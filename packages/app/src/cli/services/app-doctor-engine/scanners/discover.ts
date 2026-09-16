@@ -9,8 +9,10 @@ import {
   cwd,
   dirname,
   extname,
+  isAbsolutePath,
   isSubpath,
   joinPath,
+  normalizePath as normalizeCliPath,
   relativePath,
   resolvePath,
 } from '@shopify/cli-kit/node/path'
@@ -433,30 +435,106 @@ function repositoryPathFailure(detail: string): RepositoryReadFailure {
   return {ok: false, reason: 'unreadable', detail}
 }
 
-function containedRepositoryPath(appRoot: string, path: string): {path?: string; failure?: RepositoryReadFailure} {
+type InspectedPath = {status: 'missing'} | {status: 'file'; path: string} | {status: 'unresolved'; reason: string}
+
+function isMissingFilesystemEntry(error: unknown): boolean {
+  return error instanceof Error && 'code' in error && (error.code === 'ENOENT' || error.code === 'ENOTDIR')
+}
+
+function inspectErrorReason(target: string, error: unknown): string {
+  const code = error instanceof Error && 'code' in error && typeof error.code === 'string' ? error.code : undefined
+  return code ? `Could not inspect ${target} (${code})` : `Could not inspect ${target}`
+}
+
+function repositoryDisplayPath(appRoot: string, path: string): string {
+  const relative = normalizeCliPath(relativePath(appRoot, path))
+  if (
+    relative.length === 0 ||
+    relative === '.' ||
+    relative === '..' ||
+    relative.startsWith('../') ||
+    isAbsolutePath(relative)
+  ) {
+    return 'path'
+  }
+  return relative
+}
+
+/**
+ * Resolve a repository path while preserving the difference between absence
+ * and an unsafe or unreadable entry. Walking each segment lets contained
+ * directory links through, but treats dangling or escaping intermediates as
+ * unresolved instead of ordinary allowlist absence.
+ */
+function inspectRepositoryPath(appRoot: string, path: string): InspectedPath {
   const absoluteRoot = resolvePath(appRoot)
-  const absolutePath = resolvePath(path)
+  const absolutePath = resolvePath(absoluteRoot, path)
+  const display = repositoryDisplayPath(absoluteRoot, absolutePath)
   if (!isSubpath(absoluteRoot, absolutePath)) {
-    return {failure: repositoryPathFailure('path escapes the app root')}
+    return {status: 'unresolved', reason: `${display} escapes the app root`}
   }
 
+  let canonicalRoot: string
   try {
-    const canonicalRoot = realpathSync(absoluteRoot)
-    const canonicalPath = realpathSync(absolutePath)
-    if (!isSubpath(canonicalRoot, canonicalPath)) {
-      return {failure: repositoryPathFailure('symbolic link escapes the app root')}
-    }
-    if (!lstatSync(canonicalPath).isFile()) {
-      return {failure: repositoryPathFailure('path is not a regular file')}
-    }
-    return {path: canonicalPath}
-    // Dangling links and paths whose metadata cannot be read are coverage gaps.
+    canonicalRoot = realpathSync(absoluteRoot)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return {
-      failure: repositoryPathFailure(error instanceof Error ? error.message : String(error)),
+    return {status: 'unresolved', reason: inspectErrorReason('app root', error)}
+  }
+
+  const segments = normalizeCliPath(relativePath(absoluteRoot, absolutePath))
+    .split('/')
+    .filter((segment) => segment.length > 0 && segment !== '.')
+  if (segments.includes('..')) return {status: 'unresolved', reason: `${display} escapes the app root`}
+
+  let currentPath = canonicalRoot
+  for (const [index, segment] of segments.entries()) {
+    currentPath = joinPath(currentPath, segment)
+    try {
+      lstatSync(currentPath)
+      const canonicalPath = realpathSync(currentPath)
+      if (!isSubpath(canonicalRoot, canonicalPath)) {
+        return {status: 'unresolved', reason: `${display} resolves outside the app root`}
+      }
+
+      const stats = lstatSync(canonicalPath)
+      const isLastSegment = index === segments.length - 1
+      if (isLastSegment) {
+        if (!stats.isFile()) return {status: 'unresolved', reason: `${display} is not a file`}
+      } else if (!stats.isDirectory()) {
+        return {status: 'unresolved', reason: `${display} contains an entry that is not a directory`}
+      }
+      currentPath = canonicalPath
+      // Discovery must distinguish a missing optional allowlist entry from an
+      // entry that exists but cannot be inspected safely.
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      if (isMissingFilesystemEntry(error)) {
+        // lstat succeeds for a dangling link, so ENOENT from realpath is an
+        // unsafe existing entry rather than ordinary allowlist absence.
+        try {
+          if (lstatSync(currentPath).isSymbolicLink()) {
+            return {status: 'unresolved', reason: `${display} contains a dangling symbolic link`}
+          }
+          // eslint-disable-next-line no-catch-all/no-catch-all
+        } catch {
+          return {status: 'missing'}
+        }
+        return {status: 'missing'}
+      }
+      return {status: 'unresolved', reason: inspectErrorReason(display, error)}
     }
   }
+
+  if (segments.length === 0) return {status: 'unresolved', reason: `${display} is not a file`}
+  return {status: 'file', path: currentPath}
+}
+
+function containedRepositoryPath(appRoot: string, path: string): {path?: string; failure?: RepositoryReadFailure} {
+  const inspected = inspectRepositoryPath(appRoot, path)
+  if (inspected.status === 'file') return {path: inspected.path}
+  if (inspected.status === 'missing') return {failure: repositoryPathFailure('path does not exist')}
+  return {failure: repositoryPathFailure(inspected.reason)}
 }
 
 function readRepositoryFile(appRoot: string, path: string): RepositoryReadResult {
@@ -649,99 +727,31 @@ export function findSensitiveFiles(appRoot: string): SourceFile[] {
   })
 }
 
-interface AllowedPathResult {
-  exists: boolean
-  path?: string
-  unresolvedReason?: string
-}
-
-function filesystemError(path: string, error: unknown): string {
-  const detail = error instanceof Error ? error.message : String(error)
-  return `Could not inspect ${path}: ${detail}`
-}
-
-function isMissingFilesystemEntry(error: unknown): boolean {
-  return error instanceof Error && 'code' in error && (error.code === 'ENOENT' || error.code === 'ENOTDIR')
-}
-
-/**
- * Resolve an allowlisted path while preserving the difference between absence
- * and an unsafe or unreadable entry. `realpathSync` follows every intermediate
- * directory link, allowing contained links but rejecting escapes and dangling
- * links explicitly.
- */
-function inspectAllowedPath(appRoot: string, relative: string): AllowedPathResult {
-  const path = resolvePath(appRoot, relative)
-  if (!isSubpath(appRoot, path)) return {exists: false, unresolvedReason: `${relative} escapes the app root`}
-
-  const segments = relative.replace(/\\/g, '/').split('/').filter(Boolean)
-  let currentPath = appRoot
-  for (const [index, segment] of segments.entries()) {
-    currentPath = joinPath(currentPath, segment)
-    try {
-      lstatSync(currentPath)
-      const canonicalPath = realpathSync(currentPath)
-      if (!isSubpath(appRoot, canonicalPath)) {
-        return {exists: false, unresolvedReason: `${relative} resolves outside the app root`}
-      }
-
-      const stats = lstatSync(canonicalPath)
-      const isLastSegment = index === segments.length - 1
-      const requiredType = isLastSegment ? 'file' : 'directory'
-      const hasRequiredType = requiredType === 'file' ? stats.isFile() : stats.isDirectory()
-      if (!hasRequiredType) {
-        return {exists: false, unresolvedReason: `${relative} contains an entry that is not a ${requiredType}`}
-      }
-      // Discovery must distinguish a missing optional allowlist entry from an
-      // entry that exists but cannot be inspected safely.
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (error) {
-      if (isMissingFilesystemEntry(error)) {
-        // lstat succeeds for a dangling link, so ENOENT from realpath is an
-        // unsafe existing entry rather than ordinary allowlist absence.
-        try {
-          if (lstatSync(currentPath).isSymbolicLink()) {
-            return {exists: false, unresolvedReason: `${relative} contains a dangling symbolic link`}
-          }
-          // eslint-disable-next-line no-catch-all/no-catch-all
-        } catch {
-          return {exists: false}
-        }
-      }
-      return {exists: false, unresolvedReason: filesystemError(relative, error)}
-    }
-  }
-
-  return {exists: true, path}
-}
-
 function nestedRepositoryReason(appRoot: string): string | undefined {
-  const rootMarker = joinPath(appRoot, '.git')
   try {
-    const stats = lstatSync(rootMarker)
+    const stats = lstatSync(joinPath(appRoot, '.git'))
     if (stats.isDirectory() || stats.isFile()) return undefined
     // A root marker establishes the app's repository boundary only when it is
     // a directory or worktree file. Never follow ambiguous marker entries.
-    return `Could not determine repository ownership from ${rootMarker}`
+    return 'Could not determine repository ownership from .git'
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    if (!isMissingFilesystemEntry(error)) return filesystemError(rootMarker, error)
+    if (!isMissingFilesystemEntry(error)) return inspectErrorReason('.git', error)
   }
 
   let ancestor = dirname(appRoot)
   while (true) {
-    const marker = joinPath(ancestor, '.git')
     try {
-      const stats = lstatSync(marker)
+      const stats = lstatSync(joinPath(ancestor, '.git'))
       if (stats.isDirectory() || stats.isFile()) {
-        return `App root is nested below repository root ${ancestor}`
+        return 'App root is nested below a parent Git repository'
       }
       // A symlink or special file is not a supported repository marker, but
       // treating it as absent would make repository ownership ambiguous.
-      return `Could not determine repository ownership from ${marker}`
+      return 'Could not determine repository ownership from .git'
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
-      if (!isMissingFilesystemEntry(error)) return filesystemError(marker, error)
+      if (!isMissingFilesystemEntry(error)) return inspectErrorReason('.git', error)
     }
 
     const parent = dirname(ancestor)
@@ -750,43 +760,60 @@ function nestedRepositoryReason(appRoot: string): string | undefined {
   }
 }
 
+function recordRejectedAllowlistPath(appRoot: string, relative: string, failure: RepositoryReadFailure): void {
+  recordSkippedFile(appRoot, resolvePath(appRoot, relative), failure)
+}
+
 /** Read local bot configuration only; hosted integrations and CI workflows are outside this check's scope. */
 export function findDependencyAutomationInputs(appRoot: string): DependencyAutomationInputs {
   let canonicalRoot: string
   try {
     canonicalRoot = realpathSync(resolvePath(appRoot))
     if (!lstatSync(canonicalRoot).isDirectory()) {
-      return {files: [], unresolvedReason: `App root is not a directory: ${appRoot}`}
+      return {files: [], unresolvedReason: 'App root is not a directory'}
     }
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return {files: [], unresolvedReason: filesystemError(appRoot, error)}
+    return {files: [], unresolvedReason: inspectErrorReason('app root', error)}
   }
 
   const repositoryReason = nestedRepositoryReason(canonicalRoot)
   if (repositoryReason) return {files: [], unresolvedReason: repositoryReason}
 
   const files: SourceFile[] = []
+  let unresolvedReason: string | undefined
   for (const relative of DEPENDENCY_AUTOMATION_CONFIG_PATHS) {
-    const inspected = inspectAllowedPath(canonicalRoot, relative)
-    if (inspected.unresolvedReason) return {files, unresolvedReason: inspected.unresolvedReason}
-    if (!inspected.exists) continue
+    const inspected = inspectRepositoryPath(canonicalRoot, relative)
+    if (inspected.status === 'missing') continue
+    if (inspected.status === 'unresolved') {
+      recordRejectedAllowlistPath(canonicalRoot, relative, {
+        ok: false,
+        reason: 'unreadable',
+        detail: inspected.reason,
+      })
+      unresolvedReason ??= inspected.reason
+      continue
+    }
 
-    const absolutePath = inspected.path!
-    const result = readRepositoryFile(canonicalRoot, absolutePath)
+    const absolutePath = resolvePath(canonicalRoot, relative)
+    const result = readBoundedFile(inspected.path)
+    if (!result.ok) {
+      recordRejectedAllowlistPath(canonicalRoot, relative, result)
+      unresolvedReason ??=
+        result.reason === 'too_large' ? `${relative} is too large to inspect` : `Could not read ${relative}`
+      continue
+    }
+
     files.push({
       path: relative,
       absolutePath,
       ext: extname(relative),
-      content: result.ok ? result.content.toString() : undefined,
+      content: result.content.toString(),
     })
-    if (!result.ok && result.reason === 'unreadable') {
-      return {files, unresolvedReason: `Could not read ${relative}: ${result.detail ?? 'unknown filesystem error'}`}
-    }
     // One safely inspected configuration file is enough for this presence-only check.
     break
   }
-  return {files}
+  return files.length > 0 ? {files} : {files, ...(unresolvedReason ? {unresolvedReason} : {})}
 }
 
 /** Find JavaScript package manifests. Dependency analysis intentionally supports JavaScript only. */

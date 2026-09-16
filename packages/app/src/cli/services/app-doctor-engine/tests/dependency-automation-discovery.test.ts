@@ -64,7 +64,8 @@ describe('dependency automation discovery', () => {
     await inTemporaryDirectory(async (root) => {
       await writeFiles(root, {'.github/dependabot.yml': 'x'.repeat(500_001)})
       expect(findDependencyAutomationInputs(root)).toMatchObject({
-        files: [{path: '.github/dependabot.yml', content: undefined}],
+        files: [],
+        unresolvedReason: expect.stringContaining('too large'),
       })
       expect(getSkippedFiles()).toEqual([
         expect.objectContaining({path: '.github/dependabot.yml', reason: 'too_large', size_bytes: 500_001}),
@@ -78,10 +79,12 @@ describe('dependency automation discovery', () => {
       await writeFiles(app, {'.github/dependabot.yml': 'version: 2\nupdates: []'})
       if (marker === 'directory') await mkdir(join(repository, '.git'))
       else await writeFile(join(repository, '.git'), 'gitdir: /outside/not-read')
-      expect(findDependencyAutomationInputs(app)).toMatchObject({
+      const nested = findDependencyAutomationInputs(app)
+      expect(nested).toMatchObject({
         files: [],
-        unresolvedReason: expect.stringContaining('nested below repository root'),
+        unresolvedReason: 'App root is nested below a parent Git repository',
       })
+      expect(nested.unresolvedReason).not.toContain(repository)
       if (marker === 'directory') await mkdir(join(app, '.git'))
       else await writeFile(join(app, '.git'), 'gitdir: /outside/not-read')
       expect(findDependencyAutomationInputs(app).files).toMatchObject([{path: '.github/dependabot.yml'}])
@@ -92,10 +95,13 @@ describe('dependency automation discovery', () => {
     await inTemporaryDirectory(async (root) => {
       await inTemporaryDirectory(async (outside) => {
         await symlink(outside, join(root, path), 'dir')
-        expect(findDependencyAutomationInputs(root)).toMatchObject({
+        const result = findDependencyAutomationInputs(root)
+        expect(result).toMatchObject({
           files: [],
           unresolvedReason: expect.any(String),
         })
+        expect(result.unresolvedReason).not.toContain(root)
+        expect(result.unresolvedReason).not.toContain(outside)
       })
     })
   })
@@ -103,7 +109,27 @@ describe('dependency automation discovery', () => {
   test('rejects dangling directory links', async () => {
     await inTemporaryDirectory(async (root) => {
       await symlink(join(root, 'missing'), join(root, '.github'), 'dir')
-      expect(findDependencyAutomationInputs(root).unresolvedReason).toContain('dangling symbolic link')
+      const result = findDependencyAutomationInputs(root)
+      expect(result.unresolvedReason).toContain('dangling symbolic link')
+      expect(result.unresolvedReason).not.toContain(root)
+      expect(getSkippedFiles()).toContainEqual(
+        expect.objectContaining({path: '.github/dependabot.yml', reason: 'unreadable'}),
+      )
+    })
+  })
+
+  test('keeps looking after an unsafe allowlisted path', async () => {
+    await inTemporaryDirectory(async (root) => {
+      await inTemporaryDirectory(async (outside) => {
+        await symlink(outside, join(root, '.github'), 'dir')
+        await writeFiles(root, {'renovate.json': '{}'})
+        const result = findDependencyAutomationInputs(root)
+        expect(result.files).toMatchObject([{path: 'renovate.json', content: '{}'}])
+        expect(result.unresolvedReason).toBeUndefined()
+        expect(getSkippedFiles()).toContainEqual(
+          expect.objectContaining({path: '.github/dependabot.yml', reason: 'unreadable'}),
+        )
+      })
     })
   })
 
@@ -112,7 +138,11 @@ describe('dependency automation discovery', () => {
       await inTemporaryDirectory(async (outside) => {
         await writeFile(join(outside, 'config.json'), '{}')
         await symlink(join(outside, 'config.json'), join(root, 'renovate.json'))
-        expect(findDependencyAutomationInputs(root).unresolvedReason).toContain('outside the app root')
+        const rejected = findDependencyAutomationInputs(root)
+        expect(rejected.unresolvedReason).toContain('outside the app root')
+        expect(rejected.unresolvedReason).not.toContain(root)
+        expect(rejected.unresolvedReason).not.toContain(outside)
+        expect(getSkippedFiles()).toContainEqual(expect.objectContaining({path: 'renovate.json', reason: 'unreadable'}))
         await writeFiles(root, {'.github/config.yml': 'version: 2\nupdates: []'})
         await symlink(join(root, '.github/config.yml'), join(root, '.github/dependabot.yml'))
         const result = findDependencyAutomationInputs(root)

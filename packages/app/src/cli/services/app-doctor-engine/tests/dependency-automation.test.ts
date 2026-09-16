@@ -185,7 +185,7 @@ describe('dependency automation scanner integration', () => {
       expect(dependencyFindings(result)).toEqual([])
       expect(dependencyExecution(result)).toMatchObject({
         status: 'unresolved',
-        reason: {message: expect.stringContaining('nested below repository root')},
+        reason: {message: 'App root is nested below a parent Git repository'},
       })
     })
   })
