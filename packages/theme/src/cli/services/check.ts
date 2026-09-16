@@ -197,12 +197,7 @@ export function sortOffenses(offenses: Offense[]): OffenseMap {
  */
 function countOffenseTypes(offenses: Offense[]) {
   return offenses.reduce((acc: SeverityCounts, offense: Offense) => {
-    const isSeverityUncounted = !Object.prototype.hasOwnProperty.call(acc, offense.severity)
-    if (isSeverityUncounted) {
-      acc[offense.severity] = 0
-    }
-
-    acc[offense.severity]!++
+    acc[offense.severity] = (acc[offense.severity] ?? 0) + 1
 
     return acc
   }, {})
