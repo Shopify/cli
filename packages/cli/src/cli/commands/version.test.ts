@@ -21,7 +21,18 @@ const sourceLoaderUrl = new URL('../../../../cli-kit/test/fixtures/cli-kit-sourc
 const runVersion = async (arguments_: string[]) => {
   const script = `
     const {default: Version} = await import(${JSON.stringify(commandUrl)})
-    await Version.run(${JSON.stringify(arguments_)}, ${JSON.stringify(commandUrl)})
+    const argv = ${JSON.stringify(arguments_)}
+    if (argv.includes('--json-schema')) {
+      // Schema inspection runs in the launcher before the command lifecycle.
+      const {launchCLI} = await import('@shopify/cli-kit/node/cli-launcher')
+      await launchCLI({
+        moduleURL: ${JSON.stringify(commandUrl)},
+        argv: ['version', ...argv],
+        lazyCommandLoader: async () => Version,
+      })
+    } else {
+      await Version.run(argv, ${JSON.stringify(commandUrl)})
+    }
   `
 
   return execa(
