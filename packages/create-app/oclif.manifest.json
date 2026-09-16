@@ -38,6 +38,13 @@
           "name": "flavor",
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "local": {
           "allowNo": false,
           "char": "l",

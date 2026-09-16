@@ -11,6 +11,7 @@ import {defineJsonOutputSchema} from './json-output-schema.js'
 import {zod} from './schema.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {Flags} from '@oclif/core'
+import {Ajv} from 'ajv'
 
 let originalStdinIsTTY: boolean | undefined
 let originalStdoutIsTTY: boolean | undefined
@@ -285,6 +286,20 @@ describe('command events', () => {
 })
 
 describe('command descriptions', () => {
+  test('preserves schema patterns that resemble Markdown links', () => {
+    class CommandWithPattern extends Command {
+      static get jsonOutputSchema() {
+        return defineJsonOutputSchema({name: 'Result', schema: zod.string().regex(/[a-z](value)/)})
+      }
+
+      public async run(): Promise<void> {}
+    }
+
+    const description = CommandWithPattern.descriptionForHelp()!
+    const schema = JSON.parse(description.match(/```json\n([\s\S]+)\n```/)![1]!)
+    expect(schema.pattern).toBe('[a-z](value)')
+  })
+
   test('includes a JSON output schema without mutating the Markdown description', () => {
     class CommandWithJsonOutput extends Command {
       static get jsonOutputSchema() {
@@ -301,15 +316,22 @@ describe('command descriptions', () => {
       public async run(): Promise<void> {}
     }
 
-    expect(CommandWithJsonOutput.description).toBe(`Returns a value. "Learn more" (https://shopify.dev).
-
-With \`--json\`, the command returns \`CommandResult\`:
-
-\`\`\`ts
-interface CommandResult {
-  value: string
-}
-\`\`\``)
+    expect(CommandWithJsonOutput.description).toContain('Returns a value. "Learn more" (https://shopify.dev).')
+    expect(CommandWithJsonOutput.description).toContain(
+      'Use `--json-schema` to print the result, error, and event schemas.',
+    )
+    const helpSchema = JSON.parse(CommandWithJsonOutput.description!.match(/```json\n([\s\S]+)\n```/)![1]!)
+    expect(helpSchema).toEqual({
+      $schema: 'http://json-schema.org/draft-07/schema#',
+      title: 'CommandResult',
+      type: 'object',
+      properties: {value: {type: 'string'}},
+      required: ['value'],
+      additionalProperties: false,
+    })
+    const validate = new Ajv().compile(helpSchema)
+    expect(validate({value: 'ready'})).toBe(true)
+    expect(validate({value: 1})).toBe(false)
     expect(CommandWithJsonOutput.descriptionWithMarkdown).toBe('Returns a value. [Learn more](https://shopify.dev).')
 
     CommandWithJsonOutput.descriptionForHelp()
