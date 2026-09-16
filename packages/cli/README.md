@@ -1979,6 +1979,57 @@ DESCRIPTION
   List deployed versions of your app.
 
   Lists the deployed app versions. An app version is a snapshot of your app extensions.
+
+  Output from `--json` conforms to the `AppVersionsListResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "array",
+    "items": {
+      "$ref": "#/definitions/AppVersion"
+    },
+    "title": "AppVersionsListResult",
+    "definitions": {
+      "AppVersion": {
+        "type": "object",
+        "properties": {
+          "createdAt": {
+            "type": "string"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "versionTag": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "versionId": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "createdAt",
+          "createdBy",
+          "status",
+          "versionId",
+          "message"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app webhook trigger`

@@ -1335,6 +1335,26 @@ describe('deploy', () => {
   })
 })
 
+describe('appVersions', () => {
+  test('preserves a missing app in the API response instead of dereferencing it', async () => {
+    // Given
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({app: null})
+
+    // When
+    const result: AppVersionsQuerySchema = await client.appVersions({
+      apiKey: 'api-key',
+      organizationId: 'gid://shopify/Organization/123',
+      id: 'gid://shopify/App/123',
+      title: 'Test App',
+    })
+
+    // Then
+    expect(result).toEqual({app: null})
+  })
+})
+
 describe('AppManagementClient', () => {
   describe('generateSignedUploadUrl', () => {
     test('passes Brotli format for uploads and scopes the cache key to the app and command run', async () => {

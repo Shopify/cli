@@ -11,6 +11,7 @@ export interface AppVersionsQuerySchema {
         }
         message?: string | null
         status: string
+        versionId: string
         versionTag?: string | null
       }[]
       pageInfo: {
