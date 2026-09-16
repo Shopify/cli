@@ -3,6 +3,7 @@ import {getStoreGraphQLTarget, type StoreGraphQLApi} from './targets.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {outputContent} from '@shopify/cli-kit/node/output'
+import type {StoreExecuteResult} from './types.js'
 
 interface ExecuteStoreOperationInput {
   store: string
@@ -15,7 +16,7 @@ interface ExecuteStoreOperationInput {
   allowMutations?: boolean
 }
 
-export async function executeStoreOperation(input: ExecuteStoreOperationInput): Promise<unknown> {
+export async function executeStoreOperation(input: ExecuteStoreOperationInput): Promise<StoreExecuteResult> {
   await recordStoreFqdnMetadata(input.store, false)
   const target = getStoreGraphQLTarget(input.api ?? 'admin')
 
