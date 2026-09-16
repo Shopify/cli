@@ -3313,117 +3313,6 @@
       "strict": true,
       "summary": "Stream detailed logs for your Shopify app."
     },
-    "app:logs:query": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "customPluginName": "@shopify/app",
-      "enableJsonFlag": false,
-      "flags": {
-        "client-id": {
-          "description": "App API key.",
-          "env": "SHOPIFY_FLAG_CLIENT_ID",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "client-id",
-          "required": true,
-          "type": "option"
-        },
-        "demo": {
-          "allowNo": false,
-          "description": "Use the loopback demo with seeded auth, not Identity login.",
-          "env": "SHOPIFY_FLAG_DEMO",
-          "name": "demo",
-          "type": "boolean"
-        },
-        "filter": {
-          "description": "Equality filter FIELD=value. Repeat to AND filters; use --list-filters for fields.",
-          "env": "SHOPIFY_FLAG_FILTER",
-          "hasDynamicHelp": false,
-          "multiple": true,
-          "name": "filter",
-          "type": "option"
-        },
-        "limit": {
-          "default": 10,
-          "description": "Maximum summary events to return.",
-          "env": "SHOPIFY_FLAG_LIMIT",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "limit",
-          "type": "option"
-        },
-        "list-filters": {
-          "allowNo": false,
-          "description": "List filter definitions for the selected types, without searching logs.",
-          "env": "SHOPIFY_FLAG_LIST_FILTERS",
-          "exclusive": [
-            "filter"
-          ],
-          "name": "list-filters",
-          "type": "boolean"
-        },
-        "minutes": {
-          "default": 15,
-          "description": "Query the last N minutes.",
-          "env": "SHOPIFY_FLAG_MINUTES",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "minutes",
-          "type": "option"
-        },
-        "no-color": {
-          "allowNo": false,
-          "description": "Disable color output.",
-          "env": "SHOPIFY_FLAG_NO_COLOR",
-          "hidden": false,
-          "name": "no-color",
-          "type": "boolean"
-        },
-        "offset": {
-          "default": 0,
-          "description": "Number of matching rows to skip. Results are unordered; this is not a reliable export cursor.",
-          "env": "SHOPIFY_FLAG_OFFSET",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "offset",
-          "type": "option"
-        },
-        "type": {
-          "description": "Restrict results to these event types.",
-          "env": "SHOPIFY_FLAG_TYPE",
-          "hasDynamicHelp": false,
-          "multiple": true,
-          "name": "type",
-          "options": [
-            "WEBHOOK_DELIVERY",
-            "GRAPHQL_REQUEST",
-            "REST_REQUEST",
-            "FUNCTION_RUN"
-          ],
-          "type": "option"
-        },
-        "verbose": {
-          "allowNo": false,
-          "description": "Increase the verbosity of the output. May include sensitive data.",
-          "env": "SHOPIFY_FLAG_VERBOSE",
-          "hidden": false,
-          "name": "verbose",
-          "type": "boolean"
-        }
-      },
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [
-      ],
-      "id": "app:logs:query",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true,
-      "summary": "Prototype only: query app log summaries through the local Dev Platform API."
-    },
     "app:logs:sources": {
       "aliases": [
       ],
@@ -4843,6 +4732,99 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Watch and prints out changes to an app."
+    },
+    "dev:execute": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Prints the complete GraphQL JSON response. The query selects apps, filters, and returned fields. GraphQL or HTTP errors produce a nonzero exit status, preserving partial data when available.",
+      "enableJsonFlag": false,
+      "flags": {
+        "demo": {
+          "allowNo": false,
+          "description": "Use the loopback demo with seeded auth, not Identity login.",
+          "env": "SHOPIFY_FLAG_DEMO",
+          "name": "demo",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "operation-name": {
+          "description": "The operation to execute when the document contains multiple operations.",
+          "env": "SHOPIFY_FLAG_OPERATION_NAME",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "operation-name",
+          "type": "option"
+        },
+        "query": {
+          "char": "q",
+          "description": "The GraphQL query or mutation, as a string.",
+          "env": "SHOPIFY_FLAG_QUERY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "query",
+          "required": false,
+          "type": "option"
+        },
+        "query-file": {
+          "description": "Path to a GraphQL document, or - to read from stdin.",
+          "env": "SHOPIFY_FLAG_QUERY_FILE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "query-file",
+          "type": "option"
+        },
+        "variable-file": {
+          "description": "Path to a file containing GraphQL variables in JSON format. Can't be used with --variables.",
+          "env": "SHOPIFY_FLAG_VARIABLE_FILE",
+          "exclusive": [
+            "variables"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "variable-file",
+          "type": "option"
+        },
+        "variables": {
+          "char": "v",
+          "description": "The values for any GraphQL variables in your query or mutation, in JSON format.",
+          "env": "SHOPIFY_FLAG_VARIABLES",
+          "exclusive": [
+            "variable-file"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "variables",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "dev:execute",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Prototype only: execute a GraphQL request against the local Dev Platform API."
     },
     "doc:fetch": {
       "aliases": [
