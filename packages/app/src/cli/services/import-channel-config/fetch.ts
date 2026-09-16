@@ -1,11 +1,12 @@
 import {OrganizationApp} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {numericIdFromGid} from '@shopify/cli-kit/common/gid'
 import {appManagementHeaders} from '@shopify/cli-kit/node/api/app-management'
 import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {shopifyFetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-export interface ChannelSpecExportWarning {
+interface ChannelSpecExportWarning {
   code: string
   message: string
 }
@@ -41,7 +42,11 @@ export async function fetchChannelSpecExport({
   developerPlatformClient,
 }: FetchChannelSpecExportOptions): Promise<ChannelSpecExportResult> {
   const fqdn = await appManagementFqdn()
-  const url = `https://${fqdn}/app_management/unstable/organizations/${remoteApp.organizationId}/apps/${remoteApp.id}/channel_spec_export.json`
+  // App Management returns app ids as GIDs (gid://shopify/App/<id>); the REST path needs the numeric id.
+  const appId = numericIdFromGid(remoteApp.id) ?? remoteApp.id
+  const url = `https://${fqdn}/app_management/unstable/organizations/${encodeURIComponent(
+    remoteApp.organizationId,
+  )}/apps/${encodeURIComponent(appId)}/channel_spec_export.json`
   const token = (await developerPlatformClient.session()).token
 
   const response = await shopifyFetch(url, {
@@ -58,16 +63,36 @@ export async function fetchChannelSpecExport({
     )
   }
 
-  let payload: {[key: string]: unknown}
+  let decoded: unknown
   try {
-    payload = (await response.json()) as {[key: string]: unknown}
+    decoded = await response.json()
   } catch {
     throw new AbortError(`Failed to fetch the channel spec export: unexpected response (status ${response.status}).`)
   }
 
-  if (!response.ok) {
+  if (typeof decoded !== 'object' || decoded === null || Array.isArray(decoded)) {
+    throw new AbortError(`Failed to fetch the channel spec export: unexpected response (status ${response.status}).`)
+  }
+  const payload = decoded as {[key: string]: unknown}
+
+  // Only 422 carries a well-formed export failure ({error, reason}); any other non-ok status is a
+  // transport/auth/server problem and should not be presented as "this app can't be exported".
+  if (response.status === 422) {
     const reason = typeof payload.reason === 'string' ? payload.reason : `http_${response.status}`
     return {success: false, reason}
+  }
+
+  if (!response.ok) {
+    if (response.status === 401 || response.status === 403) {
+      throw new AbortError(
+        `Failed to fetch the channel spec export: authentication failed (status ${response.status}).`,
+        'Log out with `shopify auth logout` and re-run the command to refresh your session.',
+      )
+    }
+    throw new AbortError(
+      `Failed to fetch the channel spec export: the server responded with status ${response.status}.`,
+      'This is likely temporary. Wait a moment and try again.',
+    )
   }
 
   const {handle, filename, toml, warnings} = payload

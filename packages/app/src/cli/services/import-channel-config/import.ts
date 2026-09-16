@@ -1,14 +1,21 @@
-import {fetchChannelSpecExport, ChannelSpecExportWarning} from './fetch.js'
+import {fetchChannelSpecExport} from './fetch.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {dirname, joinPath, relativePath} from '@shopify/cli-kit/node/path'
+import {basename, dirname, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {outputResult, outputWarn} from '@shopify/cli-kit/node/output'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 
-export const CHANNEL_SPEC_DIRECTORY = joinPath('extensions', 'channel-config', 'specifications')
+export const CHANNEL_SPEC_EXTENSION_DIRECTORY = joinPath('extensions', 'channel-config')
+export const CHANNEL_SPEC_DIRECTORY = joinPath(CHANNEL_SPEC_EXTENSION_DIRECTORY, 'specifications')
+
+const EXTENSION_CONFIG_FILENAME = 'shopify.extension.toml'
+// Minimal extension scaffold: the app loader only discovers extensions through *.extension.toml
+// files, and the channel_config deploy step copies `specifications/` relative to the extension
+// directory. Without this file, `shopify app deploy` would silently exclude the imported spec.
+const EXTENSION_CONFIG_CONTENT = 'name = "Channel config"\ntype = "channel_config"\nhandle = "channel-config"\n'
 
 const FAILURE_MESSAGES: {[reason: string]: string} = {
   no_exportable_frozen_record:
@@ -57,7 +64,9 @@ export async function importChannelConfig(options: ImportChannelConfigOptions): 
     return
   }
 
-  const outputPath = joinPath(app.directory, CHANNEL_SPEC_DIRECTORY, result.filename)
+  // basename() confines the write to the specifications directory even if the backend ever
+  // returned a filename containing path separators.
+  const outputPath = joinPath(app.directory, CHANNEL_SPEC_DIRECTORY, basename(result.filename))
   if (!overwrite && (await fileExists(outputPath))) {
     throw new AbortError(
       `A channel spec already exists at ${relativePath(app.directory, outputPath)}.`,
@@ -67,12 +76,24 @@ export async function importChannelConfig(options: ImportChannelConfigOptions): 
 
   await mkdir(dirname(outputPath))
   await writeFile(outputPath, result.toml)
+  const createdExtensionConfig = await ensureExtensionConfig(app.directory)
 
-  result.warnings.forEach((warning) => renderExportWarning(warning))
+  result.warnings.forEach((warning) => renderWarning({body: warning.message}))
 
   renderSuccess({
     headline: ['Imported the channel spec for', {userInput: remoteApp.title}, {char: '.'}],
-    body: ['The spec was written to', {filePath: relativePath(app.directory, outputPath)}, {char: '.'}],
+    body: [
+      'The spec was written to',
+      {filePath: relativePath(app.directory, outputPath)},
+      {char: '.'},
+      ...(createdExtensionConfig
+        ? [
+            'Also created',
+            {filePath: joinPath(CHANNEL_SPEC_EXTENSION_DIRECTORY, EXTENSION_CONFIG_FILENAME)},
+            'so the spec is included when your app is deployed.',
+          ]
+        : []),
+    ],
     nextSteps: [
       'Review the generated spec before deploying it.',
       ['Run', {command: 'shopify app deploy'}, 'to deploy the spec as part of your app.'],
@@ -80,6 +101,15 @@ export async function importChannelConfig(options: ImportChannelConfigOptions): 
   })
 }
 
-function renderExportWarning(warning: ChannelSpecExportWarning): void {
-  renderWarning({body: warning.message})
+/**
+ * Ensures the channel-config extension has a `shopify.extension.toml`, without which the app
+ * loader would not discover the extension and the imported spec would never reach a deploy bundle.
+ *
+ * @returns true when the file was created, false when one already existed.
+ */
+async function ensureExtensionConfig(appDirectory: string): Promise<boolean> {
+  const extensionConfigPath = joinPath(appDirectory, CHANNEL_SPEC_EXTENSION_DIRECTORY, EXTENSION_CONFIG_FILENAME)
+  if (await fileExists(extensionConfigPath)) return false
+  await writeFile(extensionConfigPath, EXTENSION_CONFIG_CONTENT)
+  return true
 }

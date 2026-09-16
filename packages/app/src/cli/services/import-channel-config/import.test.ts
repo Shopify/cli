@@ -1,5 +1,5 @@
 import {fetchChannelSpecExport} from './fetch.js'
-import {importChannelConfig, CHANNEL_SPEC_DIRECTORY} from './import.js'
+import {importChannelConfig, CHANNEL_SPEC_DIRECTORY, CHANNEL_SPEC_EXTENSION_DIRECTORY} from './import.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -150,6 +150,60 @@ describe('importChannelConfig', () => {
 
       // When/Then
       await expect(importChannelConfig(testOptions(app))).rejects.toThrow(/mystery_reason/)
+    })
+  })
+
+  test('confines the write to the specifications directory when the filename contains path segments', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      vi.mocked(fetchChannelSpecExport).mockResolvedValue({...successResult(), filename: '../../evil.toml'})
+      const app = testAppLinked({directory: tmpDir})
+      mockAndCaptureOutput()
+
+      // When
+      await importChannelConfig(testOptions(app))
+
+      // Then
+      await expect(fileExists(joinPath(tmpDir, 'evil.toml'))).resolves.toBe(false)
+      await expect(fileExists(joinPath(tmpDir, CHANNEL_SPEC_DIRECTORY, 'evil.toml'))).resolves.toBe(true)
+    })
+  })
+
+  test('creates a minimal shopify.extension.toml so the imported spec deploys', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      vi.mocked(fetchChannelSpecExport).mockResolvedValue(successResult())
+      const app = testAppLinked({directory: tmpDir})
+      const outputMock = mockAndCaptureOutput()
+
+      // When
+      await importChannelConfig(testOptions(app))
+
+      // Then
+      const extensionConfigPath = joinPath(tmpDir, CHANNEL_SPEC_EXTENSION_DIRECTORY, 'shopify.extension.toml')
+      await expect(readFile(extensionConfigPath)).resolves.toContain('type = "channel_config"')
+      expect(outputMock.info()).toContain('shopify.extension.toml')
+    })
+  })
+
+  test('does not replace an existing shopify.extension.toml', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      vi.mocked(fetchChannelSpecExport).mockResolvedValue(successResult())
+      const app = testAppLinked({directory: tmpDir})
+      const extensionConfigPath = joinPath(tmpDir, CHANNEL_SPEC_EXTENSION_DIRECTORY, 'shopify.extension.toml')
+      await mkdir(dirname(extensionConfigPath))
+      const existingContent = 'name = "My channel"\ntype = "channel_config"\nhandle = "my-channel"\n'
+      await writeFile(extensionConfigPath, existingContent)
+      const outputMock = mockAndCaptureOutput()
+      outputMock.clear()
+
+      // When
+      await importChannelConfig(testOptions(app))
+
+      // Then
+      await expect(readFile(extensionConfigPath)).resolves.toEqual(existingContent)
+      expect(outputMock.info()).not.toContain('Also created')
     })
   })
 })
