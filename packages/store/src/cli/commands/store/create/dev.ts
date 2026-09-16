@@ -15,7 +15,7 @@ export default class StoreCreateDev extends Command {
 
   static descriptionWithMarkdown = 'Creates a new dev store in your organization.'
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static examples = [
     '<%= config.bin %> <%= command.id %>',

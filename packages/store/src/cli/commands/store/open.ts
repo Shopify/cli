@@ -8,7 +8,7 @@ export default class StoreOpen extends StoreCommand {
 
   static descriptionWithMarkdown = `Opens the storefront for a store you have access to in your default web browser.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static examples = ['<%= config.bin %> <%= command.id %> --store shop.myshopify.com']
 

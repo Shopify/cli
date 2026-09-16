@@ -15,7 +15,7 @@ export default class EnvPull extends AppLinkedCommand {
 
   When an existing \`.env\` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
