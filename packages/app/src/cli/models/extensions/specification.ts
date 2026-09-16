@@ -100,7 +100,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
   getDevSessionUpdateMessages?: (config: TConfiguration, context: DevSessionUpdateContext) => Promise<string[]>
   /** Top-level URL fields to resolve against the app URL. The remote contract must accept relative values. */
-  appRelativeUrlFields?: ReadonlyArray<string>
+  appRelativeUrlFields?: ReadonlyArray<keyof TConfiguration & string>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 
   /**

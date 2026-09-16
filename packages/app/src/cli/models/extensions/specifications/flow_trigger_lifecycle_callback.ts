@@ -1,6 +1,11 @@
 import {createContractBasedModuleSpecification} from '../specification.js'
+import {BaseConfigType} from '../schemas.js'
 
-const flowTriggerLifecycleCallbackSpec = createContractBasedModuleSpecification({
+interface FlowTriggerLifecycleCallbackConfig extends BaseConfigType {
+  url: string
+}
+
+const flowTriggerLifecycleCallbackSpec = createContractBasedModuleSpecification<FlowTriggerLifecycleCallbackConfig>({
   identifier: 'flow_trigger_lifecycle_callback',
   uidStrategy: 'uuid',
   experience: 'extension',
