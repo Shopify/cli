@@ -630,6 +630,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const query = AppVersions
     const variables = {appId: id}
     const result = await this.appManagementRequest({query, variables})
+    if (!result.app) {
+      return {app: null}
+    }
     return {
       app: {
         id: result.app.id,
