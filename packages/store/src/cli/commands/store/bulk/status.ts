@@ -1,7 +1,11 @@
 import {getBulkOperationStatus, listBulkOperations} from '../../../services/store/bulk/bulk-operation-status.js'
+import {prepareBulkAdminContext} from '../../../services/store/bulk/bulk-admin-context.js'
+import {renderBulkOperationStatusResult} from '../../../services/store/bulk/status-result.js'
+import {renderBulkOperationStart} from '../../../services/store/bulk/progress.js'
+import {bulkOperationStatusJsonOutputSchema} from '../../../services/store/bulk/types.js'
 import StoreCommand from '../../../utilities/store-command.js'
 import {bulkOperationIdFlag, storeFlags} from '../../../flags.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class StoreBulkStatus extends StoreCommand {
   static summary = 'Check the status of bulk operations on a store.'
@@ -21,20 +25,27 @@ export default class StoreBulkStatus extends StoreCommand {
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     store: storeFlags.store,
     id: bulkOperationIdFlag,
   }
 
+  static get jsonOutputSchema() {
+    return bulkOperationStatusJsonOutputSchema
+  }
+
   async run(): Promise<void> {
     const {flags} = await this.parse(StoreBulkStatus)
-
-    if (flags.id) {
-      await getBulkOperationStatus({
-        store: flags.store,
-        operationId: flags.id,
-      })
-    } else {
-      await listBulkOperations({store: flags.store})
-    }
+    const format = flags.json ? 'json' : 'text'
+    const adminSession = await prepareBulkAdminContext(flags.store)
+    renderBulkOperationStart(
+      flags.id ? 'Checking bulk operation status.' : 'Listing bulk operations.',
+      {storeFqdn: adminSession.storeFqdn},
+      format,
+    )
+    const result = flags.id
+      ? await getBulkOperationStatus({adminSession, operationId: flags.id})
+      : await listBulkOperations({adminSession})
+    renderBulkOperationStatusResult(result, format)
   }
 }
