@@ -28,11 +28,11 @@
     },
     "findings": [
       {
-        "fingerprint": "sha256:298c67d67fe725a4636e1650ef5ff8149dac7d911d647b566073b3ff7a7614aa",
+        "fingerprint": "sha256:8bfe4e8f36ca45199354ef12f217c041e1d682d30e1c4a0ccd08bef080eaf7c5",
         "source": "deterministic",
         "severity": "high",
-        "title": "Vulnerable package lodash (CVE-2026-0001)",
-        "rule_id": "KNOWN_CVE_IN_DEPENDENCY",
+        "title": "Unsafe HTML assignment",
+        "rule_id": "UNSAFE_INNERHTML",
         "rule_version": 2,
         "suppressed": true,
         "suppression_id": "accepted-migration-risk"
@@ -59,19 +59,19 @@
     ],
     "checks_executed": [
       {
-        "id": "KNOWN_CVE_IN_DEPENDENCY",
+        "id": "UNSAFE_INNERHTML",
         "version": 2,
         "kind": "deterministic",
         "status": "executed",
         "required": true,
         "applicable": true,
-        "analysis_mode": "audit",
+        "analysis_mode": "regex",
         "finding_count": 1,
         "inspected_file_count": 1,
         "implementations": [
           {
-            "id": "npm-audit",
-            "analysis_mode": "audit",
+            "id": "react-router-js-regex",
+            "analysis_mode": "regex",
             "status": "executed",
             "finding_count": 1,
             "inspected_file_count": 1
@@ -130,7 +130,7 @@
     "suppressions": [
       {
         "id": "accepted-migration-risk",
-        "finding_fingerprint": "sha256:298c67d67fe725a4636e1650ef5ff8149dac7d911d647b566073b3ff7a7614aa",
+        "finding_fingerprint": "sha256:8bfe4e8f36ca45199354ef12f217c041e1d682d30e1c4a0ccd08bef080eaf7c5",
         "provenance": {"source": "human", "created_at": "2026-08-31T11:00:00.000Z"}
       }
     ],
@@ -141,7 +141,7 @@
       "gaps": [{"code": "skipped_file"}, {"code": "unresolved_check", "check_id": "UNREPORTED_AGENT_CHECK"}]
     },
     "attestation": {
-      "trace_digest": "sha256:d21dc8ca875f71ef87c386edcef6f6b97df81719425c7a398d430d32034064cc"
+      "trace_digest": "sha256:59f98a434b24a9b6e9fd08337fb29c0986cc677718d557d0d97531b2df1690c5"
     }
   }
 }

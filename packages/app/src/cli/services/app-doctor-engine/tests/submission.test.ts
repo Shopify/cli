@@ -114,7 +114,7 @@ describe('buildSubmission', () => {
     mutableEngine.name = `engine-${secret}`
     mutableEngine.version = `version-${secret}`
     mutableEngine.ruleset = `ruleset-${secret}`
-    trace.findings[0]!.title = `CVE detected: ${secret}`
+    trace.findings[0]!.title = `Unsafe HTML assignment: ${secret}`
 
     const submission = buildSubmission(trace, {
       cliVersion: '3.99.0',
@@ -134,11 +134,5 @@ describe('buildSubmission', () => {
     const submission = buildSubmission(structuredClone(submissionTraceFixture), {...options, feedback})
 
     expect(submission.report.feedback).toBe(feedback)
-  })
-
-  test('keeps the public package and CVE identifiers in a known-CVE title', () => {
-    const submission = buildSubmission(structuredClone(submissionTraceFixture), options)
-
-    expect(submission.report.findings[0]!.title).toBe('Vulnerable package lodash (CVE-2026-0001)')
   })
 })

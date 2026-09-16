@@ -105,15 +105,6 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     description: 'Detects direct credential flows into responses, loaders, globals, DOM, and external requests.',
     fix: 'Keep credentials server-side and return only non-sensitive derived data.',
   },
-  {
-    id: 'KNOWN_CVE_IN_DEPENDENCY',
-    title: 'Known CVE in dependency',
-    severity: 'high',
-    points: -20,
-    description:
-      'Runs the selected JavaScript package manager audit against production dependencies in the committed lockfile.',
-    fix: 'Upgrade the dependency to a patched version.',
-  },
 
   {
     id: 'EXPIRING_OFFLINE_TOKEN',

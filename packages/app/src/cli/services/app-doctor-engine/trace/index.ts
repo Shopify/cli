@@ -27,14 +27,13 @@ const EXECUTION_STATUSES = new Set<CheckExecutionStatus>([
   'unsupported_framework',
   'unresolved',
 ])
-const ANALYSIS_MODES = new Set<AnalysisMode>(['regex', 'structured_config', 'audit', 'ast', 'agent', 'external'])
+const ANALYSIS_MODES = new Set<AnalysisMode>(['regex', 'structured_config', 'ast', 'agent', 'external'])
 const REASON_CODES = new Set([
   'capability_absent',
   'no_relevant_files',
   'unsupported_framework',
   'unsupported_language',
   'parser_unavailable',
-  'audit_unavailable',
   'agent_investigation_required',
   'not_reported',
   'input_rejected',

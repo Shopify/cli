@@ -10,7 +10,6 @@ import {
   getSkippedFiles,
   findManifests,
   findManifestPaths,
-  readOptionalRepositoryFile,
 } from './discover.js'
 import {detectCapabilities, detectProject} from '../capabilities/detect.js'
 import {calculateScore, computeScanMetadata} from '../scorer/index.js'
@@ -24,7 +23,6 @@ import {
 } from '../rules/js-rules.js'
 import {scanLiquidSecurity} from '../rules/liquid-rules.js'
 import {redactText, scanCommittedSecrets} from '../rules/secret-rules.js'
-import {auditKnownCves} from '../rules/dependency-rules.js'
 import {scanDeprecatedScriptTagApi} from '../rules/shopify-rules.js'
 import {missingComplianceWebhooks, scanEolApiVersions} from '../rules/compliance-rules.js'
 import {scanAppProxyLiquidInjection} from '../rules/proxy-rules.js'
@@ -36,7 +34,6 @@ import {getEngineVersion} from '../version.js'
 import {basename, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {sha256} from '@shopify/cli-kit/node/crypto'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
-import type {AuditExecutor} from '../rules/dependency-rules.js'
 import type {Rule, ScanContext} from '../rules/types.js'
 import type {SourceFile} from './types.js'
 import type {
@@ -50,15 +47,7 @@ import type {
   SkippedFile,
 } from '../types.js'
 
-type CheckTarget =
-  | 'config'
-  | 'source'
-  | 'app_source'
-  | 'theme'
-  | 'manifest'
-  | 'secrets'
-  | 'config_and_source'
-  | 'source_and_theme'
+type CheckTarget = 'config' | 'source' | 'app_source' | 'theme' | 'secrets' | 'config_and_source' | 'source_and_theme'
 interface RunnerImplementationResult {
   id: string
   analysisMode: AnalysisMode
@@ -79,7 +68,7 @@ export interface DeterministicCheckDefinition {
   id: string
   version: number
   lifecycle: 'active' | 'planned' | 'investigate'
-  analysisMode: Extract<AnalysisMode, 'regex' | 'structured_config' | 'audit' | 'ast'>
+  analysisMode: Extract<AnalysisMode, 'regex' | 'structured_config' | 'ast'>
   target: CheckTarget
   requires?: keyof ScanContext['capabilities']
   guidance: string
@@ -88,7 +77,6 @@ export interface DeterministicCheckDefinition {
 }
 
 const JAVASCRIPT_EXTENSIONS = ['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.mts', '.cts']
-const JAVASCRIPT_LOCKFILES = new Set(['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock'])
 
 const configRule = (rule: Rule, version = 1): DeterministicCheckDefinition => ({
   id: rule.id,
@@ -169,19 +157,6 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
   },
   jsCheck('CREDENTIAL_LOG_LEAKAGE', (context) => scanCredentialLogLeakage(context.sourceFiles)),
   jsCheck('CREDENTIAL_BROWSER_LEAKAGE', (context) => scanCredentialBrowserLeakage(context.sourceFiles)),
-  {
-    id: 'KNOWN_CVE_IN_DEPENDENCY',
-    version: 3,
-    lifecycle: 'active',
-    analysisMode: 'audit',
-    target: 'manifest',
-    guidance:
-      'Run the matching version 3 dependency prompt for static lockfile review without executing repository-controlled code.',
-    runner: async (context) => {
-      const result = await auditKnownCves(context.appRoot, context.manifests, context.dependencyAuditExecutor)
-      return {issues: result.issues, unresolvedReason: result.unresolvedReason, inspectedFiles: result.inspectedFiles}
-    },
-  },
   {
     id: 'LIQUID_UNSAFE_RENDER',
     version: 1,
@@ -387,7 +362,6 @@ async function gitProject(appRoot: string): Promise<ScanResult['project']> {
 function selectedFiles(definition: DeterministicCheckDefinition, context: ScanContext): string[] {
   const configurations = context.appTomls.map((toml) => relativePath(context.appRoot, toml.path).replace(/\\/g, '/'))
   if (definition.target === 'config') return configurations
-  if (definition.target === 'manifest') return context.manifests.map((manifest) => manifest.path)
   if (definition.target === 'secrets')
     return context.sensitiveFiles.filter((file) => file.content !== undefined).map((file) => file.path)
   let files = definition.target === 'app_source' ? appSourceFiles(context) : reactRouterFiles(context)
@@ -508,7 +482,7 @@ function executionDisposition(
       reason: {code: 'parser_unavailable', message: 'No readable Shopify app configuration was available.'},
     }
   if (
-    ['source', 'app_source', 'theme', 'manifest', 'secrets', 'source_and_theme'].includes(definition.target) &&
+    ['source', 'app_source', 'theme', 'secrets', 'source_and_theme'].includes(definition.target) &&
     files.length === 0
   )
     return {
@@ -536,7 +510,6 @@ function skippedInputsForCheck(
   const isSourcePath = (path: string) =>
     !isThemePath(path) && Boolean(definition.extensions?.some((extension) => path.endsWith(extension)))
   const isConfig = (path: string) => /^shopify\.app(?:\.[^/]+)?\.toml$/.test(path)
-  const isManifest = (path: string) => path.endsWith('package.json')
   const isSecretInput = (file: SkippedFile) =>
     !file.detail?.includes('could not be parsed') &&
     (context.sourceCandidates.some((candidate) => candidate.path === file.path) ||
@@ -549,7 +522,6 @@ function skippedInputsForCheck(
     if (definition.target === 'source' || definition.target === 'app_source') return isSourcePath(file.path)
     if (definition.target === 'theme') return isThemePath(file.path)
     if (definition.target === 'source_and_theme') return isSourcePath(file.path) || isThemePath(file.path)
-    if (definition.target === 'manifest') return isManifest(file.path)
     return isSecretInput(file)
   })
 }
@@ -580,10 +552,7 @@ function normalizeRunnerResult(value: Issue[] | RunnerResult): RunnerResult {
   return Array.isArray(value) ? {issues: value} : value
 }
 
-export async function scan(
-  startPath?: string,
-  options: {dependencyAuditExecutor?: AuditExecutor} = {},
-): Promise<ScanResult> {
+export async function scan(startPath?: string): Promise<ScanResult> {
   const appRoot = findAppRoot(startPath)
   resetSkippedFiles()
   const appTomls = findAppTomls(appRoot)
@@ -618,7 +587,6 @@ export async function scan(
     capabilities,
     detection,
     sourceCandidates,
-    dependencyAuditExecutor: options.dependencyAuditExecutor,
   }
 
   let issues: Issue[] = []
@@ -640,7 +608,7 @@ export async function scan(
           required: true,
           applicable: true,
           reason: {
-            code: definition.analysisMode === 'audit' ? 'audit_unavailable' : 'parser_unavailable',
+            code: 'parser_unavailable',
             message: output.unresolvedReason,
           },
         }
@@ -711,22 +679,10 @@ export async function scan(
   const fileHashMap: Record<string, string> = {}
   for (const file of [...sourceFiles, ...sensitiveFiles])
     if (file.content !== undefined) fileHashMap[redactText(file.path)] = contentDigest(file.content)
-  const auditedLockfiles =
-    checksExecuted
-      .find((execution) => execution.id === 'KNOWN_CVE_IN_DEPENDENCY')
-      ?.inspected_files.filter((path) => JAVASCRIPT_LOCKFILES.has(path)) ?? []
-  const selectedAuditInputs =
-    auditedLockfiles.length === 1
-      ? auditedLockfiles.map((path) => {
-          const input = readOptionalRepositoryFile(appRoot, joinPath(appRoot, path))
-          return {absolutePath: joinPath(appRoot, path), content: input.ok ? input.content : undefined}
-        })
-      : []
   const configFiles = [
     ...appTomls.map((toml) => ({absolutePath: toml.path, content: toml.content})),
     ...extensions.map((extension) => ({absolutePath: joinPath(appRoot, extension.path), content: extension.content})),
     ...manifests.map((manifest) => ({absolutePath: manifest.absolutePath, content: manifest.content})),
-    ...selectedAuditInputs,
   ]
   for (const {absolutePath, content} of configFiles)
     if (content !== undefined) {
