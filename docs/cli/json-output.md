@@ -16,6 +16,9 @@ commands; remove each entry when converted, and never add new finite commands to
 Keep the schema beside the service that produces the result. One Zod schema supplies runtime validation, the inferred
 TypeScript type, JSON encoding, and the JSON Schema shown in command help.
 
+By default, include all available public data fields in the JSON schema and output, including fields omitted from the
+human-readable output, as long as they require no additional API requests.
+
 ```ts
 import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
