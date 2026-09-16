@@ -3450,12 +3450,31 @@ DESCRIPTION
           },
           "name": {
             "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "LOCKED"
+            ]
+          },
+          "shopCount": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "url": {
+            "type": "string"
           }
         },
         "required": [
           "id",
           "gid",
-          "name"
+          "name",
+          "status",
+          "shopCount",
+          "url"
         ],
         "additionalProperties": false
       }

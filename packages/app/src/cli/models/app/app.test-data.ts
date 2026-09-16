@@ -17,6 +17,7 @@ import {
   OrganizationApp,
   MinimalOrganizationApp,
   OrganizationSource,
+  OrganizationWithDetails,
 } from '../organization.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -1256,7 +1257,14 @@ const createSourceScanResponse: SourceScanCreateSchema = {
   userErrors: [],
 }
 
-const organizationsResponse: Organization[] = [testOrganization()]
+const organizationsResponse: OrganizationWithDetails[] = [
+  {
+    ...testOrganization(),
+    status: 'ACTIVE',
+    shopCount: 1,
+    url: 'https://admin.shopify.com/organization/1',
+  },
+]
 
 const sendSampleWebhookResponse: SendSampleWebhookSchema = {
   sendSampleWebhook: {

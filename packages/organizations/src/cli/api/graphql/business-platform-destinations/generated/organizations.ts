@@ -8,7 +8,9 @@ export type ListOrganizationsQueryVariables = Types.Exact<{[key: string]: never}
 export type ListOrganizationsQuery = {
   currentUserAccount?: {
     uuid: string
-    organizationsWithAccessToDestination: {nodes: {id: string; name: string}[]}
+    organizationsWithAccessToDestination: {
+      nodes: {id: string; name: string; status: Types.OrganizationStatus; shopCount?: number | null; url: string}[]
+    }
   } | null
 }
 
@@ -50,6 +52,9 @@ export const ListOrganizations = {
                           selections: [
                             {kind: 'Field', name: {kind: 'Name', value: 'id'}},
                             {kind: 'Field', name: {kind: 'Name', value: 'name'}},
+                            {kind: 'Field', name: {kind: 'Name', value: 'status'}},
+                            {kind: 'Field', name: {kind: 'Name', value: 'shopCount'}},
+                            {kind: 'Field', name: {kind: 'Name', value: 'url'}},
                             {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                           ],
                         },

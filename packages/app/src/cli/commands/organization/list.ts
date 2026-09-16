@@ -30,6 +30,7 @@ export default class OrganizationList extends BaseCommand {
       const result = await organizationList()
       writeOrganizationListResult(result, flags.json ? 'json' : 'text')
     } catch (error) {
+      // JSON output reports no organizations as an empty successful list; text output keeps failing.
       if (flags.json && error instanceof NoOrgError) {
         writeOrganizationListResult({organizations: []}, 'json')
         return

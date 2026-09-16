@@ -1,4 +1,5 @@
 import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {organizationStatusValues} from '@shopify/organizations'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const OrganizationListEntrySchema = zod
@@ -6,6 +7,9 @@ const OrganizationListEntrySchema = zod
     id: zod.string(),
     gid: zod.string(),
     name: zod.string(),
+    status: zod.enum(organizationStatusValues),
+    shopCount: zod.number().nullable(),
+    url: zod.string(),
   })
   .strict()
 

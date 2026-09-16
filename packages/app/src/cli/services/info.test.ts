@@ -31,6 +31,9 @@ const ORG1 = {
   businessName: 'test',
   apps: {nodes: []},
   source: OrganizationSource.BusinessPlatform,
+  status: 'ACTIVE' as const,
+  shopCount: 1,
+  url: 'https://admin.shopify.com/organization/123',
 }
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {

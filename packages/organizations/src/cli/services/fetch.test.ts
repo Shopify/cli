@@ -9,18 +9,30 @@ vi.mock('@shopify/cli-kit/node/session')
 const ENCODED_GID_1 = Buffer.from('gid://organization/Organization/1234').toString('base64')
 const ENCODED_GID_2 = Buffer.from('gid://organization/Organization/5678').toString('base64')
 
+const NODE_1 = {
+  id: ENCODED_GID_1,
+  name: 'My Org',
+  status: 'ACTIVE' as const,
+  shopCount: 3,
+  url: 'https://admin.shopify.com/organization/1234',
+}
+const NODE_2 = {
+  id: ENCODED_GID_2,
+  name: 'Other Org',
+  status: 'LOCKED' as const,
+  shopCount: null,
+  url: 'https://admin.shopify.com/organization/5678',
+}
+
 describe('fetchOrganizations', () => {
-  test('returns organizations with decoded numeric IDs', async () => {
+  test('returns organizations with decoded numeric IDs and public destination fields', async () => {
     vi.mocked(ensureAuthenticatedBusinessPlatform).mockResolvedValue('test-token')
     vi.mocked(businessPlatformRequestDoc).mockResolvedValue({
       currentUserAccount: {
         uuid: 'user-uuid',
         email: 'merchant@example.com',
         organizationsWithAccessToDestination: {
-          nodes: [
-            {id: ENCODED_GID_1, name: 'My Org'},
-            {id: ENCODED_GID_2, name: 'Other Org'},
-          ],
+          nodes: [NODE_1, NODE_2],
         },
       },
     })
@@ -28,8 +40,20 @@ describe('fetchOrganizations', () => {
     const orgs = await fetchOrganizations()
 
     expect(orgs).toEqual([
-      {id: '1234', businessName: 'My Org'},
-      {id: '5678', businessName: 'Other Org'},
+      {
+        id: '1234',
+        businessName: 'My Org',
+        status: 'ACTIVE',
+        shopCount: 3,
+        url: 'https://admin.shopify.com/organization/1234',
+      },
+      {
+        id: '5678',
+        businessName: 'Other Org',
+        status: 'LOCKED',
+        shopCount: null,
+        url: 'https://admin.shopify.com/organization/5678',
+      },
     ])
   })
 
@@ -66,7 +90,7 @@ describe('fetchOrganizations', () => {
         uuid: 'user-uuid',
         email: 'merchant@example.com',
         organizationsWithAccessToDestination: {
-          nodes: [{id: ENCODED_GID_1, name: 'My Org'}],
+          nodes: [NODE_1],
         },
       },
     })
@@ -92,7 +116,7 @@ describe('fetchOrganizationsWithAccessInfo', () => {
         uuid: 'user-uuid',
         email: 'merchant@example.com',
         organizationsWithAccessToDestination: {
-          nodes: [{id: ENCODED_GID_1, name: 'My Org'}],
+          nodes: [NODE_1],
         },
       },
     })
@@ -110,7 +134,7 @@ describe('fetchOrganizationsWithAccessInfo', () => {
         uuid: 'user-uuid',
         email: 'merchant@example.com',
         organizationsWithAccessToDestination: {
-          nodes: [{id: ENCODED_GID_1, name: 'My Org'}],
+          nodes: [NODE_1],
         },
       },
     })
@@ -132,7 +156,7 @@ describe('fetchOrganizationsWithAccessInfo', () => {
         uuid: 'user-uuid',
         email: 'merchant@example.com',
         organizationsWithAccessToDestination: {
-          nodes: [{id: ENCODED_GID_1, name: 'My Org'}],
+          nodes: [NODE_1],
         },
       },
     })
@@ -151,7 +175,7 @@ describe('fetchOrganizationsWithAccessInfo', () => {
         uuid: 'user-uuid',
         email: 'merchant@example.com',
         organizationsWithAccessToDestination: {
-          nodes: [{id: ENCODED_GID_1, name: 'My Org'}],
+          nodes: [NODE_1],
         },
       },
     })
@@ -159,7 +183,15 @@ describe('fetchOrganizationsWithAccessInfo', () => {
     const result = await fetchOrganizationsWithAccessInfo()
 
     expect(result).toEqual({
-      organizations: [{id: '1234', businessName: 'My Org'}],
+      organizations: [
+        {
+          id: '1234',
+          businessName: 'My Org',
+          status: 'ACTIVE',
+          shopCount: 3,
+          url: 'https://admin.shopify.com/organization/1234',
+        },
+      ],
       currentUserResolved: true,
     })
   })

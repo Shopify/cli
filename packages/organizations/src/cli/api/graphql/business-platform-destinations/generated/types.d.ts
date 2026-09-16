@@ -22,3 +22,9 @@ export type Scalars = {
   /** The ID for a Organization. */
   OrganizationID: { input: any; output: any; }
 };
+
+export type OrganizationStatus =
+  /** Organization is active. */
+  | 'ACTIVE'
+  /** Organization is locked. */
+  | 'LOCKED';

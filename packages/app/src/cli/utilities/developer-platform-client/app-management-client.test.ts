@@ -2238,9 +2238,27 @@ describe('organizations', () => {
     // Given
     const client = AppManagementClient.getInstance()
     vi.mocked(fetchOrganizations).mockResolvedValueOnce([
-      {id: '1', businessName: 'Org One'},
-      {id: '2', businessName: 'Org Two'},
-      {id: '3', businessName: 'Org Three'},
+      {
+        id: '1',
+        businessName: 'Org One',
+        status: 'ACTIVE',
+        shopCount: 1,
+        url: 'https://admin.shopify.com/organization/1',
+      },
+      {
+        id: '2',
+        businessName: 'Org Two',
+        status: 'ACTIVE',
+        shopCount: null,
+        url: 'https://admin.shopify.com/organization/2',
+      },
+      {
+        id: '3',
+        businessName: 'Org Three',
+        status: 'LOCKED',
+        shopCount: 3,
+        url: 'https://admin.shopify.com/organization/3',
+      },
     ])
 
     // When
@@ -2248,9 +2266,30 @@ describe('organizations', () => {
 
     // Then
     expect(result).toEqual([
-      {id: '1', businessName: 'Org One', source: 'BusinessPlatform'},
-      {id: '2', businessName: 'Org Two', source: 'BusinessPlatform'},
-      {id: '3', businessName: 'Org Three', source: 'BusinessPlatform'},
+      {
+        id: '1',
+        businessName: 'Org One',
+        source: 'BusinessPlatform',
+        status: 'ACTIVE',
+        shopCount: 1,
+        url: 'https://admin.shopify.com/organization/1',
+      },
+      {
+        id: '2',
+        businessName: 'Org Two',
+        source: 'BusinessPlatform',
+        status: 'ACTIVE',
+        shopCount: null,
+        url: 'https://admin.shopify.com/organization/2',
+      },
+      {
+        id: '3',
+        businessName: 'Org Three',
+        source: 'BusinessPlatform',
+        status: 'LOCKED',
+        shopCount: 3,
+        url: 'https://admin.shopify.com/organization/3',
+      },
     ])
   })
 

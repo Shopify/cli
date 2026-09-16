@@ -10,6 +10,9 @@ export async function organizationList(): Promise<OrganizationListResult> {
       id: organization.id,
       gid: organizationGidForBP(organization.id),
       name: organization.businessName,
+      status: organization.status,
+      shopCount: organization.shopCount,
+      url: organization.url,
     })),
   }
 }

@@ -2,4 +2,4 @@
 '@shopify/app': minor
 ---
 
-Add typed JSON output for `organization list`.
+Add typed JSON output with organization status, shop count, and URL to `organization list`.

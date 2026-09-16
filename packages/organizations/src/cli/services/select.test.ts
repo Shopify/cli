@@ -6,10 +6,23 @@ import {describe, expect, test, vi} from 'vitest'
 vi.mock('./fetch.js')
 vi.mock('../prompts/organization.js')
 
-const ORGS = [
-  {id: '1234', businessName: 'My Org'},
-  {id: '5678', businessName: 'Other Org'},
-]
+const ORG_1 = {
+  id: '1234',
+  businessName: 'My Org',
+  status: 'ACTIVE' as const,
+  shopCount: 1,
+  url: 'https://admin.shopify.com/organization/1234',
+}
+
+const ORG_2 = {
+  id: '5678',
+  businessName: 'Other Org',
+  status: 'LOCKED' as const,
+  shopCount: null,
+  url: 'https://admin.shopify.com/organization/5678',
+}
+
+const ORGS = [ORG_1, ORG_2]
 
 describe('selectOrg', () => {
   test('returns org matching flag ID', async () => {
@@ -17,7 +30,7 @@ describe('selectOrg', () => {
 
     const result = await selectOrg('5678')
 
-    expect(result).toEqual({id: '5678', businessName: 'Other Org'})
+    expect(result).toEqual(ORG_2)
     expect(selectOrganizationPrompt).not.toHaveBeenCalled()
   })
 
@@ -33,7 +46,7 @@ describe('selectOrg', () => {
 
     const result = await selectOrg()
 
-    expect(result).toEqual({id: '1234', businessName: 'My Org'})
+    expect(result).toEqual(ORG_1)
     expect(selectOrganizationPrompt).toHaveBeenCalledWith(ORGS)
   })
 
@@ -43,7 +56,7 @@ describe('selectOrg', () => {
 
     const result = await selectOrg(undefined)
 
-    expect(result).toEqual({id: '5678', businessName: 'Other Org'})
+    expect(result).toEqual(ORG_2)
     expect(selectOrganizationPrompt).toHaveBeenCalledWith(ORGS)
   })
 

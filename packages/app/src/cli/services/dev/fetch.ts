@@ -1,4 +1,4 @@
-import {Organization, OrganizationStore} from '../../models/organization.js'
+import {Organization, OrganizationStore, OrganizationWithDetails} from '../../models/organization.js'
 import {
   DeveloperPlatformClient,
   Store,
@@ -75,9 +75,9 @@ export class NoOrgError extends AbortError {
  * If the user doesn't belong to any org, throw an error
  * @returns List of organizations
  */
-export async function fetchOrganizations(): Promise<Organization[]> {
+export async function fetchOrganizations(): Promise<OrganizationWithDetails[]> {
   const client = defaultDeveloperPlatformClient()
-  const organizations: Organization[] = await client.organizations()
+  const organizations = await client.organizations()
 
   if (organizations.length === 0) {
     const session = await client.session()

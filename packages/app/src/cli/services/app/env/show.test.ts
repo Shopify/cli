@@ -25,6 +25,9 @@ describe('env show', () => {
       businessName: 'test',
       source: OrganizationSource.BusinessPlatform,
       apps: {nodes: []},
+      status: 'ACTIVE' as const,
+      shopCount: 1,
+      url: 'https://admin.shopify.com/organization/123',
     }
 
     vi.mocked(fetchOrganizations).mockResolvedValue([organization])

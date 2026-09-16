@@ -7,7 +7,12 @@ import {CachedAppInfo} from './local-storage.js'
 import link from './app/config/link.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {DeployOptions} from './deploy.js'
-import {Organization, OrganizationApp, OrganizationSource, OrganizationStore} from '../models/organization.js'
+import {
+  OrganizationApp,
+  OrganizationSource,
+  OrganizationStore,
+  OrganizationWithDetails,
+} from '../models/organization.js'
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {
   testDeveloperPlatformClient,
@@ -41,15 +46,21 @@ const APP2 = testOrganizationApp({
   apiSecretKeys: [{secret: 'secret2'}],
 })
 
-const ORG1: Organization = {
+const ORG1: OrganizationWithDetails = {
   id: '1',
   businessName: 'org1',
   source: OrganizationSource.Partners,
+  status: 'ACTIVE',
+  shopCount: 1,
+  url: 'https://admin.shopify.com/organization/1',
 }
-const ORG2: Organization = {
+const ORG2: OrganizationWithDetails = {
   id: '2',
   businessName: 'org2',
   source: OrganizationSource.Partners,
+  status: 'LOCKED',
+  shopCount: null,
+  url: 'https://admin.shopify.com/organization/2',
 }
 
 const CACHED1: CachedAppInfo = {appId: 'key1', orgId: '1', storeFqdn: 'domain1', directory: '/cached'}
