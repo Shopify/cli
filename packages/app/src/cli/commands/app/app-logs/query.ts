@@ -35,6 +35,17 @@ export default class Query extends BaseCommand {
       options: ['WEBHOOK_DELIVERY', 'GRAPHQL_REQUEST', 'REST_REQUEST', 'FUNCTION_RUN'],
       description: 'Restrict results to these event types.',
     }),
+    filter: Flags.string({
+      multiple: true,
+      env: 'SHOPIFY_FLAG_FILTER',
+      description: 'Equality filter FIELD=value. Repeat to AND filters; use --list-filters for fields.',
+    }),
+    'list-filters': Flags.boolean({
+      default: false,
+      env: 'SHOPIFY_FLAG_LIST_FILTERS',
+      exclusive: ['filter'],
+      description: 'List filter definitions for the selected types, without searching logs.',
+    }),
     demo: Flags.boolean({
       default: false,
       env: 'SHOPIFY_FLAG_DEMO',
@@ -50,6 +61,8 @@ export default class Query extends BaseCommand {
       limit: flags.limit,
       offset: flags.offset,
       types: flags.type,
+      filters: flags.filter,
+      listFilters: flags['list-filters'],
       demo: flags.demo,
     })
     outputResult(JSON.stringify(result, null, 2))

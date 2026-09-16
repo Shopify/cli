@@ -83,6 +83,62 @@ test('uses the temporary token only for the fixed loopback demo, without logging
   })
 })
 
+test('sends repeatable equality filters as AND predicates using variables', async () => {
+  vi.mocked(fetch).mockResolvedValue(new Response('{"data":{"app":{"logs":{"events":[]}}}}', {status: 200}))
+
+  await queryAppLogs({...options, types: ['FUNCTION_RUN'], filters: ['function_handle=discount', 'TARGET=some=value"']})
+
+  const request = JSON.parse(vi.mocked(fetch).mock.calls[0]![1]!.body as string)
+  expect(request.variables.search.filterGroup).toEqual({
+    conjunction: 'AND',
+    filters: [
+      {column: 'FUNCTION_HANDLE', op: 'EQUALS', values: ['discount']},
+      {column: 'TARGET', op: 'EQUALS', values: ['some=value"']},
+    ],
+  })
+  expect(request.query).not.toContain('some=value')
+})
+
+test('discovers server-owned filter definitions without a log search or time window', async () => {
+  const definitions = [
+    {field: 'FUNCTION_HANDLE', description: 'Function handle.', valueType: 'STRING', operators: ['EQUALS', 'IN']},
+  ]
+  vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({data: {app: {logFilterDefinitions: definitions}}})))
+
+  await expect(queryAppLogs({...options, types: ['FUNCTION_RUN'], listFilters: true})).resolves.toEqual(definitions)
+
+  const request = JSON.parse(vi.mocked(fetch).mock.calls[0]![1]!.body as string)
+  expect(request.operationName).toBe('AppLogFilters')
+  expect(request.query).toContain('logFilterDefinitions(types: $types)')
+  expect(request.query).not.toContain('logs(input:')
+  expect(request.variables).toEqual({appKey: 'test-app', types: ['FUNCTION_RUN']})
+})
+
+test.each(['missing-equals', '=value', 'TARGET=', 'bad.field=value'])('rejects malformed filter %s', async (filter) => {
+  await expect(queryAppLogs({...options, filters: [filter]})).rejects.toThrow('FIELD=value')
+  expect(fetch).not.toHaveBeenCalled()
+})
+
+test('leaves allowed fields and type compatibility to the server', async () => {
+  vi.mocked(fetch).mockResolvedValue(new Response('{"errors":[{"message":"Unsupported filter for selected types"}]}'))
+
+  await expect(queryAppLogs({...options, filters: ['NEW_FIELD=value']})).rejects.toThrow('Unsupported filter')
+  expect(fetch).toHaveBeenCalledOnce()
+})
+
+test('rejects discovery combined with filtering instead of ignoring filters', async () => {
+  await expect(queryAppLogs({...options, listFilters: true, filters: ['TARGET=orders/create']})).rejects.toThrow(
+    'Use --list-filters separately',
+  )
+  expect(fetch).not.toHaveBeenCalled()
+})
+
+test('rejects missing or malformed discovery results', async () => {
+  vi.mocked(fetch).mockResolvedValue(new Response('{"data":{"app":{"logFilterDefinitions":null}}}'))
+
+  await expect(queryAppLogs({...options, listFilters: true})).rejects.toThrow('invalid filter definitions')
+})
+
 test('surfaces API errors instead of turning them into an empty result', async () => {
   vi.mocked(fetch).mockResolvedValue(new Response('private upstream details', {status: 502}))
   await expect(queryAppLogs(options)).rejects.toThrow('HTTP 502')

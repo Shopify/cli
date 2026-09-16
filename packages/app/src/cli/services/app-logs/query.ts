@@ -17,9 +17,21 @@ const query = `
   }
 `
 
+const filterDefinitionsQuery = `
+  query AppLogFilters($appKey: String!, $types: [LogEventType!]) {
+    app(key: $appKey) {
+      logFilterDefinitions(types: $types) { field description valueType operators }
+    }
+  }
+`
+
+const filterDefinitionsSchema = z.array(
+  z.object({field: z.string(), description: z.string(), valueType: z.string(), operators: z.array(z.string())}),
+)
+
 const responseSchema = z.object({
   data: z
-    .object({app: z.object({logs: z.record(z.unknown()).nullable()}).nullable()})
+    .object({app: z.record(z.unknown()).nullable()})
     .nullable()
     .optional(),
   errors: z.array(z.object({message: z.string()})).optional(),
@@ -31,6 +43,8 @@ interface QueryOptions {
   limit: number
   offset: number
   types?: string[]
+  filters?: string[]
+  listFilters?: boolean
   demo: boolean
 }
 
@@ -40,6 +54,9 @@ export async function queryAppLogs(options: QueryOptions): Promise<unknown> {
   }
   if (!options.clientId) {
     throw new AbortError('Provide a nonempty app client ID.')
+  }
+  if (options.listFilters && options.filters?.length) {
+    throw new AbortError('Use --list-filters separately from --filter.')
   }
   if (
     !Number.isInteger(options.minutes) ||
@@ -52,6 +69,15 @@ export async function queryAppLogs(options: QueryOptions): Promise<unknown> {
     throw new AbortError('Use positive integers for minutes and limit, and a nonnegative integer for offset.')
   }
 
+  const filters = options.filters?.map((filter) => {
+    const separator = filter.indexOf('=')
+    const column = filter.slice(0, separator).trim().toUpperCase()
+    const value = filter.slice(separator + 1)
+    if (separator < 1 || !/^[A-Z][A-Z_]*$/.test(column) || !value) {
+      throw new AbortError('Use --filter FIELD=value. Use --list-filters to discover supported fields.')
+    }
+    return {column, op: 'EQUALS', values: [value]}
+  })
   const {origin, token} = await queryConnection(options.demo)
   const end = new Date()
   const response = await fetch(`${origin}/api/unstable/graphql`, {
@@ -60,18 +86,21 @@ export async function queryAppLogs(options: QueryOptions): Promise<unknown> {
     signal: AbortSignal.timeout(15000),
     headers: appManagementHeaders(token),
     body: JSON.stringify({
-      query,
-      operationName: 'AppLogs',
-      variables: {
-        appKey: options.clientId,
-        search: {
-          startTime: new Date(end.getTime() - options.minutes * 60 * 1000).toISOString(),
-          endTime: end.toISOString(),
-          limit: options.limit,
-          offset: options.offset,
-          ...(options.types ? {types: options.types} : {}),
-        },
-      },
+      query: options.listFilters ? filterDefinitionsQuery : query,
+      operationName: options.listFilters ? 'AppLogFilters' : 'AppLogs',
+      variables: options.listFilters
+        ? {appKey: options.clientId, types: options.types}
+        : {
+            appKey: options.clientId,
+            search: {
+              startTime: new Date(end.getTime() - options.minutes * 60 * 1000).toISOString(),
+              endTime: end.toISOString(),
+              limit: options.limit,
+              offset: options.offset,
+              ...(options.types ? {types: options.types} : {}),
+              ...(filters?.length ? {filterGroup: {conjunction: 'AND', filters}} : {}),
+            },
+          },
     }),
   })
   if (!response.ok) {
@@ -82,8 +111,17 @@ export async function queryAppLogs(options: QueryOptions): Promise<unknown> {
   if (result.data.errors?.length) {
     throw new AbortError(`Local log query failed: ${result.data.errors.map((error) => error.message).join('; ')}`)
   }
-  if (!result.data.data?.app?.logs) throw new AbortError('Local log query returned no app logs result.')
-  return result.data.data.app.logs
+  const app = result.data.data?.app
+  if (options.listFilters) {
+    const definitions = filterDefinitionsSchema.safeParse(app?.logFilterDefinitions)
+    if (!definitions.success) throw new AbortError('Local log query returned invalid filter definitions.')
+    return definitions.data
+  }
+  if (app && !('logs' in app)) throw new AbortError('Local log query returned an invalid GraphQL response.')
+  if (!app?.logs) throw new AbortError('Local log query returned no app logs result.')
+  const logs = z.record(z.unknown()).safeParse(app.logs)
+  if (!logs.success) throw new AbortError('Local log query returned an invalid GraphQL response.')
+  return logs.data
 }
 
 async function queryConnection(demo: boolean): Promise<{origin: string; token: string}> {

@@ -3337,6 +3337,14 @@
           "name": "demo",
           "type": "boolean"
         },
+        "filter": {
+          "description": "Equality filter FIELD=value. Repeat to AND filters; use --list-filters for fields.",
+          "env": "SHOPIFY_FLAG_FILTER",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "name": "filter",
+          "type": "option"
+        },
         "limit": {
           "default": 10,
           "description": "Maximum summary events to return.",
@@ -3345,6 +3353,16 @@
           "multiple": false,
           "name": "limit",
           "type": "option"
+        },
+        "list-filters": {
+          "allowNo": false,
+          "description": "List filter definitions for the selected types, without searching logs.",
+          "env": "SHOPIFY_FLAG_LIST_FILTERS",
+          "exclusive": [
+            "filter"
+          ],
+          "name": "list-filters",
+          "type": "boolean"
         },
         "minutes": {
           "default": 15,
