@@ -40,6 +40,7 @@ export default class StoreStripeAuth extends StoreCommand {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(StoreStripeAuth)
+    // A blank --signup counts as not supplied, so the command falls back to reading the JWT from stdin.
     const signup = signupFlagValue(flags.signup) ?? (await readSignupJwtFromStdin())
 
     await authenticateStoreWithApp(
@@ -59,8 +60,6 @@ const MAX_SIGNUP_JWT_BYTES = 8 * 1024
 const MISSING_SIGNUP_JWT = 'Missing signup JWT.'
 const MISSING_SIGNUP_JWT_GUIDANCE = 'Pass --signup <jwt>, set SHOPIFY_FLAG_SIGNUP, or pipe the JWT to stdin.'
 
-// A blank --signup is a credential that was never supplied rather than an empty one, so it falls
-// through to stdin instead of starting an authorization without it.
 function signupFlagValue(signup: string | undefined): string | undefined {
   const trimmed = signup?.trim()
   return trimmed === '' ? undefined : trimmed
@@ -69,8 +68,6 @@ function signupFlagValue(signup: string | undefined): string | undefined {
 export async function readSignupJwtFromStdin(
   stdin: NodeJS.ReadableStream & AsyncIterable<Buffer | string> = process.stdin,
 ): Promise<string> {
-  // An interactive stdin never ends, so reading it would hang the command instead of reporting the
-  // credential that was never supplied.
   if (stdin === process.stdin && !isStdinPiped()) {
     throw new AbortError(MISSING_SIGNUP_JWT, MISSING_SIGNUP_JWT_GUIDANCE)
   }
@@ -81,7 +78,7 @@ export async function readSignupJwtFromStdin(
     const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
     byteLength += buffer.length
     if (byteLength > MAX_SIGNUP_JWT_BYTES) {
-      throw new AbortError('The signup JWT piped to stdin is too large.', 'Pipe only the JWT.')
+      throw new AbortError('The input piped to stdin is too large to be a signup JWT.', 'Pipe only the signup JWT.')
     }
     chunks.push(buffer)
   }
