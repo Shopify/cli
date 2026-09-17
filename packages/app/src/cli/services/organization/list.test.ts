@@ -1,73 +1,112 @@
 import {organizationList} from './list.js'
+import {organizationListJsonOutputSchema} from './list/types.js'
 import {fetchOrganizations, NoOrgError} from '../dev/fetch.js'
-import {Organization, OrganizationSource} from '../../models/organization.js'
+import {OrganizationSource, OrganizationWithDetails} from '../../models/organization.js'
 import {describe, expect, test, vi} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {renderTable} from '@shopify/cli-kit/node/ui'
 
 vi.mock('../dev/fetch.js')
-vi.mock('@shopify/cli-kit/node/ui')
 
-const ORG1: Organization = {
+const ORG1: OrganizationWithDetails = {
   id: '123',
   businessName: 'Test Organization',
   source: OrganizationSource.Partners,
+  status: 'ACTIVE',
+  shopCount: 3,
+  url: 'https://admin.shopify.com/organization/123',
 }
 
-const ORG2: Organization = {
+const ORG2: OrganizationWithDetails = {
   id: '456',
   businessName: 'Another Organization',
   source: OrganizationSource.BusinessPlatform,
+  status: 'LOCKED',
+  shopCount: null,
+  url: 'https://admin.shopify.com/organization/456',
 }
 
 describe('organizationList', () => {
-  test('renders table with organization id and name', async () => {
+  test('returns organizations with id, gid, name, status, shop count, and url (excludes source)', async () => {
     vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
 
-    await organizationList({json: false})
+    const result = await organizationList()
 
-    expect(renderTable).toHaveBeenCalledWith({
-      rows: [
-        {id: '123', name: 'Test Organization'},
-        {id: '456', name: 'Another Organization'},
-      ],
-      columns: {
-        id: {header: 'ID'},
-        name: {header: 'NAME'},
-      },
-    })
-  })
-
-  test('outputs JSON with id, gid, and name (excludes source)', async () => {
-    const mockOutput = mockAndCaptureOutput()
-    mockOutput.clear()
-    vi.mocked(fetchOrganizations).mockResolvedValue([ORG1, ORG2])
-
-    await organizationList({json: true})
-
-    expect(JSON.parse(mockOutput.output())).toEqual({
+    expect(result).toEqual({
       organizations: [
-        {id: '123', gid: 'gid://organization/Organization/123', name: 'Test Organization'},
-        {id: '456', gid: 'gid://organization/Organization/456', name: 'Another Organization'},
+        {
+          id: '123',
+          gid: 'gid://organization/Organization/123',
+          name: 'Test Organization',
+          status: 'ACTIVE',
+          shopCount: 3,
+          url: 'https://admin.shopify.com/organization/123',
+        },
+        {
+          id: '456',
+          gid: 'gid://organization/Organization/456',
+          name: 'Another Organization',
+          status: 'LOCKED',
+          shopCount: null,
+          url: 'https://admin.shopify.com/organization/456',
+        },
       ],
     })
   })
 
-  test('returns empty JSON array when NoOrgError thrown in JSON mode', async () => {
-    const mockOutput = mockAndCaptureOutput()
-    mockOutput.clear()
+  test('propagates NoOrgError', async () => {
     const error = new NoOrgError({type: 'UserAccount', email: 'test@example.com'})
     vi.mocked(fetchOrganizations).mockRejectedValue(error)
 
-    await organizationList({json: true})
+    await expect(organizationList()).rejects.toThrow(error)
+  })
+})
 
-    expect(JSON.parse(mockOutput.output())).toEqual({organizations: []})
+describe('organizationListJsonOutputSchema', () => {
+  test('encodes the public result in a stable field order', () => {
+    expect(
+      organizationListJsonOutputSchema.encode({
+        organizations: [
+          {
+            id: '123',
+            gid: 'gid://organization/Organization/123',
+            name: 'Test Organization',
+            status: 'ACTIVE',
+            shopCount: null,
+            url: 'https://admin.shopify.com/organization/123',
+          },
+        ],
+      }),
+    ).toBe(`{
+  "organizations": [
+    {
+      "id": "123",
+      "gid": "gid://organization/Organization/123",
+      "name": "Test Organization",
+      "status": "ACTIVE",
+      "shopCount": null,
+      "url": "https://admin.shopify.com/organization/123"
+    }
+  ]
+}`)
   })
 
-  test('propagates NoOrgError in table mode', async () => {
-    const error = new NoOrgError({type: 'UserAccount', email: 'test@example.com'})
-    vi.mocked(fetchOrganizations).mockRejectedValue(error)
+  test('rejects an unknown status value', () => {
+    expect(() =>
+      organizationListJsonOutputSchema.validate({
+        organizations: [
+          {
+            id: '123',
+            gid: 'gid://organization/Organization/123',
+            name: 'Test Organization',
+            status: 'SUSPENDED',
+            shopCount: 3,
+            url: 'https://admin.shopify.com/organization/123',
+          },
+        ],
+      }),
+    ).toThrow()
+  })
 
-    await expect(organizationList({json: false})).rejects.toThrow(NoOrgError)
+  test('rejects invalid public results', () => {
+    expect(() => organizationListJsonOutputSchema.validate({organizations: [{id: 123}]})).toThrow()
   })
 })

@@ -1,4 +1,5 @@
 import {writeStoreListResult} from './result.js'
+import {storeTypeFilters} from '../store-type.js'
 import {beforeEach, describe, expect, test} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
@@ -9,7 +10,7 @@ describe('writeStoreListResult', () => {
     mockAndCaptureOutput().clear()
   })
 
-  test('renders organization context and rows with subdomain, name, type, and created date', () => {
+  test('renders organization context and rows with subdomain, name, type, plan, and created date', () => {
     const output = mockAndCaptureOutput()
 
     writeStoreListResult(
@@ -25,20 +26,132 @@ describe('writeStoreListResult', () => {
             organizationName: 'Acme',
             name: 'My Shop',
             type: 'dev',
+            plan: 'plus',
           },
         ],
       },
       'text',
     )
 
-    expect(output.info()).toContain('Organization: Acme (1234)')
+    expect(output.info()).toContain('Acme (1234)')
     expect(output.info()).toContain('Subdomain')
     expect(output.info()).toContain('my-shop')
     expect(output.info()).not.toContain('my-shop.myshopify.com')
     expect(output.info()).toContain('My Shop')
     expect(output.info()).toContain('Dev')
+    expect(output.info()).toContain('Plus')
     expect(output.info()).toContain('May 22, 2026')
     expect(output.info()).toContain('shopify store auth list')
+  })
+
+  test('renders the organization row and the store auth hint in a single info banner above the table', () => {
+    const output = mockAndCaptureOutput()
+
+    writeStoreListResult(
+      {
+        source: 'organization',
+        organization,
+        stores: [
+          {
+            store: 'my-shop.myshopify.com',
+            createdAt: '2026-05-22T00:00:00Z',
+            organizationId: '1234',
+            organizationName: 'Acme',
+            name: 'My Shop',
+            type: 'dev',
+            plan: 'grow',
+          },
+        ],
+      },
+      'text',
+    )
+
+    expect(trimmedLines(output.info())).toMatchInlineSnapshot(`
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  Listing stores.                                                             │
+      │                                                                              │
+      │  Organization  Acme (1234)                                                   │
+      │                                                                              │
+      │  To list stores authenticated directly with \`shopify store auth\`, run        │
+      │  \`shopify store auth list\`.                                                  │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+
+      Subdomain  Name     Type  Plan  Created
+      ─────────  ───────  ────  ────  ────────────
+      my-shop    My Shop  Dev   Grow  May 22, 2026"
+    `)
+  })
+
+  test('leaves the plan column blank when the plan is unrecognized', () => {
+    const output = mockAndCaptureOutput()
+
+    writeStoreListResult(
+      {
+        source: 'organization',
+        organization,
+        stores: [
+          {
+            store: 'my-shop.myshopify.com',
+            createdAt: '2026-05-22T00:00:00Z',
+            organizationId: '1234',
+            organizationName: 'Acme',
+            name: 'My Shop',
+            type: 'dev',
+          },
+        ],
+      },
+      'text',
+    )
+
+    expect(trimmedLines(output.info())).toContain('my-shop    My Shop  Dev         May 22, 2026')
+  })
+
+  test('names the active store type filter in the headline', () => {
+    const output = mockAndCaptureOutput()
+
+    writeStoreListResult(
+      {
+        source: 'organization',
+        organization,
+        storeType: 'client-transfer',
+        stores: [
+          {
+            store: 'my-shop.myshopify.com',
+            createdAt: '2026-05-22T00:00:00Z',
+            organizationId: '1234',
+            organizationName: 'Acme',
+            name: 'My Shop',
+            type: 'client-transfer',
+          },
+        ],
+      },
+      'text',
+    )
+
+    expect(output.info()).toContain('Listing client transfer stores.')
+  })
+
+  test('names the active store type filter in the empty state', () => {
+    const output = mockAndCaptureOutput()
+
+    writeStoreListResult({source: 'organization', organization, storeType: 'dev', stores: []}, 'text')
+
+    expect(output.info()).toContain('No dev stores found.')
+  })
+
+  // Every accepted filter has to read as prose, however many underscores a future handle carries.
+  test('humanizes every accepted store type filter', () => {
+    const output = mockAndCaptureOutput()
+
+    for (const storeType of storeTypeFilters) {
+      writeStoreListResult({source: 'organization', organization, storeType, stores: []}, 'text')
+    }
+
+    // Keeps the assertion below from passing vacuously if the filter list is ever emptied.
+    expect(storeTypeFilters.length).toBeGreaterThan(0)
+    expect(output.info()).not.toContain('_')
   })
 
   test('renders the subdomain handle for non-myshopify hosts (local dev)', () => {
@@ -82,21 +195,34 @@ describe('writeStoreListResult', () => {
     expect(output.info()).toContain('shopify store auth list')
   })
 
-  test('renders the selected organization empty state', () => {
+  test('renders the selected organization empty state in the same banner shape', () => {
     const output = mockAndCaptureOutput()
 
     writeStoreListResult({source: 'organization', organization, stores: []}, 'text')
 
-    expect(output.info()).toContain('No stores found in Acme.')
+    expect(trimmedLines(output.info())).toMatchInlineSnapshot(`
+      "╭─ info ───────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  No stores found.                                                            │
+      │                                                                              │
+      │  Organization  Acme (1234)                                                   │
+      │                                                                              │
+      │  To list stores authenticated directly with \`shopify store auth\`, run        │
+      │  \`shopify store auth list\`.                                                  │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
   })
 
-  test('renders the fallback organization empty state when no organization is selected', () => {
+  test('omits the organization row from the empty state when no organization is selected', () => {
     const output = mockAndCaptureOutput()
 
     writeStoreListResult({source: 'organization', stores: []}, 'text')
 
-    expect(output.info()).toContain('No stores found in your Shopify organization.')
+    expect(output.info()).toContain('No stores found.')
     expect(output.info()).toContain('shopify store auth list')
+    expect(output.info()).not.toContain('Organization')
   })
 
   test('emits a {stores, organization} JSON document on stdout', () => {
@@ -115,6 +241,7 @@ describe('writeStoreListResult', () => {
             organizationName: 'Acme',
             name: 'My Shop',
             type: 'dev',
+            plan: 'plus',
           },
         ],
       },
@@ -131,10 +258,19 @@ describe('writeStoreListResult', () => {
           organizationName: 'Acme',
           name: 'My Shop',
           type: 'dev',
+          plan: 'plus',
         },
       ],
       organization,
     })
+  })
+
+  test('includes the active store type filter in JSON output', () => {
+    const output = mockAndCaptureOutput()
+
+    writeStoreListResult({source: 'organization', organization, storeType: 'dev', stores: []}, 'json')
+
+    expect(JSON.parse(output.output())).toEqual({stores: [], organization, storeType: 'dev'})
   })
 
   test('includes unresolved-session notices in JSON output', () => {
@@ -181,4 +317,38 @@ describe('writeStoreListResult', () => {
     // The structured truncation flag is part of the JSON document on stdout (prose stays on stderr).
     expect(jsonOutput.output()).toContain('"truncated": true')
   })
+
+  // The cap applies to the filtered set, so the warning has to say which stores were capped.
+  test('names the active store type filter in the truncation warning', () => {
+    const output = mockAndCaptureOutput()
+
+    writeStoreListResult(
+      {
+        source: 'organization',
+        organization,
+        storeType: 'production',
+        stores: [
+          {
+            store: 'shop.myshopify.com',
+            createdAt: '2026-05-22T00:00:00Z',
+            organizationId: '1234',
+            organizationName: 'Acme',
+          },
+        ],
+        truncated: true,
+      },
+      'text',
+    )
+
+    expect(output.warn()).toContain('Showing the 250 most recent production stores in Acme. More stores exist')
+  })
 })
+
+// The banner pads every line out to the terminal width, which is narrow in the test environment.
+// Trimming keeps the snapshots readable and free of trailing whitespace.
+function trimmedLines(output: string): string {
+  return output
+    .split('\n')
+    .map((line) => line.trimEnd())
+    .join('\n')
+}

@@ -1,57 +1,21 @@
-import {appFlags} from '../../flags.js'
-import {allExtensionTypes, importExtensions} from '../../services/import-extensions.js'
-import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
-import {linkedAppContext} from '../../services/app-context.js'
-import {getMigrationChoices, selectMigrationChoice} from '../../prompts/import-extensions.js'
-import {getExtensions} from '../../services/fetch-extensions.js'
-import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import ImportDashboardExtensions from './import/dashboard-extensions.js'
+import {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
+import {renderDeprecatedCommandWarning} from '../../utilities/deprecated-command.js'
 
-export default class ImportExtensions extends AppLinkedCommand {
-  static description = 'Import dashboard-managed extensions into your app.'
+/**
+ * Deprecated path for `app import dashboard-extensions`. Hidden from help and docs, but still
+ * registered so that existing scripts keep working.
+ */
+export default class ImportExtensions extends ImportDashboardExtensions {
+  static hidden = true
 
-  static flags = {
-    ...globalFlags,
-    ...appFlags,
-    'client-id': Flags.string({
-      hidden: false,
-      description: 'The Client ID of your app.',
-      env: 'SHOPIFY_FLAG_CLIENT_ID',
-      exclusive: ['config'],
-    }),
-  }
+  // Restated because oclif's manifest builder stops walking the prototype chain at
+  // `AppLinkedCommand`, which drops the inherited `--auth-alias` and `--json-schema` flags.
+  static flags = {...ImportDashboardExtensions.flags}
+  static baseFlags = {...ImportDashboardExtensions.baseFlags}
 
   async run(): Promise<AppLinkedCommandOutput> {
-    const {flags} = await this.parse(ImportExtensions)
-    const appContext = await linkedAppContext({
-      directory: flags.path,
-      clientId: flags['client-id'],
-      forceRelink: flags.reset,
-      userProvidedConfigName: flags.config,
-    })
-
-    const extensions = await getExtensions({
-      developerPlatformClient: appContext.developerPlatformClient,
-      apiKey: appContext.remoteApp.apiKey,
-      organizationId: appContext.remoteApp.organizationId,
-      extensionTypes: allExtensionTypes,
-    })
-
-    const migrationChoices = getMigrationChoices(extensions)
-
-    if (migrationChoices.length === 0) {
-      renderSuccess({headline: ['No extensions to migrate.']})
-    } else {
-      const migrationChoice = await selectMigrationChoice(migrationChoices)
-      await importExtensions({
-        ...appContext,
-        extensions,
-        extensionTypes: migrationChoice.extensionTypes,
-        buildExtensionConfig: migrationChoice.buildExtensionConfig,
-      })
-    }
-
-    return {app: appContext.app}
+    renderDeprecatedCommandWarning({from: 'app import-extensions', to: 'app import dashboard-extensions'})
+    return super.run()
   }
 }

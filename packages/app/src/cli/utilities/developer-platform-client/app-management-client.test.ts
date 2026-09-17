@@ -43,6 +43,8 @@ import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
+import {RequestSourceScanUploadUrl} from '../../api/graphql/app-management/generated/request-source-scan-upload-url.js'
+import {CreateSourceScan} from '../../api/graphql/app-management/generated/create-source-scan.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {fetchOrganizations} from '@shopify/organizations'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
@@ -1333,6 +1335,26 @@ describe('deploy', () => {
   })
 })
 
+describe('appVersions', () => {
+  test('preserves a missing app in the API response instead of dereferencing it', async () => {
+    // Given
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({app: null})
+
+    // When
+    const result: AppVersionsQuerySchema = await client.appVersions({
+      apiKey: 'api-key',
+      organizationId: 'gid://shopify/Organization/123',
+      id: 'gid://shopify/App/123',
+      title: 'Test App',
+    })
+
+    // Then
+    expect(result).toEqual({app: null})
+  })
+})
+
 describe('AppManagementClient', () => {
   describe('generateSignedUploadUrl', () => {
     test('passes Brotli format for uploads and scopes the cache key to the app and command run', async () => {
@@ -1413,6 +1435,61 @@ describe('AppManagementClient', () => {
       const commandRunId = calls[0]?.replace('app-one-api-key-', '')
       expect(commandRunId).toMatch(/^[\da-f-]{36}$/)
       expect(calls).toEqual([`app-one-api-key-${commandRunId}`, `app-two-api-key-${commandRunId}`])
+    })
+  })
+
+  describe('generateSourceScanUploadUrl', () => {
+    test('passes the app ID and byte size, does not cache, and maps the upload response', async () => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
+        appRequestSourceScanUploadUrl: {
+          sourceScanUploadUrl: 'https://example.com/source-scan-upload',
+          userErrors: [],
+        },
+      })
+
+      const result = await client.generateSourceScanUploadUrl({
+        appId: 'gid://shopify/App/1',
+        byteSize: 1234,
+      })
+
+      expect(result).toEqual({sourceScanUploadUrl: 'https://example.com/source-scan-upload', userErrors: []})
+      expect(appManagementRequestDoc).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: RequestSourceScanUploadUrl,
+          token: 'token',
+          variables: {appId: 'gid://shopify/App/1', byteSize: 1234},
+        }),
+      )
+      expect(vi.mocked(appManagementRequestDoc).mock.calls[0]![0]).not.toHaveProperty('cacheOptions')
+    })
+  })
+
+  describe('createSourceScan', () => {
+    test('passes the app ID and source scan URL and maps the accepted result', async () => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
+        appSourceScanCreate: {accepted: true, userErrors: []},
+      })
+
+      const result = await client.createSourceScan({
+        appId: 'gid://shopify/App/1',
+        sourceScanUrl: 'https://example.com/source-scan-upload',
+      })
+
+      expect(result).toEqual({accepted: true, userErrors: []})
+      expect(appManagementRequestDoc).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: CreateSourceScan,
+          token: 'token',
+          variables: {
+            appId: 'gid://shopify/App/1',
+            sourceScanUrl: 'https://example.com/source-scan-upload',
+          },
+        }),
+      )
     })
   })
 
@@ -2181,9 +2258,27 @@ describe('organizations', () => {
     // Given
     const client = AppManagementClient.getInstance()
     vi.mocked(fetchOrganizations).mockResolvedValueOnce([
-      {id: '1', businessName: 'Org One'},
-      {id: '2', businessName: 'Org Two'},
-      {id: '3', businessName: 'Org Three'},
+      {
+        id: '1',
+        businessName: 'Org One',
+        status: 'ACTIVE',
+        shopCount: 1,
+        url: 'https://admin.shopify.com/organization/1',
+      },
+      {
+        id: '2',
+        businessName: 'Org Two',
+        status: 'ACTIVE',
+        shopCount: null,
+        url: 'https://admin.shopify.com/organization/2',
+      },
+      {
+        id: '3',
+        businessName: 'Org Three',
+        status: 'LOCKED',
+        shopCount: 3,
+        url: 'https://admin.shopify.com/organization/3',
+      },
     ])
 
     // When
@@ -2191,9 +2286,30 @@ describe('organizations', () => {
 
     // Then
     expect(result).toEqual([
-      {id: '1', businessName: 'Org One', source: 'BusinessPlatform'},
-      {id: '2', businessName: 'Org Two', source: 'BusinessPlatform'},
-      {id: '3', businessName: 'Org Three', source: 'BusinessPlatform'},
+      {
+        id: '1',
+        businessName: 'Org One',
+        source: 'BusinessPlatform',
+        status: 'ACTIVE',
+        shopCount: 1,
+        url: 'https://admin.shopify.com/organization/1',
+      },
+      {
+        id: '2',
+        businessName: 'Org Two',
+        source: 'BusinessPlatform',
+        status: 'ACTIVE',
+        shopCount: null,
+        url: 'https://admin.shopify.com/organization/2',
+      },
+      {
+        id: '3',
+        businessName: 'Org Three',
+        source: 'BusinessPlatform',
+        status: 'LOCKED',
+        shopCount: 3,
+        url: 'https://admin.shopify.com/organization/3',
+      },
     ])
   })
 

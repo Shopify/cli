@@ -21,6 +21,7 @@ function accessibleShopNode(overrides: Partial<AccessibleShopNode> = {}): Access
     shopifyShopId: '1',
     name: 'Acme Production',
     storeType: 'PRODUCTION',
+    planName: 'shopify_plus',
     primaryDomain: 'acme.myshopify.com',
     url: null,
     createdAt: '2026-01-15T00:00:00Z',
@@ -55,6 +56,8 @@ function latestBusinessPlatformRequestOptions() {
   return requestOptions
 }
 
+const activeStatusFilter = {field: 'STORE_STATUS', operator: 'EQUALS', value: 'active'}
+
 describe('listBusinessPlatformStores', () => {
   beforeEach(() => {
     mockAndCaptureOutput().clear()
@@ -64,11 +67,7 @@ describe('listBusinessPlatformStores', () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(shopPage())
 
     const result = await listBusinessPlatformStores({token: 'bp-token', organization})
-    const requestOptions = latestBusinessPlatformRequestOptions()
 
-    expect(JSON.stringify(requestOptions.query)).toContain('STORE_STATUS')
-    expect(JSON.stringify(requestOptions.query)).toContain('EQUALS')
-    expect(JSON.stringify(requestOptions.query)).toContain('active')
     expect(result).toEqual({
       entries: [
         {
@@ -79,12 +78,50 @@ describe('listBusinessPlatformStores', () => {
           organizationName: 'Acme',
           name: 'Acme Production',
           type: 'production',
+          plan: 'plus',
         },
       ],
       hasMore: false,
     })
     expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
-      expect.objectContaining({token: 'bp-token', organizationId: '1234', variables: {first: 250}}),
+      expect.objectContaining({
+        token: 'bp-token',
+        organizationId: '1234',
+        variables: {first: 250, filters: [activeStatusFilter]},
+      }),
+    )
+  })
+
+  test('narrows the query to a single store type when one is requested', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(shopPage())
+
+    await listBusinessPlatformStores({token: 'bp-token', organization, storeType: 'client-transfer'})
+
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: {
+          first: 250,
+          filters: [activeStatusFilter, {field: 'STORE_TYPE', operator: 'EQUALS', value: 'client_transfer'}],
+        },
+      }),
+    )
+  })
+
+  // `dev` covers both BP dev store types, and `development_superset` is BP's alias for the pair, so
+  // the filter stays a single query rather than one request per underlying type.
+  test('filters dev stores with the development superset alias', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(shopPage())
+
+    await listBusinessPlatformStores({token: 'bp-token', organization, storeType: 'dev'})
+
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledTimes(1)
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variables: {
+          first: 250,
+          filters: [activeStatusFilter, {field: 'STORE_TYPE', operator: 'EQUALS', value: 'development_superset'}],
+        },
+      }),
     )
   })
 
@@ -109,6 +146,16 @@ describe('listBusinessPlatformStores', () => {
     const result = await listBusinessPlatformStores({token: 'bp-token', organization})
 
     expect(result).toEqual({entries: [], hasMore: false})
+  })
+
+  test('omits the plan for an unrecognized plan name', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(
+      shopPage({shops: [accessibleShopNode({planName: 'some_new_plan'})]}),
+    )
+
+    const result = await listBusinessPlatformStores({token: 'bp-token', organization})
+
+    expect(result.entries[0]?.plan).toBeUndefined()
   })
 
   test('fetches a single bounded page for the selected organization and orders newest first', async () => {
@@ -139,7 +186,7 @@ describe('listBusinessPlatformStores', () => {
     expect(result.entries.map((entry) => entry.store)).toEqual(['newer.myshopify.com', 'older.myshopify.com'])
     expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledTimes(1)
     expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
-      expect.objectContaining({variables: {first: 250}}),
+      expect.objectContaining({variables: {first: 250, filters: [activeStatusFilter]}}),
     )
   })
 

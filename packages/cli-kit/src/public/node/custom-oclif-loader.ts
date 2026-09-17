@@ -1,4 +1,6 @@
+import {runWithCommandEventsForCommand} from './command-events.js'
 import {Command, Config} from '@oclif/core'
+import os from 'os'
 
 /**
  * Optional lazy command loader function.
@@ -24,6 +26,16 @@ export class ShopifyConfig extends Config {
   }
 
   /**
+   * Override load to protect oclif's shell detection from a failing OS user lookup.
+   *
+   * @returns A promise that resolves once the config is loaded.
+   */
+  async load(): Promise<void> {
+    setShellVariableWhenUserLookupFails()
+    return super.load()
+  }
+
+  /**
    * Override runCommand to use lazy loading when available.
    * Instead of calling cmd.load() which triggers loading ALL commands via index.js,
    * we directly import only the needed command module.
@@ -38,27 +50,42 @@ export class ShopifyConfig extends Config {
     argv: string[] = [],
     cachedCommand: Command.Loadable | null = null,
   ): Promise<T> {
-    if (!this.lazyCommandLoader) {
-      return super.runCommand<T>(id, argv, cachedCommand)
-    }
+    return runWithCommandEventsForCommand(argv, async () => {
+      if (!this.lazyCommandLoader) {
+        return super.runCommand<T>(id, argv, cachedCommand)
+      }
 
-    const cmd = cachedCommand ?? this.findCommand(id)
-    if (!cmd) {
-      return super.runCommand<T>(id, argv, cachedCommand)
-    }
+      const cmd = cachedCommand ?? this.findCommand(id)
+      if (!cmd) {
+        return super.runCommand<T>(id, argv, cachedCommand)
+      }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const commandClass = (await this.lazyCommandLoader(id)) as any
-    if (!commandClass) {
-      return super.runCommand<T>(id, argv, cachedCommand)
-    }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const commandClass = (await this.lazyCommandLoader(id)) as any
+      if (!commandClass) {
+        return super.runCommand<T>(id, argv, cachedCommand)
+      }
 
-    commandClass.id = id
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    commandClass.plugin = cmd.plugin ?? (this as any).rootPlugin
-    await this.runHook('prerun', {argv, Command: commandClass})
-    const result = (await commandClass.run(argv, this)) as T
-    await this.runHook('postrun', {argv, Command: commandClass, result})
-    return result
+      commandClass.id = id
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      commandClass.plugin = cmd.plugin ?? (this as any).rootPlugin
+      await this.runHook('prerun', {argv, Command: commandClass})
+      const result = (await commandClass.run(argv, this)) as T
+      await this.runHook('postrun', {argv, Command: commandClass, result})
+      return result
+    })
+  }
+}
+
+// oclif reads SHELL and falls back to os.userInfo(), which throws when the OS can't resolve the current
+// user, killing the CLI during load. Remove once oclif guards that call.
+function setShellVariableWhenUserLookupFails(): void {
+  if (process.env.SHELL !== undefined) return
+
+  try {
+    os.userInfo()
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    process.env.SHELL = 'unknown'
   }
 }

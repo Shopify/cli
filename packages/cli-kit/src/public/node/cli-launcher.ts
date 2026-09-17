@@ -1,3 +1,4 @@
+import {isTruthy} from './context/utilities.js'
 import {fileURLToPath} from 'node:url'
 import type {LazyCommandLoader} from './custom-oclif-loader.js'
 
@@ -34,7 +35,17 @@ export async function launchCLI(options: Options): Promise<void> {
       config.setLazyCommandLoader(options.lazyCommandLoader)
     }
 
-    await run(options.argv, config)
+    const argv = options.argv ?? process.argv.slice(2)
+    const passthroughIndex = argv.indexOf('--')
+    const commandArguments = passthroughIndex === -1 ? argv : argv.slice(0, passthroughIndex)
+    if (commandArguments.includes('--json-schema') || isTruthy(process.env.SHOPIFY_FLAG_JSON_SCHEMA)) {
+      // Inspect the command before Oclif runs init or prerun hooks, which may require a project or start background work.
+      const {printCommandJsonSchema} = await import('../../private/node/command-json-schema.js')
+      await printCommandJsonSchema(config, argv, options.lazyCommandLoader)
+      return
+    }
+
+    await run(argv, config)
     await flush()
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {

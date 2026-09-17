@@ -18,6 +18,10 @@ import {
   AppVersionWithContext,
   AppDeployOptions,
   AssetUrlSchema,
+  SourceScanCreateInput,
+  SourceScanCreateSchema,
+  SourceScanUploadUrlInput,
+  SourceScanUploadUrlSchema,
   AppVersionIdentifiers,
   filterDisabledFlags,
   ClientName,
@@ -37,6 +41,7 @@ import {
   OrganizationApp,
   OrganizationSource,
   OrganizationStore,
+  OrganizationWithDetails,
 } from '../../models/organization.js'
 import {
   AllAppExtensionRegistrationsQuerySchema,
@@ -92,6 +97,14 @@ import {
   CreateAppVersionMutationVariables,
 } from '../../api/graphql/app-management/generated/create-app-version.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
+import {
+  RequestSourceScanUploadUrl,
+  RequestSourceScanUploadUrlMutationVariables,
+} from '../../api/graphql/app-management/generated/request-source-scan-upload-url.js'
+import {
+  CreateSourceScan,
+  CreateSourceScanMutationVariables,
+} from '../../api/graphql/app-management/generated/create-source-scan.js'
 import {AppVersionById} from '../../api/graphql/app-management/generated/app-version-by-id.js'
 import {AppVersions} from '../../api/graphql/app-management/generated/app-versions.js'
 import {AppInstallCount} from '../../api/graphql/app-management/generated/app-install-count.js'
@@ -355,7 +368,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async organizations(): Promise<Organization[]> {
+  async organizations(): Promise<OrganizationWithDetails[]> {
     const orgs = await fetchOrganizations()
     return orgs.map((org) => ({
       ...org,
@@ -618,6 +631,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const query = AppVersions
     const variables = {appId: id}
     const result = await this.appManagementRequest({query, variables})
+    if (!result.app) {
+      return {app: null}
+    }
     return {
       app: {
         id: result.app.id,
@@ -739,6 +755,21 @@ export class AppManagementClient implements DeveloperPlatformClient {
       assetUrl: result.appRequestSourceUploadUrl.sourceUploadUrl,
       userErrors: result.appRequestSourceUploadUrl.userErrors,
     }
+  }
+
+  async generateSourceScanUploadUrl({appId, byteSize}: SourceScanUploadUrlInput): Promise<SourceScanUploadUrlSchema> {
+    const variables: RequestSourceScanUploadUrlMutationVariables = {appId, byteSize}
+    const result = await this.appManagementRequest({
+      query: RequestSourceScanUploadUrl,
+      variables,
+    })
+    return result.appRequestSourceScanUploadUrl
+  }
+
+  async createSourceScan({appId, sourceScanUrl}: SourceScanCreateInput): Promise<SourceScanCreateSchema> {
+    const variables: CreateSourceScanMutationVariables = {appId, sourceScanUrl}
+    const result = await this.appManagementRequest({query: CreateSourceScan, variables})
+    return result.appSourceScanCreate
   }
 
   async deploy({

@@ -1,9 +1,9 @@
-import {mapPlanToPublicHandle} from './plan.js'
 import {classifyAdminApiError, throwIfStoredStoreAuthIsInvalid} from '../admin-errors.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
 import {throwStoredAuthInvalidError} from '../auth/recovery.js'
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
 import {getPreviewStore, PreviewStoreRequestError} from '../create/preview/client.js'
+import {planHandle} from '../plan.js'
 import {storeTypeHandle} from '../store-type.js'
 import {StoreLookupStoreNotFoundError, fetchDestinationsContext} from '../../../utilities/store-lookup/destinations.js'
 import {fetchOrganizationShop} from '../../../utilities/store-lookup/organization-shop.js'
@@ -242,7 +242,7 @@ function buildBusinessPlatformResult(args: BuildBusinessPlatformResultArgs): Sto
     organizationName: destinationsCtx.owningOrg?.name,
     storeOwner: buildBusinessPlatformStoreOwner(orgShop),
     type: storeTypeHandle(orgShop?.storeType),
-    plan: mapPlanToPublicHandle(orgShop?.planName),
+    plan: planHandle(orgShop?.planName),
     featurePreview: orgShop?.developerPreviewHandle,
     adminUrl: buildAdminUrl(extractMyshopifyHandle(store)),
   }

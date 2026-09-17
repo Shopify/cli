@@ -26,8 +26,9 @@
 │  ├─ generate
 │  │  └─ extension
 │  ├─ graphiql
-│  ├─ import-custom-data-definitions
-│  ├─ import-extensions
+│  ├─ import
+│  │  ├─ custom-data-definitions
+│  │  └─ dashboard-extensions
 │  ├─ info
 │  ├─ init
 │  ├─ logs
@@ -104,7 +105,9 @@
 │  │  ├─ execute
 │  │  └─ status
 │  ├─ create
+│  │  ├─ dev
 │  │  └─ preview
+│  ├─ delete
 │  ├─ execute
 │  ├─ graphiql
 │  ├─ info

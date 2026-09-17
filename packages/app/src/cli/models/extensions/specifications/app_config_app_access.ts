@@ -4,6 +4,20 @@ import {BaseSchemaWithoutHandle} from '../schemas.js'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
 
+export const AppAccessScopesSchema = zod.object({
+  scopes: zod
+    .string()
+    .transform((scopes) => normalizeDelimitedString(scopes) ?? '')
+    .optional(),
+  required_scopes: zod.array(zod.string()).optional(),
+  optional_scopes: zod.array(zod.string()).optional(),
+  use_legacy_install_flow: zod.boolean().optional(),
+})
+
+export const AppAuthSchema = zod.object({
+  redirect_urls: zod.array(validateUrl(zod.string())),
+})
+
 const AppAccessSchema = BaseSchemaWithoutHandle.extend({
   access: zod
     .object({
@@ -15,20 +29,8 @@ const AppAccessSchema = BaseSchemaWithoutHandle.extend({
         .optional(),
     })
     .optional(),
-  access_scopes: zod
-    .object({
-      scopes: zod
-        .string()
-        .transform((scopes) => normalizeDelimitedString(scopes) ?? '')
-        .optional(),
-      required_scopes: zod.array(zod.string()).optional(),
-      optional_scopes: zod.array(zod.string()).optional(),
-      use_legacy_install_flow: zod.boolean().optional(),
-    })
-    .optional(),
-  auth: zod.object({
-    redirect_urls: zod.array(validateUrl(zod.string())),
-  }),
+  access_scopes: AppAccessScopesSchema.optional(),
+  auth: AppAuthSchema,
 })
 
 export const AppAccessSpecIdentifier = 'app_access'

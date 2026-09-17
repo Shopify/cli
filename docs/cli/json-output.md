@@ -1,0 +1,142 @@
+# JSON output contracts
+
+A finite command finishes its work, returns one final result, and exits, such as `shopify store list`. Commands that
+keep running and streaming updates, such as `shopify app dev`, are currently outside this contract.
+
+Finite commands expose their successful result as typed data independently from terminal presentation. The command's
+domain package owns this contract; CLI Kit only provides the shared schema and help infrastructure.
+
+New finite query and operation commands must include `jsonFlag` and expose a `jsonOutputSchema`. The repository lint
+check enforces both. Exceptions are recorded in
+`packages/eslint-plugin-cli/rules/json-output-command-exceptions.js`. Its migration section tracks existing finite
+commands; remove each entry when converted, and never add new finite commands to it.
+
+## Define the result beside the domain service
+
+Keep the schema beside the service that produces the result. One Zod schema supplies runtime validation, the inferred
+TypeScript type, JSON encoding, and the JSON Schema shown in command help.
+
+By default, include all available public data fields in the JSON schema and output, including fields omitted from the
+human-readable output, as long as they require no additional API requests.
+
+```ts
+import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {zod} from '@shopify/cli-kit/node/schema'
+
+const WidgetSchema = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+})
+
+export const widgetListJsonOutputSchema = defineJsonOutputSchema({
+  name: 'WidgetListResult',
+  schema: zod.object({widgets: zod.array(WidgetSchema)}),
+  definitions: {Widget: WidgetSchema},
+})
+
+export type WidgetListResult = InferJsonOutputSchema<typeof widgetListJsonOutputSchema>
+```
+
+Optionally add nested object schemas to `definitions` to give them stable names and references in JSON Schema.
+Use `.passthrough()` only when the public result deliberately permits additional keys.
+
+## Connect the command and encoder
+
+Expose the contract from the command and encode through it. Encoding validates the value before serialization.
+
+```ts
+export default class WidgetList extends Command {
+  static flags = {
+    ...globalFlags,
+    ...jsonFlag,
+  }
+
+  static get jsonOutputSchema() {
+    return widgetListJsonOutputSchema
+  }
+
+  static descriptionWithMarkdown = 'Lists widgets.'
+  static description = this.descriptionForHelp()
+
+  async run(): Promise<void> {
+    const result = await listWidgets()
+    outputResult(widgetListJsonOutputSchema.encode(result))
+  }
+}
+```
+
+## Keep data and presentation separate
+
+A finite command should have these boundaries:
+
+- The domain service returns typed data and doesn't print terminal output.
+- A command-specific codec maps the service result to the stable public JSON shape when they differ.
+- The schema validates and encodes that public result.
+- A presenter turns the same result into human-readable terminal output.
+
+Presenters continue to own terminal text, output channels, files, and exit behavior. A result contract must not depend
+on terminal rendering (including React/Ink), Oclif, filesystem output, or CLI errors.
+
+Events are separate from finite results. Progress events can drive spinners or status messages while the command is
+running, but they aren't fields in the final JSON result. Errors continue through the standard CLI error path;
+don't encode failures as successful result shapes merely to support `--json`.
+
+## Preserve compatibility
+
+Treat the JSON result as a public API. Keep existing keys, omission rules, nullability, collection shapes, and exit
+behavior when converting a command. Put compatibility mappings in the codec instead of changing domain models or
+leaking presenter details into the schema. Add regression tests for the exact encoded result as well as schema
+validation.
+
+`--json` selects the output format. `--no-input` controls interactivity. They are independent: JSON output must not
+silently disable prompts, and non-interactive execution must not silently select JSON. A command that can prompt should
+support and test the relevant combinations explicitly.
+
+## Exempt only streaming commands
+
+Long-lived commands that produce an open-ended event stream don't have one finite result. Track these exemptions in
+`packages/eslint-plugin-cli/rules/json-output-command-exceptions.js`, in its streaming section. Add the command's
+repository-relative path:
+
+```js
+'packages/app/src/cli/commands/app/widgets/watch.ts',
+```
+
+The lint rule only exempts paths in that list; a `jsonOutputSupport` property alone does not exempt a new command.
+
+This exemption is only for commands whose lifetime or output is inherently streaming. A finite operation remains a
+finite command even when it emits progress events, writes a file, or has no interesting return value.
+
+## Plugin authors
+
+Plugins must adopt the result contract and control their output before their commands can be used reliably in JSON
+mode. Inheriting `--json-schema` or enabling `SHOPIFY_FLAG_JSON=1` doesn't convert all plugin output automatically.
+
+- Oclif `init` hooks run before the command's error handling. A hook that renders a warning and calls `process.exit(1)`
+  bypasses the JSON fatal error path and can leave stdout empty. Put command validation in the command lifecycle and
+  throw an `AbortError` so CLI Kit can encode the failure.
+- In the command event context, `outputInfo`, `outputWarn`, and `outputDebug` use diagnostic events in JSON mode when
+  using their default logger. Banners such as `renderSuccess` and `renderWarning` still render terminal text to stderr;
+  they aren't automatically converted to events. Use `emitCommandEvent` from `@shopify/cli-kit/node/command-events`
+  for diagnostics, and keep human-only banners in the text presenter.
+- Third-party loggers and child processes aren't automatically converted or silenced. Use `jsonOutputEnabled()` from
+  `@shopify/cli-kit/node/environment` to silence or capture their output in JSON mode. Reserve stdout for the encoded
+  result or fatal error document, and send diagnostics through the event helpers to stderr.
+
+## Test a new command
+
+Tests should verify:
+
+- the domain service result without terminal concerns;
+- codec compatibility and schema validation;
+- the exact `--json` document;
+- human presentation independently from JSON encoding;
+- errors and exit behavior; and
+- prompt behavior independently from `--json` and `--no-input`.
+
+Command help includes the result's JSON Schema automatically through `jsonOutputSchema`. `--json-schema` prints one
+JSON Schema (draft-07) accepting a result, a fatal error document, or a side event. The `Result`, `Error`, and `Event`
+definitions describe these separately; results and fatal errors go to stdout, and side events go to stderr.
+
+Both outputs come from the same Zod definitions used to validate and encode results. Run the manifest,
+README, and code-documentation refresh commands required by CI after changing command metadata.

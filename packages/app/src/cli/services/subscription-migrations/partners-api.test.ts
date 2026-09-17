@@ -1,6 +1,7 @@
 import {
   cancelMigrationOperation,
   createMigrationOperation,
+  getMigratableSubscriptionPage,
   getMigrationOperation,
   type MigrationApiInput,
 } from './partners-api.js'
@@ -8,9 +9,11 @@ import {
   AppSubscriptionMigrationOperationCancelMutation,
   AppSubscriptionMigrationOperationCreateMutation,
   AppSubscriptionMigrationOperationQuery,
+  MigratableAppSubscriptionsQuery,
 } from '../../api/graphql/subscription_migrations.js'
 import {PartnersClient} from '../../utilities/developer-platform-client/partners-client.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
+import type {MigratableSubscription} from '../../models/subscription-migrations.js'
 
 vi.mock('../../utilities/developer-platform-client/partners-client.js')
 
@@ -48,11 +51,115 @@ const canceledMigration: MigrationApiInput = {
   action: {cancelMigration: true},
 }
 
+const migratableSubscription: MigratableSubscription = {
+  shopId: 'gid://shopify/Shop/1001',
+  status: 'SCHEDULED',
+  manualSubscriptionName: 'Legacy plan',
+  manualSubscriptionPrice: {amount: '19.99', currencyCode: 'USD'},
+  manualSubscriptionInterval: 'ANNUAL',
+  targetPlanHandle: 'pro',
+  notification: {
+    kind: 'NONE',
+    optOutDeadline: '2025-01-02T03:04:05Z',
+    sentAt: '2025-01-01T03:04:05Z',
+  },
+  priceBehavior: 'PLAN_PRICE',
+  effectiveDate: '2025-02-01',
+  lastFailureReason: 'SCHEDULING_FAILED',
+}
+
 describe('Partners migration API', () => {
   beforeEach(() => {
     request.mockReset()
     vi.mocked(PartnersClient.getInstance).mockReset()
     vi.mocked(PartnersClient.getInstance).mockReturnValue({request} as unknown as PartnersClient)
+  })
+
+  test('defines the complete migratable subscriptions query', () => {
+    expect(MigratableAppSubscriptionsQuery.replace(/[\s,]/g, '')).toBe(
+      'queryMigratableAppSubscriptions($apiKey:String!$first:Int!$after:String$status:AppSubscriptionMigrationStatus){migratableAppSubscriptions(apiKey:$apiKeyfirst:$firstafter:$afterstatus:$status){edges{cursornode{shopIdstatusmanualSubscriptionNamemanualSubscriptionPrice{amountcurrencyCode}manualSubscriptionIntervaltargetPlanHandlenotification{kindoptOutDeadlinesentAt}priceBehavioreffectiveDatelastFailureReason}}pageInfo{hasNextPageendCursor}}}',
+    )
+  })
+
+  test('gets a migratable subscription page with the exported document and exact variables', async () => {
+    request.mockResolvedValue({
+      migratableAppSubscriptions: {
+        edges: [{cursor: 'next-cursor', node: migratableSubscription}],
+        pageInfo: {hasNextPage: true, endCursor: 'next-cursor'},
+      },
+    })
+
+    await expect(
+      getMigratableSubscriptionPage({
+        clientId: 'client-id',
+        first: 25,
+        after: 'previous-cursor',
+        status: 'SCHEDULED',
+      }),
+    ).resolves.toEqual({
+      subscriptions: [migratableSubscription],
+      pageInfo: {hasNextPage: true, endCursor: 'next-cursor'},
+    })
+
+    expect(request).toHaveBeenCalledWith(MigratableAppSubscriptionsQuery, {
+      apiKey: 'client-id',
+      first: 25,
+      after: 'previous-cursor',
+      status: 'SCHEDULED',
+    })
+  })
+
+  test('always sends optional migratable subscription variables', async () => {
+    request.mockResolvedValue({
+      migratableAppSubscriptions: {
+        edges: [],
+        pageInfo: {hasNextPage: false, endCursor: null},
+      },
+    })
+
+    await getMigratableSubscriptionPage({clientId: 'client-id', first: 250})
+
+    expect(request).toHaveBeenCalledWith(MigratableAppSubscriptionsQuery, {
+      apiKey: 'client-id',
+      first: 250,
+      after: undefined,
+      status: undefined,
+    })
+  })
+
+  test('preserves a nullable migratable subscription connection', async () => {
+    request.mockResolvedValue({migratableAppSubscriptions: null})
+
+    await expect(getMigratableSubscriptionPage({clientId: 'client-id', first: 250})).resolves.toBeNull()
+  })
+
+  test('normalizes nullable migratable subscription edges', async () => {
+    request.mockResolvedValue({
+      migratableAppSubscriptions: {
+        edges: null,
+        pageInfo: {hasNextPage: false, endCursor: null},
+      },
+    })
+
+    await expect(getMigratableSubscriptionPage({clientId: 'client-id', first: 250})).resolves.toEqual({
+      subscriptions: [],
+      pageInfo: {hasNextPage: false, endCursor: null},
+    })
+  })
+
+  test('filters nullable migratable subscription edge elements while preserving order', async () => {
+    const secondSubscription = {...migratableSubscription, shopId: 'gid://shopify/Shop/1002'}
+    request.mockResolvedValue({
+      migratableAppSubscriptions: {
+        edges: [{cursor: 'one', node: migratableSubscription}, null, {cursor: 'two', node: secondSubscription}],
+        pageInfo: {hasNextPage: false, endCursor: 'two'},
+      },
+    })
+
+    await expect(getMigratableSubscriptionPage({clientId: 'client-id', first: 250})).resolves.toEqual({
+      subscriptions: [migratableSubscription, secondSubscription],
+      pageInfo: {hasNextPage: false, endCursor: 'two'},
+    })
   })
 
   test('creates a migration operation with the exported document and exact variables', async () => {

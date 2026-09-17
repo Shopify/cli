@@ -1,6 +1,7 @@
 import {listBusinessPlatformStores} from './list/bp-source.js'
 import {STORE_LIST_LIMIT} from './list/constants.js'
 import {type ListStoresResult, type StoreListEntry, type StoreListOrganization} from './list/types.js'
+import {type StoreTypeFilter} from './store-type.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isTTY, renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
@@ -8,6 +9,7 @@ import {fetchOrganizationsWithAccessInfo, type Organization} from '@shopify/orga
 
 interface ListStoresOptions {
   organizationId?: number
+  storeType?: StoreTypeFilter
 }
 
 export async function listStores(options: ListStoresOptions = {}): Promise<ListStoresResult> {
@@ -38,13 +40,18 @@ export async function listStores(options: ListStoresOptions = {}): Promise<ListS
     options.organizationId,
   )
 
-  const result = await listBusinessPlatformStores({token, organization: selectedOrganization})
+  const result = await listBusinessPlatformStores({
+    token,
+    organization: selectedOrganization,
+    storeType: options.storeType,
+  })
   const {stores, truncated} = limitEntries(result.entries, result.hasMore)
 
   return {
     stores,
     source: 'organization',
     organization: storeListOrganization(selectedOrganization),
+    ...(options.storeType ? {storeType: options.storeType} : {}),
     ...(truncated ? {truncated: true} : {}),
   }
 }

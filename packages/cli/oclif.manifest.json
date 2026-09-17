@@ -39,6 +39,13 @@
           "name": "config",
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -141,6 +148,13 @@
           "required": true,
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -235,6 +249,13 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -406,6 +427,13 @@
           "name": "id",
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -524,6 +552,13 @@
           "name": "force",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -621,6 +656,13 @@
           "name": "config",
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -700,6 +742,13 @@
           "multiple": false,
           "name": "client-id",
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -795,6 +844,13 @@
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "no-color": {
@@ -898,6 +954,13 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "message": {
           "description": "Optional message that will be associated with this version. This is for internal use only and won't be available externally.",
@@ -1065,6 +1128,13 @@
           "description": "Install and use mkcert to generate localhost certificates when --use-localhost is enabled without prompting.",
           "env": "SHOPIFY_FLAG_INSTALL_MKCERT",
           "name": "install-mkcert",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "localhost-port": {
@@ -1246,6 +1316,13 @@
           "name": "config",
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -1303,6 +1380,304 @@
       "strict": true,
       "summary": "Cleans up the dev preview from the selected store."
     },
+    "app:doctor": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app doctor instructions` to print, copy, or write them later.",
+      "descriptionWithMarkdown": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app doctor instructions` to print, copy, or write them later.",
+      "enableJsonFlag": false,
+      "flags": {
+        "blocking": {
+          "default": "none",
+          "description": "The minimum finding severity that causes a non-zero exit code.",
+          "env": "SHOPIFY_FLAG_APP_DOCTOR_BLOCKING",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "blocking",
+          "options": [
+            "high",
+            "medium",
+            "low",
+            "none"
+          ],
+          "type": "option"
+        },
+        "findings": {
+          "description": "Validate agent findings from a JSON file and compile them into the trace.",
+          "env": "SHOPIFY_FLAG_APP_DOCTOR_FINDINGS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "findings",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "skip-instructions": {
+          "allowNo": false,
+          "description": "Don't offer to show coding-agent instructions.",
+          "env": "SHOPIFY_FLAG_APP_DOCTOR_SKIP_INSTRUCTIONS",
+          "exclusive": [
+            "yes"
+          ],
+          "name": "skip-instructions",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "yes": {
+          "allowNo": false,
+          "description": "Print coding-agent instructions without prompting.",
+          "env": "SHOPIFY_FLAG_YES",
+          "exclusive": [
+            "skip-instructions"
+          ],
+          "name": "yes",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:doctor",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Check an app for Shopify-specific security issues."
+    },
+    "app:doctor:instructions": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Prints the complete workflow that a coding agent should follow to review App Doctor results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app doctor`; only that invocation's generated review pack is trusted as workflow input.",
+      "descriptionWithMarkdown": "Prints the complete workflow that a coding agent should follow to review App Doctor results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app doctor`; only that invocation's generated review pack is trusted as workflow input.",
+      "enableJsonFlag": false,
+      "flags": {
+        "copy": {
+          "allowNo": false,
+          "description": "Copy the instructions to the clipboard instead of printing them.",
+          "env": "SHOPIFY_FLAG_APP_DOCTOR_INSTRUCTIONS_COPY",
+          "exclusive": [
+            "write"
+          ],
+          "name": "copy",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "write": {
+          "description": "Write the instructions to a file instead of printing them.",
+          "env": "SHOPIFY_FLAG_APP_DOCTOR_INSTRUCTIONS_WRITE",
+          "exclusive": [
+            "copy"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "write",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:doctor:instructions",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Provide App Doctor instructions to a coding agent."
+    },
+    "app:doctor:submit": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Reads the most recent App Doctor trace, writes a `.shopify/app-doctor/submission.json` file for inspection, asks for confirmation, and uploads the result to Shopify.\n\nGenerated report fields exclude source code, file paths, code snippets, evidence, finding messages, and commit identifiers. Optional feedback is included without redaction. Optionally use `--version` to identify the app version corresponding to the scanned files. Use `--dry-run` to write and inspect the exact payload without uploading it.",
+      "descriptionWithMarkdown": "Reads the most recent App Doctor trace, writes a `.shopify/app-doctor/submission.json` file for inspection, asks for confirmation, and uploads the result to Shopify.\n\nGenerated report fields exclude source code, file paths, code snippets, evidence, finding messages, and commit identifiers. Optional feedback is included without redaction. Optionally use `--version` to identify the app version corresponding to the scanned files. Use `--dry-run` to write and inspect the exact payload without uploading it.",
+      "enableJsonFlag": false,
+      "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "dry-run": {
+          "allowNo": false,
+          "description": "Write the submission payload without uploading it.",
+          "env": "SHOPIFY_FLAG_APP_DOCTOR_DRY_RUN",
+          "name": "dry-run",
+          "type": "boolean"
+        },
+        "feedback": {
+          "description": "Optional feedback about inaccurate or unhelpful App Doctor results. Use - to read from stdin.",
+          "env": "SHOPIFY_FLAG_APP_DOCTOR_FEEDBACK",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "feedback",
+          "type": "option"
+        },
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Skip confirmation. Required if non interactive.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "name": "force",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "Optional app version corresponding to the files used to generate these results.",
+          "env": "SHOPIFY_FLAG_VERSION",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "version",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:doctor:submit",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Submit App Doctor results to Shopify."
+    },
     "app:env:pull": {
       "aliases": [
       ],
@@ -1350,6 +1725,13 @@
           "multiple": false,
           "name": "env-file",
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -1437,6 +1819,13 @@
           "name": "config",
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -1522,6 +1911,13 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -1675,6 +2071,13 @@
           "name": "config",
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -1771,6 +2174,13 @@
           "name": "json",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -1865,6 +2275,13 @@
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "log": {
@@ -2000,6 +2417,13 @@
           "name": "json",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -2093,6 +2517,13 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -2188,6 +2619,13 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -2303,6 +2741,13 @@
           ],
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "name": {
           "char": "n",
           "description": "name of your Extension. Required if non interactive.",
@@ -2412,6 +2857,13 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -2540,6 +2992,213 @@
           "name": "include-existing",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. Must be an existing development or Shopify Plus sandbox store.",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:import-custom-data-definitions",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "summary": "Import metafield and metaobject definitions."
+    },
+    "app:import-extensions": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Import dashboard-managed extensions into your app.",
+      "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:import-extensions",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core"
+    },
+    "app:import:custom-data-definitions": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Import metafield and metaobject definitions from your development store. \"Read more about declarative custom data definitions\" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).",
+      "descriptionWithMarkdown": "Import metafield and metaobject definitions from your development store. [Read more about declarative custom data definitions](https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).",
+      "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "include-existing": {
+          "allowNo": false,
+          "description": "Include existing declared definitions in the output.",
+          "env": "SHOPIFY_FLAG_INCLUDE_EXISTING",
+          "name": "include-existing",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -2589,14 +3248,14 @@
       "hasDynamicHelp": false,
       "hiddenAliases": [
       ],
-      "id": "app:import-custom-data-definitions",
+      "id": "app:import:custom-data-definitions",
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
       "summary": "Import metafield and metaobject definitions."
     },
-    "app:import-extensions": {
+    "app:import:dashboard-extensions": {
       "aliases": [
       ],
       "args": {
@@ -2633,6 +3292,13 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -2674,7 +3340,7 @@
       "hasDynamicHelp": false,
       "hiddenAliases": [
       ],
-      "id": "app:import-extensions",
+      "id": "app:import:dashboard-extensions",
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
@@ -2726,6 +3392,13 @@
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "no-color": {
@@ -2821,6 +3494,13 @@
           "multiple": false,
           "name": "flavor",
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "local": {
           "allowNo": false,
@@ -2960,6 +3640,13 @@
           "name": "json",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -3075,6 +3762,13 @@
           "name": "config",
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -3176,6 +3870,13 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -3297,6 +3998,13 @@
           "name": "json",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -3344,6 +4052,129 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Cancels app subscription migration operations."
+    },
+    "app:subscription-migrations:list": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Lists every app subscription eligible for migration.\n\nBy default, the command writes CSV to stdout, streaming each page of results as it arrives. If a later page fails, the rows already written remain valid CSV. Use `--json` to fetch all pages first and then write a single versioned JSON envelope to stdout. Use shell redirection to save either format, for example `shopify app subscription-migrations list > subscriptions.csv` or `shopify app subscription-migrations list --json > subscriptions.json`.\n\nUse `--status` to filter subscriptions by migration status. Supported values are `UNSCHEDULED`, `SCHEDULED`, and `MIGRATED`.\n\nRun the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path` to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app within the project. Use `--reset` to relink the app.",
+      "descriptionWithMarkdown": "Lists every app subscription eligible for migration.\n\nBy default, the command writes CSV to stdout, streaming each page of results as it arrives. If a later page fails, the rows already written remain valid CSV. Use `--json` to fetch all pages first and then write a single versioned JSON envelope to stdout. Use shell redirection to save either format, for example `shopify app subscription-migrations list > subscriptions.csv` or `shopify app subscription-migrations list --json > subscriptions.json`.\n\nUse `--status` to filter subscriptions by migration status. Supported values are `UNSCHEDULED`, `SCHEDULED`, and `MIGRATED`.\n\nRun the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path` to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app within the project. Use `--reset` to relink the app.",
+      "examples": [
+        "<%= config.bin %> <%= command.id %>",
+        "<%= config.bin %> <%= command.id %> --status SCHEDULED > scheduled-subscriptions.csv",
+        "<%= config.bin %> <%= command.id %> --json",
+        "<%= config.bin %> <%= command.id %> --json > subscriptions.json",
+        "<%= config.bin %> <%= command.id %> --client-id <client-id> > subscriptions.csv"
+      ],
+      "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
+        "status": {
+          "description": "Filter subscriptions by migration status.",
+          "env": "SHOPIFY_FLAG_STATUS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "status",
+          "options": [
+            "UNSCHEDULED",
+            "SCHEDULED",
+            "MIGRATED"
+          ],
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:subscription-migrations:list",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Lists app subscriptions eligible for migration."
     },
     "app:subscription-migrations:schedule": {
       "aliases": [
@@ -3415,6 +4246,13 @@
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "no-color": {
@@ -3532,6 +4370,13 @@
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "no-color": {
@@ -3661,6 +4506,13 @@
           "name": "json",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -3722,7 +4574,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Lists the deployed app versions. An app version is a snapshot of your app extensions.",
+      "description": "Lists the deployed app versions. An app version is a snapshot of your app extensions.\n\nOutput from `--json` conforms to the `AppVersionsListResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"array\",\n  \"items\": {\n    \"$ref\": \"#/definitions/AppVersion\"\n  },\n  \"title\": \"AppVersionsListResult\",\n  \"definitions\": {\n    \"AppVersion\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"createdAt\": {\n          \"type\": \"string\"\n        },\n        \"createdBy\": {\n          \"type\": \"string\"\n        },\n        \"versionTag\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        },\n        \"status\": {\n          \"type\": \"string\"\n        },\n        \"versionId\": {\n          \"type\": \"string\"\n        },\n        \"message\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"createdAt\",\n        \"createdBy\",\n        \"status\",\n        \"versionId\",\n        \"message\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Lists the deployed app versions. An app version is a snapshot of your app extensions.",
       "flags": {
         "auth-alias": {
@@ -3762,6 +4614,13 @@
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "no-color": {
@@ -3904,6 +4763,13 @@
           "required": false,
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to your app directory.",
           "env": "SHOPIFY_FLAG_PATH",
@@ -3960,6 +4826,13 @@
           "multiple": false,
           "name": "alias",
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         }
       },
       "hasDynamicHelp": false,
@@ -3979,6 +4852,13 @@
       "description": "Logs you out of the Shopify account or Partner account and store.",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -3997,6 +4877,13 @@
       "description": "Clear the CLI cache, used to store some API responses and handle notifications status",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -4116,6 +5003,13 @@
       "descriptionWithMarkdown": "Disable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -4137,6 +5031,13 @@
       "descriptionWithMarkdown": "Enable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -4158,6 +5059,13 @@
       "descriptionWithMarkdown": "Check whether autocorrect is enabled or disabled. On by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -4178,6 +5086,13 @@
       "descriptionWithMarkdown": "Disable automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is disabled, Shopify CLI won't automatically update. Run `shopify upgrade` to update manually.\n\n  To enable auto-upgrade, run `shopify config autoupgrade on`.\n",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -4198,6 +5113,13 @@
       "descriptionWithMarkdown": "Enable automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version once per day. Major version upgrades are skipped and must be done manually.\n\n  To disable auto-upgrade, run `shopify config autoupgrade off`.\n",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -4218,6 +5140,13 @@
       "descriptionWithMarkdown": "Check whether auto-upgrade is enabled, disabled, or not yet configured.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.\n\n  Run `shopify config autoupgrade on` or `shopify config autoupgrade off` to configure it.\n",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -4242,6 +5171,13 @@
           "description": "Output as CSV",
           "env": "SHOPIFY_FLAG_OUTPUT_CSV",
           "name": "csv",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         }
       },
@@ -4291,6 +5227,13 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -4345,13 +5288,41 @@
       ],
       "args": {
       },
-      "description": "Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.",
+      "description": "Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. Pass `--language` for the language of the app you are building so code examples match your stack. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.",
       "enableJsonFlag": false,
       "examples": [
         "# fetch the Markdown version of a Shopify.dev page\nshopify doc fetch --url https://shopify.dev/docs/api/shopify-cli",
+        "# filter code examples to the language of the app you are building\nshopify doc fetch --url https://shopify.dev/docs/api/shopify-cli --language ruby",
         "# save the document to a file instead of printing it\nshopify doc fetch --url https://shopify.dev/docs/api/shopify-cli --output docs/shopify-cli.md"
       ],
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "language": {
+          "description": "Filter code examples in the returned Markdown to this language. Supply the language of the app you are building so examples match your stack. Optional — if omitted, or if shopify.dev does not recognize the language for a given page, the document includes examples in every language.",
+          "env": "SHOPIFY_FLAG_LANGUAGE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "language",
+          "options": [
+            "javascript",
+            "typescript",
+            "python",
+            "ruby",
+            "php",
+            "rust",
+            "curl",
+            "liquid",
+            "graphql",
+            "html"
+          ],
+          "type": "option"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -4422,6 +5393,13 @@
           "name": "api-version",
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -4465,6 +5443,13 @@
       "description": "Generate CLI commands documentation",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -4484,6 +5469,13 @@
       "description": "Run CLI doctor-release tests",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -4512,6 +5504,13 @@
           "name": "environment",
           "required": true,
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -4580,6 +5579,13 @@
       "description": "Display help for Shopify CLI",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "nested-commands": {
           "allowNo": false,
           "char": "n",
@@ -4655,6 +5661,13 @@
           "name": "force-client-sourcemap",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "lockfile-check": {
           "allowNo": true,
           "description": "Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.",
@@ -4712,6 +5725,13 @@
       "descriptionWithMarkdown": "Checks whether your Hydrogen app includes a set of standard Shopify routes.",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -4756,6 +5776,13 @@
           "name": "force-sfapi-version",
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -4797,6 +5824,20 @@
           "name": "dev-origin",
           "required": true,
           "type": "option"
+        },
+        "javascript-origin": {
+          "description": "The origin to register as the allowed JavaScript origin for the Customer Account API OAuth flow. Defaults to --dev-origin. Must not include a port (Shopify rejects origins with ports); use this to register a portless origin while keeping a portful --dev-origin.",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "javascript-origin",
+          "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -4854,6 +5895,13 @@
           "multiple": false,
           "name": "entry",
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "output": {
           "default": "startup.cpuprofile",
@@ -4988,6 +6036,13 @@
           "description": "Create a JSON file containing the deployment details in CI environments. Defaults to true, use `--no-json-output` to disable.",
           "name": "json-output",
           "required": false,
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "lockfile-check": {
@@ -5211,6 +6266,13 @@
           "name": "inspector-port",
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -5256,6 +6318,13 @@
       "descriptionWithMarkdown": "Lists all environments available on the linked Hydrogen storefront.",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -5323,6 +6392,13 @@
           "name": "force",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -5387,6 +6463,13 @@
           "name": "force",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -5414,6 +6497,13 @@
       "description": "Shortcut for `hydrogen generate`. See `hydrogen generate --help` for more information.",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -5468,6 +6558,13 @@
           "description": "Overwrites the destination directory and files if they already exist.",
           "env": "SHOPIFY_HYDROGEN_FLAG_FORCE",
           "name": "force",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "locale-param": {
@@ -5526,6 +6623,13 @@
           "description": "Overwrites the destination directory and files if they already exist.",
           "env": "SHOPIFY_HYDROGEN_FLAG_FORCE",
           "name": "force",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "locale-param": {
@@ -5591,6 +6695,13 @@
           "description": "Auto installs dependencies using the active package manager.",
           "env": "SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS",
           "name": "install-deps",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "language": {
@@ -5706,6 +6817,13 @@
           "name": "force",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "name": {
           "description": "The name to use when creating a new Hydrogen storefront.",
           "env": "SHOPIFY_HYDROGEN_FLAG_NAME",
@@ -5766,6 +6884,13 @@
       "descriptionWithMarkdown": "Lists all remote Hydrogen storefronts available to link to your local development environment.",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -5794,6 +6919,13 @@
       "descriptionWithMarkdown": "Logs in to the specified shop and saves the shop domain to the project.",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -5831,6 +6963,13 @@
       "descriptionWithMarkdown": "Log out from the current shop.",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -5943,6 +7082,13 @@
           "name": "inspector-port",
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -6008,6 +7154,13 @@
           "description": "Auto installs dependencies using the active package manager.",
           "env": "SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS",
           "name": "install-deps",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "markets": {
@@ -6078,6 +7231,13 @@
           "name": "install-deps",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -6115,6 +7275,13 @@
       "descriptionWithMarkdown": "Adds support for multiple [markets](https://shopify.dev/docs/custom-storefronts/hydrogen/markets) to your project by using the URL structure.",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -6142,6 +7309,13 @@
       "description": "EXPERIMENTAL: Upgrades the project to use Vite.",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -6170,6 +7344,13 @@
       "descriptionWithMarkdown": "Creates a global h2 shortcut for Shopify CLI using shell aliases.\n\n  The following shells are supported:\n\n  - Bash (using `~/.bashrc`)\n  - ZSH (using `~/.zshrc`)\n  - Fish (using `~/.config/fish/functions`)\n  - PowerShell (added to `$PROFILE`)\n\n  After the alias is created, you can call Shopify CLI from anywhere in your project using `h2 <command>`.",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -6190,6 +7371,13 @@
       "descriptionWithMarkdown": "Unlinks your local development environment from a remote Hydrogen storefront.",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -6224,6 +7412,13 @@
           "description": "Ignore warnings and force the upgrade to the target version",
           "env": "SHOPIFY_HYDROGEN_FLAG_FORCE",
           "name": "force",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "path": {
@@ -6261,6 +7456,13 @@
       "description": "View all the available UI kit components",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -6281,6 +7483,13 @@
       "description": "View the UI kit components that process async tasks",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -6300,6 +7509,13 @@
       "description": "View the UI kit components prompts",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -6319,6 +7535,13 @@
       "description": "View the UI kit components that display static output",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -6338,6 +7561,13 @@
       "description": "Generate a notifications.json file for the the CLI, appending a new notification to the current file.",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -6364,6 +7594,13 @@
           "hidden": false,
           "name": "ignore-errors",
           "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         }
       },
       "hasDynamicHelp": false,
@@ -6382,7 +7619,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Lists the Shopify organizations that you have access to, along with their organization IDs.",
+      "description": "Lists the Shopify organizations that you have access to, along with their organization IDs.\n\nOutput from `--json` conforms to the `OrganizationListResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"organizations\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/OrganizationListEntry\"\n      }\n    }\n  },\n  \"required\": [\n    \"organizations\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"OrganizationListResult\",\n  \"definitions\": {\n    \"OrganizationListEntry\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"id\": {\n          \"type\": \"string\"\n        },\n        \"gid\": {\n          \"type\": \"string\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"status\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"ACTIVE\",\n            \"LOCKED\"\n          ]\n        },\n        \"shopCount\": {\n          \"type\": [\n            \"number\",\n            \"null\"\n          ]\n        },\n        \"url\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"id\",\n        \"gid\",\n        \"name\",\n        \"status\",\n        \"shopCount\",\n        \"url\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Lists the Shopify organizations that you have access to, along with their organization IDs.",
       "enableJsonFlag": false,
       "flags": {
@@ -6401,6 +7638,13 @@
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "no-color": {
@@ -6768,6 +8012,13 @@
         "# open the search modal on Shopify.dev\n    shopify search\n\n    # search for a term on Shopify.dev\n    shopify search <query>\n\n    # search for a phrase on Shopify.dev\n    shopify search \"<a search query separated by spaces>\"\n    "
       ],
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -6802,6 +8053,13 @@
       },
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hidden": true,
@@ -6833,6 +8091,13 @@
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "no-color": {
@@ -6904,6 +8169,13 @@
           "name": "json",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -6951,6 +8223,13 @@
           "name": "id",
           "required": true,
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -7008,6 +8287,13 @@
           "description": "Allow GraphQL mutations to run against the target store.",
           "env": "SHOPIFY_FLAG_ALLOW_MUTATIONS",
           "name": "allow-mutations",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "no-color": {
@@ -7135,6 +8421,13 @@
           "name": "id",
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -7178,9 +8471,15 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Creates a new development store in your organization.",
-      "descriptionWithMarkdown": "Creates a new development store in your organization.",
+      "description": "Creates a new dev store in your organization.",
+      "descriptionWithMarkdown": "Creates a new dev store in your organization.",
       "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %>",
+        "<%= config.bin %> <%= command.id %> --name \"Lavender Candles\" --organization-id 1234567 --plan basic",
+        "<%= config.bin %> <%= command.id %> --name \"Lavender Candles\" --organization-id 1234567 --plan basic --demo-data",
+        "<%= config.bin %> <%= command.id %> --name \"Lavender Candles\" --organization-id 1234567 --plan basic --json"
+      ],
       "flags": {
         "country": {
           "description": "Two-letter country code for the store, such as US, CA, or GB. Follows the ISO 3166-1 alpha-2 standard.",
@@ -7191,8 +8490,15 @@
           "required": false,
           "type": "option"
         },
+        "demo-data": {
+          "allowNo": true,
+          "description": "Populate the new dev store with demo data.",
+          "env": "SHOPIFY_FLAG_STORE_DEMO_DATA",
+          "name": "demo-data",
+          "type": "boolean"
+        },
         "feature-preview": {
-          "description": "The handle of a feature preview to enable on the new development store.",
+          "description": "The handle of a feature preview to enable on the new dev store.",
           "env": "SHOPIFY_FLAG_STORE_FEATURE_PREVIEW",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -7208,8 +8514,15 @@
           "name": "json",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "name": {
-          "description": "Name for the new development store. Required if non interactive.",
+          "description": "Name for the new dev store. Required if non interactive.",
           "env": "SHOPIFY_FLAG_STORE_NAME",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -7233,7 +8546,7 @@
           "type": "option"
         },
         "plan": {
-          "description": "The Shopify plan to use for the new development store. Required if non interactive.",
+          "description": "The Shopify plan to use for the new dev store. Required if non interactive.",
           "env": "SHOPIFY_FLAG_STORE_PLAN",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -7253,17 +8566,9 @@
           "hidden": false,
           "name": "verbose",
           "type": "boolean"
-        },
-        "with-demo-data": {
-          "allowNo": false,
-          "description": "Populate the new development store with demo data.",
-          "env": "SHOPIFY_FLAG_STORE_WITH_DEMO_DATA",
-          "name": "with-demo-data",
-          "type": "boolean"
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "store:create:dev",
@@ -7271,7 +8576,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Create a new development store."
+      "summary": "Create a new dev store."
     },
     "store:create:preview": {
       "aliases": [
@@ -7303,6 +8608,13 @@
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "name": {
@@ -7347,8 +8659,8 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Deletes a development store from your organization.",
-      "descriptionWithMarkdown": "Deletes a development store from your organization.",
+      "description": "Deletes a dev store from your organization.",
+      "descriptionWithMarkdown": "Deletes a dev store from your organization.",
       "enableJsonFlag": false,
       "examples": [
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --organization-id 1234567",
@@ -7371,6 +8683,13 @@
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "no-color": {
@@ -7409,7 +8728,6 @@
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "store:delete",
@@ -7417,7 +8735,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Delete a development store."
+      "summary": "Delete a dev store."
     },
     "store:execute": {
       "aliases": [
@@ -7448,6 +8766,13 @@
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "no-color": {
@@ -7565,6 +8890,13 @@
           "name": "allow-mutations",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -7649,6 +8981,13 @@
           "name": "json",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -7697,6 +9036,7 @@
       "examples": [
         "<%= config.bin %> <%= command.id %>",
         "<%= config.bin %> <%= command.id %> --organization-id 1234567",
+        "<%= config.bin %> <%= command.id %> --type dev",
         "<%= config.bin %> <%= command.id %> --json"
       ],
       "flags": {
@@ -7707,6 +9047,13 @@
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "no-color": {
@@ -7723,6 +9070,20 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "organization-id",
+          "type": "option"
+        },
+        "type": {
+          "description": "List only stores of this type.",
+          "env": "SHOPIFY_FLAG_STORE_TYPE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "type",
+          "options": [
+            "dev",
+            "production",
+            "client-transfer",
+            "collaborator"
+          ],
           "type": "option"
         },
         "verbose": {
@@ -7756,6 +9117,13 @@
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com"
       ],
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -7814,6 +9182,13 @@
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "no-color": {
@@ -7944,6 +9319,13 @@
           "required": false,
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "list": {
           "allowNo": false,
           "description": "List enabled checks",
@@ -8049,6 +9431,13 @@
           "multiple": true,
           "name": "environment",
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -8166,6 +9555,13 @@
           "description": "Skip confirmation. Required if non interactive.",
           "env": "SHOPIFY_FLAG_FORCE",
           "name": "force",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "no-color": {
@@ -8320,6 +9716,13 @@
           "multiple": true,
           "name": "ignore",
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "listing": {
           "description": "The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.",
@@ -8536,6 +9939,13 @@
           "name": "json",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "name": {
           "char": "n",
           "description": "Name of the newly duplicated theme.",
@@ -8645,6 +10055,13 @@
           "name": "json",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -8743,6 +10160,13 @@
           "name": "clone-url",
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "latest": {
           "allowNo": false,
           "char": "l",
@@ -8806,6 +10230,13 @@
           "multiple": false,
           "name": "auth-alias",
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "no-color": {
           "allowNo": false,
@@ -8876,6 +10307,13 @@
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "name": {
@@ -8991,6 +10429,13 @@
           "name": "force",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -9088,6 +10533,13 @@
           "name": "environment",
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "live": {
           "allowNo": false,
           "char": "l",
@@ -9177,6 +10629,13 @@
           "name": "auth-alias",
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -9246,6 +10705,13 @@
           "description": "Output the preview URL and identifier as JSON.",
           "env": "SHOPIFY_FLAG_JSON",
           "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "no-color": {
@@ -9372,6 +10838,13 @@
           "name": "json",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -9489,6 +10962,13 @@
           "description": "Skip confirmation. Required if non interactive.",
           "env": "SHOPIFY_FLAG_FORCE",
           "name": "force",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
           "type": "boolean"
         },
         "no-color": {
@@ -9610,6 +11090,13 @@
           "multiple": true,
           "name": "ignore",
           "type": "option"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
         },
         "live": {
           "allowNo": false,
@@ -9793,6 +11280,13 @@
           "name": "json",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "listing": {
           "description": "The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.",
           "env": "SHOPIFY_FLAG_LISTING",
@@ -9960,6 +11454,13 @@
           "name": "environment",
           "type": "option"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "live": {
           "allowNo": false,
           "char": "l",
@@ -10086,6 +11587,13 @@
           "name": "force",
           "type": "boolean"
         },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
         "listing": {
           "description": "The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.",
           "env": "SHOPIFY_FLAG_LISTING",
@@ -10161,6 +11669,13 @@
       "descriptionWithMarkdown": "Upgrades Shopify CLI using your package manager.",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -10180,6 +11695,13 @@
       "description": "Shopify CLI version currently installed.",
       "enableJsonFlag": false,
       "flags": {
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
@@ -10191,5 +11713,5 @@
       "strict": true
     }
   },
-  "version": "4.7.0"
+  "version": "4.8.0"
 }

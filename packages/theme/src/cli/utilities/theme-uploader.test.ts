@@ -255,6 +255,8 @@ describe('theme-uploader', () => {
       {key: 'templates/index.liquid', checksum: '4'},
       {key: 'assets/liquid.liquid', checksum: '5'},
       {key: 'config/settings_data.json', checksum: '6'},
+      {key: 'config/styles.css', checksum: '9'},
+      {key: 'AGENTS.md', checksum: '10'},
       {key: 'assets/image.png', checksum: '7'},
       {key: 'layout/custom.liquid', checksum: '8'},
     ]
@@ -282,6 +284,8 @@ describe('theme-uploader', () => {
         'templates/index.liquid',
         'assets/liquid.liquid',
         'config/settings_data.json',
+        'config/styles.css',
+        'AGENTS.md',
         'assets/image.png',
       ],
       adminSession,
@@ -305,6 +309,8 @@ describe('theme-uploader', () => {
         ['templates/product.context.uk.json', {key: 'templates/product.context.uk.json', checksum: '8'}],
         ['blocks/block.liquid', {key: 'blocks/block.liquid', checksum: '9'}],
         ['layout/theme.liquid', {key: 'layout/theme.liquid', checksum: '10'}],
+        ['config/styles.css', {key: 'config/styles.css', checksum: '11', value: ':root { --color-primary: #000; }'}],
+        ['AGENTS.md', {key: 'AGENTS.md', checksum: '12', value: '# Theme instructions'}],
       ]),
     )
 
@@ -344,6 +350,14 @@ describe('theme-uploader', () => {
         },
         {
           key: 'assets/image.png',
+        },
+        {
+          key: 'config/styles.css',
+          value: ':root { --color-primary: #000; }',
+        },
+        {
+          key: 'AGENTS.md',
+          value: '# Theme instructions',
         },
       ],
       adminSession,

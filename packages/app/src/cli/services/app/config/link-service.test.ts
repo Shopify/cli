@@ -26,7 +26,14 @@ beforeEach(async () => {
   // Default mock for selectConfigName - tests that need a specific value can override
   vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
   vi.mocked(fetchOrganizations).mockResolvedValue([
-    {id: '12345', businessName: 'test', source: OrganizationSource.BusinessPlatform},
+    {
+      id: '12345',
+      businessName: 'test',
+      source: OrganizationSource.BusinessPlatform,
+      status: 'ACTIVE',
+      shopCount: 1,
+      url: 'https://admin.shopify.com/organization/12345',
+    },
   ])
 })
 

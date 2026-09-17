@@ -1,5 +1,7 @@
 import {appFlags} from '../../../flags.js'
-import versionList from '../../../services/versions-list.js'
+import {appVersionsListJsonOutputSchema} from '../../../services/versions-list/types.js'
+import {getAppVersions} from '../../../services/versions-list.js'
+import {renderAppVersionsListResult} from '../../../services/versions-list/result.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
@@ -9,7 +11,11 @@ export default class VersionsList extends AppLinkedCommand {
 
   static descriptionWithMarkdown = `Lists the deployed app versions. An app version is a snapshot of your app extensions.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static get jsonOutputSchema() {
+    return appVersionsListJsonOutputSchema
+  }
+
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
@@ -27,13 +33,18 @@ export default class VersionsList extends AppLinkedCommand {
       userProvidedConfigName: flags.config,
     })
 
-    await versionList({
-      app,
-      remoteApp,
-      organization,
-      developerPlatformClient,
-      json: flags.json,
-    })
+    const result = await getAppVersions(developerPlatformClient, remoteApp)
+
+    await renderAppVersionsListResult(
+      {
+        app,
+        remoteApp,
+        organization,
+        developerPlatformClient,
+        ...result,
+      },
+      flags.json ? 'json' : 'text',
+    )
 
     return {app}
   }

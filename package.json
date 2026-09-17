@@ -264,7 +264,8 @@
         "ignoreDependencies": [
           "@ast-grep/napi",
           "@shopify/theme-check-docs-updater",
-          "@shopify/theme-check-node"
+          "@shopify/theme-check-node",
+          "clipboardy"
         ],
         "vite": {
           "config": [

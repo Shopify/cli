@@ -1,4 +1,4 @@
-import {isDevelopment} from './context/local.js'
+import {isDevelopment, isUnitTest} from './context/local.js'
 import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI} from './is-global.js'
 import {checkForCachedNewVersion, packageManagerFromUserAgent, PackageManager} from './node-package-manager.js'
 import {exec, isCI} from './system.js'
@@ -10,8 +10,11 @@ import {
   versionToAutoUpgrade,
 } from './upgrade.js'
 import {Notification, fetchNotifications} from './notifications-system.js'
-import {isPreReleaseVersion} from './version.js'
+import {globalCLIVersion, isPreReleaseVersion} from './version.js'
+import {mockAndCaptureOutput} from './testing/output.js'
 import {getAutoUpgradeEnabled} from '../../private/node/conf-store.js'
+import {CLI_KIT_VERSION} from '../common/version.js'
+import {SemVer} from 'semver'
 import {vi, describe, test, expect, beforeEach} from 'vitest'
 
 vi.mock('./notifications-system.js', async (importOriginal) => {
@@ -31,6 +34,7 @@ vi.mock('./version.js', async (importOriginal) => {
   return {
     ...actual,
     isPreReleaseVersion: vi.fn(() => false),
+    globalCLIVersion: vi.fn(),
   }
 })
 
@@ -146,6 +150,12 @@ describe('runCLIUpgrade', () => {
   beforeEach(() => {
     // Mock isDevelopment to return false by default (not in CLI development mode)
     vi.mocked(isDevelopment).mockReturnValue(false)
+    // context/local.js is auto-mocked; restore isUnitTest so rendered banners are collected
+    // by mockAndCaptureOutput instead of printed to the real console.
+    vi.mocked(isUnitTest).mockReturnValue(true)
+    // By default the post-install verification finds the current version installed,
+    // which counts as success when no newer version was cached.
+    vi.mocked(globalCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
   })
 
   test('runs the install command via exec for a global npm install', async () => {
@@ -218,6 +228,68 @@ describe('runCLIUpgrade', () => {
 
     // Then
     expect(exec).not.toHaveBeenCalled()
+  })
+
+  test('reports the verified installed version on success', async () => {
+    // Given
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
+    vi.mocked(exec).mockResolvedValue()
+    vi.mocked(checkForCachedNewVersion).mockReturnValue('4.7.1')
+    vi.mocked(globalCLIVersion).mockResolvedValue('4.7.1')
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+
+    // When
+    await runCLIUpgrade()
+
+    // Then
+    expect(outputMock.info()).toContain("You're now on version 4.7.1")
+  })
+
+  test('throws when the install lands an older version than expected (e.g. a stale private registry)', async () => {
+    // Given
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
+    vi.mocked(exec).mockResolvedValue()
+    vi.mocked(checkForCachedNewVersion).mockReturnValue('4.7.1')
+    vi.mocked(globalCLIVersion).mockResolvedValue('3.94.3')
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+
+    // When/Then
+    await expect(runCLIUpgrade()).rejects.toThrow(
+      'Expected to be on version 4.7.1, but version 3.94.3 is now installed',
+    )
+    expect(outputMock.info()).not.toContain('Shopify CLI upgraded')
+  })
+
+  test('throws when the install leaves the CLI on the current version instead of the expected one', async () => {
+    // Given
+    // Derived from CLI_KIT_VERSION rather than hardcoded, so this keeps exercising the
+    // "the install was a no-op" branch after a release bumps the current version.
+    const expectedVersion = new SemVer(CLI_KIT_VERSION).inc('patch').version
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
+    vi.mocked(exec).mockResolvedValue()
+    vi.mocked(checkForCachedNewVersion).mockReturnValue(expectedVersion)
+    vi.mocked(globalCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
+
+    // When/Then
+    await expect(runCLIUpgrade()).rejects.toThrow(
+      `Expected to be on version ${expectedVersion}, but version ${CLI_KIT_VERSION} is now installed`,
+    )
+  })
+
+  test('throws when the installed version cannot be verified', async () => {
+    // Given
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
+    vi.mocked(exec).mockResolvedValue()
+    vi.mocked(globalCLIVersion).mockResolvedValue(undefined)
+
+    // When/Then
+    await expect(runCLIUpgrade()).rejects.toThrow("Couldn't verify the Shopify CLI version after upgrading")
   })
 })
 

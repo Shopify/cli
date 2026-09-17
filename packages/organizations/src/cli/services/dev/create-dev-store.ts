@@ -86,7 +86,7 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<st
   const userErrors = createAppDevelopmentStore.userErrors
   if (userErrors && userErrors.length > 0) {
     const messages = userErrors.map((error) => error.message).join(', ')
-    throw new AbortError(`Failed to create development store: ${messages}`)
+    throw new AbortError(`Failed to create dev store: ${messages}`)
   }
 
   const {shopDomain, shopAdminUrl} = createAppDevelopmentStore
@@ -167,7 +167,7 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<st
     pushRow(rows, 'Demo data', options.withDemoData ? 'enabled' : 'disabled')
 
     renderSuccess({
-      headline: `Development store "${name}" created successfully.`,
+      headline: `Dev store "${name}" created successfully.`,
       customSections: [{body: {tabularData: rows, firstColumnSubdued: true}}],
     })
   }

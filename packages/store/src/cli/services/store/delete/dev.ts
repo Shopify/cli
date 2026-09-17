@@ -54,7 +54,7 @@ export async function deleteDevStore(options: DeleteDevStoreOptions): Promise<vo
   const userErrors = deleteAppDevelopmentStore.userErrors
   if (userErrors && userErrors.length > 0) {
     const messages = userErrors.map((error) => error.message).join(', ')
-    throw new AbortError(`Failed to delete development store: ${messages}`)
+    throw new AbortError(`Failed to delete dev store: ${messages}`)
   }
   if (deleteAppDevelopmentStore.success === false) {
     throw new AbortError('Store deletion failed.')
@@ -75,12 +75,12 @@ export async function deleteDevStore(options: DeleteDevStoreOptions): Promise<vo
     outputResult(deletionResultJson({store, organization: org, deletionConfirmed}))
   } else if (deletionConfirmed) {
     renderSuccess({
-      headline: `Development store "${store}" deleted successfully.`,
+      headline: `Dev store "${store}" deleted successfully.`,
       body: ['The store was deleted.'],
     })
   } else {
     renderWarning({
-      headline: `Development store "${store}" deletion was requested, but not confirmed.`,
+      headline: `Dev store "${store}" deletion was requested, but not confirmed.`,
       body: [
         'Shopify accepted the deletion request, but deletion was not confirmed before the CLI stopped waiting.',
         'The store may still finish deleting asynchronously.',
@@ -113,7 +113,7 @@ async function waitForStoreDeletionConfirmation(options: StoreDeletionConfirmati
   const organizationsShopifyShopId = toOrganizationsShopifyShopId(options.shopifyShopId)
 
   return renderSingleTask({
-    title: outputContent`Development store deletion requested. Waiting for deletion confirmation`,
+    title: outputContent`Dev store deletion requested. Waiting for deletion confirmation`,
     task: async (updateStatus) => {
       const startTime = Date.now()
       while (true) {

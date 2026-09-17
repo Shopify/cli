@@ -6,6 +6,7 @@ import {ApplicationURLs} from '../services/dev/urls.js'
 import {
   devStoreNamePrompt as sharedDevStoreNamePrompt,
   devStorePlanPrompt as sharedDevStorePlanPrompt,
+  devStoreDemoDataPrompt as sharedDevStoreDemoDataPrompt,
 } from '@shopify/organizations'
 import {
   RenderAutocompleteOptions,
@@ -22,6 +23,10 @@ export function devStoreNamePrompt(): Promise<string> {
 
 export function devStorePlanPrompt(): Promise<DevStorePlan> {
   return sharedDevStorePlanPrompt()
+}
+
+export function devStoreDemoDataPrompt(): Promise<boolean> {
+  return sharedDevStoreDemoDataPrompt()
 }
 
 export async function selectAppPrompt(

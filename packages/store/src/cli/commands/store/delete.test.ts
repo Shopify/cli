@@ -80,7 +80,7 @@ describe('store delete command', () => {
     await StoreDelete.run(['--store', 'my-store.myshopify.com', '--organization-id', '12345'])
 
     expect(renderDangerousConfirmationPrompt).toHaveBeenCalledWith({
-      message: `Delete development store my-store.myshopify.com? This can't be undone.`,
+      message: `Delete dev store my-store.myshopify.com? This can't be undone.`,
       confirmation: 'my-store.myshopify.com',
     })
     expect(deleteDevStore).toHaveBeenCalled()
@@ -132,7 +132,7 @@ describe('store delete command', () => {
     const parsed = JSON.parse(call)
     expect(parsed).toEqual({
       error: true,
-      message: 'Deleting the development store my-store.myshopify.com requires confirmation.',
+      message: 'Deleting the dev store my-store.myshopify.com requires confirmation.',
       nextSteps: ['Use the `--force` flag to skip confirmation when running non-interactively.'],
       exitCode: 1,
     })

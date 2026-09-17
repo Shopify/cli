@@ -1,6 +1,6 @@
 {
   "name": "@shopify/cli",
-  "version": "4.7.0",
+  "version": "4.8.0",
   "packageManager": "pnpm@10.11.1",
   "private": false,
   "description": "A CLI tool to build for the Shopify platform",
@@ -53,6 +53,7 @@
   },
   "dependencies": {
     "@ast-grep/napi": "0.43.0",
+    "clipboardy": "4.0.0",
     "esbuild": "0.28.1",
     "global-agent": "3.0.0"
   },
@@ -60,13 +61,13 @@
     "@oclif/core": "4.8.3",
     "@oclif/plugin-commands": "4.1.60",
     "@oclif/plugin-plugins": "5.4.84",
-    "@shopify/app": "4.7.0",
-    "@shopify/store": "4.7.0",
-    "@shopify/cli-kit": "4.7.0",
-    "@shopify/plugin-cloudflare": "4.7.0",
-    "@shopify/plugin-did-you-mean": "4.7.0",
-    "@shopify/theme": "4.7.0",
-    "@shopify/cli-hydrogen": "13.0.3",
+    "@shopify/app": "4.8.0",
+    "@shopify/store": "4.8.0",
+    "@shopify/cli-kit": "4.8.0",
+    "@shopify/plugin-cloudflare": "4.8.0",
+    "@shopify/plugin-did-you-mean": "4.8.0",
+    "@shopify/theme": "4.8.0",
+    "@shopify/cli-hydrogen": "13.0.4",
     "@types/global-agent": "3.0.0",
     "@vitest/coverage-istanbul": "^3.2.7",
     "esbuild-plugin-copy": "^2.1.1"
@@ -127,6 +128,9 @@
       },
       "app:function": {
         "description": "Manage Shopify Functions."
+      },
+      "app:import": {
+        "description": "Import existing configuration into your app."
       },
       "auth": {
         "description": "Auth operations."

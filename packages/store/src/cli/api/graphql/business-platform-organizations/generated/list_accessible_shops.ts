@@ -5,6 +5,7 @@ import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/co
 
 export type ListAccessibleShopsQueryVariables = Types.Exact<{
   first: Types.Scalars['Int']['input']
+  filters?: Types.InputMaybe<Types.ShopFilterInput[] | Types.ShopFilterInput>
 }>
 
 export type ListAccessibleShopsQuery = {
@@ -18,6 +19,7 @@ export type ListAccessibleShopsQuery = {
           shopifyShopId?: string | null
           name: string
           storeType?: Types.Store | null
+          planName?: string | null
           primaryDomain?: string | null
           url?: string | null
           createdAt: unknown
@@ -40,6 +42,14 @@ export const ListAccessibleShops = {
           kind: 'VariableDefinition',
           variable: {kind: 'Variable', name: {kind: 'Name', value: 'first'}},
           type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'Int'}}},
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'filters'}},
+          type: {
+            kind: 'ListType',
+            type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'ShopFilterInput'}}},
+          },
         },
       ],
       selectionSet: {
@@ -70,31 +80,7 @@ export const ListAccessibleShops = {
                     {
                       kind: 'Argument',
                       name: {kind: 'Name', value: 'filters'},
-                      value: {
-                        kind: 'ListValue',
-                        values: [
-                          {
-                            kind: 'ObjectValue',
-                            fields: [
-                              {
-                                kind: 'ObjectField',
-                                name: {kind: 'Name', value: 'field'},
-                                value: {kind: 'EnumValue', value: 'STORE_STATUS'},
-                              },
-                              {
-                                kind: 'ObjectField',
-                                name: {kind: 'Name', value: 'operator'},
-                                value: {kind: 'EnumValue', value: 'EQUALS'},
-                              },
-                              {
-                                kind: 'ObjectField',
-                                name: {kind: 'Name', value: 'value'},
-                                value: {kind: 'StringValue', value: 'active', block: false},
-                              },
-                            ],
-                          },
-                        ],
-                      },
+                      value: {kind: 'Variable', name: {kind: 'Name', value: 'filters'}},
                     },
                   ],
                   selectionSet: {
@@ -116,6 +102,7 @@ export const ListAccessibleShops = {
                                   {kind: 'Field', name: {kind: 'Name', value: 'shopifyShopId'}},
                                   {kind: 'Field', name: {kind: 'Name', value: 'name'}},
                                   {kind: 'Field', name: {kind: 'Name', value: 'storeType'}},
+                                  {kind: 'Field', name: {kind: 'Name', value: 'planName'}},
                                   {kind: 'Field', name: {kind: 'Name', value: 'primaryDomain'}},
                                   {kind: 'Field', name: {kind: 'Name', value: 'url'}},
                                   {kind: 'Field', name: {kind: 'Name', value: 'createdAt'}},

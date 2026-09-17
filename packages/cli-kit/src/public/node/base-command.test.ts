@@ -1,13 +1,17 @@
 import Command from './base-command.js'
 import {Environments} from './environments.js'
 import {encodeToml as encodeTOML} from './toml/codec.js'
-import {globalFlags, requiredIfNonInteractive} from './cli.js'
+import {globalFlags, jsonFlag, requiredIfNonInteractive} from './cli.js'
+import {emitCommandEvent} from './command-events.js'
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
 import {joinPath, resolvePath, cwd} from './path.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {unstyled} from './output.js'
+import {defineJsonOutputSchema} from './json-output-schema.js'
+import {zod} from './schema.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {Flags} from '@oclif/core'
+import {Ajv} from 'ajv'
 
 let originalStdinIsTTY: boolean | undefined
 let originalStdoutIsTTY: boolean | undefined
@@ -25,6 +29,7 @@ beforeEach(() => {
 afterEach(() => {
   Object.defineProperty(process.stdin, 'isTTY', {value: originalStdinIsTTY, configurable: true, writable: true})
   Object.defineProperty(process.stdout, 'isTTY', {value: originalStdoutIsTTY, configurable: true, writable: true})
+  mockAndCaptureOutput().clear()
 })
 
 let testResult: Record<string, unknown> = {}
@@ -149,6 +154,29 @@ class MockCommandWithoutEnvironmentFlag extends Command {
   }
 }
 
+class MockCommandWithEvents extends Command {
+  static enableJsonFlag = true
+  static flags = {...jsonFlag}
+
+  async run(): Promise<void> {
+    await this.parse(MockCommandWithEvents)
+    emitCommandEvent({type: 'progress', operation: 'upload', status: 'updated', message: 'Command event'})
+  }
+}
+
+class MockCommandWithAlreadyRenderedEvent extends Command {
+  static enableJsonFlag = true
+  static flags = {...jsonFlag}
+
+  async run(): Promise<void> {
+    await this.parse(MockCommandWithAlreadyRenderedEvent)
+    emitCommandEvent(
+      {type: 'progress', operation: 'upload', status: 'updated', message: 'Displayed by task UI'},
+      {alreadyRendered: true},
+    )
+  }
+}
+
 const validEnvironment = {
   someString: 'stringy',
   someBoolean: true,
@@ -206,6 +234,111 @@ const allEnvironments: Environments = {
     environmentWithPassword,
   },
 }
+
+describe('command events', () => {
+  test('renders events for commands', async () => {
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+
+    await MockCommandWithEvents.run([])
+
+    expect(outputMock.info()).toContain('Command event')
+  })
+
+  test('renders events as JSON for JSON commands', async () => {
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+
+    await MockCommandWithEvents.run(['--json'])
+
+    expect(JSON.parse(outputMock.info())).toEqual({
+      type: 'progress',
+      operation: 'upload',
+      status: 'updated',
+      timestamp: expect.any(String),
+      message: 'Command event',
+    })
+  })
+
+  test('does not duplicate events already displayed by the text UI', async () => {
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+
+    await MockCommandWithAlreadyRenderedEvent.run([])
+
+    expect(outputMock.info()).toBe('')
+  })
+
+  test('renders UI-managed events as JSON without presentation details', async () => {
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+
+    await MockCommandWithAlreadyRenderedEvent.run(['--json'])
+
+    expect(JSON.parse(outputMock.info())).toEqual({
+      type: 'progress',
+      operation: 'upload',
+      status: 'updated',
+      timestamp: expect.any(String),
+      message: 'Displayed by task UI',
+    })
+  })
+})
+
+describe('command descriptions', () => {
+  test('preserves schema patterns that resemble Markdown links', () => {
+    class CommandWithPattern extends Command {
+      static get jsonOutputSchema() {
+        return defineJsonOutputSchema({name: 'Result', schema: zod.string().regex(/[a-z](value)/)})
+      }
+
+      public async run(): Promise<void> {}
+    }
+
+    const description = CommandWithPattern.descriptionForHelp()!
+    const schema = JSON.parse(description.match(/```json\n([\s\S]+)\n```/)![1]!)
+    expect(schema.pattern).toBe('[a-z](value)')
+  })
+
+  test('includes a JSON output schema without mutating the Markdown description', () => {
+    class CommandWithJsonOutput extends Command {
+      static get jsonOutputSchema() {
+        return defineJsonOutputSchema({
+          name: 'CommandResult',
+          schema: zod.object({value: zod.string()}),
+        })
+      }
+
+      static descriptionWithMarkdown = 'Returns a value. [Learn more](https://shopify.dev).'
+
+      static description = this.descriptionForHelp()
+
+      public async run(): Promise<void> {}
+    }
+
+    expect(CommandWithJsonOutput.description).toContain('Returns a value. "Learn more" (https://shopify.dev).')
+    expect(CommandWithJsonOutput.description).toContain(
+      'Use `--json-schema` to print the result, error, and event schemas.',
+    )
+    const helpSchema = JSON.parse(CommandWithJsonOutput.description!.match(/```json\n([\s\S]+)\n```/)![1]!)
+    expect(helpSchema).toEqual({
+      $schema: 'http://json-schema.org/draft-07/schema#',
+      title: 'CommandResult',
+      type: 'object',
+      properties: {value: {type: 'string'}},
+      required: ['value'],
+      additionalProperties: false,
+    })
+    const validate = new Ajv().compile(helpSchema)
+    expect(validate({value: 'ready'})).toBe(true)
+    expect(validate({value: 1})).toBe(false)
+    expect(CommandWithJsonOutput.descriptionWithMarkdown).toBe('Returns a value. [Learn more](https://shopify.dev).')
+
+    CommandWithJsonOutput.descriptionForHelp()
+    expect(CommandWithJsonOutput.descriptionWithMarkdown).toBe('Returns a value. [Learn more](https://shopify.dev).')
+    expect(CommandWithJsonOutput.descriptionWithoutMarkdown()).toBe(CommandWithJsonOutput.descriptionForHelp())
+  })
+})
 
 describe('applying environments', async () => {
   const runTestInTmpDir = (testName: string, testFunc: (tmpDir: string) => Promise<void>) => {

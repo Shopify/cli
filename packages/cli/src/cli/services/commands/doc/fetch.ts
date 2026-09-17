@@ -17,7 +17,7 @@ const SURFACE = 'cli'
 // hostname is one of these or a subdomain of one of these.
 const ALLOWED_HOSTS = ['shopify.dev']
 
-export async function docFetchService(url: string, outputPath?: string) {
+export async function docFetchService(url: string, outputPath?: string, language?: string) {
   let parsedURL: URL
   try {
     parsedURL = new URL(url)
@@ -31,7 +31,16 @@ export async function docFetchService(url: string, outputPath?: string) {
     throw new AbortError(`Only documents from the following hosts can be fetched: ${ALLOWED_HOSTS.join(', ')}.`)
   }
 
-  const response = await fetch(url, {headers: {Accept: MARKDOWN_CONTENT_TYPE, [SURFACE_HEADER]: SURFACE}})
+  // shopify.dev filters Markdown code examples when Accept-Language is a
+  // recognized programming-language key. Unrecognized values are ignored and
+  // the unfiltered document is returned.
+  const response = await fetch(url, {
+    headers: {
+      Accept: MARKDOWN_CONTENT_TYPE,
+      [SURFACE_HEADER]: SURFACE,
+      ...(language ? {'Accept-Language': language} : {}),
+    },
+  })
 
   if (!response.ok) {
     throw new AbortError(`Failed to fetch ${url}: ${response.status} ${response.statusText}`)

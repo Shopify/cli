@@ -10,12 +10,21 @@ const PLAN_LABELS: {[plan in DevStorePlan]: string} = {
 }
 
 export function devStoreNamePrompt(): Promise<string> {
-  return ui.renderTextPrompt({message: 'Name for the new development store'})
+  return ui.renderTextPrompt({message: 'Name for the new dev store'})
 }
 
 export function devStorePlanPrompt(): Promise<DevStorePlan> {
   return ui.renderSelectPrompt({
     message: 'Which Shopify plan do you want to use?',
     choices: devStorePlanHandles.map((handle) => ({label: PLAN_LABELS[handle], value: handle})),
+  })
+}
+
+export function devStoreDemoDataPrompt(): Promise<boolean> {
+  return ui.renderConfirmationPrompt({
+    message: 'Populate the store with demo data?',
+    confirmationMessage: 'Yes, add demo data',
+    cancellationMessage: 'No, start with an empty store',
+    defaultValue: true,
   })
 }

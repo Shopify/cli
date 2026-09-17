@@ -44,7 +44,7 @@ Sample JSON output:
 }
 \`\`\``
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,

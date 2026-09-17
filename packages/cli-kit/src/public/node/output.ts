@@ -20,6 +20,7 @@ import {
   SubHeadingContentToken,
 } from '../../private/node/content-tokens.js'
 import {tokenItemToString} from '../../private/node/ui/components/token-item.js'
+import {commandEventOutputMode, emitCommandEvent} from '../../private/node/command-event-context.js'
 import {consoleLog, consoleWarn, output} from '../../private/node/output.js'
 import stripAnsi from 'strip-ansi'
 import {Writable} from 'stream'
@@ -256,6 +257,21 @@ export function outputResult(content: OutputMessage): void {
 }
 
 /**
+ * Waits for queued stdout writes to reach their destination before the process exits.
+ *
+ * @returns A promise that resolves when stdout has flushed.
+ */
+export async function flushStdout(): Promise<void> {
+  // An empty write completes after the preceding writes, including those queued for a pipe.
+  await new Promise<void>((resolve, reject) => {
+    process.stdout.write('', (error) => {
+      if (error) reject(error)
+      else resolve()
+    })
+  })
+}
+
+/**
  * Logs information at the info level.
  * Info messages don't get additional formatting.
  * Note: By default, info messages are sent through the standard error.
@@ -264,6 +280,8 @@ export function outputResult(content: OutputMessage): void {
  * @param logger - The logging function to use to output to the user.
  */
 export function outputInfo(content: OutputMessage, logger: Logger = consoleWarn): void {
+  if (emitJsonDiagnostic(content, 'info', logger)) return
+
   const message = stringifyMessage(content)
   if (isUnitTest()) collectLog('info', content)
   outputWhereAppropriate('info', logger, message)
@@ -278,6 +296,8 @@ export function outputInfo(content: OutputMessage, logger: Logger = consoleWarn)
  * @param logger - The logging function to use to output to the user.
  */
 export function outputSuccess(content: OutputMessage, logger: Logger = consoleWarn): void {
+  if (emitJsonDiagnostic(content, 'info', logger)) return
+
   const message = colors.bold(`✅ Success! ${stringifyMessage(content)}.`)
   if (isUnitTest()) collectLog('success', content)
   outputWhereAppropriate('info', logger, message)
@@ -292,6 +312,8 @@ export function outputSuccess(content: OutputMessage, logger: Logger = consoleWa
  * @param logger - The logging function to use to output to the user.
  */
 export function outputCompleted(content: OutputMessage, logger: Logger = consoleWarn): void {
+  if (emitJsonDiagnostic(content, 'info', logger)) return
+
   const message = `${colors.green('✔')} ${stringifyMessage(content)}`
   if (isUnitTest()) collectLog('completed', content)
   outputWhereAppropriate('info', logger, message)
@@ -306,6 +328,8 @@ export function outputCompleted(content: OutputMessage, logger: Logger = console
  * @param logger - The logging function to use to output to the user.
  */
 export function outputDebug(content: OutputMessage, logger: Logger = consoleWarn): void {
+  if (emitJsonDiagnostic(content, 'debug', logger)) return
+
   if (isUnitTest()) collectLog('debug', content)
   if (!shouldOutput('debug')) return
 
@@ -322,6 +346,8 @@ export function outputDebug(content: OutputMessage, logger: Logger = consoleWarn
  * @param logger - The logging function to use to output to the user.
  */
 export function outputWarn(content: OutputMessage, logger: Logger = consoleWarn): void {
+  if (emitJsonDiagnostic(content, 'warning', logger)) return
+
   if (isUnitTest()) collectLog('warn', content)
   const message = colors.yellow(stringifyMessage(content))
   outputWhereAppropriate('warn', logger, message)
@@ -331,6 +357,7 @@ export function outputWarn(content: OutputMessage, logger: Logger = consoleWarn)
  * Prints a new line in the terminal.
  */
 export function outputNewline(): void {
+  if (commandEventOutputMode() === 'json') return
   consoleWarn('')
 }
 
@@ -401,6 +428,17 @@ export function unstyled(message: string): string {
   if (!message.includes('\u001b')) return message
 
   return stripAnsi(message)
+}
+
+function emitJsonDiagnostic(content: OutputMessage, level: 'debug' | 'info' | 'warning', logger: Logger): boolean {
+  if (logger !== consoleWarn || commandEventOutputMode() !== 'json') return false
+  if (level === 'debug' && !isUnitTest() && !shouldOutput('debug')) return true
+
+  const message = unstyled(stringifyMessage(content))
+  if (message.trim().length > 0) {
+    emitCommandEvent({type: 'diagnostic', level, message})
+  }
+  return true
 }
 
 /**

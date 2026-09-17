@@ -1,5 +1,5 @@
 import {ListOrganizations} from '../api/graphql/business-platform-destinations/generated/organizations.js'
-import {Organization} from '../models/organization.js'
+import {Organization, OrganizationWithDetails} from '../models/organization.js'
 import {businessPlatformRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -10,14 +10,23 @@ interface FetchOrganizationsWithAccessInfoResult {
   currentUserResolved: boolean
 }
 
-export async function fetchOrganizations(): Promise<Organization[]> {
-  const result = await fetchOrganizationsWithAccessInfo()
+interface FetchOrganizationsWithDetailsResult {
+  organizations: OrganizationWithDetails[]
+  currentUserResolved: boolean
+}
+
+export async function fetchOrganizations(): Promise<OrganizationWithDetails[]> {
+  const result = await fetchOrganizationsWithDetails()
   return result.organizations
 }
 
 export async function fetchOrganizationsWithAccessInfo(
   token?: string,
 ): Promise<FetchOrganizationsWithAccessInfoResult> {
+  return fetchOrganizationsWithDetails(token)
+}
+
+async function fetchOrganizationsWithDetails(token?: string): Promise<FetchOrganizationsWithDetailsResult> {
   const resolvedToken = token ?? (await ensureAuthenticatedBusinessPlatform())
   const unauthorizedHandler = {
     type: 'token_refresh' as const,
@@ -42,7 +51,13 @@ export async function fetchOrganizationsWithAccessInfo(
     if (id === undefined) {
       throw new AbortError(`Failed to decode organization ID from: ${org.id}`)
     }
-    return {id, businessName: org.name}
+    return {
+      id,
+      businessName: org.name,
+      status: org.status,
+      shopCount: org.shopCount ?? null,
+      url: org.url,
+    }
   })
 
   return {

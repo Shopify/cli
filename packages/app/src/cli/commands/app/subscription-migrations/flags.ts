@@ -1,4 +1,5 @@
 import {appFlags} from '../../../flags.js'
+import {MIGRATABLE_SUBSCRIPTION_STATUSES} from '../../../models/subscription-migrations.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 
@@ -24,6 +25,15 @@ const statusWatchFlag = {
     env: 'SHOPIFY_FLAG_WATCH',
     default: false,
   }),
+}
+
+export const listFlags = {
+  ...sharedFlags,
+  status: Flags.option({
+    description: 'Filter subscriptions by migration status.',
+    env: 'SHOPIFY_FLAG_STATUS',
+    options: [...MIGRATABLE_SUBSCRIPTION_STATUSES],
+  })(),
 }
 
 export const submissionFlags = {

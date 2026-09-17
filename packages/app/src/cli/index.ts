@@ -7,6 +7,9 @@ import ConfigPull from './commands/app/config/pull.js'
 import DemoWatcher from './commands/app/demo/watcher.js'
 import Deploy from './commands/app/deploy.js'
 import Dev from './commands/app/dev.js'
+import DoctorInstructions from './commands/app/doctor/instructions.js'
+import DoctorSubmit from './commands/app/doctor/submit.js'
+import Doctor from './commands/app/doctor.js'
 import Logs from './commands/app/logs.js'
 import Sources from './commands/app/app-logs/sources.js'
 import EnvPull from './commands/app/env/pull.js'
@@ -21,11 +24,13 @@ import FetchSchema from './commands/app/function/schema.js'
 import FunctionTypegen from './commands/app/function/typegen.js'
 import AppGenerateExtension from './commands/app/generate/extension.js'
 import ImportExtensions from './commands/app/import-extensions.js'
+import ImportDashboardExtensions from './commands/app/import/dashboard-extensions.js'
 import AppInfo from './commands/app/info.js'
 import Init from './commands/app/init.js'
 import ConfigValidate from './commands/app/config/validate.js'
 import Release from './commands/app/release.js'
 import SubscriptionMigrationsCancel from './commands/app/subscription-migrations/cancel.js'
+import SubscriptionMigrationsList from './commands/app/subscription-migrations/list.js'
 import SubscriptionMigrationsSchedule from './commands/app/subscription-migrations/schedule.js'
 import SubscriptionMigrationsStatus from './commands/app/subscription-migrations/status.js'
 import SubscriptionMigrationsUnschedule from './commands/app/subscription-migrations/unschedule.js'
@@ -37,7 +42,8 @@ import AppLinkedCommand from './utilities/app-linked-command.js'
 import DevClean from './commands/app/dev/clean.js'
 import AppUnlinkedCommand from './utilities/app-unlinked-command.js'
 import FunctionInfo from './commands/app/function/info.js'
-import ImportCustomDataDefinitions from './commands/app/import-custom-data-definitions.js'
+import ImportCustomDataDefinitions from './commands/app/import/custom-data-definitions.js'
+import ImportCustomDataDefinitionsDeprecated from './commands/app/import-custom-data-definitions.js'
 import OrganizationList from './commands/organization/list.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 
@@ -52,15 +58,22 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:deploy': Deploy,
   'app:dev': Dev,
   'app:dev:clean': DevClean,
+  'app:doctor:instructions': DoctorInstructions,
+  'app:doctor:submit': DoctorSubmit,
+  'app:doctor': Doctor,
   'app:logs': Logs,
   'app:logs:sources': Sources,
-  'app:import-custom-data-definitions': ImportCustomDataDefinitions,
+  'app:import:custom-data-definitions': ImportCustomDataDefinitions,
+  'app:import:dashboard-extensions': ImportDashboardExtensions,
+  // Deprecated paths, kept registered (and hidden) so existing scripts keep working.
+  'app:import-custom-data-definitions': ImportCustomDataDefinitionsDeprecated,
   'app:import-extensions': ImportExtensions,
   'app:info': AppInfo,
   'app:init': Init,
   'app:config:validate': ConfigValidate,
   'app:release': Release,
   'app:subscription-migrations:cancel': SubscriptionMigrationsCancel,
+  'app:subscription-migrations:list': SubscriptionMigrationsList,
   'app:subscription-migrations:schedule': SubscriptionMigrationsSchedule,
   'app:subscription-migrations:status': SubscriptionMigrationsStatus,
   'app:subscription-migrations:unschedule': SubscriptionMigrationsUnschedule,
