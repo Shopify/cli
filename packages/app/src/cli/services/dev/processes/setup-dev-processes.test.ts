@@ -349,7 +349,7 @@ describe('setup-dev-processes', () => {
     expect(res.graphiqlUrl).toBe(`http://localhost:${graphiqlPort}/graphiql?key=${encodeURIComponent(expectedKey)}`)
   })
 
-  test('process list includes dev-session', async () => {
+  test.each([false, true])('process list includes dev-session with unsafe=%s', async (unsafe) => {
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
     const storeFqdn = 'store.myshopify.io'
     const storeId = '123456789'
@@ -359,6 +359,7 @@ describe('setup-dev-processes', () => {
       ...appContextResult,
       directory: '',
       update: false,
+      unsafe,
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
@@ -413,6 +414,7 @@ describe('setup-dev-processes', () => {
         appId: '1234',
         organizationId: '5678',
         storeFqdn: 'store.myshopify.io',
+        unsafe,
       },
     })
   })

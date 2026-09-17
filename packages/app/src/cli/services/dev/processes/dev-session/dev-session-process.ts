@@ -16,6 +16,7 @@ export interface DevSessionProcessOptions {
   appWatcher: AppEventWatcher
   appPreviewURL: string
   devSessionStatusManager: DevSessionStatusManager
+  unsafe?: boolean
 }
 
 export interface DevSessionProcess extends BaseProcess<DevSessionProcessOptions> {

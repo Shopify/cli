@@ -308,6 +308,7 @@ export class DevSession {
           assetsUrl: signedURL,
           manifest,
           inheritedModuleUids,
+          unsafe: this.options.unsafe ?? false,
         }
         return this.devSessionUpdateWithRetry(payload)
       } else {
@@ -316,6 +317,7 @@ export class DevSession {
           appId: this.options.appId,
           assetsUrl: signedURL,
           websocketUrl,
+          unsafe: this.options.unsafe ?? false,
         }
         return this.devSessionCreateWithRetry(payload)
       }
@@ -429,6 +431,7 @@ export class DevSession {
   private async devSessionUpdateWithRetry(payload: DevSessionUpdateOptions): Promise<DevSessionResult> {
     const result = await this.options.developerPlatformClient.devSessionUpdate(payload)
     const errors = result.devSessionUpdate?.userErrors ?? []
+    const warnings = result.devSessionUpdate?.warnings ?? []
     const devSession = result.devSessionUpdate?.devSession
 
     // Check for session takeover
@@ -459,6 +462,8 @@ export class DevSession {
       }
     }
 
+    if (warnings.length > 0) await this.logWarnings(warnings)
+
     if (errors.length) return {status: 'remote-error', error: errors}
     return {status: 'updated'}
   }
@@ -484,19 +489,20 @@ export class DevSession {
       }
     }
 
-    // Display warnings (non-blocking)
-    if (warnings.length > 0) {
-      await Promise.all(
-        warnings.map((warning) => {
-          const message = warning.code === 'SESSION_TAKEOVER' ? `⚠️  ${warning.message}` : warning.message
-          return this.logger.warning(message)
-        }),
-      )
-    }
+    if (warnings.length > 0) await this.logWarnings(warnings)
 
     // Errors are blocking
     if (errors.length) return {status: 'remote-error', error: errors}
 
     return {status: 'created'}
+  }
+
+  private async logWarnings(warnings: {message: string; code: string}[]): Promise<void> {
+    await Promise.all(
+      warnings.map((warning) => {
+        const message = warning.code === 'SESSION_TAKEOVER' ? `⚠️  ${warning.message}` : warning.message
+        return this.logger.warning(message)
+      }),
+    )
   }
 }

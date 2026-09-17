@@ -695,7 +695,7 @@ USAGE
     [--install-mkcert --use-localhost] [--json-schema] [--localhost-port <value>] [--no-color] [--no-update] [--notify
     <value>] [--path <value>] [--reset | ] [--skip-dependencies-installation] [-s <value>] [--store-password <value>]
     [--subscription-product-url <value>] [-t <value>] [--theme-app-extension-port <value>] [--tunnel-url <value> | ]
-    [--verbose]
+    [--unsafe-validation] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -774,6 +774,10 @@ FLAGS
   --tunnel-url=<value>
       Use a custom tunnel, it must be running before executing dev. Format: "https://my-tunnel-url:port".
       [env: SHOPIFY_FLAG_TUNNEL_URL]
+
+  --unsafe-validation
+      Allow unsafe app version validation during dev previews.
+      [env: SHOPIFY_FLAG_UNSAFE_VALIDATION]
 
   --use-localhost
       Service entry point will listen to localhost. A tunnel won't be used. Will work for testing many app features, but
