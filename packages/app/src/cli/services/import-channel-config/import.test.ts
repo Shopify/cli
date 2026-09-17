@@ -21,13 +21,14 @@ function successResult(warnings: {code: string; message: string}[] = []) {
   }
 }
 
-function testOptions(app: AppLinkedInterface, {stdout = false, overwrite = false} = {}) {
+function testOptions(app: AppLinkedInterface, {stdout = false, overwrite = false, json = false} = {}) {
   return {
     app,
     remoteApp: testOrganizationApp(),
     developerPlatformClient: testDeveloperPlatformClient(),
     stdout,
     overwrite,
+    json,
   }
 }
 
@@ -150,6 +151,32 @@ describe('importChannelConfig', () => {
 
       // When/Then
       await expect(importChannelConfig(testOptions(app))).rejects.toThrow(/mystery_reason/)
+    })
+  })
+
+  test('emits the encoded JSON result and still writes the file in --json mode', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const warning = {code: 'missing_countries', message: 'Add a countries section.'}
+      vi.mocked(fetchChannelSpecExport).mockResolvedValue(successResult([warning]))
+      const app = testAppLinked({directory: tmpDir})
+      const outputMock = mockAndCaptureOutput()
+      outputMock.clear()
+
+      // When
+      await importChannelConfig(testOptions(app, {json: true}))
+
+      // Then
+      const outputPath = joinPath(tmpDir, CHANNEL_SPEC_DIRECTORY, 'example.toml')
+      await expect(fileExists(outputPath)).resolves.toBe(true)
+      const parsed = JSON.parse(outputMock.info())
+      expect(parsed).toEqual({
+        handle: 'example',
+        filename: 'example.toml',
+        path: joinPath(CHANNEL_SPEC_DIRECTORY, 'example.toml'),
+        toml: TOML,
+        warnings: [warning],
+      })
     })
   })
 

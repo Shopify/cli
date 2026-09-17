@@ -1520,12 +1520,16 @@ Import the Shopify-authored default channel spec as a channel_config TOML file.
 ```
 USAGE
   $ shopify app import channel-config [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--overwrite] [--path <value>] [--reset | ] [--stdout] [--verbose]
+    [--overwrite] [--path <value>] [--reset | ] [--stdout | -j] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -1572,6 +1576,64 @@ DESCRIPTION
 
   The generated TOML file contains only public `channel_config` fields. Review it, commit it to your app, then deploy it
   with `shopify app deploy`. This command never deploys the spec itself.
+
+  Output from `--json` conforms to the `ImportChannelConfigResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "handle": {
+        "type": "string"
+      },
+      "filename": {
+        "type": "string"
+      },
+      "path": {
+        "type": "string"
+      },
+      "toml": {
+        "type": "string"
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ChannelSpecExportWarning"
+        }
+      }
+    },
+    "required": [
+      "handle",
+      "filename",
+      "path",
+      "toml",
+      "warnings"
+    ],
+    "additionalProperties": false,
+    "title": "ImportChannelConfigResult",
+    "definitions": {
+      "ChannelSpecExportWarning": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app import custom-data-definitions`

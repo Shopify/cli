@@ -1,4 +1,5 @@
 import {fetchChannelSpecExport} from './fetch.js'
+import {importChannelConfigJsonOutputSchema} from './types.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
@@ -36,6 +37,7 @@ interface ImportChannelConfigOptions {
   developerPlatformClient: DeveloperPlatformClient
   stdout: boolean
   overwrite: boolean
+  json: boolean
 }
 
 /**
@@ -47,7 +49,7 @@ interface ImportChannelConfigOptions {
  * This command never deploys; the partner reviews the generated file and runs `shopify app deploy`.
  */
 export async function importChannelConfig(options: ImportChannelConfigOptions): Promise<void> {
-  const {app, remoteApp, developerPlatformClient, stdout, overwrite} = options
+  const {app, remoteApp, developerPlatformClient, stdout, overwrite, json} = options
 
   const result = await fetchChannelSpecExport({remoteApp, developerPlatformClient})
 
@@ -77,6 +79,20 @@ export async function importChannelConfig(options: ImportChannelConfigOptions): 
   await mkdir(dirname(outputPath))
   await writeFile(outputPath, result.toml)
   const createdExtensionConfig = await ensureExtensionConfig(app.directory)
+
+  if (json) {
+    // Warnings are part of the JSON result rather than out-of-band stderr text.
+    outputResult(
+      importChannelConfigJsonOutputSchema.encode({
+        handle: result.handle,
+        filename: basename(result.filename),
+        path: relativePath(app.directory, outputPath),
+        toml: result.toml,
+        warnings: result.warnings,
+      }),
+    )
+    return
+  }
 
   result.warnings.forEach((warning) => renderWarning({body: warning.message}))
 
