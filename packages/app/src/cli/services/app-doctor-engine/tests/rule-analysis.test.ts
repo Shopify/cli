@@ -35,6 +35,7 @@ function context(
     extensions: [],
     sourceFiles: input.files ?? [],
     manifests: [],
+    dependencyAutomation: {files: []},
     sensitiveFiles: [],
     capabilities: {
       theme_app_extension: false,

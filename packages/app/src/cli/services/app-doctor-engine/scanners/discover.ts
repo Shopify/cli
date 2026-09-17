@@ -1,14 +1,33 @@
+import {DEPENDENCY_AUTOMATION_CONFIG_PATHS} from '../rules/dependency-automation-rules.js'
 import {APP_CONFIG_FILE_GLOB, isValidFormatAppConfigurationFileName} from '../../../models/app/config-file-naming.js'
 import {AppAccessScopesSchema, AppAuthSchema} from '../../../models/extensions/specifications/app_config_app_access.js'
 import {WebhookSubscriptionSchema} from '../../../models/extensions/specifications/app_config_webhook_schemas/webhook_subscription_schema.js'
 import {removeTrailingSlash} from '../../../models/extensions/specifications/validation/common.js'
 import {fileExistsSync, fileSizeSync, globSync, readFileSync} from '@shopify/cli-kit/node/fs'
-import {basename, cwd, dirname, extname, joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {
+  basename,
+  cwd,
+  dirname,
+  extname,
+  isAbsolutePath,
+  isSubpath,
+  joinPath,
+  normalizePath as normalizeCliPath,
+  relativePath,
+  resolvePath,
+} from '@shopify/cli-kit/node/path'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {decodeToml} from '@shopify/cli-kit/node/toml/codec'
-import {lstatSync} from 'node:fs'
+import {lstatSync, realpathSync} from 'node:fs'
 import type {SourceCandidate} from '../types.js'
-import type {AppTomlContent, ExtensionInfo, SourceFile, ManifestFile, WebhookSubscription} from './types.js'
+import type {
+  AppTomlContent,
+  DependencyAutomationInputs,
+  ExtensionInfo,
+  SourceFile,
+  ManifestFile,
+  WebhookSubscription,
+} from './types.js'
 
 /** Expected user error while locating a Shopify app root. */
 export class AppRootDiscoveryError extends Error {
@@ -412,13 +431,141 @@ function readBoundedFile(path: string): RepositoryReadResult {
   }
 }
 
+function repositoryPathFailure(detail: string): RepositoryReadFailure {
+  return {ok: false, reason: 'unreadable', detail}
+}
+
+type InspectedPath = {status: 'missing'} | {status: 'file'; path: string} | {status: 'unresolved'; reason: string}
+
+function isMissingFilesystemEntry(error: unknown): boolean {
+  return error instanceof Error && 'code' in error && (error.code === 'ENOENT' || error.code === 'ENOTDIR')
+}
+
+function inspectErrorReason(target: string, error: unknown): string {
+  const code = error instanceof Error && 'code' in error && typeof error.code === 'string' ? error.code : undefined
+  return code ? `Could not inspect ${target} (${code})` : `Could not inspect ${target}`
+}
+
+function repositoryDisplayPath(appRoot: string, path: string): string {
+  const relative = normalizeCliPath(relativePath(appRoot, path))
+  if (
+    relative.length === 0 ||
+    relative === '.' ||
+    relative === '..' ||
+    relative.startsWith('../') ||
+    isAbsolutePath(relative)
+  ) {
+    return 'path'
+  }
+  return relative
+}
+
+/**
+ * Resolve a repository path while preserving the difference between absence
+ * and an unsafe or unreadable entry. Existing files take a single realpath;
+ * prefix walking runs only after ENOENT/ENOTDIR so optional allowlist paths
+ * can distinguish ordinary absence from a dangling or escaping intermediate.
+ */
+function inspectRepositoryPath(appRoot: string, path: string): InspectedPath {
+  const absoluteRoot = resolvePath(appRoot)
+  const absolutePath = resolvePath(absoluteRoot, path)
+  const display = repositoryDisplayPath(absoluteRoot, absolutePath)
+  if (!isSubpath(absoluteRoot, absolutePath)) {
+    return {status: 'unresolved', reason: `${display} escapes the app root`}
+  }
+
+  let canonicalRoot: string
+  try {
+    canonicalRoot = realpathSync(absoluteRoot)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    return {status: 'unresolved', reason: inspectErrorReason('app root', error)}
+  }
+
+  const segments = normalizeCliPath(relativePath(absoluteRoot, absolutePath))
+    .split('/')
+    .filter((segment) => segment.length > 0 && segment !== '.')
+  if (segments.includes('..')) return {status: 'unresolved', reason: `${display} escapes the app root`}
+  if (segments.length === 0) return {status: 'unresolved', reason: `${display} is not a file`}
+
+  try {
+    const canonicalPath = realpathSync(absolutePath)
+    if (!isSubpath(canonicalRoot, canonicalPath)) {
+      return {status: 'unresolved', reason: `${display} resolves outside the app root`}
+    }
+    if (!lstatSync(canonicalPath).isFile()) {
+      return {status: 'unresolved', reason: `${display} is not a file`}
+    }
+    return {status: 'file', path: canonicalPath}
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    if (isMissingFilesystemEntry(error)) {
+      return inspectMissingRepositoryPath(canonicalRoot, segments, display)
+    }
+    return {status: 'unresolved', reason: inspectErrorReason(display, error)}
+  }
+}
+
+function inspectMissingRepositoryPath(canonicalRoot: string, segments: string[], display: string): InspectedPath {
+  let currentPath = canonicalRoot
+  for (const [index, segment] of segments.entries()) {
+    currentPath = joinPath(currentPath, segment)
+    try {
+      lstatSync(currentPath)
+      const canonicalPath = realpathSync(currentPath)
+      if (!isSubpath(canonicalRoot, canonicalPath)) {
+        return {status: 'unresolved', reason: `${display} resolves outside the app root`}
+      }
+
+      const stats = lstatSync(canonicalPath)
+      const isLastSegment = index === segments.length - 1
+      if (isLastSegment) {
+        if (!stats.isFile()) return {status: 'unresolved', reason: `${display} is not a file`}
+      } else if (!stats.isDirectory()) {
+        return {status: 'unresolved', reason: `${display} contains an entry that is not a directory`}
+      }
+      currentPath = canonicalPath
+      // Discovery must distinguish a missing optional allowlist entry from an
+      // entry that exists but cannot be inspected safely.
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      if (isMissingFilesystemEntry(error)) {
+        // lstat succeeds for a dangling link, so ENOENT from realpath is an
+        // unsafe existing entry rather than ordinary allowlist absence.
+        try {
+          if (lstatSync(currentPath).isSymbolicLink()) {
+            return {status: 'unresolved', reason: `${display} contains a dangling symbolic link`}
+          }
+          // eslint-disable-next-line no-catch-all/no-catch-all
+        } catch {
+          return {status: 'missing'}
+        }
+        return {status: 'missing'}
+      }
+      return {status: 'unresolved', reason: inspectErrorReason(display, error)}
+    }
+  }
+
+  return {status: 'file', path: currentPath}
+}
+
+function containedRepositoryPath(appRoot: string, path: string): {path?: string; failure?: RepositoryReadFailure} {
+  const inspected = inspectRepositoryPath(appRoot, path)
+  if (inspected.status === 'file') return {path: inspected.path}
+  if (inspected.status === 'missing') return {failure: repositoryPathFailure('path does not exist')}
+  return {failure: repositoryPathFailure(inspected.reason)}
+}
+
 function readRepositoryFile(appRoot: string, path: string): RepositoryReadResult {
+  const absoluteRoot = resolvePath(appRoot)
   const absolutePath = resolvePath(path)
-  const cached = repositoryFileCache.get(absolutePath)
+  const cacheKey = `${absoluteRoot}\0${absolutePath}`
+  const cached = repositoryFileCache.get(cacheKey)
   if (cached) return cached
 
-  const result = readBoundedFile(absolutePath)
-  repositoryFileCache.set(absolutePath, result)
+  const containedPath = containedRepositoryPath(absoluteRoot, absolutePath)
+  const result = containedPath.path ? readBoundedFile(containedPath.path) : containedPath.failure!
+  repositoryFileCache.set(cacheKey, result)
   if (!result.ok) recordSkippedFile(appRoot, path, result)
   return result
 }
@@ -599,6 +746,95 @@ export function findSensitiveFiles(appRoot: string): SourceFile[] {
   })
 }
 
+function nestedRepositoryReason(appRoot: string): string | undefined {
+  try {
+    const stats = lstatSync(joinPath(appRoot, '.git'))
+    if (stats.isDirectory() || stats.isFile()) return undefined
+    // A root marker establishes the app's repository boundary only when it is
+    // a directory or worktree file. Never follow ambiguous marker entries.
+    return 'Could not determine repository ownership from .git'
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    if (!isMissingFilesystemEntry(error)) return inspectErrorReason('.git', error)
+  }
+
+  let ancestor = dirname(appRoot)
+  while (true) {
+    try {
+      const stats = lstatSync(joinPath(ancestor, '.git'))
+      if (stats.isDirectory() || stats.isFile()) {
+        return 'App root is nested below a parent Git repository'
+      }
+      // A symlink or special file is not a supported repository marker, but
+      // treating it as absent would make repository ownership ambiguous.
+      return 'Could not determine repository ownership from .git'
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      if (!isMissingFilesystemEntry(error)) return inspectErrorReason('.git', error)
+    }
+
+    const parent = dirname(ancestor)
+    if (parent === ancestor) return undefined
+    ancestor = parent
+  }
+}
+
+function recordRejectedAllowlistPath(appRoot: string, relative: string, failure: RepositoryReadFailure): void {
+  recordSkippedFile(appRoot, resolvePath(appRoot, relative), failure)
+}
+
+/** Read local bot configuration only; hosted integrations and CI workflows are outside this check's scope. */
+export function findDependencyAutomationInputs(appRoot: string): DependencyAutomationInputs {
+  let canonicalRoot: string
+  try {
+    canonicalRoot = realpathSync(resolvePath(appRoot))
+    if (!lstatSync(canonicalRoot).isDirectory()) {
+      return {files: [], unresolvedReason: 'App root is not a directory'}
+    }
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    return {files: [], unresolvedReason: inspectErrorReason('app root', error)}
+  }
+
+  const repositoryReason = nestedRepositoryReason(canonicalRoot)
+  if (repositoryReason) return {files: [], unresolvedReason: repositoryReason}
+
+  const files: SourceFile[] = []
+  let unresolvedReason: string | undefined
+  for (const relative of DEPENDENCY_AUTOMATION_CONFIG_PATHS) {
+    const inspected = inspectRepositoryPath(canonicalRoot, relative)
+    if (inspected.status === 'missing') continue
+    if (inspected.status === 'unresolved') {
+      recordRejectedAllowlistPath(canonicalRoot, relative, {
+        ok: false,
+        reason: 'unreadable',
+        detail: inspected.reason,
+      })
+      unresolvedReason ??= inspected.reason
+      continue
+    }
+
+    const absolutePath = resolvePath(canonicalRoot, relative)
+    const result = readBoundedFile(inspected.path)
+    if (!result.ok) {
+      recordRejectedAllowlistPath(canonicalRoot, relative, result)
+      unresolvedReason ??=
+        result.reason === 'too_large' ? `${relative} is too large to inspect` : `Could not read ${relative}`
+      continue
+    }
+
+    files.push({
+      path: relative,
+      absolutePath,
+      ext: extname(relative),
+      content: result.content.toString(),
+    })
+    // One safely inspected configuration file is enough for this presence-only check.
+    break
+  }
+  return files.length > 0 ? {files} : {files, ...(unresolvedReason ? {unresolvedReason} : {})}
+}
+
 /** Find JavaScript package manifests. Dependency analysis intentionally supports JavaScript only. */
 export function findManifestPaths(appRoot: string): string[] {
   const paths = globSync(['**/package.json'], {
@@ -612,6 +848,11 @@ export function findManifestPaths(appRoot: string): string[] {
   return [...new Set(paths)].sort()
 }
 
+const PackageManifestSchema = zod.object({
+  dependencies: zod.record(zod.string()).optional(),
+  devDependencies: zod.record(zod.string()).optional(),
+})
+
 export function findManifests(appRoot: string, discoveredPaths = findManifestPaths(appRoot)): ManifestFile[] {
   const manifests: ManifestFile[] = []
 
@@ -622,7 +863,7 @@ export function findManifests(appRoot: string, discoveredPaths = findManifestPat
     const content = readRepositoryText(appRoot, fullPath)
     if (content === undefined) continue
     try {
-      const pkg = JSON.parse(content)
+      const pkg = PackageManifestSchema.parse(JSON.parse(content))
       manifests.push({
         path: pkgPath,
         absolutePath: fullPath,

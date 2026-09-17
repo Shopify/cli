@@ -146,6 +146,15 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     guide: 'https://shopify.dev/docs/apps/webhooks/configuration/mandatory-webhooks',
   },
   {
+    id: 'MISSING_DEPENDENCY_SECURITY_AUTOMATION',
+    title: 'Repository-level dependency management configuration not detected',
+    severity: 'low',
+    points: -5,
+    description:
+      'Looks for a local Dependabot or Renovate configuration file at the repository root without validating its contents.',
+    fix: 'Add a Dependabot or Renovate configuration file at the repository root, or verify existing coverage.',
+  },
+  {
     id: 'EOL_API_VERSION',
     title: 'End-of-life API version',
     severity: 'low',

@@ -1,5 +1,11 @@
 import type {Issue, Capabilities, ProjectDetection, Severity, SourceCandidate} from '../types.js'
-import type {AppTomlContent, ExtensionInfo, ManifestFile, SourceFile} from '../scanners/types.js'
+import type {
+  AppTomlContent,
+  DependencyAutomationInputs,
+  ExtensionInfo,
+  ManifestFile,
+  SourceFile,
+} from '../scanners/types.js'
 
 export type {AppTomlContent, ExtensionInfo, ManifestFile, SourceFile} from '../scanners/types.js'
 
@@ -38,8 +44,10 @@ export interface ScanContext {
   extensions: ExtensionInfo[]
   /** Source files read for supported non-secret deterministic analysis. */
   sourceFiles: SourceFile[]
-  /** Package manifest files found (package.json, Gemfile, composer.json) */
+  /** Supported JavaScript package manifests found. */
   manifests: ManifestFile[]
+  /** Local dependency-management configuration and discovery obstacles. */
+  dependencyAutomation: DependencyAutomationInputs
   /** Safely readable repository text evidence available to secret scanning. */
   sensitiveFiles: SourceFile[]
   /** Detected capabilities */
