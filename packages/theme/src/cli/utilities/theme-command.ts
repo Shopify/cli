@@ -40,12 +40,6 @@ interface ValidEnvironment {
   storeAuthSession?: AdminSession
 }
 type EnvironmentName = string
-
-export interface ThemeCommandMultiEnvironmentEntry<TResult> {
-  environment: EnvironmentName
-  result: TResult
-}
-
 /**
  * Flags required to run a command in multiple environments
  *
@@ -62,7 +56,7 @@ export interface ThemeCommandMultiEnvironmentEntry<TResult> {
  */
 export type RequiredFlags = (string | string[])[] | null
 
-export default abstract class ThemeCommand<TResult = void> extends Command {
+export default abstract class ThemeCommand extends Command {
   static baseFlags = {...Command.baseFlags, ...authAliasFlag}
 
   environmentsFilename(): string {
@@ -75,9 +69,7 @@ export default abstract class ThemeCommand<TResult = void> extends Command {
     _multiEnvironment = false,
     _args?: ArgOutput,
     _context?: {stdout?: Writable; stderr?: Writable},
-  ): Promise<TResult | undefined> {
-    return undefined
-  }
+  ): Promise<void> {}
 
   async run<
     TFlags extends FlagOutput & {path?: string; verbose?: boolean},
@@ -126,14 +118,12 @@ export default abstract class ThemeCommand<TResult = void> extends Command {
 
     // Multiple environments
     if (requiredFlags === null) {
-      renderWarning({body: 'This command does not support multiple environments.'})
-      return
+      throw new AbortError('This command does not support multiple environments.')
     }
 
     const {flags: flagsWithoutDefaults} = await this.parse(noDefaultsOptions(klass), this.argv)
     if ('path' in flagsWithoutDefaults) {
       this.errorOnGlobalPath()
-      return
     }
 
     const environmentsMap = await this.loadEnvironments(environments, flags, flagsWithoutDefaults)
@@ -142,28 +132,30 @@ export default abstract class ThemeCommand<TResult = void> extends Command {
     const commandAllowsForceFlag = 'force' in klass.flags
 
     if (commandAllowsForceFlag && !flags.force) {
-      const confirmed = await this.showConfirmation(this.constructor.name, requiredFlags, validationResults)
+      const confirmed = await this.showConfirmation(
+        (this.id ?? 'theme').replaceAll(':', ' '),
+        requiredFlags,
+        validationResults,
+      )
       if (!confirmed) return
     }
 
-    const successfulResults = new Map<EnvironmentName, TResult>()
-    await this.runConcurrent(validationResults.valid, successfulResults)
-
-    const entries = validationResults.valid
-      .filter(({environment}) => successfulResults.has(environment))
-      .map(({environment}) => ({environment, result: successfulResults.get(environment) as TResult}))
-
-    await this.onMultiEnvironmentComplete(entries, flags)
+    await this.runConcurrent(validationResults.valid)
   }
 
-  /**
-   * Receives the successful multi-environment results in the requested environment order.
-   * The default does nothing so commands keep their current output behavior.
-   */
-  protected onMultiEnvironmentComplete(
-    _entries: ThemeCommandMultiEnvironmentEntry<TResult>[],
-    _flags: FlagValues,
-  ): void | Promise<void> {}
+  protected validateNonTTYFlags(flags: FlagOutput): void {
+    // Multiple environments must be validated after their configured flags are loaded.
+    const command = this.constructor
+    if (
+      'multiEnvironmentsFlags' in command &&
+      command.multiEnvironmentsFlags !== undefined &&
+      Array.isArray(flags.environment) &&
+      flags.environment.length > 1
+    ) {
+      return
+    }
+    super.validateNonTTYFlags(flags)
+  }
 
   /**
    * Admin API scopes that a stored `store auth` session must include for this
@@ -248,6 +240,7 @@ export default abstract class ThemeCommand<TResult = void> extends Command {
         invalid.push({environment: environmentName, reason: `Missing flags: ${missingFlagsText}`})
         continue
       }
+      super.validateNonTTYFlags(flags)
       valid.push({environment: environmentName, flags, requiresAuth, storeAuthSession})
     }
 
@@ -313,7 +306,7 @@ export default abstract class ThemeCommand<TResult = void> extends Command {
    * Run the command in each valid environment concurrently
    * @param validEnvironments - The valid environments to run the command in
    */
-  private async runConcurrent(validEnvironments: ValidEnvironment[], successfulResults: Map<EnvironmentName, TResult>) {
+  private async runConcurrent(validEnvironments: ValidEnvironment[]) {
     const abortController = new AbortController()
 
     const stores = validEnvironments.map((env) => env.flags.store as string)
@@ -335,17 +328,10 @@ export default abstract class ThemeCommand<TResult = void> extends Command {
                 const commandName = this.constructor.name.toLowerCase()
                 recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
 
-                let result: TResult | undefined
                 try {
-                  result = await this.command(flags, session, true, {}, {stdout, stderr})
+                  await this.command(flags, session, true, {}, {stdout, stderr})
                 } finally {
                   await this.logAnalyticsData(session)
-                }
-
-                // Only publish a result after analytics cleanup succeeds, so a
-                // cleanup failure reports the environment as failed.
-                if (result !== undefined) {
-                  successfulResults.set(environment, result)
                 }
               })
 
@@ -545,17 +531,12 @@ export default abstract class ThemeCommand<TResult = void> extends Command {
     const tomlPath = joinPath(cwd(), 'shopify.theme.toml')
     const tomlInCwd = fileExistsSync(tomlPath)
 
-    renderError({
-      body: [
-        "Can't use `--path` flag with multiple environments.",
-        ...(tomlInCwd
-          ? ["Configure each environment's theme path in your shopify.theme.toml file instead."]
-          : [
-              'Run this command from the directory containing shopify.theme.toml.',
-              'No shopify.theme.toml found in current directory.',
-            ]),
-      ],
-    })
+    throw new AbortError(
+      "Can't use `--path` flag with multiple environments.",
+      tomlInCwd
+        ? "Configure each environment's theme path in your shopify.theme.toml file instead."
+        : 'Run this command from the directory containing shopify.theme.toml. No shopify.theme.toml found in current directory.',
+    )
   }
 
   private async logAnalyticsData(session?: AdminSession): Promise<void> {
