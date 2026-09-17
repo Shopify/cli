@@ -1,6 +1,12 @@
 import {formatAppDoctorCommand, type AppDoctorCommands} from './app-doctor-commands.js'
-import {groupIssues, type IssueGroup} from './app-doctor-engine/index.js'
-import type {Capabilities, Issue, ScanResult, Severity} from './app-doctor-engine/index.js'
+import {
+  groupIssues,
+  type Capabilities,
+  type Issue,
+  type IssueGroup,
+  type ScanResult,
+  type Severity,
+} from './app-doctor-engine/index.js'
 import {renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import type {AlertCustomSection, InlineToken, RenderAlertOptions, Token, TokenItem} from '@shopify/cli-kit/node/ui'
 
