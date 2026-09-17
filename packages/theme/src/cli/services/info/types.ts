@@ -1,4 +1,4 @@
-import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const ThemeInfoThemeSchema = zod.object({
@@ -23,28 +23,16 @@ const ThemeEnvironmentInfoSchema = zod.object({
   node_version: zod.string(),
 })
 
-const ThemeInfoMultiEnvironmentEntrySchema = zod.object({
-  environment: zod.string(),
-  result: zod.union([ThemeInfoThemeResultSchema, ThemeEnvironmentInfoSchema]),
-})
-
-const ThemeInfoMultiEnvironmentResultSchema = zod.object({
-  environments: zod.array(ThemeInfoMultiEnvironmentEntrySchema),
-})
-
 export const themeInfoJsonOutputSchema = defineJsonOutputSchema({
   name: 'ThemeInfoResult',
-  schema: zod.union([ThemeInfoThemeResultSchema, ThemeEnvironmentInfoSchema, ThemeInfoMultiEnvironmentResultSchema]),
+  schema: zod.union([ThemeInfoThemeResultSchema, ThemeEnvironmentInfoSchema]),
   definitions: {
     ThemeInfoTheme: ThemeInfoThemeSchema,
     ThemeInfoThemeResult: ThemeInfoThemeResultSchema,
     ThemeEnvironmentInfo: ThemeEnvironmentInfoSchema,
-    ThemeInfoMultiEnvironmentEntry: ThemeInfoMultiEnvironmentEntrySchema,
-    ThemeInfoMultiEnvironmentResult: ThemeInfoMultiEnvironmentResultSchema,
   },
 })
 
-export type ThemeInfoResult = ThemeInfoThemeResult | ThemeEnvironmentInfo
+export type ThemeInfoResult = InferJsonOutputSchema<typeof themeInfoJsonOutputSchema>
 export type ThemeInfoThemeResult = zod.infer<typeof ThemeInfoThemeResultSchema>
 export type ThemeEnvironmentInfo = zod.infer<typeof ThemeEnvironmentInfoSchema>
-export type ThemeInfoMultiEnvironmentResult = zod.infer<typeof ThemeInfoMultiEnvironmentResultSchema>
