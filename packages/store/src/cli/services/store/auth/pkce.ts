@@ -3,7 +3,7 @@ import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {createHash, randomBytes} from 'crypto'
 import type {StoreTokenResponse} from './token-client.js'
-import type {WaitForAuthCodeOptions} from './callback.js'
+import type {AuthorizationRedirect, WaitForAuthCodeOptions} from './callback.js'
 
 interface StoreAuthorizationContext {
   store: string
@@ -13,7 +13,6 @@ interface StoreAuthorizationContext {
   redirectUri: string
   authorizationUrl: string
   codeVerifier: string
-  signup?: string
 }
 
 interface StoreAuthBootstrap {
@@ -36,7 +35,6 @@ export function buildStoreAuthUrl(options: {
   state: string
   redirectUri: string
   codeChallenge: string
-  signup?: string
 }): string {
   const params = new URLSearchParams()
   params.set('client_id', STORE_AUTH_APP_CLIENT_ID)
@@ -46,9 +44,15 @@ export function buildStoreAuthUrl(options: {
   params.set('response_type', 'code')
   params.set('code_challenge', options.codeChallenge)
   params.set('code_challenge_method', 'S256')
-  if (options.signup) params.set('signup', options.signup)
 
   return `https://${options.store}/admin/oauth/authorize?${params.toString()}`
+}
+
+function buildAuthorizationRedirect(storeAuthorizationUrl: string, signup: string): AuthorizationRedirect {
+  const authorizationUrl = new URL(storeAuthorizationUrl)
+  authorizationUrl.searchParams.set('signup', signup)
+
+  return {nonce: randomBytes(32).toString('base64url'), authorizationUrl: authorizationUrl.toString()}
 }
 
 export function createPkceBootstrap(options: {
@@ -68,9 +72,11 @@ export function createPkceBootstrap(options: {
   const redirectUri = storeAuthRedirectUri(port)
   const codeVerifier = generateCodeVerifier()
   const codeChallenge = computeCodeChallenge(codeVerifier)
-  const sensitiveAuthorizationUrl = buildStoreAuthUrl({store, scopes, state, redirectUri, codeChallenge, signup})
-  const handoffNonce = signup ? randomBytes(32).toString('base64url') : undefined
-  const authorizationUrl = handoffNonce ? storeAuthHandoffUri(port, handoffNonce) : sensitiveAuthorizationUrl
+  const storeAuthorizationUrl = buildStoreAuthUrl({store, scopes, state, redirectUri, codeChallenge})
+  const authorizationRedirect = signup ? buildAuthorizationRedirect(storeAuthorizationUrl, signup) : undefined
+  const authorizationUrl = authorizationRedirect
+    ? storeAuthHandoffUri(port, authorizationRedirect.nonce)
+    : storeAuthorizationUrl
 
   outputDebug(
     outputContent`Starting PKCE auth for ${outputToken.raw(store)} with scopes ${outputToken.raw(scopes.join(','))} (redirect_uri=${outputToken.raw(redirectUri)})`,
@@ -85,18 +91,12 @@ export function createPkceBootstrap(options: {
       redirectUri,
       authorizationUrl,
       codeVerifier,
-      signup,
     },
     waitForAuthCodeOptions: {
       store,
       state,
       port,
-      authorizationRedirect: handoffNonce
-        ? {
-            nonce: handoffNonce,
-            authorizationUrl: sensitiveAuthorizationUrl,
-          }
-        : undefined,
+      authorizationRedirect,
     },
     exchangeCodeForToken: (code: string) => exchangeCodeForToken({store, code, codeVerifier, redirectUri}),
   }

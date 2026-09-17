@@ -1,6 +1,7 @@
 import StoreStripeAuth, {readSignupJwtFromStdin} from './stripe-auth.js'
 import {authenticateStoreWithApp} from '../../services/store/auth/index.js'
 import {createStoreAuthPresenter} from '../../services/store/auth/result.js'
+import {isStdinPiped} from '@shopify/cli-kit/node/system'
 import {describe, expect, test, vi} from 'vitest'
 import {Readable} from 'stream'
 
@@ -8,6 +9,10 @@ vi.mock('../../services/store/auth/index.js')
 vi.mock('../../services/store/attribution.js')
 vi.mock('../../services/store/auth/result.js', () => ({
   createStoreAuthPresenter: vi.fn((format: 'text' | 'json') => ({format})),
+}))
+vi.mock('@shopify/cli-kit/node/system', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/system')>()),
+  isStdinPiped: vi.fn(),
 }))
 
 describe('store stripe-auth command', () => {
@@ -70,5 +75,26 @@ describe('store stripe-auth command', () => {
 
   test('rejects blank stdin signup JWTs', async () => {
     await expect(readSignupJwtFromStdin(Readable.from(['\n']))).rejects.toThrow('Missing signup JWT')
+  })
+
+  test('reports the missing credential instead of waiting when stdin is an interactive terminal', async () => {
+    vi.mocked(isStdinPiped).mockReturnValue(false)
+
+    await expect(readSignupJwtFromStdin()).rejects.toThrow('Missing signup JWT')
+  })
+
+  test('rejects a stdin signup JWT larger than the accepted size', async () => {
+    const oversized = 'a'.repeat(8 * 1024 + 1)
+
+    await expect(readSignupJwtFromStdin(Readable.from([oversized]))).rejects.toThrow('too large')
+  })
+
+  test('does not authenticate when the signup flag is empty and no JWT is piped', async () => {
+    vi.mocked(isStdinPiped).mockReturnValue(false)
+
+    await expect(
+      StoreStripeAuth.run(['--store', 'shop.myshopify.com', '--scopes', 'read_products', '--signup', '']),
+    ).rejects.toThrow()
+    expect(authenticateStoreWithApp).not.toHaveBeenCalled()
   })
 })
