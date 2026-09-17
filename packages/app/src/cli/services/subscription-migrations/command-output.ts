@@ -8,7 +8,7 @@ export function formatMigrationOperationsStatus(operations: MigrationOperation[]
 
 export function outputOperations(operations: MigrationOperation[], json: boolean): void {
   if (json) {
-    outputResult(JSON.stringify({schemaVersion: 1, operations}, null, 2))
+    outputResult(JSON.stringify({operations}, null, 2))
     return
   }
 

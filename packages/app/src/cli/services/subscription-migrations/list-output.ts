@@ -10,7 +10,7 @@ interface MigrationListOutputOptions {
 }
 
 export function serializeMigrationListJson(subscriptions: MigratableSubscription[]): string {
-  return JSON.stringify({schemaVersion: 1, subscriptions}, null, 2)
+  return JSON.stringify({subscriptions}, null, 2)
 }
 
 export function serializeMigrationListCsv(subscriptions: MigratableSubscription[]): string {

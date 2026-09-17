@@ -1,8 +1,8 @@
 import {encodeMigrationCancellationResult, encodeMigrationSubmissionResult} from './result-codec.js'
-import {migrationCancellationJsonOutputSchema} from '../../../services/subscription-migrations/cancel-operations.js'
+import {migrationCancellationJsonOutputSchema} from '../../../services/subscription-migrations/types.js'
 import {describe, expect, test} from 'vitest'
 import type {MigrationOperation} from '../../../models/subscription-migrations.js'
-import type {MigrationCancellationResult} from '../../../services/subscription-migrations/cancel-operations.js'
+import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
 import type {
   MigrationSubmission,
   MigrationSubmissionResult,
@@ -35,8 +35,8 @@ describe('subscription migration result codecs', () => {
 
     const document = encodeMigrationSubmissionResult(result)
 
-    expect(JSON.parse(document)).toEqual({schemaVersion: 1, ...value})
-    expect(document).toBe(JSON.stringify({schemaVersion: 1, ...value}, null, 2))
+    expect(JSON.parse(document)).toEqual(value)
+    expect(document).toBe(JSON.stringify(value, null, 2))
     expect(document).not.toContain('idempotencyKey')
   })
 
@@ -55,7 +55,6 @@ describe('subscription migration result codecs', () => {
     const document = encodeMigrationSubmissionResult(result)
 
     expect(JSON.parse(document)).toEqual({
-      schemaVersion: 1,
       ...value,
       failure: {
         type: 'submission',
@@ -77,14 +76,12 @@ describe('subscription migration result codecs', () => {
     const document = encodeMigrationSubmissionResult(result)
 
     expect(JSON.parse(document)).toEqual({
-      schemaVersion: 1,
       ...value,
       failure: {type: 'operations', operationIds: ['operation-one']},
     })
     expect(document).toBe(
       JSON.stringify(
         {
-          schemaVersion: 1,
           ...value,
           failure: {type: 'operations', operationIds: ['operation-one']},
         },
@@ -97,7 +94,6 @@ describe('subscription migration result codecs', () => {
   test('rejects cancellation documents with an invalid outcome', () => {
     expect(() =>
       migrationCancellationJsonOutputSchema.validate({
-        schemaVersion: 1,
         outcomes: [{status: 'success', operationId: 'one', operation: null}],
       }),
     ).toThrow()
@@ -124,7 +120,7 @@ describe('subscription migration result codecs', () => {
 
     const document = encodeMigrationCancellationResult(result)
 
-    expect(JSON.parse(document)).toEqual({schemaVersion: 1, outcomes: result.outcomes})
-    expect(document).toBe(JSON.stringify({schemaVersion: 1, outcomes: result.outcomes}, null, 2))
+    expect(JSON.parse(document)).toEqual({outcomes: result.outcomes})
+    expect(document).toBe(JSON.stringify({outcomes: result.outcomes}, null, 2))
   })
 })

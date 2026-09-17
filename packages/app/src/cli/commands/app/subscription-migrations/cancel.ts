@@ -1,10 +1,8 @@
 import {operationFlags} from './flags.js'
 import {presentMigrationCancellationResult} from './result-presenter.js'
 import {linkedAppContext} from '../../../services/app-context.js'
-import {
-  cancelMigrationOperations,
-  migrationCancellationJsonOutputSchema,
-} from '../../../services/subscription-migrations/cancel-operations.js'
+import {cancelMigrationOperations} from '../../../services/subscription-migrations/cancel-operations.js'
+import {migrationCancellationJsonOutputSchema} from '../../../services/subscription-migrations/types.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {jsonFlag} from '@shopify/cli-kit/node/cli'
 

@@ -7,10 +7,8 @@ import {appFlags} from '../../../flags.js'
 import {commands} from '../../../index.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {linkedAppContext} from '../../../services/app-context.js'
-import {
-  cancelMigrationOperations,
-  migrationCancellationJsonOutputSchema,
-} from '../../../services/subscription-migrations/cancel-operations.js'
+import {cancelMigrationOperations} from '../../../services/subscription-migrations/cancel-operations.js'
+import {migrationCancellationJsonOutputSchema} from '../../../services/subscription-migrations/types.js'
 import {outputOperations} from '../../../services/subscription-migrations/command-output.js'
 import {getMigrationOperations} from '../../../services/subscription-migrations/get-operations.js'
 import {runSubmissionCommand} from '../../../services/subscription-migrations/run-submission-command.js'
@@ -21,7 +19,7 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import type {MigrationOperation} from '../../../models/subscription-migrations.js'
-import type {MigrationCancellationResult} from '../../../services/subscription-migrations/cancel-operations.js'
+import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
 import type {MigrationSubmissionResult} from '../../../services/subscription-migrations/submit-migration-plan.js'
 
 vi.mock('../../../services/app-context.js')
@@ -115,10 +113,9 @@ describe('subscription migration submission commands', () => {
       watch: true,
     })
     expect(outputResult).toHaveBeenCalledOnce()
-    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
-      schemaVersion: 1,
-      ...successfulSubmissionResult.submission,
-    })
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(
+      successfulSubmissionResult.submission,
+    )
     expect(result).toEqual({app})
   })
 
@@ -198,7 +195,6 @@ describe('subscription migration submission commands', () => {
     expect(process.exitCode).toBe(1)
     expect(outputResult).toHaveBeenCalledOnce()
     expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
-      schemaVersion: 1,
       ...failedResult.submission,
       failure: failedResult.failure,
     })
@@ -332,7 +328,6 @@ describe('subscription migration operation commands', () => {
     })
     expect(outputResult).toHaveBeenCalledOnce()
     expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
-      schemaVersion: 1,
       outcomes: result.outcomes,
     })
     expect(process.exitCode).toBe(1)
