@@ -100,7 +100,10 @@ These are the allowed paths:
 ${outputToken.json(JSON.stringify(rules))}
 `)
 
-    res.statusCode = 500
+    // The body echoes the requested path, so it must never be interpreted as HTML.
+    // Without an explicit content type browsers sniff the response, which would let a
+    // crafted path run script in the dev server's origin.
+    res.writeHead(500, {'Content-Type': 'text/plain; charset=utf-8', 'X-Content-Type-Options': 'nosniff'})
     res.end(`Invalid path ${req.url}`)
   }
 }
