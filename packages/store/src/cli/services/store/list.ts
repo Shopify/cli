@@ -5,7 +5,7 @@ import {type StoreTypeFilter} from './store-type.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isTTY, renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
-import {fetchOrganizationsWithAccessInfo, type Organization} from '@shopify/organizations'
+import {fetchOrganizationById, fetchOrganizationsWithAccessInfo, type Organization} from '@shopify/organizations'
 
 interface ListStoresOptions {
   organizationId?: number
@@ -14,6 +14,15 @@ interface ListStoresOptions {
 
 export async function listStores(options: ListStoresOptions = {}): Promise<StoreListResult> {
   const token = await ensureAuthenticatedBusinessPlatform()
+
+  // Look the organization up directly instead of paging through every one the account belongs to.
+  // A miss falls through to the list below, which supplies the accessible organizations for the
+  // not-found error and re-resolves access granted since the lookup cached that miss.
+  if (options.organizationId) {
+    const organization = await fetchOrganizationById(options.organizationId.toString(), token)
+    if (organization) return listStoresInOrganization(token, organization, options.storeType)
+  }
+
   const organizationsResult = await fetchOrganizationsWithAccessInfo(token)
 
   if (!organizationsResult.currentUserResolved) {
@@ -39,17 +48,21 @@ export async function listStores(options: ListStoresOptions = {}): Promise<Store
     options.organizationId,
   )
 
-  const result = await listBusinessPlatformStores({
-    token,
-    organization: selectedOrganization,
-    storeType: options.storeType,
-  })
+  return listStoresInOrganization(token, selectedOrganization, options.storeType)
+}
+
+async function listStoresInOrganization(
+  token: string,
+  organization: Organization,
+  storeType: StoreTypeFilter | undefined,
+): Promise<StoreListResult> {
+  const result = await listBusinessPlatformStores({token, organization, storeType})
   const {stores, truncated} = limitEntries(result.entries, result.hasMore)
 
   return {
     stores,
-    organization: storeListOrganization(selectedOrganization),
-    ...(options.storeType ? {storeType: options.storeType} : {}),
+    organization: storeListOrganization(organization),
+    ...(storeType ? {storeType} : {}),
     ...(truncated ? {truncated: true} : {}),
   }
 }

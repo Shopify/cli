@@ -1,4 +1,4 @@
-export {fetchOrganizations, fetchOrganizationsWithAccessInfo} from './cli/services/fetch.js'
+export {fetchOrganizations, fetchOrganizationsWithAccessInfo, fetchOrganizationById} from './cli/services/fetch.js'
 export {selectOrg} from './cli/services/select.js'
 export {selectOrganizationPrompt} from './cli/prompts/organization.js'
 export type {Organization, OrganizationWithDetails, OrganizationStatus} from './cli/models/organization.js'
