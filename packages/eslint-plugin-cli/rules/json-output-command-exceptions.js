@@ -29,7 +29,6 @@ const commandExceptions = [
   'packages/app/src/cli/commands/app/import-extensions.ts',
   'packages/app/src/cli/commands/app/import/custom-data-definitions.ts',
   'packages/app/src/cli/commands/app/import/dashboard-extensions.ts',
-  'packages/app/src/cli/commands/app/info.ts',
   'packages/app/src/cli/commands/app/init.ts',
   'packages/app/src/cli/commands/app/release.ts',
   'packages/app/src/cli/commands/app/subscription-migrations/cancel.ts',

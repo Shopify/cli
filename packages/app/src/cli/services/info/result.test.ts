@@ -1,0 +1,363 @@
+import {formatAppInfoResult} from './result.js'
+import {info as getInfo} from '../info.js'
+import {AppInterface, AppLinkedInterface} from '../../models/app/app.js'
+import {OrganizationApp, OrganizationSource} from '../../models/organization.js'
+import {
+  testDeveloperPlatformClient,
+  testOrganizationApp,
+  testUIExtension,
+  testAppConfigExtensions,
+  testAppLinked,
+  testProject,
+} from '../../models/app/app.test-data.js'
+import {AppErrors} from '../../models/app/loader.js'
+import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {selectOrganizationPrompt} from '@shopify/organizations'
+import {describe, expect, vi, test} from 'vitest'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {OutputMessage, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
+import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
+import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
+
+vi.mock('@shopify/organizations')
+vi.mock('@shopify/cli-kit/node/node-package-manager')
+vi.mock('../utilities/developer-platform-client.js')
+
+const APP = testOrganizationApp()
+const APP1 = testOrganizationApp({id: '123', title: 'my app', apiKey: '12345'})
+
+const ORG1 = {
+  id: '123',
+  flags: {},
+  businessName: 'test',
+  apps: {nodes: []},
+  source: OrganizationSource.BusinessPlatform,
+  status: 'ACTIVE' as const,
+  shopCount: 1,
+  url: 'https://admin.shopify.com/organization/123',
+}
+
+function buildDeveloperPlatformClient(): DeveloperPlatformClient {
+  return testDeveloperPlatformClient({
+    async appFromIdentifiers(apiKey: string): Promise<OrganizationApp> {
+      switch (apiKey) {
+        case '123':
+          return APP1
+        case APP.apiKey:
+          return APP
+        default:
+          throw new Error(`App not found for client ID ${apiKey}`)
+      }
+    },
+
+    async organizations() {
+      return [ORG1]
+    },
+
+    async appsForOrg(organizationId: string, _term?: string) {
+      switch (organizationId) {
+        case '123':
+          return {
+            apps: [APP, APP1].map((org) => ({
+              id: org.id,
+              title: org.title,
+              apiKey: org.apiKey,
+              organizationId: org.id,
+            })),
+            hasMorePages: false,
+          }
+        default:
+          throw new Error(`Organization not found for ID ${organizationId}`)
+      }
+    },
+  })
+}
+
+function infoOptions() {
+  return {
+    format: 'text' as const,
+    webEnv: false,
+    developerPlatformClient: buildDeveloperPlatformClient(),
+  }
+}
+
+async function info(
+  app: AppLinkedInterface,
+  remoteApp: OrganizationApp,
+  organization: typeof ORG1,
+  project: ReturnType<typeof testProject>,
+  options: {format: 'json' | 'text'; webEnv: boolean; developerPlatformClient: DeveloperPlatformClient},
+) {
+  const result = await getInfo(app, remoteApp, organization, project, options)
+  return formatAppInfoResult(
+    result,
+    {app, remoteApp, organization, project, developerPlatformClient: options.developerPlatformClient},
+    options.format,
+  )
+}
+
+describe('info', () => {
+  const remoteApp = testOrganizationApp()
+
+  test('returns the web environment as a text when webEnv is true', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const app = mockApp({directory: tmp})
+
+      vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
+
+      // When
+      const result = (await info(app, remoteApp, ORG1, testProject(), {
+        ...infoOptions(),
+        webEnv: true,
+      })) as OutputMessage
+
+      // Then
+      expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
+      "
+          SHOPIFY_API_KEY=api-key
+          SHOPIFY_API_SECRET=api-secret
+          SCOPES=my-scope
+        "
+      `)
+    })
+  })
+
+  test('returns the web environment as a json when webEnv is true', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const app = mockApp({directory: tmp})
+      vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
+
+      // When
+      const result = (await info(app, remoteApp, ORG1, testProject(), {
+        ...infoOptions(),
+        format: 'json',
+        webEnv: true,
+      })) as OutputMessage
+
+      // Then
+      expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
+        "{
+          "SHOPIFY_API_KEY": "api-key",
+          "SHOPIFY_API_SECRET": "api-secret",
+          "SCOPES": "my-scope"
+        }"
+      `)
+    })
+  })
+
+  test('returns errors alongside extensions when extensions have errors', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const uiExtension1 = await testUIExtension({
+        configuration: {
+          name: 'Extension 1',
+          handle: 'handle-for-extension-1',
+          type: 'ui_extension',
+          metafields: [],
+        },
+        configurationPath: 'extension/path/1',
+      })
+      const uiExtension2 = await testUIExtension({
+        configuration: {
+          name: 'Extension 2',
+          type: 'checkout_ui_extension',
+          metafields: [],
+        },
+        configurationPath: 'extension/path/2',
+      })
+
+      const errors = new AppErrors()
+      errors.addError({file: uiExtension1.configurationPath, message: 'Mock error with ui_extension'})
+      errors.addError({file: uiExtension2.configurationPath, message: 'Mock error with checkout_ui_extension'})
+
+      const app = mockApp({
+        directory: tmp,
+        app: {
+          errors,
+          allExtensions: [uiExtension1, uiExtension2],
+        },
+      })
+      vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
+
+      // When
+      const result = (await info(app, remoteApp, ORG1, testProject(), infoOptions())) as AlertCustomSection[]
+      const uiData = tabularDataSectionFromInfo(result, 'ui_extension_external')
+      const checkoutData = tabularDataSectionFromInfo(result, 'checkout_ui_extension_external')
+
+      // Then
+
+      // Doesn't use the type as part of the title
+      expect(JSON.stringify(uiData)).not.toContain('📂 ui_extension')
+
+      // Shows handle as title
+      const uiExtensionTitle = uiData[0]![0]
+      expect(uiExtensionTitle).toBe('📂 handle-for-extension-1')
+      // Displays errors
+      const uiExtensionErrorsRow = errorRow(uiData)
+      expect(uiExtensionErrorsRow[1]).toStrictEqual({error: 'Mock error with ui_extension'})
+
+      // Shows default handle derived from name when no handle is present
+      const checkoutExtensionTitle = checkoutData[0]![0]
+      expect(checkoutExtensionTitle).toBe('📂 extension-2')
+      // Displays errors
+      const checkoutExtensionErrorsRow = errorRow(checkoutData)
+      expect(checkoutExtensionErrorsRow[1]).toStrictEqual({error: 'Mock error with checkout_ui_extension'})
+    })
+  })
+
+  test("doesn't return extensions not supported using the default output format", async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const uiExtension1 = await testUIExtension({
+        configuration: {
+          path: 'extension/path/1',
+          name: 'Extension 1',
+          handle: 'handle-for-extension-1',
+          type: 'ui_extension',
+          metafields: [],
+        },
+      })
+      const configExtension = await testAppConfigExtensions()
+
+      const app = mockApp({
+        directory: tmp,
+        app: {
+          allExtensions: [uiExtension1, configExtension],
+        },
+      })
+      vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
+
+      // When
+      const result = (await info(app, remoteApp, ORG1, testProject(), infoOptions())) as AlertCustomSection[]
+      const uiExtensionsData = tabularDataSectionFromInfo(result, 'ui_extension_external')
+      const relevantExtension = extensionTitleRow(uiExtensionsData, 'handle-for-extension-1')
+      const irrelevantExtension = extensionTitleRow(uiExtensionsData, 'point_of_sale')
+
+      // Then
+      expect(relevantExtension).toBeDefined()
+      expect(irrelevantExtension).not.toBeDefined()
+    })
+  })
+
+  test("doesn't return extensions not supported using the json output format", async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const uiExtension1 = await testUIExtension({
+        configuration: {
+          path: 'extension/path/1',
+          name: 'Extension 1',
+          handle: 'handle-for-extension-1',
+          type: 'ui_extension',
+          metafields: [],
+        },
+      })
+      const configExtension = await testAppConfigExtensions()
+      const developerPlatformClient = testDeveloperPlatformClient()
+      const app = mockApp({
+        directory: tmp,
+        app: {
+          allExtensions: [uiExtension1, configExtension],
+        },
+      })
+      vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
+
+      // When
+      const result = await info(app, remoteApp, ORG1, testProject(), {
+        format: 'json',
+        webEnv: false,
+        developerPlatformClient,
+      })
+
+      // Then
+      expect(typeof result).toBe('string')
+      const resultObject = JSON.parse(result as string) as AppInterface
+      const extensionsIdentifiers = resultObject.allExtensions.map((extension) => extension.localIdentifier)
+      expect(extensionsIdentifiers).toContain('handle-for-extension-1')
+      expect(extensionsIdentifiers).not.toContain('point_of_sale')
+
+      // Verify backward-compat: project fields injected into JSON output
+      const rawResult = JSON.parse(result as string)
+      expect(rawResult.packageManager).toBe('yarn')
+      expect(rawResult.nodeDependencies).toEqual({})
+      expect(rawResult.usesWorkspaces).toBe(false)
+    })
+  })
+
+  test('returns the organization name and ID using the default output format', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const app = mockApp({directory: tmp})
+
+      // When
+      const result = (await info(app, remoteApp, ORG1, testProject(), infoOptions())) as AlertCustomSection[]
+      const configData = tabularDataSectionFromInfo(result, 'CURRENT APP CONFIGURATION\n')
+
+      // Then
+      expect(configData).toContainEqual(['Organization', 'test (123)'])
+    })
+  })
+
+  test('returns the organization name and ID using the json output format', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const app = mockApp({directory: tmp})
+
+      // When
+      const result = await info(app, remoteApp, ORG1, testProject(), {...infoOptions(), format: 'json'})
+
+      // Then
+      const resultObject = JSON.parse(result as string)
+      expect(resultObject.organization).toEqual({id: '123', businessName: 'test'})
+    })
+  })
+})
+
+function mockApp({
+  directory,
+  configContents = 'scopes = "read_products"',
+  app,
+}: {
+  directory: string
+  configContents?: string
+  app?: Partial<AppInterface>
+}): AppLinkedInterface {
+  writeFileSync(joinPath(directory, 'shopify.app.toml'), configContents)
+
+  return testAppLinked({
+    name: 'my app',
+    directory,
+    configPath: joinPath(directory, 'shopify.app.toml'),
+    configuration: {
+      client_id: 'test-client-id',
+      name: 'my-app',
+      application_url: 'https://example.com',
+      embedded: true,
+      access_scopes: {
+        scopes: 'my-scope',
+      },
+      extension_directories: ['extensions/*'],
+    },
+    ...(app ?? {}),
+  })
+}
+
+function tabularDataSectionFromInfo(info: AlertCustomSection[], title: string): InlineToken[][] {
+  const section = info.find((section) => section.title === title)
+  if (!section) throw new Error(`Section ${title} not found`)
+  if (!(typeof section.body === 'object' && 'tabularData' in section.body)) {
+    throw new Error(`Expected to be a table: ${JSON.stringify(section.body)}`)
+  }
+  return section.body.tabularData
+}
+
+function errorRow(data: InlineToken[][]): InlineToken[] {
+  const row = data.find((row: InlineToken[]) => typeof row[0] === 'object' && 'error' in row[0])!
+  if (!row) throw new Error('Error row not found')
+  return row
+}
+
+function extensionTitleRow(data: InlineToken[][], title: string): InlineToken[] | undefined {
+  return data.find((row) => typeof row[0] === 'string' && row[0].match(new RegExp(title)))
+}
