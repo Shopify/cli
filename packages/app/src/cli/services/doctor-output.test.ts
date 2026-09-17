@@ -107,11 +107,13 @@ describe('buildDoctorAlert', () => {
           [
             {bold: 'Request input selects Admin API shop context'},
             {subdued: 'REQUEST_CONTROLLED_ADMIN_CONTEXT'},
+            '1 occurrence across 1 file',
             {filePath: 'app/routes/action.ts:42'},
           ],
           [
             {bold: 'Configured API version is no longer supported'},
             {subdued: 'EOL_API_VERSION'},
+            '1 occurrence across 1 file',
             {filePath: 'shopify.app.toml'},
           ],
         ],
@@ -135,6 +137,83 @@ describe('buildDoctorAlert', () => {
       {subdued: 'Engine: shopify-app-doctor 1.2.3'},
       {subdued: 'Ruleset: 2026.08.28'},
     ])
+  })
+
+  test('collapses hundreds of occurrences without hiding their reach or changing severity', () => {
+    const issues = Array.from({length: 200}, (_, index) => ({
+      ...scanWithIssues.issues[0]!,
+      location: {file: `app/routes/route-${String(index).padStart(3, '0')}.ts`, line: 42},
+    }))
+    const input = reportInput({scan: {...scanWithIssues, issues}})
+    const before = structuredClone(input.scan)
+    const alert = buildDoctorAlert(input)
+    const high = section(input, 'High')!
+
+    expect(alert.type).toBe('error')
+    expect(alert.options.headline).toBe('1 security issue group found (200 occurrences).')
+    expect(high.body).toEqual({
+      list: {
+        items: [
+          [
+            {bold: issues[0]!.title},
+            {subdued: issues[0]!.id},
+            '200 occurrences across 200 files',
+            {filePath: 'app/routes/route-000.ts:42'},
+            {filePath: 'app/routes/route-001.ts:42'},
+            {filePath: 'app/routes/route-002.ts:42'},
+            {subdued: '+197 more files'},
+          ],
+        ],
+      },
+    })
+    expect(JSON.stringify(alert)).toContain('Use --verbose')
+    expect(input.scan).toEqual(before)
+    expect(buildDoctorAlert({...input, scan: {...input.scan, issues: [...issues].reverse()}})).toEqual(alert)
+  })
+
+  test('samples distinct files, not just the first three occurrences', () => {
+    const issues = [
+      {file: 'app/a.ts', line: 1},
+      {file: 'app/a.ts', line: 2},
+      {file: 'app/a.ts', line: 3},
+      {file: 'app/b.ts', line: 4},
+      {file: 'app/c.ts', line: 5},
+    ].map((location) => ({...scanWithIssues.issues[0]!, location}))
+    const input = reportInput({scan: {...scanWithIssues, issues}})
+    const serialized = JSON.stringify(section(input, 'High'))
+    expect(serialized).toContain('5 occurrences across 3 files')
+    expect(serialized).toContain('app/a.ts:1')
+    expect(serialized).toContain('app/b.ts:4')
+    expect(serialized).toContain('app/c.ts:5')
+    expect(serialized).not.toContain('app/a.ts:2')
+  })
+
+  test('verbose output expands every occurrence, including distinct messages and fixes', () => {
+    const issues = Array.from({length: 4}, (_, index) => ({
+      ...scanWithIssues.issues[0]!,
+      location: {file: 'app/a.ts', line: index + 1},
+      message: `Evidence ${index}`,
+      fix: {automated: false, description: `Remediation ${index}`},
+    }))
+    const input = reportInput({verbose: true, scan: {...scanWithIssues, issues}})
+    const serialized = JSON.stringify(section(input, 'High'))
+    expect(serialized).toContain('4 occurrences across 1 file')
+    for (const [index, issue] of issues.entries()) {
+      expect(serialized).toContain(`app/a.ts:${index + 1}`)
+      expect(serialized).toContain(issue.message)
+      expect(serialized).toContain(`Fix: ${issue.fix.description}`)
+    }
+  })
+
+  test.each(['low', 'medium'] as const)('does not promote widespread %s findings', (severity) => {
+    const issues = Array.from({length: 200}, (_, index) => ({
+      ...scanWithIssues.issues[0]!,
+      severity,
+      location: {file: `app/${index}.ts`},
+    }))
+    const input = reportInput({scan: {...scanWithIssues, issues}})
+    expect(buildDoctorAlert(input).type).toBe('warning')
+    expect(section(input, 'High')).toBeUndefined()
   })
 
   test('quotes compile commands for Windows paths with spaces and percents', () => {

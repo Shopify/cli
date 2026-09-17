@@ -1,6 +1,7 @@
 import {formatAppDoctorCommand, type AppDoctorCommands} from './app-doctor-commands.js'
-import {renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {groupIssues, type IssueGroup} from './app-doctor-engine/index.js'
 import type {Capabilities, Issue, ScanResult, Severity} from './app-doctor-engine/index.js'
+import {renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import type {AlertCustomSection, InlineToken, RenderAlertOptions, Token, TokenItem} from '@shopify/cli-kit/node/ui'
 
 interface DoctorEngineMetadata {
@@ -33,21 +34,26 @@ interface DoctorAlert {
 }
 
 const SEVERITY_LABEL: Record<Severity, string> = {high: 'High', medium: 'Medium', low: 'Low'}
+const SAMPLE_FILE_COUNT = 3
 
 export function buildDoctorAlert(input: DoctorReportInput): DoctorAlert {
   const type = doctorAlertType(input)
+  const groups = groupIssues(input.scan.issues)
 
   return {
     type,
     options: {
-      headline: doctorHeadline(input),
+      headline: doctorHeadline(input, groups),
       body: doctorBody(input),
       ...(input.findings ? {} : {nextSteps: doctorNextSteps(input.commands)}),
       reference: [
         {subdued: `Engine: ${input.engine.name} ${input.engine.version}`},
         {subdued: `Ruleset: ${input.engine.ruleset}`},
+        ...(groups.some((group) => group.issues.length > 1) && !input.verbose
+          ? [{subdued: 'Use --verbose for every occurrence and fix. The trace retains all file and line details.'}]
+          : []),
       ],
-      customSections: doctorCustomSections(input),
+      customSections: doctorCustomSections(input, groups),
     },
   }
 }
@@ -77,12 +83,15 @@ function doctorAlertType(input: DoctorReportInput): DoctorAlertType {
   return 'success'
 }
 
-function doctorHeadline(input: DoctorReportInput): string {
+function doctorHeadline(input: DoctorReportInput, groups: IssueGroup[]): string {
   if (input.findings && input.findings.rejected.length > 0) {
     return 'App Doctor could not compile some agent findings.'
   }
 
   const count = input.scan.issues.length
+  if (groups.length < count) {
+    return `${groups.length} security issue ${groups.length === 1 ? 'group' : 'groups'} found (${count} occurrences).`
+  }
   if (count > 0) return `${count} security ${count === 1 ? 'issue' : 'issues'} found.`
   if (coverageIncomplete(input)) return 'Scan completed with coverage gaps.'
   return 'No security issues found.'
@@ -116,15 +125,20 @@ function doctorNextSteps(commands: AppDoctorCommands): TokenItem<InlineToken>[] 
   ]
 }
 
-function doctorCustomSections(input: DoctorReportInput): AlertCustomSection[] {
+function doctorCustomSections(input: DoctorReportInput, groups: IssueGroup[]): AlertCustomSection[] {
   const sections: AlertCustomSection[] = []
 
-  for (const group of groupIssuesBySeverity(input.scan.issues)) {
+  for (const severity of ['high', 'medium', 'low'] as const) {
+    const severityGroups = groups.filter((group) => group.severity === severity)
+    if (severityGroups.length === 0) continue
     sections.push({
-      title: SEVERITY_LABEL[group.severity],
+      title: SEVERITY_LABEL[severity],
       body: {
         list: {
-          items: group.issues.map((issue) => issueListItem(issue, input.verbose)),
+          items: severityGroups.flatMap((group) => [
+            issueGroupListItem(group),
+            ...(input.verbose ? group.issues.map(issueListItem) : []),
+          ]),
         },
       },
     })
@@ -187,43 +201,39 @@ function doctorCustomSections(input: DoctorReportInput): AlertCustomSection[] {
   return sections
 }
 
-function issueListItem(issue: Issue, verbose: boolean): TokenItem<InlineToken> {
+function issueListItem(issue: Issue): TokenItem<InlineToken> {
   const location = issue.location.line ? `${issue.location.file}:${issue.location.line}` : issue.location.file
   const item: InlineToken[] = [{bold: issue.title}, {subdued: issue.id}, {filePath: location}]
 
-  if (verbose) {
-    item.push({subdued: issue.message}, {subdued: `Fix: ${issue.fix.description}`})
-    if (issue.fix.guide) {
-      if (issue.fix.guide.startsWith('https://') || issue.fix.guide.startsWith('http://')) {
-        item.push({link: {label: 'Docs', url: issue.fix.guide}})
-      } else {
-        item.push({subdued: `Docs: ${issue.fix.guide}`})
-      }
+  item.push({subdued: issue.message}, {subdued: `Fix: ${issue.fix.description}`})
+  if (issue.fix.guide) {
+    if (issue.fix.guide.startsWith('https://') || issue.fix.guide.startsWith('http://')) {
+      item.push({link: {label: 'Docs', url: issue.fix.guide}})
+    } else {
+      item.push({subdued: `Docs: ${issue.fix.guide}`})
     }
-    if (issue.snippet) item.push({subdued: `Code: ${issue.snippet}`})
   }
+  if (issue.snippet) item.push({subdued: `Code: ${issue.snippet}`})
 
   return item
 }
 
-function sortIssues(issues: Issue[]): Issue[] {
-  const severityOrder: Record<Severity, number> = {high: 3, medium: 2, low: 1}
-  return [...issues].sort((left, right) => {
-    const severityDifference = severityOrder[right.severity] - severityOrder[left.severity]
-    if (severityDifference !== 0) return severityDifference
-    const fileDifference = left.location.file.localeCompare(right.location.file)
-    return fileDifference === 0 ? (left.location.line ?? 0) - (right.location.line ?? 0) : fileDifference
+function issueGroupListItem(group: IssueGroup): TokenItem<InlineToken> {
+  const issue = group.issues[0]!
+  const count = group.issues.length
+  const files = group.files.length
+  const samples = group.files.slice(0, SAMPLE_FILE_COUNT).map((file) => {
+    const sample = group.issues.find((occurrence) => occurrence.location.file === file)!
+    const location = sample.location.line ? `${file}:${sample.location.line}` : file
+    return {filePath: location}
   })
-}
-
-function groupIssuesBySeverity(issues: Issue[]): {severity: Severity; issues: Issue[]}[] {
-  const groups: {severity: Severity; issues: Issue[]}[] = []
-  for (const issue of sortIssues(issues)) {
-    const last = groups[groups.length - 1]
-    if (last?.severity === issue.severity) last.issues.push(issue)
-    else groups.push({severity: issue.severity, issues: [issue]})
-  }
-  return groups
+  return [
+    {bold: issue.title},
+    {subdued: issue.id},
+    `${count} ${count === 1 ? 'occurrence' : 'occurrences'} across ${files} ${files === 1 ? 'file' : 'files'}`,
+    ...samples,
+    ...(files > SAMPLE_FILE_COUNT ? [{subdued: `+${files - SAMPLE_FILE_COUNT} more files`}] : []),
+  ]
 }
 
 function formatCapabilities(capabilities: Capabilities): string {

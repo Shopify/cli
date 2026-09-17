@@ -1,5 +1,7 @@
 export interface Issue {
   id: string
+  /** Detector-defined variant within a rule, used to group similar findings in the report. */
+  pattern_id?: string
   severity: Severity
   points: number
   title: string
