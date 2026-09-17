@@ -55,11 +55,31 @@ describe('appDoctorInstructions', () => {
 
       expect(instructions).toContain('### 1. Run the initial scan')
       expect(instructions).toContain(`shopify app doctor --path ${shellQuote(appRoot)}`)
+      expect(instructions).not.toMatch(/shopify app doctor --path .+ --config/)
       expect(instructions).toContain(joinPath(appRoot, '.shopify', 'app-doctor', 'findings.json'))
       expect(instructions).toContain(joinPath(appRoot, '.shopify', 'app-doctor', 'trace.json'))
       expect(instructions).not.toContain('{{SCAN_CONTEXT}}')
       expect(instructions).not.toContain('{{SCAN_COMMAND}}')
       expect(instructions).not.toContain('{{COMPILE_COMMAND}}')
+    })
+  })
+
+  test('includes --config in scan and compile commands for a named configuration', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+      await writeFile(joinPath(appRoot, 'shopify.app.staging.toml'), 'name = "Staging"\nclient_id = "staging"\n')
+      const instructions = appDoctorInstructions({
+        directory: appRoot,
+        scanComplete: false,
+        configName: 'staging',
+      })
+
+      expect(instructions).toContain(
+        `shopify app doctor --path ${shellQuote(appRoot)} --config ${shellQuote('staging')}`,
+      )
+      expect(instructions).toContain(
+        `shopify app doctor --path ${shellQuote(appRoot)} --config ${shellQuote('staging')} --findings ${shellQuote(joinPath(appRoot, '.shopify', 'app-doctor', 'findings.json'))}`,
+      )
     })
   })
 
@@ -89,6 +109,19 @@ describe('appDoctorInstructions', () => {
         expect(instructions).not.toContain('shopify app doctor\n')
         expect(instructions).not.toContain('--findings .shopify/app-doctor/findings.json')
       })
+    })
+  })
+
+  test('translates a missing selected configuration into an AbortError', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+
+      expect(() => appDoctorInstructions({directory: appRoot, scanComplete: false, configName: 'missing'})).toThrow(
+        AbortError,
+      )
+      expect(() => appDoctorInstructions({directory: appRoot, scanComplete: false, configName: 'missing'})).toThrow(
+        /shopify\.app\.missing\.toml/,
+      )
     })
   })
 

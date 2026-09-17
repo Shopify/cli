@@ -1,6 +1,5 @@
 import {
   findAppRoot,
-  findAppTomls,
   loadAppToml,
   findExtensions,
   findAppSourceFiles,
@@ -33,6 +32,7 @@ import {scanDependencyAutomation} from '../rules/dependency-automation-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {redactIssue} from '../trace/index.js'
 import {getEngineVersion} from '../version.js'
+import {getAppConfigurationFileName} from '../../../models/app/config-file-naming.js'
 import {basename, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {sha256} from '@shopify/cli-kit/node/crypto'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
@@ -95,7 +95,7 @@ const configRule = (rule: Rule, version = 1): DeterministicCheckDefinition => ({
   analysisMode: 'structured_config',
   target: 'config',
   requires: rule.requires,
-  guidance: `Review ${rule.id} in every shopify.app*.toml file and resolve any parse error.`,
+  guidance: `Review ${rule.id} in the selected shopify.app*.toml file and resolve any parse error.`,
   runner: (context) => rule.check(context),
 })
 
@@ -136,7 +136,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     target: 'config_and_source',
     extensions: JAVASCRIPT_EXTENSIONS,
     guidance:
-      'Inspect parsed shopify.app*.toml values and high-signal React Router shopify.server ApiVersion declarations using the matching version 1 agent prompt.',
+      'Inspect the selected shopify.app*.toml and high-signal React Router shopify.server ApiVersion declarations using the matching version 1 agent prompt.',
     runner: (context) => scanEolApiVersions(context),
   },
   {
@@ -591,32 +591,22 @@ function normalizeRunnerResult(value: Issue[] | RunnerResult): RunnerResult {
   return Array.isArray(value) ? {issues: value} : value
 }
 
-export async function scan(startPath?: string): Promise<ScanResult> {
+export async function scan(startPath?: string, configFileName?: string): Promise<ScanResult> {
   const appRoot = findAppRoot(startPath)
   resetSkippedFiles()
-  const appTomls = findAppTomls(appRoot)
+  const selectedFileName = getAppConfigurationFileName(configFileName)
+  const appToml = loadAppToml(joinPath(appRoot, selectedFileName), appRoot)
+  const appTomls = appToml ? [appToml] : []
   const extensions = findExtensions(appRoot)
   const sourceCandidates = findSourceCandidates(appRoot)
   const sourceFiles = findAppSourceFiles(appRoot)
-  const sensitiveFiles = findSensitiveFiles(appRoot)
+  const sensitiveFiles = findSensitiveFiles(appRoot, selectedFileName)
   const manifestPaths = findManifestPaths(appRoot)
   const manifests = findManifests(appRoot, manifestPaths)
   const dependencyAutomation = manifests.some(manifestHasDependencies)
     ? findDependencyAutomationInputs(appRoot)
     : {files: []}
-  const requestedAppToml = startPath?.endsWith('.toml')
-    ? (appTomls.find((toml) => basename(toml.path) === basename(startPath)) ??
-      loadAppToml(joinPath(appRoot, basename(startPath)), appRoot))
-    : undefined
-  const appToml = requestedAppToml ?? appTomls[0] ?? null
-  const mergedConfig = appToml
-    ? {
-        ...appToml,
-        webhooks: appTomls.flatMap((configuration) => configuration.webhooks),
-        raw: Object.assign({}, ...appTomls.map((configuration) => configuration.raw)),
-      }
-    : null
-  const capabilities = detectCapabilities(mergedConfig, extensions, sourceFiles, appTomls)
+  const capabilities = detectCapabilities(appToml, extensions, sourceFiles, appTomls)
   const detection = detectProject(manifests, extensions, sourceCandidates)
   const context: ScanContext = {
     appRoot,

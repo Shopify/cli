@@ -124,6 +124,7 @@ describe('doctor', () => {
 
     expect(dependencies.execute).toHaveBeenCalledWith({
       directory: '/tmp/unlinked-app',
+      configName: undefined,
       findingsPath: undefined,
     })
     expect(dependencies.writeArtifacts).toHaveBeenCalledWith(scanExecution)
@@ -132,13 +133,30 @@ describe('doctor', () => {
       engine,
       verbose: true,
       elapsedMilliseconds: 12,
-      commands: resolveAppDoctorCommands(scanExecution.appRoot),
+      commands: resolveAppDoctorCommands(scanExecution.appRoot, 'shopify.app.toml'),
       tracePath: artifacts.tracePath,
       reviewPath: artifacts.reviewPath,
       reviewCheckCount: 31,
       findings: undefined,
     })
     expect(dependencies.output).not.toHaveBeenCalled()
+  })
+
+  test('forwards configName and includes --config in generated commands', async () => {
+    const dependencies = testDependencies()
+
+    await doctor({...testOptions(), configName: 'staging'}, dependencies)
+
+    expect(dependencies.execute).toHaveBeenCalledWith({
+      directory: '/tmp/unlinked-app',
+      configName: 'staging',
+      findingsPath: undefined,
+    })
+    expect(dependencies.renderReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        commands: resolveAppDoctorCommands(scanExecution.appRoot, 'shopify.app.staging.toml'),
+      }),
+    )
   })
 
   test('encodes a tagged JSON scan result', async () => {

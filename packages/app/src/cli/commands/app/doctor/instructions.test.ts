@@ -14,6 +14,7 @@ describe('app doctor instructions command', () => {
     expect(DoctorInstructions.prototype).toBeInstanceOf(BaseCommand)
     expect(DoctorInstructions.prototype).not.toBeInstanceOf(AppLinkedCommand)
     expect(DoctorInstructions.flags.path).toBe(appFlags.path)
+    expect(DoctorInstructions.flags.config).toBe(appFlags.config)
     expect(DoctorInstructions.args).not.toHaveProperty('directory')
   })
 
@@ -22,6 +23,7 @@ describe('app doctor instructions command', () => {
 
     expect(deliverAppDoctorInstructions).toHaveBeenCalledWith({
       directory: cwd(),
+      configName: undefined,
       copy: false,
       writePath: undefined,
     })
@@ -32,6 +34,7 @@ describe('app doctor instructions command', () => {
 
     expect(deliverAppDoctorInstructions).toHaveBeenCalledWith({
       directory: resolvePath('./fixtures/unlinked-app'),
+      configName: undefined,
       copy: true,
       writePath: undefined,
     })
@@ -42,9 +45,16 @@ describe('app doctor instructions command', () => {
 
     expect(deliverAppDoctorInstructions).toHaveBeenCalledWith({
       directory: cwd(),
+      configName: undefined,
       copy: false,
       writePath: resolvePath('./instructions.md'),
     })
+  })
+
+  test('forwards --config', async () => {
+    await DoctorInstructions.run(['--path', './fixtures/unlinked-app', '--config', 'staging'], import.meta.url)
+
+    expect(deliverAppDoctorInstructions).toHaveBeenCalledWith(expect.objectContaining({configName: 'staging'}))
   })
 
   test('keeps --copy and --write mutually exclusive', () => {

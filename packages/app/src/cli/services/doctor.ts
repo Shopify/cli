@@ -1,5 +1,6 @@
 import {doctorExitCode, executeAppDoctor, loadAppDoctorFindings, resolveAppDoctorRoot} from './app-doctor-api.js'
 import {writeAppDoctorArtifacts} from './app-doctor-artifacts.js'
+import {requireDoctorConfigFileName, resolveDoctorConfigFileName} from './app-doctor-config.js'
 import deliverAppDoctorInstructions from './app-doctor-instructions.js'
 import {resolveAppDoctorCommands, type AppDoctorCommands} from './app-doctor-commands.js'
 import {encodeDoctorJson, toDoctorJson} from './doctor-json.js'
@@ -14,6 +15,7 @@ import type {RenderSelectPromptOptions} from '@shopify/cli-kit/node/ui'
 
 interface DoctorOptions {
   directory: string
+  configName?: string
   json: boolean
   verbose: boolean
   blocking: AppDoctorBlockingLevel
@@ -25,7 +27,7 @@ interface DoctorOptions {
 export type AppDoctorInstructionsDestination = 'copy' | 'print' | 'nothing'
 
 interface DoctorDependencies {
-  execute(options: {directory: string; findingsPath?: string}): Promise<AppDoctorExecution>
+  execute(options: {directory: string; configName?: string; findingsPath?: string}): Promise<AppDoctorExecution>
   writeArtifacts(execution: AppDoctorExecution): Promise<AppDoctorArtifactPaths>
   canPrompt(): boolean
   selectInstructionsDestination(): Promise<AppDoctorInstructionsDestination>
@@ -51,10 +53,14 @@ export const appDoctorInstructionsPrompt: RenderSelectPromptOptions<AppDoctorIns
 }
 
 const defaultDependencies: DoctorDependencies = {
-  execute: async ({directory, findingsPath}) => {
+  execute: async ({directory, configName, findingsPath}) => {
     const appRoot = resolveAppDoctorRoot(directory)
     const findings = findingsPath ? await loadAppDoctorFindings(findingsPath) : undefined
-    return executeAppDoctor({appRoot, findings})
+    return executeAppDoctor({
+      appRoot,
+      findings,
+      configFileName: requireDoctorConfigFileName(appRoot, configName),
+    })
   },
   writeArtifacts: writeAppDoctorArtifacts,
   canPrompt: terminalSupportsPrompting,
@@ -102,10 +108,14 @@ export default async function doctor(
 ): Promise<void> {
   const execution = await dependencies.execute({
     directory: options.directory,
+    configName: options.configName,
     findingsPath: options.findingsPath,
   })
   const artifacts = await dependencies.writeArtifacts(execution)
-  const commands = resolveAppDoctorCommands(execution.appRoot)
+  const commands = resolveAppDoctorCommands(
+    execution.appRoot,
+    resolveDoctorConfigFileName(execution.appRoot, options.configName),
+  )
 
   if (options.json) {
     dependencies.output(encodeDoctorJson(toDoctorJson(execution)))
