@@ -1825,13 +1825,17 @@ Print out a list of sources that may be used with the logs command.
 
 ```
 USAGE
-  $ shopify app logs sources [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--path <value>] [--reset | ] [--verbose]
+  $ shopify app logs sources [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -1866,6 +1870,21 @@ DESCRIPTION
 
   The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently
   only function extensions are supported as sources.
+
+  Output from `--json` conforms to the `AppLogSourcesResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "array",
+    "items": {
+      "type": "string"
+    },
+    "title": "AppLogSourcesResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app release --version <version>`

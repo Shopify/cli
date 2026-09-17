@@ -1,24 +1,19 @@
-import {sourcesForApp} from './utils.js'
 import {sources} from './sources.js'
-import {testApp} from '../../models/app/app.test-data.js'
-import {outputResult, formatSection} from '@shopify/cli-kit/node/output'
-import {describe, test, vi, expect} from 'vitest'
+import {testApp, testFunctionExtension, testUIExtension} from '../../models/app/app.test-data.js'
+import {expect, test} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/output')
-vi.mock('./utils.js')
-
-describe('sources', () => {
-  test('prints sources by namespace', async () => {
-    // Given
-    vi.mocked(sourcesForApp).mockReturnValue(['extensions.source1', 'extensions.source2', 'arbitrary.text'])
-    vi.mocked(formatSection).mockReturnValue('formatted section')
-
-    // When
-    sources(testApp())
-
-    // Then
-    expect(formatSection).toHaveBeenCalledWith('extensions', 'extensions.source1\nextensions.source2')
-    expect(formatSection).toHaveBeenCalledWith('arbitrary', 'arbitrary.text')
-    expect(outputResult).toHaveBeenCalledWith('formatted section')
+test('returns function sources in extension order', async () => {
+  const first = await testFunctionExtension({
+    config: {...(await testFunctionExtension()).configuration, handle: 'first'},
   })
+  const second = await testFunctionExtension({
+    config: {...(await testFunctionExtension()).configuration, handle: 'second'},
+  })
+  const ui = await testUIExtension()
+
+  expect(sources(testApp({allExtensions: [first, ui, second]}))).toEqual(['extensions.first', 'extensions.second'])
+})
+
+test('returns an empty collection without function extensions', () => {
+  expect(sources(testApp())).toEqual([])
 })

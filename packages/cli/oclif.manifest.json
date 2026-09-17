@@ -3729,7 +3729,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently only function extensions are supported as sources.",
+      "description": "The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently only function extensions are supported as sources.\n\nOutput from `--json` conforms to the `AppLogSourcesResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"string\"\n  },\n  \"title\": \"AppLogSourcesResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently only function extensions are supported as sources.",
       "flags": {
         "auth-alias": {
@@ -3761,6 +3761,15 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,
