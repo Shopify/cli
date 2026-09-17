@@ -1,4 +1,4 @@
-import {renderThemeInfoMultiEnvironmentResult, renderThemeInfoResult} from './result.js'
+import {renderThemeInfoResult} from './result.js'
 import {describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
@@ -61,61 +61,6 @@ describe('renderThemeInfoResult', () => {
         },
       ],
     })
-  })
-
-  test('encodes the multi-environment wrapper as exactly one JSON document on stdout', () => {
-    const output = mockAndCaptureOutput()
-    output.clear()
-
-    renderThemeInfoMultiEnvironmentResult({
-      environments: [
-        {environment: 'development', result: themeResult},
-        {environment: 'staging', result: environmentResult},
-      ],
-    })
-
-    expect(output.output()).toBe(
-      `{
-  "environments": [
-    {
-      "environment": "development",
-      "result": {
-        "theme": {
-          "id": 123,
-          "name": "My theme",
-          "role": "live",
-          "shop": "my-shop.myshopify.com",
-          "preview_url": "https://my-shop.myshopify.com/preview",
-          "editor_url": "https://my-shop.myshopify.com/editor"
-        }
-      }
-    },
-    {
-      "environment": "staging",
-      "result": {
-        "store": "my-shop.myshopify.com",
-        "development_theme_id": null,
-        "cli_version": "3.91.0",
-        "os": "darwin-arm64",
-        "shell": "/bin/zsh",
-        "node_version": "v24.15.0"
-      }
-    }
-  ]
-}`,
-    )
-    expect(output.error()).toBe('')
-    expect(renderInfo).not.toHaveBeenCalled()
-  })
-
-  test('encodes an empty multi-environment wrapper as one JSON document', () => {
-    const output = mockAndCaptureOutput()
-    output.clear()
-
-    renderThemeInfoMultiEnvironmentResult({environments: []})
-
-    expect(output.output()).toBe(`{\n  "environments": []\n}`)
-    expect(output.error()).toBe('')
   })
 
   test('renders environment information as text', () => {

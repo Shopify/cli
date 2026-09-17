@@ -4950,9 +4950,6 @@ DESCRIPTION
       },
       {
         "$ref": "#/definitions/ThemeEnvironmentInfo"
-      },
-      {
-        "$ref": "#/definitions/ThemeInfoMultiEnvironmentResult"
       }
     ],
     "title": "ThemeInfoResult",
@@ -5033,44 +5030,6 @@ DESCRIPTION
           "os",
           "shell",
           "node_version"
-        ],
-        "additionalProperties": false
-      },
-      "ThemeInfoMultiEnvironmentEntry": {
-        "type": "object",
-        "properties": {
-          "environment": {
-            "type": "string"
-          },
-          "result": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/ThemeInfoThemeResult"
-              },
-              {
-                "$ref": "#/definitions/ThemeEnvironmentInfo"
-              }
-            ]
-          }
-        },
-        "required": [
-          "environment",
-          "result"
-        ],
-        "additionalProperties": false
-      },
-      "ThemeInfoMultiEnvironmentResult": {
-        "type": "object",
-        "properties": {
-          "environments": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/ThemeInfoMultiEnvironmentEntry"
-            }
-          }
-        },
-        "required": [
-          "environments"
         ],
         "additionalProperties": false
       }

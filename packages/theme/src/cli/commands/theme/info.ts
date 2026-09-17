@@ -1,7 +1,7 @@
-import ThemeCommand, {type ThemeCommandMultiEnvironmentEntry} from '../../utilities/theme-command.js'
+import ThemeCommand from '../../utilities/theme-command.js'
 import {fetchThemeInfo, getThemeEnvironmentInfo} from '../../services/info.js'
-import {renderThemeInfoMultiEnvironmentResult, renderThemeInfoResult} from '../../services/info/result.js'
-import {themeInfoJsonOutputSchema, type ThemeInfoResult} from '../../services/info/types.js'
+import {renderThemeInfoResult} from '../../services/info/result.js'
+import {themeInfoJsonOutputSchema} from '../../services/info/types.js'
 import {themeFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -12,7 +12,7 @@ import {recordTiming} from '@shopify/cli-kit/node/analytics'
 
 type InfoFlags = OutputFlags<typeof Info.flags>
 
-export default class Info extends ThemeCommand<ThemeInfoResult> {
+export default class Info extends ThemeCommand {
   static get jsonOutputSchema() {
     return themeInfoJsonOutputSchema
   }
@@ -41,41 +41,19 @@ Use \`--json\` for machine-readable output.`
 
   static multiEnvironmentsFlags = ['store', 'password']
 
-  async command(
-    flags: InfoFlags,
-    adminSession: AdminSession,
-    multiEnvironment = false,
-  ): Promise<ThemeInfoResult | undefined> {
+  async command(flags: InfoFlags, adminSession: AdminSession): Promise<void> {
     recordTiming('theme-command:info')
-
     if (flags.theme || flags.development) {
       const output = await fetchThemeInfo(adminSession, flags)
       if (!output) {
         throw new AbortError('Theme not found!')
       }
 
-      if (multiEnvironment && flags.json) return output
-
       renderThemeInfoResult(output, flags.json ? 'json' : 'text', flags)
     } else {
       const {result, developmentTheme} = getThemeEnvironmentInfo({cliVersion: this.config.version})
-
-      if (multiEnvironment && flags.json) return result
-
       renderThemeInfoResult(result, flags.json ? 'json' : 'text', {developmentTheme})
     }
-
     if (!flags.json) recordTiming('theme-command:info')
-
-    return undefined
-  }
-
-  protected onMultiEnvironmentComplete(
-    entries: ThemeCommandMultiEnvironmentEntry<ThemeInfoResult>[],
-    flags: InfoFlags,
-  ): void {
-    if (flags.json !== true) return
-
-    renderThemeInfoMultiEnvironmentResult({environments: entries})
   }
 }
