@@ -64,7 +64,20 @@ describe('app dev command', () => {
         localhostPort: undefined,
       })
       expect(storeContext).toHaveBeenCalledWith(expect.objectContaining({storeCreationMode: 'selection-option'}))
-      expect(dev).toHaveBeenCalledWith(expect.objectContaining({installMkcert: undefined, tunnel: {mode: 'auto'}}))
+      expect(dev).toHaveBeenCalledWith(
+        expect.objectContaining({installMkcert: undefined, unsafe: false, tunnel: {mode: 'auto'}}),
+      )
+    })
+  })
+
+  test('passes --unsafe-validation to dev', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      const {store} = mockAppAndStore(tmp)
+      vi.mocked(getTunnelMode).mockResolvedValue({mode: 'auto'})
+
+      await Dev.run(['--path', tmp, '--store', store.shopDomain, '--unsafe-validation'], import.meta.url)
+
+      expect(dev).toHaveBeenCalledWith(expect.objectContaining({unsafe: true}))
     })
   })
 

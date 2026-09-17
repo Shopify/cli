@@ -1248,6 +1248,13 @@
           "name": "tunnel-url",
           "type": "option"
         },
+        "unsafe-validation": {
+          "allowNo": false,
+          "description": "Allow unsafe app version validation during dev previews.",
+          "env": "SHOPIFY_FLAG_UNSAFE_VALIDATION",
+          "name": "unsafe-validation",
+          "type": "boolean"
+        },
         "use-localhost": {
           "allowNo": false,
           "description": "Service entry point will listen to localhost. A tunnel won't be used. Will work for testing many app features, but not those that directly invoke your app (E.g: Webhooks)",

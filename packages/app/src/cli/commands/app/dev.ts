@@ -40,6 +40,11 @@ export default class Dev extends AppLinkedCommand {
       env: 'SHOPIFY_FLAG_NO_UPDATE',
       default: false,
     }),
+    'unsafe-validation': Flags.boolean({
+      description: 'Allow unsafe app version validation during dev previews.',
+      env: 'SHOPIFY_FLAG_UNSAFE_VALIDATION',
+      default: false,
+    }),
     'subscription-product-url': Flags.string({
       description: 'Resource URL for subscription UI extension. Format: "/products/{productId}"',
       env: 'SHOPIFY_FLAG_SUBSCRIPTION_PRODUCT_URL',
@@ -142,6 +147,7 @@ export default class Dev extends AppLinkedCommand {
       store,
       directory: flags.path,
       update: !flags['no-update'],
+      unsafe: flags['unsafe-validation'],
       skipDependenciesInstallation: flags['skip-dependencies-installation'],
       commandConfig: this.config,
       subscriptionProductUrl: flags['subscription-product-url'],
