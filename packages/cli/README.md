@@ -8023,11 +8023,9 @@ DESCRIPTION
   Displays information about your theme environment, including your current store. Can also retrieve information about a
   specific theme.
 
-  Use `--json` for machine-readable output.
+  Use `--json-schema` to print the result, error, and event schemas.
 
   Output from `--json` conforms to the `ThemeInfoResult` schema.
-
-  Use `--json-schema` to print the result, error, and event schemas.
 
   ```json
   {
@@ -8037,9 +8035,6 @@ DESCRIPTION
       },
       {
         "$ref": "#/definitions/ThemeEnvironmentInfo"
-      },
-      {
-        "$ref": "#/definitions/ThemeInfoMultiEnvironmentResult"
       }
     ],
     "title": "ThemeInfoResult",
@@ -8120,44 +8115,6 @@ DESCRIPTION
           "os",
           "shell",
           "node_version"
-        ],
-        "additionalProperties": false
-      },
-      "ThemeInfoMultiEnvironmentEntry": {
-        "type": "object",
-        "properties": {
-          "environment": {
-            "type": "string"
-          },
-          "result": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/ThemeInfoThemeResult"
-              },
-              {
-                "$ref": "#/definitions/ThemeEnvironmentInfo"
-              }
-            ]
-          }
-        },
-        "required": [
-          "environment",
-          "result"
-        ],
-        "additionalProperties": false
-      },
-      "ThemeInfoMultiEnvironmentResult": {
-        "type": "object",
-        "properties": {
-          "environments": {
-            "type": "array",
-            "items": {
-              "$ref": "#/definitions/ThemeInfoMultiEnvironmentEntry"
-            }
-          }
-        },
-        "required": [
-          "environments"
         ],
         "additionalProperties": false
       }

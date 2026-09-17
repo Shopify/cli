@@ -1,4 +1,4 @@
-import ThemeCommand, {RequiredFlags, type ThemeCommandMultiEnvironmentEntry} from './theme-command.js'
+import ThemeCommand, {RequiredFlags} from './theme-command.js'
 import {ensureThemeStore} from './theme-store.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config, Flags} from '@oclif/core'
@@ -38,6 +38,8 @@ vi.mock('@shopify/cli-kit/node/fs')
 const CommandConfig = new Config({root: __dirname})
 
 class TestThemeCommand extends ThemeCommand {
+  static id = 'theme:test'
+
   static flags = {
     environment: Flags.string({
       multiple: true,
@@ -155,42 +157,6 @@ class TestUnauthenticatedThemeCommand extends ThemeCommand {
 
 class TestNoMultiEnvThemeCommand extends TestThemeCommand {
   static multiEnvironmentsFlags: RequiredFlags = null
-}
-
-class TestResultThemeCommand extends ThemeCommand<string> {
-  static flags = {...TestThemeCommand.flags}
-
-  static multiEnvironmentsFlags: RequiredFlags = ['store']
-
-  completedEntries: ThemeCommandMultiEnvironmentEntry<string>[] = []
-  lifecycle: string[] = []
-
-  async command(flags: any, _session?: AdminSession, _multiEnvironment = false): Promise<string | undefined> {
-    const environment = flags.environment?.[0] as string
-    this.lifecycle.push(`command:${environment}`)
-
-    if (environment === 'command-error') {
-      throw new Error('Mocking a command error')
-    }
-
-    return `result-for-${environment}`
-  }
-
-  protected onMultiEnvironmentComplete(entries: ThemeCommandMultiEnvironmentEntry<string>[]): void {
-    this.lifecycle.push('complete')
-    this.completedEntries = entries
-  }
-}
-
-class TestResultThemeCommandWithDefaultHook extends ThemeCommand<string> {
-  static flags = {...TestThemeCommand.flags}
-
-  static multiEnvironmentsFlags: RequiredFlags = ['store']
-
-  async command(flags: any): Promise<string | undefined> {
-    const environment = flags.environment?.[0] as string
-    return `result-for-${environment}`
-  }
 }
 
 class TestThemeCommandWithoutStoreRequired extends ThemeCommand {
@@ -649,7 +615,7 @@ describe('ThemeCommand', () => {
       expect(fileExistsSync).toHaveBeenCalledWith('current/working/directory')
     })
 
-    test('multiple environments provided - displays warning if not allowed', async () => {
+    test('multiple environments provided - fails if not allowed', async () => {
       // Given
       const environmentConfig = {store: 'store.myshopify.com'}
       vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
@@ -663,15 +629,7 @@ describe('ThemeCommand', () => {
         CommandConfig,
       )
 
-      // When
-      await command.run()
-
-      // Then
-      expect(renderWarning).toHaveBeenCalledWith(
-        expect.objectContaining({
-          body: 'This command does not support multiple environments.',
-        }),
-      )
+      await expect(command.run()).rejects.toThrow('This command does not support multiple environments.')
     })
   })
 
@@ -803,7 +761,7 @@ describe('ThemeCommand', () => {
       expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
       expect(renderConfirmationPrompt).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: ['Run testthemecommandwithpathflag in the following environments?'],
+          message: ['Run theme test in the following environments?'],
           infoTable: {
             Environment: [
               ['development', {subdued: 'store: store1.myshopify.com, password, path: /home/.../theme1'}],
@@ -1001,60 +959,6 @@ describe('ThemeCommand', () => {
       )
     })
 
-    test('commands should display an error if the --path flag is used', async () => {
-      // Given
-      const environmentConfig = {store: 'store.myshopify.com'}
-      vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-
-      await CommandConfig.load()
-      const command = new TestThemeCommand(
-        ['--environment', 'command-error', '--environment', 'development', '--path', 'path'],
-        CommandConfig,
-      )
-
-      // When
-      await command.run()
-
-      // Then
-      expect(renderError).toHaveBeenCalledWith(
-        expect.objectContaining({
-          body: [
-            "Can't use `--path` flag with multiple environments.",
-            "Configure each environment's theme path in your shopify.theme.toml file instead.",
-          ],
-        }),
-      )
-    })
-
-    test('commands should display an error if the --path flag is used and no shopify.theme.toml is found', async () => {
-      // Given
-      const environmentConfig = {store: 'store.myshopify.com'}
-      vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
-      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-      vi.mocked(fileExistsSync).mockReturnValue(false)
-
-      await CommandConfig.load()
-      const command = new TestThemeCommand(
-        ['--environment', 'command-error', '--environment', 'development', '--path', 'path'],
-        CommandConfig,
-      )
-
-      // When
-      await command.run()
-
-      // Then
-      expect(renderError).toHaveBeenCalledWith(
-        expect.objectContaining({
-          body: [
-            "Can't use `--path` flag with multiple environments.",
-            'Run this command from the directory containing shopify.theme.toml.',
-            'No shopify.theme.toml found in current directory.',
-          ],
-        }),
-      )
-    })
-
     test('CLI and shopify.theme.toml flag values take precedence over defaults', async () => {
       // Given
       vi.mocked(loadEnvironment)
@@ -1223,241 +1127,6 @@ describe('ThemeCommand', () => {
 
       // Then
       expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
-    })
-  })
-
-  describe('multi environment result collection', () => {
-    test('collects successful results in requested order when completion order differs', async () => {
-      // Given
-      vi.mocked(loadEnvironment)
-        .mockResolvedValueOnce({store: 'store1.myshopify.com'})
-        .mockResolvedValueOnce({store: 'store2.myshopify.com'})
-        .mockResolvedValueOnce({store: 'store3.myshopify.com'})
-      vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
-
-      await CommandConfig.load()
-      const command = new TestResultThemeCommand(
-        ['--environment', 'first', '--environment', 'second', '--environment', 'third'],
-        CommandConfig,
-      )
-
-      // Completion happens in reverse requested order
-      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
-        for (const process of [...processes].reverse()) {
-          // eslint-disable-next-line no-await-in-loop
-          await process.action({} as Writable, {} as Writable, {} as any)
-        }
-      })
-
-      // When
-      await command.run()
-
-      // Then
-      expect(command.lifecycle.filter((event) => event.startsWith('command:'))).toEqual([
-        'command:third',
-        'command:second',
-        'command:first',
-      ])
-      expect(command.completedEntries).toEqual([
-        {environment: 'first', result: 'result-for-first'},
-        {environment: 'second', result: 'result-for-second'},
-        {environment: 'third', result: 'result-for-third'},
-      ])
-    })
-
-    test('omits failed executions from the collected results', async () => {
-      // Given
-      vi.mocked(loadEnvironment)
-        .mockResolvedValueOnce({store: 'store1.myshopify.com'})
-        .mockResolvedValueOnce({store: 'store2.myshopify.com'})
-        .mockResolvedValueOnce({store: 'store3.myshopify.com'})
-      vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
-      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
-        for (const process of processes) {
-          // eslint-disable-next-line no-await-in-loop
-          await process.action({} as Writable, {} as Writable, {} as any)
-        }
-      })
-
-      await CommandConfig.load()
-      const command = new TestResultThemeCommand(
-        ['--environment', 'ok', '--environment', 'command-error', '--environment', 'another'],
-        CommandConfig,
-      )
-
-      // When
-      await command.run()
-
-      // Then
-      expect(command.completedEntries).toEqual([
-        {environment: 'ok', result: 'result-for-ok'},
-        {environment: 'another', result: 'result-for-another'},
-      ])
-      expect(renderError).toHaveBeenCalledWith(
-        expect.objectContaining({body: ['Environment command-error failed: \n\nMocking a command error']}),
-      )
-    })
-
-    test('omits an environment from results when its analytics cleanup fails', async () => {
-      // Given
-      vi.mocked(loadEnvironment)
-        .mockResolvedValueOnce({store: 'store1.myshopify.com'})
-        .mockResolvedValueOnce({store: 'store2.myshopify.com'})
-      vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
-      vi.mocked(ensureAuthenticatedThemes).mockImplementation(async (store) => ({
-        token: 'test-token',
-        storeFqdn: store,
-      }))
-      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
-        for (const process of processes) {
-          // eslint-disable-next-line no-await-in-loop
-          await process.action({} as Writable, {} as Writable, {} as any)
-        }
-      })
-
-      // The second environment's analytics cleanup fails after its command returns a result.
-      vi.mocked(addPublicMetadata).mockImplementation(async (getMetadata) => {
-        const metadata = (await getMetadata()) as {store_domain?: string}
-        if (metadata.store_domain === 'store2.myshopify.com') throw new Error('analytics unavailable')
-      })
-
-      await CommandConfig.load()
-      const command = new TestResultThemeCommand(
-        ['--environment', 'ok', '--environment', 'analytics-fails'],
-        CommandConfig,
-      )
-
-      // When
-      await command.run()
-
-      // Then
-      expect(command.completedEntries).toEqual([{environment: 'ok', result: 'result-for-ok'}])
-      expect(renderError).toHaveBeenCalledWith(
-        expect.objectContaining({body: ['Environment analytics-fails failed: \n\nanalytics unavailable']}),
-      )
-    })
-
-    test('runs the completion hook after all duplicate-store groups finish', async () => {
-      // Given
-      vi.mocked(loadEnvironment)
-        .mockResolvedValueOnce({store: 'store1.myshopify.com'})
-        .mockResolvedValueOnce({store: 'store1.myshopify.com'})
-        .mockResolvedValueOnce({store: 'store2.myshopify.com'})
-      vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
-
-      await CommandConfig.load()
-      const command = new TestResultThemeCommand(
-        ['--environment', 'first', '--environment', 'second', '--environment', 'third'],
-        CommandConfig,
-      )
-      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
-        command.lifecycle.push(`group:${processes.map((process) => process.prefix).join('+')}`)
-        for (const process of processes) {
-          // eslint-disable-next-line no-await-in-loop
-          await process.action({} as Writable, {} as Writable, {} as any)
-        }
-      })
-
-      // When
-      await command.run()
-
-      // Then
-      expect(vi.mocked(renderConcurrent)).toHaveBeenCalledTimes(2)
-      expect(command.lifecycle).toEqual([
-        'group:first+third',
-        'command:first',
-        'command:third',
-        'group:second',
-        'command:second',
-        'complete',
-      ])
-      expect(command.completedEntries.map((entry) => entry.environment)).toEqual(['first', 'second', 'third'])
-    })
-
-    test('the default completion hook leaves command output unchanged', async () => {
-      // Given
-      vi.mocked(loadEnvironment)
-        .mockResolvedValueOnce({store: 'store1.myshopify.com'})
-        .mockResolvedValueOnce({store: 'store2.myshopify.com'})
-      vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
-      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
-        for (const process of processes) {
-          // eslint-disable-next-line no-await-in-loop
-          await process.action({} as Writable, {} as Writable, {} as any)
-        }
-      })
-
-      await CommandConfig.load()
-      const command = new TestResultThemeCommandWithDefaultHook(
-        ['--environment', 'first', '--environment', 'second'],
-        CommandConfig,
-      )
-
-      // When
-      await command.run()
-
-      // Then
-      expect(mockAndCaptureOutput().output()).toBe('')
-      expect(renderError).not.toHaveBeenCalled()
-    })
-
-    test('does not resolve until an asynchronous completion hook finishes', async () => {
-      // Given
-      vi.mocked(loadEnvironment)
-        .mockResolvedValueOnce({store: 'store1.myshopify.com'})
-        .mockResolvedValueOnce({store: 'store2.myshopify.com'})
-      vi.mocked(ensureThemeStore).mockImplementation((options: any) => options.store)
-      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
-        for (const process of processes) {
-          // eslint-disable-next-line no-await-in-loop
-          await process.action({} as Writable, {} as Writable, {} as any)
-        }
-      })
-
-      let signalHookStarted: () => void = () => {}
-      const hookStarted = new Promise<void>((resolve) => {
-        signalHookStarted = resolve
-      })
-      let releaseHook: () => void = () => {}
-
-      class AsyncCompletionThemeCommand extends ThemeCommand<string> {
-        static flags = {...TestThemeCommand.flags}
-
-        static multiEnvironmentsFlags: RequiredFlags = ['store']
-
-        async command(flags: any): Promise<string | undefined> {
-          return `result-for-${flags.environment?.[0]}`
-        }
-
-        protected async onMultiEnvironmentComplete(): Promise<void> {
-          signalHookStarted()
-          await new Promise<void>((resolve) => {
-            releaseHook = resolve
-          })
-        }
-      }
-
-      await CommandConfig.load()
-      const command = new AsyncCompletionThemeCommand(
-        ['--environment', 'first', '--environment', 'second'],
-        CommandConfig,
-      )
-
-      // When
-      let didResolve = false
-      const runPromise = command.run().then(() => {
-        didResolve = true
-      })
-
-      await hookStarted
-      await Promise.resolve()
-
-      // Then
-      expect(didResolve).toBe(false)
-
-      releaseHook()
-      await runPromise
-      expect(didResolve).toBe(true)
     })
   })
 })
