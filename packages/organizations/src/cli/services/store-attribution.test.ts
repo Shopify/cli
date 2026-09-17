@@ -1,4 +1,4 @@
-import {recordStoreFqdnMetadata} from './attribution.js'
+import {recordStoreFqdnMetadata} from './store-attribution.js'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
@@ -12,7 +12,7 @@ describe('store command attribution', () => {
   })
 
   test('records the sensitive, hashed, validation, and public store domain for a store fqdn', async () => {
-    await recordStoreFqdnMetadata('shop.myshopify.com', true)
+    await recordStoreFqdnMetadata({storeFqdn: 'shop.myshopify.com', validated: true})
 
     expect(addSensitiveMetadata).toHaveBeenCalledWith(expect.any(Function))
     expect(vi.mocked(addSensitiveMetadata).mock.calls[0]![0]()).toEqual({store_fqdn: 'shop.myshopify.com'})
@@ -26,13 +26,23 @@ describe('store command attribution', () => {
   })
 
   test('records the numeric store id when provided', async () => {
-    await recordStoreFqdnMetadata('shop.myshopify.com', true, '123')
+    await recordStoreFqdnMetadata({storeFqdn: 'shop.myshopify.com', validated: true, storeId: '123'})
 
     expect(vi.mocked(addPublicMetadata).mock.calls[0]![0]()).toEqual({
       store_fqdn_hash: 'hashed-store',
       store_fqdn_validated: true,
       store_domain: 'shop.myshopify.com',
       store_id: 123,
+    })
+  })
+
+  test('omits the store id when it is not numeric', async () => {
+    await recordStoreFqdnMetadata({storeFqdn: 'shop.myshopify.com', validated: true, storeId: 'gid://shopify/Shop/123'})
+
+    expect(vi.mocked(addPublicMetadata).mock.calls[0]![0]()).toEqual({
+      store_fqdn_hash: 'hashed-store',
+      store_fqdn_validated: true,
+      store_domain: 'shop.myshopify.com',
     })
   })
 })

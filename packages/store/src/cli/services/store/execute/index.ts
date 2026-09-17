@@ -16,7 +16,7 @@ interface ExecuteStoreOperationInput {
 }
 
 export async function executeStoreOperation(input: ExecuteStoreOperationInput): Promise<unknown> {
-  await recordStoreFqdnMetadata(input.store, false)
+  await recordStoreFqdnMetadata({storeFqdn: input.store, validated: false})
   const target = getStoreGraphQLTarget(input.api ?? 'admin')
 
   const request = await prepareStoreExecuteRequest({

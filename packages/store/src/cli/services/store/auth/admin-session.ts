@@ -10,7 +10,7 @@ export async function loadAdminSessionFromStoreAuth(store: string): Promise<{
   session: StoredStoreAppSession
 }> {
   const session = await loadStoredStoreSession(normalizeStoreFqdn(store))
-  await recordStoreFqdnMetadata(session.store, true)
+  await recordStoreFqdnMetadata({storeFqdn: session.store, validated: true})
   setLastSeenUserId(session.userId)
 
   return {

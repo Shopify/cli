@@ -44,7 +44,11 @@ describe('preview store create service', () => {
       },
     })
     expect(recordStoreFqdnMetadata).toHaveBeenCalledOnce()
-    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('x12y45z.myshopify.com', true, '123')
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith({
+      storeFqdn: 'x12y45z.myshopify.com',
+      validated: true,
+      storeId: '123',
+    })
     expect(setLastSeenUserId).toHaveBeenCalledWith('placeholder-uuid')
     expect(result).toEqual({
       status: 'success',
@@ -133,7 +137,11 @@ describe('preview store create service', () => {
     expect(setStoredStoreAppSession).toHaveBeenCalledOnce()
     expect(setLastSeenUserId).toHaveBeenCalledWith('123')
     expect(recordStoreFqdnMetadata).toHaveBeenCalledOnce()
-    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('x12y45z.myshopify.com', true, '123')
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith({
+      storeFqdn: 'x12y45z.myshopify.com',
+      validated: true,
+      storeId: '123',
+    })
     expect(result.status).toBe('success')
   })
 

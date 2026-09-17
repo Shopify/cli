@@ -29,7 +29,7 @@ describe('loadAdminSessionFromStoreAuth', () => {
     const got = await loadAdminSessionFromStoreAuth('https://preview.myshopify.com/admin')
 
     expect(loadStoredStoreSession).toHaveBeenCalledWith('preview.myshopify.com')
-    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith('preview.myshopify.com', true)
+    expect(recordStoreFqdnMetadata).toHaveBeenCalledWith({storeFqdn: 'preview.myshopify.com', validated: true})
     expect(setLastSeenUserId).toHaveBeenCalledWith('preview:123')
     expect(got).toEqual({
       adminSession: {token: 'shpat_token', storeFqdn: 'preview.myshopify.com'},
