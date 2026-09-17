@@ -7,10 +7,8 @@ import {appFlags} from '../../../flags.js'
 import {commands} from '../../../index.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {linkedAppContext} from '../../../services/app-context.js'
-import {
-  cancelMigrationOperations,
-  migrationCancellationJsonOutputSchema,
-} from '../../../services/subscription-migrations/cancel-operations.js'
+import {cancelMigrationOperations} from '../../../services/subscription-migrations/cancel-operations.js'
+import {migrationCancellationJsonOutputSchema} from '../../../services/subscription-migrations/types.js'
 import {outputOperations} from '../../../services/subscription-migrations/command-output.js'
 import {getMigrationOperations} from '../../../services/subscription-migrations/get-operations.js'
 import {runSubmissionCommand} from '../../../services/subscription-migrations/run-submission-command.js'
@@ -21,7 +19,7 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import type {MigrationOperation} from '../../../models/subscription-migrations.js'
-import type {MigrationCancellationResult} from '../../../services/subscription-migrations/cancel-operations.js'
+import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
 import type {MigrationSubmissionResult} from '../../../services/subscription-migrations/submit-migration-plan.js'
 
 vi.mock('../../../services/app-context.js')

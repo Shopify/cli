@@ -5,7 +5,7 @@ import type {MigrationOperation} from '../../../models/subscription-migrations.j
 import type {
   MigrationCancellationOutcome,
   MigrationCancellationResult,
-} from '../../../services/subscription-migrations/cancel-operations.js'
+} from '../../../services/subscription-migrations/types.js'
 import type {
   MigrationSubmission,
   MigrationSubmissionResult,

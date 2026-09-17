@@ -1,7 +1,7 @@
 import {
   migrationCancellationJsonOutputSchema,
   type MigrationCancellationResult,
-} from '../../../services/subscription-migrations/cancel-operations.js'
+} from '../../../services/subscription-migrations/types.js'
 import type {MigrationSubmissionResult} from '../../../services/subscription-migrations/submit-migration-plan.js'
 
 export function encodeMigrationSubmissionResult(result: MigrationSubmissionResult): string {

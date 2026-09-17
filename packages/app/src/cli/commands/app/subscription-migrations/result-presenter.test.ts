@@ -7,7 +7,7 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import type {MigrationOperation} from '../../../models/subscription-migrations.js'
-import type {MigrationCancellationResult} from '../../../services/subscription-migrations/cancel-operations.js'
+import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
 import type {
   MigrationSubmission,
   MigrationSubmissionResult,

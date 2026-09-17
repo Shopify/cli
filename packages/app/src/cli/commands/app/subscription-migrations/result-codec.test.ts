@@ -1,8 +1,8 @@
 import {encodeMigrationCancellationResult, encodeMigrationSubmissionResult} from './result-codec.js'
-import {migrationCancellationJsonOutputSchema} from '../../../services/subscription-migrations/cancel-operations.js'
+import {migrationCancellationJsonOutputSchema} from '../../../services/subscription-migrations/types.js'
 import {describe, expect, test} from 'vitest'
 import type {MigrationOperation} from '../../../models/subscription-migrations.js'
-import type {MigrationCancellationResult} from '../../../services/subscription-migrations/cancel-operations.js'
+import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
 import type {
   MigrationSubmission,
   MigrationSubmissionResult,
