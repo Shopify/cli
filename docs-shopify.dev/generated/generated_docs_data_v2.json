@@ -2368,7 +2368,7 @@
     "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts",
       "name": "appimportcustomdatadefinitions",
-      "description": "The following flags are available for the `app import-custom-data-definitions` command:",
+      "description": "The following flags are available for the `app import custom-data-definitions` command:",
       "isPublicDocs": true,
       "members": [
         {
@@ -2465,15 +2465,15 @@
       "value": "export interface appimportcustomdatadefinitions {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Include existing declared definitions in the output.\n   * @environment SHOPIFY_FLAG_INCLUDE_EXISTING\n   */\n  '--include-existing'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Store URL. Must be an existing development or Shopify Plus sandbox store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
-  "appimportextensions": {
-    "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts": {
-      "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
-      "name": "appimportextensions",
-      "description": "The following flags are available for the `app import-extensions` command:",
+  "appimportdashboardextensions": {
+    "docs-shopify.dev/commands/interfaces/app-import-dashboard-extensions.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/app-import-dashboard-extensions.interface.ts",
+      "name": "appimportdashboardextensions",
+      "description": "The following flags are available for the `app import dashboard-extensions` command:",
       "isPublicDocs": true,
       "members": [
         {
-          "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
+          "filePath": "docs-shopify.dev/commands/interfaces/app-import-dashboard-extensions.interface.ts",
           "syntaxKind": "PropertySignature",
           "name": "--auth-alias <value>",
           "value": "string",
@@ -2482,7 +2482,7 @@
           "environmentValue": "SHOPIFY_FLAG_AUTH_ALIAS"
         },
         {
-          "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
+          "filePath": "docs-shopify.dev/commands/interfaces/app-import-dashboard-extensions.interface.ts",
           "syntaxKind": "PropertySignature",
           "name": "--client-id <value>",
           "value": "string",
@@ -2491,7 +2491,7 @@
           "environmentValue": "SHOPIFY_FLAG_CLIENT_ID"
         },
         {
-          "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
+          "filePath": "docs-shopify.dev/commands/interfaces/app-import-dashboard-extensions.interface.ts",
           "syntaxKind": "PropertySignature",
           "name": "--json-schema",
           "value": "''",
@@ -2500,7 +2500,7 @@
           "environmentValue": "SHOPIFY_FLAG_JSON_SCHEMA"
         },
         {
-          "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
+          "filePath": "docs-shopify.dev/commands/interfaces/app-import-dashboard-extensions.interface.ts",
           "syntaxKind": "PropertySignature",
           "name": "--no-color",
           "value": "''",
@@ -2509,7 +2509,7 @@
           "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
         },
         {
-          "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
+          "filePath": "docs-shopify.dev/commands/interfaces/app-import-dashboard-extensions.interface.ts",
           "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
@@ -2518,7 +2518,7 @@
           "environmentValue": "SHOPIFY_FLAG_PATH"
         },
         {
-          "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
+          "filePath": "docs-shopify.dev/commands/interfaces/app-import-dashboard-extensions.interface.ts",
           "syntaxKind": "PropertySignature",
           "name": "--reset",
           "value": "''",
@@ -2527,7 +2527,7 @@
           "environmentValue": "SHOPIFY_FLAG_RESET"
         },
         {
-          "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
+          "filePath": "docs-shopify.dev/commands/interfaces/app-import-dashboard-extensions.interface.ts",
           "syntaxKind": "PropertySignature",
           "name": "--verbose",
           "value": "''",
@@ -2536,7 +2536,7 @@
           "environmentValue": "SHOPIFY_FLAG_VERBOSE"
         },
         {
-          "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
+          "filePath": "docs-shopify.dev/commands/interfaces/app-import-dashboard-extensions.interface.ts",
           "syntaxKind": "PropertySignature",
           "name": "-c, --config <value>",
           "value": "string",
@@ -2545,7 +2545,7 @@
           "environmentValue": "SHOPIFY_FLAG_APP_CONFIG"
         }
       ],
-      "value": "export interface appimportextensions {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface appimportdashboardextensions {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "appinfo": {
