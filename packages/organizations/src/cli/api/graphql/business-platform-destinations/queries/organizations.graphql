@@ -5,6 +5,9 @@ query ListOrganizations {
       nodes {
         id
         name
+        status
+        shopCount
+        url
       }
     }
   }

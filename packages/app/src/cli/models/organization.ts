@@ -1,6 +1,9 @@
 import {AppConfigurationUsedByCli} from './extensions/specifications/types/app_config.js'
 import {Flag, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {Organization as BaseOrganization} from '@shopify/organizations'
+import {
+  Organization as BaseOrganization,
+  type OrganizationWithDetails as BaseOrganizationWithDetails,
+} from '@shopify/organizations'
 
 export enum OrganizationSource {
   Partners = 'Partners',
@@ -10,6 +13,12 @@ export enum OrganizationSource {
 export interface Organization extends BaseOrganization {
   source: OrganizationSource
 }
+
+/**
+ * Organization returned by the destinations fetch, including the public fields the API returns
+ * without an extra request.
+ */
+export interface OrganizationWithDetails extends Organization, BaseOrganizationWithDetails {}
 
 export interface MinimalAppIdentifiers {
   apiKey: string

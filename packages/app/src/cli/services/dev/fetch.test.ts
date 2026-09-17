@@ -1,5 +1,10 @@
 import {fetchOrganizations, fetchStore, NoOrgError, StoreNotFoundError} from './fetch.js'
-import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
+import {
+  Organization,
+  OrganizationSource,
+  OrganizationStore,
+  OrganizationWithDetails,
+} from '../../models/organization.js'
 import {
   testPartnersServiceSession,
   testPartnersUserSession,
@@ -17,10 +22,13 @@ const ORG1: Organization = {
   businessName: 'org1',
   source: OrganizationSource.Partners,
 }
-const ORG2: Organization = {
+const ORG2: OrganizationWithDetails = {
   id: '2',
   businessName: 'org2',
   source: OrganizationSource.Partners,
+  status: 'ACTIVE',
+  shopCount: 1,
+  url: 'https://admin.shopify.com/organization/2',
 }
 const STORE1: OrganizationStore = {
   shopId: '1',

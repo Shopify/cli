@@ -6,6 +6,7 @@ import {
   OrganizationApp,
   OrganizationSource,
   OrganizationStore,
+  OrganizationWithDetails,
 } from '../models/organization.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema, AppDeployVariables} from '../api/graphql/app_deploy.js'
@@ -215,7 +216,7 @@ export interface DeveloperPlatformClient {
   unsafeRefreshToken: () => Promise<string>
   accountInfo: () => Promise<Session['accountInfo']>
   appFromIdentifiers: (apiKey: string) => Promise<OrganizationApp | undefined>
-  organizations: () => Promise<Organization[]>
+  organizations: () => Promise<OrganizationWithDetails[]>
   orgFromId: (orgId: string) => Promise<Organization | undefined>
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>
   appsForOrg: (orgId: string, term?: string) => Promise<Paginateable<{apps: MinimalOrganizationApp[]}>>

@@ -41,6 +41,7 @@ import {
   OrganizationApp,
   OrganizationSource,
   OrganizationStore,
+  OrganizationWithDetails,
 } from '../../models/organization.js'
 import {
   AllAppExtensionRegistrationsQuerySchema,
@@ -367,7 +368,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async organizations(): Promise<Organization[]> {
+  async organizations(): Promise<OrganizationWithDetails[]> {
     const orgs = await fetchOrganizations()
     return orgs.map((org) => ({
       ...org,
