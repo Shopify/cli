@@ -5,7 +5,7 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {renderConcurrent, renderError, renderInfo} from '@shopify/cli-kit/node/ui'
+import {renderConcurrent, renderInfo} from '@shopify/cli-kit/node/ui'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
 import {readFileSync} from 'node:fs'
@@ -37,6 +37,17 @@ const themeResult = {
   theme: {
     id: 123,
     name: 'my theme',
+    role: 'live',
+    shop: 'my-shop.myshopify.com',
+    preview_url: 'https://my-shop.myshopify.com/preview',
+    editor_url: 'https://my-shop.myshopify.com/editor',
+  },
+}
+
+const secondThemeResult = {
+  theme: {
+    id: 456,
+    name: 'second theme',
     role: 'live',
     shop: 'my-shop.myshopify.com',
     preview_url: 'https://my-shop.myshopify.com/preview',
@@ -109,7 +120,6 @@ describe('Info', () => {
     vi.mocked(loadEnvironment).mockReset()
     vi.mocked(renderConcurrent).mockReset()
     vi.mocked(recordTiming).mockClear()
-    vi.mocked(renderError).mockClear()
   })
 
   describe('when theme or development flag is provided', () => {
@@ -260,129 +270,27 @@ describe('Info', () => {
   })
 
   describe('multi-environment JSON output', () => {
-    test('collects requested environments in order even when completion order differs', async () => {
+    test('emits each environment result as its own existing JSON document', async () => {
       vi.mocked(loadEnvironment)
         .mockResolvedValueOnce({store: 'store1.myshopify.com', theme: '123'})
         .mockResolvedValueOnce({store: 'store2.myshopify.com', theme: '456'})
-        .mockResolvedValueOnce({store: 'store3.myshopify.com', theme: '789'})
-      vi.mocked(fetchThemeInfo).mockResolvedValue(themeResult)
-      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
-        for (const process of [...processes].reverse()) {
-          // eslint-disable-next-line no-await-in-loop
-          await process.action({} as Writable, {} as Writable, {} as never)
-        }
-      })
-      const output = mockAndCaptureOutput()
-      output.clear()
-
-      await runMultiEnvironment([
-        '--environment',
-        'first',
-        '--environment',
-        'second',
-        '--environment',
-        'third',
-        '--json',
-      ])
-
-      expect(JSON.parse(output.output())).toEqual({
-        environments: [
-          {environment: 'first', result: themeResult},
-          {environment: 'second', result: themeResult},
-          {environment: 'third', result: themeResult},
-        ],
-      })
-    })
-
-    test('writes one multi-environment JSON document to stdout with no text on stderr', async () => {
-      const originalUnitTestEnv = process.env.SHOPIFY_UNIT_TEST
-      process.env.SHOPIFY_UNIT_TEST = 'false'
-      vi.resetModules()
-      const streams = captureStandardStreams()
-
-      try {
-        const {default: StreamInfo} = await import('./info.js')
-        const {fetchThemeInfo, getThemeEnvironmentInfo} = await import('../../services/info.js')
-        const {ensureAuthenticatedThemes} = await import('@shopify/cli-kit/node/session')
-        const {renderConcurrent} = await import('@shopify/cli-kit/node/ui')
-        const {loadEnvironment} = await import('@shopify/cli-kit/node/environments')
-        const {Config} = await import('@oclif/core')
-        const streamConfig = new Config({root: __dirname})
-        await streamConfig.load()
-        vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(session)
-        vi.mocked(loadEnvironment)
-          .mockResolvedValueOnce({store: 'store1.myshopify.com', theme: '123'})
-          .mockResolvedValueOnce({store: 'store2.myshopify.com'})
-        vi.mocked(fetchThemeInfo).mockResolvedValue(themeResult)
-        vi.mocked(getThemeEnvironmentInfo).mockReturnValue({result: environmentResult, developmentTheme: undefined})
-        vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
-          for (const process of processes) {
-            // eslint-disable-next-line no-await-in-loop
-            await process.action({} as Writable, {} as Writable, {} as never)
-          }
-        })
-
-        await new StreamInfo(
-          ['--password=test-password', '--environment', 'theme-env', '--environment', 'environment-env', '--json'],
-          streamConfig,
-        ).run()
-      } finally {
-        streams.restore()
-        restoreUnitTestEnvironment(originalUnitTestEnv)
-      }
-
-      expect(JSON.parse(streams.stdout())).toEqual({
-        environments: [
-          {environment: 'theme-env', result: themeResult},
-          {environment: 'environment-env', result: environmentResult},
-        ],
-      })
-      expect(streams.stderr()).toBe('')
-    })
-
-    test('omits failed environments and keeps their errors on stderr', async () => {
-      vi.mocked(loadEnvironment)
-        .mockResolvedValueOnce({store: 'store1.myshopify.com', theme: '123'})
-        .mockResolvedValueOnce({store: 'store2.myshopify.com', theme: '404'})
-        .mockResolvedValueOnce({store: 'store3.myshopify.com', theme: '789'})
       vi.mocked(fetchThemeInfo).mockImplementation(async (_session, options) =>
-        options.theme === '404' ? undefined : themeResult,
+        options.theme === '456' ? secondThemeResult : themeResult,
       )
       executeConcurrentProcessesInOrder()
       const output = mockAndCaptureOutput()
       output.clear()
 
-      await runMultiEnvironment(['--environment', 'ok', '--environment', 'bad', '--environment', 'another', '--json'])
+      await runMultiEnvironment(['--environment', 'first', '--environment', 'second', '--json'])
 
-      expect(JSON.parse(output.output())).toEqual({
-        environments: [
-          {environment: 'ok', result: themeResult},
-          {environment: 'another', result: themeResult},
-        ],
-      })
-      expect(renderError).toHaveBeenCalledWith(
-        expect.objectContaining({body: ['Environment bad failed: \n\nTheme not found!']}),
-      )
+      const expectedOutput = `${JSON.stringify(themeResult, null, 2)}\n${JSON.stringify(secondThemeResult, null, 2)}`
+
+      expect(output.output()).toBe(expectedOutput)
+      expect(output.output()).not.toContain('environments')
+      expect(renderInfo).not.toHaveBeenCalled()
     })
 
-    test('emits an empty wrapper when every environment fails and preserves exit behavior', async () => {
-      vi.mocked(loadEnvironment)
-        .mockResolvedValueOnce({store: 'store1.myshopify.com', theme: '123'})
-        .mockResolvedValueOnce({store: 'store2.myshopify.com', theme: '456'})
-      vi.mocked(fetchThemeInfo).mockResolvedValue(undefined)
-      executeConcurrentProcessesInOrder()
-      const output = mockAndCaptureOutput()
-      output.clear()
-
-      await expect(
-        runMultiEnvironment(['--environment', 'first', '--environment', 'second', '--json']),
-      ).resolves.toBeUndefined()
-
-      expect(JSON.parse(output.output())).toEqual({environments: []})
-      expect(renderError).toHaveBeenCalledTimes(2)
-    })
-
-    test('does not emit the JSON wrapper in text mode', async () => {
+    test('renders each environment result independently in text mode', async () => {
       vi.mocked(loadEnvironment)
         .mockResolvedValueOnce({store: 'store1.myshopify.com', theme: '123'})
         .mockResolvedValueOnce({store: 'store2.myshopify.com', theme: '456'})

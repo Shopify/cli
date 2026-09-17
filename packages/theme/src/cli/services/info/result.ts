@@ -1,7 +1,6 @@
 import {
   themeInfoJsonOutputSchema,
   type ThemeEnvironmentInfo,
-  type ThemeInfoMultiEnvironmentResult,
   type ThemeInfoResult,
   type ThemeInfoThemeResult,
 } from './types.js'
@@ -31,10 +30,6 @@ export function renderThemeInfoResult(
   } else {
     renderInfo({customSections: themeEnvironmentInfoSections(result, options)})
   }
-}
-
-export function renderThemeInfoMultiEnvironmentResult(result: ThemeInfoMultiEnvironmentResult): void {
-  outputResult(themeInfoJsonOutputSchema.encode(result))
 }
 
 function formatThemeInfo(output: ThemeInfoThemeResult, options: ThemeInfoPresentationOptions) {
