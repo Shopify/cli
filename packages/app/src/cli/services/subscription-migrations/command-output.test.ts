@@ -39,10 +39,10 @@ describe('operation command output', () => {
     outputOperations(operations, true)
 
     expect(outputResult).toHaveBeenCalledOnce()
-    expect(outputResult).toHaveBeenCalledWith(JSON.stringify({schemaVersion: 1, operations}, null, 2))
+    expect(outputResult).toHaveBeenCalledWith(JSON.stringify({operations}, null, 2))
     const jsonDocument = vi.mocked(outputResult).mock.calls[0]?.[0]
     if (typeof jsonDocument !== 'string') throw new Error('Expected operations output to be one JSON document')
-    expect(JSON.parse(jsonDocument)).toEqual({schemaVersion: 1, operations})
+    expect(JSON.parse(jsonDocument)).toEqual({operations})
     expect(renderInfo).not.toHaveBeenCalled()
   })
 

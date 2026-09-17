@@ -33,7 +33,7 @@ describe('migration cancellation JSON output', () => {
       expect(stdout).toHaveBeenCalledOnce()
       const output = stdout.mock.calls[0]?.[0]
       expect(typeof output).toBe('string')
-      expect(JSON.parse(output as string)).toEqual({schemaVersion: 1, outcomes: result.outcomes})
+      expect(JSON.parse(output as string)).toEqual({outcomes: result.outcomes})
       expect(stderr).not.toHaveBeenCalled()
     } finally {
       stdout.mockRestore()

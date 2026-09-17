@@ -1,15 +1,14 @@
 import {
   migrationCancellationJsonOutputSchema,
   type MigrationCancellationResult,
-} from '../../../services/subscription-migrations/cancel-operations.js'
+} from '../../../services/subscription-migrations/types.js'
 import type {MigrationSubmissionResult} from '../../../services/subscription-migrations/submit-migration-plan.js'
 
 export function encodeMigrationSubmissionResult(result: MigrationSubmissionResult): string {
   const document =
     result.status === 'success'
-      ? {schemaVersion: 1, ...result.submission}
+      ? result.submission
       : {
-          schemaVersion: 1,
           ...result.submission,
           failure: result.failure,
         }
@@ -17,5 +16,5 @@ export function encodeMigrationSubmissionResult(result: MigrationSubmissionResul
 }
 
 export function encodeMigrationCancellationResult(result: MigrationCancellationResult): string {
-  return migrationCancellationJsonOutputSchema.encode({schemaVersion: 1, outcomes: result.outcomes})
+  return migrationCancellationJsonOutputSchema.encode({outcomes: result.outcomes})
 }
