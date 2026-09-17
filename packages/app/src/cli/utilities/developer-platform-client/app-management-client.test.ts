@@ -41,12 +41,12 @@ import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
-import {MinimalAppIdentifiers} from '../../models/organization.js'
+import {MinimalAppIdentifiers, OrganizationSource} from '../../models/organization.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
 import {RequestSourceScanUploadUrl} from '../../api/graphql/app-management/generated/request-source-scan-upload-url.js'
 import {CreateSourceScan} from '../../api/graphql/app-management/generated/create-source-scan.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
-import {fetchOrganizations} from '@shopify/organizations'
+import {fetchOrganizationById, fetchOrganizations} from '@shopify/organizations'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -2386,6 +2386,39 @@ describe('uidStrategyFromTypename', () => {
 
   test('returns uuid as default for unknown typename', () => {
     expect(uidStrategyFromTypename('UnknownStrategy')).toBe('uuid')
+  })
+})
+
+describe('orgFromId', () => {
+  test('resolves the organization through the shared lookup and stamps the source', async () => {
+    vi.mocked(fetchOrganizationById).mockResolvedValueOnce({id: '123', businessName: 'Org 123'})
+
+    const client = AppManagementClient.getInstance()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const unsafeRefreshToken = vi.spyOn(client, 'unsafeRefreshToken').mockResolvedValue('refreshed-token')
+    client.session = vi.fn().mockResolvedValue({
+      token: 'refreshed-token',
+      businessPlatformToken: 'refreshed-business-platform-token',
+    }) as unknown as typeof client.session
+
+    const result = await client.orgFromId('123')
+
+    expect(result).toEqual({id: '123', businessName: 'Org 123', source: OrganizationSource.BusinessPlatform})
+    // The client's own handler refreshes its cached session, not just the stored token.
+    const [organizationId, token, unauthorizedHandler] = vi.mocked(fetchOrganizationById).mock.calls[0]!
+    expect(organizationId).toBe('123')
+    expect(token).toBe('business-platform-token')
+    await expect(unauthorizedHandler!.handler()).resolves.toEqual({token: 'refreshed-business-platform-token'})
+    expect(unsafeRefreshToken).toHaveBeenCalledOnce()
+  })
+
+  test('returns undefined when the lookup finds no organization', async () => {
+    vi.mocked(fetchOrganizationById).mockResolvedValueOnce(undefined)
+
+    const client = AppManagementClient.getInstance()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+
+    await expect(client.orgFromId('9999999')).resolves.toBeUndefined()
   })
 })
 

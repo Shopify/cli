@@ -1,7 +1,7 @@
-import {fetchOrganizations, fetchOrganizationsWithAccessInfo} from './fetch.js'
+import {fetchOrganizationById, fetchOrganizations, fetchOrganizationsWithAccessInfo} from './fetch.js'
 import {describe, expect, test, vi} from 'vitest'
 import {businessPlatformRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
-import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {ensureAuthenticatedBusinessPlatform, lastSeenUserId} from '@shopify/cli-kit/node/session'
 
 vi.mock('@shopify/cli-kit/node/api/business-platform')
 vi.mock('@shopify/cli-kit/node/session')
@@ -208,5 +208,108 @@ describe('fetchOrganizationsWithAccessInfo', () => {
       organizations: [],
       currentUserResolved: false,
     })
+  })
+})
+
+describe('fetchOrganizationById', () => {
+  test('returns the organization for a numeric ID, addressed by its encoded GID', async () => {
+    vi.mocked(lastSeenUserId).mockResolvedValue('account-1')
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValue({
+      currentUserAccount: {organization: {id: ENCODED_GID_1, name: 'My Org'}},
+    })
+
+    const organization = await fetchOrganizationById('1234', 'test-token')
+
+    expect(organization).toEqual({id: '1234', businessName: 'My Org'})
+    expect(businessPlatformRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        token: 'test-token',
+        variables: {organizationId: ENCODED_GID_1},
+        // Scoped by account: the cache is shared across every account on the machine.
+        cacheOptions: {cacheTTL: {hours: 6}, cacheExtraKey: 'account-1'},
+      }),
+    )
+  })
+
+  test('keys the cache separately for each account', async () => {
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValue({
+      currentUserAccount: {organization: {id: ENCODED_GID_1, name: 'My Org'}},
+    })
+
+    vi.mocked(lastSeenUserId).mockResolvedValue('account-1')
+    await fetchOrganizationById('1234', 'test-token')
+    vi.mocked(lastSeenUserId).mockResolvedValue('account-2')
+    await fetchOrganizationById('1234', 'test-token')
+
+    const [first, second] = vi.mocked(businessPlatformRequestDoc).mock.calls
+    expect((first?.[0] as any).cacheOptions.cacheExtraKey).toBe('account-1')
+    expect((second?.[0] as any).cacheOptions.cacheExtraKey).toBe('account-2')
+  })
+
+  test('skips caching entirely when the account cannot be identified', async () => {
+    vi.mocked(lastSeenUserId).mockResolvedValue('unknown')
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValue({
+      currentUserAccount: {organization: {id: ENCODED_GID_1, name: 'My Org'}},
+    })
+
+    await fetchOrganizationById('1234', 'test-token')
+
+    expect(businessPlatformRequestDoc).toHaveBeenCalledWith(expect.objectContaining({cacheOptions: undefined}))
+  })
+
+  test('accepts an organization GID and requests the same encoded ID', async () => {
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValue({
+      currentUserAccount: {organization: {id: ENCODED_GID_1, name: 'My Org'}},
+    })
+
+    const organization = await fetchOrganizationById('gid://organization/Organization/1234', 'test-token')
+
+    expect(organization).toEqual({id: 'gid://organization/Organization/1234', businessName: 'My Org'})
+    expect(businessPlatformRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({variables: {organizationId: ENCODED_GID_1}}),
+    )
+  })
+
+  test('returns undefined when the account cannot reach an organization with that ID', async () => {
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValue({currentUserAccount: {organization: null}})
+
+    await expect(fetchOrganizationById('9999999', 'test-token')).resolves.toBeUndefined()
+  })
+
+  test('returns undefined when BP cannot resolve currentUserAccount', async () => {
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValue({currentUserAccount: null})
+
+    await expect(fetchOrganizationById('1234', 'test-token')).resolves.toBeUndefined()
+  })
+
+  test('throws without requesting anything when the ID is not numeric', async () => {
+    await expect(fetchOrganizationById('not-an-id', 'test-token')).rejects.toThrow('Invalid organization ID: not-an-id')
+    expect(businessPlatformRequestDoc).not.toHaveBeenCalled()
+  })
+
+  test('fetches a token when none is provided, and refreshes it on an unauthorized response', async () => {
+    vi.mocked(ensureAuthenticatedBusinessPlatform)
+      .mockResolvedValueOnce('initial-token')
+      .mockResolvedValueOnce('refreshed-token')
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValue({
+      currentUserAccount: {organization: {id: ENCODED_GID_1, name: 'My Org'}},
+    })
+
+    await fetchOrganizationById('1234')
+
+    const requestOptions = vi.mocked(businessPlatformRequestDoc).mock.calls[0]?.[0] as any
+    expect(requestOptions.token).toBe('initial-token')
+    await expect(requestOptions.unauthorizedHandler.handler()).resolves.toEqual({token: 'refreshed-token'})
+  })
+
+  test('uses a caller-provided unauthorized handler instead of the default', async () => {
+    const unauthorizedHandler = {type: 'token_refresh' as const, handler: async () => ({token: 'client-token'})}
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValue({
+      currentUserAccount: {organization: {id: ENCODED_GID_1, name: 'My Org'}},
+    })
+
+    await fetchOrganizationById('1234', 'test-token', unauthorizedHandler)
+
+    expect(businessPlatformRequestDoc).toHaveBeenCalledWith(expect.objectContaining({unauthorizedHandler}))
   })
 })
