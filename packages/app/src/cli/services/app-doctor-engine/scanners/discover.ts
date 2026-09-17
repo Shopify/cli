@@ -462,9 +462,9 @@ function repositoryDisplayPath(appRoot: string, path: string): string {
 
 /**
  * Resolve a repository path while preserving the difference between absence
- * and an unsafe or unreadable entry. Walking each segment lets contained
- * directory links through, but treats dangling or escaping intermediates as
- * unresolved instead of ordinary allowlist absence.
+ * and an unsafe or unreadable entry. Existing files take a single realpath;
+ * prefix walking runs only after ENOENT/ENOTDIR so optional allowlist paths
+ * can distinguish ordinary absence from a dangling or escaping intermediate.
  */
 function inspectRepositoryPath(appRoot: string, path: string): InspectedPath {
   const absoluteRoot = resolvePath(appRoot)
@@ -486,7 +486,27 @@ function inspectRepositoryPath(appRoot: string, path: string): InspectedPath {
     .split('/')
     .filter((segment) => segment.length > 0 && segment !== '.')
   if (segments.includes('..')) return {status: 'unresolved', reason: `${display} escapes the app root`}
+  if (segments.length === 0) return {status: 'unresolved', reason: `${display} is not a file`}
 
+  try {
+    const canonicalPath = realpathSync(absolutePath)
+    if (!isSubpath(canonicalRoot, canonicalPath)) {
+      return {status: 'unresolved', reason: `${display} resolves outside the app root`}
+    }
+    if (!lstatSync(canonicalPath).isFile()) {
+      return {status: 'unresolved', reason: `${display} is not a file`}
+    }
+    return {status: 'file', path: canonicalPath}
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    if (isMissingFilesystemEntry(error)) {
+      return inspectMissingRepositoryPath(canonicalRoot, segments, display)
+    }
+    return {status: 'unresolved', reason: inspectErrorReason(display, error)}
+  }
+}
+
+function inspectMissingRepositoryPath(canonicalRoot: string, segments: string[], display: string): InspectedPath {
   let currentPath = canonicalRoot
   for (const [index, segment] of segments.entries()) {
     currentPath = joinPath(currentPath, segment)
@@ -526,7 +546,6 @@ function inspectRepositoryPath(appRoot: string, path: string): InspectedPath {
     }
   }
 
-  if (segments.length === 0) return {status: 'unresolved', reason: `${display} is not a file`}
   return {status: 'file', path: currentPath}
 }
 

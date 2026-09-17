@@ -81,7 +81,9 @@ describe('dependency automation scanner integration', () => {
 
   test('reports one ordinary finding through scoring, blocking, trace, and submission', async () => {
     await inTemporaryDirectory(async (root) => {
-      await makeApp(root)
+      await makeApp(root, {
+        'extensions/app-home/package.json': JSON.stringify({dependencies: {react: '^19.0.0'}}),
+      })
       const execution = await scanApp(root)
       expect(dependencyFindings(execution.scan)).toEqual([
         expect.objectContaining({id: checkId, severity: 'low', points: -5, location: {file: 'package.json'}}),
@@ -90,7 +92,7 @@ describe('dependency automation scanner integration', () => {
         status: 'executed',
         required: true,
         findings: 1,
-        inspected_files: ['package.json'],
+        inspected_files: ['extensions/app-home/package.json', 'package.json'],
       })
       expect(execution.scan.score).toEqual({total: 95, baseline: 100, grade: 'EXCELLENT'})
       expect(formatJson(execution.scan)).toContain(checkId)

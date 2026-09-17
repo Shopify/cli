@@ -29,12 +29,31 @@ describe('dependency-management configuration file presence', () => {
         id: 'MISSING_DEPENDENCY_SECURITY_AUTOMATION',
         severity: 'low',
         points: -5,
-        title: 'Dependency management configuration file not detected',
+        title: 'Repository-level dependency management configuration not detected',
         location: {file: 'package.json'},
         fix: expect.objectContaining({automated: false}),
       }),
     ])
+    expect(result.issues[0]?.message).toContain('repository root')
     expect(result.issues[0]?.message).toContain('does not validate their contents')
+  })
+
+  test('prefers the root manifest over a nested extension even when localeCompare would not', () => {
+    const result = scan({files: []}, [
+      manifest('extensions/app-home/package.json'),
+      manifest('web/package.json'),
+      manifest(),
+    ])
+    expect(result.issues[0]?.location).toEqual({file: 'package.json'})
+  })
+
+  test('falls back to the shallowest nested manifest when the root has no dependencies', () => {
+    const result = scan({files: []}, [
+      {...manifest(), dependencies: {}},
+      manifest('extensions/app-home/package.json'),
+      manifest('web/package.json'),
+    ])
+    expect(result.issues[0]?.location).toEqual({file: 'web/package.json'})
   })
 
   test('preserves discovery obstacles without a finding', () => {

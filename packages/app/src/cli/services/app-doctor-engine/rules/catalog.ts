@@ -147,11 +147,12 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
   },
   {
     id: 'MISSING_DEPENDENCY_SECURITY_AUTOMATION',
-    title: 'Dependency management configuration file not detected',
+    title: 'Repository-level dependency management configuration not detected',
     severity: 'low',
     points: -5,
-    description: 'Looks for a local Dependabot or Renovate configuration file without validating its contents.',
-    fix: 'Configure Dependabot or Renovate for this app, or verify existing coverage.',
+    description:
+      'Looks for a local Dependabot or Renovate configuration file at the repository root without validating its contents.',
+    fix: 'Add a Dependabot or Renovate configuration file at the repository root, or verify existing coverage.',
   },
   {
     id: 'EOL_API_VERSION',
