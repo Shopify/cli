@@ -148,3 +148,18 @@ type MigrationSubmissionFailure = NonNullable<MigrationSubmissionJsonOutput['fai
 export type MigrationSubmissionResult =
   | {status: 'success'; submission: MigrationSubmission}
   | {status: 'failed'; submission: MigrationSubmission; failure: MigrationSubmissionFailure}
+
+export const migrationStatusJsonOutputSchema = defineJsonOutputSchema({
+  name: 'MigrationStatusResult',
+  schema: zod.object({
+    schemaVersion: zod.literal(1),
+    operations: zod.array(MigrationOperationSchema),
+  }),
+  definitions: {
+    MigrationOperation: MigrationOperationSchema,
+    MigrationOperationResultEdge: MigrationOperationResultEdgeSchema,
+    MigrationOperationResultNode: MigrationOperationResultNodeSchema,
+  },
+})
+
+export type MigrationStatusResult = InferJsonOutputSchema<typeof migrationStatusJsonOutputSchema>

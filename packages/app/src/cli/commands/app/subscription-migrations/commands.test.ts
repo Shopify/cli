@@ -12,6 +12,7 @@ import {
   migrationCancellationJsonOutputSchema,
   migrationListJsonOutputSchema,
   migrationSubmissionJsonOutputSchema,
+  migrationStatusJsonOutputSchema,
 } from '../../../services/subscription-migrations/types.js'
 import {outputOperations} from '../../../services/subscription-migrations/command-output.js'
 import {getMigrationOperations} from '../../../services/subscription-migrations/get-operations.js'
@@ -294,6 +295,16 @@ describe('subscription migration operation commands', () => {
     expect(watchMigrationOperations).not.toHaveBeenCalled()
   })
 
+  test('status reports failed operations without changing the command exit code', async () => {
+    const failedOperation = {...completedOperation, status: 'FAILED' as const}
+    vi.mocked(getMigrationOperations).mockResolvedValue([failedOperation])
+
+    await expect(Status.run(['--id', failedOperation.id, '--json'])).resolves.toEqual({app})
+
+    expect(outputOperations).toHaveBeenCalledWith([failedOperation], true)
+    expect(process.exitCode).toBeUndefined()
+  })
+
   test('cancel presents every repeated ID in exactly one JSON document', async () => {
     const secondOperation = {...completedOperation, id: 'gid://shopify/AppSubscriptionMigrationOperation/2'}
     const result: MigrationCancellationResult = {
@@ -452,6 +463,12 @@ describe('subscription migration command metadata', () => {
     expect(Schedule.description).toContain('```json')
   })
 
+  test('status exposes and documents its JSON output schema', () => {
+    expect(Status.jsonOutputSchema).toBe(migrationStatusJsonOutputSchema)
+    expect(Status.description).toContain('`MigrationStatusResult` schema')
+    expect(Status.description).toContain('```json')
+  })
+
   test('cancel exposes its JSON output schema', () => {
     expect(Cancel.jsonOutputSchema).toBe(migrationCancellationJsonOutputSchema)
   })
@@ -575,8 +592,8 @@ describe('subscription migration command metadata', () => {
     },
   )
 
-  test.each([Unschedule, Status])('$name has no fenced-code markers in its plain description', (Command) => {
-    expect(Command.description).not.toContain('```')
+  test('unschedule has no fenced-code markers in its plain description', () => {
+    expect(Unschedule.description).not.toContain('```')
   })
 
   test('cancel documents its JSON output schema', () => {
