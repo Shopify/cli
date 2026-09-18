@@ -69,8 +69,27 @@ test('writes one JSON document to stdout without terminal text', async () => {
   } finally {
     streams.restore()
   }
-  expect(streams.stdout()).toBe('[\n  "extensions.discount"\n]\n')
-  expect(JSON.parse(streams.stdout())).toEqual(['extensions.discount'])
+  const extension = app.allExtensions[0]!
+  expect(JSON.parse(streams.stdout())).toEqual([
+    {
+      source: 'extensions.discount',
+      namespace: 'extensions',
+      handle: 'discount',
+      name: extension.configuration.name,
+      type: extension.type,
+      externalType: extension.externalType,
+      humanName: extension.humanName,
+      uid: extension.uid,
+      directory: extension.directory,
+      configurationPath: extension.configurationPath,
+      configuration: extension.configuration,
+      entrySourceFilePath: extension.entrySourceFilePath,
+      outputPath: extension.outputPath,
+      surface: extension.surface,
+      features: extension.features,
+      ...(extension.dependency === undefined ? {} : {dependency: extension.dependency}),
+    },
+  ])
   expect(streams.stderr()).toBe('')
 })
 

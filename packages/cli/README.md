@@ -1879,9 +1879,87 @@ DESCRIPTION
   {
     "type": "array",
     "items": {
-      "type": "string"
+      "$ref": "#/definitions/AppLogSource"
     },
     "title": "AppLogSourcesResult",
+    "definitions": {
+      "AppLogSource": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "namespace": {
+            "type": "string",
+            "const": "extensions"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "externalType": {
+            "type": "string"
+          },
+          "humanName": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "directory": {
+            "type": "string"
+          },
+          "configurationPath": {
+            "type": "string"
+          },
+          "configuration": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "entrySourceFilePath": {
+            "type": "string"
+          },
+          "outputPath": {
+            "type": "string"
+          },
+          "surface": {
+            "type": "string"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dependency": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "namespace",
+          "handle",
+          "name",
+          "type",
+          "externalType",
+          "humanName",
+          "uid",
+          "directory",
+          "configurationPath",
+          "configuration",
+          "entrySourceFilePath",
+          "outputPath",
+          "surface",
+          "features"
+        ],
+        "additionalProperties": false
+      }
+    },
     "$schema": "http://json-schema.org/draft-07/schema#"
   }
   ```

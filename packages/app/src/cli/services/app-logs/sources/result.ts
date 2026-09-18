@@ -8,7 +8,7 @@ export function renderAppLogSourcesResult(result: AppLogSourcesResult, format: '
   }
 
   const sourcesByNamespace = new Map<string, string[]>()
-  result.forEach((source) => {
+  result.forEach(({source}) => {
     const tokens = source.split('.')
 
     if (tokens.length >= 2) {
