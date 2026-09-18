@@ -21,7 +21,10 @@ export const StoreAuthSessionSchema = zod.object({
 
 export const storeAuthJsonOutputSchema = defineJsonOutputSchema({
   name: 'StoreAuthResult',
-  schema: StoreAuthSessionSchema.extend({hasRefreshToken: zod.boolean()}),
+  schema: StoreAuthSessionSchema.omit({associatedUser: true}).extend({
+    hasRefreshToken: zod.boolean(),
+    associatedUser: StoreAuthSessionSchema.shape.associatedUser,
+  }),
   definitions: {StoreAuthAssociatedUser: StoreAuthAssociatedUserSchema},
 })
 

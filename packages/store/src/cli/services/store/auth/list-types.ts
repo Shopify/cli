@@ -2,9 +2,10 @@ import {StoreAuthAssociatedUserSchema, StoreAuthSessionSchema} from './types.js'
 import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const StoreAuthListSessionSchema = StoreAuthSessionSchema.partial().extend({
+const StoreAuthListSessionSchema = zod.object({
   subdomain: zod.string(),
   connected: zod.string(),
+  ...StoreAuthSessionSchema.partial().shape,
   acquiredAt: StoreAuthSessionSchema.shape.acquiredAt
     .optional()
     .describe('When the stored token was acquired, in ISO 8601 format.'),
