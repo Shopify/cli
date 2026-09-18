@@ -125,16 +125,27 @@ export function redactText(text: string): string {
   return redacted
 }
 
-const ENV_FILE_PATTERN = /(^|\/)\.env(?:\.[^/]+)*$/
 const NAMED_SECRET_FILE_PATTERN = /(^|\/)(?:\.env\.(?:secrets|keys)|(?:secrets|credentials)\.json)$/
-const TEMPLATE_ENV_FILE_PATTERN = /(^|\/)\.env(?:\.[^/]+)*\.(?:example|sample|template|dist)$/i
+const TEMPLATE_ENV_SUFFIXES = new Set(['example', 'sample', 'template', 'dist'])
 // `SHOPIFY_API_KEY` / `api_key` are client IDs and public; they are not secret names.
 // Optional quotes cover JSON/YAML keys (`"password": "…"`) as well as env assignments.
 const SECRET_ASSIGNMENT_PATTERN =
   /["']?(?:api[_-]?secret|access[_-]?token|secret[_-]?key|private[_-]?key|password|SHOPIFY_API_SECRET)["']?\s*[:=]\s*(?:"([^"\r\n]*)"|'([^'\r\n]*)'|([^\s#'"\r\n][^#\r\n]*))/gi
 
+function envFileBasename(path: string): string | undefined {
+  const basename = path.slice(path.lastIndexOf('/') + 1)
+  if (basename === '.env' || basename.startsWith('.env.')) return basename
+  return undefined
+}
+
+function isEnvFile(path: string): boolean {
+  return envFileBasename(path) !== undefined
+}
+
 function isTemplateEnvFile(path: string): boolean {
-  return TEMPLATE_ENV_FILE_PATTERN.test(path)
+  const basename = envFileBasename(path)
+  if (!basename) return false
+  return TEMPLATE_ENV_SUFFIXES.has(basename.slice(basename.lastIndexOf('.') + 1).toLowerCase())
 }
 
 function containsKnownSecretFormat(content: string): boolean {
@@ -224,7 +235,7 @@ export async function scanCommittedSecrets(secretEvidenceFiles: SourceFile[], ap
 
   for (const file of secretEvidenceFiles) {
     if (file.content === undefined) continue
-    const environmentFile = ENV_FILE_PATTERN.test(file.path)
+    const environmentFile = isEnvFile(file.path)
     const namedSecretFile = NAMED_SECRET_FILE_PATTERN.test(file.path)
     if (!environmentFile && !namedSecretFile) continue
 
@@ -251,7 +262,7 @@ export async function scanCommittedSecrets(secretEvidenceFiles: SourceFile[], ap
   }
 
   for (const file of secretEvidenceFiles) {
-    if (!file.content || ENV_FILE_PATTERN.test(file.path) || NAMED_SECRET_FILE_PATTERN.test(file.path)) continue
+    if (!file.content || isEnvFile(file.path) || NAMED_SECRET_FILE_PATTERN.test(file.path)) continue
 
     const lines = file.content.split('\n')
     for (const [index, line] of lines.entries()) {
