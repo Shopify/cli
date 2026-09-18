@@ -1,20 +1,11 @@
 import {zod} from '@shopify/cli-kit/node/schema'
 
-// Commands select the fields they expose and preserve their existing names and requiredness.
-// IDs remain command-specific: creation returns a numeric ID, while inspection returns a Shop GID.
-export const StoreSchema = zod.object({
-  id: zod.string(),
-  name: zod.string(),
-  subdomain: zod.string(),
-  country: zod.string().optional(),
-  type: zod.string().optional(),
-  authScopes: zod.array(zod.string()).optional(),
-  plan: zod.string().optional(),
-  organizationId: zod.string(),
-  organizationName: zod.string(),
-})
+export {StoreSchema, StoreOrganizationSchema} from '@shopify/organizations'
 
-export const StoreOrganizationSchema = zod.object({
-  id: zod.string(),
-  name: zod.string(),
+// These commands predate the global JSON error envelope and keep their existing stdout contract.
+export const StoreCommandErrorSchema = zod.object({
+  error: zod.literal(true),
+  message: zod.string(),
+  nextSteps: zod.array(zod.unknown()).describe('Suggested next steps, as text or formatted UI tokens.'),
+  exitCode: zod.literal(1),
 })

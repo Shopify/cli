@@ -1,5 +1,5 @@
 import StoreCreateDev from './dev.js'
-import {createDevStore} from '../../../services/store/create/dev.js'
+import {createDevStore, createDevStoreJsonOutputSchema} from '../../../services/store/create/dev.js'
 import {storeNamePrompt, storePlanPrompt, storeDemoDataPrompt} from '../../../prompts/store.js'
 import {selectOrg} from '@shopify/organizations'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -7,7 +7,10 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 
-vi.mock('../../../services/store/create/dev.js')
+vi.mock('../../../services/store/create/dev.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../services/store/create/dev.js')>()),
+  createDevStore: vi.fn(),
+}))
 vi.mock('../../../prompts/store.js')
 vi.mock('@shopify/cli-kit/node/system')
 
@@ -38,6 +41,10 @@ beforeEach(() => {
 })
 
 describe('store create dev command', () => {
+  test('exposes the output schema', () => {
+    expect(StoreCreateDev.jsonOutputSchema).toBe(createDevStoreJsonOutputSchema)
+  })
+
   test('resolves the organization and passes parsed flags through to the service', async () => {
     await StoreCreateDev.run([
       '--name',
