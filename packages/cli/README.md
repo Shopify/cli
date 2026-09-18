@@ -5051,6 +5051,108 @@ FLAGS
 DESCRIPTION
   Displays information about your theme environment, including your current store. Can also retrieve information about a
   specific theme.
+
+  Use `--json` for machine-readable output.
+
+  Output from `--json` conforms to the `ThemeInfoResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeInfoThemeResult"
+      },
+      {
+        "$ref": "#/definitions/ThemeEnvironmentInfo"
+      }
+    ],
+    "title": "ThemeInfoResult",
+    "definitions": {
+      "ThemeInfoTheme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "shop": {
+            "type": "string"
+          },
+          "preview_url": {
+            "type": "string"
+          },
+          "editor_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "shop",
+          "preview_url",
+          "editor_url"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeInfoThemeResult": {
+        "type": "object",
+        "properties": {
+          "theme": {
+            "$ref": "#/definitions/ThemeInfoTheme"
+          }
+        },
+        "required": [
+          "theme"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeEnvironmentInfo": {
+        "type": "object",
+        "properties": {
+          "store": {
+            "type": "string"
+          },
+          "development_theme_id": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "cli_version": {
+            "type": "string"
+          },
+          "os": {
+            "type": "string"
+          },
+          "shell": {
+            "type": "string"
+          },
+          "node_version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "store",
+          "development_theme_id",
+          "cli_version",
+          "os",
+          "shell",
+          "node_version"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme init [name] [flags]`
