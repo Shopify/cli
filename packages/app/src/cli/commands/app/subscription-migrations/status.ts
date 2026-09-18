@@ -1,9 +1,11 @@
 import {statusFlags} from './flags.js'
+import {migrationStatusJsonOutputSchema} from '../../../services/subscription-migrations/types.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {outputOperations} from '../../../services/subscription-migrations/command-output.js'
 import {getMigrationOperations} from '../../../services/subscription-migrations/get-operations.js'
 import {watchMigrationOperations} from '../../../services/subscription-migrations/watch-operations.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
+import {jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class Status extends AppLinkedCommand {
   static summary = 'Checks the status of app subscription migration operations.'
@@ -26,7 +28,11 @@ Run the command from an app project. By default, it uses the Client ID from the 
     '<%= config.bin %> <%= command.id %> --client-id <client-id> --id <operation-id> --json',
   ]
 
-  static flags = {...statusFlags}
+  static flags = {...statusFlags, ...jsonFlag}
+
+  static get jsonOutputSchema() {
+    return migrationStatusJsonOutputSchema
+  }
 
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Status)
