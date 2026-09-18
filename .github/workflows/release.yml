@@ -72,10 +72,11 @@ jobs:
             const claims = JSON.parse(Buffer.from(encodedClaims, 'base64url').toString());
             // Log only identity metadata, never the signed token or exchanged credential.
             const claimNames = [
-              'iss', 'aud', 'sub', 'repository', 'repository_id', 'repository_owner',
+              'iss', 'aud', 'sub', 'issuer_scope', 'repository', 'repository_id', 'repository_owner',
               'repository_owner_id', 'repository_visibility', 'workflow', 'workflow_ref',
-              'workflow_sha', 'job_workflow_ref', 'job_workflow_sha', 'ref', 'ref_type',
-              'ref_protected', 'environment', 'runner_environment', 'event_name',
+              'workflow_sha', 'job_workflow_ref', 'job_workflow_sha', 'ref', 'ref_type', 'sha',
+              'head_ref', 'base_ref', 'ref_protected', 'environment', 'environment_node_id',
+              'enterprise', 'enterprise_id', 'runner_environment', 'event_name', 'check_run_id',
               'actor', 'actor_id', 'run_id', 'run_number', 'run_attempt', 'iat', 'nbf', 'exp',
             ];
             const identity = Object.fromEntries(claimNames.map((name) => [name, claims[name] ?? null]));
