@@ -9,7 +9,10 @@ import {fetchOrganizationsWithAccessInfo} from '@shopify/organizations'
 
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/organizations')
+vi.mock('@shopify/organizations', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/organizations')>()),
+  fetchOrganizationsWithAccessInfo: vi.fn(),
+}))
 
 const acme = {id: '1234', businessName: 'Acme'}
 const beta = {id: '5678', businessName: 'Beta'}

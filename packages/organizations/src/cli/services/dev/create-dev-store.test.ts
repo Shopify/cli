@@ -1,3 +1,4 @@
+import {createDevStoreJsonOutputSchema} from './types.js'
 import {createDevStore} from './create-dev-store.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 
@@ -76,3 +77,40 @@ describe('createDevStore', () => {
     expect(outputResult).not.toHaveBeenCalled()
   })
 })
+
+test.each([undefined, null, 'https://admin.shopify.com/store/test-store'])(
+  'validates JSON output with admin URL %s and preserves optional creation fields',
+  async (adminUrl) => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce({
+        createAppDevelopmentStore: {...defaultMutationResult.createAppDevelopmentStore, shopAdminUrl: adminUrl},
+      })
+      .mockResolvedValueOnce({organization: {storeCreation: {status: 'COMPLETE'}}})
+
+    await createDevStore({
+      name: 'test-store',
+      organization: defaultOrg,
+      plan: 'plus',
+      featurePreview: 'extended_variants',
+      country: 'CA',
+      withDemoData: true,
+      json: true,
+    })
+
+    const result = JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)
+    expect(result).toEqual({
+      store: {
+        name: 'test-store',
+        domain: 'test-store.myshopify.com',
+        ...(adminUrl === undefined ? {} : {adminUrl}),
+        plan: 'plus',
+        featurePreview: 'extended_variants',
+        country: 'CA',
+        demoData: true,
+      },
+      organization: {id: '123', name: 'Test Org'},
+    })
+    expect(createDevStoreJsonOutputSchema.validate(result)).toEqual(result)
+    expect(renderSuccess).not.toHaveBeenCalled()
+  },
+)
