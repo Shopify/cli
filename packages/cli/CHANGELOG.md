@@ -1,5 +1,19 @@
 # @shopify/cli
 
+## 4.9.0
+
+### Minor Changes
+
+- 4986275: Add `--language` to `doc fetch` to filter shopify.dev Markdown code examples to a single language.
+- 3385c63: Move `app import-extensions` and `app import-custom-data-definitions` under the new `app import` topic; the old paths still work but are deprecated
+- 83fe8a2: Emit machine-readable fatal errors when JSON output is active
+- 02fbf6e: Show JSON Schema in command help and use `--json-schema` to print result, error, and event schemas.
+
+### Patch Changes
+
+- dddec36: Fix loading bars remaining on screen when a task prints log messages.
+- 667c628: Verify the installed version after `shopify upgrade` and fail instead of reporting a false success when the upgrade didn't complete
+
 ## 4.8.0
 
 ### Minor Changes
