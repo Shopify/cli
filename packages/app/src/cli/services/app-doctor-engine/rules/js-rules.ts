@@ -7,38 +7,6 @@ const SHOP_FIELD = 'shop(?:Domain)?'
 const CREDENTIAL =
   /\b(?:accessToken|access_token|sessionToken|session_token|apiSecret|api_secret|clientSecret|client_secret|SHOPIFY_API_SECRET|SHOPIFY_ACCESS_TOKEN)\b/i
 
-export function scanUnauthenticatedEndpoints(files: SourceFile[]): Issue[] {
-  const issues: Issue[] = []
-  for (const file of files) {
-    if (!isJavaScript(file) || !file.path.includes('/routes/')) continue
-    if (/auth[._/-]?(?:login|callback)/i.test(file.path)) continue
-    const source = maskCommentsAndStrings(file.content!)
-    const routePattern = /export\s+(?:async\s+)?(?:function\s+|const\s+)(loader|action)\b/g
-    let route = routePattern.exec(source)
-    while (route) {
-      const body = source.slice(route.index, nextRouteIndex(source, routePattern.lastIndex))
-      const authentication = /\bawait\s+authenticate\.(?:admin|public\.[A-Za-z_$][\w$]*|webhook)\s*\(/.exec(body)
-      const accessesProtectedData =
-        /\b(?:admin\.graphql|prisma\.|db\.|session\.|metafields?Set|unauthenticated\.admin)\b/.test(body)
-      if (!authentication && accessesProtectedData) {
-        issues.push(
-          issue(
-            'UNAUTHENTICATED_ENDPOINT',
-            file,
-            route.index,
-            'Route handler lacks recognized auth verification',
-            "The React Router loader/action doesn't have a recognized awaited Shopify authentication barrier.",
-            'Call and await authenticate.admin(request) (or the applicable Shopify authenticator) before protected access.',
-            -15,
-          ),
-        )
-      }
-      route = routePattern.exec(source)
-    }
-  }
-  return issues
-}
-
 /**
  * Find high-signal request-to-unauthenticated.admin flows.
  *
@@ -479,12 +447,6 @@ export function scanUnsafeInnerHTML(files: SourceFile[]): Issue[] {
 
 function isJavaScript(file: SourceFile): boolean {
   return Boolean(file.content) && JAVASCRIPT_EXTENSIONS.has(file.ext)
-}
-
-function nextRouteIndex(source: string, start: number): number {
-  const next = /export\s+(?:async\s+)?(?:function\s+|const\s+)(?:loader|action)\b/g
-  next.lastIndex = start
-  return next.exec(source)?.index ?? source.length
 }
 
 function callContents(source: string, start: number): {text: string; end: number} | undefined {
