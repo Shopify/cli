@@ -60,3 +60,44 @@ export const migrationCancellationJsonOutputSchema = defineJsonOutputSchema({
 
 export type MigrationCancellationResult = InferJsonOutputSchema<typeof migrationCancellationJsonOutputSchema>
 export type MigrationCancellationOutcome = MigrationCancellationResult['outcomes'][number]
+
+const MigratableSubscriptionPriceSchema = zod.object({
+  amount: zod.string(),
+  currencyCode: zod.string(),
+})
+
+const MigratableSubscriptionNotificationSchema = zod.object({
+  kind: zod.string().describe('Known values: NONE, OPT_OUT, WHEN_REQUIRED.'),
+  optOutDeadline: zod.string().nullable(),
+  sentAt: zod.string().nullable(),
+})
+
+// Server-provided values are typed as strings (with the known values documented) instead of enums, so a new
+// server-side value never makes `--json` output fail validation. Compatibility with the `MigratableSubscription`
+// model is enforced where `serializeMigrationListJson` passes the model into this schema's `encode`.
+const MigratableSubscriptionSchema = zod.object({
+  shopId: zod.string(),
+  status: zod.string().describe('Known values: UNSCHEDULED, SCHEDULED, MIGRATED.'),
+  manualSubscriptionName: zod.string().nullable(),
+  manualSubscriptionPrice: MigratableSubscriptionPriceSchema.nullable(),
+  manualSubscriptionInterval: zod.string().describe('Known values: EVERY_30_DAYS, ANNUAL.'),
+  targetPlanHandle: zod.string().nullable(),
+  notification: MigratableSubscriptionNotificationSchema.nullable(),
+  priceBehavior: zod.string().nullable().describe('Known values: HONOR_BILLING_PRICE, PLAN_PRICE.'),
+  effectiveDate: zod.string().nullable(),
+  lastFailureReason: zod.string().nullable().describe('Known values: SUPERSEDED, SCHEDULING_FAILED.'),
+})
+
+export const migrationListJsonOutputSchema = defineJsonOutputSchema({
+  name: 'MigrationListResult',
+  schema: zod.object({
+    subscriptions: zod.array(MigratableSubscriptionSchema),
+  }),
+  definitions: {
+    MigratableSubscription: MigratableSubscriptionSchema,
+    MigratableSubscriptionPrice: MigratableSubscriptionPriceSchema,
+    MigratableSubscriptionNotification: MigratableSubscriptionNotificationSchema,
+  },
+})
+
+export type MigrationListResult = InferJsonOutputSchema<typeof migrationListJsonOutputSchema>

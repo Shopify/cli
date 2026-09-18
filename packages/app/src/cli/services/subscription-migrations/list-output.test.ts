@@ -1,3 +1,4 @@
+import {migrationListJsonOutputSchema} from './types.js'
 import {outputMigrationList, serializeMigrationListCsv, serializeMigrationListJson} from './list-output.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {describe, expect, test, vi} from 'vitest'
@@ -7,6 +8,15 @@ vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@shopify/cli-kit/node/output')>()
   return {...actual, outputResult: vi.fn()}
 })
+
+// Defaults to true, matching the real isUnitTest behavior under vitest. The stream boundary test overrides it to
+// false so outputResult writes to process.stdout instead of collecting logs.
+const isUnitTest = vi.hoisted(() => vi.fn(() => true))
+
+vi.mock('@shopify/cli-kit/node/context/local', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/context/local')>()),
+  isUnitTest,
+}))
 
 const CSV_HEADER =
   'shop_id,status,manual_subscription_name,manual_subscription_price_amount,manual_subscription_price_currency_code,manual_subscription_interval,target_plan_handle,notification_kind,notification_opt_out_deadline,notification_sent_at,price_behavior,effective_date,last_failure_reason'
@@ -254,5 +264,76 @@ describe('outputMigrationList JSON', () => {
     await expect(outputMigrationList({pages: pagesThenFailure([pageOne], apiError), json: true})).rejects.toBe(apiError)
 
     expect(outputResult).not.toHaveBeenCalled()
+  })
+})
+
+describe('migration list JSON contract', () => {
+  test('preserves nullable fields and nested nulls', () => {
+    const value = subscription({
+      manualSubscriptionName: null,
+      manualSubscriptionPrice: null,
+      targetPlanHandle: null,
+      notification: {kind: 'NONE', optOutDeadline: null, sentAt: null},
+      priceBehavior: null,
+      effectiveDate: null,
+      lastFailureReason: null,
+    })
+
+    expect(serializeMigrationListJson([value])).toBe(
+      JSON.stringify({subscriptions: [value]}, null, 2),
+    )
+  })
+
+  test.each([
+    {manualSubscriptionPrice: {amount: 19.99, currencyCode: 'USD'}},
+    {notification: {kind: 'NONE', optOutDeadline: null}},
+  ])('rejects invalid subscription fields: %j', (fields) => {
+    expect(() =>
+      migrationListJsonOutputSchema.validate({
+        subscriptions: [{...subscription(), ...fields}],
+      }),
+    ).toThrow()
+  })
+
+  test.each([
+    {status: 'UNKNOWN'},
+    {priceBehavior: 'UNKNOWN'},
+    {manualSubscriptionInterval: 'MONTHLY'},
+    {lastFailureReason: 'UNKNOWN'},
+  ])('accepts unknown server-provided values for pass-through fields: %j', (fields) => {
+    const value = {...subscription(), ...fields}
+
+    const encoded = migrationListJsonOutputSchema.encode({subscriptions: [value]})
+
+    expect(JSON.parse(encoded)).toEqual({subscriptions: [value]})
+  })
+})
+
+describe('outputMigrationList stream boundary', () => {
+  test('writes all pages as one JSON document to stdout', async () => {
+    // Restore the real outputResult and report a non-test context so the document reaches process.stdout.
+    const actualOutput =
+      await vi.importActual<typeof import('@shopify/cli-kit/node/output')>('@shopify/cli-kit/node/output')
+    vi.mocked(outputResult).mockImplementation(actualOutput.outputResult)
+    isUnitTest.mockReturnValue(false)
+    const stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+    const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+    const value = subscription()
+    async function* pages() {
+      yield [value]
+      expect(stdout).not.toHaveBeenCalled()
+      yield []
+    }
+
+    try {
+      await outputMigrationList({pages: pages(), json: true})
+
+      expect(stdout).toHaveBeenCalledOnce()
+      expect(stdout.mock.calls[0]?.[0]).toBe(`${JSON.stringify({subscriptions: [value]}, null, 2)}\n`)
+      expect(stderr).not.toHaveBeenCalled()
+    } finally {
+      stdout.mockRestore()
+      stderr.mockRestore()
+    }
   })
 })
