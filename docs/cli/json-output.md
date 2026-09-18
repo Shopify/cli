@@ -109,6 +109,41 @@ finite command even when it emits progress events, writes a file, or has no inte
 
 ## Plugin authors
 
+### Enable the JSON output lint rule
+
+Other repositories can install a version of `@shopify/eslint-plugin-cli` that includes `command-json-output`
+and enable the rule in their existing ESLint flat config. Importing the plugin's `rules` does not require
+extending its full CLI configuration.
+
+For example, Hydrogen can add this entry to its existing `eslint.config.js` array:
+
+```js
+const cliPlugin = require('@shopify/eslint-plugin-cli')
+const {commandExceptions} = require('./json-output-command-exceptions.cjs')
+
+module.exports = [
+  // Other existing configuration entries.
+  {
+    files: ['packages/cli/src/commands/**/*.ts'],
+    plugins: {'@shopify/cli': cliPlugin},
+    rules: {
+      '@shopify/cli/command-json-output': ['error', {exceptions: commandExceptions}],
+    },
+  },
+]
+```
+
+Create `json-output-command-exceptions.cjs` in that repository, exporting a `commandExceptions` array.
+Use exact repository-relative paths with forward slashes, such as `packages/cli/src/commands/hydrogen/dev.ts`.
+Paths are matched individually; exempting a command does not exempt its subcommands. The rule recognizes command
+files under both `packages/*/src/commands/` and `packages/*/src/cli/commands/`.
+
+The `exceptions` option replaces the built-in Shopify CLI list. An empty array disables all exemptions;
+omitting the option preserves the built-in list. Keep the local list limited to existing finite commands awaiting
+migration and streaming commands, and remove finite entries as they adopt the contract.
+
+### Control plugin output
+
 Plugins must adopt the result contract and control their output before their commands can be used reliably in JSON
 mode. Inheriting `--json-schema` or enabling `SHOPIFY_FLAG_JSON=1` doesn't convert all plugin output automatically.
 
