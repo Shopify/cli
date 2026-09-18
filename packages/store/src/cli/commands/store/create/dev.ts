@@ -1,4 +1,4 @@
-import {createDevStore} from '../../../services/store/create/dev.js'
+import {createDevStore, createDevStoreJsonOutputSchema} from '../../../services/store/create/dev.js'
 import {devStorePlanHandles, DevStorePlan} from '../../../services/store/constants.js'
 import {storeNamePrompt, storePlanPrompt, storeDemoDataPrompt} from '../../../prompts/store.js'
 import {countryFlag, storeFlags} from '../../../flags.js'
@@ -53,6 +53,10 @@ export default class StoreCreateDev extends Command {
     country: countryFlag,
   }
 
+  static get jsonOutputSchema() {
+    return createDevStoreJsonOutputSchema
+  }
+
   async run(): Promise<void> {
     const {flags} = await this.parse(StoreCreateDev)
 
@@ -75,16 +79,12 @@ export default class StoreCreateDev extends Command {
     } catch (error) {
       if (flags.json && error instanceof AbortError) {
         outputResult(
-          JSON.stringify(
-            {
-              error: true,
-              message: error.message,
-              nextSteps: error.nextSteps ?? [],
-              exitCode: 1,
-            },
-            null,
-            2,
-          ),
+          createDevStoreJsonOutputSchema.encode({
+            error: true,
+            message: error.message,
+            nextSteps: error.nextSteps ?? [],
+            exitCode: 1,
+          }),
         )
         process.exit(1)
       }
