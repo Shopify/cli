@@ -1386,8 +1386,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app doctor instructions` to print, copy, or write them later.",
-      "descriptionWithMarkdown": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app doctor instructions` to print, copy, or write them later.",
+      "description": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` to validate agent findings from a JSON file and compile them into the trace. The coding-agent instructions are the standalone `shopify app doctor instructions` workflow: the agent reviews the app, stores its findings with the token-bound `shopify app doctor record` command, and `shopify app doctor status` reads the stored results back. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. Pass `--skip-instructions` to never offer them. JSON output never prompts or prints those instructions.",
+      "descriptionWithMarkdown": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` to validate agent findings from a JSON file and compile them into the trace. The coding-agent instructions are the standalone `shopify app doctor instructions` workflow: the agent reviews the app, stores its findings with the token-bound `shopify app doctor record` command, and `shopify app doctor status` reads the stored results back. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. Pass `--skip-instructions` to never offer them. JSON output never prompts or prints those instructions.",
       "enableJsonFlag": false,
       "flags": {
         "blocking": {
@@ -1492,18 +1492,258 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Prints the complete workflow that a coding agent should follow to review App Doctor results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app doctor`; only that invocation's generated review pack is trusted as workflow input.",
-      "descriptionWithMarkdown": "Prints the complete workflow that a coding agent should follow to review App Doctor results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app doctor`; only that invocation's generated review pack is trusted as workflow input.",
+      "description": "Prints a self-contained workflow that a coding agent follows to review your app's source code with App Doctor's semantic checks. No prior `shopify app doctor` scan is required.\n\nThe instructions embed every check prompt from this CLI and, for each review scope, the exact `shopify app doctor record` command to run. That command carries an opaque review token that binds the agent's findings document to this app configuration, the scope directory, and the exact check prompts it received. After recording, `shopify app doctor status` reads the result back.\n\nBy default, the whole app is one review scope; pass `--review` to review specific directories instead. The instructions are printed to stdout. Use `--copy` to copy them to the clipboard, `--write` to write them to a file, or `--json` to print the structured result including the review tokens and record commands.\n\nOutput from `--json` conforms to the `AppDoctorInstructionsResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"schema_version\": {\n      \"type\": \"number\",\n      \"const\": 1\n    },\n    \"configuration\": {\n      \"$ref\": \"#/definitions/AppDoctorInstructionsConfiguration\"\n    },\n    \"app_root\": {\n      \"type\": \"string\"\n    },\n    \"scopes\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/AppDoctorInstructionsScope\"\n      }\n    },\n    \"checks\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/AppDoctorInstructionsCheck\"\n      }\n    },\n    \"instructions\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"schema_version\",\n    \"configuration\",\n    \"app_root\",\n    \"scopes\",\n    \"checks\",\n    \"instructions\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppDoctorInstructionsResult\",\n  \"definitions\": {\n    \"AppDoctorInstructionsConfiguration\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"identity\": {\n          \"type\": \"string\"\n        },\n        \"path\": {\n          \"type\": \"string\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"client_id\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"identity\",\n        \"path\",\n        \"name\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDoctorInstructionsCommand\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"command\": {\n          \"type\": \"string\",\n          \"const\": \"shopify\"\n        },\n        \"args\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        }\n      },\n      \"required\": [\n        \"command\",\n        \"args\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDoctorInstructionsScope\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"scope_identity\": {\n          \"type\": \"string\"\n        },\n        \"directory\": {\n          \"type\": \"string\"\n        },\n        \"token\": {\n          \"type\": \"string\"\n        },\n        \"record_command\": {\n          \"$ref\": \"#/definitions/AppDoctorInstructionsCommand\"\n        },\n        \"findings_path\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"scope_identity\",\n        \"directory\",\n        \"token\",\n        \"record_command\",\n        \"findings_path\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDoctorInstructionsCheck\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"id\": {\n          \"type\": \"string\"\n        },\n        \"version\": {\n          \"type\": \"integer\",\n          \"exclusiveMinimum\": 0\n        },\n        \"prompt_hash\": {\n          \"type\": \"string\"\n        },\n        \"prompt\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"id\",\n        \"version\",\n        \"prompt_hash\",\n        \"prompt\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Prints a self-contained workflow that a coding agent follows to review your app's source code with App Doctor's semantic checks. No prior `shopify app doctor` scan is required.\n\nThe instructions embed every check prompt from this CLI and, for each review scope, the exact `shopify app doctor record` command to run. That command carries an opaque review token that binds the agent's findings document to this app configuration, the scope directory, and the exact check prompts it received. After recording, `shopify app doctor status` reads the result back.\n\nBy default, the whole app is one review scope; pass `--review` to review specific directories instead. The instructions are printed to stdout. Use `--copy` to copy them to the clipboard, `--write` to write them to a file, or `--json` to print the structured result including the review tokens and record commands.",
       "enableJsonFlag": false,
       "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
         "copy": {
           "allowNo": false,
           "description": "Copy the instructions to the clipboard instead of printing them.",
           "env": "SHOPIFY_FLAG_APP_DOCTOR_INSTRUCTIONS_COPY",
           "exclusive": [
-            "write"
+            "write",
+            "json"
           ],
           "name": "copy",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "review": {
+          "description": "Review only this directory (repeatable). Omit to review the whole app.",
+          "env": "SHOPIFY_FLAG_APP_DOCTOR_REVIEW",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "name": "review",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "write": {
+          "description": "Write the instructions to a file instead of printing them.",
+          "env": "SHOPIFY_FLAG_APP_DOCTOR_INSTRUCTIONS_WRITE",
+          "exclusive": [
+            "copy",
+            "json"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "write",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:doctor:instructions",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Provide App Doctor instructions to a coding agent."
+    },
+    "app:doctor:record": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Stores the findings documents a coding agent wrote after following `shopify app doctor instructions`. No prior `shopify app doctor` scan is required: each review token carries the app configuration, the scope directory, and the exact check prompts the agent received, and the command refuses documents that don't match this CLI or this app.\n\nPass one `--review` token with one `--findings` file for each reviewed scope, in the same order; the pairs are matched by position and the whole command is rejected when any pair is invalid, so nothing is stored partially. Recording replaces any earlier agent results for the same scopes and checks; static scan results are kept separately and are not touched. Run `shopify app doctor status` afterwards to read the stored results back.\n\nOutput from `--json` conforms to the `AppDoctorRecordResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"schema_version\": {\n      \"type\": \"number\",\n      \"const\": 1\n    },\n    \"configuration\": {\n      \"$ref\": \"#/definitions/AppDoctorRecordConfiguration\"\n    },\n    \"app_root\": {\n      \"type\": \"string\"\n    },\n    \"recorded\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/AppDoctorRecordedScope\"\n      }\n    },\n    \"summary\": {\n      \"$ref\": \"#/definitions/AppDoctorRecordSummary\"\n    },\n    \"diagnostics\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/AppDoctorRecordDiagnostic\"\n      }\n    },\n    \"next\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"schema_version\",\n    \"configuration\",\n    \"app_root\",\n    \"recorded\",\n    \"summary\",\n    \"diagnostics\",\n    \"next\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppDoctorRecordResult\",\n  \"definitions\": {\n    \"AppDoctorRecordConfiguration\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"identity\": {\n          \"type\": \"string\"\n        },\n        \"path\": {\n          \"type\": \"string\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"client_id\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"identity\",\n        \"path\",\n        \"name\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDoctorRecordedScope\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"scope_identity\": {\n          \"type\": \"string\"\n        },\n        \"directory\": {\n          \"type\": \"string\"\n        },\n        \"checks\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/definitions/AppDoctorRecordedCheck\"\n          }\n        }\n      },\n      \"required\": [\n        \"scope_identity\",\n        \"checks\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDoctorRecordedCheck\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"check_id\": {\n          \"type\": \"string\"\n        },\n        \"outcome\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"clean\",\n            \"findings\",\n            \"not_applicable\",\n            \"unresolved\"\n          ]\n        },\n        \"finding_count\": {\n          \"type\": \"integer\",\n          \"minimum\": 0\n        },\n        \"status\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"created\",\n            \"replaced\"\n          ]\n        }\n      },\n      \"required\": [\n        \"check_id\",\n        \"outcome\",\n        \"finding_count\",\n        \"status\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDoctorRecordSummary\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"scopes\": {\n          \"type\": \"integer\",\n          \"minimum\": 0\n        },\n        \"findings\": {\n          \"type\": \"integer\",\n          \"minimum\": 0\n        },\n        \"suppressed_findings\": {\n          \"type\": \"integer\",\n          \"minimum\": 0\n        },\n        \"score\": {\n          \"$ref\": \"#/definitions/AppDoctorRecordScore\"\n        },\n        \"static_coverage_complete\": {\n          \"type\": \"boolean\"\n        }\n      },\n      \"required\": [\n        \"scopes\",\n        \"findings\",\n        \"suppressed_findings\",\n        \"score\",\n        \"static_coverage_complete\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDoctorRecordScore\": {\n      \"anyOf\": [\n        {\n          \"type\": \"object\",\n          \"properties\": {\n            \"status\": {\n              \"type\": \"string\",\n              \"const\": \"graded\"\n            },\n            \"total\": {\n              \"type\": \"number\"\n            },\n            \"grade\": {\n              \"type\": \"string\",\n              \"enum\": [\n                \"EXCELLENT\",\n                \"GOOD\",\n                \"NEEDS_WORK\",\n                \"POOR\"\n              ]\n            }\n          },\n          \"required\": [\n            \"status\",\n            \"total\",\n            \"grade\"\n          ],\n          \"additionalProperties\": false\n        },\n        {\n          \"type\": \"object\",\n          \"properties\": {\n            \"status\": {\n              \"type\": \"string\",\n              \"const\": \"withheld\"\n            },\n            \"reason\": {\n              \"type\": \"string\",\n              \"enum\": [\n                \"no_static_results\",\n                \"incomplete_static_coverage\"\n              ]\n            }\n          },\n          \"required\": [\n            \"status\",\n            \"reason\"\n          ],\n          \"additionalProperties\": false\n        }\n      ]\n    },\n    \"AppDoctorRecordDiagnostic\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"source\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"store\",\n            \"record\",\n            \"scan\"\n          ]\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n        \"message\": {\n          \"type\": \"string\"\n        },\n        \"path\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"source\",\n        \"code\",\n        \"message\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Stores the findings documents a coding agent wrote after following `shopify app doctor instructions`. No prior `shopify app doctor` scan is required: each review token carries the app configuration, the scope directory, and the exact check prompts the agent received, and the command refuses documents that don't match this CLI or this app.\n\nPass one `--review` token with one `--findings` file for each reviewed scope, in the same order; the pairs are matched by position and the whole command is rejected when any pair is invalid, so nothing is stored partially. Recording replaces any earlier agent results for the same scopes and checks; static scan results are kept separately and are not touched. Run `shopify app doctor status` afterwards to read the stored results back.",
+      "enableJsonFlag": false,
+      "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "findings": {
+          "description": "Findings document the agent wrote for the matching --review token (repeatable).",
+          "env": "SHOPIFY_FLAG_APP_DOCTOR_RECORD_FINDINGS",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "name": "findings",
+          "required": true,
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "review": {
+          "description": "Review token from the instructions for one scope (repeatable; pair each with --findings).",
+          "env": "SHOPIFY_FLAG_APP_DOCTOR_RECORD_REVIEW",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "name": "review",
+          "required": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:doctor:record",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Record a coding agent's App Doctor review."
+    },
+    "app:doctor:status": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Reads the App Doctor results stored for an app configuration and reports them. No scan is performed and no source files are read: the results describe the app as it was when each result was recorded, so a changed tree is not reflected until it is reviewed again.\n\nEach check can hold a result from two modes. Static results come from the `shopify app doctor` scan. Agent results come from a coding agent that followed `shopify app doctor instructions` and stored its findings with `shopify app doctor record`. A check with no result in a mode is reported as not run, never as passed. Findings are listed with their suppression state, and a score is only given when static coverage is complete.\n\nOutput from `--json` conforms to the `AppDoctorStatusResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"schema_version\": {\n      \"type\": \"number\",\n      \"const\": 1\n    },\n    \"basis\": {\n      \"type\": \"string\",\n      \"const\": \"stored-results\"\n    },\n    \"configuration\": {\n      \"$ref\": \"#/definitions/AppDoctorStatusConfiguration\"\n    },\n    \"app_root\": {\n      \"type\": \"string\"\n    },\n    \"store\": {\n      \"$ref\": \"#/definitions/AppDoctorStatusStore\"\n    },\n    \"scopes\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/AppDoctorStatusScope\"\n      }\n    },\n    \"findings\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/AppDoctorStatusFinding\"\n      }\n    },\n    \"coverage\": {\n      \"$ref\": \"#/definitions/AppDoctorStatusCoverage\"\n    },\n    \"score\": {\n      \"$ref\": \"#/definitions/AppDoctorStatusScore\"\n    },\n    \"suppressions\": {\n      \"$ref\": \"#/definitions/AppDoctorStatusSuppressions\"\n    },\n    \"diagnostics\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/AppDoctorStatusDiagnostic\"\n      }\n    }\n  },\n  \"required\": [\n    \"schema_version\",\n    \"basis\",\n    \"configuration\",\n    \"app_root\",\n    \"store\",\n    \"scopes\",\n    \"findings\",\n    \"coverage\",\n    \"score\",\n    \"suppressions\",\n    \"diagnostics\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppDoctorStatusResult\",\n  \"definitions\": {\n    \"AppDoctorStatusConfiguration\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"identity\": {\n          \"type\": \"string\"\n        },\n        \"path\": {\n          \"type\": \"string\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"client_id\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"identity\",\n        \"path\",\n        \"name\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDoctorStatusStore\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"directory\": {\n          \"type\": \"string\"\n        },\n        \"state\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"present\",\n            \"missing\"\n          ]\n        }\n      },\n      \"required\": [\n        \"directory\",\n        \"state\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDoctorStatusScope\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"scope_identity\": {\n          \"type\": \"string\"\n        },\n        \"directory\": {\n          \"type\": \"string\"\n        },\n        \"directory_resolved\": {\n          \"type\": \"boolean\"\n        },\n        \"checks\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/definitions/AppDoctorStatusCheck\"\n          }\n        }\n      },\n      \"required\": [\n        \"scope_identity\",\n        \"directory\",\n        \"directory_resolved\",\n        \"checks\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDoctorStatusCheck\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"check_id\": {\n          \"type\": \"string\"\n        },\n        \"static\": {\n          \"$ref\": \"#/definitions/AppDoctorStatusModeOutcome\"\n        },\n        \"agent\": {\n          \"$ref\": \"#/definitions/AppDoctorStatusModeOutcome\"\n        }\n      },\n      \"required\": [\n        \"check_id\",\n        \"static\",\n        \"agent\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDoctorStatusModeOutcome\": {\n      \"anyOf\": [\n        {\n          \"type\": \"object\",\n          \"properties\": {\n            \"outcome\": {\n              \"type\": \"string\",\n              \"const\": \"not_run\"\n            }\n          },\n          \"required\": [\n            \"outcome\"\n          ],\n          \"additionalProperties\": false\n        },\n        {\n          \"type\": \"object\",\n          \"properties\": {\n            \"outcome\": {\n              \"type\": \"string\",\n              \"enum\": [\n                \"clean\",\n                \"findings\",\n                \"not_applicable\",\n                \"unsupported_framework\",\n                \"unresolved\"\n              ]\n            },\n            \"produced_at\": {\n              \"type\": \"string\"\n            },\n            \"check_version\": {\n              \"type\": \"integer\",\n              \"exclusiveMinimum\": 0\n            },\n            \"finding_count\": {\n              \"type\": \"integer\",\n              \"minimum\": 0\n            },\n            \"reason\": {\n              \"type\": \"object\",\n              \"properties\": {\n                \"code\": {\n                  \"type\": \"string\",\n                  \"enum\": [\n                    \"capability_absent\",\n                    \"no_relevant_files\",\n                    \"unsupported_framework\",\n                    \"unsupported_language\",\n                    \"parser_unavailable\",\n                    \"agent_investigation_required\",\n                    \"not_reported\",\n                    \"input_rejected\"\n                  ]\n                },\n                \"message\": {\n                  \"type\": \"string\"\n                }\n              },\n              \"required\": [\n                \"code\",\n                \"message\"\n              ],\n              \"additionalProperties\": false\n            },\n            \"guidance\": {\n              \"type\": \"string\"\n            }\n          },\n          \"required\": [\n            \"outcome\",\n            \"produced_at\",\n            \"check_version\",\n            \"finding_count\"\n          ],\n          \"additionalProperties\": false\n        }\n      ]\n    },\n    \"AppDoctorStatusFinding\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"fingerprint\": {\n          \"type\": \"string\"\n        },\n        \"scope_identity\": {\n          \"type\": \"string\"\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n        \"severity\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"high\",\n            \"medium\",\n            \"low\"\n          ]\n        },\n        \"title\": {\n          \"type\": \"string\"\n        },\n        \"message\": {\n          \"type\": \"string\"\n        },\n        \"location\": {\n          \"$ref\": \"#/definitions/AppDoctorStatusLocation\"\n        },\n        \"sources\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"enum\": [\n              \"static\",\n              \"agent\"\n            ]\n          }\n        },\n        \"suppressed\": {\n          \"type\": \"boolean\"\n        },\n        \"suppression\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"id\": {\n              \"type\": \"string\"\n            },\n            \"justification\": {\n              \"type\": \"string\"\n            }\n          },\n          \"required\": [\n            \"id\",\n            \"justification\"\n          ],\n          \"additionalProperties\": false\n        },\n        \"fix\": {\n          \"$ref\": \"#/definitions/AppDoctorStatusFix\"\n        },\n        \"scoring\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"eligible\": {\n              \"type\": \"boolean\"\n            },\n            \"points\": {\n              \"type\": \"number\"\n            }\n          },\n          \"required\": [\n            \"eligible\",\n            \"points\"\n          ],\n          \"additionalProperties\": false\n        }\n      },\n      \"required\": [\n        \"fingerprint\",\n        \"scope_identity\",\n        \"code\",\n        \"severity\",\n        \"title\",\n        \"message\",\n        \"location\",\n        \"sources\",\n        \"suppressed\",\n        \"fix\",\n        \"scoring\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDoctorStatusLocation\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"file\": {\n          \"type\": \"string\"\n        },\n        \"path\": {\n          \"type\": \"string\"\n        },\n        \"line\": {\n          \"type\": \"integer\",\n          \"exclusiveMinimum\": 0\n        },\n        \"column\": {\n          \"type\": \"integer\",\n          \"exclusiveMinimum\": 0\n        }\n      },\n      \"required\": [\n        \"file\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDoctorStatusFix\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"automated\": {\n          \"type\": \"boolean\"\n        },\n        \"description\": {\n          \"type\": \"string\"\n        },\n        \"guide\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"automated\",\n        \"description\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDoctorStatusUnmatchedSuppression\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"id\": {\n          \"type\": \"string\"\n        },\n        \"finding_fingerprint\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"id\",\n        \"finding_fingerprint\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDoctorStatusCoverage\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"static_result_count\": {\n          \"type\": \"integer\",\n          \"minimum\": 0\n        },\n        \"complete\": {\n          \"type\": \"boolean\"\n        },\n        \"files_skipped\": {\n          \"type\": \"integer\",\n          \"minimum\": 0\n        },\n        \"unsupported_languages\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"gaps\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/definitions/AppDoctorStatusCoverageGap\"\n          }\n        },\n        \"owners\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"object\",\n            \"properties\": {\n              \"scope_identity\": {\n                \"type\": \"string\"\n              },\n              \"check_id\": {\n                \"type\": \"string\"\n              },\n              \"files_scanned\": {\n                \"type\": \"integer\",\n                \"minimum\": 0\n              },\n              \"gap_count\": {\n                \"type\": \"integer\",\n                \"minimum\": 0\n              }\n            },\n            \"required\": [\n              \"scope_identity\",\n              \"check_id\",\n              \"files_scanned\",\n              \"gap_count\"\n            ],\n            \"additionalProperties\": false\n          }\n        }\n      },\n      \"required\": [\n        \"static_result_count\",\n        \"complete\",\n        \"files_skipped\",\n        \"unsupported_languages\",\n        \"gaps\",\n        \"owners\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDoctorStatusCoverageGap\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"code\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"skipped_file\",\n            \"unsupported_language\",\n            \"unresolved_check\"\n          ]\n        },\n        \"message\": {\n          \"type\": \"string\"\n        },\n        \"file\": {\n          \"type\": \"string\"\n        },\n        \"owner\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"scope_identity\": {\n              \"$ref\": \"#/definitions/AppDoctorStatusCoverage/properties/owners/items/properties/scope_identity\"\n            },\n            \"check_id\": {\n              \"$ref\": \"#/definitions/AppDoctorStatusCoverage/properties/owners/items/properties/check_id\"\n            }\n          },\n          \"required\": [\n            \"scope_identity\",\n            \"check_id\"\n          ],\n          \"additionalProperties\": false\n        }\n      },\n      \"required\": [\n        \"code\",\n        \"message\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDoctorStatusScore\": {\n      \"anyOf\": [\n        {\n          \"type\": \"object\",\n          \"properties\": {\n            \"status\": {\n              \"type\": \"string\",\n              \"const\": \"graded\"\n            },\n            \"total\": {\n              \"type\": \"number\"\n            },\n            \"grade\": {\n              \"type\": \"string\",\n              \"enum\": [\n                \"EXCELLENT\",\n                \"GOOD\",\n                \"NEEDS_WORK\",\n                \"POOR\"\n              ]\n            }\n          },\n          \"required\": [\n            \"status\",\n            \"total\",\n            \"grade\"\n          ],\n          \"additionalProperties\": false\n        },\n        {\n          \"type\": \"object\",\n          \"properties\": {\n            \"status\": {\n              \"type\": \"string\",\n              \"const\": \"withheld\"\n            },\n            \"reason\": {\n              \"type\": \"string\",\n              \"enum\": [\n                \"no_static_results\",\n                \"incomplete_static_coverage\"\n              ]\n            }\n          },\n          \"required\": [\n            \"status\",\n            \"reason\"\n          ],\n          \"additionalProperties\": false\n        }\n      ]\n    },\n    \"AppDoctorStatusSuppressions\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"matched\": {\n          \"type\": \"integer\",\n          \"minimum\": 0\n        },\n        \"suppressed_findings\": {\n          \"type\": \"integer\",\n          \"minimum\": 0\n        },\n        \"unmatched\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/definitions/AppDoctorStatusUnmatchedSuppression\"\n          }\n        }\n      },\n      \"required\": [\n        \"matched\",\n        \"suppressed_findings\",\n        \"unmatched\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppDoctorStatusDiagnostic\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"source\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"store\",\n            \"record\",\n            \"scan\"\n          ]\n        },\n        \"code\": {\n          \"type\": \"string\"\n        },\n        \"message\": {\n          \"type\": \"string\"\n        },\n        \"path\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"source\",\n        \"code\",\n        \"message\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Reads the App Doctor results stored for an app configuration and reports them. No scan is performed and no source files are read: the results describe the app as it was when each result was recorded, so a changed tree is not reflected until it is reviewed again.\n\nEach check can hold a result from two modes. Static results come from the `shopify app doctor` scan. Agent results come from a coding agent that followed `shopify app doctor instructions` and stored its findings with `shopify app doctor record`. A check with no result in a mode is reported as not run, never as passed. Findings are listed with their suppression state, and a score is only given when static coverage is complete.",
+      "enableJsonFlag": false,
+      "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
           "type": "boolean"
         },
         "json-schema": {
@@ -1537,29 +1777,18 @@
           "hidden": false,
           "name": "verbose",
           "type": "boolean"
-        },
-        "write": {
-          "description": "Write the instructions to a file instead of printing them.",
-          "env": "SHOPIFY_FLAG_APP_DOCTOR_INSTRUCTIONS_WRITE",
-          "exclusive": [
-            "copy"
-          ],
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "write",
-          "type": "option"
         }
       },
       "hasDynamicHelp": false,
       "hidden": true,
       "hiddenAliases": [
       ],
-      "id": "app:doctor:instructions",
+      "id": "app:doctor:status",
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Provide App Doctor instructions to a coding agent."
+      "summary": "Show recorded App Doctor results for an app configuration."
     },
     "app:doctor:submit": {
       "aliases": [

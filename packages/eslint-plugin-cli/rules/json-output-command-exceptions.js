@@ -14,7 +14,6 @@ const commandExceptions = [
   'packages/app/src/cli/commands/app/deploy.ts',
   'packages/app/src/cli/commands/app/dev/clean.ts',
   'packages/app/src/cli/commands/app/doctor.ts',
-  'packages/app/src/cli/commands/app/doctor/instructions.ts',
   'packages/app/src/cli/commands/app/doctor/submit.ts',
   'packages/app/src/cli/commands/app/env/pull.ts',
   'packages/app/src/cli/commands/app/env/show.ts',

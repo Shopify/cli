@@ -188,10 +188,9 @@ describe('doctor', () => {
     })
     expect(dependencies.selectInstructionsDestination).toHaveBeenCalledOnce()
     expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
-      directory: '/tmp/unlinked-app',
+      directory: scanExecution.appRoot,
       copy: true,
-      scanComplete: true,
-      commands: resolveAppDoctorCommands(scanExecution.appRoot),
+      interactive: true,
     })
   })
 
@@ -203,10 +202,9 @@ describe('doctor', () => {
     await doctor(testOptions(), dependencies)
 
     expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
-      directory: '/tmp/unlinked-app',
+      directory: scanExecution.appRoot,
       copy: false,
-      scanComplete: true,
-      commands: resolveAppDoctorCommands(scanExecution.appRoot),
+      interactive: true,
     })
   })
 
@@ -228,10 +226,9 @@ describe('doctor', () => {
     expect(dependencies.canPrompt).not.toHaveBeenCalled()
     expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
     expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
-      directory: '/tmp/unlinked-app',
+      directory: scanExecution.appRoot,
       copy: false,
-      scanComplete: true,
-      commands: resolveAppDoctorCommands(scanExecution.appRoot),
+      interactive: false,
     })
   })
 
