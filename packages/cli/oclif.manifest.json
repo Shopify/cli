@@ -8743,7 +8743,7 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.\n\nRun `shopify store auth` first to create stored auth for the store.\n\nMutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.",
+      "description": "Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.\n\nRun `shopify store auth` first to create stored auth for the store.\n\nMutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.\n\nOutput from `--json` conforms to the `StoreExecuteResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"type\": \"object\",\n      \"additionalProperties\": {}\n    },\n    {\n      \"type\": \"null\"\n    }\n  ],\n  \"title\": \"StoreExecuteResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.\n\nRun `shopify store auth` first to create stored auth for the store.\n\nMutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.",
       "examples": [
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --query \"query { shop { name } }\"",

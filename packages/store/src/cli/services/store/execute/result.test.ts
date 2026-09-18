@@ -1,5 +1,6 @@
 import {writeOrOutputStoreExecuteResult} from './result.js'
-import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {storeExecuteJsonOutputSchema} from './types.js'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -7,38 +8,9 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
-function captureStandardStreams() {
-  const stdout: string[] = []
-  const stderr: string[] = []
-
-  const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(((chunk: string | Uint8Array) => {
-    stdout.push(typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'))
-    return true
-  }) as typeof process.stdout.write)
-  const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(((chunk: string | Uint8Array) => {
-    stderr.push(typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'))
-    return true
-  }) as typeof process.stderr.write)
-
-  return {
-    stdout: () => stdout.join(''),
-    stderr: () => stderr.join(''),
-    restore: () => {
-      stdoutSpy.mockRestore()
-      stderrSpy.mockRestore()
-    },
-  }
-}
-
 describe('writeOrOutputStoreExecuteResult', () => {
-  const originalUnitTestEnv = process.env.SHOPIFY_UNIT_TEST
-
   beforeEach(() => {
     mockAndCaptureOutput().clear()
-  })
-
-  afterEach(() => {
-    process.env.SHOPIFY_UNIT_TEST = originalUnitTestEnv
   })
 
   test('writes results to a file when outputFile is provided', async () => {
@@ -68,42 +40,37 @@ describe('writeOrOutputStoreExecuteResult', () => {
     expect(output.output()).toContain('Test shop')
   })
 
-  test('suppresses success rendering in json mode', async () => {
+  test('outputs the exact JSON result without a success message', async () => {
     const output = mockAndCaptureOutput()
+    const result = {renamedShop: {name: 'Test shop', optional: null}, products: [], enabled: false}
 
-    await writeOrOutputStoreExecuteResult({data: {shop: {name: 'Test shop'}}}, undefined, 'json')
+    await writeOrOutputStoreExecuteResult(result, undefined, 'json')
 
+    expect(output.output()).toBe(JSON.stringify(result, null, 2))
     expect(renderSuccess).not.toHaveBeenCalled()
-    expect(output.output()).toContain('Test shop')
   })
 
-  test('writes json results to stdout without writing to stderr', async () => {
-    process.env.SHOPIFY_UNIT_TEST = 'false'
-    vi.resetModules()
-    const streams = captureStandardStreams()
-    const {writeOrOutputStoreExecuteResult} = await import('./result.js')
+  test.each([{}, null, {zebra: false, apple: null, omitted: undefined, nested: {list: [null, 1, 'value']}}])(
+    'preserves arbitrary GraphQL fields, order, and omissions: %j',
+    (result) => {
+      expect(storeExecuteJsonOutputSchema.encode(result)).toBe(JSON.stringify(result, null, 2))
+    },
+  )
 
-    try {
-      await writeOrOutputStoreExecuteResult({data: {shop: {name: 'Test shop'}}}, undefined, 'json')
-    } finally {
-      streams.restore()
-    }
-
-    expect(streams.stdout()).toContain('"name": "Test shop"')
-    expect(streams.stderr()).toBe('')
+  test.each([undefined, 'not an object', 42, []])('rejects invalid response roots: %j', (result) => {
+    expect(() => storeExecuteJsonOutputSchema.validate(result)).toThrow()
   })
 
-  test('suppresses success rendering when writing a file in json mode', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const outputPath = joinPath(tmpDir, 'results.json')
+  test('writes an exact JSON file without a result or success message in JSON mode', async () => {
+    const output = mockAndCaptureOutput()
+    await inTemporaryDirectory(async (directory) => {
+      const path = joinPath(directory, 'result.json')
+      const result = {shop: {name: 'Test shop'}, products: []}
 
-      // When
-      await writeOrOutputStoreExecuteResult({data: {shop: {name: 'Test shop'}}}, outputPath, 'json')
+      await writeOrOutputStoreExecuteResult(result, path, 'json')
 
-      // Then
-      const content = await readFile(outputPath)
-      expect(content).toContain('Test shop')
+      await expect(readFile(path)).resolves.toBe(JSON.stringify(result, null, 2))
+      expect(output.info()).toBe('')
       expect(renderSuccess).not.toHaveBeenCalled()
     })
   })
