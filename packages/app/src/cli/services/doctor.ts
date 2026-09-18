@@ -29,12 +29,7 @@ interface DoctorDependencies {
   writeArtifacts(execution: AppDoctorExecution): Promise<AppDoctorArtifactPaths>
   canPrompt(): boolean
   selectInstructionsDestination(): Promise<AppDoctorInstructionsDestination>
-  deliverInstructions(options: {
-    directory: string
-    copy: boolean
-    scanComplete: boolean
-    commands: AppDoctorCommands
-  }): Promise<void>
+  deliverInstructions(options: {directory: string; copy: boolean; interactive: boolean}): Promise<void>
   output(content: string): void
   renderReport(input: DoctorReportInput): void
   setExitCode(exitCode: number): void
@@ -59,7 +54,8 @@ const defaultDependencies: DoctorDependencies = {
   writeArtifacts: writeAppDoctorArtifacts,
   canPrompt: terminalSupportsPrompting,
   selectInstructionsDestination: () => renderSelectPrompt(appDoctorInstructionsPrompt),
-  deliverInstructions: deliverAppDoctorInstructions,
+  deliverInstructions: ({directory, copy, interactive}) =>
+    deliverAppDoctorInstructions({directory, copy, interactive, format: 'text'}),
   output: outputResult,
   renderReport: renderDoctorReport,
   setExitCode: (exitCode) => {
@@ -116,10 +112,10 @@ export default async function doctor(
   const destination = await instructionsDestination(options, dependencies)
   if (destination !== 'nothing') {
     await dependencies.deliverInstructions({
-      directory: options.directory,
+      directory: execution.appRoot,
       copy: destination === 'copy',
-      scanComplete: true,
-      commands,
+      // `--yes` reaches here without consulting the terminal; every other path prompted first.
+      interactive: !options.yes,
     })
   }
 

@@ -15,7 +15,7 @@ export default class Doctor extends BaseCommand {
 
   static descriptionWithMarkdown = `Runs Shopify App Doctor locally and creates its review pack and trace.
 
-Pass \`--findings\` after completing the review pack to validate agent findings and compile them into the trace. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. JSON output never prompts or prints those instructions. You can also run \`shopify app doctor instructions\` to print, copy, or write them later.`
+Pass \`--findings\` to validate agent findings from a JSON file and compile them into the trace. The coding-agent instructions are the standalone \`shopify app doctor instructions\` workflow: the agent reviews the app, stores its findings with the token-bound \`shopify app doctor record\` command, and \`shopify app doctor status\` reads the stored results back. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. Pass \`--skip-instructions\` to never offer them. JSON output never prompts or prints those instructions.`
 
   static description = this.descriptionWithoutMarkdown()
 
