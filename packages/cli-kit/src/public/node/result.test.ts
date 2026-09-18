@@ -1,7 +1,8 @@
 import {err, ok} from './result.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {outputSuccess} from './output.js'
-import {describe, expect, test} from 'vitest'
+import {AbortError, BugError} from './error.js'
+import {describe, expect, test, vi} from 'vitest'
 
 describe('ok', () => {
   test('create ok with value', () => {
@@ -41,6 +42,48 @@ describe('valueOrBug', () => {
   })
 })
 
+describe('valueOrAbort', () => {
+  test('when ok result should return value', () => {
+    // When
+    const result = ok(123).valueOrAbort()
+
+    // Then
+    expect(result).toEqual(123)
+  })
+
+  test('when err result with FatalError should throw the original FatalError', () => {
+    // Given
+    const fatal = new BugError('fatal bug')
+
+    // When / Then
+    expect(() => err(fatal).valueOrAbort()).toThrow(fatal)
+  })
+
+  test('when err result with standard Error should throw AbortError with matching message and stack', () => {
+    // Given
+    const standardError = new Error('standard error')
+    standardError.stack = 'custom stack trace'
+
+    // When / Then
+    try {
+      err(standardError).valueOrAbort()
+      expect.fail('Expected valueOrAbort to throw')
+    } catch (error) {
+      if (error instanceof AbortError) {
+        expect(error.message).toEqual('standard error')
+        expect(error.stack).toEqual('custom stack trace')
+      } else {
+        throw error
+      }
+    }
+  })
+
+  test('when err result with non-Error value should throw AbortError with string representation', () => {
+    // When / Then
+    expect(() => err('string error').valueOrAbort()).toThrow(new AbortError('string error'))
+  })
+})
+
 describe('mapError', () => {
   test('when ok result should not affect the result', () => {
     // When
@@ -70,6 +113,18 @@ describe('doOnOk', () => {
     // Then
     expect(!result.isErr() && result.value).toEqual(123)
     expect(outpuMocker.success()).toMatchInlineSnapshot('"result ok 123"')
+  })
+
+  test('when err result should not execute the command and return err', () => {
+    // Given
+    const handler = vi.fn()
+
+    // When
+    const result = err(new Error('error')).doOnOk(handler)
+
+    // Then
+    expect(handler).not.toHaveBeenCalled()
+    expect(result.isErr() && result.error).toEqual(new Error('error'))
   })
 })
 
