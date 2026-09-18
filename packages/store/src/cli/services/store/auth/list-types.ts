@@ -1,17 +1,19 @@
-import {StoreAuthAssociatedUserSchema} from './types.js'
+import {StoreAuthAssociatedUserSchema, StoreAuthSessionSchema} from './types.js'
 import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const StoreAuthListSessionSchema = zod.object({
+const StoreAuthListSessionSchema = StoreAuthSessionSchema.partial().extend({
   subdomain: zod.string(),
   connected: zod.string(),
-  store: zod.string().optional(),
-  userId: zod.string().optional(),
-  scopes: zod.array(zod.string()).optional(),
-  acquiredAt: zod.string().optional().describe('When the stored token was acquired, in ISO 8601 format.'),
-  expiresAt: zod.string().optional().describe('When the stored access token expires, in ISO 8601 format.'),
-  refreshTokenExpiresAt: zod.string().optional().describe('When the stored refresh token expires, in ISO 8601 format.'),
-  associatedUser: StoreAuthAssociatedUserSchema.optional(),
+  acquiredAt: StoreAuthSessionSchema.shape.acquiredAt
+    .optional()
+    .describe('When the stored token was acquired, in ISO 8601 format.'),
+  expiresAt: StoreAuthSessionSchema.shape.expiresAt.describe(
+    'When the stored access token expires, in ISO 8601 format.',
+  ),
+  refreshTokenExpiresAt: StoreAuthSessionSchema.shape.refreshTokenExpiresAt.describe(
+    'When the stored refresh token expires, in ISO 8601 format.',
+  ),
 })
 
 export const storeAuthListJsonOutputSchema = defineJsonOutputSchema({

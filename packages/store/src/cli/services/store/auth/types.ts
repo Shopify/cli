@@ -9,19 +9,21 @@ export const StoreAuthAssociatedUserSchema = zod.object({
   accountOwner: zod.boolean().optional(),
 })
 
+export const StoreAuthSessionSchema = zod.object({
+  store: zod.string(),
+  userId: zod.string(),
+  scopes: zod.array(zod.string()),
+  acquiredAt: zod.string(),
+  expiresAt: zod.string().optional(),
+  refreshTokenExpiresAt: zod.string().optional(),
+  associatedUser: StoreAuthAssociatedUserSchema.optional(),
+})
+
 export const storeAuthJsonOutputSchema = defineJsonOutputSchema({
   name: 'StoreAuthResult',
-  schema: zod.object({
-    store: zod.string(),
-    userId: zod.string(),
-    scopes: zod.array(zod.string()),
-    acquiredAt: zod.string(),
-    expiresAt: zod.string().optional(),
-    refreshTokenExpiresAt: zod.string().optional(),
-    hasRefreshToken: zod.boolean(),
-    associatedUser: StoreAuthAssociatedUserSchema.optional(),
-  }),
+  schema: StoreAuthSessionSchema.extend({hasRefreshToken: zod.boolean()}),
   definitions: {StoreAuthAssociatedUser: StoreAuthAssociatedUserSchema},
 })
 
+export type StoreAuthSession = zod.infer<typeof StoreAuthSessionSchema>
 export type StoreAuthResult = InferJsonOutputSchema<typeof storeAuthJsonOutputSchema>
