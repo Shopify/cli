@@ -1,5 +1,6 @@
 import {listStoreAuthSessions} from '../../../services/store/auth/list.js'
 import {writeStoreAuthListResult} from '../../../services/store/auth/list-result.js'
+import {storeAuthListJsonOutputSchema} from '../../../services/store/auth/list-types.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
@@ -18,6 +19,10 @@ To list stores in a Shopify organization, run \`shopify store list\`.`
   static flags = {
     ...globalFlags,
     ...jsonFlag,
+  }
+
+  static get jsonOutputSchema() {
+    return storeAuthListJsonOutputSchema
   }
 
   async run(): Promise<void> {

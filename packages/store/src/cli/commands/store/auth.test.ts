@@ -1,4 +1,5 @@
 import StoreAuth from './auth.js'
+import {storeAuthJsonOutputSchema} from '../../services/store/auth/types.js'
 import {authenticateStoreWithApp} from '../../services/store/auth/index.js'
 import {createStoreAuthPresenter} from '../../services/store/auth/result.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -37,6 +38,7 @@ describe('store auth command', () => {
   })
 
   test('defines the expected flags', () => {
+    expect(StoreAuth.jsonOutputSchema).toBe(storeAuthJsonOutputSchema)
     expect(StoreAuth.flags.store).toBeDefined()
     expect(StoreAuth.flags.scopes).toBeDefined()
     expect(StoreAuth.flags.json).toBeDefined()

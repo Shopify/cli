@@ -2,10 +2,10 @@ import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
 import {resolveExistingStoreAuthScopes} from './existing-scopes.js'
 import {loadStoredStoreSession} from './session-lifecycle.js'
 import {getCurrentStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
-import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/store-auth-session')
 vi.mock('./session-lifecycle.js', () => ({loadStoredStoreSession: vi.fn()}))
@@ -23,10 +23,6 @@ vi.mock('@shopify/cli-kit/node/api/admin', async () => {
 describe('resolveExistingStoreAuthScopes', () => {
   beforeEach(() => {
     vi.mocked(adminUrl).mockReturnValue('https://shop.myshopify.com/admin/api/unstable/graphql.json')
-  })
-
-  afterEach(() => {
-    mockAndCaptureOutput().clear()
   })
 
   test('returns no scopes when no stored auth exists', async () => {
