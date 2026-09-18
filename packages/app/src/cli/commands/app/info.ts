@@ -1,11 +1,11 @@
 import {appFlags} from '../../flags.js'
-import {Format, info} from '../../services/info.js'
+import {info} from '../../services/info.js'
+import {appInfoJsonOutputSchema} from '../../services/info/types.js'
+import {renderAppInfoResult} from '../../services/info/result.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {outputResult} from '@shopify/cli-kit/node/output'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
 
 export default class AppInfo extends AppLinkedCommand {
   static summary = 'Print basic information about your app and extensions.'
@@ -16,6 +16,10 @@ export default class AppInfo extends AppLinkedCommand {
   - The [structure](https://shopify.dev/docs/apps/tools/cli/structure) of your app project.
   - The [access scopes](https://shopify.dev/docs/api/usage) your app has requested.
   - System information, including the package manager and version of Shopify CLI used in the project.`
+
+  static get jsonOutputSchema() {
+    return appInfoJsonOutputSchema
+  }
 
   static description = this.descriptionForHelp()
 
@@ -34,24 +38,15 @@ export default class AppInfo extends AppLinkedCommand {
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(AppInfo)
 
-    const {app, project, remoteApp, organization, developerPlatformClient} = await linkedAppContext({
+    const {app, project, remoteApp, organization} = await linkedAppContext({
       directory: flags.path,
       clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
       unsafeTolerateErrors: true,
     })
-    const results = await info(app, remoteApp, organization, project, {
-      format: (flags.json ? 'json' : 'text') as Format,
-      webEnv: flags['web-env'],
-      configName: flags.config,
-      developerPlatformClient,
-    })
-    if (typeof results === 'string' || 'value' in results) {
-      outputResult(results)
-    } else {
-      renderInfo({customSections: results})
-    }
+    const result = await info(app, remoteApp, organization, project, {webEnv: flags['web-env']})
+    await renderAppInfoResult(result, {app, remoteApp, organization, project}, flags.json ? 'json' : 'text')
     if (!app.errors.isEmpty()) process.exit(2)
 
     return {app}

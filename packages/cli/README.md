@@ -1676,6 +1676,653 @@ DESCRIPTION
   - The "structure" (https://shopify.dev/docs/apps/tools/cli/structure) of your app project.
   - The "access scopes" (https://shopify.dev/docs/api/usage) your app has requested.
   - System information, including the package manager and version of Shopify CLI used in the project.
+
+  Output from `--json` conforms to the `AppInfoResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/AppInfoWebEnvironment"
+      },
+      {
+        "$ref": "#/definitions/AppInfo"
+      }
+    ],
+    "title": "AppInfoResult",
+    "definitions": {
+      "AppInfo": {
+        "type": "object",
+        "properties": {
+          "remoteApp": {
+            "$ref": "#/definitions/AppInfoRemoteApp"
+          },
+          "account": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "UserAccount"
+                  },
+                  "email": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "email"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "ServiceAccount"
+                  },
+                  "orgName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "orgName"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "UnknownAccount"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "project": {
+            "$ref": "#/definitions/AppInfoProject"
+          },
+          "system": {
+            "$ref": "#/definitions/AppInfoSystem"
+          },
+          "devStoreUrl": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "idEnvironmentVariableName": {
+            "type": "string",
+            "const": "SHOPIFY_API_KEY"
+          },
+          "directory": {
+            "type": "string"
+          },
+          "configPath": {
+            "type": "string"
+          },
+          "configuration": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "webs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppInfoWeb"
+            }
+          },
+          "dotenv": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "variables": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "path",
+              "variables"
+            ],
+            "additionalProperties": true
+          },
+          "errors": {
+            "type": "object",
+            "properties": {
+              "errors": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/AppInfoConfigurationError"
+                }
+              }
+            },
+            "required": [
+              "errors"
+            ],
+            "additionalProperties": true
+          },
+          "specifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppInfoSpecification"
+            }
+          },
+          "remoteFlags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "realExtensions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppInfoExtension"
+            }
+          },
+          "devApplicationURLs": {
+            "$ref": "#/definitions/AppInfo/properties/configuration"
+          },
+          "_hiddenConfig": {
+            "$ref": "#/definitions/AppInfo/properties/configuration"
+          },
+          "packageManager": {
+            "type": "string"
+          },
+          "nodeDependencies": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "usesWorkspaces": {
+            "type": "boolean"
+          },
+          "organization": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "businessName": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "businessName",
+              "source"
+            ],
+            "additionalProperties": false
+          },
+          "allExtensions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppInfoExtension"
+            }
+          }
+        },
+        "required": [
+          "remoteApp",
+          "account",
+          "project",
+          "system",
+          "name",
+          "idEnvironmentVariableName",
+          "directory",
+          "configPath",
+          "configuration",
+          "webs",
+          "errors",
+          "specifications",
+          "remoteFlags",
+          "realExtensions",
+          "_hiddenConfig",
+          "packageManager",
+          "nodeDependencies",
+          "usesWorkspaces",
+          "organization",
+          "allExtensions"
+        ],
+        "additionalProperties": true
+      },
+      "AppInfoRemoteApp": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "apiKey": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "appType": {
+            "type": "string"
+          },
+          "newApp": {
+            "type": "boolean"
+          },
+          "grantedScopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "developmentStorePreviewEnabled": {
+            "type": "boolean"
+          },
+          "applicationUrl": {
+            "type": "string"
+          },
+          "redirectUrlWhitelist": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "requestedAccessScopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "webhookApiVersion": {
+            "type": "string"
+          },
+          "embedded": {
+            "type": "boolean"
+          },
+          "posEmbedded": {
+            "type": "boolean"
+          },
+          "preferencesUrl": {
+            "type": "string"
+          },
+          "gdprWebhooks": {
+            "type": "object",
+            "properties": {
+              "customerDeletionUrl": {
+                "type": "string"
+              },
+              "customerDataRequestUrl": {
+                "type": "string"
+              },
+              "shopDeletionUrl": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "appProxy": {
+            "type": "object",
+            "properties": {
+              "subPath": {
+                "type": "string"
+              },
+              "subPathPrefix": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subPath",
+              "subPathPrefix",
+              "url"
+            ],
+            "additionalProperties": false
+          },
+          "configuration": {
+            "$ref": "#/definitions/AppInfo/properties/configuration"
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "apiKey",
+          "organizationId",
+          "grantedScopes",
+          "flags"
+        ],
+        "additionalProperties": false
+      },
+      "AppInfoProject": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string"
+          },
+          "appConfigFiles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "content": {
+                  "$ref": "#/definitions/AppInfo/properties/configuration"
+                },
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "path",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "path",
+                "content",
+                "errors"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "extensionConfigFiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppInfoProject/properties/appConfigFiles/items"
+            }
+          },
+          "webConfigFiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppInfoProject/properties/appConfigFiles/items"
+            }
+          },
+          "dotenvFiles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppInfoProject/properties/appConfigFiles/items/properties/errors/items"
+            }
+          }
+        },
+        "required": [
+          "directory",
+          "appConfigFiles",
+          "extensionConfigFiles",
+          "webConfigFiles",
+          "dotenvFiles",
+          "errors"
+        ],
+        "additionalProperties": false
+      },
+      "AppInfoSystem": {
+        "type": "object",
+        "properties": {
+          "cliVersion": {
+            "type": "string"
+          },
+          "nodeVersion": {
+            "type": "string"
+          },
+          "platform": {
+            "type": "string"
+          },
+          "arch": {
+            "type": "string"
+          },
+          "shell": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cliVersion",
+          "nodeVersion",
+          "platform",
+          "arch"
+        ],
+        "additionalProperties": false
+      },
+      "AppInfoWebEnvironment": {
+        "type": "object",
+        "properties": {
+          "SHOPIFY_API_KEY": {
+            "type": "string"
+          },
+          "SHOPIFY_API_SECRET": {
+            "type": "string"
+          },
+          "SCOPES": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "SHOPIFY_API_KEY",
+          "SCOPES"
+        ],
+        "additionalProperties": false
+      },
+      "AppInfoExtension": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "externalType": {
+            "type": "string"
+          },
+          "humanName": {
+            "type": "string"
+          },
+          "surface": {
+            "type": "string"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dependency": {
+            "type": "string"
+          },
+          "entrySourceFilePath": {
+            "type": "string"
+          },
+          "devUUID": {
+            "type": "string"
+          },
+          "localIdentifier": {
+            "type": "string"
+          },
+          "idEnvironmentVariableName": {
+            "type": "string"
+          },
+          "directory": {
+            "type": "string"
+          },
+          "configuration": {
+            "$ref": "#/definitions/AppInfo/properties/configuration"
+          },
+          "configurationPath": {
+            "type": "string"
+          },
+          "outputPath": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "specification": {
+            "$ref": "#/definitions/AppInfoSpecification"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "externalType",
+          "humanName",
+          "surface",
+          "features",
+          "entrySourceFilePath",
+          "devUUID",
+          "localIdentifier",
+          "idEnvironmentVariableName",
+          "directory",
+          "configuration",
+          "configurationPath",
+          "outputPath",
+          "handle",
+          "specification",
+          "uid"
+        ],
+        "additionalProperties": true
+      },
+      "AppInfoSpecification": {
+        "type": "object",
+        "properties": {
+          "identifier": {
+            "type": "string"
+          },
+          "externalIdentifier": {
+            "type": "string"
+          },
+          "externalName": {
+            "type": "string"
+          },
+          "additionalIdentifiers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "partnersWebIdentifier": {
+            "type": "string"
+          },
+          "surface": {
+            "type": "string"
+          },
+          "registrationLimit": {
+            "type": "number"
+          },
+          "experience": {
+            "type": "string",
+            "enum": [
+              "extension",
+              "configuration"
+            ]
+          },
+          "uidStrategy": {
+            "type": "string",
+            "enum": [
+              "single",
+              "dynamic",
+              "uuid"
+            ]
+          }
+        },
+        "required": [
+          "identifier",
+          "externalIdentifier",
+          "externalName",
+          "additionalIdentifiers",
+          "partnersWebIdentifier",
+          "surface",
+          "registrationLimit",
+          "experience",
+          "uidStrategy"
+        ],
+        "additionalProperties": true
+      },
+      "AppInfoWeb": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string"
+          },
+          "configuration": {
+            "$ref": "#/definitions/AppInfo/properties/configuration"
+          }
+        },
+        "required": [
+          "directory"
+        ],
+        "additionalProperties": true
+      },
+      "AppInfoConfigurationError": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "message"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app init`

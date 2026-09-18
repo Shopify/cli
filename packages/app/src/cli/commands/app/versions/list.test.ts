@@ -3,9 +3,7 @@ import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '.
 import {Organization, OrganizationSource} from '../../../models/organization.js'
 import {Config} from '@oclif/core'
 import {afterEach, describe, expect, test, vi} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-// eslint-disable-next-line n/prefer-global/console
-import {Console} from 'node:console'
+import {mockAndCaptureOutput, mockAndCaptureStandardStreams} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('../../../services/app-context.js')
 
@@ -26,33 +24,6 @@ afterEach(() => {
   mockAndCaptureOutput().clear()
   vi.resetModules()
 })
-
-// Captures the real standard streams so JSON and text output are proven at the process boundary.
-function captureStandardStreams() {
-  const stdout: string[] = []
-  const stderr: string[] = []
-
-  const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(((chunk: string | Uint8Array) => {
-    stdout.push(typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'))
-    return true
-  }) as typeof process.stdout.write)
-  const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(((chunk: string | Uint8Array) => {
-    stderr.push(typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'))
-    return true
-  }) as typeof process.stderr.write)
-  // Vitest intercepts console.warn; use Node's console to exercise the captured streams.
-  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(new Console(process.stdout, process.stderr).warn)
-
-  return {
-    stdout: () => stdout.join(''),
-    stderr: () => stderr.join(''),
-    restore: () => {
-      warnSpy.mockRestore()
-      stdoutSpy.mockRestore()
-      stderrSpy.mockRestore()
-    },
-  }
-}
 
 type AppVersionsNodes = NonNullable<AppVersionsQuerySchema['app']>['appVersions']['nodes']
 
@@ -95,7 +66,7 @@ describe('app versions list command', () => {
   test('writes the encoded JSON result to stdout with empty stderr', async () => {
     process.env.SHOPIFY_UNIT_TEST = 'false'
     vi.resetModules()
-    const streams = captureStandardStreams()
+    const streams = mockAndCaptureStandardStreams()
 
     try {
       await runCommand(
@@ -172,7 +143,7 @@ describe('app versions list command', () => {
   test('writes an empty JSON array to stdout with empty stderr', async () => {
     process.env.SHOPIFY_UNIT_TEST = 'false'
     vi.resetModules()
-    const streams = captureStandardStreams()
+    const streams = mockAndCaptureStandardStreams()
 
     try {
       await runCommand(appVersionsResponse([], 0), ['--json'])
@@ -187,7 +158,7 @@ describe('app versions list command', () => {
   test('keeps stdout empty and writes config and empty-state guidance to stderr in text mode', async () => {
     process.env.SHOPIFY_UNIT_TEST = 'false'
     vi.resetModules()
-    const streams = captureStandardStreams()
+    const streams = mockAndCaptureStandardStreams()
 
     try {
       await runCommand(appVersionsResponse([], 0), [])

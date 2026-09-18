@@ -1,0 +1,325 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`preserves the legacy JSON payload from real app and extension instances 1`] = `
+{
+  "_hiddenConfig": {
+    "dev_store_url": "example.myshopify.com",
+  },
+  "allExtensions": [
+    {
+      "configuration": {
+        "handle": "example",
+        "name": "Example",
+        "type": "ui_extension",
+      },
+      "configurationPath": "/tmp/project/extensions/test-ui-extension/shopify.ui.extension.toml",
+      "devUUID": "dev-example-uid",
+      "directory": "/tmp/project/extensions/test-ui-extension",
+      "entrySourceFilePath": "/tmp/project/extensions/test-ui-extension/src/index.js",
+      "handle": "example",
+      "idEnvironmentVariableName": "SHOPIFY_EXAMPLE_ID",
+      "localIdentifier": "example",
+      "outputPath": "/tmp/project/extensions/test-ui-extension/example.js",
+      "specification": {
+        "additionalIdentifiers": [],
+        "clientSteps": [
+          {
+            "lifecycle": "deploy",
+            "steps": [
+              {
+                "config": {
+                  "bundleFolder": "dist/",
+                  "generatesAssetsManifest": true,
+                },
+                "id": "bundle-ui",
+                "name": "Bundle UI Extension",
+                "type": "bundle_ui",
+              },
+              {
+                "config": {
+                  "generatesAssetsManifest": true,
+                  "inclusions": [
+                    {
+                      "anchor": "extension_points[]",
+                      "groupBy": "target",
+                      "key": "extension_points[].assets",
+                      "type": "configKey",
+                    },
+                    {
+                      "anchor": "extension_points[]",
+                      "groupBy": "target",
+                      "key": "extension_points[].tools",
+                      "type": "configKey",
+                    },
+                    {
+                      "anchor": "extension_points[]",
+                      "groupBy": "target",
+                      "key": "extension_points[].instructions",
+                      "type": "configKey",
+                    },
+                    {
+                      "anchor": "extension_points[]",
+                      "groupBy": "target",
+                      "key": "extension_points[].intents[].schema",
+                      "type": "configKey",
+                    },
+                  ],
+                },
+                "id": "include-ui-extension-assets",
+                "name": "Include UI Extension Assets",
+                "type": "include_assets",
+              },
+            ],
+          },
+        ],
+        "dependency": "@shopify/checkout-ui-extensions",
+        "experience": "extension",
+        "externalIdentifier": "ui_extension_external",
+        "externalName": "Ui extension",
+        "identifier": "ui_extension",
+        "partnersWebIdentifier": "ui_extension",
+        "registrationLimit": 1,
+        "surface": "test-surface",
+        "uidStrategy": "uuid",
+      },
+      "uid": "example-uid",
+    },
+  ],
+  "configPath": "/tmp/project/shopify.app.toml",
+  "configuration": {
+    "access_scopes": {
+      "scopes": "read_products",
+      "use_legacy_install_flow": true,
+    },
+    "application_url": "https://myapp.com",
+    "client_id": "api-key",
+    "embedded": true,
+    "name": "my app",
+    "webhooks": {
+      "api_version": "2023-04",
+    },
+  },
+  "directory": "/tmp/project",
+  "dotenv": {
+    "path": "/tmp/project/.env",
+    "variables": {
+      "EXAMPLE": "value",
+    },
+  },
+  "errors": {
+    "errors": [
+      {
+        "file": "/tmp/project/shopify.app.toml",
+        "message": "Invalid app configuration",
+      },
+    ],
+  },
+  "idEnvironmentVariableName": "SHOPIFY_API_KEY",
+  "name": "App",
+  "nodeDependencies": {
+    "example": "1.0.0",
+  },
+  "organization": {
+    "businessName": "Example organization",
+    "id": "123",
+  },
+  "packageManager": "yarn",
+  "realExtensions": [
+    {
+      "configuration": {
+        "handle": "example",
+        "name": "Example",
+        "type": "ui_extension",
+      },
+      "configurationPath": "/tmp/project/extensions/test-ui-extension/shopify.ui.extension.toml",
+      "devUUID": "dev-example-uid",
+      "directory": "/tmp/project/extensions/test-ui-extension",
+      "entrySourceFilePath": "/tmp/project/extensions/test-ui-extension/src/index.js",
+      "handle": "example",
+      "idEnvironmentVariableName": "SHOPIFY_EXAMPLE_ID",
+      "localIdentifier": "example",
+      "outputPath": "/tmp/project/extensions/test-ui-extension/example.js",
+      "specification": {
+        "additionalIdentifiers": [],
+        "clientSteps": [
+          {
+            "lifecycle": "deploy",
+            "steps": [
+              {
+                "config": {
+                  "bundleFolder": "dist/",
+                  "generatesAssetsManifest": true,
+                },
+                "id": "bundle-ui",
+                "name": "Bundle UI Extension",
+                "type": "bundle_ui",
+              },
+              {
+                "config": {
+                  "generatesAssetsManifest": true,
+                  "inclusions": [
+                    {
+                      "anchor": "extension_points[]",
+                      "groupBy": "target",
+                      "key": "extension_points[].assets",
+                      "type": "configKey",
+                    },
+                    {
+                      "anchor": "extension_points[]",
+                      "groupBy": "target",
+                      "key": "extension_points[].tools",
+                      "type": "configKey",
+                    },
+                    {
+                      "anchor": "extension_points[]",
+                      "groupBy": "target",
+                      "key": "extension_points[].instructions",
+                      "type": "configKey",
+                    },
+                    {
+                      "anchor": "extension_points[]",
+                      "groupBy": "target",
+                      "key": "extension_points[].intents[].schema",
+                      "type": "configKey",
+                    },
+                  ],
+                },
+                "id": "include-ui-extension-assets",
+                "name": "Include UI Extension Assets",
+                "type": "include_assets",
+              },
+            ],
+          },
+        ],
+        "dependency": "@shopify/checkout-ui-extensions",
+        "experience": "extension",
+        "externalIdentifier": "ui_extension_external",
+        "externalName": "Ui extension",
+        "identifier": "ui_extension",
+        "partnersWebIdentifier": "ui_extension",
+        "registrationLimit": 1,
+        "surface": "test-surface",
+        "uidStrategy": "uuid",
+      },
+      "uid": "example-uid",
+    },
+    {
+      "configuration": {
+        "pos": {
+          "embedded": true,
+        },
+      },
+      "configurationPath": "shopify.app.toml",
+      "devUUID": "dev-config-uid",
+      "directory": "./",
+      "entrySourceFilePath": "",
+      "handle": "point_of_sale",
+      "idEnvironmentVariableName": "SHOPIFY_POINT_OF_SALE_ID",
+      "localIdentifier": "point_of_sale",
+      "outputPath": "./",
+      "specification": {
+        "additionalIdentifiers": [],
+        "experience": "configuration",
+        "externalIdentifier": "point_of_sale_external",
+        "externalName": "Point of sale",
+        "identifier": "point_of_sale",
+        "partnersWebIdentifier": "point_of_sale",
+        "registrationLimit": 1,
+        "surface": "test-surface",
+        "uidStrategy": "single",
+      },
+      "uid": "config-uid",
+    },
+  ],
+  "remoteFlags": [],
+  "specifications": [
+    {
+      "additionalIdentifiers": [],
+      "clientSteps": [
+        {
+          "lifecycle": "deploy",
+          "steps": [
+            {
+              "config": {
+                "bundleFolder": "dist/",
+                "generatesAssetsManifest": true,
+              },
+              "id": "bundle-ui",
+              "name": "Bundle UI Extension",
+              "type": "bundle_ui",
+            },
+            {
+              "config": {
+                "generatesAssetsManifest": true,
+                "inclusions": [
+                  {
+                    "anchor": "extension_points[]",
+                    "groupBy": "target",
+                    "key": "extension_points[].assets",
+                    "type": "configKey",
+                  },
+                  {
+                    "anchor": "extension_points[]",
+                    "groupBy": "target",
+                    "key": "extension_points[].tools",
+                    "type": "configKey",
+                  },
+                  {
+                    "anchor": "extension_points[]",
+                    "groupBy": "target",
+                    "key": "extension_points[].instructions",
+                    "type": "configKey",
+                  },
+                  {
+                    "anchor": "extension_points[]",
+                    "groupBy": "target",
+                    "key": "extension_points[].intents[].schema",
+                    "type": "configKey",
+                  },
+                ],
+              },
+              "id": "include-ui-extension-assets",
+              "name": "Include UI Extension Assets",
+              "type": "include_assets",
+            },
+          ],
+        },
+      ],
+      "dependency": "@shopify/checkout-ui-extensions",
+      "experience": "extension",
+      "externalIdentifier": "ui_extension_external",
+      "externalName": "Ui extension",
+      "identifier": "ui_extension",
+      "partnersWebIdentifier": "ui_extension",
+      "registrationLimit": 1,
+      "surface": "test-surface",
+      "uidStrategy": "uuid",
+    },
+    {
+      "additionalIdentifiers": [],
+      "experience": "configuration",
+      "externalIdentifier": "point_of_sale_external",
+      "externalName": "Point of sale",
+      "identifier": "point_of_sale",
+      "partnersWebIdentifier": "point_of_sale",
+      "registrationLimit": 1,
+      "surface": "test-surface",
+      "uidStrategy": "single",
+    },
+  ],
+  "usesWorkspaces": false,
+  "webs": [
+    {
+      "configuration": {
+        "commands": {
+          "dev": "",
+        },
+        "roles": [
+          "backend",
+        ],
+      },
+      "directory": "",
+    },
+  ],
+}
+`;
