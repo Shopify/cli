@@ -8,11 +8,9 @@ import {AppErrors} from '../../models/app/loader.js'
 import {OrganizationSource} from '../../models/organization.js'
 import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput, mockAndCaptureStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {unstyled, outputInfo} from '@shopify/cli-kit/node/output'
-// eslint-disable-next-line n/prefer-global/console
-import {Console} from 'node:console'
 
 vi.mock('../../services/app-context.js')
 vi.mock('../../services/context.js')
@@ -28,33 +26,6 @@ afterEach(() => {
   mockAndCaptureOutput().clear()
   vi.resetModules()
 })
-
-// Captures the real standard streams so JSON and text output are proven at the process boundary.
-function captureStandardStreams() {
-  const stdout: string[] = []
-  const stderr: string[] = []
-
-  const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(((chunk: string | Uint8Array) => {
-    stdout.push(typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'))
-    return true
-  }) as typeof process.stdout.write)
-  const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(((chunk: string | Uint8Array) => {
-    stderr.push(typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'))
-    return true
-  }) as typeof process.stderr.write)
-  // Vitest intercepts console.warn; use Node's console to exercise the captured streams.
-  const warnSpy = vi.spyOn(console, 'warn').mockImplementation(new Console(process.stdout, process.stderr).warn)
-
-  return {
-    stdout: () => stdout.join(''),
-    stderr: () => stderr.join(''),
-    restore: () => {
-      warnSpy.mockRestore()
-      stdoutSpy.mockRestore()
-      stderrSpy.mockRestore()
-    },
-  }
-}
 
 async function runCommand(argv: string[], app = testAppLinked(), remoteApp = testOrganizationApp()) {
   const {linkedAppContext} = await import('../../services/app-context.js')
@@ -76,7 +47,7 @@ test('writes one JSON document with no account lookup or terminal output', async
   process.env.SHOPIFY_UNIT_TEST = 'false'
   vi.resetModules()
   const app = testAppLinked()
-  const streams = captureStandardStreams()
+  const streams = mockAndCaptureStandardStreams()
   try {
     const {result, developerPlatformClient} = await runCommand(['--json'], app)
     expect(result).toEqual({app})
@@ -108,7 +79,7 @@ test('writes one JSON document with no account lookup or terminal output', async
 test('keeps app information on stderr in text mode', async () => {
   process.env.SHOPIFY_UNIT_TEST = 'false'
   vi.resetModules()
-  const streams = captureStandardStreams()
+  const streams = mockAndCaptureStandardStreams()
   try {
     const {developerPlatformClient} = await runCommand([])
     expect(developerPlatformClient.accountInfo).toHaveBeenCalledOnce()
@@ -127,7 +98,7 @@ test.each([{secret: 'api-secret'}, {secret: undefined}])(
     process.env.SHOPIFY_UNIT_TEST = 'false'
     vi.resetModules()
     const remoteApp = testOrganizationApp({apiSecretKeys: secret === undefined ? [] : [{secret}]})
-    const streams = captureStandardStreams()
+    const streams = mockAndCaptureStandardStreams()
     try {
       await runCommand(['--web-env', '--json'], testAppLinked(), remoteApp)
     } finally {
@@ -145,7 +116,7 @@ test.each([{secret: 'api-secret'}, {secret: undefined}])(
 test('keeps web environment text on stdout, with an empty missing secret', async () => {
   process.env.SHOPIFY_UNIT_TEST = 'false'
   vi.resetModules()
-  const streams = captureStandardStreams()
+  const streams = mockAndCaptureStandardStreams()
   try {
     await runCommand(['--web-env'], testAppLinked(), testOrganizationApp({apiSecretKeys: []}))
   } finally {
@@ -164,7 +135,7 @@ test.each([{argv: []}, {argv: ['--json']}, {argv: ['--web-env', '--json']}])(
     vi.resetModules()
     const errors = new AppErrors()
     errors.addError({file: '/tmp/project/shopify.app.toml', message: 'Invalid app'})
-    const streams = captureStandardStreams()
+    const streams = mockAndCaptureStandardStreams()
     const exit = vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('exit')
     })
@@ -217,7 +188,7 @@ test('routes context diagnostics through side events without contaminating the r
     } as unknown as Awaited<ReturnType<typeof linkedAppContext>>
   })
   const command = new AppInfo(['--json'], await Config.load())
-  const streams = captureStandardStreams()
+  const streams = mockAndCaptureStandardStreams()
   try {
     await runWithCommandEventsForCommand(['--json'], () => command.run())
   } finally {
