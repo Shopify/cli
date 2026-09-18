@@ -11,6 +11,7 @@ import {afterEach, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput, mockAndCaptureStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {unstyled, outputInfo} from '@shopify/cli-kit/node/output'
+import {platformAndArch} from '@shopify/cli-kit/node/os'
 
 vi.mock('../../services/app-context.js')
 vi.mock('../../services/context.js')
@@ -29,7 +30,7 @@ afterEach(() => {
 
 async function runCommand(argv: string[], app = testAppLinked(), remoteApp = testOrganizationApp()) {
   const {linkedAppContext} = await import('../../services/app-context.js')
-  const developerPlatformClient = testDeveloperPlatformClient()
+  const developerPlatformClient = remoteApp.developerPlatformClient
   vi.spyOn(developerPlatformClient, 'accountInfo')
   vi.mocked(linkedAppContext).mockResolvedValue({
     app,
@@ -43,7 +44,7 @@ async function runCommand(argv: string[], app = testAppLinked(), remoteApp = tes
   return {result, developerPlatformClient}
 }
 
-test('writes one JSON document with no account lookup or terminal output', async () => {
+test('writes one JSON document with cached account information and no terminal output', async () => {
   process.env.SHOPIFY_UNIT_TEST = 'false'
   vi.resetModules()
   const app = testAppLinked()
@@ -51,7 +52,7 @@ test('writes one JSON document with no account lookup or terminal output', async
   try {
     const {result, developerPlatformClient} = await runCommand(['--json'], app)
     expect(result).toEqual({app})
-    expect(developerPlatformClient.accountInfo).not.toHaveBeenCalled()
+    expect(developerPlatformClient.accountInfo).toHaveBeenCalledOnce()
   } finally {
     streams.restore()
   }
@@ -70,7 +71,23 @@ test('writes one JSON document with no account lookup or terminal output', async
     packageManager: 'yarn',
     nodeDependencies: {},
     usesWorkspaces: false,
-    organization: {id: '123', businessName: 'Example organization'},
+    organization: {id: '123', businessName: 'Example organization', source: OrganizationSource.BusinessPlatform},
+    account: {type: 'UserAccount', email: 'partner@shopify.com'},
+    remoteApp: {id: '1', title: 'app1', apiKey: 'api-key', organizationId: '1', grantedScopes: [], flags: []},
+    project: {
+      directory: '/tmp/project',
+      appConfigFiles: [],
+      extensionConfigFiles: [],
+      webConfigFiles: [],
+      dotenvFiles: [],
+      errors: [],
+    },
+    system: {
+      cliVersion: expect.any(String),
+      nodeVersion: process.version,
+      ...platformAndArch(),
+      ...(process.env.SHELL === undefined ? {} : {shell: process.env.SHELL}),
+    },
     allExtensions: [],
   })
   expect(streams.stderr()).toBe('')
