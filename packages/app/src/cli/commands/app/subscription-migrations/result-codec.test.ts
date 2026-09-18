@@ -1,7 +1,8 @@
 import {encodeMigrationCancellationResult, encodeMigrationSubmissionResult} from './result-codec.js'
+import {migrationCancellationJsonOutputSchema} from '../../../services/subscription-migrations/types.js'
 import {describe, expect, test} from 'vitest'
 import type {MigrationOperation} from '../../../models/subscription-migrations.js'
-import type {MigrationCancellationResult} from '../../../services/subscription-migrations/cancel-operations.js'
+import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
 import type {
   MigrationSubmission,
   MigrationSubmissionResult,
@@ -91,6 +92,15 @@ describe('subscription migration result codecs', () => {
         2,
       ),
     )
+  })
+
+  test('rejects cancellation documents with an invalid outcome', () => {
+    expect(() =>
+      migrationCancellationJsonOutputSchema.validate({
+        schemaVersion: 1,
+        outcomes: [{status: 'success', operationId: 'one', operation: null}],
+      }),
+    ).toThrow()
   })
 
   test('encodes every cancellation outcome in one JSON document', () => {
