@@ -33,7 +33,6 @@ const commandExceptions = [
   'packages/app/src/cli/commands/app/info.ts',
   'packages/app/src/cli/commands/app/init.ts',
   'packages/app/src/cli/commands/app/release.ts',
-  'packages/app/src/cli/commands/app/subscription-migrations/status.ts',
   'packages/app/src/cli/commands/app/subscription-migrations/unschedule.ts',
   'packages/app/src/cli/commands/app/webhook/trigger.ts',
   'packages/cli/src/cli/commands/auth/login.ts',
