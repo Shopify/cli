@@ -1,8 +1,0 @@
-{
-  "operation": "submit",
-  "dry_run": true,
-  "payload": {
-    "path": "<APP_ROOT>/.shopify/app-doctor/submission.json",
-    "schema_version": 1
-  }
-}

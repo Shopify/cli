@@ -75,7 +75,7 @@ export async function uploadToGCS(
   let response: Response | undefined
   for (let attempt = 1; attempt <= UPLOAD_MAX_ATTEMPTS; attempt++) {
     // Most signed URLs only bind the `host` header, but some (including App
-    // Doctor source scans) are also bound to a Content-Type and must send it.
+    // Security source scans) are also bound to a Content-Type and must send it.
     // node-fetch derives Content-Length from the buffer body.
     // eslint-disable-next-line no-await-in-loop
     response = await fetch(

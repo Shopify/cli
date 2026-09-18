@@ -349,8 +349,8 @@ describe('uploadToGCS', () => {
       } as never)
 
       await expect(
-        uploadToGCS('https://signed.example/upload', artifactPath, {artifactName: 'App Doctor submission'}),
-      ).rejects.toThrow('Failed to upload your App Doctor submission to storage (HTTP 403).')
+        uploadToGCS('https://signed.example/upload', artifactPath, {artifactName: 'App Security submission'}),
+      ).rejects.toThrow('Failed to upload your App Security submission to storage (HTTP 403).')
     })
   })
 
@@ -361,8 +361,8 @@ describe('uploadToGCS', () => {
       vi.mocked(fileSize).mockResolvedValueOnce(101 * 1024 * 1024)
 
       await expect(
-        uploadToGCS('https://signed.example/upload', artifactPath, {artifactName: 'App Doctor submission'}),
-      ).rejects.toThrow('Your App Doctor submission exceeds the 100 MB upload limit')
+        uploadToGCS('https://signed.example/upload', artifactPath, {artifactName: 'App Security submission'}),
+      ).rejects.toThrow('Your App Security submission exceeds the 100 MB upload limit')
     })
   })
 })

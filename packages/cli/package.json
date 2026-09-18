@@ -132,6 +132,10 @@
       "app:import": {
         "description": "Import existing configuration into your app."
       },
+      "app:security": {
+        "description": "Check an app for Shopify-specific security issues.",
+        "hidden": true
+      },
       "auth": {
         "description": "Auth operations."
       },

@@ -42,7 +42,7 @@
   "scripts": {
     "build": "nx build",
     "clean": "nx clean",
-    "generate:app-doctor-checks": "node src/cli/services/app-doctor-engine/embed-checks.mjs",
+    "generate:app-security-checks": "node src/cli/services/app-security-engine/embed-checks.mjs",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
