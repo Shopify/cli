@@ -50,6 +50,7 @@ const PROBES = {
   awsAccessKey: compose('AKIA', 'IOSFODNN7EXAMPLE'),
   awsSecretKey: compose('wJalrXUtnFEMI', 'K7MDENGbPxRfiCYEXAMPLEKEY12'),
   stripeLive: compose('sk_', `live_51H8xQ2eZvKYlo2C${ALNUM.slice(0, 24)}`),
+  stripePublishable: compose('pk_', `live_51H8xQ2eZvKYlo2C${ALNUM.slice(0, 24)}`),
   shopifyToken: compose('shp', `at_${HEX32}`),
   shopifySecret: compose('shp', `ss_${HEX32}`),
   githubToken: compose('gh', `p_${ALNUM.repeat(2).slice(0, 36)}`),
@@ -57,6 +58,8 @@ const PROBES = {
   slackToken: compose('xox', `b-123456789012-${ALNUM.slice(0, 16)}`),
   pemHeader: compose('-----BEGIN ', 'RSA PRIVATE KEY-----'),
 }
+
+const trackedEnvSecret = () => `SHOPIFY_API_SECRET=${PROBES.shopifySecret}\n`
 
 const TOML = `name = "t"
 client_id = "abc123"
@@ -176,7 +179,7 @@ describe('git status drives severity, not .gitignore text', () => {
     // The classic leak: commit the file, then gitignore it and assume safety.
     const dir = makeApp({})
     git(dir, ['init', '-q', '.'])
-    writeFileSync(join(dir, '.env'), 'SHOPIFY_API_SECRET=placeholder-value-here\n')
+    writeFileSync(join(dir, '.env'), trackedEnvSecret())
     git(dir, ['add', '-f', '.env'])
     git(dir, ['commit', '-qm', 'oops'])
     writeFileSync(join(dir, '.gitignore'), '.env\n')
@@ -198,7 +201,7 @@ describe('git status drives severity, not .gitignore text', () => {
     writeFileSync(join(dir, '.gitignore'), '.env\n')
     git(dir, ['add', '.gitignore'])
     git(dir, ['commit', '-qm', 'init'])
-    writeFileSync(join(dir, '.env'), 'SHOPIFY_API_SECRET=placeholder-value-here\n')
+    writeFileSync(join(dir, '.env'), trackedEnvSecret())
 
     const result = await scan(dir)
     const finding = result.issues.find((i) => i.id === 'COMMITTED_SECRET')
@@ -221,24 +224,52 @@ describe('git status drives severity, not .gitignore text', () => {
     rmSync(dir, {recursive: true, force: true})
   })
 
-  test('fails closed for an empty named secret file when git status is unknown', async () => {
+  test('does not score an empty named secret file when git status is unknown', async () => {
     const dir = makeApp({'secrets.json': ''})
     const result = await scan(dir)
-    const finding = result.issues.find((issue) => issue.id === 'COMMITTED_SECRET')
-    expect(finding).toMatchObject({severity: 'high', location: {file: 'secrets.json'}})
+    expect(result.issues.find((issue) => issue.id === 'COMMITTED_SECRET')).toBeUndefined()
     rmSync(dir, {recursive: true, force: true})
   })
 
-  test('fails closed when git cannot answer (no repository)', async () => {
-    // Unknown status must never be treated as safe.
+  test('fails closed for an empty named secret file that git confirms is tracked', async () => {
+    const dir = makeApp({})
+    git(dir, ['init', '-q', '.'])
+    writeFileSync(join(dir, 'secrets.json'), '')
+    git(dir, ['add', 'secrets.json', 'shopify.app.toml'])
+    git(dir, ['commit', '-qm', 'init'])
+
+    const result = await scan(dir)
+    const finding = result.issues.find((issue) => issue.id === 'COMMITTED_SECRET')
+    expect(finding).toMatchObject({
+      severity: 'high',
+      location: {file: 'secrets.json'},
+      title: 'Secret file is tracked by git',
+    })
+    rmSync(dir, {recursive: true, force: true})
+  })
+
+  test('does not score placeholder env values when git cannot answer', async () => {
     const dir = makeApp({})
     writeFileSync(join(dir, '.env'), 'SHOPIFY_API_SECRET=placeholder-value-here\n')
     writeFileSync(join(dir, '.gitignore'), '.env\n')
 
     const result = await scan(dir)
+    expect(result.issues.find((i) => i.id === 'COMMITTED_SECRET')).toBeUndefined()
+    rmSync(dir, {recursive: true, force: true})
+  })
+
+  test('reports unverified exposure separately from confirmed tracked files', async () => {
+    const dir = makeApp({})
+    writeFileSync(join(dir, '.env'), trackedEnvSecret())
+
+    const result = await scan(dir)
     const finding = result.issues.find((i) => i.id === 'COMMITTED_SECRET')
-    expect(finding).toBeDefined()
-    expect(finding!.severity).toBe('high')
+    expect(finding).toMatchObject({
+      severity: 'high',
+      points: -50,
+      title: 'Environment file with secrets could not be confirmed as ignored',
+    })
+    expect(finding!.message).not.toContain('IS TRACKED BY GIT')
     rmSync(dir, {recursive: true, force: true})
   })
 
@@ -262,6 +293,68 @@ describe('git status drives severity, not .gitignore text', () => {
 
     const status = await gitStatusFor(dir, '.env.example')
     expect(status.ignored).toBe(false) // negated back in
+    rmSync(dir, {recursive: true, force: true})
+  })
+})
+
+describe('committed secret classification', () => {
+  test('does not score template env files with placeholder values', async () => {
+    const dir = makeApp({
+      '.env.example': 'SHOPIFY_API_SECRET=your-secret-here\nSHOPIFY_API_KEY=your-key-here\n',
+    })
+    git(dir, ['init', '-q', '.'])
+    git(dir, ['add', '.'])
+    git(dir, ['commit', '-qm', 'init'])
+
+    const result = await scan(dir)
+    expect(result.issues.filter((issue) => issue.id === 'COMMITTED_SECRET')).toEqual([])
+    rmSync(dir, {recursive: true, force: true})
+  })
+
+  test('scores a real token format in a template env file', async () => {
+    const dir = makeApp({'.env.example': trackedEnvSecret()})
+    git(dir, ['init', '-q', '.'])
+    git(dir, ['add', '.'])
+    git(dir, ['commit', '-qm', 'init'])
+
+    const result = await scan(dir)
+    expect(result.issues.find((issue) => issue.id === 'COMMITTED_SECRET')).toMatchObject({
+      severity: 'high',
+      location: {file: '.env.example'},
+    })
+    rmSync(dir, {recursive: true, force: true})
+  })
+
+  test('does not score public Shopify API keys in env files', async () => {
+    const dir = makeApp({'.env': `SHOPIFY_API_KEY=${HEX32}\n`})
+    git(dir, ['init', '-q', '.'])
+    git(dir, ['add', '-f', '.env'])
+    git(dir, ['commit', '-qm', 'init'])
+
+    const result = await scan(dir)
+    expect(result.issues.filter((issue) => issue.id === 'COMMITTED_SECRET')).toEqual([])
+    rmSync(dir, {recursive: true, force: true})
+  })
+
+  test('does not score placeholder assignments in a tracked .env', async () => {
+    const dir = makeApp({'.env': 'SHOPIFY_API_SECRET=placeholder-value-here\npassword=changeme\n'})
+    git(dir, ['init', '-q', '.'])
+    git(dir, ['add', '-f', '.env'])
+    git(dir, ['commit', '-qm', 'init'])
+
+    const result = await scan(dir)
+    expect(result.issues.filter((issue) => issue.id === 'COMMITTED_SECRET')).toEqual([])
+    rmSync(dir, {recursive: true, force: true})
+  })
+
+  test('does not treat Stripe publishable keys as secrets', async () => {
+    const line = `const k = "${PROBES.stripePublishable}";`
+    expect(SECRET_PATTERNS.some((pattern) => pattern.regex.test(line))).toBe(false)
+
+    const dir = makeApp({'config.js': `${line}\n`})
+    const result = await scan(dir)
+    expect(result.issues.filter((issue) => issue.id === 'COMMITTED_SECRET')).toEqual([])
+    expect(JSON.stringify(result)).not.toContain(PROBES.stripePublishable)
     rmSync(dir, {recursive: true, force: true})
   })
 })
