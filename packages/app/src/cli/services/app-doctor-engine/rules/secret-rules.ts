@@ -125,12 +125,13 @@ export function redactText(text: string): string {
   return redacted
 }
 
-const ENV_FILE_PATTERN = /(^|\/)\.env(?:\.[^/]+)?$/
+const ENV_FILE_PATTERN = /(^|\/)\.env(?:\.[^/]+)*$/
 const NAMED_SECRET_FILE_PATTERN = /(^|\/)(?:\.env\.(?:secrets|keys)|(?:secrets|credentials)\.json)$/
 const TEMPLATE_ENV_FILE_PATTERN = /(^|\/)\.env(?:\.[^/]+)*\.(?:example|sample|template|dist)$/i
 // `SHOPIFY_API_KEY` / `api_key` are client IDs and public; they are not secret names.
+// Optional quotes cover JSON/YAML keys (`"password": "…"`) as well as env assignments.
 const SECRET_ASSIGNMENT_PATTERN =
-  /(?:api[_-]?secret|access[_-]?token|secret[_-]?key|private[_-]?key|password|SHOPIFY_API_SECRET)\s*[:=]\s*(?:"([^"\r\n]*)"|'([^'\r\n]*)'|([^\s#'"\r\n][^#\r\n]*))/gi
+  /["']?(?:api[_-]?secret|access[_-]?token|secret[_-]?key|private[_-]?key|password|SHOPIFY_API_SECRET)["']?\s*[:=]\s*(?:"([^"\r\n]*)"|'([^'\r\n]*)'|([^\s#'"\r\n][^#\r\n]*))/gi
 
 function isTemplateEnvFile(path: string): boolean {
   return TEMPLATE_ENV_FILE_PATTERN.test(path)
