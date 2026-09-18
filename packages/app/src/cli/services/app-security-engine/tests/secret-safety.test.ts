@@ -386,6 +386,62 @@ describe('committed secret classification', () => {
     rmSync(dir, {recursive: true, force: true})
   })
 
+  test('scores an unquoted 32-hex Shopify API secret the same as a quoted one', async () => {
+    const quoted = makeApp({'.env': `SHOPIFY_API_SECRET="${HEX32}"\n`})
+    git(quoted, ['init', '-q', '.'])
+    git(quoted, ['add', '-f', '.env'])
+    git(quoted, ['commit', '-qm', 'init'])
+    const quotedScan = await scan(quoted)
+    expect(quotedScan.issues.find((issue) => issue.id === 'COMMITTED_SECRET')).toMatchObject({
+      severity: 'high',
+      location: {file: '.env'},
+    })
+    rmSync(quoted, {recursive: true, force: true})
+
+    const unquoted = makeApp({'.env': `SHOPIFY_API_SECRET=${HEX32}\n`})
+    git(unquoted, ['init', '-q', '.'])
+    git(unquoted, ['add', '-f', '.env'])
+    git(unquoted, ['commit', '-qm', 'init'])
+    const unquotedScan = await scan(unquoted)
+    expect(unquotedScan.issues.find((issue) => issue.id === 'COMMITTED_SECRET')).toMatchObject({
+      severity: 'high',
+      location: {file: '.env'},
+    })
+    rmSync(unquoted, {recursive: true, force: true})
+  })
+
+  test('scores an unquoted 32-hex Shopify API secret in source', async () => {
+    const dir = makeApp({'config.js': `SHOPIFY_API_SECRET=${HEX32}\n`})
+    const result = await scan(dir)
+    expect(result.issues.find((issue) => issue.id === 'COMMITTED_SECRET')).toMatchObject({
+      severity: 'high',
+      location: {file: 'config.js'},
+    })
+    rmSync(dir, {recursive: true, force: true})
+  })
+
+  test('does not treat a blank secret assignment as the next line', async () => {
+    const dir = makeApp({'.env': 'SHOPIFY_API_SECRET=\nPORT=3000\n'})
+    git(dir, ['init', '-q', '.'])
+    git(dir, ['add', '-f', '.env'])
+    git(dir, ['commit', '-qm', 'init'])
+
+    const result = await scan(dir)
+    expect(result.issues.filter((issue) => issue.id === 'COMMITTED_SECRET')).toEqual([])
+    rmSync(dir, {recursive: true, force: true})
+  })
+
+  test('does not score boolean flags whose names merely contain password', async () => {
+    const dir = makeApp({'.env': 'HAS_PASSWORD=true\n'})
+    git(dir, ['init', '-q', '.'])
+    git(dir, ['add', '-f', '.env'])
+    git(dir, ['commit', '-qm', 'init'])
+
+    const result = await scan(dir)
+    expect(result.issues.filter((issue) => issue.id === 'COMMITTED_SECRET')).toEqual([])
+    rmSync(dir, {recursive: true, force: true})
+  })
+
   test('does not treat Stripe publishable keys as secrets', async () => {
     const line = `const k = "${PROBES.stripePublishable}";`
     expect(SECRET_PATTERNS.some((pattern) => pattern.regex.test(line))).toBe(false)
