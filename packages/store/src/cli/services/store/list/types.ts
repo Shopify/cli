@@ -1,22 +1,19 @@
-import {storeTypeFilters, type StoreTypeFilter} from '../store-type.js'
 import {StoreSchema, StoreOrganizationSchema} from '../types.js'
+import {storeTypeFilters, type StoreTypeFilter} from '../store-type.js'
 import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const StoreListEntrySchema = StoreSchema.pick({
-  id: true,
-  name: true,
-  type: true,
-  plan: true,
-  organizationId: true,
-  organizationName: true,
+const StoreListEntrySchema = zod.object({
+  id: StoreSchema.shape.id.optional(),
+  store: StoreSchema.shape.subdomain,
+  primaryDomain: zod.string().optional().describe('The primary storefront hostname, which may be a custom domain.'),
+  createdAt: zod.string(),
+  organizationId: StoreSchema.shape.organizationId,
+  organizationName: StoreSchema.shape.organizationName,
+  name: StoreSchema.shape.name.optional(),
+  type: StoreSchema.shape.type,
+  plan: StoreSchema.shape.plan,
 })
-  .partial({id: true, name: true})
-  .extend({
-    store: StoreSchema.shape.subdomain,
-    primaryDomain: zod.string().optional().describe('The primary storefront hostname, which may be a custom domain.'),
-    createdAt: zod.string(),
-  })
 
 export const storeListJsonOutputSchema = defineJsonOutputSchema({
   name: 'StoreListResult',
