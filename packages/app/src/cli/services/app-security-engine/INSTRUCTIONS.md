@@ -136,3 +136,5 @@ When the user explicitly wants a fast local or CI scan without semantic investig
 ```
 
 Honor the installed CLI's documented JSON and blocking flags when requested. Do not describe a deterministic-only scan as the full App Security review.
+
+Route authentication is reviewed by the agentic `UNAUTHENTICATED_ENDPOINT` check. A deterministic-only scan does not verify route authentication; an unreported agent review remains unresolved in the trace.

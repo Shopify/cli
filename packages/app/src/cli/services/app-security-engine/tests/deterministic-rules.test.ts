@@ -6,7 +6,6 @@ import {
   scanCredentialBrowserLeakage,
   scanCredentialLogLeakage,
   scanRequestControlledAdminContext,
-  scanUnauthenticatedEndpoints,
   scanUnsafeInnerHTML,
 } from '../rules/js-rules.js'
 import {scanLiquidSecurity} from '../rules/liquid-rules.js'
@@ -19,7 +18,6 @@ const ACTIVE_IDS = [
   'MISSING_DEPENDENCY_SECURITY_AUTOMATION',
   'EOL_API_VERSION',
   'EXPIRING_OFFLINE_TOKEN',
-  'UNAUTHENTICATED_ENDPOINT',
   'REQUEST_CONTROLLED_ADMIN_CONTEXT',
   'DEPRECATED_SCRIPT_TAG_SCOPE',
   'INSECURE_WEBHOOK_URL',
@@ -40,7 +38,7 @@ const source = (content: string, path = 'app/routes/example.tsx'): SourceFile =>
 })
 
 describe('deterministic rules product contract', () => {
-  test('has exactly fifteen active executable deterministic identities', () => {
+  test('registers every active executable deterministic identity with a runnable definition', () => {
     expect([...DETERMINISTIC_CHECKS.keys()].sort()).toEqual(ACTIVE_IDS)
     expect([...DETERMINISTIC_CHECKS.values()].every((check) => check.lifecycle === 'active' && check.runner)).toBe(true)
     const registry = getRegistry()
@@ -144,35 +142,6 @@ describe('deterministic rules product contract', () => {
 })
 
 describe('JavaScript regex mode', () => {
-  test('classifies React Router handlers and awaited authentication barriers', () => {
-    expect(
-      scanUnauthenticatedEndpoints([
-        source('export async function loader({request}: LoaderArgs) { return prisma.order.findMany() }'),
-      ]),
-    ).toHaveLength(1)
-    expect(
-      scanUnauthenticatedEndpoints([
-        source(
-          'export async function loader({request}: LoaderArgs) { const {admin} = await authenticate.admin(request); return json({ok: true}) }',
-        ),
-      ]),
-    ).toHaveLength(0)
-    expect(
-      scanUnauthenticatedEndpoints([
-        source(
-          'export async function loader({request}: LoaderArgs) { await authenticate.admin(request); return json({ok: true}) }',
-        ),
-      ]),
-    ).toHaveLength(0)
-    expect(
-      scanUnauthenticatedEndpoints([
-        source(
-          'export async function loader({request}: LoaderArgs) { authenticate.admin(request); return prisma.order.findMany() }',
-        ),
-      ]),
-    ).toHaveLength(1)
-  })
-
   test('detects direct admin-context and credential flows with safe exceptions', () => {
     expect(
       scanRequestControlledAdminContext([source('const shop = request.query.shop; unauthenticated.admin(shop)')]),

@@ -19,7 +19,6 @@ import {
   scanCredentialBrowserLeakage,
   scanCredentialLogLeakage,
   scanRequestControlledAdminContext,
-  scanUnauthenticatedEndpoints,
   scanUnsafeInnerHTML,
 } from '../rules/js-rules.js'
 import {scanLiquidSecurity} from '../rules/liquid-rules.js'
@@ -144,10 +143,6 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     extensions: [...JAVASCRIPT_EXTENSIONS, '.prisma'],
     guidance:
       'Review offline-token feature configuration, session storage refresh metadata, and ambiguous setup using the matching version 1 agent prompt.',
-  },
-  {
-    ...jsCheck('UNAUTHENTICATED_ENDPOINT', (context) => scanUnauthenticatedEndpoints(context.sourceFiles)),
-    requires: 'has_backend',
   },
   jsCheck(
     'REQUEST_CONTROLLED_ADMIN_CONTEXT',
