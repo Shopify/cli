@@ -1,4 +1,5 @@
 import {listFlags} from './flags.js'
+import {migrationListJsonOutputSchema} from '../../../services/subscription-migrations/types.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {
   iterateMigratableSubscriptionPages,
@@ -6,6 +7,7 @@ import {
 } from '../../../services/subscription-migrations/list-migratable-subscriptions.js'
 import {outputMigrationList} from '../../../services/subscription-migrations/list-output.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
+import {jsonFlag} from '@shopify/cli-kit/node/cli'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export default class List extends AppLinkedCommand {
@@ -30,7 +32,11 @@ Run the command from an app project. By default, it uses the Client ID from the 
     '<%= config.bin %> <%= command.id %> --client-id <client-id> > subscriptions.csv',
   ]
 
-  static flags = {...listFlags}
+  static flags = {...listFlags, ...jsonFlag}
+
+  static get jsonOutputSchema() {
+    return migrationListJsonOutputSchema
+  }
 
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(List)

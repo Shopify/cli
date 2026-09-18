@@ -1,3 +1,4 @@
+import {migrationListJsonOutputSchema} from './types.js'
 import {outputMigrationList, serializeMigrationListCsv, serializeMigrationListJson} from './list-output.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {describe, expect, test, vi} from 'vitest'
@@ -255,5 +256,39 @@ describe('outputMigrationList JSON', () => {
     await expect(outputMigrationList({pages: pagesThenFailure([pageOne], apiError), json: true})).rejects.toBe(apiError)
 
     expect(outputResult).not.toHaveBeenCalled()
+  })
+})
+
+describe('migration list JSON contract', () => {
+  test('preserves nullable fields and nested nulls', () => {
+    const value = subscription({
+      manualSubscriptionName: null,
+      manualSubscriptionPrice: null,
+      targetPlanHandle: null,
+      notification: {kind: 'NONE', optOutDeadline: null, sentAt: null},
+      priceBehavior: null,
+      effectiveDate: null,
+      lastFailureReason: null,
+    })
+
+    expect(serializeMigrationListJson([value])).toBe(
+      JSON.stringify({schemaVersion: 1, subscriptions: [value]}, null, 2),
+    )
+  })
+
+  test.each([
+    {status: 'UNKNOWN'},
+    {manualSubscriptionPrice: {amount: 19.99, currencyCode: 'USD'}},
+    {notification: {kind: 'NONE', optOutDeadline: null}},
+    {priceBehavior: 'UNKNOWN'},
+    {manualSubscriptionInterval: 'MONTHLY'},
+    {lastFailureReason: 'UNKNOWN'},
+  ])('rejects invalid subscription fields: %j', (fields) => {
+    expect(() =>
+      migrationListJsonOutputSchema.validate({
+        schemaVersion: 1,
+        subscriptions: [{...subscription(), ...fields}],
+      }),
+    ).toThrow()
   })
 })
