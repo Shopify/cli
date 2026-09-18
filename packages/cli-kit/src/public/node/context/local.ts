@@ -1,4 +1,5 @@
 import {isTruthy} from './utilities.js'
+import {isInputDisabled} from '../no-input.js'
 import {getCIMetadata, isSet, Metadata} from '../../../private/node/context/utilities.js'
 import {defaultThemeKitAccessDomain, environmentVariables, pathConstants} from '../../../private/node/constants.js'
 import {randomUUID} from 'crypto'
@@ -22,7 +23,7 @@ async function lazyExec(command: string, args: string[]): Promise<void> {
  * @returns True if the terminal is interactive.
  */
 export function isTerminalInteractive(): boolean {
-  return Boolean(process.stdout.isTTY && process.env.TERM !== 'dumb' && !('CI' in process.env))
+  return Boolean(!isInputDisabled() && process.stdout.isTTY && process.env.TERM !== 'dumb' && !('CI' in process.env))
 }
 
 /**
