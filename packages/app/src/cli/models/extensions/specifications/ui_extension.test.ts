@@ -49,7 +49,7 @@ describe('ui_extension', async () => {
     const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
     const configuration = {
       extension_points: extensionPoints,
-      api_version: apiVersion ?? ('2023-01' as const),
+      api_version: apiVersion ?? '2023-01',
       name: 'UI Extension',
       description: 'This is an ordinary test extension.',
       type: 'ui_extension',
@@ -117,12 +117,12 @@ describe('ui_extension', async () => {
             },
           },
         ],
-        api_version: '2023-01' as const,
+        api_version: '2026-10',
         handle: 'test-ui-extension',
         name: 'UI Extension',
         description: 'This is an ordinary test extension',
         type: 'ui_extension',
-        metafields: [{namespace: 'test', key: 'test'}],
+        metafields: [{namespace: 'test', key: 'test', owner_type: 'PRODUCT'}],
         capabilities: {
           block_progress: false,
           network_access: false,
@@ -155,7 +155,7 @@ describe('ui_extension', async () => {
           intents: undefined,
           assets: undefined,
           module: './src/ExtensionPointA.js',
-          metafields: [{namespace: 'test', key: 'test'}],
+          metafields: [{namespace: 'test', key: 'test', owner_type: 'PRODUCT'}],
           default_placement_reference: undefined,
           capabilities: undefined,
           preloads: {},
@@ -176,6 +176,34 @@ describe('ui_extension', async () => {
       ])
     })
 
+    test('target-level metafields override extension-level metafields', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            metafields: [{namespace: 'target', key: 'value', owner_type: 'COMPANY_LOCATION'}],
+          },
+        ],
+        api_version: '2026-10',
+        handle: 'test-ui-extension',
+        name: 'UI Extension',
+        type: 'ui_extension',
+        metafields: [{namespace: 'extension', key: 'value', owner_type: 'SHOP'}],
+      }
+
+      const parsed = specification.parseConfigurationObject(configuration)
+
+      expect(parsed.state).toBe('ok')
+      if (parsed.state === 'ok') {
+        expect(parsed.data.extension_points[0]?.metafields).toStrictEqual([
+          {namespace: 'target', key: 'value', owner_type: 'COMPANY_LOCATION'},
+        ])
+      }
+    })
+
     test('targeting object accepts a default_placement', async () => {
       const allSpecs = await loadLocalExtensionsSpecifications()
       const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
@@ -187,7 +215,7 @@ describe('ui_extension', async () => {
             default_placement: 'PLACEMENT_REFERENCE1',
           },
         ],
-        api_version: '2023-01' as const,
+        api_version: '2023-01',
         name: 'UI Extension',
         description: 'This is an ordinary test extension',
         type: 'ui_extension',
@@ -256,7 +284,7 @@ describe('ui_extension', async () => {
             capabilities: {allow_direct_linking: true, intercepts},
           },
         ],
-        api_version: '2023-01' as const,
+        api_version: '2023-01',
         name: 'UI Extension',
         description: 'This is an ordinary test extension',
         type: 'ui_extension',
@@ -327,7 +355,7 @@ describe('ui_extension', async () => {
             preloads: {chat: '/chat', not_supported: '/hello'},
           },
         ],
-        api_version: '2023-01' as const,
+        api_version: '2023-01',
         name: 'UI Extension',
         description: 'This is an ordinary test extension',
         type: 'ui_extension',
@@ -395,7 +423,7 @@ describe('ui_extension', async () => {
             },
           },
         ],
-        api_version: '2023-01' as const,
+        api_version: '2023-01',
         name: 'UI Extension',
         description: 'This is an ordinary test extension',
         type: 'ui_extension',
@@ -465,7 +493,7 @@ describe('ui_extension', async () => {
             preloads: {chat: '/chat', not_supported: '/hello'},
           },
         ],
-        api_version: '2023-01' as const,
+        api_version: '2023-01',
         name: 'UI Extension',
         description: 'This is an ordinary test extension',
         type: 'ui_extension',
@@ -534,7 +562,7 @@ describe('ui_extension', async () => {
             tools: './tools.json',
           },
         ],
-        api_version: '2023-01' as const,
+        api_version: '2023-01',
         name: 'UI Extension',
         description: 'This is an ordinary test extension',
         type: 'ui_extension',
@@ -599,7 +627,7 @@ describe('ui_extension', async () => {
             instructions: './instructions.md',
           },
         ],
-        api_version: '2023-01' as const,
+        api_version: '2023-01',
         name: 'UI Extension',
         description: 'This is an ordinary test extension',
         type: 'ui_extension',
@@ -664,7 +692,7 @@ describe('ui_extension', async () => {
             assets: './assets',
           },
         ],
-        api_version: '2023-01' as const,
+        api_version: '2023-01',
         name: 'UI Extension',
         description: 'This is an ordinary test extension',
         type: 'ui_extension',
@@ -723,7 +751,7 @@ describe('ui_extension', async () => {
       const allSpecs = await loadLocalExtensionsSpecifications()
       const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
       const configuration = {
-        api_version: '2023-01' as const,
+        api_version: '2023-01',
         name: 'UI Extension',
         description: 'This is an ordinary test extension',
         type: 'ui_extension',
@@ -828,7 +856,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
             instructions: './instructions.md',
           },
         ],
-        api_version: '2023-01' as const,
+        api_version: '2023-01',
         name: 'UI Extension',
         description: 'This is an ordinary test extension',
         type: 'ui_extension',
@@ -966,7 +994,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
               module: './src/ExtensionPointA.js',
             },
           ],
-          api_version: '2025-10' as const,
+          api_version: '2025-10',
           name: 'UI Extension',
           type: 'ui_extension',
           handle: 'test-ui-extension',
@@ -1009,7 +1037,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         const uiExtension = new ExtensionInstance({
           configuration: {
             extension_points: [],
-            api_version: '2023-01' as const,
+            api_version: '2023-01',
             name: 'UI Extension',
             type: 'ui_extension',
             metafields: [],
@@ -1048,7 +1076,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         const uiExtension = new ExtensionInstance({
           configuration: {
             extension_points: [],
-            api_version: '2023-01' as const,
+            api_version: '2023-01',
             name: 'UI Extension',
             type: 'ui_extension',
             metafields: [],
@@ -1087,7 +1115,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         const uiExtension = new ExtensionInstance({
           configuration: {
             extension_points: [],
-            api_version: '2023-01' as const,
+            api_version: '2023-01',
             name: 'UI Extension',
             type: 'ui_extension',
             metafields: [],

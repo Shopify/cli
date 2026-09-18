@@ -9,6 +9,7 @@ export type ZodSchemaType<T> = zod.ZodType<T, any, any>
 export const MetafieldSchema = zod.object({
   namespace: zod.string(),
   key: zod.string(),
+  owner_type: zod.string().optional(),
 })
 
 const CollectBuyerConsentCapabilitySchema = zod.object({
