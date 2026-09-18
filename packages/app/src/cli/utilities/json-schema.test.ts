@@ -152,6 +152,72 @@ describe('unifiedConfigurationParserFactory', () => {
     expect(priceError).toBeDefined()
   })
 
+  test('ignores root-level required properties for configuration-experience specs', async () => {
+    // Given
+    const merged = {
+      identifier: randomUUID(),
+      experience: 'configuration',
+      parseConfigurationObject: mockParseConfigurationObject,
+      validationSchema: {
+        jsonSchema:
+          '{"type":"object","properties":{"events":{"type":"object","properties":{"api_version":{"type":"string"}},"required":["api_version"]}},"required":["events"]}',
+      },
+    }
+
+    // When
+    const parser = await unifiedConfigurationParserFactory(merged as any, merged.validationSchema)
+    const result = parser({name: 'my app'})
+
+    // Then - the absent section must not be required, and non-contract keys are stripped
+    expect(result).toEqual({
+      state: 'ok',
+      data: {},
+      errors: undefined,
+    })
+  })
+
+  test('still enforces nested required properties for configuration-experience specs when the section is present', async () => {
+    // Given
+    const merged = {
+      identifier: randomUUID(),
+      experience: 'configuration',
+      parseConfigurationObject: mockParseConfigurationObject,
+      validationSchema: {
+        jsonSchema:
+          '{"type":"object","properties":{"events":{"type":"object","properties":{"api_version":{"type":"string"}},"required":["api_version"]}},"required":["events"]}',
+      },
+    }
+
+    // When
+    const parser = await unifiedConfigurationParserFactory(merged as any, merged.validationSchema)
+    const result = parser({name: 'my app', events: {}})
+
+    // Then
+    expect(result.state).toBe('error')
+    expect(result.errors).toContainEqual({path: ['events', 'api_version'], message: 'Required'})
+    expect(result.errors).not.toContainEqual({path: ['events'], message: 'Required'})
+  })
+
+  test('still enforces root-level required properties for extension-experience specs', async () => {
+    // Given
+    const merged = {
+      identifier: randomUUID(),
+      experience: 'extension',
+      parseConfigurationObject: mockParseConfigurationObject,
+      validationSchema: {
+        jsonSchema: '{"type":"object","properties":{"type":{"type":"string"}},"required":["price"]}',
+      },
+    }
+
+    // When
+    const parser = await unifiedConfigurationParserFactory(merged as any, merged.validationSchema)
+    const result = parser({type: 'product_subscription'})
+
+    // Then
+    expect(result.state).toBe('error')
+    expect(result.errors).toContainEqual({path: ['price'], message: 'Required'})
+  })
+
   test('adds base properties to the JSON schema', async () => {
     // Given
     const merged = {
