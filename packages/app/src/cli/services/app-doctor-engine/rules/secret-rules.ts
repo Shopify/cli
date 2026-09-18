@@ -25,14 +25,17 @@ interface SecretPattern {
 }
 
 export const SECRET_PATTERNS: SecretPattern[] = [
-  // Shopify API secret (shpss_ prefix or 32 hex)
+  // Shopify API secret (shpss_ prefix or 32 hex). Quotes are optional so dotenv
+  // assignments match the same way quoted JS/JSON assignments do.
   {
-    regex: /(?:api[_-]?secret|SHOPIFY_API_SECRET)\s*[:=]\s*['"](shpss_[a-f0-9]+|[a-f0-9]{32})['"]/i,
+    regex:
+      /(?<![A-Za-z0-9_])(?:api[_-]?secret|SHOPIFY_API_SECRET)[ \t]*[:=][ \t]*['"]?(shpss_[a-f0-9]+|[a-f0-9]{32})['"]?/i,
     name: 'Shopify API secret',
   },
   // Shopify access token (shpat_ / shpca_ / shppa_)
   {
-    regex: /(?:access[_-]?token|SHOPIFY_ACCESS_TOKEN)\s*[:=]\s*['"](shp(?:at|ca|pa)_[a-zA-Z0-9]+)['"]/i,
+    regex:
+      /(?<![A-Za-z0-9_])(?:access[_-]?token|SHOPIFY_ACCESS_TOKEN)[ \t]*[:=][ \t]*['"]?(shp(?:at|ca|pa)_[a-zA-Z0-9]+)['"]?/i,
     name: 'Shopify access token',
   },
   // Bare Shopify tokens, even without an assignment context
@@ -41,9 +44,9 @@ export const SECRET_PATTERNS: SecretPattern[] = [
     name: 'Shopify token',
     wholeMatch: true,
   },
-  // Stripe keys
+  // Stripe secret/restricted keys. Publishable `pk_` keys are public by design.
   {
-    regex: /(?:sk|pk|rk)_(?:live|test)_[a-zA-Z0-9]{20,}/,
+    regex: /(?:sk|rk)_(?:live|test)_[a-zA-Z0-9]{20,}/,
     name: 'Stripe API key',
     wholeMatch: true,
   },
@@ -125,37 +128,106 @@ export function redactText(text: string): string {
   return redacted
 }
 
-const ENV_FILE_PATTERN = /(^|\/)\.env(?:\.[^/]+)?$/
 const NAMED_SECRET_FILE_PATTERN = /(^|\/)(?:\.env\.(?:secrets|keys)|(?:secrets|credentials)\.json)$/
+const TEMPLATE_ENV_SUFFIXES = new Set(['example', 'sample', 'template', 'dist'])
+// `SHOPIFY_API_KEY` / `api_key` are client IDs and public; they are not secret names.
+// Optional quotes cover JSON/YAML keys (`"password": "…"`) as well as env assignments.
 const SECRET_ASSIGNMENT_PATTERN =
-  /(?:api[_-]?key|api[_-]?secret|access[_-]?token|secret[_-]?key|private[_-]?key|password|SHOPIFY_API_KEY|SHOPIFY_API_SECRET)\s*[:=]\s*(?:"[^"\r\n]+"|'[^'\r\n]+'|[^\s#'"\r\n][^#\r\n]*)/i
+  /(?<![A-Za-z0-9_])["']?(?:api[_-]?secret|access[_-]?token|secret[_-]?key|private[_-]?key|password|SHOPIFY_API_SECRET)["']?[ \t]*[:=][ \t]*(?:"([^"\r\n]*)"|'([^'\r\n]*)'|([^\s#'"\r\n][^#\r\n]*))/gi
 
-function containsSecretLikeValue(content: string): boolean {
-  return SECRET_ASSIGNMENT_PATTERN.test(content) || SECRET_PATTERNS.some((pattern) => pattern.regex.test(content))
+function envFileBasename(path: string): string | undefined {
+  const basename = path.slice(path.lastIndexOf('/') + 1)
+  if (basename === '.env' || basename.startsWith('.env.')) return basename
+  return undefined
+}
+
+function isEnvFile(path: string): boolean {
+  return envFileBasename(path) !== undefined
+}
+
+function isTemplateEnvFile(path: string): boolean {
+  const basename = envFileBasename(path)
+  if (!basename) return false
+  return TEMPLATE_ENV_SUFFIXES.has(basename.slice(basename.lastIndexOf('.') + 1).toLowerCase())
+}
+
+function containsKnownSecretFormat(content: string): boolean {
+  return SECRET_PATTERNS.some((pattern) => pattern.regex.test(content))
+}
+
+/**
+ * Name matches are not evidence. Partners commit `.env.example` with
+ * `SHOPIFY_API_SECRET=your-secret-here`; treating that as a leak is how this
+ * check missed its own static-tier bar (provable facts, near-zero FPs).
+ */
+function isPlaceholderSecretValue(raw: string): boolean {
+  const value = raw.trim()
+  if (value.length === 0) return true
+  if (/^<[^>\n]+>$/.test(value)) return true
+  if (/^\$\{[^}]+}$/.test(value)) return true
+  if (/^\$[A-Za-z_][A-Za-z0-9_]*$/.test(value)) return true
+  if (/^(x{2,}|\*{2,}|\.{2,}|-{2,}|_{2,})$/i.test(value)) return true
+  const compact = value.toLowerCase().replace(/[^a-z0-9]/g, '')
+  if (
+    /^(changeme|placeholder|example|sample|dummy|fake|secret|password|todo|replaceme|insertme|none|null|undefined|na|nil)$/.test(
+      compact,
+    )
+  ) {
+    return true
+  }
+  if (/^(your|insert|replace|change).*(here|this|secret|key|token|password)$/.test(compact)) return true
+  if (/^(example|sample|dummy|fake)/.test(compact)) return true
+  return compact.includes('placeholder') || compact.includes('changeme')
+}
+
+function secretAssignmentValues(content: string): string[] {
+  const pattern = new RegExp(SECRET_ASSIGNMENT_PATTERN.source, SECRET_ASSIGNMENT_PATTERN.flags)
+  const values: string[] = []
+  for (const match of content.matchAll(pattern)) {
+    values.push((match[1] ?? match[2] ?? match[3] ?? '').trim())
+  }
+  return values
+}
+
+function containsCommittedSecretEvidence(content: string, templateFile: boolean): boolean {
+  if (containsKnownSecretFormat(content)) return true
+  if (templateFile) return false
+  return secretAssignmentValues(content).some((value) => !isPlaceholderSecretValue(value))
 }
 
 function committedSecretFileIssue(file: SourceFile, status: GitFileStatus, environmentFile: boolean): Issue {
+  const kind = environmentFile ? 'Environment file with secrets' : 'Secret file'
   const tracked = status.tracked === true
+  const untrackedAndNotIgnored = status.tracked === false && status.ignored === false
+
   let title: string
-  if (tracked)
-    title = environmentFile ? 'Environment file with secrets is tracked by git' : 'Secret file is tracked by git'
-  else title = environmentFile ? 'Environment file with secrets committed to repository' : 'Secret file in repository'
+  let message: string
+  let fixDescription: string
+  if (tracked) {
+    title = `${kind} is tracked by git`
+    message = `${file.path} IS TRACKED BY GIT (confirmed via git ls-files), so its contents are in the repository history. Rotate every exposed secret and purge the file from history.`
+    fixDescription = `git rm --cached ${file.path}, add it to .gitignore, purge it from history, and rotate every exposed secret`
+  } else if (untrackedAndNotIgnored) {
+    title = `${kind} is not ignored by git`
+    message = `${file.path} is untracked but not ignored. If committed, its contents enter repository history.`
+    fixDescription = `Add ${file.path} to .gitignore, confirm with 'git check-ignore ${file.path}', and rotate any exposed secrets`
+  } else {
+    title = `${kind} could not be confirmed as ignored`
+    message = `${file.path} could not be confirmed as untracked-and-ignored${status.reason ? ` (${status.reason})` : ''}. Confirm it is gitignored before treating this as clean.`
+    fixDescription = `Add ${file.path} to .gitignore, confirm with 'git ls-files ${file.path}', and rotate any exposed secrets`
+  }
 
   return {
     id: 'COMMITTED_SECRET',
     severity: 'high',
     points: -50,
     title,
-    message: tracked
-      ? `${file.path} IS TRACKED BY GIT (confirmed via git ls-files), so its contents are in the repository history. Rotate every exposed secret and purge the file from history.`
-      : `${file.path} could not be confirmed as untracked-and-ignored${status.reason ? ` (${status.reason})` : ''}. Treating it as exposed.`,
+    message,
     location: {file: file.path},
     detection_evidence: status.evidence,
     fix: {
       automated: false,
-      description: tracked
-        ? `git rm --cached ${file.path}, add it to .gitignore, purge it from history, and rotate every exposed secret`
-        : `Add ${file.path} to .gitignore, confirm with 'git ls-files ${file.path}', and rotate any exposed secrets`,
+      description: fixDescription,
     },
   }
 }
@@ -166,23 +238,34 @@ export async function scanCommittedSecrets(secretEvidenceFiles: SourceFile[], ap
 
   for (const file of secretEvidenceFiles) {
     if (file.content === undefined) continue
-    const environmentFile = ENV_FILE_PATTERN.test(file.path)
+    const environmentFile = isEnvFile(file.path)
     const namedSecretFile = NAMED_SECRET_FILE_PATTERN.test(file.path)
     if (!environmentFile && !namedSecretFile) continue
-    if (environmentFile && !namedSecretFile && !containsSecretLikeValue(file.content)) continue
+
+    const templateFile = isTemplateEnvFile(file.path)
+    const hasEvidence = containsCommittedSecretEvidence(file.content, templateFile)
+    const emptyNamedSecret = namedSecretFile && file.content.trim() === ''
+    if (!hasEvidence && !emptyNamedSecret) continue
 
     // Keep git probes sequential to avoid spawning competing processes for one repository.
     // eslint-disable-next-line no-await-in-loop
     const status = await gitStatusFor(appRoot, file.path)
-    // A safe local secret file is not a vulnerability or scoring event. Tracked
-    // and indeterminate states remain fail-closed, including empty named secret
-    // files whose history cannot be inferred from their current contents.
+    // A safe local secret file is not a vulnerability or scoring event.
     if (status.tracked === false && status.ignored === true) continue
+    // Empty named secret files stay fail-closed only when git confirms they are
+    // tracked — history may still contain prior secrets. Unknown git plus empty
+    // contents is not a provable leak.
+    if (!hasEvidence) {
+      if (emptyNamedSecret && status.tracked === true) {
+        issues.push(committedSecretFileIssue(file, status, environmentFile))
+      }
+      continue
+    }
     issues.push(committedSecretFileIssue(file, status, environmentFile))
   }
 
   for (const file of secretEvidenceFiles) {
-    if (!file.content || ENV_FILE_PATTERN.test(file.path) || NAMED_SECRET_FILE_PATTERN.test(file.path)) continue
+    if (!file.content || isEnvFile(file.path) || NAMED_SECRET_FILE_PATTERN.test(file.path)) continue
 
     const lines = file.content.split('\n')
     for (const [index, line] of lines.entries()) {
