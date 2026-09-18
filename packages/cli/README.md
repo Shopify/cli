@@ -5947,14 +5947,47 @@ Shopify CLI version currently installed.
 
 ```
 USAGE
-  $ shopify version [--json-schema]
+  $ shopify version [-j] [--json-schema] [--no-color] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
   Shopify CLI version currently installed.
+
+  Output from `--json` conforms to the `VersionResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "version": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "version"
+    ],
+    "additionalProperties": false,
+    "title": "VersionResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 <!-- commandsstop -->
