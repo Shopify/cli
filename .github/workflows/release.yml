@@ -26,6 +26,7 @@ on:
           - nightly
           - latest
           - experimental
+          - snapshot
       diagnostics_only:
         description: 'Inspect npm OIDC authentication without publishing'
         default: false
