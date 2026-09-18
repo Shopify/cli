@@ -911,7 +911,13 @@ describe('getDevSessionUpdateMessages', () => {
         .map((specification) => specification.identifier)
         .sort()
 
-      expect(matching).toEqual(['editor_extension_collection', 'flow_action', 'flow_trigger', 'payments_extension'])
+      expect(matching).toEqual([
+        'editor_extension_collection',
+        'flow_action',
+        'flow_trigger',
+        'flow_trigger_lifecycle_callback',
+        'payments_extension',
+      ])
     })
   })
 })

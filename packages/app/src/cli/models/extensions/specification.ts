@@ -1,5 +1,6 @@
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
+import {patchAppRelativeUrls} from './specifications/validation/app_relative_urls.js'
 import {blocks} from '../../constants.js'
 import {ClientSteps} from '../../services/build/client-steps.js'
 
@@ -98,6 +99,8 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
   getDevSessionUpdateMessages?: (config: TConfiguration, context: DevSessionUpdateContext) => Promise<string[]>
+  /** Top-level URL fields to resolve against the app URL. The remote contract must accept relative values. */
+  appRelativeUrlFields?: ReadonlyArray<keyof TConfiguration & string>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 
   /**
@@ -302,6 +305,7 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     CreateExtensionSpecType<TConfiguration>,
     | 'identifier'
     | 'appModuleFeatures'
+    | 'appRelativeUrlFields'
     | 'uidStrategy'
     | 'clientSteps'
     | 'experience'
@@ -309,6 +313,8 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     | 'devSessionWatchConfig'
   >,
 ) {
+  const appRelativeUrlFields = spec.appRelativeUrlFields
+
   return createExtensionSpecification({
     identifier: spec.identifier,
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
@@ -318,8 +324,25 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     uidStrategy: spec.uidStrategy,
     transformRemoteToLocal: spec.transformRemoteToLocal,
     devSessionWatchConfig: spec.devSessionWatchConfig,
-    deployConfig: async (config, directory) => {
+    appRelativeUrlFields,
+    patchWithAppDevURLs: appRelativeUrlFields?.length
+      ? (config, urls) => {
+          patchAppRelativeUrls(
+            capitalize(spec.identifier.replace(/_/g, ' ')),
+            appRelativeUrlFields,
+            config,
+            urls.applicationUrl,
+          )
+        }
+      : undefined,
+    deployConfig: async (config, directory, _apiKey, _moduleId, context) => {
+      // configWithoutFirstClassFields returns a fresh object, so patching it in place cannot affect the caller.
       let parsedConfig = configWithoutFirstClassFields(config)
+      if (appRelativeUrlFields?.length) {
+        const applicationUrl = context?.appConfiguration?.application_url
+        const appUrl = typeof applicationUrl === 'string' ? applicationUrl : undefined
+        patchAppRelativeUrls(capitalize(spec.identifier.replace(/_/g, ' ')), appRelativeUrlFields, parsedConfig, appUrl)
+      }
       if (spec.appModuleFeatures().includes('localization')) {
         const localization = await loadLocalesConfig(directory, spec.identifier)
         parsedConfig = {...parsedConfig, localization}
