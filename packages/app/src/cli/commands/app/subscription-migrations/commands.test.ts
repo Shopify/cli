@@ -230,6 +230,28 @@ describe('subscription migration submission commands', () => {
     expect(outputResult).not.toHaveBeenCalled()
   })
 
+  test.each([false, true])('unschedule preserves JSON results and failure exits with watch=%s', async (watch) => {
+    const submission = {...successfulSubmissionResult.submission, action: 'unschedule' as const}
+    const failure = {type: 'submission' as const, batchIndex: 1, userErrors: [{message: 'Rejected', field: null}]}
+    vi.mocked(runSubmissionCommand).mockResolvedValue({status: 'failed', submission, failure})
+
+    await expect(
+      Unschedule.run(['--input', 'migrations.csv', '--force', '--json', ...(watch ? ['--watch'] : [])]),
+    ).resolves.toEqual({app})
+
+    expect(runSubmissionCommand).toHaveBeenCalledWith({
+      action: 'unschedule',
+      input: 'migrations.csv',
+      clientId: 'remote-client-id',
+      skipConfirmation: true,
+      watch,
+    })
+    expect(outputResult).toHaveBeenCalledOnce()
+    expect(outputResult).toHaveBeenCalledWith(JSON.stringify({schemaVersion: 1, ...submission, failure}, null, 2))
+    expect(process.exitCode).toBe(1)
+    expect(renderWarning).not.toHaveBeenCalled()
+  })
+
   test.each([Schedule, Unschedule])(
     '$name rejects positional CSV input before calling its service',
     async (Command) => {
@@ -592,8 +614,10 @@ describe('subscription migration command metadata', () => {
     },
   )
 
-  test('unschedule has no fenced-code markers in its plain description', () => {
-    expect(Unschedule.description).not.toContain('```')
+  test('unschedule exposes and documents the shared submission schema', () => {
+    expect(Unschedule.jsonOutputSchema).toBe(Schedule.jsonOutputSchema)
+    expect(Unschedule.description).toContain('`MigrationSubmissionResult` schema')
+    expect(Unschedule.description).toContain('```json')
   })
 
   test('cancel documents its JSON output schema', () => {
