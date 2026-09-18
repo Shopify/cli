@@ -8,27 +8,27 @@ const StoreInfoStoreOwnerSchema = zod.object({
 
 export const storeInfoJsonOutputSchema = defineJsonOutputSchema({
   name: 'StoreInfoResult',
-  schema: zod.object({
-    id: zod.string().optional(),
-    displayName: zod.string().optional(),
-    subdomain: zod.string(),
-    organizationId: zod.string().optional(),
-    organizationName: zod.string().optional(),
-    storeOwner: StoreInfoStoreOwnerSchema.optional(),
-    type: zod.string().optional(),
-    country: zod.string().optional().describe('The country selected when creating the preview store, if specified.'),
-    // Admin API public display name for store-auth stores, or public plan handle for BP-backed stores.
-    plan: zod.string().optional(),
-    featurePreview: zod.string().optional(),
-    adminUrl: zod.string().optional(),
-    accessUrl: zod.string().optional(),
-    saveUrl: zod.string().optional(),
-    // Scopes from the stored session used for this lookup. Preview store scopes are preapproved
-    // and cannot be expanded through authentication.
-    authScopes: zod.array(zod.string()).optional(),
-  }),
+  schema: StoreSchema.omit({name: true})
+    .partial({id: true, organizationId: true, organizationName: true})
+    .extend({
+      displayName: StoreSchema.shape.name.optional(),
+      storeOwner: StoreInfoStoreOwnerSchema.optional(),
+      country: StoreSchema.shape.country.describe(
+        'The country selected when creating the preview store, if specified.',
+      ),
+      // Admin API public display name for store-auth stores, or public plan handle for BP-backed stores.
+      plan: StoreSchema.shape.plan,
+      featurePreview: zod.string().optional(),
+      adminUrl: zod.string().optional(),
+      accessUrl: zod.string().optional(),
+      saveUrl: zod.string().optional(),
+      // Scopes from the stored session used for this lookup. Preview store scopes are preapproved
+      // and cannot be expanded through authentication.
+      authScopes: StoreSchema.shape.authScopes,
+    }),
   definitions: {StoreInfoStoreOwner: StoreInfoStoreOwnerSchema},
 })
 
 export type StoreInfoStoreOwner = zod.infer<typeof StoreInfoStoreOwnerSchema>
 export type StoreInfoResult = InferJsonOutputSchema<typeof storeInfoJsonOutputSchema>
+import {StoreSchema} from '../types.js'
