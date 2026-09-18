@@ -6,7 +6,7 @@ import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import type {MigrationOperation} from '../../models/subscription-migrations.js'
-import type {MigrationSubmission, MigrationSubmissionResult} from './submit-migration-plan.js'
+import type {MigrationSubmission, MigrationSubmissionResult} from './types.js'
 
 vi.mock('./plan/plan-migration-input.js')
 vi.mock('./submit-migration-plan.js', async (importOriginal) => {

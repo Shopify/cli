@@ -1,8 +1,10 @@
 import {submissionFlags} from './flags.js'
 import {presentAcceptedMigrationSubmission, presentMigrationSubmissionResult} from './result-presenter.js'
+import {migrationSubmissionJsonOutputSchema} from '../../../services/subscription-migrations/types.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {runSubmissionCommand} from '../../../services/subscription-migrations/run-submission-command.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
+import {jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class Schedule extends AppLinkedCommand {
   static hidden = true
@@ -35,7 +37,11 @@ Use \`--force\` to skip confirmation and immediately submit every valid row. Wit
     '<%= config.bin %> <%= command.id %> --input - --force --watch',
   ]
 
-  static flags = {...submissionFlags}
+  static flags = {...submissionFlags, ...jsonFlag}
+
+  static get jsonOutputSchema() {
+    return migrationSubmissionJsonOutputSchema
+  }
 
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Schedule)
