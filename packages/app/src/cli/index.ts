@@ -42,6 +42,7 @@ import AppLinkedCommand from './utilities/app-linked-command.js'
 import DevClean from './commands/app/dev/clean.js'
 import AppUnlinkedCommand from './utilities/app-unlinked-command.js'
 import FunctionInfo from './commands/app/function/info.js'
+import ImportChannelConfig from './commands/app/import/channel-config.js'
 import ImportCustomDataDefinitions from './commands/app/import/custom-data-definitions.js'
 import ImportCustomDataDefinitionsDeprecated from './commands/app/import-custom-data-definitions.js'
 import OrganizationList from './commands/organization/list.js'
@@ -63,6 +64,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:doctor': Doctor,
   'app:logs': Logs,
   'app:logs:sources': Sources,
+  'app:import:channel-config': ImportChannelConfig,
   'app:import:custom-data-definitions': ImportCustomDataDefinitions,
   'app:import:dashboard-extensions': ImportDashboardExtensions,
   // Deprecated paths, kept registered (and hidden) so existing scripts keep working.

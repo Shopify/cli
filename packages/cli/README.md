@@ -22,6 +22,7 @@
 * [`shopify app function typegen`](#shopify-app-function-typegen)
 * [`shopify app generate extension`](#shopify-app-generate-extension)
 * [`shopify app graphiql`](#shopify-app-graphiql)
+* [`shopify app import channel-config`](#shopify-app-import-channel-config)
 * [`shopify app import custom-data-definitions`](#shopify-app-import-custom-data-definitions)
 * [`shopify app import dashboard-extensions`](#shopify-app-import-dashboard-extensions)
 * [`shopify app info`](#shopify-app-info)
@@ -1510,6 +1511,129 @@ EXAMPLES
   $ shopify app graphiql --store shop.myshopify.com
 
   $ shopify app graphiql --store shop.myshopify.com --port 9123
+```
+
+## `shopify app import channel-config`
+
+Import the Shopify-authored default channel spec as a channel_config TOML file.
+
+```
+USAGE
+  $ shopify app import channel-config [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
+    [--overwrite] [--path <value>] [--reset | ] [--stdout | -j] [--verbose]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --auth-alias=<value>
+      Alias of the Shopify account to use for authentication.
+      [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --overwrite
+      Overwrite the existing channel spec file if one already exists.
+      [env: SHOPIFY_FLAG_OVERWRITE]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --reset
+      Reset all your settings.
+      [env: SHOPIFY_FLAG_RESET]
+
+  --stdout
+      Print the generated TOML to stdout instead of writing it to a file. For piped output, use an already-linked app:
+      first-time linking prompts may interleave with the output.
+      [env: SHOPIFY_FLAG_STDOUT]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  Import the Shopify-authored default channel spec as a channel_config TOML file.
+
+  Imports the Shopify-authored default channel specification for your app as a deployable `channel_config` extension
+  spec.
+
+  The generated TOML file contains only public `channel_config` fields. Review it, commit it to your app, then deploy it
+  with `shopify app deploy`. This command never deploys the spec itself.
+
+  Output from `--json` conforms to the `ImportChannelConfigResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "handle": {
+        "type": "string"
+      },
+      "filename": {
+        "type": "string"
+      },
+      "path": {
+        "type": "string"
+      },
+      "toml": {
+        "type": "string"
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ChannelSpecExportWarning"
+        }
+      }
+    },
+    "required": [
+      "handle",
+      "filename",
+      "path",
+      "toml",
+      "warnings"
+    ],
+    "additionalProperties": false,
+    "title": "ImportChannelConfigResult",
+    "definitions": {
+      "ChannelSpecExportWarning": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app import custom-data-definitions`
