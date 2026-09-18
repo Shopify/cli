@@ -2,8 +2,8 @@
  * Public App Doctor engine API.
  *
  * CLI code outside this directory should import only these operations and result
- * types: locate an app, scan, parse/compile findings, parse a stored trace, and
- * build a submission. Keep scanners, registries, merge helpers, and redaction
+ * types: locate an app, scan, parse/compile findings, parse a stored trace,
+ * build a submission, and group issues for display. Keep scanners, registries, merge helpers, and redaction
  * inside the engine.
  */
 export {
@@ -27,4 +27,6 @@ export type {
 export {buildSubmission, SUBMISSION_SCHEMA_VERSION} from './submission/index.js'
 export type {AppDoctorSubmission, AppDoctorSubmissionReport, BuildSubmissionOptions} from './submission/index.js'
 export type {ReviewPack} from './checks/index.js'
+export {groupIssues} from './output/group-issues.js'
+export type {IssueGroup} from './output/group-issues.js'
 export type {Capabilities, Issue, ScanResult, Severity, TraceV2} from './types.js'
