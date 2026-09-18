@@ -7,9 +7,9 @@ import ConfigPull from './commands/app/config/pull.js'
 import DemoWatcher from './commands/app/demo/watcher.js'
 import Deploy from './commands/app/deploy.js'
 import Dev from './commands/app/dev.js'
-import DoctorInstructions from './commands/app/doctor/instructions.js'
-import DoctorSubmit from './commands/app/doctor/submit.js'
-import Doctor from './commands/app/doctor.js'
+import SecurityCheck from './commands/app/security/check.js'
+import SecurityInstructions from './commands/app/security/instructions.js'
+import SecuritySubmit from './commands/app/security/submit.js'
 import Logs from './commands/app/logs.js'
 import Sources from './commands/app/app-logs/sources.js'
 import EnvPull from './commands/app/env/pull.js'
@@ -58,9 +58,9 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:deploy': Deploy,
   'app:dev': Dev,
   'app:dev:clean': DevClean,
-  'app:doctor:instructions': DoctorInstructions,
-  'app:doctor:submit': DoctorSubmit,
-  'app:doctor': Doctor,
+  'app:security:check': SecurityCheck,
+  'app:security:instructions': SecurityInstructions,
+  'app:security:submit': SecuritySubmit,
   'app:logs': Logs,
   'app:logs:sources': Sources,
   'app:import:custom-data-definitions': ImportCustomDataDefinitions,
