@@ -5,10 +5,10 @@ import {
   resolveAppSecurityRoot,
   type AppSecurityBlockingLevel,
 } from './app-security-api.js'
-import {writeAppSecurityArtifacts} from './app-security-artifacts.js'
+import {appSecurityArtifactPaths, readTrace, writeAppSecurityArtifacts} from './app-security-artifacts.js'
 import securityCheck from './security-check.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
 import {symlink} from 'node:fs/promises'
@@ -612,10 +612,14 @@ describe('App Security CLI integration', () => {
           blocking: 'none',
           yes: false,
           skipInstructions: true,
+          clean: false,
         },
         {
-          execute: async ({directory: appDirectory, findingsPath}) => {
-            const appRoot = resolveAppSecurityRoot(appDirectory)
+          resolveRoot: resolveAppSecurityRoot,
+          artifactPaths: appSecurityArtifactPaths,
+          findingsFileExists: fileExists,
+          readTrace,
+          execute: async ({appRoot, findingsPath}) => {
             const findings = findingsPath ? await loadAppSecurityFindings(findingsPath) : undefined
             return executeAppSecurity({appRoot, findings})
           },

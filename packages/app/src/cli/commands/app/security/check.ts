@@ -15,7 +15,9 @@ export default class SecurityCheck extends BaseCommand {
 
   static descriptionWithMarkdown = `Runs Shopify App Security locally and creates its review pack and trace.
 
-Pass \`--findings\` after completing the review pack to validate agent findings and compile them into the trace. Use \`--config\` to select a specific app configuration when the project has multiple \`shopify.app*.toml\` files; App Security inspects only that configuration. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. JSON output never prompts or prints those instructions. You can also run \`shopify app security instructions\` to print, copy, or write them later.`
+Pass \`--findings\` after completing the review pack to validate agent findings and compile them into the trace. A new scan stops when local agent findings or a compiled trace already exist. Pass \`--clean\` to discard that work and start over. Use \`--config\` to select a specific app configuration when the project has multiple \`shopify.app*.toml\` files; App Security inspects only that configuration.
+
+In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. JSON output never prompts or prints those instructions. You can also run \`shopify app security instructions\` to print, copy, or write them later.`
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -28,6 +30,13 @@ Pass \`--findings\` after completing the review pack to validate agent findings 
       description: 'Validate agent findings from a JSON file and compile them into the trace.',
       parse: async (input) => resolvePath(input),
       env: 'SHOPIFY_FLAG_APP_SECURITY_FINDINGS',
+      exclusive: ['clean'],
+    }),
+    clean: Flags.boolean({
+      description: 'Discard the current local review and start a new scan.',
+      default: false,
+      exclusive: ['findings'],
+      env: 'SHOPIFY_FLAG_APP_SECURITY_CLEAN',
     }),
     blocking: Flags.string({
       description: 'The minimum finding severity that causes a non-zero exit code.',
@@ -61,6 +70,7 @@ Pass \`--findings\` after completing the review pack to validate agent findings 
       yes: flags.yes,
       skipInstructions: flags['skip-instructions'],
       findingsPath: flags.findings,
+      clean: flags.clean,
     })
   }
 }

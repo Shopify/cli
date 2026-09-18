@@ -145,6 +145,8 @@ describe('app security submit command boundary', () => {
     await inTemporaryDirectory(async (directory) => {
       const client = remoteClient()
       const paths = await writeApp(directory)
+      const compiledTrace = await readFile(paths.tracePath)
+      expect(submissionTraceFixture.findings.some((finding) => finding.source === 'agent')).toBe(true)
       await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Unlinked app"\n')
       const result = await runCommand(['--path', directory, '--dry-run', ...(json ? ['--json'] : [])])
 
@@ -168,6 +170,7 @@ describe('app security submit command boundary', () => {
       expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
       expect(client.appFromIdentifiers).not.toHaveBeenCalled()
       expect(fetch).not.toHaveBeenCalled()
+      await expect(readFile(paths.tracePath)).resolves.toEqual(compiledTrace)
       await expect(readdir(joinPath(directory, '.shopify'))).resolves.toEqual(['app-security'])
     })
   })
@@ -306,6 +309,8 @@ describe('app security submit command boundary', () => {
     await inTemporaryDirectory(async (directory) => {
       remoteClient()
       const paths = await writeApp(directory)
+      const compiledTrace = await readFile(paths.tracePath)
+      expect(submissionTraceFixture.findings.some((finding) => finding.source === 'agent')).toBe(true)
       const result = await runCommand(['--path', directory, '--json', '--force'])
       const submission = JSON.parse(await readFile(paths.submissionPath, 'utf8'))
       expect(JSON.parse(result.stdout)).toEqual({
@@ -317,6 +322,7 @@ describe('app security submit command boundary', () => {
       })
       expect(submission).not.toHaveProperty('client_id')
       expect(submission.report).not.toHaveProperty('client_id')
+      await expect(readFile(paths.tracePath)).resolves.toEqual(compiledTrace)
       expect(result.stderr).toBe('')
       expect(result.exitCode).toBe(0)
     })
