@@ -25,14 +25,17 @@ interface SecretPattern {
 }
 
 export const SECRET_PATTERNS: SecretPattern[] = [
-  // Shopify API secret (shpss_ prefix or 32 hex)
+  // Shopify API secret (shpss_ prefix or 32 hex). Quotes are optional so dotenv
+  // assignments match the same way quoted JS/JSON assignments do.
   {
-    regex: /(?:api[_-]?secret|SHOPIFY_API_SECRET)\s*[:=]\s*['"](shpss_[a-f0-9]+|[a-f0-9]{32})['"]/i,
+    regex:
+      /(?<![A-Za-z0-9_])(?:api[_-]?secret|SHOPIFY_API_SECRET)[ \t]*[:=][ \t]*['"]?(shpss_[a-f0-9]+|[a-f0-9]{32})['"]?/i,
     name: 'Shopify API secret',
   },
   // Shopify access token (shpat_ / shpca_ / shppa_)
   {
-    regex: /(?:access[_-]?token|SHOPIFY_ACCESS_TOKEN)\s*[:=]\s*['"](shp(?:at|ca|pa)_[a-zA-Z0-9]+)['"]/i,
+    regex:
+      /(?<![A-Za-z0-9_])(?:access[_-]?token|SHOPIFY_ACCESS_TOKEN)[ \t]*[:=][ \t]*['"]?(shp(?:at|ca|pa)_[a-zA-Z0-9]+)['"]?/i,
     name: 'Shopify access token',
   },
   // Bare Shopify tokens, even without an assignment context
@@ -130,7 +133,7 @@ const TEMPLATE_ENV_SUFFIXES = new Set(['example', 'sample', 'template', 'dist'])
 // `SHOPIFY_API_KEY` / `api_key` are client IDs and public; they are not secret names.
 // Optional quotes cover JSON/YAML keys (`"password": "…"`) as well as env assignments.
 const SECRET_ASSIGNMENT_PATTERN =
-  /["']?(?:api[_-]?secret|access[_-]?token|secret[_-]?key|private[_-]?key|password|SHOPIFY_API_SECRET)["']?\s*[:=]\s*(?:"([^"\r\n]*)"|'([^'\r\n]*)'|([^\s#'"\r\n][^#\r\n]*))/gi
+  /(?<![A-Za-z0-9_])["']?(?:api[_-]?secret|access[_-]?token|secret[_-]?key|private[_-]?key|password|SHOPIFY_API_SECRET)["']?[ \t]*[:=][ \t]*(?:"([^"\r\n]*)"|'([^'\r\n]*)'|([^\s#'"\r\n][^#\r\n]*))/gi
 
 function envFileBasename(path: string): string | undefined {
   const basename = path.slice(path.lastIndexOf('/') + 1)
