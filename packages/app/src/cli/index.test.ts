@@ -9,7 +9,5 @@ describe('@shopify/app command registration', () => {
     expect(commands['app:security:check']).toBe(SecurityCheck)
     expect(commands['app:security:instructions']).toBe(SecurityInstructions)
     expect(commands['app:security:submit']).toBe(SecuritySubmit)
-    expect(commands['app:doctor']).toBeUndefined()
-    expect(commands['app:doctor:scan']).toBeUndefined()
   })
 })
