@@ -1,3 +1,4 @@
+import {deleteDevStoreJsonOutputSchema} from './types.js'
 import {deleteDevStore, toOrganizationsShopifyShopId} from './dev.js'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
@@ -83,6 +84,27 @@ describe('toOrganizationsShopifyShopId', () => {
 })
 
 describe('deleteDevStore', () => {
+  test('outputs a validated pending result when deletion is not confirmed', async () => {
+    vi.mocked(renderSingleTask).mockResolvedValueOnce(false)
+
+    await deleteDevStore({...defaultOptions, json: true})
+
+    const result = JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)
+    expect(result).toEqual({
+      store: {
+        domain: 'test-store.myshopify.com',
+        deletionRequested: true,
+        deletionConfirmed: false,
+      },
+      organization: {id: '123', name: 'Test Org'},
+      message:
+        'Deletion was requested, but has not been confirmed yet. The store may still finish deleting asynchronously.',
+    })
+    expect(deleteDevStoreJsonOutputSchema.validate(result)).toEqual(result)
+    expect(renderSuccess).not.toHaveBeenCalled()
+    expect(renderWarning).not.toHaveBeenCalled()
+  })
+
   test('requests deletion and renders success after polling sees the plan become cancelled', async () => {
     mockBusinessPlatformRequests({pollShops: [pollShop({planName: 'professional'}), pollShop({planName: 'cancelled'})]})
 
@@ -115,7 +137,7 @@ describe('deleteDevStore', () => {
     await deleteDevStore({...defaultOptions, json: true})
 
     const call = vi.mocked(outputResult).mock.calls[0]![0] as string
-    expect(JSON.parse(call)).toEqual({
+    expect(deleteDevStoreJsonOutputSchema.validate(JSON.parse(call))).toEqual({
       store: {
         domain: 'test-store.myshopify.com',
         deletionRequested: true,

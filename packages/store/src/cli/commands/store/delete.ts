@@ -1,3 +1,4 @@
+import {deleteDevStoreJsonOutputSchema} from '../../services/store/delete/types.js'
 import {deleteDevStore} from '../../services/store/delete/dev.js'
 import {storeFlags} from '../../flags.js'
 import {resolveOrganizationForStore} from '../../utilities/store-lookup/organization.js'
@@ -34,6 +35,10 @@ export default class StoreDelete extends Command {
     }),
   }
 
+  static get jsonOutputSchema() {
+    return deleteDevStoreJsonOutputSchema
+  }
+
   async run(): Promise<void> {
     const {flags} = await this.parse(StoreDelete)
 
@@ -66,16 +71,12 @@ export default class StoreDelete extends Command {
       // global error handler so they keep their stack traces and get reported as CLI bugs.
       if (flags.json && error instanceof AbortError) {
         outputResult(
-          JSON.stringify(
-            {
-              error: true,
-              message: error.message,
-              nextSteps: error.nextSteps ?? [],
-              exitCode: 1,
-            },
-            null,
-            2,
-          ),
+          deleteDevStoreJsonOutputSchema.encode({
+            error: true,
+            message: error.message,
+            nextSteps: error.nextSteps ?? [],
+            exitCode: 1,
+          }),
         )
         process.exit(1)
       }
