@@ -1,3 +1,4 @@
+import {getAppConfigurationShorthand} from '../models/app/config-file-naming.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 export type AppDoctorShell = 'posix' | 'cmd' | 'powershell'
@@ -12,11 +13,12 @@ export interface AppDoctorCommands {
   compile: AppDoctorCommand
 }
 
-export function resolveAppDoctorCommands(appRoot: string): AppDoctorCommands {
+export function resolveAppDoctorCommands(appRoot: string, configFileName?: string): AppDoctorCommands {
   const findingsPath = joinPath(appRoot, '.shopify', 'app-doctor', 'findings.json')
+  const configFlag = configFileName ? getAppConfigurationShorthand(configFileName) : undefined
   const scan: AppDoctorCommand = {
     command: 'shopify',
-    args: ['app', 'doctor', '--path', appRoot],
+    args: ['app', 'doctor', '--path', appRoot, ...(configFlag ? ['--config', configFlag] : [])],
   }
 
   return {

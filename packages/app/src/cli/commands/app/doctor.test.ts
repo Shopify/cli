@@ -14,6 +14,7 @@ describe('app doctor command', () => {
     expect(Doctor.prototype).toBeInstanceOf(BaseCommand)
     expect(Doctor.prototype).not.toBeInstanceOf(AppLinkedCommand)
     expect(Doctor.flags.path).toBe(appFlags.path)
+    expect(Doctor.flags.config).toBe(appFlags.config)
     expect(Doctor.args).not.toHaveProperty('directory')
   })
 
@@ -25,6 +26,7 @@ describe('app doctor command', () => {
 
     expect(doctor).toHaveBeenCalledWith({
       directory: resolvePath('./fixtures/unlinked-app'),
+      configName: undefined,
       json: true,
       verbose: true,
       blocking: 'high',
@@ -39,6 +41,7 @@ describe('app doctor command', () => {
 
     expect(doctor).toHaveBeenCalledWith({
       directory: '/tmp/directory-without-shopify-toml',
+      configName: undefined,
       json: false,
       verbose: false,
       blocking: 'none',
@@ -46,6 +49,15 @@ describe('app doctor command', () => {
       skipInstructions: false,
       findingsPath: undefined,
     })
+  })
+
+  test('forwards --config without requiring a linked app', async () => {
+    await Doctor.run(
+      ['--path', './fixtures/unlinked-app', '--config', 'staging', '--skip-instructions'],
+      import.meta.url,
+    )
+
+    expect(doctor).toHaveBeenCalledWith(expect.objectContaining({configName: 'staging', skipInstructions: true}))
   })
 
   test('resolves and forwards an agent findings file', async () => {
@@ -60,6 +72,7 @@ describe('app doctor command', () => {
     expect(Doctor.flags.yes.exclusive).toEqual(['skip-instructions'])
     expect(Doctor.flags['skip-instructions'].exclusive).toEqual(['yes'])
     expect(Doctor.descriptionWithMarkdown).toContain('copy the coding-agent instructions')
+    expect(Doctor.descriptionWithMarkdown).toContain('`--config`')
     expect(Doctor.descriptionWithMarkdown).toContain('copying is the default')
     expect(Doctor.descriptionWithMarkdown).toContain('shopify app doctor instructions')
   })

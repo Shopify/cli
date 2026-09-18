@@ -6,4 +6,4 @@ severity: medium
 
 # Missing Compliance Webhooks
 
-Inspect every `shopify.app*.toml` file that could not be parsed. Verify all three compliance topics (`shop/redact`, `customers/data_request`, `customers/redact`) are declared in each deployable configuration. Report only a confirmed missing topic.
+Inspect the selected `shopify.app*.toml` file. If it could not be parsed, keep the check unresolved. Verify all three compliance topics (`shop/redact`, `customers/data_request`, `customers/redact`) are declared in that configuration. Report only a confirmed missing topic.

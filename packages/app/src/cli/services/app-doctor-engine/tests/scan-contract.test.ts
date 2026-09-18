@@ -188,20 +188,44 @@ describe('framework and surface detection', () => {
     })
   })
 
-  test('keeps embedded-app capability when any readable app config is embedded', async () => {
-    const result = await scan(
-      await app({
-        'shopify.app.toml': `name = "Embedded production"\nembedded = true\n[access_scopes]\nscopes = ""\n`,
-        'shopify.app.staging.toml': `name = "Non-embedded staging"\nembedded = false\n[access_scopes]\nscopes = ""\n`,
-        'server.ts': `const headers = {'Content-Security-Policy': 'frame-ancestors *'}`,
-      }),
-    )
+  test('scopes embedded-app capability to the selected app configuration', async () => {
+    const directory = await app({
+      'shopify.app.toml': `name = "Embedded production"\nembedded = true\n[access_scopes]\nscopes = ""\n`,
+      'shopify.app.staging.toml': `name = "Non-embedded staging"\nembedded = false\n[access_scopes]\nscopes = ""\n`,
+      'server.ts': `const headers = {'Content-Security-Policy': 'frame-ancestors *'}`,
+    })
 
-    expect(result.capabilities.embedded_app).toBe(true)
-    expect(result.scan.checks_executed.find((execution) => execution.id === 'STATIC_FRAME_ANCESTORS')).toMatchObject({
+    const defaultScan = await scan(directory)
+    expect(defaultScan.capabilities.embedded_app).toBe(true)
+    expect(defaultScan.app.name).toBe('Embedded production')
+    expect(
+      defaultScan.scan.checks_executed.find((execution) => execution.id === 'STATIC_FRAME_ANCESTORS'),
+    ).toMatchObject({
       status: 'executed',
       findings: 1,
     })
+
+    const staging = await scan(directory, 'staging')
+    expect(staging.capabilities.embedded_app).toBe(false)
+    expect(staging.app.name).toBe('Non-embedded staging')
+    expect(staging.scan.checks_executed.find((execution) => execution.id === 'STATIC_FRAME_ANCESTORS')).toMatchObject({
+      status: 'not_applicable',
+    })
+  })
+
+  test('does not report findings or hashes from a sibling app configuration', async () => {
+    const directory = await app({
+      'shopify.app.toml': appConfig(),
+      'shopify.app.production.toml': appConfig('write_script_tags'),
+    })
+
+    const result = await scan(directory, 'shopify.app.toml')
+    const deprecated = result.scan.checks_executed.find((execution) => execution.id === 'DEPRECATED_SCRIPT_TAG_SCOPE')
+
+    expect(deprecated).toMatchObject({status: 'executed', findings: 0, inspected_files: ['shopify.app.toml']})
+    expect(result.issues.filter((issue) => issue.id === 'DEPRECATED_SCRIPT_TAG_SCOPE')).toEqual([])
+    expect(result.scan.file_hashes).not.toHaveProperty('shopify.app.production.toml')
+    expect(result.scan.file_hashes).toHaveProperty('shopify.app.toml')
   })
 
   test('keeps React Router and theme implementations inside their supported file boundaries', async () => {
@@ -278,16 +302,23 @@ describe('framework and surface detection', () => {
   })
 
   test('makes only affected checks unresolved when readable and rejected inputs coexist', async () => {
-    const malformedConfig = await scan(
+    const malformedSelected = await scan(await app({'shopify.app.toml': 'name = ['}))
+    expect(
+      malformedSelected.scan.checks_executed.find((execution) => execution.id === 'EOL_API_VERSION'),
+    ).toMatchObject({
+      status: 'unresolved',
+      reason: {code: 'parser_unavailable'},
+    })
+
+    const malformedSibling = await scan(
       await app({
         'shopify.app.toml': appConfig(),
         'shopify.app.invalid.toml': 'name = [',
       }),
     )
-    expect(malformedConfig.scan.checks_executed.find((execution) => execution.id === 'EOL_API_VERSION')).toMatchObject({
-      status: 'unresolved',
-      reason: {code: 'parser_unavailable'},
-    })
+    expect(
+      malformedSibling.scan.checks_executed.find((execution) => execution.id === 'EOL_API_VERSION')?.status,
+    ).not.toBe('unresolved')
 
     const skippedSource = await scan(
       await app({

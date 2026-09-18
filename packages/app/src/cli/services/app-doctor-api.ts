@@ -90,11 +90,12 @@ export function resolveAppDoctorRoot(directory?: string): string {
 export async function executeAppDoctor(options: {
   appRoot: string
   findings?: FindingsDocument
+  configFileName?: string
 }): Promise<AppDoctorExecution> {
   const startTime = Date.now()
   const result = options.findings
-    ? await compileFindings(options.appRoot, options.findings)
-    : await scanApp(options.appRoot)
+    ? await compileFindings(options.appRoot, options.findings, options.configFileName)
+    : await scanApp(options.appRoot, options.configFileName)
   return {
     ...result,
     elapsedMilliseconds: Date.now() - startTime,

@@ -1386,8 +1386,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app doctor instructions` to print, copy, or write them later.",
-      "descriptionWithMarkdown": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app doctor instructions` to print, copy, or write them later.",
+      "description": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Doctor inspects only that configuration. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app doctor instructions` to print, copy, or write them later.",
+      "descriptionWithMarkdown": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Doctor inspects only that configuration. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app doctor instructions` to print, copy, or write them later.",
       "enableJsonFlag": false,
       "flags": {
         "blocking": {
@@ -1403,6 +1403,16 @@
             "low",
             "none"
           ],
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
           "type": "option"
         },
         "findings": {
@@ -1496,6 +1506,16 @@
       "descriptionWithMarkdown": "Prints the complete workflow that a coding agent should follow to review App Doctor results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app doctor`; only that invocation's generated review pack is trusted as workflow input.",
       "enableJsonFlag": false,
       "flags": {
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
         "copy": {
           "allowNo": false,
           "description": "Copy the instructions to the clipboard instead of printing them.",

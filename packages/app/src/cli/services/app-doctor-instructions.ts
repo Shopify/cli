@@ -1,4 +1,5 @@
 import {resolveAppDoctorRoot} from './app-doctor-api.js'
+import {requireDoctorConfigFileName} from './app-doctor-config.js'
 import {
   formatAppDoctorCommand,
   quoteShellArgument,
@@ -39,13 +40,18 @@ function markdownPath(value: string): string {
   return `\`${escaped}\``
 }
 
-function instructionPaths(directory: string, commands?: AppDoctorCommands): AppDoctorInstructionPaths {
+function instructionPaths(
+  directory: string,
+  commands?: AppDoctorCommands,
+  configName?: string,
+): AppDoctorInstructionPaths {
   const appRoot = resolveAppDoctorRoot(resolvePath(directory))
   const artifactDirectory = joinPath(appRoot, '.shopify', 'app-doctor')
   const reviewPath = joinPath(artifactDirectory, 'review.json')
   const tracePath = joinPath(artifactDirectory, 'trace.json')
   const findingsPath = joinPath(artifactDirectory, 'findings.json')
-  const resolvedCommands = commands ?? resolveAppDoctorCommands(appRoot)
+  const resolvedCommands =
+    commands ?? resolveAppDoctorCommands(appRoot, requireDoctorConfigFileName(appRoot, configName))
   return {
     appRoot,
     commands: resolvedCommands,
@@ -80,6 +86,7 @@ The current invocation's initial scan has already completed. It generated ${mark
 
 interface AppDoctorInstructionsOptions {
   directory: string
+  configName?: string
   copy: boolean
   writePath?: string
   scanComplete?: boolean
@@ -106,8 +113,9 @@ export function appDoctorInstructions(options: {
   directory: string
   scanComplete: boolean
   commands?: AppDoctorCommands
+  configName?: string
 }): string {
-  const paths = instructionPaths(options.directory, options.commands)
+  const paths = instructionPaths(options.directory, options.commands, options.configName)
   const scanContext = options.scanComplete ? completedScanInstructions(paths) : initialScanInstructions(paths)
   return getAgentInstructions()
     .replace(SCAN_CONTEXT_PLACEHOLDER, scanContext)
@@ -127,6 +135,7 @@ export default async function deliverAppDoctorInstructions(
     directory: options.directory,
     scanComplete: options.scanComplete ?? false,
     commands: options.commands,
+    configName: options.configName,
   })
 
   if (options.copy) {

@@ -19,6 +19,7 @@ By default, the instructions are printed to stdout. Use \`--copy\` to copy them 
   static flags = {
     ...globalFlags,
     path: appFlags.path,
+    config: appFlags.config,
     copy: Flags.boolean({
       description: 'Copy the instructions to the clipboard instead of printing them.',
       default: false,
@@ -38,6 +39,7 @@ By default, the instructions are printed to stdout. Use \`--copy\` to copy them 
 
     await deliverAppDoctorInstructions({
       directory: flags.path,
+      configName: flags.config,
       copy: flags.copy,
       writePath: flags.write,
     })

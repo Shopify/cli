@@ -136,6 +136,35 @@ describe('quoteShellArgument', () => {
   })
 })
 
+describe('resolveAppDoctorCommands', () => {
+  test('omits --config for the default shopify.app.toml', () => {
+    expect(resolveAppDoctorCommands('/tmp/app').scan.args).toEqual(['app', 'doctor', '--path', '/tmp/app'])
+    expect(resolveAppDoctorCommands('/tmp/app', 'shopify.app.toml').scan.args).toEqual([
+      'app',
+      'doctor',
+      '--path',
+      '/tmp/app',
+    ])
+  })
+
+  test('includes --config on scan and compile for a named configuration', () => {
+    const commands = resolveAppDoctorCommands('/tmp/app', 'shopify.app.staging.toml')
+    const findingsPath = joinPath('/tmp/app', '.shopify', 'app-doctor', 'findings.json')
+
+    expect(commands.scan.args).toEqual(['app', 'doctor', '--path', '/tmp/app', '--config', 'staging'])
+    expect(commands.compile.args).toEqual([
+      'app',
+      'doctor',
+      '--path',
+      '/tmp/app',
+      '--config',
+      'staging',
+      '--findings',
+      findingsPath,
+    ])
+  })
+})
+
 describe('formatAppDoctorCommand', () => {
   test('quotes a Windows path with spaces and percents for terminal and instruction shells', () => {
     const commands = resolveAppDoctorCommands(WINDOWS_APP_ROOT)

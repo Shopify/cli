@@ -109,9 +109,9 @@ export function parseFindings(value: unknown): FindingsDocument {
   return value as FindingsDocument
 }
 
-export async function scanApp(directory?: string): Promise<AppDoctorScan> {
+export async function scanApp(directory?: string, configFileName?: string): Promise<AppDoctorScan> {
   const appRoot = findAppRoot(directory)
-  const result = await scan(appRoot)
+  const result = await scan(appRoot, configFileName)
   const engineVersion = getEngineVersion()
   const reviewPack = buildReviewPack(engineVersion, result)
   const trace = compileTrace(result, {engineVersion, agentChecksExecuted: [], suppressions: []})
@@ -125,9 +125,13 @@ export async function scanApp(directory?: string): Promise<AppDoctorScan> {
   }
 }
 
-export async function compileFindings(directory: string, document: FindingsDocument): Promise<AppDoctorCompile> {
+export async function compileFindings(
+  directory: string,
+  document: FindingsDocument,
+  configFileName?: string,
+): Promise<AppDoctorCompile> {
   const appRoot = findAppRoot(directory)
-  const result = await scan(appRoot)
+  const result = await scan(appRoot, configFileName)
   const engineVersion = getEngineVersion()
   const knownFiles = new Set(searchBoundaryFiles(result))
   const provenanceRejected =
