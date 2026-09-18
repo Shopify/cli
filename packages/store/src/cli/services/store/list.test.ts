@@ -4,7 +4,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {isTTY, renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
-import {fetchOrganizationsWithAccessInfo} from '@shopify/organizations'
+import {fetchOrganizationById, fetchOrganizationsWithAccessInfo} from '@shopify/organizations'
 
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/ui')
@@ -23,12 +23,17 @@ const orgEntry = {
   type: 'production',
 }
 
+// The organizations the account can reach. `--organization-id` resolves through the by-ID lookup,
+// and anything it can't find falls back to the same set via the filtered list.
 function mockOrganizations(organizations = [acme]) {
   vi.mocked(ensureAuthenticatedBusinessPlatform).mockResolvedValue('bp-token')
   vi.mocked(fetchOrganizationsWithAccessInfo).mockResolvedValue({
     organizations,
     currentUserResolved: true,
   })
+  vi.mocked(fetchOrganizationById).mockImplementation(async (organizationId) =>
+    organizations.find((organization) => organization.id === organizationId),
+  )
 }
 
 describe('listStores', () => {
@@ -169,6 +174,50 @@ describe('listStores', () => {
     vi.spyOn(bpSource, 'listBusinessPlatformStores')
 
     await expect(listStores({organizationId: 9999999})).rejects.toThrow('Organization with ID 9999999 not found.')
+  })
+
+  test('skips the organization list entirely when the requested organization resolves directly', async () => {
+    mockOrganizations([acme, beta])
+    vi.spyOn(bpSource, 'listBusinessPlatformStores').mockResolvedValue({entries: [orgEntry], hasMore: false})
+
+    const result = await listStores({organizationId: 1234})
+
+    expect(fetchOrganizationById).toHaveBeenCalledWith('1234', 'bp-token')
+    expect(fetchOrganizationsWithAccessInfo).not.toHaveBeenCalled()
+    expect(result.organization).toEqual({id: '1234', name: 'Acme'})
+  })
+
+  test('falls back to the organization list when the direct lookup misses but access exists', async () => {
+    mockOrganizations([acme])
+    // The cached lookup can trail newly granted access, so the uncached list is the authority.
+    vi.mocked(fetchOrganizationById).mockResolvedValue(undefined)
+    vi.spyOn(bpSource, 'listBusinessPlatformStores').mockResolvedValue({entries: [orgEntry], hasMore: false})
+
+    const result = await listStores({organizationId: 1234})
+
+    expect(fetchOrganizationsWithAccessInfo).toHaveBeenCalled()
+    expect(bpSource.listBusinessPlatformStores).toHaveBeenCalledWith({
+      token: 'bp-token',
+      organization: acme,
+      storeType: undefined,
+    })
+    expect(result.organization).toEqual({id: '1234', name: 'Acme'})
+  })
+
+  test('does not prompt when an organization id is provided but the direct lookup misses', async () => {
+    mockOrganizations([acme, beta])
+    vi.mocked(fetchOrganizationById).mockResolvedValue(undefined)
+    vi.mocked(isTTY).mockReturnValue(true)
+    vi.spyOn(bpSource, 'listBusinessPlatformStores').mockResolvedValue({entries: [], hasMore: false})
+
+    await listStores({organizationId: 5678})
+
+    expect(renderAutocompletePrompt).not.toHaveBeenCalled()
+    expect(bpSource.listBusinessPlatformStores).toHaveBeenCalledWith({
+      token: 'bp-token',
+      organization: beta,
+      storeType: undefined,
+    })
   })
 
   test('caps the listing at 250 entries and flags truncation when more were returned', async () => {

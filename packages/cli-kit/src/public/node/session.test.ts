@@ -7,6 +7,7 @@ import {
   ensureAuthenticatedStorefront,
   ensureAuthenticatedThemes,
   findSessionIdByAlias,
+  lastSeenUserId,
   setCurrentSessionAlias,
   setLastSeenUserId,
 } from './session.js'
@@ -16,6 +17,7 @@ import {getAppAutomationToken} from './environment.js'
 import {shopifyFetch} from './http.js'
 import {
   ensureAuthenticated,
+  getLastSeenUserIdAfterAuth,
   setCommandSessionId,
   setLastSeenAuthMethod,
   setLastSeenUserIdAfterAuth,
@@ -45,6 +47,13 @@ vi.mock('./environment.js')
 vi.mock('./http.js')
 
 describe('store command analytics session helpers', () => {
+  test('reads the last seen user id without authenticating', async () => {
+    vi.mocked(getLastSeenUserIdAfterAuth).mockResolvedValue('account-1')
+
+    await expect(lastSeenUserId()).resolves.toBe('account-1')
+    expect(ensureAuthenticated).not.toHaveBeenCalled()
+  })
+
   test('sets last seen user id through the public session helper', () => {
     setLastSeenUserId('store-user-id')
 

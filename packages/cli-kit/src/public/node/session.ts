@@ -17,6 +17,7 @@ import {
   PartnersAPIScope,
   StorefrontRendererScope,
   ensureAuthenticated,
+  getLastSeenUserIdAfterAuth,
   setCommandSessionId,
   setLastSeenAuthMethod,
   setLastSeenUserIdAfterAuth,
@@ -50,6 +51,16 @@ export type AccountInfo = UserAccountInfo | ServiceAccountInfo | UnknownAccountI
  */
 export function setLastSeenUserId(userId: string): void {
   setLastSeenUserIdAfterAuth(userId)
+}
+
+/**
+ * Returns an identifier for the account authenticated in this process, without authenticating.
+ * Custom tokens resolve to a hash of the token.
+ *
+ * @returns The account identifier, or `'unknown'` when none can be determined.
+ */
+export async function lastSeenUserId(): Promise<string> {
+  return getLastSeenUserIdAfterAuth()
 }
 
 /**
