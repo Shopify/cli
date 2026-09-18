@@ -3,7 +3,7 @@ import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-k
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const StoreInfoStoreOwnerSchema = zod.object({
-  name: StoreSchema.shape.name.optional(),
+  name: zod.string().optional(),
   email: zod.string().optional(),
 })
 
