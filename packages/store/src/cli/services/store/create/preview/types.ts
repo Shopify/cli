@@ -1,14 +1,11 @@
+import {StoreSchema} from '../../types.js'
 import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const PreviewStoreSchema = zod.object({
-  id: zod.string(),
-  name: zod.string(),
-  subdomain: zod.string(),
-  country: zod.string().optional(),
+const PreviewStoreSchema = StoreSchema.pick({id: true, name: true, subdomain: true, country: true}).extend({
   storefrontUrl: zod.string(),
   type: zod.literal('preview').optional(),
-  authScopes: zod.array(zod.string()).optional().describe('Preapproved Admin API scopes for the preview store.'),
+  authScopes: StoreSchema.shape.authScopes.describe('Preapproved Admin API scopes for the preview store.'),
 })
 
 export const createPreviewStoreJsonOutputSchema = defineJsonOutputSchema({
