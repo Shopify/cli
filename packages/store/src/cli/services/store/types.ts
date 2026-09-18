@@ -9,4 +9,12 @@ export const StoreSchema = zod.object({
   country: zod.string().optional(),
   type: zod.string().optional(),
   authScopes: zod.array(zod.string()).optional(),
+  plan: zod.string().optional(),
+  organizationId: zod.string(),
+  organizationName: zod.string(),
+})
+
+export const StoreOrganizationSchema = zod.object({
+  id: zod.string(),
+  name: zod.string(),
 })
