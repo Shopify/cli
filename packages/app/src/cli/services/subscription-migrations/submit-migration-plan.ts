@@ -1,33 +1,7 @@
-import {createMigrationOperation, type MigrationApiInput, type MigrationUserError} from './partners-api.js'
+import {createMigrationOperation, type MigrationApiInput} from './partners-api.js'
 import {deriveBatchIdempotencyKey, generateInvocationId} from './plan/idempotency.js'
-import type {
-  MigrationOperation,
-  MigrationPlan,
-  PlannedMigrationRow,
-  ScheduledMigrationRow,
-} from '../../models/subscription-migrations.js'
-
-export interface SubmittedMigrationOperation {
-  batchIndex: number
-  batchPayloadDigest: string
-  operation: MigrationOperation
-}
-
-export interface MigrationSubmission {
-  clientId: string
-  action: MigrationPlan['action']
-  inputDigest: string
-  total: number
-  operations: SubmittedMigrationOperation[]
-}
-
-export type MigrationSubmissionFailure =
-  | {type: 'submission'; batchIndex: number; userErrors: MigrationUserError[]}
-  | {type: 'operations'; operationIds: string[]}
-
-export type MigrationSubmissionResult =
-  | {status: 'success'; submission: MigrationSubmission}
-  | {status: 'failed'; submission: MigrationSubmission; failure: MigrationSubmissionFailure}
+import type {MigrationSubmission, MigrationSubmissionResult} from './types.js'
+import type {MigrationPlan, PlannedMigrationRow, ScheduledMigrationRow} from '../../models/subscription-migrations.js'
 
 export class MigrationSubmissionProtocolError extends Error {
   readonly batchIndex: number
