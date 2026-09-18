@@ -347,6 +347,45 @@ describe('committed secret classification', () => {
     rmSync(dir, {recursive: true, force: true})
   })
 
+  test('scores a real token format in a multi-suffix template env file', async () => {
+    const dir = makeApp({'.env.local.example': trackedEnvSecret()})
+    git(dir, ['init', '-q', '.'])
+    git(dir, ['add', '.'])
+    git(dir, ['commit', '-qm', 'init'])
+
+    const result = await scan(dir)
+    expect(result.issues.find((issue) => issue.id === 'COMMITTED_SECRET')).toMatchObject({
+      severity: 'high',
+      location: {file: '.env.local.example'},
+    })
+    rmSync(dir, {recursive: true, force: true})
+  })
+
+  test('scores quoted JSON secret assignments in a tracked named secret file', async () => {
+    const dir = makeApp({'secrets.json': '{ "password": "correct-horse-battery-staple" }\n'})
+    git(dir, ['init', '-q', '.'])
+    git(dir, ['add', '.'])
+    git(dir, ['commit', '-qm', 'init'])
+
+    const result = await scan(dir)
+    expect(result.issues.find((issue) => issue.id === 'COMMITTED_SECRET')).toMatchObject({
+      severity: 'high',
+      location: {file: 'secrets.json'},
+    })
+    rmSync(dir, {recursive: true, force: true})
+  })
+
+  test('does not score quoted JSON placeholder assignments in a tracked named secret file', async () => {
+    const dir = makeApp({'secrets.json': '{ "password": "changeme" }\n'})
+    git(dir, ['init', '-q', '.'])
+    git(dir, ['add', '.'])
+    git(dir, ['commit', '-qm', 'init'])
+
+    const result = await scan(dir)
+    expect(result.issues.filter((issue) => issue.id === 'COMMITTED_SECRET')).toEqual([])
+    rmSync(dir, {recursive: true, force: true})
+  })
+
   test('does not treat Stripe publishable keys as secrets', async () => {
     const line = `const k = "${PROBES.stripePublishable}";`
     expect(SECRET_PATTERNS.some((pattern) => pattern.regex.test(line))).toBe(false)
