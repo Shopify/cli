@@ -1,5 +1,15 @@
 # @shopify/eslint-plugin-cli
 
+## 4.0.0
+
+### Major Changes
+
+- Require ESLint 9 and use flat configuration.
+
+### Minor Changes
+
+- Add typed JSON output enforcement with configurable command exceptions.
+
 ## 3.47.2
 
 ### Patch Changes
