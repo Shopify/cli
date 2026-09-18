@@ -24,6 +24,7 @@ export type {
   FindingsDocument,
   ParseTraceResult,
 } from './run.js'
+export {hasRecordedAgentReview} from './trace/index.js'
 export {buildSubmission, SUBMISSION_SCHEMA_VERSION} from './submission/index.js'
 export type {AppDoctorSubmission, AppDoctorSubmissionReport, BuildSubmissionOptions} from './submission/index.js'
 export type {ReviewPack} from './checks/index.js'

@@ -3,7 +3,7 @@ import {computeResultHash} from '../scorer/index.js'
 import {mergeExternalFindings, validateExternalFinding} from '../external/index.js'
 import {formatJson} from '../output/format.js'
 import {scan} from '../scanners/index.js'
-import {compileTrace, sha256, validateSuppression, validateTrace} from '../trace/index.js'
+import {compileTrace, hasRecordedAgentReview, sha256, validateSuppression, validateTrace} from '../trace/index.js'
 import {afterEach, describe, expect, test} from 'vitest'
 import {mkdtempSync, rmSync, writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
@@ -139,6 +139,81 @@ describe('trace v2', () => {
         },
       }),
     ).toMatch(/actor/)
+  })
+
+  test('distinguishes an initial trace from recorded agent review state', () => {
+    const initialTrace = compileTrace(result())
+    expect(hasRecordedAgentReview(initialTrace)).toBe(false)
+
+    const initialAgentExecution = initialTrace.checks_executed.find(
+      (execution) => execution.kind === 'agent' && execution.id === 'MISSING_TENANT_ISOLATION',
+    )!
+    const {reason: _reason, ...agentExecution} = initialAgentExecution
+    const completedReview = compileTrace(result(), {
+      agentChecksExecuted: [
+        {
+          ...agentExecution,
+          status: 'executed',
+          required: true,
+          applicable: true,
+          inspected_files: ['app/a.ts'],
+        },
+      ],
+    })
+    expect(hasRecordedAgentReview(completedReview)).toBe(true)
+
+    const suppressedReview = structuredClone(initialTrace)
+    suppressedReview.suppressions.push({
+      id: 'accepted-risk',
+      finding_fingerprint: `sha256:${'f'.repeat(64)}`,
+      justification: 'Accepted for this test.',
+      provenance: {source: 'human', created_at: '2026-08-28T00:00:00.000Z'},
+    })
+    expect(hasRecordedAgentReview(suppressedReview)).toBe(true)
+  })
+
+  test('detects findings, external checks, and rejected agent input as recorded review state', () => {
+    const initialTrace = compileTrace(result())
+    const initialAgentExecution = initialTrace.checks_executed.find((execution) => execution.kind === 'agent')!
+
+    const findingReview = structuredClone(initialTrace)
+    findingReview.findings.push({
+      fingerprint: `sha256:${'f'.repeat(64)}`,
+      source: 'agent',
+      check_id: initialAgentExecution.id,
+      check_version: initialAgentExecution.version,
+      prompt_hash: initialAgentExecution.prompt_hash!,
+      severity: 'medium',
+      title: 'Recorded agent finding',
+      message: 'An agent recorded this finding.',
+      location: {file: 'app/a.ts'},
+      evidence: [],
+      fix: {automated: false, description: 'Fix the recorded issue.'},
+      suppressed: false,
+    })
+    expect(hasRecordedAgentReview(findingReview)).toBe(true)
+
+    const externalReview = structuredClone(initialTrace)
+    externalReview.checks_executed.push({
+      id: 'EXTERNAL_REVIEW',
+      version: 1,
+      kind: 'external',
+      status: 'executed',
+      required: false,
+      applicable: true,
+      languages: ['typescript'],
+      framework: 'react_router',
+      surface: 'react_router',
+      inspected_files: ['app/a.ts'],
+      findings: 0,
+      analysis_mode: 'external',
+    })
+    expect(hasRecordedAgentReview(externalReview)).toBe(true)
+
+    const rejectedReview = structuredClone(initialTrace)
+    const rejectedExecution = rejectedReview.checks_executed.find((execution) => execution.kind === 'agent')!
+    rejectedExecution.reason = {code: 'input_rejected', message: 'The submitted agent input was rejected.'}
+    expect(hasRecordedAgentReview(rejectedReview)).toBe(true)
   })
 
   test('compiles a large-app input_hashes map instead of rejecting it as cyclic', () => {

@@ -134,6 +134,18 @@ function issueToFinding(issueInput: Issue): TraceFinding {
   return {fingerprint: findingFingerprint(core), ...core, suppressed: false}
 }
 
+export function hasRecordedAgentReview(trace: TraceV2): boolean {
+  return (
+    trace.findings.some((finding) => finding.source === 'agent' || finding.source === 'external') ||
+    trace.checks_executed.some((execution) => {
+      if (execution.kind === 'external') return true
+      if (execution.kind !== 'agent') return false
+      return execution.status !== 'unresolved' || execution.reason?.code !== 'not_reported'
+    }) ||
+    trace.suppressions.length > 0
+  )
+}
+
 export interface CompileTraceOptions {
   engineVersion?: string
   ruleset?: string

@@ -1,13 +1,21 @@
 import {doctorExitCode, executeAppDoctor, loadAppDoctorFindings, resolveAppDoctorRoot} from './app-doctor-api.js'
-import {writeAppDoctorArtifacts} from './app-doctor-artifacts.js'
+import {appDoctorArtifactPaths, readTrace, writeAppDoctorArtifacts} from './app-doctor-artifacts.js'
 import deliverAppDoctorInstructions from './app-doctor-instructions.js'
-import {resolveAppDoctorCommands, type AppDoctorCommands} from './app-doctor-commands.js'
+import {formatAppDoctorCommand, resolveAppDoctorCommands, type AppDoctorCommands} from './app-doctor-commands.js'
+import {hasRecordedAgentReview} from './app-doctor-engine/index.js'
 import {encodeDoctorJson, toDoctorJson} from './doctor-json.js'
 import {renderDoctorReport} from './doctor-output.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {fileExists} from '@shopify/cli-kit/node/fs'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
-import type {AppDoctorArtifactPaths} from './app-doctor-artifacts.js'
+import type {
+  AppDoctorArtifactPaths,
+  ReadTraceResult,
+  ResolvedAppDoctorArtifactPaths,
+  WriteAppDoctorArtifactsOptions,
+} from './app-doctor-artifacts.js'
 import type {AppDoctorBlockingLevel, AppDoctorExecution} from './app-doctor-api.js'
 import type {DoctorReportInput} from './doctor-output.js'
 import type {RenderSelectPromptOptions} from '@shopify/cli-kit/node/ui'
@@ -20,13 +28,21 @@ interface DoctorOptions {
   yes: boolean
   skipInstructions: boolean
   findingsPath?: string
+  clean: boolean
 }
 
 export type AppDoctorInstructionsDestination = 'copy' | 'print' | 'nothing'
 
 interface DoctorDependencies {
-  execute(options: {directory: string; findingsPath?: string}): Promise<AppDoctorExecution>
-  writeArtifacts(execution: AppDoctorExecution): Promise<AppDoctorArtifactPaths>
+  resolveRoot(directory: string): string
+  artifactPaths(appRoot: string): ResolvedAppDoctorArtifactPaths
+  findingsFileExists(path: string): Promise<boolean>
+  readTrace(path: string): Promise<ReadTraceResult>
+  execute(options: {appRoot: string; findingsPath?: string}): Promise<AppDoctorExecution>
+  writeArtifacts(
+    execution: AppDoctorExecution,
+    options: WriteAppDoctorArtifactsOptions,
+  ): Promise<AppDoctorArtifactPaths>
   canPrompt(): boolean
   selectInstructionsDestination(): Promise<AppDoctorInstructionsDestination>
   deliverInstructions(options: {
@@ -51,8 +67,11 @@ export const appDoctorInstructionsPrompt: RenderSelectPromptOptions<AppDoctorIns
 }
 
 const defaultDependencies: DoctorDependencies = {
-  execute: async ({directory, findingsPath}) => {
-    const appRoot = resolveAppDoctorRoot(directory)
+  resolveRoot: resolveAppDoctorRoot,
+  artifactPaths: appDoctorArtifactPaths,
+  findingsFileExists: fileExists,
+  readTrace,
+  execute: async ({appRoot, findingsPath}) => {
     const findings = findingsPath ? await loadAppDoctorFindings(findingsPath) : undefined
     return executeAppDoctor({appRoot, findings})
   },
@@ -96,16 +115,39 @@ function doctorReportInput(
   }
 }
 
+async function assertCanStartScan(
+  paths: ResolvedAppDoctorArtifactPaths,
+  commands: AppDoctorCommands,
+  dependencies: DoctorDependencies,
+): Promise<void> {
+  const traceResult = await dependencies.readTrace(paths.tracePath)
+  if (traceResult.status === 'ok' && hasRecordedAgentReview(traceResult.trace)) {
+    throw new AbortError(
+      'App Doctor did not start a new scan.',
+      `The existing trace contains agent review results:\n  ${paths.tracePath}\n\nUse the existing trace, or discard the current review and start over:\n  ${formatAppDoctorCommand(commands.clean)}`,
+    )
+  }
+
+  if (await dependencies.findingsFileExists(paths.findingsPath)) {
+    throw new AbortError(
+      'App Doctor did not start a new scan.',
+      `Agent findings exist at:\n  ${paths.findingsPath}\n\nCompile those findings:\n  ${formatAppDoctorCommand(commands.compile)}\n\nTo discard the current agent findings and start over:\n  ${formatAppDoctorCommand(commands.clean)}`,
+    )
+  }
+}
+
 export default async function doctor(
   options: DoctorOptions,
   dependencies: DoctorDependencies = defaultDependencies,
 ): Promise<void> {
-  const execution = await dependencies.execute({
-    directory: options.directory,
-    findingsPath: options.findingsPath,
-  })
-  const artifacts = await dependencies.writeArtifacts(execution)
-  const commands = resolveAppDoctorCommands(execution.appRoot)
+  const appRoot = dependencies.resolveRoot(options.directory)
+  const commands = resolveAppDoctorCommands(appRoot)
+  if (!options.findingsPath && !options.clean) {
+    await assertCanStartScan(dependencies.artifactPaths(appRoot), commands, dependencies)
+  }
+
+  const execution = await dependencies.execute({appRoot, findingsPath: options.findingsPath})
+  const artifacts = await dependencies.writeArtifacts(execution, {clean: options.clean})
 
   if (options.json) {
     dependencies.output(encodeDoctorJson(toDoctorJson(execution)))
