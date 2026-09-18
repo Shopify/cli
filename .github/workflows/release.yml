@@ -72,12 +72,8 @@ jobs:
             const claims = JSON.parse(Buffer.from(encodedClaims, 'base64url').toString());
             // Log only identity metadata, never the signed token or exchanged credential.
             const claimNames = [
-              'iss', 'aud', 'sub', 'issuer_scope', 'repository', 'repository_id', 'repository_owner',
-              'repository_owner_id', 'repository_visibility', 'workflow', 'workflow_ref',
-              'workflow_sha', 'job_workflow_ref', 'job_workflow_sha', 'ref', 'ref_type', 'sha',
-              'head_ref', 'base_ref', 'ref_protected', 'environment', 'environment_node_id',
-              'enterprise', 'enterprise_id', 'runner_environment', 'event_name', 'check_run_id',
-              'actor', 'actor_id', 'run_id', 'run_number', 'run_attempt', 'iat', 'nbf', 'exp',
+              'iss', 'aud', 'sub', 'repository', 'workflow_ref', 'job_workflow_ref',
+              'environment', 'runner_environment', 'event_name',
             ];
             const identity = Object.fromEntries(claimNames.map((name) => [name, claims[name] ?? null]));
             core.info(JSON.stringify({alg: header.alg, kid: header.kid, claims: identity}, null, 2));
@@ -93,12 +89,8 @@ jobs:
               const value = response.headers.get(name);
               if (value) core.info(`${name}: ${value}`);
             }
-            if (response.ok) {
-              await response.body?.cancel();
-            } else {
-              const body = await response.json();
-              core.warning(typeof body.message === 'string' ? body.message : 'npm rejected the token exchange');
-            }
+            // The response can contain an npm credential; never read or log its body.
+            await response.body?.cancel();
       - name: Force snapshot changeset
         if: ${{ github.event.comment.body == '/snapit' }}
         run: "mv .changeset/force-snapshot-build.md.ignore .changeset/force-snapshot-build.md"
