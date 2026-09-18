@@ -88,12 +88,14 @@ async function info(
   project: ReturnType<typeof testProject>,
   options: {format: 'json' | 'text'; webEnv: boolean; developerPlatformClient: DeveloperPlatformClient},
 ) {
-  const result = await getInfo(app, remoteApp, organization, project, options)
-  return formatAppInfoResult(
-    result,
-    {app, remoteApp, organization, project, developerPlatformClient: options.developerPlatformClient},
-    options.format,
+  const result = await getInfo(
+    app,
+    {...remoteApp, developerPlatformClient: options.developerPlatformClient},
+    organization,
+    project,
+    options,
   )
+  return formatAppInfoResult(result, {app, remoteApp, organization, project}, options.format)
 }
 
 describe('info', () => {
@@ -309,7 +311,7 @@ describe('info', () => {
 
       // Then
       const resultObject = JSON.parse(result as string)
-      expect(resultObject.organization).toEqual({id: '123', businessName: 'test'})
+      expect(resultObject.organization).toEqual({id: '123', businessName: 'test', source: ORG1.source})
     })
   })
 })

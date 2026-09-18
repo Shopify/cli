@@ -10,6 +10,11 @@ import {
 } from '../models/app/app.test-data.js'
 import {OrganizationSource} from '../models/organization.js'
 import {AppErrors} from '../models/app/loader.js'
+import {Project} from '../models/project/project.js'
+import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {platformAndArch} from '@shopify/cli-kit/node/os'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {expect, test, vi} from 'vitest'
 
 vi.mock('./context.js')
@@ -44,7 +49,16 @@ async function resultWithExtensions() {
 
 test('preserves the legacy JSON payload from real app and extension instances', async () => {
   const {app, result} = await resultWithExtensions()
-  expect(JSON.parse(appInfoJsonOutputSchema.encode(result))).toMatchSnapshot()
+  const {remoteApp, account, project, system, devStoreUrl, ...legacy} = JSON.parse(
+    appInfoJsonOutputSchema.encode(result),
+  )
+  delete legacy.organization.source
+  for (const extension of [...legacy.allExtensions, ...legacy.realExtensions]) {
+    for (const key of ['name', 'type', 'externalType', 'humanName', 'surface', 'features', 'dependency']) {
+      delete extension[key]
+    }
+  }
+  expect(legacy).toMatchSnapshot()
   expect(app.configSchema).toBeDefined()
   expect(app.allExtensions[0]!.specification).toHaveProperty('schema')
 })
@@ -116,4 +130,108 @@ test('preserves dynamic configuration values and development URLs', async () => 
     applicationUrl: 'https://example.com',
     redirectUrlWhitelist: ['https://example.com/auth'],
   })
+})
+
+test('includes all public remote fields without credentials or the API client', async () => {
+  const publicRemoteApp = {
+    id: 'gid://shopify/App/123',
+    title: 'Remote title',
+    apiKey: 'client-id',
+    organizationId: '456',
+    appType: 'custom',
+    newApp: false,
+    grantedScopes: ['read_orders'],
+    developmentStorePreviewEnabled: false,
+    applicationUrl: 'https://example.com',
+    redirectUrlWhitelist: ['https://example.com/auth'],
+    requestedAccessScopes: ['read_products'],
+    webhookApiVersion: '2026-07',
+    embedded: false,
+    posEmbedded: false,
+    preferencesUrl: 'https://example.com/preferences',
+    gdprWebhooks: {
+      customerDeletionUrl: 'https://example.com/delete',
+      customerDataRequestUrl: 'https://example.com/data',
+      shopDeletionUrl: 'https://example.com/shop-delete',
+    },
+    appProxy: {subPath: 'proxy', subPathPrefix: 'apps', url: 'https://example.com/proxy'},
+    configuration: {name: 'Remote configuration', application_url: 'https://example.com', embedded: false},
+    flags: [],
+  }
+  const result = await info(testAppLinked(), testOrganizationApp(publicRemoteApp), organization, testProject(), {
+    webEnv: false,
+  })
+  const json = JSON.parse(appInfoJsonOutputSchema.encode(result))
+  expect(json.remoteApp).toEqual(publicRemoteApp)
+  expect(json.organization).toEqual(organization)
+  expect(json.system).toEqual({
+    cliVersion: CLI_KIT_VERSION,
+    nodeVersion: process.version,
+    ...platformAndArch(),
+    ...(process.env.SHELL === undefined ? {} : {shell: process.env.SHELL}),
+  })
+})
+
+test('includes extension identity and capabilities and resolves the dev store', async () => {
+  const {result} = await resultWithExtensions()
+  const json = JSON.parse(appInfoJsonOutputSchema.encode(result))
+  expect(json.devStoreUrl).toBe('example.myshopify.com')
+  expect(json.allExtensions[0]).toMatchObject({
+    name: 'Example',
+    type: 'ui_extension',
+    externalType: 'ui_extension_external',
+    features: expect.any(Array),
+    surface: expect.any(String),
+  })
+  const app = testAppLinked({hiddenConfig: {dev_store_url: 'old.myshopify.com'}})
+  app.configuration = {
+    ...app.configuration,
+    build: {...app.configuration.build, dev_store_url: 'current.myshopify.com'},
+  }
+  const current = await info(app, testOrganizationApp(), organization, testProject(), {webEnv: false})
+  expect(current).toHaveProperty('devStoreUrl', 'current.myshopify.com')
+})
+
+test('includes discovered configuration files and errors without adding environment secrets', async () => {
+  await inTemporaryDirectory(async (directory) => {
+    await writeFile(joinPath(directory, 'shopify.app.toml'), 'client_id = "client-id"')
+    await writeFile(joinPath(directory, 'shopify.app.staging.toml'), 'client_id = "staging-id"')
+    await writeFile(joinPath(directory, 'shopify.app.invalid.toml'), 'invalid = [')
+    await writeFile(joinPath(directory, '.env.production'), 'SECRET=private-value')
+    await mkdir(joinPath(directory, 'extensions/example'))
+    await writeFile(joinPath(directory, 'extensions/example/shopify.extension.toml'), 'type = "function"')
+    await mkdir(joinPath(directory, 'web'))
+    await writeFile(joinPath(directory, 'web/shopify.web.toml'), 'roles = ["frontend"]')
+    const project = await Project.load(directory)
+    const result = await info(testAppLinked({directory}), testOrganizationApp(), organization, project, {webEnv: false})
+    const json = JSON.parse(appInfoJsonOutputSchema.encode(result))
+    expect(json.project.appConfigFiles).toEqual(
+      expect.arrayContaining([
+        {path: joinPath(directory, 'shopify.app.toml'), content: {client_id: 'client-id'}, errors: []},
+        {path: joinPath(directory, 'shopify.app.staging.toml'), content: {client_id: 'staging-id'}, errors: []},
+      ]),
+    )
+    expect(json.project.extensionConfigFiles).toEqual([
+      {path: joinPath(directory, 'extensions/example/shopify.extension.toml'), content: {type: 'function'}, errors: []},
+    ])
+    expect(json.project.webConfigFiles).toEqual([
+      {path: joinPath(directory, 'web/shopify.web.toml'), content: {roles: ['frontend']}, errors: []},
+    ])
+    expect(json.project.errors).toEqual([
+      {path: joinPath(directory, 'shopify.app.invalid.toml'), message: expect.any(String)},
+    ])
+    expect(json.project.dotenvFiles).toEqual([{path: joinPath(directory, '.env.production')}])
+    expect(JSON.stringify(json)).not.toContain('private-value')
+  })
+})
+
+test.each([
+  {type: 'UserAccount' as const, email: 'dev@example.com'},
+  {type: 'ServiceAccount' as const, orgName: 'Example organization'},
+  {type: 'UnknownAccount' as const},
+])('includes the cached account identity: $type', async (account) => {
+  const remoteApp = testOrganizationApp()
+  vi.spyOn(remoteApp.developerPlatformClient, 'accountInfo').mockResolvedValue(account)
+  const result = await info(testAppLinked(), remoteApp, organization, testProject(), {webEnv: false})
+  expect(JSON.parse(appInfoJsonOutputSchema.encode(result)).account).toEqual(account)
 })

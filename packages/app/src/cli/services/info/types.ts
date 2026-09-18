@@ -20,6 +20,13 @@ const specificationSchema = zod
 
 const extensionSchema = zod
   .object({
+    name: zod.string(),
+    type: zod.string(),
+    externalType: zod.string(),
+    humanName: zod.string(),
+    surface: zod.string(),
+    features: zod.array(zod.string()),
+    dependency: zod.string().optional(),
     entrySourceFilePath: zod.string(),
     devUUID: zod.string(),
     localIdentifier: zod.string(),
@@ -48,10 +55,71 @@ const configurationErrorSchema = zod
   })
   .passthrough()
 
+// Explicitly select public remote data before serialization: the model also contains
+// credentials and a live API client, neither of which belongs in app information.
+export const remoteAppInfoSchema = zod.object({
+  id: zod.string(),
+  title: zod.string(),
+  apiKey: zod.string(),
+  organizationId: zod.string(),
+  appType: zod.string().optional(),
+  newApp: zod.boolean().optional(),
+  grantedScopes: zod.array(zod.string()),
+  developmentStorePreviewEnabled: zod.boolean().optional(),
+  applicationUrl: zod.string().optional(),
+  redirectUrlWhitelist: zod.array(zod.string()).optional(),
+  requestedAccessScopes: zod.array(zod.string()).optional(),
+  webhookApiVersion: zod.string().optional(),
+  embedded: zod.boolean().optional(),
+  posEmbedded: zod.boolean().optional(),
+  preferencesUrl: zod.string().optional(),
+  gdprWebhooks: zod
+    .object({
+      customerDeletionUrl: zod.string().optional(),
+      customerDataRequestUrl: zod.string().optional(),
+      shopDeletionUrl: zod.string().optional(),
+    })
+    .optional(),
+  appProxy: zod.object({subPath: zod.string(), subPathPrefix: zod.string(), url: zod.string()}).optional(),
+  configuration: configurationSchema.optional(),
+  flags: zod.array(zod.string()),
+})
+
+const fileErrorSchema = zod.object({path: zod.string(), message: zod.string()})
+const configFileSchema = zod.object({
+  path: zod.string(),
+  content: configurationSchema,
+  errors: zod.array(fileErrorSchema),
+})
+const projectSchema = zod.object({
+  directory: zod.string(),
+  appConfigFiles: zod.array(configFileSchema),
+  extensionConfigFiles: zod.array(configFileSchema),
+  webConfigFiles: zod.array(configFileSchema),
+  dotenvFiles: zod.array(zod.object({path: zod.string()})),
+  errors: zod.array(fileErrorSchema),
+})
+const systemSchema = zod.object({
+  cliVersion: zod.string(),
+  nodeVersion: zod.string(),
+  platform: zod.string(),
+  arch: zod.string(),
+  shell: zod.string().optional(),
+})
+
 // These are legacy enumerable model fields, including additional metadata. Keep
 // passthrough here so adoption cannot silently remove existing JSON properties.
 const appSchema = zod
   .object({
+    remoteApp: remoteAppInfoSchema,
+    account: zod.discriminatedUnion('type', [
+      zod.object({type: zod.literal('UserAccount'), email: zod.string()}),
+      zod.object({type: zod.literal('ServiceAccount'), orgName: zod.string()}),
+      zod.object({type: zod.literal('UnknownAccount')}),
+    ]),
+    project: projectSchema,
+    system: systemSchema,
+    devStoreUrl: zod.string().optional(),
     name: zod.string(),
     idEnvironmentVariableName: zod.literal('SHOPIFY_API_KEY'),
     directory: zod.string(),
@@ -71,7 +139,7 @@ const appSchema = zod
     packageManager: zod.string(),
     nodeDependencies: zod.record(zod.string()),
     usesWorkspaces: zod.boolean(),
-    organization: zod.object({id: zod.string(), businessName: zod.string()}),
+    organization: zod.object({id: zod.string(), businessName: zod.string(), source: zod.string()}),
     allExtensions: zod.array(extensionSchema),
   })
   .passthrough()
@@ -87,6 +155,9 @@ export const appInfoJsonOutputSchema = defineJsonOutputSchema({
   schema: zod.union([webEnvironmentSchema, appSchema]),
   definitions: {
     AppInfo: appSchema,
+    AppInfoRemoteApp: remoteAppInfoSchema,
+    AppInfoProject: projectSchema,
+    AppInfoSystem: systemSchema,
     AppInfoWebEnvironment: webEnvironmentSchema,
     AppInfoExtension: extensionSchema,
     AppInfoSpecification: specificationSchema,

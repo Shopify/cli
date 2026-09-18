@@ -1,11 +1,10 @@
 import {AppInfoResult, appInfoJsonOutputSchema} from './types.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppLinkedInterface, getAppScopes} from '../../models/app/app.js'
 import {Project} from '../../models/project/project.js'
 import {configurationFileNames} from '../../constants.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {Organization, OrganizationApp} from '../../models/organization.js'
-import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
+import {isServiceAccount, isUserAccount, AccountInfo} from '@shopify/cli-kit/node/session'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {basename, relativePath} from '@shopify/cli-kit/node/path'
 import {
@@ -20,16 +19,11 @@ import {AlertCustomSection, InlineToken, renderInfo} from '@shopify/cli-kit/node
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {getArrayRejectingUndefined, uniq} from '@shopify/cli-kit/common/array'
 
-interface InfoPresentationOptions {
-  developerPlatformClient: DeveloperPlatformClient
-}
-
 interface InfoContext {
   app: AppLinkedInterface
   remoteApp: OrganizationApp
   organization: Organization
   project: Project
-  developerPlatformClient: DeveloperPlatformClient
 }
 
 export async function formatAppInfoResult(
@@ -45,8 +39,8 @@ export async function formatAppInfoResult(
     ${outputToken.green('SCOPES')}=${result.SCOPES}
   `
   }
-  const {app, remoteApp, organization, project, developerPlatformClient} = context
-  return new AppInfo(app, remoteApp, organization, project, {developerPlatformClient}).output()
+  const {app, remoteApp, organization, project} = context
+  return new AppInfo(app, remoteApp, organization, project, result.account).output()
 }
 
 export async function renderAppInfoResult(
@@ -71,20 +65,20 @@ class AppInfo {
   private readonly remoteApp: OrganizationApp
   private readonly organization: Organization
   private readonly project: Project
-  private readonly options: InfoPresentationOptions
+  private readonly account: AccountInfo
 
   constructor(
     app: AppLinkedInterface,
     remoteApp: OrganizationApp,
     organization: Organization,
     project: Project,
-    options: InfoPresentationOptions,
+    account: AccountInfo,
   ) {
     this.app = app
     this.remoteApp = remoteApp
     this.organization = organization
     this.project = project
-    this.options = options
+    this.account = account
   }
 
   async output(): Promise<AlertCustomSection[]> {
@@ -103,7 +97,7 @@ class AppInfo {
     }
 
     let userAccountInfo: [string, string] = ['User', 'unknown']
-    const retrievedAccountInfo = await this.options.developerPlatformClient.accountInfo()
+    const retrievedAccountInfo = this.account
     if (isServiceAccount(retrievedAccountInfo)) {
       userAccountInfo = ['Service account', retrievedAccountInfo.orgName]
     } else if (isUserAccount(retrievedAccountInfo)) {

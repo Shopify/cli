@@ -1696,6 +1696,69 @@ DESCRIPTION
       "AppInfo": {
         "type": "object",
         "properties": {
+          "remoteApp": {
+            "$ref": "#/definitions/AppInfoRemoteApp"
+          },
+          "account": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "UserAccount"
+                  },
+                  "email": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "email"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "ServiceAccount"
+                  },
+                  "orgName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "orgName"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "UnknownAccount"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "project": {
+            "$ref": "#/definitions/AppInfoProject"
+          },
+          "system": {
+            "$ref": "#/definitions/AppInfoSystem"
+          },
+          "devStoreUrl": {
+            "type": "string"
+          },
           "name": {
             "type": "string"
           },
@@ -1797,11 +1860,15 @@ DESCRIPTION
               },
               "businessName": {
                 "type": "string"
+              },
+              "source": {
+                "type": "string"
               }
             },
             "required": [
               "id",
-              "businessName"
+              "businessName",
+              "source"
             ],
             "additionalProperties": false
           },
@@ -1813,6 +1880,10 @@ DESCRIPTION
           }
         },
         "required": [
+          "remoteApp",
+          "account",
+          "project",
+          "system",
           "name",
           "idEnvironmentVariableName",
           "directory",
@@ -1831,6 +1902,234 @@ DESCRIPTION
           "allExtensions"
         ],
         "additionalProperties": true
+      },
+      "AppInfoRemoteApp": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "apiKey": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "appType": {
+            "type": "string"
+          },
+          "newApp": {
+            "type": "boolean"
+          },
+          "grantedScopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "developmentStorePreviewEnabled": {
+            "type": "boolean"
+          },
+          "applicationUrl": {
+            "type": "string"
+          },
+          "redirectUrlWhitelist": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "requestedAccessScopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "webhookApiVersion": {
+            "type": "string"
+          },
+          "embedded": {
+            "type": "boolean"
+          },
+          "posEmbedded": {
+            "type": "boolean"
+          },
+          "preferencesUrl": {
+            "type": "string"
+          },
+          "gdprWebhooks": {
+            "type": "object",
+            "properties": {
+              "customerDeletionUrl": {
+                "type": "string"
+              },
+              "customerDataRequestUrl": {
+                "type": "string"
+              },
+              "shopDeletionUrl": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "appProxy": {
+            "type": "object",
+            "properties": {
+              "subPath": {
+                "type": "string"
+              },
+              "subPathPrefix": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subPath",
+              "subPathPrefix",
+              "url"
+            ],
+            "additionalProperties": false
+          },
+          "configuration": {
+            "$ref": "#/definitions/AppInfo/properties/configuration"
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "apiKey",
+          "organizationId",
+          "grantedScopes",
+          "flags"
+        ],
+        "additionalProperties": false
+      },
+      "AppInfoProject": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string"
+          },
+          "appConfigFiles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "content": {
+                  "$ref": "#/definitions/AppInfo/properties/configuration"
+                },
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "path",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "path",
+                "content",
+                "errors"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "extensionConfigFiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppInfoProject/properties/appConfigFiles/items"
+            }
+          },
+          "webConfigFiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppInfoProject/properties/appConfigFiles/items"
+            }
+          },
+          "dotenvFiles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppInfoProject/properties/appConfigFiles/items/properties/errors/items"
+            }
+          }
+        },
+        "required": [
+          "directory",
+          "appConfigFiles",
+          "extensionConfigFiles",
+          "webConfigFiles",
+          "dotenvFiles",
+          "errors"
+        ],
+        "additionalProperties": false
+      },
+      "AppInfoSystem": {
+        "type": "object",
+        "properties": {
+          "cliVersion": {
+            "type": "string"
+          },
+          "nodeVersion": {
+            "type": "string"
+          },
+          "platform": {
+            "type": "string"
+          },
+          "arch": {
+            "type": "string"
+          },
+          "shell": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cliVersion",
+          "nodeVersion",
+          "platform",
+          "arch"
+        ],
+        "additionalProperties": false
       },
       "AppInfoWebEnvironment": {
         "type": "object",
@@ -1854,6 +2153,30 @@ DESCRIPTION
       "AppInfoExtension": {
         "type": "object",
         "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "externalType": {
+            "type": "string"
+          },
+          "humanName": {
+            "type": "string"
+          },
+          "surface": {
+            "type": "string"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dependency": {
+            "type": "string"
+          },
           "entrySourceFilePath": {
             "type": "string"
           },
@@ -1889,6 +2212,12 @@ DESCRIPTION
           }
         },
         "required": [
+          "name",
+          "type",
+          "externalType",
+          "humanName",
+          "surface",
+          "features",
           "entrySourceFilePath",
           "devUUID",
           "localIdentifier",
