@@ -1,4 +1,4 @@
-import {presentMigrationCancellationResult} from './result-presenter.js'
+import {presentMigrationCancellationResult, presentMigrationSubmissionResult} from './result-presenter.js'
 import {outputMigrationList} from '../../../services/subscription-migrations/list-output.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
@@ -72,6 +72,38 @@ describe('migration list JSON output', () => {
       expect(stdout.mock.calls[0]?.[0]).toBe(
         `${JSON.stringify({schemaVersion: 1, subscriptions: [subscription]}, null, 2)}\n`,
       )
+      expect(stderr).not.toHaveBeenCalled()
+    } finally {
+      stdout.mockRestore()
+      stderr.mockRestore()
+    }
+  })
+})
+
+describe('migration submission JSON output', () => {
+  test.each([false, true])('writes one final failure document with watch=%s', (watch) => {
+    const stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+    const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+    const submission = {
+      clientId: 'client-id',
+      action: 'schedule' as const,
+      inputDigest: 'input-digest',
+      total: 2,
+      operations: [
+        {
+          batchIndex: 0,
+          batchPayloadDigest: 'batch-digest',
+          operation: {id: 'operation-one', status: 'RUNNING' as const, total: 1, results: {edges: []}},
+        },
+      ],
+    }
+    const failure = {type: 'submission' as const, batchIndex: 1, userErrors: [{message: 'Rejected', field: null}]}
+
+    try {
+      expect(presentMigrationSubmissionResult({status: 'failed', submission, failure}, {json: true, watch})).toBe(1)
+
+      expect(stdout).toHaveBeenCalledOnce()
+      expect(stdout.mock.calls[0]?.[0]).toBe(`${JSON.stringify({schemaVersion: 1, ...submission, failure}, null, 2)}\n`)
       expect(stderr).not.toHaveBeenCalled()
     } finally {
       stdout.mockRestore()

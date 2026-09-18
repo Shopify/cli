@@ -102,3 +102,49 @@ export const migrationListJsonOutputSchema = defineJsonOutputSchema({
 })
 
 export type MigrationListResult = InferJsonOutputSchema<typeof migrationListJsonOutputSchema>
+
+const SubmittedMigrationOperationSchema = zod.object({
+  batchIndex: zod.number(),
+  batchPayloadDigest: zod.string(),
+  operation: MigrationOperationSchema,
+})
+
+const MigrationSubmissionFailureSchema = zod.discriminatedUnion('type', [
+  zod.object({
+    type: zod.literal('submission'),
+    batchIndex: zod.number(),
+    userErrors: zod.array(MigrationUserErrorSchema),
+  }),
+  zod.object({
+    type: zod.literal('operations'),
+    operationIds: zod.array(zod.string()),
+  }),
+])
+
+export const migrationSubmissionJsonOutputSchema = defineJsonOutputSchema({
+  name: 'MigrationSubmissionResult',
+  schema: zod.object({
+    schemaVersion: zod.literal(1),
+    clientId: zod.string(),
+    action: zod.enum(['schedule', 'unschedule']),
+    inputDigest: zod.string(),
+    total: zod.number(),
+    operations: zod.array(SubmittedMigrationOperationSchema),
+    failure: MigrationSubmissionFailureSchema.optional(),
+  }),
+  definitions: {
+    SubmittedMigrationOperation: SubmittedMigrationOperationSchema,
+    MigrationOperation: MigrationOperationSchema,
+    MigrationOperationResultEdge: MigrationOperationResultEdgeSchema,
+    MigrationOperationResultNode: MigrationOperationResultNodeSchema,
+    MigrationSubmissionFailure: MigrationSubmissionFailureSchema,
+    MigrationUserError: MigrationUserErrorSchema,
+  },
+})
+
+export type MigrationSubmissionJsonOutput = InferJsonOutputSchema<typeof migrationSubmissionJsonOutputSchema>
+export type MigrationSubmission = Omit<MigrationSubmissionJsonOutput, 'schemaVersion' | 'failure'>
+type MigrationSubmissionFailure = NonNullable<MigrationSubmissionJsonOutput['failure']>
+export type MigrationSubmissionResult =
+  | {status: 'success'; submission: MigrationSubmission}
+  | {status: 'failed'; submission: MigrationSubmission; failure: MigrationSubmissionFailure}
