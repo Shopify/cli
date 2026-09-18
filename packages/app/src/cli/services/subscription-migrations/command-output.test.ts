@@ -1,3 +1,4 @@
+import {migrationStatusJsonOutputSchema} from './types.js'
 import {formatMigrationOperationsStatus, outputOperations} from './command-output.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
@@ -56,5 +57,21 @@ describe('operation command output', () => {
       body: ['one: COMPLETED (1/2 settled)', 'two: RUNNING (1/2 settled)'],
     })
     expect(outputResult).not.toHaveBeenCalled()
+  })
+})
+
+describe('migration status JSON contract', () => {
+  test('encodes an empty operation list', () => {
+    outputOperations([], true)
+    expect(outputResult).toHaveBeenCalledWith(JSON.stringify({operations: []}, null, 2))
+  })
+
+  test.each([
+    {...operation('one'), status: 'UNKNOWN'},
+    {...operation('one'), total: '2'},
+    {...operation('one'), results: {edges: [{node: {shopId: 'shop-one', code: 'UNKNOWN'}}]}},
+    {...operation('one'), results: null},
+  ])('rejects invalid operations: %j', (value) => {
+    expect(() => migrationStatusJsonOutputSchema.validate({operations: [value]})).toThrow()
   })
 })

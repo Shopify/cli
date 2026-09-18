@@ -1,3 +1,4 @@
+import {migrationStatusJsonOutputSchema} from './types.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import type {MigrationOperation} from '../../models/subscription-migrations.js'
@@ -8,7 +9,7 @@ export function formatMigrationOperationsStatus(operations: MigrationOperation[]
 
 export function outputOperations(operations: MigrationOperation[], json: boolean): void {
   if (json) {
-    outputResult(JSON.stringify({operations}, null, 2))
+    outputResult(migrationStatusJsonOutputSchema.encode({operations}))
     return
   }
 
