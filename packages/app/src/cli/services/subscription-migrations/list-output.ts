@@ -1,3 +1,4 @@
+import {migrationListJsonOutputSchema} from './types.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import type {MigratableSubscription} from '../../models/subscription-migrations.js'
 
@@ -10,7 +11,7 @@ interface MigrationListOutputOptions {
 }
 
 export function serializeMigrationListJson(subscriptions: MigratableSubscription[]): string {
-  return JSON.stringify({schemaVersion: 1, subscriptions}, null, 2)
+  return migrationListJsonOutputSchema.encode({schemaVersion: 1, subscriptions})
 }
 
 export function serializeMigrationListCsv(subscriptions: MigratableSubscription[]): string {

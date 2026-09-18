@@ -1,3 +1,4 @@
+import {MIGRATABLE_SUBSCRIPTION_STATUSES, PRICE_BEHAVIORS} from '../../models/subscription-migrations.js'
 import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -62,3 +63,42 @@ export const migrationCancellationJsonOutputSchema = defineJsonOutputSchema({
 export type MigrationCancellationJsonOutput = InferJsonOutputSchema<typeof migrationCancellationJsonOutputSchema>
 export type MigrationCancellationResult = Omit<MigrationCancellationJsonOutput, 'schemaVersion'>
 export type MigrationCancellationOutcome = MigrationCancellationResult['outcomes'][number]
+
+const MigratableSubscriptionPriceSchema = zod.object({
+  amount: zod.string(),
+  currencyCode: zod.string(),
+})
+
+const MigratableSubscriptionNotificationSchema = zod.object({
+  kind: zod.enum(['NONE', 'OPT_OUT', 'WHEN_REQUIRED']),
+  optOutDeadline: zod.string().nullable(),
+  sentAt: zod.string().nullable(),
+})
+
+const MigratableSubscriptionSchema = zod.object({
+  shopId: zod.string(),
+  status: zod.enum(MIGRATABLE_SUBSCRIPTION_STATUSES),
+  manualSubscriptionName: zod.string().nullable(),
+  manualSubscriptionPrice: MigratableSubscriptionPriceSchema.nullable(),
+  manualSubscriptionInterval: zod.enum(['EVERY_30_DAYS', 'ANNUAL']),
+  targetPlanHandle: zod.string().nullable(),
+  notification: MigratableSubscriptionNotificationSchema.nullable(),
+  priceBehavior: zod.enum(PRICE_BEHAVIORS).nullable(),
+  effectiveDate: zod.string().nullable(),
+  lastFailureReason: zod.enum(['SUPERSEDED', 'SCHEDULING_FAILED']).nullable(),
+})
+
+export const migrationListJsonOutputSchema = defineJsonOutputSchema({
+  name: 'MigrationListResult',
+  schema: zod.object({
+    schemaVersion: zod.literal(1),
+    subscriptions: zod.array(MigratableSubscriptionSchema),
+  }),
+  definitions: {
+    MigratableSubscription: MigratableSubscriptionSchema,
+    MigratableSubscriptionPrice: MigratableSubscriptionPriceSchema,
+    MigratableSubscriptionNotification: MigratableSubscriptionNotificationSchema,
+  },
+})
+
+export type MigrationListResult = InferJsonOutputSchema<typeof migrationListJsonOutputSchema>

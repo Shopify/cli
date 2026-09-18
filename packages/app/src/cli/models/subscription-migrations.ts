@@ -1,3 +1,5 @@
+import type {MigrationListResult} from '../services/subscription-migrations/types.js'
+
 export const PRICE_BEHAVIORS = ['HONOR_BILLING_PRICE', 'PLAN_PRICE'] as const
 export type PriceBehavior = (typeof PRICE_BEHAVIORS)[number]
 
@@ -7,30 +9,7 @@ export type NotificationKind = (typeof NOTIFICATION_KINDS)[number]
 export const MIGRATABLE_SUBSCRIPTION_STATUSES = ['UNSCHEDULED', 'SCHEDULED', 'MIGRATED'] as const
 export type MigratableSubscriptionStatus = (typeof MIGRATABLE_SUBSCRIPTION_STATUSES)[number]
 
-export type ManualSubscriptionInterval = 'EVERY_30_DAYS' | 'ANNUAL'
-export type MigrationFailureReason = 'SUPERSEDED' | 'SCHEDULING_FAILED'
-export type MigratableSubscriptionNotificationKind = 'NONE' | 'OPT_OUT' | 'WHEN_REQUIRED'
-export type MigratableSubscriptionPriceBehavior = 'HONOR_BILLING_PRICE' | 'PLAN_PRICE'
-
-export interface MigratableSubscription {
-  shopId: string
-  status: MigratableSubscriptionStatus
-  manualSubscriptionName: string | null
-  manualSubscriptionPrice: {
-    amount: string
-    currencyCode: string
-  } | null
-  manualSubscriptionInterval: ManualSubscriptionInterval
-  targetPlanHandle: string | null
-  notification: {
-    kind: MigratableSubscriptionNotificationKind
-    optOutDeadline: string | null
-    sentAt: string | null
-  } | null
-  priceBehavior: MigratableSubscriptionPriceBehavior | null
-  effectiveDate: string | null
-  lastFailureReason: MigrationFailureReason | null
-}
+export type MigratableSubscription = MigrationListResult['subscriptions'][number]
 
 export type MigrationAction = 'schedule' | 'unschedule'
 
