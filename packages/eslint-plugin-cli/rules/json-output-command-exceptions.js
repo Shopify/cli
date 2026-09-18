@@ -71,7 +71,6 @@ const commandExceptions = [
   'packages/store/src/cli/commands/store/bulk/execute.ts',
   'packages/store/src/cli/commands/store/bulk/status.ts',
   'packages/store/src/cli/commands/store/create/dev.ts',
-  'packages/store/src/cli/commands/store/create/preview.ts',
   'packages/store/src/cli/commands/store/delete.ts',
   'packages/store/src/cli/commands/store/execute.ts',
   'packages/store/src/cli/commands/store/info.ts',
