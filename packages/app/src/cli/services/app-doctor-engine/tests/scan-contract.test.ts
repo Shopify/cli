@@ -478,3 +478,34 @@ describe('coverage and trace invariants', () => {
     expect(validateTrace(trace).errors.join(' ')).toMatch(/reason and handoff guidance/)
   })
 })
+
+describe('authenticated-route review handoff', () => {
+  test('leaves unauthenticated-endpoint review to the agent and emits no static finding', async () => {
+    const directory = await app({
+      'shopify.app.toml': appConfig(),
+      'package.json': reactPackage,
+      'app/shopify.server.ts': 'export const shopify = {}',
+      'app/routes/orders.tsx':
+        'export async function loader({request, context}: LoaderArgs) { const {admin} = await context.shopify.authenticate.admin(request); return admin.graphql("{ shop { id } }") }',
+    })
+    const result = await scan(directory)
+
+    // Context-provided authentication must not be mistaken for missing verification.
+    expect(result.issues.some((issue) => issue.id === 'UNAUTHENTICATED_ENDPOINT')).toBe(false)
+    expect(result.scan.checks_executed.some((execution) => execution.id === 'UNAUTHENTICATED_ENDPOINT')).toBe(false)
+
+    const reviewPack = buildReviewPack('test', result)
+    expect(reviewPack.checks).toContainEqual(expect.objectContaining({id: 'UNAUTHENTICATED_ENDPOINT', version: 2}))
+
+    // Removing the heuristic must not make an unperformed auth review look clean.
+    const trace = compileTrace(result)
+    expect(trace.checks_executed).toContainEqual(
+      expect.objectContaining({
+        id: 'UNAUTHENTICATED_ENDPOINT',
+        kind: 'agent',
+        status: 'unresolved',
+        reason: expect.objectContaining({code: 'not_reported'}),
+      }),
+    )
+  })
+})

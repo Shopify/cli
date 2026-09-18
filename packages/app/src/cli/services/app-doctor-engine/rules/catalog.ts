@@ -204,12 +204,12 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
   },
   {
     id: 'UNAUTHENTICATED_ENDPOINT',
-    title: 'Route handler lacks recognized auth verification',
+    title: 'Route handler reaches shop data without a verified request',
     severity: 'high',
     points: -15,
     description:
-      'Detects backend routes with no recognized auth guard or catch-block fallback to request-controlled shop input.',
-    fix: 'Require Shopify session validation before accessing shop data.',
+      'Investigates reachable protected operations that lack request verification across middleware, wrappers, and framework-specific authentication paths.',
+    fix: 'Complete the verification appropriate to the entry point before protected operations, and stop those operations when verification fails.',
     guide: 'https://shopify.dev/docs/apps/auth',
     requires: 'has_backend',
   },
