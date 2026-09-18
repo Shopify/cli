@@ -158,8 +158,17 @@ describe('formatAppDoctorCommand', () => {
         '--findings',
         findingsPath,
       ])
+      expect(splitQuotedCommand(formatAppDoctorCommand(commands.clean, shell), shell)).toEqual([
+        'shopify',
+        'app',
+        'doctor',
+        '--path',
+        WINDOWS_APP_ROOT,
+        '--clean',
+      ])
       expect(formatAppDoctorCommand(commands.scan, shell)).not.toContain('50%%')
       expect(formatAppDoctorCommand(commands.compile, shell)).not.toContain('50%%')
+      expect(formatAppDoctorCommand(commands.clean, shell)).not.toContain('50%%')
     }
   })
 
@@ -182,6 +191,14 @@ describe('formatAppDoctorCommand', () => {
       PAIRED_PERCENT_ROOT,
       '--findings',
       findingsPath,
+    ])
+    expect(splitQuotedCommand(formatAppDoctorCommand(commands.clean, 'cmd'), 'cmd')).toEqual([
+      'shopify',
+      'app',
+      'doctor',
+      '--path',
+      PAIRED_PERCENT_ROOT,
+      '--clean',
     ])
     expect(formatAppDoctorCommand(commands.scan, 'cmd')).not.toContain('%NAME%')
     expect(formatAppDoctorCommand(commands.compile, 'powershell')).toContain('%NAME%')

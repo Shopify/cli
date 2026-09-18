@@ -77,6 +77,29 @@ describe('appDoctorInstructions', () => {
     })
   })
 
+  test('explains guarded scans and explicit clean restarts', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+      const instructions = appDoctorInstructions({directory: appRoot, scanComplete: true})
+      const cleanCommand = `shopify app doctor --path ${shellQuote(appRoot)} --clean`
+
+      expect(instructions).toContain(
+        'If App Doctor reports existing agent findings or a compiled trace, do not bypass that safeguard automatically.',
+      )
+      expect(instructions).toContain(
+        'Read the diagnostics produced by that compilation command and open the existing trace directly.',
+      )
+      expect(instructions).toContain(`Start a new review with \`${cleanCommand}\``)
+      expect(instructions).toContain(
+        'Submission reads the existing compiled trace and does not require or perform another scan.',
+      )
+      expect(instructions).toContain(
+        'If protected review work blocks the deterministic scan, do not use `--clean` unless the user intends to discard that work.',
+      )
+      expect(instructions).not.toContain('{{CLEAN_COMMAND}}')
+    })
+  })
+
   test('uses the resolved app root when CWD differs from --path', async () => {
     await inTemporaryDirectory(async (appDirectory) => {
       const appRoot = await createApp(appDirectory)

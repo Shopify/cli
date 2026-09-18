@@ -31,6 +31,7 @@ describe('app doctor command', () => {
       yes: false,
       skipInstructions: true,
       findingsPath: undefined,
+      clean: false,
     })
   })
 
@@ -45,7 +46,15 @@ describe('app doctor command', () => {
       yes: true,
       skipInstructions: false,
       findingsPath: undefined,
+      clean: false,
     })
+  })
+
+  test('forwards --clean and keeps it mutually exclusive with --findings', async () => {
+    await Doctor.run(['--clean', '--skip-instructions'], import.meta.url)
+
+    expect(doctor).toHaveBeenCalledWith(expect.objectContaining({clean: true, findingsPath: undefined}))
+    expect(Doctor.flags.clean.exclusive).toEqual(['findings'])
   })
 
   test('resolves and forwards an agent findings file', async () => {
@@ -57,11 +66,13 @@ describe('app doctor command', () => {
   test('describes --yes as printing instructions and keeps it mutually exclusive with --skip-instructions', () => {
     expect(Doctor.flags.yes.description).toBe('Print coding-agent instructions without prompting.')
     expect(Doctor.flags['skip-instructions'].description).toBe("Don't offer to show coding-agent instructions.")
+    expect(Doctor.flags.clean.description).toBe('Discard the current local review and start a new scan.')
     expect(Doctor.flags.yes.exclusive).toEqual(['skip-instructions'])
     expect(Doctor.flags['skip-instructions'].exclusive).toEqual(['yes'])
     expect(Doctor.descriptionWithMarkdown).toContain('copy the coding-agent instructions')
     expect(Doctor.descriptionWithMarkdown).toContain('copying is the default')
     expect(Doctor.descriptionWithMarkdown).toContain('shopify app doctor instructions')
+    expect(Doctor.descriptionWithMarkdown).toContain('Pass `--clean` to discard that work and start over')
   })
 
   test('allows --yes in JSON mode while preserving non-interactive output behavior', async () => {

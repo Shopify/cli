@@ -1,4 +1,4 @@
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {appDoctorArtifactPaths} from './app-doctor-artifacts.js'
 
 export type AppDoctorShell = 'posix' | 'cmd' | 'powershell'
 
@@ -10,10 +10,11 @@ export interface AppDoctorCommand {
 export interface AppDoctorCommands {
   scan: AppDoctorCommand
   compile: AppDoctorCommand
+  clean: AppDoctorCommand
 }
 
 export function resolveAppDoctorCommands(appRoot: string): AppDoctorCommands {
-  const findingsPath = joinPath(appRoot, '.shopify', 'app-doctor', 'findings.json')
+  const {findingsPath} = appDoctorArtifactPaths(appRoot)
   const scan: AppDoctorCommand = {
     command: 'shopify',
     args: ['app', 'doctor', '--path', appRoot],
@@ -24,6 +25,10 @@ export function resolveAppDoctorCommands(appRoot: string): AppDoctorCommands {
     compile: {
       command: scan.command,
       args: [...scan.args, '--findings', findingsPath],
+    },
+    clean: {
+      command: scan.command,
+      args: [...scan.args, '--clean'],
     },
   }
 }

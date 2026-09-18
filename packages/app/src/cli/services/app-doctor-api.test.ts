@@ -5,10 +5,10 @@ import {
   resolveAppDoctorRoot,
   type AppDoctorBlockingLevel,
 } from './app-doctor-api.js'
-import {writeAppDoctorArtifacts} from './app-doctor-artifacts.js'
+import {appDoctorArtifactPaths, readTrace, writeAppDoctorArtifacts} from './app-doctor-artifacts.js'
 import doctor from './doctor.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
 import {symlink} from 'node:fs/promises'
@@ -612,10 +612,14 @@ describe('App Doctor CLI integration', () => {
           blocking: 'none',
           yes: false,
           skipInstructions: true,
+          clean: false,
         },
         {
-          execute: async ({directory: appDirectory, findingsPath}) => {
-            const appRoot = resolveAppDoctorRoot(appDirectory)
+          resolveRoot: resolveAppDoctorRoot,
+          artifactPaths: appDoctorArtifactPaths,
+          findingsFileExists: fileExists,
+          readTrace,
+          execute: async ({appRoot, findingsPath}) => {
             const findings = findingsPath ? await loadAppDoctorFindings(findingsPath) : undefined
             return executeAppDoctor({appRoot, findings})
           },
