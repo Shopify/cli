@@ -204,6 +204,12 @@ export async function ensureAuthenticated(
   {forceRefresh = false, noPrompt = false, forceNewSession = false}: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<OAuthSession> {
   const automationToken = getAutomationToken(env)
+  if (automationToken?.source === 'organization') {
+    throw new AbortError(
+      "The organization automation token can't be used for this command.",
+      'Use a command that supports organization automation tokens or unset SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN.',
+    )
+  }
   const fqdn = await identityFqdn()
 
   const previousStoreFqdn = applications.adminApi?.storeFqdn

@@ -298,6 +298,18 @@ The CLI is currently unable to prompt for reauthentication.`,
 })
 
 describe('when existing session is valid', () => {
+  test('does not fall back to the cached human session for unsupported organization token commands', async () => {
+    vi.mocked(getAutomationToken).mockReturnValue({value: 'organization-token', source: 'organization'})
+    vi.mocked(fetchSessions).mockResolvedValue(validSessions)
+
+    await expect(ensureAuthenticated(defaultApplications)).rejects.toThrow(
+      "The organization automation token can't be used for this command.",
+    )
+
+    expect(fetchSessions).not.toHaveBeenCalled()
+    expect(validateSession).not.toHaveBeenCalled()
+  })
+
   test('does nothing', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('ok')
