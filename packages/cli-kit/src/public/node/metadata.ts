@@ -176,11 +176,12 @@ export function createRuntimeMetadataContainer<
 }
 
 // We want to track anything that ends up getting sent to monorail as `cmd_all_*`,
-// `cmd_app_*`, `cmd_theme_*`, `store_*`, and `env_auto_upgrade_*`
+// `cmd_app_*`, `cmd_theme_*`, `store_*`, `env_auto_upgrade_*`, and `cmd_feedback_*`
 type CmdFieldsFromMonorail = PickByPrefix<MonorailEventPublic, 'cmd_all_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_app_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_create_app_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_theme_'> &
+  PickByPrefix<MonorailEventPublic, 'cmd_feedback_'> &
   PickByPrefix<MonorailEventPublic, 'store_'> &
   PickByPrefix<MonorailEventPublic, 'env_auto_upgrade_'>
 
@@ -195,7 +196,12 @@ const coreData = createRuntimeMetadataContainer<
       startArgs: string[]
       requiresSyncAnalytics?: boolean
     }
-  } & {environmentFlags: string} & PickByPrefix<MonorailEventSensitive, 'store_'>
+  } & {
+    environmentFlags: string
+    // The `shopify feedback` message is user-authored free text that may contain PII, so it travels
+    // inside the sensitive `metadata` field of the Monorail event rather than as a public field.
+    cmd_feedback_message: string
+  } & PickByPrefix<MonorailEventSensitive, 'store_'>
 >({cmd_all_timing_network_ms: 0, cmd_all_timing_prompts_ms: 0})
 
 export const {getAllPublicMetadata, getAllSensitiveMetadata, addPublicMetadata, addSensitiveMetadata, runWithTimer} =

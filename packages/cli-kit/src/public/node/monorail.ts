@@ -10,7 +10,7 @@ const url = 'https://monorail-edge.shopifysvc.com/v1/produce'
 type Optional<T> = T | null
 
 // This is the topic name of the main event we log to Monorail, the command tracker
-export const MONORAIL_COMMAND_TOPIC = 'app_cli3_command/1.28'
+export const MONORAIL_COMMAND_TOPIC = 'app_cli3_command/1.29'
 
 export interface Schemas {
   [MONORAIL_COMMAND_TOPIC]: {
@@ -134,6 +134,14 @@ export interface Schemas {
 
       // Release related commands
       cmd_release_confirm_cancelled?: Optional<boolean>
+
+      // Feedback command. The message itself is user-authored free text, so it travels in the
+      // sensitive `metadata` field rather than as a public field.
+      cmd_feedback_sentiment?: Optional<string>
+      cmd_feedback_category?: Optional<string>
+      cmd_feedback_message_length?: Optional<number>
+      cmd_feedback_message_truncated?: Optional<boolean>
+      cmd_feedback_source?: Optional<string>
 
       // App setup
       app_extensions_any?: Optional<boolean>
