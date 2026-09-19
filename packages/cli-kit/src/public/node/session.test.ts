@@ -12,7 +12,7 @@ import {
 } from './session.js'
 
 import {nonRandomUUID} from './crypto.js'
-import {getAppAutomationToken} from './environment.js'
+import {getAutomationToken} from './environment.js'
 import {shopifyFetch} from './http.js'
 import {
   ensureAuthenticated,
@@ -198,7 +198,7 @@ describe('ensureAuthenticatedPartners', () => {
       accessToken: partnersToken.accessToken,
       userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
     })
-    vi.mocked(getAppAutomationToken).mockReturnValue('custom_cli_token')
+    vi.mocked(getAutomationToken).mockReturnValue({value: 'custom_cli_token', source: 'app'})
 
     // When
     const got = await ensureAuthenticatedPartners([])
@@ -309,20 +309,40 @@ describe('ensureAuthenticatedBusinessPlatform', () => {
     await expect(got).rejects.toThrow(`No business-platform token`)
   })
 
-  test('exchanges the app automation token if envvar is defined', async () => {
+  test('exchanges the organization automation token for Business Platform access', async () => {
     // Given
     vi.mocked(exchangeAppAutomationTokenForBusinessPlatformAccessToken).mockResolvedValueOnce({
       accessToken: 'business_platform_token_from_env',
       userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
     })
-    vi.mocked(getAppAutomationToken).mockReturnValue('custom_app_automation_token')
+    vi.mocked(getAutomationToken).mockReturnValue({
+      value: 'organization_automation_token',
+      source: 'organization',
+    })
 
     // When
     const got = await ensureAuthenticatedBusinessPlatform()
 
     // Then
     expect(got).toEqual('business_platform_token_from_env')
-    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).toHaveBeenCalledWith('custom_app_automation_token')
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).toHaveBeenCalledWith(
+      'organization_automation_token',
+    )
+    expect(ensureAuthenticated).not.toHaveBeenCalled()
+  })
+
+  test('does not fall back to interactive authentication when automation token exchange fails', async () => {
+    // Given
+    vi.mocked(getAutomationToken).mockReturnValue({
+      value: 'organization_automation_token',
+      source: 'organization',
+    })
+    vi.mocked(exchangeAppAutomationTokenForBusinessPlatformAccessToken).mockRejectedValueOnce(
+      new Error('Token exchange failed'),
+    )
+
+    // When/Then
+    await expect(ensureAuthenticatedBusinessPlatform()).rejects.toThrow('Token exchange failed')
     expect(ensureAuthenticated).not.toHaveBeenCalled()
   })
 })
@@ -358,9 +378,12 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
     await expect(got).rejects.toThrow('No App Management or Business Platform token found after ensuring authenticated')
   })
 
-  test('returns app managment and business platform tokens if CLI token envvar is defined', async () => {
+  test('exchanges the organization automation token for App Management and Business Platform access', async () => {
     // Given
-    vi.mocked(getAppAutomationToken).mockReturnValue('custom_cli_token')
+    vi.mocked(getAutomationToken).mockReturnValue({
+      value: 'organization_automation_token',
+      source: 'organization',
+    })
     vi.mocked(exchangeAppAutomationTokenForAppManagementAccessToken).mockResolvedValueOnce({
       accessToken: 'app-management-token',
       userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
@@ -379,6 +402,31 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
       userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
       businessPlatformToken: 'business-platform-token',
     })
+    expect(exchangeAppAutomationTokenForAppManagementAccessToken).toHaveBeenCalledWith('organization_automation_token')
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).toHaveBeenCalledWith(
+      'organization_automation_token',
+    )
+    expect(ensureAuthenticated).not.toHaveBeenCalled()
+  })
+
+  test('does not fall back to interactive authentication when a retry exchange fails', async () => {
+    // Given
+    vi.mocked(getAutomationToken).mockReturnValue({
+      value: 'organization_automation_token',
+      source: 'organization',
+    })
+    vi.mocked(exchangeAppAutomationTokenForAppManagementAccessToken).mockResolvedValueOnce({
+      accessToken: 'app-management-token',
+      userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
+    })
+    vi.mocked(exchangeAppAutomationTokenForBusinessPlatformAccessToken).mockRejectedValueOnce(
+      new Error('Token exchange failed'),
+    )
+
+    // When/Then
+    await expect(
+      ensureAuthenticatedAppManagementAndBusinessPlatform({noPrompt: true, forceRefresh: true}),
+    ).rejects.toThrow('Token exchange failed')
     expect(ensureAuthenticated).not.toHaveBeenCalled()
   })
 })

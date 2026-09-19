@@ -135,7 +135,7 @@ import {
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {WebhookSubscriptionSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook_subscription.js'
 import {fetchOrganizations} from '@shopify/organizations'
-import {getAppAutomationToken} from '@shopify/cli-kit/node/environment'
+import {getAutomationToken} from '@shopify/cli-kit/node/environment'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform, Session} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -285,7 +285,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         unauthorizedHandler: this.createUnauthorizedHandler('businessPlatform'),
       })
 
-      if (getAppAutomationToken() && userInfoResult.currentUserAccount) {
+      if (getAutomationToken() && userInfoResult.currentUserAccount) {
         const organizations = userInfoResult.currentUserAccount.organizations.nodes.map((org) => ({
           name: org.name,
         }))
