@@ -609,13 +609,17 @@ Refresh an already-linked app configuration without prompts.
 
 ```
 USAGE
-  $ shopify app config pull [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--path <value>] [--reset | ] [--verbose]
+  $ shopify app config pull [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -652,6 +656,161 @@ DESCRIPTION
 
   This command reuses the existing linked app and organization and skips all interactive prompts. Use `--config` to
   target a specific configuration file, or omit it to use the default one.
+
+  Output from `--json` conforms to the `AppConfigPullResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "configFile": {
+        "type": "string"
+      },
+      "configuration": {
+        "$ref": "#/definitions/AppConfiguration"
+      },
+      "app": {
+        "$ref": "#/definitions/LinkedApp"
+      }
+    },
+    "required": [
+      "configFile",
+      "configuration",
+      "app"
+    ],
+    "additionalProperties": false,
+    "title": "AppConfigPullResult",
+    "definitions": {
+      "AppConfiguration": {
+        "type": "object",
+        "properties": {
+          "client_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "client_id"
+        ],
+        "additionalProperties": true
+      },
+      "LinkedApp": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "apiKey": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "appType": {
+            "type": "string"
+          },
+          "newApp": {
+            "type": "boolean"
+          },
+          "grantedScopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "developmentStorePreviewEnabled": {
+            "type": "boolean"
+          },
+          "applicationUrl": {
+            "type": "string"
+          },
+          "redirectUrlWhitelist": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "requestedAccessScopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "webhookApiVersion": {
+            "type": "string"
+          },
+          "embedded": {
+            "type": "boolean"
+          },
+          "posEmbedded": {
+            "type": "boolean"
+          },
+          "preferencesUrl": {
+            "type": "string"
+          },
+          "gdprWebhooks": {
+            "$ref": "#/definitions/PrivacyWebhooks"
+          },
+          "appProxy": {
+            "$ref": "#/definitions/AppProxy"
+          },
+          "configuration": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "apiKey",
+          "organizationId",
+          "grantedScopes"
+        ],
+        "additionalProperties": false
+      },
+      "PrivacyWebhooks": {
+        "type": "object",
+        "properties": {
+          "customerDeletionUrl": {
+            "type": "string"
+          },
+          "customerDataRequestUrl": {
+            "type": "string"
+          },
+          "shopDeletionUrl": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AppProxy": {
+        "type": "object",
+        "properties": {
+          "subPath": {
+            "type": "string"
+          },
+          "subPathPrefix": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "subPath",
+          "subPathPrefix",
+          "url"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app config use [config] [flags]`

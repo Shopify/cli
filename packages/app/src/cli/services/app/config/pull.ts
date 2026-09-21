@@ -1,5 +1,4 @@
-// packages/app/src/cli/services/app/config/pull.ts
-
+import {appConfigPullJsonOutputSchema, type AppConfigPullResult} from './pull/types.js'
 import {LinkOptions, loadLocalAppOptions, overwriteLocalConfigFileWithRemoteAppConfiguration} from './link.js'
 import {CurrentAppConfiguration} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
@@ -18,16 +17,10 @@ interface PullOptions {
   remoteApp: OrganizationApp
 }
 
-interface PullOutput {
-  configPath: string
-  configuration: CurrentAppConfiguration
-  remoteApp: OrganizationApp
-}
-
 /**
  * Refresh an already-linked app configuration without prompting for org/app.
  */
-export default async function pull(options: PullOptions): Promise<PullOutput> {
+export default async function pull(options: PullOptions): Promise<AppConfigPullResult> {
   const {directory, configName, configPath, configuration, remoteApp} = options
 
   if (!configuration.client_id) {
@@ -68,5 +61,9 @@ export default async function pull(options: PullOptions): Promise<PullOutput> {
     localAppOptions,
   })
 
-  return {configPath, configuration: mergedConfiguration, remoteApp}
+  return appConfigPullJsonOutputSchema.validate({
+    configFile: configPath,
+    configuration: mergedConfiguration,
+    app: remoteApp,
+  })
 }
