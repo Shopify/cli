@@ -1380,324 +1380,6 @@
       "strict": true,
       "summary": "Cleans up the dev preview from the selected store."
     },
-    "app:doctor": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "customPluginName": "@shopify/app",
-      "description": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Doctor inspects only that configuration. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app doctor instructions` to print, copy, or write them later.",
-      "descriptionWithMarkdown": "Runs Shopify App Doctor locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Doctor inspects only that configuration. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app doctor instructions` to print, copy, or write them later.",
-      "enableJsonFlag": false,
-      "flags": {
-        "blocking": {
-          "default": "none",
-          "description": "The minimum finding severity that causes a non-zero exit code.",
-          "env": "SHOPIFY_FLAG_APP_DOCTOR_BLOCKING",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "blocking",
-          "options": [
-            "high",
-            "medium",
-            "low",
-            "none"
-          ],
-          "type": "option"
-        },
-        "config": {
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "env": "SHOPIFY_FLAG_APP_CONFIG",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "config",
-          "type": "option"
-        },
-        "findings": {
-          "description": "Validate agent findings from a JSON file and compile them into the trace.",
-          "env": "SHOPIFY_FLAG_APP_DOCTOR_FINDINGS",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "findings",
-          "type": "option"
-        },
-        "json": {
-          "allowNo": false,
-          "char": "j",
-          "description": "Output the result as JSON. Automatically disables color output.",
-          "env": "SHOPIFY_FLAG_JSON",
-          "hidden": false,
-          "name": "json",
-          "type": "boolean"
-        },
-        "json-schema": {
-          "allowNo": false,
-          "description": "Print the command's JSON schemas.",
-          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
-          "name": "json-schema",
-          "type": "boolean"
-        },
-        "no-color": {
-          "allowNo": false,
-          "description": "Disable color output.",
-          "env": "SHOPIFY_FLAG_NO_COLOR",
-          "hidden": false,
-          "name": "no-color",
-          "type": "boolean"
-        },
-        "path": {
-          "description": "The path to your app directory.",
-          "env": "SHOPIFY_FLAG_PATH",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "path",
-          "noCacheDefault": true,
-          "type": "option"
-        },
-        "skip-instructions": {
-          "allowNo": false,
-          "description": "Don't offer to show coding-agent instructions.",
-          "env": "SHOPIFY_FLAG_APP_DOCTOR_SKIP_INSTRUCTIONS",
-          "exclusive": [
-            "yes"
-          ],
-          "name": "skip-instructions",
-          "type": "boolean"
-        },
-        "verbose": {
-          "allowNo": false,
-          "description": "Increase the verbosity of the output. May include sensitive data.",
-          "env": "SHOPIFY_FLAG_VERBOSE",
-          "hidden": false,
-          "name": "verbose",
-          "type": "boolean"
-        },
-        "yes": {
-          "allowNo": false,
-          "description": "Print coding-agent instructions without prompting.",
-          "env": "SHOPIFY_FLAG_YES",
-          "exclusive": [
-            "skip-instructions"
-          ],
-          "name": "yes",
-          "type": "boolean"
-        }
-      },
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [
-      ],
-      "id": "app:doctor",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true,
-      "summary": "Check an app for Shopify-specific security issues."
-    },
-    "app:doctor:instructions": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "customPluginName": "@shopify/app",
-      "description": "Prints the complete workflow that a coding agent should follow to review App Doctor results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app doctor`; only that invocation's generated review pack is trusted as workflow input.",
-      "descriptionWithMarkdown": "Prints the complete workflow that a coding agent should follow to review App Doctor results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app doctor`; only that invocation's generated review pack is trusted as workflow input.",
-      "enableJsonFlag": false,
-      "flags": {
-        "config": {
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "env": "SHOPIFY_FLAG_APP_CONFIG",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "config",
-          "type": "option"
-        },
-        "copy": {
-          "allowNo": false,
-          "description": "Copy the instructions to the clipboard instead of printing them.",
-          "env": "SHOPIFY_FLAG_APP_DOCTOR_INSTRUCTIONS_COPY",
-          "exclusive": [
-            "write"
-          ],
-          "name": "copy",
-          "type": "boolean"
-        },
-        "json-schema": {
-          "allowNo": false,
-          "description": "Print the command's JSON schemas.",
-          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
-          "name": "json-schema",
-          "type": "boolean"
-        },
-        "no-color": {
-          "allowNo": false,
-          "description": "Disable color output.",
-          "env": "SHOPIFY_FLAG_NO_COLOR",
-          "hidden": false,
-          "name": "no-color",
-          "type": "boolean"
-        },
-        "path": {
-          "description": "The path to your app directory.",
-          "env": "SHOPIFY_FLAG_PATH",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "path",
-          "noCacheDefault": true,
-          "type": "option"
-        },
-        "verbose": {
-          "allowNo": false,
-          "description": "Increase the verbosity of the output. May include sensitive data.",
-          "env": "SHOPIFY_FLAG_VERBOSE",
-          "hidden": false,
-          "name": "verbose",
-          "type": "boolean"
-        },
-        "write": {
-          "description": "Write the instructions to a file instead of printing them.",
-          "env": "SHOPIFY_FLAG_APP_DOCTOR_INSTRUCTIONS_WRITE",
-          "exclusive": [
-            "copy"
-          ],
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "write",
-          "type": "option"
-        }
-      },
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [
-      ],
-      "id": "app:doctor:instructions",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true,
-      "summary": "Provide App Doctor instructions to a coding agent."
-    },
-    "app:doctor:submit": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "customPluginName": "@shopify/app",
-      "description": "Reads the most recent App Doctor trace, writes a `.shopify/app-doctor/submission.json` file for inspection, asks for confirmation, and uploads the result to Shopify.\n\nGenerated report fields exclude source code, file paths, code snippets, evidence, finding messages, and commit identifiers. Optional feedback is included without redaction. Optionally use `--version` to identify the app version corresponding to the scanned files. Use `--dry-run` to write and inspect the exact payload without uploading it.",
-      "descriptionWithMarkdown": "Reads the most recent App Doctor trace, writes a `.shopify/app-doctor/submission.json` file for inspection, asks for confirmation, and uploads the result to Shopify.\n\nGenerated report fields exclude source code, file paths, code snippets, evidence, finding messages, and commit identifiers. Optional feedback is included without redaction. Optionally use `--version` to identify the app version corresponding to the scanned files. Use `--dry-run` to write and inspect the exact payload without uploading it.",
-      "enableJsonFlag": false,
-      "flags": {
-        "client-id": {
-          "description": "The Client ID of your app.",
-          "env": "SHOPIFY_FLAG_CLIENT_ID",
-          "exclusive": [
-            "config"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "client-id",
-          "type": "option"
-        },
-        "config": {
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "env": "SHOPIFY_FLAG_APP_CONFIG",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "config",
-          "type": "option"
-        },
-        "dry-run": {
-          "allowNo": false,
-          "description": "Write the submission payload without uploading it.",
-          "env": "SHOPIFY_FLAG_APP_DOCTOR_DRY_RUN",
-          "name": "dry-run",
-          "type": "boolean"
-        },
-        "feedback": {
-          "description": "Optional feedback about inaccurate or unhelpful App Doctor results. Use - to read from stdin.",
-          "env": "SHOPIFY_FLAG_APP_DOCTOR_FEEDBACK",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "feedback",
-          "type": "option"
-        },
-        "force": {
-          "allowNo": false,
-          "char": "f",
-          "description": "Skip confirmation. Required if non interactive.",
-          "env": "SHOPIFY_FLAG_FORCE",
-          "name": "force",
-          "type": "boolean"
-        },
-        "json": {
-          "allowNo": false,
-          "char": "j",
-          "description": "Output the result as JSON. Automatically disables color output.",
-          "env": "SHOPIFY_FLAG_JSON",
-          "hidden": false,
-          "name": "json",
-          "type": "boolean"
-        },
-        "json-schema": {
-          "allowNo": false,
-          "description": "Print the command's JSON schemas.",
-          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
-          "name": "json-schema",
-          "type": "boolean"
-        },
-        "no-color": {
-          "allowNo": false,
-          "description": "Disable color output.",
-          "env": "SHOPIFY_FLAG_NO_COLOR",
-          "hidden": false,
-          "name": "no-color",
-          "type": "boolean"
-        },
-        "path": {
-          "description": "The path to your app directory.",
-          "env": "SHOPIFY_FLAG_PATH",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "path",
-          "noCacheDefault": true,
-          "type": "option"
-        },
-        "verbose": {
-          "allowNo": false,
-          "description": "Increase the verbosity of the output. May include sensitive data.",
-          "env": "SHOPIFY_FLAG_VERBOSE",
-          "hidden": false,
-          "name": "verbose",
-          "type": "boolean"
-        },
-        "version": {
-          "description": "Optional app version corresponding to the files used to generate these results.",
-          "env": "SHOPIFY_FLAG_VERSION",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "version",
-          "type": "option"
-        }
-      },
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [
-      ],
-      "id": "app:doctor:submit",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true,
-      "summary": "Submit App Doctor results to Shopify."
-    },
     "app:env:pull": {
       "aliases": [
       ],
@@ -3955,6 +3637,324 @@
       "strict": true,
       "summary": "Release an app version.",
       "usage": "app release --version <version>"
+    },
+    "app:security:check": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Runs Shopify App Security locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects only that configuration. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app security instructions` to print, copy, or write them later.",
+      "descriptionWithMarkdown": "Runs Shopify App Security locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects only that configuration. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app security instructions` to print, copy, or write them later.",
+      "enableJsonFlag": false,
+      "flags": {
+        "blocking": {
+          "default": "none",
+          "description": "The minimum finding severity that causes a non-zero exit code.",
+          "env": "SHOPIFY_FLAG_APP_SECURITY_BLOCKING",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "blocking",
+          "options": [
+            "high",
+            "medium",
+            "low",
+            "none"
+          ],
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "findings": {
+          "description": "Validate agent findings from a JSON file and compile them into the trace.",
+          "env": "SHOPIFY_FLAG_APP_SECURITY_FINDINGS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "findings",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "skip-instructions": {
+          "allowNo": false,
+          "description": "Don't offer to show coding-agent instructions.",
+          "env": "SHOPIFY_FLAG_APP_SECURITY_SKIP_INSTRUCTIONS",
+          "exclusive": [
+            "yes"
+          ],
+          "name": "skip-instructions",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "yes": {
+          "allowNo": false,
+          "description": "Print coding-agent instructions without prompting.",
+          "env": "SHOPIFY_FLAG_YES",
+          "exclusive": [
+            "skip-instructions"
+          ],
+          "name": "yes",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:security:check",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Check an app for Shopify-specific security issues."
+    },
+    "app:security:instructions": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Prints the complete workflow that a coding agent should follow to review App Security results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's generated review pack is trusted as workflow input.",
+      "descriptionWithMarkdown": "Prints the complete workflow that a coding agent should follow to review App Security results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's generated review pack is trusted as workflow input.",
+      "enableJsonFlag": false,
+      "flags": {
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "copy": {
+          "allowNo": false,
+          "description": "Copy the instructions to the clipboard instead of printing them.",
+          "env": "SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_COPY",
+          "exclusive": [
+            "write"
+          ],
+          "name": "copy",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "write": {
+          "description": "Write the instructions to a file instead of printing them.",
+          "env": "SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_WRITE",
+          "exclusive": [
+            "copy"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "write",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:security:instructions",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Provide App Security instructions to a coding agent."
+    },
+    "app:security:submit": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Reads the most recent App Security trace, writes a `.shopify/app-security/submission.json` file for inspection, asks for confirmation, and uploads the result to Shopify.\n\nGenerated report fields exclude source code, file paths, code snippets, evidence, finding messages, and commit identifiers. Optional feedback is included without redaction. Optionally use `--version` to identify the app version corresponding to the scanned files. Use `--dry-run` to write and inspect the exact payload without uploading it.",
+      "descriptionWithMarkdown": "Reads the most recent App Security trace, writes a `.shopify/app-security/submission.json` file for inspection, asks for confirmation, and uploads the result to Shopify.\n\nGenerated report fields exclude source code, file paths, code snippets, evidence, finding messages, and commit identifiers. Optional feedback is included without redaction. Optionally use `--version` to identify the app version corresponding to the scanned files. Use `--dry-run` to write and inspect the exact payload without uploading it.",
+      "enableJsonFlag": false,
+      "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "dry-run": {
+          "allowNo": false,
+          "description": "Write the submission payload without uploading it.",
+          "env": "SHOPIFY_FLAG_APP_SECURITY_DRY_RUN",
+          "name": "dry-run",
+          "type": "boolean"
+        },
+        "feedback": {
+          "description": "Optional feedback about inaccurate or unhelpful App Security results. Use - to read from stdin.",
+          "env": "SHOPIFY_FLAG_APP_SECURITY_FEEDBACK",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "feedback",
+          "type": "option"
+        },
+        "force": {
+          "allowNo": false,
+          "char": "f",
+          "description": "Skip confirmation. Required if non interactive.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "name": "force",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "Optional app version corresponding to the files used to generate these results.",
+          "env": "SHOPIFY_FLAG_VERSION",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "version",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:security:submit",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Submit App Security results to Shopify."
     },
     "app:subscription-migrations:cancel": {
       "aliases": [
@@ -11712,14 +11712,40 @@
       ],
       "args": {
       },
-      "description": "Shopify CLI version currently installed.",
+      "description": "Shopify CLI version currently installed.\n\nOutput from `--json` conforms to the `VersionResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"version\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"version\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"VersionResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Shopify CLI version currently installed.",
       "enableJsonFlag": false,
       "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
         "json-schema": {
           "allowNo": false,
           "description": "Print the command's JSON schemas.",
           "env": "SHOPIFY_FLAG_JSON_SCHEMA",
           "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
           "type": "boolean"
         }
       },

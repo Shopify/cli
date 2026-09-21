@@ -1,8 +1,28 @@
 import {AbortError, BugError} from './error.js'
-import {fileHasWritePermissions, unixFileIsOwnedByCurrentUser} from './fs.js'
-import {dirname} from './path.js'
+import {fileExistsSync, fileHasWritePermissions, findPathUpSync, unixFileIsOwnedByCurrentUser} from './fs.js'
+import {dirname, resolvePath} from './path.js'
 import {TokenItem} from './ui.js'
 import Config from 'conf'
+import envPaths from 'env-paths'
+
+function isFileSystemPermissionError(error: unknown): error is NodeJS.ErrnoException {
+  if (!(error instanceof Error)) return false
+  const errorCode = (error as NodeJS.ErrnoException).code
+  return errorCode === 'EACCES' || errorCode === 'EPERM'
+}
+
+function configPathFromInitializationError(
+  options: {projectName?: string; cwd?: string},
+  error: NodeJS.ErrnoException,
+): string | undefined {
+  if (typeof error.path === 'string') {
+    return error.syscall === 'mkdir' ? resolvePath(error.path, 'config.json') : resolvePath(error.path)
+  }
+
+  const configDirectory =
+    options.cwd ?? (options.projectName ? envPaths(options.projectName, {suffix: 'nodejs'}).config : undefined)
+  return configDirectory ? resolvePath(configDirectory, 'config.json') : undefined
+}
 
 function deserializeJson<T>(value: string): T {
   // Some Windows editors encode UTF-8 files with a byte order mark, which JSON.parse does not accept.
@@ -19,11 +39,20 @@ export class LocalStorage<T extends Record<string, any>> {
   private readonly config: Config<T>
 
   constructor(options: {projectName?: string; cwd?: string}) {
-    this.config = new Config<T>({
-      ...options,
-      clearInvalidConfig: true,
-      deserialize: deserializeJson<T>,
-    })
+    try {
+      this.config = new Config<T>({
+        ...options,
+        clearInvalidConfig: true,
+        deserialize: deserializeJson<T>,
+      })
+    } catch (error) {
+      if (!isFileSystemPermissionError(error)) throw error
+
+      const configPath = configPathFromInitializationError(options, error)
+      if (configPath) this.handleError(error, 'initialize', configPath)
+
+      throw new AbortError(`Failed to access local storage (initialize): ${error}`)
+    }
   }
 
   /**
@@ -98,40 +127,47 @@ export class LocalStorage<T extends Record<string, any>> {
    *
    * @param error - The error that occurred.
    * @param operation - The operation that failed.
+   * @param configPath - The local storage configuration file path.
    * @throws AbortError if the error is permission-related.
    * @throws BugError if the error is not permission-related.
    */
-  private handleError(error: unknown, operation: string): never {
-    if (this.isPermissionError()) {
-      throw new AbortError(`Failed to access local storage (${operation}): ${error}`, this.tryMessage())
+  private handleError(error: unknown, operation: string, configPath = this.config.path): never {
+    if (isFileSystemPermissionError(error) || this.isPermissionError(configPath)) {
+      throw new AbortError(`Failed to access local storage (${operation}): ${error}`, this.tryMessage(configPath))
     } else {
-      throw new BugError(
-        `Unexpected error while accessing local storage at ${this.config.path} (${operation}): ${error}`,
-      )
+      throw new BugError(`Unexpected error while accessing local storage at ${configPath} (${operation}): ${error}`)
     }
   }
 
-  private isPermissionError(): boolean {
-    const canAccessFile = fileHasWritePermissions(this.config.path)
-    const canAccessFolder = fileHasWritePermissions(dirname(this.config.path))
-    const ownsFile = unixFileIsOwnedByCurrentUser(this.config.path)
+  private isPermissionError(configPath: string): boolean {
+    const canAccessFile = fileHasWritePermissions(configPath)
+    const canAccessFolder = fileHasWritePermissions(dirname(configPath))
+    const ownsFile = unixFileIsOwnedByCurrentUser(configPath)
 
     return !canAccessFile || !canAccessFolder || ownsFile === false
   }
 
-  private tryMessage() {
-    const ownsFile = unixFileIsOwnedByCurrentUser(this.config.path)
-    const ownsFolder = unixFileIsOwnedByCurrentUser(dirname(this.config.path))
+  private tryMessage(configPath: string) {
+    const configDirectory = dirname(configPath)
+    const configDirectoryExists = fileExistsSync(configDirectory)
+    const permissionsPath = configDirectoryExists
+      ? configPath
+      : (findPathUpSync('.', {cwd: configDirectory, type: 'directory'}) ?? configDirectory)
+    const ownsFile = fileExistsSync(configPath) ? unixFileIsOwnedByCurrentUser(configPath) : undefined
+    const ownershipDirectory = configDirectoryExists ? configDirectory : permissionsPath
+    const ownsFolder = unixFileIsOwnedByCurrentUser(ownershipDirectory)
 
-    const message: TokenItem = [`Check that you have write permissions for`, {filePath: this.config.path}]
+    const message: TokenItem = [`Check that you have write permissions for`, {filePath: permissionsPath}]
     if (ownsFile === false || ownsFolder === false) {
       message.push(
         '- The file is owned by a different user. This typically happens when Shopify CLI was previously run with elevated permissions (e.g., sudo).',
       )
     }
 
-    message.push('\n\nTo resolve this, remove the Shopify CLI preferences folder:')
-    message.push({command: `rm -rf ${dirname(this.config.path)}`})
+    if (configDirectoryExists) {
+      message.push('\n\nTo resolve this, remove the Shopify CLI preferences folder:')
+      message.push({filePath: configDirectory})
+    }
 
     return message
   }

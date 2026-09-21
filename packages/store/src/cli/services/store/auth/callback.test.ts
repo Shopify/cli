@@ -38,6 +38,46 @@ function callbackParams(options?: {code?: string; shop?: string; state?: string;
   return params
 }
 
+const handoffNonce = 'nonce-123'
+const handoffSignupJwt = 'signed.signup.jwt'
+const handoffAuthorizationUrl = `https://shop.myshopify.com/admin/oauth/authorize?signup=${handoffSignupJwt}`
+
+interface HandoffResponse {
+  status: number
+  body: string
+  headers: Headers
+}
+
+async function fetchHandoff(url: string, init?: Parameters<typeof globalThis.fetch>[1]): Promise<HandoffResponse> {
+  const response = await globalThis.fetch(url, {redirect: 'manual', ...init})
+  return {status: response.status, headers: response.headers, body: await response.text()}
+}
+
+// Runs `probe` against a server holding a pending authorization handoff, then completes
+// authentication through the callback to prove the probe did not settle or break the auth flow.
+async function withPendingHandoff(probe: (handoff: {url: string; port: number}) => Promise<void>): Promise<void> {
+  const port = await getAvailablePort()
+  const params = callbackParams()
+
+  const onListening = async () => {
+    await probe({url: `http://127.0.0.1:${port}/auth/handoff?nonce=${handoffNonce}`, port})
+    const callbackResponse = await globalThis.fetch(`http://127.0.0.1:${port}/auth/callback?${params.toString()}`)
+    expect(callbackResponse.status).toBe(200)
+    await callbackResponse.text()
+  }
+
+  await expect(
+    waitForStoreAuthCode({
+      store: 'shop.myshopify.com',
+      state: 'state-123',
+      port,
+      timeoutMs: 1000,
+      authorizationRedirect: {nonce: handoffNonce, authorizationUrl: handoffAuthorizationUrl},
+      onListening,
+    }),
+  ).resolves.toBe('abc123')
+}
+
 describe('store auth callback server', () => {
   test('waitForStoreAuthCode resolves after a valid callback', async () => {
     const port = await getAvailablePort()
@@ -60,36 +100,60 @@ describe('store auth callback server', () => {
   })
 
   test('waitForStoreAuthCode redirects a valid authorization handoff without settling auth', async () => {
-    const port = await getAvailablePort()
-    const params = callbackParams()
-    const authorizationUrl = 'https://shop.myshopify.com/admin/oauth/authorize?signup=signed.signup.jwt'
-    const onListening = async () => {
-      const handoffResponse = await globalThis.fetch(`http://127.0.0.1:${port}/auth/handoff?nonce=nonce-123`, {
-        redirect: 'manual',
-      })
-      expect(handoffResponse.status).toBe(302)
-      expect(handoffResponse.headers.get('Location')).toBe(authorizationUrl)
-      expect(handoffResponse.headers.get('Cache-Control')).toBe('no-store')
-      expect(handoffResponse.headers.get('Referrer-Policy')).toBe('no-referrer')
+    await withPendingHandoff(async ({url}) => {
+      const handoff = await fetchHandoff(url)
+      expect(handoff.status).toBe(302)
+      expect(handoff.headers.get('Location')).toBe(handoffAuthorizationUrl)
+      expect(handoff.headers.get('Cache-Control')).toBe('no-store')
+      expect(handoff.headers.get('Referrer-Policy')).toBe('no-referrer')
+    })
+  })
 
-      const callbackResponse = await globalThis.fetch(`http://127.0.0.1:${port}/auth/callback?${params.toString()}`)
-      expect(callbackResponse.status).toBe(200)
-      await callbackResponse.text()
-    }
+  test('waitForStoreAuthCode answers 404 to a handoff request with a wrong nonce', async () => {
+    await withPendingHandoff(async ({port}) => {
+      const handoff = await fetchHandoff(`http://127.0.0.1:${port}/auth/handoff?nonce=wrong`)
+      expect(handoff.status).toBe(404)
+      expect(handoff.body).not.toContain(handoffSignupJwt)
+    })
+  })
 
-    await expect(
-      waitForStoreAuthCode({
-        store: 'shop.myshopify.com',
-        state: 'state-123',
-        port,
-        timeoutMs: 1000,
-        authorizationRedirect: {
-          nonce: 'nonce-123',
-          authorizationUrl,
-        },
-        onListening,
-      }),
-    ).resolves.toBe('abc123')
+  test('waitForStoreAuthCode answers 404 to a handoff request with no nonce', async () => {
+    await withPendingHandoff(async ({port}) => {
+      const handoff = await fetchHandoff(`http://127.0.0.1:${port}/auth/handoff`)
+      expect(handoff.status).toBe(404)
+      expect(handoff.body).not.toContain(handoffSignupJwt)
+    })
+  })
+
+  test('waitForStoreAuthCode answers 404 to a non-GET handoff request', async () => {
+    await withPendingHandoff(async ({url}) => {
+      const handoff = await fetchHandoff(url, {method: 'POST'})
+      expect(handoff.status).toBe(404)
+      expect(handoff.body).not.toContain(handoffSignupJwt)
+    })
+  })
+
+  test('waitForStoreAuthCode answers 404 to a replayed handoff request', async () => {
+    await withPendingHandoff(async ({url}) => {
+      const served = await fetchHandoff(url)
+      expect(served.status).toBe(302)
+
+      const replay = await fetchHandoff(url)
+      expect(replay.status).toBe(404)
+      expect(replay.body).not.toContain(handoffSignupJwt)
+    })
+  })
+
+  test('waitForStoreAuthCode does not spend the handoff on a speculative browser fetch', async () => {
+    await withPendingHandoff(async ({url}) => {
+      const prefetch = await fetchHandoff(url, {headers: {'Sec-Purpose': 'prefetch;prerender'}})
+      expect(prefetch.status).toBe(404)
+      expect(prefetch.body).not.toContain(handoffSignupJwt)
+
+      const navigation = await fetchHandoff(url)
+      expect(navigation.status).toBe(302)
+      expect(navigation.headers.get('Location')).toBe(handoffAuthorizationUrl)
+    })
   })
 
   test('waitForStoreAuthCode rejects when callback state does not match', async () => {
