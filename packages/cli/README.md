@@ -4102,9 +4102,13 @@ Cancel a bulk operation on a store.
 
 ```
 USAGE
-  $ shopify store bulk cancel --id <value> -s <value> [--json-schema] [--no-color] [--verbose]
+  $ shopify store bulk cancel --id <value> -s <value> [-j] [--json-schema] [--no-color] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   -s, --store=<value>
       (required) The myshopify.com domain of the store.
       [env: SHOPIFY_FLAG_STORE]
@@ -4132,6 +4136,152 @@ DESCRIPTION
 
   Run `shopify store auth` first to create stored auth for the store.
 
+  Output from `--json` conforms to the `CancelBulkOperationResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "store": {
+        "type": "string"
+      },
+      "apiVersion": {
+        "type": "string",
+        "description": "The API version selected for the request."
+      },
+      "operation": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/BulkOperation"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "userErrors": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/BulkOperationUserError"
+        }
+      }
+    },
+    "required": [
+      "operation",
+      "userErrors"
+    ],
+    "additionalProperties": false,
+    "title": "CancelBulkOperationResult",
+    "definitions": {
+      "BulkOperation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "QUERY",
+              "MUTATION"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "RUNNING",
+              "COMPLETED",
+              "FAILED",
+              "CANCELED",
+              "CANCELING",
+              "EXPIRED"
+            ]
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ACCESS_DENIED",
+                  "INTERNAL_SERVER_ERROR",
+                  "TIMEOUT"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "objectCount": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "partialDataUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "status",
+          "createdAt",
+          "objectCount"
+        ],
+        "additionalProperties": false
+      },
+      "BulkOperationUserError": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify store bulk cancel --store shop.myshopify.com --id 123456789
 ```
@@ -4142,11 +4292,15 @@ Execute bulk operations on a store.
 
 ```
 USAGE
-  $ shopify store bulk execute -s <value> [--allow-mutations] [--json-schema] [--no-color] [--output-file <value>
+  $ shopify store bulk execute -s <value> [--allow-mutations] [-j] [--json-schema] [--no-color] [--output-file <value>
     --watch] [-q <value>] [--query-file <value>] [--variable-file <value> | -v <value>...] [--verbose] [--version
     <value>]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   -q, --query=<value>
       The GraphQL query or mutation to run as a bulk operation.
       [env: SHOPIFY_FLAG_QUERY]
@@ -4214,6 +4368,164 @@ DESCRIPTION
   Use "`store bulk status`" (https://shopify.dev/docs/api/shopify-cli/store/store-bulk-status) to check the status of
   your bulk operations.
 
+  Output from `--json` conforms to the `ExecuteBulkOperationResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "store": {
+        "type": "string"
+      },
+      "apiVersion": {
+        "type": "string",
+        "description": "The API version selected for the request."
+      },
+      "operation": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/BulkOperation"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "userErrors": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/BulkOperationUserError"
+        }
+      },
+      "watchAborted": {
+        "type": "boolean"
+      },
+      "results": {
+        "type": "string",
+        "description": "Downloaded results in JSONL format."
+      },
+      "outputFile": {
+        "type": "string",
+        "description": "The file containing the downloaded JSONL results."
+      }
+    },
+    "required": [
+      "operation",
+      "userErrors",
+      "watchAborted"
+    ],
+    "additionalProperties": false,
+    "title": "ExecuteBulkOperationResult",
+    "definitions": {
+      "BulkOperation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "QUERY",
+              "MUTATION"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "RUNNING",
+              "COMPLETED",
+              "FAILED",
+              "CANCELED",
+              "CANCELING",
+              "EXPIRED"
+            ]
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ACCESS_DENIED",
+                  "INTERNAL_SERVER_ERROR",
+                  "TIMEOUT"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "objectCount": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "partialDataUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "status",
+          "createdAt",
+          "objectCount"
+        ],
+        "additionalProperties": false
+      },
+      "BulkOperationUserError": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify store bulk execute --store shop.myshopify.com --query "query { products { edges { node { id } } } }"
 
@@ -4228,9 +4540,13 @@ Check the status of bulk operations on a store.
 
 ```
 USAGE
-  $ shopify store bulk status -s <value> [--id <value>] [--json-schema] [--no-color] [--verbose]
+  $ shopify store bulk status -s <value> [--id <value>] [-j] [--json-schema] [--no-color] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   -s, --store=<value>
       (required) The myshopify.com domain of the store.
       [env: SHOPIFY_FLAG_STORE]
@@ -4262,6 +4578,191 @@ DESCRIPTION
 
   Use "`store bulk execute`" (https://shopify.dev/docs/api/shopify-cli/store/store-bulk-execute) to start a new bulk
   operation.
+
+  Output from `--json` conforms to the `BulkOperationStatusResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/GetBulkOperationStatusResult"
+      },
+      {
+        "$ref": "#/definitions/ListBulkOperationsResult"
+      }
+    ],
+    "title": "BulkOperationStatusResult",
+    "definitions": {
+      "GetBulkOperationStatusResult": {
+        "type": "object",
+        "properties": {
+          "store": {
+            "type": "string"
+          },
+          "apiVersion": {
+            "type": "string",
+            "description": "The API version selected for the request."
+          },
+          "operationId": {
+            "type": "string"
+          },
+          "operation": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/BulkOperation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "operationId",
+          "operation"
+        ],
+        "additionalProperties": false
+      },
+      "ListBulkOperationsResult": {
+        "type": "object",
+        "properties": {
+          "store": {
+            "$ref": "#/definitions/GetBulkOperationStatusResult/properties/store"
+          },
+          "apiVersion": {
+            "$ref": "#/definitions/GetBulkOperationStatusResult/properties/apiVersion"
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListedBulkOperation"
+            }
+          }
+        },
+        "required": [
+          "operations"
+        ],
+        "additionalProperties": false
+      },
+      "BulkOperation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "QUERY",
+              "MUTATION"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "RUNNING",
+              "COMPLETED",
+              "FAILED",
+              "CANCELED",
+              "CANCELING",
+              "EXPIRED"
+            ]
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ACCESS_DENIED",
+                  "INTERNAL_SERVER_ERROR",
+                  "TIMEOUT"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "objectCount": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "partialDataUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "status",
+          "createdAt",
+          "objectCount"
+        ],
+        "additionalProperties": false
+      },
+      "ListedBulkOperation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/BulkOperation/properties/id"
+          },
+          "status": {
+            "$ref": "#/definitions/BulkOperation/properties/status"
+          },
+          "errorCode": {
+            "$ref": "#/definitions/BulkOperation/properties/errorCode"
+          },
+          "createdAt": {
+            "$ref": "#/definitions/BulkOperation/properties/createdAt"
+          },
+          "completedAt": {
+            "$ref": "#/definitions/BulkOperation/properties/completedAt"
+          },
+          "objectCount": {
+            "$ref": "#/definitions/BulkOperation/properties/objectCount"
+          },
+          "url": {
+            "$ref": "#/definitions/BulkOperation/properties/url"
+          },
+          "partialDataUrl": {
+            "$ref": "#/definitions/BulkOperation/properties/partialDataUrl"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "createdAt",
+          "objectCount"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   $ shopify store bulk status --store shop.myshopify.com
