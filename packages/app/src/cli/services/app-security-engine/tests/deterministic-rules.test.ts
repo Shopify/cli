@@ -18,6 +18,7 @@ const ACTIVE_IDS = [
   'MISSING_DEPENDENCY_SECURITY_AUTOMATION',
   'EOL_API_VERSION',
   'EXPIRING_OFFLINE_TOKEN',
+  'UNAUTHENTICATED_ENDPOINT',
   'REQUEST_CONTROLLED_ADMIN_CONTEXT',
   'DEPRECATED_SCRIPT_TAG_SCOPE',
   'INSECURE_WEBHOOK_URL',
@@ -52,6 +53,7 @@ describe('deterministic rules product contract', () => {
     expect(DETERMINISTIC_CHECKS.get('APP_PROXY_LIQUID_INJECTION')?.version).toBe(2)
     expect(DETERMINISTIC_CHECKS.get('INSECURE_WEBHOOK_URL')?.version).toBe(2)
     expect(DETERMINISTIC_CHECKS.get('COMMITTED_SECRET')?.version).toBe(2)
+    expect(DETERMINISTIC_CHECKS.get('UNAUTHENTICATED_ENDPOINT')?.version).toBe(2)
   })
 
   test('extracts security fields from parsed TOML without source regexes', () => {

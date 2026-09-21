@@ -17,6 +17,26 @@ principal before the sensitive action. The correct verification depends on
 the entry point, and you must resolve the one actually in use rather than
 recognize a spelling.
 
+## Deterministic coverage and handoff
+
+The deterministic implementation uses an AST to inspect exported loaders
+and actions in the conventional `app/routes` layout. It resolves Shopify
+imports, immutable aliases, and context produced by supported React Router
+request-handler wiring. A missing-auth finding requires a resolved Admin
+API operation before completed verification of the incoming request.
+
+This is a bounded straight-line analysis, not general JavaScript execution
+or proof of object-level authorization. Branches, catches, mutable or escaped
+bindings, custom routing/middleware, opaque helpers, ambiguous context,
+async instance factories, and parsing or resolution limits require review.
+The name `context.shopify` alone is never evidence of an authentic instance.
+
+When the review pack includes a deterministic fallback, inspect its listed
+files and the missing verification path within the permitted review scope.
+Keep the same check ID and report unsupported or unavailable evidence as
+unresolved. A static coverage gap is neither a finding nor a pass; broader
+agent review remains useful even when the supported static subset completed.
+
 ## Resolve actual verification
 
 Do not match a token string. Trace the real authentication path for each

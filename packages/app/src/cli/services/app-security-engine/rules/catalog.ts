@@ -208,10 +208,9 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     severity: 'high',
     points: -15,
     description:
-      'Investigates reachable protected operations that lack request verification across middleware, wrappers, and framework-specific authentication paths.',
+      'Checks straight-line React Router Admin API operations using resolved Shopify authentication bindings, with agent review for unsupported verification paths.',
     fix: 'Complete the verification appropriate to the entry point before protected operations, and stop those operations when verification fails.',
     guide: 'https://shopify.dev/docs/apps/auth',
-    requires: 'has_backend',
   },
   {
     id: 'REQUEST_CONTROLLED_ADMIN_CONTEXT',

@@ -27,6 +27,7 @@ import {scanDeprecatedScriptTagApi} from '../rules/shopify-rules.js'
 import {missingComplianceWebhooks, scanEolApiVersions} from '../rules/compliance-rules.js'
 import {scanAppProxyLiquidInjection} from '../rules/proxy-rules.js'
 import {scanExpiringOfflineTokens} from '../rules/token-rules.js'
+import {scanRouteAuthentication} from '../rules/auth-rules.js'
 import {scanStaticFrameAncestors} from '../rules/csp-rules.js'
 import {scanDependencyAutomation} from '../rules/dependency-automation-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
@@ -68,6 +69,7 @@ interface RunnerImplementationResult {
 interface RunnerResult {
   issues: Issue[]
   unresolvedReason?: string
+  unresolvedReasonCode?: CheckExecutionReason['code']
   inspectedFiles?: string[]
   implementations?: RunnerImplementationResult[]
 }
@@ -143,6 +145,12 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     extensions: [...JAVASCRIPT_EXTENSIONS, '.prisma'],
     guidance:
       'Review offline-token feature configuration, session storage refresh metadata, and ambiguous setup using the matching version 1 agent prompt.',
+  },
+  {
+    ...jsCheck('UNAUTHENTICATED_ENDPOINT', (context) => scanRouteAuthentication(context.sourceFiles), 'source', 2),
+    analysisMode: 'ast',
+    guidance:
+      'Trace the unresolved route authentication, context producer, wrapper, middleware, or control flow with the matching agent prompt. An unrecognized guard is not a missing-auth finding.',
   },
   jsCheck(
     'REQUEST_CONTROLLED_ADMIN_CONTEXT',
@@ -652,7 +660,7 @@ export async function scan(startPath?: string): Promise<ScanResult> {
           required: true,
           applicable: true,
           reason: {
-            code: 'parser_unavailable',
+            code: output.unresolvedReasonCode ?? 'parser_unavailable',
             message: output.unresolvedReason,
           },
         }

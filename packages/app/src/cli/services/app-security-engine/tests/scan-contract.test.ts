@@ -480,7 +480,7 @@ describe('coverage and trace invariants', () => {
 })
 
 describe('authenticated-route review handoff', () => {
-  test('leaves unauthenticated-endpoint review to the agent and emits no static finding', async () => {
+  test('hands unresolved context authentication to the agent without a false finding or a passing check', async () => {
     const directory = await app({
       'shopify.app.toml': appConfig(),
       'package.json': reactPackage,
@@ -492,12 +492,27 @@ describe('authenticated-route review handoff', () => {
 
     // Context-provided authentication must not be mistaken for missing verification.
     expect(result.issues.some((issue) => issue.id === 'UNAUTHENTICATED_ENDPOINT')).toBe(false)
-    expect(result.scan.checks_executed.some((execution) => execution.id === 'UNAUTHENTICATED_ENDPOINT')).toBe(false)
+    expect(result.scan.checks_executed.find((execution) => execution.id === 'UNAUTHENTICATED_ENDPOINT')).toMatchObject({
+      status: 'unresolved',
+      analysis_mode: 'ast',
+      reason: {code: 'agent_investigation_required'},
+    })
+    expect(result.scan.coverage_gaps).toContainEqual(
+      expect.objectContaining({code: 'unresolved_check', check_id: 'UNAUTHENTICATED_ENDPOINT'}),
+    )
 
     const reviewPack = buildReviewPack('test', result)
-    expect(reviewPack.checks).toContainEqual(expect.objectContaining({id: 'UNAUTHENTICATED_ENDPOINT', version: 2}))
+    expect(reviewPack.checks).toContainEqual(
+      expect.objectContaining({
+        id: 'UNAUTHENTICATED_ENDPOINT',
+        version: 2,
+        deterministic_fallback: expect.objectContaining({
+          reason: expect.objectContaining({code: 'agent_investigation_required'}),
+        }),
+      }),
+    )
 
-    // Removing the heuristic must not make an unperformed auth review look clean.
+    // A bounded static check must not make an unperformed agent review look complete.
     const trace = compileTrace(result)
     expect(trace.checks_executed).toContainEqual(
       expect.objectContaining({
@@ -507,5 +522,28 @@ describe('authenticated-route review handoff', () => {
         reason: expect.objectContaining({code: 'not_reported'}),
       }),
     )
+  })
+  test('executes the traced Worker authentication path with AST provenance', async () => {
+    const directory = await app({
+      'shopify.app.toml': appConfig(),
+      'package.json': reactPackage,
+      'app/shopify.server.ts': `import {shopifyApp} from '@shopify/shopify-app-react-router/server'; export default shopifyApp({});`,
+      'workers/app.ts': `import {createRequestHandler} from 'react-router';
+import shopify from '../app/shopify.server';
+const handler = createRequestHandler(build);
+export default {async fetch(request) { return handler(request, {shopify}); }};`,
+      'app/routes/orders.tsx': `export async function loader({request, context}) {
+const {admin} = await context.shopify.authenticate.admin(request);
+return admin.graphql('query { orders(first: 1) { nodes { id } } }');
+}`,
+    })
+    const result = await scan(directory)
+    expect(result.issues.filter((issue) => issue.id === 'UNAUTHENTICATED_ENDPOINT')).toEqual([])
+    expect(result.scan.checks_executed.find((execution) => execution.id === 'UNAUTHENTICATED_ENDPOINT')).toMatchObject({
+      status: 'executed',
+      analysis_mode: 'ast',
+      findings: 0,
+      inspected_files: expect.arrayContaining(['workers/app.ts', 'app/shopify.server.ts', 'app/routes/orders.tsx']),
+    })
   })
 })
