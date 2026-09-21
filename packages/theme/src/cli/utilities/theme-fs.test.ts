@@ -27,6 +27,7 @@ import {Operation, type Checksum, type ThemeAsset} from '@shopify/cli-kit/node/t
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {recordError} from '@shopify/cli-kit/node/analytics'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 import EventEmitter from 'events'
 import {fileURLToPath} from 'node:url'
@@ -335,6 +336,24 @@ describe('theme-fs', () => {
         // Then
         expect(filesUpdated).toBe(true)
         writeFileSpy.mockRestore()
+      })
+    })
+
+    test('"write" rejects keys that resolve outside of the theme directory', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const root = joinPath(tmpDir, 'theme')
+        await mkdir(root)
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+        const escapingKey = '../escaped.liquid'
+
+        // When
+        const writePromise = themeFileSystem.write({key: escapingKey, checksum: '1010', value: 'content'})
+
+        // Then
+        await expect(writePromise).rejects.toThrow(AbortError)
+        await expect(fileExists(joinPath(tmpDir, 'escaped.liquid'))).resolves.toBe(false)
       })
     })
   })

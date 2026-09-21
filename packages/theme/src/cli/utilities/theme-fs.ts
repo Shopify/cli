@@ -6,11 +6,12 @@ import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js
 import {getListingFilePath, updateSettingsDataForListing} from './theme-listing.js'
 import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
+import {joinPath, basename, relativePath, resolvePath, isSubpath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
 import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {recordError} from '@shopify/cli-kit/node/analytics'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
 
@@ -395,8 +396,26 @@ export function handleSyncUpdate(
   }
 }
 
+/**
+ * Resolves a theme file key against the theme root, ensuring the result stays inside it.
+ *
+ * File keys come from the remote theme, so a key containing `..` segments would otherwise
+ * make `joinPath` resolve to a path outside the theme directory and let a remote response
+ * read or overwrite arbitrary files on the developer's machine.
+ */
+function resolveThemeFilePath(root: string, key: Key): string {
+  const absoluteRoot = resolvePath(root)
+  const absolutePath = resolvePath(absoluteRoot, key)
+
+  if (!isSubpath(absoluteRoot, absolutePath)) {
+    throw new AbortError(`Theme file "${key}" is outside of the theme directory.`)
+  }
+
+  return absolutePath
+}
+
 async function writeThemeFile(root: string, {key, attachment, value}: ThemeAsset) {
-  const absolutePath = joinPath(root, key)
+  const absolutePath = resolveThemeFilePath(root, key)
 
   await ensureDirExists(absolutePath)
 
@@ -411,7 +430,7 @@ async function writeThemeFile(root: string, {key, attachment, value}: ThemeAsset
 
 export async function readThemeFile(root: string, path: Key): Promise<string | Buffer | undefined> {
   const options: ReadOptions = isTextFile(path) ? {encoding: 'utf8'} : {}
-  const absolutePath = joinPath(root, path)
+  const absolutePath = resolveThemeFilePath(root, path)
 
   const themeFileExists = await fileExists(absolutePath)
   if (!themeFileExists) {
@@ -444,7 +463,7 @@ async function readThemeFileWithListing(
 }
 
 async function removeThemeFile(root: string, path: Key) {
-  const absolutePath = joinPath(root, path)
+  const absolutePath = resolveThemeFilePath(root, path)
 
   const themeFileExists = await fileExists(absolutePath)
   if (!themeFileExists) {
