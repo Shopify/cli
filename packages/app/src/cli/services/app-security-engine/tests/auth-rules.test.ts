@@ -1,7 +1,9 @@
 /* eslint-disable @shopify/cli/no-inline-graphql -- source fixtures exercise AST recognition without executing GraphQL */
 import {scanRouteAuthentication} from '../rules/auth-rules.js'
+import {AuthProject} from '../rules/auth-bindings.js'
+import * as astGrep from '@ast-grep/napi'
 import {extname} from '@shopify/cli-kit/node/path'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import type {SourceFile} from '../rules/types.js'
 
 const server = `import {shopifyApp} from '@shopify/shopify-app-react-router/server';
@@ -472,5 +474,73 @@ export const handler = createRequestHandler({build, getLoadContext: recursive});
     expect(standard.unresolvedReason).toBeUndefined()
     expect(custom.issues).toEqual([])
     expect(custom.unresolvedReasonCode).toBe('agent_investigation_required')
+  })
+
+  test('reports an unverified GraphQL call with a static template literal', async () => {
+    const query = '`#graphql\nquery Orders { orders(first: 1) { nodes { id } } }\n`'
+    const result = await scanRouteAuthentication(files(route(`${offline}\nreturn admin.graphql(${query});`)))
+    expect(result.issues).toEqual([
+      expect.objectContaining({
+        id: 'UNAUTHENTICATED_ENDPOINT',
+        location: {file: 'app/routes/orders.ts', line: 4},
+      }),
+    ])
+    expect(result.unresolvedReason).toBeUndefined()
+  })
+
+  test('keeps authenticated static-template queries within deterministic coverage', async () => {
+    const query = '`#graphql\nquery Orders { orders(first: 1) { nodes { id } } }\n`'
+    const result = await scanRouteAuthentication(
+      files(route(`const {admin} = await authenticate.admin(request);\nreturn admin.graphql(${query});`)),
+    )
+    expect(result.issues).toEqual([])
+    expect(result.unresolvedReason).toBeUndefined()
+  })
+
+  test('does not assume interpolated templates are inert', async () => {
+    const query = `\`#graphql \${buildQuery()}\``
+    const result = await scanRouteAuthentication(files(route(`${offline}\nreturn admin.graphql(${query});`)))
+    expect(result.issues).toEqual([])
+    expect(result.unresolvedReasonCode).toBe('agent_investigation_required')
+  })
+
+  test('evaluates authentication in arguments before reporting the GraphQL operation', async () => {
+    const query = '`#graphql\nquery Products($query: String!) { products(first: 1, query: $query) { nodes { id } } }\n`'
+    const result = await scanRouteAuthentication(
+      files(
+        route(
+          `${offline}\nreturn admin.graphql(${query}, {variables: {query: (await authenticate.admin(request)).session.shop}});`,
+        ),
+      ),
+    )
+    expect(result.issues).toEqual([])
+    expect(result.unresolvedReason).toBeUndefined()
+  })
+
+  test('contains parser exceptions to the affected file and continues inspecting other files', () => {
+    const sourceFiles = files('export const loader = () => null;', {'app/routes/bad.ts': 'broken source'})
+    const parser = {...astGrep}
+    vi.spyOn(parser, 'parse').mockImplementationOnce(() => {
+      throw new SyntaxError('Native parser rejected this input')
+    })
+    const project = new AuthProject(sourceFiles, parser)
+    expect(project.module('app/routes/bad.ts')).toBeUndefined()
+    expect(project.module('app/routes/orders.ts')?.exports.has('loader')).toBe(true)
+    expect([...project.parserFailures]).toEqual(['app/routes/bad.ts'])
+  })
+
+  test('does not turn analyzer inspection bugs into parser failures', () => {
+    const sourceFiles = files('export const loader = () => null;')
+    const inspectionError = new Error('Broken AST inspection invariant')
+    const root = new Proxy(astGrep.parse(astGrep.Lang.TypeScript, sourceFiles[1]!.content!).root(), {
+      get() {
+        throw inspectionError
+      },
+    })
+    const parser = {...astGrep}
+    vi.spyOn(parser, 'parse').mockReturnValue({root: () => root, filename: () => 'app/routes/orders.ts'})
+    const project = new AuthProject(sourceFiles, parser)
+    expect(() => project.module('app/routes/orders.ts')).toThrow(inspectionError)
+    expect([...project.parserFailures]).toEqual([])
   })
 })

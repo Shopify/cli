@@ -216,13 +216,14 @@ export class AuthProject {
           file.content,
         )
         .root()
-      // Tree-sitter also recovers missing punctuation as zero-width nodes, without an ERROR node.
-      if (root.find({rule: {any: [{kind: 'ERROR'}, {all: [{regex: '^$'}, {not: {kind: 'program'}}]}]}})) {
-        this.parserFailures.add(path)
-        return undefined
-      }
-    } catch (error) {
-      if (!(error instanceof Error) || error.name !== 'Error') throw error
+      // Any rejection from the native parse/root operation leaves this file uninspected.
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      this.parserFailures.add(path)
+      return undefined
+    }
+    // Tree-sitter also recovers missing punctuation as zero-width nodes, without an ERROR node.
+    if (root.find({rule: {any: [{kind: 'ERROR'}, {all: [{regex: '^$'}, {not: {kind: 'program'}}]}]}})) {
       this.parserFailures.add(path)
       return undefined
     }

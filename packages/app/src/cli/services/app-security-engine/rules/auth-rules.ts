@@ -48,13 +48,9 @@ export async function scanRouteAuthentication(files: SourceFile[]): Promise<Auth
   try {
     // Import the external native package here: bundling an internal lazy module can hoist its native import.
     parser = await import('@ast-grep/napi')
-  } catch (error) {
-    const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined
-    if (
-      !['ERR_MODULE_NOT_FOUND', 'MODULE_NOT_FOUND', 'ERR_DLOPEN_FAILED'].includes(String(code)) &&
-      !(error instanceof Error && /^(?:Failed to load|Cannot find) native binding/.test(error.message))
-    )
-      throw error
+    // Only the optional native package import is inside this availability boundary.
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
     return {
       issues: [],
       inspectedFiles: [],
@@ -218,6 +214,13 @@ function evaluate(
     case 'true':
     case 'false':
     case 'null':
+      return {kind: 'inert'}
+    case 'template_string':
+      // Substitutions can execute code or coerce objects; only static templates are inert.
+      if (expression.children().some((child) => child.kind() === 'template_substitution')) {
+        state.ambiguous = true
+        return UNKNOWN_AUTH_VALUE
+      }
       return {kind: 'inert'}
     case 'function_expression':
     case 'arrow_function':
