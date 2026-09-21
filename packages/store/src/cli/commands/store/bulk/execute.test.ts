@@ -1,6 +1,6 @@
 import StoreBulkExecute from './execute.js'
 import {renderExecuteBulkOperationResult} from '../../../services/store/bulk/execute-result.js'
-import {renderBulkOperationStart} from '../../../services/store/bulk/progress.js'
+import {logBulkOperationStart} from '../../../services/store/bulk/progress.js'
 import {executeBulkOperation, prepareBulkOperation} from '../../../services/store/bulk/execute-bulk-operation.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
@@ -74,7 +74,7 @@ describe('store bulk execute command', () => {
       watch: false,
       outputFile: undefined,
     })
-    expect(renderBulkOperationStart).toHaveBeenCalledWith('Starting bulk operation.', expect.any(Object), 'json')
+    expect(logBulkOperationStart).toHaveBeenCalledWith('Starting bulk operation.', expect.any(Object), 'json')
   })
 
   test('rejects an empty query', async () => {

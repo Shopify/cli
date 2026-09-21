@@ -1,7 +1,7 @@
 import StoreBulkStatus from './status.js'
 import {prepareBulkAdminContext} from '../../../services/store/bulk/bulk-admin-context.js'
 import {renderBulkOperationStatusResult} from '../../../services/store/bulk/status-result.js'
-import {renderBulkOperationStart} from '../../../services/store/bulk/progress.js'
+import {logBulkOperationStart} from '../../../services/store/bulk/progress.js'
 import {getBulkOperationStatus, listBulkOperations} from '../../../services/store/bulk/bulk-operation-status.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
@@ -31,7 +31,7 @@ describe('store bulk status command', () => {
   test('selects JSON presentation', async () => {
     await StoreBulkStatus.run(['--store', 'shop.myshopify.com', '--json'])
     expect(renderBulkOperationStatusResult).toHaveBeenCalledWith({operations: []}, 'json')
-    expect(renderBulkOperationStart).toHaveBeenCalledWith(expect.any(String), expect.any(Object), 'json')
+    expect(logBulkOperationStart).toHaveBeenCalledWith(expect.any(String), expect.any(Object), 'json')
     expect(StoreBulkStatus.jsonOutputSchema).toBeDefined()
     expect(StoreBulkStatus.flags.json).toBeDefined()
   })

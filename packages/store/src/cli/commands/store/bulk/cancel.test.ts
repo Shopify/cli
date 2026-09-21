@@ -1,7 +1,7 @@
 import StoreBulkCancel from './cancel.js'
 import {prepareBulkAdminContext} from '../../../services/store/bulk/bulk-admin-context.js'
 import {renderCancelBulkOperationResult} from '../../../services/store/bulk/cancel-result.js'
-import {renderBulkOperationStart} from '../../../services/store/bulk/progress.js'
+import {logBulkOperationStart} from '../../../services/store/bulk/progress.js'
 import {cancelBulkOperation} from '../../../services/store/bulk/cancel-bulk-operation.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
@@ -24,7 +24,7 @@ describe('store bulk cancel command', () => {
       'gid://shopify/BulkOperation/123',
       'json',
     )
-    expect(renderBulkOperationStart).toHaveBeenCalledWith(expect.any(String), expect.any(Object), 'json')
+    expect(logBulkOperationStart).toHaveBeenCalledWith(expect.any(String), expect.any(Object), 'json')
     expect(StoreBulkCancel.jsonOutputSchema).toBeDefined()
     expect(StoreBulkCancel.flags.json).toBeDefined()
   })

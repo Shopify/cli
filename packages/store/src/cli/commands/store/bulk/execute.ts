@@ -1,6 +1,6 @@
 import {executeBulkOperation, prepareBulkOperation} from '../../../services/store/bulk/execute-bulk-operation.js'
 import {renderExecuteBulkOperationResult} from '../../../services/store/bulk/execute-result.js'
-import {renderBulkOperationStart} from '../../../services/store/bulk/progress.js'
+import {logBulkOperationStart} from '../../../services/store/bulk/progress.js'
 import {executeBulkOperationJsonOutputSchema} from '../../../services/store/bulk/types.js'
 import StoreCommand from '../../../utilities/store-command.js'
 import {bulkOperationFlags, storeFlags} from '../../../flags.js'
@@ -54,7 +54,7 @@ export default class StoreBulkExecute extends StoreCommand {
       ...(flags.version && {version: flags.version}),
     })
     const format = flags.json ? 'json' : 'text'
-    renderBulkOperationStart(
+    logBulkOperationStart(
       'Starting bulk operation.',
       {storeFqdn: input.adminSession.storeFqdn, version: input.version},
       format,

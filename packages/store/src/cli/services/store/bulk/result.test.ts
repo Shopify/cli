@@ -1,7 +1,7 @@
 import {renderExecuteBulkOperationResult} from './execute-result.js'
 import {renderCancelBulkOperationResult} from './cancel-result.js'
 import {renderBulkOperationStatusResult} from './status-result.js'
-import {renderBulkOperationStart} from './progress.js'
+import {logBulkOperationStart} from './progress.js'
 import {
   executeBulkOperationJsonOutputSchema,
   cancelBulkOperationJsonOutputSchema,
@@ -82,7 +82,7 @@ test('preserves upstream cancellation errors with omitted and null fields', () =
 })
 
 test('keeps the original starting banner in text mode', () => {
-  renderBulkOperationStart('Starting bulk operation.', {storeFqdn: 'shop.myshopify.com', version: '2026-01'}, 'text')
+  logBulkOperationStart('Starting bulk operation.', {storeFqdn: 'shop.myshopify.com', version: '2026-01'}, 'text')
   expect(renderInfo).toHaveBeenCalledWith({
     headline: 'Starting bulk operation.',
     body: [{list: {items: ['Store: shop.myshopify.com', 'API version: 2026-01']}}],
@@ -92,7 +92,7 @@ test('keeps the original starting banner in text mode', () => {
 test('outputs starting information without a terminal banner in JSON mode', () => {
   const output = mockAndCaptureOutput()
 
-  renderBulkOperationStart('Starting bulk operation.', {storeFqdn: 'shop.myshopify.com'}, 'json')
+  logBulkOperationStart('Starting bulk operation.', {storeFqdn: 'shop.myshopify.com'}, 'json')
 
   expect(output.info()).toBe('Starting bulk operation.\nStore: shop.myshopify.com')
   expect(renderInfo).not.toHaveBeenCalled()

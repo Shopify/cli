@@ -2,7 +2,7 @@ import {formatOperationInfo} from './common.js'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
-export function renderBulkOperationStart(
+export function logBulkOperationStart(
   headline: string,
   context: {storeFqdn: string; version?: string; operationId?: string},
   format: 'text' | 'json',

@@ -1,7 +1,7 @@
 import {cancelBulkOperation} from '../../../services/store/bulk/cancel-bulk-operation.js'
 import {prepareBulkAdminContext} from '../../../services/store/bulk/bulk-admin-context.js'
 import {renderCancelBulkOperationResult} from '../../../services/store/bulk/cancel-result.js'
-import {renderBulkOperationStart} from '../../../services/store/bulk/progress.js'
+import {logBulkOperationStart} from '../../../services/store/bulk/progress.js'
 import {cancelBulkOperationJsonOutputSchema} from '../../../services/store/bulk/types.js'
 import StoreCommand from '../../../utilities/store-command.js'
 import {requiredBulkOperationIdFlag, storeFlags} from '../../../flags.js'
@@ -33,7 +33,7 @@ export default class StoreBulkCancel extends StoreCommand {
     const {flags} = await this.parse(StoreBulkCancel)
     const format = flags.json ? 'json' : 'text'
     const adminSession = await prepareBulkAdminContext(flags.store)
-    renderBulkOperationStart(
+    logBulkOperationStart(
       'Canceling bulk operation.',
       {storeFqdn: adminSession.storeFqdn, operationId: flags.id},
       format,
