@@ -1,4 +1,6 @@
 import {appFlags} from '../../../flags.js'
+import {appConfigValidateJsonOutputSchema, type AppConfigValidateResult} from '../../../services/validate/types.js'
+import {renderAppConfigValidateResult} from '../../../services/validate/result.js'
 import {validateApp} from '../../../services/validate.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
@@ -20,10 +22,21 @@ async function recordValidationFailure(issueCount: number, fileCount: number) {
   }))
 }
 
+async function failJsonValidation(issues: AppConfigValidateResult['issues']): Promise<never> {
+  const fileCount = new Set(issues.map((issue) => issue.file)).size
+  await recordValidationFailure(issues.length, fileCount)
+  outputResult(appConfigValidateJsonOutputSchema.encode({valid: false, issues}))
+  throw new AbortSilentError()
+}
+
 export default class Validate extends AppLinkedCommand {
   static summary = 'Validate your app configuration and extensions.'
 
   static descriptionWithMarkdown = `Validates the selected app configuration file and all extension configurations against their schemas and reports any errors found.`
+
+  static get jsonOutputSchema() {
+    return appConfigValidateJsonOutputSchema
+  }
 
   static description = this.descriptionForHelp()
 
@@ -46,10 +59,7 @@ export default class Validate extends AppLinkedCommand {
       project = await Project.load(flags.path)
     } catch (err) {
       if (err instanceof AbortError && flags.json) {
-        await recordValidationFailure(1, 1)
-        const message = unstyled(stringifyMessage(err.message)).trim()
-        outputResult(JSON.stringify({valid: false, issues: [{message}]}, null, 2))
-        throw new AbortSilentError()
+        await failJsonValidation([{message: unstyled(stringifyMessage(err.message)).trim()}])
       }
       throw err
     }
@@ -63,10 +73,7 @@ export default class Validate extends AppLinkedCommand {
       })
     } catch (err) {
       if (err instanceof AbortError && flags.json) {
-        await recordValidationFailure(1, 1)
-        const message = unstyled(stringifyMessage(err.message)).trim()
-        outputResult(JSON.stringify({valid: false, issues: [{message}]}, null, 2))
-        throw new AbortSilentError()
+        await failJsonValidation([{message: unstyled(stringifyMessage(err.message)).trim()}])
       }
       throw err
     }
@@ -74,12 +81,11 @@ export default class Validate extends AppLinkedCommand {
     const configErrors = errorsForConfig(project, activeConfig.file)
     if (configErrors.length > 0) {
       const issues = configErrors.map((err) => ({file: err.path, message: err.message}))
+      if (flags.json) {
+        await failJsonValidation(issues)
+      }
       const fileCount = new Set(configErrors.map((err) => err.path)).size
       await recordValidationFailure(issues.length, fileCount)
-      if (flags.json) {
-        outputResult(JSON.stringify({valid: false, issues}, null, 2))
-        throw new AbortSilentError()
-      }
       renderError({
         headline: 'Validation errors found.',
         body: issues.map((issue) => `• ${issue.message}`).join('\n'),
@@ -104,14 +110,14 @@ export default class Validate extends AppLinkedCommand {
       const message = err instanceof AbortError ? unstyled(stringifyMessage(err.message)).trim() : ''
       const isValidationError = message.startsWith('Validation errors in ')
       if (isValidationError && flags.json) {
-        await recordValidationFailure(1, 1)
-        outputResult(JSON.stringify({valid: false, issues: [{message}]}, null, 2))
-        throw new AbortSilentError()
+        await failJsonValidation([{message}])
       }
       throw err
     }
 
-    await validateApp(app, {json: flags.json})
+    const result = await validateApp(app)
+    renderAppConfigValidateResult(result, app.configPath, flags.json ? 'json' : 'text')
+    if (!result.valid) throw new AbortSilentError()
 
     return {app}
   }

@@ -592,6 +592,63 @@ DESCRIPTION
 
   Validates the selected app configuration file and all extension configurations against their schemas and reports any
   errors found.
+
+  Output from `--json` conforms to the `AppConfigValidateResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "valid": {
+        "type": "boolean"
+      },
+      "issues": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ValidationIssue"
+        }
+      }
+    },
+    "required": [
+      "valid",
+      "issues"
+    ],
+    "additionalProperties": false,
+    "title": "AppConfigValidateResult",
+    "definitions": {
+      "ValidationIssue": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "path": {
+            "type": "array",
+            "items": {
+              "type": [
+                "string",
+                "number"
+              ]
+            }
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app deploy`
