@@ -1,5 +1,5 @@
 import Execute from './execute.js'
-import {executeDevPlatformOperation} from '../../services/dev/execute.js'
+import {executeAppLogsOperation} from '../../services/dev/execute.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {Parser} from '@oclif/core'
@@ -23,11 +23,11 @@ afterEach(() => {
 test('forwards a GraphQL request without an app project or log-specific flags and prints the full response', async () => {
   const query = '{ __schema { queryType { name } } }'
   const response = {data: {__schema: {queryType: {name: 'QueryRoot'}}}}
-  vi.mocked(executeDevPlatformOperation).mockResolvedValue({response, failed: false})
+  vi.mocked(executeAppLogsOperation).mockResolvedValue({response, failed: false})
 
   await Execute.run(['--query', query], import.meta.url)
 
-  expect(executeDevPlatformOperation).toHaveBeenCalledWith({
+  expect(executeAppLogsOperation).toHaveBeenCalledWith({
     query,
     queryFile: undefined,
     variables: undefined,
@@ -40,14 +40,14 @@ test('forwards a GraphQL request without an app project or log-specific flags an
 })
 
 test('forwards stdin, variables, operation name and the local demo selection', async () => {
-  vi.mocked(executeDevPlatformOperation).mockResolvedValue({response: {data: {app: null}}, failed: false})
+  vi.mocked(executeAppLogsOperation).mockResolvedValue({response: {data: {app: null}}, failed: false})
 
   await Execute.run(
     ['--query-file', '-', '--variables', '{"key":"test-app"}', '--operation-name', 'Logs', '--demo'],
     import.meta.url,
   )
 
-  expect(executeDevPlatformOperation).toHaveBeenCalledWith({
+  expect(executeAppLogsOperation).toHaveBeenCalledWith({
     query: undefined,
     queryFile: '-',
     variables: '{"key":"test-app"}',
@@ -59,7 +59,7 @@ test('forwards stdin, variables, operation name and the local demo selection', a
 
 test('preserves partial data and errors in stdout while setting a failing exit status', async () => {
   const response = {data: {app: null}, errors: [{message: 'Access denied', path: ['app']}]}
-  vi.mocked(executeDevPlatformOperation).mockResolvedValue({response, failed: true})
+  vi.mocked(executeAppLogsOperation).mockResolvedValue({response, failed: true})
 
   await Execute.run(['--query', '{ app(key: "test-app") { key } }'], import.meta.url)
 

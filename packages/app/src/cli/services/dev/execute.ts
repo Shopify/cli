@@ -1,5 +1,5 @@
 import {appManagementHeaders} from '@shopify/cli-kit/node/api/app-management'
-import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -33,7 +33,7 @@ interface ExecuteResult {
   failed: boolean
 }
 
-export async function executeDevPlatformOperation(options: ExecuteOptions): Promise<ExecuteResult> {
+export async function executeAppLogsOperation(options: ExecuteOptions): Promise<ExecuteResult> {
   if (process.env.SHOPIFY_APP_LOG_QUERY_PROTOTYPE !== '1' || process.env.SHOPIFY_SERVICE_ENV !== 'local') {
     throw new AbortError('Prototype only: set SHOPIFY_APP_LOG_QUERY_PROTOTYPE=1 and SHOPIFY_SERVICE_ENV=local.')
   }
@@ -65,7 +65,7 @@ export async function executeDevPlatformOperation(options: ExecuteOptions): Prom
   }
 
   const {origin, token} = await queryConnection(options.demo)
-  const response = await fetch(`${origin}/api/unstable/graphql`, {
+  const response = await fetch(`${origin}/app_logs/unstable/graphql`, {
     method: 'POST',
     redirect: 'error',
     signal: AbortSignal.timeout(15000),
@@ -77,11 +77,11 @@ export async function executeDevPlatformOperation(options: ExecuteOptions): Prom
     body = await response.json()
   } catch (error) {
     if (!(error instanceof SyntaxError)) throw error
-    throw new AbortError(`Local Dev Platform API returned invalid JSON (HTTP ${response.status}).`)
+    throw new AbortError(`Local App Logs API returned invalid JSON (HTTP ${response.status}).`)
   }
   const result = responseSchema.safeParse(body)
   if (!result.success) {
-    throw new AbortError(`Local Dev Platform API returned an invalid GraphQL response (HTTP ${response.status}).`)
+    throw new AbortError(`Local App Logs API returned an invalid GraphQL response (HTTP ${response.status}).`)
   }
   return {response: result.data, failed: !response.ok || Boolean(result.data.errors?.length)}
 }
@@ -95,8 +95,8 @@ async function queryConnection(demo: boolean): Promise<{origin: string; token: s
     return {origin: 'http://127.0.0.1:4387', token}
   }
 
-  const host = await developerDashboardFqdn()
-  if (host !== 'dev.shop.dev') throw new AbortError('This prototype can only call dev.shop.dev.')
+  const host = await appManagementFqdn()
+  if (host !== 'app.shop.dev') throw new AbortError('This prototype can only call app.shop.dev.')
   const {appManagementToken} = await ensureAuthenticatedAppManagementAndBusinessPlatform()
   return {origin: `https://${host}`, token: appManagementToken}
 }

@@ -1,4 +1,4 @@
-import {executeDevPlatformOperation} from '../../services/dev/execute.js'
+import {executeAppLogsOperation} from '../../services/dev/execute.js'
 import {operationFlags} from '../../flags.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -7,7 +7,7 @@ import {Flags} from '@oclif/core'
 
 export default class Execute extends BaseCommand {
   static hidden = true
-  static summary = 'Prototype only: execute a GraphQL request against the local Dev Platform API.'
+  static summary = 'Prototype only: execute a GraphQL request against the local App Logs API.'
   static description =
     'Prints the complete GraphQL JSON response. The query selects apps, filters, and returned fields. ' +
     'GraphQL or HTTP errors produce a nonzero exit status, preserving partial data when available.'
@@ -35,7 +35,7 @@ export default class Execute extends BaseCommand {
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(Execute)
-    const {response, failed} = await executeDevPlatformOperation({
+    const {response, failed} = await executeAppLogsOperation({
       query: flags.query,
       queryFile: flags['query-file'],
       variables: flags.variables,
