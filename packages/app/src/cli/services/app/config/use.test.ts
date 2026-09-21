@@ -1,4 +1,4 @@
-import use, {UseOptions} from './use.js'
+import use, {UseOptions, useAppConfiguration} from './use.js'
 import {testApp, testAppWithConfig, testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
 import {getAppConfigurationFileName, getAppConfigurationContext} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
@@ -297,3 +297,25 @@ function createConfigFile(tmp: string, fileName: string) {
   const filePath = joinPath(tmp, fileName)
   writeFileSync(filePath, '')
 }
+
+test('returns selected configuration facts without presentation', async () => {
+  await inTemporaryDirectory(async (directory) => {
+    createConfigFile(directory, 'shopify.app.toml')
+    vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
+    mockContext(directory, {client_id: 'key'})
+    await expect(useAppConfiguration({directory, configName: 'shopify.app.toml'})).resolves.toEqual({
+      configFile: joinPath(directory, 'shopify.app.toml'),
+      clientId: 'key',
+    })
+    expect(renderSuccess).not.toHaveBeenCalled()
+    expect(setCachedAppInfo).toHaveBeenCalledWith({directory, configFile: 'shopify.app.toml'})
+  })
+})
+
+test('returns explicit nulls after resetting the preference without presentation', async () => {
+  await inTemporaryDirectory(async (directory) => {
+    await expect(useAppConfiguration({directory, reset: true})).resolves.toEqual({configFile: null, clientId: null})
+    expect(clearCurrentConfigFile).toHaveBeenCalledWith(directory)
+    expect(renderSuccess).not.toHaveBeenCalled()
+  })
+})
