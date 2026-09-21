@@ -4826,6 +4826,126 @@ DESCRIPTION
 
   Creates a new dev store in your organization.
 
+  Output from `--json` conforms to the `CreateDevStoreResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "store": {
+            "$ref": "#/definitions/CreatedDevStore"
+          },
+          "organization": {
+            "$ref": "#/definitions/StoreOrganization"
+          }
+        },
+        "required": [
+          "store",
+          "organization"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "$ref": "#/definitions/StoreCommandError"
+      }
+    ],
+    "title": "CreateDevStoreResult",
+    "definitions": {
+      "CreatedDevStore": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "adminUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "plan": {
+            "type": "string",
+            "enum": [
+              "basic",
+              "grow",
+              "advanced",
+              "plus"
+            ]
+          },
+          "featurePreview": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "demoData": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "domain",
+          "plan",
+          "demoData"
+        ],
+        "additionalProperties": false
+      },
+      "StoreOrganization": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "StoreCommandError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "const": true
+          },
+          "message": {
+            "type": "string"
+          },
+          "nextSteps": {
+            "type": "array",
+            "items": {},
+            "description": "Suggested next steps, as text or formatted UI tokens."
+          },
+          "exitCode": {
+            "type": "number",
+            "const": 1
+          }
+        },
+        "required": [
+          "error",
+          "message",
+          "nextSteps",
+          "exitCode"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify store create dev
 

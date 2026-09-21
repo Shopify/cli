@@ -64,7 +64,6 @@ const commandExceptions = [
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/off.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/on.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/status.ts',
-  'packages/store/src/cli/commands/store/create/dev.ts',
   'packages/store/src/cli/commands/store/delete.ts',
   'packages/theme/src/cli/commands/theme/check.ts',
   'packages/theme/src/cli/commands/theme/delete.ts',
