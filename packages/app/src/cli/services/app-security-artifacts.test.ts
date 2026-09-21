@@ -4,7 +4,13 @@ import {
   writeAppSecurityArtifacts,
   writeSubmission,
 } from './app-security-artifacts.js'
-import {scanApp, SUBMISSION_SCHEMA_VERSION, type AppSecuritySubmission} from './app-security-engine/index.js'
+import {
+  compileFindings,
+  scanApp,
+  SUBMISSION_SCHEMA_VERSION,
+  type AppSecuritySubmission,
+} from './app-security-engine/index.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
@@ -13,6 +19,17 @@ const submission = {
   schemaVersion: SUBMISSION_SCHEMA_VERSION,
   report: {metadata: {}},
 } as AppSecuritySubmission
+
+async function compileExecution(directory: string) {
+  await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Test"\nclient_id = "test"\n')
+  const {scan} = await scanApp(directory)
+  const compiled = await compileFindings(directory, {
+    schema_version: 1,
+    source_scan_id: scan.scan.input_hash,
+    findings: [],
+  })
+  return {...compiled, elapsedMilliseconds: 1}
+}
 
 describe('appSecurityArtifactPaths', () => {
   test('resolves every artifact under .shopify/app-security', () => {
@@ -120,6 +137,42 @@ describe('writeAppSecurityArtifacts', () => {
       await expect(readFile(customFindingsPath)).resolves.toBe('keep')
       await expect(readTrace(paths.tracePath)).resolves.toMatchObject({status: 'ok'})
       await expect(fileExists(paths.reviewPath)).resolves.toBe(true)
+    })
+  })
+
+  test('rejects clean compilation before touching any existing artifact', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const execution = await compileExecution(directory)
+      const paths = appSecurityArtifactPaths(directory)
+      await mkdir(paths.artifactDirectory)
+      const existingArtifacts = {
+        [paths.tracePath]: '{"trace":"stale"}',
+        [paths.reviewPath]: '{"review":"stale"}',
+        [paths.findingsPath]: '{"findings":"stale"}',
+        [paths.submissionPath]: '{"submission":"stale"}',
+      }
+      for (const [path, content] of Object.entries(existingArtifacts)) {
+        // eslint-disable-next-line no-await-in-loop
+        await writeFile(path, content)
+      }
+
+      await expect(writeAppSecurityArtifacts(execution, {clean: true})).rejects.toThrow(AbortError)
+
+      for (const [path, content] of Object.entries(existingArtifacts)) {
+        // eslint-disable-next-line no-await-in-loop
+        await expect(readFile(path)).resolves.toBe(content)
+      }
+    })
+  })
+
+  test('rejects clean compilation without creating the artifact directory', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const execution = await compileExecution(directory)
+      const paths = appSecurityArtifactPaths(directory)
+
+      await expect(writeAppSecurityArtifacts(execution, {clean: true})).rejects.toThrow(AbortError)
+
+      await expect(fileExists(paths.artifactDirectory)).resolves.toBe(false)
     })
   })
 

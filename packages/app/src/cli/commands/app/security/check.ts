@@ -32,11 +32,13 @@ In interactive terminals, the command offers to copy the coding-agent instructio
       env: 'SHOPIFY_FLAG_APP_SECURITY_FINDINGS',
       exclusive: ['clean'],
     }),
+    // Deliberately not bound to an environment variable: clean discards local review work, so it must be an
+    // explicit per-invocation decision rather than something inherited from a shell or CI environment.
+    // eslint-disable-next-line @shopify/cli/command-flags-with-env
     clean: Flags.boolean({
       description: 'Discard the current local review and start a new scan.',
       default: false,
       exclusive: ['findings'],
-      env: 'SHOPIFY_FLAG_APP_SECURITY_CLEAN',
     }),
     blocking: Flags.string({
       description: 'The minimum finding severity that causes a non-zero exit code.',

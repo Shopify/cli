@@ -69,6 +69,26 @@ describe('app security check command', () => {
     expect(SecurityCheck.flags.clean.exclusive).toEqual(['findings'])
   })
 
+  test.each(['true', 'false'])(
+    'ignores an inherited SHOPIFY_FLAG_APP_SECURITY_CLEAN=%s so a plain scan stays non-destructive',
+    async (inheritedValue) => {
+      vi.stubEnv('SHOPIFY_FLAG_APP_SECURITY_CLEAN', inheritedValue)
+      try {
+        expect(SecurityCheck.flags.clean).not.toHaveProperty('env')
+
+        await SecurityCheck.run(['--skip-instructions'], import.meta.url)
+        expect(securityCheck).toHaveBeenLastCalledWith(expect.objectContaining({clean: false}))
+
+        await SecurityCheck.run(['--findings', './findings.json', '--skip-instructions'], import.meta.url)
+        expect(securityCheck).toHaveBeenLastCalledWith(
+          expect.objectContaining({clean: false, findingsPath: resolvePath('./findings.json')}),
+        )
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    },
+  )
+
   test('resolves and forwards an agent findings file', async () => {
     await SecurityCheck.run(['--findings', './findings.json', '--skip-instructions'], import.meta.url)
 

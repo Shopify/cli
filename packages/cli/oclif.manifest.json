@@ -3675,7 +3675,6 @@
         "clean": {
           "allowNo": false,
           "description": "Discard the current local review and start a new scan.",
-          "env": "SHOPIFY_FLAG_APP_SECURITY_CLEAN",
           "exclusive": [
             "findings"
           ],

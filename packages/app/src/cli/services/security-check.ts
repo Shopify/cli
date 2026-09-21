@@ -156,10 +156,7 @@ export default async function securityCheck(
   dependencies: SecurityDependencies = defaultDependencies,
 ): Promise<void> {
   const appRoot = dependencies.resolveRoot(options.directory)
-  const commands = resolveAppSecurityCommands(
-    appRoot,
-    resolveSecurityConfigFileName(appRoot, options.configName),
-  )
+  const commands = resolveAppSecurityCommands(appRoot, resolveSecurityConfigFileName(appRoot, options.configName))
   if (!options.findingsPath && !options.clean) {
     await assertCanStartScan(dependencies.artifactPaths(appRoot), commands, dependencies)
   }
