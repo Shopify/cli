@@ -72,8 +72,6 @@ const commandExceptions = [
   'packages/store/src/cli/commands/store/create/dev.ts',
   'packages/store/src/cli/commands/store/delete.ts',
   'packages/store/src/cli/commands/store/execute.ts',
-  'packages/store/src/cli/commands/store/info.ts',
-  'packages/store/src/cli/commands/store/list.ts',
   'packages/store/src/cli/commands/store/open.ts',
   'packages/store/src/cli/commands/store/stripe-auth.ts',
   'packages/theme/src/cli/commands/theme/check.ts',

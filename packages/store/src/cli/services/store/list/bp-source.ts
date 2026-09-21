@@ -89,6 +89,7 @@ function toStoreListEntry(node: ShopNode, organization: Organization): StoreList
     // Canonicalize the host from the BP-returned URL/domain. Do not run it through the user-input
     // normalizer (normalizeStoreFqdn), which would append `.myshopify.com` to custom domains.
     store: extractHost(store) ?? store,
+    ...(node.primaryDomain ? {primaryDomain: extractHost(node.primaryDomain) ?? node.primaryDomain} : {}),
     createdAt: typeof node.createdAt === 'string' ? node.createdAt : String(node.createdAt),
     organizationId: organization.id,
     organizationName: organization.businessName,

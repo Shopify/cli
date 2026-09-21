@@ -1,4 +1,5 @@
 import {getStoreInfo} from './index.js'
+import {storeInfoJsonOutputSchema} from './types.js'
 import {StoreLookupStoreNotFoundError, fetchDestinationsContext} from '../../../utilities/store-lookup/destinations.js'
 import {fetchOrganizationShop} from '../../../utilities/store-lookup/organization-shop.js'
 import {STORE_AUTH_APP_CLIENT_ID} from '../auth/config.js'
@@ -149,6 +150,7 @@ describe('getStoreInfo', () => {
       featurePreview: 'extended_variants',
       adminUrl: 'https://admin.shopify.com/store/shop',
     })
+    expect(storeInfoJsonOutputSchema.validate(result)).toEqual(result)
   })
 
   test('returns fresh access and save URLs for locally stored preview stores', async () => {
@@ -164,6 +166,7 @@ describe('getStoreInfo', () => {
         placeholderAccountUuid: 'placeholder-uuid',
         shopId: '123',
         name: 'Lavender Candles',
+        country: 'US',
         createdAt: '2026-06-08T12:00:00.000Z',
         accessUrl: 'https://app.shopify.com/auth/preview-store?token=stale-access-token',
       },
@@ -190,10 +193,14 @@ describe('getStoreInfo', () => {
       subdomain: SHOP,
       accessUrl: 'https://app.shopify.com/auth/preview-store?token=fresh-access-token',
       saveUrl: 'https://admin.shopify.com/store-transfer/accept/claim-token',
+      type: 'preview',
+      country: 'US',
       authScopes: [],
     })
     // The admin URL doesn't resolve for an unclaimed preview store, so it's deliberately omitted.
     expect(result.adminUrl).toBeUndefined()
+    expect(getPreviewStore).toHaveBeenCalledOnce()
+    expect(JSON.parse(storeInfoJsonOutputSchema.encode(result))).toEqual(result)
   })
 
   test.each([401, 404])(
@@ -318,8 +325,10 @@ describe('getStoreInfo', () => {
       subdomain: SHOP,
       accessUrl: 'https://app.shopify.com/auth/preview-store?token=fresh-access-token',
       authScopes: [],
+      type: 'preview',
     })
     expect(result.saveUrl).toBeUndefined()
+    expect(result).not.toHaveProperty('country')
   })
 
   test('prefers BP when store auth exists and BP can resolve the store', async () => {
@@ -371,7 +380,10 @@ describe('getStoreInfo', () => {
       storeOwner: {name: 'Jane Doe', email: 'jane@acme.com'},
       plan: 'Grow',
       adminUrl: 'https://admin.shopify.com/store/shop',
+      authScopes: ['read_products'],
     })
+    expect(graphqlRequest).toHaveBeenCalledOnce()
+    expect(JSON.parse(storeInfoJsonOutputSchema.encode(result))).toEqual(result)
   })
 
   test('falls back to stored store auth when BP auth would need to prompt', async () => {

@@ -73,6 +73,7 @@ describe('listBusinessPlatformStores', () => {
         {
           id: 'gid://shopify/Shop/1',
           store: 'acme.myshopify.com',
+          primaryDomain: 'acme.myshopify.com',
           createdAt: '2026-01-15T00:00:00Z',
           organizationId: '1234',
           organizationName: 'Acme',
@@ -90,6 +91,29 @@ describe('listBusinessPlatformStores', () => {
         variables: {first: 250, filters: [activeStatusFilter]},
       }),
     )
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledOnce()
+  })
+
+  test('preserves a custom primary domain separately from the store URL', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(
+      shopPage({shops: [accessibleShopNode({url: 'https://acme.myshopify.com', primaryDomain: 'https://acme.com'})]}),
+    )
+
+    const result = await listBusinessPlatformStores({token: 'bp-token', organization})
+
+    expect(result.entries[0]).toMatchObject({store: 'acme.myshopify.com', primaryDomain: 'acme.com'})
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledOnce()
+  })
+
+  test('omits an unavailable primary domain', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue(
+      shopPage({shops: [accessibleShopNode({url: 'https://acme.myshopify.com', primaryDomain: null})]}),
+    )
+
+    const result = await listBusinessPlatformStores({token: 'bp-token', organization})
+
+    expect(result.entries[0]?.store).toBe('acme.myshopify.com')
+    expect(result.entries[0]).not.toHaveProperty('primaryDomain')
   })
 
   test('narrows the query to a single store type when one is requested', async () => {
