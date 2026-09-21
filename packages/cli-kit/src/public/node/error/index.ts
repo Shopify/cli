@@ -2,7 +2,7 @@ import {normalizePath} from '../path.js'
 import {flushStdout, OutputMessage, stringifyMessage, TokenizedString} from '../output.js'
 import {tokenItemToString, type InlineToken, type TokenItem} from '../../../private/node/ui/components/token-item.js'
 import {hasRateLimitCode} from '../../../private/node/analytics/graphql-error-codes.js'
-import {isGatewayErrorStatus} from '../../../private/node/api/gateway-status.js'
+import {isGatewayErrorStatus} from '../../../private/node/api/status-checks.js'
 
 import {Errors} from '@oclif/core'
 
