@@ -4929,9 +4929,13 @@ Open your Shopify store in the default web browser.
 
 ```
 USAGE
-  $ shopify store open -s <value> [--json-schema] [--no-color] [--verbose]
+  $ shopify store open -s <value> [-j] [--json-schema] [--no-color] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   -s, --store=<value>
       (required) The myshopify.com domain of the store.
       [env: SHOPIFY_FLAG_STORE]
@@ -4952,6 +4956,35 @@ DESCRIPTION
   Open your Shopify store in the default web browser.
 
   Opens the storefront for a store you have access to in your default web browser.
+
+  Output from `--json` conforms to the `OpenStoreResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "store": {
+        "type": "string"
+      },
+      "url": {
+        "type": "string"
+      },
+      "opened": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "store",
+      "url",
+      "opened"
+    ],
+    "additionalProperties": false,
+    "title": "OpenStoreResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   $ shopify store open --store shop.myshopify.com
