@@ -1,19 +1,25 @@
 import {appFlags} from '../../../flags.js'
 import {linkedAppContext} from '../../../services/app-context.js'
-import {showEnv} from '../../../services/app/env/show.js'
+import {getAppEnv} from '../../../services/app/env/show.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {outputResult} from '@shopify/cli-kit/node/output'
+import {appEnvShowJsonOutputSchema} from '../../../services/app/env/show/types.js'
+import {renderAppEnvShowResult} from '../../../services/app/env/show/result.js'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class EnvShow extends AppLinkedCommand {
   static summary = 'Display app and extensions environment variables.'
 
   static descriptionWithMarkdown = `Displays environment variables that can be used to deploy apps and app extensions.`
 
+  static get jsonOutputSchema() {
+    return appEnvShowJsonOutputSchema
+  }
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     ...appFlags,
   }
 
@@ -25,7 +31,8 @@ export default class EnvShow extends AppLinkedCommand {
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
-    outputResult(await showEnv(app, remoteApp, organization))
+    const result = await getAppEnv(app, remoteApp, organization)
+    renderAppEnvShowResult(result, flags.json ? 'json' : 'text')
     return {app}
   }
 }
