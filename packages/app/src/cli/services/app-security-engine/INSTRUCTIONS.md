@@ -137,4 +137,4 @@ When the user explicitly wants a fast local or CI scan without semantic investig
 
 Honor the installed CLI's documented JSON and blocking flags when requested. Do not describe a deterministic-only scan as the full App Security review.
 
-Route authentication has bounded deterministic coverage for supported straight-line React Router handlers. Unknown auth bindings, custom routing or middleware, and unsupported control flow remain unresolved and require the agentic `UNAUTHENTICATED_ENDPOINT` review; they must not be described as passing. The static check does not replace tenant or object-level authorization review.
+Route authentication retains a template-oriented heuristic. Calls using `context.shopify.authenticate.admin(...)` are deferred to the `UNAUTHENTICATED_ENDPOINT` agent review, with unresolved coverage rather than a missing-auth finding or a pass. The heuristic does not establish binding provenance, control-flow safety, or tenant/object authorization.

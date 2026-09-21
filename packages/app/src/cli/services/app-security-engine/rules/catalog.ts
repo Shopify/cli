@@ -204,13 +204,14 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
   },
   {
     id: 'UNAUTHENTICATED_ENDPOINT',
-    title: 'Route handler reaches shop data without a verified request',
+    title: 'Route handler lacks recognized auth verification',
     severity: 'high',
     points: -15,
     description:
-      'Checks straight-line React Router Admin API operations using resolved Shopify authentication bindings, with agent review for unsupported verification paths.',
+      'Uses the template route-auth heuristic, with agent review for context.shopify.authenticate.admin calls instead of treating them as missing authentication.',
     fix: 'Complete the verification appropriate to the entry point before protected operations, and stop those operations when verification fails.',
     guide: 'https://shopify.dev/docs/apps/auth',
+    requires: 'has_backend',
   },
   {
     id: 'REQUEST_CONTROLLED_ADMIN_CONTEXT',

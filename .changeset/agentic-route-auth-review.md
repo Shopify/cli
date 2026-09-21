@@ -2,4 +2,4 @@
 '@shopify/app': patch
 ---
 
-Reduce App Security route-authentication false positives with bounded AST checks and agent review for unresolved paths.
+Defer context-based route authentication to agent review instead of reporting it as missing authentication.

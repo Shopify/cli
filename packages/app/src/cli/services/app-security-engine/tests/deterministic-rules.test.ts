@@ -6,6 +6,7 @@ import {
   scanCredentialBrowserLeakage,
   scanCredentialLogLeakage,
   scanRequestControlledAdminContext,
+  scanUnauthenticatedEndpoints,
   scanUnsafeInnerHTML,
 } from '../rules/js-rules.js'
 import {scanLiquidSecurity} from '../rules/liquid-rules.js'
@@ -144,6 +145,30 @@ describe('deterministic rules product contract', () => {
 })
 
 describe('JavaScript regex mode', () => {
+  test('retains the template route-auth heuristic', () => {
+    const missing = scanUnauthenticatedEndpoints([
+      source('export async function loader({request}: LoaderArgs) { return prisma.order.findMany() }'),
+    ])
+    expect(missing.issues).toHaveLength(1)
+    expect(missing.unresolvedReason).toBeUndefined()
+
+    const authenticated = scanUnauthenticatedEndpoints([
+      source(
+        'export async function loader({request}: LoaderArgs) { await authenticate.admin(request); return prisma.order.findMany() }',
+      ),
+    ])
+    expect(authenticated.issues).toEqual([])
+    expect(authenticated.unresolvedReason).toBeUndefined()
+
+    const unawaited = scanUnauthenticatedEndpoints([
+      source(
+        'export async function loader({request}: LoaderArgs) { authenticate.admin(request); return prisma.order.findMany() }',
+      ),
+    ])
+    expect(unawaited.issues).toHaveLength(1)
+    expect(unawaited.unresolvedReason).toBeUndefined()
+  })
+
   test('detects direct admin-context and credential flows with safe exceptions', () => {
     expect(
       scanRequestControlledAdminContext([source('const shop = request.query.shop; unauthenticated.admin(shop)')]),

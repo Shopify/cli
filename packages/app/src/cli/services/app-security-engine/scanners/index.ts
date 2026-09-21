@@ -19,6 +19,7 @@ import {
   scanCredentialBrowserLeakage,
   scanCredentialLogLeakage,
   scanRequestControlledAdminContext,
+  scanUnauthenticatedEndpoints,
   scanUnsafeInnerHTML,
 } from '../rules/js-rules.js'
 import {scanLiquidSecurity} from '../rules/liquid-rules.js'
@@ -27,7 +28,6 @@ import {scanDeprecatedScriptTagApi} from '../rules/shopify-rules.js'
 import {missingComplianceWebhooks, scanEolApiVersions} from '../rules/compliance-rules.js'
 import {scanAppProxyLiquidInjection} from '../rules/proxy-rules.js'
 import {scanExpiringOfflineTokens} from '../rules/token-rules.js'
-import {scanRouteAuthentication} from '../rules/auth-rules.js'
 import {scanStaticFrameAncestors} from '../rules/csp-rules.js'
 import {scanDependencyAutomation} from '../rules/dependency-automation-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
@@ -147,10 +147,10 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
       'Review offline-token feature configuration, session storage refresh metadata, and ambiguous setup using the matching version 1 agent prompt.',
   },
   {
-    ...jsCheck('UNAUTHENTICATED_ENDPOINT', (context) => scanRouteAuthentication(context.sourceFiles), 'source', 2),
-    analysisMode: 'ast',
+    ...jsCheck('UNAUTHENTICATED_ENDPOINT', (context) => scanUnauthenticatedEndpoints(context.sourceFiles), 'source', 2),
+    requires: 'has_backend',
     guidance:
-      'Trace the unresolved route authentication, context producer, wrapper, middleware, or control flow with the matching agent prompt. An unrecognized guard is not a missing-auth finding.',
+      'Trace context.shopify.authenticate.admin in the listed routes with the matching agent prompt. Confirm the context origin, completed request verification, and protected operations; the syntax hint is not a pass.',
   },
   jsCheck(
     'REQUEST_CONTROLLED_ADMIN_CONTEXT',

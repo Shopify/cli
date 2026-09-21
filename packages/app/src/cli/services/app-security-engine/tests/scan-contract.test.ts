@@ -494,7 +494,7 @@ describe('authenticated-route review handoff', () => {
     expect(result.issues.some((issue) => issue.id === 'UNAUTHENTICATED_ENDPOINT')).toBe(false)
     expect(result.scan.checks_executed.find((execution) => execution.id === 'UNAUTHENTICATED_ENDPOINT')).toMatchObject({
       status: 'unresolved',
-      analysis_mode: 'ast',
+      analysis_mode: 'regex',
       reason: {code: 'agent_investigation_required'},
     })
     expect(result.scan.coverage_gaps).toContainEqual(
@@ -512,7 +512,7 @@ describe('authenticated-route review handoff', () => {
       }),
     )
 
-    // A bounded static check must not make an unperformed agent review look complete.
+    // A deferred context pattern must not make an unperformed agent review look complete.
     const trace = compileTrace(result)
     expect(trace.checks_executed).toContainEqual(
       expect.objectContaining({
@@ -523,27 +523,29 @@ describe('authenticated-route review handoff', () => {
       }),
     )
   })
-  test('executes the traced Worker authentication path with AST provenance', async () => {
+  test('preserves ordinary findings when another handler needs context-auth review', async () => {
     const directory = await app({
       'shopify.app.toml': appConfig(),
       'package.json': reactPackage,
-      'app/shopify.server.ts': `import {shopifyApp} from '@shopify/shopify-app-react-router/server'; export default shopifyApp({});`,
-      'workers/app.ts': `import {createRequestHandler} from 'react-router';
-import shopify from '../app/shopify.server';
-const handler = createRequestHandler(build);
-export default {async fetch(request) { return handler(request, {shopify}); }};`,
+      'app/shopify.server.ts': 'export const shopify = {}',
       'app/routes/orders.tsx': `export async function loader({request, context}) {
-const {admin} = await context.shopify.authenticate.admin(request);
-return admin.graphql('query { orders(first: 1) { nodes { id } } }');
+await context.shopify.authenticate.admin(request);
+return prisma.order.findMany();
+}
+export async function action({request}) {
+return prisma.order.deleteMany();
 }`,
     })
     const result = await scan(directory)
-    expect(result.issues.filter((issue) => issue.id === 'UNAUTHENTICATED_ENDPOINT')).toEqual([])
+    expect(result.issues.filter((issue) => issue.id === 'UNAUTHENTICATED_ENDPOINT')).toEqual([
+      expect.objectContaining({location: {file: 'app/routes/orders.tsx', line: 5}}),
+    ])
     expect(result.scan.checks_executed.find((execution) => execution.id === 'UNAUTHENTICATED_ENDPOINT')).toMatchObject({
-      status: 'executed',
-      analysis_mode: 'ast',
-      findings: 0,
-      inspected_files: expect.arrayContaining(['workers/app.ts', 'app/shopify.server.ts', 'app/routes/orders.tsx']),
+      status: 'unresolved',
+      analysis_mode: 'regex',
+      findings: 1,
+      reason: {code: 'agent_investigation_required'},
+      inspected_files: expect.arrayContaining(['app/routes/orders.tsx']),
     })
   })
 })
