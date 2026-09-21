@@ -3431,7 +3431,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently only function extensions are supported as sources.",
+      "description": "The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently only function extensions are supported as sources.\n\nOutput from `--json` conforms to the `AppLogSourcesResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"array\",\n  \"items\": {\n    \"$ref\": \"#/definitions/AppLogSource\"\n  },\n  \"title\": \"AppLogSourcesResult\",\n  \"definitions\": {\n    \"AppLogSource\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"source\": {\n          \"type\": \"string\"\n        },\n        \"namespace\": {\n          \"type\": \"string\",\n          \"const\": \"extensions\"\n        },\n        \"handle\": {\n          \"type\": \"string\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"type\": {\n          \"type\": \"string\"\n        },\n        \"externalType\": {\n          \"type\": \"string\"\n        },\n        \"humanName\": {\n          \"type\": \"string\"\n        },\n        \"uid\": {\n          \"type\": \"string\"\n        },\n        \"directory\": {\n          \"type\": \"string\"\n        },\n        \"configurationPath\": {\n          \"type\": \"string\"\n        },\n        \"configuration\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {}\n        },\n        \"entrySourceFilePath\": {\n          \"type\": \"string\"\n        },\n        \"outputPath\": {\n          \"type\": \"string\"\n        },\n        \"surface\": {\n          \"type\": \"string\"\n        },\n        \"features\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"dependency\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"source\",\n        \"namespace\",\n        \"handle\",\n        \"name\",\n        \"type\",\n        \"externalType\",\n        \"humanName\",\n        \"uid\",\n        \"directory\",\n        \"configurationPath\",\n        \"configuration\",\n        \"entrySourceFilePath\",\n        \"outputPath\",\n        \"surface\",\n        \"features\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently only function extensions are supported as sources.",
       "flags": {
         "auth-alias": {
@@ -3463,6 +3463,15 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,

@@ -1,25 +1,25 @@
-import {sourcesForApp} from './utils.js'
+import {AppLogSourcesResult} from './sources/types.js'
 import {AppInterface} from '../../models/app/app.js'
-import {formatSection, outputResult} from '@shopify/cli-kit/node/output'
 
-export function sources(app: AppInterface) {
-  const sources = sourcesForApp(app)
-  const sourcesByNamespace = new Map<string, string[]>()
-  sources.forEach((source) => {
-    const tokens = source.split('.')
-
-    if (tokens.length >= 2) {
-      const sourceNamespace = tokens[0]!
-
-      if (!sourcesByNamespace.has(sourceNamespace)) {
-        sourcesByNamespace.set(sourceNamespace, [])
-      }
-
-      sourcesByNamespace.set(sourceNamespace, [...sourcesByNamespace.get(sourceNamespace)!, source])
-    }
-  })
-
-  for (const [namespace, sources] of sourcesByNamespace) {
-    outputResult(formatSection(namespace, sources.join('\n')))
-  }
+export function sources(app: AppInterface): AppLogSourcesResult {
+  return app.allExtensions
+    .filter((extension) => extension.isFunctionExtension)
+    .map((extension) => ({
+      source: `extensions.${extension.configuration.handle}`,
+      namespace: 'extensions',
+      handle: extension.handle,
+      name: extension.name,
+      type: extension.type,
+      externalType: extension.externalType,
+      humanName: extension.humanName,
+      uid: extension.uid,
+      directory: extension.directory,
+      configurationPath: extension.configurationPath,
+      configuration: extension.configuration,
+      entrySourceFilePath: extension.entrySourceFilePath,
+      outputPath: extension.outputPath,
+      surface: extension.surface,
+      features: extension.features,
+      dependency: extension.dependency,
+    }))
 }
