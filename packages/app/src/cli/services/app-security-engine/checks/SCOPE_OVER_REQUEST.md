@@ -1,89 +1,113 @@
 ---
 id: SCOPE_OVER_REQUEST
-version: 1
+version: 2
 severity: high
 ---
 
-Find cases where an app requests OAuth scopes it does not use, or uses
-scopes in ways that exceed what the merchant authorised.
+Review whether the app's requested and effective OAuth access is necessary
+for its supported behavior. Distinguish least-privilege recommendations
+from demonstrated access beyond the intended authorization boundary.
 
-When a merchant installs an app, they grant a set of access scopes (e.g.
-`read_orders`, `write_products`). The app should only access data covered
-by those scopes. Two risks:
-
-1. **Over-requested scopes:** the app declares scopes in its config that it
-   never references in code. This is a privacy violation — the merchant
-   granted access to data the app doesn't need.
-
-2. **Under-verified usage:** the app calls an API endpoint that requires a
-   scope, but doesn't check that the scope was granted before making the
-   call. This can fail at runtime or, worse, access data the merchant
-   didn't authorise if the scope was added by a different code path.
+A scope declaration is not proof of a live grant, data misuse, or a
+privacy violation. Failure to find a matching API call is not proof that
+a scope is unused. Report a finding only when repository evidence shows
+a concrete excess-authority path and its security impact; do not turn a
+configuration cleanup opportunity into a high-severity finding.
 
 ## What to look for
 
-1. **Find the declared scopes.** Look in `shopify.app.toml` under
-   `[access_scopes]` → `scopes`, or in the app's OAuth redirect URL, or
-   in environment variables like `SCOPES`.
+1. **Find the requested scopes and configuration.** Use the app config
+   selected by the review workflow. Inspect `[access_scopes].scopes`,
+   `required_scopes`, and `optional_scopes`, plus OAuth authorization URLs,
+   environment configuration, and dynamic optional-scope requests when
+   present. Do not combine declarations from unrelated apps or environments.
 
-2. **Find where scopes are used.** Search for API calls that reference
-   Shopify resources: `admin.rest.get`, `admin.graphql`, REST resource
-   classes, GraphQL queries on `orders`, `products`, `customers`, etc.
+2. **Trace scope usage broadly.** Search for operations that exercise
+   Shopify resources across the entire reviewed boundary, not only the
+   entry directory:
+   - REST and GraphQL API calls (`admin.rest`, `admin.graphql`,
+     `client.get/post`, REST resource classes)
+   - Generated or dynamically built GraphQL (template strings, query
+     builders, `.graphql` files, codegen output)
+   - Wrappers and SDK helpers that hide the underlying operation
+   - Shared packages, monorepo workspaces, and background jobs reachable
+     from the app
+   - Flag-gated paths and optional features that may not run on every
+     install but still exercise a scope when enabled
 
-3. **Match scopes to usage.** Each scope should map to at least one API
-   call:
-   - `read_orders` → queries on orders
-   - `write_products` → mutations on products
-   - `read_customers` → queries on customers
-   - etc.
+3. **Distinguish declared, requested, and granted scopes.** An optional
+   declaration allows a later request; it does not establish that the
+   merchant granted it. Deployment, installation, approval, and revocation
+   can leave the current grant different from local configuration. Use
+   available session, grant-query, and consent-handling evidence. State
+   when the effective grant cannot be established rather than inventing it.
 
-4. **Flag scopes with no matching usage.** If `read_analytics` is declared
-   but no code references analytics, that's an over-requested scope.
+4. **Match exact operations to their scope requirements.** Use the
+   applicable API version's field or mutation requirements, not keyword
+   matches or a guessed resource-to-scope table. Account for implied
+   access such as a write scope also granting read access, and for
+   wrappers or generated queries that do not name the resource literally.
 
-5. **Flag API calls with no matching scope.** If code queries customers
-   but `read_customers` isn't declared, that's an under-verified usage.
+5. **Establish necessity before calling a scope excessive.** Compare the
+   requested authority with supported features and reachable operations.
+   A complete reviewed corpus with no use may justify cleanup guidance,
+   but it does not by itself demonstrate a trust-boundary violation.
+   Planned work is not proof a scope is necessary today, nor is the
+   declaration alone a security finding. Identify the concrete data or
+   operation exposed through the excessive authority before reporting it.
+
+6. **Inspect scope-dependent behavior without inventing platform bypasses.**
+   Follow optional-scope requests, consent handling, grant checks, and
+   denied or revoked access through the affected feature. Shopify enforces
+   API scopes server-side. A missing local declaration or preflight check,
+   or an expected access-denied API response, does not establish
+   unauthorized access. Report only a demonstrated excess-authority path,
+   not an assumption that an API call succeeds without authorization.
+
+7. **Keep API scopes and object authorization separate.** OAuth access
+   scopes govern which resource classes an app may touch.
+   Staff-permission or customer object-level authorization is a
+   different boundary. If the real bug is missing object-level
+   authorization or tenant isolation, refer to the owning check
+   (`MISSING_AUTHORIZATION_CHECK`, `MISSING_TENANT_ISOLATION`) instead
+   of duplicating it here.
+
+8. **Respect review boundaries.** If the review pack scopes you to a
+   subdirectory or a subset of the app, absence of a matching call
+   inside that boundary is not proof of absence across the whole app.
+   State the boundary you actually reviewed and mark scope-match
+   questions unresolved when the unreviewed remainder could contain the
+   usage.
 
 ## What to report
 
-```json
-{
-  "file": "shopify.app.toml",
-  "line": 10,
-  "message": "Scope 'read_analytics' is declared but never referenced in app code",
-  "evidence": [
-    {
-      "file": "shopify.app.toml",
-      "line": 10,
-      "quote": "scopes = \"read_orders,read_analytics\""
-    }
-  ],
-  "confidence": "medium",
-  "reasoning": "Searched all source files for 'analytics' and found no API calls referencing analytics endpoints or resources."
-}
-```
+Use the generated review pack's current finding and execution schemas;
+do not invent extra fields or a standalone JSON envelope.
 
-For under-verified usage, report the code location, not the TOML:
+A finding must identify:
 
-```json
-{
-  "file": "app/services/customer_export.rb",
-  "line": 15,
-  "message": "Queries customers but 'read_customers' is not in declared scopes",
-  "evidence": [
-    {
-      "file": "app/services/customer_export.rb",
-      "line": 15,
-      "quote": "Customer.all"
-    },
-    {
-      "file": "shopify.app.toml",
-      "line": 10,
-      "quote": "scopes = \"read_orders\""
-    }
-  ],
-  "confidence": "high"
-}
-```
+- The selected configuration and the relevant scope declaration or request.
+- The principal, intended authorization boundary, and requested authority.
+- The reachable operation and concrete data or capability exposed through
+  the excess authority, with file/line evidence for the complete path.
+- Which effective-grant facts are established and which are unavailable.
+- The reviewed directories, packages, helpers, and feature paths. Account
+  for any unreviewed code that could change the conclusion.
 
-Note: if the app has zero source files (config-only app), do not report
-over-requested scopes — you cannot verify usage from an empty corpus.
+Do not report a finding solely because:
+
+- A scope is declared ahead of planned work or for an optional feature.
+- No matching keyword or API call appears in one directory.
+- The app is config-only and no source corpus is available.
+- A scope is missing from local TOML, or an API call fails with access denied.
+- A write scope is used for reads or implies another required scope.
+- A declaration could theoretically increase the impact of a future leak,
+  without a demonstrated excess-authority path in the reviewed code.
+
+Keep supported least-privilege recommendations separate from findings.
+Do not label planned scopes or documented intent as automatically safe:
+comments and documentation are evidence to corroborate, not authorization.
+If incomplete source, unknown feature reachability, or unavailable grant
+evidence prevents a conclusion, record the check as unresolved with the
+review pack's structured reason and guidance rather than asserting either
+a vulnerability or a pass.

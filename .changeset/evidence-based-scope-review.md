@@ -1,0 +1,5 @@
+---
+'@shopify/app': patch
+---
+
+Require concrete excess-authority evidence in App Security OAuth scope reviews instead of flagging declarations without local usage.
