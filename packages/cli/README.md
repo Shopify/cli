@@ -5121,6 +5121,108 @@ DESCRIPTION
 
   Deletes a dev store from your organization.
 
+  Output from `--json` conforms to the `DeleteDevStoreResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "store": {
+            "$ref": "#/definitions/DeletedStore"
+          },
+          "organization": {
+            "$ref": "#/definitions/StoreOrganization"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "store",
+          "organization"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "$ref": "#/definitions/StoreCommandError"
+      }
+    ],
+    "title": "DeleteDevStoreResult",
+    "definitions": {
+      "DeletedStore": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "deletionRequested": {
+            "type": "boolean",
+            "const": true
+          },
+          "deletionConfirmed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "domain",
+          "deletionRequested",
+          "deletionConfirmed"
+        ],
+        "additionalProperties": false
+      },
+      "StoreOrganization": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "StoreCommandError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "const": true
+          },
+          "message": {
+            "type": "string"
+          },
+          "nextSteps": {
+            "type": "array",
+            "items": {},
+            "description": "Suggested next steps, as text or formatted UI tokens."
+          },
+          "exitCode": {
+            "type": "number",
+            "const": 1
+          }
+        },
+        "required": [
+          "error",
+          "message",
+          "nextSteps",
+          "exitCode"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify store delete --store shop.myshopify.com --organization-id 1234567
 
