@@ -906,13 +906,17 @@ Display app and extensions environment variables.
 
 ```
 USAGE
-  $ shopify app env show [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--path <value>] [--reset | ] [--verbose]
+  $ shopify app env show [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -946,6 +950,34 @@ DESCRIPTION
   Display app and extensions environment variables.
 
   Displays environment variables that can be used to deploy apps and app extensions.
+
+  Output from `--json` conforms to the `AppEnvShowResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "SHOPIFY_API_KEY": {
+        "type": "string"
+      },
+      "SHOPIFY_API_SECRET": {
+        "type": "string"
+      },
+      "SCOPES": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "SHOPIFY_API_KEY",
+      "SCOPES"
+    ],
+    "additionalProperties": false,
+    "title": "AppEnvShowResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app execute`
