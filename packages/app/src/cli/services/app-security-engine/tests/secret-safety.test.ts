@@ -298,6 +298,17 @@ describe('git status drives severity, not .gitignore text', () => {
 })
 
 describe('committed secret classification', () => {
+  test('detects every supported Shopify credential prefix as a bare value', () => {
+    const prefixes = ['shpat_', 'shpca_', 'shppa_', 'shpss_', 'shprt_', 'shpsb_', 'shptka_', 'shpua_']
+    for (const prefix of prefixes) {
+      const token = compose(prefix, HEX32)
+      expect(
+        SECRET_PATTERNS.some((pattern) => pattern.regex.test(token)),
+        `${prefix} not detected`,
+      ).toBe(true)
+    }
+  })
+
   test('does not score template env files with placeholder values', async () => {
     const dir = makeApp({
       '.env.example': 'SHOPIFY_API_SECRET=your-secret-here\nSHOPIFY_API_KEY=your-key-here\n',

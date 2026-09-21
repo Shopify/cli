@@ -26,13 +26,16 @@ interface SecretPattern {
 
 export const SECRET_PATTERNS: SecretPattern[] = [
   // Shopify credentials are recognized by value prefix, never by variable or
-  // key name: shpss_ (API secret), shpat_ (Admin API token), shpca_ and
-  // shppa_ (custom app tokens). A secret-sounding name proves nothing —
-  // `.env.example` files legitimately assign placeholders to
-  // `SHOPIFY_API_SECRET`, and scoring those is how this check missed its own
-  // static-tier bar (provable facts, near-zero FPs).
+  // key name. A secret-sounding name proves nothing — `.env.example` files
+  // legitimately assign placeholders to `SHOPIFY_API_SECRET`, and scoring
+  // those is how this check missed its own static-tier bar (provable facts,
+  // near-zero FPs). shpat_/shpca_/shppa_/shpss_ bodies are 32-char hex;
+  // shprt_/shpsb_/shptka_/shpua_ are alphanumeric. The first seven prefixes
+  // are already public via shopify.dev docs and published secret-scanning
+  // rules (gitleaks, GitHub partner patterns); shpua_ marks tokens issued
+  // while an app is still in development — the most likely to be committed.
   {
-    regex: /shp(?:at|ca|pa|ss)_[a-fA-F0-9]{16,}/,
+    regex: /shp(?:(?:at|ca|pa|ss)_[a-fA-F0-9]{16,}|(?:rt|sb|tka|ua)_[a-zA-Z0-9]{16,})/,
     name: 'Shopify token',
     wholeMatch: true,
   },
