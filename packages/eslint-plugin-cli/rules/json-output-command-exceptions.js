@@ -2,7 +2,6 @@
 const commandExceptions = [
   // Existing finite commands awaiting migration. Remove entries as they adopt typed JSON output.
   // Do not add new finite commands to this section.
-  'packages/app/src/cli/commands/app/config/link.ts',
   'packages/app/src/cli/commands/app/config/pull.ts',
   'packages/app/src/cli/commands/app/config/use.ts',
   'packages/app/src/cli/commands/app/deploy.ts',

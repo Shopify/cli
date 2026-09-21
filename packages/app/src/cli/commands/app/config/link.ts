@@ -1,9 +1,11 @@
 import {appFlags} from '../../../flags.js'
 import {linkedAppContext} from '../../../services/app-context.js'
-import link, {LinkOptions} from '../../../services/app/config/link.js'
+import {linkAppConfiguration, LinkOptions} from '../../../services/app/config/link.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
+import {appConfigLinkJsonOutputSchema} from '../../../services/app/config/link/types.js'
+import {renderAppConfigLinkResult} from '../../../services/app/config/link/result.js'
 import {Flags} from '@oclif/core'
-import {globalFlags, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export default class ConfigLink extends AppLinkedCommand {
@@ -14,10 +16,15 @@ export default class ConfigLink extends AppLinkedCommand {
   For more information on the format of the created TOML configuration file, refer to the [App configuration](https://shopify.dev/docs/apps/tools/cli/configuration) page.
   `
 
+  static get jsonOutputSchema() {
+    return appConfigLinkJsonOutputSchema
+  }
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     ...appFlags,
     config: Flags.string({
       hidden: false,
@@ -74,7 +81,8 @@ export default class ConfigLink extends AppLinkedCommand {
       force: flags.force ?? false,
     }
 
-    const result = await link(options)
+    const result = await linkAppConfiguration(options)
+    if (!flags.json) renderAppConfigLinkResult(result.result, result.packageManager, 'text')
 
     const {app} = await linkedAppContext({
       directory: flags.path,
@@ -82,6 +90,9 @@ export default class ConfigLink extends AppLinkedCommand {
       forceRelink: false,
       userProvidedConfigName: result.configFileName,
     })
+
+    // JSON must wait until all command work succeeds, so a later failure cannot emit a second document.
+    if (flags.json) renderAppConfigLinkResult(result.result, result.packageManager, 'json')
 
     return {app}
   }
