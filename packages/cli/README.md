@@ -4575,6 +4575,26 @@ DESCRIPTION
 
   Mutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.
 
+  Output from `--json` conforms to the `StoreExecuteResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "additionalProperties": {}
+      },
+      {
+        "type": "null"
+      }
+    ],
+    "title": "StoreExecuteResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify store execute --store shop.myshopify.com --query "query { shop { name } }"
 

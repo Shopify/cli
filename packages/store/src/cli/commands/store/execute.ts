@@ -1,5 +1,6 @@
 import {executeStoreOperation} from '../../services/store/execute/index.js'
 import {writeOrOutputStoreExecuteResult} from '../../services/store/execute/result.js'
+import {storeExecuteJsonOutputSchema} from '../../services/store/execute/types.js'
 import StoreCommand from '../../utilities/store-command.js'
 import {storeFlags} from '../../flags.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
@@ -67,6 +68,10 @@ Mutations are disabled by default. Re-run with \`--allow-mutations\` if you inte
       env: 'SHOPIFY_FLAG_ALLOW_MUTATIONS',
       default: false,
     }),
+  }
+
+  static get jsonOutputSchema() {
+    return storeExecuteJsonOutputSchema
   }
 
   public async run(): Promise<void> {

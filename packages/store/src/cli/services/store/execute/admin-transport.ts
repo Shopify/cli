@@ -13,6 +13,7 @@ import type {AdminSession} from '@shopify/cli-kit/node/session'
 import type {PreparedStoreExecuteRequest} from './request.js'
 import type {AdminStoreGraphQLContext} from './admin-context.js'
 import type {StoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
+import type {StoreExecuteResult} from './types.js'
 
 export {ABORTED_FETCH_MESSAGE_FRAGMENTS}
 
@@ -65,12 +66,12 @@ export async function fetchPublicApiVersions(input: {
 export async function runAdminStoreGraphQLOperation(input: {
   context: AdminStoreGraphQLContext
   request: PreparedStoreExecuteRequest
-}): Promise<unknown> {
+}): Promise<StoreExecuteResult> {
   try {
     return await renderSingleTask({
       title: outputContent`Executing GraphQL operation`,
       task: async () => {
-        return graphqlRequest({
+        return graphqlRequest<StoreExecuteResult>({
           query: input.request.query,
           api: 'Admin',
           url: adminUrl(input.context.adminSession.storeFqdn, input.context.version, input.context.adminSession),
