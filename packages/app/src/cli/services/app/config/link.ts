@@ -1,3 +1,5 @@
+import {appConfigLinkJsonOutputSchema, type AppConfigLinkResult} from './link/types.js'
+import {renderAppConfigLinkResult} from './link/result.js'
 import {setCurrentConfigPreference} from './use.js'
 import {AppConfiguration, CurrentAppConfiguration, CliBuildPreferences, getAppScopes} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
@@ -22,8 +24,6 @@ import {fetchSpecifications} from '../../generate/fetch-extension-specifications
 import {AppConfigurationUsedByCli} from '../../../models/extensions/specifications/types/app_config.js'
 import {getTomls} from '../../../utilities/app/config/getTomls.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {deepMergeObjects, isEmpty} from '@shopify/cli-kit/common/object'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -60,6 +60,14 @@ interface LinkOutput {
  * @returns The final app configuration object that was written to the filesystem
  */
 export default async function link(options: LinkOptions, shouldRenderSuccess = true): Promise<LinkOutput> {
+  const output = await linkAppConfiguration(options)
+  if (shouldRenderSuccess) renderAppConfigLinkResult(output.result, output.packageManager, 'text')
+  return output
+}
+
+export async function linkAppConfiguration(
+  options: LinkOptions,
+): Promise<LinkOutput & {result: AppConfigLinkResult; packageManager: PackageManager}> {
   // First, select (or create, if the user chooses to) a remote app to link to
   const {remoteApp, appDirectory, developerPlatformClient} = await selectOrCreateRemoteAppToLinkTo(options)
 
@@ -87,11 +95,17 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     localAppOptions,
   })
 
-  if (shouldRenderSuccess) {
-    renderSuccessMessage(configFileName, mergedAppConfiguration.name, localAppOptions.packageManager)
+  return {
+    remoteApp,
+    configFileName,
+    configuration: mergedAppConfiguration,
+    packageManager: localAppOptions.packageManager,
+    result: appConfigLinkJsonOutputSchema.validate({
+      configFile: joinPath(appDirectory, configFileName),
+      configuration: mergedAppConfiguration,
+      app: remoteApp,
+    }),
   }
-
-  return {remoteApp, configFileName, configuration: mergedAppConfiguration}
 }
 
 function abortIfLinkPromptCannotRun(missingFlags: string[]) {
@@ -429,30 +443,6 @@ function buildOptionsForGeneratedConfigFile(options: {
   } else {
     return buildOptions
   }
-}
-
-function renderSuccessMessage(configFileName: string, appName: string, packageManager: PackageManager) {
-  renderSuccess({
-    headline: `${configFileName} is now linked to "${appName}" on Shopify`,
-    body: `Using ${configFileName} as your default config.`,
-    nextSteps: [
-      [`Make updates to ${configFileName} in your local project`],
-      [
-        'To upload your config, run',
-        {
-          command: formatPackageManagerCommand(packageManager, 'shopify app deploy'),
-        },
-      ],
-    ],
-    reference: [
-      {
-        link: {
-          label: 'App configuration',
-          url: 'https://shopify.dev/docs/apps/tools/cli/configuration',
-        },
-      },
-    ],
-  })
 }
 
 /**
