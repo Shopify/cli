@@ -47,27 +47,38 @@ export function transformFromEventsConfig(content: object, appConfiguration?: ob
   }
 }
 
+interface RemoteEventSubscription {
+  identifier: string
+  api_version?: string
+  [key: string]: unknown
+}
+
 /**
  * Transforms the events config from remote to local format.
- * Strips the server-managed 'identifier' field from subscriptions.
+ * Strips the server-managed 'identifier' field from subscriptions, and the
+ * per-subscription 'api_version' when it only echoes the events default.
  */
 export function transformToEventsConfig(content: object) {
   const eventsConfig = getPathValue(content, 'events') as {
     api_version: string
-    subscription: {identifier: string} | {identifier: string}[]
+    subscription: RemoteEventSubscription | RemoteEventSubscription[]
   }
-  const apiVersion = getPathValue(eventsConfig, 'api_version')
-  const subscription = getPathValue<{identifier: string} | {identifier: string}[]>(eventsConfig, 'subscription')
+  const apiVersion = getPathValue<string>(eventsConfig, 'api_version')
+  const subscription = getPathValue<RemoteEventSubscription | RemoteEventSubscription[]>(eventsConfig, 'subscription')
 
-  // Server always includes identifier - strip it for local TOML.
-  // Single-subscription modules are normalized to a one-element array so that
-  // merging multiple modules accumulates a single subscription list.
+  // The server always includes identifier, and materializes the events default
+  // api_version onto every subscription. Both are derived, so they are stripped
+  // for the local TOML; an api_version that differs from the default is a real
+  // override and is kept. Single-subscription modules are normalized to a
+  // one-element array so that merging multiple modules accumulates a single
+  // subscription list.
   const cleanedSubscriptions =
     subscription === undefined
       ? undefined
       : wrapSubscriptions(subscription).map((sub) => {
-          const {identifier, ...rest} = sub
-          return rest
+          const {identifier, api_version: subscriptionApiVersion, ...rest} = sub
+          const overridesDefault = subscriptionApiVersion !== undefined && subscriptionApiVersion !== apiVersion
+          return overridesDefault ? {...rest, api_version: subscriptionApiVersion} : rest
         })
 
   const events =

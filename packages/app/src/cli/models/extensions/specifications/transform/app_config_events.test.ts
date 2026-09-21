@@ -282,6 +282,166 @@ describe('transformToEventsConfig', () => {
     })
   })
 
+  test('strips a subscription api_version that matches the events default in the list shape', () => {
+    const remoteContent = {
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/a',
+            actions: ['create'],
+            api_version: '2024-01',
+            identifier: 'id-a',
+          },
+          {
+            topic: 'products/update',
+            uri: 'https://example.com/b',
+            actions: ['update'],
+            api_version: '2024-01',
+            identifier: 'id-b',
+          },
+        ],
+      },
+    }
+
+    const result = transformToEventsConfig(remoteContent)
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', uri: 'https://example.com/a', actions: ['create']},
+          {topic: 'products/update', uri: 'https://example.com/b', actions: ['update']},
+        ],
+      },
+    })
+  })
+
+  test('strips a subscription api_version that matches the events default in the single shape', () => {
+    const remoteContent = {
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'orders/create',
+          uri: 'https://example.com/a',
+          actions: ['create'],
+          api_version: '2024-01',
+          identifier: 'id-a',
+        },
+      },
+    }
+
+    const result = transformToEventsConfig(remoteContent)
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [{topic: 'orders/create', uri: 'https://example.com/a', actions: ['create']}],
+      },
+    })
+  })
+
+  test('keeps a subscription api_version that overrides the events default', () => {
+    const remoteContent = {
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'orders/create',
+          uri: 'https://example.com/a',
+          actions: ['create'],
+          api_version: '2025-07',
+          identifier: 'id-a',
+        },
+      },
+    }
+
+    const result = transformToEventsConfig(remoteContent)
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', uri: 'https://example.com/a', actions: ['create'], api_version: '2025-07'},
+        ],
+      },
+    })
+  })
+
+  test('keeps a subscription api_version when the events default is absent', () => {
+    const remoteContent = {
+      events: {
+        subscription: [
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/a',
+            actions: ['create'],
+            api_version: '2024-01',
+            identifier: 'id-a',
+          },
+        ],
+      },
+    }
+
+    const result = transformToEventsConfig(remoteContent)
+
+    expect(result).toEqual({
+      events: {
+        api_version: undefined,
+        subscription: [
+          {topic: 'orders/create', uri: 'https://example.com/a', actions: ['create'], api_version: '2024-01'},
+        ],
+      },
+    })
+  })
+
+  test('merging single-subscription modules keeps only the overriding api_version', () => {
+    const moduleOne = {
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'orders/create',
+          uri: 'https://example.com/a',
+          actions: ['create'],
+          handle: 'a',
+          api_version: '2024-01',
+          identifier: 'id-a',
+        },
+      },
+    }
+    const moduleTwo = {
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'products/update',
+          uri: 'https://example.com/b',
+          actions: ['update'],
+          handle: 'b',
+          api_version: '2025-07',
+          identifier: 'id-b',
+        },
+      },
+    }
+
+    const merged = deepMergeObjects(transformToEventsConfig(moduleOne), transformToEventsConfig(moduleTwo))
+
+    expect(merged).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', uri: 'https://example.com/a', actions: ['create'], handle: 'a'},
+          {
+            topic: 'products/update',
+            uri: 'https://example.com/b',
+            actions: ['update'],
+            handle: 'b',
+            api_version: '2025-07',
+          },
+        ],
+      },
+    })
+  })
+
   test('merging a list-shape module with a single-subscription module accumulates all subscriptions', () => {
     const listModule = {
       events: {
