@@ -361,17 +361,16 @@ describe('committed secret classification', () => {
     rmSync(dir, {recursive: true, force: true})
   })
 
-  test('scores quoted JSON secret assignments in a tracked named secret file', async () => {
+  test('does not score a value identified only by a secret-sounding key name', async () => {
+    // Key names are not evidence: `password` in JSON could be anything, and
+    // flagging it is what flooded partners with false positives.
     const dir = makeApp({'secrets.json': '{ "password": "correct-horse-battery-staple" }\n'})
     git(dir, ['init', '-q', '.'])
     git(dir, ['add', '.'])
     git(dir, ['commit', '-qm', 'init'])
 
     const result = await scan(dir)
-    expect(result.issues.find((issue) => issue.id === 'COMMITTED_SECRET')).toMatchObject({
-      severity: 'high',
-      location: {file: 'secrets.json'},
-    })
+    expect(result.issues.filter((issue) => issue.id === 'COMMITTED_SECRET')).toEqual([])
     rmSync(dir, {recursive: true, force: true})
   })
 
@@ -386,37 +385,37 @@ describe('committed secret classification', () => {
     rmSync(dir, {recursive: true, force: true})
   })
 
-  test('scores an unquoted 32-hex Shopify API secret the same as a quoted one', async () => {
-    const quoted = makeApp({'.env': `SHOPIFY_API_SECRET="${HEX32}"\n`})
-    git(quoted, ['init', '-q', '.'])
-    git(quoted, ['add', '-f', '.env'])
-    git(quoted, ['commit', '-qm', 'init'])
-    const quotedScan = await scan(quoted)
-    expect(quotedScan.issues.find((issue) => issue.id === 'COMMITTED_SECRET')).toMatchObject({
-      severity: 'high',
-      location: {file: '.env'},
-    })
-    rmSync(quoted, {recursive: true, force: true})
+  test('does not score a 32-hex value under a secret-sounding name, quoted or not', async () => {
+    // Legacy Shopify API secrets are 32 hex chars, but so are client IDs,
+    // webhook ids, and content hashes — without a prefix the value is not
+    // provably a secret.
+    for (const assignment of [`SHOPIFY_API_SECRET="${HEX32}"\n`, `SHOPIFY_API_SECRET=${HEX32}\n`]) {
+      const dir = makeApp({'.env': assignment})
+      git(dir, ['init', '-q', '.'])
+      git(dir, ['add', '-f', '.env'])
+      git(dir, ['commit', '-qm', 'init'])
 
-    const unquoted = makeApp({'.env': `SHOPIFY_API_SECRET=${HEX32}\n`})
-    git(unquoted, ['init', '-q', '.'])
-    git(unquoted, ['add', '-f', '.env'])
-    git(unquoted, ['commit', '-qm', 'init'])
-    const unquotedScan = await scan(unquoted)
-    expect(unquotedScan.issues.find((issue) => issue.id === 'COMMITTED_SECRET')).toMatchObject({
-      severity: 'high',
-      location: {file: '.env'},
-    })
-    rmSync(unquoted, {recursive: true, force: true})
+      // eslint-disable-next-line no-await-in-loop
+      const result = await scan(dir)
+      expect(result.issues.filter((issue) => issue.id === 'COMMITTED_SECRET')).toEqual([])
+      rmSync(dir, {recursive: true, force: true})
+    }
   })
 
-  test('scores an unquoted 32-hex Shopify API secret in source', async () => {
-    const dir = makeApp({'config.js': `SHOPIFY_API_SECRET=${HEX32}\n`})
+  test('scores a prefixed Shopify token in source regardless of variable name', async () => {
+    const dir = makeApp({'config.js': `const token = "${PROBES.shopifySecret}"\n`})
     const result = await scan(dir)
     expect(result.issues.find((issue) => issue.id === 'COMMITTED_SECRET')).toMatchObject({
       severity: 'high',
       location: {file: 'config.js'},
     })
+    rmSync(dir, {recursive: true, force: true})
+  })
+
+  test('does not score a 32-hex value under a secret-sounding name in source', async () => {
+    const dir = makeApp({'config.js': `SHOPIFY_API_SECRET=${HEX32}\n`})
+    const result = await scan(dir)
+    expect(result.issues.filter((issue) => issue.id === 'COMMITTED_SECRET')).toEqual([])
     rmSync(dir, {recursive: true, force: true})
   })
 
@@ -509,10 +508,6 @@ describe('incomplete coverage is reported, not hidden', () => {
 /** Probe strings with realistic shape, assembled at runtime. See note above. */
 function probeFor(name: string): string | undefined {
   switch (name) {
-    case 'Shopify API secret':
-      return `api_secret = "${PROBES.shopifySecret}"`
-    case 'Shopify access token':
-      return `access_token = "${PROBES.shopifyToken}"`
     case 'Shopify token':
       return `x = ${PROBES.shopifyToken}`
     case 'Stripe API key':

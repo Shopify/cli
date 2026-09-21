@@ -25,20 +25,12 @@ interface SecretPattern {
 }
 
 export const SECRET_PATTERNS: SecretPattern[] = [
-  // Shopify API secret (shpss_ prefix or 32 hex). Quotes are optional so dotenv
-  // assignments match the same way quoted JS/JSON assignments do.
-  {
-    regex:
-      /(?<![A-Za-z0-9_])(?:api[_-]?secret|SHOPIFY_API_SECRET)[ \t]*[:=][ \t]*['"]?(shpss_[a-f0-9]+|[a-f0-9]{32})['"]?/i,
-    name: 'Shopify API secret',
-  },
-  // Shopify access token (shpat_ / shpca_ / shppa_)
-  {
-    regex:
-      /(?<![A-Za-z0-9_])(?:access[_-]?token|SHOPIFY_ACCESS_TOKEN)[ \t]*[:=][ \t]*['"]?(shp(?:at|ca|pa)_[a-zA-Z0-9]+)['"]?/i,
-    name: 'Shopify access token',
-  },
-  // Bare Shopify tokens, even without an assignment context
+  // Shopify credentials are recognized by value prefix, never by variable or
+  // key name: shpss_ (API secret), shpat_ (Admin API token), shpca_ and
+  // shppa_ (custom app tokens). A secret-sounding name proves nothing —
+  // `.env.example` files legitimately assign placeholders to
+  // `SHOPIFY_API_SECRET`, and scoring those is how this check missed its own
+  // static-tier bar (provable facts, near-zero FPs).
   {
     regex: /shp(?:at|ca|pa|ss)_[a-fA-F0-9]{16,}/,
     name: 'Shopify token',
@@ -129,11 +121,6 @@ export function redactText(text: string): string {
 }
 
 const NAMED_SECRET_FILE_PATTERN = /(^|\/)(?:\.env\.(?:secrets|keys)|(?:secrets|credentials)\.json)$/
-const TEMPLATE_ENV_SUFFIXES = new Set(['example', 'sample', 'template', 'dist'])
-// `SHOPIFY_API_KEY` / `api_key` are client IDs and public; they are not secret names.
-// Optional quotes cover JSON/YAML keys (`"password": "…"`) as well as env assignments.
-const SECRET_ASSIGNMENT_PATTERN =
-  /(?<![A-Za-z0-9_])["']?(?:api[_-]?secret|access[_-]?token|secret[_-]?key|private[_-]?key|password|SHOPIFY_API_SECRET)["']?[ \t]*[:=][ \t]*(?:"([^"\r\n]*)"|'([^'\r\n]*)'|([^\s#'"\r\n][^#\r\n]*))/gi
 
 function envFileBasename(path: string): string | undefined {
   const basename = path.slice(path.lastIndexOf('/') + 1)
@@ -143,56 +130,6 @@ function envFileBasename(path: string): string | undefined {
 
 function isEnvFile(path: string): boolean {
   return envFileBasename(path) !== undefined
-}
-
-function isTemplateEnvFile(path: string): boolean {
-  const basename = envFileBasename(path)
-  if (!basename) return false
-  return TEMPLATE_ENV_SUFFIXES.has(basename.slice(basename.lastIndexOf('.') + 1).toLowerCase())
-}
-
-function containsKnownSecretFormat(content: string): boolean {
-  return SECRET_PATTERNS.some((pattern) => pattern.regex.test(content))
-}
-
-/**
- * Name matches are not evidence. Partners commit `.env.example` with
- * `SHOPIFY_API_SECRET=your-secret-here`; treating that as a leak is how this
- * check missed its own static-tier bar (provable facts, near-zero FPs).
- */
-function isPlaceholderSecretValue(raw: string): boolean {
-  const value = raw.trim()
-  if (value.length === 0) return true
-  if (/^<[^>\n]+>$/.test(value)) return true
-  if (/^\$\{[^}]+}$/.test(value)) return true
-  if (/^\$[A-Za-z_][A-Za-z0-9_]*$/.test(value)) return true
-  if (/^(x{2,}|\*{2,}|\.{2,}|-{2,}|_{2,})$/i.test(value)) return true
-  const compact = value.toLowerCase().replace(/[^a-z0-9]/g, '')
-  if (
-    /^(changeme|placeholder|example|sample|dummy|fake|secret|password|todo|replaceme|insertme|none|null|undefined|na|nil)$/.test(
-      compact,
-    )
-  ) {
-    return true
-  }
-  if (/^(your|insert|replace|change).*(here|this|secret|key|token|password)$/.test(compact)) return true
-  if (/^(example|sample|dummy|fake)/.test(compact)) return true
-  return compact.includes('placeholder') || compact.includes('changeme')
-}
-
-function secretAssignmentValues(content: string): string[] {
-  const pattern = new RegExp(SECRET_ASSIGNMENT_PATTERN.source, SECRET_ASSIGNMENT_PATTERN.flags)
-  const values: string[] = []
-  for (const match of content.matchAll(pattern)) {
-    values.push((match[1] ?? match[2] ?? match[3] ?? '').trim())
-  }
-  return values
-}
-
-function containsCommittedSecretEvidence(content: string, templateFile: boolean): boolean {
-  if (containsKnownSecretFormat(content)) return true
-  if (templateFile) return false
-  return secretAssignmentValues(content).some((value) => !isPlaceholderSecretValue(value))
 }
 
 function committedSecretFileIssue(file: SourceFile, status: GitFileStatus, environmentFile: boolean): Issue {
@@ -237,14 +174,16 @@ export async function scanCommittedSecrets(secretEvidenceFiles: SourceFile[], ap
   const issues: Issue[] = []
 
   for (const file of secretEvidenceFiles) {
-    if (file.content === undefined) continue
+    const content = file.content
+    if (content === undefined) continue
     const environmentFile = isEnvFile(file.path)
     const namedSecretFile = NAMED_SECRET_FILE_PATTERN.test(file.path)
     if (!environmentFile && !namedSecretFile) continue
 
-    const templateFile = isTemplateEnvFile(file.path)
-    const hasEvidence = containsCommittedSecretEvidence(file.content, templateFile)
-    const emptyNamedSecret = namedSecretFile && file.content.trim() === ''
+    // Only a recognizable secret value is evidence. A secret-sounding
+    // variable or key name proves nothing (see SECRET_PATTERNS).
+    const hasEvidence = SECRET_PATTERNS.some((pattern) => pattern.regex.test(content))
+    const emptyNamedSecret = namedSecretFile && content.trim() === ''
     if (!hasEvidence && !emptyNamedSecret) continue
 
     // Keep git probes sequential to avoid spawning competing processes for one repository.
