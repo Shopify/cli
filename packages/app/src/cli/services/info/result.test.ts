@@ -1,4 +1,4 @@
-import {formatAppInfoResult} from './result.js'
+import {formatAppInfo, formatAppInfoResult} from './result.js'
 import {info as getInfo} from '../info.js'
 import {AppInterface, AppLinkedInterface} from '../../models/app/app.js'
 import {OrganizationApp, OrganizationSource} from '../../models/organization.js'
@@ -88,6 +88,14 @@ async function info(
   project: ReturnType<typeof testProject>,
   options: {format: 'json' | 'text'; webEnv: boolean; developerPlatformClient: DeveloperPlatformClient},
 ) {
+  if (options.format === 'text' && !options.webEnv) {
+    return formatAppInfo({
+      app,
+      remoteApp: {...remoteApp, developerPlatformClient: options.developerPlatformClient},
+      organization,
+      project,
+    })
+  }
   const result = await getInfo(
     app,
     {...remoteApp, developerPlatformClient: options.developerPlatformClient},
@@ -95,7 +103,7 @@ async function info(
     project,
     options,
   )
-  return formatAppInfoResult(result, {app, remoteApp, organization, project}, options.format)
+  return formatAppInfoResult(result, options.format)
 }
 
 describe('info', () => {

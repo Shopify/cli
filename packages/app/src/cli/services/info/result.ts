@@ -26,11 +26,17 @@ interface InfoContext {
   project: Project
 }
 
-export async function formatAppInfoResult(
-  result: AppInfoResult,
-  context: InfoContext,
-  format: 'json' | 'text',
-): Promise<OutputMessage | AlertCustomSection[]> {
+export async function formatAppInfo(context: InfoContext): Promise<AlertCustomSection[]> {
+  const {app, remoteApp, organization, project} = context
+  const account = await remoteApp.developerPlatformClient.accountInfo()
+  return new AppInfo(app, remoteApp, organization, project, account).output()
+}
+
+export async function renderAppInfo(context: InfoContext): Promise<void> {
+  renderInfo({customSections: await formatAppInfo(context)})
+}
+
+export function formatAppInfoResult(result: AppInfoResult, format: 'json' | 'text'): OutputMessage {
   if (format === 'json') return appInfoJsonOutputSchema.encode(result)
   if (!('name' in result)) {
     return outputContent`
@@ -39,21 +45,11 @@ export async function formatAppInfoResult(
     ${outputToken.green('SCOPES')}=${result.SCOPES}
   `
   }
-  const {app, remoteApp, organization, project} = context
-  return new AppInfo(app, remoteApp, organization, project, result.account).output()
+  throw new Error('App information text output requires the loaded app context.')
 }
 
-export async function renderAppInfoResult(
-  result: AppInfoResult,
-  context: InfoContext,
-  format: 'json' | 'text',
-): Promise<void> {
-  const output = await formatAppInfoResult(result, context, format)
-  if (typeof output === 'string' || 'value' in output) {
-    outputResult(output)
-  } else {
-    renderInfo({customSections: output})
-  }
+export function renderAppInfoResult(result: AppInfoResult, format: 'json' | 'text'): void {
+  outputResult(formatAppInfoResult(result, format))
 }
 
 const UNKNOWN_TEXT = 'unknown'

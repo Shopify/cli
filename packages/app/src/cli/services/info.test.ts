@@ -235,3 +235,63 @@ test.each([
   const result = await info(testAppLinked(), remoteApp, organization, testProject(), {webEnv: false})
   expect(JSON.parse(appInfoJsonOutputSchema.encode(result)).account).toEqual(account)
 })
+
+test('only emits documented specification metadata, without reading internal fields', async () => {
+  const extension = await testUIExtension()
+  extension.specification.group = 'ui'
+  extension.specification.graphQLType = 'UIExtension'
+  Object.defineProperty(extension.specification, 'internalState', {
+    enumerable: true,
+    get() {
+      throw new Error('Internal specification state must not be read')
+    },
+  })
+  const app = testAppLinked({allExtensions: [extension], specifications: [extension.specification]})
+  const result = await info(app, testOrganizationApp(), organization, testProject(), {webEnv: false})
+  const json = JSON.parse(appInfoJsonOutputSchema.encode(result))
+  for (const specification of [
+    json.specifications[0],
+    json.allExtensions[0].specification,
+    json.realExtensions[0].specification,
+  ]) {
+    expect(specification).toMatchObject({
+      identifier: extension.specification.identifier,
+      group: 'ui',
+      graphQLType: 'UIExtension',
+    })
+    expect(specification.clientSteps).toEqual(extension.specification.clientSteps)
+    expect(specification).not.toHaveProperty('internalState')
+    expect(specification).not.toHaveProperty('schema')
+    const schema = appInfoJsonOutputSchema.jsonSchema.definitions!.AppInfoSpecification
+    expect(schema).toHaveProperty('additionalProperties', false)
+    for (const key of Object.keys(specification)) {
+      expect(schema).toHaveProperty(`properties.${key}`)
+    }
+  }
+})
+
+test('preserves environment values, hidden state, and arbitrary configuration fields', async () => {
+  const extension = await testUIExtension()
+  Object.assign(extension.configuration, {custom: {token: 'extension-value'}})
+  const app = testAppLinked({
+    allExtensions: [extension],
+    configuration: {...testAppLinked().configuration, custom: {token: 'app-value'}},
+    dotenv: {path: '/tmp/project/.env', variables: {TOKEN: 'environment-value'}},
+    hiddenConfig: {dev_store_url: 'example.myshopify.com'},
+  })
+  Object.assign(app.hiddenConfig, {custom: 'hidden-value'})
+  app.webs = [
+    {
+      directory: '/tmp/project/web',
+      configuration: {roles: [], commands: {dev: 'TOKEN=web-value npm run dev'}},
+    },
+  ]
+  const result = await info(app, testOrganizationApp(), organization, testProject(), {webEnv: false})
+  const json = JSON.parse(appInfoJsonOutputSchema.encode(result))
+  expect(json.dotenv).toEqual(app.dotenv)
+  expect(json._hiddenConfig).toEqual(app.hiddenConfig)
+  expect(json.configuration).toEqual(app.configuration)
+  expect(json.allExtensions[0].configuration).toEqual(extension.configuration)
+  expect(json.realExtensions[0].configuration).toEqual(extension.configuration)
+  expect(json.webs).toEqual(app.webs)
+})

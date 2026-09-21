@@ -1,7 +1,7 @@
 import {appFlags} from '../../flags.js'
 import {info} from '../../services/info.js'
 import {appInfoJsonOutputSchema} from '../../services/info/types.js'
-import {renderAppInfoResult} from '../../services/info/result.js'
+import {renderAppInfo, renderAppInfoResult} from '../../services/info/result.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
@@ -45,8 +45,12 @@ export default class AppInfo extends AppLinkedCommand {
       userProvidedConfigName: flags.config,
       unsafeTolerateErrors: true,
     })
-    const result = await info(app, remoteApp, organization, project, {webEnv: flags['web-env']})
-    await renderAppInfoResult(result, {app, remoteApp, organization, project}, flags.json ? 'json' : 'text')
+    if (flags.json || flags['web-env']) {
+      const result = await info(app, remoteApp, organization, project, {webEnv: flags['web-env']})
+      renderAppInfoResult(result, flags.json ? 'json' : 'text')
+    } else {
+      await renderAppInfo({app, remoteApp, organization, project})
+    }
     if (!app.errors.isEmpty()) process.exit(2)
 
     return {app}

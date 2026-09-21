@@ -2244,6 +2244,9 @@ DESCRIPTION
           "externalName": {
             "type": "string"
           },
+          "group": {
+            "type": "string"
+          },
           "additionalIdentifiers": {
             "type": "array",
             "items": {
@@ -2273,6 +2276,18 @@ DESCRIPTION
               "dynamic",
               "uuid"
             ]
+          },
+          "dependency": {
+            "type": "string"
+          },
+          "graphQLType": {
+            "type": "string"
+          },
+          "clientSteps": {
+            "$ref": "#/definitions/AppInfoClientSteps"
+          },
+          "loadedRemoteSpecs": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -2286,7 +2301,226 @@ DESCRIPTION
           "experience",
           "uidStrategy"
         ],
-        "additionalProperties": true
+        "additionalProperties": false
+      },
+      "AppInfoClientSteps": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "lifecycle": {
+              "type": "string",
+              "const": "deploy"
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "continueOnError": {
+                        "type": "boolean"
+                      },
+                      "type": {
+                        "type": "string",
+                        "const": "include_assets"
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {
+                          "generatesAssetsManifest": {
+                            "type": "boolean"
+                          },
+                          "inclusions": {
+                            "type": "array",
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "pattern"
+                                    },
+                                    "baseDir": {
+                                      "type": "string"
+                                    },
+                                    "include": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "ignore": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "destination": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "type"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "static"
+                                    },
+                                    "source": {
+                                      "type": "string"
+                                    },
+                                    "destination": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "source"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "configKey"
+                                    },
+                                    "key": {
+                                      "type": "string"
+                                    },
+                                    "destination": {
+                                      "type": "string"
+                                    },
+                                    "anchor": {
+                                      "type": "string"
+                                    },
+                                    "groupBy": {
+                                      "type": "string"
+                                    },
+                                    "preserveFilePaths": {
+                                      "type": "boolean"
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "key"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "inclusions"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "type",
+                      "config"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "$ref": "#/definitions/AppInfoClientSteps/items/properties/steps/items/anyOf/0/properties/id"
+                      },
+                      "name": {
+                        "$ref": "#/definitions/AppInfoClientSteps/items/properties/steps/items/anyOf/0/properties/name"
+                      },
+                      "continueOnError": {
+                        "$ref": "#/definitions/AppInfoClientSteps/items/properties/steps/items/anyOf/0/properties/continueOnError"
+                      },
+                      "type": {
+                        "type": "string",
+                        "const": "bundle_ui"
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {
+                          "generatesAssetsManifest": {
+                            "type": "boolean"
+                          },
+                          "bundleFolder": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "type"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "$ref": "#/definitions/AppInfoClientSteps/items/properties/steps/items/anyOf/0/properties/id"
+                      },
+                      "name": {
+                        "$ref": "#/definitions/AppInfoClientSteps/items/properties/steps/items/anyOf/0/properties/name"
+                      },
+                      "continueOnError": {
+                        "$ref": "#/definitions/AppInfoClientSteps/items/properties/steps/items/anyOf/0/properties/continueOnError"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "build_theme",
+                          "bundle_theme",
+                          "build_function",
+                          "create_tax_stub"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "not": {}
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "type"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          },
+          "required": [
+            "lifecycle",
+            "steps"
+          ],
+          "additionalProperties": false
+        }
       },
       "AppInfoWeb": {
         "type": "object",

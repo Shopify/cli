@@ -4,6 +4,7 @@ import {AppLinkedInterface, getAppScopes} from '../models/app/app.js'
 import {Project} from '../models/project/project.js'
 import {Organization, OrganizationApp} from '../models/organization.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
+import {ExtensionSpecification} from '../models/extensions/specification.js'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
@@ -44,7 +45,7 @@ export async function info(
     devStoreUrl: app.configuration.build?.dev_store_url ?? app.hiddenConfig.dev_store_url,
     allExtensions: withPurgedSchemas(app.allExtensions.filter((extension) => extension.isReturnedAsInfo())),
     realExtensions: withPurgedSchemas(app.realExtensions),
-    specifications: app.specifications.map(objectWithoutSchema),
+    specifications: app.specifications.map(specificationInfo),
   }
 
   // The legacy result exposes enumerable model data. Materialize its JSON value to
@@ -57,12 +58,23 @@ export async function info(
   return appInfoJsonOutputSchema.validate(result)
 }
 
-function objectWithoutSchema(obj: object): object {
-  if ('schema' in obj) {
-    const {schema, ...rest} = obj
-    return rest
+function specificationInfo(specification: ExtensionSpecification) {
+  return {
+    identifier: specification.identifier,
+    externalIdentifier: specification.externalIdentifier,
+    externalName: specification.externalName,
+    group: specification.group,
+    additionalIdentifiers: specification.additionalIdentifiers,
+    partnersWebIdentifier: specification.partnersWebIdentifier,
+    surface: specification.surface,
+    registrationLimit: specification.registrationLimit,
+    experience: specification.experience,
+    uidStrategy: specification.uidStrategy,
+    dependency: specification.dependency,
+    graphQLType: specification.graphQLType,
+    clientSteps: specification.clientSteps,
+    ...('loadedRemoteSpecs' in specification ? {loadedRemoteSpecs: specification.loadedRemoteSpecs} : {}),
   }
-  return obj
 }
 
 function configFileInfo({path, content, errors}: TomlFile) {
@@ -79,6 +91,6 @@ function withPurgedSchemas(extensions: ExtensionInstance[]): object[] {
     surface: extension.surface,
     features: extension.features,
     dependency: extension.dependency,
-    specification: objectWithoutSchema(extension.specification),
+    specification: specificationInfo(extension.specification),
   }))
 }

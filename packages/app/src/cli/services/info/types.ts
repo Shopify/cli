@@ -1,22 +1,86 @@
 import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
+import type {ClientSteps} from '../build/client-steps.js'
 
 // App and extension configuration is defined by remotely supplied specifications.
 const configurationSchema = zod.record(zod.unknown())
 
-const specificationSchema = zod
-  .object({
-    identifier: zod.string(),
-    externalIdentifier: zod.string(),
-    externalName: zod.string(),
-    additionalIdentifiers: zod.array(zod.string()),
-    partnersWebIdentifier: zod.string(),
-    surface: zod.string(),
-    registrationLimit: zod.number(),
-    experience: zod.enum(['extension', 'configuration']),
-    uidStrategy: zod.enum(['single', 'dynamic', 'uuid']),
-  })
-  .passthrough()
+// Describe build-step input without applying execution-time defaults, so the JSON
+// contract preserves the configuration already returned by app info.
+const clientStepSchema = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  continueOnError: zod.boolean().optional(),
+})
+const clientStepsSchema = zod.array(
+  zod.object({
+    lifecycle: zod.literal('deploy'),
+    steps: zod.array(
+      zod.discriminatedUnion('type', [
+        clientStepSchema.extend({
+          type: zod.literal('include_assets'),
+          config: zod.object({
+            generatesAssetsManifest: zod.boolean().optional(),
+            inclusions: zod.array(
+              zod.discriminatedUnion('type', [
+                zod.object({
+                  type: zod.literal('pattern'),
+                  baseDir: zod.string().optional(),
+                  include: zod.array(zod.string()).optional(),
+                  ignore: zod.array(zod.string()).optional(),
+                  destination: zod.string().optional(),
+                }),
+                zod.object({
+                  type: zod.literal('static'),
+                  source: zod.string(),
+                  destination: zod.string().optional(),
+                }),
+                zod.object({
+                  type: zod.literal('configKey'),
+                  key: zod.string(),
+                  destination: zod.string().optional(),
+                  anchor: zod.string().optional(),
+                  groupBy: zod.string().optional(),
+                  preserveFilePaths: zod.boolean().optional(),
+                }),
+              ]),
+            ),
+          }),
+        }),
+        clientStepSchema.extend({
+          type: zod.literal('bundle_ui'),
+          config: zod
+            .object({
+              generatesAssetsManifest: zod.boolean().optional(),
+              bundleFolder: zod.string().optional(),
+            })
+            .optional(),
+        }),
+        clientStepSchema.extend({
+          type: zod.enum(['build_theme', 'bundle_theme', 'build_function', 'create_tax_stub']),
+          config: zod.record(zod.never()).optional(),
+        }),
+      ]),
+    ),
+  }),
+) satisfies zod.ZodType<ClientSteps>
+
+const specificationSchema = zod.object({
+  identifier: zod.string(),
+  externalIdentifier: zod.string(),
+  externalName: zod.string(),
+  group: zod.string().optional(),
+  additionalIdentifiers: zod.array(zod.string()),
+  partnersWebIdentifier: zod.string(),
+  surface: zod.string(),
+  registrationLimit: zod.number(),
+  experience: zod.enum(['extension', 'configuration']),
+  uidStrategy: zod.enum(['single', 'dynamic', 'uuid']),
+  dependency: zod.string().optional(),
+  graphQLType: zod.string().optional(),
+  clientSteps: clientStepsSchema.optional(),
+  loadedRemoteSpecs: zod.boolean().optional(),
+})
 
 const extensionSchema = zod
   .object({
@@ -161,6 +225,7 @@ export const appInfoJsonOutputSchema = defineJsonOutputSchema({
     AppInfoWebEnvironment: webEnvironmentSchema,
     AppInfoExtension: extensionSchema,
     AppInfoSpecification: specificationSchema,
+    AppInfoClientSteps: clientStepsSchema,
     AppInfoWeb: webSchema,
     AppInfoConfigurationError: configurationErrorSchema,
   },

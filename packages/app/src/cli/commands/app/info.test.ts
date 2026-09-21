@@ -1,3 +1,4 @@
+import AppInfo from './info.js'
 import {
   testAppLinked,
   testOrganizationApp,
@@ -6,9 +7,11 @@ import {
 } from '../../models/app/app.test-data.js'
 import {AppErrors} from '../../models/app/loader.js'
 import {OrganizationSource} from '../../models/organization.js'
+import {linkedAppContext} from '../../services/app-context.js'
+import {appInfoJsonOutputSchema} from '../../services/info/types.js'
 import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
-import {mockAndCaptureOutput, mockAndCaptureStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {unstyled, outputInfo} from '@shopify/cli-kit/node/output'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
@@ -16,20 +19,11 @@ import {platformAndArch} from '@shopify/cli-kit/node/os'
 vi.mock('../../services/app-context.js')
 vi.mock('../../services/context.js')
 
-const originalUnitTestEnvironment = process.env.SHOPIFY_UNIT_TEST
-
 afterEach(() => {
-  if (originalUnitTestEnvironment === undefined) {
-    delete process.env.SHOPIFY_UNIT_TEST
-  } else {
-    process.env.SHOPIFY_UNIT_TEST = originalUnitTestEnvironment
-  }
   mockAndCaptureOutput().clear()
-  vi.resetModules()
 })
 
 async function runCommand(argv: string[], app = testAppLinked(), remoteApp = testOrganizationApp()) {
-  const {linkedAppContext} = await import('../../services/app-context.js')
   const developerPlatformClient = remoteApp.developerPlatformClient
   vi.spyOn(developerPlatformClient, 'accountInfo')
   vi.mocked(linkedAppContext).mockResolvedValue({
@@ -39,161 +33,130 @@ async function runCommand(argv: string[], app = testAppLinked(), remoteApp = tes
     organization: {id: '123', businessName: 'Example organization', source: OrganizationSource.BusinessPlatform},
     developerPlatformClient,
   } as unknown as Awaited<ReturnType<typeof linkedAppContext>>)
-  const {default: AppInfo} = await import('./info.js')
   const result = await new AppInfo(argv, await Config.load()).run()
   return {result, developerPlatformClient}
 }
 
 test('writes one JSON document with cached account information and no terminal output', async () => {
-  process.env.SHOPIFY_UNIT_TEST = 'false'
-  vi.resetModules()
   const app = testAppLinked()
-  const streams = mockAndCaptureStandardStreams()
-  try {
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
     const {result, developerPlatformClient} = await runCommand(['--json'], app)
     expect(result).toEqual({app})
     expect(developerPlatformClient.accountInfo).toHaveBeenCalledOnce()
-  } finally {
-    streams.restore()
-  }
-  expect(JSON.parse(streams.stdout())).toEqual({
-    name: 'App',
-    idEnvironmentVariableName: 'SHOPIFY_API_KEY',
-    directory: '/tmp/project',
-    configPath: '/tmp/project/shopify.app.toml',
-    configuration: app.configuration,
-    webs: app.webs,
-    errors: {errors: []},
-    specifications: [],
-    remoteFlags: [],
-    realExtensions: [],
-    _hiddenConfig: {},
-    packageManager: 'yarn',
-    nodeDependencies: {},
-    usesWorkspaces: false,
-    organization: {id: '123', businessName: 'Example organization', source: OrganizationSource.BusinessPlatform},
-    account: {type: 'UserAccount', email: 'partner@shopify.com'},
-    remoteApp: {id: '1', title: 'app1', apiKey: 'api-key', organizationId: '1', grantedScopes: [], flags: []},
-    project: {
+    expect(JSON.parse(stdout())).toEqual({
+      name: 'App',
+      idEnvironmentVariableName: 'SHOPIFY_API_KEY',
       directory: '/tmp/project',
-      appConfigFiles: [],
-      extensionConfigFiles: [],
-      webConfigFiles: [],
-      dotenvFiles: [],
-      errors: [],
-    },
-    system: {
-      cliVersion: expect.any(String),
-      nodeVersion: process.version,
-      ...platformAndArch(),
-      ...(process.env.SHELL === undefined ? {} : {shell: process.env.SHELL}),
-    },
-    allExtensions: [],
+      configPath: '/tmp/project/shopify.app.toml',
+      configuration: app.configuration,
+      webs: app.webs,
+      errors: {errors: []},
+      specifications: [],
+      remoteFlags: [],
+      realExtensions: [],
+      _hiddenConfig: {},
+      packageManager: 'yarn',
+      nodeDependencies: {},
+      usesWorkspaces: false,
+      organization: {id: '123', businessName: 'Example organization', source: OrganizationSource.BusinessPlatform},
+      account: {type: 'UserAccount', email: 'partner@shopify.com'},
+      remoteApp: {id: '1', title: 'app1', apiKey: 'api-key', organizationId: '1', grantedScopes: [], flags: []},
+      project: {
+        directory: '/tmp/project',
+        appConfigFiles: [],
+        extensionConfigFiles: [],
+        webConfigFiles: [],
+        dotenvFiles: [],
+        errors: [],
+      },
+      system: {
+        cliVersion: expect.any(String),
+        nodeVersion: process.version,
+        ...platformAndArch(),
+        ...(process.env.SHELL === undefined ? {} : {shell: process.env.SHELL}),
+      },
+      allExtensions: [],
+    })
+    expect(stderr()).toBe('')
   })
-  expect(streams.stderr()).toBe('')
 })
 
 test('keeps app information on stderr in text mode', async () => {
-  process.env.SHOPIFY_UNIT_TEST = 'false'
-  vi.resetModules()
-  const streams = mockAndCaptureStandardStreams()
-  try {
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
     const {developerPlatformClient} = await runCommand([])
     expect(developerPlatformClient.accountInfo).toHaveBeenCalledOnce()
-  } finally {
-    streams.restore()
-  }
-  expect(streams.stdout()).toBe('')
-  expect(streams.stderr()).toContain('CURRENT APP CONFIGURATION')
-  expect(streams.stderr()).toContain('Example organization (123)')
-  expect(streams.stderr()).toContain('TOOLING AND SYSTEM')
+    expect(stdout()).toBe('')
+    expect(stderr()).toContain('CURRENT APP CONFIGURATION')
+    expect(stderr()).toContain('Example organization (123)')
+    expect(stderr()).toContain('TOOLING AND SYSTEM')
+  })
 })
 
 test.each([{secret: 'api-secret'}, {secret: undefined}])(
   'preserves web environment JSON: $secret',
   async ({secret}) => {
-    process.env.SHOPIFY_UNIT_TEST = 'false'
-    vi.resetModules()
     const remoteApp = testOrganizationApp({apiSecretKeys: secret === undefined ? [] : [{secret}]})
-    const streams = mockAndCaptureStandardStreams()
-    try {
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
       await runCommand(['--web-env', '--json'], testAppLinked(), remoteApp)
-    } finally {
-      streams.restore()
-    }
-    expect(streams.stdout()).toBe(
-      secret === undefined
-        ? '{\n  "SHOPIFY_API_KEY": "api-key",\n  "SCOPES": "read_products"\n}\n'
-        : '{\n  "SHOPIFY_API_KEY": "api-key",\n  "SHOPIFY_API_SECRET": "api-secret",\n  "SCOPES": "read_products"\n}\n',
-    )
-    expect(streams.stderr()).toBe('')
+      expect(stdout()).toBe(
+        secret === undefined
+          ? '{\n  "SHOPIFY_API_KEY": "api-key",\n  "SCOPES": "read_products"\n}\n'
+          : '{\n  "SHOPIFY_API_KEY": "api-key",\n  "SHOPIFY_API_SECRET": "api-secret",\n  "SCOPES": "read_products"\n}\n',
+      )
+      expect(stderr()).toBe('')
+    })
   },
 )
 
 test('keeps web environment text on stdout, with an empty missing secret', async () => {
-  process.env.SHOPIFY_UNIT_TEST = 'false'
-  vi.resetModules()
-  const streams = mockAndCaptureStandardStreams()
-  try {
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await runCommand(['--web-env'], testAppLinked(), testOrganizationApp({apiSecretKeys: []}))
-  } finally {
-    streams.restore()
-  }
-  expect(unstyled(streams.stdout())).toBe(
-    '\n    SHOPIFY_API_KEY=api-key\n    SHOPIFY_API_SECRET=\n    SCOPES=read_products\n  \n',
-  )
-  expect(streams.stderr()).toBe('')
+    expect(unstyled(stdout())).toBe(
+      '\n    SHOPIFY_API_KEY=api-key\n    SHOPIFY_API_SECRET=\n    SCOPES=read_products\n  \n',
+    )
+    expect(stderr()).toBe('')
+  })
 })
 
 test.each([{argv: []}, {argv: ['--json']}, {argv: ['--web-env', '--json']}])(
   'prints the result before exiting with status 2: $argv',
   async ({argv}) => {
-    process.env.SHOPIFY_UNIT_TEST = 'false'
-    vi.resetModules()
     const errors = new AppErrors()
     errors.addError({file: '/tmp/project/shopify.app.toml', message: 'Invalid app'})
-    const streams = mockAndCaptureStandardStreams()
     const exit = vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('exit')
     })
     try {
-      await expect(runCommand(argv, testAppLinked({errors}))).rejects.toThrow('exit')
-      expect(exit).toHaveBeenCalledWith(2)
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await expect(runCommand(argv, testAppLinked({errors}))).rejects.toThrow('exit')
+        expect(exit).toHaveBeenCalledWith(2)
+        if (argv.includes('--json')) {
+          expect(JSON.parse(stdout())).toBeDefined()
+          expect(stderr()).toBe('')
+        } else {
+          expect(stdout()).toBe('')
+          expect(stderr()).toContain('CURRENT APP CONFIGURATION')
+        }
+      })
     } finally {
-      streams.restore()
       exit.mockRestore()
-    }
-    if (argv.includes('--json')) {
-      expect(JSON.parse(streams.stdout())).toBeDefined()
-      expect(streams.stderr()).toBe('')
-    } else {
-      expect(streams.stdout()).toBe('')
-      expect(streams.stderr()).toContain('CURRENT APP CONFIGURATION')
     }
   },
 )
 
 test('preserves context failures without printing a result', async () => {
-  const {linkedAppContext} = await import('../../services/app-context.js')
   vi.mocked(linkedAppContext).mockRejectedValue(new Error('Unable to load app'))
-  const {default: AppInfo} = await import('./info.js')
   await expect(new AppInfo(['--json'], await Config.load()).run()).rejects.toThrow('Unable to load app')
   expect(mockAndCaptureOutput().output()).toBe('')
 })
 
-test('exposes both app and web environment schemas in help', async () => {
-  const {default: AppInfo} = await import('./info.js')
-  const {appInfoJsonOutputSchema} = await import('../../services/info/types.js')
+test('exposes both app and web environment schemas in help', () => {
   expect(AppInfo.jsonOutputSchema).toBe(appInfoJsonOutputSchema)
   expect(AppInfo.descriptionForHelp()).toContain('`AppInfoResult` schema')
   expect(AppInfo.descriptionForHelp()).toContain('AppInfoWebEnvironment')
 })
 
 test('routes context diagnostics through side events without contaminating the result', async () => {
-  process.env.SHOPIFY_UNIT_TEST = 'false'
-  vi.resetModules()
-  const {linkedAppContext} = await import('../../services/app-context.js')
-  const {default: AppInfo} = await import('./info.js')
   vi.mocked(linkedAppContext).mockImplementation(async () => {
     outputInfo('Loading app configuration')
     return {
@@ -205,16 +168,36 @@ test('routes context diagnostics through side events without contaminating the r
     } as unknown as Awaited<ReturnType<typeof linkedAppContext>>
   })
   const command = new AppInfo(['--json'], await Config.load())
-  const streams = mockAndCaptureStandardStreams()
-  try {
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await runWithCommandEventsForCommand(['--json'], () => command.run())
-  } finally {
-    streams.restore()
-  }
-  expect(JSON.parse(streams.stdout())).toHaveProperty('name', 'App')
-  expect(JSON.parse(streams.stderr())).toMatchObject({
-    type: 'diagnostic',
-    level: 'info',
-    message: 'Loading app configuration',
+    expect(JSON.parse(stdout())).toHaveProperty('name', 'App')
+    expect(JSON.parse(stderr())).toMatchObject({
+      type: 'diagnostic',
+      level: 'info',
+      message: 'Loading app configuration',
+    })
   })
+})
+
+test('renders text without constructing or validating the public JSON result', async () => {
+  const validate = vi.spyOn(appInfoJsonOutputSchema, 'validate').mockImplementation(() => {
+    throw new Error('JSON validation failed')
+  })
+  const app = testAppLinked()
+  Object.defineProperty(app, 'specifications', {
+    get() {
+      throw new Error('JSON-only metadata must not be read')
+    },
+  })
+  try {
+    await withCapturedStandardStreams(async ({stderr}) => {
+      const {developerPlatformClient} = await runCommand([], app)
+      expect(validate).not.toHaveBeenCalled()
+      expect(developerPlatformClient.accountInfo).toHaveBeenCalledOnce()
+      expect(stderr()).toContain('CURRENT APP CONFIGURATION')
+      await expect(runCommand(['--json'])).rejects.toThrow('JSON validation failed')
+    })
+  } finally {
+    validate.mockRestore()
+  }
 })
