@@ -1,17 +1,28 @@
 import {isDevelopment, isUnitTest} from './context/local.js'
-import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI} from './is-global.js'
-import {checkForCachedNewVersion, packageManagerFromUserAgent, PackageManager} from './node-package-manager.js'
+import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI, getProjectDir} from './is-global.js'
+import {
+  checkForCachedNewVersion,
+  checkForNewVersion,
+  addNPMDependencies,
+  getPackageManager,
+  usesWorkspaces,
+  packageManagerFromUserAgent,
+  PackageManager,
+} from './node-package-manager.js'
 import {exec, isCI} from './system.js'
 import {
   cliInstallCommand,
   getOutputUpdateCLIReminder,
   hasBlockingAutoUpgradeNotification,
   runCLIUpgrade,
+  upgradeCLI,
   versionToAutoUpgrade,
 } from './upgrade.js'
 import {Notification, fetchNotifications} from './notifications-system.js'
 import {globalCLIVersion, isPreReleaseVersion} from './version.js'
 import {mockAndCaptureOutput} from './testing/output.js'
+import {inTemporaryDirectory, writeFile} from './fs.js'
+import {joinPath} from './path.js'
 import {getAutoUpgradeEnabled} from '../../private/node/conf-store.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {SemVer} from 'semver'
@@ -26,7 +37,15 @@ vi.mock('./notifications-system.js', async (importOriginal) => {
 })
 vi.mock('./context/local.js')
 vi.mock('./is-global.js')
-vi.mock('./node-package-manager.js')
+vi.mock('./node-package-manager.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./node-package-manager.js')>()),
+  checkForCachedNewVersion: vi.fn(),
+  checkForNewVersion: vi.fn(),
+  addNPMDependencies: vi.fn(),
+  getPackageManager: vi.fn(),
+  usesWorkspaces: vi.fn(),
+  packageManagerFromUserAgent: vi.fn(),
+}))
 vi.mock('./system.js')
 vi.mock('../../private/node/conf-store.js')
 vi.mock('./version.js', async (importOriginal) => {
@@ -401,5 +420,98 @@ describe('hasBlockingAutoUpgradeNotification', () => {
   test('fails open and returns false when fetching notifications throws', async () => {
     vi.mocked(fetchNotifications).mockRejectedValue(new Error('network down'))
     await expect(hasBlockingAutoUpgradeNotification()).resolves.toBe(false)
+  })
+})
+
+describe('upgradeCLI result', () => {
+  test('returns the verified global version without presenting success', async () => {
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('pnpm')
+    vi.mocked(globalCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
+    mockAndCaptureOutput().clear()
+
+    await expect(upgradeCLI()).resolves.toEqual({
+      status: 'upgraded',
+      scope: 'global',
+      previousVersion: CLI_KIT_VERSION,
+      version: CLI_KIT_VERSION,
+      packageManager: 'pnpm',
+    })
+    expect(mockAndCaptureOutput().info()).not.toContain('Shopify CLI upgraded.')
+  })
+
+  test('returns a development skip without installing', async () => {
+    vi.mocked(isDevelopment).mockReturnValue(true)
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+
+    await expect(upgradeCLI()).resolves.toEqual({status: 'skipped', reason: 'development', scope: 'global'})
+    expect(exec).not.toHaveBeenCalled()
+  })
+
+  test('returns an automatic local upgrade skip', async () => {
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
+
+    await expect(upgradeCLI({autoupgrade: true})).resolves.toEqual({
+      status: 'skipped',
+      reason: 'local_autoupgrade',
+      scope: 'local',
+    })
+    expect(addNPMDependencies).not.toHaveBeenCalled()
+  })
+
+  test.each([undefined, '999.0.0'])(
+    'returns local dependency updates with available version %s',
+    async (availableVersion) => {
+      await inTemporaryDirectory(async (directory) => {
+        // In the unbundled source, the upgrade service belongs to cli-kit.
+        await writeFile(
+          joinPath(directory, 'package.json'),
+          JSON.stringify({
+            dependencies: {'@shopify/cli-kit': '^4.0.0', unrelated: '1.0.0'},
+          }),
+        )
+        vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
+        vi.mocked(getProjectDir).mockReturnValue(directory)
+        vi.mocked(checkForNewVersion).mockResolvedValue(availableVersion)
+        vi.mocked(getPackageManager).mockResolvedValue('npm')
+        vi.mocked(usesWorkspaces).mockResolvedValue(false)
+
+        await expect(upgradeCLI()).resolves.toEqual({
+          status: 'dependencies_updated',
+          scope: 'local',
+          directory,
+          previousVersion: CLI_KIT_VERSION,
+          availableVersion,
+          packages: ['@shopify/cli-kit'],
+        })
+        expect(addNPMDependencies).toHaveBeenCalledExactlyOnceWith([{name: '@shopify/cli-kit', version: 'latest'}], {
+          directory,
+          type: 'prod',
+          packageManager: 'npm',
+          addToRootDirectory: false,
+          stdout: process.stdout,
+          stderr: process.stderr,
+        })
+        expect(checkForNewVersion).toHaveBeenCalledWith('@shopify/cli-kit', CLI_KIT_VERSION)
+      })
+    },
+  )
+
+  test('skips a local project without a CLI dependency', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeFile(joinPath(directory, 'package.json'), '{}')
+      vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
+      vi.mocked(getProjectDir).mockReturnValue(directory)
+
+      await expect(upgradeCLI()).resolves.toEqual({status: 'skipped', reason: 'dependency_not_found', scope: 'local'})
+      expect(addNPMDependencies).not.toHaveBeenCalled()
+    })
+  })
+
+  test('preserves the failure for a missing local project', async () => {
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
+    vi.mocked(getProjectDir).mockReturnValue(undefined)
+
+    await expect(upgradeCLI()).rejects.toThrow('Could not determine the local project directory')
   })
 })

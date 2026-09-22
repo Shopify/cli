@@ -11762,15 +11762,40 @@
       ],
       "args": {
       },
-      "description": "Upgrades Shopify CLI using your package manager.",
+      "description": "Upgrades Shopify CLI using your package manager.\n\nOutput from `--json` conforms to the `UpgradeResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"status\": {\n          \"type\": \"string\",\n          \"const\": \"upgraded\"\n        },\n        \"scope\": {\n          \"type\": \"string\",\n          \"const\": \"global\"\n        },\n        \"previousVersion\": {\n          \"type\": \"string\"\n        },\n        \"version\": {\n          \"type\": \"string\"\n        },\n        \"packageManager\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"status\",\n        \"scope\",\n        \"previousVersion\",\n        \"version\",\n        \"packageManager\"\n      ],\n      \"additionalProperties\": false\n    },\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"status\": {\n          \"type\": \"string\",\n          \"const\": \"dependencies_updated\"\n        },\n        \"scope\": {\n          \"type\": \"string\",\n          \"const\": \"local\"\n        },\n        \"directory\": {\n          \"type\": \"string\"\n        },\n        \"previousVersion\": {\n          \"type\": \"string\"\n        },\n        \"availableVersion\": {\n          \"type\": \"string\"\n        },\n        \"packages\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        }\n      },\n      \"required\": [\n        \"status\",\n        \"scope\",\n        \"directory\",\n        \"previousVersion\",\n        \"packages\"\n      ],\n      \"additionalProperties\": false\n    },\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"status\": {\n          \"type\": \"string\",\n          \"const\": \"skipped\"\n        },\n        \"reason\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"development\",\n            \"local_autoupgrade\",\n            \"dependency_not_found\"\n          ]\n        },\n        \"scope\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"global\",\n            \"local\"\n          ]\n        }\n      },\n      \"required\": [\n        \"status\",\n        \"reason\",\n        \"scope\"\n      ],\n      \"additionalProperties\": false\n    }\n  ],\n  \"title\": \"UpgradeResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Upgrades Shopify CLI using your package manager.",
       "enableJsonFlag": false,
       "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
         "json-schema": {
           "allowNo": false,
           "description": "Print the command's JSON schemas.",
           "env": "SHOPIFY_FLAG_JSON_SCHEMA",
           "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
           "type": "boolean"
         }
       },

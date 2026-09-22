@@ -8460,17 +8460,138 @@ Upgrades Shopify CLI.
 
 ```
 USAGE
-  $ shopify upgrade [--json-schema]
+  $ shopify upgrade [-j] [--json-schema] [--no-color] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
   Upgrades Shopify CLI.
 
   Upgrades Shopify CLI using your package manager.
+
+  Output from `--json` conforms to the `UpgradeResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "upgraded"
+          },
+          "scope": {
+            "type": "string",
+            "const": "global"
+          },
+          "previousVersion": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          },
+          "packageManager": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "scope",
+          "previousVersion",
+          "version",
+          "packageManager"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "dependencies_updated"
+          },
+          "scope": {
+            "type": "string",
+            "const": "local"
+          },
+          "directory": {
+            "type": "string"
+          },
+          "previousVersion": {
+            "type": "string"
+          },
+          "availableVersion": {
+            "type": "string"
+          },
+          "packages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "scope",
+          "directory",
+          "previousVersion",
+          "packages"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "skipped"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "development",
+              "local_autoupgrade",
+              "dependency_not_found"
+            ]
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "global",
+              "local"
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "reason",
+          "scope"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "UpgradeResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify version`

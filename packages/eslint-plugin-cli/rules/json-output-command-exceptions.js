@@ -56,7 +56,6 @@ const commandExceptions = [
   'packages/cli/src/cli/commands/notifications/generate.ts',
   'packages/cli/src/cli/commands/notifications/list.ts',
   'packages/cli/src/cli/commands/send-analytics.ts',
-  'packages/cli/src/cli/commands/upgrade.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/off.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/on.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/status.ts',
