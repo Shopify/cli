@@ -396,21 +396,13 @@ function createBatches<T extends {size: number}>(files: T[]): T[][] {
 }
 
 function calculateLocalChecksums(localThemeFileSystem: ThemeFileSystem): ChecksumWithSize[] {
-  const checksums: ChecksumWithSize[] = []
-
-  localThemeFileSystem.files.forEach((file, key) => {
+  return Array.from(localThemeFileSystem.files.entries()).map(([key, file]) => ({
+    key,
+    checksum: file.checksum,
     // Text files: use UTF-8 byte count
     // Binary files: use base64 length
-    const size = file.value ? Buffer.byteLength(file.value, 'utf8') : (file.attachment?.length ?? 0)
-
-    checksums.push({
-      key,
-      checksum: file.checksum,
-      size,
-    })
-  })
-
-  return checksums
+    size: file.value ? Buffer.byteLength(file.value, 'utf8') : (file.attachment?.length ?? 0),
+  }))
 }
 
 async function uploadBatch(
