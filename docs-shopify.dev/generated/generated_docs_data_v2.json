@@ -3,7 +3,7 @@
     "docs-shopify.dev/commands/interfaces/app-build.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/app-build.interface.ts",
       "name": "appbuild",
-      "description": "The following flags are available for the `app build` command:",
+      "description": "TEST PREVIEW: The following flags are available for the `app build` command:",
       "isPublicDocs": true,
       "members": [
         {
@@ -2552,7 +2552,7 @@
     "docs-shopify.dev/commands/interfaces/app-info.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/app-info.interface.ts",
       "name": "appinfo",
-      "description": "The following flags are available for the `app info` command:",
+      "description": "TEST PREVIEW: The following flags are available for the `app info` command:",
       "isPublicDocs": true,
       "members": [
         {
