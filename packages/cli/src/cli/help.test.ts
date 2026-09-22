@@ -1,7 +1,16 @@
 import ShopifyHelp, {ShopifyCommandHelp} from './help.js'
+import {helpService} from './services/commands/help/index.js'
 import {CommandHelp, Help} from '@oclif/core'
-import {describe, expect, test} from 'vitest'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 import type {Command, Interfaces} from '@oclif/core'
+
+vi.mock('./services/commands/help/index.js')
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+  mockAndCaptureOutput().clear()
+})
 
 const stripAnsi = (value: string) => value.replace(new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g'), '')
 
@@ -160,6 +169,39 @@ interface Result {
 })
 
 describe('ShopifyHelp', () => {
+  test.each([
+    {argv: ['version', '--help', '--json'], environment: ''},
+    {argv: ['--json', 'version', '--help'], environment: ''},
+    {argv: ['version', '--help', '-j'], environment: ''},
+    {argv: ['version', '--help'], environment: '1'},
+  ])('uses the JSON presenter for %j', async ({argv, environment}) => {
+    vi.stubEnv('SHOPIFY_FLAG_JSON', environment)
+    vi.mocked(helpService).mockResolvedValue({kind: 'root', commands: [], topics: []})
+    const output = mockAndCaptureOutput()
+    const config = {} as Interfaces.Config
+    const help = new ShopifyHelp(config, {all: true})
+
+    await help.showHelp(argv)
+
+    expect(helpService).toHaveBeenCalledWith(config, ['version', '--help'], true)
+    expect(JSON.parse(output.output())).toEqual({kind: 'root', commands: [], topics: []})
+    expect(output.warn()).toBe('')
+  })
+
+  test.each([
+    ['version', '--help'],
+    ['version', '--help', '--', '--json'],
+  ])('preserves text help for %j', async (...argv) => {
+    vi.stubEnv('SHOPIFY_FLAG_JSON', '')
+    const showHelp = vi.spyOn(Help.prototype, 'showHelp').mockResolvedValue()
+    const help = new ShopifyHelp({} as Interfaces.Config)
+
+    await help.showHelp(argv)
+
+    expect(showHelp).toHaveBeenCalledWith(argv)
+    expect(helpService).not.toHaveBeenCalled()
+  })
+
   test('is an oclif Help that renders command help with ShopifyCommandHelp', () => {
     // When
     const help = new ShopifyHelp({} as Interfaces.Config)

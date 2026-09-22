@@ -50,7 +50,6 @@ const commandExceptions = [
   'packages/cli/src/cli/commands/docs/generate.ts',
   'packages/cli/src/cli/commands/doctor-release/doctor-release.ts',
   'packages/cli/src/cli/commands/doctor-release/theme/index.ts',
-  'packages/cli/src/cli/commands/help.ts',
   'packages/cli/src/cli/commands/kitchen-sink/async.ts',
   'packages/cli/src/cli/commands/kitchen-sink/index.ts',
   'packages/cli/src/cli/commands/kitchen-sink/prompts.ts',

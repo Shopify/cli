@@ -51,6 +51,14 @@ export async function launchCLI(options: Options): Promise<void> {
   } catch (error) {
     const {errorHandler} = await import('./error-handler.js')
     await errorHandler(error as Error)
-    return Errors.handle(error as Error)
+    const handledError = error as Error | null | undefined
+    // Suppress duplicate output without mutating the thrown value, which may be frozen or null.
+    return Errors.handle({
+      ...handledError,
+      name: handledError?.name ?? 'Error',
+      message: handledError?.message ?? String(error),
+      stack: handledError?.stack,
+      skipOclifErrorHandling: true,
+    })
   }
 }

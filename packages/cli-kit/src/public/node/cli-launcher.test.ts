@@ -31,6 +31,34 @@ describe('launchCLI', () => {
     await expect(launchCLI({moduleURL: import.meta.url, argv: ['this', 'is', 'invalid']})).rejects.toThrow()
   })
 
+  test.each([
+    {error: null, message: 'null'},
+    {error: undefined, message: 'undefined'},
+    {error: 'Startup failed', message: 'Startup failed'},
+    {error: Object.freeze(new Error('Frozen error')), message: 'Frozen error'},
+    {error: Object.freeze({message: 'Frozen object', oclif: {exit: 3}}), message: 'Frozen object'},
+    {error: new Errors.CLIError('CLI error', {exit: 2}), message: 'CLI error'},
+    {error: Object.freeze(new Errors.CLIError('Frozen CLI error', {exit: 2})), message: 'Frozen CLI error'},
+  ])('handles $message without mutating the thrown value', async ({error, message}) => {
+    vi.spyOn(ShopifyConfig.prototype, 'load').mockRejectedValue(error)
+    const handle = vi.spyOn(Errors, 'handle').mockResolvedValue()
+
+    await launchCLI({moduleURL: import.meta.url, argv: ['--help']})
+
+    expect(errorHandler).toHaveBeenCalledExactlyOnceWith(error)
+    expect(handle).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({message, skipOclifErrorHandling: true}))
+    const handledError = handle.mock.calls[0]![0]
+    expect(handledError).not.toBe(error)
+    if (error instanceof Error) {
+      expect(handledError.name).toBe(error.name)
+      expect(handledError.stack).toBe(error.stack)
+    }
+    if (error && typeof error === 'object') {
+      expect(error).not.toMatchObject({skipOclifErrorHandling: true})
+      if ('oclif' in error) expect(handledError.oclif).toEqual(error.oclif)
+    }
+  })
+
   test('preserves the loaded Shopify config so commands can be loaded lazily', async () => {
     const command = {id: 'lazy-test'} as any
     const config = new ShopifyConfig({root: import.meta.url})
@@ -146,6 +174,7 @@ describe('JSON output schema flag', () => {
       )
 
       expect(errorHandler).toHaveBeenCalledWith(expect.objectContaining({message}))
+      expect(Errors.handle).toHaveBeenCalledWith(expect.objectContaining({message, skipOclifErrorHandling: true}))
       expect(hook).not.toHaveBeenCalled()
     })
   })

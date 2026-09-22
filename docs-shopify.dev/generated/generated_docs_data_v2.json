@@ -3681,6 +3681,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/help.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/help.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-n, --nested-commands",
           "value": "''",
           "description": "Include all nested commands in the output.",
@@ -3688,7 +3697,7 @@
           "environmentValue": "SHOPIFY_FLAG_CLI_NESTED_COMMANDS"
         }
       ],
-      "value": "export interface help {\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Include all nested commands in the output.\n   * @environment SHOPIFY_FLAG_CLI_NESTED_COMMANDS\n   */\n  '-n, --nested-commands'?: ''\n}"
+      "value": "export interface help {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Include all nested commands in the output.\n   * @environment SHOPIFY_FLAG_CLI_NESTED_COMMANDS\n   */\n  '-n, --nested-commands'?: ''\n}"
     }
   },
   "hydrogenbuild": {
