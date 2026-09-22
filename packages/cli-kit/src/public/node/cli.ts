@@ -1,4 +1,5 @@
 import {isTruthy} from './context/utilities.js'
+import {noInputFlag} from './no-input.js'
 import {launchCLI as defaultLaunchCli} from './cli-launcher.js'
 import {environmentVariables} from '../../private/node/constants.js'
 import {Flags} from '@oclif/core'
@@ -131,6 +132,7 @@ export async function runCreateCLI(
  * are shared across all the commands.
  */
 export const globalFlags = {
+  ...noInputFlag,
   'no-color': Flags.boolean({
     hidden: false,
     description: 'Disable color output.',

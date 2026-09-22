@@ -13,6 +13,7 @@ import {openURL} from '@shopify/cli-kit/node/system'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {isInputDisabled} from '@shopify/cli-kit/node/no-input'
 
 export {listStoredStoreAuthSummaries, type StoredStoreAuthSummary} from './stored-auth.js'
 
@@ -48,6 +49,12 @@ export async function authenticateStoreWithApp(
   const store = normalizeStoreFqdn(input.store)
 
   throwIfPreviewStore(store, resolvedDependencies)
+  if (isInputDisabled()) {
+    throw new AbortError(
+      'Store authentication requires browser interaction, but user input is disabled.',
+      'Remove `--no-input` and run the command in an interactive terminal.',
+    )
+  }
 
   await recordStoreFqdnMetadata(store, false)
   const requestedScopes = parseStoreAuthScopes(input.scopes)
