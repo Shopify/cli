@@ -37,7 +37,7 @@ import {basename, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {sha256} from '@shopify/cli-kit/node/crypto'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import type {Rule, ScanContext} from '../rules/types.js'
-import type {SourceFile} from './types.js'
+import type {RunnerImplementationResult, RunnerResult, SourceFile} from './types.js'
 import type {
   AnalysisMode,
   CheckExecution,
@@ -58,20 +58,6 @@ type CheckTarget =
   | 'config_and_source'
   | 'source_and_theme'
   | 'dependency_automation'
-interface RunnerImplementationResult {
-  id: string
-  analysisMode: AnalysisMode
-  status: CheckExecutionStatus
-  inspectedFiles: string[]
-  findings: number
-  reason?: CheckExecutionReason
-}
-interface RunnerResult {
-  issues: Issue[]
-  unresolvedReason?: string
-  inspectedFiles?: string[]
-  implementations?: RunnerImplementationResult[]
-}
 type Runner = (context: ScanContext) => Issue[] | RunnerResult | Promise<Issue[] | RunnerResult>
 
 export interface DeterministicCheckDefinition {
@@ -146,8 +132,10 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
       'Review offline-token feature configuration, session storage refresh metadata, and ambiguous setup using the matching version 1 agent prompt.',
   },
   {
-    ...jsCheck('UNAUTHENTICATED_ENDPOINT', (context) => scanUnauthenticatedEndpoints(context.sourceFiles)),
+    ...jsCheck('UNAUTHENTICATED_ENDPOINT', (context) => scanUnauthenticatedEndpoints(context.sourceFiles), 'source', 2),
     requires: 'has_backend',
+    guidance:
+      'Trace context.shopify.authenticate.admin in the listed routes with the matching agent prompt. Confirm the context origin, completed request verification, and protected operations; the syntax hint is not a pass.',
   },
   jsCheck(
     'REQUEST_CONTROLLED_ADMIN_CONTEXT',
@@ -647,7 +635,7 @@ export async function scan(startPath?: string, configFileName?: string): Promise
           required: true,
           applicable: true,
           reason: {
-            code: 'parser_unavailable',
+            code: output.unresolvedReasonCode ?? 'parser_unavailable',
             message: output.unresolvedReason,
           },
         }

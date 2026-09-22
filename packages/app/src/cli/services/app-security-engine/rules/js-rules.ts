@@ -1,4 +1,5 @@
 import type {Issue} from '../types.js'
+import type {RunnerResult} from '../scanners/types.js'
 import type {SourceFile} from './types.js'
 
 const JAVASCRIPT_EXTENSIONS = new Set(['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.mts', '.cts'])
@@ -7,8 +8,10 @@ const SHOP_FIELD = 'shop(?:Domain)?'
 const CREDENTIAL =
   /\b(?:accessToken|access_token|sessionToken|session_token|apiSecret|api_secret|clientSecret|client_secret|SHOPIFY_API_SECRET|SHOPIFY_ACCESS_TOKEN)\b/i
 
-export function scanUnauthenticatedEndpoints(files: SourceFile[]): Issue[] {
+/** Context-provided authenticators require agent review because their origin and execution order are unknown. */
+export function scanUnauthenticatedEndpoints(files: SourceFile[]): RunnerResult {
   const issues: Issue[] = []
+  const contextAuthFiles = new Set<string>()
   for (const file of files) {
     if (!isJavaScript(file) || !file.path.includes('/routes/')) continue
     if (/auth[._/-]?(?:login|callback)/i.test(file.path)) continue
@@ -20,7 +23,9 @@ export function scanUnauthenticatedEndpoints(files: SourceFile[]): Issue[] {
       const authentication = /\bawait\s+authenticate\.(?:admin|public\.[A-Za-z_$][\w$]*|webhook)\s*\(/.exec(body)
       const accessesProtectedData =
         /\b(?:admin\.graphql|prisma\.|db\.|session\.|metafields?Set|unauthenticated\.admin)\b/.test(body)
-      if (!authentication && accessesProtectedData) {
+      if (/\bcontext\s*\.\s*shopify\s*\.\s*authenticate\s*\.\s*admin\s*\(/.test(body)) {
+        contextAuthFiles.add(file.path)
+      } else if (!authentication && accessesProtectedData) {
         issues.push(
           issue(
             'UNAUTHENTICATED_ENDPOINT',
@@ -36,7 +41,15 @@ export function scanUnauthenticatedEndpoints(files: SourceFile[]): Issue[] {
       route = routePattern.exec(source)
     }
   }
-  return issues
+  return {
+    issues,
+    ...(contextAuthFiles.size > 0
+      ? {
+          unresolvedReason: `Context-based route authentication needs agent review in ${[...contextAuthFiles].join(', ')}. A context.shopify.authenticate.admin call is neither proof of verification nor a missing-auth finding.`,
+          unresolvedReasonCode: 'agent_investigation_required' as const,
+        }
+      : {}),
+  }
 }
 
 /**

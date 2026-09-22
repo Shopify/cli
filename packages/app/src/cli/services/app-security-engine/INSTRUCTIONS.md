@@ -136,3 +136,5 @@ When the user explicitly wants a fast local or CI scan without semantic investig
 ```
 
 Honor the installed CLI's documented JSON and blocking flags when requested. Do not describe a deterministic-only scan as the full App Security review.
+
+Route authentication retains a template-oriented heuristic. Calls using `context.shopify.authenticate.admin(...)` are deferred to the `UNAUTHENTICATED_ENDPOINT` agent review, with unresolved coverage rather than a missing-auth finding or a pass. The heuristic does not establish binding provenance, control-flow safety, or tenant/object authorization.

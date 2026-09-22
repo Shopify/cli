@@ -40,7 +40,7 @@ const source = (content: string, path = 'app/routes/example.tsx'): SourceFile =>
 })
 
 describe('deterministic rules product contract', () => {
-  test('has exactly fifteen active executable deterministic identities', () => {
+  test('registers every active executable deterministic identity with a runnable definition', () => {
     expect([...DETERMINISTIC_CHECKS.keys()].sort()).toEqual(ACTIVE_IDS)
     expect([...DETERMINISTIC_CHECKS.values()].every((check) => check.lifecycle === 'active' && check.runner)).toBe(true)
     const registry = getRegistry()
@@ -54,6 +54,7 @@ describe('deterministic rules product contract', () => {
     expect(DETERMINISTIC_CHECKS.get('APP_PROXY_LIQUID_INJECTION')?.version).toBe(2)
     expect(DETERMINISTIC_CHECKS.get('INSECURE_WEBHOOK_URL')?.version).toBe(2)
     expect(DETERMINISTIC_CHECKS.get('COMMITTED_SECRET')?.version).toBe(2)
+    expect(DETERMINISTIC_CHECKS.get('UNAUTHENTICATED_ENDPOINT')?.version).toBe(2)
   })
 
   test('extracts security fields from parsed TOML without source regexes', () => {
@@ -144,33 +145,28 @@ describe('deterministic rules product contract', () => {
 })
 
 describe('JavaScript regex mode', () => {
-  test('classifies React Router handlers and awaited authentication barriers', () => {
-    expect(
-      scanUnauthenticatedEndpoints([
-        source('export async function loader({request}: LoaderArgs) { return prisma.order.findMany() }'),
-      ]),
-    ).toHaveLength(1)
-    expect(
-      scanUnauthenticatedEndpoints([
-        source(
-          'export async function loader({request}: LoaderArgs) { const {admin} = await authenticate.admin(request); return json({ok: true}) }',
-        ),
-      ]),
-    ).toHaveLength(0)
-    expect(
-      scanUnauthenticatedEndpoints([
-        source(
-          'export async function loader({request}: LoaderArgs) { await authenticate.admin(request); return json({ok: true}) }',
-        ),
-      ]),
-    ).toHaveLength(0)
-    expect(
-      scanUnauthenticatedEndpoints([
-        source(
-          'export async function loader({request}: LoaderArgs) { authenticate.admin(request); return prisma.order.findMany() }',
-        ),
-      ]),
-    ).toHaveLength(1)
+  test('retains the template route-auth heuristic', () => {
+    const missing = scanUnauthenticatedEndpoints([
+      source('export async function loader({request}: LoaderArgs) { return prisma.order.findMany() }'),
+    ])
+    expect(missing.issues).toHaveLength(1)
+    expect(missing.unresolvedReason).toBeUndefined()
+
+    const authenticated = scanUnauthenticatedEndpoints([
+      source(
+        'export async function loader({request}: LoaderArgs) { await authenticate.admin(request); return prisma.order.findMany() }',
+      ),
+    ])
+    expect(authenticated.issues).toEqual([])
+    expect(authenticated.unresolvedReason).toBeUndefined()
+
+    const unawaited = scanUnauthenticatedEndpoints([
+      source(
+        'export async function loader({request}: LoaderArgs) { authenticate.admin(request); return prisma.order.findMany() }',
+      ),
+    ])
+    expect(unawaited.issues).toHaveLength(1)
+    expect(unawaited.unresolvedReason).toBeUndefined()
   })
 
   test('detects direct admin-context and credential flows with safe exceptions', () => {

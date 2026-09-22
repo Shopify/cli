@@ -509,3 +509,74 @@ describe('coverage and trace invariants', () => {
     expect(validateTrace(trace).errors.join(' ')).toMatch(/reason and handoff guidance/)
   })
 })
+
+describe('authenticated-route review handoff', () => {
+  test('hands unresolved context authentication to the agent without a false finding or a passing check', async () => {
+    const directory = await app({
+      'shopify.app.toml': appConfig(),
+      'package.json': reactPackage,
+      'app/shopify.server.ts': 'export const shopify = {}',
+      'app/routes/orders.tsx':
+        'export async function loader({request, context}: LoaderArgs) { const {admin} = await context.shopify.authenticate.admin(request); return admin.graphql("{ shop { id } }") }',
+    })
+    const result = await scan(directory)
+
+    // Context-provided authentication must not be mistaken for missing verification.
+    expect(result.issues.some((issue) => issue.id === 'UNAUTHENTICATED_ENDPOINT')).toBe(false)
+    expect(result.scan.checks_executed.find((execution) => execution.id === 'UNAUTHENTICATED_ENDPOINT')).toMatchObject({
+      status: 'unresolved',
+      analysis_mode: 'regex',
+      reason: {code: 'agent_investigation_required'},
+    })
+    expect(result.scan.coverage_gaps).toContainEqual(
+      expect.objectContaining({code: 'unresolved_check', check_id: 'UNAUTHENTICATED_ENDPOINT'}),
+    )
+
+    const reviewPack = buildReviewPack('test', result)
+    expect(reviewPack.checks).toContainEqual(
+      expect.objectContaining({
+        id: 'UNAUTHENTICATED_ENDPOINT',
+        version: 2,
+        deterministic_fallback: expect.objectContaining({
+          reason: expect.objectContaining({code: 'agent_investigation_required'}),
+        }),
+      }),
+    )
+
+    // A deferred context pattern must not make an unperformed agent review look complete.
+    const trace = compileTrace(result)
+    expect(trace.checks_executed).toContainEqual(
+      expect.objectContaining({
+        id: 'UNAUTHENTICATED_ENDPOINT',
+        kind: 'agent',
+        status: 'unresolved',
+        reason: expect.objectContaining({code: 'not_reported'}),
+      }),
+    )
+  })
+  test('preserves ordinary findings when another handler needs context-auth review', async () => {
+    const directory = await app({
+      'shopify.app.toml': appConfig(),
+      'package.json': reactPackage,
+      'app/shopify.server.ts': 'export const shopify = {}',
+      'app/routes/orders.tsx': `export async function loader({request, context}) {
+await context.shopify.authenticate.admin(request);
+return prisma.order.findMany();
+}
+export async function action({request}) {
+return prisma.order.deleteMany();
+}`,
+    })
+    const result = await scan(directory)
+    expect(result.issues.filter((issue) => issue.id === 'UNAUTHENTICATED_ENDPOINT')).toEqual([
+      expect.objectContaining({location: {file: 'app/routes/orders.tsx', line: 5}}),
+    ])
+    expect(result.scan.checks_executed.find((execution) => execution.id === 'UNAUTHENTICATED_ENDPOINT')).toMatchObject({
+      status: 'unresolved',
+      analysis_mode: 'regex',
+      findings: 1,
+      reason: {code: 'agent_investigation_required'},
+      inspected_files: expect.arrayContaining(['app/routes/orders.tsx']),
+    })
+  })
+})
