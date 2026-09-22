@@ -8015,12 +8015,22 @@
           "name": "query"
         }
       },
-      "description": "Search shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.",
+      "description": "Search shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.\n\nOutput from `--json` conforms to the `SearchResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"url\": {\n      \"type\": \"string\",\n      \"format\": \"uri\"\n    }\n  },\n  \"required\": [\n    \"url\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"SearchResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Search shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.",
       "enableJsonFlag": false,
       "examples": [
         "# open the search modal on Shopify.dev\n    shopify search\n\n    # search for a term on Shopify.dev\n    shopify search <query>\n\n    # search for a phrase on Shopify.dev\n    shopify search \"<a search query separated by spaces>\"\n    "
       ],
       "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
         "json-schema": {
           "allowNo": false,
           "description": "Print the command's JSON schemas.",
