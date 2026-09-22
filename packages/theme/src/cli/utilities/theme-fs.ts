@@ -30,6 +30,7 @@ const FILE_EVENT_DEBOUNCE_TIME_IN_MS = 250
 
 const THEME_DIRECTORY_PATTERNS = [
   'AGENTS.md',
+  'DESIGN.md',
   'assets/**/*.*',
   'config/**/*.json',
   'config/styles.css',
@@ -43,7 +44,7 @@ const THEME_DIRECTORY_PATTERNS = [
 ]
 
 const THEME_PARTITION_REGEX = {
-  agentInstructionsRegex: /^AGENTS\.md$/,
+  documentationFilesRegex: /^(AGENTS|DESIGN)\.md$/,
   layoutLiquidRegex: /^layout\/.+\.liquid$/,
   sectionLiquidRegex: /^sections\/.+\.liquid$/,
   blockLiquidRegex: /^blocks\/.+\.liquid$/,
@@ -476,12 +477,12 @@ export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
   const staticAssetFiles: T[] = []
   const blockLiquidFiles: T[] = []
   const layoutFiles: T[] = []
-  const agentInstructionFiles: T[] = []
+  const documentationFiles: T[] = []
 
   files.forEach((file) => {
     const fileKey = file.key
-    if (THEME_PARTITION_REGEX.agentInstructionsRegex.test(fileKey)) {
-      agentInstructionFiles.push(file)
+    if (THEME_PARTITION_REGEX.documentationFilesRegex.test(fileKey)) {
+      documentationFiles.push(file)
     } else if (fileKey.endsWith('.liquid')) {
       if (THEME_PARTITION_REGEX.sectionLiquidRegex.test(fileKey)) {
         sectionLiquidFiles.push(file)
@@ -526,7 +527,7 @@ export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
     staticAssetFiles,
     blockLiquidFiles,
     layoutFiles,
-    agentInstructionFiles,
+    documentationFiles,
   }
 }
 

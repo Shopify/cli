@@ -16,6 +16,7 @@ describe('packageTheme', () => {
       await mkdir(inputDirectory)
       const themeRelativePaths = [
         'AGENTS.md',
+        'DESIGN.md',
         'assets/base.css',
         'layout/theme.liquid',
         'config/settings_schema.json',

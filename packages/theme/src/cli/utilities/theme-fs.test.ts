@@ -66,13 +66,14 @@ describe('theme-fs', () => {
 
         // Then
         expect(themeFileSystem.root).toBe(root)
-        expect(themeFileSystem.files.size).toBe(12)
+        expect(themeFileSystem.files.size).toBe(13)
         expect(themeFileSystem.unsyncedFileKeys).toEqual(new Set())
         expect(themeFileSystem.uploadErrors).toEqual(new Map())
 
         // Check that all expected files are present with correct checksums
         const expectedFiles = [
           {checksum: '6e3520cc5a5c4cdb1267f36406c732a1', key: 'AGENTS.md'},
+          {checksum: 'f5e9ce97aef578fc4e2e369a3c271234', key: 'DESIGN.md'},
           {checksum: 'b7fbe0ecff2a6c1d6e697a13096e2b17', key: 'assets/base.css'},
           {checksum: '7adcd48a3cc215a81fabd9dafb919507', key: 'assets/sparkle.gif'},
           {checksum: '22e69af13b7953914563c60035a831bc', key: 'config/settings_data.json'},
@@ -520,6 +521,7 @@ describe('theme-fs', () => {
         {key: 'templates/404.liquid', checksum: '13'},
         {key: 'blocks/block.liquid', checksum: '14'},
         {key: 'AGENTS.md', checksum: '17'},
+        {key: 'DESIGN.md', checksum: '18'},
       ]
       // When
       const {
@@ -534,7 +536,7 @@ describe('theme-fs', () => {
         contextualizedJsonFiles,
         blockLiquidFiles,
         layoutFiles,
-        agentInstructionFiles,
+        documentationFiles,
       } = partitionThemeFiles(files)
 
       // Then
@@ -560,7 +562,10 @@ describe('theme-fs', () => {
         {key: 'layout/theme.liquid', checksum: '5'},
         {key: 'layout/custom.liquid', checksum: '15'},
       ])
-      expect(agentInstructionFiles).toEqual([{key: 'AGENTS.md', checksum: '17'}])
+      expect(documentationFiles).toEqual([
+        {key: 'AGENTS.md', checksum: '17'},
+        {key: 'DESIGN.md', checksum: '18'},
+      ])
     })
 
     test('should handle empty file array', () => {
@@ -577,7 +582,7 @@ describe('theme-fs', () => {
         configDataFile,
         configStylesheetFiles,
         staticAssetFiles,
-        agentInstructionFiles,
+        documentationFiles,
       } = partitionThemeFiles(files)
 
       // Then
@@ -589,7 +594,7 @@ describe('theme-fs', () => {
       expect(configDataFile).toEqual([])
       expect(configStylesheetFiles).toEqual([])
       expect(staticAssetFiles).toEqual([])
-      expect(agentInstructionFiles).toEqual([])
+      expect(documentationFiles).toEqual([])
     })
   })
 
@@ -603,6 +608,7 @@ describe('theme-fs', () => {
       expect(isTextFile('sections/template.liquid')).toBeTruthy()
       expect(isTextFile('templates/cart.json')).toBeTruthy()
       expect(isTextFile('AGENTS.md')).toBeTruthy()
+      expect(isTextFile('DESIGN.md')).toBeTruthy()
     })
 
     test(`returns false when it's not a text file`, async () => {
