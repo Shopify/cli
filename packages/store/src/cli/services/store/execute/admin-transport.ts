@@ -59,6 +59,18 @@ export async function fetchPublicApiVersions(input: {
     const classified = classifyAdminApiError(error, input.adminSession.storeFqdn)
     if (classified) throw classified
 
+    // Version discovery takes no user input, so a 5xx here is a Shopify-side failure. Wrapped
+    // rather than rethrown: a raw `ClientError` is filed as an unexpected CLI bug.
+    //
+    // Not in `classifyAdminApiError`, which `runAdminStoreGraphQLOperation` also calls. There a
+    // 5xx can carry GraphQL errors about the user's own query, which must stay visible.
+    if (isGraphQLClientErrorLike(error) && typeof error.response.status === 'number' && error.response.status >= 500) {
+      throw new AbortError(
+        `Couldn't read the supported API versions for ${input.adminSession.storeFqdn}: the Admin API returned a server error (HTTP ${error.response.status}).`,
+        'This is a problem on the Shopify side, not with your command. Wait a moment and run it again.',
+      )
+    }
+
     throw error
   }
 }

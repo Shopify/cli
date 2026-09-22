@@ -14,7 +14,7 @@ import {
   restRequestUrl,
   isThemeAccessSession,
 } from '../../../private/node/api/rest.js'
-import {isNetworkError} from '../../../private/node/api.js'
+import {isAbortedFetchError, isNetworkError} from '../../../private/node/api.js'
 import {RequestModeInput, shopifyFetch} from '../http.js'
 import {PublicApiVersions} from '../../../cli/api/graphql/admin/generated/public_api_versions.js'
 import {themeKitAccessDomain} from '../../../private/node/constants.js'
@@ -189,6 +189,35 @@ export async function fetchApiVersions(
     if (error instanceof ClientError && (error.response.status === 401 || error.response.status === 404)) {
       throw new AbortError(
         `Error connecting to your store ${session.storeFqdn}: ${error.message} ${error.response.status} ${error.response.data}`,
+      )
+    }
+
+    // HTTP 402 means the shop is frozen, paused, or closed. That is a store state the user can
+    // fix, not a CLI bug, so it must not reach the BugError below.
+    if (error instanceof ClientError && error.response.status === 402) {
+      throw new AbortError(
+        `The store ${session.storeFqdn} is currently unavailable.`,
+        'This usually means the store is frozen, paused, or closed. Check the store in the Shopify admin and try again once it is reactivated.',
+      )
+    }
+
+    // HTTP 5xx is a Shopify-side failure. This query takes no user input, so the user's command
+    // cannot have caused it. `isExpectedApiError` covers 502/503/504, but only for raw errors, so
+    // it never sees one we have already wrapped in a BugError.
+    if (error instanceof ClientError && error.response.status >= 500) {
+      throw new AbortError(
+        `The Admin API for ${session.storeFqdn} returned a server error (HTTP ${error.response.status}).`,
+        'This is a problem on the Shopify side, not with your command. Wait a moment and try again.',
+      )
+    }
+
+    // A cancelled request is neither a store-state failure nor a CLI bug. Checked before
+    // `isNetworkError` so the message says the request was aborted instead of blaming the
+    // user's connection.
+    if (isAbortedFetchError(error)) {
+      throw new AbortError(
+        `Request to ${session.storeFqdn} was aborted before it completed.`,
+        'The request was cancelled or timed out before the store responded. Try running the command again.',
       )
     }
 
