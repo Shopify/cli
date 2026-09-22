@@ -183,6 +183,17 @@ export interface AppLogsError {
 
 export type AppLogsResponse = AppLogsSuccess | AppLogsError
 
+/**
+ * Raw result of the App Management channel_spec_export endpoint. The HTTP status and decoded JSON
+ * body are returned as-is so the import service can apply the endpoint's status contract.
+ */
+export interface ChannelSpecExportResponse {
+  status: number
+  ok: boolean
+  /** Decoded JSON body, or undefined when the body was not valid JSON. */
+  body: unknown
+}
+
 export interface UserError {
   field?: string[] | null
   message: string
@@ -264,6 +275,7 @@ export interface DeveloperPlatformClient {
     organizationId: string,
   ) => Promise<AppLogsSubscribeMutation>
   appLogs: (options: AppLogsOptions, organizationId: string) => Promise<AppLogsResponse>
+  channelSpecExport: (app: MinimalAppIdentifiers) => Promise<ChannelSpecExportResponse>
   appDeepLink: (app: MinimalAppIdentifiers) => Promise<string>
   devSessionCreate: (input: DevSessionCreateOptions) => Promise<DevSessionCreateMutation>
   devSessionUpdate: (input: DevSessionUpdateOptions) => Promise<DevSessionUpdateMutation>

@@ -1,9 +1,5 @@
 import {OrganizationApp} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {numericIdFromGid} from '@shopify/cli-kit/common/gid'
-import {appManagementHeaders} from '@shopify/cli-kit/node/api/app-management'
-import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {shopifyFetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 interface ChannelSpecExportWarning {
@@ -41,18 +37,7 @@ export async function fetchChannelSpecExport({
   remoteApp,
   developerPlatformClient,
 }: FetchChannelSpecExportOptions): Promise<ChannelSpecExportResult> {
-  const fqdn = await appManagementFqdn()
-  // App Management returns app ids as GIDs (gid://shopify/App/<id>); the REST path needs the numeric id.
-  const appId = numericIdFromGid(remoteApp.id) ?? remoteApp.id
-  const url = `https://${fqdn}/app_management/unstable/organizations/${encodeURIComponent(
-    remoteApp.organizationId,
-  )}/apps/${encodeURIComponent(appId)}/channel_spec_export.json`
-  const token = (await developerPlatformClient.session()).token
-
-  const response = await shopifyFetch(url, {
-    method: 'GET',
-    headers: appManagementHeaders(token),
-  })
+  const response = await developerPlatformClient.channelSpecExport(remoteApp)
 
   if (response.status === 404) {
     // A 404 is not part of the export contract (failures are 422 with a reason code). It means the
@@ -63,13 +48,7 @@ export async function fetchChannelSpecExport({
     )
   }
 
-  let decoded: unknown
-  try {
-    decoded = await response.json()
-  } catch {
-    throw new AbortError(`Failed to fetch the channel spec export: unexpected response (status ${response.status}).`)
-  }
-
+  const decoded = response.body
   if (typeof decoded !== 'object' || decoded === null || Array.isArray(decoded)) {
     throw new AbortError(`Failed to fetch the channel spec export: unexpected response (status ${response.status}).`)
   }

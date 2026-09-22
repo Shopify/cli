@@ -28,6 +28,7 @@ import {
   AppModuleVersion,
   CreateAppOptions,
   AppLogsResponse,
+  ChannelSpecExportResponse,
   createUnauthorizedHandler,
   DevSessionUpdateOptions,
   DevSessionCreateOptions,
@@ -143,6 +144,7 @@ import {fetch, shopifyFetch, Response} from '@shopify/cli-kit/node/http'
 import {
   appManagementRequestDoc,
   appManagementAppLogsUrl,
+  appManagementChannelSpecExportUrl,
   appManagementHeaders,
   AppManagementRequestOptions,
 } from '@shopify/cli-kit/node/api/app-management'
@@ -263,6 +265,32 @@ export class AppManagementClient implements DeveloperPlatformClient {
         status: response.status,
       }
     }
+  }
+
+  /**
+   * Fetches the Shopify-authored channel spec export for an app as deployable channel_config TOML.
+   *
+   * Returns the raw status and decoded body: the endpoint uses HTTP status codes (200/404/422/426)
+   * as its contract, and the import service owns mapping those onto user-facing outcomes.
+   */
+  async channelSpecExport(app: MinimalAppIdentifiers): Promise<ChannelSpecExportResponse> {
+    // App Management returns app ids as GIDs (gid://shopify/App/<id>); the REST path needs the numeric id.
+    const appId = numericIdFromGid(app.id) ?? app.id
+    const url = await appManagementChannelSpecExportUrl(app.organizationId, appId)
+    const response = await shopifyFetch(url, {
+      method: 'GET',
+      headers: appManagementHeaders(await this.token()),
+    })
+
+    let body: unknown
+    try {
+      body = await response.json()
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      body = undefined
+    }
+
+    return {status: response.status, ok: response.ok, body}
   }
 
   async session(): Promise<Session> {

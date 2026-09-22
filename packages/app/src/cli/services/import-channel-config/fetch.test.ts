@@ -1,11 +1,7 @@
 import {fetchChannelSpecExport} from './fetch.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
+import {ChannelSpecExportResponse} from '../../utilities/developer-platform-client.js'
 import {describe, expect, test, vi} from 'vitest'
-import {shopifyFetch} from '@shopify/cli-kit/node/http'
-import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
-
-vi.mock('@shopify/cli-kit/node/http')
-vi.mock('@shopify/cli-kit/node/context/fqdn')
 
 const SUCCESS_PAYLOAD = {
   success: true,
@@ -15,44 +11,35 @@ const SUCCESS_PAYLOAD = {
   warnings: [],
 }
 
-function mockResponse({status = 200, json}: {status?: number; json?: unknown} = {}) {
-  return {
-    status,
-    ok: status >= 200 && status < 300,
-    json: json === undefined ? () => Promise.reject(new Error('invalid json')) : () => Promise.resolve(json),
-  } as unknown as Awaited<ReturnType<typeof shopifyFetch>>
+function mockResponse({status = 200, json}: {status?: number; json?: unknown} = {}): ChannelSpecExportResponse {
+  return {status, ok: status >= 200 && status < 300, body: json}
 }
 
-function testOptions() {
+function testOptions(response: ChannelSpecExportResponse) {
   return {
     remoteApp: testOrganizationApp({id: 'gid://shopify/App/123', organizationId: '42'}),
-    developerPlatformClient: testDeveloperPlatformClient(),
+    developerPlatformClient: testDeveloperPlatformClient({channelSpecExport: vi.fn().mockResolvedValue(response)}),
   }
 }
 
 describe('fetchChannelSpecExport', () => {
-  test('extracts the numeric app id from a GID when building the endpoint URL', async () => {
+  test('requests the export for the linked app through the developer platform client', async () => {
     // Given
-    vi.mocked(appManagementFqdn).mockResolvedValue('app.shopify.com')
-    vi.mocked(shopifyFetch).mockResolvedValue(mockResponse({json: SUCCESS_PAYLOAD}))
+    const options = testOptions(mockResponse({json: SUCCESS_PAYLOAD}))
 
     // When
-    await fetchChannelSpecExport(testOptions())
+    await fetchChannelSpecExport(options)
 
     // Then
-    expect(shopifyFetch).toHaveBeenCalledWith(
-      'https://app.shopify.com/app_management/unstable/organizations/42/apps/123/channel_spec_export.json',
-      expect.anything(),
-    )
+    expect(options.developerPlatformClient.channelSpecExport).toHaveBeenCalledWith(options.remoteApp)
   })
 
   test('returns the parsed export on success', async () => {
     // Given
-    vi.mocked(appManagementFqdn).mockResolvedValue('app.shopify.com')
-    vi.mocked(shopifyFetch).mockResolvedValue(mockResponse({json: SUCCESS_PAYLOAD}))
+    const response = mockResponse({json: SUCCESS_PAYLOAD})
 
     // When
-    const result = await fetchChannelSpecExport(testOptions())
+    const result = await fetchChannelSpecExport(testOptions(response))
 
     // Then
     expect(result).toEqual({
@@ -66,13 +53,13 @@ describe('fetchChannelSpecExport', () => {
 
   test('treats a 422 as a well-formed export failure with a reason', async () => {
     // Given
-    vi.mocked(appManagementFqdn).mockResolvedValue('app.shopify.com')
-    vi.mocked(shopifyFetch).mockResolvedValue(
-      mockResponse({status: 422, json: {success: false, error: 'not_exportable_yet', reason: 'not_allowlisted'}}),
-    )
+    const response = mockResponse({
+      status: 422,
+      json: {success: false, error: 'not_exportable_yet', reason: 'not_allowlisted'},
+    })
 
     // When
-    const result = await fetchChannelSpecExport(testOptions())
+    const result = await fetchChannelSpecExport(testOptions(response))
 
     // Then
     expect(result).toEqual({success: false, reason: 'not_allowlisted'})
@@ -80,40 +67,35 @@ describe('fetchChannelSpecExport', () => {
 
   test('aborts with endpoint-unavailable guidance on 404', async () => {
     // Given
-    vi.mocked(appManagementFqdn).mockResolvedValue('app.shopify.com')
-    vi.mocked(shopifyFetch).mockResolvedValue(mockResponse({status: 404, json: {}}))
+    const response = mockResponse({status: 404, json: {}})
 
     // When/Then
-    await expect(fetchChannelSpecExport(testOptions())).rejects.toThrow(
+    await expect(fetchChannelSpecExport(testOptions(response))).rejects.toThrow(
       'The channel spec export endpoint is not available for this app.',
     )
   })
 
   test.each([401, 403])('aborts with re-auth guidance on %i instead of reporting an export failure', async (status) => {
     // Given
-    vi.mocked(appManagementFqdn).mockResolvedValue('app.shopify.com')
-    vi.mocked(shopifyFetch).mockResolvedValue(mockResponse({status, json: {}}))
+    const response = mockResponse({status, json: {}})
 
     // When/Then
-    await expect(fetchChannelSpecExport(testOptions())).rejects.toThrow('authentication failed')
+    await expect(fetchChannelSpecExport(testOptions(response))).rejects.toThrow('authentication failed')
   })
 
   test('aborts with upgrade guidance on 426 instead of reporting an export failure', async () => {
     // Given
-    vi.mocked(appManagementFqdn).mockResolvedValue('app.shopify.com')
-    vi.mocked(shopifyFetch).mockResolvedValue(
-      mockResponse({
-        status: 426,
-        json: {
-          success: false,
-          error: 'unsupported_client_version',
-          reason: 'Shopify CLI 3.50.0 is no longer supported.',
-        },
-      }),
-    )
+    const response = mockResponse({
+      status: 426,
+      json: {
+        success: false,
+        error: 'unsupported_client_version',
+        reason: 'Shopify CLI 3.50.0 is no longer supported.',
+      },
+    })
 
     // When
-    const promise = fetchChannelSpecExport(testOptions())
+    const promise = fetchChannelSpecExport(testOptions(response))
 
     // Then
     await expect(promise).rejects.toThrow('Shopify CLI 3.50.0 is no longer supported.')
@@ -122,11 +104,10 @@ describe('fetchChannelSpecExport', () => {
 
   test('aborts with retry guidance on 5xx JSON responses instead of reporting an export failure', async () => {
     // Given
-    vi.mocked(appManagementFqdn).mockResolvedValue('app.shopify.com')
-    vi.mocked(shopifyFetch).mockResolvedValue(mockResponse({status: 500, json: {message: 'oops'}}))
+    const response = mockResponse({status: 500, json: {message: 'oops'}})
 
     // When/Then
-    await expect(fetchChannelSpecExport(testOptions())).rejects.toThrow('responded with status 500')
+    await expect(fetchChannelSpecExport(testOptions(response))).rejects.toThrow('responded with status 500')
   })
 
   test.each([
@@ -135,19 +116,17 @@ describe('fetchChannelSpecExport', () => {
     ['a primitive', 'nope'],
   ])('aborts with a controlled error when the body is %s', async (_label, json) => {
     // Given
-    vi.mocked(appManagementFqdn).mockResolvedValue('app.shopify.com')
-    vi.mocked(shopifyFetch).mockResolvedValue(mockResponse({json}))
+    const response = mockResponse({json})
 
     // When/Then
-    await expect(fetchChannelSpecExport(testOptions())).rejects.toThrow('unexpected response')
+    await expect(fetchChannelSpecExport(testOptions(response))).rejects.toThrow('unexpected response')
   })
 
   test('aborts when required fields are missing from the response', async () => {
     // Given
-    vi.mocked(appManagementFqdn).mockResolvedValue('app.shopify.com')
-    vi.mocked(shopifyFetch).mockResolvedValue(mockResponse({json: {handle: 'example'}}))
+    const response = mockResponse({json: {handle: 'example'}})
 
     // When/Then
-    await expect(fetchChannelSpecExport(testOptions())).rejects.toThrow('missing required fields')
+    await expect(fetchChannelSpecExport(testOptions(response))).rejects.toThrow('missing required fields')
   })
 })

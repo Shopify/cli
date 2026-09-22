@@ -49,13 +49,17 @@ import {SourceExtension} from '../../api/graphql/app-management/generated/types.
 import {fetchOrganizations} from '@shopify/organizations'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
-import {fetch} from '@shopify/cli-kit/node/http'
+import {fetch, shopifyFetch} from '@shopify/cli-kit/node/http'
 import {
   businessPlatformOrganizationsRequest,
   businessPlatformOrganizationsRequestDoc,
   businessPlatformRequestDoc,
 } from '@shopify/cli-kit/node/api/business-platform'
-import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
+import {
+  appManagementChannelSpecExportUrl,
+  appManagementHeaders,
+  appManagementRequestDoc,
+} from '@shopify/cli-kit/node/api/app-management'
 import {BugError} from '@shopify/cli-kit/node/error'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {webhooksRequestDoc} from '@shopify/cli-kit/node/api/webhooks'
@@ -2536,5 +2540,52 @@ describe('devStoresForOrg', () => {
     // Then
     expect(result.stores).toEqual([])
     expect(result.hasMorePages).toBe(false)
+  })
+})
+
+describe('channelSpecExport', () => {
+  function mockFetchResponse({status = 200, json}: {status?: number; json?: unknown} = {}) {
+    return {
+      status,
+      ok: status >= 200 && status < 300,
+      json: json === undefined ? () => Promise.reject(new Error('invalid json')) : () => Promise.resolve(json),
+    } as unknown as Awaited<ReturnType<typeof shopifyFetch>>
+  }
+
+  test('requests the export with the numeric app id and App Management headers', async () => {
+    // Given
+    const app = testOrganizationApp({id: 'gid://shopify/App/123', organizationId: '42'})
+    vi.mocked(appManagementChannelSpecExportUrl).mockResolvedValue('https://app.shopify.com/export')
+    vi.mocked(appManagementHeaders).mockReturnValue({Authorization: 'Bearer token'})
+    vi.mocked(shopifyFetch).mockResolvedValue(mockFetchResponse({json: {success: true}}))
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+
+    // When
+    const result = await client.channelSpecExport(app)
+
+    // Then
+    expect(appManagementChannelSpecExportUrl).toHaveBeenCalledWith('42', '123')
+    expect(appManagementHeaders).toHaveBeenCalledWith('token')
+    expect(shopifyFetch).toHaveBeenCalledWith('https://app.shopify.com/export', {
+      method: 'GET',
+      headers: {Authorization: 'Bearer token'},
+    })
+    expect(result).toEqual({status: 200, ok: true, body: {success: true}})
+  })
+
+  test('returns the status with an undefined body when the response is not JSON', async () => {
+    // Given
+    const app = testOrganizationApp({id: 'gid://shopify/App/123', organizationId: '42'})
+    vi.mocked(appManagementChannelSpecExportUrl).mockResolvedValue('https://app.shopify.com/export')
+    vi.mocked(shopifyFetch).mockResolvedValue(mockFetchResponse({status: 502}))
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+
+    // When
+    const result = await client.channelSpecExport(app)
+
+    // Then
+    expect(result).toEqual({status: 502, ok: false, body: undefined})
   })
 })
