@@ -98,6 +98,28 @@ describe('fetchChannelSpecExport', () => {
     await expect(fetchChannelSpecExport(testOptions())).rejects.toThrow('authentication failed')
   })
 
+  test('aborts with upgrade guidance on 426 instead of reporting an export failure', async () => {
+    // Given
+    vi.mocked(appManagementFqdn).mockResolvedValue('app.shopify.com')
+    vi.mocked(shopifyFetch).mockResolvedValue(
+      mockResponse({
+        status: 426,
+        json: {
+          success: false,
+          error: 'unsupported_client_version',
+          reason: 'Shopify CLI 3.50.0 is no longer supported.',
+        },
+      }),
+    )
+
+    // When
+    const promise = fetchChannelSpecExport(testOptions())
+
+    // Then
+    await expect(promise).rejects.toThrow('Shopify CLI 3.50.0 is no longer supported.')
+    await expect(promise).rejects.not.toThrow('likely temporary')
+  })
+
   test('aborts with retry guidance on 5xx JSON responses instead of reporting an export failure', async () => {
     // Given
     vi.mocked(appManagementFqdn).mockResolvedValue('app.shopify.com')

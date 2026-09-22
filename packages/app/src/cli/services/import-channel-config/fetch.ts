@@ -75,6 +75,17 @@ export async function fetchChannelSpecExport({
   }
   const payload = decoded as {[key: string]: unknown}
 
+  // A 426 means the server rejected this CLI version ({error: 'unsupported_client_version', reason}).
+  // Surface the server's reason and tell the user to upgrade rather than treating it as transient.
+  if (response.status === 426) {
+    const reason =
+      typeof payload.reason === 'string' ? payload.reason : 'This version of the Shopify CLI is no longer supported.'
+    throw new AbortError(
+      `Failed to fetch the channel spec export: ${reason}`,
+      'Upgrade the Shopify CLI to the latest version and re-run the command.',
+    )
+  }
+
   // Only 422 carries a well-formed export failure ({error, reason}); any other non-ok status is a
   // transport/auth/server problem and should not be presented as "this app can't be exported".
   if (response.status === 422) {
