@@ -99,5 +99,3 @@ export const migrationListJsonOutputSchema = defineJsonOutputSchema({
     MigratableSubscriptionNotification: MigratableSubscriptionNotificationSchema,
   },
 })
-
-export type MigrationListResult = InferJsonOutputSchema<typeof migrationListJsonOutputSchema>

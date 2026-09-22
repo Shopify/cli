@@ -279,9 +279,7 @@ describe('migration list JSON contract', () => {
       lastFailureReason: null,
     })
 
-    expect(serializeMigrationListJson([value])).toBe(
-      JSON.stringify({subscriptions: [value]}, null, 2),
-    )
+    expect(serializeMigrationListJson([value])).toBe(JSON.stringify({subscriptions: [value]}, null, 2))
   })
 
   test.each([
