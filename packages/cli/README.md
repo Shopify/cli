@@ -2561,6 +2561,10 @@ ARGUMENTS
   [COMMAND...]  Command to show help for.
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   -n, --nested-commands
       Include all nested commands in the output.
       [env: SHOPIFY_FLAG_CLI_NESTED_COMMANDS]
@@ -2571,6 +2575,328 @@ FLAGS
 
 DESCRIPTION
   Display help for Shopify CLI
+
+  Output from `--json` conforms to the `HelpResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "root"
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/HelpCommandSummary"
+            }
+          },
+          "topics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/HelpTopic"
+            }
+          }
+        },
+        "required": [
+          "kind",
+          "commands",
+          "topics"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "topic"
+          },
+          "topic": {
+            "$ref": "#/definitions/HelpTopic"
+          },
+          "commands": {
+            "$ref": "#/definitions/HelpResult/anyOf/0/properties/commands"
+          },
+          "topics": {
+            "$ref": "#/definitions/HelpResult/anyOf/0/properties/topics"
+          }
+        },
+        "required": [
+          "kind",
+          "topic",
+          "commands",
+          "topics"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "command"
+          },
+          "command": {
+            "$ref": "#/definitions/HelpCommand"
+          },
+          "commands": {
+            "$ref": "#/definitions/HelpResult/anyOf/0/properties/commands"
+          },
+          "topics": {
+            "$ref": "#/definitions/HelpResult/anyOf/0/properties/topics"
+          }
+        },
+        "required": [
+          "kind",
+          "command",
+          "commands",
+          "topics"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "HelpResult",
+    "definitions": {
+      "HelpCommandSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "hidden": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "HelpTopic": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "hidden": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "HelpArgument": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean",
+            "default": false
+          },
+          "hidden": {
+            "type": "boolean",
+            "default": false
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "default": {}
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "HelpFlag": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "boolean",
+              "option"
+            ]
+          },
+          "char": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "env": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean",
+            "default": false
+          },
+          "hidden": {
+            "type": "boolean",
+            "default": false
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "default": {},
+          "multiple": {
+            "type": "boolean"
+          },
+          "allowNo": {
+            "type": "boolean"
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dependsOn": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exclusive": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exactlyOne": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "HelpCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/HelpCommandSummary/properties/id"
+          },
+          "summary": {
+            "$ref": "#/definitions/HelpCommandSummary/properties/summary"
+          },
+          "hidden": {
+            "$ref": "#/definitions/HelpCommandSummary/properties/hidden"
+          },
+          "description": {
+            "type": "string"
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "usage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "examples": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "description": {
+                      "type": "string"
+                    },
+                    "command": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "description",
+                    "command"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "strict": {
+            "type": "boolean",
+            "default": true
+          },
+          "args": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/definitions/HelpArgument"
+            }
+          },
+          "flags": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/definitions/HelpFlag"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "aliases",
+          "args",
+          "flags"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen build`
