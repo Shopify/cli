@@ -59,15 +59,11 @@ export async function fetchPublicApiVersions(input: {
     const classified = classifyAdminApiError(error, input.adminSession.storeFqdn)
     if (classified) throw classified
 
-    // Version discovery sends a constant query with no user input, so an Admin API 5xx here is a
-    // Shopify-side failure that cannot have been caused by the operation the user asked for. It is
-    // wrapped rather than rethrown because a raw `ClientError` escaping this function reaches the
-    // error reporter unwrapped (`shouldReportErrorAsUnexpected` only excuses 401/429/502/503/504)
-    // and is filed as an unexpected CLI bug, with the whole request echoed back at the user.
+    // Version discovery takes no user input, so a 5xx here is a Shopify-side failure. Wrapped
+    // rather than rethrown: a raw `ClientError` is filed as an unexpected CLI bug.
     //
-    // Deliberately handled here and not in `classifyAdminApiError`, which `runAdminStoreGraphQLOperation`
-    // also calls: there a 5xx can carry GraphQL errors about the user's own query, and that
-    // function's `GraphQL operation failed.` branch has to stay reachable so those stay visible.
+    // Not in `classifyAdminApiError`, which `runAdminStoreGraphQLOperation` also calls. There a
+    // 5xx can carry GraphQL errors about the user's own query, which must stay visible.
     if (isGraphQLClientErrorLike(error) && typeof error.response.status === 'number' && error.response.status >= 500) {
       throw new AbortError(
         `Couldn't read the supported API versions for ${input.adminSession.storeFqdn}: the Admin API returned a server error (HTTP ${error.response.status}).`,

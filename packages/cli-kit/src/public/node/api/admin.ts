@@ -192,9 +192,8 @@ export async function fetchApiVersions(
       )
     }
 
-    // HTTP 402 Payment Required from the Admin API means the shop itself is unavailable: frozen,
-    // paused, or closed. That is an expected store-state condition the user can act on, not a CLI
-    // bug, so it must never reach the BugError below.
+    // HTTP 402 means the shop is frozen, paused, or closed. That is a store state the user can
+    // fix, not a CLI bug, so it must not reach the BugError below.
     if (error instanceof ClientError && error.response.status === 402) {
       throw new AbortError(
         `The store ${session.storeFqdn} is currently unavailable.`,
@@ -202,10 +201,9 @@ export async function fetchApiVersions(
       )
     }
 
-    // HTTP 5xx is a Shopify-side failure. This query is a constant with no user-supplied input, so
-    // a server error here cannot have been caused by what the user typed. Note that 502/503/504 are
-    // already on `isExpectedApiError`'s list in node/error, but that list is only consulted for raw
-    // errors — it is never reached for an error we have already wrapped in a BugError.
+    // HTTP 5xx is a Shopify-side failure. This query takes no user input, so the user's command
+    // cannot have caused it. `isExpectedApiError` covers 502/503/504, but only for raw errors, so
+    // it never sees one we have already wrapped in a BugError.
     if (error instanceof ClientError && error.response.status >= 500) {
       throw new AbortError(
         `The Admin API for ${session.storeFqdn} returned a server error (HTTP ${error.response.status}).`,
@@ -213,10 +211,9 @@ export async function fetchApiVersions(
       )
     }
 
-    // A request that was cancelled — by the user, by the host process, or by one of the CLI's own
-    // timeouts — is neither a store-state failure nor a CLI bug, and has to stay distinguishable
-    // from both. Checked before `isNetworkError` so the message says the request was aborted rather
-    // than blaming the user's connection.
+    // A cancelled request is neither a store-state failure nor a CLI bug. Checked before
+    // `isNetworkError` so the message says the request was aborted instead of blaming the
+    // user's connection.
     if (isAbortedFetchError(error)) {
       throw new AbortError(
         `Request to ${session.storeFqdn} was aborted before it completed.`,
