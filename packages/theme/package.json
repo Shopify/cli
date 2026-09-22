@@ -40,13 +40,13 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "4.8.3",
+    "@oclif/core": "4.14.0",
     "@shopify/cli-kit": "4.8.0",
     "@shopify/theme-check-node": "3.29.0",
     "@shopify/theme-language-server-node": "2.22.2",
     "chokidar": "3.6.0",
     "h3": "1.15.11",
-    "yaml": "2.9.0"
+    "yaml": "2.9.1"
   },
   "devDependencies": {
     "@shopify/theme-hot-reload": "^0.0.22",
