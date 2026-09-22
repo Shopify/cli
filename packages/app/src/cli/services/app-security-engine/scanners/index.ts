@@ -37,7 +37,7 @@ import {basename, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {sha256} from '@shopify/cli-kit/node/crypto'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import type {Rule, ScanContext} from '../rules/types.js'
-import type {SourceFile} from './types.js'
+import type {RunnerImplementationResult, RunnerResult, SourceFile} from './types.js'
 import type {
   AnalysisMode,
   CheckExecution,
@@ -58,21 +58,6 @@ type CheckTarget =
   | 'config_and_source'
   | 'source_and_theme'
   | 'dependency_automation'
-interface RunnerImplementationResult {
-  id: string
-  analysisMode: AnalysisMode
-  status: CheckExecutionStatus
-  inspectedFiles: string[]
-  findings: number
-  reason?: CheckExecutionReason
-}
-interface RunnerResult {
-  issues: Issue[]
-  unresolvedReason?: string
-  unresolvedReasonCode?: CheckExecutionReason['code']
-  inspectedFiles?: string[]
-  implementations?: RunnerImplementationResult[]
-}
 type Runner = (context: ScanContext) => Issue[] | RunnerResult | Promise<Issue[] | RunnerResult>
 
 export interface DeterministicCheckDefinition {

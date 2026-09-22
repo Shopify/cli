@@ -1,4 +1,5 @@
 import type {Issue} from '../types.js'
+import type {RunnerResult} from '../scanners/types.js'
 import type {SourceFile} from './types.js'
 
 const JAVASCRIPT_EXTENSIONS = new Set(['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.mts', '.cts'])
@@ -7,12 +8,8 @@ const SHOP_FIELD = 'shop(?:Domain)?'
 const CREDENTIAL =
   /\b(?:accessToken|access_token|sessionToken|session_token|apiSecret|api_secret|clientSecret|client_secret|SHOPIFY_API_SECRET|SHOPIFY_ACCESS_TOKEN)\b/i
 
-/** Retain the template heuristic; context-based authentication needs semantic review. */
-export function scanUnauthenticatedEndpoints(files: SourceFile[]): {
-  issues: Issue[]
-  unresolvedReason?: string
-  unresolvedReasonCode?: 'agent_investigation_required'
-} {
+/** Context-provided authenticators require agent review because their origin and execution order are unknown. */
+export function scanUnauthenticatedEndpoints(files: SourceFile[]): RunnerResult {
   const issues: Issue[] = []
   const contextAuthFiles = new Set<string>()
   for (const file of files) {
@@ -26,7 +23,6 @@ export function scanUnauthenticatedEndpoints(files: SourceFile[]): {
       const authentication = /\bawait\s+authenticate\.(?:admin|public\.[A-Za-z_$][\w$]*|webhook)\s*\(/.exec(body)
       const accessesProtectedData =
         /\b(?:admin\.graphql|prisma\.|db\.|session\.|metafields?Set|unauthenticated\.admin)\b/.test(body)
-      // This is a handoff hint, not proof the method verifies the request or runs before protected access.
       if (/\bcontext\s*\.\s*shopify\s*\.\s*authenticate\s*\.\s*admin\s*\(/.test(body)) {
         contextAuthFiles.add(file.path)
       } else if (!authentication && accessesProtectedData) {

@@ -1,3 +1,5 @@
+import type {AnalysisMode, CheckExecutionReason, CheckExecutionStatus, Issue} from '../types.js'
+
 export interface AppTomlContent {
   /** Raw parsed TOML object */
   raw: Record<string, unknown>
@@ -58,4 +60,21 @@ export interface ManifestFile {
   /** Parsed dependencies, keyed by name with version specifications as values. */
   dependencies: Record<string, string>
   devDependencies?: Record<string, string>
+}
+
+export interface RunnerImplementationResult {
+  id: string
+  analysisMode: AnalysisMode
+  status: CheckExecutionStatus
+  inspectedFiles: string[]
+  findings: number
+  reason?: CheckExecutionReason
+}
+
+export interface RunnerResult {
+  issues: Issue[]
+  unresolvedReason?: string
+  unresolvedReasonCode?: CheckExecutionReason['code']
+  inspectedFiles?: string[]
+  implementations?: RunnerImplementationResult[]
 }
