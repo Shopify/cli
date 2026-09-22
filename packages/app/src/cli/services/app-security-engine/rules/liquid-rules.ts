@@ -54,6 +54,7 @@ function liquidUnsafeRenderVisitor(file: SourceFile) {
           unsafeRenderFix(context),
           'medium',
           -10,
+          context,
         ),
       ]
     },
@@ -81,6 +82,7 @@ function liquidExecutableContextVisitor(file: SourceFile) {
             : 'Keep dynamic values out of executable attributes; use a fixed, versioned script asset and event listeners.',
           'high',
           -25,
+          context,
         ),
       ]
     },
@@ -144,10 +146,12 @@ function makeLiquidIssue(
   fix: string,
   severity: Issue['severity'],
   points: number,
+  context: LiquidOutputContext,
 ): Issue {
   const lineStart = file.content!.lastIndexOf('\n', Math.max(0, offset - 1)) + 1
   return {
     id,
+    pattern_id: `liquid-${context}`,
     severity,
     points,
     title,

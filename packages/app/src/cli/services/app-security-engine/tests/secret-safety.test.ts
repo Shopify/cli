@@ -192,6 +192,7 @@ describe('git status drives severity, not .gitignore text', () => {
     expect(finding!.severity).toBe('high')
     expect(finding!.points).toBe(-50)
     expect(finding!.detection_evidence?.join(' ')).toContain('TRACKED')
+    expect(finding!.pattern_id).toBe('environment-file:tracked')
     rmSync(dir, {recursive: true, force: true})
   })
 
@@ -268,6 +269,7 @@ describe('git status drives severity, not .gitignore text', () => {
       severity: 'high',
       points: -50,
       title: 'Environment file with secrets could not be confirmed as ignored',
+      pattern_id: 'environment-file:unconfirmed',
     })
     expect(finding!.message).not.toContain('IS TRACKED BY GIT')
     rmSync(dir, {recursive: true, force: true})
