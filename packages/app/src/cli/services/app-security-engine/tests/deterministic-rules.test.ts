@@ -1,6 +1,5 @@
 import {getRegistry} from '../registry/index.js'
 import {DETERMINISTIC_CHECKS} from '../scanners/index.js'
-import {RULE_CATALOG} from '../rules/catalog.js'
 import {parseAppToml} from '../scanners/discover.js'
 import {
   scanCredentialBrowserLeakage,
@@ -45,8 +44,6 @@ describe('deterministic rules product contract', () => {
     expect([...DETERMINISTIC_CHECKS.values()].every((check) => check.lifecycle === 'active' && check.runner)).toBe(true)
     const registry = getRegistry()
     expect(registry.some((entry) => entry.id === 'TOKEN_LEAKAGE')).toBe(false)
-    expect(RULE_CATALOG.find((entry) => entry.id === 'MISSING_SRI')?.status).toBe('investigate')
-    expect(RULE_CATALOG.find((entry) => entry.id === 'EXTERNAL_CDN_DEPENDENCY')?.status).toBe('investigate')
   })
 
   test('bumps deterministic versions when scanner behavior changes', () => {

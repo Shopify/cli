@@ -33,17 +33,6 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     guide: 'https://shopify.dev/docs/api/usage/access-scopes',
   },
   {
-    id: 'MISSING_SRI',
-    status: 'investigate',
-    title: 'Missing subresource integrity on external script',
-    severity: 'high',
-    points: 0,
-    description: "Investigates external script tags in Liquid or HTML that don't declare integrity metadata.",
-    fix: 'Add integrity and crossorigin attributes to the script tag.',
-    guide: 'https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity',
-    requires: 'theme_app_extension',
-  },
-  {
     id: 'UNSAFE_INNERHTML',
     title: 'Unsafe HTML assignment',
     severity: 'high',
@@ -60,16 +49,6 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     points: -10,
     description: 'Detects metafield and merchant-setting output without context-appropriate escaping or serialization.',
     fix: 'Use escape for HTML text/attributes, json for JavaScript data, or metafield_tag for supported rich content.',
-    requires: 'theme_app_extension',
-  },
-  {
-    id: 'EXTERNAL_CDN_DEPENDENCY',
-    status: 'investigate',
-    title: 'External CDN dependency',
-    severity: 'medium',
-    points: 0,
-    description: 'Investigates extension code loading dependencies or fetches from external non-Shopify domains.',
-    fix: 'Bundle the dependency locally or self-host it behind a trusted boundary.',
     requires: 'theme_app_extension',
   },
   {
@@ -223,15 +202,6 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
       "Detects request-derived shop values passed into unauthenticated.admin(...), allowing callers to select another shop's Admin API context.",
     fix: 'Use the Admin API context returned by authenticate.admin(request). Never pass form, JSON, query, or route input into unauthenticated.admin(...).',
     guide: 'https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens/online-access-tokens',
-  },
-  {
-    id: 'RUNTIME_CONFIG_SCRIPT_EXECUTION',
-    title: 'Runtime config field is executed as script',
-    severity: 'high',
-    points: -25,
-    description: 'Detects config fields named as executable script used in files that inject or evaluate scripts.',
-    fix: 'Ship storefront JavaScript as static versioned extension assets and treat runtime config as data only.',
-    status: 'investigate',
   },
 
   {
