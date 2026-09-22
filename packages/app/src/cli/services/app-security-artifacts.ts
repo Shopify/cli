@@ -15,6 +15,7 @@ export interface AppSecurityArtifactPaths {
 }
 
 export interface ResolvedAppSecurityArtifactPaths extends Required<AppSecurityArtifactPaths> {
+  findingsPath: string
   submissionPath: string
 }
 
@@ -28,12 +29,27 @@ export function appSecurityArtifactPaths(appRoot: string): ResolvedAppSecurityAr
   return {
     artifactDirectory,
     reviewPath: joinPath(artifactDirectory, 'review.json'),
+    findingsPath: joinPath(artifactDirectory, 'findings.json'),
     submissionPath: joinPath(artifactDirectory, 'submission.json'),
     tracePath: joinPath(artifactDirectory, 'trace.json'),
   }
 }
 
-export async function writeAppSecurityArtifacts(execution: AppSecurityExecution): Promise<AppSecurityArtifactPaths> {
+export interface WriteAppSecurityArtifactsOptions {
+  clean?: boolean
+}
+
+export async function writeAppSecurityArtifacts(
+  execution: AppSecurityExecution,
+  options: WriteAppSecurityArtifactsOptions = {},
+): Promise<AppSecurityArtifactPaths> {
+  if (options.clean && execution.operation === 'compile') {
+    throw new AbortError(
+      "Can't clean App Security artifacts while compiling findings.",
+      'Run a scan with clean instead, or compile the findings without clean.',
+    )
+  }
+
   const paths = appSecurityArtifactPaths(execution.appRoot)
   await ensureArtifactDirectory(execution.appRoot, paths.artifactDirectory)
   await writeAtomicArtifact(paths.tracePath, `${JSON.stringify(execution.trace, null, 2)}\n`)
@@ -42,10 +58,24 @@ export async function writeAppSecurityArtifacts(execution: AppSecurityExecution)
   }
 
   await writeAtomicArtifact(paths.reviewPath, `${JSON.stringify(execution.reviewPack, null, 2)}\n`)
+  if (options.clean) {
+    await removeStaleArtifact(paths.findingsPath)
+    await removeStaleArtifact(paths.submissionPath)
+  }
   return {
     artifactDirectory: paths.artifactDirectory,
     reviewPath: paths.reviewPath,
     tracePath: paths.tracePath,
+  }
+}
+
+async function removeStaleArtifact(path: string): Promise<void> {
+  try {
+    await unlink(path)
+  } catch (error) {
+    // Missing stale artifacts are already clean.
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return
+    throw new AbortError(`Could not remove stale App Security artifact at ${path}.`, errorMessage(error))
   }
 }
 

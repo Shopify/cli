@@ -191,8 +191,18 @@ describe('formatAppSecurityCommand', () => {
         '--findings',
         findingsPath,
       ])
+      expect(splitQuotedCommand(formatAppSecurityCommand(commands.clean, shell), shell)).toEqual([
+        'shopify',
+        'app',
+        'security',
+        'check',
+        '--path',
+        WINDOWS_APP_ROOT,
+        '--clean',
+      ])
       expect(formatAppSecurityCommand(commands.scan, shell)).not.toContain('50%%')
       expect(formatAppSecurityCommand(commands.compile, shell)).not.toContain('50%%')
+      expect(formatAppSecurityCommand(commands.clean, shell)).not.toContain('50%%')
     }
   })
 
@@ -217,6 +227,15 @@ describe('formatAppSecurityCommand', () => {
       PAIRED_PERCENT_ROOT,
       '--findings',
       findingsPath,
+    ])
+    expect(splitQuotedCommand(formatAppSecurityCommand(commands.clean, 'cmd'), 'cmd')).toEqual([
+      'shopify',
+      'app',
+      'security',
+      'check',
+      '--path',
+      PAIRED_PERCENT_ROOT,
+      '--clean',
     ])
     expect(formatAppSecurityCommand(commands.scan, 'cmd')).not.toContain('%NAME%')
     expect(formatAppSecurityCommand(commands.compile, 'powershell')).toContain('%NAME%')

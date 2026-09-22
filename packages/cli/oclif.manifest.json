@@ -3653,8 +3653,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Runs Shopify App Security locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects only that configuration. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app security instructions` to print, copy, or write them later.",
-      "descriptionWithMarkdown": "Runs Shopify App Security locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects only that configuration. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app security instructions` to print, copy, or write them later.",
+      "description": "Runs Shopify App Security locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. A new scan stops when local agent findings or a compiled trace already exist. Pass `--clean` to discard that work and start over. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects only that configuration.\n\nIn interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app security instructions` to print, copy, or write them later.",
+      "descriptionWithMarkdown": "Runs Shopify App Security locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. A new scan stops when local agent findings or a compiled trace already exist. Pass `--clean` to discard that work and start over. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects only that configuration.\n\nIn interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app security instructions` to print, copy, or write them later.",
       "enableJsonFlag": false,
       "flags": {
         "blocking": {
@@ -3672,6 +3672,15 @@
           ],
           "type": "option"
         },
+        "clean": {
+          "allowNo": false,
+          "description": "Discard the current local review and start a new scan.",
+          "exclusive": [
+            "findings"
+          ],
+          "name": "clean",
+          "type": "boolean"
+        },
         "config": {
           "char": "c",
           "description": "The name of the app configuration.",
@@ -3685,6 +3694,9 @@
         "findings": {
           "description": "Validate agent findings from a JSON file and compile them into the trace.",
           "env": "SHOPIFY_FLAG_APP_SECURITY_FINDINGS",
+          "exclusive": [
+            "clean"
+          ],
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "findings",

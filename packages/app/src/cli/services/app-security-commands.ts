@@ -1,5 +1,5 @@
+import {appSecurityArtifactPaths} from './app-security-artifacts.js'
 import {getAppConfigurationShorthand} from '../models/app/config-file-naming.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
 
 export type AppSecurityShell = 'posix' | 'cmd' | 'powershell'
 
@@ -11,10 +11,11 @@ export interface AppSecurityCommand {
 export interface AppSecurityCommands {
   scan: AppSecurityCommand
   compile: AppSecurityCommand
+  clean: AppSecurityCommand
 }
 
 export function resolveAppSecurityCommands(appRoot: string, configFileName?: string): AppSecurityCommands {
-  const findingsPath = joinPath(appRoot, '.shopify', 'app-security', 'findings.json')
+  const {findingsPath} = appSecurityArtifactPaths(appRoot)
   const configFlag = configFileName ? getAppConfigurationShorthand(configFileName) : undefined
   const scan: AppSecurityCommand = {
     command: 'shopify',
@@ -26,6 +27,10 @@ export function resolveAppSecurityCommands(appRoot: string, configFileName?: str
     compile: {
       command: scan.command,
       args: [...scan.args, '--findings', findingsPath],
+    },
+    clean: {
+      command: scan.command,
+      args: [...scan.args, '--clean'],
     },
   }
 }
