@@ -233,4 +233,39 @@ describe('importChannelConfig', () => {
       expect(outputMock.info()).not.toContain('Also created')
     })
   })
+
+  test('aborts without writing the spec when shopify.extension.toml declares a different extension type', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      vi.mocked(fetchChannelSpecExport).mockResolvedValue(successResult())
+      const app = testAppLinked({directory: tmpDir})
+      const extensionConfigPath = joinPath(tmpDir, CHANNEL_SPEC_EXTENSION_DIRECTORY, 'shopify.extension.toml')
+      await mkdir(dirname(extensionConfigPath))
+      const existingContent = 'name = "Some other extension"\ntype = "ui_extension"\nhandle = "something-else"\n'
+      await writeFile(extensionConfigPath, existingContent)
+
+      // When
+      const promise = importChannelConfig(testOptions(app))
+
+      // Then
+      await expect(promise).rejects.toThrow('already defines an extension of type "ui_extension"')
+      await expect(readFile(extensionConfigPath)).resolves.toEqual(existingContent)
+      await expect(fileExists(joinPath(tmpDir, CHANNEL_SPEC_DIRECTORY, 'example.toml'))).resolves.toBe(false)
+    })
+  })
+
+  test('aborts when the existing shopify.extension.toml cannot be parsed', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      vi.mocked(fetchChannelSpecExport).mockResolvedValue(successResult())
+      const app = testAppLinked({directory: tmpDir})
+      const extensionConfigPath = joinPath(tmpDir, CHANNEL_SPEC_EXTENSION_DIRECTORY, 'shopify.extension.toml')
+      await mkdir(dirname(extensionConfigPath))
+      await writeFile(extensionConfigPath, 'type = "channel_config"\nname = [unterminated\n')
+
+      // When/Then
+      await expect(importChannelConfig(testOptions(app))).rejects.toThrow("Couldn't parse the existing")
+      await expect(fileExists(joinPath(tmpDir, CHANNEL_SPEC_DIRECTORY, 'example.toml'))).resolves.toBe(false)
+    })
+  })
 })

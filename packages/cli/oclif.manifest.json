@@ -3256,6 +3256,7 @@
         }
       },
       "hasDynamicHelp": false,
+      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "app:import:channel-config",

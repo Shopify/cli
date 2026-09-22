@@ -4,7 +4,8 @@ import {AppLinkedInterface} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExists, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {decodeToml} from '@shopify/cli-kit/node/toml/codec'
 import {basename, dirname, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {outputResult, outputWarn} from '@shopify/cli-kit/node/output'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
@@ -17,6 +18,7 @@ const EXTENSION_CONFIG_FILENAME = 'shopify.extension.toml'
 // files, and the channel_config deploy step copies `specifications/` relative to the extension
 // directory. Without this file, `shopify app deploy` would silently exclude the imported spec.
 const EXTENSION_CONFIG_CONTENT = 'name = "Channel config"\ntype = "channel_config"\nhandle = "channel-config"\n'
+const CHANNEL_CONFIG_EXTENSION_TYPE = 'channel_config'
 
 const FAILURE_MESSAGES: {[reason: string]: string} = {
   no_exportable_frozen_record:
@@ -76,9 +78,11 @@ export async function importChannelConfig(options: ImportChannelConfigOptions): 
     )
   }
 
+  // Validate/create the extension config before writing the spec so an incompatible existing
+  // extension aborts without leaving a stray specifications file behind.
   await mkdir(dirname(outputPath))
-  await writeFile(outputPath, result.toml)
   const createdExtensionConfig = await ensureExtensionConfig(app.directory)
+  await writeFile(outputPath, result.toml)
 
   if (json) {
     // Warnings are part of the JSON result rather than out-of-band stderr text.
@@ -118,14 +122,42 @@ export async function importChannelConfig(options: ImportChannelConfigOptions): 
 }
 
 /**
- * Ensures the channel-config extension has a `shopify.extension.toml`, without which the app
- * loader would not discover the extension and the imported spec would never reach a deploy bundle.
+ * Ensures the channel-config extension has a `shopify.extension.toml` of type `channel_config`,
+ * without which the app loader would not discover the extension (or would discover it as a
+ * different extension type) and the imported spec would never reach a deploy bundle.
  *
- * @returns true when the file was created, false when one already existed.
+ * An existing file is preserved when it already declares `type = "channel_config"`. If it declares
+ * any other type, the `specifications/` directory we are about to write would be silently ignored
+ * at deploy time, so abort instead of reporting a misleading success.
+ *
+ * @returns true when the file was created, false when a compatible one already existed.
  */
 async function ensureExtensionConfig(appDirectory: string): Promise<boolean> {
   const extensionConfigPath = joinPath(appDirectory, CHANNEL_SPEC_EXTENSION_DIRECTORY, EXTENSION_CONFIG_FILENAME)
-  if (await fileExists(extensionConfigPath)) return false
-  await writeFile(extensionConfigPath, EXTENSION_CONFIG_CONTENT)
-  return true
+  if (!(await fileExists(extensionConfigPath))) {
+    await writeFile(extensionConfigPath, EXTENSION_CONFIG_CONTENT)
+    return true
+  }
+
+  const relativeConfigPath = joinPath(CHANNEL_SPEC_EXTENSION_DIRECTORY, EXTENSION_CONFIG_FILENAME)
+  let existingType: unknown
+  try {
+    const decoded = decodeToml(await readFile(extensionConfigPath)) as {[key: string]: unknown}
+    existingType = decoded.type
+  } catch {
+    throw new AbortError(
+      `Couldn't parse the existing ${relativeConfigPath}.`,
+      `Fix or remove the file so the imported channel spec can be deployed as a ${CHANNEL_CONFIG_EXTENSION_TYPE} extension.`,
+    )
+  }
+
+  if (existingType !== CHANNEL_CONFIG_EXTENSION_TYPE) {
+    const describedType = typeof existingType === 'string' ? `"${existingType}"` : 'an unknown type'
+    throw new AbortError(
+      `${relativeConfigPath} already defines an extension of type ${describedType}, so the imported channel spec would not be deployed.`,
+      `Move that extension to another directory (or change its type to "${CHANNEL_CONFIG_EXTENSION_TYPE}"), then re-run this command.`,
+    )
+  }
+
+  return false
 }
