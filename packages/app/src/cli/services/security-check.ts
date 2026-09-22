@@ -5,6 +5,7 @@ import {
   resolveAppSecurityRoot,
 } from './app-security-api.js'
 import {writeAppSecurityArtifacts} from './app-security-artifacts.js'
+import {requireSecurityConfigFileName, resolveSecurityConfigFileName} from './app-security-config.js'
 import deliverAppSecurityInstructions from './app-security-instructions.js'
 import {resolveAppSecurityCommands, type AppSecurityCommands} from './app-security-commands.js'
 import {encodeSecurityJson, toSecurityJson} from './security-json.js'
@@ -19,6 +20,7 @@ import type {RenderSelectPromptOptions} from '@shopify/cli-kit/node/ui'
 
 interface SecurityOptions {
   directory: string
+  configName?: string
   json: boolean
   verbose: boolean
   blocking: AppSecurityBlockingLevel
@@ -30,7 +32,7 @@ interface SecurityOptions {
 export type AppSecurityInstructionsDestination = 'copy' | 'print' | 'nothing'
 
 interface SecurityDependencies {
-  execute(options: {directory: string; findingsPath?: string}): Promise<AppSecurityExecution>
+  execute(options: {directory: string; configName?: string; findingsPath?: string}): Promise<AppSecurityExecution>
   writeArtifacts(execution: AppSecurityExecution): Promise<AppSecurityArtifactPaths>
   canPrompt(): boolean
   selectInstructionsDestination(): Promise<AppSecurityInstructionsDestination>
@@ -56,10 +58,14 @@ export const appSecurityInstructionsPrompt: RenderSelectPromptOptions<AppSecurit
 }
 
 const defaultDependencies: SecurityDependencies = {
-  execute: async ({directory, findingsPath}) => {
+  execute: async ({directory, configName, findingsPath}) => {
     const appRoot = resolveAppSecurityRoot(directory)
     const findings = findingsPath ? await loadAppSecurityFindings(findingsPath) : undefined
-    return executeAppSecurity({appRoot, findings})
+    return executeAppSecurity({
+      appRoot,
+      findings,
+      configFileName: requireSecurityConfigFileName(appRoot, configName),
+    })
   },
   writeArtifacts: writeAppSecurityArtifacts,
   canPrompt: terminalSupportsPrompting,
@@ -107,10 +113,14 @@ export default async function securityCheck(
 ): Promise<void> {
   const execution = await dependencies.execute({
     directory: options.directory,
+    configName: options.configName,
     findingsPath: options.findingsPath,
   })
   const artifacts = await dependencies.writeArtifacts(execution)
-  const commands = resolveAppSecurityCommands(execution.appRoot)
+  const commands = resolveAppSecurityCommands(
+    execution.appRoot,
+    resolveSecurityConfigFileName(execution.appRoot, options.configName),
+  )
 
   if (options.json) {
     dependencies.output(encodeSecurityJson(toSecurityJson(execution)))

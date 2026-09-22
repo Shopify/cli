@@ -15,13 +15,14 @@ export default class SecurityCheck extends BaseCommand {
 
   static descriptionWithMarkdown = `Runs Shopify App Security locally and creates its review pack and trace.
 
-Pass \`--findings\` after completing the review pack to validate agent findings and compile them into the trace. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. JSON output never prompts or prints those instructions. You can also run \`shopify app security instructions\` to print, copy, or write them later.`
+Pass \`--findings\` after completing the review pack to validate agent findings and compile them into the trace. Use \`--config\` to select a specific app configuration when the project has multiple \`shopify.app*.toml\` files; App Security inspects only that configuration. In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. JSON output never prompts or prints those instructions. You can also run \`shopify app security instructions\` to print, copy, or write them later.`
 
   static description = this.descriptionWithoutMarkdown()
 
   static flags = {
     ...globalFlags,
     path: appFlags.path,
+    config: appFlags.config,
     ...jsonFlag,
     findings: Flags.string({
       description: 'Validate agent findings from a JSON file and compile them into the trace.',
@@ -53,6 +54,7 @@ Pass \`--findings\` after completing the review pack to validate agent findings 
 
     await securityCheck({
       directory: flags.path,
+      configName: flags.config,
       json: flags.json,
       verbose: Boolean(flags.verbose),
       blocking: flags.blocking as AppSecurityBlockingLevel,

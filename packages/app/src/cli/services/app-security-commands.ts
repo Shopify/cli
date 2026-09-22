@@ -1,3 +1,4 @@
+import {getAppConfigurationShorthand} from '../models/app/config-file-naming.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 export type AppSecurityShell = 'posix' | 'cmd' | 'powershell'
@@ -12,11 +13,12 @@ export interface AppSecurityCommands {
   compile: AppSecurityCommand
 }
 
-export function resolveAppSecurityCommands(appRoot: string): AppSecurityCommands {
+export function resolveAppSecurityCommands(appRoot: string, configFileName?: string): AppSecurityCommands {
   const findingsPath = joinPath(appRoot, '.shopify', 'app-security', 'findings.json')
+  const configFlag = configFileName ? getAppConfigurationShorthand(configFileName) : undefined
   const scan: AppSecurityCommand = {
     command: 'shopify',
-    args: ['app', 'security', 'check', '--path', appRoot],
+    args: ['app', 'security', 'check', '--path', appRoot, ...(configFlag ? ['--config', configFlag] : [])],
   }
 
   return {

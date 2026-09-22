@@ -1,4 +1,5 @@
 import {resolveAppSecurityRoot} from './app-security-api.js'
+import {requireSecurityConfigFileName} from './app-security-config.js'
 import {
   formatAppSecurityCommand,
   quoteShellArgument,
@@ -39,13 +40,18 @@ function markdownPath(value: string): string {
   return `\`${escaped}\``
 }
 
-function instructionPaths(directory: string, commands?: AppSecurityCommands): AppSecurityInstructionPaths {
+function instructionPaths(
+  directory: string,
+  commands?: AppSecurityCommands,
+  configName?: string,
+): AppSecurityInstructionPaths {
   const appRoot = resolveAppSecurityRoot(resolvePath(directory))
   const artifactDirectory = joinPath(appRoot, '.shopify', 'app-security')
   const reviewPath = joinPath(artifactDirectory, 'review.json')
   const tracePath = joinPath(artifactDirectory, 'trace.json')
   const findingsPath = joinPath(artifactDirectory, 'findings.json')
-  const resolvedCommands = commands ?? resolveAppSecurityCommands(appRoot)
+  const resolvedCommands =
+    commands ?? resolveAppSecurityCommands(appRoot, requireSecurityConfigFileName(appRoot, configName))
   return {
     appRoot,
     commands: resolvedCommands,
@@ -80,6 +86,7 @@ The current invocation's initial scan has already completed. It generated ${mark
 
 interface AppSecurityInstructionsOptions {
   directory: string
+  configName?: string
   copy: boolean
   writePath?: string
   scanComplete?: boolean
@@ -106,8 +113,9 @@ export function appSecurityInstructions(options: {
   directory: string
   scanComplete: boolean
   commands?: AppSecurityCommands
+  configName?: string
 }): string {
-  const paths = instructionPaths(options.directory, options.commands)
+  const paths = instructionPaths(options.directory, options.commands, options.configName)
   const scanContext = options.scanComplete ? completedScanInstructions(paths) : initialScanInstructions(paths)
   return getAgentInstructions()
     .replace(SCAN_CONTEXT_PLACEHOLDER, scanContext)
@@ -127,6 +135,7 @@ export default async function deliverAppSecurityInstructions(
     directory: options.directory,
     scanComplete: options.scanComplete ?? false,
     commands: options.commands,
+    configName: options.configName,
   })
 
   if (options.copy) {

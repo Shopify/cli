@@ -14,6 +14,7 @@ describe('app security instructions command', () => {
     expect(SecurityInstructions.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityInstructions.prototype).not.toBeInstanceOf(AppLinkedCommand)
     expect(SecurityInstructions.flags.path).toBe(appFlags.path)
+    expect(SecurityInstructions.flags.config).toBe(appFlags.config)
     expect(SecurityInstructions.args).not.toHaveProperty('directory')
   })
 
@@ -22,6 +23,7 @@ describe('app security instructions command', () => {
 
     expect(deliverAppSecurityInstructions).toHaveBeenCalledWith({
       directory: cwd(),
+      configName: undefined,
       copy: false,
       writePath: undefined,
     })
@@ -32,6 +34,7 @@ describe('app security instructions command', () => {
 
     expect(deliverAppSecurityInstructions).toHaveBeenCalledWith({
       directory: resolvePath('./fixtures/unlinked-app'),
+      configName: undefined,
       copy: true,
       writePath: undefined,
     })
@@ -42,9 +45,16 @@ describe('app security instructions command', () => {
 
     expect(deliverAppSecurityInstructions).toHaveBeenCalledWith({
       directory: cwd(),
+      configName: undefined,
       copy: false,
       writePath: resolvePath('./instructions.md'),
     })
+  })
+
+  test('forwards --config', async () => {
+    await SecurityInstructions.run(['--path', './fixtures/unlinked-app', '--config', 'staging'], import.meta.url)
+
+    expect(deliverAppSecurityInstructions).toHaveBeenCalledWith(expect.objectContaining({configName: 'staging'}))
   })
 
   test('keeps --copy and --write mutually exclusive', () => {

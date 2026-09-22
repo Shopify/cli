@@ -1,5 +1,4 @@
-import {getCachedAppInfo} from './local-storage.js'
-import {getAppConfigurationFileName} from '../models/app/config-file-naming.js'
+import {resolveSecurityConfigFileName} from './app-security-config.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -21,7 +20,7 @@ export async function resolveSecuritySubmitClientId(options: {
     return clientId
   }
 
-  const configFileName = getAppConfigurationFileName(configName ?? getCachedAppInfo(directory)?.configFile)
+  const configFileName = resolveSecurityConfigFileName(directory, configName)
   const configPath = joinPath(directory, configFileName)
 
   // Do not fall back to another config: that could submit diagnostics to a different app.

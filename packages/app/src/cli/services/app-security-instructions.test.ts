@@ -58,11 +58,31 @@ describe('appSecurityInstructions', () => {
 
       expect(instructions).toContain('### 1. Run the initial scan')
       expect(instructions).toContain(`shopify app security check --path ${shellQuote(appRoot)}`)
+      expect(instructions).not.toMatch(/shopify app security check --path .+ --config/)
       expect(instructions).toContain(joinPath(appRoot, '.shopify', 'app-security', 'findings.json'))
       expect(instructions).toContain(joinPath(appRoot, '.shopify', 'app-security', 'trace.json'))
       expect(instructions).not.toContain('{{SCAN_CONTEXT}}')
       expect(instructions).not.toContain('{{SCAN_COMMAND}}')
       expect(instructions).not.toContain('{{COMPILE_COMMAND}}')
+    })
+  })
+
+  test('includes --config in scan and compile commands for a named configuration', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+      await writeFile(joinPath(appRoot, 'shopify.app.staging.toml'), 'name = "Staging"\nclient_id = "staging"\n')
+      const instructions = appSecurityInstructions({
+        directory: appRoot,
+        scanComplete: false,
+        configName: 'staging',
+      })
+
+      expect(instructions).toContain(
+        `shopify app security check --path ${shellQuote(appRoot)} --config ${shellQuote('staging')}`,
+      )
+      expect(instructions).toContain(
+        `shopify app security check --path ${shellQuote(appRoot)} --config ${shellQuote('staging')} --findings ${shellQuote(joinPath(appRoot, '.shopify', 'app-security', 'findings.json'))}`,
+      )
     })
   })
 
@@ -92,6 +112,19 @@ describe('appSecurityInstructions', () => {
         expect(instructions).not.toContain('shopify app security check\n')
         expect(instructions).not.toContain('--findings .shopify/app-security/findings.json')
       })
+    })
+  })
+
+  test('translates a missing selected configuration into an AbortError', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+
+      expect(() => appSecurityInstructions({directory: appRoot, scanComplete: false, configName: 'missing'})).toThrow(
+        AbortError,
+      )
+      expect(() => appSecurityInstructions({directory: appRoot, scanComplete: false, configName: 'missing'})).toThrow(
+        /shopify\.app\.missing\.toml/,
+      )
     })
   })
 

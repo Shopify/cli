@@ -86,34 +86,6 @@ function listAppConfigFiles(directory: string): string[] {
 }
 
 /**
- * Find and parse all shopify.app.*.toml files in the app root.
- *
- * Candidate discovery uses the same config-file identity as `Project.load()`,
- * but parsing stays on bounded raw reads so unreadable files become coverage
- * gaps instead of loader errors.
- */
-export function findAppTomls(appRoot: string): AppTomlContent[] {
-  return listAppConfigFiles(appRoot).flatMap((file) => {
-    const path = joinPath(appRoot, file)
-    const content = readRepositoryText(appRoot, path)
-    if (content === undefined) return []
-    try {
-      const raw = decodeToml(content) as Record<string, unknown>
-      return [parseAppToml(raw, path, content, appRoot)]
-      // Invalid repository TOML is a coverage gap, not a scanner crash.
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch {
-      recordSkippedFile(appRoot, path, {
-        ok: false,
-        reason: 'unreadable',
-        detail: 'TOML could not be parsed',
-      })
-      return []
-    }
-  })
-}
-
-/**
  * Load a specific shopify.app.toml file.
  */
 export function loadAppToml(tomlPath: string, appRoot = dirname(tomlPath)): AppTomlContent | null {
@@ -708,7 +680,7 @@ function isProbablyBinary(content: Buffer): boolean {
 }
 
 /** Text evidence inspected for secrets regardless of app framework support. */
-export function findSensitiveFiles(appRoot: string): SourceFile[] {
+export function findSensitiveFiles(appRoot: string, selectedAppConfigFileName?: string): SourceFile[] {
   const patterns = [
     ...SECRET_TEXT_EXTENSIONS.map((extension) => `**/*${extension}`),
     '**/.env',
@@ -735,6 +707,11 @@ export function findSensitiveFiles(appRoot: string): SourceFile[] {
     ),
   ]
     .filter((path) => !LOCKFILE_MANAGERS.has(path))
+    .filter((path) => {
+      const fileName = basename(path)
+      if (!isValidFormatAppConfigurationFileName(fileName)) return true
+      return fileName === selectedAppConfigFileName
+    })
     .sort()
 
   return paths.flatMap((path): SourceFile[] => {

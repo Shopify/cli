@@ -14,6 +14,7 @@ describe('app security check command', () => {
     expect(SecurityCheck.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityCheck.prototype).not.toBeInstanceOf(AppLinkedCommand)
     expect(SecurityCheck.flags.path).toBe(appFlags.path)
+    expect(SecurityCheck.flags.config).toBe(appFlags.config)
     expect(SecurityCheck.args).not.toHaveProperty('directory')
   })
 
@@ -25,6 +26,7 @@ describe('app security check command', () => {
 
     expect(securityCheck).toHaveBeenCalledWith({
       directory: resolvePath('./fixtures/unlinked-app'),
+      configName: undefined,
       json: true,
       verbose: true,
       blocking: 'high',
@@ -39,6 +41,7 @@ describe('app security check command', () => {
 
     expect(securityCheck).toHaveBeenCalledWith({
       directory: '/tmp/directory-without-shopify-toml',
+      configName: undefined,
       json: false,
       verbose: false,
       blocking: 'none',
@@ -46,6 +49,15 @@ describe('app security check command', () => {
       skipInstructions: false,
       findingsPath: undefined,
     })
+  })
+
+  test('forwards --config without requiring a linked app', async () => {
+    await SecurityCheck.run(
+      ['--path', './fixtures/unlinked-app', '--config', 'staging', '--skip-instructions'],
+      import.meta.url,
+    )
+
+    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({configName: 'staging', skipInstructions: true}))
   })
 
   test('resolves and forwards an agent findings file', async () => {
@@ -60,6 +72,7 @@ describe('app security check command', () => {
     expect(SecurityCheck.flags.yes.exclusive).toEqual(['skip-instructions'])
     expect(SecurityCheck.flags['skip-instructions'].exclusive).toEqual(['yes'])
     expect(SecurityCheck.descriptionWithMarkdown).toContain('copy the coding-agent instructions')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('`--config`')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('copying is the default')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('shopify app security instructions')
   })

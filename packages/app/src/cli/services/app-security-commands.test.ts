@@ -136,6 +136,37 @@ describe('quoteShellArgument', () => {
   })
 })
 
+describe('resolveAppSecurityCommands', () => {
+  test('omits --config for the default shopify.app.toml', () => {
+    expect(resolveAppSecurityCommands('/tmp/app').scan.args).toEqual(['app', 'security', 'check', '--path', '/tmp/app'])
+    expect(resolveAppSecurityCommands('/tmp/app', 'shopify.app.toml').scan.args).toEqual([
+      'app',
+      'security',
+      'check',
+      '--path',
+      '/tmp/app',
+    ])
+  })
+
+  test('includes --config on scan and compile for a named configuration', () => {
+    const commands = resolveAppSecurityCommands('/tmp/app', 'shopify.app.staging.toml')
+    const findingsPath = joinPath('/tmp/app', '.shopify', 'app-security', 'findings.json')
+
+    expect(commands.scan.args).toEqual(['app', 'security', 'check', '--path', '/tmp/app', '--config', 'staging'])
+    expect(commands.compile.args).toEqual([
+      'app',
+      'security',
+      'check',
+      '--path',
+      '/tmp/app',
+      '--config',
+      'staging',
+      '--findings',
+      findingsPath,
+    ])
+  })
+})
+
 describe('formatAppSecurityCommand', () => {
   test('quotes a Windows path with spaces and percents for terminal and instruction shells', () => {
     const commands = resolveAppSecurityCommands(WINDOWS_APP_ROOT)
