@@ -45,6 +45,15 @@ let memoizedIsVerbose: boolean | undefined
 let memoizedIsUnitTest: boolean | undefined
 
 /**
+ * Clears the memoized result of isUnitTest so the environment variable is re-read.
+ *
+ * Only intended for test helpers that temporarily toggle unit-test detection.
+ */
+export function resetMemoizedIsUnitTest(): void {
+  memoizedIsUnitTest = undefined
+}
+
+/**
  * Returns true if the CLI is running in debug mode.
  *
  * @param env - The environment variables from the environment of the current process.
