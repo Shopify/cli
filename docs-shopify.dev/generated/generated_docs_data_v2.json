@@ -801,7 +801,7 @@
     "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
       "name": "appdeploy",
-      "description": "The following flags are available for the `app deploy` command:",
+      "description": "TEST PREVIEW 2: The following flags are available for the `app deploy` command:",
       "isPublicDocs": true,
       "members": [
         {
@@ -6741,7 +6741,7 @@
     "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
       "name": "themedev",
-      "description": "The following flags are available for the `theme dev` command:",
+      "description": "TEST PREVIEW 2: The following flags are available for the `theme dev` command:",
       "isPublicDocs": true,
       "members": [
         {
