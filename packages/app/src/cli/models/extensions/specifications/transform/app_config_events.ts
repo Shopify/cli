@@ -3,7 +3,9 @@ import {CurrentAppConfiguration} from '../../../app/app.js'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 
 interface EventSubscription {
-  uri: string
+  // The events schema is untyped locally, so a subscription may be missing its uri
+  // or carry a non-string value. Such subscriptions are left for the server to reject.
+  uri?: unknown
   [key: string]: unknown
 }
 
@@ -33,10 +35,9 @@ export function transformFromEventsConfig(content: object, appConfiguration?: ob
   }
 
   const subscription = eventsConfig.events.subscription
-  const resolved = wrapSubscriptions(subscription).map((sub) => ({
-    ...sub,
-    uri: prependApplicationUrl(sub.uri, appUrl),
-  }))
+  const resolved = wrapSubscriptions(subscription).map((sub) =>
+    typeof sub.uri === 'string' ? {...sub, uri: prependApplicationUrl(sub.uri, appUrl)} : sub,
+  )
 
   return {
     ...eventsConfig,
@@ -64,7 +65,10 @@ export function transformToEventsConfig(content: object) {
     subscription: RemoteEventSubscription | RemoteEventSubscription[]
   }
   const apiVersion = getPathValue<string>(eventsConfig, 'api_version')
-  const subscription = getPathValue<RemoteEventSubscription | RemoteEventSubscription[]>(eventsConfig, 'subscription')
+  const subscription = getPathValue<RemoteEventSubscription | RemoteEventSubscription[] | null>(
+    eventsConfig,
+    'subscription',
+  )
 
   // The server always includes identifier, and materializes the events default
   // api_version onto every subscription. Both are derived, so they are stripped
@@ -72,14 +76,14 @@ export function transformToEventsConfig(content: object) {
   // override and is kept. Single-subscription modules are normalized to a
   // one-element array so that merging multiple modules accumulates a single
   // subscription list.
-  const cleanedSubscriptions =
-    subscription === undefined
-      ? undefined
-      : wrapSubscriptions(subscription).map((sub) => {
-          const {identifier, api_version: subscriptionApiVersion, ...rest} = sub
-          const overridesDefault = subscriptionApiVersion !== undefined && subscriptionApiVersion !== apiVersion
-          return overridesDefault ? {...rest, api_version: subscriptionApiVersion} : rest
-        })
+  // The remote payload may carry null as well as omit the field entirely.
+  const cleanedSubscriptions = subscription
+    ? wrapSubscriptions(subscription).map((sub) => {
+        const {identifier, api_version: subscriptionApiVersion, ...rest} = sub
+        const overridesDefault = subscriptionApiVersion !== undefined && subscriptionApiVersion !== apiVersion
+        return overridesDefault ? {...rest, api_version: subscriptionApiVersion} : rest
+      })
+    : undefined
 
   const events =
     (apiVersion ?? cleanedSubscriptions) ? {api_version: apiVersion, subscription: cleanedSubscriptions} : {}

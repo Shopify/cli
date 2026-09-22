@@ -143,6 +143,47 @@ describe('transformFromEventsConfig', () => {
 
     expect(result).toEqual(content)
   })
+
+  test('leaves subscriptions without a string uri untouched while resolving the others', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', actions: ['create']},
+          {topic: 'orders/paid', uri: null, actions: ['paid']},
+          {topic: 'products/update', uri: '/webhooks/products', actions: ['update']},
+        ],
+      },
+    }
+    const appConfiguration = {application_url: 'https://tunnel.example.com'}
+
+    const result = transformFromEventsConfig(content, appConfiguration)
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', actions: ['create']},
+          {topic: 'orders/paid', uri: null, actions: ['paid']},
+          {topic: 'products/update', uri: 'https://tunnel.example.com/webhooks/products', actions: ['update']},
+        ],
+      },
+    })
+  })
+
+  test('leaves a single subscription object without a uri untouched', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+        subscription: {topic: 'orders/create', actions: ['create']},
+      },
+    }
+    const appConfiguration = {application_url: 'https://tunnel.example.com'}
+
+    const result = transformFromEventsConfig(content, appConfiguration)
+
+    expect(result).toEqual(content)
+  })
 })
 
 describe('transformToEventsConfig', () => {
@@ -200,6 +241,24 @@ describe('transformToEventsConfig', () => {
     const remoteContent = {
       events: {
         api_version: '2024-01',
+      },
+    }
+
+    const result = transformToEventsConfig(remoteContent)
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: undefined,
+      },
+    })
+  })
+
+  test('handles a null subscription field', () => {
+    const remoteContent = {
+      events: {
+        api_version: '2024-01',
+        subscription: null,
       },
     }
 
