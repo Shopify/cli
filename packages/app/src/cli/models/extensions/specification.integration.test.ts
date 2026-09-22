@@ -5,9 +5,11 @@ import {
   createConfigExtensionSpecification,
   createExtensionSpecification,
 } from './specification.js'
-import {BaseSchema} from './schemas.js'
+import {BaseConfigType, BaseSchema} from './schemas.js'
+import {placeholderAppConfiguration} from '../app/app.test-data.js'
 import {ClientSteps} from '../../services/build/client-steps.js'
 import {AppSchema} from '../app/app.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, test, expect, beforeAll} from 'vitest'
 
 // If the AppSchema is not instanced, the dynamic loading of loadLocalExtensionsSpecifications is not working
@@ -94,6 +96,89 @@ describe('createContractBasedModuleSpecification', () => {
 
     // Then
     expect(got.clientSteps).toBeUndefined()
+  })
+
+  describe('app relative URLs', () => {
+    interface CallbackConfig extends BaseConfigType {
+      url: string
+      other_url?: string
+    }
+
+    const callbackSpec = () =>
+      createContractBasedModuleSpecification<CallbackConfig>({
+        identifier: 'test_callback',
+        uidStrategy: 'uuid',
+        experience: 'extension',
+        appModuleFeatures: () => [],
+        appRelativeUrlFields: ['url'],
+      })
+
+    test('resolves declared deployment URLs without mutating the original configuration', async () => {
+      const spec = callbackSpec()
+      const config = {type: 'test_callback', url: '/callback', other_url: '/leave-alone'}
+
+      const got = await spec.deployConfig!(config, './my-extension', 'api-key', undefined, {
+        appConfiguration: {...placeholderAppConfiguration, application_url: 'https://my-app.example.com'},
+      })
+
+      expect(got).toEqual({url: 'https://my-app.example.com/callback', other_url: '/leave-alone'})
+      expect(config).toEqual({type: 'test_callback', url: '/callback', other_url: '/leave-alone'})
+    })
+
+    test('leaves an absolute deployment URL untouched without app configuration', async () => {
+      const spec = callbackSpec()
+
+      const got = await spec.deployConfig!(
+        {type: 'test_callback', url: 'https://my-prod-host.example.com/callback'},
+        './my-extension',
+        'api-key',
+      )
+
+      expect(got).toEqual({url: 'https://my-prod-host.example.com/callback'})
+    })
+
+    test('resolves declared URLs against the dev tunnel URL', () => {
+      const spec = callbackSpec()
+      const config = {type: 'test_callback', url: '/callback', other_url: '/leave-alone'}
+
+      spec.patchWithAppDevURLs!(config, {applicationUrl: 'https://my-tunnel.example.com', redirectUrlWhitelist: []})
+
+      expect(config).toEqual({
+        type: 'test_callback',
+        url: 'https://my-tunnel.example.com/callback',
+        other_url: '/leave-alone',
+      })
+    })
+
+    test.each([
+      {appRelativeUrlFields: undefined, description: 'omitted'},
+      {appRelativeUrlFields: [], description: 'empty'},
+    ])('does not opt in by identifier when URL fields are $description', async ({appRelativeUrlFields}) => {
+      const spec = createContractBasedModuleSpecification<CallbackConfig>({
+        identifier: 'flow_trigger_lifecycle_callback',
+        uidStrategy: 'uuid',
+        experience: 'extension',
+        appModuleFeatures: () => [],
+        appRelativeUrlFields,
+      })
+      const config = {type: 'flow_trigger_lifecycle_callback', url: '/callback'}
+
+      spec.patchWithAppDevURLs?.(config, {applicationUrl: 'https://my-tunnel.example.com', redirectUrlWhitelist: []})
+      const got = await spec.deployConfig!(config, './my-extension', 'api-key', undefined, {
+        appConfiguration: {...placeholderAppConfiguration, application_url: 'https://my-app.example.com'},
+      })
+
+      expect(config).toEqual({type: 'flow_trigger_lifecycle_callback', url: '/callback'})
+      expect(got).toEqual({url: '/callback'})
+    })
+
+    test('rejects a relative deployment URL without app configuration', async () => {
+      const spec = callbackSpec()
+
+      await expect(
+        spec.deployConfig!({type: 'test_callback', url: '/callback'}, './my-extension', 'api-key'),
+      ).rejects.toThrow(AbortError)
+    })
   })
 })
 
