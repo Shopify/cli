@@ -3910,6 +3910,10 @@ USAGE
   $ shopify search [query]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
@@ -3926,6 +3930,28 @@ DESCRIPTION
   Search shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces
   of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc
   fetch`.
+
+  Output from `--json` conforms to the `SearchResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "url": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "required": [
+      "url"
+    ],
+    "additionalProperties": false,
+    "title": "SearchResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   # open the search modal on Shopify.dev
