@@ -139,21 +139,22 @@ export function isNetworkError(error: unknown): boolean {
 }
 
 /**
- * Lower-cased substrings the fetch implementations we run on use to signal that a request was
- * aborted rather than failing on its own: `node-fetch` says 'The user aborted a request.', undici
- * says 'This operation was aborted', and cli-kit's own request-timeout signal says 'The operation
- * was aborted'. Exported so tests assert against the same source of truth as production.
+ * Lower-cased substrings that mean a request was aborted rather than failing on its own.
+ * `node-fetch` says 'The user aborted a request.', undici says 'This operation was aborted', and
+ * cli-kit's own request timeout says 'The operation was aborted'.
  */
-export const ABORTED_FETCH_MESSAGE_FRAGMENTS = ['the user aborted a request', 'operation was aborted'] as const
+const ABORTED_FETCH_MESSAGE_FRAGMENTS = ['the user aborted a request', 'operation was aborted'] as const
 
 /**
- * Checks if an error is an aborted request: the user cancelling the command, the host process
+ * Checks if an error is an aborted request: a user cancelling the command, the host process
  * cancelling it, or one of the CLI's own request timeouts firing.
  *
- * Deliberately kept out of `isTransientNetworkError`, which drives retry behaviour — a request that
- * was cancelled on purpose must not be retried. The `name` check does not match cli-kit's own
- * `AbortError`, because `FatalError` never assigns `name` (it stays 'Error'); it matches the
- * `AbortError`/`DOMException` shapes that fetch itself throws.
+ * Not used by the retry logic, because a user-cancelled request must not be retried.
+ * `isTransientNetworkError` separately matches the CLI's own timeout message, so timeouts do
+ * still retry.
+ *
+ * The `name` check matches the `AbortError` shape that fetch throws, not cli-kit's own
+ * `AbortError`, which leaves `name` as 'Error'.
  *
  * @param error - Error to be checked.
  * @returns A boolean indicating if the request was aborted.
