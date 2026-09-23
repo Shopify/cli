@@ -19,7 +19,7 @@ import {outputContent, outputToken, outputDebug, outputCompleted} from '../../pu
 import {themeToken} from '../../public/node/context/local.js'
 import {AbortError} from '../../public/node/error.js'
 import {normalizeStoreFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
-import {getIdentityTokenInformation, getAppAutomationToken} from '../../public/node/environment.js'
+import {getIdentityTokenInformation, getAutomationToken} from '../../public/node/environment.js'
 import {AdminSession, logout} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
@@ -133,7 +133,7 @@ let commandSessionId: string | undefined
  * @returns A Promise that resolves to the user ID as a string.
  */
 export async function getLastSeenUserIdAfterAuth(): Promise<string> {
-  const customToken = getAppAutomationToken() ?? themeToken()
+  const customToken = getAutomationToken()?.value ?? themeToken()
   if (customToken) return nonRandomUUID(customToken)
 
   if (userId) return userId
@@ -165,8 +165,8 @@ export async function getLastSeenAuthMethod(): Promise<AuthMethod> {
 
   if (getCurrentSessionId()) return 'device_auth'
 
-  const appAutomationToken = getAppAutomationToken()
-  if (appAutomationToken) return 'partners_token'
+  const automationToken = getAutomationToken()
+  if (automationToken) return 'partners_token'
 
   const themePassword = themeToken()
   if (themePassword) {
@@ -200,9 +200,16 @@ export interface EnsureAuthenticatedAdditionalOptions {
  */
 export async function ensureAuthenticated(
   applications: OAuthApplications,
-  _env?: NodeJS.ProcessEnv,
+  env = process.env,
   {forceRefresh = false, noPrompt = false, forceNewSession = false}: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<OAuthSession> {
+  const automationToken = getAutomationToken(env)
+  if (automationToken?.source === 'organization') {
+    throw new AbortError(
+      "The organization automation token can't be used for this command.",
+      'Use a command that supports organization automation tokens or unset SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN.',
+    )
+  }
   const fqdn = await identityFqdn()
 
   const previousStoreFqdn = applications.adminApi?.storeFqdn
@@ -270,12 +277,11 @@ ${outputToken.json(applications)}
 
   const tokens = await tokensFor(applications, completeSession)
 
-  const envToken = getAppAutomationToken()
-  if (envToken && applications.partnersApi) {
-    tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
+  if (automationToken && applications.partnersApi) {
+    tokens.partners = (await exchangeCustomPartnerToken(automationToken.value)).accessToken
   }
 
-  setLastSeenAuthMethod(envToken ? 'partners_token' : 'device_auth')
+  setLastSeenAuthMethod(automationToken ? 'partners_token' : 'device_auth')
   setLastSeenUserIdAfterAuth(tokens.userId)
   return tokens
 }

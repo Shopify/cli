@@ -1,36 +1,80 @@
-import {getAppAutomationToken, getBackendPort, maxRequestTimeForNetworkCallsMs} from './environment.js'
+import {
+  getAppAutomationToken,
+  getAutomationToken,
+  getBackendPort,
+  maxRequestTimeForNetworkCallsMs,
+} from './environment.js'
 import {environmentVariables, systemEnvironmentVariables} from '../../private/node/constants.js'
 import {describe, expect, test, beforeEach} from 'vitest'
 
 beforeEach(() => {
+  delete process.env[environmentVariables.organizationAutomationToken]
   delete process.env[environmentVariables.appAutomationToken]
   delete process.env[environmentVariables.partnersToken]
   delete process.env[systemEnvironmentVariables.backendPort]
   delete process.env[environmentVariables.maxRequestTimeForNetworkCalls]
 })
 
+describe('getAutomationToken', () => {
+  test('returns SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN when set', () => {
+    process.env[environmentVariables.organizationAutomationToken] = 'organization-token'
+
+    expect(getAutomationToken()).toEqual({value: 'organization-token', source: 'organization'})
+  })
+
+  test('returns SHOPIFY_APP_AUTOMATION_TOKEN when no organization token is set', () => {
+    process.env[environmentVariables.appAutomationToken] = 'app-token'
+
+    expect(getAutomationToken()).toEqual({value: 'app-token', source: 'app'})
+  })
+
+  test('returns deprecated SHOPIFY_CLI_PARTNERS_TOKEN when no automation token is set', () => {
+    process.env[environmentVariables.partnersToken] = 'partners-token'
+
+    expect(getAutomationToken()).toEqual({value: 'partners-token', source: 'partners'})
+  })
+
+  test('prefers SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN over deprecated SHOPIFY_CLI_PARTNERS_TOKEN', () => {
+    process.env[environmentVariables.organizationAutomationToken] = 'organization-token'
+    process.env[environmentVariables.partnersToken] = 'partners-token'
+
+    expect(getAutomationToken()).toEqual({value: 'organization-token', source: 'organization'})
+  })
+
+  test('preserves SHOPIFY_APP_AUTOMATION_TOKEN precedence over deprecated SHOPIFY_CLI_PARTNERS_TOKEN', () => {
+    process.env[environmentVariables.appAutomationToken] = 'app-token'
+    process.env[environmentVariables.partnersToken] = 'partners-token'
+
+    expect(getAutomationToken()).toEqual({value: 'app-token', source: 'app'})
+  })
+
+  test('rejects simultaneous non-empty organization and app automation tokens', () => {
+    process.env[environmentVariables.organizationAutomationToken] = 'organization-token'
+    process.env[environmentVariables.appAutomationToken] = 'app-token'
+
+    expect(() => getAutomationToken()).toThrow(
+      "SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN and SHOPIFY_APP_AUTOMATION_TOKEN can't both be set.",
+    )
+  })
+
+  test('ignores empty automation token values', () => {
+    process.env[environmentVariables.organizationAutomationToken] = ''
+    process.env[environmentVariables.appAutomationToken] = ''
+    process.env[environmentVariables.partnersToken] = 'partners-token'
+
+    expect(getAutomationToken()).toEqual({value: 'partners-token', source: 'partners'})
+  })
+
+  test('returns undefined when no token is set', () => {
+    expect(getAutomationToken()).toBeUndefined()
+  })
+})
+
 describe('getAppAutomationToken', () => {
-  test('returns SHOPIFY_APP_AUTOMATION_TOKEN when set', () => {
-    process.env[environmentVariables.appAutomationToken] = 'new-token'
+  test('returns the canonical token value for backwards compatibility', () => {
+    process.env[environmentVariables.organizationAutomationToken] = 'organization-token'
 
-    expect(getAppAutomationToken()).toBe('new-token')
-  })
-
-  test('returns SHOPIFY_CLI_PARTNERS_TOKEN when SHOPIFY_APP_AUTOMATION_TOKEN is not set', () => {
-    process.env[environmentVariables.partnersToken] = 'old-token'
-
-    expect(getAppAutomationToken()).toBe('old-token')
-  })
-
-  test('prefers SHOPIFY_APP_AUTOMATION_TOKEN over SHOPIFY_CLI_PARTNERS_TOKEN', () => {
-    process.env[environmentVariables.appAutomationToken] = 'new-token'
-    process.env[environmentVariables.partnersToken] = 'old-token'
-
-    expect(getAppAutomationToken()).toBe('new-token')
-  })
-
-  test('returns undefined when neither env var is set', () => {
-    expect(getAppAutomationToken()).toBeUndefined()
+    expect(getAppAutomationToken()).toBe('organization-token')
   })
 })
 

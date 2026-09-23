@@ -1,4 +1,5 @@
 import {nonRandomUUID} from './crypto.js'
+import {AbortError} from './error.js'
 import {isTruthy} from './context/utilities.js'
 import {sniffForJson} from './path.js'
 import {environmentVariables, systemEnvironmentVariables} from '../../private/node/constants.js'
@@ -17,15 +18,53 @@ export function getEnvironmentVariables(): NodeJS.ProcessEnv {
   return process.env
 }
 
+export interface AutomationToken {
+  value: string
+  source: 'organization' | 'app' | 'partners'
+}
+
 /**
- * Returns the value of the SHOPIFY_APP_AUTOMATION_TOKEN environment variable,
- * falling back to the deprecated SHOPIFY_CLI_PARTNERS_TOKEN.
+ * Selects the automation token to use for authentication.
  *
- * @returns The app automation token value, or undefined if neither env var is set.
+ * Organization and app automation tokens are mutually exclusive because they represent different
+ * authentication subjects. The deprecated Partners token remains a fallback for compatibility.
+ *
+ * @param env - Environment variables to select the token from.
+ * @returns The selected automation token and its source, or undefined if none is set.
+ * @throws AbortError when both organization and app automation tokens are set.
+ */
+export function getAutomationToken(env = getEnvironmentVariables()): AutomationToken | undefined {
+  const organizationToken = nonEmptyEnvironmentVariable(env[environmentVariables.organizationAutomationToken])
+  const appToken = nonEmptyEnvironmentVariable(env[environmentVariables.appAutomationToken])
+  const partnersToken = nonEmptyEnvironmentVariable(env[environmentVariables.partnersToken])
+
+  if (organizationToken && appToken) {
+    throw new AbortError(
+      "SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN and SHOPIFY_APP_AUTOMATION_TOKEN can't both be set.",
+      'Unset one of the automation token environment variables and try again.',
+    )
+  }
+
+  if (organizationToken) return {value: organizationToken, source: 'organization'}
+  if (appToken) return {value: appToken, source: 'app'}
+  if (partnersToken) return {value: partnersToken, source: 'partners'}
+  return undefined
+}
+
+/**
+ * Returns the selected automation token value.
+ *
+ * Prefer getAutomationToken when the token source is needed.
+ *
+ * @returns The selected automation token value, or undefined if none is set.
  */
 export function getAppAutomationToken(): string | undefined {
-  const env = getEnvironmentVariables()
-  return env[environmentVariables.appAutomationToken] ?? env[environmentVariables.partnersToken]
+  return getAutomationToken()?.value
+}
+
+function nonEmptyEnvironmentVariable(value: string | undefined): string | undefined {
+  if (value === '') return undefined
+  return value
 }
 
 /**

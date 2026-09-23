@@ -1,6 +1,6 @@
 import {shopifyFetch} from './http.js'
 import {nonRandomUUID} from './crypto.js'
-import {getAppAutomationToken} from './environment.js'
+import {getAutomationToken} from './environment.js'
 import {AbortError, BugError} from './error.js'
 import {outputContent, outputToken, outputDebug} from './output.js'
 import * as sessionStore from '../../private/node/session/store.js'
@@ -135,8 +135,8 @@ export async function ensureAuthenticatedUser(
 
 /**
  * Ensure that we have a valid session to access the Partners API.
- * If SHOPIFY_CLI_PARTNERS_TOKEN exists, that token will be used to obtain a valid Partners Token
- * If SHOPIFY_CLI_PARTNERS_TOKEN exists, scopes will be ignored.
+ * If an automation token exists in the environment, it will be used to obtain a valid Partners token
+ * and scopes will be ignored.
  *
  * @param scopes - Optional array of extra scopes to authenticate with.
  * @param env - Optional environment variables to use.
@@ -151,9 +151,9 @@ export async function ensureAuthenticatedPartners(
   outputDebug(outputContent`Ensuring that the user is authenticated with the Partners API with the following scopes:
 ${outputToken.json(scopes)}
 `)
-  const envToken = getAppAutomationToken()
-  if (envToken) {
-    const result = await exchangeCustomPartnerToken(envToken)
+  const automationToken = getAutomationToken(env)
+  if (automationToken) {
+    const result = await exchangeCustomPartnerToken(automationToken.value)
     return {token: result.accessToken, userId: result.userId}
   }
   const tokens = await ensureAuthenticated({partnersApi: {scopes}}, env, options)
@@ -182,14 +182,14 @@ export async function ensureAuthenticatedAppManagementAndBusinessPlatform(
 ${outputToken.json(appManagementScopes)}
 `)
 
-  const envToken = getAppAutomationToken()
-  if (envToken) {
-    const appManagmentToken = await exchangeAppAutomationTokenForAppManagementAccessToken(envToken)
-    const businessPlatformToken = await exchangeAppAutomationTokenForBusinessPlatformAccessToken(envToken)
+  const automationToken = getAutomationToken(env)
+  if (automationToken) {
+    const appManagementToken = await exchangeAppAutomationTokenForAppManagementAccessToken(automationToken.value)
+    const businessPlatformToken = await exchangeAppAutomationTokenForBusinessPlatformAccessToken(automationToken.value)
 
     return {
-      appManagementToken: appManagmentToken.accessToken,
-      userId: appManagmentToken.userId,
+      appManagementToken: appManagementToken.accessToken,
+      userId: appManagementToken.userId,
       businessPlatformToken: businessPlatformToken.accessToken,
     }
   }
@@ -300,6 +300,7 @@ ${outputToken.json(scopes)}
 
 /**
  * Ensure that we have a valid session to access the Business Platform API.
+ * If an automation token exists in the environment, that token will be used and scopes will be ignored.
  *
  * @param scopes - Optional array of extra scopes to authenticate with.
  * @param options - Optional extra options to use.
@@ -312,6 +313,11 @@ export async function ensureAuthenticatedBusinessPlatform(
   outputDebug(outputContent`Ensuring that the user is authenticated with the Business Platform API with the following scopes:
 ${outputToken.json(scopes)}
 `)
+  const automationToken = getAutomationToken()
+  if (automationToken) {
+    const result = await exchangeAppAutomationTokenForBusinessPlatformAccessToken(automationToken.value)
+    return result.accessToken
+  }
   const tokens = await ensureAuthenticated({businessPlatformApi: {scopes}}, process.env, options)
   if (!tokens.businessPlatform) {
     throw new BugError('No business-platform token found after ensuring authenticated')

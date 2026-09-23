@@ -38,7 +38,10 @@ export function tokenExchangeScopes(api: API): string[] {
     case 'app-management':
       return [scopeTransform('app-management')]
     case 'business-platform':
-      return [scopeTransform('destinations')]
+      // Identity refuses to grant a scope the app automation token doesn't already hold, and an
+      // app-scoped token holds fewer scopes than an organization-scoped one. Asking for none lets
+      // Identity grant whatever the token carries, narrowed to Business Platform.
+      return []
     case 'admin':
     case 'storefront-renderer':
       throw new BugError(`API not supported for token exchange: ${api}`)
