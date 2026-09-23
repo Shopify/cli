@@ -625,6 +625,7 @@ describe('App Security CLI integration', () => {
           },
           writeArtifacts: writeAppSecurityArtifacts,
           canPrompt: () => false,
+          confirmDiscardReview: async () => false,
           selectInstructionsDestination: async () => 'nothing',
           deliverInstructions: async () => {},
           output,

@@ -15,7 +15,7 @@ export default class SecurityCheck extends BaseCommand {
 
   static descriptionWithMarkdown = `Runs Shopify App Security locally and creates its review pack and trace.
 
-Pass \`--findings\` after completing the review pack to validate agent findings and compile them into the trace. A new scan stops when local agent findings or a compiled trace already exist. Pass \`--clean\` to discard that work and start over. Use \`--config\` to select a specific app configuration when the project has multiple \`shopify.app*.toml\` files; App Security inspects only that configuration.
+Pass \`--findings\` after completing the review pack to validate agent findings and compile them into the trace. A new scan stops when local agent findings or a compiled trace already exist; in interactive terminals, the command asks whether to discard that work instead. Pass \`--clean\` to discard that work and start over. Use \`--config\` to select a specific app configuration when the project has multiple \`shopify.app*.toml\` files; App Security inspects only that configuration.
 
 In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. JSON output never prompts or prints those instructions. You can also run \`shopify app security instructions\` to print, copy, or write them later.`
 

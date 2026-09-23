@@ -15,11 +15,11 @@ import {
 import {hasRecordedAgentReview} from './app-security-engine/index.js'
 import {encodeSecurityJson, toSecurityJson} from './security-json.js'
 import {renderSecurityReport} from './security-output.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
-import {outputResult} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputResult} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
-import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import type {
   AppSecurityArtifactPaths,
   ReadTraceResult,
@@ -28,7 +28,7 @@ import type {
 } from './app-security-artifacts.js'
 import type {AppSecurityBlockingLevel, AppSecurityExecution} from './app-security-api.js'
 import type {SecurityReportInput} from './security-output.js'
-import type {RenderSelectPromptOptions} from '@shopify/cli-kit/node/ui'
+import type {RenderConfirmationPromptOptions, RenderSelectPromptOptions} from '@shopify/cli-kit/node/ui'
 
 interface SecurityOptions {
   directory: string
@@ -55,6 +55,7 @@ interface SecurityDependencies {
     options: WriteAppSecurityArtifactsOptions,
   ): Promise<AppSecurityArtifactPaths>
   canPrompt(): boolean
+  confirmDiscardReview(details: string): Promise<boolean>
   selectInstructionsDestination(): Promise<AppSecurityInstructionsDestination>
   deliverInstructions(options: {
     directory: string
@@ -77,6 +78,16 @@ export const appSecurityInstructionsPrompt: RenderSelectPromptOptions<AppSecurit
   defaultValue: 'copy',
 }
 
+export function appSecurityDiscardReviewPrompt(details: string): RenderConfirmationPromptOptions {
+  return {
+    message: 'Discard the current App Security review and start a new scan?',
+    infoMessage: {title: {color: 'red', text: "Discarding the current review can't be undone."}, body: details},
+    confirmationMessage: 'Yes, discard and start a new scan',
+    cancellationMessage: 'No, cancel',
+    defaultValue: false,
+  }
+}
+
 const defaultDependencies: SecurityDependencies = {
   resolveRoot: resolveAppSecurityRoot,
   artifactPaths: appSecurityArtifactPaths,
@@ -88,6 +99,7 @@ const defaultDependencies: SecurityDependencies = {
   },
   writeArtifacts: writeAppSecurityArtifacts,
   canPrompt: terminalSupportsPrompting,
+  confirmDiscardReview: (details) => renderConfirmationPrompt(appSecurityDiscardReviewPrompt(details)),
   selectInstructionsDestination: () => renderSelectPrompt(appSecurityInstructionsPrompt),
   deliverInstructions: deliverAppSecurityInstructions,
   output: outputResult,
@@ -126,25 +138,79 @@ function securityReportInput(
   }
 }
 
-async function assertCanStartScan(
+interface ProtectedReview {
+  // Describes the review work a new scan would discard. Shown both in the prompt and in the error.
+  details: string
+  // Recovery guidance shown when the command stops without prompting.
+  abortGuidance: string
+  // Shown in the prompt when discarding isn't the only way forward.
+  promptGuidance?: string
+}
+
+async function findProtectedReview(
   paths: ResolvedAppSecurityArtifactPaths,
   commands: AppSecurityCommands,
   dependencies: SecurityDependencies,
-): Promise<void> {
+): Promise<ProtectedReview | undefined> {
   const traceResult = await dependencies.readTrace(paths.tracePath)
+  const findingsExist = await dependencies.findingsFileExists(paths.findingsPath)
+  const cleanCommand = formatAppSecurityCommand(commands.clean)
+  const findingsNotice = findingsExist ? `\n\nAgent findings will also be deleted:\n  ${paths.findingsPath}` : ''
+
   if (traceResult.status === 'ok' && hasRecordedAgentReview(traceResult.trace)) {
+    return {
+      details: `The existing trace contains agent review results:\n  ${paths.tracePath}${findingsNotice}`,
+      abortGuidance: `Use the existing trace, or discard the current review and start over:\n  ${cleanCommand}`,
+    }
+  }
+
+  // A trace that fails validation may hold agent review results in a form this CLI can't read (for example, a
+  // newer schema or a trace over the size limit), so only a validated scan-only trace may be replaced.
+  if (traceResult.status === 'invalid') {
+    // Validation errors describe the trace schema, which users can't act on, so they're only shown with --verbose.
+    outputDebug(`App Security trace validation errors:\n${traceResult.errors.join('\n')}`)
+    return {
+      details: `Shopify CLI can't validate the existing trace, so it can't confirm whether it contains agent review results:\n  ${paths.tracePath}${findingsNotice}`,
+      abortGuidance: `To discard the current review and start over:\n  ${cleanCommand}`,
+    }
+  }
+
+  if (findingsExist) {
+    const compileCommand = formatAppSecurityCommand(commands.compile)
+    return {
+      details: `Agent findings exist at:\n  ${paths.findingsPath}`,
+      abortGuidance: `Compile those findings:\n  ${compileCommand}\n\nTo discard the current agent findings and start over:\n  ${cleanCommand}`,
+      // The agent may still be writing its findings, so compiling is left to the user rather than offered as a choice.
+      promptGuidance: `If your coding agent is still reviewing, cancel.\nTo compile these findings instead, cancel and run:\n  ${compileCommand}`,
+    }
+  }
+
+  return undefined
+}
+
+/**
+ * Returns whether a new scan must clean existing artifacts. When review work would be discarded, interactive
+ * users confirm the discard; otherwise the scan stops with recovery guidance.
+ */
+async function confirmCleanForNewScan(
+  options: SecurityOptions,
+  paths: ResolvedAppSecurityArtifactPaths,
+  commands: AppSecurityCommands,
+  dependencies: SecurityDependencies,
+): Promise<boolean> {
+  const protectedReview = await findProtectedReview(paths, commands, dependencies)
+  if (!protectedReview) return false
+
+  if (options.json || !dependencies.canPrompt()) {
     throw new AbortError(
       'App Security did not start a new scan.',
-      `The existing trace contains agent review results:\n  ${paths.tracePath}\n\nUse the existing trace, or discard the current review and start over:\n  ${formatAppSecurityCommand(commands.clean)}`,
+      `${protectedReview.details}\n\n${protectedReview.abortGuidance}`,
     )
   }
 
-  if (await dependencies.findingsFileExists(paths.findingsPath)) {
-    throw new AbortError(
-      'App Security did not start a new scan.',
-      `Agent findings exist at:\n  ${paths.findingsPath}\n\nCompile those findings:\n  ${formatAppSecurityCommand(commands.compile)}\n\nTo discard the current agent findings and start over:\n  ${formatAppSecurityCommand(commands.clean)}`,
-    )
-  }
+  const {details, promptGuidance} = protectedReview
+  if (await dependencies.confirmDiscardReview(promptGuidance ? `${details}\n\n${promptGuidance}` : details)) return true
+  throw new AbortSilentError()
 }
 
 export default async function securityCheck(
@@ -154,16 +220,17 @@ export default async function securityCheck(
   const appRoot = dependencies.resolveRoot(options.directory)
   const configFileName = requireSecurityConfigFileName(appRoot, options.configName)
   const commands = resolveAppSecurityCommands(appRoot, configFileName)
-  if (!options.findingsPath && !options.clean) {
-    await assertCanStartScan(dependencies.artifactPaths(appRoot), commands, dependencies)
-  }
+  const startsNewScan = !options.findingsPath && !options.clean
+  const clean = startsNewScan
+    ? await confirmCleanForNewScan(options, dependencies.artifactPaths(appRoot), commands, dependencies)
+    : options.clean
 
   const execution = await dependencies.execute({
     appRoot,
     configFileName,
     findingsPath: options.findingsPath,
   })
-  const artifacts = await dependencies.writeArtifacts(execution, {clean: options.clean})
+  const artifacts = await dependencies.writeArtifacts(execution, {clean})
 
   if (options.json) {
     dependencies.output(encodeSecurityJson(toSecurityJson(execution)))
