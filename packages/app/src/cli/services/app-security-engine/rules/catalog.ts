@@ -27,9 +27,8 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     title: 'OAuth scope may be over-requested',
     severity: 'high',
     points: -12,
-    description:
-      "Investigates requested and effective OAuth access for demonstrated excess authority beyond the app's intended authorization boundary.",
-    fix: 'Request only the scopes needed for supported features and enforce the intended access boundary before privileged operations.',
+    description: "Detects declared OAuth scopes that don't appear to be used by the app code.",
+    fix: 'Remove unused scopes or add the code path that needs them.',
     guide: 'https://shopify.dev/docs/api/usage/access-scopes',
   },
   {

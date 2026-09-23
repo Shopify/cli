@@ -2,4 +2,4 @@
 '@shopify/app': patch
 ---
 
-Require concrete excess-authority evidence in App Security OAuth scope reviews instead of flagging declarations without local usage.
+Revert the App Security OAuth scope review prompt to the prior version; no prompt behavior change relative to the last released version.
