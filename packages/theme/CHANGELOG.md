@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 4.8.2
+
+### Patch Changes
+
+- 90d503f: Fix `shopify theme pull/push/package` sync
+  - @shopify/cli-kit@4.8.2
+
 ## 4.8.1
 
 ### Patch Changes
