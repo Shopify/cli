@@ -30,4 +30,4 @@ export type {AppSecuritySubmission, AppSecuritySubmissionReport, BuildSubmission
 export type {ReviewPack} from './checks/index.js'
 export {groupIssues} from './output/group-issues.js'
 export type {IssueGroup} from './output/group-issues.js'
-export type {Capabilities, Issue, ScanResult, Severity, TraceV2} from './types.js'
+export type {Capabilities, Issue, ScanResult, Severity, TraceV3} from './types.js'

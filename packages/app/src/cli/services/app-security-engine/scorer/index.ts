@@ -1,39 +1,8 @@
 import {canonicalJson, sha256} from '../trace/index.js'
 import {getEngineVersion} from '../version.js'
-import type {CheckExecution, CoverageGap, Issue, ScoreResult, Grade, ScanMetadata, SkippedFile} from '../types.js'
+import type {CheckExecution, CoverageGap, Issue, ScanMetadata, SkippedFile} from '../types.js'
 
-const BASELINE = 100
-
-/** Only deterministic, definite evidence can affect a grade. */
-export function calculateScore(issues: Issue[]): ScoreResult {
-  let total = BASELINE
-  const deductedEvidence = new Set<string>()
-
-  for (const issue of issues) {
-    if (issue.found_by === 'agent' || issue.found_by === 'external') continue
-    if (issue.confidence !== 'definite' && issue.confidence !== undefined) continue
-    const evidenceKey = canonicalJson({
-      id: issue.id,
-      location: issue.location,
-      evidence: issue.evidence ?? [],
-    })
-    if (deductedEvidence.has(evidenceKey)) continue
-    deductedEvidence.add(evidenceKey)
-    total += issue.points
-  }
-
-  total = Math.max(0, Math.min(100, total))
-  return {total, baseline: BASELINE, grade: scoreToGrade(total)}
-}
-
-function scoreToGrade(score: number): Grade {
-  if (score >= 90) return 'EXCELLENT'
-  if (score >= 75) return 'GOOD'
-  if (score >= 60) return 'NEEDS_WORK'
-  return 'POOR'
-}
-
-export function computeResultHash(issues: Issue[], score: ScoreResult | null): string {
+export function computeResultHash(issues: Issue[]): string {
   const canonicalIssues = issues
     .map((issue) => ({
       id: issue.id,
@@ -51,7 +20,7 @@ export function computeResultHash(issues: Issue[], score: ScoreResult | null): s
       fix: issue.fix,
     }))
     .sort((left, right) => canonicalJson(left).localeCompare(canonicalJson(right)))
-  return sha256({issues: canonicalIssues, score})
+  return sha256({issues: canonicalIssues})
 }
 
 export function computeScanMetadata(
@@ -59,7 +28,6 @@ export function computeScanMetadata(
   rulesRun: number,
   rulesSkipped: number,
   issues: Issue[],
-  score: ScoreResult | null,
   fileHashMap: Record<string, string>,
   filesSkipped: SkippedFile[],
   checksExecuted: CheckExecution[],
@@ -80,7 +48,7 @@ export function computeScanMetadata(
     coverage_complete: coverageGaps.length === 0,
     coverage_gaps: coverageGaps,
     input_hash: sha256(inputs),
-    result_hash: computeResultHash(issues, score),
+    result_hash: computeResultHash(issues),
     file_hashes: fileHashMap,
     checks_executed: checksExecuted,
   }

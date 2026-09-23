@@ -15,7 +15,7 @@ import {computeResultHash} from './scorer/index.js'
 import {compileTrace, validateTrace} from './trace/index.js'
 import {FINDINGS_SCHEMA_VERSION} from './types.js'
 import {getEngineVersion} from './version.js'
-import type {CheckExecution, ScanResult, Suppression, TraceV2} from './types.js'
+import type {CheckExecution, ScanResult, Suppression, TraceV3} from './types.js'
 
 export {AppRootDiscoveryError, findAppRoot}
 
@@ -43,7 +43,7 @@ export interface AppSecurityScan {
   operation: 'scan'
   appRoot: string
   scan: ScanResult
-  trace: TraceV2
+  trace: TraceV3
   reviewPack: ReviewPack
   engine: AppSecurityEngineMetadata
 }
@@ -52,12 +52,12 @@ export interface AppSecurityCompile {
   operation: 'compile'
   appRoot: string
   scan: ScanResult
-  trace: TraceV2
+  trace: TraceV3
   findings: AppSecurityFindings
   engine: AppSecurityEngineMetadata
 }
 
-export type ParseTraceResult = {ok: true; trace: TraceV2} | {ok: false; errors: string[]}
+export type ParseTraceResult = {ok: true; trace: TraceV3} | {ok: false; errors: string[]}
 
 /** Expected user error while reading an agent findings document. */
 export class FindingsDocumentError extends Error {
@@ -76,7 +76,7 @@ export function getAgentInstructions(): string {
 
 export function parseTrace(value: unknown): ParseTraceResult {
   const validation = validateTrace(value)
-  return validation.valid ? {ok: true, trace: value as TraceV2} : {ok: false, errors: validation.errors}
+  return validation.valid ? {ok: true, trace: value as TraceV3} : {ok: false, errors: validation.errors}
 }
 
 export function parseFindings(value: unknown): FindingsDocument {
@@ -203,7 +203,6 @@ export async function compileFindings(
   // Stale documents must not suppress current findings or crash compile when fingerprints no longer exist.
   const suppressions = provenanceRejected.length > 0 ? [] : (document.suppressions ?? [])
   if (rejected.length > 0) {
-    result.score = null
     result.scan.coverage_complete = false
     result.scan.coverage_gaps.push(
       ...rejected.map((message) => {
@@ -216,7 +215,7 @@ export async function compileFindings(
       }),
     )
   }
-  result.scan.result_hash = computeResultHash(result.issues, result.score)
+  result.scan.result_hash = computeResultHash(result.issues)
 
   const trace = compileTrace(result, {engineVersion, agentChecksExecuted, suppressions})
   return {

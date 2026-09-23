@@ -35,7 +35,6 @@ const result = (issues: Issue[] = []): ScanResult => ({
     declared_ip_allowlist: false,
     checkout_extension: false,
   },
-  score: {total: 70, baseline: 100, grade: 'NEEDS_WORK'},
   scan: {
     timestamp: '2026-08-28T00:00:00.000Z',
     security_version: '0.1.0',
@@ -87,7 +86,7 @@ describe('trace v2', () => {
     const trace = compileTrace(result(), {
       generatedAt: '2026-08-28T00:00:00.000Z',
     })
-    expect(trace.schema_version).toBe(2)
+    expect(trace.schema_version).toBe(3)
     expect(trace.engine.name).toBe('shopify-app-security')
     expect(trace.project).toMatchObject({
       commit: 'a'.repeat(40),
@@ -249,6 +248,7 @@ describe('trace v2', () => {
       generatedAt: '2026-08-28T00:00:00.000Z',
     })
     expect(validateTrace({...trace, schema_version: 1}).errors).toContain('unsupported schema_version: 1')
+    expect(validateTrace({...trace, schema_version: 2}).errors).toContain('unsupported schema_version: 2')
     const changed = structuredClone(trace)
     const [changedFinding] = changed.findings
     if (!changedFinding) throw new Error('Expected the trace to contain a finding')
@@ -265,14 +265,12 @@ describe('trace v2', () => {
 
   test('recomputes the scan result hash over merged finding content', () => {
     const scanResult = result()
-    const before = computeResultHash(scanResult.issues, scanResult.score)
+    const before = computeResultHash(scanResult.issues)
     scanResult.issues.push(deterministicIssue())
-    expect(computeResultHash(scanResult.issues, scanResult.score)).not.toBe(before)
+    expect(computeResultHash(scanResult.issues)).not.toBe(before)
     const changed = deterministicIssue()
     changed.evidence = [{location: changed.location, quote: 'different'}]
-    expect(computeResultHash([changed], scanResult.score)).not.toBe(
-      computeResultHash([deterministicIssue()], scanResult.score),
-    )
+    expect(computeResultHash([changed])).not.toBe(computeResultHash([deterministicIssue()]))
   })
 
   test('hashes full finding messages, locations, snippets, and evidence independent of ordering', () => {

@@ -4,12 +4,11 @@ import {assertRegistryInvariants, getRegistry} from '../registry/index.js'
 import {DETERMINISTIC_CHECKS, scan} from '../scanners/index.js'
 import {compileTrace, sha256, validateTrace} from '../trace/index.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
-import {calculateScore} from '../scorer/index.js'
 import {afterEach, describe, expect, test} from 'vitest'
 import {mkdir, mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import type {Issue, TraceV2} from '../types.js'
+import type {TraceV3} from '../types.js'
 
 const directories: string[] = []
 afterEach(async () => {
@@ -32,13 +31,13 @@ async function app(files: Record<string, string>): Promise<string> {
 const appConfig = (scopes = '') => `name = "Scan contract"\n[access_scopes]\nscopes = "${scopes}"\n`
 const reactPackage = JSON.stringify({dependencies: {'@shopify/shopify-app-react-router': '^1.0.0'}})
 
-function resign(trace: TraceV2): void {
+function resign(trace: TraceV3): void {
   const {attestation: _attestation, ...unsigned} = trace
   trace.attestation = {digest: sha256(unsigned), signed: false}
 }
 
 describe('framework and surface detection', () => {
-  test('grades the React Router green path only when package and structure agree', async () => {
+  test('detects React Router only when package and structure agree', async () => {
     const directory = await app({
       'shopify.app.toml': appConfig(),
       'package.json': reactPackage,
@@ -53,7 +52,7 @@ describe('framework and surface detection', () => {
   test('detects config-only, theme extension, mixed, and unknown surfaces', async () => {
     const configOnly = await scan(await app({'shopify.app.toml': appConfig()}))
     expect(configOnly.detection).toMatchObject({framework: 'none', surface: 'config_only'})
-    expect(configOnly.score).not.toBeNull()
+    expect(configOnly.scan.coverage_complete).toBe(true)
 
     const theme = await scan(
       await app({
@@ -78,7 +77,7 @@ describe('framework and surface detection', () => {
 
     const unknown = await scan(await app({'shopify.app.toml': appConfig(), 'server.ts': 'export const server = {}'}))
     expect(unknown.detection).toMatchObject({framework: 'unknown', surface: 'unknown'})
-    expect(unknown.score).toBeNull()
+    expect(unknown.scan.coverage_complete).toBe(false)
     expect(
       unknown.scan.checks_executed.find((execution) => execution.id === 'MISSING_COMPLIANCE_WEBHOOKS'),
     ).toMatchObject({status: 'executed'})
@@ -415,7 +414,6 @@ redirect_urls = ["http://app.example/callback"]
       reason: {code: 'input_rejected'},
     })
     expect(result.scan.coverage_complete).toBe(false)
-    expect(result.score).toBeNull()
     expect(result.issues.map((issue) => issue.id)).toContain('DEPRECATED_SCRIPT_TAG_SCOPE')
   })
 })
@@ -459,21 +457,6 @@ describe('runtime identities', () => {
 })
 
 describe('coverage and trace invariants', () => {
-  test('does not double-deduct agent and deterministic evidence for one product', () => {
-    const issue: Issue = {
-      id: 'UNSAFE_INNERHTML',
-      severity: 'high',
-      points: -25,
-      title: 'Unsafe HTML',
-      message: 'Unsafe HTML',
-      location: {file: 'app/a.ts', line: 1},
-      evidence: [{location: {file: 'app/a.ts', line: 1}, quote: 'element.innerHTML = input'}],
-      fix: {automated: false, description: 'Sanitize input.'},
-      found_by: 'static',
-    }
-    expect(calculateScore([issue, {...issue, found_by: 'agent', confidence: 'agentic'}]).total).toBe(75)
-  })
-
   test('rejects impossible execution and completeness combinations', async () => {
     const directory = await app({
       'shopify.app.toml': appConfig(),

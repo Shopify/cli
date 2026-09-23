@@ -1,4 +1,4 @@
-import {parseTrace, type TraceV2} from './app-security-engine/index.js'
+import {parseTrace, type TraceV3} from './app-security-engine/index.js'
 import {fileExists, fileSize, readFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
@@ -20,7 +20,7 @@ export interface ResolvedAppSecurityArtifactPaths extends Required<AppSecurityAr
 }
 
 export type ReadTraceResult =
-  | {status: 'ok'; trace: TraceV2}
+  | {status: 'ok'; trace: TraceV3}
   | {status: 'missing'}
   | {status: 'invalid'; errors: string[]}
 

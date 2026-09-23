@@ -78,7 +78,7 @@ export function renderSecurityReport(input: SecurityReportInput): void {
 }
 
 function coverageIncomplete(input: SecurityReportInput): boolean {
-  return input.scan.score === null || !input.scan.scan.coverage_complete || input.scan.scan.coverage_gaps.length > 0
+  return !input.scan.scan.coverage_complete || input.scan.scan.coverage_gaps.length > 0
 }
 
 function securityAlertType(input: SecurityReportInput): SecurityAlertType {

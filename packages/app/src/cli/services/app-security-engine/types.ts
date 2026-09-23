@@ -85,19 +85,9 @@ export interface ScanResult {
   }
   capabilities: Capabilities
   detection: ProjectDetection
-  /** Null means the deterministic coverage is insufficient to grade safely. */
-  score: ScoreResult | null
   scan: ScanMetadata
   issues: Issue[]
 }
-
-export interface ScoreResult {
-  total: number
-  baseline: number
-  grade: Grade
-}
-
-export type Grade = 'EXCELLENT' | 'GOOD' | 'NEEDS_WORK' | 'POOR'
 
 export interface SkippedFile {
   path: string
@@ -181,7 +171,7 @@ export interface ScanMetadata {
   checks_executed: CheckExecution[]
 }
 
-export const TRACE_SCHEMA_VERSION = 2 as const
+export const TRACE_SCHEMA_VERSION = 3 as const
 export const FINDINGS_SCHEMA_VERSION = 1 as const
 export const SUPPORTED_TRACE_SCHEMA_VERSIONS = [TRACE_SCHEMA_VERSION] as const
 export const ENGINE_NAME = 'shopify-app-security' as const
@@ -229,7 +219,7 @@ export interface TraceFinding {
   }
 }
 
-export interface TraceV2 {
+export interface TraceV3 {
   schema_version: typeof TRACE_SCHEMA_VERSION
   engine: {
     name: typeof ENGINE_NAME
@@ -244,7 +234,6 @@ export interface TraceV2 {
     input_hashes: Record<string, string>
   }
   detection: ProjectDetection
-  score: ScoreResult | null
   findings: TraceFinding[]
   checks_executed: CheckExecution[]
   suppressions: Suppression[]
