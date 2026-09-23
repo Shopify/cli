@@ -31,13 +31,8 @@ export async function executeBundleUIStep(step: BundleUIStep, context: BuildCont
   // If the final output path is the same as the local one: don't copy the results and don't generate manifests.
   if (resolvePath(localOutputDir) === resolvePath(bundleOutputDir)) return
 
-  // The extension's own build produces this directory. When it is missing, the
-  // developer's build emitted nothing at the expected path, which is a project
-  // condition rather than a CLI defect. Raise it as an AbortError so it stays out
-  // of crash reporting. In practice this is almost always the `skipBuild` path
-  // (`deploy --no-build`), since esbuild creates the directory when it writes the
-  // outfile. A file that disappears part way through the copy is a different
-  // condition and still surfaces as an unexpected error.
+  // Nothing was built, usually `deploy --no-build`. A developer condition, not a
+  // CLI defect, so keep it out of crash reporting.
   if (!(await fileExists(localOutputDir))) {
     throw new AbortError(
       `Couldn't find the build output at ${localOutputDir}`,

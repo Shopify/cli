@@ -78,9 +78,7 @@ export async function copyConfigKeyEntry(config: {
     const fullPath = joinPath(baseDir, sourcePath)
     const exists = await fileExists(fullPath)
     if (!exists) {
-      // A path the developer configured does not exist. That is a project
-      // configuration mistake, not a CLI defect, so raise it as an AbortError to
-      // keep it out of crash reporting.
+      // A misconfigured path is not a CLI defect, so keep it out of crash reporting.
       throw new AbortError(
         outputContent`Couldn't find ${outputToken.path(fullPath)}\n  Please check the path '${sourcePath}' in your configuration`
           .value,
