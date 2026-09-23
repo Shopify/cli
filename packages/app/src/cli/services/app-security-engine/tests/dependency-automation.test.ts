@@ -94,7 +94,6 @@ describe('dependency automation scanner integration', () => {
         findings: 1,
         inspected_files: ['extensions/app-home/package.json', 'package.json'],
       })
-      expect(execution.scan.score).toEqual({total: 95, baseline: 100, grade: 'EXCELLENT'})
       expect(formatJson(execution.scan)).toContain(checkId)
       expect(validateTrace(execution.trace)).toEqual({valid: true, errors: []})
       const submission = buildSubmission(execution.trace, {cliVersion: '3.99.0', submittedAt: '2026-09-15T00:00:00Z'})
@@ -126,7 +125,6 @@ describe('dependency automation scanner integration', () => {
           findings: 0,
           inspected_files: expectedFiles,
         })
-        expect(execution.scan.score).toEqual({total: 100, baseline: 100, grade: 'EXCELLENT'})
         expect(execution.trace.project.input_hashes[path]).toBe(sha256(content))
         expect(securityExitCode({...execution, elapsedMilliseconds: 0}, 'low')).toBe(0)
         const submission = buildSubmission(execution.trace, {cliVersion: '3.99.0', submittedAt: '2026-09-15T00:00:00Z'})
@@ -174,7 +172,7 @@ describe('dependency automation scanner integration', () => {
       const result = await scan(root)
       expect(dependencyFindings(result)).toEqual([])
       expect(dependencyExecution(result)).toMatchObject({status: 'unresolved', findings: 0})
-      expect(result.score).toBeNull()
+      expect(result.scan.coverage_complete).toBe(false)
     })
   })
 

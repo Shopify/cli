@@ -203,7 +203,6 @@ export async function compileFindings(
   // Stale documents must not suppress current findings or crash compile when fingerprints no longer exist.
   const suppressions = provenanceRejected.length > 0 ? [] : (document.suppressions ?? [])
   if (rejected.length > 0) {
-    result.score = null
     result.scan.coverage_complete = false
     result.scan.coverage_gaps.push(
       ...rejected.map((message) => {
@@ -216,7 +215,7 @@ export async function compileFindings(
       }),
     )
   }
-  result.scan.result_hash = computeResultHash(result.issues, result.score)
+  result.scan.result_hash = computeResultHash(result.issues)
 
   const trace = compileTrace(result, {engineVersion, agentChecksExecuted, suppressions})
   return {

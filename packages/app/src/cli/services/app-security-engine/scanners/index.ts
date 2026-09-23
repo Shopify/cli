@@ -12,7 +12,7 @@ import {
   findDependencyAutomationInputs,
 } from './discover.js'
 import {detectCapabilities, detectProject} from '../capabilities/detect.js'
-import {calculateScore, computeScanMetadata} from '../scorer/index.js'
+import {computeScanMetadata} from '../scorer/index.js'
 import {deprecatedScriptTagScope, insecureWebhookUrl} from '../rules/config-rules.js'
 import {
   scanCredentialBrowserLeakage,
@@ -754,14 +754,12 @@ export async function scan(startPath?: string, configFileName?: string): Promise
           ],
     ),
   ]
-  const score = coverageGaps.length === 0 ? calculateScore(issues) : null
   const rulesRun = checksExecuted.filter((execution) => execution.status === 'executed').length
   const scanMetadata = computeScanMetadata(
     sourceFiles.filter((file) => file.content !== undefined).length,
     rulesRun,
     checksExecuted.length - rulesRun,
     issues,
-    score,
     fileHashMap,
     skippedFiles,
     checksExecuted,
@@ -774,7 +772,6 @@ export async function scan(startPath?: string, configFileName?: string): Promise
     app: {name: redactText(String(appToml?.raw.name ?? 'Unknown')), type: 'public'},
     capabilities,
     detection,
-    score,
     scan: scanMetadata,
     issues,
   }

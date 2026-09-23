@@ -29,7 +29,6 @@ const scan: ScanResult = {
     declared_ip_allowlist: false,
     checkout_extension: false,
   },
-  score: {total: 100, baseline: 100, grade: 'EXCELLENT'},
   scan: {
     timestamp: '2026-08-24T00:00:00.000Z',
     security_version: '0.1.0',

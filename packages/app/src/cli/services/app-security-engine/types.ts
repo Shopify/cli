@@ -85,19 +85,9 @@ export interface ScanResult {
   }
   capabilities: Capabilities
   detection: ProjectDetection
-  /** Null means the deterministic coverage is insufficient to grade safely. */
-  score: ScoreResult | null
   scan: ScanMetadata
   issues: Issue[]
 }
-
-export interface ScoreResult {
-  total: number
-  baseline: number
-  grade: Grade
-}
-
-export type Grade = 'EXCELLENT' | 'GOOD' | 'NEEDS_WORK' | 'POOR'
 
 export interface SkippedFile {
   path: string
