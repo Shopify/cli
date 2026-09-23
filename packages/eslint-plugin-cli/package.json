@@ -13,6 +13,11 @@
   "bugs": {
     "url": "https://community.shopify.dev/c/shopify-cli-libraries/14"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli.git",
+    "directory": "packages/eslint-plugin-cli"
+  },
   "license": "MIT",
   "author": "Shopify Inc.",
   "dependencies": {
