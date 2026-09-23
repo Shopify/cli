@@ -11,6 +11,12 @@ import type {AppSecurityExecution} from './app-security-api.js'
 import type {AppSecurityInstructionsDestination} from './security-check.js'
 import type {ScanResult, TraceV3} from './app-security-engine/index.js'
 
+vi.mock('./app-security-config.js', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./app-security-config.js')>()
+  // Unit tests use a fake app directory; check.integration.test.ts covers the missing-config error.
+  return {...original, requireSecurityConfigFileName: original.resolveSecurityConfigFileName}
+})
+
 const scan: ScanResult = {
   version: '0.1.0',
   timestamp: '2026-08-24T00:00:00.000Z',
@@ -140,7 +146,7 @@ describe('securityCheck', () => {
     expect(dependencies.resolveRoot).toHaveBeenCalledWith('/tmp/unlinked-app')
     expect(dependencies.execute).toHaveBeenCalledWith({
       appRoot: '/tmp/unlinked-app',
-      configName: undefined,
+      configFileName: 'shopify.app.toml',
       findingsPath: undefined,
     })
     expect(dependencies.writeArtifacts).toHaveBeenCalledWith(scanExecution, {clean: false})
@@ -165,7 +171,7 @@ describe('securityCheck', () => {
 
     expect(dependencies.execute).toHaveBeenCalledWith({
       appRoot: '/tmp/unlinked-app',
-      configName: 'staging',
+      configFileName: 'shopify.app.staging.toml',
       findingsPath: undefined,
     })
     expect(dependencies.renderReport).toHaveBeenCalledWith(

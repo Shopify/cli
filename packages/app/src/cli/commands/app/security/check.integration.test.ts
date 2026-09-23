@@ -177,6 +177,40 @@ describe('app security check command boundary', () => {
     })
   })
 
+  test('rejects a missing config before reporting a protected trace', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const paths = appSecurityArtifactPaths(directory)
+      await createApp(directory)
+
+      const scan = await runCommand(['--path', directory, '--json', '--skip-instructions'])
+      expect(scan.exitCode).toBe(0)
+
+      await writeFile(paths.findingsPath, findingsDocument(await readReviewPack(paths.reviewPath)))
+      const compile = await runCommand([
+        '--path',
+        directory,
+        '--findings',
+        paths.findingsPath,
+        '--json',
+        '--skip-instructions',
+      ])
+      expect(compile.exitCode).toBe(0)
+
+      const refused = await runCommand([
+        '--path',
+        directory,
+        '--config',
+        'shopify.app.dev-dashboard.json',
+        '--skip-instructions',
+      ])
+
+      expect(refused.exitCode).toBe(1)
+      const message = errorText(refused.stderr)
+      expect(message).toContain("Couldn't find app configuration at")
+      expectMentionsPath(message, joinPath(directory, 'shopify.app.shopifyappdev-dashboardjson.toml'))
+    })
+  })
+
   test('refuses a plain scan while default agent findings are pending', async () => {
     await inTemporaryDirectory(async (directory) => {
       const {nestedDirectory} = await createApp(directory)
