@@ -34,12 +34,14 @@ export async function executeBundleUIStep(step: BundleUIStep, context: BuildCont
   // The extension's own build produces this directory. When it is missing, the
   // developer's build emitted nothing at the expected path, which is a project
   // condition rather than a CLI defect. Raise it as an AbortError so it stays out
-  // of crash reporting. A file that disappears part way through the copy is a
-  // different condition and still surfaces as an unexpected error.
+  // of crash reporting. In practice this is almost always the `skipBuild` path
+  // (`deploy --no-build`), since esbuild creates the directory when it writes the
+  // outfile. A file that disappears part way through the copy is a different
+  // condition and still surfaces as an unexpected error.
   if (!(await fileExists(localOutputDir))) {
     throw new AbortError(
       `Couldn't find the build output at ${localOutputDir}`,
-      'Check that building the extension produces files at that path, then run the command again.',
+      'If you passed --no-build, build the app first. Otherwise check that building the extension produces files at that path.',
     )
   }
 
