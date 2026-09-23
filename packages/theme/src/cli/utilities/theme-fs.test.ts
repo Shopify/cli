@@ -66,19 +66,16 @@ describe('theme-fs', () => {
 
         // Then
         expect(themeFileSystem.root).toBe(root)
-        expect(themeFileSystem.files.size).toBe(13)
+        expect(themeFileSystem.files.size).toBe(10)
         expect(themeFileSystem.unsyncedFileKeys).toEqual(new Set())
         expect(themeFileSystem.uploadErrors).toEqual(new Map())
 
         // Check that all expected files are present with correct checksums
         const expectedFiles = [
-          {checksum: '6e3520cc5a5c4cdb1267f36406c732a1', key: 'AGENTS.md'},
-          {checksum: 'f5e9ce97aef578fc4e2e369a3c271234', key: 'DESIGN.md'},
           {checksum: 'b7fbe0ecff2a6c1d6e697a13096e2b17', key: 'assets/base.css'},
           {checksum: '7adcd48a3cc215a81fabd9dafb919507', key: 'assets/sparkle.gif'},
           {checksum: '22e69af13b7953914563c60035a831bc', key: 'config/settings_data.json'},
           {checksum: 'cbe979d3fd3b7cdf2041ada9fdb3af57', key: 'config/settings_schema.json'},
-          {checksum: '98fb75d10c4dbf239997ae494581fd7d', key: 'config/styles.css'},
           {checksum: '7a92d18f1f58b2396c46f98f9e502c6a', key: 'layout/password.liquid'},
           {checksum: '2374357fdadd3b4636405e80e21e87fc', key: 'layout/theme.liquid'},
           {checksum: '0b2f0aa705a4eb2b4740e2ed68bc043f', key: 'locales/en.default.json'},
@@ -140,7 +137,7 @@ describe('theme-fs', () => {
         // Given
         const root = tmpDir
         await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
-        const watchSpy = vi.spyOn(chokidar, 'watch').mockReturnValue(new EventEmitter() as any)
+        const watchSpy = vi.spyOn(chokidar, 'watch')
 
         // When
         const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
@@ -160,7 +157,7 @@ describe('theme-fs', () => {
         // Given
         const root = tmpDir
         await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
-        const watchSpy = vi.spyOn(chokidar, 'watch').mockReturnValue(new EventEmitter() as any)
+        const watchSpy = vi.spyOn(chokidar, 'watch')
 
         // When
         const themeFileSystem = mountThemeFileSystem(root)
@@ -514,14 +511,11 @@ describe('theme-fs', () => {
         {key: 'templates/404.json', checksum: '7'},
         {key: 'config/settings_schema.json', checksum: '8'},
         {key: 'config/settings_data.json', checksum: '9'},
-        {key: 'config/styles.css', checksum: '16'},
         {key: 'sections/announcement-bar.liquid', checksum: '10'},
         {key: 'snippets/language-localization.liquid', checksum: '11'},
         {key: 'templates/404.context.uk.json', checksum: '12'},
         {key: 'templates/404.liquid', checksum: '13'},
         {key: 'blocks/block.liquid', checksum: '14'},
-        {key: 'AGENTS.md', checksum: '17'},
-        {key: 'DESIGN.md', checksum: '18'},
       ]
       // When
       const {
@@ -531,12 +525,10 @@ describe('theme-fs', () => {
         otherJsonFiles,
         configSchemaFile,
         configDataFile,
-        configStylesheetFiles,
         staticAssetFiles,
         contextualizedJsonFiles,
         blockLiquidFiles,
         layoutFiles,
-        documentationFiles,
       } = partitionThemeFiles(files)
 
       // Then
@@ -550,7 +542,6 @@ describe('theme-fs', () => {
       expect(templateJsonFiles).toEqual([{key: 'templates/404.json', checksum: '7'}])
       expect(configSchemaFile).toEqual([{key: 'config/settings_schema.json', checksum: '8'}])
       expect(configDataFile).toEqual([{key: 'config/settings_data.json', checksum: '9'}])
-      expect(configStylesheetFiles).toEqual([{key: 'config/styles.css', checksum: '16'}])
       expect(staticAssetFiles).toEqual([
         {key: 'assets/base.css', checksum: '1'},
         {key: 'assets/sparkle.gif', checksum: '3'},
@@ -561,10 +552,6 @@ describe('theme-fs', () => {
         {key: 'layout/password.liquid', checksum: '4'},
         {key: 'layout/theme.liquid', checksum: '5'},
         {key: 'layout/custom.liquid', checksum: '15'},
-      ])
-      expect(documentationFiles).toEqual([
-        {key: 'AGENTS.md', checksum: '17'},
-        {key: 'DESIGN.md', checksum: '18'},
       ])
     })
 
@@ -580,9 +567,7 @@ describe('theme-fs', () => {
         otherJsonFiles,
         configSchemaFile,
         configDataFile,
-        configStylesheetFiles,
         staticAssetFiles,
-        documentationFiles,
       } = partitionThemeFiles(files)
 
       // Then
@@ -592,9 +577,7 @@ describe('theme-fs', () => {
       expect(otherJsonFiles).toEqual([])
       expect(configSchemaFile).toEqual([])
       expect(configDataFile).toEqual([])
-      expect(configStylesheetFiles).toEqual([])
       expect(staticAssetFiles).toEqual([])
-      expect(documentationFiles).toEqual([])
     })
   })
 
@@ -607,8 +590,6 @@ describe('theme-fs', () => {
       expect(isTextFile('assets/icon.svg')).toBeTruthy()
       expect(isTextFile('sections/template.liquid')).toBeTruthy()
       expect(isTextFile('templates/cart.json')).toBeTruthy()
-      expect(isTextFile('AGENTS.md')).toBeTruthy()
-      expect(isTextFile('DESIGN.md')).toBeTruthy()
     })
 
     test(`returns false when it's not a text file`, async () => {
