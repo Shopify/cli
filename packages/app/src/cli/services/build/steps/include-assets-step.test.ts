@@ -4,6 +4,7 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {inTemporaryDirectory, writeFile, mkdir, fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 describe('executeIncludeAssetsStep', () => {
   let mockExtension: ExtensionInstance
@@ -318,6 +319,32 @@ describe('executeIncludeAssetsStep', () => {
         await expect(executeIncludeAssetsStep(step, contextWithConfig)).rejects.toThrow(
           `Couldn't find ${joinPath(extensionDir, 'nonexistent')}\n  Please check the path 'nonexistent' in your configuration`,
         )
+      })
+    })
+
+    test('raises a missing configured path as a developer error, not a CLI crash', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        await setupTestEnvironment(tmpDir)
+        const contextWithConfig = {
+          ...mockContext,
+          extension: {
+            ...mockExtension,
+            configuration: {static_root: 'nonexistent'},
+          } as unknown as ExtensionInstance,
+        }
+
+        const step: LifecycleStep = {
+          id: 'copy-static',
+          name: 'Copy Static',
+          type: 'include_assets',
+          config: {
+            inclusions: [{type: 'configKey', key: 'static_root'}],
+          },
+        }
+
+        // When / Then — AbortError keeps this out of crash reporting.
+        await expect(executeIncludeAssetsStep(step, contextWithConfig)).rejects.toThrowError(AbortError)
       })
     })
 

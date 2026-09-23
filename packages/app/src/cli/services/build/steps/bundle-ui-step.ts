@@ -1,8 +1,9 @@
 import {createOrUpdateManifestFile} from './include-assets/generate-manifest.js'
 import {buildUIExtension} from '../extension.js'
 import {BuildManifest} from '../../../models/extensions/specifications/ui_extension.js'
-import {copyFile} from '@shopify/cli-kit/node/fs'
+import {copyFile, fileExists} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import type {BundleUIStep, BuildContext} from '../client-steps.js'
 
 interface ExtensionPointWithBuildManifest {
@@ -29,6 +30,18 @@ export async function executeBundleUIStep(step: BundleUIStep, context: BuildCont
 
   // If the final output path is the same as the local one: don't copy the results and don't generate manifests.
   if (resolvePath(localOutputDir) === resolvePath(bundleOutputDir)) return
+
+  // The extension's own build produces this directory. When it is missing, the
+  // developer's build emitted nothing at the expected path, which is a project
+  // condition rather than a CLI defect. Raise it as an AbortError so it stays out
+  // of crash reporting. A file that disappears part way through the copy is a
+  // different condition and still surfaces as an unexpected error.
+  if (!(await fileExists(localOutputDir))) {
+    throw new AbortError(
+      `Couldn't find the build output at ${localOutputDir}`,
+      'Check that building the extension produces files at that path, then run the command again.',
+    )
+  }
 
   await copyFile(localOutputDir, bundleOutputDir)
 
