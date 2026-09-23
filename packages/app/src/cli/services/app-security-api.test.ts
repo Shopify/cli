@@ -93,7 +93,7 @@ describe('App Security CLI integration', () => {
       expect(review.source_scan_id).toBe(result.execution.scan.scan.input_hash)
       expect(review.checks.length).toBeGreaterThan(0)
       expect(review.checks.every((check: {prompt: string}) => check.prompt.length > 0)).toBe(true)
-      expect(trace.schema_version).toBe(2)
+      expect(trace.schema_version).toBe(3)
       expect(trace.engine.name).toBe('shopify-app-security')
       expect(result.engine).toEqual(trace.engine)
       expect(result.reviewPath).toBe(artifactPath(directory, 'review.json'))
@@ -635,7 +635,7 @@ describe('App Security CLI integration', () => {
 
       const payload = JSON.parse(output.mock.calls[0]![0]) as {operation: string; trace: {schema_version: number}}
       expect(payload.operation).toBe('scan')
-      expect(payload.trace.schema_version).toBe(2)
+      expect(payload.trace.schema_version).toBe(3)
       await expect(readFile(artifactPath(directory, 'review.json'))).resolves.toContain('"checks"')
       await expect(readFile(artifactPath(directory, 'trace.json'))).resolves.toContain('"schema_version"')
       expect(setExitCode).not.toHaveBeenCalled()

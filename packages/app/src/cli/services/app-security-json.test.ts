@@ -4,7 +4,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import {fileURLToPath} from 'node:url'
 import type {AppSecurityExecution} from './app-security-api.js'
-import type {ScanResult, TraceV2} from './app-security-engine/index.js'
+import type {ScanResult, TraceV3} from './app-security-engine/index.js'
 
 const fixtureDirectory = fileURLToPath(new URL('./app-security-json-fixtures', import.meta.url))
 
@@ -48,8 +48,8 @@ const scan: ScanResult = {
   issues: [],
 }
 
-const trace: TraceV2 = {
-  schema_version: 2,
+const trace: TraceV3 = {
+  schema_version: 3,
   engine,
   generated_at: '2026-08-24T00:00:00.000Z',
   project: {commit: null, dirty: null, input_hash: 'sha256:input', input_hashes: {}},

@@ -86,7 +86,7 @@ describe('trace v2', () => {
     const trace = compileTrace(result(), {
       generatedAt: '2026-08-28T00:00:00.000Z',
     })
-    expect(trace.schema_version).toBe(2)
+    expect(trace.schema_version).toBe(3)
     expect(trace.engine.name).toBe('shopify-app-security')
     expect(trace.project).toMatchObject({
       commit: 'a'.repeat(40),
@@ -248,6 +248,7 @@ describe('trace v2', () => {
       generatedAt: '2026-08-28T00:00:00.000Z',
     })
     expect(validateTrace({...trace, schema_version: 1}).errors).toContain('unsupported schema_version: 1')
+    expect(validateTrace({...trace, schema_version: 2}).errors).toContain('unsupported schema_version: 2')
     const changed = structuredClone(trace)
     const [changedFinding] = changed.findings
     if (!changedFinding) throw new Error('Expected the trace to contain a finding')

@@ -13,7 +13,7 @@ import type {
   Severity,
   Suppression,
   TraceFinding,
-  TraceV2,
+  TraceV3,
 } from '../types.js'
 
 const SHA256 = /^sha256:[0-9a-f]{64}$/
@@ -134,7 +134,7 @@ function issueToFinding(issueInput: Issue): TraceFinding {
   return {fingerprint: findingFingerprint(core), ...core, suppressed: false}
 }
 
-export function hasRecordedAgentReview(trace: TraceV2): boolean {
+export function hasRecordedAgentReview(trace: TraceV3): boolean {
   return (
     trace.findings.some((finding) => finding.source === 'agent' || finding.source === 'external') ||
     trace.checks_executed.some((execution) => {
@@ -156,7 +156,7 @@ export interface CompileTraceOptions {
 }
 
 /** Compile trace schema v2. Version 1 remains a separate frozen type. */
-export function compileTrace(result: ScanResult, options: CompileTraceOptions = {}): TraceV2 {
+export function compileTrace(result: ScanResult, options: CompileTraceOptions = {}): TraceV3 {
   const findings = result.issues
     .map(issueToFinding)
     .sort((left, right) =>
@@ -253,7 +253,7 @@ export function compileTrace(result: ScanResult, options: CompileTraceOptions = 
       })),
     },
   }
-  const trace: TraceV2 = {...unsigned, attestation: {digest: sha256(unsigned), signed: false}}
+  const trace: TraceV3 = {...unsigned, attestation: {digest: sha256(unsigned), signed: false}}
   const validation = validateTraceValue(trace)
   if (!validation.valid) {
     // Self-compiled traces are acyclic. A complexity miss on a large app must
@@ -818,7 +818,7 @@ export function validateTrace(value: unknown): TraceValidationResult {
   }
 }
 
-export function assertCompatibleTrace(value: unknown): asserts value is TraceV2 {
+export function assertCompatibleTrace(value: unknown): asserts value is TraceV3 {
   const validation = validateTrace(value)
   if (!validation.valid) throw new Error(`Invalid App Security trace: ${validation.errors.join('; ')}`)
 }

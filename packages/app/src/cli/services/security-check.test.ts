@@ -9,7 +9,7 @@ import type {
 } from './app-security-artifacts.js'
 import type {AppSecurityExecution} from './app-security-api.js'
 import type {AppSecurityInstructionsDestination} from './security-check.js'
-import type {ScanResult, TraceV2} from './app-security-engine/index.js'
+import type {ScanResult, TraceV3} from './app-security-engine/index.js'
 
 const scan: ScanResult = {
   version: '0.1.0',
@@ -52,7 +52,7 @@ const engine = {
 }
 
 const trace = {
-  schema_version: 2,
+  schema_version: 3,
   engine,
   generated_at: '2026-08-24T00:00:00.000Z',
   project: {commit: null, dirty: null, input_hash: 'sha256:input', input_hashes: {}},
@@ -62,7 +62,7 @@ const trace = {
   suppressions: [],
   coverage: {files_scanned: 1, files_skipped: [], complete: true, gaps: []},
   attestation: {digest: 'sha256:digest', signed: false},
-} as TraceV2
+} as TraceV3
 
 const reviewPack = {
   schema_version: 1 as const,

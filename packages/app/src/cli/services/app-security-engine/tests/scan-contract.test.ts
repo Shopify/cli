@@ -8,7 +8,7 @@ import {afterEach, describe, expect, test} from 'vitest'
 import {mkdir, mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import type {TraceV2} from '../types.js'
+import type {TraceV3} from '../types.js'
 
 const directories: string[] = []
 afterEach(async () => {
@@ -31,7 +31,7 @@ async function app(files: Record<string, string>): Promise<string> {
 const appConfig = (scopes = '') => `name = "Scan contract"\n[access_scopes]\nscopes = "${scopes}"\n`
 const reactPackage = JSON.stringify({dependencies: {'@shopify/shopify-app-react-router': '^1.0.0'}})
 
-function resign(trace: TraceV2): void {
+function resign(trace: TraceV3): void {
   const {attestation: _attestation, ...unsigned} = trace
   trace.attestation = {digest: sha256(unsigned), signed: false}
 }

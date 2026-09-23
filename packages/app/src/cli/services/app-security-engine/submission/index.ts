@@ -11,7 +11,7 @@ import type {
   Severity,
   SuppressionProvenance,
   TraceFinding,
-  TraceV2,
+  TraceV3,
 } from '../types.js'
 
 export const SUBMISSION_SCHEMA_VERSION = 1 as const
@@ -68,7 +68,7 @@ export interface AppSecuritySubmission {
 }
 
 export interface AppSecuritySubmissionReport {
-  trace_schema_version: TraceV2['schema_version']
+  trace_schema_version: TraceV3['schema_version']
   engine: {name: string; version: string; ruleset: string}
   cli_version: string
   generated_at: string
@@ -93,7 +93,7 @@ export interface AppSecuritySubmissionReport {
     files_scanned: number
     complete: boolean
     files_skipped: {too_large: number; unreadable: number}
-    gaps: {code: TraceV2['coverage']['gaps'][number]['code']; check_id?: string}[]
+    gaps: {code: TraceV3['coverage']['gaps'][number]['code']; check_id?: string}[]
   }
   attestation: {trace_digest: string}
 }
@@ -159,7 +159,7 @@ function submissionCheck(check: CheckExecution): SubmissionCheck {
   }
 }
 
-function skippedFileCounts(trace: TraceV2): {too_large: number; unreadable: number} {
+function skippedFileCounts(trace: TraceV3): {too_large: number; unreadable: number} {
   return trace.coverage.files_skipped.reduce(
     (counts, file) =>
       file.reason === 'too_large'
@@ -169,7 +169,7 @@ function skippedFileCounts(trace: TraceV2): {too_large: number; unreadable: numb
   )
 }
 
-export function buildSubmission(trace: TraceV2, options: BuildSubmissionOptions): AppSecuritySubmission {
+export function buildSubmission(trace: TraceV3, options: BuildSubmissionOptions): AppSecuritySubmission {
   return {
     schemaVersion: SUBMISSION_SCHEMA_VERSION,
     report: {

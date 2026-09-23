@@ -4,7 +4,7 @@ import {
   buildSubmission,
   type AppSecuritySubmission,
   type BuildSubmissionOptions,
-  type TraceV2,
+  type TraceV3,
 } from './app-security-engine/index.js'
 import {submitAppSecurityScan} from './app-security-submit-api.js'
 import {resolveSecuritySubmitClientId} from './app-security-submit-target.js'
@@ -47,7 +47,7 @@ export interface SecuritySubmitDependencies {
   readTrace(path: string): Promise<ReadTraceResult>
   resolveClientId(options: {directory: string; clientId?: string; configName?: string}): Promise<string>
   fetchApp(clientId: string): Promise<SecuritySubmitAppContext>
-  buildSubmission(trace: TraceV2, options: BuildSubmissionOptions): AppSecuritySubmission
+  buildSubmission(trace: TraceV3, options: BuildSubmissionOptions): AppSecuritySubmission
   writeSubmission(appRoot: string, bytes: Buffer): Promise<void>
   canPrompt(): boolean
   readStdin(): Promise<string | undefined>

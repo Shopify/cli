@@ -171,7 +171,7 @@ export interface ScanMetadata {
   checks_executed: CheckExecution[]
 }
 
-export const TRACE_SCHEMA_VERSION = 2 as const
+export const TRACE_SCHEMA_VERSION = 3 as const
 export const FINDINGS_SCHEMA_VERSION = 1 as const
 export const SUPPORTED_TRACE_SCHEMA_VERSIONS = [TRACE_SCHEMA_VERSION] as const
 export const ENGINE_NAME = 'shopify-app-security' as const
@@ -219,7 +219,7 @@ export interface TraceFinding {
   }
 }
 
-export interface TraceV2 {
+export interface TraceV3 {
   schema_version: typeof TRACE_SCHEMA_VERSION
   engine: {
     name: typeof ENGINE_NAME

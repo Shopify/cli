@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "report": {
-    "trace_schema_version": 2,
+    "trace_schema_version": 3,
     "engine": {
       "name": "shopify-app-security",
       "version": "0.1.0",
@@ -141,7 +141,7 @@
       "gaps": [{"code": "skipped_file"}, {"code": "unresolved_check", "check_id": "UNREPORTED_AGENT_CHECK"}]
     },
     "attestation": {
-      "trace_digest": "sha256:a5abc9a5b332ff7fb9a7afae1dd13a9af8a4fcb990d4551f63d96e3c5318507e"
+      "trace_digest": "sha256:47beaec0942e8f81a01ab97293d256be086c6426cd30c220aa3f800d6a7d19cb"
     }
   }
 }

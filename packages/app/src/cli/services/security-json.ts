@@ -1,19 +1,19 @@
 import type {AppSecurityEngineMetadata, AppSecurityExecution, AppSecurityFindings} from './app-security-api.js'
-import type {ReviewPack, ScanResult, TraceV2} from './app-security-engine/index.js'
+import type {ReviewPack, ScanResult, TraceV3} from './app-security-engine/index.js'
 
 type AppSecurityJsonResult =
   | {
       operation: 'scan'
       engine: AppSecurityEngineMetadata
       scan: ScanResult
-      trace: TraceV2
+      trace: TraceV3
       reviewPack: ReviewPack
     }
   | {
       operation: 'compile'
       engine: AppSecurityEngineMetadata
       scan: ScanResult
-      trace: TraceV2
+      trace: TraceV3
       findings: AppSecurityFindings
     }
 

@@ -1,5 +1,5 @@
 import {findingFingerprint, sha256} from '../../trace/index.js'
-import type {TraceFinding, TraceV2} from '../../types.js'
+import type {TraceFinding, TraceV3} from '../../types.js'
 
 const inputHash = `sha256:${'a'.repeat(64)}`
 const privateFileHash = `sha256:${'b'.repeat(64)}`
@@ -23,7 +23,7 @@ const suppression = {
 }
 
 const traceWithLeakageSentinels = {
-  schema_version: 2,
+  schema_version: 3,
   engine: {
     name: 'shopify-app-security',
     version: '0.1.0',
@@ -221,7 +221,7 @@ function computedFindingFingerprint(finding: TraceFinding): string {
 
 // Compute every integrity field from the final semantic inputs. Unknown-field
 // sentinels are already present before the unsigned trace digest is calculated.
-const unsignedTrace = traceWithLeakageSentinels as unknown as Omit<TraceV2, 'attestation'>
+const unsignedTrace = traceWithLeakageSentinels as unknown as Omit<TraceV3, 'attestation'>
 const agentCheck = unsignedTrace.checks_executed[1]!
 const unresolvedCheck = unsignedTrace.checks_executed[4]!
 agentCheck.prompt_hash = sha256(agentCheck.prompt!)
@@ -242,4 +242,4 @@ export const submissionTraceHashes = {
 export const submissionTraceFixture = {
   ...unsignedTrace,
   attestation: {digest: submissionTraceHashes.traceDigest, signed: false},
-} as TraceV2
+} as TraceV3
