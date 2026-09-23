@@ -244,7 +244,6 @@ export interface TraceV2 {
     input_hashes: Record<string, string>
   }
   detection: ProjectDetection
-  score: ScoreResult | null
   findings: TraceFinding[]
   checks_executed: CheckExecution[]
   suppressions: Suppression[]

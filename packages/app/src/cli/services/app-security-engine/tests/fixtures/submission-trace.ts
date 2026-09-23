@@ -44,8 +44,6 @@ const traceWithLeakageSentinels = {
       {name: 'liquid', support: 'supported', files: ['extensions/private.liquid']},
     ],
   },
-  // Coverage is incomplete and a required check is unresolved, so validateTrace requires null.
-  score: null,
   findings: [
     {
       fingerprint: deterministicFingerprint,

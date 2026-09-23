@@ -55,7 +55,6 @@ const trace: TraceV2 = {
   generated_at: '2026-08-24T00:00:00.000Z',
   project: {commit: null, dirty: null, input_hash: 'sha256:input', input_hashes: {}},
   detection: scan.detection,
-  score: scan.score,
   findings: [],
   checks_executed: [],
   suppressions: [],

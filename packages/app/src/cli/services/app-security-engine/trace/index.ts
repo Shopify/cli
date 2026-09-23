@@ -235,7 +235,6 @@ export function compileTrace(result: ScanResult, options: CompileTraceOptions = 
       ),
     },
     detection: result.detection,
-    score: result.score,
     findings,
     checks_executed: checksExecuted,
     suppressions,
@@ -662,19 +661,6 @@ function validateTraceValue(value: unknown): TraceValidationResult {
   if (typeof value.generated_at !== 'string' || Number.isNaN(Date.parse(value.generated_at)))
     errors.push('generated_at must be an ISO date')
   if (!validDetection(value.detection)) errors.push('detection is invalid')
-  if (
-    !(
-      value.score === null ||
-      (isObject(value.score) &&
-        Number.isInteger(value.score.total) &&
-        Number(value.score.total) >= 0 &&
-        Number(value.score.total) <= 100 &&
-        Number.isInteger(value.score.baseline) &&
-        Number(value.score.baseline) === 100 &&
-        ['EXCELLENT', 'GOOD', 'NEEDS_WORK', 'POOR'].includes(String(value.score.grade)))
-    )
-  )
-    errors.push('score is invalid')
 
   if (Array.isArray(value.findings))
     value.findings.forEach((finding, index) =>
@@ -776,8 +762,6 @@ function validateTraceValue(value: unknown): TraceValidationResult {
       !requiredUnresolved &&
       !unsupportedLanguage
     if (value.coverage.complete !== canBeComplete) errors.push('coverage complete claim is inconsistent')
-    if (value.coverage.complete && value.score === null) errors.push('complete coverage requires a score')
-    if (!value.coverage.complete && value.score !== null) errors.push("incomplete coverage can't have a score")
   }
   if (inspection.containsSecret) errors.push('trace contains an unredacted matched secret')
   if (

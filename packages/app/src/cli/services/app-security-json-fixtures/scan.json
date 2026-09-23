@@ -72,11 +72,6 @@
       "surface": "config_only",
       "languages": []
     },
-    "score": {
-      "total": 100,
-      "baseline": 100,
-      "grade": "EXCELLENT"
-    },
     "findings": [],
     "checks_executed": [],
     "suppressions": [],

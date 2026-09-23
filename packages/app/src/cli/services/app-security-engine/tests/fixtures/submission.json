@@ -141,7 +141,7 @@
       "gaps": [{"code": "skipped_file"}, {"code": "unresolved_check", "check_id": "UNREPORTED_AGENT_CHECK"}]
     },
     "attestation": {
-      "trace_digest": "sha256:acce26c20bde944ca9cd6eb3d323c80829b36ad19ec1b56ec9ad1d7d6a27a76f"
+      "trace_digest": "sha256:a5abc9a5b332ff7fb9a7afae1dd13a9af8a4fcb990d4551f63d96e3c5318507e"
     }
   }
 }
