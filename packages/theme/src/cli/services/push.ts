@@ -255,12 +255,7 @@ async function executePush(
  * @returns {boolean} - Returns true if there are any upload errors, otherwise false.
  */
 function hasUploadErrors(results: Map<string, Result>): boolean {
-  for (const [_key, result] of results.entries()) {
-    if (!result.success) {
-      return true
-    }
-  }
-  return false
+  return Array.from(results.values()).some((result) => !result.success)
 }
 
 /**
