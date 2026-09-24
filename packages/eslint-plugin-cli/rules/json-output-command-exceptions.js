@@ -6,7 +6,6 @@ const commandExceptions = [
   'packages/app/src/cli/commands/app/bulk/cancel.ts',
   'packages/app/src/cli/commands/app/bulk/execute.ts',
   'packages/app/src/cli/commands/app/bulk/status.ts',
-  'packages/app/src/cli/commands/app/config/pull.ts',
   'packages/app/src/cli/commands/app/config/use.ts',
   'packages/app/src/cli/commands/app/deploy.ts',
   'packages/app/src/cli/commands/app/dev/clean.ts',
