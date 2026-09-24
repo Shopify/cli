@@ -1,15 +1,15 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
 export type AppLogsSubscribeMutationVariables = Types.Exact<{
-  shopIds: Types.Scalars['Int']['input'][] | Types.Scalars['Int']['input']
+  shopIds: Array<Types.Scalars['Int']['input']> | Types.Scalars['Int']['input']
   apiKey: Types.Scalars['String']['input']
 }>
 
 export type AppLogsSubscribeMutation = {
-  appLogsSubscribe?: {jwtToken?: string | null; success?: boolean | null; errors?: string[] | null} | null
+  appLogsSubscribe?: {jwtToken?: string | null; success?: boolean | null; errors?: Array<string> | null} | null
 }
 
 export const AppLogsSubscribe = {

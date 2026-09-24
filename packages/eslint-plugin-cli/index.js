@@ -21,13 +21,4 @@ const plugin = {
   },
 }
 
-// Lazy load config to avoid circular dependency
-Object.defineProperty(plugin, 'configs', {
-  get() {
-    return {
-      config: require('./config'),
-    }
-  },
-})
-
 module.exports = plugin

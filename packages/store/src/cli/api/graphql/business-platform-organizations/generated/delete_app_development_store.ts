@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -8,7 +8,10 @@ export type DeleteAppDevelopmentStoreMutationVariables = Types.Exact<{
 }>
 
 export type DeleteAppDevelopmentStoreMutation = {
-  deleteAppDevelopmentStore: {success: boolean; userErrors: {code?: string | null; field: string[]; message: string}[]}
+  deleteAppDevelopmentStore: {
+    success: boolean
+    userErrors: Array<{code?: string | null; field: Array<string>; message: string}>
+  }
 }
 
 export const DeleteAppDevelopmentStore = {

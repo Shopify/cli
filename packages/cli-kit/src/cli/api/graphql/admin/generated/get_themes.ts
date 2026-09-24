@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -9,7 +9,7 @@ export type GetThemesQueryVariables = Types.Exact<{
 
 export type GetThemesQuery = {
   themes?: {
-    nodes: {id: string; name: string; role: Types.ThemeRole; processing: boolean}[]
+    nodes: Array<{id: string; name: string; role: Types.ThemeRole; processing: boolean}>
     pageInfo: {hasNextPage: boolean; endCursor?: string | null}
   } | null
 }

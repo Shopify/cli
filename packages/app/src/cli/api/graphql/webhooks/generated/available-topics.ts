@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -7,7 +7,7 @@ export type AvailableTopicsQueryVariables = Types.Exact<{
   apiVersion: Types.Scalars['String']['input']
 }>
 
-export type AvailableTopicsQuery = {availableTopics?: string[] | null}
+export type AvailableTopicsQuery = {availableTopics?: Array<string> | null}
 
 export const AvailableTopics = {
   kind: 'Document',

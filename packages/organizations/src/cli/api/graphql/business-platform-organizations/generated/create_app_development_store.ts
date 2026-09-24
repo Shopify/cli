@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -15,7 +15,7 @@ export type CreateAppDevelopmentStoreMutation = {
   createAppDevelopmentStore: {
     shopAdminUrl?: string | null
     shopDomain?: string | null
-    userErrors?: {code?: string | null; field: string[]; message: string}[] | null
+    userErrors?: Array<{code?: string | null; field: Array<string>; message: string}> | null
   }
 }
 

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
+/* oxlint-disable typescript/consistent-type-definitions */
 import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -17,14 +17,14 @@ export type MetaobjectForImportFragment = {
       data?: {metaTitleKey?: string | null; metaDescriptionKey?: string | null} | null
     } | null
   }
-  fieldDefinitions: {
+  fieldDefinitions: Array<{
     key: string
     name: string
     description?: string | null
     required: boolean
     type: {category: string; name: string}
-    validations: {name: string; value?: string | null}[]
-  }[]
+    validations: Array<{name: string; value?: string | null}>
+  }>
 }
 
 export type MetaobjectDefinitionsQueryVariables = Types.Exact<{
@@ -34,7 +34,7 @@ export type MetaobjectDefinitionsQueryVariables = Types.Exact<{
 export type MetaobjectDefinitionsQuery = {
   metaobjectDefinitions: {
     pageInfo: {hasNextPage: boolean; endCursor?: string | null}
-    nodes: {
+    nodes: Array<{
       type: string
       name: string
       description?: string | null
@@ -48,15 +48,15 @@ export type MetaobjectDefinitionsQuery = {
           data?: {metaTitleKey?: string | null; metaDescriptionKey?: string | null} | null
         } | null
       }
-      fieldDefinitions: {
+      fieldDefinitions: Array<{
         key: string
         name: string
         description?: string | null
         required: boolean
         type: {category: string; name: string}
-        validations: {name: string; value?: string | null}[]
-      }[]
-    }[]
+        validations: Array<{name: string; value?: string | null}>
+      }>
+    }>
   }
 }
 
