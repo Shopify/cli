@@ -8637,7 +8637,7 @@ Download your remote theme files locally.
 
 ```
 USAGE
-  $ shopify theme pull [--auth-alias <value>] [-d] [-e <value>...] [-x <value>...] [--json-schema] [-l]
+  $ shopify theme pull [--auth-alias <value>] [-d] [-e <value>...] [-x <value>...] [-j] [--json-schema] [-l]
     [--no-color] [-n] [-o <value>...] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
@@ -8649,6 +8649,10 @@ FLAGS
   -e, --environment=<value>...
       The environment to apply to the current command.
       [env: SHOPIFY_FLAG_ENVIRONMENT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -l, --live
       Pull theme files from your remote live theme. Use --development, --live, or --theme in non-interactive environments.
@@ -8707,6 +8711,102 @@ DESCRIPTION
   Retrieves theme files from Shopify.
 
   If no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.
+
+  Output from `--json` conforms to the `ThemePullResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "theme": {
+            "$ref": "#/definitions/ThemePullTheme"
+          }
+        },
+        "required": [
+          "path",
+          "theme"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "environment": {
+              "type": "string"
+            },
+            "path": {
+              "$ref": "#/definitions/ThemePullResult/anyOf/0/properties/path"
+            },
+            "theme": {
+              "$ref": "#/definitions/ThemePullTheme"
+            }
+          },
+          "required": [
+            "environment",
+            "path",
+            "theme"
+          ],
+          "additionalProperties": false
+        }
+      }
+    ],
+    "title": "ThemePullResult",
+    "definitions": {
+      "ThemePullTheme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "processing": {
+            "type": "boolean"
+          },
+          "src": {
+            "type": "string"
+          },
+          "shop": {
+            "type": "string"
+          },
+          "editor_url": {
+            "type": "string"
+          },
+          "preview_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "processing",
+          "shop",
+          "editor_url",
+          "preview_url"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme push`
