@@ -1,5 +1,47 @@
 # @shopify/app
 
+## 4.9.0
+
+### Minor Changes
+
+- b36c592: Add a JSON output schema for `app versions list` and clarify its missing-app error.
+- 3793fab: Add typed JSON output with organization status, shop count, and URL to `organization list`.
+- a80a926: Support owner types in UI extension metafield configuration.
+- 265ada1: Allow Flow trigger lifecycle callback `url`s to be relative to the app's `application_url`
+- 5658023: Support `input_variables` on function targets, alongside the extension-level `[input.variables]`
+- 3385c63: Move `app import-extensions` and `app import-custom-data-definitions` under the new `app import` topic; the old paths still work but are deprecated
+- f863c88: Rename `app doctor` commands to `app security check`, `app security submit`, and `app security instructions`.
+
+### Patch Changes
+
+- 511403e: Check for the presence of a local Dependabot or Renovate configuration file in App Doctor.
+- 5aa3987: Defer context-based route authentication to agent review instead of reporting it as missing authentication.
+- c708391: Select a single app TOML with `--config` in `app security check` and `app security instructions`.
+- 35b1bb7: The committed-secret check in `shopify app security` now only flags recognizable secret values (e.g. `shpss_`/`shpat_` tokens), not secret-sounding variable names or placeholders.
+- f85d3e5: Add App Doctor agent checks for lifecycle replay, dependency reachability, and active upload previews.
+- 73ad604: Stop reporting a missing configured asset path and a missing extension build output as unknown CLI bugs during app build
+- c8f7f06: Add a narrow deterministic App Doctor check for wildcard `frame-ancestors` policies in embedded admin apps.
+- 93cc4d8: Recover gracefully when pnpm blocks dependency build scripts during `app generate extension`: clean up the partially generated extension and explain how to approve the builds
+- 850441d: Avoid flagging static theme asset script tags in app doctor.
+- fcddd81: Remove the dependency CVE audit check from `shopify app doctor`.
+- 7b93048: Stop treating generic 32-character hex values as hardcoded Shopify API keys in App Doctor.
+- 96309ff: Prevent new App Security scans from replacing local agent review work without `--clean`.
+- c5e5194: Fix App Doctor deterministic rule coverage for request-derived admin contexts, app-proxy body flows, and configured callback URL metadata.
+- 9920840: Tighten App Doctor agentic prompts around trust-boundary evidence, tenant-selector provenance, authorization drift, and dependency reachability.
+- Updated dependencies [267c622]
+- Updated dependencies [9832404]
+- Updated dependencies [83fe8a2]
+- Updated dependencies [065cd24]
+- Updated dependencies [02fbf6e]
+- Updated dependencies [46dcc14]
+- Updated dependencies [fd4a5db]
+- Updated dependencies [667c628]
+- Updated dependencies [2a9b3a4]
+  - @shopify/cli-kit@4.9.0
+  - @shopify/organizations@4.9.0
+  - @shopify/plugin-cloudflare@4.9.0
+  - @shopify/theme@4.9.0
+
 ## 4.8.0
 
 ### Minor Changes
