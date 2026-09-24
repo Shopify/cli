@@ -1,5 +1,6 @@
 import {getDevelopmentTheme} from './local-storage.js'
 import {list} from './list.js'
+import {renderThemeListResult} from './list/result.js'
 import {fetchStoreThemes} from '../utilities/theme-selector/fetch.js'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
@@ -22,8 +23,8 @@ describe('list', () => {
     const developmentThemeId = 5
     const hostThemeId = 6
     vi.mocked(fetchStoreThemes).mockResolvedValue([
-      {id: 1, name: 'Theme 1', role: 'live'},
-      {id: 2, name: 'Theme 2', role: ''},
+      {id: 1, name: 'Theme 1', processing: false, createdAtRuntime: false, role: 'live'},
+      {id: 2, name: 'Theme 2', processing: false, createdAtRuntime: false, role: ''},
       {id: 3, name: 'Theme 3', role: 'development'},
       {id: developmentThemeId, name: 'Theme 5', role: 'development'},
       {id: hostThemeId, name: 'Theme 6', role: 'development'},
@@ -31,7 +32,7 @@ describe('list', () => {
     vi.mocked(getDevelopmentTheme).mockReturnValue(developmentThemeId.toString())
     vi.mocked(getHostTheme).mockReturnValue(hostThemeId.toString())
 
-    await list({json: false}, session)
+    renderThemeListResult(await list({}, session), 'text', {store: session.storeFqdn})
 
     expect(renderInfo).toHaveBeenCalledWith({
       customSections: [
@@ -61,7 +62,7 @@ describe('list', () => {
       {id: 5, name: 'Theme 5', role: 'development'},
     ] as Theme[])
 
-    await list({role: 'live', name: '*eMe 3*', json: false}, session)
+    renderThemeListResult(await list({role: 'live', name: '*eMe 3*'}, session), 'text', {store: session.storeFqdn})
 
     expect(renderInfo).toHaveBeenCalledWith({
       customSections: [
@@ -83,22 +84,26 @@ describe('list', () => {
     const mockOutput = mockAndCaptureOutput()
 
     vi.mocked(fetchStoreThemes).mockResolvedValue([
-      {id: 1, name: 'Theme 1', role: 'live'},
-      {id: 2, name: 'Theme 2', role: ''},
+      {id: 1, name: 'Theme 1', processing: false, createdAtRuntime: false, role: 'live'},
+      {id: 2, name: 'Theme 2', processing: false, createdAtRuntime: false, role: ''},
     ] as Theme[])
 
-    await list({json: true}, session)
+    renderThemeListResult(await list({}, session), 'json', {store: session.storeFqdn})
 
     expect(mockOutput.info()).toMatchInlineSnapshot(`
       "[
         {
           "id": 1,
           "name": "Theme 1",
+          "processing": false,
+          "createdAtRuntime": false,
           "role": "live"
         },
         {
           "id": 2,
           "name": "Theme 2",
+          "processing": false,
+          "createdAtRuntime": false,
           "role": ""
         }
       ]"
