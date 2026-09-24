@@ -48,45 +48,48 @@ export function transformFromEventsConfig(content: object, appConfiguration?: ob
   }
 }
 
+interface RemoteEventsModule {
+  api_version?: string
+  subscription?: RemoteEventSubscription | RemoteEventSubscription[] | null
+}
+
 interface RemoteEventSubscription {
-  identifier: string
+  identifier?: string
+  handle?: string
   api_version?: string
   [key: string]: unknown
 }
 
 /**
- * Transforms the events config from remote to local format.
- * Strips the server-managed 'identifier' field from subscriptions, and the
- * per-subscription 'api_version' when it only echoes the events default.
+ * Transforms one events module from remote to local format.
+ * Strips the server-managed 'identifier' field, and the per-subscription
+ * 'api_version' when it matches the module default. Single-subscription
+ * objects are normalized to a one-element array.
  */
-export function transformToEventsConfig(content: object) {
-  const eventsConfig = getPathValue(content, 'events') as {
-    api_version: string
-    subscription: RemoteEventSubscription | RemoteEventSubscription[]
+export function transformToEventsConfig(content: object, moduleHandle?: string) {
+  const {api_version: apiVersion, subscription} = getPathValue<RemoteEventsModule>(content, 'events') ?? {}
+
+  const clean = (sub: RemoteEventSubscription) => {
+    const {identifier: _, api_version: subApiVersion, ...rest} = sub
+    const overridesDefault = subApiVersion !== undefined && subApiVersion !== apiVersion
+    return overridesDefault ? {...rest, api_version: subApiVersion} : rest
   }
-  const apiVersion = getPathValue<string>(eventsConfig, 'api_version')
-  const subscription = getPathValue<RemoteEventSubscription | RemoteEventSubscription[] | null>(
-    eventsConfig,
-    'subscription',
-  )
 
-  // The server always includes identifier, and materializes the events default
-  // api_version onto every subscription. Both are derived, so they are stripped
-  // for the local TOML; an api_version that differs from the default is a real
-  // override and is kept. Single-subscription modules are normalized to a
-  // one-element array so that merging multiple modules accumulates a single
-  // subscription list.
-  // The remote payload may carry null as well as omit the field entirely.
-  const cleanedSubscriptions = subscription
-    ? wrapSubscriptions(subscription).map((sub) => {
-        const {identifier, api_version: subscriptionApiVersion, ...rest} = sub
-        const overridesDefault = subscriptionApiVersion !== undefined && subscriptionApiVersion !== apiVersion
-        return overridesDefault ? {...rest, api_version: subscriptionApiVersion} : rest
-      })
-    : undefined
+  let cleanedSubscriptions: object[] | undefined
+  if (Array.isArray(subscription)) {
+    cleanedSubscriptions = subscription.map(clean)
+  } else if (subscription) {
+    const handle = subscription.handle ?? moduleHandle
+    cleanedSubscriptions = [clean(handle ? {...subscription, handle} : subscription)]
+  }
 
-  const events =
-    (apiVersion ?? cleanedSubscriptions) ? {api_version: apiVersion, subscription: cleanedSubscriptions} : {}
+  const events: {api_version?: string; subscription?: object[]} = {}
+  if (apiVersion !== undefined) {
+    events.api_version = apiVersion
+  }
+  if (cleanedSubscriptions !== undefined) {
+    events.subscription = cleanedSubscriptions
+  }
 
   return {events}
 }

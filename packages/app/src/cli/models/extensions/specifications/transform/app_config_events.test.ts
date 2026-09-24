@@ -535,4 +535,125 @@ describe('transformToEventsConfig', () => {
       },
     })
   })
+
+  test('names a single subscription without a handle after its module', () => {
+    const remoteContent = {
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'orders/create',
+          uri: 'https://example.com/webhook',
+          actions: ['create'],
+          identifier: 'id-1',
+        },
+      },
+    }
+
+    const result = transformToEventsConfig(remoteContent, 'order-notifier')
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/webhook',
+            actions: ['create'],
+            handle: 'order-notifier',
+          },
+        ],
+      },
+    })
+  })
+
+  test('keeps the handle of a single subscription over the module handle', () => {
+    const remoteContent = {
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'orders/create',
+          uri: 'https://example.com/webhook',
+          actions: ['create'],
+          handle: 'existing-handle',
+          identifier: 'id-1',
+        },
+      },
+    }
+
+    const result = transformToEventsConfig(remoteContent, 'order-notifier')
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/webhook',
+            actions: ['create'],
+            handle: 'existing-handle',
+          },
+        ],
+      },
+    })
+  })
+
+  test('leaves a single subscription unnamed when no module handle is provided', () => {
+    const remoteContent = {
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'orders/create',
+          uri: 'https://example.com/webhook',
+          actions: ['create'],
+          identifier: 'id-1',
+        },
+      },
+    }
+
+    const result = transformToEventsConfig(remoteContent)
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/webhook',
+            actions: ['create'],
+          },
+        ],
+      },
+    })
+  })
+
+  test('does not name subscriptions in a list after the module', () => {
+    const remoteContent = {
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/webhook',
+            actions: ['create'],
+            identifier: 'id-1',
+          },
+        ],
+      },
+    }
+
+    const result = transformToEventsConfig(remoteContent, 'order-notifier')
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/webhook',
+            actions: ['create'],
+          },
+        ],
+      },
+    })
+  })
 })
