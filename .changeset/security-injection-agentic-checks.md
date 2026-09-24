@@ -2,4 +2,4 @@
 '@shopify/app': minor
 ---
 
-Add agentic App Security checks for SQL injection and cross-site scripting in app-owned pages.
+Add agentic SQL injection and XSS checks, including stored app-proxy content, and refine DOM XSS validation.

@@ -83,16 +83,21 @@ source-to-sink vulnerability only once, under the most specific owning check:
 - `UNSAFE_INNERHTML`: DOM HTML writes and browser code-evaluation sinks.
 - `THEME_EXTENSION_XSS` / `LIQUID_UNSAFE_RENDER`: theme-extension Liquid output.
 - `TEXT_SETTING_HTML_SMUGGLING`: merchant text settings becoming active content.
-- `APP_PROXY_LIQUID_INJECTION`: active app-proxy responses.
+- `APP_PROXY_LIQUID_INJECTION`: values from verified app-proxy requests reaching
+  active responses.
 - `SCRIPT_TAG_URL_INJECTION`: Shopify ScriptTag source URLs.
 - `ACTIVE_UPLOADS_AND_PRIVILEGED_PREVIEWS`: uploaded/imported active files and
   their privileged previews.
 
-Leave those findings to their owning checks, using their own provenance. Use
-`CROSS_SITE_SCRIPTING` for remaining paths, such as reflected server HTML,
+Delegate only when the specialized check covers the complete source-to-sink
+path, not merely the response surface, and use that check's own provenance.
+Use `CROSS_SITE_SCRIPTING` for remaining paths, such as reflected server HTML,
 stored customer content in an operator template, unsafe hydration data, or
-active URL/attribute output outside those specialized surfaces. Do not suppress
-a distinct vulnerable sink just because the same input is used elsewhere.
+active URL/attribute output outside those specialized paths. Stored buyer
+reviews rendered in app-proxy HTML/Liquid responses remain here when the
+content comes from a separate submission endpoint rather than the verified
+proxy request. Do not suppress a distinct vulnerable sink just because the
+same input is used elsewhere.
 
 ## What to report
 

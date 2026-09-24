@@ -25,9 +25,14 @@ not a finding without a complete source-to-execution path.
    imports, webhook fields, and merchant/customer-editable records or metafields.
    Follow aliases, transformations, shared packages, and queued jobs. A verified
    webhook or authenticated request can still contain lower-trust business data.
+   For Shopify API/webhook fields, identify the actual customer/merchant writer
+   and field constraints. A documented field contract or app-visible write path
+   can establish control without Shopify's implementation source.
    For second-order injection, trace the original write, storage, later read,
    and query construction; safe insertion does not make the stored value safe
    to concatenate into another query.
+   For example, follow a buyer's order note through a verified webhook, safe
+   app-side persistence, and later report-query interpolation.
 
 3. **Inspect query-building escape hatches.** Examples to investigate include:
    - JavaScript/TypeScript SQL drivers such as `pg`, `mysql2`, and SQLite adapters;
@@ -44,8 +49,9 @@ not a finding without a complete source-to-execution path.
 4. **Separate SQL structure from values.** Check interpolated literals, numeric
    expressions, `IN` lists, `LIKE` patterns, identifiers, sort directions,
    `ORDER BY`, limits, and appended clauses. Value placeholders usually cannot
-   bind table names, column names, or keywords: verify a closed mapping to trusted
-   SQL fragments or the driver's identifier-quoting facility for those cases.
+   bind table names, column names, or keywords. Map keywords and structural
+   fragments to fixed SQL; use dialect-appropriate identifier quoting only
+   for actual identifiers.
    Binding one value does not protect a different interpolated fragment.
 
 5. **Resolve parameterization semantics before deciding.** Distinguish ordinary
@@ -64,6 +70,10 @@ not a finding without a complete source-to-execution path.
    read unauthorized rows, or modify data beyond the intended operation. Do not
    assume stacked statements, database-admin privileges, filesystem access, or
    command execution. An error or wildcard match alone is not SQL injection.
+   Distinguish the caller's shop permissions from the app's database authority.
+   Verify database grants, row-level security, and database-per-shop connections
+   before claiming cross-shop access. Report the demonstrated effect even when
+   it is confined to one shop.
    A bound query with a missing tenant filter belongs to
    `MISSING_TENANT_ISOLATION` or `REQUEST_DERIVED_SHOP_SCOPE`, not this check.
 
@@ -80,8 +90,8 @@ check's ID, version, and prompt hash. Each finding must include:
 - A minimal, non-destructive illustration of the changed query structure and
   the concrete data or operation exposed. Code reasoning is sufficient; do not
   probe live stores, execute destructive SQL, or access real customer data.
-- A fix at the construction boundary: bind values and map or safely quote the
-  necessary identifiers/fragments, rather than add a keyword blacklist.
+- A fix at the construction boundary: bind values, map structural fragments to
+  fixed SQL, and safely quote actual identifiers rather than use keyword blacklists.
 
 Do not report constant SQL, correctly bound values, safe identifier mappings,
 unreachable examples/tests, or an ordinary authorized database operation.
