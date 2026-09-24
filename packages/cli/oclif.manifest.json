@@ -9350,7 +9350,7 @@
       "args": {
       },
       "customPluginName": "@shopify/theme",
-      "description": "Calls and runs \"Theme Check\" (https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors and to ensure that it follows theme and Liquid best practices. \"Learn more about the checks that Theme Check runs.\" (https://shopify.dev/docs/themes/tools/theme-check/checks)",
+      "description": "Calls and runs \"Theme Check\" (https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors and to ensure that it follows theme and Liquid best practices. \"Learn more about the checks that Theme Check runs.\" (https://shopify.dev/docs/themes/tools/theme-check/checks)\n\nOutput from `--json` conforms to the `ThemeCheckResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"$ref\": \"#/definitions/ThemeCheckEnvironment/properties/result\"\n    },\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"environments\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/definitions/ThemeCheckEnvironment\"\n          }\n        }\n      },\n      \"required\": [\n        \"environments\"\n      ],\n      \"additionalProperties\": false\n    }\n  ],\n  \"title\": \"ThemeCheckResult\",\n  \"definitions\": {\n    \"ThemeCheckOffense\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"check\": {\n          \"type\": \"string\"\n        },\n        \"severity\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"error\",\n            \"warning\",\n            \"info\"\n          ]\n        },\n        \"start_row\": {\n          \"type\": \"number\"\n        },\n        \"start_column\": {\n          \"type\": \"number\"\n        },\n        \"end_row\": {\n          \"type\": \"number\"\n        },\n        \"end_column\": {\n          \"type\": \"number\"\n        },\n        \"message\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"check\",\n        \"severity\",\n        \"start_row\",\n        \"start_column\",\n        \"end_row\",\n        \"end_column\",\n        \"message\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"ThemeCheckFile\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"environment\": {\n          \"type\": \"string\"\n        },\n        \"path\": {\n          \"type\": \"string\"\n        },\n        \"offenses\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/definitions/ThemeCheckOffense\"\n          }\n        },\n        \"errorCount\": {\n          \"type\": \"number\"\n        },\n        \"warningCount\": {\n          \"type\": \"number\"\n        },\n        \"infoCount\": {\n          \"type\": \"number\"\n        }\n      },\n      \"required\": [\n        \"path\",\n        \"offenses\",\n        \"errorCount\",\n        \"warningCount\",\n        \"infoCount\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"ThemeCheckEnvironment\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"environment\": {\n          \"type\": \"string\"\n        },\n        \"result\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/definitions/ThemeCheckFile\"\n          }\n        }\n      },\n      \"required\": [\n        \"environment\",\n        \"result\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Calls and runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors and to ensure that it follows theme and Liquid best practices. [Learn more about the checks that Theme Check runs.](https://shopify.dev/docs/themes/tools/theme-check/checks)",
       "enableJsonFlag": false,
       "flags": {
@@ -9414,6 +9414,21 @@
           "env": "SHOPIFY_FLAG_INIT",
           "name": "init",
           "required": false,
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "exclusive": [
+            "init",
+            "version",
+            "print",
+            "list"
+          ],
+          "hidden": false,
+          "name": "json",
           "type": "boolean"
         },
         "json-schema": {

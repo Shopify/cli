@@ -7070,8 +7070,8 @@ Validate the theme.
 ```
 USAGE
   $ shopify theme check [--auth-alias <value>] [-a] [-C <value>] [-e <value>...] [--fail-level
-    crash|error|suggestion|style|warning|info] [--init] [--json-schema] [--list] [--no-color] [-o text|json] [--path
-    <value>] [--print] [--verbose] [-v]
+    crash|error|suggestion|style|warning|info] [-j | --init | -v | --print | --list] [--json-schema] [--no-color] [-o
+    text|json] [--path <value>] [--verbose]
 
 FLAGS
   -C, --config=<value>
@@ -7088,6 +7088,10 @@ FLAGS
   -e, --environment=<value>...
       The environment to apply to the current command.
       [env: SHOPIFY_FLAG_ENVIRONMENT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -o, --output=<option>
       [default: text] The output format to use
@@ -7141,6 +7145,133 @@ DESCRIPTION
   Calls and runs "Theme Check" (https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors
   and to ensure that it follows theme and Liquid best practices. "Learn more about the checks that Theme Check runs."
   (https://shopify.dev/docs/themes/tools/theme-check/checks)
+
+  Output from `--json` conforms to the `ThemeCheckResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeCheckEnvironment/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeCheckEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeCheckResult",
+    "definitions": {
+      "ThemeCheckOffense": {
+        "type": "object",
+        "properties": {
+          "check": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "info"
+            ]
+          },
+          "start_row": {
+            "type": "number"
+          },
+          "start_column": {
+            "type": "number"
+          },
+          "end_row": {
+            "type": "number"
+          },
+          "end_column": {
+            "type": "number"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "check",
+          "severity",
+          "start_row",
+          "start_column",
+          "end_row",
+          "end_column",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeCheckFile": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "offenses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeCheckOffense"
+            }
+          },
+          "errorCount": {
+            "type": "number"
+          },
+          "warningCount": {
+            "type": "number"
+          },
+          "infoCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "path",
+          "offenses",
+          "errorCount",
+          "warningCount",
+          "infoCount"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeCheckEnvironment": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeCheckFile"
+            }
+          }
+        },
+        "required": [
+          "environment",
+          "result"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme console`
