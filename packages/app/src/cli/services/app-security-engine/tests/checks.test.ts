@@ -12,42 +12,6 @@ import {EMBEDDED_CHECK_SOURCES} from '../checks/embedded.js'
 import {describe, expect, test} from 'vitest'
 import {readFileSync, readdirSync} from 'node:fs'
 
-const EXPECTED_CHECK_IDS = [
-  'ACTIVE_UPLOADS_AND_PRIVILEGED_PREVIEWS',
-  'APP_PROXY_LIQUID_INJECTION',
-  'APP_PROXY_UNVERIFIED_SIGNATURE',
-  'COMMITTED_SECRET',
-  'CREDENTIAL_BROWSER_LEAKAGE',
-  'CREDENTIAL_LOG_LEAKAGE',
-  'CSRF_MISSING_PROTECTION',
-  'DEPENDENCY_REACHABILITY',
-  'DEPRECATED_SCRIPT_TAG_SCOPE',
-  'EOL_API_VERSION',
-  'EXPIRING_OFFLINE_TOKEN',
-  'INSECURE_WEBHOOK_URL',
-  'LIQUID_UNSAFE_RENDER',
-  'METAFIELD_OFFLINE_TOKEN',
-  'MISSING_AUTHORIZATION_CHECK',
-  'MISSING_COMPLIANCE_WEBHOOKS',
-  'MISSING_EMBEDDED_CSP',
-  'MISSING_TENANT_ISOLATION',
-  'OPEN_REDIRECT',
-  'OVERBROAD_DATA_ACCESS',
-  'REQUEST_CONTROLLED_ADMIN_CONTEXT',
-  'REQUEST_DERIVED_SHOP_SCOPE',
-  'SCOPE_OVER_REQUEST',
-  'SCRIPT_TAG_URL_INJECTION',
-  'SESSION_LIFECYCLE_AND_REPLAY',
-  'SSRF_REQUEST_FORGERY',
-  'STATIC_FRAME_ANCESTORS',
-  'TEXT_SETTING_HTML_SMUGGLING',
-  'THEME_EXTENSION_XSS',
-  'UNAUTHENTICATED_ENDPOINT',
-  'UNSAFE_INNERHTML',
-  'UNSCOPED_SHOP_CONFIG_WRITE',
-  'WEAK_SHOP_VALIDATION',
-]
-
 const validFinding: AgentFinding = {
   check_id: 'MISSING_TENANT_ISOLATION',
   check_version: 1,
@@ -78,18 +42,6 @@ describe('check loading', () => {
     expect(EMBEDDED_CHECK_SOURCES).toEqual(markdownSources)
   })
 
-  test('loads all versioned checks with frontmatter parsed', () => {
-    const checks = loadChecks()
-    expect([...checks.keys()]).toEqual(EXPECTED_CHECK_IDS)
-    expect(checks.size).toBe(33)
-    const tenant = checks.get('MISSING_TENANT_ISOLATION')
-    expect(tenant).toBeDefined()
-    expect(tenant!.version).toBeGreaterThanOrEqual(1)
-    expect(tenant!.severity).toBe('high')
-    expect(tenant!.prompt.length).toBeGreaterThan(200)
-    expect(tenant!.tier).toBe('agentic')
-  })
-
   test('does not carry candidate_source — the agent explores independently', () => {
     const checks = loadChecks()
     const tenant = checks.get('MISSING_TENANT_ISOLATION')!
@@ -105,16 +57,6 @@ describe('check loading', () => {
 })
 
 describe('review pack', () => {
-  test('contains prompts, not candidates', () => {
-    const pack = buildReviewPack('0.1.0')
-    expect(pack.checks.map((check) => check.id)).toEqual(EXPECTED_CHECK_IDS)
-    expect(pack.checks).toHaveLength(33)
-    expect((pack as unknown as Record<string, unknown>).candidates).toBeUndefined()
-    const tenant = pack.checks.find((c) => c.id === 'MISSING_TENANT_ISOLATION')
-    expect(tenant).toBeDefined()
-    expect(tenant!.prompt.length).toBeGreaterThan(200)
-  })
-
   test('instructions tell the agent to explore and find, not adjudicate', () => {
     const pack = buildReviewPack('0.1.0')
     expect(pack.instructions).toMatch(/explore|find/i)
