@@ -1,5 +1,6 @@
 import Push from './push.js'
 import Pull from './pull.js'
+import Share from './share.js'
 import {executeThemePush} from '../../services/push.js'
 import {executeThemePull} from '../../services/pull.js'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
@@ -24,7 +25,11 @@ class TestPull extends Pull {
   public parse = vi.fn()
 }
 
-describe.each([TestPush, TestPull])('%s', (Command) => {
+class TestShare extends Share {
+  public parse = vi.fn()
+}
+
+describe.each([TestPush, TestPull, TestShare])('%s', (Command) => {
   test.each(['none', 'partial', 'total', 'cancelled'] as const)(
     'retains all environments in request order with %s failures',
     async (failures) => {
