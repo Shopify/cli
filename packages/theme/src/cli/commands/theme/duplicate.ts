@@ -1,3 +1,6 @@
+import {themeDuplicateJsonOutputSchema} from '../../services/duplicate/types.js'
+import {renderThemeDuplicateResult} from '../../services/duplicate/result.js'
+import {configureCLIEnvironment} from '../../utilities/cli-config.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
@@ -9,6 +12,10 @@ import {isCI} from '@shopify/cli-kit/node/system'
 import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 export default class Duplicate extends ThemeCommand {
+  static get jsonOutputSchema() {
+    return themeDuplicateJsonOutputSchema
+  }
+
   static summary = 'Duplicates a theme from your theme library.'
 
   static usage = ['theme duplicate', "theme duplicate --theme 10 --name 'New Theme'"]
@@ -81,6 +88,8 @@ Sample JSON output:
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
-    await duplicate(adminSession, flags.theme, flags)
+    configureCLIEnvironment(flags)
+    const result = await duplicate(adminSession, flags.theme, flags)
+    renderThemeDuplicateResult(result, flags.json ? 'json' : 'text')
   }
 }
