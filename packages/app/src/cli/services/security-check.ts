@@ -4,7 +4,13 @@ import {
   loadAppSecurityFindings,
   resolveAppSecurityRoot,
 } from './app-security-api.js'
-import {appSecurityArtifactPaths, readTrace, writeAppSecurityArtifacts} from './app-security-artifacts.js'
+import {
+  appSecurityArtifactPaths,
+  readAppSecurityArtifactState,
+  readTrace,
+  withTracePublicationLock,
+  writeAppSecurityArtifacts,
+} from './app-security-artifacts.js'
 import {requireSecurityConfigFileName} from './app-security-config.js'
 import deliverAppSecurityInstructions from './app-security-instructions.js'
 import {
@@ -22,6 +28,7 @@ import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {renderConfirmationPrompt, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import type {
   AppSecurityArtifactPaths,
+  AppSecurityArtifactState,
   ReadTraceResult,
   ResolvedAppSecurityArtifactPaths,
   WriteAppSecurityArtifactsOptions,
@@ -49,7 +56,12 @@ interface SecurityDependencies {
   artifactPaths(appRoot: string): ResolvedAppSecurityArtifactPaths
   findingsFileExists(path: string): Promise<boolean>
   readTrace(path: string): Promise<ReadTraceResult>
+  readArtifactState(paths: ResolvedAppSecurityArtifactPaths): Promise<AppSecurityArtifactState>
   execute(options: {appRoot: string; configFileName: string; findingsPath?: string}): Promise<AppSecurityExecution>
+  withPublicationLock(
+    appRoot: string,
+    publish: () => Promise<AppSecurityArtifactPaths>,
+  ): Promise<AppSecurityArtifactPaths>
   writeArtifacts(
     execution: AppSecurityExecution,
     options: WriteAppSecurityArtifactsOptions,
@@ -93,10 +105,12 @@ const defaultDependencies: SecurityDependencies = {
   artifactPaths: appSecurityArtifactPaths,
   findingsFileExists: fileExists,
   readTrace,
+  readArtifactState: readAppSecurityArtifactState,
   execute: async ({appRoot, configFileName, findingsPath}) => {
     const findings = findingsPath ? await loadAppSecurityFindings(findingsPath) : undefined
     return executeAppSecurity({appRoot, findings, configFileName})
   },
+  withPublicationLock: (appRoot, publish) => withTracePublicationLock(appRoot, publish),
   writeArtifacts: writeAppSecurityArtifacts,
   canPrompt: terminalSupportsPrompting,
   confirmDiscardReview: (details) => renderConfirmationPrompt(appSecurityDiscardReviewPrompt(details)),
@@ -213,6 +227,38 @@ async function confirmCleanForNewScan(
   throw new AbortSilentError()
 }
 
+/**
+ * Stops publication when another run changed the artifacts after this one started, so its results can't silently
+ * replace newer review work. Must run while holding the trace publication lock.
+ */
+async function assertArtifactsUnchanged(
+  startingState: AppSecurityArtifactState,
+  options: SecurityOptions,
+  paths: ResolvedAppSecurityArtifactPaths,
+  commands: AppSecurityCommands,
+  dependencies: SecurityDependencies,
+): Promise<void> {
+  const currentState = await dependencies.readArtifactState(paths)
+  const traceUnchanged = currentState.traceDigest === startingState.traceDigest
+
+  if (options.findingsPath) {
+    // Compilation reads its findings document up front, so only a trace replaced by another run matters.
+    if (traceUnchanged) return
+    // The default compile command names the default findings file, which may not be the one this run compiled.
+    const compileCommand = {...commands.scan, args: [...commands.scan.args, '--findings', options.findingsPath]}
+    throw new AbortError(
+      "App Security didn't save the compiled findings.",
+      `The trace changed while the findings were being compiled:\n  ${paths.tracePath}\n\nCompile the findings again:\n  ${formatAppSecurityCommand(compileCommand)}`,
+    )
+  }
+
+  if (traceUnchanged && currentState.findingsExist === startingState.findingsExist) return
+  throw new AbortError(
+    "App Security didn't save the new scan results.",
+    `App Security artifacts changed while this scan was running:\n  ${paths.artifactDirectory}\n\nRun the scan again to check the latest results:\n  ${formatAppSecurityCommand(commands.scan)}\n\nTo discard the current review and start over:\n  ${formatAppSecurityCommand(commands.clean)}`,
+  )
+}
+
 export default async function securityCheck(
   options: SecurityOptions,
   dependencies: SecurityDependencies = defaultDependencies,
@@ -220,17 +266,24 @@ export default async function securityCheck(
   const appRoot = dependencies.resolveRoot(options.directory)
   const configFileName = requireSecurityConfigFileName(appRoot, options.configName)
   const commands = resolveAppSecurityCommands(appRoot, configFileName)
+  const paths = dependencies.artifactPaths(appRoot)
+  // An explicit --clean discards whatever exists at publication time. Every other run, including one whose discard
+  // was confirmed at the prompt, only replaces the state it started from. The snapshot precedes the prompt so a
+  // confirmation can't cover work that appeared after it was shown.
+  const startingState = options.clean ? undefined : await dependencies.readArtifactState(paths)
   const startsNewScan = !options.findingsPath && !options.clean
-  const clean = startsNewScan
-    ? await confirmCleanForNewScan(options, dependencies.artifactPaths(appRoot), commands, dependencies)
-    : options.clean
+  const clean = startsNewScan ? await confirmCleanForNewScan(options, paths, commands, dependencies) : options.clean
 
+  // Scanning stays outside the lock; only the final check and publication hold it.
   const execution = await dependencies.execute({
     appRoot,
     configFileName,
     findingsPath: options.findingsPath,
   })
-  const artifacts = await dependencies.writeArtifacts(execution, {clean})
+  const artifacts = await dependencies.withPublicationLock(appRoot, async () => {
+    if (startingState) await assertArtifactsUnchanged(startingState, options, paths, commands, dependencies)
+    return dependencies.writeArtifacts(execution, {clean})
+  })
 
   if (options.json) {
     dependencies.output(encodeSecurityJson(toSecurityJson(execution)))

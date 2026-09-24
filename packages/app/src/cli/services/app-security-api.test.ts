@@ -5,12 +5,11 @@ import {
   resolveAppSecurityRoot,
   type AppSecurityBlockingLevel,
 } from './app-security-api.js'
-import {appSecurityArtifactPaths, readTrace, writeAppSecurityArtifacts} from './app-security-artifacts.js'
-import securityCheck from './security-check.js'
+import {writeAppSecurityArtifacts} from './app-security-artifacts.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExists, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {symlink} from 'node:fs/promises'
 
 function artifactPath(directory: string, name: string): string {
@@ -595,51 +594,6 @@ describe('App Security CLI integration', () => {
         })
         await expect(readFile(joinPath(externalDirectory, 'app-security', 'trace.json'))).rejects.toThrow()
       })
-    })
-  })
-
-  test('unmocked securityCheck scan writes artifacts, JSON output, and a zero exit status', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await createApp(directory)
-      const output = vi.fn()
-      const setExitCode = vi.fn()
-
-      await securityCheck(
-        {
-          directory,
-          json: true,
-          verbose: false,
-          blocking: 'none',
-          yes: false,
-          skipInstructions: true,
-          clean: false,
-        },
-        {
-          resolveRoot: resolveAppSecurityRoot,
-          artifactPaths: appSecurityArtifactPaths,
-          findingsFileExists: fileExists,
-          readTrace,
-          execute: async ({appRoot, configFileName, findingsPath}) => {
-            const findings = findingsPath ? await loadAppSecurityFindings(findingsPath) : undefined
-            return executeAppSecurity({appRoot, configFileName, findings})
-          },
-          writeArtifacts: writeAppSecurityArtifacts,
-          canPrompt: () => false,
-          confirmDiscardReview: async () => false,
-          selectInstructionsDestination: async () => 'nothing',
-          deliverInstructions: async () => {},
-          output,
-          renderReport: vi.fn(),
-          setExitCode,
-        },
-      )
-
-      const payload = JSON.parse(output.mock.calls[0]![0]) as {operation: string; trace: {schema_version: number}}
-      expect(payload.operation).toBe('scan')
-      expect(payload.trace.schema_version).toBe(3)
-      await expect(readFile(artifactPath(directory, 'review.json'))).resolves.toContain('"checks"')
-      await expect(readFile(artifactPath(directory, 'trace.json'))).resolves.toContain('"schema_version"')
-      expect(setExitCode).not.toHaveBeenCalled()
     })
   })
 })

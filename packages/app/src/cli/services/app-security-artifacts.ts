@@ -1,12 +1,21 @@
 import {parseTrace, type TraceV3} from './app-security-engine/index.js'
 import {fileExists, fileSize, readFile} from '@shopify/cli-kit/node/fs'
+import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
+import lockfile, {type LockOptions} from 'proper-lockfile'
 import {randomBytes} from 'node:crypto'
 import {lstat, mkdir, realpath, rename, unlink, writeFile} from 'node:fs/promises'
 import type {AppSecurityExecution} from './app-security-api.js'
 
 const MAX_TRACE_FILE_SIZE_BYTES = 5_000_000
+
+// A lock whose holder stops refreshing it for this long is treated as abandoned by a crashed process.
+const TRACE_LOCK_STALE_MILLISECONDS = 10_000
+// Publication holds the lock for milliseconds. The total wait (~17 seconds) outlasts TRACE_LOCK_STALE_MILLISECONDS,
+// so a lock left by a crashed process is reclaimed instead of reported as busy.
+const TRACE_LOCK_RETRIES: LockOptions['retries'] = {retries: 20, minTimeout: 100, maxTimeout: 1000}
 
 export interface AppSecurityArtifactPaths {
   artifactDirectory: string
@@ -17,6 +26,7 @@ export interface AppSecurityArtifactPaths {
 export interface ResolvedAppSecurityArtifactPaths extends Required<AppSecurityArtifactPaths> {
   findingsPath: string
   submissionPath: string
+  traceLockPath: string
 }
 
 export type ReadTraceResult =
@@ -32,6 +42,92 @@ export function appSecurityArtifactPaths(appRoot: string): ResolvedAppSecurityAr
     findingsPath: joinPath(artifactDirectory, 'findings.json'),
     submissionPath: joinPath(artifactDirectory, 'submission.json'),
     tracePath: joinPath(artifactDirectory, 'trace.json'),
+    traceLockPath: joinPath(artifactDirectory, 'trace.lock'),
+  }
+}
+
+/**
+ * Identifies the shared artifact state a command started from, so it can refuse to publish over changes made while
+ * it was running.
+ */
+export interface AppSecurityArtifactState {
+  // Undefined when there is no trace.
+  traceDigest?: string
+  findingsExist: boolean
+}
+
+export async function readAppSecurityArtifactState(
+  paths: ResolvedAppSecurityArtifactPaths,
+): Promise<AppSecurityArtifactState> {
+  return {
+    traceDigest: await traceDigest(paths.tracePath),
+    findingsExist: await fileExists(paths.findingsPath),
+  }
+}
+
+async function traceDigest(path: string): Promise<string | undefined> {
+  try {
+    return hashString(await readFile(path))
+    // Publishing surfaces problems with an unreadable trace path; here it only needs to compare as unchanged.
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined
+    return 'unreadable'
+  }
+}
+
+interface TracePublicationLockOptions {
+  retries?: LockOptions['retries']
+}
+
+/**
+ * Runs `publish` while holding the cross-process trace publication lock for the app.
+ *
+ * The lock guards the whole read/validate/finalize/publish step so cooperating CLI processes cannot interleave
+ * trace updates. Keep scanning, agent work, and prompts outside `publish`; they would hold the lock for too long.
+ * Readers don't need the lock because artifacts are replaced atomically.
+ */
+export async function withTracePublicationLock<T>(
+  appRoot: string,
+  publish: (paths: ResolvedAppSecurityArtifactPaths) => Promise<T>,
+  options: TracePublicationLockOptions = {},
+): Promise<T> {
+  const paths = appSecurityArtifactPaths(appRoot)
+  await ensureArtifactDirectory(appRoot, paths.artifactDirectory)
+  await assertNotSymbolicLink(paths.traceLockPath)
+  const release = await acquireTraceLock(paths, options.retries ?? TRACE_LOCK_RETRIES)
+  let result: T
+  try {
+    result = await publish(paths)
+  } catch (error) {
+    // A release failure must not replace the publication failure that explains what went wrong.
+    await release().catch((releaseError: unknown) => {
+      outputDebug(`Failed to release the App Security trace lock: ${errorMessage(releaseError)}`)
+    })
+    throw error
+  }
+  await release()
+  return result
+}
+
+async function acquireTraceLock(
+  paths: ResolvedAppSecurityArtifactPaths,
+  retries: LockOptions['retries'],
+): Promise<() => Promise<void>> {
+  try {
+    // The lock lives beside the trace instead of on it, so it works before the first trace exists and survives the
+    // atomic rename that replaces the trace.
+    return await lockfile.lock(paths.artifactDirectory, {
+      lockfilePath: paths.traceLockPath,
+      retries,
+      stale: TRACE_LOCK_STALE_MILLISECONDS,
+    })
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'ELOCKED') throw error
+    throw new AbortError(
+      'Another Shopify CLI command is updating the App Security trace.',
+      'Wait for the other command to finish, then run this command again.',
+    )
   }
 }
 
@@ -39,6 +135,10 @@ export interface WriteAppSecurityArtifactsOptions {
   clean?: boolean
 }
 
+/**
+ * Writes the artifacts for an execution. Commands must call this inside `withTracePublicationLock` so concurrent
+ * publications can't interleave.
+ */
 export async function writeAppSecurityArtifacts(
   execution: AppSecurityExecution,
   options: WriteAppSecurityArtifactsOptions = {},
@@ -111,7 +211,13 @@ async function ensureDirectoryComponent(path: string): Promise<void> {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
   }
 
-  await mkdir(path, {mode: 0o700})
+  try {
+    await mkdir(path, {mode: 0o700})
+  } catch (error) {
+    // Another process may create the directory between the check above and mkdir. The lstat below still refuses
+    // anything that isn't a real directory.
+    if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
+  }
   const stats = await lstat(path)
   if (stats.isSymbolicLink() || !stats.isDirectory()) refuseArtifactPath(path)
 }
