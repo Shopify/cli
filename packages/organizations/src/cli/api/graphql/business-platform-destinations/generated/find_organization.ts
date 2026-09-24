@@ -3,19 +3,19 @@ import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
-export type FindOrganizationsQueryVariables = Types.Exact<{
+export type FindOrganizationQueryVariables = Types.Exact<{
   organizationId: Types.Scalars['OrganizationID']['input']
 }>
 
-export type FindOrganizationsQuery = {currentUserAccount?: {organization?: {id: string; name: string} | null} | null}
+export type FindOrganizationQuery = {currentUserAccount?: {organization?: {id: string; name: string} | null} | null}
 
-export const FindOrganizations = {
+export const FindOrganization = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'query',
-      name: {kind: 'Name', value: 'FindOrganizations'},
+      name: {kind: 'Name', value: 'FindOrganization'},
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -59,4 +59,4 @@ export const FindOrganizations = {
       },
     },
   ],
-} as unknown as DocumentNode<FindOrganizationsQuery, FindOrganizationsQueryVariables>
+} as unknown as DocumentNode<FindOrganizationQuery, FindOrganizationQueryVariables>

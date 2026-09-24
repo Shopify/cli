@@ -1,4 +1,4 @@
-query FindOrganizations($organizationId: OrganizationID!) {
+query FindOrganization($organizationId: OrganizationID!) {
   currentUserAccount {
     organization(id: $organizationId) {
       id
