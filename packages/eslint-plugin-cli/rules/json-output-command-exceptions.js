@@ -31,7 +31,6 @@ const commandExceptions = [
   'packages/theme/src/cli/commands/theme/package.ts',
   'packages/theme/src/cli/commands/theme/preview.ts',
   'packages/theme/src/cli/commands/theme/profile.ts',
-  'packages/theme/src/cli/commands/theme/pull.ts',
   'packages/theme/src/cli/commands/theme/share.ts',
 
   // App Security commands, launched before adopting typed JSON output. Remove entries as they adopt it.
