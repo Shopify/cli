@@ -10595,7 +10595,7 @@
       "args": {
       },
       "customPluginName": "@shopify/theme",
-      "description": "Returns links that let you preview the specified theme. The following links are returned:\n\n  - A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\n  If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your store.",
+      "description": "Returns links that let you preview the specified theme. The following links are returned:\n\n  - A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\n  If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your store.\n\nOutput from `--json` conforms to the `ThemeOpenResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"theme\": {\n      \"$ref\": \"#/definitions/Theme\"\n    },\n    \"preview_url\": {\n      \"type\": \"string\"\n    },\n    \"editor_url\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"theme\",\n    \"preview_url\",\n    \"editor_url\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"ThemeOpenResult\",\n  \"definitions\": {\n    \"Theme\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"id\": {\n          \"type\": \"number\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"createdAtRuntime\": {\n          \"type\": \"boolean\"\n        },\n        \"processing\": {\n          \"type\": \"boolean\"\n        },\n        \"role\": {\n          \"type\": \"string\"\n        },\n        \"src\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"id\",\n        \"name\",\n        \"createdAtRuntime\",\n        \"processing\",\n        \"role\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Returns links that let you preview the specified theme. The following links are returned:\n\n  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\n  If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your store.",
       "enableJsonFlag": false,
       "flags": {
@@ -10631,6 +10631,15 @@
           "multiple": true,
           "name": "environment",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,

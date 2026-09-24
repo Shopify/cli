@@ -7973,7 +7973,7 @@ Opens the preview of your remote theme.
 
 ```
 USAGE
-  $ shopify theme open [--auth-alias <value>] [-d] [-E] [-e <value>...] [--json-schema] [-l] [--no-color]
+  $ shopify theme open [--auth-alias <value>] [-d] [-E] [-e <value>...] [-j] [--json-schema] [-l] [--no-color]
     [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
@@ -7988,6 +7988,10 @@ FLAGS
   -e, --environment=<value>...
       The environment to apply to the current command.
       [env: SHOPIFY_FLAG_ENVIRONMENT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -l, --live
       Open your live (published) theme. Use --development, --live, or --theme in non-interactive environments.
@@ -8038,6 +8042,68 @@ DESCRIPTION
 
   If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your
   store.
+
+  Output from `--json` conforms to the `ThemeOpenResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "theme": {
+        "$ref": "#/definitions/Theme"
+      },
+      "preview_url": {
+        "type": "string"
+      },
+      "editor_url": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "theme",
+      "preview_url",
+      "editor_url"
+    ],
+    "additionalProperties": false,
+    "title": "ThemeOpenResult",
+    "definitions": {
+      "Theme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "createdAtRuntime": {
+            "type": "boolean"
+          },
+          "processing": {
+            "type": "boolean"
+          },
+          "role": {
+            "type": "string"
+          },
+          "src": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdAtRuntime",
+          "processing",
+          "role"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme package`
