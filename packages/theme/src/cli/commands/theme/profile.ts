@@ -1,16 +1,21 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {profile} from '../../services/profile.js'
+import {renderThemeProfileResult} from '../../services/profile/result.js'
+import {themeProfileJsonOutputSchema} from '../../services/profile/types.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {renderTasksToStdErr} from '../../utilities/theme-ui.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {Task} from '@shopify/cli-kit/node/ui'
 import {InferredFlags} from '@oclif/core/interfaces'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
 type ProfileFlags = InferredFlags<typeof Profile.flags>
 export default class Profile extends ThemeCommand {
+  static get jsonOutputSchema() {
+    return themeProfileJsonOutputSchema
+  }
+
   static summary = 'Profile the Liquid rendering of a theme page.'
 
   static usage = ['theme profile', 'theme profile --url /products/classic-leather-jacket']
@@ -54,21 +59,17 @@ export default class Profile extends ThemeCommand {
     }
     const theme = await findOrSelectTheme(adminSession, filter)
 
-    const tasks: Task[] = [
-      {
-        title: `Generating Liquid profile for ${adminSession.storeFqdn} ${flags.url}`,
-        task: async () => {
-          await profile(
-            adminSession,
-            theme.id.toString(),
-            flags.url,
-            flags.json,
-            themeAccessPassword,
-            flags['store-password'],
-          )
-        },
-      },
-    ]
-    await renderTasksToStdErr(tasks)
+    const title = `Generating Liquid profile for ${adminSession.storeFqdn} ${flags.url}`
+    const task = async () => {
+      const result = await profile(
+        adminSession,
+        theme.id.toString(),
+        flags.url,
+        themeAccessPassword,
+        flags['store-password'],
+      )
+      await renderThemeProfileResult(result, flags.json ? 'json' : 'text')
+    }
+    await renderTasksToStdErr([{title, task}])
   }
 }
