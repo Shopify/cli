@@ -132,6 +132,9 @@
       "app:import": {
         "description": "Import existing configuration into your app."
       },
+      "app:subscription-migrations": {
+        "description": "Migrate app subscriptions to Shopify-managed pricing."
+      },
       "app:security": {
         "description": "Check an app for Shopify-specific security issues.",
         "hidden": true

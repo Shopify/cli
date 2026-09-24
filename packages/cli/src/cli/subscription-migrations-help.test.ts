@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url'
 
 const commandNames = ['cancel', 'list', 'schedule', 'status', 'unschedule']
 const topic = 'app:subscription-migrations'
+const topicDescription = 'Migrate app subscriptions to Shopify-managed pricing.'
 
 async function loadConfig() {
   return Config.load({root: fileURLToPath(new URL('../../', import.meta.url)), userPlugins: false, devPlugins: false})
@@ -20,6 +21,7 @@ describe('subscription migration help discovery', () => {
     await help.showHelp(argv)
 
     const output = log.mock.calls.flat().join('\n')
+    expect(output.replace(/\s+/g, ' ')).toContain(topicDescription)
     if (argv.length === 1) {
       expect(output).toContain('app subscription-migrations')
     } else {
@@ -40,12 +42,15 @@ describe('subscription migration help discovery', () => {
   test('JSON app help lists the migration topic', async () => {
     const result = await helpService(await loadConfig(), ['app'])
 
-    expect(result.topics).toEqual(expect.arrayContaining([expect.objectContaining({name: topic})]))
+    expect(result.topics).toEqual(
+      expect.arrayContaining([expect.objectContaining({name: topic, description: topicDescription})]),
+    )
   })
 
   test('JSON topic help lists every migration command', async () => {
     const result = await helpService(await loadConfig(), ['app', 'subscription-migrations'])
 
+    expect(result).toMatchObject({kind: 'topic', topic: {name: topic, description: topicDescription}})
     expect(result.commands.map((command) => command.id)).toEqual(commandNames.map((name) => `${topic}:${name}`))
   })
 
