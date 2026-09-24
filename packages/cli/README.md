@@ -8846,6 +8846,100 @@ DESCRIPTION
       }
     }
     ```
+
+
+  Output from `--json` conforms to the `ThemePushJsonResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string"
+          },
+          "theme": {
+            "$ref": "#/definitions/ThemePushTheme"
+          }
+        },
+        "required": [
+          "theme"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "environment": {
+              "type": "string"
+            },
+            "theme": {
+              "$ref": "#/definitions/ThemePushTheme"
+            }
+          },
+          "required": [
+            "environment",
+            "theme"
+          ],
+          "additionalProperties": false
+        }
+      }
+    ],
+    "title": "ThemePushJsonResult",
+    "definitions": {
+      "ThemePushTheme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "shop": {
+            "type": "string"
+          },
+          "editor_url": {
+            "type": "string"
+          },
+          "preview_url": {
+            "type": "string"
+          },
+          "warning": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "shop",
+          "editor_url",
+          "preview_url"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme rename`

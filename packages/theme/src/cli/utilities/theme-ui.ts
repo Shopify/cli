@@ -1,10 +1,11 @@
+import {commandEventOutputMode, emitCommandEvent} from '@shopify/cli-kit/node/command-events'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {LIVE_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {Task, renderConfirmationPrompt, renderError, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
 import {Writable} from 'stream'
 
-export function themeComponent(theme: Theme) {
+export function themeComponent(theme: Pick<Theme, 'id' | 'name'>) {
   return [
     `'${theme.name}'`,
     {
@@ -30,14 +31,26 @@ export async function ensureDirectoryConfirmed(
   }
 
   if (multiEnvironment) {
-    renderError({
-      headline: environment ? `Environment: ${environment}` : '',
-      body: message,
-    })
+    if (commandEventOutputMode() === 'json') {
+      emitCommandEvent({
+        type: 'diagnostic',
+        level: 'error',
+        message: `${environment ? `Environment: ${environment}\n` : ''}${message}`,
+      })
+    } else {
+      renderError({
+        headline: environment ? `Environment: ${environment}` : '',
+        body: message,
+      })
+    }
     return false
   }
 
-  renderWarning({body: message})
+  if (commandEventOutputMode() === 'json') {
+    emitCommandEvent({type: 'diagnostic', level: 'warning', message})
+  } else {
+    renderWarning({body: message})
+  }
 
   if (!process.stdout.isTTY) {
     return true
