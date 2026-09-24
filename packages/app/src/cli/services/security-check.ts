@@ -5,7 +5,7 @@ import {
   resolveAppSecurityRoot,
 } from './app-security-api.js'
 import {appSecurityArtifactPaths, readTrace, writeAppSecurityArtifacts} from './app-security-artifacts.js'
-import {requireSecurityConfigFileName, resolveSecurityConfigFileName} from './app-security-config.js'
+import {requireSecurityConfigFileName} from './app-security-config.js'
 import deliverAppSecurityInstructions from './app-security-instructions.js'
 import {
   formatAppSecurityCommand,
@@ -49,7 +49,7 @@ interface SecurityDependencies {
   artifactPaths(appRoot: string): ResolvedAppSecurityArtifactPaths
   findingsFileExists(path: string): Promise<boolean>
   readTrace(path: string): Promise<ReadTraceResult>
-  execute(options: {appRoot: string; configName?: string; findingsPath?: string}): Promise<AppSecurityExecution>
+  execute(options: {appRoot: string; configFileName: string; findingsPath?: string}): Promise<AppSecurityExecution>
   writeArtifacts(
     execution: AppSecurityExecution,
     options: WriteAppSecurityArtifactsOptions,
@@ -82,13 +82,9 @@ const defaultDependencies: SecurityDependencies = {
   artifactPaths: appSecurityArtifactPaths,
   findingsFileExists: fileExists,
   readTrace,
-  execute: async ({appRoot, configName, findingsPath}) => {
+  execute: async ({appRoot, configFileName, findingsPath}) => {
     const findings = findingsPath ? await loadAppSecurityFindings(findingsPath) : undefined
-    return executeAppSecurity({
-      appRoot,
-      findings,
-      configFileName: requireSecurityConfigFileName(appRoot, configName),
-    })
+    return executeAppSecurity({appRoot, findings, configFileName})
   },
   writeArtifacts: writeAppSecurityArtifacts,
   canPrompt: terminalSupportsPrompting,
@@ -156,14 +152,15 @@ export default async function securityCheck(
   dependencies: SecurityDependencies = defaultDependencies,
 ): Promise<void> {
   const appRoot = dependencies.resolveRoot(options.directory)
-  const commands = resolveAppSecurityCommands(appRoot, resolveSecurityConfigFileName(appRoot, options.configName))
+  const configFileName = requireSecurityConfigFileName(appRoot, options.configName)
+  const commands = resolveAppSecurityCommands(appRoot, configFileName)
   if (!options.findingsPath && !options.clean) {
     await assertCanStartScan(dependencies.artifactPaths(appRoot), commands, dependencies)
   }
 
   const execution = await dependencies.execute({
     appRoot,
-    configName: options.configName,
+    configFileName,
     findingsPath: options.findingsPath,
   })
   const artifacts = await dependencies.writeArtifacts(execution, {clean: options.clean})

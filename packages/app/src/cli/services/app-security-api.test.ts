@@ -619,9 +619,9 @@ describe('App Security CLI integration', () => {
           artifactPaths: appSecurityArtifactPaths,
           findingsFileExists: fileExists,
           readTrace,
-          execute: async ({appRoot, findingsPath}) => {
+          execute: async ({appRoot, configFileName, findingsPath}) => {
             const findings = findingsPath ? await loadAppSecurityFindings(findingsPath) : undefined
-            return executeAppSecurity({appRoot, findings})
+            return executeAppSecurity({appRoot, configFileName, findings})
           },
           writeArtifacts: writeAppSecurityArtifacts,
           canPrompt: () => false,
