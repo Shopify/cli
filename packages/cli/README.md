@@ -1677,9 +1677,9 @@ DESCRIPTION
   - The "access scopes" (https://shopify.dev/docs/api/usage) your app has requested.
   - System information, including the package manager and version of Shopify CLI used in the project.
 
-  Output from `--json` conforms to the `AppInfoResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppInfoResult` schema.
 
   ```json
   {
@@ -2752,9 +2752,9 @@ DESCRIPTION
   The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently
   only function extensions are supported as sources.
 
-  Output from `--json` conforms to the `AppLogSourcesResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppLogSourcesResult` schema.
 
   ```json
   {
@@ -2958,9 +2958,9 @@ DESCRIPTION
 
   Lists the deployed app versions. An app version is a snapshot of your app extensions.
 
-  Output from `--json` conforms to the `AppVersionsListResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppVersionsListResult` schema.
 
   ```json
   {
@@ -3457,9 +3457,9 @@ FLAGS
 DESCRIPTION
   Display help for Shopify CLI
 
-  Output from `--json` conforms to the `HelpResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HelpResult` schema.
 
   ```json
   {
@@ -4773,9 +4773,9 @@ DESCRIPTION
 
   Lists the Shopify organizations that you have access to, along with their organization IDs.
 
-  Output from `--json` conforms to the `OrganizationListResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `OrganizationListResult` schema.
 
   ```json
   {
@@ -5138,9 +5138,9 @@ DESCRIPTION
   of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc
   fetch`.
 
-  Output from `--json` conforms to the `SearchResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `SearchResult` schema.
 
   ```json
   {
@@ -5210,9 +5210,9 @@ DESCRIPTION
 
   Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.
 
-  Output from `--json` conforms to the `StoreAuthResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `StoreAuthResult` schema.
 
   ```json
   {
@@ -5324,9 +5324,9 @@ DESCRIPTION
   Use this command to find stores that can be used with store-authenticated commands such as `shopify store execute`.
   To list stores in a Shopify organization, run `shopify store list`.
 
-  Output from `--json` conforms to the `StoreAuthListResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `StoreAuthListResult` schema.
 
   ```json
   {
@@ -5466,9 +5466,9 @@ DESCRIPTION
 
   Run `shopify store auth` first to create stored auth for the store.
 
-  Output from `--json` conforms to the `CancelBulkOperationResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `CancelBulkOperationResult` schema.
 
   ```json
   {
@@ -5698,9 +5698,9 @@ DESCRIPTION
   Use "`store bulk status`" (https://shopify.dev/docs/api/shopify-cli/store/store-bulk-status) to check the status of
   your bulk operations.
 
-  Output from `--json` conforms to the `ExecuteBulkOperationResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ExecuteBulkOperationResult` schema.
 
   ```json
   {
@@ -5909,9 +5909,9 @@ DESCRIPTION
   Use "`store bulk execute`" (https://shopify.dev/docs/api/shopify-cli/store/store-bulk-execute) to start a new bulk
   operation.
 
-  Output from `--json` conforms to the `BulkOperationStatusResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `BulkOperationStatusResult` schema.
 
   ```json
   {
@@ -6156,9 +6156,9 @@ DESCRIPTION
 
   Creates a new dev store in your organization.
 
-  Output from `--json` conforms to the `CreateDevStoreResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `CreateDevStoreResult` schema.
 
   ```json
   {
@@ -6324,9 +6324,9 @@ DESCRIPTION
 
   Creates a new Shopify store, with no need for an existing account.
 
-  Output from `--json` conforms to the `CreatePreviewStoreResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `CreatePreviewStoreResult` schema.
 
   ```json
   {
@@ -6451,9 +6451,9 @@ DESCRIPTION
 
   Deletes a dev store from your organization.
 
-  Output from `--json` conforms to the `DeleteDevStoreResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `DeleteDevStoreResult` schema.
 
   ```json
   {
@@ -6628,9 +6628,9 @@ DESCRIPTION
 
   Mutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.
 
-  Output from `--json` conforms to the `StoreExecuteResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `StoreExecuteResult` schema.
 
   ```json
   {
@@ -6756,9 +6756,9 @@ DESCRIPTION
 
   Use `--json` for machine-readable output.
 
-  Output from `--json` conforms to the `StoreInfoResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `StoreInfoResult` schema.
 
   ```json
   {
@@ -6886,9 +6886,9 @@ DESCRIPTION
 
   Run `shopify organization list` to find organization IDs.
 
-  Output from `--json` conforms to the `StoreListResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `StoreListResult` schema.
 
   ```json
   {
@@ -7030,9 +7030,9 @@ DESCRIPTION
 
   Opens the storefront for a store you have access to in your default web browser.
 
-  Output from `--json` conforms to the `OpenStoreResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `OpenStoreResult` schema.
 
   ```json
   {
@@ -8501,9 +8501,9 @@ FLAGS
 DESCRIPTION
   Shopify CLI version currently installed.
 
-  Output from `--json` conforms to the `VersionResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `VersionResult` schema.
 
   ```json
   {

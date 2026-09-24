@@ -318,7 +318,8 @@ describe('command descriptions', () => {
 
     expect(CommandWithJsonOutput.description).toContain('Returns a value. "Learn more" (https://shopify.dev).')
     expect(CommandWithJsonOutput.description).toContain(
-      'Use `--json-schema` to print the result, error, and event schemas.',
+      'Use `--json-schema` to print the result, error, and event schemas.\n\n' +
+        'Output from `--json` conforms to the `CommandResult` schema.',
     )
     const helpSchema = JSON.parse(CommandWithJsonOutput.description!.match(/```json\n([\s\S]+)\n```/)![1]!)
     expect(helpSchema).toEqual({

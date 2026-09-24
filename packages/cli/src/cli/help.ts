@@ -118,11 +118,11 @@ export default class ShopifyHelp extends Help {
     if (!terminalSupportsPrompting()) return super.showCommandHelp(command)
 
     // Keep schemas in cached metadata and formatCommand(), which generates README documentation.
-    // Only remove the generated schema block, preserving the hint and any command examples.
+    // Remove the schema introduction and block, preserving the hint and any command examples.
     return super.showCommandHelp({
       ...command,
       description: command.description?.replace(
-        /(Use `--json-schema` to print the result, error, and event schemas\.)\n\n```json\n[\s\S]*\n```$/,
+        /(Use `--json-schema` to print the result, error, and event schemas\.)\n\nOutput from `--json` conforms to the `[^`]+` schema\.\n\n```json\n[\s\S]*\n```$/,
         '$1',
       ),
     })

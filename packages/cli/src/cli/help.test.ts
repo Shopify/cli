@@ -234,7 +234,7 @@ describe('ShopifyHelp', () => {
       await help.showCommandHelp(command)
 
       expect(help.output).toContain('Use `--json-schema` to print the result, error, and event schemas.')
-      expect(help.output).toContain('Output from `--json` conforms to the `ExampleResult` schema.')
+      expect(help.output.includes('Output from `--json` conforms to the `ExampleResult` schema.')).toBe(!interactive)
       expect(help.output).toContain('{"example": true}')
       expect(help.output.includes('"title": "ExampleResult"')).toBe(!interactive)
       expect(command.description).toBe(originalDescription)
@@ -249,7 +249,10 @@ describe('ShopifyHelp', () => {
     await help.showCommandHelp(command)
     const documentation = help.formatCommand(command)
 
-    expect(documentation).toContain('Use `--json-schema` to print the result, error, and event schemas.')
+    expect(documentation).toContain(
+      'Use `--json-schema` to print the result, error, and event schemas.\n\n' +
+        '  Output from `--json` conforms to the `ExampleResult` schema.',
+    )
     expect(documentation).toContain('"title": "ExampleResult"')
   })
 

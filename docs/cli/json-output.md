@@ -170,9 +170,9 @@ Tests should verify:
 - prompt behavior independently from `--json` and `--no-input`.
 
 Non-interactive command help and generated README documentation include the result's JSON Schema automatically through
-`jsonOutputSchema`. Interactive help keeps the `--json-schema` hint and omits the inline schema. `--json-schema` prints one
-JSON Schema (draft-07) accepting a result, a fatal error document, or a side event. The `Result`, `Error`, and `Event`
-definitions describe these separately; results and fatal errors go to stdout, and side events go to stderr.
+`jsonOutputSchema`. Interactive help keeps the `--json-schema` hint and omits the schema introduction and inline schema.
+`--json-schema` prints one JSON Schema (draft-07) accepting a result, a fatal error document, or a side event. The `Result`,
+`Error`, and `Event` definitions describe these separately; results and fatal errors go to stdout, and side events go to stderr.
 
 Both outputs come from the same Zod definitions used to validate and encode results. Run the manifest,
 README, and code-documentation refresh commands required by CI after changing command metadata.
