@@ -8474,7 +8474,7 @@ Set a remote theme as the live theme.
 
 ```
 USAGE
-  $ shopify theme publish [--auth-alias <value>] [-e <value>...] [-f] [--json-schema] [--no-color] [--password
+  $ shopify theme publish [--auth-alias <value>] [-e <value>...] [-f] [-j] [--json-schema] [--no-color] [--password
     <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
@@ -8485,6 +8485,10 @@ FLAGS
   -f, --force
       Skip confirmation. Required if non interactive.
       [env: SHOPIFY_FLAG_FORCE]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
@@ -8532,6 +8536,99 @@ DESCRIPTION
 
   If you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that
   you want to publish the specified theme. You can skip this confirmation using the `--force` flag.
+
+  Output from `--json` conforms to the `ThemePublishResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemePublishEnvironment/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemePublishEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemePublishResult",
+    "definitions": {
+      "PublishedTheme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "processing": {
+            "type": "boolean"
+          },
+          "createdAtRuntime": {
+            "type": "boolean"
+          },
+          "src": {
+            "type": "string"
+          },
+          "shop": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "processing",
+          "createdAtRuntime",
+          "shop"
+        ],
+        "additionalProperties": false
+      },
+      "ThemePublishEnvironment": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string"
+          },
+          "result": {
+            "type": "object",
+            "properties": {
+              "theme": {
+                "$ref": "#/definitions/PublishedTheme"
+              }
+            },
+            "required": [
+              "theme"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "environment",
+          "result"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme pull`

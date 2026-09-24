@@ -1,4 +1,5 @@
-import {publish} from './publish.js'
+import {publish as executePublish} from './publish.js'
+import {renderThemePublishResult} from './publish/result.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {renderSuccess, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {test, describe, expect, vi} from 'vitest'
@@ -103,5 +104,50 @@ describe('publish', () => {
         {char: '.'},
       ],
     })
+  })
+})
+
+async function publish(...args: Parameters<typeof executePublish>) {
+  const result = await executePublish(...args)
+  if (result) renderThemePublishResult(result, 'text')
+  return result
+}
+
+test('returns the published API data without presenting a final result', async () => {
+  const publishedTheme = {...theme, name: 'Published name', role: 'live', processing: false, createdAtRuntime: false}
+  vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+  vi.mocked(themePublish).mockResolvedValue(publishedTheme)
+  const result = await executePublish(session, {...options, force: true})
+  expect(result).toEqual({
+    data: {theme: {...publishedTheme, shop: session.storeFqdn}},
+    originalTheme: theme,
+    previewUrl: 'https://my-shop.myshopify.com',
+  })
+  expect(renderSuccess).not.toHaveBeenCalled()
+})
+
+test('skips confirmation when already confirmed for multiple environments', async () => {
+  vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+  vi.mocked(themePublish).mockResolvedValue(theme)
+  await executePublish(session, options, true)
+  expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+  expect(themePublish).toHaveBeenCalledWith(1, session)
+})
+
+test('keeps the original theme name and environment label in terminal output', async () => {
+  vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+  vi.mocked(themePublish).mockResolvedValue({...theme, name: 'Canonical name', role: 'live'})
+  const result = await executePublish(session, {...options, force: true})
+  renderThemePublishResult(result!, 'text', ['staging'])
+  expect(renderSuccess).toHaveBeenCalledWith({
+    headline: 'Environment: staging',
+    body: [
+      'The theme',
+      "'my theme'",
+      {subdued: '(#1)'},
+      'is now live at',
+      {link: {label: 'https://my-shop.myshopify.com', url: 'https://my-shop.myshopify.com'}},
+      {char: '.'},
+    ],
   })
 })
