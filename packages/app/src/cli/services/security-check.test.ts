@@ -5,6 +5,7 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 import type {
   AppSecurityArtifactPaths,
+  AppSecurityArtifactState,
   ReadTraceResult,
   ResolvedAppSecurityArtifactPaths,
 } from './app-security-artifacts.js'
@@ -107,6 +108,7 @@ const resolvedArtifacts: ResolvedAppSecurityArtifactPaths = {
   reviewPath: artifacts.reviewPath!,
   findingsPath: '/tmp/unlinked-app/.shopify/app-security/findings.json',
   submissionPath: '/tmp/unlinked-app/.shopify/app-security/submission.json',
+  traceLockPath: '/tmp/unlinked-app/.shopify/app-security/trace.lock',
 }
 
 function testDependencies(execution: AppSecurityExecution = scanExecution) {
@@ -115,7 +117,11 @@ function testDependencies(execution: AppSecurityExecution = scanExecution) {
     artifactPaths: vi.fn(() => resolvedArtifacts),
     findingsFileExists: vi.fn(async () => false),
     readTrace: vi.fn<() => Promise<ReadTraceResult>>(async () => ({status: 'missing'})),
+    readArtifactState: vi.fn(
+      async (_paths: ResolvedAppSecurityArtifactPaths): Promise<AppSecurityArtifactState> => ({findingsExist: false}),
+    ),
     execute: vi.fn(async () => execution),
+    withPublicationLock: vi.fn(async (_appRoot: string, publish: () => Promise<AppSecurityArtifactPaths>) => publish()),
     writeArtifacts: vi.fn(async () => artifacts),
     canPrompt: vi.fn(() => false),
     confirmDiscardReview: vi.fn(async (_details: string) => false),
@@ -398,6 +404,114 @@ describe('securityCheck', () => {
 
     await expect(securityCheck({...testOptions(), clean: true}, dependencies)).rejects.toThrow('scan failed')
 
+    expect(dependencies.writeArtifacts).not.toHaveBeenCalled()
+  })
+
+  test('scans outside the publication lock and rechecks the starting artifacts before writing inside it', async () => {
+    const dependencies = testDependencies()
+    const calls: string[] = []
+    dependencies.readArtifactState.mockImplementation(async () => {
+      calls.push('readArtifactState')
+      return {findingsExist: false}
+    })
+    dependencies.execute.mockImplementation(async () => {
+      calls.push('execute')
+      return scanExecution
+    })
+    dependencies.withPublicationLock.mockImplementation(async (_appRoot, publish) => {
+      calls.push('lock')
+      const published = await publish()
+      calls.push('release')
+      return published
+    })
+    dependencies.writeArtifacts.mockImplementation(async () => {
+      calls.push('writeArtifacts')
+      return artifacts
+    })
+
+    await securityCheck(testOptions(), dependencies)
+
+    expect(dependencies.withPublicationLock).toHaveBeenCalledWith(scanExecution.appRoot, expect.any(Function))
+    expect(calls).toEqual(['readArtifactState', 'execute', 'lock', 'readArtifactState', 'writeArtifacts', 'release'])
+  })
+
+  test.each<[string, AppSecurityArtifactState]>([
+    ['the trace was replaced', {traceDigest: 'newer', findingsExist: false}],
+    ['agent findings appeared', {traceDigest: 'original', findingsExist: true}],
+  ])('refuses to save a scan when %s while it was running', async (_change, currentState) => {
+    const dependencies = testDependencies()
+    dependencies.readArtifactState
+      .mockResolvedValueOnce({traceDigest: 'original', findingsExist: false})
+      .mockResolvedValueOnce(currentState)
+    const commands = resolveAppSecurityCommands(scanExecution.appRoot)
+
+    const error = await securityCheck(testOptions(), dependencies).catch((error: unknown) => error)
+
+    expect(error).toBeInstanceOf(AbortError)
+    expect(error).toMatchObject({
+      message: "App Security didn't save the new scan results.",
+      tryMessage: `App Security artifacts changed while this scan was running:\n  ${resolvedArtifacts.artifactDirectory}\n\nRun the scan again to check the latest results:\n  ${formatAppSecurityCommand(commands.scan)}\n\nTo discard the current review and start over:\n  ${formatAppSecurityCommand(commands.clean)}`,
+    })
+    expect(dependencies.writeArtifacts).not.toHaveBeenCalled()
+    expect(dependencies.output).not.toHaveBeenCalled()
+    expect(dependencies.renderReport).not.toHaveBeenCalled()
+  })
+
+  test('refuses to save compiled findings over a trace replaced while compiling, naming the compiled file', async () => {
+    const dependencies = testDependencies()
+    dependencies.readArtifactState
+      .mockResolvedValueOnce({traceDigest: 'original', findingsExist: true})
+      .mockResolvedValueOnce({traceDigest: 'newer', findingsExist: true})
+    const commands = resolveAppSecurityCommands(scanExecution.appRoot)
+    const compileCommand = {...commands.scan, args: [...commands.scan.args, '--findings', '/tmp/custom-findings.json']}
+
+    const error = await securityCheck(
+      {...testOptions(), findingsPath: '/tmp/custom-findings.json'},
+      dependencies,
+    ).catch((error: unknown) => error)
+
+    expect(error).toBeInstanceOf(AbortError)
+    expect(error).toMatchObject({
+      message: "App Security didn't save the compiled findings.",
+      tryMessage: `The trace changed while the findings were being compiled:\n  ${resolvedArtifacts.tracePath}\n\nCompile the findings again:\n  ${formatAppSecurityCommand(compileCommand)}`,
+    })
+    expect(dependencies.writeArtifacts).not.toHaveBeenCalled()
+  })
+
+  test('compiles findings when only the findings file changed while compiling', async () => {
+    const dependencies = testDependencies()
+    dependencies.readArtifactState
+      .mockResolvedValueOnce({traceDigest: 'original', findingsExist: true})
+      .mockResolvedValueOnce({traceDigest: 'original', findingsExist: false})
+
+    await securityCheck({...testOptions(), findingsPath: '/tmp/custom-findings.json'}, dependencies)
+
+    expect(dependencies.writeArtifacts).toHaveBeenCalledWith(scanExecution, {clean: false})
+  })
+
+  test('an explicit --clean replaces whatever exists without comparing against the starting artifacts', async () => {
+    const dependencies = testDependencies()
+
+    await securityCheck({...testOptions(), clean: true}, dependencies)
+
+    expect(dependencies.readArtifactState).not.toHaveBeenCalled()
+    expect(dependencies.writeArtifacts).toHaveBeenCalledWith(scanExecution, {clean: true})
+  })
+
+  test('a discard confirmed at the prompt does not cover review work that appeared during the scan', async () => {
+    const dependencies = testDependencies()
+    dependencies.findingsFileExists.mockResolvedValue(true)
+    dependencies.canPrompt.mockReturnValue(true)
+    dependencies.confirmDiscardReview.mockResolvedValue(true)
+    dependencies.readArtifactState
+      .mockResolvedValueOnce({traceDigest: 'original', findingsExist: true})
+      .mockResolvedValueOnce({traceDigest: 'compiled-meanwhile', findingsExist: true})
+
+    await expect(securityCheck(testOptions(), dependencies)).rejects.toThrow(
+      "App Security didn't save the new scan results.",
+    )
+
+    expect(dependencies.confirmDiscardReview).toHaveBeenCalledOnce()
     expect(dependencies.writeArtifacts).not.toHaveBeenCalled()
   })
 
