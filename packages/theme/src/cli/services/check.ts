@@ -1,10 +1,12 @@
+import {ThemeCheckResult} from './check/types.js'
 import {fileExists, writeFile} from '@shopify/cli-kit/node/fs'
-import {outputResult, outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
+import {outputResult, outputInfo, outputSuccess, outputDebug} from '@shopify/cli-kit/node/output'
 import {joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {uniq} from '@shopify/cli-kit/common/array'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {
+  themeCheckRun,
   Severity,
   applyFixToString,
   autofix,
@@ -20,24 +22,6 @@ type OffenseMap = Record<string, Offense[]>
 
 /** The contents of every theme file, keyed by its normalized uri. */
 type ThemeSourcesByUri = Map<string, string>
-
-interface TransformedOffense {
-  check: string
-  severity: string
-  start_row: number
-  start_column: number
-  end_row: number
-  end_column: number
-  message: string
-}
-
-interface TransformedOffenseMap {
-  path: string
-  offenses: TransformedOffense[]
-  errorCount: number
-  warningCount: number
-  infoCount: number
-}
 
 type SeverityCounts = Partial<{
   [Severity.ERROR]: number
@@ -58,7 +42,7 @@ function isMissingThemeCheckConfigFile(error: unknown, configPath: string) {
   )
 }
 
-export async function withThemeCheckConfigErrorHandling<T>(
+async function withThemeCheckConfigErrorHandling<T>(
   configPath: string | undefined,
   operation: () => Promise<T>,
 ): Promise<T> {
@@ -87,7 +71,7 @@ function failLevelToSeverity(failLevel: FailLevel): Severity | undefined {
   }
 }
 
-function severityToLabel(severity: Severity) {
+function severityToLabel(severity: Severity): 'error' | 'warning' | 'info' {
   switch (severity) {
     case Severity.ERROR:
       return 'error'
@@ -248,7 +232,7 @@ export function renderOffensesText(
   })
 }
 
-export function formatOffensesJson(offensesByFile: OffenseMap, environment?: string): TransformedOffenseMap[] {
+export function formatOffensesJson(offensesByFile: OffenseMap, environment?: string): ThemeCheckResult {
   return Object.entries(offensesByFile).map(([path, offenses]) => {
     const transformedOffenses = offenses.map((offense: Offense) => {
       return {
@@ -415,4 +399,14 @@ export function isExtendedWriteStream(stream: NodeJS.WriteStream): stream is Ext
     (stream as HandleObject)._handle !== null &&
     typeof (stream as HandleWithSetBlocking)._handle.setBlocking === 'function'
   )
+}
+
+export async function checkTheme(path: string, config?: string, environment?: string) {
+  const {offenses, theme} = await withThemeCheckConfigErrorHandling(config, () =>
+    themeCheckRun(path, config, (message) => {
+      if (process.env.SHOPIFY_TMP_FLAG_DEBUG) outputDebug(message)
+    }),
+  )
+  const result = formatOffensesJson(sortOffenses(offenses), environment)
+  return {result, offenses, theme}
 }
