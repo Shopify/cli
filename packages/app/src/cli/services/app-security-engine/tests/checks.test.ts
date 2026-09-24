@@ -12,6 +12,45 @@ import {EMBEDDED_CHECK_SOURCES} from '../checks/embedded.js'
 import {describe, expect, test} from 'vitest'
 import {readFileSync, readdirSync} from 'node:fs'
 
+// These IDs are consumed by review packs and findings; changes must be intentional.
+const EXPECTED_CHECK_IDS = [
+  'ACTIVE_UPLOADS_AND_PRIVILEGED_PREVIEWS',
+  'APP_PROXY_LIQUID_INJECTION',
+  'APP_PROXY_UNVERIFIED_SIGNATURE',
+  'COMMITTED_SECRET',
+  'CREDENTIAL_BROWSER_LEAKAGE',
+  'CREDENTIAL_LOG_LEAKAGE',
+  'CROSS_SITE_SCRIPTING',
+  'CSRF_MISSING_PROTECTION',
+  'DEPENDENCY_REACHABILITY',
+  'DEPRECATED_SCRIPT_TAG_SCOPE',
+  'EOL_API_VERSION',
+  'EXPIRING_OFFLINE_TOKEN',
+  'INSECURE_WEBHOOK_URL',
+  'LIQUID_UNSAFE_RENDER',
+  'METAFIELD_OFFLINE_TOKEN',
+  'MISSING_AUTHORIZATION_CHECK',
+  'MISSING_COMPLIANCE_WEBHOOKS',
+  'MISSING_EMBEDDED_CSP',
+  'MISSING_TENANT_ISOLATION',
+  'OPEN_REDIRECT',
+  'OVERBROAD_DATA_ACCESS',
+  'REQUEST_CONTROLLED_ADMIN_CONTEXT',
+  'REQUEST_DERIVED_SHOP_SCOPE',
+  'SCOPE_OVER_REQUEST',
+  'SCRIPT_TAG_URL_INJECTION',
+  'SESSION_LIFECYCLE_AND_REPLAY',
+  'SQL_INJECTION',
+  'SSRF_REQUEST_FORGERY',
+  'STATIC_FRAME_ANCESTORS',
+  'TEXT_SETTING_HTML_SMUGGLING',
+  'THEME_EXTENSION_XSS',
+  'UNAUTHENTICATED_ENDPOINT',
+  'UNSAFE_INNERHTML',
+  'UNSCOPED_SHOP_CONFIG_WRITE',
+  'WEAK_SHOP_VALIDATION',
+]
+
 const validFinding: AgentFinding = {
   check_id: 'MISSING_TENANT_ISOLATION',
   check_version: 1,
@@ -42,6 +81,11 @@ describe('check loading', () => {
     expect(EMBEDDED_CHECK_SOURCES).toEqual(markdownSources)
   })
 
+  test('loads every shipped agent check', () => {
+    const checks = loadChecks()
+    expect([...checks.keys()].sort()).toEqual(EXPECTED_CHECK_IDS)
+  })
+
   test('does not carry candidate_source — the agent explores independently', () => {
     const checks = loadChecks()
     const tenant = checks.get('MISSING_TENANT_ISOLATION')!
@@ -57,6 +101,11 @@ describe('check loading', () => {
 })
 
 describe('review pack', () => {
+  test('includes every shipped check in the review pack', () => {
+    const pack = buildReviewPack('0.1.0')
+    expect(pack.checks.map((check) => check.id).sort()).toEqual(EXPECTED_CHECK_IDS)
+  })
+
   test('instructions tell the agent to explore and find, not adjudicate', () => {
     const pack = buildReviewPack('0.1.0')
     expect(pack.instructions).toMatch(/explore|find/i)
