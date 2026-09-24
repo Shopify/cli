@@ -56,6 +56,7 @@ import {
   businessPlatformRequestDoc,
 } from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
+import {appDevRequestDoc} from '@shopify/cli-kit/node/api/app-dev'
 import {BugError} from '@shopify/cli-kit/node/error'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {webhooksRequestDoc} from '@shopify/cli-kit/node/api/webhooks'
@@ -63,6 +64,7 @@ import {webhooksRequestDoc} from '@shopify/cli-kit/node/api/webhooks'
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/api/business-platform')
 vi.mock('@shopify/cli-kit/node/api/app-management')
+vi.mock('@shopify/cli-kit/node/api/app-dev')
 vi.mock('@shopify/organizations')
 vi.mock('@shopify/cli-kit/node/api/webhooks')
 
@@ -1016,6 +1018,64 @@ describe('sendSampleWebhook', () => {
     expect(result.sendSampleWebhook.headers).toEqual('{}')
     expect(result.sendSampleWebhook.success).toEqual(false)
     expect(result.sendSampleWebhook.userErrors).toEqual([{message: 'Invalid api_version', fields: []}])
+  })
+})
+
+describe('dev session requests', () => {
+  test('sends the enabled unsafe value to create and update requests', async () => {
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+
+    await client.devSessionCreate({
+      appId: 'gid://shopify/App/123',
+      assetsUrl: 'https://assets.test',
+      shopFqdn: 'test.myshopify.com',
+      websocketUrl: 'wss://test.dev/extensions',
+      unsafe: true,
+    })
+    await client.devSessionUpdate({
+      appId: 'gid://shopify/App/123',
+      assetsUrl: 'https://assets.test',
+      shopFqdn: 'test.myshopify.com',
+      manifest: {name: 'App', handle: 'app', modules: []},
+      inheritedModuleUids: [],
+      unsafe: true,
+    })
+
+    expect(appDevRequestDoc).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({variables: expect.objectContaining({unsafe: true})}),
+    )
+    expect(appDevRequestDoc).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({variables: expect.objectContaining({unsafe: true})}),
+    )
+  })
+
+  test('sends false when unsafe is omitted', async () => {
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+
+    await client.devSessionCreate({
+      appId: 'gid://shopify/App/123',
+      assetsUrl: 'https://assets.test',
+      shopFqdn: 'test.myshopify.com',
+    })
+    await client.devSessionUpdate({
+      appId: 'gid://shopify/App/123',
+      shopFqdn: 'test.myshopify.com',
+      manifest: {name: 'App', handle: 'app', modules: []},
+      inheritedModuleUids: [],
+    })
+
+    expect(appDevRequestDoc).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({variables: expect.objectContaining({unsafe: false})}),
+    )
+    expect(appDevRequestDoc).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({variables: expect.objectContaining({unsafe: false})}),
+    )
   })
 })
 

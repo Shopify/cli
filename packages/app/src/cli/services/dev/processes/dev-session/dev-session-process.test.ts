@@ -115,6 +115,19 @@ describe('pushUpdatesForDevSession', () => {
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Ready'))
   })
 
+  test('uses the enabled unsafe value when creating and updating a dev session', async () => {
+    options.unsafe = true
+
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
+    await flushPromises()
+
+    expect(developerPlatformClient.devSessionCreate).toHaveBeenCalledWith(expect.objectContaining({unsafe: true}))
+    expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledWith(expect.objectContaining({unsafe: true}))
+  })
+
   test('updates use the extension handle as the output prefix', async () => {
     // When
 
@@ -180,6 +193,56 @@ describe('pushUpdatesForDevSession', () => {
     // Then
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Error'))
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Update error'))
+  })
+
+  test.each([
+    {
+      code: 'VALIDATION_WARNING',
+      message: 'Bundle size exceeds the supported development limit',
+      renderedMessage: 'Bundle size exceeds the supported development limit',
+    },
+    {
+      code: 'SESSION_TAKEOVER',
+      message: "You took over another user's session",
+      renderedMessage: "⚠️  You took over another user's session",
+    },
+  ])('displays $code warnings from dev session updates', async ({code, message, renderedMessage}) => {
+    developerPlatformClient.devSessionUpdate = vi.fn().mockResolvedValue({
+      devSessionUpdate: {
+        userErrors: [],
+        warnings: [{message, code}],
+      },
+    })
+
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
+    await flushPromises()
+
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining(renderedMessage))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated dev preview on test.myshopify.com'))
+  })
+
+  test('displays validation warnings without hiding update errors', async () => {
+    // Given
+    developerPlatformClient.devSessionUpdate = vi.fn().mockResolvedValue({
+      devSessionUpdate: {
+        userErrors: [{message: 'Update failed', category: 'test'}],
+        warnings: [{message: 'Validation warning', code: 'VALIDATION_WARNING'}],
+      },
+    })
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
+    await flushPromises()
+
+    // Then
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Validation warning'))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Update failed'))
   })
 
   test('handles scope changes and displays updated message', async () => {
@@ -419,6 +482,7 @@ describe('pushUpdatesForDevSession', () => {
       },
       // The unaffected extension is listed in inheritedModuleUids
       inheritedModuleUids: [unaffectedExtension.uid],
+      unsafe: false,
     })
   })
 
@@ -530,6 +594,7 @@ describe('pushUpdatesForDevSession', () => {
       assetsUrl: 'https://gcs.url',
       manifest: expect.any(Object),
       inheritedModuleUids: [],
+      unsafe: false,
     })
   })
 
@@ -549,6 +614,7 @@ describe('pushUpdatesForDevSession', () => {
       appId: 'app123',
       assetsUrl: 'https://gcs.url',
       websocketUrl: 'wss://test.dev/extensions',
+      unsafe: false,
     })
   })
 
