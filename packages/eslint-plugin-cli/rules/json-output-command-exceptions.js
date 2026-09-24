@@ -8,7 +8,6 @@ const commandExceptions = [
   'packages/theme/src/cli/commands/theme/init.ts',
   'packages/theme/src/cli/commands/theme/metafields/pull.ts',
   'packages/theme/src/cli/commands/theme/package.ts',
-  'packages/theme/src/cli/commands/theme/profile.ts',
 
   // App Security commands, launched before adopting typed JSON output. Remove entries as they adopt it.
   'packages/app/src/cli/commands/app/security/check.ts',
