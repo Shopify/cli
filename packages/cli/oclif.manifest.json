@@ -10796,7 +10796,7 @@
       "args": {
       },
       "customPluginName": "@shopify/theme",
-      "description": "Applies a JSON overrides file to a theme and creates or updates a preview. This lets you quickly preview changes.\n\n  The command returns a preview URL and a preview identifier. You can reuse the preview identifier with `--preview-id` to update an existing preview instead of creating a new one.",
+      "description": "Applies a JSON overrides file to a theme and creates or updates a preview. This lets you quickly preview changes.\n\n  The command returns a preview URL and a preview identifier. You can reuse the preview identifier with `--preview-id` to update an existing preview instead of creating a new one.\n\nOutput from `--json` conforms to the `ThemePreviewResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"url\": {\n      \"type\": \"string\"\n    },\n    \"preview_identifier\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"url\",\n    \"preview_identifier\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"ThemePreviewResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Applies a JSON overrides file to a theme and creates or updates a preview. This lets you quickly preview changes.\n\n  The command returns a preview URL and a preview identifier. You can reuse the preview identifier with `--preview-id` to update an existing preview instead of creating a new one.",
       "enableJsonFlag": false,
       "flags": {
@@ -10819,8 +10819,10 @@
         },
         "json": {
           "allowNo": false,
+          "char": "j",
           "description": "Output the preview URL and identifier as JSON.",
           "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
           "name": "json",
           "type": "boolean"
         },
