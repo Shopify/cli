@@ -1,5 +1,23 @@
 # @shopify/store
 
+## 4.9.0
+
+### Patch Changes
+
+- 0638841: Fix `store list --organization-id` reporting a valid organization as not found for accounts that belong to many organizations
+- fd4a5db: Stop reporting an unavailable shop, an Admin API server error, and a cancelled request as unknown CLI bugs during Admin API version discovery
+- Updated dependencies [267c622]
+- Updated dependencies [9832404]
+- Updated dependencies [83fe8a2]
+- Updated dependencies [065cd24]
+- Updated dependencies [02fbf6e]
+- Updated dependencies [46dcc14]
+- Updated dependencies [fd4a5db]
+- Updated dependencies [667c628]
+- Updated dependencies [2a9b3a4]
+  - @shopify/cli-kit@4.9.0
+  - @shopify/organizations@4.9.0
+
 ## 4.8.0
 
 ### Minor Changes

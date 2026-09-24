@@ -1,5 +1,23 @@
 # @shopify/cli
 
+## 4.9.0
+
+### Minor Changes
+
+- 5b4e82f: Add json flag and output schema for all store commands
+- 4986275: Add `--language` to `doc fetch` to filter shopify.dev Markdown code examples to a single language.
+- 3385c63: Move `app import-extensions` and `app import-custom-data-definitions` under the new `app import` topic; the old paths still work but are deprecated
+- 83fe8a2: Emit machine-readable fatal errors when JSON output is active
+- 02fbf6e: Show JSON Schema in command help and use `--json-schema` to print result, error, and event schemas.
+- f88ee51: Add JSON output to `version`, `search` and `help` commands.
+- 6d56ae6: Show app subscription migration commands in help and command discovery.
+
+### Patch Changes
+
+- dddec36: Fix loading bars remaining on screen when a task prints log messages.
+- c7af682: Update cli-hydrogen 13.0.5
+- 667c628: Verify the installed version after `shopify upgrade` and fail instead of reporting a false success when the upgrade didn't complete
+
 ## 4.8.0
 
 ### Minor Changes
