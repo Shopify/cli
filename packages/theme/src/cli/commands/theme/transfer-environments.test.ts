@@ -1,8 +1,10 @@
 import Push from './push.js'
 import Pull from './pull.js'
+import Share from './share.js'
 import {executeThemePull} from '../../services/pull.js'
 import {executeThemePush} from '../../services/push.js'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -24,9 +26,13 @@ class TestPull extends Pull {
   public parse = vi.fn()
 }
 
-describe.each([TestPush, TestPull])('%s', (Command) => {
+class TestShare extends Share {
+  public parse = vi.fn()
+}
+
+describe.each([TestPush, TestPull, TestShare])('%s', (Command) => {
   // Exercise real environment orchestration, presenter, encoder and streams.
-  test.each(['none', 'partial', 'total'] as const)(
+  test.each(['none', 'partial', 'total', 'cancelled', 'analytics'] as const)(
     'collects environment successes in requested order with %s failures',
     async (failures) => {
       await inTemporaryDirectory(async (path) => {
@@ -41,12 +47,19 @@ describe.each([TestPush, TestPull])('%s', (Command) => {
         const secondStarted = new Promise<void>((resolve) => {
           releaseFirst = resolve
         })
+        vi.mocked(addPublicMetadata).mockImplementation(async (collect) => {
+          const metadata = await collect()
+          if (failures === 'analytics' && metadata?.store_domain === 'second.myshopify.com') {
+            throw new Error('analytics failed')
+          }
+        })
         const executionOrder: string[] = []
         const execute = async (flags: {environment?: string[]}, session?: {storeFqdn: string}) => {
           const environment = flags.environment![0]!
           if (environment === 'first') await secondStarted
           if (environment === 'second') releaseFirst()
           executionOrder.push(environment)
+          if (failures === 'cancelled' && environment === 'second') return undefined
           if (failures === 'total' || (failures === 'partial' && environment === 'second'))
             throw new Error('upload failed')
           return {
@@ -89,7 +102,7 @@ describe.each([TestPush, TestPull])('%s', (Command) => {
                 .map((line) => JSON.parse(line))
             : []
           expect(events.filter((event) => event.level === 'error')).toHaveLength(
-            {none: 0, partial: 1, total: 3}[failures],
+            {none: 0, partial: 1, total: 3, cancelled: 0, analytics: 1}[failures],
           )
         })
       })
@@ -108,6 +121,7 @@ describe.each([TestPush, TestPull])('%s', (Command) => {
 
       expect(JSON.parse(stdout())).toEqual([])
       expect(executeThemePush).not.toHaveBeenCalled()
+      expect(executeThemePull).not.toHaveBeenCalled()
       expect(
         stderr()
           .trim()
