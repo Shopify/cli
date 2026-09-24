@@ -1,14 +1,21 @@
+import {themePublishJsonOutputSchema} from '../../services/publish/types.js'
+import {renderThemePublishResult} from '../../services/publish/result.js'
 import {publish} from '../../services/publish.js'
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {Flags} from '@oclif/core'
-import {globalFlags, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 import {OutputFlags} from '@oclif/core/interfaces'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
 type PublishFlags = OutputFlags<typeof Publish.flags>
 
 export default class Publish extends ThemeCommand {
+  static get jsonOutputSchema() {
+    return themePublishJsonOutputSchema
+  }
+
   static summary = 'Set a remote theme as the live theme.'
 
   static descriptionWithMarkdown = `Publishes an unpublished theme from your theme library.
@@ -23,6 +30,7 @@ If you want to publish your local theme, then you need to run \`shopify theme pu
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     ...themeFlags,
     force: requiredIfNonInteractive(
       Flags.boolean({
@@ -43,6 +51,17 @@ If you want to publish your local theme, then you need to run \`shopify theme pu
   static multiEnvironmentsFlags = ['store', 'password', 'theme']
 
   async command(flags: PublishFlags, adminSession: AdminSession, multiEnvironment?: boolean) {
-    await publish(adminSession, flags, multiEnvironment)
+    const result = await publish(adminSession, flags, multiEnvironment)
+    if (!result) return
+    if (flags.json && multiEnvironment) return result.data
+    renderThemePublishResult(result, flags.json ? 'json' : 'text', flags.environment)
+  }
+
+  protected collectsEnvironmentResults(flags: {json?: boolean}): boolean {
+    return Boolean(flags.json)
+  }
+
+  protected renderEnvironmentResults(environments: {environment: string; result: unknown}[]): void {
+    outputResult(themePublishJsonOutputSchema.encode(themePublishJsonOutputSchema.validate({environments})))
   }
 }
