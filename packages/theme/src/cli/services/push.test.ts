@@ -104,6 +104,7 @@ describe('push', () => {
     // Then
     expect(outputResult).toHaveBeenCalledWith(
       JSON.stringify({
+        status: 'failed',
         theme: {
           id: 1,
           name: 'Theme',

@@ -1,6 +1,12 @@
 import {globFlags, themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {push} from '../../services/push.js'
+import {executeThemePush} from '../../services/push.js'
+import {themePushJsonOutputSchema} from '../../services/push/types.js'
+import {
+  checkThemeBeforePush,
+  renderThemePushResult,
+  renderThemePushEnvironmentResults,
+} from '../../services/push/result.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
@@ -13,6 +19,10 @@ import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 type PushFlags = InferredFlags<typeof Push.flags>
 
 export default class Push extends ThemeCommand {
+  static get jsonOutputSchema() {
+    return themePushJsonOutputSchema
+  }
+
   static summary = 'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
 
   static usage = ['theme push', 'theme push --unpublished --json']
@@ -137,7 +147,8 @@ export default class Push extends ThemeCommand {
     context?: {stdout?: Writable; stderr?: Writable},
   ) {
     recordTiming('theme-command:push')
-    await push(
+    await checkThemeBeforePush(flags)
+    const result = await executeThemePush(
       {
         ...flags,
         allowLive: flags['allow-live'],
@@ -148,7 +159,17 @@ export default class Push extends ThemeCommand {
       multiEnvironment,
       context,
     )
+    if (result && !(flags.json && multiEnvironment)) renderThemePushResult(result, flags.json ? 'json' : 'text')
     recordTiming('theme-command:push')
+    return result
+  }
+
+  protected collectsEnvironmentResults(flags: {json?: boolean}): boolean {
+    return Boolean(flags.json)
+  }
+
+  protected renderEnvironmentResults(results: {environment: string; result: unknown}[]): void {
+    renderThemePushEnvironmentResults(results)
   }
 
   protected storeAuthScopes(): string[] {
