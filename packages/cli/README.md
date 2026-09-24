@@ -825,6 +825,10 @@ ARGUMENTS
   [CONFIG]  The name of the app configuration. Can be 'shopify.app.staging.toml' or simply 'staging'.
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
@@ -858,6 +862,37 @@ DESCRIPTION
 
   Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll
   be prompted to choose from the configuration files in your project.
+
+  Output from `--json` conforms to the `AppConfigUseResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "configFile": {
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      "clientId": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    },
+    "required": [
+      "configFile",
+      "clientId"
+    ],
+    "additionalProperties": false,
+    "title": "AppConfigUseResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app config validate`

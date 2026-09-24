@@ -1,14 +1,14 @@
+import {type AppConfigUseResult} from './use/types.js'
+import {renderAppConfigUseResult} from './use/result.js'
 import {getAppConfigurationFileName, getAppConfigurationContext} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {RenderAlertOptions, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {basename, joinPath} from '@shopify/cli-kit/node/path'
+import {RenderAlertOptions, renderWarning} from '@shopify/cli-kit/node/ui'
 import {Result, err, ok} from '@shopify/cli-kit/node/result'
-import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 
 export interface UseOptions {
   directory: string
@@ -26,36 +26,26 @@ export default async function use({
   shouldRenderSuccess = true,
   reset = false,
 }: UseOptions): Promise<string | undefined> {
+  // Compatibility adapter for configuration selection during other commands.
+  if (warningContent && !reset) renderWarning(warningContent)
+  const result = await useAppConfiguration({directory, configName, reset})
+  if (reset || shouldRenderSuccess) await renderAppConfigUseResult(result, directory, 'text')
+  return result.configFile === null ? undefined : basename(result.configFile)
+}
+
+export async function useAppConfiguration({
+  directory,
+  configName,
+  reset = false,
+}: Pick<UseOptions, 'directory' | 'configName' | 'reset'>): Promise<AppConfigUseResult> {
   if (reset) {
     clearCurrentConfigFile(directory)
-    const packageManager = await getPackageManager(directory)
-    renderSuccess({
-      headline: 'Cleared current configuration.',
-      body: [
-        'In order to set a new current configuration, please run',
-        {command: formatPackageManagerCommand(packageManager, 'shopify app config use CONFIG_NAME')},
-        {char: '.'},
-      ],
-    })
-    return
+    return {configFile: null, clientId: null}
   }
-
-  if (warningContent) {
-    renderWarning(warningContent)
-  }
-
   const configFileName = (await getConfigFileName(directory, configName)).valueOrAbort()
-
   const {activeConfig} = await getAppConfigurationContext(directory, configFileName)
   setCurrentConfigPreference(activeConfig.file.content, {configFileName, directory})
-
-  if (shouldRenderSuccess) {
-    renderSuccess({
-      headline: `Using configuration file ${configFileName}`,
-    })
-  }
-
-  return configFileName
+  return {configFile: joinPath(directory, configFileName), clientId: activeConfig.file.content.client_id as string}
 }
 
 /**
