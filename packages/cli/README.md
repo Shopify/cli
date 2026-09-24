@@ -8854,7 +8854,7 @@ Renames an existing theme.
 
 ```
 USAGE
-  $ shopify theme rename [--auth-alias <value>] [-d] [-e <value>...] [--json-schema] [-l] [-n <value>]
+  $ shopify theme rename [--auth-alias <value>] [-d] [-e <value>...] [-j] [--json-schema] [-l] [-n <value>]
     [--no-color] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
@@ -8865,6 +8865,10 @@ FLAGS
   -e, --environment=<value>...
       The environment to apply to the current command.
       [env: SHOPIFY_FLAG_ENVIRONMENT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -l, --live
       Rename your remote live theme. Use --development, --live, or --theme in non-interactive environments.
@@ -8914,6 +8918,100 @@ DESCRIPTION
 
   If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in
   your store.
+
+
+  Output from `--json` conforms to the `ThemeRenameResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeRenameEnvironment/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeRenameEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeRenameResult",
+    "definitions": {
+      "RenamedTheme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "processing": {
+            "type": "boolean"
+          },
+          "createdAtRuntime": {
+            "type": "boolean"
+          },
+          "src": {
+            "type": "string"
+          },
+          "shop": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "processing",
+          "createdAtRuntime",
+          "shop"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeRenameEnvironment": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string"
+          },
+          "result": {
+            "type": "object",
+            "properties": {
+              "theme": {
+                "$ref": "#/definitions/RenamedTheme"
+              }
+            },
+            "required": [
+              "theme"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "environment",
+          "result"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme share`

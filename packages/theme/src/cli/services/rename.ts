@@ -1,8 +1,7 @@
-import {themeComponent} from '../utilities/theme-ui.js'
+import {ThemeRenameResult} from './rename/types.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themeUpdate} from '@shopify/cli-kit/node/themes/api'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {promptThemeName} from '@shopify/cli-kit/node/themes/utils'
 
 export interface RenameOptions {
@@ -10,10 +9,9 @@ export interface RenameOptions {
   development?: boolean
   theme?: string
   live?: boolean
-  environment?: string
 }
 
-export async function renameTheme(options: RenameOptions, adminSession: AdminSession) {
+export async function renameTheme(options: RenameOptions, adminSession: AdminSession): Promise<ThemeRenameResult> {
   const newName = options.name ?? (await promptThemeName('New name for the theme'))
 
   const theme = await findOrSelectTheme(adminSession, {
@@ -25,15 +23,7 @@ export async function renameTheme(options: RenameOptions, adminSession: AdminSes
     },
   })
 
-  await themeUpdate(theme.id, {name: newName}, adminSession)
-
-  renderSuccess({
-    body: [
-      ...(options.environment ? [{subdued: `Environment: ${options.environment}\n\n`}] : []),
-      'The theme',
-      ...themeComponent(theme),
-      'was renamed to',
-      `'${newName}'`,
-    ],
-  })
+  // The API helper rejects missing themes and user errors before returning.
+  const renamedTheme = (await themeUpdate(theme.id, {name: newName}, adminSession))!
+  return {data: {theme: {...renamedTheme, shop: adminSession.storeFqdn}}, originalTheme: theme, requestedName: newName}
 }
