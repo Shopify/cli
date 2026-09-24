@@ -55,6 +55,7 @@ const shopifyFunctionCodegenDefaults = {
     Handle: 'string',
     ID: 'string',
     JSON: 'unknown',
+    JsonObject: 'Record<string, unknown>',
     TimeWithoutTimezone: 'string',
     URL: 'string',
     Void: 'null',
