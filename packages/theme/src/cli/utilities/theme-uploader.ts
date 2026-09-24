@@ -130,7 +130,7 @@ function createIntervalTask({
   const addNextCheck = () => {
     tasks.push({
       title: titleGetter(),
-      task: async () => {
+      task: async (_context, task) => {
         const result = await Promise.race([
           promise,
           new Promise((resolve) => setTimeout(() => resolve('timeout'), updateInterval)),
@@ -138,6 +138,8 @@ function createIntervalTask({
 
         if (result === 'timeout') {
           addNextCheck()
+        } else {
+          task.title = titleGetter()
         }
       },
     })
