@@ -1,6 +1,7 @@
-import securityCheck, {appSecurityInstructionsPrompt} from './security-check.js'
+import securityCheck, {appSecurityDiscardReviewPrompt, appSecurityInstructionsPrompt} from './security-check.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 import type {
   AppSecurityArtifactPaths,
@@ -117,6 +118,7 @@ function testDependencies(execution: AppSecurityExecution = scanExecution) {
     execute: vi.fn(async () => execution),
     writeArtifacts: vi.fn(async () => artifacts),
     canPrompt: vi.fn(() => false),
+    confirmDiscardReview: vi.fn(async (_details: string) => false),
     selectInstructionsDestination: vi.fn(async (): Promise<AppSecurityInstructionsDestination> => 'nothing'),
     deliverInstructions: vi.fn(async () => {}),
     output: vi.fn(),
@@ -209,9 +211,14 @@ describe('securityCheck', () => {
     })
     dependencies.readTrace.mockResolvedValue({status: 'ok', trace: compiledTrace})
 
-    await expect(securityCheck(testOptions(), dependencies)).rejects.toBeInstanceOf(AbortError)
+    const commands = resolveAppSecurityCommands(scanExecution.appRoot)
 
-    expect(dependencies.findingsFileExists).not.toHaveBeenCalled()
+    const error = await securityCheck(testOptions(), dependencies).catch((error: unknown) => error)
+
+    expect(error).toBeInstanceOf(AbortError)
+    expect(error).toMatchObject({
+      tryMessage: `The existing trace contains agent review results:\n  ${resolvedArtifacts.tracePath}\n\nUse the existing trace, or discard the current review and start over:\n  ${formatAppSecurityCommand(commands.clean)}`,
+    })
     expect(dependencies.execute).not.toHaveBeenCalled()
   })
 
@@ -233,10 +240,135 @@ describe('securityCheck', () => {
     expect(error).toBeInstanceOf(AbortError)
     expect(error).toMatchObject({
       message: 'App Security did not start a new scan.',
-      tryMessage: `The existing trace contains agent review results:\n  ${resolvedArtifacts.tracePath}\n\nUse the existing trace, or discard the current review and start over:\n  ${formatAppSecurityCommand(commands.clean)}`,
+      tryMessage: `The existing trace contains agent review results:\n  ${resolvedArtifacts.tracePath}\n\nAgent findings will also be deleted:\n  ${resolvedArtifacts.findingsPath}\n\nUse the existing trace, or discard the current review and start over:\n  ${formatAppSecurityCommand(commands.clean)}`,
     })
     expect(dependencies.execute).not.toHaveBeenCalled()
     expect(dependencies.writeArtifacts).not.toHaveBeenCalled()
+  })
+
+  test('refuses to replace a trace that fails validation', async () => {
+    const dependencies = testDependencies()
+    dependencies.readTrace.mockResolvedValue({status: 'invalid', errors: ['unsupported schema_version: 3']})
+    const commands = resolveAppSecurityCommands(scanExecution.appRoot)
+    const output = mockAndCaptureOutput()
+
+    const error = await securityCheck(testOptions(), dependencies).catch((error: unknown) => error)
+
+    expect(error).toBeInstanceOf(AbortError)
+    expect(error).toMatchObject({
+      message: 'App Security did not start a new scan.',
+      tryMessage: `Shopify CLI can't validate the existing trace, so it can't confirm whether it contains agent review results:\n  ${resolvedArtifacts.tracePath}\n\nTo discard the current review and start over:\n  ${formatAppSecurityCommand(commands.clean)}`,
+    })
+    expect((error as AbortError).tryMessage).not.toContain('unsupported schema_version')
+    expect(output.debug()).toContain('unsupported schema_version: 3')
+    expect(dependencies.execute).not.toHaveBeenCalled()
+  })
+
+  test('prompts before replacing a trace that fails validation', async () => {
+    const dependencies = testDependencies()
+    dependencies.readTrace.mockResolvedValue({status: 'invalid', errors: ['The trace file is larger than 5 MB.']})
+    dependencies.findingsFileExists.mockResolvedValue(true)
+    dependencies.canPrompt.mockReturnValue(true)
+    dependencies.confirmDiscardReview.mockResolvedValue(true)
+
+    await securityCheck(testOptions(), dependencies)
+
+    expect(dependencies.confirmDiscardReview).toHaveBeenCalledWith(
+      `Shopify CLI can't validate the existing trace, so it can't confirm whether it contains agent review results:\n  ${resolvedArtifacts.tracePath}\n\nAgent findings will also be deleted:\n  ${resolvedArtifacts.findingsPath}`,
+    )
+    expect(dependencies.writeArtifacts).toHaveBeenCalledWith(scanExecution, {clean: true})
+  })
+
+  test('prompts before discarding protected review work in interactive terminals', async () => {
+    const dependencies = testDependencies()
+    dependencies.canPrompt.mockReturnValue(true)
+    dependencies.findingsFileExists.mockResolvedValue(true)
+    dependencies.confirmDiscardReview.mockResolvedValue(true)
+    const commands = resolveAppSecurityCommands(scanExecution.appRoot)
+
+    await securityCheck(testOptions(), dependencies)
+
+    expect(dependencies.confirmDiscardReview).toHaveBeenCalledWith(
+      `Agent findings exist at:\n  ${resolvedArtifacts.findingsPath}\n\nIf your coding agent is still reviewing, cancel.\nTo compile these findings instead, cancel and run:\n  ${formatAppSecurityCommand(commands.compile)}`,
+    )
+    expect(dependencies.writeArtifacts).toHaveBeenCalledWith(scanExecution, {clean: true})
+  })
+
+  test('describes every discarded artifact when prompting for a compiled trace', async () => {
+    const dependencies = testDependencies()
+    const compiledTrace = structuredClone(trace)
+    compiledTrace.checks_executed.push({
+      id: 'CHECK_0',
+      version: 1,
+      kind: 'agent',
+      status: 'executed',
+      required: false,
+      applicable: true,
+      languages: [],
+      framework: 'none',
+      surface: 'config_only',
+      inspected_files: ['app/a.ts'],
+      findings: 0,
+      analysis_mode: 'agent',
+      prompt: 'prompt',
+      prompt_hash: 'sha256:prompt',
+      guidance: 'guidance',
+    })
+    dependencies.readTrace.mockResolvedValue({status: 'ok', trace: compiledTrace})
+    dependencies.findingsFileExists.mockResolvedValue(true)
+    dependencies.canPrompt.mockReturnValue(true)
+    dependencies.confirmDiscardReview.mockResolvedValue(true)
+
+    await securityCheck(testOptions(), dependencies)
+
+    expect(dependencies.confirmDiscardReview).toHaveBeenCalledWith(
+      `The existing trace contains agent review results:\n  ${resolvedArtifacts.tracePath}\n\nAgent findings will also be deleted:\n  ${resolvedArtifacts.findingsPath}`,
+    )
+    expect(dependencies.writeArtifacts).toHaveBeenCalledWith(scanExecution, {clean: true})
+  })
+
+  test('stops silently without scanning when the user declines to discard review work', async () => {
+    const dependencies = testDependencies()
+    dependencies.canPrompt.mockReturnValue(true)
+    dependencies.findingsFileExists.mockResolvedValue(true)
+
+    await expect(securityCheck(testOptions(), dependencies)).rejects.toBeInstanceOf(AbortSilentError)
+
+    expect(dependencies.confirmDiscardReview).toHaveBeenCalledOnce()
+    expect(dependencies.execute).not.toHaveBeenCalled()
+    expect(dependencies.writeArtifacts).not.toHaveBeenCalled()
+  })
+
+  test('never prompts to discard review work for JSON output', async () => {
+    const dependencies = testDependencies()
+    dependencies.canPrompt.mockReturnValue(true)
+    dependencies.findingsFileExists.mockResolvedValue(true)
+
+    await expect(securityCheck({...testOptions(), json: true}, dependencies)).rejects.toBeInstanceOf(AbortError)
+
+    expect(dependencies.confirmDiscardReview).not.toHaveBeenCalled()
+    expect(dependencies.execute).not.toHaveBeenCalled()
+  })
+
+  test('does not treat --yes as consent to discard review work', async () => {
+    const dependencies = testDependencies()
+    dependencies.canPrompt.mockReturnValue(true)
+    dependencies.findingsFileExists.mockResolvedValue(true)
+
+    await expect(securityCheck({...testOptions(), yes: true}, dependencies)).rejects.toBeInstanceOf(AbortSilentError)
+
+    expect(dependencies.confirmDiscardReview).toHaveBeenCalledOnce()
+    expect(dependencies.writeArtifacts).not.toHaveBeenCalled()
+  })
+
+  test('defaults the discard prompt to cancelling', () => {
+    expect(appSecurityDiscardReviewPrompt('details')).toEqual({
+      message: 'Discard the current App Security review and start a new scan?',
+      infoMessage: {title: {color: 'red', text: "Discarding the current review can't be undone."}, body: 'details'},
+      confirmationMessage: 'Yes, discard and start a new scan',
+      cancellationMessage: 'No, cancel',
+      defaultValue: false,
+    })
   })
 
   test('allows an initial trace and bypasses the guard for compile and clean operations', async () => {
@@ -244,11 +376,6 @@ describe('securityCheck', () => {
     initialDependencies.readTrace.mockResolvedValue({status: 'ok', trace})
     await securityCheck(testOptions(), initialDependencies)
     expect(initialDependencies.execute).toHaveBeenCalledOnce()
-
-    const invalidTraceDependencies = testDependencies()
-    invalidTraceDependencies.readTrace.mockResolvedValue({status: 'invalid', errors: ['invalid trace']})
-    await securityCheck(testOptions(), invalidTraceDependencies)
-    expect(invalidTraceDependencies.execute).toHaveBeenCalledOnce()
 
     const compileDependencies = testDependencies()
     compileDependencies.findingsFileExists.mockResolvedValue(true)
