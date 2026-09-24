@@ -34,6 +34,7 @@ import {Writable} from 'stream'
 export const PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION = '2'
 
 interface FunctionCodegenConfig {
+  generates?: Record<string, unknown>
   config?: {
     scalars?: Record<string, unknown> | null
     [key: string]: unknown
@@ -201,8 +202,34 @@ export async function buildGraphqlTypes(
   return inTemporaryDirectory(async (temporaryDirectory) => {
     const codegenConfigPath = joinPath(temporaryDirectory, 'codegen.json')
     await writeFile(codegenConfigPath, JSON.stringify(codegenConfig))
-    return runGraphqlCodegen(fun, options, codegenConfigPath)
+    await runGraphqlCodegen(fun, options, codegenConfigPath)
+    await typePrepareResultVariablesAsJsonObject(fun.directory, codegenConfig)
   })
+}
+
+async function typePrepareResultVariablesAsJsonObject(directory: string, codegenConfig: FunctionCodegenConfig) {
+  const generatedPaths = Object.keys(codegenConfig.generates ?? {})
+
+  await Promise.all(
+    generatedPaths.map(async (generatedPath) => {
+      const filePath = joinPath(directory, generatedPath)
+      if (!(await fileExists(filePath))) return
+
+      const content = await readFile(filePath)
+      const updatedContent = content.replace(/export type \w*PrepareResult = \{[\s\S]*?\n\};/g, (typeDefinition) => {
+        return typeDefinition.replace(/variables: Scalars\['JSON'\]\['input'\]/, 'variables: JsonObject')
+      })
+      if (updatedContent === content) return
+
+      const jsonObjectTypes =
+        'export type JsonObject = { [key: string]: JsonValue }\n' +
+        'export type JsonValue = string | number | boolean | null | JsonObject | JsonValue[]\n\n'
+      const contentWithTypes = updatedContent.includes('export type JsonObject =')
+        ? updatedContent
+        : `${jsonObjectTypes}${updatedContent}`
+      await writeFile(filePath, contentWithTypes)
+    }),
+  )
 }
 
 async function runGraphqlCodegen(fun: {directory: string}, options: JSFunctionBuildOptions, codegenConfigPath: string) {

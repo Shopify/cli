@@ -184,6 +184,49 @@ describe('buildGraphqlTypes', () => {
     })
   })
 
+  test(
+    'types prepare result variables as a JSON object without narrowing other JSON fields',
+    {timeout: 20000},
+    async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const ourFunction = await testFunctionExtension({dir: tmpDir, entryPath: 'src/index.js'})
+        const generatedApiPath = joinPath(tmpDir, 'generated/api.ts')
+        await mkdir(dirname(generatedApiPath))
+        await writeFile(
+          joinPath(tmpDir, 'package.json'),
+          JSON.stringify({
+            codegen: {
+              schema: 'schema.graphql',
+              documents: 'src/*.graphql',
+              generates: {'generated/api.ts': {plugins: ['typescript', 'typescript-operations']}},
+            },
+          }),
+        )
+        vi.mocked(exec).mockImplementation(async () => {
+          await writeFile(
+            generatedApiPath,
+            `export type Scalars = {\n  JSON: { input: unknown; output: unknown; }\n}\n\nexport type CartValidationsGeneratePrepareResult = {\n  variables: Scalars['JSON']['input'];\n};\n\nexport type Metafield = {\n  jsonValue?: Maybe<Scalars['JSON']['output']>;\n};\n`,
+          )
+        })
+
+        // When
+        await buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+
+        // Then
+        const generatedApi = await readFile(generatedApiPath)
+        expect(generatedApi).toContain('export type JsonObject = { [key: string]: JsonValue }')
+        expect(generatedApi).toContain(
+          'export type JsonValue = string | number | boolean | null | JsonObject | JsonValue[]',
+        )
+        expect(generatedApi).toContain(
+          `export type CartValidationsGeneratePrepareResult = {\n  variables: JsonObject;\n};`,
+        )
+        expect(generatedApi).toContain(`jsonValue?: Maybe<Scalars['JSON']['output']>;`)
+      })
+    },
+  )
+
   test('preserves user-defined scalar mappings and fallback type', {timeout: 20000}, async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
