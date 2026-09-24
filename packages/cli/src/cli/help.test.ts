@@ -2,10 +2,18 @@ import ShopifyHelp, {ShopifyCommandHelp} from './help.js'
 import {helpService} from './services/commands/help/index.js'
 import {CommandHelp, Help} from '@oclif/core'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import BaseCommand from '@shopify/cli-kit/node/base-command'
+import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {zod} from '@shopify/cli-kit/node/schema'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import type {Command, Interfaces} from '@oclif/core'
 
 vi.mock('./services/commands/help/index.js')
+vi.mock('@shopify/cli-kit/node/system', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/system')>()),
+  terminalSupportsPrompting: vi.fn(),
+}))
 
 afterEach(() => {
   vi.unstubAllEnvs()
@@ -169,6 +177,92 @@ interface Result {
 })
 
 describe('ShopifyHelp', () => {
+  class CapturingHelp extends ShopifyHelp {
+    output = ''
+
+    // Oclif's README generator calls this protected method from JavaScript.
+    formatCommand(command: Command.Loadable): string {
+      return super.formatCommand(command)
+    }
+
+    protected log(...args: string[]): void {
+      this.output += `${args.join(' ')}\n`
+    }
+  }
+
+  function commandWithSchema(): Command.Loadable {
+    class ExampleCommand extends BaseCommand {
+      static descriptionWithMarkdown = 'Return a value.\n\n```json\n{"example": true}\n```'
+
+      static get jsonOutputSchema() {
+        return defineJsonOutputSchema({name: 'ExampleResult', schema: zod.object({value: zod.string()})})
+      }
+
+      async run(): Promise<void> {}
+    }
+
+    return {
+      id: 'example',
+      aliases: [],
+      args: {},
+      flags: {},
+      description: ExampleCommand.descriptionForHelp(),
+    } as unknown as Command.Loadable
+  }
+
+  function helpForCommand(command: Command.Loadable): CapturingHelp {
+    return new CapturingHelp(
+      {
+        bin: 'shopify',
+        topicSeparator: ':',
+        commands: [command],
+        topics: [],
+        plugins: new Map(),
+      } as unknown as Interfaces.Config,
+      {maxWidth: 120, stripAnsi: true},
+    )
+  }
+
+  test.each([true, false])(
+    'shows the inline schema only in non-interactive help (interactive: %s)',
+    async (interactive) => {
+      vi.mocked(terminalSupportsPrompting).mockReturnValue(interactive)
+      const command = commandWithSchema()
+      const originalDescription = command.description
+      const help = helpForCommand(command)
+
+      await help.showCommandHelp(command)
+
+      expect(help.output).toContain('Use `--json-schema` to print the result, error, and event schemas.')
+      expect(help.output).toContain('Output from `--json` conforms to the `ExampleResult` schema.')
+      expect(help.output).toContain('{"example": true}')
+      expect(help.output.includes('"title": "ExampleResult"')).toBe(!interactive)
+      expect(command.description).toBe(originalDescription)
+    },
+  )
+
+  test('keeps schemas in generated documentation even after displaying interactive help', async () => {
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+    const command = commandWithSchema()
+    const help = helpForCommand(command)
+
+    await help.showCommandHelp(command)
+    const documentation = help.formatCommand(command)
+
+    expect(documentation).toContain('Use `--json-schema` to print the result, error, and event schemas.')
+    expect(documentation).toContain('"title": "ExampleResult"')
+  })
+
+  test('preserves interactive help for commands without schemas', async () => {
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+    const command = {...commandWithSchema(), description: 'Return a value.\n\n```json\n{"example": true}\n```'}
+    const help = helpForCommand(command)
+
+    await help.showCommandHelp(command)
+
+    expect(help.output).toContain('{"example": true}')
+  })
+
   test.each([
     {argv: ['version', '--help', '--json'], environment: ''},
     {argv: ['--json', 'version', '--help'], environment: ''},

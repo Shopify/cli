@@ -2,6 +2,7 @@ import {helpService} from './services/commands/help/index.js'
 import {presentHelpResult} from './services/commands/help/result.js'
 import {CommandHelp, Help} from '@oclif/core'
 import {jsonOutputEnabled} from '@shopify/cli-kit/node/environment'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import type {Command} from '@oclif/core'
 
 type HelpSectionBody = Parameters<CommandHelp['section']>[1]
@@ -112,6 +113,20 @@ function wrapDescription(description: string, wrapProse: (prose: string) => stri
  */
 export default class ShopifyHelp extends Help {
   protected CommandHelpClass = ShopifyCommandHelp
+
+  async showCommandHelp(command: Command.Loadable): Promise<void> {
+    if (!terminalSupportsPrompting()) return super.showCommandHelp(command)
+
+    // Keep schemas in cached metadata and formatCommand(), which generates README documentation.
+    // Only remove the generated schema block, preserving the hint and any command examples.
+    return super.showCommandHelp({
+      ...command,
+      description: command.description?.replace(
+        /(Use `--json-schema` to print the result, error, and event schemas\.)\n\n```json\n[\s\S]*\n```$/,
+        '$1',
+      ),
+    })
+  }
 
   async showHelp(argv: string[]): Promise<void> {
     if (!jsonOutputEnabled(undefined, argv)) return super.showHelp(argv)

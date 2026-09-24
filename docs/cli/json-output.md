@@ -169,7 +169,8 @@ Tests should verify:
 - errors and exit behavior; and
 - prompt behavior independently from `--json` and `--no-input`.
 
-Command help includes the result's JSON Schema automatically through `jsonOutputSchema`. `--json-schema` prints one
+Non-interactive command help and generated README documentation include the result's JSON Schema automatically through
+`jsonOutputSchema`. Interactive help keeps the `--json-schema` hint and omits the inline schema. `--json-schema` prints one
 JSON Schema (draft-07) accepting a result, a fatal error document, or a side event. The `Result`, `Error`, and `Event`
 definitions describe these separately; results and fatal errors go to stdout, and side events go to stderr.
 
