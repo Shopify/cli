@@ -1,12 +1,20 @@
+import {themeRenameJsonOutputSchema} from '../../services/rename/types.js'
+import {renderThemeRenameResult} from '../../services/rename/result.js'
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
-import {RenameOptions, renameTheme} from '../../services/rename.js'
+import {renameTheme} from '../../services/rename.js'
+import {OutputFlags} from '@oclif/core/interfaces'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {Flags} from '@oclif/core'
-import {globalFlags, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 export default class Rename extends ThemeCommand {
+  static get jsonOutputSchema() {
+    return themeRenameJsonOutputSchema
+  }
+
   static summary = 'Renames an existing theme.'
 
   static descriptionWithMarkdown = `Renames a theme in your store.
@@ -18,6 +26,7 @@ export default class Rename extends ThemeCommand {
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     ...themeFlags,
     name: requiredIfNonInteractive(
       Flags.string({
@@ -53,7 +62,17 @@ export default class Rename extends ThemeCommand {
     return [{flags: ['theme', 'development', 'live']}]
   }
 
-  async command(flags: RenameOptions, adminSession: AdminSession) {
-    await renameTheme(flags, adminSession)
+  async command(flags: OutputFlags<typeof Rename.flags>, adminSession: AdminSession, multiEnvironment = false) {
+    const result = await renameTheme(flags, adminSession)
+    if (flags.json && multiEnvironment) return result.data
+    renderThemeRenameResult(result, flags.json ? 'json' : 'text', flags.environment)
+  }
+
+  protected collectsEnvironmentResults(flags: {json?: boolean}): boolean {
+    return Boolean(flags.json)
+  }
+
+  protected renderEnvironmentResults(environments: {environment: string; result: unknown}[]): void {
+    outputResult(themeRenameJsonOutputSchema.encode(themeRenameJsonOutputSchema.validate({environments})))
   }
 }
