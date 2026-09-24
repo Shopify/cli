@@ -34,6 +34,12 @@
 │  ├─ logs
 │  │  └─ sources
 │  ├─ release
+│  ├─ subscription-migrations
+│  │  ├─ cancel
+│  │  ├─ list
+│  │  ├─ schedule
+│  │  ├─ status
+│  │  └─ unschedule
 │  ├─ versions
 │  │  └─ list
 │  └─ webhook

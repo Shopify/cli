@@ -1,6 +1,6 @@
 import ShopifyHelp from './help.js'
 import {helpService} from './services/commands/help/index.js'
-import {Config} from '@oclif/core'
+import {Config, ux} from '@oclif/core'
 import {describe, expect, test, vi} from 'vitest'
 import {fileURLToPath} from 'node:url'
 
@@ -15,7 +15,7 @@ describe('subscription migration help discovery', () => {
   test.each([['app'], ['app', 'subscription-migrations']])('text help lists migrations for %j', async (...argv) => {
     const config = await loadConfig()
     const help = new ShopifyHelp(config, {stripAnsi: true})
-    const log = vi.spyOn(help, 'log').mockImplementation(() => {})
+    const log = vi.spyOn(ux, 'stdout').mockImplementation(() => {})
 
     await help.showHelp(argv)
 
@@ -29,7 +29,7 @@ describe('subscription migration help discovery', () => {
 
   test('recursive text root help lists every migration command', async () => {
     const help = new ShopifyHelp(await loadConfig(), {all: true, stripAnsi: true})
-    const log = vi.spyOn(help, 'log').mockImplementation(() => {})
+    const log = vi.spyOn(ux, 'stdout').mockImplementation(() => {})
 
     await help.showHelp([])
 
