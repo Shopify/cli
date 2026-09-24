@@ -7962,6 +7962,116 @@ DESCRIPTION
     "requestId": "12345-abcde-67890"
   }
   ```
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeDuplicateResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "originalTheme": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/DuplicatedTheme/properties/id"
+              },
+              "name": {
+                "$ref": "#/definitions/DuplicatedTheme/properties/name"
+              },
+              "role": {
+                "$ref": "#/definitions/DuplicatedTheme/properties/role"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "role"
+            ],
+            "additionalProperties": false
+          },
+          "theme": {
+            "$ref": "#/definitions/DuplicatedTheme"
+          }
+        },
+        "required": [
+          "status",
+          "originalTheme",
+          "theme"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "$ref": "#/definitions/ThemeDuplicateError"
+      }
+    ],
+    "title": "ThemeDuplicateResult",
+    "definitions": {
+      "DuplicatedTheme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "shop": {
+            "type": "string"
+          },
+          "preview_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "shop"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeDuplicateError": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "failed"
+          },
+          "message": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "message",
+          "errors"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme info`
