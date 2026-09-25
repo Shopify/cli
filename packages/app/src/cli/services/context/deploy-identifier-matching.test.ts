@@ -13,9 +13,9 @@ import {
 } from '../../models/app/app.test-data.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {BaseConfigType} from '../../models/extensions/schemas.js'
+import {BaseConfigType, BaseSchemaWithoutHandle} from '../../models/extensions/schemas.js'
 import {createConfigExtensionSpecification} from '../../models/extensions/specification.js'
-import {AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {AppModuleVersion, DeveloperPlatformClient, Flag} from '../../utilities/developer-platform-client.js'
 import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js'
 import {migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {beforeAll, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -623,6 +623,64 @@ describe('classifyDeployExtensionChanges', () => {
 })
 
 describe('ensureDeployIdentifiersFromAppVersion', () => {
+  test('passes each module handle to a config reverse transform without changing its output', async () => {
+    const configuration: BaseConfigType & {synthetic_config: {enabled: boolean}} = {synthetic_config: {enabled: true}}
+    const reverse = vi.fn((content: object) => content)
+    const specification = createConfigExtensionSpecification<BaseConfigType>({
+      identifier: 'synthetic_config',
+      schema: BaseSchemaWithoutHandle.extend({synthetic_config: zod.object({enabled: zod.boolean()})}),
+      transformConfig: {forward: (content) => content, reverse},
+    })
+    const extension = new ExtensionInstance<BaseConfigType>({
+      configuration,
+      configurationPath: 'shopify.app.toml',
+      directory: '/app',
+      specification,
+    })
+    extension.handle = 'Local_Module_Handle'
+    const app = testApp({
+      ...APP,
+      allExtensions: [extension],
+      specifications: [specification],
+      remoteFlags: Object.values(Flag),
+    })
+    const remote: AppModuleVersion = {
+      registrationId: extension.uid,
+      registrationUuid: 'synthetic-uuid',
+      registrationTitle: 'Remote_Module_Handle',
+      type: specification.identifier,
+      config: configuration,
+      specification: {
+        identifier: specification.identifier,
+        name: 'Synthetic config',
+        experience: 'configuration',
+        options: {managementExperience: 'cli'},
+      },
+    }
+
+    await ensureDeployIdentifiersFromAppVersion(deployOptions({app, activeAppVersion: {appModuleVersions: [remote]}}))
+
+    expect(reverse).toHaveBeenCalledTimes(2)
+    expect(reverse).toHaveBeenNthCalledWith(1, configuration, {
+      flags: app.remoteFlags,
+      module: {handle: extension.handle},
+    })
+    expect(reverse).toHaveBeenNthCalledWith(2, configuration, {
+      flags: app.remoteFlags,
+      module: {handle: remote.registrationTitle},
+    })
+    expect(deployOrReleaseConfirmationPrompt).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        configExtensionIdentifiersBreakdown: {
+          existingFieldNames: ['synthetic_config'],
+          existingUpdatedFieldNames: [],
+          newFieldNames: [],
+          deletedFieldNames: [],
+        },
+      }),
+    )
+  })
+
   test('prompts with the existing UI breakdown shape and returns deploy identifiers', async () => {
     const identifiers = await ensureDeployIdentifiersFromAppVersion(
       deployOptions({
