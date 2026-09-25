@@ -1,92 +1,99 @@
 import {prependApplicationUrl} from '../validation/url_prepender.js'
-import {CurrentAppConfiguration} from '../../../app/app.js'
+import {ConfigurationModule, configWithoutFirstClassFields} from '../../specification.js'
 import {getPathValue} from '@shopify/cli-kit/common/object'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {zod} from '@shopify/cli-kit/node/schema'
 
-interface EventSubscription {
-  uri: string
-  [key: string]: unknown
+const SubscriptionShape = zod.record(zod.unknown()).refine((value) => Object.keys(value).length > 0)
+const EventsShape = zod
+  .object({
+    api_version: zod.string().min(1).optional(),
+    subscription: zod.union([SubscriptionShape, zod.array(SubscriptionShape)]).nullish(),
+  })
+  .passthrough()
+
+export function eventSubscriptionHandle(handle: unknown): string {
+  if (typeof handle !== 'string' || !/^[a-zA-Z0-9_-]{1,50}$/.test(handle)) {
+    throw new AbortError(
+      'Events subscription identity must be a handle of 1–50 letters, numbers, hyphens or underscores.',
+    )
+  }
+  return handle
 }
 
-interface EventsConfig {
-  events?: {
-    api_version?: string
-    subscription?: EventSubscription | EventSubscription[]
+/** Resolve relative URIs, removing local editing identity only from outgoing object subscriptions. */
+export function transformFromEventsConfig(content: object, appConfiguration?: object): object {
+  const config = configWithoutFirstClassFields({...content})
+  const events = readEvents(config)
+  if (!events?.subscription) return config
+
+  const appUrl = appConfiguration && getPathValue<string>(appConfiguration, 'application_url')
+  const resolve = (subscription: Record<string, unknown>) => ({
+    ...subscription,
+    ...(typeof subscription.uri === 'string' ? {uri: prependApplicationUrl(subscription.uri, appUrl)} : {}),
+  })
+  let subscription
+  if (Array.isArray(events.subscription)) {
+    subscription = events.subscription.map(resolve)
+  } else {
+    const {handle, ...payload} = events.subscription
+    subscription = resolve(payload)
   }
+
+  return {...config, events: {...events, subscription}}
 }
 
-/**
- * Transforms the events config from local to remote format.
- * Resolves relative URIs (starting with /) by prepending the application_url.
- * During dev, application_url is set to the tunnel URL, ensuring events
- * are delivered to the correct endpoint.
- */
-export function transformFromEventsConfig(content: object, appConfiguration?: object) {
-  const eventsConfig = content as EventsConfig
+/** Reconstruct the entire Events section before compacting per-subscription versions against one default. */
+export function aggregateEventsConfigurations(modules: ReadonlyArray<ConfigurationModule>) {
+  const defaults: string[] = []
+  const subscriptions: Record<string, unknown>[] = []
+  let hasSubscriptionList = false
 
-  if (!eventsConfig.events?.subscription) {
-    return content
+  for (const module of modules) {
+    const events = readEvents(module.config)
+    if (!events) continue
+    if (events.api_version !== undefined) defaults.push(events.api_version)
+    if (events.subscription == null) continue
+    hasSubscriptionList = true
+    const isList = Array.isArray(events.subscription)
+    const entries = Array.isArray(events.subscription) ? events.subscription : [events.subscription]
+    if (entries.length > 0 && events.api_version === undefined) {
+      throw new AbortError("Can't reconstruct Events subscriptions without events.api_version on their module.")
+    }
+    for (const entry of entries) {
+      const {identifier, handle, api_version: override, ...payload} = entry
+      if (override !== undefined && (typeof override !== 'string' || override.length === 0)) {
+        throw new AbortError('Events subscription api_version must be a nonempty string.')
+      }
+      subscriptions.push({
+        ...payload,
+        handle: eventSubscriptionHandle(isList ? handle : module.handle),
+        api_version: override ?? events.api_version,
+      })
+    }
   }
 
-  let appUrl: string | undefined
-  if (appConfiguration && 'application_url' in appConfiguration) {
-    appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
-  }
-
-  const subscription = eventsConfig.events.subscription
-  const resolved = wrapSubscriptions(subscription).map((sub) => ({
-    ...sub,
-    uri: prependApplicationUrl(sub.uri, appUrl),
-  }))
-
+  // Lexical ordering chooses a stable representation, not the newest API release.
+  const apiVersion = defaults.sort()[0]
+  const compacted = subscriptions.map(({api_version: version, ...subscription}) =>
+    version === apiVersion ? subscription : {...subscription, api_version: version},
+  )
   return {
-    ...eventsConfig,
     events: {
-      ...eventsConfig.events,
-      subscription: Array.isArray(subscription) ? resolved : resolved[0],
+      ...(apiVersion === undefined ? {} : {api_version: apiVersion}),
+      ...(hasSubscriptionList ? {subscription: compacted} : {}),
     },
   }
 }
 
-interface RemoteEventSubscription {
-  identifier: string
-  api_version?: string
-  [key: string]: unknown
-}
-
-/**
- * Transforms the events config from remote to local format.
- * Strips the server-managed 'identifier' field from subscriptions, and the
- * per-subscription 'api_version' when it only echoes the events default.
- */
-export function transformToEventsConfig(content: object) {
-  const eventsConfig = getPathValue(content, 'events') as {
-    api_version: string
-    subscription: RemoteEventSubscription | RemoteEventSubscription[]
+function readEvents(content: object) {
+  const events = getPathValue<unknown>(content, 'events')
+  if (events == null) return undefined
+  const parsed = EventsShape.safeParse(events)
+  if (!parsed.success) {
+    throw new AbortError(
+      'Invalid Events configuration: expected an events table and a subscription object or array of nonempty objects.',
+    )
   }
-  const apiVersion = getPathValue<string>(eventsConfig, 'api_version')
-  const subscription = getPathValue<RemoteEventSubscription | RemoteEventSubscription[]>(eventsConfig, 'subscription')
-
-  // The server always includes identifier, and materializes the events default
-  // api_version onto every subscription. Both are derived, so they are stripped
-  // for the local TOML; an api_version that differs from the default is a real
-  // override and is kept. Single-subscription modules are normalized to a
-  // one-element array so that merging multiple modules accumulates a single
-  // subscription list.
-  const cleanedSubscriptions =
-    subscription === undefined
-      ? undefined
-      : wrapSubscriptions(subscription).map((sub) => {
-          const {identifier, api_version: subscriptionApiVersion, ...rest} = sub
-          const overridesDefault = subscriptionApiVersion !== undefined && subscriptionApiVersion !== apiVersion
-          return overridesDefault ? {...rest, api_version: subscriptionApiVersion} : rest
-        })
-
-  const events =
-    (apiVersion ?? cleanedSubscriptions) ? {api_version: apiVersion, subscription: cleanedSubscriptions} : {}
-
-  return {events}
-}
-
-function wrapSubscriptions<T>(subscription: T | T[]): T[] {
-  return Array.isArray(subscription) ? subscription : [subscription]
+  return parsed.data
 }

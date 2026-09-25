@@ -7,6 +7,7 @@ import {
 import {activeAppVersionAfterMigrations} from './deploy-app-version-migrations.js'
 import {EnsureDeploymentIdsPresenceOptions} from './identifiers.js'
 import {remoteAppConfigurationExtensionContent} from '../app/select-app.js'
+import {configurationFromModules, ConfigurationModuleEntry} from '../app/configuration-modules.js'
 import {AppInterface} from '../../models/app/app.js'
 import {DeployIdentifiers, ExtensionUuidsByLocalIdentifier} from '../../models/app/identifiers.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
@@ -14,7 +15,6 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js'
 import {AppModuleVersion, AppVersion} from '../../utilities/developer-platform-client.js'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
-import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 import {slugify} from '@shopify/cli-kit/common/string'
 
 type DeployExtensionChangeStatus = 'created' | 'updated' | 'deleted' | 'unchanged'
@@ -182,19 +182,20 @@ function buildDeployIdentifiersFromChanges(changes: DeployExtensionChange[]) {
 }
 
 async function localAppConfigurationExtensionContent(app: AppInterface, apiKey: string) {
-  let appConfig: {[key: string]: unknown} = {}
   const configExtensions = app.allExtensions.filter((extension) => extension.isAppConfigExtension)
-
+  const entries: (ConfigurationModuleEntry & {configuration: object})[] = []
   for (const extension of configExtensions) {
     // eslint-disable-next-line no-await-in-loop
     const deployConfig = await extension.deployConfig({apiKey, appConfiguration: app.configuration})
-    const localConfig =
-      extension.specification.transformRemoteToLocal?.(deployConfig ?? {}, {flags: app.remoteFlags}) ??
-      extension.configuration
-    appConfig = deepMergeObjects(appConfig, localConfig)
+    const specification = extension.specification
+    const configuration = specification.aggregateModuleConfigurations
+      ? extension.configuration
+      : (specification.transformRemoteToLocal?.(deployConfig ?? {}, {flags: app.remoteFlags}) ??
+        extension.configuration)
+    entries.push({specification, module: {handle: extension.handle, config: deployConfig ?? {}}, configuration})
   }
 
-  return appConfig
+  return configurationFromModules(entries, app.remoteFlags, ({configuration}) => configuration)
 }
 
 /** Builds prompt metadata for a remote-only module. */
