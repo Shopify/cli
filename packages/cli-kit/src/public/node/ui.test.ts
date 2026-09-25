@@ -7,11 +7,12 @@ import {
   renderTasks,
   renderWarning,
   renderSingleTask,
+  Task,
 } from './ui.js'
 import {AbortSignal} from './abort.js'
 import {BugError, FatalError, AbortError, FatalErrorType} from './error.js'
-import {runWithCommandEvents} from './command-events.js'
-import {mockAndCaptureOutput} from './testing/output.js'
+import {renderCommandEventAsJson, runWithCommandEvents} from './command-events.js'
+import {mockAndCaptureOutput, withCapturedStandardStreams} from './testing/output.js'
 import {TokenizedString} from './output.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import supportsHyperlinks from 'supports-hyperlinks'
@@ -340,6 +341,158 @@ describe('renderConcurrent', async () => {
 })
 
 describe('renderTasks', async () => {
+  test.each(['text', 'json'] as const)(
+    'preserves context, retries, subtasks, and skipping in %s mode',
+    async (outputMode) => {
+      const sink = vi.fn()
+      const error = new Error('Try again')
+      const skipped = vi.fn()
+      const tasks: Task<{steps: string[]}>[] = [
+        {
+          title: 'Prepare',
+          task: async (context) => {
+            context.steps = ['prepare']
+          },
+        },
+        {
+          title: 'Upload',
+          retry: 1,
+          task: async (context, task) => {
+            if (task.retryCount === 0) throw error
+            expect(task.errors).toEqual([error])
+            context.steps.push('upload')
+            return [
+              {title: 'Skipped subtask', skip: () => true, task: skipped},
+              {
+                title: 'Verify',
+                task: async (context) => {
+                  context.steps.push('verify')
+                },
+              },
+            ]
+          },
+        },
+        {title: 'Skipped task', skip: (context) => context.steps.includes('verify'), task: skipped},
+      ]
+
+      const context = await runWithCommandEvents({sink, outputMode}, () => renderTasks(tasks))
+
+      expect(context).toEqual({steps: ['prepare', 'upload', 'verify']})
+      expect(skipped).not.toHaveBeenCalled()
+      expect(tasks[1]!.retryCount).toBe(1)
+      const events = sink.mock.calls.map(([event]) => event)
+      expect(events.map(({status, message}) => ({status, message}))).toEqual([
+        {status: 'started', message: 'Prepare'},
+        {status: 'updated', message: 'Upload'},
+        {status: 'updated', message: 'Verify'},
+        {status: 'completed', message: 'Verify'},
+      ])
+      expect(events[0].operation).toEqual(expect.any(String))
+      expect(new Set(events.map(({operation}) => operation)).size).toBe(1)
+      expect(events.at(-1)).toMatchObject({current: 1, total: 1})
+      expect(sink.mock.calls.every(([, options]) => options.alreadyRendered)).toBe(true)
+    },
+  )
+
+  test('writes JSON progress to stderr without rendering terminal UI', async () => {
+    const write = vi.fn((_chunk, _encoding, callback) => callback())
+    const stdout = new Writable({write})
+    await withCapturedStandardStreams(async (streams) => {
+      await runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, () =>
+        renderTasks(
+          [
+            {title: '\u001b[32mUpload\u001b[39m', task: async () => {}},
+            {title: new TokenizedString('Upload'), task: async () => {}},
+          ],
+          {renderOptions: {stdout: stdout as NodeJS.WriteStream}},
+        ),
+      )
+
+      expect(write).not.toHaveBeenCalled()
+      expect(streams.stdout()).toBe('')
+      const events = streams
+        .stderr()
+        .trim()
+        .split('\n')
+        .map((line) => JSON.parse(line))
+      expect(events).toHaveLength(3)
+      expect(events.every((event) => event.type === 'progress' && event.message === 'Upload')).toBe(true)
+      expect(events[0].operation).toBe(events[2].operation)
+    })
+  })
+
+  test.each(['text', 'json'] as const)('stops after exhausting retries in %s mode', async (outputMode) => {
+    const sink = vi.fn()
+    const error = new Error('Upload failed')
+    const task = vi.fn().mockRejectedValue(error)
+    const nextTask = vi.fn()
+
+    await expect(
+      runWithCommandEvents({sink, outputMode}, () =>
+        renderTasks([
+          {title: 'Upload', retry: 1, task},
+          {title: 'Next', task: nextTask},
+        ]),
+      ),
+    ).rejects.toBe(error)
+
+    expect(task).toHaveBeenCalledTimes(2)
+    expect(nextTask).not.toHaveBeenCalled()
+    expect(sink).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({type: 'progress', status: 'started', message: 'Upload'}),
+      {alreadyRendered: true},
+    )
+  })
+
+  test.each(['text', 'json'] as const)('runs tasks appended during execution in %s mode', async (outputMode) => {
+    const sink = vi.fn()
+    const tasks: Task<{finished: boolean}>[] = [
+      {
+        title: 'Wait',
+        task: async () => {
+          tasks.push({
+            title: 'Finish',
+            task: async (context) => {
+              expect(sink.mock.calls.map(([event]) => event.status)).toEqual(['started', 'updated'])
+              context.finished = true
+            },
+          })
+        },
+      },
+    ]
+
+    const context = await runWithCommandEvents({outputMode, sink}, () => renderTasks(tasks))
+
+    expect(context).toEqual({finished: true})
+    expect(sink.mock.calls.map(([event]) => event.status)).toEqual(['started', 'updated', 'completed'])
+  })
+
+  test('distinguishes concurrent JSON task lists with the same title', async () => {
+    const sink = vi.fn()
+    await runWithCommandEvents({outputMode: 'json', sink}, () =>
+      Promise.all([
+        renderTasks([{title: 'Upload', task: async () => {}}]),
+        renderTasks([{title: 'Upload', task: async () => {}}]),
+      ]),
+    )
+    const events = sink.mock.calls.map(([event]) => event)
+    const operations = events.filter((event) => event.status === 'started').map((event) => event.operation)
+    expect(new Set(operations).size).toBe(2)
+    for (const operation of operations) {
+      expect(events.filter((event) => event.operation === operation).map((event) => event.status)).toEqual([
+        'started',
+        'completed',
+      ])
+    }
+  })
+
+  test('returns an empty context for an empty JSON task list', async () => {
+    const sink = vi.fn()
+    const context = await runWithCommandEvents({outputMode: 'json', sink}, () => renderTasks([]))
+    expect(context).toEqual({})
+    expect(sink).not.toHaveBeenCalled()
+  })
+
   test('renders an error message correctly when the task throws an error', async () => {
     // Given
     const mockOutput = mockAndCaptureOutput()
