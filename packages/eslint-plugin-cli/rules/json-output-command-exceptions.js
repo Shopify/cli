@@ -66,7 +66,6 @@ const commandExceptions = [
   'packages/theme/src/cli/commands/theme/package.ts',
   'packages/theme/src/cli/commands/theme/preview.ts',
   'packages/theme/src/cli/commands/theme/profile.ts',
-  'packages/theme/src/cli/commands/theme/publish.ts',
   'packages/theme/src/cli/commands/theme/pull.ts',
   'packages/theme/src/cli/commands/theme/push.ts',
   'packages/theme/src/cli/commands/theme/rename.ts',
