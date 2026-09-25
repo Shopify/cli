@@ -303,25 +303,12 @@ export async function bulkUploadThemeAssets(
 }
 
 function prepareFilesForUpload(assets: AssetParams[]): OnlineStoreThemeFilesUpsertFileInput[] {
-  return assets.map((asset) => {
-    if (asset.attachment) {
-      return {
-        filename: asset.key,
-        body: {
-          type: 'BASE64' as const,
-          value: asset.attachment,
-        },
-      }
-    } else {
-      return {
-        filename: asset.key,
-        body: {
-          type: 'TEXT' as const,
-          value: asset.value ?? '',
-        },
-      }
-    }
-  })
+  return assets.map((asset) => ({
+    filename: asset.key,
+    body: asset.attachment
+      ? {type: 'BASE64' as const, value: asset.attachment}
+      : {type: 'TEXT' as const, value: asset.value ?? ''},
+  }))
 }
 
 async function uploadFiles(
