@@ -1,9 +1,10 @@
 import Search from './search.js'
 import {searchJsonOutputSchema} from '../services/commands/search/types.js'
 import {openURL} from '@shopify/cli-kit/node/system'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {launchCLI} from '@shopify/cli-kit/node/cli-launcher'
+import {ShopifyConfig} from '@shopify/cli-kit/node/custom-oclif-loader'
+import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {afterEach, describe, expect, test, vi} from 'vitest'
-import {execa} from 'execa'
 
 vi.mock('@shopify/cli-kit/node/system', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@shopify/cli-kit/node/system')>()),
@@ -11,6 +12,7 @@ vi.mock('@shopify/cli-kit/node/system', async (importOriginal) => ({
 }))
 
 afterEach(() => {
+  vi.unstubAllEnvs()
   mockAndCaptureOutput().clear()
 })
 
@@ -49,46 +51,22 @@ describe('search command', () => {
     expect(() => searchJsonOutputSchema.validate(result)).toThrow()
   })
 
-  test.each(['--json', '--json-schema'])(
-    'writes one document with %s through the launcher',
-    {timeout: 60000},
-    async (flag) => {
-      const commandUrl = new URL('./search.ts', import.meta.url).href
-      const sourceLoaderUrl = new URL('../../../../cli-kit/test/fixtures/cli-kit-source-loader.js', import.meta.url)
-        .href
-      const script = `
-      const {default: Search} = await import(${JSON.stringify(commandUrl)})
-      const {launchCLI} = await import('@shopify/cli-kit/node/cli-launcher')
+  test.each(['--json', '--json-schema'])('writes one document with %s through the launcher', async (flag) => {
+    // Keep upgrade checks and other lifecycle hooks out of output assertions.
+    vi.spyOn(ShopifyConfig.prototype, 'runHook').mockResolvedValue({successes: [], failures: []})
+    vi.stubEnv('CI', '1')
+    vi.stubEnv('SHOPIFY_CLI_NO_ANALYTICS', '1')
+
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
       await launchCLI({
-        moduleURL: ${JSON.stringify(commandUrl)},
-        argv: ['search', 'deploy app', ${JSON.stringify(flag)}],
+        moduleURL: import.meta.url,
+        argv: ['search', 'deploy app', flag],
         lazyCommandLoader: async () => Search,
       })
-    `
 
-      const result = await execa(
-        process.execPath,
-        ['--loader', 'ts-node/esm', '--loader', sourceLoaderUrl, '--input-type=module', '--eval', script],
-        {
-          env: {
-            ...process.env,
-            FORCE_COLOR: '0',
-            NODE_NO_WARNINGS: '1',
-            SHOPIFY_CLI_ENV: 'development',
-            SHOPIFY_CLI_NO_ANALYTICS: '1',
-            SHOPIFY_UNIT_TEST: 'false',
-            // Cloud environments cannot open a local browser.
-            CODESPACES: 'true',
-          },
-          reject: false,
-          // Source-loader startup can exceed 20 seconds on Windows CI. Stop a hung child before the test times out.
-          timeout: 45000,
-        },
-      )
-
-      expect(result.exitCode).toBe(0)
-      expect(result.stderr).toBe('')
-      const document = JSON.parse(result.stdout)
+      expect(openURL).not.toHaveBeenCalled()
+      expect(stderr()).toBe('')
+      const document = JSON.parse(stdout())
       if (flag === '--json') {
         expect(document).toEqual({url: 'https://shopify.dev/docs?search=deploy+app'})
       } else {
@@ -98,6 +76,6 @@ describe('search command', () => {
           required: ['url'],
         })
       }
-    },
-  )
+    })
+  })
 })
