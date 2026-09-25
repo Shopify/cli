@@ -2,10 +2,17 @@ import {prependApplicationUrl} from '../validation/url_prepender.js'
 import {CurrentAppConfiguration} from '../../../app/app.js'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 
+interface EventSubscription {
+  // The events schema is untyped locally, so a subscription may be missing its uri
+  // or carry a non-string value. Such subscriptions are left for the server to reject.
+  uri?: unknown
+  [key: string]: unknown
+}
+
 interface EventsConfig {
   events?: {
     api_version?: string
-    subscription?: {uri: string; [key: string]: unknown}[]
+    subscription?: EventSubscription | EventSubscription[]
   }
 }
 
@@ -27,35 +34,66 @@ export function transformFromEventsConfig(content: object, appConfiguration?: ob
     appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
   }
 
+  const subscription = eventsConfig.events.subscription
+  const resolved = wrapSubscriptions(subscription).map((sub) =>
+    typeof sub.uri === 'string' ? {...sub, uri: prependApplicationUrl(sub.uri, appUrl)} : sub,
+  )
+
   return {
     ...eventsConfig,
     events: {
       ...eventsConfig.events,
-      subscription: eventsConfig.events.subscription.map((sub) => ({
-        ...sub,
-        uri: prependApplicationUrl(sub.uri, appUrl),
-      })),
+      subscription: Array.isArray(subscription) ? resolved : resolved[0],
     },
   }
 }
 
+interface RemoteEventsModule {
+  api_version?: string
+  subscription?: RemoteEventSubscription | RemoteEventSubscription[] | null
+}
+
+interface RemoteEventSubscription {
+  identifier?: string
+  handle?: string
+  api_version?: string
+  [key: string]: unknown
+}
+
 /**
- * Transforms the events config from remote to local format.
- * Strips the server-managed 'identifier' field from subscriptions.
+ * Transforms one events module from remote to local format.
+ * Strips the server-managed 'identifier' field, and the per-subscription
+ * 'api_version' when it matches the module default. Single-subscription
+ * objects are normalized to a one-element array.
  */
-export function transformToEventsConfig(content: object) {
-  const eventsConfig = getPathValue(content, 'events') as {api_version: string; subscription: object[]}
-  const apiVersion = getPathValue(eventsConfig, 'api_version')
-  const subscription = getPathValue(eventsConfig, 'subscription') as {identifier: string}[]
+export function transformToEventsConfig(content: object, moduleHandle?: string) {
+  const {api_version: apiVersion, subscription} = getPathValue<RemoteEventsModule>(content, 'events') ?? {}
 
-  // Server always includes identifier - strip it for local TOML
-  const cleanedSubscriptions = subscription?.map((sub) => {
-    const {identifier, ...rest} = sub
-    return rest
-  })
+  const clean = (sub: RemoteEventSubscription) => {
+    const {identifier: _, api_version: subApiVersion, ...rest} = sub
+    const overridesDefault = subApiVersion !== undefined && subApiVersion !== apiVersion
+    return overridesDefault ? {...rest, api_version: subApiVersion} : rest
+  }
 
-  const events =
-    (apiVersion ?? cleanedSubscriptions) ? {api_version: apiVersion, subscription: cleanedSubscriptions} : {}
+  let cleanedSubscriptions: object[] | undefined
+  if (Array.isArray(subscription)) {
+    cleanedSubscriptions = subscription.map(clean)
+  } else if (subscription) {
+    const handle = subscription.handle ?? moduleHandle
+    cleanedSubscriptions = [clean(handle ? {...subscription, handle} : subscription)]
+  }
+
+  const events: {api_version?: string; subscription?: object[]} = {}
+  if (apiVersion !== undefined) {
+    events.api_version = apiVersion
+  }
+  if (cleanedSubscriptions !== undefined) {
+    events.subscription = cleanedSubscriptions
+  }
 
   return {events}
+}
+
+function wrapSubscriptions<T>(subscription: T | T[]): T[] {
+  return Array.isArray(subscription) ? subscription : [subscription]
 }

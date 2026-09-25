@@ -1,4 +1,4 @@
-import {fetchAppRemoteConfiguration} from './select-app.js'
+import {fetchAppRemoteConfiguration, remoteAppConfigurationExtensionContent} from './select-app.js'
 import {configurationSpecifications, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers, MinimalOrganizationApp} from '../../models/organization.js'
@@ -162,5 +162,162 @@ describe('fetchAppRemoteConfiguration', () => {
 
     // Then
     expect(result).toBeUndefined()
+  })
+})
+
+describe('remoteAppConfigurationExtensionContent', () => {
+  const eventsSpec = {
+    identifier: 'events',
+    name: 'Events',
+    experience: 'configuration' as const,
+    options: {
+      managementExperience: 'cli' as const,
+    },
+  }
+
+  test('populates subscription handle from module registrationTitle when missing on single-subscription modules', async () => {
+    const specs = await configurationSpecifications()
+    const moduleOne: AppModuleVersion = {
+      registrationId: 'MOD_1',
+      registrationUuid: 'UUID_1',
+      registrationTitle: 'order-notifier',
+      type: 'Module:Events',
+      config: {
+        events: {
+          api_version: '2024-01',
+          subscription: {
+            topic: 'orders/create',
+            uri: 'https://example.com/orders',
+            actions: ['create'],
+          },
+        },
+      },
+      specification: eventsSpec,
+    }
+    const moduleTwo: AppModuleVersion = {
+      registrationId: 'MOD_2',
+      registrationUuid: 'UUID_2',
+      registrationTitle: 'product-sync',
+      type: 'Module:Events',
+      config: {
+        events: {
+          api_version: '2024-01',
+          subscription: {
+            topic: 'products/update',
+            uri: 'https://example.com/products',
+            actions: ['update'],
+          },
+        },
+      },
+      specification: eventsSpec,
+    }
+
+    const result = remoteAppConfigurationExtensionContent([moduleOne, moduleTwo], specs, [])
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/orders',
+            actions: ['create'],
+            handle: 'order-notifier',
+          },
+          {
+            topic: 'products/update',
+            uri: 'https://example.com/products',
+            actions: ['update'],
+            handle: 'product-sync',
+          },
+        ],
+      },
+    })
+  })
+
+  test('leaves subscription unnamed when module registrationTitle is the default events handle', async () => {
+    const specs = await configurationSpecifications()
+    const moduleOne: AppModuleVersion = {
+      registrationId: 'MOD_1',
+      registrationUuid: 'UUID_1',
+      registrationTitle: 'events',
+      type: 'Module:Events',
+      config: {
+        events: {
+          api_version: '2024-01',
+          subscription: {
+            topic: 'orders/create',
+            uri: 'https://example.com/orders',
+            actions: ['create'],
+          },
+        },
+      },
+      specification: eventsSpec,
+    }
+
+    const result = remoteAppConfigurationExtensionContent([moduleOne], specs, [])
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/orders',
+            actions: ['create'],
+          },
+        ],
+      },
+    })
+  })
+
+  test('merging a populated events module followed by a null-subscription module preserves subscriptions', async () => {
+    const specs = await configurationSpecifications()
+    const populatedModule: AppModuleVersion = {
+      registrationId: 'MOD_1',
+      registrationUuid: 'UUID_1',
+      registrationTitle: 'order-notifier',
+      type: 'Module:Events',
+      config: {
+        events: {
+          api_version: '2024-01',
+          subscription: {
+            topic: 'orders/create',
+            uri: 'https://example.com/orders',
+            actions: ['create'],
+          },
+        },
+      },
+      specification: eventsSpec,
+    }
+    const nullModule: AppModuleVersion = {
+      registrationId: 'MOD_2',
+      registrationUuid: 'UUID_2',
+      registrationTitle: 'empty-events',
+      type: 'Module:Events',
+      config: {
+        events: {
+          api_version: '2024-01',
+          subscription: null,
+        },
+      },
+      specification: eventsSpec,
+    }
+
+    const result = remoteAppConfigurationExtensionContent([populatedModule, nullModule], specs, [])
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/orders',
+            actions: ['create'],
+            handle: 'order-notifier',
+          },
+        ],
+      },
+    })
   })
 })
