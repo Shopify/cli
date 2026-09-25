@@ -26,12 +26,8 @@ interface FetchChannelSpecExportOptions {
 }
 
 /**
- * Fetches the partner-safe channel spec export for an app.
- *
- * The export itself is produced server-side by the Channels-owned exporter, which projects the
- * Shopify-authored default channel specification into the public channel_config schema and
- * validates it before returning it. The CLI intentionally does not transform or validate the
- * TOML locally: the backend response is the deployable artifact.
+ * Fetches the channel spec export for an app. The backend generates and validates the TOML,
+ * so we don't transform it here.
  */
 export async function fetchChannelSpecExport({
   remoteApp,
@@ -40,11 +36,10 @@ export async function fetchChannelSpecExport({
   const response = await developerPlatformClient.channelSpecExport(remoteApp)
 
   if (response.status === 404) {
-    // A 404 is not part of the export contract (failures are 422 with a reason code). It means the
-    // export endpoint isn't available (not deployed yet), or the app/organization couldn't be found.
+    // Export failures come back as 422, so a 404 means the endpoint or app isn't available
     throw new AbortError(
       'The channel spec export endpoint is not available for this app.',
-      'Confirm the app and organization are correct, and that the channel spec export backend is available.',
+      'Check that the app and organization are correct.',
     )
   }
 
@@ -54,19 +49,13 @@ export async function fetchChannelSpecExport({
   }
   const payload = decoded as {[key: string]: unknown}
 
-  // A 426 means the server rejected this CLI version ({error: 'unsupported_client_version', reason}).
-  // Surface the server's reason and tell the user to upgrade rather than treating it as transient.
+  // Server rejected this CLI version
   if (response.status === 426) {
     const reason =
       typeof payload.reason === 'string' ? payload.reason : 'This version of the Shopify CLI is no longer supported.'
-    throw new AbortError(
-      `Failed to fetch the channel spec export: ${reason}`,
-      'Upgrade the Shopify CLI to the latest version and re-run the command.',
-    )
+    throw new AbortError(`Failed to fetch the channel spec export: ${reason}`, 'Upgrade the Shopify CLI and try again.')
   }
 
-  // Only 422 carries a well-formed export failure ({error, reason}); any other non-ok status is a
-  // transport/auth/server problem and should not be presented as "this app can't be exported".
   if (response.status === 422) {
     const reason = typeof payload.reason === 'string' ? payload.reason : `http_${response.status}`
     return {success: false, reason}
@@ -76,12 +65,12 @@ export async function fetchChannelSpecExport({
     if (response.status === 401 || response.status === 403) {
       throw new AbortError(
         `Failed to fetch the channel spec export: authentication failed (status ${response.status}).`,
-        'Log out with `shopify auth logout` and re-run the command to refresh your session.',
+        'Run `shopify auth logout` and try again.',
       )
     }
     throw new AbortError(
       `Failed to fetch the channel spec export: the server responded with status ${response.status}.`,
-      'This is likely temporary. Wait a moment and try again.',
+      'Try again in a moment.',
     )
   }
 

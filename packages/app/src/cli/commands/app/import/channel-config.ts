@@ -7,15 +7,14 @@ import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class ImportChannelConfig extends AppLinkedCommand {
-  // Prototype scoped to an allowlisted cohort of channel partners; the backend fails closed for
-  // everyone else, so keep the command out of public help/docs until the rollout widens.
+  // Only available to allowlisted channel partners for now
   static hidden = true
 
-  static summary = 'Import the Shopify-authored default channel spec as a channel_config TOML file.'
+  static summary = "Import your app's default channel spec as a channel_config extension."
 
-  static descriptionWithMarkdown = `Imports the Shopify-authored default channel specification for your app as a deployable \`channel_config\` extension spec.
+  static descriptionWithMarkdown = `Imports the Shopify-authored channel spec for your app as a \`channel_config\` extension.
 
-  The generated TOML file contains only public \`channel_config\` fields. Review it, commit it to your app, then deploy it with \`shopify app deploy\`. This command never deploys the spec itself.`
+  The generated TOML only includes public \`channel_config\` fields. Review it, then deploy it with \`shopify app deploy\`.`
 
   static description = this.descriptionWithoutMarkdown()
 

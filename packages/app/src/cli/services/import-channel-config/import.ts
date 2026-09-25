@@ -14,23 +14,16 @@ export const CHANNEL_SPEC_EXTENSION_DIRECTORY = joinPath('extensions', 'channel-
 export const CHANNEL_SPEC_DIRECTORY = joinPath(CHANNEL_SPEC_EXTENSION_DIRECTORY, 'specifications')
 
 const EXTENSION_CONFIG_FILENAME = 'shopify.extension.toml'
-// Minimal extension scaffold: the app loader only discovers extensions through *.extension.toml
-// files, and the channel_config deploy step copies `specifications/` relative to the extension
-// directory. Without this file, `shopify app deploy` would silently exclude the imported spec.
+// Without this file the app loader won't pick up the extension and the spec won't be deployed
 const EXTENSION_CONFIG_CONTENT = 'name = "Channel config"\ntype = "channel_config"\nhandle = "channel-config"\n'
 const CHANNEL_CONFIG_EXTENSION_TYPE = 'channel_config'
 
 const FAILURE_MESSAGES: {[reason: string]: string} = {
-  no_exportable_frozen_record:
-    'No deployable channel spec is available for this app yet.\n\n' +
-    "The Shopify-authored default can't currently be exported to the public channel_config schema.",
-  multiple_exportable_records:
-    "This app has more than one Shopify-authored channel spec, so a single spec can't be exported automatically.",
+  no_exportable_frozen_record: "This app doesn't have a channel spec that can be exported yet.",
+  multiple_exportable_records: "This app has more than one channel spec, so it can't be exported automatically.",
   not_allowlisted: "This app isn't part of the channel spec export prototype yet.",
-  contains_no_public_fields:
-    'The Shopify-authored default for this app contains no fields that are part of the public channel_config schema.',
-  invalid_public_schema:
-    'The Shopify-authored default for this app could not be projected into a valid public channel_config spec.',
+  contains_no_public_fields: "This app's channel spec has no public channel_config fields.",
+  invalid_public_schema: "This app's channel spec doesn't match the public channel_config schema.",
 }
 
 interface ImportChannelConfigOptions {
@@ -42,12 +35,8 @@ interface ImportChannelConfigOptions {
 }
 
 /**
- * Imports the Shopify-authored default channel spec as a deployable channel_config TOML file.
- *
- * On success the TOML is written to `extensions/channel-config/specifications/<handle>.toml`
- * inside the app directory. Warnings returned by the backend are rendered out-of-band and are
- * never written into the TOML file. This command never deploys; the partner reviews the generated
- * file, tries it with `shopify app dev`, and runs `shopify app deploy`.
+ * Imports the Shopify-authored channel spec for the linked app into
+ * extensions/channel-config/specifications/<handle>.toml.
  */
 export async function importChannelConfig(options: ImportChannelConfigOptions): Promise<void> {
   const {app, remoteApp, developerPlatformClient, force, json} = options
@@ -60,8 +49,7 @@ export async function importChannelConfig(options: ImportChannelConfigOptions): 
     throw new AbortError(`The channel spec for this app could not be exported (reason: ${result.reason}).`)
   }
 
-  // basename() confines the write to the specifications directory even if the backend ever
-  // returned a filename containing path separators.
+  // basename() so a filename with path separators can't escape the specifications directory
   const outputPath = joinPath(app.directory, CHANNEL_SPEC_DIRECTORY, basename(result.filename))
   if (!force && (await fileExists(outputPath))) {
     throw new AbortError(
@@ -70,14 +58,12 @@ export async function importChannelConfig(options: ImportChannelConfigOptions): 
     )
   }
 
-  // Validate/create the extension config before writing the spec so an incompatible existing
-  // extension aborts without leaving a stray specifications file behind.
+  // Check the extension config first so we don't leave a stray spec file behind on abort
   await mkdir(dirname(outputPath))
   const createdExtensionConfig = await ensureExtensionConfig(app.directory)
   await writeFile(outputPath, result.toml)
 
   if (json) {
-    // Warnings are part of the JSON result rather than out-of-band stderr text.
     outputResult(
       importChannelConfigJsonOutputSchema.encode({
         handle: result.handle,
@@ -115,15 +101,10 @@ export async function importChannelConfig(options: ImportChannelConfigOptions): 
 }
 
 /**
- * Ensures the channel-config extension has a `shopify.extension.toml` of type `channel_config`,
- * without which the app loader would not discover the extension (or would discover it as a
- * different extension type) and the imported spec would never reach a deploy bundle.
+ * Creates shopify.extension.toml if missing. If one exists with a different extension type the
+ * spec would never be deployed, so abort rather than write it.
  *
- * An existing file is preserved when it already declares `type = "channel_config"`. If it declares
- * any other type, the `specifications/` directory we are about to write would be silently ignored
- * at deploy time, so abort instead of reporting a misleading success.
- *
- * @returns true when the file was created, false when a compatible one already existed.
+ * @returns true if the file was created.
  */
 async function ensureExtensionConfig(appDirectory: string): Promise<boolean> {
   const extensionConfigPath = joinPath(appDirectory, CHANNEL_SPEC_EXTENSION_DIRECTORY, EXTENSION_CONFIG_FILENAME)
@@ -138,17 +119,14 @@ async function ensureExtensionConfig(appDirectory: string): Promise<boolean> {
     const decoded = decodeToml(await readFile(extensionConfigPath)) as {[key: string]: unknown}
     existingType = decoded.type
   } catch {
-    throw new AbortError(
-      `Couldn't parse the existing ${relativeConfigPath}.`,
-      `Fix or remove the file so the imported channel spec can be deployed as a ${CHANNEL_CONFIG_EXTENSION_TYPE} extension.`,
-    )
+    throw new AbortError(`Couldn't parse the existing ${relativeConfigPath}.`, 'Fix or remove the file and try again.')
   }
 
   if (existingType !== CHANNEL_CONFIG_EXTENSION_TYPE) {
     const describedType = typeof existingType === 'string' ? `"${existingType}"` : 'an unknown type'
     throw new AbortError(
-      `${relativeConfigPath} already defines an extension of type ${describedType}, so the imported channel spec would not be deployed.`,
-      `Move that extension to another directory (or change its type to "${CHANNEL_CONFIG_EXTENSION_TYPE}"), then re-run this command.`,
+      `${relativeConfigPath} already defines an extension of type ${describedType}.`,
+      `Move that extension to another directory or change its type to "${CHANNEL_CONFIG_EXTENSION_TYPE}", then try again.`,
     )
   }
 

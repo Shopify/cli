@@ -100,7 +100,6 @@ describe('importChannelConfig', () => {
       await importChannelConfig(testOptions(app))
 
       // Then
-      // renderWarning wraps long lines inside a box, so match on the unwrapped prefix.
       expect(outputMock.warn()).toContain('This generated spec enables automatic product feed management.')
       await expect(readFile(joinPath(tmpDir, CHANNEL_SPEC_DIRECTORY, 'example.toml'))).resolves.not.toContain(
         'product feed management',
@@ -116,7 +115,7 @@ describe('importChannelConfig', () => {
 
       // When/Then
       await expect(importChannelConfig(testOptions(app))).rejects.toThrow(
-        /No deployable channel spec is available for this app yet/,
+        /doesn't have a channel spec that can be exported yet/,
       )
     })
   })

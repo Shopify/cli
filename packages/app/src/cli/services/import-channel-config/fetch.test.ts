@@ -99,7 +99,7 @@ describe('fetchChannelSpecExport', () => {
 
     // Then
     await expect(promise).rejects.toThrow('Shopify CLI 3.50.0 is no longer supported.')
-    await expect(promise).rejects.not.toThrow('likely temporary')
+    await expect(promise).rejects.not.toThrow('Try again in a moment')
   })
 
   test('aborts with retry guidance on 5xx JSON responses instead of reporting an export failure', async () => {

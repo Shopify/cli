@@ -183,14 +183,10 @@ export interface AppLogsError {
 
 export type AppLogsResponse = AppLogsSuccess | AppLogsError
 
-/**
- * Raw result of the App Management channel_spec_export endpoint. The HTTP status and decoded JSON
- * body are returned as-is so the import service can apply the endpoint's status contract.
- */
 export interface ChannelSpecExportResponse {
   status: number
   ok: boolean
-  /** Decoded JSON body, or undefined when the body was not valid JSON. */
+  /** undefined if the body wasn't valid JSON */
   body: unknown
 }
 
