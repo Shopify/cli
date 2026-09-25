@@ -417,9 +417,9 @@ function commandSupportsFlag(flags: FlagInput | undefined, flagName: string): bo
 function appendJsonOutputSchema(description: string, outputSchema: JsonOutputSchema | undefined): string {
   if (!outputSchema) return description
 
-  const jsonOutputDescription = `Output from \`--json\` conforms to the \`${outputSchema.name}\` schema.
+  const jsonOutputDescription = `Use \`--json-schema\` to print the result, error, and event schemas.
 
-Use \`--json-schema\` to print the result, error, and event schemas.
+Output from \`--json\` conforms to the \`${outputSchema.name}\` schema.
 
 \`\`\`json
 ${JSON.stringify(outputSchema.jsonSchema, null, 2)}
