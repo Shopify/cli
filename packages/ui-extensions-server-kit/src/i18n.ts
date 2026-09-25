@@ -118,9 +118,7 @@ export function flattenDevExtensionTranslations(localization: Localization, loca
 
   const userLocaleTranslations = getFlatMap(localization.translations[locale])
 
-  return convertMapToExtensionTranslationMap(
-    new Map([...defaultTranslations, ...nonRegionalTranslations, ...userLocaleTranslations]),
-  )
+  return Object.fromEntries(new Map([...defaultTranslations, ...nonRegionalTranslations, ...userLocaleTranslations]))
 }
 
 function getFlatMap(translationDictionary: TranslationDictionary | undefined) {
@@ -158,14 +156,6 @@ export function resolveDevExtensionLocale(
 
   // 5. Finally, return the default locale as a fallback
   return localization.defaultLocale
-}
-
-function convertMapToExtensionTranslationMap(map: Map<string, string>): ExtensionTranslationMap {
-  const extTransMap: ExtensionTranslationMap = {}
-  for (const [key, value] of map) {
-    extTransMap[key] = value
-  }
-  return extTransMap
 }
 
 function getNonRegionalLocale(locale: string): string {
