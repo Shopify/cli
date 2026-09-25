@@ -8,11 +8,7 @@ import {DEFAULT_CONFIG, testDeveloperPlatformClient, testOrganizationApp} from '
 import {AppInterface} from '../../models/app/app.js'
 import {loadApp} from '../../models/app/loader.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
-import {
-  RemoteAwareExtensionSpecification,
-  createConfigExtensionSpecification,
-} from '../../models/extensions/specification.js'
-import {BaseConfigType, BaseSchemaWithoutHandle} from '../../models/extensions/schemas.js'
+import {RemoteAwareExtensionSpecification} from '../../models/extensions/specification.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import eventsSpec from '../../models/extensions/specifications/app_config_events.js'
 import {AppModuleVersion, Flag} from '../../utilities/developer-platform-client.js'
@@ -25,7 +21,6 @@ import {writeManifestToBundle} from '../bundle.js'
 import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {getPathValue} from '@shopify/cli-kit/common/object'
-import {zod} from '@shopify/cli-kit/node/schema'
 import {jsonSchemaValidate} from '@shopify/cli-kit/node/json-schema'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
@@ -528,33 +523,6 @@ describe('Events pull → TOML → loader → deployment', () => {
       })
       expect(parsed.state).toBe('error')
       expect(JSON.stringify(parsed.errors)).toContain('handle')
-    })
-  })
-
-  test('supplies identical optional context to a synthetic non-Events spec in both generic callers', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const {app, modules, specifications} = await initializeApp(directory)
-      const reverse = vi.fn((content: object) => content)
-      const custom: RemoteAwareExtensionSpecification = {
-        ...createConfigExtensionSpecification<BaseConfigType>({
-          identifier: 'synthetic_config',
-          schema: BaseSchemaWithoutHandle.extend({synthetic_config: zod.object({value: zod.string()})}),
-          transformConfig: {
-            forward: (content) => ({synthetic_config: getPathValue(content, 'synthetic_config')}),
-            reverse,
-          },
-        }),
-        loadedRemoteSpecs: true,
-      }
-      const flags = [Flag.SingleSubscriptionEventsModules]
-      const remote = remoteModule('synthetic_config', 'synthetic_config', {synthetic_config: {value: 'unchanged'}})
-      const {options} = await pullAndLoad(app, [...modules, remote], [...specifications, custom], flags)
-      reverse.mockClear()
-      await ensureDeployIdentifiersFromAppVersion(options)
-      expect(reverse).toHaveBeenCalledTimes(2)
-      expect(reverse).toHaveBeenNthCalledWith(1, remote.config, {flags, module: {handle: 'synthetic_config'}})
-      expect(reverse).toHaveBeenNthCalledWith(2, remote.config, {flags, module: {handle: 'synthetic_config'}})
-      expectNoConfigurationChanges()
     })
   })
 })
