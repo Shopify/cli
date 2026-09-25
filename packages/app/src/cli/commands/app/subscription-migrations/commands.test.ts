@@ -8,7 +8,10 @@ import {commands} from '../../../index.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {cancelMigrationOperations} from '../../../services/subscription-migrations/cancel-operations.js'
-import {migrationCancellationJsonOutputSchema} from '../../../services/subscription-migrations/types.js'
+import {
+  migrationCancellationJsonOutputSchema,
+  migrationListJsonOutputSchema,
+} from '../../../services/subscription-migrations/types.js'
 import {outputOperations} from '../../../services/subscription-migrations/command-output.js'
 import {getMigrationOperations} from '../../../services/subscription-migrations/get-operations.js'
 import {runSubmissionCommand} from '../../../services/subscription-migrations/run-submission-command.js'
@@ -431,6 +434,12 @@ describe('subscription migration command metadata', () => {
     expect(Command.flags.json).toBe(jsonFlag.json)
   })
 
+  test('list exposes and documents its JSON output schema', () => {
+    expect(List.jsonOutputSchema).toBe(migrationListJsonOutputSchema)
+    expect(List.description).toContain('`MigrationListResult` schema')
+    expect(List.description).toContain('```json')
+  })
+
   test('cancel exposes its JSON output schema', () => {
     expect(Cancel.jsonOutputSchema).toBe(migrationCancellationJsonOutputSchema)
   })
@@ -554,12 +563,9 @@ describe('subscription migration command metadata', () => {
     },
   )
 
-  test.each([Schedule, Unschedule, Status, List])(
-    '$name has no fenced-code markers in its plain description',
-    (Command) => {
-      expect(Command.description).not.toContain('```')
-    },
-  )
+  test.each([Schedule, Unschedule, Status])('$name has no fenced-code markers in its plain description', (Command) => {
+    expect(Command.description).not.toContain('```')
+  })
 
   test('cancel documents its JSON output schema', () => {
     expect(Cancel.description).toContain('`MigrationCancellationResult` schema')
