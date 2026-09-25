@@ -11696,7 +11696,7 @@
       "args": {
       },
       "customPluginName": "@shopify/theme",
-      "description": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.",
+      "description": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.\n\nOutput from `--json` conforms to the `ThemeShareResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"environment\": {\n          \"type\": \"string\"\n        },\n        \"theme\": {\n          \"$ref\": \"#/definitions/ThemePushTheme\"\n        }\n      },\n      \"required\": [\n        \"theme\"\n      ],\n      \"additionalProperties\": false\n    },\n    {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"environment\": {\n            \"type\": \"string\"\n          },\n          \"theme\": {\n            \"$ref\": \"#/definitions/ThemePushTheme\"\n          }\n        },\n        \"required\": [\n          \"environment\",\n          \"theme\"\n        ],\n        \"additionalProperties\": false\n      }\n    }\n  ],\n  \"title\": \"ThemeShareResult\",\n  \"definitions\": {\n    \"ThemePushTheme\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"id\": {\n          \"type\": \"number\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"type\": \"string\"\n        },\n        \"shop\": {\n          \"type\": \"string\"\n        },\n        \"editor_url\": {\n          \"type\": \"string\"\n        },\n        \"preview_url\": {\n          \"type\": \"string\"\n        },\n        \"warning\": {\n          \"type\": \"string\"\n        },\n        \"errors\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"string\"\n            }\n          }\n        }\n      },\n      \"required\": [\n        \"id\",\n        \"name\",\n        \"role\",\n        \"shop\",\n        \"editor_url\",\n        \"preview_url\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.",
       "enableJsonFlag": false,
       "flags": {
@@ -11724,6 +11724,15 @@
           "env": "SHOPIFY_FLAG_FORCE",
           "hidden": true,
           "name": "force",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
           "type": "boolean"
         },
         "json-schema": {

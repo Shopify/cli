@@ -9649,13 +9649,17 @@ Creates a shareable, unpublished, and new theme on your theme library with a ran
 
 ```
 USAGE
-  $ shopify theme share [--auth-alias <value>] [-e <value>...] [--json-schema] [--listing <value>] [--no-color]
-    [--password <value>] [--path <value>] [-s <value>] [--verbose]
+  $ shopify theme share [--auth-alias <value>] [-e <value>...] [-j] [--json-schema] [--listing <value>]
+    [--no-color] [--password <value>] [--path <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
       The environment to apply to the current command.
       [env: SHOPIFY_FLAG_ENVIRONMENT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
@@ -9698,6 +9702,99 @@ DESCRIPTION
   This command returns a "preview link"
   (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can
   share with others.
+
+  Output from `--json` conforms to the `ThemeShareResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string"
+          },
+          "theme": {
+            "$ref": "#/definitions/ThemePushTheme"
+          }
+        },
+        "required": [
+          "theme"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "environment": {
+              "type": "string"
+            },
+            "theme": {
+              "$ref": "#/definitions/ThemePushTheme"
+            }
+          },
+          "required": [
+            "environment",
+            "theme"
+          ],
+          "additionalProperties": false
+        }
+      }
+    ],
+    "title": "ThemeShareResult",
+    "definitions": {
+      "ThemePushTheme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "shop": {
+            "type": "string"
+          },
+          "editor_url": {
+            "type": "string"
+          },
+          "preview_url": {
+            "type": "string"
+          },
+          "warning": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "shop",
+          "editor_url",
+          "preview_url"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify upgrade`
