@@ -1,5 +1,6 @@
 import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH, MAX_UID_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
+import {eventSubscriptionHandle} from './specifications/transform/app_config_events.js'
 import {
   DevSessionUpdateContext,
   DevSessionWatchConfig,
@@ -524,9 +525,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   private singleEventSubscriptionHandle(): string | undefined {
     if (this.specification.identifier !== 'events') return undefined
-    const subscription = getPathValue(this.configuration, 'events.subscription')
-    if (!subscription || Array.isArray(subscription)) return undefined
-    return getPathValue(subscription, 'handle')
+    const subscription = getPathValue<unknown>(this.configuration, 'events.subscription')
+    if (subscription == null || Array.isArray(subscription)) return undefined
+    const handle = typeof subscription === 'object' ? getPathValue<unknown>(subscription, 'handle') : undefined
+    return eventSubscriptionHandle(this.configuration.handle ?? handle)
   }
 
   private buildHandle() {

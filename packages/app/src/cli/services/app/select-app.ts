@@ -1,8 +1,8 @@
+import {configurationFromModules} from './configuration-modules.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
 import {Flag, AppModuleVersion, DeveloperPlatformClient, AppVersion} from '../../utilities/developer-platform-client.js'
 import {ExtensionSpecification, isAppConfigSpecification} from '../../models/extensions/specification.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
-import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
 function extensionTypeStrategy(specs: ExtensionSpecification[], type?: string) {
   if (!type) return
@@ -58,18 +58,16 @@ export function remoteAppConfigurationExtensionContent(
   specifications: ExtensionSpecification[],
   flags: Flag[],
 ) {
-  let remoteAppConfig: {[key: string]: unknown} = {}
   const configSpecifications = specifications.filter(isAppConfigSpecification)
-  configRegistrations.forEach((module) => {
+  const entries = configRegistrations.flatMap((module) => {
     const configSpec = configSpecifications.find(
       (spec) => spec.identifier === module.specification?.identifier.toLowerCase(),
     )
-    if (!configSpec) return
-    const config = module.config
-    if (!config) return
-
-    remoteAppConfig = deepMergeObjects(remoteAppConfig, configSpec.transformRemoteToLocal?.(config, {flags}) ?? config)
+    if (!configSpec || !module.config) return []
+    return [{specification: configSpec, module: {handle: module.registrationTitle, config: module.config}}]
   })
 
-  return {...remoteAppConfig}
+  return configurationFromModules(entries, flags, ({specification, module}) => {
+    return specification.transformRemoteToLocal?.(module.config, {flags}) ?? module.config
+  })
 }

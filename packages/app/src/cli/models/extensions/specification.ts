@@ -30,6 +30,11 @@ export interface CustomTransformationConfig {
   reverse?: (obj: object, options?: {flags?: Flag[]}) => object
 }
 
+export interface ConfigurationModule {
+  readonly handle: string
+  readonly config: object
+}
+
 type ExtensionExperience = 'extension' | 'configuration'
 
 export function isAppConfigSpecification(spec: {experience: string}): boolean {
@@ -117,6 +122,13 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
    * @returns Transformed configuration to use in place of the platform provided content
    */
   transformRemoteToLocal?: (remoteContent: object, options?: {flags?: Flag[]}) => object
+
+  /**
+   * Reconstruct a complete app-config section from this specification's modules, in input order.
+   * The specification must exclusively own the sections it emits. This replaces scalar readback;
+   * its result is merged at the first occurrence without reordering other specifications.
+   */
+  aggregateModuleConfigurations?: (modules: ReadonlyArray<ConfigurationModule>, options?: {flags?: Flag[]}) => object
 
   uidStrategy: UidStrategy
 
@@ -276,6 +288,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   clientSteps?: ClientSteps
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig: TransformationConfig | CustomTransformationConfig
+  aggregateModuleConfigurations?: ExtensionSpecification<TConfiguration>['aggregateModuleConfigurations']
   uidStrategy?: UidStrategy
   getDevSessionUpdateMessages?: (config: TConfiguration, context: DevSessionUpdateContext) => Promise<string[]>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
@@ -288,7 +301,10 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     schema: spec.schema,
     appModuleFeatures,
     transformLocalToRemote: resolveAppConfigTransform(spec.transformConfig),
-    transformRemoteToLocal: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
+    transformRemoteToLocal: spec.aggregateModuleConfigurations
+      ? undefined
+      : resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
+    aggregateModuleConfigurations: spec.aggregateModuleConfigurations,
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
     clientSteps: spec.clientSteps,
