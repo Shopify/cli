@@ -46,6 +46,13 @@ export const appManagementAppLogsUrl = async (
   return addCursorAndFiltersToAppLogsUrl(url, cursor, filters)
 }
 
+export const appManagementChannelSpecExportUrl = async (organizationId: string, appId: string): Promise<string> => {
+  const fqdn = await appManagementFqdn()
+  return `https://${fqdn}/app_management/unstable/organizations/${encodeURIComponent(
+    organizationId,
+  )}/apps/${encodeURIComponent(appId)}/channel_spec_export.json`
+}
+
 export interface RequestOptions {
   requestMode: RequestModeInput
 }

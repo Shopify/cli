@@ -28,6 +28,7 @@ import {WebhooksConfig} from '../extensions/specifications/types/app_config_webh
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
 import {
   AppLogsResponse,
+  ChannelSpecExportResponse,
   SourceScanCreateInput,
   SourceScanCreateSchema,
   SourceScanUploadUrlInput,
@@ -1385,6 +1386,12 @@ export function testDeveloperPlatformClient(
         ],
         cursor: 'cursor',
         status: 200,
+      }),
+    channelSpecExport: (_app: MinimalAppIdentifiers): Promise<ChannelSpecExportResponse> =>
+      Promise.resolve({
+        status: 200,
+        ok: true,
+        body: {success: true, handle: 'example', filename: 'example.toml', toml: 'handle = "example"\n', warnings: []},
       }),
     appDeepLink: (app: MinimalAppIdentifiers) =>
       Promise.resolve(`https://test.shopify.com/${app.organizationId}/apps/${app.id}`),
