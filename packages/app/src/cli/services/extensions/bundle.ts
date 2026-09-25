@@ -1,14 +1,14 @@
 import {ExtensionBuildOptions} from '../build/extension.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {themeExtensionFiles} from '../../utilities/extensions/theme.js'
-import {EsbuildEnvVarRegex, environmentVariableNames} from '../../constants.js'
+import {environmentVariableNames} from '../../constants.js'
+import {esbuildDefine, esbuildEnvironment} from '../../utilities/esbuild.js'
 import {context as esContext, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {copyFile, glob, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, parsePath, relativePath} from '@shopify/cli-kit/node/path'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
-import {pickBy} from '@shopify/cli-kit/common/object'
 import graphqlLoaderPlugin from '@luckycatfactory/esbuild-graphql-loader'
 import {Writable} from 'stream'
 import type {StdinOptions, build as esBuild, Plugin} from 'esbuild'
@@ -140,16 +140,11 @@ function onResult(result: EsbuildResult | null, options: BundleOptions) {
 }
 
 function getESBuildOptions(options: BundleOptions, processEnv = process.env): Parameters<typeof esContext>[0] {
-  const validEnvs = pickBy(processEnv, (value, key) => EsbuildEnvVarRegex.test(key) && value)
-
-  const env: {[variable: string]: string | undefined} = {...options.env, ...validEnvs}
-  const define = Object.keys(env || {}).reduce(
-    (acc, key) => ({
-      ...acc,
-      [`process.env.${key}`]: JSON.stringify(env[key]),
-    }),
-    {'process.env.NODE_ENV': JSON.stringify(options.environment)},
-  )
+  const env = esbuildEnvironment(options.env, processEnv)
+  const define = {
+    'process.env.NODE_ENV': JSON.stringify(options.environment),
+    ...esbuildDefine(env),
+  }
 
   const esbuildOptions: Parameters<typeof esContext>[0] = {
     outfile: options.outputPath,
