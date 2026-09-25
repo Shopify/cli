@@ -2,6 +2,8 @@ import {MinimalOrganizationApp} from '../../models/organization.js'
 import {Flag, AppModuleVersion, DeveloperPlatformClient, AppVersion} from '../../utilities/developer-platform-client.js'
 import {ExtensionSpecification, isAppConfigSpecification} from '../../models/extensions/specification.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
+import {EventsSpecIdentifier} from '../../models/extensions/specifications/app_config_events.js'
+import {mergeEventsModuleConfiguration} from '../../models/extensions/specifications/transform/app_config_events.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
 function extensionTypeStrategy(specs: ExtensionSpecification[], type?: string) {
@@ -68,7 +70,10 @@ export function remoteAppConfigurationExtensionContent(
     const config = module.config
     if (!config) return
 
-    remoteAppConfig = deepMergeObjects(remoteAppConfig, configSpec.transformRemoteToLocal?.(config, {flags}) ?? config)
+    remoteAppConfig =
+      configSpec.identifier === EventsSpecIdentifier
+        ? mergeEventsModuleConfiguration(remoteAppConfig, {config, handle: module.registrationTitle})
+        : deepMergeObjects(remoteAppConfig, configSpec.transformRemoteToLocal?.(config, {flags}) ?? config)
   })
 
   return {...remoteAppConfig}
