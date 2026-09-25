@@ -4905,6 +4905,79 @@
       "pluginType": "core",
       "strict": true
     },
+    "auth:token": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Prints only the access token to stdout by default. Reuses the selected CLI account and refreshes credentials when needed. Run `shopify auth login` interactively first when using this command in a script. The token retains its App Management permissions; it is not read-only or restricted to one app. Treat it as a secret and don't include it in logs or agent conversations. Automation tokens are not supported.\n\nOutput from `--json` conforms to the `AuthTokenResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"accessToken\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"accessToken\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AuthTokenResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Prints only the access token to stdout by default. Reuses the selected CLI account and refreshes credentials when needed. Run `shopify auth login` interactively first when using this command in a script. The token retains its App Management permissions; it is not read-only or restricted to one app. Treat it as a secret and don't include it in logs or agent conversations. Automation tokens are not supported.",
+      "enableJsonFlag": false,
+      "flags": {
+        "api": {
+          "description": "API to obtain an access token for.",
+          "env": "SHOPIFY_FLAG_API",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "api",
+          "options": [
+            "app-management"
+          ],
+          "required": true,
+          "type": "option"
+        },
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "auth:token",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Prototype: print an API access token for the signed-in Shopify account."
+    },
     "cache:clear": {
       "aliases": [
       ],

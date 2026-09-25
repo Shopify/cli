@@ -4,6 +4,7 @@ import Upgrade from './cli/commands/upgrade.js'
 import SendAnalytics from './cli/commands/send-analytics.js'
 import Logout from './cli/commands/auth/logout.js'
 import Login from './cli/commands/auth/login.js'
+import Token from './cli/commands/auth/token.js'
 import CommandFlags from './cli/commands/debug/command-flags.js'
 import KitchenSinkAsync from './cli/commands/kitchen-sink/async.js'
 import KitchenSinkPrompts from './cli/commands/kitchen-sink/prompts.js'
@@ -148,6 +149,7 @@ export const COMMANDS: any = {
   help: HelpCommand,
   'auth:logout': Logout,
   'auth:login': Login,
+  'auth:token': Token,
   'debug:command-flags': CommandFlags,
   'kitchen-sink': KitchenSink,
   'kitchen-sink:async': KitchenSinkAsync,
