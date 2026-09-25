@@ -1,4 +1,4 @@
-import {isDevelopment, isUnitTest} from './context/local.js'
+import {homeDirectory, isDevelopment, isUnitTest} from './context/local.js'
 import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI} from './is-global.js'
 import {checkForCachedNewVersion, packageManagerFromUserAgent, PackageManager} from './node-package-manager.js'
 import {exec, isCI} from './system.js'
@@ -156,6 +156,8 @@ describe('runCLIUpgrade', () => {
     // By default the post-install verification finds the current version installed,
     // which counts as success when no newer version was cached.
     vi.mocked(globalCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
+    // The upgrade must run from the home directory, never from the (possibly untrusted) project.
+    vi.mocked(homeDirectory).mockReturnValue('/home/user')
   })
 
   test('runs the install command via exec for a global npm install', async () => {
@@ -168,7 +170,11 @@ describe('runCLIUpgrade', () => {
     await runCLIUpgrade()
 
     // Then
-    expect(exec).toHaveBeenCalledWith('npm', ['install', '-g', '@shopify/cli@latest'], {stdio: 'inherit'})
+    expect(exec).toHaveBeenCalledWith('npm', ['install', '-g', '@shopify/cli@latest'], {
+      stdio: 'inherit',
+      cwd: '/home/user',
+      env: expect.objectContaining({YARN_IGNORE_PATH: '1'}),
+    })
   })
 
   test('runs the install command via exec for a global yarn install', async () => {
@@ -181,7 +187,11 @@ describe('runCLIUpgrade', () => {
     await runCLIUpgrade()
 
     // Then
-    expect(exec).toHaveBeenCalledWith('yarn', ['global', 'add', '@shopify/cli@latest'], {stdio: 'inherit'})
+    expect(exec).toHaveBeenCalledWith('yarn', ['global', 'add', '@shopify/cli@latest'], {
+      stdio: 'inherit',
+      cwd: '/home/user',
+      env: expect.objectContaining({YARN_IGNORE_PATH: '1'}),
+    })
   })
 
   test('runs the install command via exec for a global homebrew install', async () => {
@@ -194,7 +204,11 @@ describe('runCLIUpgrade', () => {
     await runCLIUpgrade()
 
     // Then
-    expect(exec).toHaveBeenCalledWith('brew', ['upgrade', 'shopify-cli'], {stdio: 'inherit'})
+    expect(exec).toHaveBeenCalledWith('brew', ['upgrade', 'shopify-cli'], {
+      stdio: 'inherit',
+      cwd: '/home/user',
+      env: expect.objectContaining({YARN_IGNORE_PATH: '1'}),
+    })
   })
 
   test('throws an error when cliInstallCommand returns undefined', async () => {
