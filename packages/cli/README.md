@@ -856,13 +856,17 @@ Pull app and extensions environment variables.
 
 ```
 USAGE
-  $ shopify app env pull [--auth-alias <value>] [--client-id <value> | -c <value>] [--env-file <value>]
+  $ shopify app env pull [--auth-alias <value>] [--client-id <value> | -c <value>] [--env-file <value>] [-j]
     [--json-schema] [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -903,6 +907,65 @@ DESCRIPTION
 
   When an existing `.env` file is updated, changes to the variables are displayed in the terminal output. Existing
   variables and commented variables are preserved.
+
+  Output from `--json` conforms to the `AppEnvPullResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string"
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "created",
+          "updated",
+          "unchanged"
+        ]
+      },
+      "variables": {
+        "$ref": "#/definitions/EnvironmentVariables"
+      },
+      "content": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "path",
+      "status",
+      "variables",
+      "content"
+    ],
+    "additionalProperties": false,
+    "title": "AppEnvPullResult",
+    "definitions": {
+      "EnvironmentVariables": {
+        "type": "object",
+        "properties": {
+          "SHOPIFY_API_KEY": {
+            "type": "string"
+          },
+          "SHOPIFY_API_SECRET": {
+            "type": "string"
+          },
+          "SCOPES": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "SHOPIFY_API_KEY",
+          "SCOPES"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app env show`

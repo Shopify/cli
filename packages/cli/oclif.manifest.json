@@ -1386,7 +1386,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Creates or updates an `.env` files that contains app and app extension environment variables.\n\n  When an existing `.env` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.",
+      "description": "Creates or updates an `.env` files that contains app and app extension environment variables.\n\n  When an existing `.env` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.\n\nOutput from `--json` conforms to the `AppEnvPullResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"path\": {\n      \"type\": \"string\"\n    },\n    \"status\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"created\",\n        \"updated\",\n        \"unchanged\"\n      ]\n    },\n    \"variables\": {\n      \"$ref\": \"#/definitions/EnvironmentVariables\"\n    },\n    \"content\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"path\",\n    \"status\",\n    \"variables\",\n    \"content\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppEnvPullResult\",\n  \"definitions\": {\n    \"EnvironmentVariables\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"SHOPIFY_API_KEY\": {\n          \"type\": \"string\"\n        },\n        \"SHOPIFY_API_SECRET\": {\n          \"type\": \"string\"\n        },\n        \"SCOPES\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"SHOPIFY_API_KEY\",\n        \"SCOPES\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Creates or updates an `.env` files that contains app and app extension environment variables.\n\n  When an existing `.env` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.",
       "flags": {
         "auth-alias": {
@@ -1427,6 +1427,15 @@
           "multiple": false,
           "name": "env-file",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,
