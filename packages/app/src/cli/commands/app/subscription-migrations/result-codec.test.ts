@@ -152,3 +152,14 @@ describe('migration submission JSON contract', () => {
     expect(() => migrationSubmissionJsonOutputSchema.validate({...submission(), ...fields})).toThrow()
   })
 })
+
+describe('unschedule JSON compatibility', () => {
+  test('uses the shared submission contract and preserves the unschedule action', () => {
+    const value = {...submission(), action: 'unschedule' as const}
+    const encoded = encodeMigrationSubmissionResult({status: 'success', submission: value})
+
+    expect(encoded).toBe(JSON.stringify(value, null, 2))
+    expect(migrationSubmissionJsonOutputSchema.validate(JSON.parse(encoded))).toEqual(value)
+    expect(JSON.parse(encoded)).not.toHaveProperty('failure')
+  })
+})
