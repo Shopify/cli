@@ -1,51 +1,36 @@
-import {showEnv} from './show.js'
-import {fetchOrganizations} from '../../dev/fetch.js'
+import {getAppEnv} from './show.js'
+import {logMetadataForLoadedContext} from '../../context.js'
 import {AppInterface} from '../../../models/app/app.js'
 import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {OrganizationSource} from '../../../models/organization.js'
-import {selectOrganizationPrompt} from '@shopify/organizations'
-import {describe, expect, vi, test} from 'vitest'
-import * as file from '@shopify/cli-kit/node/fs'
-import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
+import {expect, test, vi} from 'vitest'
 
-vi.mock('../../dev/fetch.js')
-vi.mock('@shopify/organizations')
-vi.mock('@shopify/cli-kit/node/node-package-manager')
+vi.mock('../../context.js')
 
-describe('env show', () => {
-  test('outputs the new environment', async () => {
-    // Given
-    vi.spyOn(file, 'writeFile')
+const organization = {id: '123', businessName: 'test', source: OrganizationSource.BusinessPlatform}
 
-    const app = mockApp()
-    const remoteApp = testOrganizationApp()
-    const organization = {
-      id: '123',
-      flags: {},
-      businessName: 'test',
-      source: OrganizationSource.BusinessPlatform,
-      apps: {nodes: []},
-      status: 'ACTIVE' as const,
-      shopCount: 1,
-      url: 'https://admin.shopify.com/organization/123',
-    }
+test('returns the environment facts and records analytics metadata', async () => {
+  const app = mockApp()
+  const remoteApp = testOrganizationApp()
 
-    vi.mocked(fetchOrganizations).mockResolvedValue([organization])
-    vi.mocked(selectOrganizationPrompt).mockResolvedValue(organization)
+  const result = await getAppEnv(app, remoteApp, organization)
 
-    // When
-    const result = await showEnv(app, remoteApp, organization)
-
-    // Then
-    expect(file.writeFile).not.toHaveBeenCalled()
-    expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
-    "
-        SHOPIFY_API_KEY=api-key
-        SHOPIFY_API_SECRET=api-secret
-        SCOPES=my-scope
-      "
-    `)
+  expect(result).toEqual({
+    SHOPIFY_API_KEY: remoteApp.apiKey,
+    SHOPIFY_API_SECRET: 'api-secret',
+    SCOPES: 'my-scope',
   })
+  expect(logMetadataForLoadedContext).toHaveBeenCalledWith(remoteApp, organization.source)
+})
+
+test('omits SHOPIFY_API_SECRET when the app has no secret', async () => {
+  const app = mockApp()
+  const remoteApp = testOrganizationApp({apiSecretKeys: []})
+
+  const result = await getAppEnv(app, remoteApp, organization)
+
+  expect(result).toEqual({SHOPIFY_API_KEY: remoteApp.apiKey, SCOPES: 'my-scope'})
+  expect(result).not.toHaveProperty('SHOPIFY_API_SECRET')
 })
 
 function mockApp(): AppInterface {

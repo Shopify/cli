@@ -1,4 +1,5 @@
 import {AppInfoResult, appInfoJsonOutputSchema} from './types.js'
+import {formatAppEnvShowText} from '../app/env/show/result.js'
 import {AppLinkedInterface, getAppScopes} from '../../models/app/app.js'
 import {Project} from '../../models/project/project.js'
 import {configurationFileNames} from '../../constants.js'
@@ -10,9 +11,7 @@ import {basename, relativePath} from '@shopify/cli-kit/node/path'
 import {
   OutputMessage,
   outputResult,
-  outputToken,
   formatPackageManagerCommand,
-  outputContent,
   shouldDisplayColors,
 } from '@shopify/cli-kit/node/output'
 import {AlertCustomSection, InlineToken, renderInfo} from '@shopify/cli-kit/node/ui'
@@ -38,13 +37,8 @@ export async function renderAppInfo(context: InfoContext): Promise<void> {
 
 export function formatAppInfoResult(result: AppInfoResult, format: 'json' | 'text'): OutputMessage {
   if (format === 'json') return appInfoJsonOutputSchema.encode(result)
-  if (!('name' in result)) {
-    return outputContent`
-    ${outputToken.green('SHOPIFY_API_KEY')}=${result.SHOPIFY_API_KEY}
-    ${outputToken.green('SHOPIFY_API_SECRET')}=${result.SHOPIFY_API_SECRET ?? ''}
-    ${outputToken.green('SCOPES')}=${result.SCOPES}
-  `
-  }
+  // The web environment variables are the same facts app env show renders, so reuse its text template.
+  if (!('name' in result)) return formatAppEnvShowText(result)
   throw new Error('App information text output requires the loaded app context.')
 }
 
