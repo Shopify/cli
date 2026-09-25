@@ -7,6 +7,7 @@ import {
   ExtensionSpecification,
 } from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
+import {eventSubscriptionHandle} from './specifications/validation/events.js'
 import {ExtensionBuildOptions} from '../../services/build/extension.js'
 import {ExtensionUuidsByLocalIdentifier} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
@@ -525,8 +526,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   private singleEventSubscriptionHandle(): string | undefined {
     if (this.specification.identifier !== 'events') return undefined
     const subscription = getPathValue(this.configuration, 'events.subscription')
-    if (!subscription || Array.isArray(subscription)) return undefined
-    return getPathValue(subscription, 'handle')
+    if (subscription === undefined || subscription === null || Array.isArray(subscription)) return undefined
+    return eventSubscriptionHandle(this.configuration.handle ?? getPathValue(subscription, 'handle'))
   }
 
   private buildHandle() {

@@ -1,92 +1,61 @@
 import {prependApplicationUrl} from '../validation/url_prepender.js'
-import {CurrentAppConfiguration} from '../../../app/app.js'
+import {eventSubscriptionHandle, eventSubscriptions} from '../validation/events.js'
+import {TransformRemoteToLocalOptions, configWithoutFirstClassFields} from '../../specification.js'
 import {getPathValue} from '@shopify/cli-kit/common/object'
+import {zod} from '@shopify/cli-kit/node/schema'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
-interface EventSubscription {
-  uri: string
-  [key: string]: unknown
-}
+/** Resolves relative URIs and removes the editing handle only from object-shaped modules. */
+export function transformFromEventsConfig(content: object, appConfiguration?: object): object {
+  const config = configWithoutFirstClassFields({...content})
+  const events = readEvents(config)
+  const subscription = events.subscription
+  if (subscription === undefined || subscription === null) return config
 
-interface EventsConfig {
-  events?: {
-    api_version?: string
-    subscription?: EventSubscription | EventSubscription[]
-  }
-}
-
-/**
- * Transforms the events config from local to remote format.
- * Resolves relative URIs (starting with /) by prepending the application_url.
- * During dev, application_url is set to the tunnel URL, ensuring events
- * are delivered to the correct endpoint.
- */
-export function transformFromEventsConfig(content: object, appConfiguration?: object) {
-  const eventsConfig = content as EventsConfig
-
-  if (!eventsConfig.events?.subscription) {
-    return content
-  }
-
-  let appUrl: string | undefined
-  if (appConfiguration && 'application_url' in appConfiguration) {
-    appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
-  }
-
-  const subscription = eventsConfig.events.subscription
-  const resolved = wrapSubscriptions(subscription).map((sub) => ({
-    ...sub,
-    uri: prependApplicationUrl(sub.uri, appUrl),
-  }))
+  const appUrl = getPathValue<string>(appConfiguration ?? {}, 'application_url')
+  const resolved = eventSubscriptions(subscription).map((sub) => {
+    const {handle, ...rest} = sub
+    const fields = Array.isArray(subscription) ? sub : rest
+    return typeof sub.uri === 'string' ? {...fields, uri: prependApplicationUrl(sub.uri, appUrl)} : fields
+  })
+  if (resolved.length === 0) return config
 
   return {
-    ...eventsConfig,
+    ...config,
+    events: {...events, subscription: Array.isArray(subscription) ? resolved : resolved[0]},
+  }
+}
+
+/** Restores local editing identity and pins effective versions before the generic module merge. */
+export function transformToEventsConfig(content: object, options?: TransformRemoteToLocalOptions) {
+  const events = readEvents(content)
+  const subscription = events.subscription
+  const subscriptions = eventSubscriptions(subscription)
+  const cleanedSubscriptions = subscriptions.map((sub) => {
+    const {identifier, handle, api_version: subscriptionApiVersion, ...rest} = sub
+    const localHandle = Array.isArray(subscription)
+      ? eventSubscriptionHandle(handle)
+      : eventSubscriptionHandle(options?.module?.handle, 'module')
+    const apiVersion = subscriptionApiVersion ?? events.api_version
+    if (typeof apiVersion !== 'string' || apiVersion.length === 0) {
+      throw new AbortError(`Events subscription "${localHandle}" is missing an effective API version.`)
+    }
+    // Every entry needs its effective version: another module can overwrite the root default during merge.
+    return {...rest, handle: localHandle, api_version: apiVersion}
+  })
+
+  return {
     events: {
-      ...eventsConfig.events,
-      subscription: Array.isArray(subscription) ? resolved : resolved[0],
+      ...(events.api_version === undefined ? {} : {api_version: events.api_version}),
+      ...(Array.isArray(subscription) || cleanedSubscriptions.length > 0 ? {subscription: cleanedSubscriptions} : {}),
     },
   }
 }
 
-interface RemoteEventSubscription {
-  identifier: string
-  api_version?: string
-  [key: string]: unknown
-}
-
-/**
- * Transforms the events config from remote to local format.
- * Strips the server-managed 'identifier' field from subscriptions, and the
- * per-subscription 'api_version' when it only echoes the events default.
- */
-export function transformToEventsConfig(content: object) {
-  const eventsConfig = getPathValue(content, 'events') as {
-    api_version: string
-    subscription: RemoteEventSubscription | RemoteEventSubscription[]
-  }
-  const apiVersion = getPathValue<string>(eventsConfig, 'api_version')
-  const subscription = getPathValue<RemoteEventSubscription | RemoteEventSubscription[]>(eventsConfig, 'subscription')
-
-  // The server always includes identifier, and materializes the events default
-  // api_version onto every subscription. Both are derived, so they are stripped
-  // for the local TOML; an api_version that differs from the default is a real
-  // override and is kept. Single-subscription modules are normalized to a
-  // one-element array so that merging multiple modules accumulates a single
-  // subscription list.
-  const cleanedSubscriptions =
-    subscription === undefined
-      ? undefined
-      : wrapSubscriptions(subscription).map((sub) => {
-          const {identifier, api_version: subscriptionApiVersion, ...rest} = sub
-          const overridesDefault = subscriptionApiVersion !== undefined && subscriptionApiVersion !== apiVersion
-          return overridesDefault ? {...rest, api_version: subscriptionApiVersion} : rest
-        })
-
-  const events =
-    (apiVersion ?? cleanedSubscriptions) ? {api_version: apiVersion, subscription: cleanedSubscriptions} : {}
-
-  return {events}
-}
-
-function wrapSubscriptions<T>(subscription: T | T[]): T[] {
-  return Array.isArray(subscription) ? subscription : [subscription]
+function readEvents(content: object): Record<string, unknown> {
+  const events = getPathValue(content, 'events')
+  if (events === undefined || events === null) return {}
+  const result = zod.record(zod.unknown()).safeParse(events)
+  if (!result.success) throw new AbortError('Events configuration must be an object.')
+  return result.data
 }

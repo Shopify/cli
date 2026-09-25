@@ -22,8 +22,13 @@ describe('transformFromEventsConfig', () => {
       events: {
         api_version: '2024-01',
         subscription: [
-          {topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']},
-          {topic: 'products/update', uri: 'https://absolute.example.com/webhook', actions: ['update']},
+          {topic: 'orders/create', uri: '/webhooks/orders', actions: ['create'], handle: 'Order_Notifier'},
+          {
+            topic: 'products/update',
+            uri: 'https://absolute.example.com/webhook',
+            actions: ['update'],
+            handle: 'Product',
+          },
         ],
       },
     }
@@ -35,8 +40,18 @@ describe('transformFromEventsConfig', () => {
       events: {
         api_version: '2024-01',
         subscription: [
-          {topic: 'orders/create', uri: 'https://tunnel.example.com/webhooks/orders', actions: ['create']},
-          {topic: 'products/update', uri: 'https://absolute.example.com/webhook', actions: ['update']},
+          {
+            topic: 'orders/create',
+            uri: 'https://tunnel.example.com/webhooks/orders',
+            actions: ['create'],
+            handle: 'Order_Notifier',
+          },
+          {
+            topic: 'products/update',
+            uri: 'https://absolute.example.com/webhook',
+            actions: ['update'],
+            handle: 'Product',
+          },
         ],
       },
     })
@@ -120,7 +135,7 @@ describe('transformFromEventsConfig', () => {
     const content = {
       events: {
         api_version: '2024-01',
-        subscription: {topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']},
+        subscription: {topic: 'orders/create', uri: '/webhooks/orders', actions: ['create'], handle: 'Order_Notifier'},
       },
     }
     const appConfiguration = {application_url: 'https://tunnel.example.com'}
@@ -133,6 +148,28 @@ describe('transformFromEventsConfig', () => {
         subscription: {topic: 'orders/create', uri: 'https://tunnel.example.com/webhooks/orders', actions: ['create']},
       },
     })
+  })
+
+  test.each([undefined, null, [], 'invalid', 123])('leaves non-string URIs for validation: %j', (uri) => {
+    const content = {events: {subscription: {uri, handle: 'one'}}}
+    expect(transformFromEventsConfig(content, {application_url: 'https://example.com'})).toEqual({
+      events: {subscription: {uri}},
+    })
+  })
+
+  test.each([
+    {},
+    {events: null},
+    {events: {}},
+    {events: {subscription: null}},
+    {events: {subscription: []}},
+    {events: {subscription: [{handle: 'List_Entry'}]}},
+  ])('never serializes first-class fields or mutates configuration: %j', (content) => {
+    const before = structuredClone(content)
+    expect(transformFromEventsConfig({...content, handle: 'Exact_Case', uid: 'Exact_Case', type: 'events'})).toEqual(
+      content,
+    )
+    expect(content).toEqual(before)
   })
 
   test('returns content as-is when events is undefined', () => {
@@ -155,6 +192,7 @@ describe('transformToEventsConfig', () => {
             topic: 'orders/create',
             uri: 'https://example.com/webhook',
             actions: ['create'],
+            handle: 'order-notifier',
             identifier: 'id-1',
           },
           {
@@ -181,6 +219,8 @@ describe('transformToEventsConfig', () => {
             topic: 'orders/create',
             uri: 'https://example.com/webhook',
             actions: ['create'],
+            handle: 'order-notifier',
+            api_version: '2024-01',
           },
           {
             topic: 'products/update',
@@ -190,6 +230,7 @@ describe('transformToEventsConfig', () => {
             triggers: ['product_updated'],
             query: 'query { id }',
             query_filter: 'status:active',
+            api_version: '2024-01',
           },
         ],
       },
@@ -208,7 +249,6 @@ describe('transformToEventsConfig', () => {
     expect(result).toEqual({
       events: {
         api_version: '2024-01',
-        subscription: undefined,
       },
     })
   })
@@ -220,13 +260,12 @@ describe('transformToEventsConfig', () => {
           topic: 'orders/create',
           uri: 'https://example.com/webhook',
           actions: ['create'],
-          handle: 'order-notifier',
           identifier: 'id-1',
         },
       },
     }
 
-    const result = transformToEventsConfig(remoteContent)
+    const result = transformToEventsConfig(remoteContent, {module: {handle: 'order-notifier'}})
 
     expect(result).toEqual({
       events: {
@@ -237,6 +276,7 @@ describe('transformToEventsConfig', () => {
             uri: 'https://example.com/webhook',
             actions: ['create'],
             handle: 'order-notifier',
+            api_version: '2024-01',
           },
         ],
       },
@@ -269,20 +309,35 @@ describe('transformToEventsConfig', () => {
       },
     }
 
-    const merged = deepMergeObjects(transformToEventsConfig(moduleOne), transformToEventsConfig(moduleTwo))
+    const merged = deepMergeObjects(
+      transformToEventsConfig(moduleOne, {module: {handle: 'a'}}),
+      transformToEventsConfig(moduleTwo, {module: {handle: 'b'}}),
+    )
 
     expect(merged).toEqual({
       events: {
         api_version: '2024-01',
         subscription: [
-          {topic: 'orders/create', uri: 'https://example.com/a', actions: ['create'], handle: 'a'},
-          {topic: 'products/update', uri: 'https://example.com/b', actions: ['update'], handle: 'b'},
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/a',
+            actions: ['create'],
+            handle: 'a',
+            api_version: '2024-01',
+          },
+          {
+            topic: 'products/update',
+            uri: 'https://example.com/b',
+            actions: ['update'],
+            handle: 'b',
+            api_version: '2024-01',
+          },
         ],
       },
     })
   })
 
-  test('strips a subscription api_version that matches the events default in the list shape', () => {
+  test('keeps a subscription api_version that matches the events default in the list shape', () => {
     const remoteContent = {
       events: {
         api_version: '2024-01',
@@ -292,6 +347,7 @@ describe('transformToEventsConfig', () => {
             uri: 'https://example.com/a',
             actions: ['create'],
             api_version: '2024-01',
+            handle: 'a',
             identifier: 'id-a',
           },
           {
@@ -299,6 +355,7 @@ describe('transformToEventsConfig', () => {
             uri: 'https://example.com/b',
             actions: ['update'],
             api_version: '2024-01',
+            handle: 'b',
             identifier: 'id-b',
           },
         ],
@@ -311,14 +368,26 @@ describe('transformToEventsConfig', () => {
       events: {
         api_version: '2024-01',
         subscription: [
-          {topic: 'orders/create', uri: 'https://example.com/a', actions: ['create']},
-          {topic: 'products/update', uri: 'https://example.com/b', actions: ['update']},
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/a',
+            actions: ['create'],
+            handle: 'a',
+            api_version: '2024-01',
+          },
+          {
+            topic: 'products/update',
+            uri: 'https://example.com/b',
+            actions: ['update'],
+            handle: 'b',
+            api_version: '2024-01',
+          },
         ],
       },
     })
   })
 
-  test('strips a subscription api_version that matches the events default in the single shape', () => {
+  test('keeps a subscription api_version that matches the events default in the single shape', () => {
     const remoteContent = {
       events: {
         api_version: '2024-01',
@@ -332,12 +401,20 @@ describe('transformToEventsConfig', () => {
       },
     }
 
-    const result = transformToEventsConfig(remoteContent)
+    const result = transformToEventsConfig(remoteContent, {module: {handle: 'a'}})
 
     expect(result).toEqual({
       events: {
         api_version: '2024-01',
-        subscription: [{topic: 'orders/create', uri: 'https://example.com/a', actions: ['create']}],
+        subscription: [
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/a',
+            actions: ['create'],
+            handle: 'a',
+            api_version: '2024-01',
+          },
+        ],
       },
     })
   })
@@ -356,13 +433,19 @@ describe('transformToEventsConfig', () => {
       },
     }
 
-    const result = transformToEventsConfig(remoteContent)
+    const result = transformToEventsConfig(remoteContent, {module: {handle: 'a'}})
 
     expect(result).toEqual({
       events: {
         api_version: '2024-01',
         subscription: [
-          {topic: 'orders/create', uri: 'https://example.com/a', actions: ['create'], api_version: '2025-07'},
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/a',
+            actions: ['create'],
+            handle: 'a',
+            api_version: '2025-07',
+          },
         ],
       },
     })
@@ -377,6 +460,7 @@ describe('transformToEventsConfig', () => {
             uri: 'https://example.com/a',
             actions: ['create'],
             api_version: '2024-01',
+            handle: 'a',
             identifier: 'id-a',
           },
         ],
@@ -387,15 +471,20 @@ describe('transformToEventsConfig', () => {
 
     expect(result).toEqual({
       events: {
-        api_version: undefined,
         subscription: [
-          {topic: 'orders/create', uri: 'https://example.com/a', actions: ['create'], api_version: '2024-01'},
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/a',
+            actions: ['create'],
+            handle: 'a',
+            api_version: '2024-01',
+          },
         ],
       },
     })
   })
 
-  test('merging single-subscription modules keeps only the overriding api_version', () => {
+  test('merging single-subscription modules keeps both effective api_versions', () => {
     const moduleOne = {
       events: {
         api_version: '2024-01',
@@ -423,13 +512,22 @@ describe('transformToEventsConfig', () => {
       },
     }
 
-    const merged = deepMergeObjects(transformToEventsConfig(moduleOne), transformToEventsConfig(moduleTwo))
+    const merged = deepMergeObjects(
+      transformToEventsConfig(moduleOne, {module: {handle: 'a'}}),
+      transformToEventsConfig(moduleTwo, {module: {handle: 'b'}}),
+    )
 
     expect(merged).toEqual({
       events: {
         api_version: '2024-01',
         subscription: [
-          {topic: 'orders/create', uri: 'https://example.com/a', actions: ['create'], handle: 'a'},
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/a',
+            actions: ['create'],
+            handle: 'a',
+            api_version: '2024-01',
+          },
           {
             topic: 'products/update',
             uri: 'https://example.com/b',
@@ -440,6 +538,100 @@ describe('transformToEventsConfig', () => {
         ],
       },
     })
+  })
+
+  test.each(['events', 'Order_Notifier', 'a'.repeat(50)])('uses exact outer identity %s without mutation', (handle) => {
+    const fields = {topic: 'products', uri: '/events', future_field: true}
+    const content = {
+      events: {api_version: '2026-07', subscription: {...fields, handle: 'historical', identifier: 'server'}},
+    }
+    const before = structuredClone(content)
+    const result = transformToEventsConfig(content, {module: {handle}})
+    expect(result).toEqual({
+      events: {
+        api_version: '2026-07',
+        subscription: [{...fields, handle, api_version: '2026-07'}],
+      },
+    })
+    const editing = {...content, handle, uid: handle, type: 'events'}
+    const editingBefore = structuredClone(editing)
+    expect(transformFromEventsConfig(editing)).toEqual({
+      events: {
+        api_version: '2026-07',
+        subscription: {...fields, identifier: 'server'},
+      },
+    })
+    expect(content).toEqual(before)
+    expect(editing).toEqual(editingBefore)
+  })
+
+  test.each([undefined, '', ' ', ' bad ', 'bad.name', 'a'.repeat(51)])(
+    'rejects invalid outer identity %j',
+    (handle) => {
+      const content = {events: {api_version: '2026-07', subscription: {handle: 'historical'}}}
+      expect(() => transformToEventsConfig(content, handle === undefined ? undefined : {module: {handle}})).toThrow(
+        /Events module handle/,
+      )
+    },
+  )
+
+  test.each([undefined, null, '', ' ', 3, 'a'.repeat(51)])('rejects invalid list identity %j', (handle) => {
+    expect(() => transformToEventsConfig({events: {api_version: '2026-07', subscription: [{handle}]}})).toThrow(
+      /Events subscription handle/,
+    )
+  })
+
+  test.each([undefined, null, [], {}])('empty later subscriptions cannot erase earlier entries: %j', (subscription) => {
+    const first = transformToEventsConfig({events: {api_version: '2026-04', subscription: [{handle: 'one'}]}})
+    const later = transformToEventsConfig({events: {api_version: '2026-10', subscription}})
+    if (Array.isArray(subscription)) expect(later.events.subscription).toEqual([])
+    else expect(later.events).not.toHaveProperty('subscription')
+    expect(deepMergeObjects(first, later)).toEqual({events: {...first.events, api_version: '2026-10'}})
+  })
+
+  test.each([{}, {events: undefined}, {events: null}, {events: {}}])(
+    'absent config cannot erase accumulated values: %j',
+    (content) => {
+      const first = {events: {api_version: '2026-07', subscription: [{handle: 'one'}]}}
+      expect(deepMergeObjects(first, transformToEventsConfig(content))).toEqual(first)
+    },
+  )
+
+  test.each(['', 'not-an-object', 123, false, [null], ['invalid'], [[]]])(
+    'rejects malformed subscriptions: %j',
+    (subscription) => {
+      expect(() => transformToEventsConfig({events: {subscription}})).toThrow(
+        /subscription must be an object or an array/,
+      )
+    },
+  )
+
+  test.each(['invalid', 42, [], false])('rejects malformed events envelopes: %j', (events) => {
+    expect(() => transformToEventsConfig({events})).toThrow(/Events configuration must be an object/)
+  })
+
+  test('requires an effective API version, not necessarily a module default', () => {
+    expect(() => transformToEventsConfig({events: {subscription: {handle: 'one'}}}, {module: {handle: 'one'}})).toThrow(
+      /missing an effective API version/,
+    )
+    expect(
+      transformToEventsConfig({events: {subscription: {api_version: '2026-04'}}}, {module: {handle: 'one'}}),
+    ).toEqual({events: {subscription: [{handle: 'one', api_version: '2026-04'}]}})
+  })
+
+  test('rejects an empty list entry rather than silently dropping it', () => {
+    expect(() => transformToEventsConfig({events: {api_version: '2026-07', subscription: [{}]}})).toThrow(
+      /Events subscription handle/,
+    )
+  })
+
+  test.each(['Same', 'same'])('retains duplicate %s entries for validation, never value-deduplicates', (handle) => {
+    const content = {events: {api_version: '2026-07', subscription: {topic: 'products'}}}
+    const merged = deepMergeObjects(
+      transformToEventsConfig(content, {module: {handle: 'Same'}}),
+      transformToEventsConfig(content, {module: {handle}}),
+    )
+    expect(merged.events.subscription?.map((subscription) => subscription.handle)).toEqual(['Same', handle])
   })
 
   test('merging a list-shape module with a single-subscription module accumulates all subscriptions', () => {
@@ -464,14 +656,29 @@ describe('transformToEventsConfig', () => {
       },
     }
 
-    const merged = deepMergeObjects(transformToEventsConfig(listModule), transformToEventsConfig(singleModule))
+    const merged = deepMergeObjects(
+      transformToEventsConfig(listModule, {module: {handle: 'unrelated'}}),
+      transformToEventsConfig(singleModule, {module: {handle: 'b'}}),
+    )
 
     expect(merged).toEqual({
       events: {
         api_version: '2024-01',
         subscription: [
-          {topic: 'orders/create', uri: 'https://example.com/a', actions: ['create'], handle: 'a'},
-          {topic: 'products/update', uri: 'https://example.com/b', actions: ['update'], handle: 'b'},
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/a',
+            actions: ['create'],
+            handle: 'a',
+            api_version: '2024-01',
+          },
+          {
+            topic: 'products/update',
+            uri: 'https://example.com/b',
+            actions: ['update'],
+            handle: 'b',
+            api_version: '2024-01',
+          },
         ],
       },
     })

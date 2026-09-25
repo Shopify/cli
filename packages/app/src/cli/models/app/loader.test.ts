@@ -2242,23 +2242,23 @@ describe('load', () => {
       expect(eventsExtensions).toHaveLength(2)
       expect(eventsExtensions.map((ext) => ext.configuration)).toEqual([
         {
+          handle: 'order-notifier',
           events: {
             api_version: '2024-01',
             subscription: {
               topic: 'orders/create',
               actions: ['create'],
-              handle: 'order-notifier',
               uri: 'https://example.com/events/orders',
             },
           },
         },
         {
+          handle: 'product-sync',
           events: {
             api_version: '2024-01',
             subscription: {
               topic: 'products/update',
               actions: ['update'],
-              handle: 'product-sync',
               uri: 'https://example.com/events/products',
             },
           },
@@ -2303,12 +2303,12 @@ describe('load', () => {
     const eventsExtensions = app.allExtensions.filter((ext) => ext.specification.identifier === 'events')
     expect(eventsExtensions).toHaveLength(1)
     expect(eventsExtensions[0]!.configuration).toEqual({
+      handle: 'order-notifier',
       events: {
         api_version: '2024-01',
         subscription: {
           topic: 'orders/create',
           actions: ['create'],
-          handle: 'order-notifier',
           uri: 'https://example.com/events/orders',
         },
       },
@@ -2395,15 +2395,7 @@ describe('load', () => {
     process.env.SHOPIFY_CLI_EVENTS_SUBSCRIPTION_FANOUT = '1'
 
     try {
-      // When
-      const app = await loadTestingApp({remoteFlags: []})
-
-      // Then
-      const errorMessages = app.errors
-        .getErrors()
-        .map((error) => error.message)
-        .join('\n')
-      expect(errorMessages).toContain('Duplicated handle "order-notifier"')
+      await expect(loadTestingApp({remoteFlags: []})).rejects.toThrow('Duplicated handle "order-notifier"')
     } finally {
       delete process.env.SHOPIFY_CLI_EVENTS_SUBSCRIPTION_FANOUT
     }
