@@ -948,12 +948,31 @@ describe('getPackageManager', () => {
     })
   })
 
-  test("tries to guess the package manager from the environment if it can't find a package.json", async () => {
+  test('falls back to npm when no package.json is found and the user agent is unrecognized', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      // When/Then — no package.json, falls back to user agent
-      const packageManager = await getPackageManager(tmpDir)
-      // pnpm is used locally and in CI
-      expect(packageManager).toEqual('pnpm')
+      // Given — no package.json in tmpDir, and a user agent naming no known package manager
+      vi.stubEnv('npm_config_user_agent', 'some-other-tool/1.0.0')
+
+      try {
+        // When/Then
+        await expect(getPackageManager(tmpDir)).resolves.toEqual('npm')
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    })
+  })
+
+  test('falls back to npm when no package.json is found and no user agent is set', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given — no package.json in tmpDir, and no user agent to infer from
+      vi.stubEnv('npm_config_user_agent', '')
+
+      try {
+        // When/Then
+        await expect(getPackageManager(tmpDir)).resolves.toEqual('npm')
+      } finally {
+        vi.unstubAllEnvs()
+      }
     })
   })
 })
