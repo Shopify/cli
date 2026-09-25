@@ -27,6 +27,7 @@ import {
 } from '../../private/node/ui/components/DangerousConfirmationPrompt.js'
 import {SelectPrompt, SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
+import {runTasks} from '../../private/node/ui/tasks.js'
 import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
 import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
@@ -490,6 +491,8 @@ export async function renderTasks<TContext>(
   tasks: Task<TContext>[],
   {renderOptions, noProgressBar}: RenderTasksOptions = {},
 ): Promise<TContext> {
+  if (commandEventOutputMode() === 'json') return runTasks(tasks)
+
   let taskResult: TContext
   await render(
     <Tasks
