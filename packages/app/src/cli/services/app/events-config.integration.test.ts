@@ -145,6 +145,18 @@ async function pullAndLoad(
   return {loaded, options, developerPlatformClient}
 }
 
+function expectNoConfigurationChanges() {
+  expect(deployOrReleaseConfirmationPrompt).toHaveBeenLastCalledWith(
+    expect.objectContaining({
+      configExtensionIdentifiersBreakdown: expect.objectContaining({
+        existingUpdatedFieldNames: [],
+        newFieldNames: [],
+        deletedFieldNames: [],
+      }),
+    }),
+  )
+}
+
 describe('Events pull → TOML → loader → deployment', () => {
   test.each([
     {mixed: false, reversed: false},
@@ -277,15 +289,7 @@ describe('Events pull → TOML → loader → deployment', () => {
         ]
         const {loaded, options} = await pullAndLoad(app, [...modules, ...events], specifications, flags)
         await ensureDeployIdentifiersFromAppVersion(options)
-        expect(deployOrReleaseConfirmationPrompt).toHaveBeenLastCalledWith(
-          expect.objectContaining({
-            configExtensionIdentifiersBreakdown: expect.objectContaining({
-              existingUpdatedFieldNames: [],
-              newFieldNames: [],
-              deletedFieldNames: [],
-            }),
-          }),
-        )
+        expectNoConfigurationChanges()
         const manifest = await loaded.manifest({})
         expect(manifest.modules.filter((module) => module.type === 'events')).toMatchObject([
           {
@@ -296,6 +300,37 @@ describe('Events pull → TOML → loader → deployment', () => {
       })
     },
   )
+
+  test.each([false, true])('pulling an empty list clears stale local subscriptions (fanout: %s)', async (fanout) => {
+    await inTemporaryDirectory(async (directory) => {
+      const flags = fanout ? [Flag.SingleSubscriptionEventsModules] : []
+      const {app, modules, specifications} = await initializeApp(directory, flags)
+      const configPath = joinPath(directory, 'shopify.app.toml')
+      await writeAppConfigurationFile(
+        {...app.configuration, events: {api_version: '2026-07', subscription: [{...SUBSCRIPTION, handle: 'Removed'}]}},
+        configPath,
+      )
+      const staleApp = await loadApp({directory, userProvidedConfigName: undefined, specifications, remoteFlags: flags})
+      expect(staleApp.errors.getErrors()).toEqual([])
+      expect(getPathValue(staleApp.configuration, 'events.subscription')).toEqual([
+        {...SUBSCRIPTION, handle: 'Removed'},
+      ])
+      const empty = remoteModule('events', 'events', {events: {api_version: '2026-07', subscription: []}})
+      const {loaded, options} = await pullAndLoad(staleApp, [...modules, empty], specifications, flags)
+      expect(getPathValue(loaded.configuration, 'events.subscription')).toEqual([])
+      await expect(readFile(configPath)).resolves.not.toContain('Removed')
+      const manifest = await loaded.manifest({})
+      const eventModules = manifest.modules.filter((module) => module.type === 'events')
+      expect(eventModules).toEqual([expect.objectContaining({handle: 'events', uid: 'events', config: empty.config})])
+      expect(jsonSchemaValidate(eventModules[0]!.config, strictEventsContract, 'fail')).toMatchObject({state: 'ok'})
+      await writeManifestToBundle(manifest, directory)
+      expect(JSON.parse(await readFile(joinPath(directory, 'manifest.json')))).toEqual(
+        JSON.parse(JSON.stringify(manifest)),
+      )
+      await ensureDeployIdentifiersFromAppVersion(options)
+      expectNoConfigurationChanges()
+    })
+  })
 
   test.each([
     {objectShape: false, fanout: false},
@@ -434,18 +469,19 @@ describe('Events pull → TOML → loader → deployment', () => {
     })
   })
 
-  test('reparses normalized object configurations without mutating the editing copy', async () => {
+  test.each([false, true])('reparses without mutating the editing copy (list: %s)', async (list) => {
     await inTemporaryDirectory(async (directory) => {
       const {specifications} = await initializeApp(directory)
       const specification = specifications.find((spec) => spec.identifier === 'events')!
-      const editingConfig = {
-        events: {api_version: '2026-07', subscription: {...SUBSCRIPTION, handle: 'Exact_Case'}},
-      }
+      const subscription = {...SUBSCRIPTION, handle: 'Exact_Case'}
+      const editingConfig = {events: {api_version: '2026-07', subscription: list ? [subscription] : subscription}}
       const before = structuredClone(editingConfig)
       const parsed = specification.parseConfigurationObject(editingConfig)
       expect(parsed).toEqual({
         state: 'ok',
-        data: {handle: 'Exact_Case', events: {api_version: '2026-07', subscription: SUBSCRIPTION}},
+        data: list
+          ? editingConfig
+          : {handle: 'Exact_Case', events: {api_version: '2026-07', subscription: SUBSCRIPTION}},
         errors: undefined,
       })
       if (parsed.state !== 'ok') throw new Error('Expected valid Events configuration')
@@ -453,7 +489,10 @@ describe('Events pull → TOML → loader → deployment', () => {
       expect(editingConfig).toEqual(before)
       const invalid = specification.parseConfigurationObject({
         ...parsed.data,
-        events: {api_version: '2026-07', subscription: {...SUBSCRIPTION, unexpected: true}},
+        events: {
+          api_version: '2026-07',
+          subscription: list ? [{...subscription, unexpected: true}] : {...SUBSCRIPTION, unexpected: true},
+        },
       })
       expect(invalid.state).toBe('error')
       expect(JSON.stringify(invalid.errors)).toContain('unexpected')
@@ -515,15 +554,7 @@ describe('Events pull → TOML → loader → deployment', () => {
       expect(reverse).toHaveBeenCalledTimes(2)
       expect(reverse).toHaveBeenNthCalledWith(1, remote.config, {flags, module: {handle: 'synthetic_config'}})
       expect(reverse).toHaveBeenNthCalledWith(2, remote.config, {flags, module: {handle: 'synthetic_config'}})
-      expect(deployOrReleaseConfirmationPrompt).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          configExtensionIdentifiersBreakdown: expect.objectContaining({
-            existingUpdatedFieldNames: [],
-            newFieldNames: [],
-            deletedFieldNames: [],
-          }),
-        }),
-      )
+      expectNoConfigurationChanges()
     })
   })
 })
