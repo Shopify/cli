@@ -68,7 +68,10 @@ export function remoteAppConfigurationExtensionContent(
     const config = module.config
     if (!config) return
 
-    remoteAppConfig = deepMergeObjects(remoteAppConfig, configSpec.transformRemoteToLocal?.(config, {flags}) ?? config)
+    remoteAppConfig = deepMergeObjects(
+      remoteAppConfig,
+      configSpec.transformRemoteToLocal?.(config, {flags, module: {handle: module.registrationTitle}}) ?? config,
+    )
   })
 
   return {...remoteAppConfig}
