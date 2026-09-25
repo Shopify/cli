@@ -14,13 +14,9 @@ export async function isVSCode(root = cwd()): Promise<boolean> {
       root,
     )} or any of its parents has a .vscode directory... `,
   )
-  const config = await findPathUp(joinPath(root, '.vscode'), {type: 'directory'})
+  const config = await findPathUp('.vscode', {cwd: root, type: 'directory'})
 
-  if (!config) {
-    return false
-  }
-
-  return fileExists(config)
+  return Boolean(config)
 }
 
 /**
