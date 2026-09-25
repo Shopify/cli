@@ -130,7 +130,7 @@ jobs:
 
             core.setOutput('payload', JSON.stringify({
               channel: 'C0ARV62K59C', // #devtools-gardener-backlog
-              text: `Maintenance PR: <${pullRequest.html_url}|${pullRequestTitle}>`,
+              text: `CLI maintenance PR: <${pullRequest.html_url}|${pullRequestTitle}>`,
               unfurl_links: false,
               unfurl_media: false,
             }));
