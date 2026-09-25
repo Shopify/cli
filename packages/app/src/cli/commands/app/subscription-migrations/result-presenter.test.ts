@@ -7,7 +7,7 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import type {MigrationOperation} from '../../../models/subscription-migrations.js'
-import type {MigrationCancellationResult} from '../../../services/subscription-migrations/cancel-operations.js'
+import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
 import type {
   MigrationSubmission,
   MigrationSubmissionResult,
@@ -55,7 +55,7 @@ describe('migration submission result presenter', () => {
 
     expect(exitCode).toBe(0)
     expect(outputResult).toHaveBeenCalledOnce()
-    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({schemaVersion: 1, ...value})
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(value)
     expect(renderSuccess).not.toHaveBeenCalled()
     expect(renderWarning).not.toHaveBeenCalled()
   })
@@ -74,7 +74,6 @@ describe('migration submission result presenter', () => {
     expect(exitCode).toBe(1)
     expect(outputResult).toHaveBeenCalledOnce()
     expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
-      schemaVersion: 1,
       ...value,
       failure: {type: 'operations', operationIds: ['operation-one']},
     })
@@ -227,7 +226,6 @@ describe('migration cancellation result presenter', () => {
     expect(exitCode).toBe(1)
     expect(outputResult).toHaveBeenCalledOnce()
     expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
-      schemaVersion: 1,
       outcomes: result.outcomes,
     })
     expect(renderSuccess).not.toHaveBeenCalled()

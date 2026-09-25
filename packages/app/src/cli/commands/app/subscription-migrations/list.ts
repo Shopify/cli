@@ -13,7 +13,7 @@ export default class List extends AppLinkedCommand {
 
   static descriptionWithMarkdown = `Lists every app subscription eligible for migration.
 
-By default, the command writes CSV to stdout, streaming each page of results as it arrives. If a later page fails, the rows already written remain valid CSV. Use \`--json\` to fetch all pages first and then write a single versioned JSON envelope to stdout. Use shell redirection to save either format, for example \`shopify app subscription-migrations list > subscriptions.csv\` or \`shopify app subscription-migrations list --json > subscriptions.json\`.
+By default, the command writes CSV to stdout, streaming each page of results as it arrives. If a later page fails, the rows already written remain valid CSV. Use \`--json\` to fetch all pages first and then write a single JSON envelope to stdout. Use shell redirection to save either format, for example \`shopify app subscription-migrations list > subscriptions.csv\` or \`shopify app subscription-migrations list --json > subscriptions.json\`.
 
 Use \`--status\` to filter subscriptions by migration status. Supported values are \`UNSCHEDULED\`, \`SCHEDULED\`, and \`MIGRATED\`.
 
