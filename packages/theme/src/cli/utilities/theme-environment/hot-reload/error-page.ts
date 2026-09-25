@@ -4,6 +4,8 @@ interface Error {
 }
 
 const POLARIS_STYLESHEET_URL = 'https://unpkg.com/@shopify/polaris@13.9.2/build/esm/styles.css'
+const POLARIS_STYLESHEET_INTEGRITY =
+  'sha384-Jq1vfnAkgaXSSTna4RtH/iWyr/gTsjmgGgyBAia59wtMRN1TbZqpBPcmRh5DEnN6'
 
 function escapeHtml(unsafe: string) {
   return unsafe
@@ -20,7 +22,12 @@ export function getErrorPage(options: {title: string; header: string; errors: Er
     <html>
       <head>
         <title>${options.title}</title>
-        <link rel="stylesheet" href="${POLARIS_STYLESHEET_URL}" />
+        <link
+          rel="stylesheet"
+          href="${POLARIS_STYLESHEET_URL}"
+          integrity="${POLARIS_STYLESHEET_INTEGRITY}"
+          crossorigin="anonymous"
+        />
       </head>
       <body>
         <div style="display: flex; justify-content: center; padding-top: 2rem;">
