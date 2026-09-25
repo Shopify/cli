@@ -7644,8 +7644,8 @@ Delete remote themes from the connected store. This command can't be undone.
 
 ```
 USAGE
-  $ shopify theme delete [--auth-alias <value>] [-d] [-e <value>...] [-f] [--json-schema] [--no-color] [--password
-    <value>] [--path <value>] [-a] [-s <value>] [-t <value>...] [--verbose]
+  $ shopify theme delete [--auth-alias <value>] [-d] [-e <value>...] [-f] [-j] [--json-schema] [--no-color]
+    [--password <value>] [--path <value>] [-a] [-s <value>] [-t <value>...] [--verbose]
 
 FLAGS
   -a, --show-all
@@ -7664,6 +7664,10 @@ FLAGS
   -f, --force
       Skip confirmation. Required if non interactive.
       [env: SHOPIFY_FLAG_FORCE]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
@@ -7708,6 +7712,102 @@ DESCRIPTION
 
   You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this
   confirmation using the `--force` flag.
+
+  Output from `--json` conforms to the `ThemeDeleteResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeDeleteEnvironment/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeDeleteEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeDeleteResult",
+    "definitions": {
+      "DeletedTheme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "processing": {
+            "type": "boolean"
+          },
+          "createdAtRuntime": {
+            "type": "boolean"
+          },
+          "src": {
+            "type": "string"
+          },
+          "shop": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "processing",
+          "createdAtRuntime",
+          "shop"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeDeleteEnvironment": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string"
+          },
+          "result": {
+            "type": "object",
+            "properties": {
+              "themes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/DeletedTheme"
+                }
+              }
+            },
+            "required": [
+              "themes"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "environment",
+          "result"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme dev`

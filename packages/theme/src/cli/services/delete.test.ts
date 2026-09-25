@@ -1,4 +1,5 @@
-import {themesDelete} from './delete.js'
+import {themesDelete as executeDelete} from './delete.js'
+import {renderThemeDeleteResult} from './delete/result.js'
 import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
 import {themeDelete} from '@shopify/cli-kit/node/themes/api'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -140,5 +141,41 @@ describe('themesDelete', () => {
     // Then
     expect(themeDelete).not.toBeCalled()
     expect(renderSuccess).not.toBeCalled()
+  })
+})
+
+async function themesDelete(...args: Parameters<typeof executeDelete>) {
+  const result = await executeDelete(...args)
+  if (result) renderThemeDeleteResult(result, 'text', {store: args[0].storeFqdn})
+  return result
+}
+
+test('returns deletion data without presenting it', async () => {
+  vi.mocked(findThemes).mockResolvedValue([theme1, theme2])
+  const result = await executeDelete(session, {...options, themes: ['1', '2'], force: true})
+  expect(result).toEqual({themes: [theme1, theme2].map((theme) => ({...theme, shop: session.storeFqdn}))})
+  expect(renderSuccess).not.toHaveBeenCalled()
+})
+
+test('does not prompt again for multiple environments', async () => {
+  vi.mocked(findThemes).mockResolvedValue([theme1])
+  await executeDelete(session, {...options, themes: ['1']}, true)
+  expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+  expect(themeDelete).toHaveBeenCalledWith(1, session)
+})
+
+test('preserves the environment label in terminal output', () => {
+  renderThemeDeleteResult({themes: [{...theme1, shop: session.storeFqdn}]}, 'text', {
+    store: session.storeFqdn,
+    environment: ['staging'],
+  })
+  expect(renderSuccess).toHaveBeenCalledWith({
+    body: [
+      {subdued: 'Environment: staging\n\n'},
+      'The theme',
+      "'my theme'",
+      {subdued: '(#1)'},
+      'was deleted from my-shop.myshopify.com.',
+    ],
   })
 })
