@@ -192,4 +192,9 @@ describe('transformToEventsConfig', () => {
       },
     })
   })
+
+  test('omits the events section when there is no events config', () => {
+    expect(transformToEventsConfig({})).toEqual({})
+    expect(transformToEventsConfig({events: {}})).toEqual({})
+  })
 })
