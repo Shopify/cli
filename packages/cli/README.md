@@ -8269,6 +8269,86 @@ FLAGS
 
 DESCRIPTION
   Lists the themes in your store, along with their IDs and statuses.
+
+  Output from `--json` conforms to the `ThemeListResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeListEnvironment/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeListEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeListResult",
+    "definitions": {
+      "ThemeListTheme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "processing": {
+            "type": "boolean"
+          },
+          "createdAtRuntime": {
+            "type": "boolean"
+          },
+          "role": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "processing",
+          "createdAtRuntime",
+          "role"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeListEnvironment": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeListTheme"
+            }
+          }
+        },
+        "required": [
+          "environment",
+          "result"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme metafields pull`
