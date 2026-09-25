@@ -49,6 +49,8 @@ const runVersion = async (arguments_: string[]) => {
       },
       reject: false,
       stripFinalNewline: false,
+      // Source-loader startup can exceed 20 seconds on Windows CI. Stop a hung child before the test times out.
+      timeout: 45000,
     },
   )
 }
@@ -83,7 +85,7 @@ describe('version command', () => {
     expect(Version.description).toContain('"type": "object"')
   })
 
-  test('writes the installed version without stderr output', {timeout: 20000}, async () => {
+  test('writes the installed version without stderr output', {timeout: 60000}, async () => {
     const result = await runVersion([])
 
     expect(result.exitCode).toBe(0)
@@ -91,7 +93,7 @@ describe('version command', () => {
     expect(result.stdout).toBe(`${CLI_KIT_VERSION}\n`)
   })
 
-  test('writes the installed version as JSON without stderr output', {timeout: 20000}, async () => {
+  test('writes the installed version as JSON without stderr output', {timeout: 60000}, async () => {
     const result = await runVersion(['--json'])
 
     expect(result.exitCode).toBe(0)
@@ -100,7 +102,7 @@ describe('version command', () => {
     expect(JSON.parse(result.stdout)).toEqual({version: CLI_KIT_VERSION})
   })
 
-  test('writes a schema with an object result without stderr output', {timeout: 20000}, async () => {
+  test('writes a schema with an object result without stderr output', {timeout: 60000}, async () => {
     const result = await runVersion(['--json-schema'])
 
     expect(result.exitCode).toBe(0)
