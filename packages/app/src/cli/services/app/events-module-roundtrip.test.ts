@@ -1,9 +1,11 @@
 import {remoteAppConfigurationExtensionContent} from './select-app.js'
 import {writeAppConfigurationFile} from './write-app-configuration-file.js'
+import {overwriteLocalConfigFileWithRemoteAppConfiguration} from './config/link.js'
 import {strictEventsContract} from './events-strict-schema.test-data.js'
 import {fetchSpecifications} from '../generate/fetch-extension-specifications.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {loadApp} from '../../models/app/loader.js'
+import {AppInterface} from '../../models/app/app.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import eventsSpec from '../../models/extensions/specifications/app_config_events.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
@@ -16,6 +18,7 @@ import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {jsonSchemaValidate} from '@shopify/cli-kit/node/json-schema'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/api/app-management')
@@ -58,9 +61,7 @@ function remoteModule(handle: string, subscription: object, apiVersion = '2026-0
   }
 }
 
-async function loadEventsApp(directory: string, eventsConfig: object, remoteFlags: Flag[] = ENABLED) {
-  await writeAppConfigurationFile({...BASE, ...eventsConfig}, joinPath(directory, 'shopify.app.toml'))
-  await writeFile(joinPath(directory, 'package.json'), JSON.stringify({name: 'events-test', private: true}))
+async function fetchedSpecifications() {
   const remoteSpecs: RemoteSpecification[] = (await loadLocalExtensionsSpecifications()).map((spec) => ({
     identifier: spec.identifier,
     externalIdentifier: spec.externalIdentifier,
@@ -73,16 +74,42 @@ async function loadEventsApp(directory: string, eventsConfig: object, remoteFlag
     uidStrategy: spec.uidStrategy,
     validationSchema: spec.identifier === 'events' ? {jsonSchema: JSON.stringify(strictEventsContract)} : undefined,
   }))
-  const specifications = await fetchSpecifications({
+  return fetchSpecifications({
     developerPlatformClient: testDeveloperPlatformClient({specifications: async () => remoteSpecs}),
     app: testOrganizationApp(),
   })
+}
+
+async function loadEventsApp(directory: string, eventsConfig: object, remoteFlags: Flag[] = ENABLED) {
+  await writeAppConfigurationFile({...BASE, ...eventsConfig}, joinPath(directory, 'shopify.app.toml'))
+  await writeFile(joinPath(directory, 'package.json'), JSON.stringify({name: 'events-test', private: true}))
   return loadApp({
     directory,
     userProvidedConfigName: undefined,
-    specifications,
+    specifications: await fetchedSpecifications(),
     remoteFlags,
     skipPrompts: true,
+  })
+}
+
+async function remoteAppModules(app: AppInterface): Promise<AppModuleVersion[]> {
+  const manifest = await app.manifest(undefined)
+  return manifest.modules.map((module) => {
+    const specification = app.specifications.find((spec) => spec.externalIdentifier === module.type)
+    if (!specification) throw new Error(`Missing specification ${module.type}`)
+    return {
+      registrationTitle: module.handle,
+      registrationId: module.uid,
+      registrationUuid: `uuid-${module.uid}`,
+      type: specification.identifier,
+      config: module.config,
+      specification: {
+        identifier: specification.identifier,
+        name: specification.externalName,
+        experience: specification.experience,
+        options: {managementExperience: 'cli'},
+      },
+    }
   })
 }
 
@@ -149,17 +176,22 @@ describe('Events module round trip', () => {
         const manifest = await app.manifest(undefined)
         const events = manifest.modules.filter((module) => module.type === eventsSpec.externalIdentifier)
         expect(events).toHaveLength(fanout ? 3 : 1)
+        events.forEach((module) =>
+          expect(jsonSchemaValidate(module.config, strictEventsContract, 'fail').state).toBe('ok'),
+        )
         const readback = events.map(
           (module): AppModuleVersion => ({...remoteModule(module.handle, {}), config: module.config}),
         )
         expect(remoteAppConfigurationExtensionContent(readback, [eventsSpec], [])).toEqual(config)
         if (fanout) expect(events.map((module) => module.handle)).toEqual(['Legacy_A', 'Legacy_B', 'Object'])
-        else
+        else {
+          expect(events[0]).toMatchObject({handle: 'events', uid: 'events'})
           expect(events[0]?.config).toHaveProperty('events.subscription', [
             {...PAYLOAD, handle: 'Legacy_A', api_version: '2026-04'},
             {...PAYLOAD, handle: 'Legacy_B', api_version: '2026-07'},
             {...PAYLOAD, handle: 'Object', uri: 'https://example.com/object'},
           ])
+        }
       })
     },
   )
@@ -229,7 +261,9 @@ describe('Events module round trip', () => {
           uuid: `uuid-${events[index]?.handle}`,
           config: configs[index],
         })
+        expect(module.config).not.toHaveProperty('handle')
         expect(module.config).not.toHaveProperty('events.subscription.handle')
+        expect(jsonSchemaValidate(module.config, strictEventsContract, 'fail').state).toBe('ok')
       })
       const bundleDirectory = joinPath(directory, 'bundle')
       await mkdir(bundleDirectory)
@@ -272,26 +306,9 @@ describe('Events module round trip', () => {
           remoteAppConfigurationExtensionContent(remoteEvents, [eventsSpec], []),
         )
         expect(app.errors.getErrors()).toEqual([])
-        const manifest = await app.manifest(undefined)
-        const remote = manifest.modules.map((module): AppModuleVersion => {
-          const event = remoteEvents.find((event) => event.registrationTitle === module.handle)
-          if (event) return event
-          const specification = app.specifications.find((spec) => spec.externalIdentifier === module.type)
-          if (!specification) throw new Error(`Missing specification ${module.type}`)
-          return {
-            registrationTitle: module.handle,
-            registrationId: module.uid,
-            registrationUuid: `uuid-${module.uid}`,
-            type: specification.identifier,
-            config: module.config,
-            specification: {
-              identifier: specification.identifier,
-              name: specification.externalName,
-              experience: specification.experience,
-              options: {managementExperience: 'cli'},
-            },
-          }
-        })
+        const remote = (await remoteAppModules(app)).map(
+          (module) => remoteEvents.find((event) => event.registrationTitle === module.registrationTitle) ?? module,
+        )
         const identifiers = await ensureDeployIdentifiersFromAppVersion({
           app,
           appId: BASE.client_id,
@@ -362,6 +379,119 @@ describe('Events module round trip', () => {
           }),
         ).rejects.toThrow('identity must be a handle')
       })
+    },
+  )
+
+  test.each([false, true])('pulling an explicit empty list clears existing TOML (fanout=%j)', async (fanout) => {
+    const flags = fanout ? ENABLED : []
+    vi.stubEnv('SHOPIFY_CLI_EVENTS_SUBSCRIPTION_FANOUT', '')
+    vi.mocked(deployOrReleaseConfirmationPrompt).mockResolvedValue(true)
+    await inTemporaryDirectory(async (directory) => {
+      const app = await loadEventsApp(
+        directory,
+        {events: {api_version: '2026-01', subscription: [{...PAYLOAD, handle: 'Removed'}]}},
+        flags,
+      )
+      expect(app.errors.isEmpty()).toBe(true)
+      const modules = (await remoteAppModules(app)).filter((module) => module.type !== 'events')
+      modules.push(remoteModule('events', []))
+      const activeAppVersion = {appModuleVersions: modules}
+      const developerPlatformClient = testDeveloperPlatformClient({activeAppVersion: async () => activeAppVersion})
+      const remoteApp = testOrganizationApp({apiKey: BASE.client_id})
+      await overwriteLocalConfigFileWithRemoteAppConfiguration({
+        remoteApp,
+        developerPlatformClient,
+        specifications: app.specifications,
+        flags,
+        configFileName: 'shopify.app.toml',
+        appDirectory: directory,
+        localAppOptions: {
+          state: 'reusable-current-app',
+          scopes: '',
+          localAppIdMatchedRemote: true,
+          existingBuildOptions: undefined,
+          existingConfig: app.configuration,
+          appDirectory: directory,
+          packageManager: 'npm',
+        },
+      })
+      const loaded = await loadApp({
+        directory,
+        userProvidedConfigName: undefined,
+        specifications: app.specifications,
+        remoteFlags: flags,
+      })
+      expect(loaded.errors.isEmpty()).toBe(true)
+      expect(loaded.configuration).toHaveProperty('events.subscription', [])
+      await expect(readFile(joinPath(directory, 'shopify.app.toml'))).resolves.not.toContain('Removed')
+      const manifest = await loaded.manifest({})
+      const events = manifest.modules.filter((module) => module.type === eventsSpec.externalIdentifier)
+      expect(events).toMatchObject([
+        {handle: 'events', uid: 'events', config: {events: {api_version: '2026-01', subscription: []}}},
+      ])
+      events.forEach((module) =>
+        expect(jsonSchemaValidate(module.config, strictEventsContract, 'fail').state).toBe('ok'),
+      )
+      await writeManifestToBundle(manifest, directory)
+      expect(JSON.parse(await readFile(joinPath(directory, 'manifest.json')))).toEqual(
+        JSON.parse(JSON.stringify(manifest)),
+      )
+      await ensureDeployIdentifiersFromAppVersion({
+        app: loaded,
+        appId: BASE.client_id,
+        appName: loaded.name,
+        release: false,
+        developerPlatformClient,
+        remoteApp,
+        envIdentifiers: {},
+        activeAppVersion,
+      })
+      expect(deployOrReleaseConfirmationPrompt).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          configExtensionIdentifiersBreakdown: expect.objectContaining({
+            existingUpdatedFieldNames: [],
+            newFieldNames: [],
+            deletedFieldNames: [],
+          }),
+        }),
+      )
+    })
+  })
+
+  test.each([false, true])('fetched parser preserves editing input and repeated validation (list=%j)', async (list) => {
+    const specification = (await fetchedSpecifications()).find((spec) => spec.identifier === 'events')
+    if (!specification) throw new Error('Missing Events specification')
+    const subscription = {...PAYLOAD, handle: 'Exact_CASE', uri: '/events'}
+    const input = {events: {api_version: '2026-01', subscription: list ? [subscription] : subscription}}
+    const before = structuredClone(input)
+    const parsed = specification.parseConfigurationObject(input)
+    expect(parsed.state).toBe('ok')
+    if (parsed.state !== 'ok') throw new Error('Expected valid Events config')
+    expect(specification.parseConfigurationObject(parsed.data)).toEqual(parsed)
+    expect(input).toEqual(before)
+    if (!list) {
+      expect(parsed.data).toHaveProperty('handle', 'Exact_CASE')
+      expect(parsed.data).not.toHaveProperty('events.subscription.handle')
+    }
+    const invalid = {...PAYLOAD, unexpected: true, ...(list ? {handle: 'Exact_CASE'} : {})}
+    expect(
+      specification.parseConfigurationObject({
+        ...parsed.data,
+        events: {api_version: '2026-01', subscription: list ? [invalid] : invalid},
+      }).state,
+    ).toBe('error')
+  })
+
+  test.each([{unexpected: true}, {topic: 'not-a-topic'}, {actions: []}, {uri: 123}])(
+    'fetched parser still rejects invalid subscription fields: %j',
+    async (invalid) => {
+      const specification = (await fetchedSpecifications()).find((spec) => spec.identifier === 'events')
+      if (!specification) throw new Error('Missing Events specification')
+      expect(
+        specification.parseConfigurationObject({
+          events: {api_version: '2026-01', subscription: {...PAYLOAD, handle: 'Exact_CASE', ...invalid}},
+        }).state,
+      ).toBe('error')
     },
   )
 

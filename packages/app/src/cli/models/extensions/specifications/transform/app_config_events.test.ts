@@ -24,11 +24,11 @@ describe('transformFromEventsConfig', () => {
     'omits object identity, preserves payload, and leaves local config unchanged (%j)',
     (appConfiguration) => {
       const content = {
+        handle: 'Exact_CASE',
         events: {api_version: '2026-01', subscription: {...PAYLOAD, handle: 'Exact_CASE', uri: '/events'}},
       }
       const before = structuredClone(content)
-      const result = transformFromEventsConfig(content, appConfiguration)
-      expect(result).toEqual({
+      expect(transformFromEventsConfig(content, appConfiguration)).toEqual({
         events: {
           api_version: '2026-01',
           subscription: {
@@ -41,19 +41,9 @@ describe('transformFromEventsConfig', () => {
     },
   )
 
-  test('retains list handles and resolves only relative URLs', () => {
-    const subscriptions = [
-      {...PAYLOAD, handle: 'Relative', uri: '/events'},
-      {...PAYLOAD, handle: 'Absolute'},
-      {...PAYLOAD, handle: 'Pubsub', uri: 'pubsub://project:topic'},
-    ]
-    expect(
-      transformFromEventsConfig({events: {subscription: subscriptions}}, {application_url: 'https://app.com'}),
-    ).toEqual({
-      events: {
-        subscription: [{...subscriptions[0], uri: 'https://app.com/events'}, subscriptions[1], subscriptions[2]],
-      },
-    })
+  test('retains list handles and non-HTTP URIs', () => {
+    const content = {events: {subscription: [{...PAYLOAD, handle: 'Pubsub', uri: 'pubsub://project:topic'}]}}
+    expect(transformFromEventsConfig(content, {application_url: 'https://app.com'})).toEqual(content)
   })
 
   test.each([undefined, null, 42, false])('retains a missing/invalid URI for normal validation (%j)', (uri) => {
@@ -64,9 +54,150 @@ describe('transformFromEventsConfig', () => {
   })
 
   test.each([{}, {events: {}}, {events: {subscription: null}}, {events: {subscription: []}}])(
-    'preserves empty content (%j)',
-    (content) => expect(transformFromEventsConfig(content)).toEqual(content),
+    'omits first-class identity on empty-content paths (%j)',
+    (content) => expect(transformFromEventsConfig({...content, handle: 'local-only'})).toEqual(content),
   )
+
+  test('returns content as-is when all URIs are absolute', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+        subscription: [{topic: 'orders/create', uri: 'https://example.com', actions: ['create']}],
+      },
+    }
+    const appConfiguration = {application_url: 'https://tunnel.example.com'}
+
+    const result = transformFromEventsConfig(content, appConfiguration)
+
+    expect(result).toEqual(content)
+  })
+
+  test('prepends application_url to relative URIs in subscriptions', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']},
+          {topic: 'products/update', uri: 'https://absolute.example.com/webhook', actions: ['update']},
+        ],
+      },
+    }
+    const appConfiguration = {application_url: 'https://tunnel.example.com'}
+
+    const result = transformFromEventsConfig(content, appConfiguration)
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', uri: 'https://tunnel.example.com/webhooks/orders', actions: ['create']},
+          {topic: 'products/update', uri: 'https://absolute.example.com/webhook', actions: ['update']},
+        ],
+      },
+    })
+  })
+
+  test('returns content as-is when no application_url in config', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+        subscription: [{topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']}],
+      },
+    }
+
+    const result = transformFromEventsConfig(content, {})
+
+    expect(result).toEqual(content)
+  })
+
+  test('returns content as-is when no appConfiguration provided', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+        subscription: [{topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']}],
+      },
+    }
+
+    const result = transformFromEventsConfig(content)
+
+    expect(result).toEqual(content)
+  })
+
+  test('handles application_url with trailing slash', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+        subscription: [{topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']}],
+      },
+    }
+    const appConfiguration = {application_url: 'https://tunnel.example.com/'}
+
+    const result = transformFromEventsConfig(content, appConfiguration)
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', uri: 'https://tunnel.example.com/webhooks/orders', actions: ['create']},
+        ],
+      },
+    })
+  })
+
+  test('returns content as-is when subscription array is empty', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+        subscription: [],
+      },
+    }
+    const appConfiguration = {application_url: 'https://tunnel.example.com'}
+
+    const result = transformFromEventsConfig(content, appConfiguration)
+
+    expect(result).toEqual(content)
+  })
+
+  test('returns content as-is when no subscriptions', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+      },
+    }
+    const appConfiguration = {application_url: 'https://tunnel.example.com'}
+
+    const result = transformFromEventsConfig(content, appConfiguration)
+
+    expect(result).toEqual(content)
+  })
+
+  test('prepends application_url to a relative URI in a single subscription object', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+        subscription: {topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']},
+      },
+    }
+    const appConfiguration = {application_url: 'https://tunnel.example.com'}
+
+    const result = transformFromEventsConfig(content, appConfiguration)
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: {topic: 'orders/create', uri: 'https://tunnel.example.com/webhooks/orders', actions: ['create']},
+      },
+    })
+  })
+
+  test('returns content as-is when events is undefined', () => {
+    const content = {}
+    const appConfiguration = {application_url: 'https://tunnel.example.com'}
+
+    const result = transformFromEventsConfig(content, appConfiguration)
+
+    expect(result).toEqual(content)
+  })
 })
 
 describe('aggregateEventsConfigurations', () => {
@@ -93,10 +224,11 @@ describe('aggregateEventsConfigurations', () => {
 
   test('retains independent legacy identities and duplicates, including case variants, for validation', () => {
     const subscription = {...PAYLOAD, handle: 'First', identifier: 'id'}
-    const modules = [
-      moduleWith([subscription, subscription, {...subscription, handle: 'first'}], '2026-01', 'not-used'),
-    ]
-    expect(aggregateEventsConfigurations(modules)).toEqual({
+    expect(
+      aggregateEventsConfigurations([
+        moduleWith([subscription, subscription, {...subscription, handle: 'first'}], '2026-01', 'not-used'),
+      ]),
+    ).toEqual({
       events: {
         api_version: '2026-01',
         subscription: [
@@ -186,5 +318,344 @@ describe('aggregateEventsConfigurations', () => {
     expect(() => aggregateEventsConfigurations([moduleWith([{...PAYLOAD, handle}])])).toThrow(
       'identity must be a handle',
     )
+  })
+
+  test('strips server-managed identifier field from subscriptions while preserving all other fields', () => {
+    const remoteContent = {
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/webhook',
+            actions: ['create'],
+            handle: 'orders',
+            identifier: 'id-1',
+          },
+          {
+            topic: 'products/update',
+            uri: 'https://example.com/webhook',
+            actions: ['update'],
+            handle: 'my-subscription',
+            triggers: ['product_updated'],
+            query: 'query { id }',
+            query_filter: 'status:active',
+            identifier: 'id-2',
+          },
+        ],
+      },
+    }
+
+    const result = aggregateEventsConfigurations([{handle: 'ignored-outer', config: remoteContent}])
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/webhook',
+            actions: ['create'],
+            handle: 'orders',
+          },
+          {
+            topic: 'products/update',
+            uri: 'https://example.com/webhook',
+            actions: ['update'],
+            handle: 'my-subscription',
+            triggers: ['product_updated'],
+            query: 'query { id }',
+            query_filter: 'status:active',
+          },
+        ],
+      },
+    })
+  })
+
+  test('handles missing subscription field', () => {
+    const remoteContent = {
+      events: {
+        api_version: '2024-01',
+      },
+    }
+
+    const result = aggregateEventsConfigurations([{handle: 'events', config: remoteContent}])
+
+    expect(result).toEqual({events: {api_version: '2024-01'}})
+    expect(result.events).not.toHaveProperty('subscription')
+  })
+  test('strips the identifier from a single subscription object and returns it as a one-element array', () => {
+    const remoteContent = {
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'orders/create',
+          uri: 'https://example.com/webhook',
+          actions: ['create'],
+          handle: 'order-notifier',
+          identifier: 'id-1',
+        },
+      },
+    }
+
+    const result = aggregateEventsConfigurations([{handle: 'order-notifier', config: remoteContent}])
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/webhook',
+            actions: ['create'],
+            handle: 'order-notifier',
+          },
+        ],
+      },
+    })
+  })
+
+  test('merging multiple single-subscription modules accumulates one subscription array', () => {
+    const moduleOne = {
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'orders/create',
+          uri: 'https://example.com/a',
+          actions: ['create'],
+          handle: 'a',
+          identifier: 'id-a',
+        },
+      },
+    }
+    const moduleTwo = {
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'products/update',
+          uri: 'https://example.com/b',
+          actions: ['update'],
+          handle: 'b',
+          identifier: 'id-b',
+        },
+      },
+    }
+
+    const merged = aggregateEventsConfigurations([
+      {handle: 'a', config: moduleOne},
+      {handle: 'b', config: moduleTwo},
+    ])
+
+    expect(merged).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', uri: 'https://example.com/a', actions: ['create'], handle: 'a'},
+          {topic: 'products/update', uri: 'https://example.com/b', actions: ['update'], handle: 'b'},
+        ],
+      },
+    })
+  })
+
+  test('strips a subscription api_version that matches the events default in the list shape', () => {
+    const remoteContent = {
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/a',
+            actions: ['create'],
+            handle: 'a',
+            api_version: '2024-01',
+            identifier: 'id-a',
+          },
+          {
+            topic: 'products/update',
+            uri: 'https://example.com/b',
+            actions: ['update'],
+            handle: 'b',
+            api_version: '2024-01',
+            identifier: 'id-b',
+          },
+        ],
+      },
+    }
+
+    const result = aggregateEventsConfigurations([{handle: 'ignored-outer', config: remoteContent}])
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', uri: 'https://example.com/a', actions: ['create'], handle: 'a'},
+          {topic: 'products/update', uri: 'https://example.com/b', actions: ['update'], handle: 'b'},
+        ],
+      },
+    })
+  })
+
+  test('strips a subscription api_version that matches the events default in the single shape', () => {
+    const remoteContent = {
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'orders/create',
+          uri: 'https://example.com/a',
+          actions: ['create'],
+          api_version: '2024-01',
+          identifier: 'id-a',
+        },
+      },
+    }
+
+    const result = aggregateEventsConfigurations([{handle: 'a', config: remoteContent}])
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [{topic: 'orders/create', uri: 'https://example.com/a', actions: ['create'], handle: 'a'}],
+      },
+    })
+  })
+
+  test('keeps a subscription api_version that overrides the events default', () => {
+    const remoteContent = {
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'orders/create',
+          uri: 'https://example.com/a',
+          actions: ['create'],
+          api_version: '2025-07',
+          identifier: 'id-a',
+        },
+      },
+    }
+
+    const result = aggregateEventsConfigurations([{handle: 'a', config: remoteContent}])
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/a',
+            actions: ['create'],
+            handle: 'a',
+            api_version: '2025-07',
+          },
+        ],
+      },
+    })
+  })
+
+  test('rejects a missing module default even when a subscription overrides it', () => {
+    const remoteContent = {
+      events: {
+        subscription: [
+          {
+            topic: 'orders/create',
+            uri: 'https://example.com/a',
+            actions: ['create'],
+            api_version: '2024-01',
+            identifier: 'id-a',
+          },
+        ],
+      },
+    }
+
+    expect(() => aggregateEventsConfigurations([{handle: 'events', config: remoteContent}])).toThrow(
+      'without events.api_version',
+    )
+  })
+
+  test('merging single-subscription modules keeps only the overriding api_version', () => {
+    const moduleOne = {
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'orders/create',
+          uri: 'https://example.com/a',
+          actions: ['create'],
+          handle: 'a',
+          api_version: '2024-01',
+          identifier: 'id-a',
+        },
+      },
+    }
+    const moduleTwo = {
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'products/update',
+          uri: 'https://example.com/b',
+          actions: ['update'],
+          handle: 'b',
+          api_version: '2025-07',
+          identifier: 'id-b',
+        },
+      },
+    }
+
+    const merged = aggregateEventsConfigurations([
+      {handle: 'a', config: moduleOne},
+      {handle: 'b', config: moduleTwo},
+    ])
+
+    expect(merged).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', uri: 'https://example.com/a', actions: ['create'], handle: 'a'},
+          {
+            topic: 'products/update',
+            uri: 'https://example.com/b',
+            actions: ['update'],
+            handle: 'b',
+            api_version: '2025-07',
+          },
+        ],
+      },
+    })
+  })
+
+  test('merging a list-shape module with a single-subscription module accumulates all subscriptions', () => {
+    const listModule = {
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', uri: 'https://example.com/a', actions: ['create'], handle: 'a', identifier: 'id-a'},
+        ],
+      },
+    }
+    const singleModule = {
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'products/update',
+          uri: 'https://example.com/b',
+          actions: ['update'],
+          handle: 'b',
+          identifier: 'id-b',
+        },
+      },
+    }
+
+    const merged = aggregateEventsConfigurations([
+      {handle: 'ignored-outer', config: listModule},
+      {handle: 'b', config: singleModule},
+    ])
+
+    expect(merged).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', uri: 'https://example.com/a', actions: ['create'], handle: 'a'},
+          {topic: 'products/update', uri: 'https://example.com/b', actions: ['update'], handle: 'b'},
+        ],
+      },
+    })
   })
 })
