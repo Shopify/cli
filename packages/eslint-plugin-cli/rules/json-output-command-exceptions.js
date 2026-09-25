@@ -60,7 +60,6 @@ const commandExceptions = [
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/off.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/on.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/status.ts',
-  'packages/theme/src/cli/commands/theme/check.ts',
   'packages/theme/src/cli/commands/theme/init.ts',
   'packages/theme/src/cli/commands/theme/metafields/pull.ts',
   'packages/theme/src/cli/commands/theme/package.ts',
