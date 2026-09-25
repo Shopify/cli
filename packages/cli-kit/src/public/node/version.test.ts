@@ -1,6 +1,7 @@
 import {captureOutput} from './system.js'
 import {localCLIVersion, globalCLIVersion, isPreReleaseVersion} from './version.js'
 import {inTemporaryDirectory} from './fs.js'
+import {homeDirectory} from './context/local.js'
 import {describe, expect, test, vi} from 'vitest'
 
 import which from 'which'
@@ -50,7 +51,7 @@ describe('globalCLIVersion', () => {
 
     // Then
     expect(got).toBe('3.65.0')
-    expect(captureOutput).toHaveBeenCalledWith('path/to/shopify', [], {env: expect.any(Object)})
+    expect(captureOutput).toHaveBeenCalledWith('path/to/shopify', [], {env: expect.any(Object), cwd: homeDirectory()})
   })
 
   test('returns undefined when the global version is older than 3.59', async () => {
@@ -64,7 +65,7 @@ describe('globalCLIVersion', () => {
 
     // Then
     expect(got).toBeUndefined()
-    expect(captureOutput).toHaveBeenCalledWith('path/to/shopify', [], {env: expect.any(Object)})
+    expect(captureOutput).toHaveBeenCalledWith('path/to/shopify', [], {env: expect.any(Object), cwd: homeDirectory()})
   })
 
   test('returns undefined when the global version is not installed', async () => {
