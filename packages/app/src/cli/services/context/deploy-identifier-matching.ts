@@ -11,6 +11,8 @@ import {AppInterface} from '../../models/app/app.js'
 import {DeployIdentifiers, ExtensionUuidsByLocalIdentifier} from '../../models/app/identifiers.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {EventsSpecIdentifier} from '../../models/extensions/specifications/app_config_events.js'
+import {mergeEventsModuleConfiguration} from '../../models/extensions/specifications/transform/app_config_events.js'
 import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js'
 import {AppModuleVersion, AppVersion} from '../../utilities/developer-platform-client.js'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
@@ -188,10 +190,14 @@ async function localAppConfigurationExtensionContent(app: AppInterface, apiKey: 
   for (const extension of configExtensions) {
     // eslint-disable-next-line no-await-in-loop
     const deployConfig = await extension.deployConfig({apiKey, appConfiguration: app.configuration})
-    const localConfig =
-      extension.specification.transformRemoteToLocal?.(deployConfig ?? {}, {flags: app.remoteFlags}) ??
-      extension.configuration
-    appConfig = deepMergeObjects(appConfig, localConfig)
+    if (extension.specification.identifier === EventsSpecIdentifier) {
+      appConfig = mergeEventsModuleConfiguration(appConfig, {config: deployConfig ?? {}, handle: extension.handle})
+    } else {
+      const localConfig =
+        extension.specification.transformRemoteToLocal?.(deployConfig ?? {}, {flags: app.remoteFlags}) ??
+        extension.configuration
+      appConfig = deepMergeObjects(appConfig, localConfig)
+    }
   }
 
   return appConfig
