@@ -25,13 +25,18 @@ export async function fetchStoreThemes(session: AdminSession) {
     throw new AbortError(`There are no themes in the ${store} store`)
   }
 
-  return themes.sort(byRole)
+  return themes.sort(byRoleThenNewest)
 }
 
 function isRoleAllowed(theme: Theme) {
   return (ALLOWED_ROLES as string[]).includes(theme.role)
 }
 
-function byRole(themeA: Theme, themeB: Theme) {
-  return (ALLOWED_ROLES as string[]).indexOf(themeA.role) - (ALLOWED_ROLES as string[]).indexOf(themeB.role)
+function byRoleThenNewest(themeA: Theme, themeB: Theme) {
+  const roleComparison =
+    (ALLOWED_ROLES as string[]).indexOf(themeA.role) - (ALLOWED_ROLES as string[]).indexOf(themeB.role)
+  if (roleComparison !== 0) return roleComparison
+
+  // Theme IDs increase monotonically, so a higher ID means a newer theme.
+  return themeB.id - themeA.id
 }
