@@ -27,16 +27,9 @@ export default class ImportChannelConfig extends AppLinkedCommand {
     ...globalFlags,
     ...appFlags,
     ...jsonFlag,
-    stdout: Flags.boolean({
-      description:
-        'Print the generated TOML to stdout instead of writing it to a file. For piped output, use an already-linked app: first-time linking prompts may interleave with the output.',
-      env: 'SHOPIFY_FLAG_STDOUT',
-      default: false,
-      exclusive: ['json'],
-    }),
-    overwrite: Flags.boolean({
-      description: 'Overwrite the existing channel spec file if one already exists.',
-      env: 'SHOPIFY_FLAG_OVERWRITE',
+    force: Flags.boolean({
+      description: 'Overwrite the existing channel spec file without prompting.',
+      env: 'SHOPIFY_FLAG_FORCE',
       default: false,
     }),
   }
@@ -55,8 +48,7 @@ export default class ImportChannelConfig extends AppLinkedCommand {
       app,
       remoteApp,
       developerPlatformClient,
-      stdout: flags.stdout,
-      overwrite: flags.overwrite,
+      force: flags.force,
       json: flags.json,
     })
 

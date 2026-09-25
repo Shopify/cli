@@ -7,7 +7,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {decodeToml} from '@shopify/cli-kit/node/toml/codec'
 import {basename, dirname, joinPath, relativePath} from '@shopify/cli-kit/node/path'
-import {outputResult, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 
 export const CHANNEL_SPEC_EXTENSION_DIRECTORY = joinPath('extensions', 'channel-config')
@@ -37,21 +37,20 @@ interface ImportChannelConfigOptions {
   app: AppLinkedInterface
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
-  stdout: boolean
-  overwrite: boolean
+  force: boolean
   json: boolean
 }
 
 /**
  * Imports the Shopify-authored default channel spec as a deployable channel_config TOML file.
  *
- * On success the TOML is either printed to stdout (`--stdout`) or written to
- * `extensions/channel-config/specifications/<handle>.toml` inside the app directory. Warnings
- * returned by the backend are rendered out-of-band and are never written into the TOML file.
- * This command never deploys; the partner reviews the generated file and runs `shopify app deploy`.
+ * On success the TOML is written to `extensions/channel-config/specifications/<handle>.toml`
+ * inside the app directory. Warnings returned by the backend are rendered out-of-band and are
+ * never written into the TOML file. This command never deploys; the partner reviews the generated
+ * file, tries it with `shopify app dev`, and runs `shopify app deploy`.
  */
 export async function importChannelConfig(options: ImportChannelConfigOptions): Promise<void> {
-  const {app, remoteApp, developerPlatformClient, stdout, overwrite, json} = options
+  const {app, remoteApp, developerPlatformClient, force, json} = options
 
   const result = await fetchChannelSpecExport({remoteApp, developerPlatformClient})
 
@@ -61,20 +60,13 @@ export async function importChannelConfig(options: ImportChannelConfigOptions): 
     throw new AbortError(`The channel spec for this app could not be exported (reason: ${result.reason}).`)
   }
 
-  if (stdout) {
-    // Warnings go to stderr so stdout carries only the TOML and stays pipeable.
-    result.warnings.forEach((warning) => outputWarn(warning.message))
-    outputResult(result.toml)
-    return
-  }
-
   // basename() confines the write to the specifications directory even if the backend ever
   // returned a filename containing path separators.
   const outputPath = joinPath(app.directory, CHANNEL_SPEC_DIRECTORY, basename(result.filename))
-  if (!overwrite && (await fileExists(outputPath))) {
+  if (!force && (await fileExists(outputPath))) {
     throw new AbortError(
       `A channel spec already exists at ${relativePath(app.directory, outputPath)}.`,
-      'Re-run with `--overwrite` to replace it.',
+      'Re-run with `--force` to replace it.',
     )
   }
 
@@ -115,7 +107,8 @@ export async function importChannelConfig(options: ImportChannelConfigOptions): 
         : []),
     ],
     nextSteps: [
-      'Review the generated spec before deploying it.',
+      'Review the generated spec and make any changes your channel needs.',
+      ['Run', {command: 'shopify app dev'}, 'to try the spec on a development store before releasing it.'],
       ['Run', {command: 'shopify app deploy'}, 'to deploy the spec as part of your app.'],
     ],
   })

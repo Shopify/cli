@@ -21,13 +21,12 @@ function successResult(warnings: {code: string; message: string}[] = []) {
   }
 }
 
-function testOptions(app: AppLinkedInterface, {stdout = false, overwrite = false, json = false} = {}) {
+function testOptions(app: AppLinkedInterface, {force = false, json = false} = {}) {
   return {
     app,
     remoteApp: testOrganizationApp(),
     developerPlatformClient: testDeveloperPlatformClient(),
-    stdout,
-    overwrite,
+    force,
     json,
   }
 }
@@ -48,11 +47,12 @@ describe('importChannelConfig', () => {
       await expect(fileExists(outputPath)).resolves.toBe(true)
       await expect(readFile(outputPath)).resolves.toEqual(TOML)
       expect(outputMock.info()).toContain('Imported the channel spec')
+      expect(outputMock.info()).toContain('shopify app dev')
       expect(outputMock.info()).toContain('shopify app deploy')
     })
   })
 
-  test('refuses to overwrite an existing spec without --overwrite', async () => {
+  test('refuses to overwrite an existing spec without --force', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       vi.mocked(fetchChannelSpecExport).mockResolvedValue(successResult())
@@ -67,7 +67,7 @@ describe('importChannelConfig', () => {
     })
   })
 
-  test('overwrites an existing spec with --overwrite', async () => {
+  test('overwrites an existing spec with --force', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       vi.mocked(fetchChannelSpecExport).mockResolvedValue(successResult())
@@ -77,33 +77,10 @@ describe('importChannelConfig', () => {
       await writeFile(outputPath, 'existing = true\n')
 
       // When
-      await importChannelConfig(testOptions(app, {overwrite: true}))
+      await importChannelConfig(testOptions(app, {force: true}))
 
       // Then
       await expect(readFile(outputPath)).resolves.toEqual(TOML)
-    })
-  })
-
-  test('prints only the TOML to stdout with --stdout, keeping warnings out-of-band', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const warning = {
-        code: 'automatic_product_feed_management',
-        message:
-          'This generated spec enables automatic product feed management. Review the generated configuration before deploying.',
-      }
-      vi.mocked(fetchChannelSpecExport).mockResolvedValue(successResult([warning]))
-      const app = testAppLinked({directory: tmpDir})
-      const outputMock = mockAndCaptureOutput()
-
-      // When
-      await importChannelConfig(testOptions(app, {stdout: true}))
-
-      // Then
-      expect(outputMock.output()).toContain(TOML)
-      expect(outputMock.output()).not.toContain(warning.code)
-      expect(outputMock.warn()).toContain(warning.message)
-      await expect(fileExists(joinPath(tmpDir, CHANNEL_SPEC_DIRECTORY, 'example.toml'))).resolves.toBe(false)
     })
   })
 
@@ -123,9 +100,10 @@ describe('importChannelConfig', () => {
       await importChannelConfig(testOptions(app))
 
       // Then
-      expect(outputMock.warn()).toContain(warning.message)
+      // renderWarning wraps long lines inside a box, so match on the unwrapped prefix.
+      expect(outputMock.warn()).toContain('This generated spec enables automatic product feed management.')
       await expect(readFile(joinPath(tmpDir, CHANNEL_SPEC_DIRECTORY, 'example.toml'))).resolves.not.toContain(
-        warning.message,
+        'product feed management',
       )
     })
   })
