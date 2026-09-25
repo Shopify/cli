@@ -1,14 +1,21 @@
+import {themeDeleteJsonOutputSchema} from '../../services/delete/types.js'
+import {renderThemeDeleteResult} from '../../services/delete/result.js'
 import {themesDelete} from '../../services/delete.js'
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {Flags} from '@oclif/core'
-import {globalFlags, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 import {OutputFlags} from '@oclif/core/interfaces'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 type DeleteFlags = OutputFlags<typeof Delete.flags>
 export default class Delete extends ThemeCommand {
+  static get jsonOutputSchema() {
+    return themeDeleteJsonOutputSchema
+  }
+
   static summary = "Delete remote themes from the connected store. This command can't be undone."
 
   static descriptionWithMarkdown = `Deletes a theme from your store.
@@ -21,6 +28,7 @@ export default class Delete extends ThemeCommand {
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     ...themeFlags,
     development: Flags.boolean({
       char: 'd',
@@ -60,16 +68,26 @@ export default class Delete extends ThemeCommand {
     const {environment, development, force, theme} = flags
     const themes = theme ?? []
 
-    await themesDelete(
+    const result = await themesDelete(
       adminSession,
       {
         selectTheme: flags['show-all'],
-        environment,
         development,
         themes,
         force,
       },
       multiEnvironment,
     )
+    if (!result) return
+    if (flags.json && multiEnvironment) return result
+    renderThemeDeleteResult(result, flags.json ? 'json' : 'text', {store: adminSession.storeFqdn, environment})
+  }
+
+  protected collectsEnvironmentResults(flags: {json?: boolean}): boolean {
+    return Boolean(flags.json)
+  }
+
+  protected renderEnvironmentResults(environments: {environment: string; result: unknown}[]): void {
+    outputResult(themeDeleteJsonOutputSchema.encode(themeDeleteJsonOutputSchema.validate({environments})))
   }
 }
