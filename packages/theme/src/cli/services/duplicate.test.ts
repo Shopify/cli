@@ -1,6 +1,5 @@
-// packages/theme/src/cli/services/duplicate.test.ts
-import {duplicate} from './duplicate.js'
-import {configureCLIEnvironment} from '../utilities/cli-config.js'
+import {duplicate as executeDuplicate} from './duplicate.js'
+import {renderThemeDuplicateResult} from './duplicate/result.js'
 import {themeComponent} from '../utilities/theme-ui.js'
 import {findThemeById, findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themeDuplicate} from '@shopify/cli-kit/node/themes/api'
@@ -17,7 +16,6 @@ vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('../utilities/theme-selector.js')
 vi.mock('../utilities/theme-ui.js')
-vi.mock('../utilities/cli-config.js')
 
 const session: AdminSession = {
   token: 'token',
@@ -44,7 +42,6 @@ const options = {
 describe('duplicate', () => {
   beforeEach(() => {
     vi.mocked(themeComponent).mockReturnValue(['theme component'])
-    vi.mocked(configureCLIEnvironment).mockReturnValue()
     vi.mocked(outputResult).mockReturnValue()
   })
 
@@ -272,4 +269,34 @@ describe('duplicate', () => {
       }),
     )
   })
+})
+
+async function duplicate(
+  session: AdminSession,
+  themeId: string | undefined,
+  flags: Parameters<typeof executeDuplicate>[2] & {json?: boolean},
+) {
+  const result = await executeDuplicate(session, themeId, flags)
+  renderThemeDuplicateResult(result, flags.json ? 'json' : 'text')
+  return result
+}
+
+test('returns a typed result without presenting the final output', async () => {
+  vi.mocked(isCI).mockReturnValue(true)
+  vi.mocked(findThemeById).mockResolvedValue(theme)
+  vi.mocked(themeDuplicate).mockResolvedValue({theme: duplicatedTheme, userErrors: [], requestId: 'request-123'})
+
+  const result = await executeDuplicate(session, '1', {force: true})
+
+  expect(result).toMatchObject({
+    status: 'completed',
+    originalTheme: theme,
+    theme: duplicatedTheme,
+    shop: session.storeFqdn,
+    previewUrl: 'https://my-shop.myshopify.com?preview_theme_id=2',
+    requestId: 'request-123',
+  })
+  expect(outputResult).not.toHaveBeenCalled()
+  expect(renderSuccess).not.toHaveBeenCalled()
+  expect(renderError).not.toHaveBeenCalled()
 })
