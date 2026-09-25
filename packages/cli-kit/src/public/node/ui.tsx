@@ -27,6 +27,7 @@ import {
 } from '../../private/node/ui/components/DangerousConfirmationPrompt.js'
 import {SelectPrompt, SelectPromptProps} from '../../private/node/ui/components/SelectPrompt.js'
 import {Tasks, Task} from '../../private/node/ui/components/Tasks.js'
+import {runTasks} from '../../private/node/ui/tasks.js'
 import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/TextPrompt.js'
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
 import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
@@ -490,6 +491,8 @@ export async function renderTasks<TContext>(
   tasks: Task<TContext>[],
   {renderOptions, noProgressBar}: RenderTasksOptions = {},
 ): Promise<TContext> {
+  if (commandEventOutputMode() === 'json') return runTasks(tasks)
+
   let taskResult: TContext
   await render(
     <Tasks
@@ -511,6 +514,8 @@ export async function renderTasks<TContext>(
 export interface RenderSingleTaskOptions<T> {
   title: TokenizedString
   task: (updateStatus: (status: TokenizedString) => void) => Promise<T>
+  /** The number of additional attempts after a failure. Defaults to zero. */
+  retry?: number
   onAbort?: () => void
   renderOptions?: RenderOptions
 }
@@ -520,6 +525,7 @@ export interface RenderSingleTaskOptions<T> {
  * @param options - Configuration object
  * @param options.title - The initial title to display with the loading bar
  * @param options.task - The async task to execute. Receives an updateStatus callback to change the displayed title.
+ * @param options.retry - The number of additional attempts after a failure. Defaults to zero.
  * @param options.renderOptions - Optional render configuration
  * @returns The result of the task
  * @example
@@ -528,36 +534,78 @@ export interface RenderSingleTaskOptions<T> {
 export async function renderSingleTask<T>({
   title,
   task,
+  retry = 0,
   onAbort,
   renderOptions,
 }: RenderSingleTaskOptions<T>): Promise<T> {
   // Keep updates correlated even when titles change or concurrent tasks share the same title.
   const operation = randomUUID()
   let currentStatus = title
+  let aborted = false
+  const abort = onAbort
+    ? () => {
+        aborted = true
+        onAbort()
+      }
+    : undefined
   const taskWithProgressEvents = async (updateStatus: (status: TokenizedString) => void): Promise<T> => {
     emitCommandEvent(
       {type: 'progress', operation, status: 'started', message: unstyled(currentStatus.value)},
       {alreadyRendered: true},
     )
-    const result = await task((status) => {
+    const updateTaskStatus = (status: TokenizedString) => {
       currentStatus = status
       emitCommandEvent(
         {type: 'progress', operation, status: 'updated', message: unstyled(status.value)},
         {alreadyRendered: true},
       )
       updateStatus(status)
-    })
-    emitCommandEvent(
-      {type: 'progress', operation, status: 'completed', message: unstyled(currentStatus.value), current: 1, total: 1},
-      {alreadyRendered: true},
-    )
-    return result
+    }
+
+    for (let attempt = 0; ; attempt++) {
+      let result: T
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        result = await task(updateTaskStatus)
+      } catch (error) {
+        // A custom abort callback can reject the task; cancellation must not start another attempt.
+        if (aborted) throw error
+
+        const shouldRetry = attempt < retry
+        emitCommandEvent(
+          {
+            type: 'progress',
+            operation,
+            status: shouldRetry ? 'retrying' : 'failed',
+            message: unstyled(currentStatus.value),
+          },
+          {alreadyRendered: true},
+        )
+        if (!shouldRetry) throw error
+        continue
+      }
+
+      if (!aborted) {
+        emitCommandEvent(
+          {
+            type: 'progress',
+            operation,
+            status: 'completed',
+            message: unstyled(currentStatus.value),
+            current: 1,
+            total: 1,
+          },
+          {alreadyRendered: true},
+        )
+      }
+      return result
+    }
   }
 
   if (commandEventOutputMode() === 'json') {
     // Without Ink's raw input handling, Ctrl+C arrives as SIGINT. Leave the default
     // signal behavior intact when the caller has no custom abort callback.
-    const onSigint = () => onAbort?.()
+    const onSigint = () => abort?.()
     if (onAbort) process.once('SIGINT', onSigint)
     try {
       return await taskWithProgressEvents(() => {})
@@ -574,7 +622,7 @@ export async function renderSingleTask<T>({
       onComplete={(result) => {
         taskResult = result
       }}
-      onAbort={onAbort}
+      onAbort={abort}
     />,
     {
       stdout: process.stderr as unknown as NodeJS.WriteStream,
