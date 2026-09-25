@@ -11546,7 +11546,7 @@
       "args": {
       },
       "customPluginName": "@shopify/theme",
-      "description": "Renames a theme in your store.\n\n  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in your store.\n  ",
+      "description": "Renames a theme in your store.\n\n  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in your store.\n  \n\nOutput from `--json` conforms to the `ThemeRenameResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"$ref\": \"#/definitions/ThemeRenameEnvironment/properties/result\"\n    },\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"environments\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/definitions/ThemeRenameEnvironment\"\n          }\n        }\n      },\n      \"required\": [\n        \"environments\"\n      ],\n      \"additionalProperties\": false\n    }\n  ],\n  \"title\": \"ThemeRenameResult\",\n  \"definitions\": {\n    \"RenamedTheme\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"id\": {\n          \"type\": \"number\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"type\": \"string\"\n        },\n        \"processing\": {\n          \"type\": \"boolean\"\n        },\n        \"createdAtRuntime\": {\n          \"type\": \"boolean\"\n        },\n        \"src\": {\n          \"type\": \"string\"\n        },\n        \"shop\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"id\",\n        \"name\",\n        \"role\",\n        \"processing\",\n        \"createdAtRuntime\",\n        \"shop\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"ThemeRenameEnvironment\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"environment\": {\n          \"type\": \"string\"\n        },\n        \"result\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"theme\": {\n              \"$ref\": \"#/definitions/RenamedTheme\"\n            }\n          },\n          \"required\": [\n            \"theme\"\n          ],\n          \"additionalProperties\": false\n        }\n      },\n      \"required\": [\n        \"environment\",\n        \"result\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Renames a theme in your store.\n\n  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in your store.\n  ",
       "enableJsonFlag": false,
       "flags": {
@@ -11574,6 +11574,15 @@
           "multiple": true,
           "name": "environment",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,
