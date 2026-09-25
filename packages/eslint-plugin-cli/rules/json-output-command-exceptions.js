@@ -64,7 +64,6 @@ const commandExceptions = [
   'packages/theme/src/cli/commands/theme/delete.ts',
   'packages/theme/src/cli/commands/theme/duplicate.ts',
   'packages/theme/src/cli/commands/theme/init.ts',
-  'packages/theme/src/cli/commands/theme/list.ts',
   'packages/theme/src/cli/commands/theme/metafields/pull.ts',
   'packages/theme/src/cli/commands/theme/open.ts',
   'packages/theme/src/cli/commands/theme/package.ts',

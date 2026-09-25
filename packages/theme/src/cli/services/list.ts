@@ -1,30 +1,15 @@
-import {getDevelopmentTheme} from './local-storage.js'
+import {ThemeListResult} from './list/types.js'
 import {Filter, FilterProps, filterThemes} from '../utilities/theme-selector/filter.js'
 import {ALLOWED_ROLES, fetchStoreThemes, Role} from '../utilities/theme-selector/fetch.js'
-import {InlineToken, renderInfo} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {getHostTheme} from '@shopify/cli-kit/node/themes/conf'
-import {outputResult} from '@shopify/cli-kit/node/output'
 
 interface Options {
   role?: Role
   name?: string
   id?: number
-  json: boolean
-  environment?: string
 }
 
-function tabularSection(
-  title: string,
-  data: InlineToken[][],
-): {title: string; body: {tabularData: InlineToken[][]; firstColumnSubdued?: boolean}} {
-  return {
-    title,
-    body: {tabularData: data},
-  }
-}
-
-export async function list(options: Options, adminSession: AdminSession) {
+export async function list(options: Options, adminSession: AdminSession): Promise<ThemeListResult> {
   const store = adminSession.storeFqdn
   const filter = new Filter({
     ...ALLOWED_ROLES.reduce((roles: FilterProps, role) => {
@@ -35,44 +20,9 @@ export async function list(options: Options, adminSession: AdminSession) {
   })
 
   let storeThemes = await fetchStoreThemes(adminSession)
-  const developmentTheme = getDevelopmentTheme()
-  const hostTheme = getHostTheme(store)
   if (filter.any()) {
     storeThemes = filterThemes(store, storeThemes, filter)
   }
 
-  if (options.json) {
-    return outputResult(JSON.stringify(storeThemes, null, 2))
-  }
-
-  const themes = storeThemes.map(({id, name, role}) => {
-    let formattedRole = ''
-    if (role) {
-      formattedRole = `[${role}]`
-      if ([developmentTheme, hostTheme].includes(`${id}`)) {
-        formattedRole += ' [current]'
-      }
-    }
-    return [name, formattedRole, `#${id}`]
-  })
-
-  const tableData = [
-    ['name', 'role', 'id'],
-    ['───────────────────────────────', '──────────────────────', '──────────────'],
-    ...themes,
-  ]
-
-  renderInfo({
-    customSections: [
-      ...(options.environment
-        ? [
-            {
-              title: `${store} theme library`,
-              body: [{subdued: `Environment name: ${options.environment}`}],
-            },
-          ]
-        : []),
-      tabularSection('', tableData),
-    ],
-  })
+  return storeThemes
 }
