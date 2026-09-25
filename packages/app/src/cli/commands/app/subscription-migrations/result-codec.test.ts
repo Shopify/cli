@@ -1,12 +1,15 @@
 import {encodeMigrationCancellationResult, encodeMigrationSubmissionResult} from './result-codec.js'
-import {migrationCancellationJsonOutputSchema} from '../../../services/subscription-migrations/types.js'
+import {
+  migrationCancellationJsonOutputSchema,
+  migrationSubmissionJsonOutputSchema,
+} from '../../../services/subscription-migrations/types.js'
 import {describe, expect, test} from 'vitest'
 import type {MigrationOperation} from '../../../models/subscription-migrations.js'
-import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
 import type {
+  MigrationCancellationResult,
   MigrationSubmission,
   MigrationSubmissionResult,
-} from '../../../services/subscription-migrations/submit-migration-plan.js'
+} from '../../../services/subscription-migrations/types.js'
 
 function operation(id: string): MigrationOperation {
   return {id, status: 'RUNNING', total: 1, results: {edges: []}}
@@ -122,5 +125,30 @@ describe('subscription migration result codecs', () => {
 
     expect(JSON.parse(document)).toEqual({outcomes: result.outcomes})
     expect(document).toBe(JSON.stringify({outcomes: result.outcomes}, null, 2))
+  })
+})
+
+describe('migration submission JSON contract', () => {
+  test('preserves an empty successful submission without failure details', () => {
+    const value = {...submission(), total: 0, operations: []}
+    expect(encodeMigrationSubmissionResult({status: 'success', submission: value})).toBe(JSON.stringify(value, null, 2))
+  })
+
+  test('preserves total submission failure with nullable error fields', () => {
+    const value = {...submission(), operations: []}
+    const failure = {type: 'submission' as const, batchIndex: 0, userErrors: [{message: 'Rejected', field: null}]}
+    expect(encodeMigrationSubmissionResult({status: 'failed', submission: value, failure})).toBe(
+      JSON.stringify({...value, failure}, null, 2),
+    )
+  })
+
+  test.each([
+    {action: 'cancel'},
+    {total: '1'},
+    {failure: {type: 'operations'}},
+    {failure: {type: 'submission', batchIndex: 0, userErrors: [{message: 'Rejected'}]}},
+    {operations: [{batchIndex: 0, batchPayloadDigest: 'digest', operation: {...operation('one'), status: 'UNKNOWN'}}]},
+  ])('rejects invalid submission fields: %j', (fields) => {
+    expect(() => migrationSubmissionJsonOutputSchema.validate({...submission(), ...fields})).toThrow()
   })
 })
