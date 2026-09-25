@@ -184,6 +184,57 @@ describe('transformFromEventsConfig', () => {
 
     expect(result).toEqual(content)
   })
+
+  test('strips the handle field from subscriptions in an array', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', uri: 'https://example.com/orders', actions: ['create'], handle: 'order-sub'},
+          {topic: 'products/update', uri: 'https://example.com/products', actions: ['update'], handle: 'product-sub'},
+        ],
+      },
+    }
+
+    const result = transformFromEventsConfig(content)
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', uri: 'https://example.com/orders', actions: ['create']},
+          {topic: 'products/update', uri: 'https://example.com/products', actions: ['update']},
+        ],
+      },
+    })
+  })
+
+  test('strips the handle field from a single subscription object', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'orders/create',
+          uri: 'https://example.com/orders',
+          actions: ['create'],
+          handle: 'order-sub',
+        },
+      },
+    }
+
+    const result = transformFromEventsConfig(content)
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'orders/create',
+          uri: 'https://example.com/orders',
+          actions: ['create'],
+        },
+      },
+    })
+  })
 })
 
 describe('transformToEventsConfig', () => {
