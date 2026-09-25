@@ -11047,7 +11047,7 @@
       "args": {
       },
       "customPluginName": "@shopify/theme",
-      "description": "Publishes an unpublished theme from your theme library.\n\nIf no theme ID is specified, then you're prompted to select the theme that you want to publish from the list of themes in your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\nIf you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that you want to publish the specified theme. You can skip this confirmation using the `--force` flag.",
+      "description": "Publishes an unpublished theme from your theme library.\n\nIf no theme ID is specified, then you're prompted to select the theme that you want to publish from the list of themes in your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\nIf you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that you want to publish the specified theme. You can skip this confirmation using the `--force` flag.\n\nOutput from `--json` conforms to the `ThemePublishResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"$ref\": \"#/definitions/ThemePublishEnvironment/properties/result\"\n    },\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"environments\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/definitions/ThemePublishEnvironment\"\n          }\n        }\n      },\n      \"required\": [\n        \"environments\"\n      ],\n      \"additionalProperties\": false\n    }\n  ],\n  \"title\": \"ThemePublishResult\",\n  \"definitions\": {\n    \"PublishedTheme\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"id\": {\n          \"type\": \"number\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"type\": \"string\"\n        },\n        \"processing\": {\n          \"type\": \"boolean\"\n        },\n        \"createdAtRuntime\": {\n          \"type\": \"boolean\"\n        },\n        \"src\": {\n          \"type\": \"string\"\n        },\n        \"shop\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"id\",\n        \"name\",\n        \"role\",\n        \"processing\",\n        \"createdAtRuntime\",\n        \"shop\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"ThemePublishEnvironment\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"environment\": {\n          \"type\": \"string\"\n        },\n        \"result\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"theme\": {\n              \"$ref\": \"#/definitions/PublishedTheme\"\n            }\n          },\n          \"required\": [\n            \"theme\"\n          ],\n          \"additionalProperties\": false\n        }\n      },\n      \"required\": [\n        \"environment\",\n        \"result\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Publishes an unpublished theme from your theme library.\n\nIf no theme ID is specified, then you're prompted to select the theme that you want to publish from the list of themes in your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\nIf you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that you want to publish the specified theme. You can skip this confirmation using the `--force` flag.",
       "enableJsonFlag": false,
       "flags": {
@@ -11074,6 +11074,15 @@
           "description": "Skip confirmation. Required if non interactive.",
           "env": "SHOPIFY_FLAG_FORCE",
           "name": "force",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
           "type": "boolean"
         },
         "json-schema": {
