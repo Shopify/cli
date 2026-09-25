@@ -8768,7 +8768,7 @@ Applies JSON overrides to a theme and returns a preview URL.
 
 ```
 USAGE
-  $ shopify theme preview --overrides <value> -t <value> [--auth-alias <value>] [-e <value>...] [--json]
+  $ shopify theme preview --overrides <value> -t <value> [--auth-alias <value>] [-e <value>...] [-j]
     [--json-schema] [--no-color] [--open] [--password <value>] [--path <value>] [--preview-id <value>] [-s <value>]
     [--verbose]
 
@@ -8776,6 +8776,10 @@ FLAGS
   -e, --environment=<value>...
       The environment to apply to the current command.
       [env: SHOPIFY_FLAG_ENVIRONMENT]
+
+  -j, --json
+      Output the preview URL and identifier as JSON.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
@@ -8789,10 +8793,6 @@ FLAGS
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
-
-  --json
-      Output the preview URL and identifier as JSON.
-      [env: SHOPIFY_FLAG_JSON]
 
   --json-schema
       Print the command's JSON schemas.
@@ -8833,6 +8833,31 @@ DESCRIPTION
 
   The command returns a preview URL and a preview identifier. You can reuse the preview identifier with `--preview-id`
   to update an existing preview instead of creating a new one.
+
+  Output from `--json` conforms to the `ThemePreviewResult` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "url": {
+        "type": "string"
+      },
+      "preview_identifier": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "url",
+      "preview_identifier"
+    ],
+    "additionalProperties": false,
+    "title": "ThemePreviewResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme profile`
