@@ -2,11 +2,52 @@ import {transformToEventsConfig, transformFromEventsConfig} from './app_config_e
 import {describe, expect, test} from 'vitest'
 
 describe('transformFromEventsConfig', () => {
+  test('inherits missing subscription versions while preserving explicit versions and the local config', () => {
+    const content = {
+      events: {
+        api_version: '2026-07',
+        subscription: [
+          {handle: 'inherited', uri: 'https://example.com/events'},
+          {handle: 'explicit-default', uri: 'https://example.com/events', api_version: '2026-07'},
+          {handle: 'explicit-override', uri: 'https://example.com/events', api_version: '2026-04'},
+        ],
+      },
+    }
+    const originalContent = structuredClone(content)
+
+    const result = transformFromEventsConfig(content)
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2026-07',
+        subscription: [
+          {handle: 'inherited', uri: 'https://example.com/events', api_version: '2026-07'},
+          {handle: 'explicit-default', uri: 'https://example.com/events', api_version: '2026-07'},
+          {handle: 'explicit-override', uri: 'https://example.com/events', api_version: '2026-04'},
+        ],
+      },
+    })
+    expect(content).toStrictEqual(originalContent)
+  })
+
+  test('preserves an empty subscription version for server validation', () => {
+    const content = {
+      events: {
+        api_version: '2026-07',
+        subscription: [{uri: 'https://example.com/events', api_version: ''}],
+      },
+    }
+
+    expect(transformFromEventsConfig(content)).toEqual(content)
+  })
+
   test('returns content as-is when all URIs are absolute', () => {
     const content = {
       events: {
         api_version: '2024-01',
-        subscription: [{topic: 'orders/create', uri: 'https://example.com', actions: ['create']}],
+        subscription: [
+          {api_version: '2024-01', topic: 'orders/create', uri: 'https://example.com', actions: ['create']},
+        ],
       },
     }
     const appConfiguration = {application_url: 'https://tunnel.example.com'}
@@ -21,8 +62,13 @@ describe('transformFromEventsConfig', () => {
       events: {
         api_version: '2024-01',
         subscription: [
-          {topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']},
-          {topic: 'products/update', uri: 'https://absolute.example.com/webhook', actions: ['update']},
+          {api_version: '2024-01', topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']},
+          {
+            api_version: '2024-01',
+            topic: 'products/update',
+            uri: 'https://absolute.example.com/webhook',
+            actions: ['update'],
+          },
         ],
       },
     }
@@ -34,8 +80,18 @@ describe('transformFromEventsConfig', () => {
       events: {
         api_version: '2024-01',
         subscription: [
-          {topic: 'orders/create', uri: 'https://tunnel.example.com/webhooks/orders', actions: ['create']},
-          {topic: 'products/update', uri: 'https://absolute.example.com/webhook', actions: ['update']},
+          {
+            api_version: '2024-01',
+            topic: 'orders/create',
+            uri: 'https://tunnel.example.com/webhooks/orders',
+            actions: ['create'],
+          },
+          {
+            api_version: '2024-01',
+            topic: 'products/update',
+            uri: 'https://absolute.example.com/webhook',
+            actions: ['update'],
+          },
         ],
       },
     })
@@ -45,7 +101,7 @@ describe('transformFromEventsConfig', () => {
     const content = {
       events: {
         api_version: '2024-01',
-        subscription: [{topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']}],
+        subscription: [{api_version: '2024-01', topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']}],
       },
     }
 
@@ -58,7 +114,7 @@ describe('transformFromEventsConfig', () => {
     const content = {
       events: {
         api_version: '2024-01',
-        subscription: [{topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']}],
+        subscription: [{api_version: '2024-01', topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']}],
       },
     }
 
@@ -71,7 +127,7 @@ describe('transformFromEventsConfig', () => {
     const content = {
       events: {
         api_version: '2024-01',
-        subscription: [{topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']}],
+        subscription: [{api_version: '2024-01', topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']}],
       },
     }
     const appConfiguration = {application_url: 'https://tunnel.example.com/'}
@@ -82,7 +138,12 @@ describe('transformFromEventsConfig', () => {
       events: {
         api_version: '2024-01',
         subscription: [
-          {topic: 'orders/create', uri: 'https://tunnel.example.com/webhooks/orders', actions: ['create']},
+          {
+            api_version: '2024-01',
+            topic: 'orders/create',
+            uri: 'https://tunnel.example.com/webhooks/orders',
+            actions: ['create'],
+          },
         ],
       },
     })
