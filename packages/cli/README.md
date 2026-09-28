@@ -74,6 +74,7 @@
 * [`shopify hydrogen unlink`](#shopify-hydrogen-unlink)
 * [`shopify hydrogen upgrade`](#shopify-hydrogen-upgrade)
 * [`shopify logs`](#shopify-logs)
+* [`shopify logs schema`](#shopify-logs-schema)
 * [`shopify organization list`](#shopify-organization-list)
 * [`shopify plugins add PLUGIN`](#shopify-plugins-add-plugin)
 * [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
@@ -5181,8 +5182,8 @@ Query app logs using GraphQL (prototype).
 
 ```
 USAGE
-  $ shopify logs [--auth-alias <value>] [-j] [--json-schema] [--no-color] [--no-prompt] [--operation-name
-    <value>] [-q <value>] [--query-file <value>] [--variable-file <value> | -v <value>] [--verbose]
+  $ shopify logs [--api app-logs] [--auth-alias <value>] [-j] [--json-schema] [--no-color] [--no-prompt]
+    [--operation-name <value>] [-q <value>] [--query-file <value>] [--variable-file <value> | -v <value>] [--verbose]
 
 FLAGS
   -j, --json
@@ -5196,6 +5197,10 @@ FLAGS
   -v, --variables=<value>
       The values for any GraphQL variables in your query or mutation, in JSON format.
       [env: SHOPIFY_FLAG_VARIABLES]
+
+  --api=<option>
+      [default: app-logs] The logs API to call.
+      <options: app-logs>
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -5239,8 +5244,8 @@ DESCRIPTION
   `shopify app logs` behavior is unchanged.
 
   Always prints the complete GraphQL JSON response, including errors, partial data, and extensions. `--json` is accepted
-  but optional. HTTP or GraphQL errors produce a nonzero exit status. Introspection is supported; schema descriptions
-  explain available fields and query limits.
+  but optional. HTTP or GraphQL errors produce a nonzero exit status. Use `shopify logs schema --api app-logs` to fetch
+  the live schema with descriptions of available fields and query limits. The default API is `app-logs`.
 
   Local development only: set SHOPIFY_APP_LOG_QUERY_PROTOTYPE=1 and SHOPIFY_SERVICE_ENV=local.
 
@@ -5291,11 +5296,121 @@ DESCRIPTION
   ```
 
 EXAMPLES
-  $ shopify logs --query "{ __typename }"
+  $ shopify logs --api app-logs --query "{ __typename }"
 
-  $ shopify logs --query-file ./logs.graphql --variable-file ./variables.json --json
+  $ shopify logs --api app-logs --query-file ./logs.graphql --variable-file ./variables.json --json
 
-  $ shopify logs --query-file - --operation-name Logs
+  $ shopify logs --api app-logs --query-file - --operation-name Logs
+```
+
+## `shopify logs schema`
+
+Fetch the live App Logs API GraphQL schema (prototype).
+
+```
+USAGE
+  $ shopify logs schema [--api app-logs] [--auth-alias <value>] [-j] [--json-schema] [--no-color] [--no-prompt]
+    [--variable-file <value> | -v <value>] [--verbose]
+
+FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  -v, --variables=<value>
+      The values for any GraphQL variables in your query or mutation, in JSON format.
+      [env: SHOPIFY_FLAG_VARIABLES]
+
+  --api=<option>
+      [default: app-logs] The logs API to call.
+      <options: app-logs>
+
+  --auth-alias=<value>
+      Alias of the Shopify account to use for authentication.
+      [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-prompt
+      Fail instead of prompting for authentication when no valid session is available.
+      [env: SHOPIFY_FLAG_NO_PROMPT]
+
+  --variable-file=<value>
+      Path to a file containing GraphQL variables in JSON format. Can't be used with --variables.
+      [env: SHOPIFY_FLAG_VARIABLE_FILE]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  Fetch the live App Logs API GraphQL schema (prototype).
+
+  Fetches the schema through authenticated introspection using the same API and account as `shopify logs`. Prints
+  GraphQL SDL with descriptions, field arguments, defaults, enums, and deprecations. Save it to a file and reuse it
+  while composing queries; no schema is bundled in the CLI.
+
+  Use `--json` for the full introspection JSON response. HTTP or GraphQL errors print the JSON response instead of SDL
+  and produce a nonzero exit status. Optional variables are forwarded for API authorization context.
+
+  Local development only: set SHOPIFY_APP_LOG_QUERY_PROTOTYPE=1 and SHOPIFY_SERVICE_ENV=local.
+
+  Output from `--json` conforms to the `LogsGraphQLResponse` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "data": {
+        "anyOf": [
+          {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "errors": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message"
+          ],
+          "additionalProperties": true
+        },
+        "minItems": 1
+      },
+      "extensions": {
+        "type": "object",
+        "additionalProperties": {}
+      }
+    },
+    "additionalProperties": true,
+    "title": "LogsGraphQLResponse",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
+EXAMPLES
+  $ shopify logs schema --api app-logs > app-logs.graphql
+
+  $ shopify logs schema --api app-logs --json
 ```
 
 ## `shopify organization list`
