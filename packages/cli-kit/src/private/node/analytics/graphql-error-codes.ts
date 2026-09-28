@@ -18,6 +18,10 @@ const RATE_LIMIT_CODES = new Set(['THROTTLED', '429'])
  */
 const PERMISSION_CODES = new Set(['ACCESS_DENIED', 'access_denied'])
 
+function isString(value: unknown): value is string {
+  return typeof value === 'string'
+}
+
 /**
  * Collects every routing-relevant code from a GraphQL `errors` value.
  *
@@ -32,21 +36,14 @@ export function graphQLErrorCodes(errors: unknown): string[] {
   if (!Array.isArray(errors)) return []
 
   return errors.flatMap((entry) => {
-    const found: string[] = []
     const error = entry as {extensions?: {code?: unknown; app_errors?: {errors?: unknown}}} | undefined
-
-    const code = error?.extensions?.code
-    if (typeof code === 'string') found.push(code)
-
     const appErrors = error?.extensions?.app_errors?.errors
-    if (Array.isArray(appErrors)) {
-      for (const appError of appErrors) {
-        const category = (appError as {category?: unknown} | undefined)?.category
-        if (typeof category === 'string') found.push(category)
-      }
-    }
 
-    return found
+    const nestedCategories = Array.isArray(appErrors)
+      ? appErrors.map((appError) => (appError as {category?: unknown} | undefined)?.category)
+      : []
+
+    return [error?.extensions?.code, ...nestedCategories].filter(isString)
   })
 }
 
