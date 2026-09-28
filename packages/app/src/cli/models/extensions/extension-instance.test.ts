@@ -340,6 +340,52 @@ describe('isFlow', async () => {
   })
 })
 
+describe('specification identity', () => {
+  test.each(['single', 'uuid', 'dynamic'] as const)(
+    'uses the specification identity before the %s strategy',
+    (uidStrategy) => {
+      const specification = createConfigExtensionSpecification({
+        identifier: 'custom',
+        schema: BaseSchema,
+        uidStrategy,
+        transformConfig: {},
+        getIdentity: (config) => ({handle: `custom-${config.name}`, uid: `uid-${config.name}`}),
+      })
+
+      const instance = new ExtensionInstance({
+        specification,
+        configuration: {name: 'example'},
+        configurationPath: '/app/shopify.app.toml',
+        directory: '/app',
+      })
+
+      expect(instance.handle).toBe('custom-example')
+      expect(instance.localIdentifier).toBe('custom-example')
+      expect(instance.uid).toBe('uid-example')
+      expect(instance.devUUID).toBe('dev-uid-example')
+    },
+  )
+
+  test('uses the declared strategy when the specification returns no identity', () => {
+    const specification = createConfigExtensionSpecification({
+      identifier: 'custom',
+      schema: BaseSchema,
+      transformConfig: {},
+      getIdentity: () => undefined,
+    })
+
+    const instance = new ExtensionInstance({
+      specification,
+      configuration: {},
+      configurationPath: '/app/shopify.app.toml',
+      directory: '/app',
+    })
+
+    expect(instance.handle).toBe('custom')
+    expect(instance.uid).toBe('custom')
+  })
+})
+
 describe('buildHandle', async () => {
   test('extensions handle is either its handle or name when specification uidStrategy is uuid', async () => {
     // Given

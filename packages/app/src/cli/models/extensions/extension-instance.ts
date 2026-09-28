@@ -166,11 +166,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.entrySourceFilePath = options.entryPath ?? ''
     this.directory = options.directory
     this.specification = options.specification
-    this.handle = this.buildHandle()
+    const identity = this.specification.getIdentity?.(this.configuration)
+    this.handle = identity?.handle ?? this.buildHandle()
     this.localIdentifier = this.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
     this.outputPath = joinPath(this.directory, this.outputRelativePath)
-    this.uid = this.buildUIDFromStrategy()
+    this.uid = identity?.uid ?? this.buildUIDFromStrategy()
     this.devUUID = `dev-${this.uid}`
   }
 

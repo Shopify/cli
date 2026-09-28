@@ -1,4 +1,5 @@
 import {
+  formatConfigurationError,
   getAppConfigurationShorthand,
   getAppConfigurationFileName,
   loadApp,
@@ -15,7 +16,8 @@ import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
-import {ExtensionSpecification} from '../extensions/specification.js'
+import {createConfigExtensionSpecification, ExtensionSpecification} from '../extensions/specification.js'
+import {BaseSchemaWithoutHandle} from '../extensions/schemas.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
@@ -2196,6 +2198,189 @@ describe('load', () => {
         uri: 'https://example.com',
       },
     ])
+  })
+
+  describe('configuration expansion', () => {
+    test('creates and validates expanded modules without knowing the specification', async () => {
+      const specification = createConfigExtensionSpecification({
+        identifier: 'custom',
+        schema: BaseSchemaWithoutHandle.extend({entries: zod.array(zod.object({handle: zod.string()}))}),
+        expandConfig: (config) => config.entries.map((entry) => ({entries: [entry]})),
+        getIdentity: (config) => ({handle: config.entries[0]!.handle, uid: config.entries[0]!.handle}),
+        transformConfig: {
+          forward: (config) => ((config as {entries: {handle: string}[]}).entries[0]!.handle === 'omit' ? {} : config),
+        },
+      })
+      await writeConfig(`entries = [{handle = "keep"}, {handle = "omit"}]\n${buildAppConfiguration()}`)
+
+      const app = await loadApp({
+        directory: tmpDir,
+        userProvidedConfigName: undefined,
+        specifications: [...specifications, specification] as ExtensionSpecification[],
+      })
+
+      expect(app.errors.isEmpty()).toBe(true)
+      expect(app.allExtensions.filter((extension) => extension.specification.identifier === 'custom')).toMatchObject([
+        {handle: 'keep', uid: 'keep', configuration: {entries: [{handle: 'keep'}]}},
+      ])
+    })
+
+    test('claims configuration keys when expansion produces no modules', async () => {
+      const specification = createConfigExtensionSpecification({
+        identifier: 'custom',
+        schema: BaseSchemaWithoutHandle.extend({entries: zod.array(zod.string())}),
+        expandConfig: () => [],
+        transformConfig: {forward: (config) => config},
+      })
+      await writeConfig(`entries = []\n${buildAppConfiguration()}`)
+
+      const app = await loadApp({
+        directory: tmpDir,
+        userProvidedConfigName: undefined,
+        specifications: [...specifications, specification] as ExtensionSpecification[],
+      })
+
+      expect(app.errors.isEmpty()).toBe(true)
+      expect(app.allExtensions.some((extension) => extension.specification.identifier === 'custom')).toBe(false)
+    })
+
+    test('validates each expanded configuration against the specification schema', async () => {
+      const specification = createConfigExtensionSpecification({
+        identifier: 'custom',
+        schema: BaseSchemaWithoutHandle.extend({entries: zod.array(zod.string())}),
+        expandConfig: () => [{entries: [42]}],
+        transformConfig: {forward: (config) => config},
+      })
+      await writeConfig(`entries = ["valid"]\n${buildAppConfiguration()}`)
+
+      const app = await loadApp({
+        directory: tmpDir,
+        userProvidedConfigName: undefined,
+        specifications: [...specifications, specification] as ExtensionSpecification[],
+      })
+
+      expect(app.errors.getErrors()).toEqual([
+        expect.objectContaining({message: expect.stringContaining('Expected string, received number')}),
+      ])
+      expect(app.allExtensions.some((extension) => extension.specification.identifier === 'custom')).toBe(false)
+    })
+  })
+
+  describe('event subscription modules', () => {
+    beforeEach(() => {
+      vi.stubEnv('SHOPIFY_CLI_EVENTS_SUBSCRIPTION_FANOUT', undefined)
+    })
+
+    afterEach(() => {
+      vi.unstubAllEnvs()
+    })
+
+    const eventsConfiguration = `
+      [events]
+      api_version = "2024-01"
+
+      [[events.subscription]]
+      topic = "orders/create"
+      actions = ["create"]
+      handle = "order-notifier"
+      uri = "/events/orders"
+
+      [[events.subscription]]
+      topic = "products/update"
+      actions = ["update"]
+      handle = "product-sync"
+      api_version = "2025-01"
+      uri = "https://example.com/events/products"
+    `
+
+    test.each(['environment', 'organization'] as const)('expands subscriptions with the %s opt-in', async (optIn) => {
+      await writeConfig(buildAppConfiguration({extra: eventsConfiguration}))
+      if (optIn === 'environment') vi.stubEnv('SHOPIFY_CLI_EVENTS_SUBSCRIPTION_FANOUT', '1')
+      const remoteFlags = optIn === 'organization' ? [Flag.SingleSubscriptionEventsModules] : []
+
+      const app = await loadTestingApp({remoteFlags})
+      const extensions = app.allExtensions.filter((extension) => extension.specification.identifier === 'events')
+
+      expect(app.errors.isEmpty()).toBe(true)
+      expect(extensions.map(({handle, uid}) => ({handle, uid}))).toEqual([
+        {handle: 'order-notifier', uid: 'order-notifier'},
+        {handle: 'product-sync', uid: 'product-sync'},
+      ])
+      expect(app.configuration).toMatchObject({
+        events: {subscription: [{handle: 'order-notifier'}, {handle: 'product-sync'}]},
+      })
+      const deployed = await Promise.all(
+        extensions.map((extension) =>
+          extension.deployConfig({apiKey: 'test-client-id', appConfiguration: app.configuration}),
+        ),
+      )
+      expect(deployed).toEqual([
+        {
+          events: {
+            api_version: '2024-01',
+            subscription: {topic: 'orders/create', actions: ['create'], uri: 'https://example.com/events/orders'},
+          },
+        },
+        {
+          events: {
+            api_version: '2024-01',
+            subscription: {
+              topic: 'products/update',
+              actions: ['update'],
+              api_version: '2025-01',
+              uri: 'https://example.com/events/products',
+            },
+          },
+        },
+      ])
+    })
+
+    test('keeps the subscription list and legacy identity when disabled', async () => {
+      await writeConfig(buildAppConfiguration({extra: eventsConfiguration}))
+
+      const app = await loadTestingApp({remoteFlags: []})
+      const extensions = app.allExtensions.filter((extension) => extension.specification.identifier === 'events')
+
+      expect(app.errors.isEmpty()).toBe(true)
+      expect(extensions).toMatchObject([
+        {
+          handle: 'events',
+          uid: 'events',
+          configuration: {events: {subscription: [{handle: 'order-notifier'}, {handle: 'product-sync'}]}},
+        },
+      ])
+    })
+
+    test('rejects duplicate subscription handles', async () => {
+      await writeConfig(buildAppConfiguration({extra: eventsConfiguration.replace('product-sync', 'order-notifier')}))
+
+      const app = await loadTestingApp({remoteFlags: [Flag.SingleSubscriptionEventsModules]})
+
+      expect(app.errors.getErrors()).toEqual([
+        expect.objectContaining({message: expect.stringContaining('Duplicated handle "order-notifier"')}),
+      ])
+    })
+
+    test('rejects missing subscription handles before identity resolution', async () => {
+      await writeConfig(buildAppConfiguration({extra: eventsConfiguration.replace('handle = "order-notifier"', '')}))
+
+      const app = await loadTestingApp({remoteFlags: [Flag.SingleSubscriptionEventsModules]})
+
+      expect(app.errors.isEmpty()).toBe(false)
+      expect(app.allExtensions.filter((extension) => extension.specification.identifier === 'events')).toMatchObject([
+        {handle: 'product-sync'},
+      ])
+      expect(app.errors.getErrors().map(formatConfigurationError).join('\n')).toContain('handle')
+    })
+
+    test('creates no events modules for an empty subscription list', async () => {
+      await writeConfig(buildAppConfiguration({extra: '[events]\napi_version = "2024-01"\nsubscription = []'}))
+
+      const app = await loadTestingApp({remoteFlags: [Flag.SingleSubscriptionEventsModules]})
+
+      expect(app.errors.isEmpty()).toBe(true)
+      expect(app.allExtensions.some((extension) => extension.specification.identifier === 'events')).toBe(false)
+    })
   })
 
   test('loads the app with several functions that have valid configurations', async () => {
