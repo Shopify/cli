@@ -36,6 +36,7 @@ module.exports = {
         if (node.declaration.type !== 'ClassDeclaration') return
 
         const classMembers = node.declaration.body.body
+        if (classMembers.some((member) => isStaticMemberNamed(member, 'hidden') && member.value?.value === true)) return
 
         if (!hasJsonOutputSchema(classMembers)) {
           context.report({node: node.declaration, messageId: 'missingJsonOutputSchema'})
