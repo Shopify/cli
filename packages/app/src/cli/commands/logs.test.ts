@@ -32,6 +32,7 @@ test.each([{flags: []}, {flags: ['--json']}])('prints the full JSON response wit
   await Logs.run(['--query', query, ...flags], import.meta.url)
 
   expect(executeLogsQuery).toHaveBeenCalledExactlyOnceWith({
+    api: 'app-logs',
     query,
     queryFile: undefined,
     variables: undefined,
@@ -53,6 +54,7 @@ test('forwards stdin, variables, operation name and local demo selection', async
   )
 
   expect(executeLogsQuery).toHaveBeenCalledExactlyOnceWith({
+    api: 'app-logs',
     query: undefined,
     queryFile: '-',
     variables: '{"key":"test-app"}',
@@ -92,6 +94,7 @@ test('defines JSON output and account selection', async () => {
 })
 
 test.each([
+  {args: ['--api', 'unknown', '--query', '{ __typename }']},
   {args: []},
   {args: ['--query', '{ __typename }', '--query-file', 'query.graphql']},
   {args: ['--query', '{ __typename }', '--variables', '{}', '--variable-file', 'variables.json']},

@@ -20,6 +20,12 @@ vi.mock('@shopify/cli-kit/node/system', async (importOriginal) => ({
 
 const options = {query: '{ __typename }', noPrompt: false, demo: false}
 
+test('rejects an unsupported API before authentication', async () => {
+  await expect(executeLogsQuery({...options, api: 'unknown'})).rejects.toThrow('Unsupported logs API')
+  expect(ensureAuthenticatedAppManagementAndBusinessPlatform).not.toHaveBeenCalled()
+  expect(fetch).not.toHaveBeenCalled()
+})
+
 beforeEach(() => {
   vi.stubEnv('SHOPIFY_APP_LOG_QUERY_PROTOTYPE', '1')
   vi.stubEnv('SHOPIFY_SERVICE_ENV', 'local')
