@@ -73,6 +73,7 @@
 * [`shopify hydrogen shortcut`](#shopify-hydrogen-shortcut)
 * [`shopify hydrogen unlink`](#shopify-hydrogen-unlink)
 * [`shopify hydrogen upgrade`](#shopify-hydrogen-upgrade)
+* [`shopify logs`](#shopify-logs)
 * [`shopify organization list`](#shopify-organization-list)
 * [`shopify plugins add PLUGIN`](#shopify-plugins-add-plugin)
 * [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
@@ -5172,6 +5173,129 @@ FLAGS
 
 DESCRIPTION
   Upgrade Remix and Hydrogen npm dependencies.
+```
+
+## `shopify logs`
+
+Query app logs using GraphQL (prototype).
+
+```
+USAGE
+  $ shopify logs [--auth-alias <value>] [-j] [--json-schema] [--no-color] [--no-prompt] [--operation-name
+    <value>] [-q <value>] [--query-file <value>] [--variable-file <value> | -v <value>] [--verbose]
+
+FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  -q, --query=<value>
+      The GraphQL query or mutation, as a string.
+      [env: SHOPIFY_FLAG_QUERY]
+
+  -v, --variables=<value>
+      The values for any GraphQL variables in your query or mutation, in JSON format.
+      [env: SHOPIFY_FLAG_VARIABLES]
+
+  --auth-alias=<value>
+      Alias of the Shopify account to use for authentication.
+      [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-prompt
+      Fail instead of prompting for authentication when no valid session is available.
+      [env: SHOPIFY_FLAG_NO_PROMPT]
+
+  --operation-name=<value>
+      The operation to execute when the document contains multiple operations.
+      [env: SHOPIFY_FLAG_OPERATION_NAME]
+
+  --query-file=<value>
+      Path to a GraphQL document, or - to read from stdin.
+      [env: SHOPIFY_FLAG_QUERY_FILE]
+
+  --variable-file=<value>
+      Path to a file containing GraphQL variables in JSON format. Can't be used with --variables.
+      [env: SHOPIFY_FLAG_VARIABLE_FILE]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  Query app logs using GraphQL (prototype).
+
+  Runs an explicit GraphQL request using your Shopify account. Provide query text or a query file, with optional JSON
+  variables. App scope, filters, fields, sorting, and pagination are specified in the query; no app project is required.
+
+  This prototype implements GraphQL mode only. It does not stream logs or accept convenience filter flags. Existing
+  `shopify app logs` behavior is unchanged.
+
+  Always prints the complete GraphQL JSON response, including errors, partial data, and extensions. `--json` is accepted
+  but optional. HTTP or GraphQL errors produce a nonzero exit status. Introspection is supported; schema descriptions
+  explain available fields and query limits.
+
+  Local development only: set SHOPIFY_APP_LOG_QUERY_PROTOTYPE=1 and SHOPIFY_SERVICE_ENV=local.
+
+  Output from `--json` conforms to the `LogsGraphQLResponse` schema.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "data": {
+        "anyOf": [
+          {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "errors": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "message"
+          ],
+          "additionalProperties": true
+        },
+        "minItems": 1
+      },
+      "extensions": {
+        "type": "object",
+        "additionalProperties": {}
+      }
+    },
+    "additionalProperties": true,
+    "title": "LogsGraphQLResponse",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
+EXAMPLES
+  $ shopify logs --query "{ __typename }"
+
+  $ shopify logs --query-file ./logs.graphql --variable-file ./variables.json --json
+
+  $ shopify logs --query-file - --operation-name Logs
 ```
 
 ## `shopify organization list`
