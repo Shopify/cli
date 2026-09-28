@@ -1,5 +1,40 @@
-import {getExtensionPointTargetSurface} from './utilities.js'
-import {describe, expect, test} from 'vitest'
+import {buildCartURLIfNeeded, getExtensionPointTargetSurface} from './utilities.js'
+import {testUIExtension} from '../../../models/app/app.test-data.js'
+import {fetchProductVariant} from '../../../utilities/extensions/fetch-product-variant.js'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
+
+vi.mock('../../../utilities/extensions/fetch-product-variant.js')
+
+describe('buildCartURLIfNeeded()', () => {
+  beforeEach(() => {
+    vi.mocked(fetchProductVariant).mockResolvedValue('42')
+  })
+
+  test('builds a cart URL from the first product variant of the store', async () => {
+    const checkoutExtension = await testUIExtension({type: 'checkout_post_purchase'})
+
+    await expect(buildCartURLIfNeeded([checkoutExtension], 'my-store.myshopify.com')).resolves.toBe('/cart/42:1')
+    expect(fetchProductVariant).toHaveBeenCalledWith('my-store.myshopify.com')
+  })
+
+  test('returns the provided cart URL without querying the store', async () => {
+    const checkoutExtension = await testUIExtension({type: 'checkout_post_purchase'})
+
+    await expect(buildCartURLIfNeeded([checkoutExtension], 'my-store.myshopify.com', '/cart/7:1')).resolves.toBe(
+      '/cart/7:1',
+    )
+    expect(fetchProductVariant).not.toHaveBeenCalled()
+  })
+
+  test('returns undefined when no extension needs a cart URL', async () => {
+    const subscriptionExtension = await testUIExtension({type: 'product_subscription'})
+
+    await expect(
+      buildCartURLIfNeeded([subscriptionExtension], 'my-store.myshopify.com', '/cart/7:1'),
+    ).resolves.toBeUndefined()
+    expect(fetchProductVariant).not.toHaveBeenCalled()
+  })
+})
 
 describe('getExtensionPointTargetSurface()', () => {
   test('returns "admin" for an Admin UI extension', async () => {
