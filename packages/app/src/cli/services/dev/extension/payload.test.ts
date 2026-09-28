@@ -155,6 +155,73 @@ describe('getUIExtensionPayload', () => {
     })
   })
 
+  test('normalizes target-level metafields for the runtime payload', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const uiExtension = await testUIExtension({
+        directory: tmpDir,
+        configuration: {
+          name: 'test-ui-extension',
+          type: 'ui_extension',
+          extension_points: [
+            {
+              target: 'CUSTOM_EXTENSION_POINT',
+              module: './src/ExtensionPointA.js',
+              metafields: [
+                {namespace: 'product', key: 'variant', owner_type: 'PRODUCT_VARIANT'},
+                {namespace: 'company', key: 'location', owner_type: 'COMPANY_LOCATION'},
+                {namespace: 'shop', key: 'name'},
+              ],
+            },
+          ],
+        },
+        devUUID: 'devUUID',
+      })
+
+      const got = await getUIExtensionPayload(uiExtension, tmpDir, {
+        ...createMockOptions(tmpDir, [uiExtension]),
+        currentDevelopmentPayload: {hidden: true, status: 'success'},
+      })
+
+      expect(got.extensionPoints).toMatchObject([
+        {
+          metafields: [
+            {namespace: 'product', key: 'variant', ownerType: 'PRODUCTVARIANT'},
+            {namespace: 'company', key: 'location', ownerType: 'COMPANYLOCATION'},
+            {namespace: 'shop', key: 'name'},
+          ],
+        },
+      ])
+    })
+  })
+
+  test('normalizes legacy top-level metafields for the runtime payload', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const uiExtension = await testUIExtension({
+        directory: tmpDir,
+        configuration: {
+          name: 'test-ui-extension',
+          type: 'checkout_ui_extension',
+          metafields: [
+            {namespace: 'shop', key: 'user', owner_type: 'SHOP_USER'},
+            {namespace: 'shop', key: 'name'},
+          ],
+          extension_points: ['CUSTOM_EXTENSION_POINT'],
+        },
+        devUUID: 'devUUID',
+      })
+
+      const got = await getUIExtensionPayload(uiExtension, tmpDir, {
+        ...createMockOptions(tmpDir, [uiExtension]),
+        currentDevelopmentPayload: {hidden: true, status: 'success'},
+      })
+
+      expect(got.metafields).toStrictEqual([
+        {namespace: 'shop', key: 'user', ownerType: 'SHOPUSER'},
+        {namespace: 'shop', key: 'name'},
+      ])
+    })
+  })
+
   test('maps tools and instructions from manifest.json to asset payloads', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const uiExtension = await testUIExtension({

@@ -1,5 +1,5 @@
 import {getLocalization} from './localization.js'
-import {DevNewExtensionPointSchema, UIExtensionPayload} from './payload/models.js'
+import {DevMetafield, DevNewExtensionPointSchema, UIExtensionPayload} from './payload/models.js'
 import {getExtensionPointTargetSurface} from './utilities.js'
 import {ExtensionsPayloadStoreOptions} from './payload/store.js'
 import {getUIExtensionResourceURL} from '../../../utilities/extensions/configuration.js'
@@ -73,13 +73,13 @@ export async function getUIExtensionPayload(
     const buildDirectory = extension.outputRelativePath ? dirname(extensionOutputPath) : extensionOutputPath
     const extensionPoints = await getExtensionPoints(extension, url, buildDirectory, resolver)
 
-    let metafields: {namespace: string; key: string}[] | null = null
+    let metafields: DevMetafield[] | null = null
     if (
       'metafields' in extension.configuration &&
       Array.isArray(extension.configuration.metafields) &&
       extension.configuration.metafields.length > 0
     ) {
-      metafields = extension.configuration.metafields
+      metafields = normalizeMetafields(extension.configuration.metafields)
     }
 
     const defaultConfig = {
@@ -164,9 +164,12 @@ async function getExtensionPoints(
     return Promise.all(
       extensionPoints.map(async (extensionPoint) => {
         const {target, resource} = extensionPoint
+        const metafields =
+          'metafields' in extensionPoint ? normalizeMetafields(extensionPoint.metafields ?? []) : undefined
 
         const payload = {
           ...extensionPoint,
+          ...(metafields ? {metafields} : {}),
           surface: getExtensionPointTargetSurface(target),
           root: {
             url: `${url}/${target}`,
@@ -384,6 +387,18 @@ async function mapManifestAssetsToPayload(
     }),
     {},
   )
+}
+
+function normalizeMetafields(metafields: {namespace: string; key: string; owner_type?: string}[]): DevMetafield[] {
+  return metafields.map((metafield) => ({
+    namespace: metafield.namespace,
+    key: metafield.key,
+    // Match server-returned metafield configuration.
+    // For example, private checkout/accounts GraphQL APIs derive `ownerType` from something like
+    // `gid://shopify/CompanyLocation/123` which gets normalized to `COMPANYLOCATION`
+    // even though the metafield was configured in TOML with `COMPANY_LOCATION`.
+    ...(metafield.owner_type === undefined ? {} : {ownerType: metafield.owner_type.replaceAll('_', '')}),
+  }))
 }
 
 export function isNewExtensionPointsSchema(extensionPoints: unknown): extensionPoints is DevNewExtensionPointSchema[] {
