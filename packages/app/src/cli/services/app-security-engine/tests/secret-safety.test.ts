@@ -1,11 +1,17 @@
 /* eslint-disable id-length, line-comment-position, no-restricted-imports -- security fixtures exercise raw git and filesystem behavior */
+import {git, isolateGitConfig} from './git-test-helpers.js'
 import {scan} from '../scanners/index.js'
-import {SHOPIFY_SECRET_PATTERNS, redactMatch, redactText, gitStatusFor} from '../rules/secret-rules.js'
-import {describe, expect, test} from 'vitest'
+import {
+  SHOPIFY_SECRET_PATTERNS,
+  redactMatch,
+  redactText,
+  gitStatusFor,
+  scanCommittedSecrets,
+} from '../rules/secret-rules.js'
+import {afterEach, beforeEach, describe, expect, test} from 'vitest'
 import {mkdtempSync, writeFileSync, mkdirSync, rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import {execFileSync} from 'node:child_process'
 
 /**
  * Regression tests for two defects found in review, both of which the existing
@@ -81,19 +87,22 @@ const makeApp = (files: Record<string, string>): string => {
   return dir
 }
 
-const git = (dir: string, args: string[]) =>
-  execFileSync('git', args, {
-    cwd: dir,
-    encoding: 'utf-8',
-    stdio: ['ignore', 'pipe', 'ignore'],
-    env: {
-      ...process.env,
-      GIT_AUTHOR_NAME: 't',
-      GIT_AUTHOR_EMAIL: 't@t',
-      GIT_COMMITTER_NAME: 't',
-      GIT_COMMITTER_EMAIL: 't@t',
-    },
-  })
+// Directories removed after each test, so a failing assertion cannot leak them.
+const temporaryDirectories: string[] = []
+const removeAfterTest = (directory: string): string => {
+  temporaryDirectories.push(directory)
+  return directory
+}
+
+// Keep git results independent of the developer's global excludes and any enclosing repository.
+let restoreGitConfig: (() => void) | undefined
+beforeEach(() => {
+  restoreGitConfig = isolateGitConfig()
+})
+afterEach(() => {
+  restoreGitConfig?.()
+  for (const directory of temporaryDirectories.splice(0)) rmSync(directory, {recursive: true, force: true})
+})
 
 describe('redaction never emits known secrets', () => {
   const samples: [label: string, line: string, secret: string][] = [
@@ -258,6 +267,119 @@ describe('git status drives severity, not .gitignore text', () => {
     })
     expect(finding!.message).not.toContain('IS TRACKED BY GIT')
     rmSync(dir, {recursive: true, force: true})
+  })
+
+  test('reports a secret ignored only by an enclosing repository that does not own the app', async () => {
+    // The app folder is gitignored by a parent repository (a monorepo scratch area, a dotfiles
+    // repo ignoring `*`). That repository's rules do not protect the app, so the file is scanned
+    // and the finding must say so rather than claim the ignore status is unconfirmed.
+    const repository = removeAfterTest(mkdtempSync(join(tmpdir(), 'app-security-enclosing-')))
+    git(repository, ['init', '-q', '.'])
+    writeFileSync(join(repository, '.gitignore'), 'apps/\n')
+    const dir = join(repository, 'apps', 'web')
+    mkdirSync(dir, {recursive: true})
+    writeFileSync(join(dir, 'shopify.app.toml'), TOML)
+    writeFileSync(join(dir, '.env'), trackedEnvSecret())
+
+    const result = await scan(dir)
+    const finding = result.issues.find((i) => i.id === 'COMMITTED_SECRET')
+    expect(finding).toMatchObject({
+      severity: 'high',
+      points: -50,
+      title: 'Environment file with secrets is ignored by a repository that does not own this app',
+      pattern_id: 'environment-file:unconfirmed',
+    })
+    expect(finding!.detection_evidence?.join(' ')).toContain('→ ignored')
+    expect(finding!.message).toContain('.env is ignored by an enclosing git repository')
+    expect(finding!.message).not.toContain('could not be confirmed')
+  })
+
+  test('reports a secret inside a nested repository that the app repository ignores by name', async () => {
+    // The app's own `.env` rule matches `inner/.env`, but `inner/` is a separate repository, so the
+    // app repository never lists the file as ignored and discovery scans it. The finding names the
+    // nested repository only after confirming the two directories have different top levels.
+    const dir = removeAfterTest(makeApp({'.gitignore': '.env\n'}))
+    git(dir, ['init', '-q', '.'])
+    const inner = join(dir, 'inner')
+    mkdirSync(inner)
+    git(inner, ['init', '-q', '.'])
+    writeFileSync(join(inner, '.env'), trackedEnvSecret())
+
+    const result = await scan(dir)
+    const finding = result.issues.find((i) => i.id === 'COMMITTED_SECRET')
+    expect(finding).toMatchObject({
+      location: {file: 'inner/.env'},
+      title: 'Environment file with secrets is inside a nested git repository',
+      pattern_id: 'environment-file:unconfirmed',
+    })
+    expect(finding!.message).toContain('inner/.env belongs to a nested git repository')
+    expect(finding!.message).not.toContain('could not be confirmed')
+    const evidence = finding!.detection_evidence?.join(' ')
+    expect(evidence).toContain('→ ignored')
+    expect(evidence).toContain('git rev-parse --show-toplevel → differs')
+  })
+
+  test('says the ignored-file listing failed when git ignores a file that was still scanned', async () => {
+    // Discovery falls back to scanning everything when git cannot list ignored paths, so a file git
+    // ignores can reach the rule. The finding must say why it was scanned rather than blame a
+    // foreign repository.
+    const dir = removeAfterTest(makeApp({'.gitignore': '.env\n', '.env': trackedEnvSecret()}))
+    git(dir, ['init', '-q', '.'])
+    const file = {path: '.env', absolutePath: join(dir, '.env'), ext: '', content: trackedEnvSecret()}
+
+    const issues = await scanCommittedSecrets([file], dir, 'failed')
+    expect(issues).toHaveLength(1)
+    expect(issues[0]).toMatchObject({
+      location: {file: '.env'},
+      title: 'Environment file with secrets is ignored by git but was scanned',
+      pattern_id: 'environment-file:unconfirmed',
+    })
+    expect(issues[0]!.message).toContain('could not list the ignored files')
+    expect(issues[0]!.detection_evidence?.join(' ')).toContain('→ ignored')
+  })
+
+  test('still scans a gitignored secret conservatively when git cannot list the ignored files', async () => {
+    // End to end: the listing fails (a truncated index leaves `rev-parse` working but makes `ls-files`
+    // exit with a fatal error), so discovery applies no git exclusions and the ignored .env is hashed
+    // and reported rather than silently trusted.
+    const dir = removeAfterTest(makeApp({'.gitignore': '.env\n', '.env': trackedEnvSecret()}))
+    git(dir, ['init', '-q', '.'])
+    git(dir, ['add', '.gitignore', 'shopify.app.toml'])
+    git(dir, ['commit', '-qm', 'init'])
+    writeFileSync(join(dir, '.git', 'index'), 'not an index')
+
+    const result = await scan(dir)
+    expect(result.scan.file_hashes).toHaveProperty(['.env'])
+    const finding = result.issues.find((issue) => issue.id === 'COMMITTED_SECRET')
+    expect(finding).toMatchObject({
+      severity: 'high',
+      points: -50,
+      location: {file: '.env'},
+      title: 'Environment file with secrets could not be confirmed as ignored',
+      pattern_id: 'environment-file:unconfirmed',
+    })
+    expect(finding!.message).toContain('git status command failed')
+    expect(JSON.stringify(result)).not.toContain(PROBES.shopifySecret)
+  })
+
+  test('says why is unknown when an ignored file has the same top level as the app', async () => {
+    // The listing succeeded and the file is not in a nested repository, so nothing explains why git
+    // ignores a file discovery still produced. Git DID confirm the file is untracked and ignored,
+    // so the finding must say the cause is unknown rather than call the ignore status unconfirmed.
+    const dir = removeAfterTest(makeApp({'.gitignore': '.env\n', '.env': trackedEnvSecret()}))
+    git(dir, ['init', '-q', '.'])
+    const file = {path: '.env', absolutePath: join(dir, '.env'), ext: '', content: trackedEnvSecret()}
+
+    const issues = await scanCommittedSecrets([file], dir, 'listed')
+    expect(issues[0]).toMatchObject({
+      title: 'Environment file with secrets is ignored by git but was scanned',
+      pattern_id: 'environment-file:unconfirmed',
+    })
+    expect(issues[0]!.message).toContain(
+      ".env is ignored by git but was still scanned; App Security couldn't determine why",
+    )
+    expect(issues[0]!.message).not.toContain('could not be confirmed')
+    expect(issues[0]!.detection_evidence?.join(' ')).toContain('git rev-parse --show-toplevel → same')
   })
 
   test('reports tri-state status rather than a boolean guess', async () => {

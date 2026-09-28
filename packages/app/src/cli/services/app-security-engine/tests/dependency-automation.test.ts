@@ -1,4 +1,5 @@
 /* eslint-disable no-restricted-imports -- integration coverage uses real temporary repositories */
+import {git, isolateGitConfig} from './git-test-helpers.js'
 import {securityExitCode} from '../../app-security-api.js'
 import {formatJson} from '../output/format.js'
 import {getRegistry} from '../registry/index.js'
@@ -9,7 +10,7 @@ import {scanApp} from '../run.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
-import {describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {mkdir, unlink, writeFile} from 'node:fs/promises'
 import {dirname, join} from 'node:path'
 
@@ -24,6 +25,15 @@ vi.mock('@shopify/cli-kit/node/system', async (importActual) => {
 
 const checkId = 'MISSING_DEPENDENCY_SECURITY_AUTOMATION'
 const dependabot = '# Configuration contents are not validated.\n'
+
+// Keep the scan's git calls independent of the developer's global excludes and any enclosing repository.
+let restoreGitConfig: (() => void) | undefined
+beforeEach(() => {
+  restoreGitConfig = isolateGitConfig()
+})
+afterEach(() => {
+  restoreGitConfig?.()
+})
 
 async function writeFiles(root: string, files: Record<string, string>): Promise<void> {
   await Promise.all(
@@ -130,7 +140,10 @@ describe('dependency automation scanner integration', () => {
         const submission = buildSubmission(execution.trace, {cliVersion: '3.99.0', submittedAt: '2026-09-15T00:00:00Z'})
         expect(JSON.stringify(submission)).not.toContain('local>org/renovate-config')
         expect(JSON.stringify(execution.trace)).not.toContain('local>org/renovate-config')
+        // The scan's own git calls (ignored-path discovery and project metadata) are the only ones allowed.
+        // The temporary directory is outside any repository, so ignored-path discovery stops at its first probe.
         expect(vi.mocked(captureOutputWithExitCode).mock.calls.map(([command, args]) => [command, args])).toEqual([
+          ['git', ['rev-parse', '--is-inside-work-tree', '--show-prefix']],
           ['git', ['rev-parse', 'HEAD']],
           ['git', ['status', '--porcelain']],
         ])
@@ -152,7 +165,63 @@ describe('dependency automation scanner integration', () => {
       const result = await scan(root)
       expect(dependencyFindings(result)).toHaveLength(1)
       expect(dependencyExecution(result)).toMatchObject({status: 'executed', inspected_files: ['package.json']})
-      expect(result.scan.input_hash).toBe(initial.scan.input_hash)
+      // Workflow files are scanned for secrets (so the scan inputs change) but never feed this check.
+      expect(dependencyExecution(result)).toEqual(dependencyExecution(initial))
+    })
+  })
+
+  describe('gitignored configuration', () => {
+    // Hosted bots read the repository, so a configuration file that never reaches it configures nothing.
+    async function makeRepository(root: string, files: Record<string, string>, tracked: string[]): Promise<void> {
+      await makeApp(root, files)
+      git(root, ['init', '-q', '.'])
+      git(root, ['add', '-f', '--', 'shopify.app.toml', 'package.json', ...tracked])
+      git(root, ['commit', '-qm', 'init'])
+    }
+
+    test('does not read an untracked configuration file that git ignores', async () => {
+      await inTemporaryDirectory(async (root) => {
+        await makeRepository(root, {'.gitignore': '.github/\n', '.github/dependabot.yml': dependabot}, ['.gitignore'])
+        const result = await scan(root)
+        expect(dependencyFindings(result)).toHaveLength(1)
+        expect(dependencyExecution(result)).toMatchObject({status: 'executed', inspected_files: ['package.json']})
+        expect(result.scan.file_hashes).not.toHaveProperty('.github/dependabot.yml')
+        expect(result.scan.coverage_complete).toBe(true)
+      })
+    })
+
+    test('reads a force-tracked configuration file that matches .gitignore', async () => {
+      await inTemporaryDirectory(async (root) => {
+        await makeRepository(root, {'.gitignore': '.github/\n', '.github/dependabot.yml': dependabot}, [
+          '.gitignore',
+          '.github/dependabot.yml',
+        ])
+        const result = await scan(root)
+        expect(dependencyFindings(result)).toEqual([])
+        expect(dependencyExecution(result)).toMatchObject({
+          status: 'executed',
+          inspected_files: ['package.json', '.github/dependabot.yml'],
+        })
+        expect(result.scan.file_hashes?.['.github/dependabot.yml']).toBe(sha256(dependabot))
+      })
+    })
+
+    test('skips an ignored configuration file and still counts a committed one later in the allowlist', async () => {
+      await inTemporaryDirectory(async (root) => {
+        await makeRepository(
+          root,
+          {'.gitignore': '.github/dependabot.yml\n', '.github/dependabot.yml': dependabot, 'renovate.json': '{}'},
+          ['.gitignore', 'renovate.json'],
+        )
+        const result = await scan(root)
+        expect(dependencyFindings(result)).toEqual([])
+        expect(dependencyExecution(result)).toMatchObject({
+          status: 'executed',
+          inspected_files: ['package.json', 'renovate.json'],
+        })
+        expect(result.scan.file_hashes).not.toHaveProperty('.github/dependabot.yml')
+        expect(result.scan.file_hashes?.['renovate.json']).toBe(sha256('{}'))
+      })
     })
   })
 
