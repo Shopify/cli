@@ -1,13 +1,19 @@
 import {themeFlags} from '../../../flags.js'
-import {metafieldsPull, MetafieldsPullFlags} from '../../../services/metafields-pull.js'
+import {downloadMetafieldDefinitions, MetafieldsPullFlags} from '../../../services/metafields-pull.js'
 import ThemeCommand, {RequiredFlags} from '../../../utilities/theme-command.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {themeMetafieldsPullJsonOutputSchema} from '../../../services/metafields-pull/types.js'
+import {renderThemeMetafieldsPullResult} from '../../../services/metafields-pull/result.js'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {InferredFlags} from '@oclif/core/interfaces'
 
 type MetafieldsFlags = InferredFlags<typeof MetafieldsPull.flags>
 
 export default class MetafieldsPull extends ThemeCommand {
+  static get jsonOutputSchema() {
+    return themeMetafieldsPullJsonOutputSchema
+  }
+
   static summary = 'Download metafields definitions from your shop into a local file.'
 
   static descriptionWithMarkdown = `Retrieves metafields from Shopify Admin.
@@ -18,6 +24,7 @@ If the metafields file already exists, it will be overwritten.`
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     ...themeFlags,
     force: Flags.boolean({
       hidden: true,
@@ -39,6 +46,7 @@ If the metafields file already exists, it will be overwritten.`
       noColor: flags['no-color'],
     }
 
-    await metafieldsPull(args)
+    const result = await downloadMetafieldDefinitions(args)
+    renderThemeMetafieldsPullResult(result, flags.json ? 'json' : 'text')
   }
 }
