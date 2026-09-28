@@ -12158,6 +12158,10 @@ ARGUMENTS
   [NAME]  Name of the new theme
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   -l, --latest
       Downloads the latest release of the `clone-url`
       [env: SHOPIFY_FLAG_LATEST]
@@ -12203,6 +12207,60 @@ DESCRIPTION
   > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting
   point. However, the theme that you submit needs to be "substantively different from existing themes"
   (https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.
+
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeInitResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string"
+      },
+      "repoUrl": {
+        "type": "string"
+      },
+      "latest": {
+        "type": "boolean"
+      },
+      "aiInstructions": {
+        "anyOf": [
+          {
+            "type": "string",
+            "enum": [
+              "all",
+              "github",
+              "cursor",
+              "claude"
+            ]
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "instructionFiles": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "path",
+      "repoUrl",
+      "latest",
+      "aiInstructions",
+      "instructionFiles"
+    ],
+    "additionalProperties": false,
+    "title": "ThemeInitResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme language-server`

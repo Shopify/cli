@@ -11317,7 +11317,7 @@
         }
       },
       "customPluginName": "@shopify/theme",
-      "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's \"Skeleton theme\" (https://github.com/Shopify/skeleton-theme.git), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be \"substantively different from existing themes\" (https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
+      "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's \"Skeleton theme\" (https://github.com/Shopify/skeleton-theme.git), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be \"substantively different from existing themes\" (https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  \n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `ThemeInitResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"path\": {\n      \"type\": \"string\"\n    },\n    \"repoUrl\": {\n      \"type\": \"string\"\n    },\n    \"latest\": {\n      \"type\": \"boolean\"\n    },\n    \"aiInstructions\": {\n      \"anyOf\": [\n        {\n          \"type\": \"string\",\n          \"enum\": [\n            \"all\",\n            \"github\",\n            \"cursor\",\n            \"claude\"\n          ]\n        },\n        {\n          \"type\": \"null\"\n        }\n      ]\n    },\n    \"instructionFiles\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"required\": [\n    \"path\",\n    \"repoUrl\",\n    \"latest\",\n    \"aiInstructions\",\n    \"instructionFiles\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"ThemeInitResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's [Skeleton theme](https://github.com/Shopify/skeleton-theme.git), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be [substantively different from existing themes](https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
       "enableJsonFlag": false,
       "flags": {
@@ -11338,6 +11338,15 @@
           "multiple": false,
           "name": "clone-url",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,
