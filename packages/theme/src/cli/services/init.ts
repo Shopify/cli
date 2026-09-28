@@ -1,4 +1,5 @@
-import {renderSelectPrompt, renderWarning, renderTasks} from '@shopify/cli-kit/node/ui'
+import {type ThemeInitResult} from './init/types.js'
+import {renderSelectPrompt, renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/node/git'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {rmdir, fileExists, inTemporaryDirectory, readFile, writeFile, symlink} from '@shopify/cli-kit/node/fs'
@@ -17,14 +18,14 @@ const SUPPORTED_AI_INSTRUCTIONS = {
 type AIInstruction = keyof typeof SUPPORTED_AI_INSTRUCTIONS
 
 export async function cloneRepo(repoUrl: string, destination: string) {
-  await downloadRepository(repoUrl, destination)
+  return downloadRepository(repoUrl, destination)
 }
 
 export async function cloneRepoAndCheckoutLatestTag(repoUrl: string, destination: string) {
-  await downloadRepository(repoUrl, destination, true)
+  return downloadRepository(repoUrl, destination, true)
 }
 
-async function downloadRepository(repoUrl: string, destination: string, latestTag?: boolean) {
+async function downloadRepository(repoUrl: string, destination: string, latestTag?: boolean): Promise<ThemeInitResult> {
   await renderTasks([
     {
       title: `Cloning ${repoUrl} into ${destination}`,
@@ -33,7 +34,8 @@ async function downloadRepository(repoUrl: string, destination: string, latestTa
           repoUrl,
           destination,
           latestTag,
-          shallow: true,
+          // Fetch tags and history when selecting the latest release.
+          shallow: !latestTag,
         })
         await removeGitRemote(destination)
 
@@ -48,6 +50,8 @@ async function downloadRepository(repoUrl: string, destination: string, latestTa
       },
     },
   ])
+
+  return {path: destination, repoUrl, latest: latestTag ?? false, aiInstructions: null, instructionFiles: []}
 }
 
 async function removeDirectory(path: string) {
@@ -72,7 +76,8 @@ export async function promptAIInstruction() {
 }
 
 export async function createAIInstructions(themeRoot: string, aiInstruction: AIInstruction) {
-  const createdFiles: string[] = []
+  const copiedFiles: string[] = []
+  const files = [joinPath(themeRoot, 'AGENTS.md')]
 
   await renderTasks([
     {
@@ -103,10 +108,17 @@ export async function createAIInstructions(themeRoot: string, aiInstruction: AII
               instructions.map((instruction) => createAIInstructionFiles(themeRoot, agentsPath, instruction)),
             )
 
+            files.push(
+              ...instructions.flatMap((instruction) => {
+                if (instruction === 'cursor') return []
+                return [joinPath(themeRoot, instruction === 'github' ? 'copilot-instructions.md' : 'CLAUDE.md')]
+              }),
+            )
+
             // Collect files that were copied instead of symlinked
             results.forEach((result) => {
               if (result.copiedFile) {
-                createdFiles.push(result.copiedFile)
+                copiedFiles.push(result.copiedFile)
               }
             })
           } catch (error) {
@@ -117,14 +129,7 @@ export async function createAIInstructions(themeRoot: string, aiInstruction: AII
     },
   ])
 
-  if (createdFiles.length > 0) {
-    renderWarning({
-      headline: 'Files created instead of symlinks.',
-      body: `Shopify CLI attempted to create symbolic links between AGENTS.md and ${createdFiles.join(
-        ', ',
-      )}, but your system doesn't have Developer Mode enabled or symlinks are disabled. Separate files were created instead.`,
-    })
-  }
+  return {files, copiedFiles}
 }
 
 export async function createAIInstructionFiles(
