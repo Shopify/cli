@@ -171,3 +171,20 @@ describe('metafields-pull', () => {
     })
   })
 })
+
+test.each([true, false])('keeps the theme dev caller silent when all requests fail=%s', async (fail) => {
+  vi.mocked(ensureThemeStore).mockReturnValue('example.myshopify.com')
+  vi.mocked(ensureAuthenticatedThemes).mockResolvedValue({token: '', storeFqdn: 'example.myshopify.com'})
+  vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(true)
+  vi.mocked(metafieldDefinitionsByOwnerType).mockImplementation(async () => {
+    if (fail) throw new Error('Unavailable')
+    return []
+  })
+  const output = mockAndCaptureOutput()
+  await inTemporaryDirectory(async (path) => {
+    await metafieldsPull({path, silent: true})
+    await expect(fileExists(metafieldDefinitionPath(path))).resolves.toBe(!fail)
+    expect(output.info()).toBe('')
+    expect(output.error()).toBe('')
+  })
+})
