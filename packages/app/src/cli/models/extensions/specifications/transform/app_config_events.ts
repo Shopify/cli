@@ -41,17 +41,19 @@ export function transformFromEventsConfig(content: object, appConfiguration?: ob
 
 /**
  * Transforms the events config from remote to local format.
- * Strips the server-managed 'identifier' field from subscriptions.
+ * Strips the server-managed 'identifier' field from subscriptions, and the
+ * subscription 'api_version' when it matches the events default.
  */
 export function transformToEventsConfig(content: object) {
   const eventsConfig = getPathValue(content, 'events') as {api_version: string; subscription: object[]}
-  const apiVersion = getPathValue(eventsConfig, 'api_version')
-  const subscription = getPathValue(eventsConfig, 'subscription') as {identifier: string}[]
+  const apiVersion = getPathValue(eventsConfig, 'api_version') as string
+  const subscription = getPathValue(eventsConfig, 'subscription') as {identifier: string; api_version?: string}[]
 
-  // Server always includes identifier - strip it for local TOML
+  // Server adds identifier and fills [events].api_version into subscriptions that omit it
   const cleanedSubscriptions = subscription?.map((sub) => {
-    const {identifier, ...rest} = sub
-    return rest
+    const {identifier, api_version: subscriptionApiVersion, ...rest} = sub
+    const overridesDefault = subscriptionApiVersion !== undefined && subscriptionApiVersion !== apiVersion
+    return overridesDefault ? {...rest, api_version: subscriptionApiVersion} : rest
   })
 
   const events =
