@@ -15,6 +15,7 @@ import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {BaseConfigType} from '../../models/extensions/schemas.js'
 import {createConfigExtensionSpecification} from '../../models/extensions/specification.js'
+import appEventsSpec from '../../models/extensions/specifications/app_config_events.js'
 import {AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js'
 import {migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
@@ -623,6 +624,113 @@ describe('classifyDeployExtensionChanges', () => {
 })
 
 describe('ensureDeployIdentifiersFromAppVersion', () => {
+  test.each([
+    {
+      name: 'inherited version',
+      localDefault: '2026-07',
+      localVersion: undefined,
+      remoteVersion: '2026-07',
+      updated: false,
+    },
+    {
+      name: 'explicit default',
+      localDefault: '2026-07',
+      localVersion: '2026-07',
+      remoteVersion: '2026-07',
+      updated: false,
+    },
+    {
+      name: 'explicit override',
+      localDefault: '2026-07',
+      localVersion: '2026-04',
+      remoteVersion: '2026-04',
+      updated: false,
+    },
+    {
+      name: 'changed override',
+      localDefault: '2026-07',
+      localVersion: '2026-04',
+      remoteVersion: '2026-07',
+      updated: true,
+    },
+    {
+      name: 'removed override',
+      localDefault: '2026-07',
+      localVersion: undefined,
+      remoteVersion: '2026-04',
+      updated: true,
+    },
+    {
+      name: 'changed default',
+      localDefault: '2026-10',
+      localVersion: undefined,
+      remoteVersion: '2026-07',
+      updated: true,
+    },
+  ])('reports events updated=$updated for $name', async ({localDefault, localVersion, remoteVersion, updated}) => {
+    const subscription = {
+      handle: 'product-updated',
+      topic: 'Product',
+      actions: ['update'],
+      uri: '/events',
+    }
+    const localConfig = {
+      events: {
+        api_version: localDefault,
+        subscription: [{...subscription, ...(localVersion === undefined ? {} : {api_version: localVersion})}],
+      },
+    }
+    const eventsExtension = new ExtensionInstance<BaseConfigType & typeof localConfig>({
+      configuration: localConfig,
+      configurationPath: 'shopify.app.toml',
+      directory: '/app',
+      specification: appEventsSpec,
+    })
+    const remoteEventsModule: AppModuleVersion = {
+      registrationId: eventsExtension.uid,
+      registrationUuid: 'events-uuid',
+      registrationTitle: 'Events',
+      type: 'events',
+      config: {
+        events: {
+          api_version: '2026-07',
+          subscription: [
+            {
+              ...subscription,
+              uri: 'https://example.com/events',
+              api_version: remoteVersion,
+              identifier: 'subscription-id',
+            },
+          ],
+        },
+      },
+      specification: {
+        identifier: 'events',
+        name: 'Events',
+        experience: 'configuration',
+        options: {managementExperience: 'cli'},
+      },
+    }
+
+    await ensureDeployIdentifiersFromAppVersion(
+      deployOptions({
+        app: testApp({...APP, allExtensions: [eventsExtension], specifications: [appEventsSpec]}),
+        activeAppVersion: {appModuleVersions: [remoteEventsModule]},
+      }),
+    )
+
+    expect(deployOrReleaseConfirmationPrompt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        configExtensionIdentifiersBreakdown: {
+          existingFieldNames: updated ? [] : ['events'],
+          existingUpdatedFieldNames: updated ? ['events'] : [],
+          newFieldNames: [],
+          deletedFieldNames: [],
+        },
+      }),
+    )
+  })
+
   test('prompts with the existing UI breakdown shape and returns deploy identifiers', async () => {
     const identifiers = await ensureDeployIdentifiersFromAppVersion(
       deployOptions({
