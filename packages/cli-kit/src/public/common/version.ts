@@ -1,1 +1,1 @@
-export const CLI_KIT_VERSION = '4.8.2'
+export const CLI_KIT_VERSION = '4.8.3'

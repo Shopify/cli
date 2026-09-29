@@ -1,5 +1,11 @@
 # @shopify/theme
 
+## 4.8.3
+
+### Patch Changes
+
+- @shopify/cli-kit@4.8.3
+
 ## 4.8.2
 
 ### Patch Changes
