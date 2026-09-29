@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 4.8.3
+
+### Patch Changes
+
+- d823077: Fix unchanged event subscriptions appearing as updates during app deploy and avoid redundant subscription API versions when linking config.
+  - @shopify/organizations@4.8.3
+  - @shopify/cli-kit@4.8.3
+  - @shopify/theme@4.8.3
+  - @shopify/plugin-cloudflare@4.8.3
+
 ## 4.8.2
 
 ### Patch Changes
