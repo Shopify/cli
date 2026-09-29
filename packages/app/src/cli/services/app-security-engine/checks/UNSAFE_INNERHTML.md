@@ -7,9 +7,10 @@ severity: high
 Find cases where user-controlled data is written to the DOM without
 sanitisation, creating a cross-site scripting (XSS) vulnerability.
 
-XSS in a Shopify app is particularly dangerous because the app runs
-inside the admin iframe. A script injection can access the merchant's
-session, make API calls on their behalf, or exfiltrate data.
+Establish the controlling principal, victim, execution context, and affected
+origin. An embedded app injection can act with the app's browser authority,
+but does not inherit the Shopify Admin parent's origin or authority. Require
+a concrete trust-boundary violation, not merely a raw-rendering API.
 
 ## What to look for
 
@@ -23,6 +24,7 @@ session, make API calls on their behalf, or exfiltrate data.
    - `eval(...)` — code injection, not HTML, but same attacker entry point
    - `setTimeout(string, ...)` / `setInterval(string, ...)` — evals string
    - `new Function(string)` — evals string
+   - `script.textContent = ...` followed by inserting an executable script
 
 2. **Find React/Vue dangerous rendering.** These frameworks auto-escape
    string interpolation, but have explicit escape hatches:
@@ -51,11 +53,17 @@ session, make API calls on their behalf, or exfiltrate data.
    previews, App Proxy active responses, or script/iframe URL construction.
    The key question is where the value becomes executable or privileged content.
 
-6. **Check for sanitisation.** Is the data passed through:
-   - `DOMPurify.sanitize(...)` — but verify it handles event handler
-     attributes (onerror, onload, onfocus, onclick), not just tag removal
-   - `escapeHTML(...)` or a similar escaping function
-   - A textContent assignment instead (safe — textContent doesn't parse HTML)
+6. **Verify defenses in the final parser context.** Follow the actual helper,
+   configuration, and any decoding or mutations after sanitization:
+   - `DOMPurify.sanitize(...)` or another library is not proof by name alone;
+     verify which executable constructs survive in the destination context.
+   - `escapeHTML(...)` can protect HTML text, but is not automatically safe in
+     JavaScript, event-handler, or URL contexts.
+   - `textContent` on an ordinary non-executable element does not parse HTML;
+     trace any later consumer that reparses its text as HTML or code.
+   - `script.textContent` can become executable when the script is inserted.
+     Check its type, insertion path, enforced CSP, and sandboxing rather than
+     treating every text-node write as safe.
 
 ## XSS evasion patterns to check for
 
@@ -69,44 +77,52 @@ techniques that bypass naive string-matching:
 - **Data URI payloads**: `<iframe src="data:text/html,...">`
 - **SVG payloads**: `<svg onload="...">` — some sanitizers miss SVG events
 
-If the sanitizer is a custom function (not DOMPurify or a well-known
-library), flag it — custom sanitizers are frequently bypassable.
+A custom sanitizer is not automatically vulnerable, and a well-known library
+is not automatically safe in every context. Report a bypass only when you can
+identify a concrete construct that survives the defense and executes in the
+actual renderer, accounting for enforced CSP and sandboxing.
 
 ## What to report
 
-For each DOM write where user-controlled data (including metafield values)
-reaches the DOM unsanitised:
+Report paths where lower-trust data becomes executable content across a
+demonstrated authority boundary. Explain the execution mechanism; a `<script>`
+inserted through `innerHTML` does not execute like a parser-inserted script.
 
 ```json
 {
   "file": "extensions/.../widget.js",
   "line": 42,
-  "message": "User-controlled metafield value rendered via innerHTML without sanitisation",
-  "snippet": "el.innerHTML = product.metafield.custom.value",
+  "message": "Buyer-authored review rendered via innerHTML without sanitisation",
+  "snippet": "el.innerHTML = review.body",
   "evidence": [
     {
       "file": "extensions/.../widget.js",
       "line": 42,
-      "quote": "el.innerHTML = product.metafield.custom.value"
+      "quote": "el.innerHTML = review.body"
     },
     {
       "file": "extensions/.../widget.js",
       "line": 30,
-      "quote": "const metafield = await admin.rest.get({ path: 'metafields' })"
+      "quote": "const review = await response.json()"
     }
   ],
   "confidence": "high",
-  "reasoning": "The metafield value is merchant-writable (user-controlled) and is inserted into innerHTML without DOMPurify or equivalent sanitisation. An attacker who controls the metafield value can inject script tags that execute in the storefront."
+  "reasoning": "The buyer-authored review reaches innerHTML without escaping or sanitisation. Event-handler markup can execute when another shopper views the review, with the storefront origin and that shopper's browser authority."
 }
 ```
 
 Do not report:
 
 - Literal HTML strings (`el.innerHTML = "<b>Static</b>"`)
-- `textContent` assignments (safe — no HTML parsing)
+- `textContent` writes to non-executable elements with no later executable consumer
 - React JSX with string interpolation (auto-escaped)
 - `dangerouslySetInnerHTML` with static/constant content (still risky but
   if the content is a constant string, there's no XSS vector from user input)
-- Sanitised inputs (`DOMPurify.sanitize(userInput)`) — unless the sanitizer
-  is custom and might miss event handler attributes
+- Inputs adequately escaped or sanitized for the final context, whether the
+  defense is custom or library-provided
 - `eval()` or `new Function()` with literal strings (no user input)
+
+If missing producer, sanitizer, or execution-context evidence prevents a
+conclusion, record the check as unresolved with the review pack's structured
+reason and actionable guidance. Do not turn incomplete tracing into a finding
+or a pass.
