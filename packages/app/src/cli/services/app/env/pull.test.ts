@@ -1,4 +1,5 @@
 import {pullEnv} from './pull.js'
+import {formatAppEnvPullResult} from './pull/result.js'
 import {AppInterface, AppLinkedInterface} from '../../../models/app/app.js'
 import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {Organization, OrganizationApp, OrganizationSource} from '../../../models/organization.js'
@@ -29,7 +30,8 @@ describe('env pull', () => {
 
       // When
       const filePath = resolvePath(tmpDir, '.env')
-      const result = await pullEnv({app, remoteApp, organization: ORG1, envFile: filePath})
+      const outcome = await pullEnv({app, remoteApp, organization: ORG1, envFile: filePath})
+      const result = formatAppEnvPullResult(outcome, 'text')
 
       // Then
       expect(file.writeFile).toHaveBeenCalledWith(
@@ -55,7 +57,8 @@ describe('env pull', () => {
       vi.spyOn(file, 'writeFile')
 
       // When
-      const result = await pullEnv({app, remoteApp, organization: ORG1, envFile: filePath})
+      const outcome = await pullEnv({app, remoteApp, organization: ORG1, envFile: filePath})
+      const result = formatAppEnvPullResult(outcome, 'text')
 
       // Then
       expect(file.writeFile).toHaveBeenCalledWith(
@@ -89,7 +92,8 @@ describe('env pull', () => {
       vi.spyOn(file, 'writeFile')
 
       // When
-      const result = await pullEnv({app, remoteApp, organization: ORG1, envFile: filePath})
+      const outcome = await pullEnv({app, remoteApp, organization: ORG1, envFile: filePath})
+      const result = formatAppEnvPullResult(outcome, 'text')
 
       // Then
       expect(file.writeFile).not.toHaveBeenCalled()
@@ -116,3 +120,24 @@ function mockApp(): AppInterface {
     },
   })
 }
+
+test('returns file facts while preserving custom variables, comments, and a missing secret', async () => {
+  await file.inTemporaryDirectory(async (directory) => {
+    const path = resolvePath(directory, '.env')
+    await file.writeFile(path, '# Local settings\nCUSTOM=value\nSHOPIFY_API_SECRET=existing-secret')
+    const remoteApp = testOrganizationApp({apiSecretKeys: []})
+    const output = await pullEnv({app: mockApp() as AppLinkedInterface, remoteApp, organization: ORG1, envFile: path})
+    expect(output.result.status).toBe('updated')
+    expect(output.result.variables).toEqual({
+      SHOPIFY_API_KEY: 'api-key',
+      SHOPIFY_API_SECRET: undefined,
+      SCOPES: 'my-scope',
+    })
+    expect(output.result.content).toContain('# Local settings\nCUSTOM=value\nSHOPIFY_API_SECRET=existing-secret')
+    await expect(file.readFile(path)).resolves.toBe(output.result.content)
+    expect(output.previousContent).toBe('# Local settings\nCUSTOM=value\nSHOPIFY_API_SECRET=existing-secret')
+    const encoded = JSON.parse(stringifyMessage(formatAppEnvPullResult(output, 'json')))
+    expect(encoded.variables).not.toHaveProperty('SHOPIFY_API_SECRET')
+    expect(encoded).not.toHaveProperty('previousContent')
+  })
+})

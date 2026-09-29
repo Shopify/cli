@@ -1322,9 +1322,18 @@
           "description": "The name of the app configuration.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_APP_CONFIG"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-env-pull.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface appenvpull {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Specify an environment file to update if the update flag is set\n   * @environment SHOPIFY_FLAG_ENV_FILE\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface appenvpull {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Specify an environment file to update if the update flag is set\n   * @environment SHOPIFY_FLAG_ENV_FILE\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "appenvshow": {
