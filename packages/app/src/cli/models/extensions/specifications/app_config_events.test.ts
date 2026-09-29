@@ -35,6 +35,7 @@ describe('event module configuration', () => {
 
     expect(appEventsSpec.expandConfig!(config, {flags: []})).toEqual([config])
     expect(appEventsSpec.getIdentity!(config)).toBeUndefined()
+    expect(appEventsSpec.getTarget!(config)).toBeUndefined()
     expect(appEventsSpec.parseConfigurationObject(config).state).toBe('ok')
   })
 
@@ -43,6 +44,19 @@ describe('event module configuration', () => {
 
     expect(appEventsSpec.expandConfig!(config, {flags})).toEqual([config])
     expect(appEventsSpec.getIdentity!(config)).toBeUndefined()
+    expect(appEventsSpec.getTarget!(config)).toBeUndefined()
+  })
+
+  test('targets the topic of a single subscription', () => {
+    const config = {events: {api_version: '2024-01', subscription: {handle: 'orders', topic: 'orders/create'}}}
+
+    expect(appEventsSpec.getTarget!(config)).toBe('orders/create')
+  })
+
+  test('returns no target for a single subscription without a topic', () => {
+    const config = {events: {api_version: '2024-01', subscription: {handle: 'orders'}}}
+
+    expect(appEventsSpec.getTarget!(config)).toBeUndefined()
   })
 
   test.each([undefined, '', ' ', 42, '-orders', 'orders-', 'orders/create', 'a'.repeat(51), 'events'])(

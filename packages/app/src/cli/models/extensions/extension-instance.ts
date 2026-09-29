@@ -376,6 +376,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get contextValue() {
+    const specificationTarget = this.specification.getTarget?.(this.configuration)
+    if (specificationTarget !== undefined) return specificationTarget
+
     let context = this.singleTarget ?? ''
     if (this.isFlow) context = this.configuration.handle ?? ''
     return context

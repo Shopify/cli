@@ -59,6 +59,13 @@ const appEventsSpec = createConfigExtensionSpecification({
     if (!subscription || Array.isArray(subscription)) return undefined
     return {handle: subscription.handle, uid: subscription.handle}
   },
+  // A single-subscription module targets its topic. The topic stays in the config as
+  // well: Core still derives the module target from `events.subscription.topic`.
+  getTarget: (config) => {
+    const subscription = config.events?.subscription
+    if (!subscription || Array.isArray(subscription)) return undefined
+    return typeof subscription.topic === 'string' ? subscription.topic : undefined
+  },
 })
 
 export default appEventsSpec

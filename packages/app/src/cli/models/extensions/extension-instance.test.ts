@@ -320,6 +320,42 @@ describe('contextValue', async () => {
 
     expect(got).toEqual('')
   })
+
+  test('uses the specification target when one is resolved', () => {
+    const specification = createConfigExtensionSpecification({
+      identifier: 'custom',
+      schema: BaseSchema,
+      transformConfig: {},
+      getTarget: (config) => `target-${config.name}`,
+    })
+
+    const instance = new ExtensionInstance({
+      specification,
+      configuration: {name: 'example'},
+      configurationPath: '/app/shopify.app.toml',
+      directory: '/app',
+    })
+
+    expect(instance.contextValue).toBe('target-example')
+  })
+
+  test('falls back to the single targeting entry when the specification returns no target', () => {
+    const specification = createConfigExtensionSpecification({
+      identifier: 'custom',
+      schema: BaseSchema,
+      transformConfig: {},
+      getTarget: () => undefined,
+    })
+
+    const instance = new ExtensionInstance({
+      specification,
+      configuration: {targeting: [{target: 'admin.product.item.action'}]} as BaseConfigType,
+      configurationPath: '/app/shopify.app.toml',
+      directory: '/app',
+    })
+
+    expect(instance.contextValue).toBe('admin.product.item.action')
+  })
 })
 
 describe('isFlow', async () => {

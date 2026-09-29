@@ -134,6 +134,9 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   /** Resolve a module's identity from its configuration, or use the declared UID strategy. */
   getIdentity?: (config: TConfiguration) => {handle: string; uid: string} | undefined
 
+  /** Resolve a module's target from its configuration, or fall back to the single `targeting` entry. */
+  getTarget?: (config: TConfiguration) => string | undefined
+
   uidStrategy: UidStrategy
 
   /**
@@ -295,6 +298,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   uidStrategy?: UidStrategy
   expandConfig?: ExtensionSpecification<TConfiguration>['expandConfig']
   getIdentity?: ExtensionSpecification<TConfiguration>['getIdentity']
+  getTarget?: ExtensionSpecification<TConfiguration>['getTarget']
   getDevSessionUpdateMessages?: (config: TConfiguration, context: DevSessionUpdateContext) => Promise<string[]>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 }): ExtensionSpecification<TConfiguration> {
@@ -311,6 +315,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     uidStrategy: spec.uidStrategy ?? 'single',
     expandConfig: spec.expandConfig,
     getIdentity: spec.getIdentity,
+    getTarget: spec.getTarget,
     clientSteps: spec.clientSteps,
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
     patchWithAppDevURLs: spec.patchWithAppDevURLs,

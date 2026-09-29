@@ -2302,9 +2302,9 @@ describe('load', () => {
       const extensions = app.allExtensions.filter((extension) => extension.specification.identifier === 'events')
 
       expect(app.errors.isEmpty()).toBe(true)
-      expect(extensions.map(({handle, uid}) => ({handle, uid}))).toEqual([
-        {handle: 'order-notifier', uid: 'order-notifier'},
-        {handle: 'product-sync', uid: 'product-sync'},
+      expect(extensions.map(({handle, uid, contextValue}) => ({handle, uid, contextValue}))).toEqual([
+        {handle: 'order-notifier', uid: 'order-notifier', contextValue: 'orders/create'},
+        {handle: 'product-sync', uid: 'product-sync', contextValue: 'products/update'},
       ])
       expect(app.configuration).toMatchObject({
         events: {subscription: [{handle: 'order-notifier'}, {handle: 'product-sync'}]},
@@ -2346,6 +2346,7 @@ describe('load', () => {
         {
           handle: 'events',
           uid: 'events',
+          contextValue: '',
           configuration: {events: {subscription: [{handle: 'order-notifier'}, {handle: 'product-sync'}]}},
         },
       ])
