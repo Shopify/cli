@@ -1,5 +1,5 @@
-query AppInstallCount($appId: ID!) {
-  app(id: $appId) {
+query AppInstallCount($clientId: String!) {
+  app: appByKey(key: $clientId) {
     installCount
   }
 }

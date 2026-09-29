@@ -304,7 +304,7 @@ export class DevSession {
       if (this.statusManager.status.isReady) {
         const payload: DevSessionUpdateOptions = {
           shopFqdn: this.options.storeFqdn,
-          appId: this.options.appId,
+          clientId: this.options.apiKey,
           assetsUrl: signedURL,
           manifest,
           inheritedModuleUids,
@@ -314,7 +314,7 @@ export class DevSession {
       } else {
         const payload: DevSessionCreateOptions = {
           shopFqdn: this.options.storeFqdn,
-          appId: this.options.appId,
+          clientId: this.options.apiKey,
           assetsUrl: signedURL,
           websocketUrl,
           unsafeValidation: this.options.unsafeValidation ?? false,

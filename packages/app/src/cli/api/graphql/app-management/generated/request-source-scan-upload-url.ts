@@ -4,7 +4,7 @@ import * as Types from './types.js'
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
 export type RequestSourceScanUploadUrlMutationVariables = Types.Exact<{
-  appId: Types.Scalars['ID']['input']
+  clientId: Types.Scalars['String']['input']
   byteSize: Types.Scalars['Int']['input']
 }>
 
@@ -25,8 +25,8 @@ export const RequestSourceScanUploadUrl = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: {kind: 'Variable', name: {kind: 'Name', value: 'appId'}},
-          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'ID'}}},
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'clientId'}},
+          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}},
         },
         {
           kind: 'VariableDefinition',
@@ -43,8 +43,8 @@ export const RequestSourceScanUploadUrl = {
             arguments: [
               {
                 kind: 'Argument',
-                name: {kind: 'Name', value: 'appId'},
-                value: {kind: 'Variable', name: {kind: 'Name', value: 'appId'}},
+                name: {kind: 'Name', value: 'clientId'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'clientId'}},
               },
               {
                 kind: 'Argument',

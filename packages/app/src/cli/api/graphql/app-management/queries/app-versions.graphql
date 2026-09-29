@@ -1,5 +1,5 @@
-query AppVersions($appId: ID!) {
-  app(id: $appId) {
+query AppVersions($clientId: String!) {
+  app: appByKey(key: $clientId) {
     id
     activeRelease {
       id

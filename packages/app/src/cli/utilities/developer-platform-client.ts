@@ -115,7 +115,7 @@ export type AppDeployOptions = AppDeployVariables & {
 
 interface DevSessionSharedOptions {
   shopFqdn: string
-  appId: string
+  clientId: string
 }
 
 export interface DevSessionCreateOptions extends DevSessionSharedOptions {
@@ -149,12 +149,12 @@ export type SourceScanUploadUrlSchema = WithUserErrors<{
 }>
 
 export interface SourceScanUploadUrlInput {
-  appId: string
+  clientId: string
   byteSize: number
 }
 
 export interface SourceScanCreateInput {
-  appId: string
+  clientId: string
   sourceScanUrl: string
 }
 

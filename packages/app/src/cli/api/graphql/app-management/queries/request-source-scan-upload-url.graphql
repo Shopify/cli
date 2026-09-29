@@ -1,5 +1,5 @@
-mutation RequestSourceScanUploadUrl($appId: ID!, $byteSize: Int!) {
-  appRequestSourceScanUploadUrl(appId: $appId, byteSize: $byteSize) {
+mutation RequestSourceScanUploadUrl($clientId: String!, $byteSize: Int!) {
+  appRequestSourceScanUploadUrl(clientId: $clientId, byteSize: $byteSize) {
     sourceScanUploadUrl
     userErrors {
       field

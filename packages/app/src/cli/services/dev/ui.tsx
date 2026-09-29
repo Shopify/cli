@@ -14,7 +14,7 @@ interface DevProps {
   abortController: AbortController
   shopFqdn: string
   app: {
-    id: string
+    apiKey: string
     developerPlatformClient: DeveloperPlatformClient
   }
 }
@@ -53,7 +53,7 @@ export async function renderDev({
         configPath={configPath}
         localURL={localURL}
         onAbort={async () => {
-          await app.developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn})
+          await app.developerPlatformClient.devSessionDelete({clientId: app.apiKey, shopFqdn})
         }}
       />,
       {

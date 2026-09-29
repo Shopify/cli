@@ -1,5 +1,5 @@
-mutation ReleaseVersion($appId: ID!, $versionId: ID!) {
-  appReleaseCreate(appId: $appId, versionId: $versionId) {
+mutation ReleaseVersion($clientId: String!, $versionId: ID!) {
+  appReleaseCreate(clientId: $clientId, versionId: $versionId) {
     release {
       version {
         id

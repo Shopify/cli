@@ -4,7 +4,7 @@ import * as Types from './types.js'
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
 export type DevSessionDeleteMutationVariables = Types.Exact<{
-  appId: Types.Scalars['String']['input']
+  clientId: Types.Scalars['String']['input']
 }>
 
 export type DevSessionDeleteMutation = {devSessionDelete?: {userErrors: {message: string}[]} | null}
@@ -19,7 +19,7 @@ export const DevSessionDelete = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: {kind: 'Variable', name: {kind: 'Name', value: 'appId'}},
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'clientId'}},
           type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}},
         },
       ],
@@ -32,8 +32,8 @@ export const DevSessionDelete = {
             arguments: [
               {
                 kind: 'Argument',
-                name: {kind: 'Name', value: 'appId'},
-                value: {kind: 'Variable', name: {kind: 'Name', value: 'appId'}},
+                name: {kind: 'Name', value: 'clientId'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'clientId'}},
               },
             ],
             selectionSet: {

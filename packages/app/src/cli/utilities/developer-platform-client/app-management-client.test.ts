@@ -35,8 +35,16 @@ import {PublicApiVersionsQuery} from '../../api/graphql/webhooks/generated/publi
 import {AvailableTopicsQuery} from '../../api/graphql/webhooks/generated/available-topics.js'
 import {CliTesting, CliTestingMutation} from '../../api/graphql/webhooks/generated/cli-testing.js'
 import {SendSampleWebhookVariables} from '../../services/webhook/request-sample.js'
+import {getUploadURL} from '../../services/bundle.js'
 import {CreateApp} from '../../api/graphql/app-management/generated/create-app.js'
 import {AppVersions, AppVersionsQuery} from '../../api/graphql/app-management/generated/app-versions.js'
+import {AppInstallCount} from '../../api/graphql/app-management/generated/app-install-count.js'
+import {AppVersionByTag} from '../../api/graphql/app-management/generated/app-version-by-tag.js'
+import {CreateAppVersion} from '../../api/graphql/app-management/generated/create-app-version.js'
+import {ReleaseVersion} from '../../api/graphql/app-management/generated/release-version.js'
+import {DevSessionCreate} from '../../api/graphql/app-dev/generated/dev-session-create.js'
+import {DevSessionUpdate} from '../../api/graphql/app-dev/generated/dev-session-update.js'
+import {DevSessionDelete} from '../../api/graphql/app-dev/generated/dev-session-delete.js'
 import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
@@ -46,6 +54,7 @@ import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-
 import {RequestSourceScanUploadUrl} from '../../api/graphql/app-management/generated/request-source-scan-upload-url.js'
 import {CreateSourceScan} from '../../api/graphql/app-management/generated/create-source-scan.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
+import {print} from 'graphql'
 import {fetchOrganizationById, fetchOrganizations} from '@shopify/organizations'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
@@ -1021,34 +1030,90 @@ describe('sendSampleWebhook', () => {
   })
 })
 
+describe('client ID documents', () => {
+  test.each([
+    ['create version', CreateAppVersion],
+    ['release version', ReleaseVersion],
+    ['request source scan upload URL', RequestSourceScanUploadUrl],
+    ['create source scan', CreateSourceScan],
+    ['find version by tag', AppVersionByTag],
+    ['create dev session', DevSessionCreate],
+    ['update dev session', DevSessionUpdate],
+    ['delete dev session', DevSessionDelete],
+  ])('%s declares and sends only the required client ID', (_operation, document) => {
+    const query = print(document)
+    expect(query).toContain('$clientId: String!')
+    expect(query).toContain('clientId: $clientId')
+    expect(query).not.toMatch(/\bappId\b/)
+  })
+
+  test('nested app queries use the existing key lookup and retain their selected fields', () => {
+    const versionsQuery = print(AppVersions)
+    expect(versionsQuery).toContain('$clientId: String!')
+    expect(versionsQuery).toContain('app: appByKey(key: $clientId)')
+    expect(versionsQuery).toContain('versions(first: 20)')
+    expect(versionsQuery).toContain('activeRelease')
+    expect(versionsQuery).toContain('versionsCount')
+    expect(versionsQuery).not.toMatch(/\bappId\b/)
+
+    const installCountQuery = print(AppInstallCount)
+    expect(installCountQuery).toContain('$clientId: String!')
+    expect(installCountQuery).toContain('app: appByKey(key: $clientId)')
+    expect(installCountQuery).toContain('installCount')
+    expect(installCountQuery).not.toMatch(/\bappId\b/)
+  })
+})
+
 describe('dev session requests', () => {
   test('sends the enabled unsafe validation value to create and update requests', async () => {
     const client = AppManagementClient.getInstance()
     client.token = () => Promise.resolve('token')
 
+    const clientId = 'client-id-123'
+    const manifest = {name: 'App', handle: 'app', modules: []}
     await client.devSessionCreate({
-      appId: 'gid://shopify/App/123',
+      clientId,
       assetsUrl: 'https://assets.test',
       shopFqdn: 'test.myshopify.com',
       websocketUrl: 'wss://test.dev/extensions',
       unsafeValidation: true,
     })
     await client.devSessionUpdate({
-      appId: 'gid://shopify/App/123',
+      clientId,
       assetsUrl: 'https://assets.test',
       shopFqdn: 'test.myshopify.com',
-      manifest: {name: 'App', handle: 'app', modules: []},
-      inheritedModuleUids: [],
+      manifest,
+      inheritedModuleUids: ['existing-module'],
       unsafeValidation: true,
     })
 
     expect(appDevRequestDoc).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining({variables: expect.objectContaining({unsafeValidation: true})}),
+      expect.objectContaining({
+        query: DevSessionCreate,
+        shopFqdn: 'test.myshopify.com',
+        variables: {
+          clientId,
+          assetsUrl: 'https://assets.test',
+          websocketUrl: 'wss://test.dev/extensions',
+          unsafeValidation: true,
+        },
+        requestOptions: {requestMode: 'slow-request'},
+      }),
     )
     expect(appDevRequestDoc).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining({variables: expect.objectContaining({unsafeValidation: true})}),
+      expect.objectContaining({
+        query: DevSessionUpdate,
+        shopFqdn: 'test.myshopify.com',
+        variables: {
+          clientId,
+          assetsUrl: 'https://assets.test',
+          manifest: JSON.stringify(manifest),
+          inheritedModuleUids: ['existing-module'],
+          unsafeValidation: true,
+        },
+      }),
     )
   })
 
@@ -1057,12 +1122,12 @@ describe('dev session requests', () => {
     client.token = () => Promise.resolve('token')
 
     await client.devSessionCreate({
-      appId: 'gid://shopify/App/123',
+      clientId: 'client-id-123',
       assetsUrl: 'https://assets.test',
       shopFqdn: 'test.myshopify.com',
     })
     await client.devSessionUpdate({
-      appId: 'gid://shopify/App/123',
+      clientId: 'client-id-123',
       shopFqdn: 'test.myshopify.com',
       manifest: {name: 'App', handle: 'app', modules: []},
       inheritedModuleUids: [],
@@ -1075,6 +1140,23 @@ describe('dev session requests', () => {
     expect(appDevRequestDoc).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({variables: expect.objectContaining({unsafeValidation: false})}),
+    )
+  })
+
+  test('deletes the dev session by client ID for the requested shop', async () => {
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+    vi.mocked(appDevRequestDoc).mockResolvedValueOnce({devSessionDelete: {userErrors: []}})
+
+    const result = await client.devSessionDelete({clientId: 'client-id-123', shopFqdn: 'test.myshopify.com'})
+
+    expect(result).toEqual({devSessionDelete: {userErrors: []}})
+    expect(appDevRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: DevSessionDelete,
+        shopFqdn: 'test.myshopify.com',
+        variables: {clientId: 'client-id-123'},
+      }),
     )
   })
 })
@@ -1140,10 +1222,10 @@ describe('deploy', () => {
 
     // Then
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      query: expect.anything(),
+      query: CreateAppVersion,
       token: 'token',
       variables: {
-        appId: 'gid://shopify/App/123',
+        clientId: 'api-key',
         version: {
           source: {
             name: 'Test App',
@@ -1203,10 +1285,10 @@ describe('deploy', () => {
 
     // Then
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      query: expect.anything(),
+      query: CreateAppVersion,
       token: 'token',
       variables: {
-        appId: 'gid://shopify/App/123',
+        clientId: 'api-key',
         version: {
           sourceUrl: bundleUrl,
         },
@@ -1350,7 +1432,7 @@ describe('deploy', () => {
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
       query: AppVersions,
       token: 'token',
-      variables: expect.objectContaining({appId}),
+      variables: {clientId: 'api-key'},
       unauthorizedHandler: {
         handler: expect.any(Function),
         type: 'token_refresh',
@@ -1392,6 +1474,122 @@ describe('deploy', () => {
         },
       },
     })
+  })
+})
+
+describe('client ID version and install requests', () => {
+  test('publishes a deployed version using the client ID while keeping the numeric dashboard link', async () => {
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+    const versionId = 'gid://shopify/Version/456'
+    vi.mocked(appManagementRequestDoc)
+      .mockResolvedValueOnce({
+        appVersionCreate: {
+          version: {id: versionId, metadata: {versionTag: '1.0.0', message: 'Test deploy'}, appModules: []},
+          userErrors: [],
+        },
+      })
+      .mockResolvedValueOnce({appReleaseCreate: {release: null, userErrors: []}})
+
+    const result = await client.deploy({
+      appManifest: {name: 'Test App', handle: 'test-app', modules: []},
+      apiKey: 'client-id-123',
+      appId: 'gid://shopify/App/123',
+      name: 'Test App',
+      organizationId: 'gid://shopify/Organization/5',
+    })
+
+    expect(appManagementRequestDoc).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        query: CreateAppVersion,
+        variables: {
+          clientId: 'client-id-123',
+          version: {source: {name: 'Test App', handle: 'test-app', modules: []}},
+          metadata: {versionTag: undefined, message: undefined, sourceControlUrl: undefined},
+        },
+      }),
+    )
+    expect(appManagementRequestDoc).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({query: ReleaseVersion, variables: {clientId: 'client-id-123', versionId}}),
+    )
+    expect(result.appDeploy.appVersion?.location).toBe('https://dev.shopify.com/dashboard/5/apps/123/versions/456')
+    expect(result.appDeploy.appVersion?.uuid).toBe(versionId)
+  })
+
+  test('releases an existing version using the client ID while keeping the numeric dashboard link', async () => {
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
+      appReleaseCreate: {
+        release: {version: {id: 'gid://shopify/Version/456', metadata: {versionTag: '1.0.0', message: 'Release'}}},
+        userErrors: [],
+      },
+    })
+
+    const result = await client.release({
+      app: {id: 'gid://shopify/App/123', apiKey: 'client-id-123', organizationId: '5', title: 'Test App'},
+      version: {versionId: 'gid://shopify/Version/456', appVersionId: 456},
+    })
+
+    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: ReleaseVersion,
+        variables: {clientId: 'client-id-123', versionId: 'gid://shopify/Version/456'},
+      }),
+    )
+    expect(result.appRelease.appVersion).toEqual({
+      versionTag: '1.0.0',
+      message: 'Release',
+      location: 'https://dev.shopify.com/dashboard/5/apps/123/versions/456',
+    })
+  })
+
+  test('scopes the tag lookup to the client ID while retaining the version UUID and numeric link', async () => {
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
+      versionByTag: {
+        id: 'gid://shopify/Version/456',
+        metadata: {versionTag: '1.0.0', message: 'Tagged version'},
+        appModules: [],
+      },
+    })
+
+    const result = await client.appVersionByTag(
+      {id: 'gid://shopify/App/123', apiKey: 'client-id-123', organizationId: '5', title: 'Test App'},
+      '1.0.0',
+    )
+
+    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: AppVersionByTag,
+        variables: {clientId: 'client-id-123', versionTag: '1.0.0'},
+      }),
+    )
+    expect(result.uuid).toBe('gid://shopify/Version/456')
+    expect(result.versionTag).toBe('1.0.0')
+    expect(result.message).toBe('Tagged version')
+    expect(result.location).toBe('https://dev.shopify.com/dashboard/5/apps/123/versions/456')
+    expect(result.appModuleVersions).toEqual([])
+  })
+
+  test('reads the install count by client ID for delete warnings', async () => {
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({app: {installCount: 17}})
+
+    const count = await client.appInstallCount({
+      id: 'gid://shopify/App/123',
+      apiKey: 'client-id-123',
+      organizationId: '5',
+    })
+
+    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({query: AppInstallCount, variables: {clientId: 'client-id-123'}}),
+    )
+    expect(count).toBe(17)
   })
 })
 
@@ -1459,6 +1657,50 @@ describe('AppManagementClient', () => {
       })
     })
 
+    test('separates Dev and deploy signed-upload cache keys for the same app and command run', async () => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      const appId = 'gid://shopify/App/123'
+      const clientId = 'client-id-123'
+      const organizationId = '5'
+      const mockResponse = {
+        appRequestSourceUploadUrl: {sourceUploadUrl: 'https://example.com/upload-url', userErrors: []},
+      }
+      vi.mocked(appManagementRequestDoc)
+        .mockResolvedValueOnce(mockResponse)
+        .mockResolvedValueOnce(mockResponse)
+        .mockResolvedValueOnce(mockResponse)
+
+      const devApp: MinimalAppIdentifiers = {apiKey: appId, id: appId, organizationId}
+      const deployApp: MinimalAppIdentifiers = {apiKey: clientId, id: clientId, organizationId}
+      await expect(getUploadURL(client, devApp)).resolves.toBe('https://example.com/upload-url')
+      await expect(getUploadURL(client, deployApp)).resolves.toBe('https://example.com/upload-url')
+      await expect(getUploadURL(client, devApp)).resolves.toBe('https://example.com/upload-url')
+
+      expect(appManagementRequestDoc).toHaveBeenCalledTimes(3)
+      const requests = vi.mocked(appManagementRequestDoc).mock.calls.map(([request]) => request)
+      for (const request of requests) {
+        expect(request).toEqual(
+          expect.objectContaining({
+            query: CreateAssetUrl,
+            variables: {sourceExtension: 'BR', organizationId: 'gid://shopify/Organization/5'},
+            cacheOptions: {cacheTTL: {minutes: 59}, cacheExtraKey: expect.any(String)},
+          }),
+        )
+      }
+
+      const cacheExtraKeys = requests.map(
+        (request) => (request as {cacheOptions?: {cacheExtraKey?: string}}).cacheOptions?.cacheExtraKey,
+      )
+      const commandRunId = cacheExtraKeys[0]?.replace(`${appId}-`, '')
+      expect(commandRunId).toMatch(/^[\da-f-]{36}$/)
+      expect(cacheExtraKeys).toEqual([
+        `${appId}-${commandRunId}`,
+        `${clientId}-${commandRunId}`,
+        `${appId}-${commandRunId}`,
+      ])
+    })
+
     test('produces different cache keys for different apps in the same organization', async () => {
       // Given
       const client = AppManagementClient.getInstance()
@@ -1499,7 +1741,7 @@ describe('AppManagementClient', () => {
   })
 
   describe('generateSourceScanUploadUrl', () => {
-    test('passes the app ID and byte size, does not cache, and maps the upload response', async () => {
+    test('passes the client ID and byte size, does not cache, and maps the upload response', async () => {
       const client = AppManagementClient.getInstance()
       client.token = () => Promise.resolve('token')
       vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
@@ -1510,7 +1752,7 @@ describe('AppManagementClient', () => {
       })
 
       const result = await client.generateSourceScanUploadUrl({
-        appId: 'gid://shopify/App/1',
+        clientId: 'client-id-1',
         byteSize: 1234,
       })
 
@@ -1519,7 +1761,7 @@ describe('AppManagementClient', () => {
         expect.objectContaining({
           query: RequestSourceScanUploadUrl,
           token: 'token',
-          variables: {appId: 'gid://shopify/App/1', byteSize: 1234},
+          variables: {clientId: 'client-id-1', byteSize: 1234},
         }),
       )
       expect(vi.mocked(appManagementRequestDoc).mock.calls[0]![0]).not.toHaveProperty('cacheOptions')
@@ -1527,7 +1769,7 @@ describe('AppManagementClient', () => {
   })
 
   describe('createSourceScan', () => {
-    test('passes the app ID and source scan URL and maps the accepted result', async () => {
+    test('passes the client ID and source scan URL and maps the accepted result', async () => {
       const client = AppManagementClient.getInstance()
       client.token = () => Promise.resolve('token')
       vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({
@@ -1535,7 +1777,7 @@ describe('AppManagementClient', () => {
       })
 
       const result = await client.createSourceScan({
-        appId: 'gid://shopify/App/1',
+        clientId: 'client-id-1',
         sourceScanUrl: 'https://example.com/source-scan-upload',
       })
 
@@ -1545,7 +1787,7 @@ describe('AppManagementClient', () => {
           query: CreateSourceScan,
           token: 'token',
           variables: {
-            appId: 'gid://shopify/App/1',
+            clientId: 'client-id-1',
             sourceScanUrl: 'https://example.com/source-scan-upload',
           },
         }),

@@ -12,7 +12,7 @@ export async function devClean(options: DevCleanOptions) {
   const client = options.appContextResult.developerPlatformClient
   const remoteApp = options.appContextResult.remoteApp
 
-  const result = await client.devSessionDelete({shopFqdn: options.store.shopDomain, appId: remoteApp.id})
+  const result = await client.devSessionDelete({shopFqdn: options.store.shopDomain, clientId: remoteApp.apiKey})
 
   if (result.devSessionDelete?.userErrors.length) {
     const errors = result.devSessionDelete.userErrors.map((error) => error.message).join('\n')

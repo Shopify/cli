@@ -28,7 +28,7 @@ export async function submitAppSecurityScan(
   let stage: SecuritySubmitError['stage'] = 'upload-url'
   try {
     const uploadResult = await options.developerPlatformClient.generateSourceScanUploadUrl({
-      appId: options.app.id,
+      clientId: options.app.apiKey,
       byteSize: options.payload.bytes.length,
     })
     if (!uploadResult.sourceScanUploadUrl || uploadResult.userErrors.length > 0) {
@@ -50,7 +50,7 @@ export async function submitAppSecurityScan(
 
     stage = 'create'
     const createResult = await options.developerPlatformClient.createSourceScan({
-      appId: options.app.id,
+      clientId: options.app.apiKey,
       sourceScanUrl: uploadResult.sourceScanUploadUrl,
     })
     if (createResult.userErrors.length > 0 || !createResult.accepted) {

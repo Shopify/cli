@@ -189,7 +189,10 @@ describe('submitAppSecurityScan', () => {
 
     await expect(submitAppSecurityScan(input, {upload})).resolves.toEqual({status: 'submitted'})
 
-    expect(generateSourceScanUploadUrl).toHaveBeenCalledWith({appId: app.id, byteSize: input.payload.bytes.length})
+    expect(generateSourceScanUploadUrl).toHaveBeenCalledWith({
+      clientId: app.apiKey,
+      byteSize: input.payload.bytes.length,
+    })
     expect(generateSourceScanUploadUrl.mock.invocationCallOrder[0]).toBeLessThan(upload.mock.invocationCallOrder[0]!)
     expect(upload).toHaveBeenCalledOnce()
     const [url, bytes, uploadOptions] = upload.mock.calls[0]!
@@ -197,7 +200,7 @@ describe('submitAppSecurityScan', () => {
     expect(bytes).toBe(input.payload.bytes)
     expect(uploadOptions).toEqual({artifactName: 'App Security submission', contentType: 'application/json'})
     expect(createSourceScan).toHaveBeenCalledWith({
-      appId: app.id,
+      clientId: app.apiKey,
       sourceScanUrl: 'source-scan-upload-url',
     })
   })

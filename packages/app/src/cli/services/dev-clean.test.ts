@@ -12,7 +12,7 @@ const mockStore = testOrganizationStore({shopDomain})
 const mockOptions = {
   appContextResult: {
     developerPlatformClient: testDeveloperPlatformClient(),
-    remoteApp: {id: 'app-id-1', title: 'Test App', apiKey: 'api-key-1'},
+    remoteApp: {id: 'gid://shopify/App/1', title: 'Test App', apiKey: 'client-id-1'},
   } as unknown as LoadedAppContextOutput,
   store: mockStore,
 }
@@ -26,6 +26,10 @@ describe('devClean', () => {
     await devClean(mockOptions)
 
     // Then
+    expect(mockOptions.appContextResult.developerPlatformClient.devSessionDelete).toHaveBeenCalledWith({
+      clientId: 'client-id-1',
+      shopFqdn: mockStore.shopDomain,
+    })
     expect(renderSuccess).toHaveBeenCalledWith({
       headline: 'Dev preview stopped.',
       body: [

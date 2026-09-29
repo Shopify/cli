@@ -31,7 +31,7 @@ describe('ui', () => {
         processes: [concurrentProcess],
         previewUrl: 'https://lala.cloudflare.io/',
         graphiqlUrl: 'https://lala.cloudflare.io/graphiql',
-        app: {id: '123', developerPlatformClient},
+        app: {apiKey: 'client-id-123', developerPlatformClient},
         abortController,
         shopFqdn: 'mystore.shopify.io',
         devSessionStatusManager,
@@ -57,7 +57,7 @@ describe('ui', () => {
         processes: [concurrentProcess],
         previewUrl: 'https://lala.cloudflare.io/',
         graphiqlUrl: 'https://lala.cloudflare.io/graphiql',
-        app: {id: '123', developerPlatformClient},
+        app: {apiKey: 'client-id-123', developerPlatformClient},
         abortController: new AbortController(),
         shopFqdn: 'mystore.shopify.io',
         devSessionStatusManager,
@@ -84,7 +84,7 @@ describe('ui', () => {
         previewUrl: 'https://lala.cloudflare.io/',
         graphiqlUrl: 'https://lala.cloudflare.io/graphiql',
         app: {
-          id: '123',
+          apiKey: 'client-id-123',
           developerPlatformClient: {
             ...developerPlatformClient,
             devSessionDelete: vi.fn(),
@@ -113,7 +113,7 @@ describe('ui', () => {
     test('calls devSessionDelete when DevSessionUI aborts', async () => {
       vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
       const app = {
-        id: '123',
+        apiKey: 'client-id-123',
         developerPlatformClient: {
           ...developerPlatformClient,
           devSessionDelete: vi.fn(),
@@ -143,7 +143,7 @@ describe('ui', () => {
       await onAbort?.()
 
       expect(app.developerPlatformClient.devSessionDelete).toHaveBeenCalledWith({
-        appId: app.id,
+        clientId: app.apiKey,
         shopFqdn,
       })
     })

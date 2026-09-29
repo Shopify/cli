@@ -1,5 +1,5 @@
-query AppVersionByTag($versionTag: String!) {
-  versionByTag(tag: $versionTag) {
+query AppVersionByTag($clientId: String!, $versionTag: String!) {
+  versionByTag(clientId: $clientId, tag: $versionTag) {
     ...VersionInfo
   }
 }

@@ -37,7 +37,7 @@ describe('setupDevSessionProcess', () => {
       storeFqdn: 'test.myshopify.com',
       url: 'https://test.dev',
       organizationId: 'org123',
-      appId: 'app123',
+      appId: 'gid://shopify/App/123',
       appWatcher: {} as AppEventWatcher,
       appPreviewURL: 'https://test.preview.url',
       devSessionStatusManager: new DevSessionStatusManager(),
@@ -93,7 +93,7 @@ describe('pushUpdatesForDevSession', () => {
       appWatcher,
       storeFqdn: 'test.myshopify.com',
       url: 'https://test.dev',
-      appId: 'app123',
+      appId: 'gid://shopify/App/123',
       organizationId: 'org123',
       appPreviewURL: 'https://test.preview.url',
       devSessionStatusManager,
@@ -443,6 +443,8 @@ describe('pushUpdatesForDevSession', () => {
 
   test('manifest sent in update payload only includes affected extensions', async () => {
     // Given
+    options.apiKey = 'client-id-123'
+    options.organizationId = '5'
     vi.mocked(readdir).mockResolvedValue(['assets', 'assets/updated-extension'])
     vi.mocked(getUploadURL).mockResolvedValue('https://gcs.url')
 
@@ -466,7 +468,7 @@ describe('pushUpdatesForDevSession', () => {
     // Then
     expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledWith({
       shopFqdn: 'test.myshopify.com',
-      appId: 'app123',
+      clientId: 'client-id-123',
       // Assets URL is empty because the affected extension has no assets
       assetsUrl: undefined,
       manifest: {
@@ -594,7 +596,7 @@ describe('pushUpdatesForDevSession', () => {
     // Then
     expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledWith({
       shopFqdn: 'test.myshopify.com',
-      appId: 'app123',
+      clientId: 'test-api-key',
       assetsUrl: 'https://gcs.url',
       manifest: expect.any(Object),
       inheritedModuleUids: [],
@@ -604,6 +606,8 @@ describe('pushUpdatesForDevSession', () => {
 
   test('assetsURL is always generated for create, even if there are no assets', async () => {
     // Given
+    options.apiKey = 'client-id-123'
+    options.organizationId = '5'
     vi.mocked(formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()} as any)
     vi.mocked(getUploadURL).mockResolvedValue('https://gcs.url')
 
@@ -615,10 +619,15 @@ describe('pushUpdatesForDevSession', () => {
     // Then
     expect(developerPlatformClient.devSessionCreate).toHaveBeenCalledWith({
       shopFqdn: 'test.myshopify.com',
-      appId: 'app123',
+      clientId: 'client-id-123',
       assetsUrl: 'https://gcs.url',
       websocketUrl: 'wss://test.dev/extensions',
       unsafeValidation: false,
+    })
+    expect(getUploadURL).toHaveBeenCalledWith(developerPlatformClient, {
+      apiKey: 'gid://shopify/App/123',
+      organizationId: '5',
+      id: 'gid://shopify/App/123',
     })
   })
 

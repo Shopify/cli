@@ -5,7 +5,7 @@ import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
 export type DevSessionCreateMutationVariables = Types.Exact<{
-  appId: Types.Scalars['String']['input']
+  clientId: Types.Scalars['String']['input']
   assetsUrl: Types.Scalars['String']['input']
   websocketUrl?: Types.InputMaybe<Types.Scalars['String']['input']>
   unsafeValidation?: Types.InputMaybe<Types.Scalars['Boolean']['input']>
@@ -34,7 +34,7 @@ export const DevSessionCreate = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: {kind: 'Variable', name: {kind: 'Name', value: 'appId'}},
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'clientId'}},
           type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}},
         },
         {
@@ -62,8 +62,8 @@ export const DevSessionCreate = {
             arguments: [
               {
                 kind: 'Argument',
-                name: {kind: 'Name', value: 'appId'},
-                value: {kind: 'Variable', name: {kind: 'Name', value: 'appId'}},
+                name: {kind: 'Name', value: 'clientId'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'clientId'}},
               },
               {
                 kind: 'Argument',
