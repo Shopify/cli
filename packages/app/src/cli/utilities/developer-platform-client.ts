@@ -167,6 +167,15 @@ export interface AppLogsError {
 
 export type AppLogsResponse = AppLogsSuccess | AppLogsError
 
+export interface ChannelSpecExportBody {
+  [key: string]: unknown
+}
+
+/** ok is only true for a 2xx response with a JSON object body */
+export type ChannelSpecExportResponse =
+  | {ok: true; status: number; body: ChannelSpecExportBody}
+  | {ok: false; status: number; body: ChannelSpecExportBody | undefined}
+
 export interface UserError {
   field?: string[] | null
   message: string
@@ -246,6 +255,7 @@ export interface DeveloperPlatformClient {
     organizationId: string,
   ) => Promise<AppLogsSubscribeMutation>
   appLogs: (options: AppLogsOptions, organizationId: string) => Promise<AppLogsResponse>
+  channelSpecExport: (app: MinimalAppIdentifiers) => Promise<ChannelSpecExportResponse>
   appDeepLink: (app: MinimalAppIdentifiers) => Promise<string>
   devSessionCreate: (input: DevSessionCreateOptions) => Promise<DevSessionCreateMutation>
   devSessionUpdate: (input: DevSessionUpdateOptions) => Promise<DevSessionUpdateMutation>
