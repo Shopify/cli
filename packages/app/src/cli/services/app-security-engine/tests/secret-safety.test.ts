@@ -87,14 +87,12 @@ const makeApp = (files: Record<string, string>): string => {
   return dir
 }
 
-// Directories removed after each test, so a failing assertion cannot leak them.
 const temporaryDirectories: string[] = []
 const removeAfterTest = (directory: string): string => {
   temporaryDirectories.push(directory)
   return directory
 }
 
-// Keep git results independent of the developer's global excludes and any enclosing repository.
 let restoreGitConfig: (() => void) | undefined
 beforeEach(() => {
   restoreGitConfig = isolateGitConfig()
@@ -270,9 +268,6 @@ describe('git status drives severity, not .gitignore text', () => {
   })
 
   test('reports a secret ignored only by an enclosing repository that does not own the app', async () => {
-    // The app folder is gitignored by a parent repository (a monorepo scratch area, a dotfiles
-    // repo ignoring `*`). That repository's rules do not protect the app, so the file is scanned
-    // and the finding must say so rather than claim the ignore status is unconfirmed.
     const repository = removeAfterTest(mkdtempSync(join(tmpdir(), 'app-security-enclosing-')))
     git(repository, ['init', '-q', '.'])
     writeFileSync(join(repository, '.gitignore'), 'apps/\n')
@@ -295,9 +290,6 @@ describe('git status drives severity, not .gitignore text', () => {
   })
 
   test('reports a secret inside a nested repository that the app repository ignores by name', async () => {
-    // The app's own `.env` rule matches `inner/.env`, but `inner/` is a separate repository, so the
-    // app repository never lists the file as ignored and discovery scans it. The finding names the
-    // nested repository only after confirming the two directories have different top levels.
     const dir = removeAfterTest(makeApp({'.gitignore': '.env\n'}))
     git(dir, ['init', '-q', '.'])
     const inner = join(dir, 'inner')
@@ -320,9 +312,6 @@ describe('git status drives severity, not .gitignore text', () => {
   })
 
   test('says the ignored-file listing failed when git ignores a file that was still scanned', async () => {
-    // Discovery falls back to scanning everything when git cannot list ignored paths, so a file git
-    // ignores can reach the rule. The finding must say why it was scanned rather than blame a
-    // foreign repository.
     const dir = removeAfterTest(makeApp({'.gitignore': '.env\n', '.env': trackedEnvSecret()}))
     git(dir, ['init', '-q', '.'])
     const file = {path: '.env', absolutePath: join(dir, '.env'), ext: '', content: trackedEnvSecret()}
@@ -339,9 +328,7 @@ describe('git status drives severity, not .gitignore text', () => {
   })
 
   test('still scans a gitignored secret conservatively when git cannot list the ignored files', async () => {
-    // End to end: the listing fails (a truncated index leaves `rev-parse` working but makes `ls-files`
-    // exit with a fatal error), so discovery applies no git exclusions and the ignored .env is hashed
-    // and reported rather than silently trusted.
+    // A truncated index makes `ls-files` fail while `rev-parse` still works.
     const dir = removeAfterTest(makeApp({'.gitignore': '.env\n', '.env': trackedEnvSecret()}))
     git(dir, ['init', '-q', '.'])
     git(dir, ['add', '.gitignore', 'shopify.app.toml'])
@@ -363,9 +350,6 @@ describe('git status drives severity, not .gitignore text', () => {
   })
 
   test('says why is unknown when an ignored file has the same top level as the app', async () => {
-    // The listing succeeded and the file is not in a nested repository, so nothing explains why git
-    // ignores a file discovery still produced. Git DID confirm the file is untracked and ignored,
-    // so the finding must say the cause is unknown rather than call the ignore status unconfirmed.
     const dir = removeAfterTest(makeApp({'.gitignore': '.env\n', '.env': trackedEnvSecret()}))
     git(dir, ['init', '-q', '.'])
     const file = {path: '.env', absolutePath: join(dir, '.env'), ext: '', content: trackedEnvSecret()}

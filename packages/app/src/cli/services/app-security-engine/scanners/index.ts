@@ -587,7 +587,7 @@ export async function scan(startPath?: string, configFileName?: string): Promise
   const selectedFileName = getAppConfigurationFileName(configFileName)
   const appToml = loadAppToml(joinPath(appRoot, selectedFileName), appRoot)
   const appTomls = appToml ? [appToml] : []
-  // Path rules govern repository discovery only; the selected app configuration above is always loaded.
+  // The selected app configuration is loaded even if gitignored: path rules only apply to discovery.
   const gitIgnoreListing = await listGitIgnoredPaths(appRoot)
   const pathRules = buildPathRules({
     gitIgnoredPaths: gitIgnoreListing.status === 'listed' ? gitIgnoreListing.paths : [],

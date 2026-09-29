@@ -15,7 +15,6 @@ import {dirname, join} from 'node:path'
 
 afterEach(() => resetSkippedFiles())
 
-/** The defaults alone, as the scan's rules are when git reported no ignored paths. */
 const NO_GIT_EXCLUSIONS = buildPathRules({gitIgnoredPaths: []})
 
 async function writeFiles(root: string, files: Record<string, string>): Promise<void> {
@@ -75,8 +74,7 @@ describe('dependency automation discovery', () => {
     })
 
     test('excludes a configuration file inside a directory the rules exclude', async () => {
-      // Git collapses a fully ignored directory to `.github/`, which never names the file itself, so the
-      // decision must consider the file's ancestors.
+      // Git lists `.github/`, never the file, so the ancestors must be checked.
       await inTemporaryDirectory(async (root) => {
         await writeFiles(root, {'.github/dependabot.yml': 'version: 2\nupdates: []\n'})
         const rules = buildPathRules({gitIgnoredPaths: ['.github/']})
@@ -95,8 +93,7 @@ describe('dependency automation discovery', () => {
     })
 
     test('applies the default patterns as well as the git literals', async () => {
-      // No shipped default matches an allowlisted path (`.git` does not match `.github`), so a custom
-      // default proves the phase is consulted at all.
+      // No shipped default matches an allowlisted path, hence a custom one.
       await inTemporaryDirectory(async (root) => {
         await writeFiles(root, {'.github/dependabot.yml': 'version: 2\nupdates: []\n'})
         expect(findDependencyAutomationInputs(root, {defaults: ['.github/'], gitIgnoredPaths: []})).toEqual({files: []})

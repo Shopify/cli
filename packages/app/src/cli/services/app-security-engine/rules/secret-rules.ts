@@ -146,39 +146,16 @@ function isEnvFile(path: string): boolean {
   return envFileBasename(path) !== undefined
 }
 
-/**
- * Why a file git reports as untracked-and-ignored was still scanned. Discovery
- * drops the paths git lists as ignored, so such a file only reaches the rule
- * when the listing did not cover it. `unknown` means nothing verified explains
- * it.
- */
+/** Why a file git reports as untracked and ignored still reached this rule. */
 type IgnoredFileScanReason = 'enclosing-repository' | 'nested-repository' | 'listing-failed' | 'unknown'
 
-/**
- * The top level of the repository containing `cwd`, or `undefined` when git
- * cannot say. A missing git binary resolves with exit code 0 and empty output,
- * so only a printed path counts as known.
- */
+// A missing git binary resolves with exit code 0 and empty output.
 async function gitTopLevel(cwd: string): Promise<string | undefined> {
   const result = await runGit(cwd, ['rev-parse', '--show-toplevel'])
   return result.exitCode === 0 && result.out !== '' ? result.out : undefined
 }
 
-/**
- * Work out, from the listing outcome and (when needed) one more git probe,
- * why an ignored file was scanned. Only claims what was verified:
- *
- * - `app-root-ignored`: the enclosing repository ignores the app folder, so
- *   discovery ignored its rules on purpose.
- * - `listed`: the realistic cause is a nested repository, which is confirmed by
- *   comparing `git rev-parse --show-toplevel` in the file's directory and in
- *   the app root; the comparison is returned as extra evidence.
- * - `failed`: discovery scanned everything because git could not list ignored files.
- * - `not-a-repository`: git could not have reported the file as ignored.
- *
- * `appTopLevel` resolves the app root's top level; the caller shares one
- * result across every file it asks about.
- */
+/** When git listed ignored paths, a nested repository is confirmed by comparing top levels. */
 async function ignoredFileScanReason(
   appRoot: string,
   path: string,
@@ -237,8 +214,6 @@ function committedSecretFileIssue(
     message = `${file.path} is ignored by git, but App Security could not list the ignored files for this app, so it was scanned.`
     fixDescription = `Confirm the repository is healthy with 'git status' and rotate any exposed secrets`
   } else if (untrackedAndIgnored) {
-    // Git confirmed the file is untracked and ignored, so the ignore status is not in doubt; only
-    // the reason discovery still produced the file is.
     title = `${kind} is ignored by git but was scanned`
     message = `${file.path} is ignored by git but was still scanned; App Security couldn't determine why. Confirm the rule ignoring it belongs to the repository that owns this app before treating this as clean.`
     fixDescription = `Confirm with 'git check-ignore -v ${file.path}' that this app's repository ignores it, and rotate any exposed secrets`
@@ -264,12 +239,7 @@ function committedSecretFileIssue(
   }
 }
 
-/**
- * Rule 8: COMMITTED_SECRET (-50, high)
- *
- * `gitIgnoreListing` is how discovery's request for git's ignored paths went;
- * it decides what a finding may claim about a file git reports as ignored.
- */
+/** Rule 8: COMMITTED_SECRET (-50, high) */
 export async function scanCommittedSecrets(
   secretEvidenceFiles: SourceFile[],
   appRoot: string,
@@ -277,8 +247,7 @@ export async function scanCommittedSecrets(
 ): Promise<Issue[]> {
   const issues: Issue[] = []
 
-  // The app root's top level is the same for every file: resolve it once, and only when a file
-  // git reports as untracked-and-ignored needs it.
+  // Resolved lazily, once: most scans never need it.
   let appTopLevel: Promise<string | undefined> | undefined
   const appRootTopLevel = () => {
     appTopLevel ??= gitTopLevel(appRoot)

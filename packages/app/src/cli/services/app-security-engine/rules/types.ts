@@ -57,6 +57,6 @@ export interface ScanContext {
   detection: ProjectDetection
   /** Path-only inventory, including unsupported source candidates. */
   sourceCandidates: SourceCandidate[]
-  /** How asking git for the app's ignored paths went; discovery excluded those paths only when `listed`. */
+  /** Outcome of listing git's ignored paths. */
   gitIgnoreListing: GitIgnoreListing['status']
 }

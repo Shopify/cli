@@ -21,7 +21,6 @@ import type {ScanResult} from '../types.js'
 
 const temporaryDirectories: string[] = []
 const appConfiguration = 'name = "Discovery safety"\napplication_url = "https://example.com"\n'
-/** The rules a scan uses when git reports no ignored paths. */
 const DEFAULT_RULES = buildPathRules({gitIgnoredPaths: []})
 
 afterEach(async () => {
@@ -67,7 +66,6 @@ function inspectedManifestPaths(result: ScanResult): string[] {
   return execution?.inspected_files.filter((path) => path.endsWith('package.json')) ?? []
 }
 
-/** Rules exactly as `scan()` builds them, so direct finder tests see the same file list. */
 async function scanPathRules(appRoot: string): Promise<PathRules> {
   const listing = await listGitIgnoredPaths(appRoot)
   return buildPathRules({gitIgnoredPaths: listing.status === 'listed' ? listing.paths : []})
@@ -121,7 +119,6 @@ describe.sequential('app root discovery', () => {
 })
 
 describe('repository discovery exclusions', () => {
-  // scan() asks git for ignored paths, so keep results independent of the developer's git configuration.
   let restoreGitConfig: (() => void) | undefined
   beforeEach(() => {
     restoreGitConfig = isolateGitConfig()
@@ -291,7 +288,6 @@ describe('repository discovery exclusions', () => {
     const root = await makeDirectory()
     await writeFiles(root, {
       'shopify.app.toml': appConfiguration,
-      // A root-level extension configuration owns every source file in the repository.
       'shopify.extension.toml': 'type = "theme"\n',
       'index.ts': 'export const root = true',
       'extensions/alpha/shopify.extension.toml': 'type = "ui_extension"\n',
@@ -444,8 +440,6 @@ describe('gitignore-driven exclusions', () => {
   })
 
   test('treats gitignored paths literally even when their names are gitignore-significant', async () => {
-    // Glob brackets, comment `#`, negation `!` and whitespace all mean something in .gitignore
-    // syntax; the names are also legal on Windows, unlike `*` or `?`.
     const root = await makeRepository({
       'shopify.app.toml': appConfiguration,
       '.gitignore': '\\[id\\].ts\n\\#hash.ts\n\\!bang.ts\nsp ace.ts\n',
@@ -497,8 +491,7 @@ describe('gitignore-driven exclusions', () => {
   })
 
   test('scans the whole app when the enclosing repository ignores the app folder but force-tracks a file in it', async () => {
-    // Without the force-tracked README git would collapse the app to `./`; with it, git lists each
-    // untracked file individually, and treating those as exclusions would empty the scan.
+    // A force-tracked file stops git collapsing the app to `./`; it lists each file instead.
     const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
     const repository = await makeRepository({
       '.gitignore': 'apps/web/\n',
