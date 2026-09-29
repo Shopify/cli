@@ -41,6 +41,7 @@ interface SecurityAlert {
 
 const SEVERITY_LABEL: Record<Severity, string> = {high: 'High', medium: 'Medium', low: 'Low'}
 const SAMPLE_FILE_COUNT = 3
+const SAMPLE_COVERAGE_GAP_COUNT = 8
 
 export function buildSecurityAlert(input: SecurityReportInput): SecurityAlert {
   const type = securityAlertType(input)
@@ -152,8 +153,10 @@ function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]
 
   if (input.scan.scan.coverage_gaps.length > 0) {
     const gaps = input.scan.scan.coverage_gaps
-    const items: TokenItem<InlineToken>[] = gaps.slice(0, 8).map((gap) => gap.message)
-    if (gaps.length > 8) items.push({info: `${gaps.length - 8} more coverage gaps`})
+    const items: TokenItem<InlineToken>[] = gaps.slice(0, SAMPLE_COVERAGE_GAP_COUNT).map((gap) => gap.message)
+    if (gaps.length > SAMPLE_COVERAGE_GAP_COUNT) {
+      items.push({info: `${gaps.length - SAMPLE_COVERAGE_GAP_COUNT} more coverage gaps`})
+    }
     sections.push({title: 'Coverage gaps', body: {list: {items}}})
   }
 
