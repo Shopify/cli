@@ -81,6 +81,7 @@ export interface Asset extends ResourceURL {
 interface Metafield {
   namespace: string
   key: string
+  ownerType?: string
 }
 
 export interface ExtensionPointIntercept {
@@ -157,6 +158,7 @@ export interface ExtensionPayload {
   authenticatedRedirectStartUrl?: string
   authenticatedRedirectRedirectUrls?: string[]
   localization?: FlattenedLocalization | Localization | null
+  metafields?: Metafield[] | null
   settings?: {
     fields?: {
       type: string

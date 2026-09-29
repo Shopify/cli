@@ -215,7 +215,9 @@ export const placeholderAppConfiguration: AppConfiguration = {
 
 export async function testUIExtension(
   uiExtension: Omit<Partial<ExtensionInstance>, 'configuration'> & {
-    configuration?: Partial<BaseConfigType> & {path?: string} & {metafields?: {namespace: string; key: string}[]}
+    configuration?: Partial<BaseConfigType> & {path?: string} & {
+      metafields?: {namespace: string; key: string; owner_type?: string}[]
+    }
   } = {},
 ): Promise<ExtensionInstance> {
   const directory = uiExtension?.directory ?? '/tmp/project/extensions/test-ui-extension'

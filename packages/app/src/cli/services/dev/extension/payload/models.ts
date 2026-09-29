@@ -32,7 +32,16 @@ interface Asset {
   lastUpdated: number
 }
 
-export interface DevNewExtensionPointSchema extends Omit<NewExtensionPointSchemaType, 'intents' | 'assets'> {
+export interface DevMetafield {
+  namespace: string
+  key: string
+  ownerType?: string
+}
+
+export interface DevNewExtensionPointSchema extends Omit<
+  NewExtensionPointSchemaType,
+  'intents' | 'assets' | 'metafields'
+> {
   assets: {
     [name: string]: Asset
   }
@@ -43,6 +52,7 @@ export interface DevNewExtensionPointSchema extends Omit<NewExtensionPointSchema
     url: string
   }
   build_manifest?: BuildManifest
+  metafields?: DevMetafield[]
   intents?: {
     type: string
     action: string
@@ -81,7 +91,7 @@ export interface UIExtensionPayload {
   localization: Localization | null
   authenticatedRedirectStartUrl?: string
   authenticatedRedirectRedirectUrls?: string[]
-  metafields?: {namespace: string; key: string}[] | null
+  metafields?: DevMetafield[] | null
   type: string
   externalType: string
   apiVersion?: ApiVersionSchemaType
