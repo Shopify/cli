@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-imports -- detector coverage uses real temporary repositories */
-import {buildReviewPack} from '../checks/index.js'
+import {buildReviewPack, searchBoundaryFiles} from '../checks/index.js'
 import {assertRegistryInvariants, getRegistry} from '../registry/index.js'
 import {DETERMINISTIC_CHECKS, scan} from '../scanners/index.js'
 import {compileTrace, sha256, validateTrace} from '../trace/index.js'
@@ -298,6 +298,24 @@ describe('framework and surface detection', () => {
       }),
     )
     expect(unsupportedStatuses).toEqual(Array.from({length: 4}, () => 'unsupported_framework'))
+  })
+
+  test('includes server template formats in the agent review boundary', async () => {
+    const templateFiles = [
+      'views/index.ejs',
+      'views/index.erb',
+      'views/index.hbs',
+      'views/index.jinja2',
+      'views/index.twig',
+    ]
+    const result = await scan(
+      await app({
+        'shopify.app.toml': appConfig(),
+        ...Object.fromEntries(templateFiles.map((path) => [path, '<p>{{ user_input }}</p>'])),
+      }),
+    )
+
+    expect(searchBoundaryFiles(result)).toEqual(expect.arrayContaining(templateFiles))
   })
 
   test('makes only affected checks unresolved when readable and rejected inputs coexist', async () => {
