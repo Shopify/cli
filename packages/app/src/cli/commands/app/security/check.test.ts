@@ -4,6 +4,7 @@ import securityCheck from '../../../services/security-check.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {resolvePath} from '@shopify/cli-kit/node/path'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/security-check.js')
@@ -34,7 +35,43 @@ describe('app security check command', () => {
       skipInstructions: true,
       findingsPath: undefined,
       clean: false,
+      ignorePatterns: [],
     })
+  })
+
+  test('forwards repeated --ignore patterns in command-line order', async () => {
+    await SecurityCheck.run(
+      ['--ignore', 'generated/', '--ignore', '!build/', '--ignore', 'a b/', '--skip-instructions'],
+      import.meta.url,
+    )
+
+    expect(securityCheck).toHaveBeenCalledWith(
+      expect.objectContaining({ignorePatterns: ['generated/', '!build/', 'a b/'], skipInstructions: true}),
+    )
+  })
+
+  test.each([
+    ['#generated/', 'comment'],
+    ['', 'empty'],
+    ['!', 'nothing after'],
+    ['build\\', 'ends with a backslash'],
+    ['build\\\\\\', 'ends with a backslash'],
+    ['src/[id/x.ts', "can't be read as a .gitignore pattern"],
+    ['build/\ngenerated/', 'single line'],
+  ])('rejects the unusable --ignore pattern %j', async (value, expectedMessage) => {
+    const outputMock = mockAndCaptureOutput()
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    try {
+      await expect(SecurityCheck.run(['--ignore', value, '--skip-instructions'], import.meta.url)).rejects.toThrow(
+        'process.exit unexpectedly called with "1"',
+      )
+      expect(outputMock.error()).toContain(expectedMessage)
+      expect(securityCheck).not.toHaveBeenCalled()
+    } finally {
+      consoleErrorSpy.mockRestore()
+      outputMock.clear()
+    }
   })
 
   test('forwards --yes without requiring an app configuration', async () => {
@@ -50,6 +87,7 @@ describe('app security check command', () => {
       skipInstructions: false,
       findingsPath: undefined,
       clean: false,
+      ignorePatterns: [],
     })
   })
 
@@ -106,6 +144,19 @@ describe('app security check command', () => {
     expect(SecurityCheck.descriptionWithMarkdown).toContain('copying is the default')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('shopify app security instructions')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('Pass `--clean` to discard that work and start over')
+  })
+
+  test('documents --ignore as ordered .gitignore patterns that follow-up commands repeat', () => {
+    expect(SecurityCheck.flags.ignore.multiple).toBe(true)
+    expect(SecurityCheck.flags.ignore.description).toBe(
+      'Ignore files that match this .gitignore pattern, relative to the app directory. Start the pattern with ! to include matching files again. Repeat the flag to add patterns; later patterns take precedence.',
+    )
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('`--ignore`')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('relative to the app directory')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('later patterns take precedence')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain("--ignore '!build/'")
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('single quotes in POSIX shells and PowerShell')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('`--findings`')
   })
 
   test('allows --yes in JSON mode while preserving non-interactive output behavior', async () => {

@@ -44,13 +44,15 @@ function markdownPath(value: string): string {
 
 function instructionPaths(
   directory: string,
-  commands?: AppSecurityCommands,
-  configName?: string,
+  commands: AppSecurityCommands | undefined,
+  configName: string | undefined,
+  ignorePatterns: ReadonlyArray<string>,
 ): AppSecurityInstructionPaths {
   const appRoot = resolveAppSecurityRoot(resolvePath(directory))
   const {artifactDirectory, reviewPath, tracePath, findingsPath} = appSecurityArtifactPaths(appRoot)
+  // Commands handed over by `security check` already carry its --config values and --ignore patterns.
   const resolvedCommands =
-    commands ?? resolveAppSecurityCommands(appRoot, requireSecurityConfigFileName(appRoot, configName))
+    commands ?? resolveAppSecurityCommands(appRoot, requireSecurityConfigFileName(appRoot, configName), ignorePatterns)
   return {
     appRoot,
     commands: resolvedCommands,
@@ -93,6 +95,8 @@ interface AppSecurityInstructionsOptions {
   scanComplete?: boolean
   commands?: AppSecurityCommands
   configName?: string
+  /** `--ignore` patterns to repeat in the generated commands when `commands` are not supplied. */
+  ignorePatterns?: ReadonlyArray<string>
 }
 
 interface AppSecurityInstructionsDependencies {
@@ -116,8 +120,9 @@ export function appSecurityInstructions(options: {
   scanComplete: boolean
   commands?: AppSecurityCommands
   configName?: string
+  ignorePatterns?: ReadonlyArray<string>
 }): string {
-  const paths = instructionPaths(options.directory, options.commands, options.configName)
+  const paths = instructionPaths(options.directory, options.commands, options.configName, options.ignorePatterns ?? [])
   const scanContext = options.scanComplete ? completedScanInstructions(paths) : initialScanInstructions(paths)
   return getAgentInstructions()
     .replace(SCAN_CONTEXT_PLACEHOLDER, scanContext)
@@ -139,6 +144,7 @@ export default async function deliverAppSecurityInstructions(
     scanComplete: options.scanComplete ?? false,
     commands: options.commands,
     configName: options.configName,
+    ignorePatterns: options.ignorePatterns,
   })
 
   if (options.copy) {

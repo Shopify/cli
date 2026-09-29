@@ -1,9 +1,11 @@
 import SecurityInstructions from './instructions.js'
+import SecurityCheck from './check.js'
 import {appFlags} from '../../../flags.js'
 import deliverAppSecurityInstructions from '../../../services/app-security-instructions.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/app-security-instructions.js')
@@ -26,7 +28,37 @@ describe('app security instructions command', () => {
       configName: undefined,
       copy: false,
       writePath: undefined,
+      ignorePatterns: [],
     })
+  })
+
+  test('forwards repeated --ignore patterns in command-line order', async () => {
+    await SecurityInstructions.run(['--ignore', 'generated/', '--ignore', '!build/'], import.meta.url)
+
+    expect(deliverAppSecurityInstructions).toHaveBeenCalledWith(
+      expect.objectContaining({ignorePatterns: ['generated/', '!build/']}),
+    )
+  })
+
+  test('rejects an unusable --ignore pattern', async () => {
+    const outputMock = mockAndCaptureOutput()
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    try {
+      await expect(SecurityInstructions.run(['--ignore', '#generated/'], import.meta.url)).rejects.toThrow(
+        'process.exit unexpectedly called with "1"',
+      )
+      expect(outputMock.error()).toContain('comment')
+      expect(deliverAppSecurityInstructions).not.toHaveBeenCalled()
+    } finally {
+      consoleErrorSpy.mockRestore()
+      outputMock.clear()
+    }
+  })
+
+  test('shares the --ignore flag definition with app security check', () => {
+    expect(SecurityInstructions.flags.ignore).toBe(SecurityCheck.flags.ignore)
+    expect(SecurityInstructions.descriptionWithMarkdown).toContain('`--ignore`')
   })
 
   test('forwards --path and --copy', async () => {
@@ -37,6 +69,7 @@ describe('app security instructions command', () => {
       configName: undefined,
       copy: true,
       writePath: undefined,
+      ignorePatterns: [],
     })
   })
 
@@ -48,6 +81,7 @@ describe('app security instructions command', () => {
       configName: undefined,
       copy: false,
       writePath: resolvePath('./instructions.md'),
+      ignorePatterns: [],
     })
   })
 

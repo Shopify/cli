@@ -3660,8 +3660,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Runs Shopify App Security locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. A new scan stops when local agent findings or a compiled trace already exist. Pass `--clean` to discard that work and start over. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects only that configuration.\n\nIn interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app security instructions` to print, copy, or write them later.",
-      "descriptionWithMarkdown": "Runs Shopify App Security locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. A new scan stops when local agent findings or a compiled trace already exist. Pass `--clean` to discard that work and start over. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects only that configuration.\n\nIn interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app security instructions` to print, copy, or write them later.",
+      "description": "Runs Shopify App Security locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. A new scan stops when local agent findings or a compiled trace already exist. Pass `--clean` to discard that work and start over. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects only that configuration.\n\nUse `--ignore` to change which files are scanned. Each value is one `.gitignore` pattern relative to the app directory; prefix it with `!` to include a file again when it is ignored by default or by `.gitignore`. Repeat the flag to add patterns; later patterns take precedence. A file can't be included again while its parent folder is ignored, so include the folder again instead, for example `--ignore '!build/'`. Quote each value so your shell doesn't expand `!` or `*` (single quotes in POSIX shells and PowerShell). The generated follow-up commands repeat the patterns, and `--findings` must use the same patterns as the scan it validates.\n\nIn interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app security instructions` to print, copy, or write them later.",
+      "descriptionWithMarkdown": "Runs Shopify App Security locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. A new scan stops when local agent findings or a compiled trace already exist. Pass `--clean` to discard that work and start over. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects only that configuration.\n\nUse `--ignore` to change which files are scanned. Each value is one `.gitignore` pattern relative to the app directory; prefix it with `!` to include a file again when it is ignored by default or by `.gitignore`. Repeat the flag to add patterns; later patterns take precedence. A file can't be included again while its parent folder is ignored, so include the folder again instead, for example `--ignore '!build/'`. Quote each value so your shell doesn't expand `!` or `*` (single quotes in POSIX shells and PowerShell). The generated follow-up commands repeat the patterns, and `--findings` must use the same patterns as the scan it validates.\n\nIn interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app security instructions` to print, copy, or write them later.",
       "enableJsonFlag": false,
       "flags": {
         "blocking": {
@@ -3707,6 +3707,13 @@
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "findings",
+          "type": "option"
+        },
+        "ignore": {
+          "description": "Ignore files that match this .gitignore pattern, relative to the app directory. Start the pattern with ! to include matching files again. Repeat the flag to add patterns; later patterns take precedence.",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "name": "ignore",
           "type": "option"
         },
         "json": {
@@ -3788,8 +3795,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Prints the complete workflow that a coding agent should follow to review App Security results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's generated review pack is trusted as workflow input.",
-      "descriptionWithMarkdown": "Prints the complete workflow that a coding agent should follow to review App Security results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's generated review pack is trusted as workflow input.",
+      "description": "Prints the complete workflow that a coding agent should follow to review App Security results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's generated review pack is trusted as workflow input. `--config` values and `--ignore` patterns are included in the generated commands.",
+      "descriptionWithMarkdown": "Prints the complete workflow that a coding agent should follow to review App Security results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's generated review pack is trusted as workflow input. `--config` values and `--ignore` patterns are included in the generated commands.",
       "enableJsonFlag": false,
       "flags": {
         "config": {
@@ -3811,6 +3818,13 @@
           ],
           "name": "copy",
           "type": "boolean"
+        },
+        "ignore": {
+          "description": "Ignore files that match this .gitignore pattern, relative to the app directory. Start the pattern with ! to include matching files again. Repeat the flag to add patterns; later patterns take precedence.",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "name": "ignore",
+          "type": "option"
         },
         "json-schema": {
           "allowNo": false,

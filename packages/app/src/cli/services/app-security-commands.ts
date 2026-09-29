@@ -3,9 +3,16 @@ import {getAppConfigurationShorthand} from '../models/app/config-file-naming.js'
 
 export type AppSecurityShell = 'posix' | 'cmd' | 'powershell'
 
+/**
+ * One command-line argument. A string is command syntax (`app`, `--clean`) and is
+ * printed bare. A flag with a value is printed with the value quoted, because a
+ * value is user input: an app path, a configuration name, or an --ignore pattern.
+ */
+export type AppSecurityArgument = string | {flag: string; value: string}
+
 export interface AppSecurityCommand {
   command: string
-  args: string[]
+  args: AppSecurityArgument[]
 }
 
 export interface AppSecurityCommands {
@@ -14,19 +21,35 @@ export interface AppSecurityCommands {
   clean: AppSecurityCommand
 }
 
-export function resolveAppSecurityCommands(appRoot: string, configFileName?: string): AppSecurityCommands {
+/**
+ * Build the scan, compile, and clean commands shown to users and coding agents.
+ * `ignorePatterns` are repeated on every command, in order, because a compile
+ * must discover the same files as the scan whose findings it validates.
+ */
+export function resolveAppSecurityCommands(
+  appRoot: string,
+  configFileName?: string,
+  ignorePatterns: ReadonlyArray<string> = [],
+): AppSecurityCommands {
   const {findingsPath} = appSecurityArtifactPaths(appRoot)
   const configFlag = configFileName ? getAppConfigurationShorthand(configFileName) : undefined
   const scan: AppSecurityCommand = {
     command: 'shopify',
-    args: ['app', 'security', 'check', '--path', appRoot, ...(configFlag ? ['--config', configFlag] : [])],
+    args: [
+      'app',
+      'security',
+      'check',
+      {flag: '--path', value: appRoot},
+      ...(configFlag ? [{flag: '--config', value: configFlag}] : []),
+      ...ignorePatterns.map((ignorePattern) => ({flag: '--ignore', value: ignorePattern})),
+    ],
   }
 
   return {
     scan,
     compile: {
       command: scan.command,
-      args: [...scan.args, '--findings', findingsPath],
+      args: [...scan.args, {flag: '--findings', value: findingsPath}],
     },
     clean: {
       command: scan.command,
@@ -79,15 +102,19 @@ function quoteCmdSegment(part: string): string {
   return `"${escapedQuotes}${trailingBackslashes}"`
 }
 
+/**
+ * Render a command for a shell. Quoting follows the argument's type, not what
+ * it looks like: every flag value is quoted and all command syntax stays bare.
+ * An --ignore pattern such as `-*.log`, `-tmp/` or `check` would otherwise be
+ * left bare, where a shell could glob-expand it or a reader could mistake it
+ * for a flag or command word.
+ */
 export function formatAppSecurityCommand(
   action: AppSecurityCommand,
   shell: AppSecurityShell = shellForPlatform(),
 ): string {
-  return [action.command, ...action.args]
-    .map((argument, index) => {
-      const isCommandSyntax =
-        index === 0 || argument === 'app' || argument === 'security' || argument === 'check' || argument.startsWith('-')
-      return isCommandSyntax ? argument : quoteShellArgument(argument, shell)
-    })
-    .join(' ')
+  const words = action.args.map((argument) =>
+    typeof argument === 'string' ? argument : `${argument.flag} ${quoteShellArgument(argument.value, shell)}`,
+  )
+  return [action.command, ...words].join(' ')
 }

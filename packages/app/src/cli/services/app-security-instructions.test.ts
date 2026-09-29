@@ -86,6 +86,24 @@ describe('appSecurityInstructions', () => {
     })
   })
 
+  test('repeats --ignore patterns in the scan, compile, and clean commands', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+      const instructions = appSecurityInstructions({
+        directory: appRoot,
+        scanComplete: false,
+        ignorePatterns: ['generated/', '!build/'],
+      })
+      const patterns = `--ignore ${shellQuote('generated/')} --ignore ${shellQuote('!build/')}`
+
+      expect(instructions).toContain(`shopify app security check --path ${shellQuote(appRoot)} ${patterns}\n`)
+      expect(instructions).toContain(
+        `shopify app security check --path ${shellQuote(appRoot)} ${patterns} --findings ${shellQuote(joinPath(appRoot, '.shopify', 'app-security', 'findings.json'))}`,
+      )
+      expect(instructions).toContain(`shopify app security check --path ${shellQuote(appRoot)} ${patterns} --clean`)
+    })
+  })
+
   test('starts from existing results after a scan', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
@@ -186,6 +204,17 @@ describe('deliverAppSecurityInstructions', () => {
       expect(dependencies.output).toHaveBeenCalledWith(expect.stringContaining('Run the initial scan'))
       expect(dependencies.copyToClipboard).not.toHaveBeenCalled()
       expect(dependencies.outputConfirmation).not.toHaveBeenCalled()
+    })
+  })
+
+  test('forwards ignorePatterns into the printed commands', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const dependencies = testDependencies()
+
+      await deliverAppSecurityInstructions({directory, copy: false, ignorePatterns: ['generated/']}, dependencies)
+
+      expect(dependencies.output).toHaveBeenCalledWith(expect.stringContaining(`--ignore ${shellQuote('generated/')}`))
     })
   })
 

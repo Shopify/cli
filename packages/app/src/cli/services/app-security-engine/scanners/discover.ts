@@ -231,7 +231,17 @@ function recordSectionGap(appRoot: string | undefined, path: string, detail: str
   recordSkippedFile(appRoot, path, {ok: false, reason: 'unreadable', detail})
 }
 
-/** Uses raw entries, so a nested app whose configuration file is gitignored is still a nested app. */
+/**
+ * A directory holding its own `shopify.app*.toml` is an independent Shopify app.
+ * Nested apps are independent scan roots and never evidence for their parent
+ * app, so the walker stops at them: a structural boundary, much as git treats
+ * a nested repository as opaque to the enclosing one. (Nested git repositories
+ * themselves are NOT a boundary here; only their `.git` entry is pruned.)
+ *
+ * Detection looks at the directory's raw entries, not the rule-filtered ones:
+ * a nested app whose configuration file happens to be gitignored is still a
+ * nested app.
+ */
 function isNestedAppDirectory(entries: ReadonlyArray<Dirent>): boolean {
   return entries.some((entry) => !entry.isDirectory() && isValidFormatAppConfigurationFileName(entry.name))
 }
@@ -252,13 +262,25 @@ function readDirectoryEntries(appRoot: string, absolutePath: string, displayPath
 }
 
 /**
- * Symlinks and special entries are listed but never traversed;
- * `readRepositoryFile` enforces containment on anything a finder reads.
+ * List every repository file the scan may inspect, as sorted app-root-relative
+ * POSIX paths.
+ *
+ * The walk applies `rules` with .gitignore semantics and prunes excluded
+ * directories: it never descends into them, so the matcher is only ever asked
+ * about paths whose ancestors are known to be included (its precondition).
+ *
+ * Directory entries use lstat semantics, so a symlink is never a directory
+ * here. Symlinks (to files or directories), FIFOs and other special entries
+ * are listed but never traversed; `readRepositoryFile` later enforces
+ * containment and realpath rules on anything a finder decides to read, and
+ * records failures. Dot-folders and dotfiles are walked unless a rule excludes
+ * them (see `DEFAULT_EXCLUDE_PATTERNS`).
  */
 export function listRepositoryFiles(appRoot: string, rules: PathRules): string[] {
   const matcher = createPathMatcher(rules)
   const files: string[] = []
-  // Appended to while iterating; '' is the app root.
+  // Relative directory paths still to be read; '' is the app root itself. Subdirectories are appended
+  // while iterating, which `for...of` supports: the array iterator re-checks the length on every step.
   const pendingDirectories = ['']
 
   for (const relativeDirectory of pendingDirectories) {
@@ -269,11 +291,14 @@ export function listRepositoryFiles(appRoot: string, rules: PathRules): string[]
       relativeDirectory === '' ? 'app root' : relativeDirectory,
     )
     if (entries === undefined) continue
+    // A nested app is a scan root in its own right; nothing beneath it belongs to this scan.
     if (relativeDirectory !== '' && isNestedAppDirectory(entries)) continue
 
     for (const entry of entries) {
       const relative = relativeDirectory === '' ? entry.name : `${relativeDirectory}/${entry.name}`
       if (entry.isDirectory()) {
+        // Never descend into an excluded directory: pruning here is what keeps the matcher's
+        // precondition (every ancestor of a queried path is included) true.
         if (!matcher(relative, {directory: true})) pendingDirectories.push(relative)
       } else if (!matcher(relative, {directory: false})) {
         files.push(relative)
@@ -284,7 +309,13 @@ export function listRepositoryFiles(appRoot: string, rules: PathRules): string[]
   return files.sort()
 }
 
-/** A path inside nested extension directories belongs to each of them. */
+/**
+ * Group source paths by the extension directories that contain them, walking
+ * each path's ancestors once instead of filtering the whole repository per
+ * extension. `extensionDirectories` are app-root-relative; `.` is the app root
+ * and contains every path. A path inside nested extension directories belongs
+ * to each of them. Paths keep their input order within every group.
+ */
 function groupSourcePathsByExtensionDirectory(
   repositoryFiles: ReadonlyArray<string>,
   extensionDirectories: ReadonlySet<string>,
@@ -295,6 +326,7 @@ function groupSourcePathsByExtensionDirectory(
 
   for (const path of repositoryFiles) {
     if (!hasSupportedSourceExtension(path)) continue
+    // `dirname` yields `.` for a top-level file and for `.` itself, which ends the climb.
     let ancestor = dirname(path)
     while (ancestor !== '.') {
       pathsByDirectory.get(ancestor)?.push(path)
@@ -307,13 +339,14 @@ function groupSourcePathsByExtensionDirectory(
 }
 
 /**
- * Find extension-like repository content under the app root.
+ * Find extension-like repository content among the walked repository files.
  *
  * `Project.load()` only considers paths in each app configuration's
  * `extension_directories`. App Security still scans every `shopify.extension.toml`
  * inside the repository boundary, including unconfigured extensions, because
  * those files can still contain secrets, XSS, and other security evidence.
- * Nested apps, generated output, and test trees remain excluded.
+ * Nested apps, generated output, and test trees are already absent from
+ * `repositoryFiles` (see `listRepositoryFiles`).
  */
 export function findExtensions(appRoot: string, repositoryFiles: ReadonlyArray<string>): ExtensionInfo[] {
   const extensionTomls = repositoryFiles.filter((path) => basename(path) === 'shopify.extension.toml')
@@ -587,6 +620,7 @@ const SOURCE_LANGUAGES = {
 
 type SourceExtension = keyof typeof SOURCE_LANGUAGES
 
+/** Extension matching is exact and case-sensitive: `.JS` is not treated as source. */
 function sourceLanguageFor(path: string): (typeof SOURCE_LANGUAGES)[SourceExtension] | undefined {
   const extension = extname(path)
   return extension in SOURCE_LANGUAGES ? SOURCE_LANGUAGES[extension as SourceExtension] : undefined
@@ -607,8 +641,13 @@ export function findSourceCandidates(repositoryFiles: ReadonlyArray<string>): So
     .sort((left, right) => left.path.localeCompare(right.path))
 }
 
-/** Find and read only source languages supported by non-secret deterministic scanners. */
+/**
+ * Read the source files (backend routes, extension code, etc.) whose language
+ * is supported by the non-secret deterministic scanners. Results keep the order
+ * of `repositoryFiles`, which callers pass in `listRepositoryFiles` order.
+ */
 export function findAppSourceFiles(appRoot: string, repositoryFiles: ReadonlyArray<string>): SourceFile[] {
+  // `findExtensions` passes pre-filtered groups, but the filter is this function's own contract for every caller.
   return repositoryFiles.filter(hasSupportedSourceExtension).map((path) => {
     const absolutePath = joinPath(appRoot, path)
     const result = readRepositoryFile(appRoot, absolutePath)
@@ -649,6 +688,7 @@ const SECRET_TEXT_EXTENSIONS = new Set([
   '.pem',
 ])
 
+/** Extensionless files that routinely carry credentials. */
 const SENSITIVE_FILE_NAMES = new Set(['Dockerfile', 'Containerfile', 'Gemfile', 'Rakefile', 'Procfile', 'Makefile'])
 
 function isSensitiveFile(path: string): boolean {
@@ -673,7 +713,11 @@ function isProbablyBinary(content: Buffer): boolean {
   return sample.length > 0 && suspiciousControlBytes / sample.length > 0.1
 }
 
-/** Text evidence inspected for secrets regardless of app framework support. */
+/**
+ * Text evidence inspected for secrets regardless of app framework support.
+ * Results keep the order of `repositoryFiles`, which callers pass in
+ * `listRepositoryFiles` order.
+ */
 export function findSensitiveFiles(
   appRoot: string,
   repositoryFiles: ReadonlyArray<string>,
@@ -698,6 +742,12 @@ export function findSensitiveFiles(
   })
 }
 
+/**
+ * Why repository-level configuration cannot be attributed to the app, if it
+ * cannot. The app owns its configuration when its own `.git` marker is the
+ * nearest one (or there is no repository at all); a marker found only above
+ * the app root means the configuration belongs to an enclosing repository.
+ */
 function nestedRepositoryReason(appRoot: string): string | undefined {
   const marker = findRepositoryMarker(appRoot)
   if (marker.status === 'none') return undefined
@@ -711,8 +761,14 @@ function recordRejectedAllowlistPath(appRoot: string, relative: string, failure:
 
 /**
  * Read local bot configuration only; hosted integrations and CI workflows are
- * outside this check's scope. Paths are read from disk rather than the walked
- * list, so a symlinked `.github` is reported as unresolved rather than missing.
+ * outside this check's scope.
+ *
+ * The allowlisted paths are read directly from disk rather than taken from the
+ * walked file list, so that a symlinked `.github` (which the walker never
+ * enters) is reported as unresolved rather than missing. The scan's `rules`
+ * still apply: hosted bots read the repository, so a configuration file git
+ * ignores configures nothing and is treated exactly like a missing one. The
+ * same holds for a path the user excludes with an `--ignore` pattern.
  */
 export function findDependencyAutomationInputs(appRoot: string, rules: PathRules): DependencyAutomationInputs {
   let canonicalRoot: string
@@ -767,7 +823,10 @@ export function findDependencyAutomationInputs(appRoot: string, rules: PathRules
   return files.length > 0 ? {files} : {files, ...(unresolvedReason ? {unresolvedReason} : {})}
 }
 
-/** Find JavaScript package manifests. Dependency analysis intentionally supports JavaScript only. */
+/**
+ * Find JavaScript package manifests. Dependency analysis intentionally supports JavaScript only.
+ * Results keep the order of `repositoryFiles`, which callers pass in `listRepositoryFiles` order.
+ */
 export function findManifestPaths(repositoryFiles: ReadonlyArray<string>): string[] {
   return repositoryFiles.filter((path) => basename(path) === 'package.json')
 }

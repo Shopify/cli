@@ -319,6 +319,43 @@ describe('App Security CLI integration', () => {
     })
   })
 
+  test('compiles findings when the compile repeats the scan --ignore patterns', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      await mkdir(joinPath(directory, 'generated'))
+      await writeFile(joinPath(directory, 'generated', 'client.ts'), 'export const generated = true\n')
+      const appRoot = resolveAppSecurityRoot(directory)
+      const ignorePatterns = ['generated/']
+
+      const initial = await executeAppSecurity({appRoot, ignorePatterns})
+      expect(Object.keys(initial.scan.scan.file_hashes ?? {})).not.toContain('generated/client.ts')
+      const findings = {schema_version: 1 as const, source_scan_id: initial.scan.scan.input_hash, findings: []}
+
+      const compiled = await executeAppSecurity({appRoot, findings, ignorePatterns})
+      expect(compiled.operation).toBe('compile')
+      expect(compiled.operation === 'compile' && compiled.findings.rejected).toEqual([])
+    })
+  })
+
+  test('rejects findings when the compile uses different --ignore patterns than the scan', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      await mkdir(joinPath(directory, 'generated'))
+      await writeFile(joinPath(directory, 'generated', 'client.ts'), 'export const generated = true\n')
+      const appRoot = resolveAppSecurityRoot(directory)
+
+      const initial = await executeAppSecurity({appRoot, ignorePatterns: ['generated/']})
+      const findings = {schema_version: 1 as const, source_scan_id: initial.scan.scan.input_hash, findings: []}
+
+      const compiled = await executeAppSecurity({appRoot, findings})
+      expect(compiled.operation === 'compile' && compiled.findings.rejected).toEqual([
+        expect.stringMatching(
+          /^Findings source scan \S+ does not match the current scan \S+; compile with the same --ignore and --config values used for the scan, since ignore patterns are not recorded in the trace\.$/,
+        ),
+      ])
+    })
+  })
+
   test('does not apply a stale suppression whose fingerprint still matches a current finding', async () => {
     await inTemporaryDirectory(async (directory) => {
       const testToken = ['shpat', '0123456789abcdef0123456789abcdef'].join('_')
@@ -613,6 +650,7 @@ describe('App Security CLI integration', () => {
           yes: false,
           skipInstructions: true,
           clean: false,
+          ignorePatterns: [],
         },
         {
           resolveRoot: resolveAppSecurityRoot,
