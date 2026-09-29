@@ -5,12 +5,13 @@ import {getPathValue} from '@shopify/cli-kit/common/object'
 interface EventsConfig {
   events?: {
     api_version?: string
-    subscription?: {uri: string; [key: string]: unknown}[]
+    subscription?: {uri: string; api_version?: string; [key: string]: unknown}[]
   }
 }
 
 /**
  * Transforms the events config from local to remote format.
+ * Resolves inherited API versions to match the server's stored subscription config.
  * Resolves relative URIs (starting with /) by prepending the application_url.
  * During dev, application_url is set to the tunnel URL, ensuring events
  * are delivered to the correct endpoint.
@@ -26,6 +27,7 @@ export function transformFromEventsConfig(content: object, appConfiguration?: ob
   if (appConfiguration && 'application_url' in appConfiguration) {
     appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
   }
+  const defaultApiVersion = eventsConfig.events.api_version
 
   return {
     ...eventsConfig,
@@ -33,6 +35,7 @@ export function transformFromEventsConfig(content: object, appConfiguration?: ob
       ...eventsConfig.events,
       subscription: eventsConfig.events.subscription.map((sub) => ({
         ...sub,
+        api_version: sub.api_version ?? defaultApiVersion,
         uri: prependApplicationUrl(sub.uri, appUrl),
       })),
     },
