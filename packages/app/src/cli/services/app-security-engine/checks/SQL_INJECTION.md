@@ -103,3 +103,12 @@ Record the inspected files and review boundary. If driver behavior, a stored
 procedure, a wrapper, or an upstream producer is unavailable and prevents a
 conclusion, record the check as unresolved with the review pack's structured
 reason and actionable guidance. An unreviewed path did not pass.
+
+## Optional reference
+
+[OWASP SQL Injection Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html)
+
+When available, consult this reference for defensive techniques and remediation
+examples. It supplements the evidence and reporting requirements above; a
+deviation from its recommendations is not by itself a finding. If the reference
+is unavailable, continue using this prompt and repository evidence.

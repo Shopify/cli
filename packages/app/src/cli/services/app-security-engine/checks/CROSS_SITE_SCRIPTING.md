@@ -127,3 +127,12 @@ Record the inspected files and review boundary. If a missing producer, renderer,
 sanitizer implementation, or execution context prevents a conclusion, record
 an unresolved check with the review pack's structured reason and actionable
 guidance. Do not turn incomplete tracing into either a finding or a pass.
+
+## Optional reference
+
+[OWASP Cross Site Scripting Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html)
+
+When available, consult this reference for defensive techniques and remediation
+examples. It supplements the evidence and reporting requirements above; a
+deviation from its recommendations is not by itself a finding. If the reference
+is unavailable, continue using this prompt and repository evidence.
