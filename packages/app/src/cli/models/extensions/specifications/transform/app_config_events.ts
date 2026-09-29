@@ -22,8 +22,9 @@ interface EventsConfig {
 /**
  * Transforms the events config from local to remote format.
  * Resolves relative URIs (starting with /) by prepending the application_url.
- * Strips the local 'handle' field, which identifies the module locally but is
- * not part of the remote subscription payload.
+ * In the single-subscription shape, strips the local 'handle' field: it names the
+ * module and is not part of the remote subscription payload. In the list shape
+ * the handle is kept, as Core's contract requires one on every entry.
  * During dev, application_url is set to the tunnel URL, ensuring events
  * are delivered to the correct endpoint.
  */
@@ -40,11 +41,11 @@ export function transformFromEventsConfig(content: object, appConfiguration?: ob
   }
 
   const subscription = eventsConfig.events.subscription
+  const isSingleSubscription = !Array.isArray(subscription)
   const resolved = wrapSubscriptions(subscription).map((sub) => {
     const {handle: _, ...subWithoutHandle} = sub
-    return typeof subWithoutHandle.uri === 'string'
-      ? {...subWithoutHandle, uri: prependApplicationUrl(subWithoutHandle.uri, appUrl)}
-      : subWithoutHandle
+    const payload = isSingleSubscription ? subWithoutHandle : sub
+    return typeof payload.uri === 'string' ? {...payload, uri: prependApplicationUrl(payload.uri, appUrl)} : payload
   })
 
   return {
