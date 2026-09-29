@@ -2,6 +2,7 @@
 id: DEPRECATED_SCRIPT_TAG_SCOPE
 version: 1
 severity: medium
+precedence: prefer-agent
 ---
 
 # Deprecated Script Tag Scope

@@ -1,4 +1,5 @@
 import SecurityReview from './review.js'
+import SecurityCheck from './check.js'
 import {appFlags} from '../../../flags.js'
 import securityReview from '../../../services/security-review.js'
 import {securityReviewJsonOutputSchema} from '../../../services/security-review-json.js'
@@ -19,15 +20,52 @@ describe('app security review command', () => {
     expect(SecurityReview.jsonOutputSchema).toBe(securityReviewJsonOutputSchema)
   })
 
-  test('reviews the current directory by default', async () => {
-    await SecurityReview.run([], import.meta.url)
-
-    expect(securityReview).toHaveBeenCalledWith({directory: cwd(), json: false})
+  test('shares the --blocking flag with check', () => {
+    expect(SecurityReview.flags.blocking).toBe(SecurityCheck.flags.blocking)
+    expect(SecurityReview.flags.blocking.options).toEqual(['high', 'medium', 'low', 'none'])
+    expect(SecurityReview.flags.blocking.env).toBe('SHOPIFY_FLAG_APP_SECURITY_BLOCKING')
   })
 
-  test('forwards --path and --json', async () => {
-    await SecurityReview.run(['--path', './fixtures/app', '--json'], import.meta.url)
+  test('reads --check-id repeatedly and from SHOPIFY_FLAG_CHECK_ID', () => {
+    expect(SecurityReview.flags['check-id'].multiple).toBe(true)
+    expect(SecurityReview.flags['check-id'].env).toBe('SHOPIFY_FLAG_CHECK_ID')
+  })
 
-    expect(securityReview).toHaveBeenCalledWith({directory: resolvePath('./fixtures/app'), json: true})
+  test('reviews the current directory by default with no filter and no blocking', async () => {
+    await SecurityReview.run([], import.meta.url)
+
+    expect(securityReview).toHaveBeenCalledWith({
+      directory: cwd(),
+      json: false,
+      verbose: false,
+      checkIds: [],
+      blocking: 'none',
+    })
+  })
+
+  test('forwards --path, --json, --verbose, every --check-id and --blocking', async () => {
+    await SecurityReview.run(
+      [
+        '--path',
+        './fixtures/app',
+        '--json',
+        '--verbose',
+        '--check-id',
+        'OPEN_REDIRECT',
+        '--check-id',
+        'EOL_API_VERSION',
+        '--blocking',
+        'medium',
+      ],
+      import.meta.url,
+    )
+
+    expect(securityReview).toHaveBeenCalledWith({
+      directory: resolvePath('./fixtures/app'),
+      json: true,
+      verbose: true,
+      checkIds: ['OPEN_REDIRECT', 'EOL_API_VERSION'],
+      blocking: 'medium',
+    })
   })
 })

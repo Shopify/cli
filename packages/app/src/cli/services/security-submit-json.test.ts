@@ -4,14 +4,21 @@ import {joinPath, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import type {SecuritySubmitResult} from './security-submit-result.js'
 
-const payload = {path: '<APP_ROOT>/.shopify/app-security/submission.json', schemaVersion: 0 as const}
+const payload = {path: '<APP_ROOT>/.shopify/app-security/submission.json', schemaVersion: 2 as const}
 const submittedAt = '2026-09-01T09:30:00.000Z'
 
 describe('App Security submit JSON', () => {
   test.each([
     {result: {status: 'dry-run', payload}, fixture: 'security-submit-dry-run-result.json'},
     {
-      result: {status: 'submitted', payload, submittedAt, appTitle: 'Example app', clientId: 'example-client-id'},
+      result: {
+        status: 'submitted',
+        payload,
+        submittedAt,
+        appTitle: 'Example app',
+        clientId: 'example-client-id',
+        feedbackIncluded: true,
+      },
       fixture: 'security-submit-result.json',
     },
   ] satisfies {result: Exclude<SecuritySubmitResult, {status: 'cancelled'}>; fixture: string}[])(

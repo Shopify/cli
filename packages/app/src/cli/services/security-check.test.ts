@@ -50,15 +50,15 @@ const engine = {
   ruleset: '2026.08.28',
 }
 
-const artifact: DeterministicFindingsDocument = {
+const deterministicFindings: DeterministicFindingsDocument = {
   schema_version: 1,
+  source: 'deterministic',
   engine: {name: 'shopify-app-security', version: '1.2.3', ruleset: '2026.08.28'},
   generated_at: '2026-08-24T00:00:00.000Z',
   project: {commit: null, dirty: null},
   detection: scan.detection,
-  findings: [],
-  checks_executed: [],
   coverage: {files_scanned: 1, files_skipped: [], gaps: []},
+  checks: [],
 }
 
 const agentChecks: AgentChecks = {
@@ -77,7 +77,7 @@ const agentChecks: AgentChecks = {
 const scanExecution: AppSecurityExecution = {
   appRoot: '/tmp/unlinked-app',
   scan,
-  artifact,
+  deterministicFindings,
   agentChecks,
   engine,
   elapsedMilliseconds: 12,
@@ -126,7 +126,7 @@ describe('securityCheck', () => {
       configFileName: 'shopify.app.toml',
       ignorePatterns: [],
     })
-    expect(dependencies.writeArtifacts).toHaveBeenCalledWith('/tmp/unlinked-app', {artifact, agentChecks})
+    expect(dependencies.writeArtifacts).toHaveBeenCalledWith('/tmp/unlinked-app', {deterministicFindings, agentChecks})
     expect(dependencies.renderReport).toHaveBeenCalledWith({
       scan,
       engine,
@@ -186,16 +186,19 @@ describe('securityCheck', () => {
       const agentFindings = '{"recorded": "by the agent",  "kept": "byte for byte"}'
       await writeFile(paths.agentFindingsPath, agentFindings)
 
-      const rescanArtifact: DeterministicFindingsDocument = {...artifact, generated_at: '2026-09-01T00:00:00.000Z'}
+      const rescanFindings: DeterministicFindingsDocument = {
+        ...deterministicFindings,
+        generated_at: '2026-09-01T00:00:00.000Z',
+      }
       const dependencies = {
-        ...testDependencies({...scanExecution, appRoot, artifact: rescanArtifact}),
+        ...testDependencies({...scanExecution, appRoot, deterministicFindings: rescanFindings}),
         writeArtifacts: writeCheckArtifacts,
         canPrompt: vi.fn(() => true),
       }
 
       await securityCheck({...testOptions(), directory: appRoot, skipInstructions: true}, dependencies)
 
-      expect(JSON.parse(await readFile(paths.deterministicFindingsPath))).toEqual(rescanArtifact)
+      expect(JSON.parse(await readFile(paths.deterministicFindingsPath))).toEqual(rescanFindings)
       expect(JSON.parse(await readFile(paths.agentChecksPath))).toEqual(agentChecks)
       await expect(readFile(paths.agentFindingsPath)).resolves.toBe(agentFindings)
       expect(dependencies.canPrompt).not.toHaveBeenCalled()
@@ -226,7 +229,7 @@ describe('securityCheck', () => {
 
     expect(JSON.parse(dependencies.output.mock.calls[0]![0])).toEqual({
       engine,
-      deterministic_findings: artifact,
+      deterministic_findings: deterministicFindings,
       agent_checks_path: artifacts.agentChecksPath,
     })
     expect(dependencies.renderReport).not.toHaveBeenCalled()

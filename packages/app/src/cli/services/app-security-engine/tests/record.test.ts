@@ -1,13 +1,14 @@
 import {loadChecks, recordAgentFindings, type RecordAgentFindingsOptions} from '../checks/index.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
-import {AGENT_FINDINGS_SCHEMA_VERSION, ENGINE_NAME} from '../types.js'
+import {translateFindingsDocument} from '../results/translate.js'
+import {ENGINE_NAME, FINDINGS_SCHEMA_VERSION} from '../types.js'
 import {describe, expect, test} from 'vitest'
-import type {AgentFindingsArtifact} from '../types.js'
+import type {AgentFindingsDocument} from '../types.js'
 
 const options: RecordAgentFindingsOptions = {
   engineVersion: '3.99.0',
   project: {commit: 'abc123', dirty: false},
-  recordedAt: '2026-01-02T03:04:05.000Z',
+  generatedAt: '2026-01-02T03:04:05.000Z',
 }
 
 // Composed at runtime so the literal token never appears in the repository.
@@ -27,10 +28,10 @@ function finding(overrides: Record<string, unknown> = {}): Record<string, unknow
   }
 }
 
-function recordAccepted(document: unknown): AgentFindingsArtifact {
-  const result = recordAgentFindings(document, options)
+function recordAccepted(input: unknown): AgentFindingsDocument {
+  const result = recordAgentFindings(input, options)
   if (!result.ok) throw new Error(`Expected the document to be accepted: ${result.errors.join('; ')}`)
-  return result.artifact
+  return result.document
 }
 
 function recordRejected(document: unknown): string[] {
@@ -41,7 +42,7 @@ function recordRejected(document: unknown): string[] {
 
 describe('recordAgentFindings', () => {
   test('accepts a valid document and groups findings under their check', () => {
-    const artifact = recordAccepted({
+    const document = recordAccepted({
       schema_version: 1,
       checks_executed: [
         {check_id: tenant.id, check_version: tenant.version, status: 'executed'},
@@ -64,33 +65,75 @@ describe('recordAgentFindings', () => {
       ],
     })
 
-    expect(artifact).toMatchObject({
-      schema_version: AGENT_FINDINGS_SCHEMA_VERSION,
+    expect(document).toMatchObject({
+      schema_version: FINDINGS_SCHEMA_VERSION,
+      source: 'agent',
       engine: {name: ENGINE_NAME, version: '3.99.0'},
-      recorded_at: '2026-01-02T03:04:05.000Z',
+      generated_at: '2026-01-02T03:04:05.000Z',
       project: {commit: 'abc123', dirty: false},
     })
-    expect(artifact.checks.map((check) => [check.id, check.status, check.findings.length])).toEqual([
+    expect(document.checks.map((check) => [check.id, check.status, check.findings.length])).toEqual([
       [tenant.id, 'executed', 2],
       ['OPEN_REDIRECT', 'not_applicable', 0],
     ])
-    expect(artifact.checks[1]!.reason).toEqual({code: 'no_redirects', message: 'The app never redirects'})
-    expect(artifact.checks[0]!.findings[1]).toEqual({
-      file: 'app/routes/orders.tsx',
-      line: 30,
+    expect(document.checks[1]!.reason).toEqual({code: 'no_redirects', message: 'The app never redirects'})
+    expect(document.checks[0]!.findings[1]).toEqual({
+      location: {file: 'app/routes/orders.tsx', line: 30},
       message: 'Orders are loaded without a shop filter',
-      evidence: [{file: 'app/routes/orders.tsx', line: 12, quote: 'prisma.order.findMany()'}],
+      evidence: [{location: {file: 'app/routes/orders.tsx', line: 12}, quote: 'prisma.order.findMany()'}],
       snippet: 'db.order.delete()',
       confidence: 'high',
       reasoning: 'No session check',
       suppression: {justification: 'Admin-only route'},
     })
+    expect(translateFindingsDocument(JSON.parse(JSON.stringify(document)))).toEqual({ok: true, document})
   })
 
-  test('defaults recorded_at to the current time', () => {
-    const result = recordAgentFindings({schema_version: 1}, {...options, recordedAt: undefined})
+  test('writes the exact document for a check with no findings', () => {
+    const document = recordAccepted({
+      schema_version: 1,
+      checks_executed: [
+        {
+          check_id: 'OPEN_REDIRECT',
+          check_version: 2,
+          status: 'unresolved',
+          reason: {code: 'needs_runtime', message: 'Redirects are built at runtime'},
+        },
+      ],
+    })
+    const entry = RULE_CATALOG.find((catalogEntry) => catalogEntry.id === 'OPEN_REDIRECT')!
+    const check = loadChecks().get('OPEN_REDIRECT')!
 
-    expect(result.ok && Date.parse(result.artifact.recorded_at)).toBeGreaterThan(0)
+    expect(document).toEqual({
+      schema_version: 1,
+      source: 'agent',
+      engine: {name: 'shopify-app-security', version: '3.99.0'},
+      generated_at: '2026-01-02T03:04:05.000Z',
+      project: {commit: 'abc123', dirty: false},
+      checks: [
+        {
+          id: 'OPEN_REDIRECT',
+          version: 2,
+          status: 'unresolved',
+          reason: {code: 'needs_runtime', message: 'Redirects are built at runtime'},
+          snapshot: {
+            title: entry.title,
+            severity: check.severity,
+            description: entry.description,
+            guide: entry.guide,
+            current_version: check.version,
+            precedence: 'union',
+          },
+          findings: [],
+        },
+      ],
+    })
+  })
+
+  test('defaults generated_at to the current time', () => {
+    const result = recordAgentFindings({schema_version: 1}, {...options, generatedAt: undefined})
+
+    expect(result.ok && Date.parse(result.document.generated_at)).toBeGreaterThan(0)
   })
 
   test('rejects the whole document and reports every error', () => {
@@ -135,35 +178,53 @@ describe('recordAgentFindings', () => {
 
   test('keeps the claimed check_version even when it differs from the current version', () => {
     const claimedVersion = tenant.version + 4
-    const artifact = recordAccepted({
+    const document = recordAccepted({
       schema_version: 1,
       checks_executed: [{check_id: tenant.id, check_version: claimedVersion, status: 'executed'}],
       findings: [finding({check_version: claimedVersion})],
     })
 
-    expect(artifact.checks[0]!.version).toBe(claimedVersion)
-    expect(artifact.checks[0]!.snapshot.current_version).toBe(tenant.version)
+    expect(document.checks[0]!.version).toBe(claimedVersion)
+    expect(document.checks[0]!.snapshot.current_version).toBe(tenant.version)
   })
 
   test('snapshots title, description, and guide from the catalog, and severity and version from the check', () => {
-    const artifact = recordAccepted({
+    const document = recordAccepted({
       schema_version: 1,
       checks_executed: [{check_id: 'SCOPE_OVER_REQUEST', check_version: 1, status: 'executed'}],
     })
     const entry = RULE_CATALOG.find((catalogEntry) => catalogEntry.id === 'SCOPE_OVER_REQUEST')!
     const check = loadChecks().get('SCOPE_OVER_REQUEST')!
 
-    expect(artifact.checks[0]!.snapshot).toEqual({
+    expect(document.checks[0]!.snapshot).toEqual({
       title: entry.title,
       severity: check.severity,
       description: entry.description,
       guide: entry.guide,
       current_version: check.version,
+      precedence: 'union',
     })
   })
 
+  test('always writes the precedence into the snapshot so the file is self-describing', () => {
+    const document = recordAccepted({
+      schema_version: 1,
+      checks_executed: [
+        {check_id: 'CREDENTIAL_LOG_LEAKAGE', check_version: 1, status: 'executed'},
+        {check_id: 'COMMITTED_SECRET', check_version: 2, status: 'executed'},
+        {check_id: 'SCOPE_OVER_REQUEST', check_version: 1, status: 'executed'},
+      ],
+    })
+
+    expect(document.checks.map((check) => [check.id, check.snapshot.precedence])).toEqual([
+      ['COMMITTED_SECRET', 'union'],
+      ['CREDENTIAL_LOG_LEAKAGE', 'prefer-agent'],
+      ['SCOPE_OVER_REQUEST', 'union'],
+    ])
+  })
+
   test('redacts secrets in every piece of agent text', () => {
-    const artifact = recordAccepted({
+    const document = recordAccepted({
       schema_version: 1,
       checks_executed: [
         {
@@ -185,10 +246,10 @@ describe('recordAgentFindings', () => {
       ],
     })
 
-    const serialized = JSON.stringify(artifact)
+    const serialized = JSON.stringify(document)
     expect(serialized).not.toContain(FAKE_SHOPIFY_TOKEN)
     expect(serialized).toContain('[REDACTED:')
-    expect(artifact.checks.find((check) => check.id === 'OPEN_REDIRECT')!.reason!.message).toMatch(/REDACTED/)
+    expect(document.checks.find((check) => check.id === 'OPEN_REDIRECT')!.reason!.message).toMatch(/REDACTED/)
   })
 
   test('rejects a not_applicable check that has findings', () => {
@@ -220,15 +281,15 @@ describe('recordAgentFindings', () => {
   })
 
   test('creates an executed entry, using the claimed version, for a finding without a checks_executed entry', () => {
-    const artifact = recordAccepted({
+    const document = recordAccepted({
       schema_version: 1,
       findings: [finding({check_version: 5}), finding({line: 2, check_version: 5})],
     })
 
-    expect(artifact.checks).toHaveLength(1)
-    expect(artifact.checks[0]).toMatchObject({id: tenant.id, version: 5, status: 'executed'})
-    expect(artifact.checks[0]!.findings).toHaveLength(2)
-    expect(artifact.checks[0]!.reason).toBeUndefined()
+    expect(document.checks).toHaveLength(1)
+    expect(document.checks[0]).toMatchObject({id: tenant.id, version: 5, status: 'executed'})
+    expect(document.checks[0]!.findings).toHaveLength(2)
+    expect(document.checks[0]!.reason).toBeUndefined()
   })
 
   test('rejects findings that disagree on check_version', () => {
@@ -281,7 +342,7 @@ describe('recordAgentFindings', () => {
   })
 
   test('ignores unknown keys and does not require source_scan_id, prompt_hash, or inspected_files', () => {
-    const artifact = recordAccepted({
+    const document = recordAccepted({
       schema_version: 1,
       source_scan_id: 'sha256:whatever',
       extra: {nested: true},
@@ -293,12 +354,11 @@ describe('recordAgentFindings', () => {
       ],
     })
 
-    expect(artifact.checks[0]!.findings[0]).toEqual({
-      file: 'app/routes/orders.tsx',
-      line: 12,
+    expect(document.checks[0]!.findings[0]).toEqual({
+      location: {file: 'app/routes/orders.tsx', line: 12},
       message: 'Orders are loaded without a shop filter',
-      evidence: [{file: 'app/a.ts', line: 1}],
+      evidence: [{location: {file: 'app/a.ts', line: 1}}],
     })
-    expect(JSON.stringify(artifact)).not.toMatch(/source_scan_id|prompt_hash|inspected_files|notes|extra/)
+    expect(JSON.stringify(document)).not.toMatch(/source_scan_id|prompt_hash|inspected_files|notes|extra/)
   })
 })

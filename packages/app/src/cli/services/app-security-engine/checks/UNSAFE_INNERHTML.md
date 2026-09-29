@@ -2,6 +2,7 @@
 id: UNSAFE_INNERHTML
 version: 2
 severity: high
+precedence: union
 ---
 
 Find cases where user-controlled data is written to the DOM without

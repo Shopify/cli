@@ -1,14 +1,18 @@
-import {ENGINE_NAME, DETERMINISTIC_FINDINGS_SCHEMA_VERSION} from '../types.js'
+import {ENGINE_NAME, FINDINGS_SCHEMA_VERSION} from '../types.js'
 import {redactText} from '../rules/secret-rules.js'
+import {RULE_CATALOG} from '../rules/catalog.js'
+import {compareFindingLocations, compareStrings} from '../results/order.js'
 import type {
   CheckExecution,
+  CheckSnapshot,
+  DeterministicFindingsDocument,
   FindingEvidence,
   Issue,
   Location,
-  DeterministicFindingsDocument,
-  DeterministicCheckExecution,
-  DeterministicFinding,
   ScanResult,
+  StoredCheck,
+  StoredCheckStatus,
+  StoredFinding,
 } from '../types.js'
 
 const MAX_SECRET_INSPECTION_NODES = 500_000
@@ -44,34 +48,64 @@ export function redactIssue(issue: Issue): Issue {
   }
 }
 
-function issueToFinding(issueInput: Issue): DeterministicFinding {
+/** The stored finding: the issue's own severity and title are dropped, because the check's snapshot carries them. */
+function issueToFinding(issueInput: Issue): StoredFinding {
+  // redactIssue has already redacted the evidence.
   const issue = redactIssue(issueInput)
   return {
-    rule_id: issue.id,
-    rule_version: issue.rule_version ?? 1,
-    severity: issue.severity,
-    title: issue.title,
-    message: issue.message,
     location: issue.location,
-    evidence: redactEvidence(issue.evidence),
+    message: issue.message,
+    evidence: issue.evidence ?? [],
     ...(issue.snippet === undefined ? {} : {snippet: issue.snippet}),
     fix: issue.fix,
   }
 }
 
-const findingSortKey = (finding: DeterministicFinding): string =>
-  `${finding.rule_id}|${finding.location.file}|${String(finding.location.line ?? 0).padStart(10, '0')}|${finding.message}`
+/** Findings are already grouped under one check, so location then message is a total order. */
+function compareStoredFindings(left: StoredFinding, right: StoredFinding): number {
+  return compareFindingLocations(left, right) || compareStrings(left.message, right.message)
+}
 
-function sanitizeExecution(execution: CheckExecution): DeterministicCheckExecution {
+/** `unsupported_framework` is a way of being unresolved; the reason code already says which. */
+function storedStatus(status: CheckExecution['status']): StoredCheckStatus {
+  return status === 'unsupported_framework' ? 'unresolved' : status
+}
+
+/** Check metadata from the catalog right now, so the document can be displayed without it later. */
+function snapshotDeterministicCheck(execution: CheckExecution): CheckSnapshot {
+  // registry/index.ts guarantees every deterministic check has a catalog entry ("Orphan deterministic runner").
+  const entry = RULE_CATALOG.find((catalogEntry) => catalogEntry.id === execution.id)
+  if (!entry) throw new Error(`Deterministic check has no catalog entry: ${execution.id}`)
+  return {
+    title: entry.title,
+    severity: entry.severity,
+    description: entry.description,
+    ...(entry.guide ? {guide: entry.guide} : {}),
+    current_version: execution.version,
+  }
+}
+
+function storedCheck(execution: CheckExecution, issues: Issue[]): StoredCheck {
   return {
     id: redactText(execution.id),
     version: execution.version,
-    status: execution.status,
-    applicable: execution.applicable,
-    analysis_mode: execution.analysis_mode,
-    findings: execution.findings,
+    status: storedStatus(execution.status),
     ...(execution.reason ? {reason: {...execution.reason, message: redactText(execution.reason.message)}} : {}),
+    analysis_mode: execution.analysis_mode,
+    snapshot: snapshotDeterministicCheck(execution),
+    findings: issues.map(issueToFinding).sort(compareStoredFindings),
   }
+}
+
+/**
+ * Group issues under the check that produced them. A finding whose check has no checks_executed entry is
+ * an engine bug: the scanner records every check it runs, so the document would silently lose the finding.
+ */
+function groupIssuesByCheck(result: ScanResult): Map<string, Issue[]> {
+  const executedIds = new Set(result.scan.checks_executed.map((execution) => execution.id))
+  const unexecuted = result.issues.find((issue) => !executedIds.has(issue.id))
+  if (unexecuted) throw new Error(`Finding for a check that was not executed: ${unexecuted.id}`)
+  return Map.groupBy(result.issues, (issue) => issue.id)
 }
 
 export interface BuildDeterministicFindingsOptions {
@@ -85,14 +119,13 @@ export function buildDeterministicFindings(
   result: ScanResult,
   options: BuildDeterministicFindingsOptions = {},
 ): DeterministicFindingsDocument {
-  const findings = result.issues
-    .map(issueToFinding)
-    .sort((left, right) => findingSortKey(left).localeCompare(findingSortKey(right)))
-  const checksExecuted = result.scan.checks_executed
-    .map(sanitizeExecution)
-    .sort((left, right) => left.id.localeCompare(right.id))
+  const issuesByCheck = groupIssuesByCheck(result)
+  const checks = result.scan.checks_executed
+    .map((execution) => storedCheck(execution, issuesByCheck.get(execution.id) ?? []))
+    .sort((left, right) => compareStrings(left.id, right.id))
   return {
-    schema_version: DETERMINISTIC_FINDINGS_SCHEMA_VERSION,
+    schema_version: FINDINGS_SCHEMA_VERSION,
+    source: 'deterministic',
     engine: {
       name: ENGINE_NAME,
       version: redactText(options.engineVersion ?? result.version),
@@ -110,8 +143,6 @@ export function buildDeterministicFindings(
         files: language.files.map((path) => redactText(path)),
       })),
     },
-    findings,
-    checks_executed: checksExecuted,
     coverage: {
       files_scanned: result.scan.files_scanned,
       files_skipped: (result.scan.files_skipped ?? []).map((file) => ({
@@ -125,31 +156,8 @@ export function buildDeterministicFindings(
         ...(gap.file ? {file: redactText(gap.file)} : {}),
       })),
     },
+    checks,
   }
-}
-
-export type ParseDeterministicFindingsResult =
-  | {ok: true; artifact: DeterministicFindingsDocument}
-  | {ok: false; errors: string[]}
-
-const isObject = (value: unknown): value is Record<string, unknown> =>
-  value !== null && typeof value === 'object' && !Array.isArray(value)
-
-/**
- * Loosely identify a stored deterministic-findings.json. Only the schema version and the findings array are checked;
- * the artifact is informational, so its contents aren't validated further.
- */
-export function parseDeterministicFindings(value: unknown): ParseDeterministicFindingsResult {
-  if (!isObject(value)) return {ok: false, errors: ['deterministic findings must be a JSON object']}
-  const errors: string[] = []
-  if (value.schema_version !== DETERMINISTIC_FINDINGS_SCHEMA_VERSION)
-    errors.push(
-      `unsupported schema_version: ${String(value.schema_version)} (expected ${DETERMINISTIC_FINDINGS_SCHEMA_VERSION})`,
-    )
-  if (!Array.isArray(value.findings)) errors.push('findings must be an array')
-  return errors.length === 0
-    ? {ok: true, artifact: value as unknown as DeterministicFindingsDocument}
-    : {ok: false, errors}
 }
 
 /**

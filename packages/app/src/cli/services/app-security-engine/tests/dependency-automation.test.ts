@@ -4,8 +4,7 @@ import {securityExitCode} from '../../app-security-api.js'
 import {formatJson} from '../output/format.js'
 import {getRegistry} from '../registry/index.js'
 import {DETERMINISTIC_CHECKS, scan} from '../scanners/index.js'
-import {buildSubmission} from '../submission/index.js'
-import {parseDeterministicFindings} from '../scan-artifact/index.js'
+import {translateFindingsDocument} from '../results/translate.js'
 import {scanApp} from '../run.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -88,7 +87,7 @@ describe('dependency automation scanner integration', () => {
     })
   })
 
-  test('reports one ordinary finding through scoring, blocking, deterministic-findings.json, and submission', async () => {
+  test('reports one ordinary finding through scoring, blocking, and deterministic-findings.json', async () => {
     await inTemporaryDirectory(async (root) => {
       await makeApp(root, {
         'extensions/app-home/package.json': JSON.stringify({dependencies: {react: '^19.0.0'}}),
@@ -103,14 +102,18 @@ describe('dependency automation scanner integration', () => {
         inspected_files: ['extensions/app-home/package.json', 'package.json'],
       })
       expect(formatJson(execution.scan)).toContain(checkId)
-      expect(parseDeterministicFindings(execution.artifact).ok).toBe(true)
-      const submission = buildSubmission(execution.artifact, {
-        cliVersion: '3.99.0',
-        submittedAt: '2026-09-15T00:00:00Z',
+      expect(translateFindingsDocument(JSON.parse(JSON.stringify(execution.deterministicFindings)))).toEqual({
+        ok: true,
+        document: execution.deterministicFindings,
       })
-      for (const findings of [execution.artifact.findings, submission.report.findings]) {
-        expect(findings).toContainEqual(expect.objectContaining({rule_id: checkId, severity: 'low'}))
-      }
+      expect(execution.deterministicFindings.checks).toContainEqual(
+        expect.objectContaining({
+          id: checkId,
+          status: 'executed',
+          snapshot: expect.objectContaining({severity: 'low'}),
+          findings: [expect.objectContaining({location: {file: 'package.json'}})],
+        }),
+      )
       expect(securityExitCode({...execution, elapsedMilliseconds: 0}, 'low')).toBe(1)
       expect(securityExitCode({...execution, elapsedMilliseconds: 0}, 'medium')).toBe(0)
       expect(securityExitCode({...execution, elapsedMilliseconds: 0}, 'none')).toBe(0)
@@ -137,12 +140,7 @@ describe('dependency automation scanner integration', () => {
           inspected_files: expectedFiles,
         })
         expect(securityExitCode({...execution, elapsedMilliseconds: 0}, 'low')).toBe(0)
-        const submission = buildSubmission(execution.artifact, {
-          cliVersion: '3.99.0',
-          submittedAt: '2026-09-15T00:00:00Z',
-        })
-        expect(JSON.stringify(submission)).not.toContain('local>org/renovate-config')
-        expect(JSON.stringify(execution.artifact)).not.toContain('local>org/renovate-config')
+        expect(JSON.stringify(execution.deterministicFindings)).not.toContain('local>org/renovate-config')
         // Outside any repository, ignored-path discovery stops at its first probe.
         expect(vi.mocked(captureOutputWithExitCode).mock.calls.map(([command, args]) => [command, args])).toEqual([
           ['git', ['rev-parse', '--is-inside-work-tree', '--show-prefix']],

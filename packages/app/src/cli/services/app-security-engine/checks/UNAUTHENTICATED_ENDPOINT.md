@@ -2,6 +2,7 @@
 id: UNAUTHENTICATED_ENDPOINT
 version: 2
 severity: high
+precedence: union
 ---
 
 # Unauthenticated Endpoint

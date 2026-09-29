@@ -2,6 +2,7 @@
 id: CREDENTIAL_LOG_LEAKAGE
 version: 1
 severity: high
+precedence: prefer-agent
 ---
 
 # Credential Log Leakage

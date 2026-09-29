@@ -1,10 +1,16 @@
 import {prepareSubmissionPayload} from './app-security-submission-payload.js'
 import {buildSubmission} from './app-security-engine/index.js'
-import {submissionScanFixture} from './app-security-engine/tests/fixtures/submission-scan.js'
+import {
+  agentFindingsDocument,
+  deterministicFindingsDocument,
+} from './app-security-engine/tests/fixtures/findings-documents.js'
 import {describe, expect, test} from 'vitest'
 
 function submissionFixture() {
-  return buildSubmission(submissionScanFixture, {cliVersion: 'test', submittedAt: '2026-09-08'})
+  return buildSubmission(
+    {deterministic: deterministicFindingsDocument, agent: agentFindingsDocument},
+    {cliVersion: 'test', submittedAt: '2026-09-08'},
+  )
 }
 
 describe('prepareSubmissionPayload', () => {

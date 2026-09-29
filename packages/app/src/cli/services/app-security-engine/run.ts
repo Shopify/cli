@@ -17,7 +17,7 @@ export interface AppSecurityEngineMetadata {
 export interface AppSecurityScan {
   appRoot: string
   scan: ScanResult
-  artifact: DeterministicFindingsDocument
+  deterministicFindings: DeterministicFindingsDocument
   agentChecks: AgentChecks
   engine: AppSecurityEngineMetadata
 }
@@ -34,12 +34,12 @@ export async function scanApp(
   const appRoot = findAppRoot(directory)
   const result = await scan(appRoot, configFileName, options)
   const engineVersion = getEngineVersion()
-  const artifact = buildDeterministicFindings(result, {engineVersion})
+  const deterministicFindings = buildDeterministicFindings(result, {engineVersion})
   return {
     appRoot,
     scan: result,
-    artifact,
+    deterministicFindings,
     agentChecks: buildAgentChecks(engineVersion),
-    engine: artifact.engine,
+    engine: deterministicFindings.engine,
   }
 }

@@ -1,20 +1,49 @@
 import securitySubmit from './security-submit.js'
-import {appSecurityArtifactPaths, readDeterministicFindings, writeSubmission} from './app-security-artifacts.js'
+import {appSecurityArtifactPaths, writeSubmission} from './app-security-artifacts.js'
+import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {buildSubmission, SUBMISSION_SCHEMA_VERSION} from './app-security-engine/index.js'
+import {loadAppSecurityResults} from './app-security-results.js'
+import {appSecurityResultsFor} from './app-security-results.test-data.js'
 import {submitAppSecurityScan} from './app-security-submit-api.js'
 import {resolveSecuritySubmitClientId} from './app-security-submit-target.js'
-import {submissionScanFixture} from './app-security-engine/tests/fixtures/submission-scan.js'
+import {
+  agentFindingsDocument,
+  deterministicFindingsDocument,
+} from './app-security-engine/tests/fixtures/findings-documents.js'
 import {testDeveloperPlatformClient} from '../models/app/app.test-data.js'
 import {fileExists, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {itemToString, unstyled} from '@shopify/cli-kit/node/output'
 import {describe, expect, test, vi} from 'vitest'
 import type {uploadToGCS} from './bundle.js'
 import type {SecuritySubmitDependencies, SecuritySubmitOptions} from './security-submit.js'
-import type {ReadArtifactResult} from './app-security-artifacts.js'
-import type {DeterministicFindingsDocument} from './app-security-engine/index.js'
+import type {AppSecurityResults} from './app-security-results.js'
+import type {AgentFindingsDocument, DeterministicFindingsDocument} from './app-security-engine/index.js'
 
 const submittedAt = '2026-09-01T09:30:00.000Z'
+
+/**
+ * The results the default `loadResults` stub returns: both shared documents, as the real loader would combine
+ * them. The documents are cloned because some tests edit them.
+ */
+function loadedResults(
+  directory: string,
+  {
+    deterministic = structuredClone(deterministicFindingsDocument),
+    agent = structuredClone(agentFindingsDocument),
+  }: {deterministic?: DeterministicFindingsDocument | null; agent?: AgentFindingsDocument | null} = {},
+): AppSecurityResults {
+  return appSecurityResultsFor(directory, {deterministic, agent})
+}
+
+function plainSteps(error: AbortError): string[] {
+  return (error.nextSteps ?? []).map((step) => unstyled(itemToString(step)))
+}
+
+function expectedCommand(appRoot: string, name: 'scan' | 'record'): string {
+  return formatAppSecurityCommand(resolveAppSecurityCommands(appRoot)[name])
+}
 
 function options(directory: string): SecuritySubmitOptions {
   return {
@@ -33,12 +62,7 @@ function testDependencies(directory: string): SecuritySubmitDependencies {
   return {
     findRoot: vi.fn(() => directory),
     artifactPaths: appSecurityArtifactPaths,
-    readDeterministicFindings: vi.fn(
-      async (): Promise<ReadArtifactResult<DeterministicFindingsDocument>> => ({
-        status: 'ok',
-        value: structuredClone(submissionScanFixture),
-      }),
-    ),
+    loadResults: vi.fn(async () => loadedResults(directory)),
     resolveClientId: vi.fn<SecuritySubmitDependencies['resolveClientId']>(async ({clientId}) => clientId ?? 'api-key'),
     fetchApp: vi.fn(async (clientId: string) => ({
       remoteApp: {
@@ -79,8 +103,8 @@ function expectNoOutput(dependencies: SecuritySubmitDependencies): void {
 }
 
 function useReportSize(dependencies: SecuritySubmitDependencies, byteSize: number) {
-  vi.mocked(dependencies.buildSubmission).mockImplementation((deterministicFindings, buildOptions) => {
-    const submission = buildSubmission(deterministicFindings, {...buildOptions, feedback: undefined, versionTag: ''})
+  vi.mocked(dependencies.buildSubmission).mockImplementation((sources, buildOptions) => {
+    const submission = buildSubmission(sources, {...buildOptions, feedback: undefined, versionTag: ''})
     const baseSize = Buffer.byteLength(`${JSON.stringify(submission, null, 2)}\n`)
     submission.report.metadata.version_tag = 'a'.repeat(byteSize - baseSize)
     submission.report.feedback = buildOptions.feedback ?? null
@@ -164,73 +188,123 @@ describe('securitySubmit', () => {
     })
   })
 
-  test('builds the payload from deterministic-findings.json with schema version 0 and no attestation fields', async () => {
+  test.each([
+    {name: 'both result files', agent: true},
+    {name: 'deterministic-findings.json alone', agent: false},
+  ])('builds the v2 payload from $name with the real loader', async ({agent}) => {
     await inTemporaryDirectory(async (directory) => {
-      const dependencies = {...testDependencies(directory), readDeterministicFindings}
+      const dependencies = {...testDependencies(directory), loadResults: loadAppSecurityResults}
       const paths = appSecurityArtifactPaths(directory)
       await mkdir(paths.artifactDirectory)
-      await writeFile(paths.deterministicFindingsPath, JSON.stringify(submissionScanFixture))
+      await writeFile(paths.deterministicFindingsPath, JSON.stringify(deterministicFindingsDocument))
+      if (agent) await writeFile(paths.agentFindingsPath, JSON.stringify(agentFindingsDocument))
 
       const result = await securitySubmit({...options(directory), dryRun: true}, dependencies)
 
-      expect(result).toEqual({status: 'dry-run', payload: {path: paths.submissionPath, schemaVersion: 0}})
+      expect(result).toEqual({status: 'dry-run', payload: {path: paths.submissionPath, schemaVersion: 2}})
       const payload = await readFile(paths.submissionPath)
       expect(JSON.parse(payload)).toEqual(
-        buildSubmission(submissionScanFixture, {cliVersion: '3.99.0', submittedAt, feedback: undefined}),
+        buildSubmission(
+          {deterministic: deterministicFindingsDocument, agent: agent ? agentFindingsDocument : null},
+          {cliVersion: '3.99.0', submittedAt, feedback: undefined},
+        ),
       )
       expect(JSON.parse(payload).schemaVersion).toBe(SUBMISSION_SCHEMA_VERSION)
-      expect(payload).not.toMatch(/attestation|digest|fingerprint|suppress|input_hash|prompt_hash/)
+      expect(JSON.parse(payload).report.sources.agent).toEqual(agent ? expect.any(Object) : null)
+      expect(payload).not.toMatch(/attestation|digest|fingerprint|justification|input_hash|prompt_hash/)
     })
   })
 
-  test('refuses to build a submission from a scan that contains an unredacted secret', async () => {
+  test('builds an agent-only payload when only agent-findings.json is present', async () => {
     await inTemporaryDirectory(async (directory) => {
       const dependencies = testDependencies(directory)
-      const secretScan = structuredClone(submissionScanFixture)
-      secretScan.findings[0]!.message = `token ${['shpat', '0123456789abcdef0123456789abcdef'].join('_')}`
-      vi.mocked(dependencies.readDeterministicFindings).mockResolvedValue({status: 'ok', value: secretScan})
+      vi.mocked(dependencies.loadResults).mockResolvedValue(loadedResults(directory, {deterministic: null}))
+
+      await securitySubmit({...options(directory), dryRun: true}, dependencies)
+
+      expect(dependencies.buildSubmission).toHaveBeenCalledExactlyOnceWith(
+        {deterministic: null, agent: agentFindingsDocument},
+        expect.anything(),
+      )
+      const payload = JSON.parse(await readFile(appSecurityArtifactPaths(directory).submissionPath))
+      expect(payload.report.sources).toEqual({deterministic: null, agent: expect.objectContaining({source: 'agent'})})
+    })
+  })
+
+  test('refuses to submit when deterministic-findings.json contains an unredacted secret', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const dependencies = testDependencies(directory)
+      const deterministic = structuredClone(deterministicFindingsDocument)
+      deterministic.checks[0]!.findings[0]!.message = `token ${['shpat', '0123456789abcdef0123456789abcdef'].join('_')}`
+      vi.mocked(dependencies.loadResults).mockResolvedValue(loadedResults(directory, {deterministic}))
 
       const error = await capturedAbort(securitySubmit({...options(directory), dryRun: true}, dependencies))
 
       expect(error.message).toBe(
-        `The App Security scan at ${appSecurityArtifactPaths(directory).deterministicFindingsPath} contains an unredacted secret.`,
+        `The App Security results at ${
+          appSecurityArtifactPaths(directory).deterministicFindingsPath
+        } contain an unredacted secret.`,
       )
+      expect(plainSteps(error)).toEqual([`Run ${expectedCommand(directory, 'scan')} to regenerate it, then submit.`])
       expect(dependencies.buildSubmission).not.toHaveBeenCalled()
       expect(dependencies.writeSubmission).not.toHaveBeenCalled()
       await expect(fileExists(appSecurityArtifactPaths(directory).submissionPath)).resolves.toBe(false)
     })
   })
 
-  test('fails with a next step to run check before resolving the target when deterministic-findings.json is missing', async () => {
+  test('refuses to submit when agent-findings.json contains an unredacted secret', async () => {
     await inTemporaryDirectory(async (directory) => {
-      const dependencies = {...testDependencies(directory), readDeterministicFindings}
+      const dependencies = testDependencies(directory)
+      const agent = structuredClone(agentFindingsDocument)
+      agent.checks[0]!.findings[0]!.reasoning = `token ${['shpat', '0123456789abcdef0123456789abcdef'].join('_')}`
+      vi.mocked(dependencies.loadResults).mockResolvedValue(loadedResults(directory, {agent}))
+
+      const error = await capturedAbort(securitySubmit({...options(directory), dryRun: true}, dependencies))
+
+      expect(error.message).toBe(
+        `The App Security results at ${appSecurityArtifactPaths(directory).agentFindingsPath} contain an unredacted secret.`,
+      )
+      expect(plainSteps(error)).toEqual([
+        `Have your coding agent run ${expectedCommand(directory, 'record')} again to regenerate it, then submit.`,
+      ])
+      expect(dependencies.buildSubmission).not.toHaveBeenCalled()
+      expect(dependencies.writeSubmission).not.toHaveBeenCalled()
+    })
+  })
+
+  test('fails with a next step to run check before resolving the target when no results are present', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const dependencies = {...testDependencies(directory), loadResults: loadAppSecurityResults}
       vi.mocked(dependencies.canPrompt).mockReturnValue(true)
 
       const error = await capturedAbort(securitySubmit(options(directory), dependencies))
 
-      expect(error.message).toContain(
-        `No App Security scan found in ${appSecurityArtifactPaths(directory).artifactDirectory}.`,
+      expect(error.message).toBe(
+        `No App Security results found in ${appSecurityArtifactPaths(directory).artifactDirectory}.`,
       )
-      expect(error.nextSteps).toEqual([`Run \`shopify app security check --path ${directory}\` first, then submit.`])
+      expect(plainSteps(error)).toEqual([`Run ${expectedCommand(directory, 'scan')} first, then submit.`])
+      expect(dependencies.buildSubmission).not.toHaveBeenCalled()
       expect(dependencies.resolveClientId).not.toHaveBeenCalled()
       expect(dependencies.fetchApp).not.toHaveBeenCalled()
       expectNoOutput(dependencies)
     })
   })
 
-  test('reports why an unreadable scan is invalid', async () => {
+  test('surfaces the shared invalid-file error from the loader without doing any work', async () => {
     await inTemporaryDirectory(async (directory) => {
-      const dependencies = testDependencies(directory)
+      const dependencies = {...testDependencies(directory), loadResults: loadAppSecurityResults}
       vi.mocked(dependencies.canPrompt).mockReturnValue(true)
-      vi.mocked(dependencies.readDeterministicFindings).mockResolvedValue({
-        status: 'invalid',
-        message: 'findings must be an array',
-      })
+      const paths = appSecurityArtifactPaths(directory)
+      await mkdir(paths.artifactDirectory)
+      await writeFile(paths.deterministicFindingsPath, '{"checks": "not an array"}')
 
       const error = await capturedAbort(securitySubmit(options(directory), dependencies))
 
-      expect(error.message).toContain('is not valid')
-      expect(error.nextSteps).toEqual(['findings must be an array'])
+      expect(error.message).toBe('The App Security results could not be loaded because a results file is invalid.')
+      expect(error.details).toEqual({
+        invalidFiles: [{source: 'deterministic', path: paths.deterministicFindingsPath, errors: expect.any(Array)}],
+      })
+      expect(dependencies.buildSubmission).not.toHaveBeenCalled()
       expect(dependencies.resolveClientId).not.toHaveBeenCalled()
       expect(dependencies.fetchApp).not.toHaveBeenCalled()
       expectNoOutput(dependencies)
@@ -474,14 +548,14 @@ describe('securitySubmit', () => {
       const result = await securitySubmit({...options(directory), dryRun: true}, dependencies)
 
       const payloadPath = appSecurityArtifactPaths(directory).submissionPath
-      await expect(readFile(payloadPath)).resolves.toContain('"schemaVersion": 0')
+      await expect(readFile(payloadPath)).resolves.toContain('"schemaVersion": 2')
       expect(dependencies.buildSubmission).toHaveBeenCalledOnce()
       expect(dependencies.writeSubmission).toHaveBeenCalledOnce()
       expect(dependencies.resolveClientId).not.toHaveBeenCalled()
       expect(dependencies.fetchApp).not.toHaveBeenCalled()
       expect(dependencies.submitScan).not.toHaveBeenCalled()
       expect(dependencies.confirm).not.toHaveBeenCalled()
-      expect(result).toEqual({status: 'dry-run', payload: {path: payloadPath, schemaVersion: 0}})
+      expect(result).toEqual({status: 'dry-run', payload: {path: payloadPath, schemaVersion: 2}})
     })
   })
 
@@ -501,7 +575,7 @@ describe('securitySubmit', () => {
       expect(dependencies.submitScan).not.toHaveBeenCalled()
       expect(result).toEqual({
         status: 'dry-run',
-        payload: {path: appSecurityArtifactPaths(directory).submissionPath, schemaVersion: 0},
+        payload: {path: appSecurityArtifactPaths(directory).submissionPath, schemaVersion: 2},
       })
     })
   })
@@ -515,7 +589,7 @@ describe('securitySubmit', () => {
       await expect(securitySubmit(options(directory), dependencies)).resolves.toEqual({status: 'cancelled'})
 
       await expect(readFile(appSecurityArtifactPaths(directory).submissionPath)).resolves.toContain(
-        '"schemaVersion": 0',
+        '"schemaVersion": 2',
       )
       expect(dependencies.submitScan).not.toHaveBeenCalled()
     })
@@ -540,8 +614,9 @@ describe('securitySubmit', () => {
         status: 'submitted',
         clientId: 'api-key',
         appTitle: 'Example app',
-        payload: {path: appSecurityArtifactPaths(directory).submissionPath, schemaVersion: 0},
+        payload: {path: appSecurityArtifactPaths(directory).submissionPath, schemaVersion: 2},
         submittedAt,
+        feedbackIncluded: false,
       })
     })
   })
@@ -657,7 +732,7 @@ describe('securitySubmit', () => {
 
       expect(error.message).toBe('Pass --force to submit without confirmation.')
       expect(dependencies.findRoot).not.toHaveBeenCalled()
-      expect(dependencies.readDeterministicFindings).not.toHaveBeenCalled()
+      expect(dependencies.loadResults).not.toHaveBeenCalled()
       expect(dependencies.readStdin).not.toHaveBeenCalled()
       expect(dependencies.writeSubmission).not.toHaveBeenCalled()
       expect(dependencies.resolveClientId).not.toHaveBeenCalled()
@@ -675,7 +750,7 @@ describe('securitySubmit', () => {
 
       expect(error.message).toBe('Pass --force to submit without confirmation.')
       expect(dependencies.findRoot).not.toHaveBeenCalled()
-      expect(dependencies.readDeterministicFindings).not.toHaveBeenCalled()
+      expect(dependencies.loadResults).not.toHaveBeenCalled()
       expect(dependencies.readStdin).not.toHaveBeenCalled()
       expect(dependencies.writeSubmission).not.toHaveBeenCalled()
       expect(dependencies.resolveClientId).not.toHaveBeenCalled()
@@ -756,14 +831,31 @@ describe('securitySubmit', () => {
       expect(result).toEqual({
         status: 'submitted',
         clientId: 'client-id',
-        payload: {path: appSecurityArtifactPaths(directory).submissionPath, schemaVersion: 0},
+        payload: {path: appSecurityArtifactPaths(directory).submissionPath, schemaVersion: 2},
         appTitle: 'Example app',
         submittedAt,
+        feedbackIncluded: false,
       })
     })
   })
 
-  test('passes the app and the exact submission to the human confirmation renderer', async () => {
+  test.each([
+    {feedback: 'Helpful results.', feedbackIncluded: true},
+    {feedback: '   ', feedbackIncluded: false},
+  ])(
+    'reports feedbackIncluded=$feedbackIncluded for explicit feedback $feedback',
+    async ({feedback, feedbackIncluded}) => {
+      await inTemporaryDirectory(async (directory) => {
+        const dependencies = testDependencies(directory)
+
+        const result = await securitySubmit({...options(directory), force: true, feedback}, dependencies)
+
+        expect(result).toMatchObject({status: 'submitted', feedbackIncluded})
+      })
+    },
+  )
+
+  test('passes the app, the loaded results and the exact submission to the human confirmation renderer', async () => {
     await inTemporaryDirectory(async (directory) => {
       const dependencies = testDependencies(directory)
       vi.mocked(dependencies.canPrompt).mockReturnValue(true)
@@ -776,6 +868,7 @@ describe('securitySubmit', () => {
         canAddFeedback: true,
         submissionPath,
         submission: JSON.parse(await readFile(submissionPath)),
+        results: loadedResults(directory),
       })
     })
   })

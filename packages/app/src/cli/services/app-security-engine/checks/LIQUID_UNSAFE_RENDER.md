@@ -2,6 +2,7 @@
 id: LIQUID_UNSAFE_RENDER
 version: 1
 severity: medium
+precedence: union
 ---
 
 # Liquid Unsafe Render

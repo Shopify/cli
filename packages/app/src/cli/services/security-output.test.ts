@@ -123,7 +123,7 @@ describe('buildSecurityAlert', () => {
     expect(customSections[artifactsIndex]?.body).toEqual({
       list: {
         items: [
-          ['Scan results:', {filePath: '/tmp/app/.shopify/app-security/deterministic-findings.json'}],
+          ['Deterministic findings:', {filePath: '/tmp/app/.shopify/app-security/deterministic-findings.json'}],
           ['Agent checks:', {filePath: '/tmp/app/.shopify/app-security/agent-checks.json'}],
         ],
       },

@@ -12,11 +12,11 @@ import type {SecuritySubmitResult} from '../../../services/security-submit-resul
 export default class SecuritySubmit extends BaseCommand {
   static hidden = true
 
-  static summary = 'Submit App Security results to Shopify.'
+  static summary = 'Send App Security results and feedback to Shopify.'
 
-  static descriptionWithMarkdown = `Reads the most recent App Security scan (\`.shopify/app-security/deterministic-findings.json\`), writes a \`.shopify/app-security/submission.json\` file for inspection, asks for confirmation, and uploads the result to Shopify.
+  static descriptionWithMarkdown = `Sends the App Security results that \`shopify app security review\` shows to Shopify, with your optional feedback. Reads \`.shopify/app-security/deterministic-findings.json\` and, when present, \`agent-findings.json\`, writes \`.shopify/app-security/submission.json\` for inspection, and asks for confirmation before uploading.
 
-Generated report fields exclude source code, file paths, code snippets, evidence, finding messages, and commit identifiers. Optional feedback is included without redaction. Optionally use \`--version\` to identify the app version corresponding to the scanned files. Use \`--dry-run\` to write and inspect the exact payload without uploading it.`
+The upload excludes source code, file paths, code snippets, evidence, finding messages, agent reasoning and reasons, suppression justifications, and commit identifiers. Feedback is sent without redaction. Optionally use \`--version\` to identify the app version these results came from. Use \`--dry-run\` to write and inspect the exact payload without uploading it.`
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -32,7 +32,7 @@ Generated report fields exclude source code, file paths, code snippets, evidence
       env: 'SHOPIFY_FLAG_VERSION',
     }),
     feedback: Flags.string({
-      description: 'Optional feedback about inaccurate or unhelpful App Security results. Use - to read from stdin.',
+      description: 'Optional feedback about these App Security results or this tool. Use - to read from stdin.',
       env: 'SHOPIFY_FLAG_APP_SECURITY_FEEDBACK',
     }),
     force: Flags.boolean({

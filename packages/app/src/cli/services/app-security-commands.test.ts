@@ -165,6 +165,7 @@ describe('resolveAppSecurityCommands', () => {
     ])
     expect(commands.record.args).toEqual(['app', 'security', 'record', {flag: '--path', value: '/tmp/app'}])
     expect(commands.review.args).toEqual(['app', 'security', 'review', {flag: '--path', value: '/tmp/app'}])
+    expect(commands.submit.args).toEqual(['app', 'security', 'submit', {flag: '--path', value: '/tmp/app'}])
     expect(commands.clean.args).toEqual(['app', 'security', 'clean', {flag: '--path', value: '/tmp/app'}])
   })
 
@@ -182,6 +183,7 @@ describe('resolveAppSecurityCommands', () => {
     ])
     expect(commands.record.args).toEqual(['app', 'security', 'record', {flag: '--path', value: '/tmp/app'}])
     expect(commands.review.args).toEqual(['app', 'security', 'review', {flag: '--path', value: '/tmp/app'}])
+    expect(commands.submit.args).toEqual(['app', 'security', 'submit', {flag: '--path', value: '/tmp/app'}])
     expect(commands.clean.args).toEqual(['app', 'security', 'clean', {flag: '--path', value: '/tmp/app'}])
   })
 
@@ -207,7 +209,24 @@ describe('resolveAppSecurityCommands', () => {
       "Get-Content -Raw <findings.json> | shopify app security record --path '/tmp/app'",
     )
     expect(formatAppSecurityCommand(commands.review, 'posix')).toBe("shopify app security review --path '/tmp/app'")
+    expect(formatAppSecurityCommand(commands.submit, 'posix')).toBe("shopify app security submit --path '/tmp/app'")
     expect(formatAppSecurityCommand(commands.clean, 'posix')).toBe("shopify app security clean --path '/tmp/app'")
+  })
+
+  test('leaves the submit subcommand unquoted in each shell', () => {
+    const commands = resolveAppSecurityCommands(WINDOWS_APP_ROOT)
+
+    for (const shell of ['posix', 'cmd', 'powershell'] as const) {
+      expect(splitQuotedCommand(formatAppSecurityCommand(commands.submit, shell), shell)).toEqual([
+        'shopify',
+        'app',
+        'security',
+        'submit',
+        '--path',
+        WINDOWS_APP_ROOT,
+      ])
+      expect(formatAppSecurityCommand(commands.submit, shell)).toMatch(/ submit --path /)
+    }
   })
 })
 

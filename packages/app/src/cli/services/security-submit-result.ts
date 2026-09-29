@@ -26,7 +26,15 @@ export type SubmitAppSecurityScanResult = {status: 'submitted'} | SecuritySubmit
 
 export type SecuritySubmitResult =
   | {status: 'dry-run'; payload: SecuritySubmitPayload}
-  | {status: 'submitted'; payload: SecuritySubmitPayload; submittedAt: string; appTitle: string; clientId: string}
+  | {
+      status: 'submitted'
+      payload: SecuritySubmitPayload
+      submittedAt: string
+      appTitle: string
+      clientId: string
+      /** Whether the uploaded payload carried feedback, so the success message can thank the user. */
+      feedbackIncluded: boolean
+    }
   | {status: 'cancelled'}
   | SecuritySubmitFailure
 

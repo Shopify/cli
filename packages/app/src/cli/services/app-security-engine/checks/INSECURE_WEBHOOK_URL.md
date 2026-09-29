@@ -2,6 +2,7 @@
 id: INSECURE_WEBHOOK_URL
 version: 2
 severity: high
+precedence: prefer-agent
 ---
 
 # Insecure Configured Callback Url

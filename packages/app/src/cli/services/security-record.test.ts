@@ -9,7 +9,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 import type {SecurityRecordDependencies} from './security-record.js'
-import type {AgentFindingsArtifact} from './app-security-engine/index.js'
+import type {AgentFindingsDocument} from './app-security-engine/index.js'
 
 // Composed at runtime so the literal token never appears in the repository.
 const FAKE_SHOPIFY_TOKEN = ['shpat', '_', '0123456789abcdef'.repeat(2)].join('')
@@ -62,8 +62,8 @@ function recordCommand(appRoot: string): string {
   return formatAppSecurityCommand(resolveAppSecurityCommands(appRoot).record)
 }
 
-async function readRecorded(appRoot: string): Promise<AgentFindingsArtifact> {
-  return JSON.parse(await readFile(appSecurityArtifactPaths(appRoot).agentFindingsPath)) as AgentFindingsArtifact
+async function readRecorded(appRoot: string): Promise<AgentFindingsDocument> {
+  return JSON.parse(await readFile(appSecurityArtifactPaths(appRoot).agentFindingsPath)) as AgentFindingsDocument
 }
 
 async function recordError(appRoot: string, dependencies: SecurityRecordDependencies): Promise<AbortError> {

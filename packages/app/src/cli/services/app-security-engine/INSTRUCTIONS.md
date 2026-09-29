@@ -101,16 +101,16 @@ When the document is accepted, `record` replaces {{AGENT_FINDINGS_PATH}} with it
 
 ### 6. Review, explain, and help fix
 
-Show the recorded results:
+Show the combined results:
 
 ```bash
 {{REVIEW_COMMAND}}
 ```
 
-It prints {{DETERMINISTIC_FINDINGS_PATH}} and {{AGENT_FINDINGS_PATH}} with their paths and ages. Report:
+It combines {{DETERMINISTIC_FINDINGS_PATH}} with {{AGENT_FINDINGS_PATH}} into one result per check. Each check with findings gets its own box, most severe first, listing every finding with its file, line and source (deterministic or agent). A summary box follows with the checks with findings, the other checks (passed, not applicable or unresolved), deterministic coverage, the results files with their ages and versions, and next steps. Add `--json` for the machine-readable combined view, `--check-id <ID>` (repeatable) to narrow the review to specific checks, and `--verbose` for full reasoning, evidence and suppressed findings. Report:
 
 - CLI and ruleset versions;
-- deterministic and agent finding counts, grouped by severity;
+- finding counts per check, grouped by severity and source;
 - each verified finding's impact and concise file/line evidence;
 - skipped or incomplete coverage and unresolved checks;
 - prioritized remediation steps.
@@ -125,11 +125,11 @@ The results describe the source as it was when they were produced. Once source f
 {{SCAN_COMMAND}}
 ```
 
-It replaces the scan results and agent checks and never touches the recorded agent findings. Optionally repeat steps 2–5 to refresh the agent review. `record` replaces {{AGENT_FINDINGS_PATH}} wholesale.
+It replaces the scan results and agent checks and never touches the recorded agent findings. Optionally repeat steps 2–5 to refresh the agent review. Until the agent records again, `review` shows both results for checks where the agent's result would otherwise take precedence, because the agent's result is now older than the deterministic one. `record` replaces {{AGENT_FINDINGS_PATH}} wholesale.
 
 ### 8. Submit only when explicitly authorized (optional)
 
-Only after reviewing the results, submit only when the user explicitly requests or authorizes an upload to Shopify. Do not upload automatically; local results do not require submission. Submission reads the existing {{DETERMINISTIC_FINDINGS_PATH}}; agent findings aren't uploaded.
+Only after reviewing the results, submit only when the user explicitly requests or authorizes an upload to Shopify. Do not upload automatically; local results do not require submission. Submission sends the results `review` shows: it reads the existing {{DETERMINISTIC_FINDINGS_PATH}} and, when present, {{AGENT_FINDINGS_PATH}}. The upload excludes source code, file paths, code snippets, evidence, finding messages, agent reasoning and reasons, suppression justifications, and commit identifiers.
 
 Run from the same app root used above (or pass `--path <app-root>` to each submit command). Inspect a dry run first:
 

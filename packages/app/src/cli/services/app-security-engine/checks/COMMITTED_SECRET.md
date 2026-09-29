@@ -2,6 +2,7 @@
 id: COMMITTED_SECRET
 version: 3
 severity: high
+precedence: union
 ---
 
 # Committed Secret
