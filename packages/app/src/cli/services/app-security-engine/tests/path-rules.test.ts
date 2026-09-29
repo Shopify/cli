@@ -49,16 +49,13 @@ function makeRepository(files: Record<string, string>): string {
   return root
 }
 
-/** Only the defaults, as the matcher sees them when git reported nothing. */
 const DEFAULTS_ONLY: PathRules = {defaults: DEFAULT_EXCLUDE_PATTERNS, gitIgnoredPaths: [], overrides: []}
 
-/** Only git literals, so a test can prove literal matching without a default getting in the way. */
 const gitIgnoredOnly = (paths: string[]): PathRules => ({defaults: [], gitIgnoredPaths: paths, overrides: []})
 
 const cliExclude = (pattern: string): PathOverride => ({action: 'exclude', pattern, source: 'cli'})
 const cliInclude = (pattern: string): PathOverride => ({action: 'include', pattern, source: 'cli'})
 
-/** The listing options exactly as `scan()` uses them when no override can re-include a default directory. */
 const PRUNED = {pruneDefaultDirectories: true}
 
 async function listedPaths(appRoot: string, options = PRUNED): Promise<string[]> {
@@ -81,7 +78,6 @@ describe('listGitIgnoredPaths', () => {
   })
 
   test('does not report a tracked file that matches .gitignore', async () => {
-    // The classic leak: commit .env, then gitignore it. It must still be scanned.
     const root = makeRepository({'.gitignore': '.env\n', '.env': 'SECRET=1\n'})
     git(root, ['add', '-f', '.env'])
     git(root, ['commit', '-qm', 'oops'])
@@ -128,8 +124,6 @@ describe('listGitIgnoredPaths', () => {
   })
 
   test('reports gitignore-significant filenames literally', async () => {
-    // Names that .gitignore syntax treats specially (glob brackets, comment `#`, negation `!`,
-    // whitespace) yet remain legal filenames on every platform, including Windows.
     const root = makeRepository({
       '.gitignore': '\\[id\\].ts\n\\#hash.ts\n\\!bang.ts\nsp ace.ts\n',
       '[id].ts': '',
@@ -150,9 +144,7 @@ describe('listGitIgnoredPaths', () => {
   test.skipIf(process.platform === 'win32')(
     'reports an ignored symlinked directory as a file literal, without a trailing slash',
     async () => {
-      // git never follows a symlink while listing, so the link is a blob to it and is not collapsed
-      // to a `dir/` entry. `createFilePathMatcher` relies on this when it documents that a
-      // gitignored symlinked `.github` is not excluded by the `.github/` ancestor check.
+      // Git doesn't follow symlinks, so the link is listed as a file, not a `dir/` entry.
       const root = makeRepository({'.gitignore': '.github\n', 'real/dependabot.yml': ''})
       symlinkSync(join(root, 'real'), join(root, '.github'), 'dir')
 
@@ -166,7 +158,6 @@ describe('listGitIgnoredPaths', () => {
     writeFiles(fakeConfigHome, {'git/ignore': 'notes.txt\n'})
     const root = makeRepository({'notes.txt': 'todo', 'src/index.ts': ''})
 
-    // Sanity: with core.excludesFile unset git does read $XDG_CONFIG_HOME/git/ignore.
     vi.stubEnv('XDG_CONFIG_HOME', fakeConfigHome)
     await expect(listedPaths(root)).resolves.toEqual(['notes.txt'])
 
@@ -187,8 +178,7 @@ describe('listGitIgnoredPaths', () => {
     })
 
     test('reports an app folder the enclosing repository ignores, even with a force-tracked descendant', async () => {
-      // With a force-tracked file inside, git no longer collapses the app to a single `./` entry:
-      // it lists every untracked file in the app individually, which would empty the scan.
+      // A force-tracked file stops git collapsing the app to `./`; it lists each file instead.
       const repository = makeRepository({
         '.gitignore': 'apps/web/\n',
         'apps/web/README.md': 'docs',
@@ -210,7 +200,7 @@ describe('listGitIgnoredPaths', () => {
         'apps/web/src/index.ts': '',
       })
 
-      // Asked from the repository root the same setup lists the ignored folder, proving git works here.
+      // Control: from the repository root, git lists the ignored folder.
       await expect(listedPaths(repository)).resolves.toEqual(['apps/'])
 
       await expect(listGitIgnoredPaths(join(repository, 'apps', 'web'), PRUNED)).resolves.toEqual({
@@ -225,8 +215,6 @@ describe('listGitIgnoredPaths', () => {
     })
 
     test('does not treat the top level of a whitelist-style repository as ignored', async () => {
-      // `git check-ignore .` at the top level normalises `.` to the empty path, which a bare `*`
-      // matches, so probing there would misreport the app as ignored and drop every git exclusion.
       const root = makeRepository({
         '.gitignore': '*\n!src/\n!src/**\n!.gitignore\n',
         'src/index.ts': '',
@@ -251,7 +239,6 @@ describe('listGitIgnoredPaths', () => {
     })
 
     test('reports a directory inside .git as not being in a repository', async () => {
-      // `git rev-parse --is-inside-work-tree` prints `false` with exit code 0 there.
       const root = makeRepository({})
 
       await expect(listGitIgnoredPaths(join(root, '.git'), PRUNED)).resolves.toEqual({status: 'not-a-repository'})
@@ -263,9 +250,7 @@ describe('listGitIgnoredPaths', () => {
     ])(
       'reports a failure, not a missing repository, when git refuses a repository with a corrupt %s',
       async (file, content) => {
-        // Both make `rev-parse` exit 128, as it does outside any repository (verified with git 2.55: a
-        // corrupt config prints "bad config line", a corrupt HEAD even prints "not a git repository").
-        // The .git marker on disk is what tells the two apart.
+        // Both make `rev-parse` exit 128, as it does outside any repository.
         const root = makeRepository({'.gitignore': 'tmp/\n', 'tmp/a.ts': ''})
         git(root, ['add', '.gitignore'])
         git(root, ['commit', '-qm', 'init'])
@@ -278,8 +263,7 @@ describe('listGitIgnoredPaths', () => {
     test.skipIf(process.platform === 'win32')(
       'reports a failure, not a missing repository, when the .git marker is a dangling symlink',
       async () => {
-        // git cannot follow the dangling link, so `rev-parse` exits 128 exactly as it does outside any
-        // repository; the ambiguous marker on disk is what keeps this from being reported as one.
+        // A dangling `.git` link also makes `rev-parse` exit 128.
         const root = makeDirectory()
         writeFiles(root, {'.gitignore': 'tmp/\n', 'tmp/a.ts': ''})
         symlinkSync(join(root, 'missing-git-dir'), join(root, '.git'))
@@ -339,8 +323,6 @@ describe('listGitIgnoredPaths', () => {
     })
 
     test('lists paths inside the default directories when pruning is off', async () => {
-      // `scan()` turns pruning off whenever an include override exists, since a re-included default
-      // directory is walked and the git-ignored files inside it must still be excluded.
       const root = makeRepository({
         '.gitignore': '*.log\n',
         'node_modules/pkg/index.js': '',
@@ -508,8 +490,6 @@ describe('createPathMatcher', () => {
     })
 
     test('an include for one file inside a gitignored directory does not re-include the directory', () => {
-      // git collapses the ignored directory to a single `tmp/` literal, which the walker prunes
-      // before ever asking about `tmp/keep.ts`; users must re-include the directory itself.
       const isExcluded = createPathMatcher({
         defaults: DEFAULT_EXCLUDE_PATTERNS,
         gitIgnoredPaths: ['tmp/'],
@@ -574,8 +554,6 @@ describe('createPathMatcher', () => {
   })
 
   describe('with --ignore patterns', () => {
-    // The matcher semantics are covered above with `PathOverride` values and the `!` and escape
-    // parsing under `ignorePatternRules`; this only pins that command-line order is rule order.
     test('later CLI patterns win over earlier ones', () => {
       const fromPatterns = (ignorePatterns: string[]) =>
         createPathMatcher(buildPathRules({gitIgnoredPaths: [], overrides: ignorePatternRules(ignorePatterns)}))
@@ -588,9 +566,7 @@ describe('createPathMatcher', () => {
   })
 
   test('handles many gitignore literals and many lookups', () => {
-    // 50,000 literals × 50,000 lookups. The literal lookup is a Set membership test, which keeps
-    // this far inside vitest's timeout; compiling the literals into patterns (as the first version
-    // of this matcher did) made the same workload take about a minute.
+    // Compiling literals into patterns instead of a Set makes this take about a minute.
     const rules = buildPathRules({
       gitIgnoredPaths: Array.from({length: 50_000}, (_, index) => `dir${index % 100}/.DS_Store${index}`),
     })
@@ -615,8 +591,6 @@ describe('createFilePathMatcher', () => {
   })
 
   test('excludes a file below a collapsed git directory literal', () => {
-    // `createPathMatcher` alone would answer false for `tmp/a/b.ts`: the literal `tmp/` names only the
-    // directory. This matcher asks about the ancestors first, as the walker's pruning would have.
     const isExcluded = createFilePathMatcher(gitIgnoredOnly(['tmp/']))
 
     expect(isExcluded('tmp/a/b.ts')).toBe(true)
@@ -678,7 +652,6 @@ describe('ignorePatternRules', () => {
   })
 
   test('rejects a value the flag layer should already have refused as a bug', () => {
-    // A lone `!` would make `ignore` re-include every path, so it must never reach the matcher.
     expect(() => ignorePatternRules(['!'])).toThrow(BugError)
     expect(() => ignorePatternRules(['!'])).toThrow(/nothing after/)
     expect(() => ignorePatternRules([''])).toThrow(/empty/)

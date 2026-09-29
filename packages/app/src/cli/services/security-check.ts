@@ -40,7 +40,6 @@ interface SecurityOptions {
   skipInstructions: boolean
   findingsPath?: string
   clean: boolean
-  /** `--ignore` patterns in command-line order; forwarded to the scan and repeated in generated commands. */
   ignorePatterns: ReadonlyArray<string>
 }
 

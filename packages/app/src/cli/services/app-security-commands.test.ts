@@ -222,7 +222,6 @@ describe('formatAppSecurityCommand', () => {
         '--ignore',
         'a b/',
       ])
-      // Every pattern is wrapped in quotes; bare `!` or `*` would be expanded by the shell.
       expect(formatted).not.toMatch(/ !build\//)
       expect(formatted).not.toMatch(/ \*\.log/)
     }
@@ -238,9 +237,6 @@ describe('formatAppSecurityCommand', () => {
   })
 
   test('quotes an --ignore pattern that starts with `-` or repeats a command word', () => {
-    // `-*.log` and `-tmp/` are legitimate .gitignore lines; left bare, a shell could glob-expand them
-    // and a parser could read them as flags. A pattern literally named `check` must not blend into
-    // the command words either. A flag value is quoted whatever it looks like.
     const ignorePatterns = ['-*.log', '-tmp/', 'check']
     const commands = resolveAppSecurityCommands('/tmp/app', undefined, ignorePatterns)
 

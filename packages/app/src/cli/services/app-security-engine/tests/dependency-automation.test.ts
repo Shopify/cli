@@ -26,7 +26,6 @@ vi.mock('@shopify/cli-kit/node/system', async (importActual) => {
 const checkId = 'MISSING_DEPENDENCY_SECURITY_AUTOMATION'
 const dependabot = '# Configuration contents are not validated.\n'
 
-// Keep the scan's git calls independent of the developer's global excludes and any enclosing repository.
 let restoreGitConfig: (() => void) | undefined
 beforeEach(() => {
   restoreGitConfig = isolateGitConfig()
@@ -140,8 +139,7 @@ describe('dependency automation scanner integration', () => {
         const submission = buildSubmission(execution.trace, {cliVersion: '3.99.0', submittedAt: '2026-09-15T00:00:00Z'})
         expect(JSON.stringify(submission)).not.toContain('local>org/renovate-config')
         expect(JSON.stringify(execution.trace)).not.toContain('local>org/renovate-config')
-        // The scan's own git calls (ignored-path discovery and project metadata) are the only ones allowed.
-        // The temporary directory is outside any repository, so ignored-path discovery stops at its first probe.
+        // Outside any repository, ignored-path discovery stops at its first probe.
         expect(vi.mocked(captureOutputWithExitCode).mock.calls.map(([command, args]) => [command, args])).toEqual([
           ['git', ['rev-parse', '--is-inside-work-tree', '--show-prefix']],
           ['git', ['rev-parse', 'HEAD']],
@@ -178,7 +176,6 @@ describe('dependency automation scanner integration', () => {
   }
 
   describe('gitignored configuration', () => {
-    // Hosted bots read the repository, so a configuration file that never reaches it configures nothing.
     test('does not read an untracked configuration file that git ignores', async () => {
       await inTemporaryDirectory(async (root) => {
         await makeRepository(root, {'.gitignore': '.github/\n', '.github/dependabot.yml': dependabot}, ['.gitignore'])
@@ -238,8 +235,7 @@ describe('dependency automation scanner integration', () => {
 
     test('reads an untracked gitignored configuration file a pattern includes again', async () => {
       await inTemporaryDirectory(async (root) => {
-        // The tracked CODEOWNERS keeps `.github/` from being collapsed into a single ignored directory
-        // literal, so git reports the configuration file itself and the pattern can include it again.
+        // A tracked CODEOWNERS stops git collapsing `.github/`, so it lists the file itself.
         await makeRepository(
           root,
           {

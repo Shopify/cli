@@ -72,13 +72,7 @@ export interface ProjectDetection {
   languages: DetectedLanguage[]
 }
 
-/** Caller-supplied inputs that change which files a scan discovers. */
 export interface ScanOptions {
-  /**
-   * `--ignore` patterns: .gitignore lines relative to the app directory,
-   * applied in order after the default and gitignore exclusions. They must reach
-   * every scan of the same review (initial scan and compile) or `input_hash` differs.
-   */
   ignorePatterns?: ReadonlyArray<string>
 }
 

@@ -592,8 +592,6 @@ export async function scan(
   const selectedFileName = getAppConfigurationFileName(configFileName)
   const appToml = loadAppToml(joinPath(appRoot, selectedFileName), appRoot)
   const appTomls = appToml ? [appToml] : []
-  // The overrides are parsed once, before asking git: an include override can re-open a default
-  // directory, and git may only skip the default directories while nothing can re-include one.
   const overrides = ignorePatternRules(options.ignorePatterns ?? [])
   const gitIgnoreListing = await listGitIgnoredPaths(appRoot, {
     pruneDefaultDirectories: !hasIncludeOverride(overrides),

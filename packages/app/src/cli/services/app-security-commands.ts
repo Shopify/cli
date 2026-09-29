@@ -3,11 +3,7 @@ import {getAppConfigurationShorthand} from '../models/app/config-file-naming.js'
 
 export type AppSecurityShell = 'posix' | 'cmd' | 'powershell'
 
-/**
- * One command-line argument. A string is command syntax (`app`, `--clean`) and is
- * printed bare. A flag with a value is printed with the value quoted, because a
- * value is user input: an app path, a configuration name, or an --ignore pattern.
- */
+/** Strings are command syntax, printed bare. Flag values are user input, so they're always quoted. */
 export type AppSecurityArgument = string | {flag: string; value: string}
 
 export interface AppSecurityCommand {
@@ -21,11 +17,7 @@ export interface AppSecurityCommands {
   clean: AppSecurityCommand
 }
 
-/**
- * Build the scan, compile, and clean commands shown to users and coding agents.
- * `ignorePatterns` are repeated on every command, in order, because a compile
- * must discover the same files as the scan whose findings it validates.
- */
+/** `ignorePatterns` are repeated on every command: a compile must discover the same files as its scan. */
 export function resolveAppSecurityCommands(
   appRoot: string,
   configFileName?: string,
@@ -102,13 +94,6 @@ function quoteCmdSegment(part: string): string {
   return `"${escapedQuotes}${trailingBackslashes}"`
 }
 
-/**
- * Render a command for a shell. Quoting follows the argument's type, not what
- * it looks like: every flag value is quoted and all command syntax stays bare.
- * An --ignore pattern such as `-*.log`, `-tmp/` or `check` would otherwise be
- * left bare, where a shell could glob-expand it or a reader could mistake it
- * for a flag or command word.
- */
 export function formatAppSecurityCommand(
   action: AppSecurityCommand,
   shell: AppSecurityShell = shellForPlatform(),

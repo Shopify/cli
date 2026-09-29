@@ -2,14 +2,9 @@ import {ignorePatternProblem} from '../../../services/app-security-engine/index.
 import {Flags} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-/**
- * Flags shared by `app security check` and `app security instructions`, so
- * the commands that `instructions` generates accept exactly what it was given.
- */
+/** Shared so the commands `instructions` generates accept exactly what it was given. */
 export const appSecurityFlags = {
-  // Deliberately not bound to an environment variable: oclif reads a repeatable flag's environment variable only
-  // when the command line has no value for it and passes it as one string. It could carry only one pattern, and any
-  // --ignore on the command line would silently replace it.
+  // No environment variable: oclif passes a repeatable flag's variable as one string, so it could hold only one pattern.
   ignore: Flags.string({
     description:
       'Ignore files that match this .gitignore pattern, relative to the app directory. Start the pattern with ! to include matching files again. Repeat the flag to add patterns; later patterns take precedence.',

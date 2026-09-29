@@ -662,9 +662,7 @@ describe('--ignore patterns', () => {
   })
 
   test('still applies .gitignore inside a re-included default folder', async () => {
-    // Without an include pattern git is told to skip the default directories, so it would never
-    // report `build/x.local.json`; re-including `build/` must switch that pruning off or the file
-    // would be scanned despite being gitignored.
+    // Re-including `build/` must turn off git's default-directory pruning, or git never lists this file.
     const root = await makeRepository({
       'shopify.app.toml': appConfiguration,
       '.gitignore': '*.local.json\n',

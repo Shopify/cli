@@ -129,11 +129,6 @@ export async function scanApp(
   }
 }
 
-/**
- * Compile agent findings against a fresh scan. The findings' `source_scan_id`
- * must equal the fresh scan's `input_hash`, so `options` (`--ignore` patterns)
- * must repeat whatever the initial scan used.
- */
 export async function compileFindings(
   directory: string,
   document: FindingsDocument,
@@ -144,8 +139,7 @@ export async function compileFindings(
   const result = await scan(appRoot, configFileName, options)
   const engineVersion = getEngineVersion()
   const knownFiles = new Set(searchBoundaryFiles(result))
-  // Ignore patterns change the input hash but are not recorded in the trace, so a mismatch cannot
-  // tell a changed file apart from a compile that forgot the scan's flags; the hint covers both.
+  // Ignore patterns change the input hash but aren't in the trace, so the hint covers both causes.
   const provenanceRejected =
     document.source_scan_id === result.scan.input_hash
       ? []

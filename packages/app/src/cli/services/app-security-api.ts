@@ -91,7 +91,6 @@ export async function executeAppSecurity(options: {
   appRoot: string
   findings?: FindingsDocument
   configFileName?: string
-  /** `--ignore` patterns; a compile must repeat the ones its scan used or the findings are rejected. */
   ignorePatterns?: ReadonlyArray<string>
 }): Promise<AppSecurityExecution> {
   const startTime = Date.now()
