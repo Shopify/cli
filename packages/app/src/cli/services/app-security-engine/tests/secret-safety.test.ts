@@ -1,6 +1,6 @@
 /* eslint-disable id-length, line-comment-position, no-restricted-imports -- security fixtures exercise raw git and filesystem behavior */
 import {scan} from '../scanners/index.js'
-import {SECRET_PATTERNS, redactMatch, redactText, gitStatusFor} from '../rules/secret-rules.js'
+import {SHOPIFY_SECRET_PATTERNS, redactMatch, redactText, gitStatusFor} from '../rules/secret-rules.js'
 import {describe, expect, test} from 'vitest'
 import {mkdtempSync, writeFileSync, mkdirSync, rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
@@ -95,47 +95,33 @@ const git = (dir: string, args: string[]) =>
     },
   })
 
-describe('redaction never emits the secret it detected', () => {
-  const samples: [string, string][] = [
-    ['AWS access key', `const k = "${PROBES.awsAccessKey}";`],
-    ['Stripe API key', `const k = "${PROBES.stripeLive}";`],
-    ['Shopify token', `const k = "${PROBES.shopifyToken}";`],
-    ['GitHub token', `const k = "${PROBES.githubToken}";`],
-    ['Google API key', `const k = "${PROBES.googleKey}";`],
-    ['Slack token', `const k = "${PROBES.slackToken}";`],
+describe('redaction never emits known secrets', () => {
+  const samples: [label: string, line: string, secret: string][] = [
+    ['AWS access key', `const k = "${PROBES.awsAccessKey}";`, PROBES.awsAccessKey],
+    ['AWS secret access key', `aws_secret_access_key = "${PROBES.awsSecretKey}"`, PROBES.awsSecretKey],
+    ['Stripe API key', `const k = "${PROBES.stripeLive}";`, PROBES.stripeLive],
+    ['Shopify token', `const k = "${PROBES.shopifyToken}";`, PROBES.shopifyToken],
+    ['GitHub token', `const k = "${PROBES.githubToken}";`, PROBES.githubToken],
+    ['Google API key', `const k = "${PROBES.googleKey}";`, PROBES.googleKey],
+    ['Slack token', `const k = "${PROBES.slackToken}";`, PROBES.slackToken],
   ]
 
-  for (const [label, line] of samples) {
+  for (const [label, line, secret] of samples) {
     test(`redacts ${label} in the snippet`, () => {
-      const matching = SECRET_PATTERNS.filter((p) => p.regex.test(line))
-      expect(matching.length, `no pattern detected ${label}`).toBeGreaterThan(0)
-
-      for (const pattern of matching) {
-        const match = pattern.regex.exec(line)!
-        const secret = pattern.wholeMatch ? match[0] : match[1]
-        const redacted = redactMatch(line, pattern)
-        expect(redacted, `${label} leaked via ${pattern.name}`).not.toContain(secret)
-        expect(redacted).toContain('REDACTED')
-      }
+      const redacted = redactText(line)
+      expect(redacted).not.toContain(secret)
+      expect(redacted).toContain('REDACTED')
     })
   }
 
   test('every detection pattern has working redaction — no drift between the two', () => {
-    // The original bug: a pattern existed in the detector with no counterpart
-    // in the redactor. Assert the property directly for every pattern rather
-    // than trusting that two hand-maintained lists stay in sync.
-    let exercised = 0
-    for (const pattern of SECRET_PATTERNS) {
-      const probe = probeFor(pattern.name)
-      if (!probe || !pattern.regex.test(probe)) continue
-      exercised++
+    const probe = `x = ${PROBES.shopifyToken}`
+    for (const pattern of SHOPIFY_SECRET_PATTERNS) {
+      expect(pattern.regex.test(probe), `${pattern.name} has no matching probe`).toBe(true)
       const match = pattern.regex.exec(probe)!
       const secret = pattern.wholeMatch ? match[0] : match[1]
       expect(redactMatch(probe, pattern), `${pattern.name} has no effective redaction`).not.toContain(secret)
     }
-    // Guard against the probe table silently falling out of date and making
-    // this test vacuous.
-    expect(exercised).toBeGreaterThanOrEqual(SECRET_PATTERNS.length - 1)
   })
 
   test('redacts an entire multiline private key block including its body and footer', () => {
@@ -144,7 +130,6 @@ describe('redaction never emits the secret it detected', () => {
     const block = `${PROBES.pemHeader}\n${keyBody}\n${footer}`
     const redacted = redactText(`reasoning before\n${block}\nevidence after`)
 
-    expect(SECRET_PATTERNS.some((pattern) => pattern.regex.test(block))).toBe(true)
     expect(redacted).not.toContain(PROBES.pemHeader)
     expect(redacted).not.toContain(keyBody)
     expect(redacted).not.toContain(footer)
@@ -164,11 +149,11 @@ describe('redaction never emits the secret it detected', () => {
 
   test('does not leak a detected secret into the trace written for submission', async () => {
     const dir = makeApp({
-      'config.js': `const awsKey = "${PROBES.awsAccessKey}";\n`,
+      'config.js': `const shopifyToken = "${PROBES.shopifyToken}";\n`,
     })
     const result = await scan(dir)
     const serialized = JSON.stringify(result)
-    expect(serialized).not.toContain(PROBES.awsAccessKey)
+    expect(serialized).not.toContain(PROBES.shopifyToken)
     expect(serialized).toContain('REDACTED')
     rmSync(dir, {recursive: true, force: true})
   })
@@ -305,7 +290,7 @@ describe('committed secret classification', () => {
     for (const prefix of prefixes) {
       const token = compose(prefix, HEX32)
       expect(
-        SECRET_PATTERNS.some((pattern) => pattern.regex.test(token)),
+        SHOPIFY_SECRET_PATTERNS.some((pattern) => pattern.regex.test(token)),
         `${prefix} not detected`,
       ).toBe(true)
     }
@@ -454,14 +439,21 @@ describe('committed secret classification', () => {
     rmSync(dir, {recursive: true, force: true})
   })
 
-  test('does not treat Stripe publishable keys as secrets', async () => {
-    const line = `const k = "${PROBES.stripePublishable}";`
-    expect(SECRET_PATTERNS.some((pattern) => pattern.regex.test(line))).toBe(false)
+  test('does not score non-Shopify credential formats', async () => {
+    const credentials = [
+      `STRIPE_SECRET=${PROBES.stripeLive}`,
+      `STRIPE_PUBLIC_KEY=${PROBES.stripePublishable}`,
+      `AWS_ACCESS_KEY_ID=${PROBES.awsAccessKey}`,
+      `aws_secret_access_key="${PROBES.awsSecretKey}"`,
+      `GITHUB_TOKEN=${PROBES.githubToken}`,
+      `GOOGLE_API_KEY=${PROBES.googleKey}`,
+      `SLACK_TOKEN=${PROBES.slackToken}`,
+      PROBES.pemHeader,
+    ].join('\n')
+    const dir = makeApp({'.env': `${credentials}\n`, 'config.js': `${credentials}\n`})
 
-    const dir = makeApp({'config.js': `${line}\n`})
     const result = await scan(dir)
     expect(result.issues.filter((issue) => issue.id === 'COMMITTED_SECRET')).toEqual([])
-    expect(JSON.stringify(result)).not.toContain(PROBES.stripePublishable)
     rmSync(dir, {recursive: true, force: true})
   })
 })
@@ -469,30 +461,30 @@ describe('committed secret classification', () => {
 describe('secret evidence coverage', () => {
   test('scans common repository text formats and unsupported source languages', async () => {
     const files = {
-      'README.md': PROBES.awsAccessKey,
-      'config/settings.yaml': PROBES.awsAccessKey,
-      'config/settings.json': PROBES.awsAccessKey,
-      'config/settings.toml': PROBES.awsAccessKey,
-      'prisma/schema.prisma': PROBES.awsAccessKey,
-      'scripts/setup.sh': PROBES.awsAccessKey,
-      'server/app.rb': PROBES.awsAccessKey,
+      'README.md': PROBES.shopifyToken,
+      'config/settings.yaml': PROBES.shopifyToken,
+      'config/settings.json': PROBES.shopifyToken,
+      'config/settings.toml': PROBES.shopifyToken,
+      'prisma/schema.prisma': PROBES.shopifyToken,
+      'scripts/setup.sh': PROBES.shopifyToken,
+      'server/app.rb': PROBES.shopifyToken,
     }
     const dir = makeApp(files)
     const result = await scan(dir)
     const findings = result.issues.filter((issue) => issue.id === 'COMMITTED_SECRET')
 
     for (const path of Object.keys(files)) expect(findings.some((finding) => finding.location.file === path)).toBe(true)
-    expect(JSON.stringify(result)).not.toContain(PROBES.awsAccessKey)
+    expect(JSON.stringify(result)).not.toContain(PROBES.shopifyToken)
     rmSync(dir, {recursive: true, force: true})
   })
 
   test('excludes test, fixture, dependency, build, and binary content', async () => {
     const dir = makeApp({
-      'tests/example.md': PROBES.awsAccessKey,
-      'fixtures/example.yaml': PROBES.awsAccessKey,
-      'node_modules/package/example.json': PROBES.awsAccessKey,
-      'dist/example.toml': PROBES.awsAccessKey,
-      'binary.json': `\0${PROBES.awsAccessKey}`,
+      'tests/example.md': PROBES.shopifyToken,
+      'fixtures/example.yaml': PROBES.shopifyToken,
+      'node_modules/package/example.json': PROBES.shopifyToken,
+      'dist/example.toml': PROBES.shopifyToken,
+      'binary.json': `\0${PROBES.shopifyToken}`,
     })
     const result = await scan(dir)
     expect(result.issues.filter((issue) => issue.id === 'COMMITTED_SECRET')).toEqual([])
@@ -517,27 +509,3 @@ describe('incomplete coverage is reported, not hidden', () => {
     rmSync(dir, {recursive: true, force: true})
   })
 })
-
-/** Probe strings with realistic shape, assembled at runtime. See note above. */
-function probeFor(name: string): string | undefined {
-  switch (name) {
-    case 'Shopify token':
-      return `x = ${PROBES.shopifyToken}`
-    case 'Stripe API key':
-      return `x = ${PROBES.stripeLive}`
-    case 'AWS access key':
-      return `x = ${PROBES.awsAccessKey}`
-    case 'AWS secret access key':
-      return `aws_secret_access_key = "${PROBES.awsSecretKey}"`
-    case 'GitHub token':
-      return `x = ${PROBES.githubToken}`
-    case 'Google API key':
-      return `x = ${PROBES.googleKey}`
-    case 'Slack token':
-      return `x = ${PROBES.slackToken}`
-    case 'private key':
-      return PROBES.pemHeader
-    default:
-      return undefined
-  }
-}

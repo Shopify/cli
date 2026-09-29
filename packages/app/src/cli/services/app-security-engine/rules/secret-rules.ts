@@ -3,17 +3,12 @@ import type {SourceFile} from './types.js'
 import type {Issue} from '../types.js'
 
 /**
- * Secret patterns. Each entry MUST place the sensitive material in capture
- * group 1 (or make the whole match sensitive when `wholeMatch` is set), because
- * redaction is derived from the pattern that fired rather than from a second,
- * separately-maintained list of redaction regexes.
+ * Each secret pattern MUST place the sensitive material in capture group 1
+ * (or make the whole match sensitive when `wholeMatch` is set), because
+ * redaction uses the pattern's match instead of a separately-maintained regex.
  *
- * Why this shape: a previous version kept `keyPatterns` and a `redactLine()`
- * helper as independent lists. They drifted — an AWS pattern was added to the
- * detector with no matching entry in the redactor, so detected AWS keys were
- * printed verbatim into the console AND into the submitted trace. Deriving the
- * redaction span from the match makes that class of bug unrepresentable: if a
- * pattern can fire, its match is redacted.
+ * Detection patterns are reused by redaction, so a pattern that can produce a
+ * finding always redacts the exact same span.
  */
 interface SecretPattern {
   regex: RegExp
@@ -24,20 +19,35 @@ interface SecretPattern {
   redactEntireInput?: boolean
 }
 
-export const SECRET_PATTERNS: SecretPattern[] = [
-  // Shopify credentials are recognized by value prefix, never by variable or
-  // key name — a secret-sounding name with a placeholder value (as in
-  // committed `.env.example` files) is not evidence of a leak.
-  // shpat_/shpca_/shppa_/shpss_ bodies are hex; shprt_/shpsb_/shptka_/shpua_
-  // are alphanumeric. The first seven prefixes are already public via
-  // shopify.dev docs and published secret-scanning rules (gitleaks, GitHub
-  // partner patterns); shpua_ marks tokens issued while an app is still in
-  // development — the most likely to be committed.
-  {
-    regex: /shp(?:(?:at|ca|pa|ss)_[a-fA-F0-9]{16,}|(?:rt|sb|tka|ua)_[a-zA-Z0-9]{16,})/,
-    name: 'Shopify token',
-    wholeMatch: true,
-  },
+// Shopify credentials are recognized by value prefix, never by variable or
+// key name — a secret-sounding name with a placeholder value (as in committed
+// `.env.example` files) is not evidence of a leak.
+// shpat_/shpca_/shppa_/shpss_ bodies are hex; shprt_/shpsb_/shptka_/shpua_
+// are alphanumeric. The first seven prefixes are already public via
+// shopify.dev docs and published secret-scanning rules (gitleaks, GitHub
+// partner patterns); shpua_ marks tokens issued while an app is still in
+// development — the most likely to be committed.
+const SHOPIFY_TOKEN_PATTERN: SecretPattern = {
+  regex: /shp(?:(?:at|ca|pa|ss)_[a-fA-F0-9]{16,}|(?:rt|sb|tka|ua)_[a-zA-Z0-9]{16,})/,
+  name: 'Shopify token',
+  wholeMatch: true,
+}
+
+/**
+ * Patterns that can emit COMMITTED_SECRET findings.
+ *
+ * Keep this list limited to Shopify credentials. The app security scan should
+ * not duplicate general-purpose secret scanners for third-party providers.
+ */
+export const SHOPIFY_SECRET_PATTERNS: SecretPattern[] = [SHOPIFY_TOKEN_PATTERN]
+
+/**
+ * Patterns used only to prevent known credentials from being echoed in scanner
+ * and agent output. They never produce findings unless they are also listed in
+ * SHOPIFY_SECRET_PATTERNS.
+ */
+const REDACTION_PATTERNS: SecretPattern[] = [
+  SHOPIFY_TOKEN_PATTERN,
   // Stripe secret/restricted keys. Publishable `pk_` keys are public by design.
   {
     regex: /(?:sk|rk)_(?:live|test)_[a-zA-Z0-9]{20,}/,
@@ -83,8 +93,8 @@ export const SECRET_PATTERNS: SecretPattern[] = [
 /**
  * Redact a line using the pattern that matched it.
  *
- * The redacted span is taken from the match itself, so any pattern added to
- * SECRET_PATTERNS is automatically covered. Never returns the raw secret.
+ * The redacted span is taken from the matching detection or redaction pattern.
+ * Never returns the raw secret.
  */
 export function redactMatch(line: string, pattern: SecretPattern): string {
   const match = pattern.regex.exec(line)
@@ -106,7 +116,7 @@ export function redactMatch(line: string, pattern: SecretPattern): string {
 /** Redact every known secret occurrence from arbitrary scanner or agent text. */
 export function redactText(text: string): string {
   let redacted = text
-  for (const pattern of SECRET_PATTERNS) {
+  for (const pattern of REDACTION_PATTERNS) {
     // Patterns deliberately have no global flag. Re-run until all occurrences
     // are removed, with a guard against a future non-progressing pattern.
     for (let count = 0; count < 100; count++) {
@@ -183,9 +193,9 @@ export async function scanCommittedSecrets(secretEvidenceFiles: SourceFile[], ap
     const namedSecretFile = NAMED_SECRET_FILE_PATTERN.test(file.path)
     if (!environmentFile && !namedSecretFile) continue
 
-    // Only a recognizable secret value is evidence. A secret-sounding
-    // variable or key name proves nothing (see SECRET_PATTERNS).
-    const hasEvidence = SECRET_PATTERNS.some((pattern) => pattern.regex.test(content))
+    // Only a recognizable Shopify secret value is evidence. A secret-sounding
+    // variable or key name proves nothing (see SHOPIFY_SECRET_PATTERNS).
+    const hasEvidence = SHOPIFY_SECRET_PATTERNS.some((pattern) => pattern.regex.test(content))
     const emptyNamedSecret = namedSecretFile && content.trim() === ''
     if (!hasEvidence && !emptyNamedSecret) continue
 
@@ -211,7 +221,7 @@ export async function scanCommittedSecrets(secretEvidenceFiles: SourceFile[], ap
 
     const lines = file.content.split('\n')
     for (const [index, line] of lines.entries()) {
-      for (const pattern of SECRET_PATTERNS) {
+      for (const pattern of SHOPIFY_SECRET_PATTERNS) {
         // Patterns are non-global so `.test()` has no lastIndex state to leak
         // between iterations. Do not add the /g flag here.
         if (!pattern.regex.test(line)) continue
