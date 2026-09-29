@@ -38,11 +38,14 @@ describe('commandEventSchema', () => {
     expect(commandEventSchema.parse(event)).toEqual(event)
   })
 
-  test.each(['started', 'updated', 'completed'])('accepts %s progress without a message', (status) => {
-    const event = {type: 'progress', timestamp: '2026-08-26T12:00:00.000Z', operation: 'upload', status}
+  test.each(['started', 'updated', 'retrying', 'completed', 'failed'])(
+    'accepts %s progress without a message',
+    (status) => {
+      const event = {type: 'progress', timestamp: '2026-08-26T12:00:00.000Z', operation: 'upload', status}
 
-    expect(commandEventSchema.parse(event)).toEqual(event)
-  })
+      expect(commandEventSchema.parse(event)).toEqual(event)
+    },
+  )
 
   test.each([{operation: 'upload'}, {status: 'started'}, {operation: 'upload', status: 'unknown'}])(
     'rejects incomplete or invalid progress metadata: %j',

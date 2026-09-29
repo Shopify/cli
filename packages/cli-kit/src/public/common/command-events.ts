@@ -16,7 +16,7 @@ export const commandProgressEventSchema = z
   .object({
     type: z.literal('progress'),
     timestamp: z.string().datetime({offset: true}),
-    status: z.enum(['started', 'updated', 'completed']),
+    status: z.enum(['started', 'updated', 'retrying', 'completed', 'failed']),
     operation: z.string(),
     message: z.string().optional(),
     current: z.number().nonnegative().optional(),

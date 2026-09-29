@@ -81,6 +81,21 @@ Events are separate from finite results. Progress events can drive spinners or s
 running, but they aren't fields in the final JSON result. Errors continue through the standard CLI error path;
 don't encode failures as successful result shapes merely to support `--json`.
 
+### Task progress events
+
+`renderTasks` uses one `operation` ID for the whole task list, including subtasks. It emits `started` for the first
+task that runs, `updated` for subsequent tasks, and `completed` after the whole list succeeds. Skipped tasks emit no
+progress events. Empty lists and lists where every task is skipped emit no events.
+
+`renderTasks` accepts a `retry` count on each task, and `renderSingleTask` accepts it in its options. It is the number
+of additional attempts after a failure and defaults to zero. Both emit `retrying` before each repeated task attempt,
+using the same operation ID. Once retries are exhausted, they emit one `failed` event and throw the original error.
+Only successful operations emit `completed`. Failure events identify the task through `message`; error details
+continue through the standard CLI error path.
+
+Cancellation does not trigger retries or a `failed` event in `renderSingleTask` when its `onAbort` callback runs.
+An interrupted operation can still end without a terminal progress event, so consumers must also handle process exit.
+
 ## Preserve compatibility
 
 Treat the JSON result as a public API. Keep existing keys, omission rules, nullability, collection shapes, and exit
@@ -147,6 +162,9 @@ migration and streaming commands, and remove finite entries as they adopt the co
 Plugins must adopt the result contract and control their output before their commands can be used reliably in JSON
 mode. Inheriting `--json-schema` or enabling `SHOPIFY_FLAG_JSON=1` doesn't convert all plugin output automatically.
 
+- In the command event context, `renderTasks` and `renderSingleTask` run without Ink and emit JSON progress events
+  when JSON mode is enabled. This also applies when `SHOPIFY_FLAG_JSON=1` enables JSON mode for a plugin command that
+  doesn't declare a `--json` flag.
 - Oclif `init` hooks run before the command's error handling. A hook that renders a warning and calls `process.exit(1)`
   bypasses the JSON fatal error path and can leave stdout empty. Put command validation in the command lifecycle and
   throw an `AbortError` so CLI Kit can encode the failure.
