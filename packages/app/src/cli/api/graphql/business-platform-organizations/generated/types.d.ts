@@ -15,7 +15,7 @@ export type Scalars = {
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
   AccessRoleAssignee: { input: any; output: any; }
-  /** The ID for a AccessRole. */
+  /** The ID for an AccessRole. */
   AccessRoleID: { input: any; output: any; }
   AccessRoleRecordId: { input: any; output: any; }
   /** The ID for a ActionAudit. */
