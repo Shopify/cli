@@ -50,6 +50,7 @@ export interface DevOptions {
   store: OrganizationStore
   directory: string
   update: boolean
+  unsafeValidation?: boolean
   commandConfig: Config
   skipDependenciesInstallation: boolean
   subscriptionProductUrl?: string

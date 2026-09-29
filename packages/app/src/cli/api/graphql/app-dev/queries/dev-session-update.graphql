@@ -1,5 +1,17 @@
-mutation DevSessionUpdate($appId: String!, $assetsUrl: String, $manifest: JSON, $inheritedModuleUids: [String!]!) {
-  devSessionUpdate(appId: $appId, assetsUrl: $assetsUrl, manifest: $manifest, inheritedModuleUids: $inheritedModuleUids) {
+mutation DevSessionUpdate(
+  $appId: String!
+  $assetsUrl: String
+  $manifest: JSON
+  $inheritedModuleUids: [String!]!
+  $unsafeValidation: Boolean
+) {
+  devSessionUpdate(
+    appId: $appId
+    assetsUrl: $assetsUrl
+    manifest: $manifest
+    inheritedModuleUids: $inheritedModuleUids
+    isUnsafe: $unsafeValidation
+  ) {
     devSession {
       websocketUrl
       updatedAt
@@ -11,6 +23,10 @@ mutation DevSessionUpdate($appId: String!, $assetsUrl: String, $manifest: JSON, 
         id
         key
       }
+    }
+    warnings {
+      message
+      code
     }
     userErrors {
       message

@@ -121,12 +121,14 @@ interface DevSessionSharedOptions {
 export interface DevSessionCreateOptions extends DevSessionSharedOptions {
   assetsUrl?: string
   websocketUrl?: string
+  unsafeValidation?: boolean
 }
 
 export interface DevSessionUpdateOptions extends DevSessionSharedOptions {
   assetsUrl?: string
   manifest: AppManifest
   inheritedModuleUids: string[]
+  unsafeValidation?: boolean
 }
 
 export type DevSessionDeleteOptions = DevSessionSharedOptions

@@ -1030,12 +1030,18 @@ export class AppManagementClient implements DeveloperPlatformClient {
     assetsUrl,
     shopFqdn,
     websocketUrl,
+    unsafeValidation,
   }: DevSessionCreateOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
     return this.appDevRequest({
       query: DevSessionCreate,
       shopFqdn,
-      variables: {appId: appIdNumber, assetsUrl: assetsUrl ?? '', websocketUrl},
+      variables: {
+        appId: appIdNumber,
+        assetsUrl: assetsUrl ?? '',
+        websocketUrl,
+        unsafeValidation: unsafeValidation ?? false,
+      },
       requestOptions: {requestMode: 'slow-request'},
     })
   }
@@ -1046,6 +1052,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     shopFqdn,
     manifest,
     inheritedModuleUids,
+    unsafeValidation,
   }: DevSessionUpdateOptions): Promise<DevSessionUpdateMutation> {
     const appIdNumber = String(numberFromGid(appId))
     const variables: DevSessionUpdateMutationVariables = {
@@ -1053,6 +1060,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       assetsUrl,
       manifest: JSON.stringify(manifest),
       inheritedModuleUids,
+      unsafeValidation: unsafeValidation ?? false,
     }
     return this.appDevRequest({query: DevSessionUpdate, shopFqdn, variables})
   }
