@@ -33,6 +33,8 @@ describe('app security check command', () => {
       yes: false,
       skipInstructions: true,
       findingsPath: undefined,
+      probeUrl: undefined,
+      requestsPath: undefined,
       clean: false,
     })
   })
@@ -49,17 +51,36 @@ describe('app security check command', () => {
       yes: true,
       skipInstructions: false,
       findingsPath: undefined,
+      probeUrl: undefined,
+      requestsPath: undefined,
       clean: false,
     })
   })
 
-  test('forwards --config without requiring a linked app', async () => {
+  test('forwards --config, --probe-url, and --requests without requiring a linked app', async () => {
     await SecurityCheck.run(
-      ['--path', './fixtures/unlinked-app', '--config', 'staging', '--skip-instructions'],
+      [
+        '--path',
+        './fixtures/unlinked-app',
+        '--config',
+        'staging',
+        '--probe-url',
+        'http://localhost:3000',
+        '--requests',
+        './requests.json',
+        '--skip-instructions',
+      ],
       import.meta.url,
     )
 
-    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({configName: 'staging', skipInstructions: true}))
+    expect(securityCheck).toHaveBeenCalledWith(
+      expect.objectContaining({
+        configName: 'staging',
+        probeUrl: 'http://localhost:3000',
+        requestsPath: resolvePath('./requests.json'),
+        skipInstructions: true,
+      }),
+    )
   })
 
   test('forwards --clean and keeps it mutually exclusive with --findings', async () => {
@@ -99,10 +120,16 @@ describe('app security check command', () => {
     expect(SecurityCheck.flags.yes.description).toBe('Print coding-agent instructions without prompting.')
     expect(SecurityCheck.flags['skip-instructions'].description).toBe("Don't offer to show coding-agent instructions.")
     expect(SecurityCheck.flags.clean.description).toBe('Discard the current local review and start a new scan.')
+    expect(SecurityCheck.flags['probe-url']).not.toHaveProperty('env')
+    expect(SecurityCheck.flags.requests).not.toHaveProperty('env')
+    expect(SecurityCheck.flags['probe-url'].dependsOn).toEqual(['requests'])
+    expect(SecurityCheck.flags.requests).not.toHaveProperty('dependsOn')
     expect(SecurityCheck.flags.yes.exclusive).toEqual(['skip-instructions'])
     expect(SecurityCheck.flags['skip-instructions'].exclusive).toEqual(['yes'])
     expect(SecurityCheck.descriptionWithMarkdown).toContain('copy the coding-agent instructions')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('`--config`')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('`--probe-url`')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('`--requests`')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('copying is the default')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('shopify app security instructions')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('Pass `--clean` to discard that work and start over')

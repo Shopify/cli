@@ -1,4 +1,5 @@
 import {loadChecks} from '../checks/index.js'
+import {DYNAMIC_CHECKS} from '../dynamic/index.js'
 import {getRegistry} from '../registry/index.js'
 import {DETERMINISTIC_RULES} from '../scanners/index.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
@@ -19,6 +20,12 @@ describe('authoritative registry', () => {
         .map((entry) => entry.id)
         .sort(),
     ).toEqual([...loadChecks().keys()].sort())
+    expect(
+      registry
+        .filter((entry) => entry.kind === 'external')
+        .map((entry) => entry.id)
+        .sort(),
+    ).toEqual(DYNAMIC_CHECKS.map((entry) => entry.id).sort())
     expect(new Set(registry.map((entry) => `${entry.kind}:${entry.id}`)).size).toBe(registry.length)
   })
 

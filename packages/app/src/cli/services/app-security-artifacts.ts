@@ -16,6 +16,7 @@ export interface AppSecurityArtifactPaths {
 
 export interface ResolvedAppSecurityArtifactPaths extends Required<AppSecurityArtifactPaths> {
   findingsPath: string
+  requestsPath: string
   submissionPath: string
 }
 
@@ -30,6 +31,7 @@ export function appSecurityArtifactPaths(appRoot: string): ResolvedAppSecurityAr
     artifactDirectory,
     reviewPath: joinPath(artifactDirectory, 'review.json'),
     findingsPath: joinPath(artifactDirectory, 'findings.json'),
+    requestsPath: joinPath(artifactDirectory, 'requests.json'),
     submissionPath: joinPath(artifactDirectory, 'submission.json'),
     tracePath: joinPath(artifactDirectory, 'trace.json'),
   }
@@ -60,6 +62,7 @@ export async function writeAppSecurityArtifacts(
   await writeAtomicArtifact(paths.reviewPath, `${JSON.stringify(execution.reviewPack, null, 2)}\n`)
   if (options.clean) {
     await removeStaleArtifact(paths.findingsPath)
+    await removeStaleArtifact(paths.requestsPath)
     await removeStaleArtifact(paths.submissionPath)
   }
   return {

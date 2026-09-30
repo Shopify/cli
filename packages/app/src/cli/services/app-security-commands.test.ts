@@ -148,8 +148,14 @@ describe('resolveAppSecurityCommands', () => {
     ])
   })
 
-  test('includes --config on scan and compile for a named configuration', () => {
-    const commands = resolveAppSecurityCommands('/tmp/app', 'shopify.app.staging.toml')
+  test('includes runtime probes only when compiling a named configuration', () => {
+    const requestsPath = joinPath('/tmp/app', '.shopify', 'app-security', 'requests.json')
+    const commands = resolveAppSecurityCommands(
+      '/tmp/app',
+      'shopify.app.staging.toml',
+      'http://localhost:3000/app',
+      requestsPath,
+    )
     const findingsPath = joinPath('/tmp/app', '.shopify', 'app-security', 'findings.json')
 
     expect(commands.scan.args).toEqual(['app', 'security', 'check', '--path', '/tmp/app', '--config', 'staging'])
@@ -161,6 +167,10 @@ describe('resolveAppSecurityCommands', () => {
       '/tmp/app',
       '--config',
       'staging',
+      '--probe-url',
+      'http://localhost:3000/app',
+      '--requests',
+      requestsPath,
       '--findings',
       findingsPath,
     ])

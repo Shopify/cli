@@ -1,4 +1,4 @@
-import {resolveAppSecurityRoot} from './app-security-api.js'
+import {normalizeAppSecurityProbeUrl, resolveAppSecurityRoot} from './app-security-api.js'
 import {appSecurityArtifactPaths} from './app-security-artifacts.js'
 import {requireSecurityConfigFileName} from './app-security-config.js'
 import {
@@ -22,10 +22,12 @@ interface AppSecurityInstructionPaths {
   commands: AppSecurityCommands
   scanCommand: string
   compileCommand: string
+  probeCommand: string
   cleanCommand: string
   reviewPath: string
   tracePath: string
   findingsPath: string
+  requestsPath: string
   artifactDirectory: string
 }
 
@@ -46,20 +48,32 @@ function instructionPaths(
   directory: string,
   commands?: AppSecurityCommands,
   configName?: string,
+  probeUrl?: string,
 ): AppSecurityInstructionPaths {
   const appRoot = resolveAppSecurityRoot(resolvePath(directory))
-  const {artifactDirectory, reviewPath, tracePath, findingsPath} = appSecurityArtifactPaths(appRoot)
+  const {artifactDirectory, reviewPath, tracePath, findingsPath, requestsPath} = appSecurityArtifactPaths(appRoot)
+  const normalizedProbeUrl = probeUrl ? normalizeAppSecurityProbeUrl(probeUrl) : undefined
   const resolvedCommands =
-    commands ?? resolveAppSecurityCommands(appRoot, requireSecurityConfigFileName(appRoot, configName))
+    commands ??
+    resolveAppSecurityCommands(
+      appRoot,
+      requireSecurityConfigFileName(appRoot, configName),
+      normalizedProbeUrl,
+      requestsPath,
+    )
+  const compileCommand = formatAppSecurityCommand(resolvedCommands.compile)
+  const probeCommand = compileCommand
   return {
     appRoot,
     commands: resolvedCommands,
     scanCommand: formatAppSecurityCommand(resolvedCommands.scan),
-    compileCommand: formatAppSecurityCommand(resolvedCommands.compile),
+    compileCommand,
+    probeCommand,
     cleanCommand: formatAppSecurityCommand(resolvedCommands.clean),
     reviewPath,
     tracePath,
     findingsPath,
+    requestsPath,
     artifactDirectory,
   }
 }
@@ -83,7 +97,7 @@ If App Security reports existing agent findings or a compiled trace, don't bypas
 function completedScanInstructions(paths: AppSecurityInstructionPaths): string {
   return `### 1. Use the existing scan results
 
-The current invocation's initial scan has already completed. It generated ${markdownPath(paths.reviewPath)} and the initial local ${markdownPath(paths.tracePath)}. Don't rerun the scan. Continue by reading that generated review pack; if source files change during remediation, follow the explicit clean restart in step 6.`
+The current invocation's initial scan has already completed. It generated ${markdownPath(paths.reviewPath)} and the initial local ${markdownPath(paths.tracePath)}. Don't rerun the scan. Continue by reading that generated review pack; if source files change during remediation, follow the explicit clean restart in step 7.`
 }
 
 interface AppSecurityInstructionsOptions {
@@ -93,6 +107,7 @@ interface AppSecurityInstructionsOptions {
   scanComplete?: boolean
   commands?: AppSecurityCommands
   configName?: string
+  probeUrl?: string
 }
 
 interface AppSecurityInstructionsDependencies {
@@ -116,17 +131,20 @@ export function appSecurityInstructions(options: {
   scanComplete: boolean
   commands?: AppSecurityCommands
   configName?: string
+  probeUrl?: string
 }): string {
-  const paths = instructionPaths(options.directory, options.commands, options.configName)
+  const paths = instructionPaths(options.directory, options.commands, options.configName, options.probeUrl)
   const scanContext = options.scanComplete ? completedScanInstructions(paths) : initialScanInstructions(paths)
   return getAgentInstructions()
     .replace(SCAN_CONTEXT_PLACEHOLDER, scanContext)
     .replaceAll('{{SCAN_COMMAND}}', paths.scanCommand)
     .replaceAll('{{COMPILE_COMMAND}}', paths.compileCommand)
+    .replaceAll('{{PROBE_COMMAND}}', paths.probeCommand)
     .replaceAll('{{CLEAN_COMMAND}}', paths.cleanCommand)
     .replaceAll('{{REVIEW_PATH}}', markdownPath(paths.reviewPath))
     .replaceAll('{{TRACE_PATH}}', markdownPath(paths.tracePath))
     .replaceAll('{{FINDINGS_PATH}}', markdownPath(paths.findingsPath))
+    .replaceAll('{{REQUESTS_PATH}}', markdownPath(paths.requestsPath))
     .trimEnd()
 }
 
@@ -139,6 +157,7 @@ export default async function deliverAppSecurityInstructions(
     scanComplete: options.scanComplete ?? false,
     commands: options.commands,
     configName: options.configName,
+    probeUrl: options.probeUrl,
   })
 
   if (options.copy) {

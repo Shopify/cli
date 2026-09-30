@@ -25,6 +25,10 @@ export type {
   ParseTraceResult,
 } from './run.js'
 export {hasRecordedAgentReview} from './trace/index.js'
+export {parseRequestManifest, RequestManifestError, REQUEST_MANIFEST_SCHEMA_VERSION} from './dynamic/requests.js'
+export type {AppSecurityRequest, AppSecurityRequestManifest} from './dynamic/requests.js'
+export {REQUEST_AUTHENTICATION_METHODS} from './types.js'
+export type {RequestAuthenticationMethod, RuntimeRequestResult} from './types.js'
 export {buildSubmission, SUBMISSION_SCHEMA_VERSION} from './submission/index.js'
 export type {AppSecuritySubmission, AppSecuritySubmissionReport, BuildSubmissionOptions} from './submission/index.js'
 export type {ReviewPack} from './checks/index.js'

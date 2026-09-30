@@ -1,4 +1,10 @@
-import {ENGINE_NAME, SUPPORTED_TRACE_SCHEMA_VERSIONS, TRACE_SCHEMA_VERSION} from '../types.js'
+import {
+  ENGINE_NAME,
+  REQUEST_AUTHENTICATION_METHODS,
+  RUNTIME_REQUEST_CHECK_IDS,
+  SUPPORTED_TRACE_SCHEMA_VERSIONS,
+  TRACE_SCHEMA_VERSION,
+} from '../types.js'
 import {loadChecks} from '../checks/index.js'
 import {redactText} from '../rules/secret-rules.js'
 import {sha256 as sha256Buffer} from '@shopify/cli-kit/node/crypto'
@@ -9,6 +15,7 @@ import type {
   FindingEvidence,
   Issue,
   Location,
+  RuntimeProbeStatus,
   ScanResult,
   Severity,
   Suppression,
@@ -21,6 +28,8 @@ const MAX_TRACE_VALIDATION_NODES = 500_000
 const MAX_TRACE_VALIDATION_DEPTH = 100
 const TRACE_COMPLEXITY_ERROR = 'trace is cyclic or exceeds validation complexity limits'
 const SEVERITIES = new Set<Severity>(['high', 'medium', 'low'])
+const RUNTIME_PROBE_STATUSES = new Set<RuntimeProbeStatus>(['passed', 'failed', 'unresolved'])
+const REQUEST_AUTHENTICATION_METHOD_SET = new Set<string>(REQUEST_AUTHENTICATION_METHODS)
 const EXECUTION_STATUSES = new Set<CheckExecutionStatus>([
   'executed',
   'not_applicable',
@@ -37,6 +46,8 @@ const REASON_CODES = new Set([
   'agent_investigation_required',
   'not_reported',
   'input_rejected',
+  'network_unavailable',
+  'probe_limit',
 ])
 const FRAMEWORKS = new Set(['react_router', 'none', 'unknown', 'mixed'])
 const SURFACES = new Set(['react_router', 'theme_app_extension', 'config_only', 'unknown', 'mixed'])
@@ -135,10 +146,16 @@ function issueToFinding(issueInput: Issue): TraceFinding {
 }
 
 export function hasRecordedAgentReview(trace: TraceV3): boolean {
+  const runtimeRequestChecks = new Set<string>(RUNTIME_REQUEST_CHECK_IDS)
   return (
-    trace.findings.some((finding) => finding.source === 'agent' || finding.source === 'external') ||
+    trace.findings.some(
+      (finding) =>
+        finding.source === 'agent' ||
+        (finding.source === 'external' && !runtimeRequestChecks.has(finding.rule_id ?? '')),
+    ) ||
     trace.checks_executed.some((execution) => {
-      if (execution.kind === 'external') return true
+      if (execution.kind === 'external')
+        return !runtimeRequestChecks.has(execution.id) && execution.status !== 'not_applicable'
       if (execution.kind !== 'agent') return false
       return execution.status !== 'unresolved' || execution.reason?.code !== 'not_reported'
     }) ||
@@ -165,7 +182,9 @@ export function compileTrace(result: ScanResult, options: CompileTraceOptions = 
       ),
     )
   const suppressions = applySuppressions(findings, options.suppressions ?? [])
-  const deterministicExecutions = result.scan.checks_executed.map((execution) => withFindingCount(execution, findings))
+  const deterministicExecutions = result.scan.checks_executed
+    .filter((execution) => execution.kind === 'deterministic')
+    .map((execution) => withFindingCount(execution, findings))
   const explicitAgent = new Map((options.agentChecksExecuted ?? []).map((execution) => [execution.id, execution]))
   const agentExecutions: CheckExecution[] = [...loadChecks().values()].map((check) => {
     const explicit = explicitAgent.get(check.id)
@@ -189,7 +208,12 @@ export function compileTrace(result: ScanResult, options: CompileTraceOptions = 
       guidance: 'Run this check with a coding agent and return its structured execution record.',
     }
   })
-  const externalById = new Map((options.externalChecksExecuted ?? []).map((execution) => [execution.id, execution]))
+  const externalById = new Map(
+    [
+      ...result.scan.checks_executed.filter((execution) => execution.kind === 'external'),
+      ...(options.externalChecksExecuted ?? []),
+    ].map((execution) => [execution.id, execution]),
+  )
   for (const finding of findings.filter((item) => item.source === 'external')) {
     if (finding.rule_id && !externalById.has(finding.rule_id)) {
       externalById.set(finding.rule_id, {
@@ -237,6 +261,7 @@ export function compileTrace(result: ScanResult, options: CompileTraceOptions = 
     detection: result.detection,
     findings,
     checks_executed: checksExecuted,
+    runtime_request_results: result.runtime_request_results ?? [],
     suppressions,
     coverage: {
       files_scanned: result.scan.files_scanned,
@@ -397,6 +422,110 @@ const validReason = (value: unknown): boolean =>
   REASON_CODES.has(String(value.code)) &&
   typeof value.message === 'string' &&
   value.message.trim().length > 0
+
+function validStringRecord(value: unknown, allowArrays = false): boolean {
+  return (
+    isObject(value) &&
+    Object.values(value).every(
+      (item) =>
+        typeof item === 'string' ||
+        (allowArrays && Array.isArray(item) && item.every((entry) => typeof entry === 'string')),
+    )
+  )
+}
+
+function validateRuntimeProbeValue(
+  value: Record<string, unknown>,
+  resultIndex: number,
+  probeIndex: number,
+  errors: string[],
+): RuntimeProbeStatus | undefined {
+  const label = `runtime_request_results[${resultIndex}].probes[${probeIndex}]`
+  const status = value.status as RuntimeProbeStatus
+  if (
+    typeof value.id !== 'string' ||
+    !value.id ||
+    !RUNTIME_PROBE_STATUSES.has(status) ||
+    typeof value.description !== 'string' ||
+    !value.description ||
+    !isObject(value.expected) ||
+    value.expected.outcome !== 'rejected' ||
+    !isObject(value.request) ||
+    typeof value.request.method !== 'string' ||
+    !value.request.method ||
+    typeof value.request.path !== 'string' ||
+    !value.request.path.startsWith('/') ||
+    (value.request.headers !== undefined && !validStringRecord(value.request.headers)) ||
+    (value.request.query !== undefined && !validStringRecord(value.request.query, true))
+  ) {
+    errors.push(`${label} is invalid`)
+    return undefined
+  }
+  if (
+    status === 'unresolved'
+      ? value.response !== undefined
+      : !isObject(value.response) ||
+        !Number.isInteger(value.response.status) ||
+        Number(value.response.status) < 100 ||
+        Number(value.response.status) > 599
+  )
+    errors.push(`${label}.response is inconsistent with its status`)
+  if (status === 'failed' && isObject(value.response) && !isSuccessStatus(Number(value.response.status)))
+    errors.push(`${label} failed response must be successful`)
+  if (status === 'passed' && isObject(value.response) && isSuccessStatus(Number(value.response.status)))
+    errors.push(`${label} passed response must be rejected`)
+  return status
+}
+
+function validateRuntimeRequestResultValue(value: Record<string, unknown>, index: number, errors: string[]): void {
+  const label = `runtime_request_results[${index}]`
+  const status = value.status as RuntimeProbeStatus
+  if (
+    typeof value.id !== 'string' ||
+    !value.id ||
+    !Number.isInteger(value.version) ||
+    Number(value.version) < 1 ||
+    !SEVERITIES.has(value.severity as Severity) ||
+    typeof value.title !== 'string' ||
+    !value.title ||
+    !RUNTIME_PROBE_STATUSES.has(status) ||
+    typeof value.description !== 'string' ||
+    !value.description ||
+    !isObject(value.endpoint) ||
+    typeof value.endpoint.url !== 'string' ||
+    !value.endpoint.url.startsWith('/') ||
+    !REQUEST_AUTHENTICATION_METHOD_SET.has(String(value.endpoint.authentication)) ||
+    !isObject(value.remediation) ||
+    typeof value.remediation.description !== 'string' ||
+    !value.remediation.description ||
+    (value.remediation.guide !== undefined && typeof value.remediation.guide !== 'string') ||
+    !Array.isArray(value.probes) ||
+    value.probes.length === 0
+  ) {
+    errors.push(`${label} is invalid`)
+    return
+  }
+  const probeStatuses = value.probes.flatMap((probe, probeIndex): RuntimeProbeStatus[] => {
+    if (!isObject(probe)) {
+      errors.push(`${label}.probes[${probeIndex}] is invalid`)
+      return []
+    }
+    const probeStatus = validateRuntimeProbeValue(probe, index, probeIndex, errors)
+    return probeStatus ? [probeStatus] : []
+  })
+  const expectedStatus = aggregateRuntimeProbeStatuses(probeStatuses)
+  if (status !== expectedStatus) errors.push(`${label}.status is inconsistent with its probes`)
+}
+
+function aggregateRuntimeProbeStatuses(statuses: RuntimeProbeStatus[]): RuntimeProbeStatus {
+  if (statuses.includes('failed')) return 'failed'
+  if (statuses.includes('unresolved')) return 'unresolved'
+  return 'passed'
+}
+
+function isSuccessStatus(status: number): boolean {
+  return status >= 200 && status < 300
+}
 
 const inspectUnknownValue = (root: unknown): {containsSecret: boolean; unsafe: boolean} => {
   const stack: {value: unknown; depth: number}[] = [{value: root, depth: 0}]
@@ -677,6 +806,16 @@ function validateTraceValue(value: unknown): TraceValidationResult {
     )
   else errors.push('checks_executed must be an array')
 
+  if (value.runtime_request_results !== undefined) {
+    if (Array.isArray(value.runtime_request_results))
+      value.runtime_request_results.forEach((result, index) =>
+        isObject(result)
+          ? validateRuntimeRequestResultValue(result, index, errors)
+          : errors.push(`runtime_request_results[${index}] must be an object`),
+      )
+    else errors.push('runtime_request_results must be an array')
+  }
+
   if (Array.isArray(value.checks_executed) && Array.isArray(value.findings)) {
     const executions = value.checks_executed.filter(isObject)
     const findings = value.findings.filter(isObject)
@@ -709,6 +848,16 @@ function validateTraceValue(value: unknown): TraceValidationResult {
       ) {
         errors.push(`findings[${index}] provenance doesn't match its execution record`)
       }
+    })
+  }
+
+  if (Array.isArray(value.checks_executed) && Array.isArray(value.runtime_request_results)) {
+    const executions = value.checks_executed.filter(isObject)
+    value.runtime_request_results.forEach((result, index) => {
+      if (!isObject(result)) return
+      const execution = executions.find((candidate) => candidate.kind === 'external' && candidate.id === result.id)
+      if (!execution || execution.version !== result.version || execution.status === 'not_applicable')
+        errors.push(`runtime_request_results[${index}] has no matching runtime execution`)
     })
   }
 

@@ -24,6 +24,7 @@ describe('app security instructions command', () => {
     expect(deliverAppSecurityInstructions).toHaveBeenCalledWith({
       directory: cwd(),
       configName: undefined,
+      probeUrl: undefined,
       copy: false,
       writePath: undefined,
     })
@@ -35,6 +36,7 @@ describe('app security instructions command', () => {
     expect(deliverAppSecurityInstructions).toHaveBeenCalledWith({
       directory: resolvePath('./fixtures/unlinked-app'),
       configName: undefined,
+      probeUrl: undefined,
       copy: true,
       writePath: undefined,
     })
@@ -46,15 +48,21 @@ describe('app security instructions command', () => {
     expect(deliverAppSecurityInstructions).toHaveBeenCalledWith({
       directory: cwd(),
       configName: undefined,
+      probeUrl: undefined,
       copy: false,
       writePath: resolvePath('./instructions.md'),
     })
   })
 
-  test('forwards --config', async () => {
-    await SecurityInstructions.run(['--path', './fixtures/unlinked-app', '--config', 'staging'], import.meta.url)
+  test('forwards --config and --probe-url', async () => {
+    await SecurityInstructions.run(
+      ['--path', './fixtures/unlinked-app', '--config', 'staging', '--probe-url', 'http://localhost:3000'],
+      import.meta.url,
+    )
 
-    expect(deliverAppSecurityInstructions).toHaveBeenCalledWith(expect.objectContaining({configName: 'staging'}))
+    expect(deliverAppSecurityInstructions).toHaveBeenCalledWith(
+      expect.objectContaining({configName: 'staging', probeUrl: 'http://localhost:3000'}),
+    )
   })
 
   test('keeps --copy and --write mutually exclusive', () => {

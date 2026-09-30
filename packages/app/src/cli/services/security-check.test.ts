@@ -99,6 +99,7 @@ const resolvedArtifacts: ResolvedAppSecurityArtifactPaths = {
   ...artifacts,
   reviewPath: artifacts.reviewPath!,
   findingsPath: '/tmp/unlinked-app/.shopify/app-security/findings.json',
+  requestsPath: '/tmp/unlinked-app/.shopify/app-security/requests.json',
   submissionPath: '/tmp/unlinked-app/.shopify/app-security/submission.json',
 }
 
@@ -108,6 +109,7 @@ function testDependencies(execution: AppSecurityExecution = scanExecution) {
     artifactPaths: vi.fn(() => resolvedArtifacts),
     findingsFileExists: vi.fn(async () => false),
     readTrace: vi.fn<() => Promise<ReadTraceResult>>(async () => ({status: 'missing'})),
+    startLocalApp: vi.fn(async () => ({url: 'http://localhost:3456', stop: vi.fn(async () => {})})),
     execute: vi.fn(async () => execution),
     writeArtifacts: vi.fn(async () => artifacts),
     canPrompt: vi.fn(() => false),
@@ -142,6 +144,8 @@ describe('securityCheck', () => {
       appRoot: '/tmp/unlinked-app',
       configName: undefined,
       findingsPath: undefined,
+      probeUrl: undefined,
+      requestsPath: undefined,
     })
     expect(dependencies.writeArtifacts).toHaveBeenCalledWith(scanExecution, {clean: false})
     expect(dependencies.renderReport).toHaveBeenCalledWith({
@@ -158,21 +162,73 @@ describe('securityCheck', () => {
     expect(dependencies.output).not.toHaveBeenCalled()
   })
 
-  test('forwards configName and includes --config in generated commands', async () => {
+  test('forwards configName and probeUrl into execution and generated commands', async () => {
     const dependencies = testDependencies()
 
-    await securityCheck({...testOptions(), configName: 'staging'}, dependencies)
+    await securityCheck(
+      {
+        ...testOptions(),
+        configName: 'staging',
+        probeUrl: 'http://localhost:3000',
+        requestsPath: '/tmp/requests.json',
+      },
+      dependencies,
+    )
 
     expect(dependencies.execute).toHaveBeenCalledWith({
       appRoot: '/tmp/unlinked-app',
       configName: 'staging',
       findingsPath: undefined,
+      probeUrl: 'http://localhost:3000/',
+      requestsPath: '/tmp/requests.json',
     })
     expect(dependencies.renderReport).toHaveBeenCalledWith(
       expect.objectContaining({
-        commands: resolveAppSecurityCommands(scanExecution.appRoot, 'shopify.app.staging.toml'),
+        commands: resolveAppSecurityCommands(
+          scanExecution.appRoot,
+          'shopify.app.staging.toml',
+          'http://localhost:3000/',
+          '/tmp/requests.json',
+        ),
       }),
     )
+  })
+
+  test('requires --requests when --probe-url is provided', async () => {
+    const dependencies = testDependencies()
+
+    await expect(securityCheck({...testOptions(), probeUrl: 'http://localhost:3000'}, dependencies)).rejects.toThrow(
+      'Running-app request probes require --requests when --probe-url is provided.',
+    )
+
+    expect(dependencies.startLocalApp).not.toHaveBeenCalled()
+    expect(dependencies.execute).not.toHaveBeenCalled()
+  })
+
+  test('starts and stops the configured backend when --requests is provided without --probe-url', async () => {
+    const dependencies = testDependencies()
+
+    await securityCheck({...testOptions(), requestsPath: '/tmp/requests.json'}, dependencies)
+
+    expect(dependencies.startLocalApp).toHaveBeenCalledWith({
+      appRoot: '/tmp/unlinked-app',
+      configFileName: 'shopify.app.toml',
+    })
+    expect(dependencies.execute).toHaveBeenCalledWith(
+      expect.objectContaining({probeUrl: 'http://localhost:3456', requestsPath: '/tmp/requests.json'}),
+    )
+    expect((await dependencies.startLocalApp.mock.results[0]!.value).stop).toHaveBeenCalledOnce()
+  })
+
+  test('stops the configured backend when the scan fails', async () => {
+    const dependencies = testDependencies()
+    dependencies.execute.mockRejectedValue(new Error('Scan failed'))
+
+    await expect(securityCheck({...testOptions(), requestsPath: '/tmp/requests.json'}, dependencies)).rejects.toThrow(
+      'Scan failed',
+    )
+
+    expect((await dependencies.startLocalApp.mock.results[0]!.value).stop).toHaveBeenCalledOnce()
   })
 
   test('refuses to scan when agent findings exist', async () => {

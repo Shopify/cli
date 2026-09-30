@@ -4,6 +4,7 @@ import {
   type Capabilities,
   type Issue,
   type IssueGroup,
+  type RuntimeRequestResult,
   type ScanResult,
   type Severity,
 } from './app-security-engine/index.js'
@@ -134,6 +135,21 @@ function securityNextSteps(commands: AppSecurityCommands): TokenItem<InlineToken
 
 function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]): AlertCustomSection[] {
   const sections: AlertCustomSection[] = []
+  const runtimeResults = input.scan.runtime_request_results ?? []
+
+  if (runtimeResults.length > 0) {
+    sections.push({
+      title: 'Runtime request probes',
+      body: {
+        list: {
+          items: runtimeResults.flatMap((result) => [
+            runtimeResultListItem(result),
+            ...(input.verbose ? result.probes.map(runtimeProbeListItem) : []),
+          ]),
+        },
+      },
+    })
+  }
 
   for (const severity of ['high', 'medium', 'low'] as const) {
     const severityGroups = groups.filter((group) => group.severity === severity)
@@ -208,6 +224,25 @@ function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]
   }
 
   return sections
+}
+
+function runtimeResultListItem(result: RuntimeRequestResult): TokenItem<InlineToken> {
+  return [
+    {bold: result.status.toUpperCase()},
+    {userInput: result.endpoint.url},
+    {subdued: result.endpoint.authentication},
+    result.description,
+  ]
+}
+
+function runtimeProbeListItem(probe: RuntimeRequestResult['probes'][number]): TokenItem<InlineToken> {
+  const response = probe.response ? `HTTP ${probe.response.status}` : 'no response'
+  return [
+    {subdued: probe.status.toUpperCase()},
+    {subdued: probe.id},
+    `${probe.request.method} ${probe.request.path} → ${response}`,
+    {subdued: probe.description},
+  ]
 }
 
 function issueListItem(issue: Issue): TokenItem<InlineToken> {

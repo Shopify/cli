@@ -2,6 +2,8 @@ import {
   securityExitCode,
   executeAppSecurity,
   loadAppSecurityFindings,
+  loadAppSecurityRequestManifest,
+  normalizeAppSecurityProbeUrl,
   resolveAppSecurityRoot,
   type AppSecurityBlockingLevel,
 } from './app-security-api.js'
@@ -79,6 +81,51 @@ function suppressionFor(fingerprint: string) {
     },
   }
 }
+
+describe('loadAppSecurityRequestManifest', () => {
+  test('reads and validates an agent-generated request manifest', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = joinPath(directory, 'requests.json')
+      await writeFile(
+        path,
+        JSON.stringify({schema_version: 1, requests: [{url: '/webhooks/products/create', method: 'webhook'}]}),
+      )
+
+      await expect(loadAppSecurityRequestManifest(path)).resolves.toEqual({
+        schema_version: 1,
+        requests: [{url: '/webhooks/products/create', method: 'webhook'}],
+      })
+    })
+  })
+
+  test('translates malformed request manifests into an AbortError', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = joinPath(directory, 'requests.json')
+      await writeFile(
+        path,
+        JSON.stringify({schema_version: 1, requests: [{url: 'https://production.test', method: 'webhook'}]}),
+      )
+
+      await expect(loadAppSecurityRequestManifest(path)).rejects.toBeInstanceOf(AbortError)
+    })
+  })
+})
+
+describe('normalizeAppSecurityProbeUrl', () => {
+  test('normalizes an explicit HTTP endpoint', () => {
+    expect(normalizeAppSecurityProbeUrl('http://localhost:3000/app')).toBe('http://localhost:3000/app')
+  })
+
+  test.each([
+    'not-a-url',
+    'ftp://localhost/app',
+    'http://user:password@localhost/app',
+    'http://localhost/app?token=secret',
+    'http://localhost/app#fragment',
+  ])('rejects unsafe probe URL %s', (value) => {
+    expect(() => normalizeAppSecurityProbeUrl(value)).toThrow(AbortError)
+  })
+})
 
 describe('App Security CLI integration', () => {
   test('runs the in-tree engine and writes the review pack and trace', async () => {
@@ -619,6 +666,9 @@ describe('App Security CLI integration', () => {
           artifactPaths: appSecurityArtifactPaths,
           findingsFileExists: fileExists,
           readTrace,
+          startLocalApp: async () => {
+            throw new Error('Local app should not start without a request manifest')
+          },
           execute: async ({appRoot, findingsPath}) => {
             const findings = findingsPath ? await loadAppSecurityFindings(findingsPath) : undefined
             return executeAppSecurity({appRoot, findings})

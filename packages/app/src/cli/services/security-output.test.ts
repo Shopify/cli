@@ -187,6 +187,48 @@ describe('buildSecurityAlert', () => {
     expect(serialized).not.toContain('app/a.ts:2')
   })
 
+  test('renders endpoint-level runtime outcomes and verbose request-response details', () => {
+    const runtimeRequestResults: NonNullable<ScanResult['runtime_request_results']> = [
+      {
+        id: 'APP_PROXY_UNVERIFIED_SIGNATURE',
+        version: 2,
+        severity: 'high',
+        title: 'App proxy request trusted without signature verification',
+        endpoint: {url: '/api/app-proxy', authentication: 'app_proxy'},
+        status: 'failed',
+        description: '1 of 1 rejection probes were accepted by the endpoint.',
+        probes: [
+          {
+            id: 'missing_signature',
+            status: 'failed',
+            request: {method: 'GET', path: '/api/app-proxy', query: {shop: 'probe.myshopify.com'}},
+            expected: {outcome: 'rejected'},
+            response: {status: 200},
+            description: 'Expected the request to be rejected, but the endpoint returned HTTP 200.',
+          },
+        ],
+        remediation: {description: 'Verify the app proxy signature.'},
+      },
+    ]
+    const conciseInput = reportInput({scan: {...scanWithIssues, runtime_request_results: runtimeRequestResults}})
+    const verboseInput = {...conciseInput, verbose: true}
+
+    expect(section(conciseInput, 'Runtime request probes')?.body).toEqual({
+      list: {
+        items: [
+          [
+            {bold: 'FAILED'},
+            {userInput: '/api/app-proxy'},
+            {subdued: 'app_proxy'},
+            '1 of 1 rejection probes were accepted by the endpoint.',
+          ],
+        ],
+      },
+    })
+    expect(JSON.stringify(section(verboseInput, 'Runtime request probes'))).toContain('GET /api/app-proxy → HTTP 200')
+    expect(JSON.stringify(section(verboseInput, 'Runtime request probes'))).toContain('missing_signature')
+  })
+
   test('verbose output expands every occurrence, including distinct messages and fixes', () => {
     const issues = Array.from({length: 4}, (_, index) => ({
       ...scanWithIssues.issues[0]!,

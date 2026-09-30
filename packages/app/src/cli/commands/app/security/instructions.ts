@@ -12,7 +12,7 @@ export default class SecurityInstructions extends BaseCommand {
 
   static descriptionWithMarkdown = `Prints the complete workflow that a coding agent should follow to review App Security results.
 
-By default, the instructions are printed to stdout. Use \`--copy\` to copy them to the clipboard or \`--write\` to write them to a file. Standalone instructions always start by running \`shopify app security check\`; only that invocation's generated review pack is trusted as workflow input.`
+By default, the instructions are printed to stdout. Use \`--copy\` to copy them to the clipboard or \`--write\` to write them to a file. The workflow starts the backend from \`shopify.web.toml\` for deterministic request probes; pass \`--probe-url\` to use an already running app instead. Standalone instructions always start by running \`shopify app security check\`; only that invocation's generated review pack is trusted as workflow input.`
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -20,6 +20,11 @@ By default, the instructions are printed to stdout. Use \`--copy\` to copy them 
     ...globalFlags,
     path: appFlags.path,
     config: appFlags.config,
+    // Deliberately not bound to an environment variable because the generated workflow sends network requests.
+    // eslint-disable-next-line @shopify/cli/command-flags-with-env
+    'probe-url': Flags.string({
+      description: 'Use an already running app instead of starting the backend from shopify.web.toml.',
+    }),
     copy: Flags.boolean({
       description: 'Copy the instructions to the clipboard instead of printing them.',
       default: false,
@@ -40,6 +45,7 @@ By default, the instructions are printed to stdout. Use \`--copy\` to copy them 
     await deliverAppSecurityInstructions({
       directory: flags.path,
       configName: flags.config,
+      probeUrl: flags['probe-url'],
       copy: flags.copy,
       writePath: flags.write,
     })

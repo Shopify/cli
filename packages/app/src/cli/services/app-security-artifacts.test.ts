@@ -40,6 +40,7 @@ describe('appSecurityArtifactPaths', () => {
       tracePath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'trace.json'),
       reviewPath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'review.json'),
       findingsPath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'findings.json'),
+      requestsPath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'requests.json'),
       submissionPath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'submission.json'),
     })
   })
@@ -123,6 +124,7 @@ describe('writeAppSecurityArtifacts', () => {
       const paths = appSecurityArtifactPaths(directory)
       await mkdir(paths.artifactDirectory)
       await writeFile(paths.findingsPath, '{"findings":[]}')
+      await writeFile(paths.requestsPath, '{"requests":[]}')
       await writeFile(paths.submissionPath, '{"submission":true}')
       const unknownPath = joinPath(paths.artifactDirectory, 'notes.txt')
       const customFindingsPath = joinPath(directory, 'custom-findings.json')
@@ -132,6 +134,7 @@ describe('writeAppSecurityArtifacts', () => {
       await writeAppSecurityArtifacts(execution, {clean: true})
 
       await expect(fileExists(paths.findingsPath)).resolves.toBe(false)
+      await expect(fileExists(paths.requestsPath)).resolves.toBe(false)
       await expect(fileExists(paths.submissionPath)).resolves.toBe(false)
       await expect(readFile(unknownPath)).resolves.toBe('keep')
       await expect(readFile(customFindingsPath)).resolves.toBe('keep')
@@ -149,6 +152,7 @@ describe('writeAppSecurityArtifacts', () => {
         [paths.tracePath]: '{"trace":"stale"}',
         [paths.reviewPath]: '{"review":"stale"}',
         [paths.findingsPath]: '{"findings":"stale"}',
+        [paths.requestsPath]: '{"requests":"stale"}',
         [paths.submissionPath]: '{"submission":"stale"}',
       }
       for (const [path, content] of Object.entries(existingArtifacts)) {

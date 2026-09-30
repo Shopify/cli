@@ -208,6 +208,9 @@ describe('trace v2', () => {
       analysis_mode: 'external',
     })
     expect(hasRecordedAgentReview(externalReview)).toBe(true)
+    externalReview.checks_executed.at(-1)!.status = 'not_applicable'
+    externalReview.checks_executed.at(-1)!.applicable = false
+    expect(hasRecordedAgentReview(externalReview)).toBe(false)
 
     const rejectedReview = structuredClone(initialTrace)
     const rejectedExecution = rejectedReview.checks_executed.find((execution) => execution.kind === 'agent')!

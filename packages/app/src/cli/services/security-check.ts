@@ -1,10 +1,13 @@
 import {
   securityExitCode,
   executeAppSecurity,
+  normalizeAppSecurityProbeUrl,
   loadAppSecurityFindings,
+  loadAppSecurityRequestManifest,
   resolveAppSecurityRoot,
 } from './app-security-api.js'
 import {appSecurityArtifactPaths, readTrace, writeAppSecurityArtifacts} from './app-security-artifacts.js'
+import {startAppSecurityLocalApp, type RunningAppSecurityLocalApp} from './app-security-local-app.js'
 import {requireSecurityConfigFileName, resolveSecurityConfigFileName} from './app-security-config.js'
 import deliverAppSecurityInstructions from './app-security-instructions.js'
 import {
@@ -39,6 +42,8 @@ interface SecurityOptions {
   yes: boolean
   skipInstructions: boolean
   findingsPath?: string
+  probeUrl?: string
+  requestsPath?: string
   clean: boolean
 }
 
@@ -49,7 +54,14 @@ interface SecurityDependencies {
   artifactPaths(appRoot: string): ResolvedAppSecurityArtifactPaths
   findingsFileExists(path: string): Promise<boolean>
   readTrace(path: string): Promise<ReadTraceResult>
-  execute(options: {appRoot: string; configName?: string; findingsPath?: string}): Promise<AppSecurityExecution>
+  startLocalApp(options: {appRoot: string; configFileName: string}): Promise<RunningAppSecurityLocalApp>
+  execute(options: {
+    appRoot: string
+    configName?: string
+    findingsPath?: string
+    probeUrl?: string
+    requestsPath?: string
+  }): Promise<AppSecurityExecution>
   writeArtifacts(
     execution: AppSecurityExecution,
     options: WriteAppSecurityArtifactsOptions,
@@ -82,12 +94,16 @@ const defaultDependencies: SecurityDependencies = {
   artifactPaths: appSecurityArtifactPaths,
   findingsFileExists: fileExists,
   readTrace,
-  execute: async ({appRoot, configName, findingsPath}) => {
+  startLocalApp: startAppSecurityLocalApp,
+  execute: async ({appRoot, configName, findingsPath, probeUrl, requestsPath}) => {
     const findings = findingsPath ? await loadAppSecurityFindings(findingsPath) : undefined
+    const requestManifest = requestsPath ? await loadAppSecurityRequestManifest(requestsPath) : undefined
     return executeAppSecurity({
       appRoot,
       findings,
       configFileName: requireSecurityConfigFileName(appRoot, configName),
+      probeUrl,
+      requestManifest,
     })
   },
   writeArtifacts: writeAppSecurityArtifacts,
@@ -156,16 +172,30 @@ export default async function securityCheck(
   dependencies: SecurityDependencies = defaultDependencies,
 ): Promise<void> {
   const appRoot = dependencies.resolveRoot(options.directory)
-  const commands = resolveAppSecurityCommands(appRoot, resolveSecurityConfigFileName(appRoot, options.configName))
+  if (options.probeUrl && !options.requestsPath) {
+    throw new AbortError('Running-app request probes require --requests when --probe-url is provided.')
+  }
+  const explicitProbeUrl = options.probeUrl ? normalizeAppSecurityProbeUrl(options.probeUrl) : undefined
+  const configFileName = resolveSecurityConfigFileName(appRoot, options.configName)
+  const commands = resolveAppSecurityCommands(appRoot, configFileName, explicitProbeUrl, options.requestsPath)
   if (!options.findingsPath && !options.clean) {
     await assertCanStartScan(dependencies.artifactPaths(appRoot), commands, dependencies)
   }
 
-  const execution = await dependencies.execute({
-    appRoot,
-    configName: options.configName,
-    findingsPath: options.findingsPath,
-  })
+  const localApp =
+    options.requestsPath && !explicitProbeUrl ? await dependencies.startLocalApp({appRoot, configFileName}) : undefined
+  let execution: AppSecurityExecution
+  try {
+    execution = await dependencies.execute({
+      appRoot,
+      configName: options.configName,
+      findingsPath: options.findingsPath,
+      probeUrl: explicitProbeUrl ?? localApp?.url,
+      requestsPath: options.requestsPath,
+    })
+  } finally {
+    await localApp?.stop()
+  }
   const artifacts = await dependencies.writeArtifacts(execution, {clean: options.clean})
 
   if (options.json) {

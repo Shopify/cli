@@ -17,6 +17,8 @@ export default class SecurityCheck extends BaseCommand {
 
 Pass \`--findings\` after completing the review pack to validate agent findings and compile them into the trace. A new scan stops when local agent findings or a compiled trace already exist. Pass \`--clean\` to discard that work and start over. Use \`--config\` to select a specific app configuration when the project has multiple \`shopify.app*.toml\` files; App Security inspects only that configuration.
 
+Pass \`--requests\` to test the endpoint manifest produced by the coding-agent workflow. By default, App Security starts the backend command from \`shopify.web.toml\`, probes it on localhost, and stops it after the scan. Pass \`--probe-url\` to test an already running local, tunnel, staging, or deployed app instead. App Security sends the appropriate invalid app-home, UI-extension, Flow-action, webhook, or app-proxy requests and reports endpoints that accept them.
+
 In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. JSON output never prompts or prints those instructions. You can also run \`shopify app security instructions\` to print, copy, or write them later.`
 
   static description = this.descriptionWithoutMarkdown()
@@ -31,6 +33,18 @@ In interactive terminals, the command offers to copy the coding-agent instructio
       parse: async (input) => resolvePath(input),
       env: 'SHOPIFY_FLAG_APP_SECURITY_FINDINGS',
       exclusive: ['clean'],
+    }),
+    // Deliberately not bound to an environment variable: this flag sends requests to a running app and must be an
+    // explicit per-invocation decision rather than something inherited from a shell or CI environment.
+    // eslint-disable-next-line @shopify/cli/command-flags-with-env
+    'probe-url': Flags.string({
+      description: 'Probe an already running app instead of starting the backend from shopify.web.toml.',
+      dependsOn: ['requests'],
+    }),
+    // eslint-disable-next-line @shopify/cli/command-flags-with-env
+    requests: Flags.string({
+      description: 'Use a coding-agent request manifest to select endpoints and authentication methods.',
+      parse: async (input) => resolvePath(input),
     }),
     // Deliberately not bound to an environment variable: clean discards local review work, so it must be an
     // explicit per-invocation decision rather than something inherited from a shell or CI environment.
@@ -72,6 +86,8 @@ In interactive terminals, the command offers to copy the coding-agent instructio
       yes: flags.yes,
       skipInstructions: flags['skip-instructions'],
       findingsPath: flags.findings,
+      probeUrl: flags['probe-url'],
+      requestsPath: flags.requests,
       clean: flags.clean,
     })
   }

@@ -72,6 +72,57 @@ export interface ProjectDetection {
   languages: DetectedLanguage[]
 }
 
+export const REQUEST_AUTHENTICATION_METHODS = [
+  'app_home',
+  'admin_ui_extension',
+  'checkout_ui_extension',
+  'customer_account_ui_extension',
+  'pos_ui_extension',
+  'sidekick_extension',
+  'webhook',
+  'flow_action',
+  'app_proxy',
+  'public',
+] as const
+
+export type RequestAuthenticationMethod = (typeof REQUEST_AUTHENTICATION_METHODS)[number]
+
+export type RuntimeProbeStatus = 'passed' | 'failed' | 'unresolved'
+
+export interface RuntimeProbeRequest {
+  method: string
+  path: string
+  headers?: Record<string, string>
+  query?: Record<string, string | string[]>
+}
+
+export interface RuntimeProbeResult {
+  id: string
+  status: RuntimeProbeStatus
+  request: RuntimeProbeRequest
+  expected: {outcome: 'rejected'}
+  response?: {status: number}
+  description: string
+}
+
+export interface RuntimeRequestResult {
+  id: string
+  version: number
+  severity: Severity
+  title: string
+  endpoint: {
+    url: string
+    authentication: RequestAuthenticationMethod
+  }
+  status: RuntimeProbeStatus
+  description: string
+  probes: RuntimeProbeResult[]
+  remediation: {
+    description: string
+    guide?: string
+  }
+}
+
 export interface ScanResult {
   version: string
   timestamp: string
@@ -87,6 +138,7 @@ export interface ScanResult {
   detection: ProjectDetection
   scan: ScanMetadata
   issues: Issue[]
+  runtime_request_results?: RuntimeRequestResult[]
 }
 
 export interface SkippedFile {
@@ -109,6 +161,8 @@ export type CheckExecutionReasonCode =
   | 'agent_investigation_required'
   | 'not_reported'
   | 'input_rejected'
+  | 'network_unavailable'
+  | 'probe_limit'
 
 export interface CheckExecutionReason {
   code: CheckExecutionReasonCode
@@ -176,6 +230,14 @@ export const FINDINGS_SCHEMA_VERSION = 1 as const
 export const SUPPORTED_TRACE_SCHEMA_VERSIONS = [TRACE_SCHEMA_VERSION] as const
 export const ENGINE_NAME = 'shopify-app-security' as const
 
+export const RUNTIME_REQUEST_CHECK_IDS = [
+  'APP_HOME_INVALID_TOKEN_ACCEPTED',
+  'UI_EXTENSION_INVALID_TOKEN_ACCEPTED',
+  'FLOW_ACTION_UNVERIFIED_HMAC',
+  'WEBHOOK_UNVERIFIED_HMAC',
+  'APP_PROXY_UNVERIFIED_SIGNATURE',
+] as const
+
 export type FindingSource = 'deterministic' | 'agent' | 'external'
 
 export interface FindingEvidence {
@@ -236,6 +298,8 @@ export interface TraceV3 {
   detection: ProjectDetection
   findings: TraceFinding[]
   checks_executed: CheckExecution[]
+  /** Detailed runtime request feedback. Optional so previously written schema-v3 traces remain readable. */
+  runtime_request_results?: RuntimeRequestResult[]
   suppressions: Suppression[]
   coverage: {
     files_scanned: number

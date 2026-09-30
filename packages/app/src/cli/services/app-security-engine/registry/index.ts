@@ -1,8 +1,9 @@
 import {loadChecks} from '../checks/index.js'
+import {DYNAMIC_CHECKS, type DynamicCheckDefinition} from '../dynamic/index.js'
 import {RULE_CATALOG, type RuleCatalogEntry} from '../rules/catalog.js'
 import {DETERMINISTIC_CHECKS, type DeterministicCheckDefinition} from '../scanners/index.js'
 
-export type ImplementationProvenance = 'deterministic' | 'agent'
+export type ImplementationProvenance = 'deterministic' | 'agent' | 'external'
 
 export interface RegistryEntry {
   id: string
@@ -23,10 +24,12 @@ interface RegistryInvariantInput {
   catalog: ReadonlyArray<RuleCatalogEntry>
   deterministic: ReadonlyArray<DeterministicCheckDefinition>
   agent: ReadonlyArray<{id: string; version: number; prompt_hash: string}>
+  external?: ReadonlyArray<DynamicCheckDefinition>
 }
 
 /** Assert identities before they are exposed or executed. */
 export function assertRegistryInvariants(input: RegistryInvariantInput): void {
+  const externalChecks = input.external ?? []
   const catalogIds = new Set<string>()
   for (const entry of input.catalog) {
     if (catalogIds.has(entry.id)) throw new Error(`Duplicate stable product ID: ${entry.id}`)
@@ -53,10 +56,22 @@ export function assertRegistryInvariants(input: RegistryInvariantInput): void {
     if (deterministic && deterministic.version !== check.version)
       throw new Error(`Deterministic and agent versions differ for shared product ID: ${check.id}`)
   }
+  for (const check of externalChecks) {
+    const key = `external:${check.id}`
+    if (implementationIds.has(key)) throw new Error(`Duplicate external stable ID: ${check.id}`)
+    implementationIds.add(key)
+    if (!catalogIds.has(check.id)) throw new Error(`Orphan external implementation: ${check.id}`)
+    const sharedVersion =
+      input.deterministic.find((definition) => definition.id === check.id)?.version ??
+      input.agent.find((definition) => definition.id === check.id)?.version
+    if (sharedVersion !== undefined && sharedVersion !== check.version)
+      throw new Error(`External implementation version differs for shared product ID: ${check.id}`)
+  }
 
   const implementedProducts = new Set([
     ...input.deterministic.map((definition) => definition.id),
     ...input.agent.map((check) => check.id),
+    ...externalChecks.map((check) => check.id),
   ])
   for (const entry of input.catalog) {
     if ((entry.status ?? 'active') === 'active' && !implementedProducts.has(entry.id))
@@ -70,7 +85,12 @@ export function assertRegistryInvariants(input: RegistryInvariantInput): void {
 export function getRegistry(): RegistryEntry[] {
   const checks = [...loadChecks().values()]
   const deterministicChecks = [...DETERMINISTIC_CHECKS.values()]
-  assertRegistryInvariants({catalog: RULE_CATALOG, deterministic: deterministicChecks, agent: checks})
+  assertRegistryInvariants({
+    catalog: RULE_CATALOG,
+    deterministic: deterministicChecks,
+    agent: checks,
+    external: DYNAMIC_CHECKS,
+  })
   const catalog = new Map(RULE_CATALOG.map((entry) => [entry.id, entry]))
   const deterministic: RegistryEntry[] = deterministicChecks.map((definition) => {
     const entry = catalog.get(definition.id)!
@@ -89,7 +109,15 @@ export function getRegistry(): RegistryEntry[] {
       prompt_hash: check.prompt_hash,
     })
   })
-  return [...deterministic, ...agent].sort((left, right) =>
+  const external: RegistryEntry[] = DYNAMIC_CHECKS.map((check) => {
+    const entry = catalog.get(check.id)!
+    return registryEntry(entry, {
+      version: check.version,
+      kind: 'external',
+      status: 'active',
+    })
+  })
+  return [...deterministic, ...agent, ...external].sort((left, right) =>
     `${left.id}|${left.kind}`.localeCompare(`${right.id}|${right.kind}`),
   )
 }

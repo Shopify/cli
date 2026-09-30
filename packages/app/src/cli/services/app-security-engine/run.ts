@@ -15,6 +15,7 @@ import {computeResultHash} from './scorer/index.js'
 import {compileTrace, validateTrace} from './trace/index.js'
 import {FINDINGS_SCHEMA_VERSION} from './types.js'
 import {getEngineVersion} from './version.js'
+import type {AppSecurityRequestManifest} from './dynamic/requests.js'
 import type {CheckExecution, ScanResult, Suppression, TraceV3} from './types.js'
 
 export {AppRootDiscoveryError, findAppRoot}
@@ -109,9 +110,14 @@ export function parseFindings(value: unknown): FindingsDocument {
   return value as FindingsDocument
 }
 
-export async function scanApp(directory?: string, configFileName?: string): Promise<AppSecurityScan> {
+export async function scanApp(
+  directory?: string,
+  configFileName?: string,
+  probeUrl?: string,
+  requestManifest?: AppSecurityRequestManifest,
+): Promise<AppSecurityScan> {
   const appRoot = findAppRoot(directory)
-  const result = await scan(appRoot, configFileName)
+  const result = await scan(appRoot, configFileName, {probeUrl, requestManifest})
   const engineVersion = getEngineVersion()
   const reviewPack = buildReviewPack(engineVersion, result)
   const trace = compileTrace(result, {engineVersion, agentChecksExecuted: [], suppressions: []})
@@ -129,9 +135,11 @@ export async function compileFindings(
   directory: string,
   document: FindingsDocument,
   configFileName?: string,
+  probeUrl?: string,
+  requestManifest?: AppSecurityRequestManifest,
 ): Promise<AppSecurityCompile> {
   const appRoot = findAppRoot(directory)
-  const result = await scan(appRoot, configFileName)
+  const result = await scan(appRoot, configFileName, {probeUrl, requestManifest})
   const engineVersion = getEngineVersion()
   const knownFiles = new Set(searchBoundaryFiles(result))
   const provenanceRejected =

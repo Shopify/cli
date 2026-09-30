@@ -14,23 +14,30 @@ export interface AppSecurityCommands {
   clean: AppSecurityCommand
 }
 
-export function resolveAppSecurityCommands(appRoot: string, configFileName?: string): AppSecurityCommands {
+export function resolveAppSecurityCommands(
+  appRoot: string,
+  configFileName?: string,
+  probeUrl?: string,
+  requestsPath?: string,
+): AppSecurityCommands {
   const {findingsPath} = appSecurityArtifactPaths(appRoot)
   const configFlag = configFileName ? getAppConfigurationShorthand(configFileName) : undefined
-  const scan: AppSecurityCommand = {
-    command: 'shopify',
-    args: ['app', 'security', 'check', '--path', appRoot, ...(configFlag ? ['--config', configFlag] : [])],
-  }
+  const baseArgs = ['app', 'security', 'check', '--path', appRoot, ...(configFlag ? ['--config', configFlag] : [])]
+  const scan: AppSecurityCommand = {command: 'shopify', args: baseArgs}
+  const runtimeArgs = [
+    ...(probeUrl ? ['--probe-url', probeUrl] : []),
+    ...(requestsPath ? ['--requests', requestsPath] : []),
+  ]
 
   return {
     scan,
     compile: {
       command: scan.command,
-      args: [...scan.args, '--findings', findingsPath],
+      args: [...baseArgs, ...runtimeArgs, '--findings', findingsPath],
     },
     clean: {
       command: scan.command,
-      args: [...scan.args, '--clean'],
+      args: [...baseArgs, '--clean'],
     },
   }
 }

@@ -12,6 +12,7 @@ import {
   findDependencyAutomationInputs,
 } from './discover.js'
 import {detectCapabilities, detectProject} from '../capabilities/detect.js'
+import {runRequestSecurityProbes} from '../dynamic/index.js'
 import {computeScanMetadata} from '../scorer/index.js'
 import {deprecatedScriptTagScope, insecureWebhookUrl} from '../rules/config-rules.js'
 import {
@@ -36,6 +37,7 @@ import {getAppConfigurationFileName} from '../../../models/app/config-file-namin
 import {basename, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {sha256} from '@shopify/cli-kit/node/crypto'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
+import type {AppSecurityRequestManifest} from '../dynamic/requests.js'
 import type {Rule, ScanContext} from '../rules/types.js'
 import type {RunnerImplementationResult, RunnerResult, SourceFile} from './types.js'
 import type {
@@ -579,7 +581,11 @@ function normalizeRunnerResult(value: Issue[] | RunnerResult): RunnerResult {
   return Array.isArray(value) ? {issues: value} : value
 }
 
-export async function scan(startPath?: string, configFileName?: string): Promise<ScanResult> {
+export async function scan(
+  startPath?: string,
+  configFileName?: string,
+  options: {probeUrl?: string; requestManifest?: AppSecurityRequestManifest} = {},
+): Promise<ScanResult> {
   const appRoot = findAppRoot(startPath)
   resetSkippedFiles()
   const selectedFileName = getAppConfigurationFileName(configFileName)
@@ -702,6 +708,13 @@ export async function scan(startPath?: string, configFileName?: string): Promise
   for (const execution of checksExecuted)
     execution.findings = issues.filter((issue) => issue.id === execution.id && issue.found_by === 'static').length
 
+  const dynamicResult =
+    options.probeUrl && options.requestManifest
+      ? await runRequestSecurityProbes(context, options.probeUrl, options.requestManifest)
+      : {issues: [], checksExecuted: [], requestResults: []}
+  issues.push(...dynamicResult.issues)
+  checksExecuted.push(...dynamicResult.checksExecuted)
+
   const fileHashMap: Record<string, string> = {}
   for (const file of [...sourceFiles, ...sensitiveFiles])
     if (file.content !== undefined) fileHashMap[redactText(file.path)] = contentDigest(file.content)
@@ -774,6 +787,7 @@ export async function scan(startPath?: string, configFileName?: string): Promise
     detection,
     scan: scanMetadata,
     issues,
+    ...(dynamicResult.requestResults.length > 0 ? {runtime_request_results: dynamicResult.requestResults} : {}),
   }
 }
 

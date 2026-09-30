@@ -3660,8 +3660,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Runs Shopify App Security locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. A new scan stops when local agent findings or a compiled trace already exist. Pass `--clean` to discard that work and start over. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects only that configuration.\n\nIn interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app security instructions` to print, copy, or write them later.",
-      "descriptionWithMarkdown": "Runs Shopify App Security locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. A new scan stops when local agent findings or a compiled trace already exist. Pass `--clean` to discard that work and start over. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects only that configuration.\n\nIn interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app security instructions` to print, copy, or write them later.",
+      "description": "Runs Shopify App Security locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. A new scan stops when local agent findings or a compiled trace already exist. Pass `--clean` to discard that work and start over. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects only that configuration.\n\nPass `--requests` to test the endpoint manifest produced by the coding-agent workflow. By default, App Security starts the backend command from `shopify.web.toml`, probes it on localhost, and stops it after the scan. Pass `--probe-url` to test an already running local, tunnel, staging, or deployed app instead. App Security sends the appropriate invalid app-home, UI-extension, Flow-action, webhook, or app-proxy requests and reports endpoints that accept them.\n\nIn interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app security instructions` to print, copy, or write them later.",
+      "descriptionWithMarkdown": "Runs Shopify App Security locally and creates its review pack and trace.\n\nPass `--findings` after completing the review pack to validate agent findings and compile them into the trace. A new scan stops when local agent findings or a compiled trace already exist. Pass `--clean` to discard that work and start over. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects only that configuration.\n\nPass `--requests` to test the endpoint manifest produced by the coding-agent workflow. By default, App Security starts the backend command from `shopify.web.toml`, probes it on localhost, and stops it after the scan. Pass `--probe-url` to test an already running local, tunnel, staging, or deployed app instead. App Security sends the appropriate invalid app-home, UI-extension, Flow-action, webhook, or app-proxy requests and reports endpoints that accept them.\n\nIn interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app security instructions` to print, copy, or write them later.",
       "enableJsonFlag": false,
       "flags": {
         "blocking": {
@@ -3742,6 +3742,23 @@
           "noCacheDefault": true,
           "type": "option"
         },
+        "probe-url": {
+          "dependsOn": [
+            "requests"
+          ],
+          "description": "Probe an already running app instead of starting the backend from shopify.web.toml.",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "probe-url",
+          "type": "option"
+        },
+        "requests": {
+          "description": "Use a coding-agent request manifest to select endpoints and authentication methods.",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "requests",
+          "type": "option"
+        },
         "skip-instructions": {
           "allowNo": false,
           "description": "Don't offer to show coding-agent instructions.",
@@ -3788,8 +3805,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Prints the complete workflow that a coding agent should follow to review App Security results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's generated review pack is trusted as workflow input.",
-      "descriptionWithMarkdown": "Prints the complete workflow that a coding agent should follow to review App Security results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's generated review pack is trusted as workflow input.",
+      "description": "Prints the complete workflow that a coding agent should follow to review App Security results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. The workflow starts the backend from `shopify.web.toml` for deterministic request probes; pass `--probe-url` to use an already running app instead. Standalone instructions always start by running `shopify app security check`; only that invocation's generated review pack is trusted as workflow input.",
+      "descriptionWithMarkdown": "Prints the complete workflow that a coding agent should follow to review App Security results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. The workflow starts the backend from `shopify.web.toml` for deterministic request probes; pass `--probe-url` to use an already running app instead. Standalone instructions always start by running `shopify app security check`; only that invocation's generated review pack is trusted as workflow input.",
       "enableJsonFlag": false,
       "flags": {
         "config": {
@@ -3834,6 +3851,13 @@
           "multiple": false,
           "name": "path",
           "noCacheDefault": true,
+          "type": "option"
+        },
+        "probe-url": {
+          "description": "Use an already running app instead of starting the backend from shopify.web.toml.",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "probe-url",
           "type": "option"
         },
         "verbose": {
