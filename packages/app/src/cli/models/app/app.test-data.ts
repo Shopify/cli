@@ -1363,9 +1363,9 @@ export function testDeveloperPlatformClient(
     migrateFlowExtension: (_input: MigrateFlowExtensionVariables) => Promise.resolve(migrateFlowExtensionResponse),
     migrateAppModule: (_input: MigrateAppModuleVariables) => Promise.resolve(migrateAppModuleResponse),
     updateURLs: (_input: UpdateURLsVariables) => Promise.resolve(updateURLsResponse),
-    targetSchemaDefinition: (_input: SchemaDefinitionByTargetQueryVariables & {apiKey?: string}, _orgId: string) =>
+    targetSchemaDefinition: (_input: SchemaDefinitionByTargetQueryVariables, _appId: string, _orgId: string) =>
       Promise.resolve('schema'),
-    apiSchemaDefinition: (_input: SchemaDefinitionByApiTypeQueryVariables & {apiKey?: string}, _orgId: string) =>
+    apiSchemaDefinition: (_input: SchemaDefinitionByApiTypeQueryVariables, _appId: string, _orgId: string) =>
       Promise.resolve('schema'),
     migrateToUiExtension: (_input: MigrateToUiExtensionVariables) => Promise.resolve(migrateToUiExtensionResponse),
     toExtensionGraphQLType: (input: string) => input,

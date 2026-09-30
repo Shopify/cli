@@ -19,6 +19,8 @@ import {
 } from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
+import {SchemaDefinitionByTarget} from '../../api/graphql/functions/generated/schema-definition-by-target.js'
+import {SchemaDefinitionByApiType} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {
   FetchStoreByDomain,
   FetchStoreByDomainQuery,
@@ -56,14 +58,16 @@ import {
   businessPlatformRequestDoc,
 } from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
+import {functionsRequestDoc} from '@shopify/cli-kit/node/api/functions'
 import {appDevRequestDoc} from '@shopify/cli-kit/node/api/app-dev'
-import {BugError} from '@shopify/cli-kit/node/error'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {webhooksRequestDoc} from '@shopify/cli-kit/node/api/webhooks'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/api/business-platform')
 vi.mock('@shopify/cli-kit/node/api/app-management')
+vi.mock('@shopify/cli-kit/node/api/functions')
 vi.mock('@shopify/cli-kit/node/api/app-dev')
 vi.mock('@shopify/organizations')
 vi.mock('@shopify/cli-kit/node/api/webhooks')
@@ -1618,6 +1622,112 @@ describe('AppManagementClient', () => {
         flags: [],
         developerPlatformClient: client,
       })
+    })
+  })
+})
+
+describe('Functions schema definitions', () => {
+  beforeEach(() => {
+    vi.mocked(appManagementRequestDoc).mockRejectedValue(new Error('Unexpected App Management app lookup'))
+  })
+
+  describe('targetSchemaDefinition', () => {
+    const app = testOrganizationApp({
+      id: 'gid://shopify/App/413',
+      apiKey: 'client-id-for-target',
+      organizationId: '9001',
+    })
+    const variables = {handle: 'cart.transform.run', version: '2025-07'}
+
+    test('fetches a definition directly from Functions with the numeric app ID', async () => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('session-token')
+      vi.mocked(functionsRequestDoc).mockResolvedValueOnce({target: {api: {schema: {definition: 'target schema'}}}})
+
+      const definition = await client.targetSchemaDefinition(variables, app.id, app.organizationId)
+
+      expect(definition).toBe('target schema')
+      expect(functionsRequestDoc).toHaveBeenCalledOnce()
+      expect(functionsRequestDoc).toHaveBeenCalledWith({
+        organizationId: app.organizationId,
+        query: SchemaDefinitionByTarget,
+        appId: '413',
+        variables,
+        token: 'session-token',
+        unauthorizedHandler: {type: 'token_refresh', handler: expect.any(Function)},
+      })
+      expect(appManagementRequestDoc).not.toHaveBeenCalled()
+    })
+
+    test('returns null when Functions has no target schema', async () => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('session-token')
+      vi.mocked(functionsRequestDoc).mockResolvedValueOnce({target: {api: {schema: null}}})
+
+      await expect(client.targetSchemaDefinition(variables, app.id, app.organizationId)).resolves.toBeNull()
+      expect(appManagementRequestDoc).not.toHaveBeenCalled()
+    })
+
+    test('wraps Functions errors in an AbortError', async () => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('session-token')
+      vi.mocked(functionsRequestDoc).mockRejectedValueOnce(new Error('Functions unavailable'))
+
+      const result = client.targetSchemaDefinition(variables, app.id, app.organizationId)
+
+      await expect(result).rejects.toThrow(AbortError)
+      await expect(result).rejects.toThrow('Failed to fetch schema definition: Error: Functions unavailable')
+      expect(appManagementRequestDoc).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('apiSchemaDefinition', () => {
+    const app = testOrganizationApp({
+      id: 'gid://shopify/App/733',
+      apiKey: 'client-id-for-api-type',
+      organizationId: '9002',
+    })
+    const variables = {type: 'product_discounts', version: '2025-10'}
+
+    test('fetches a definition directly from Functions with the numeric app ID', async () => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('session-token')
+      vi.mocked(functionsRequestDoc).mockResolvedValueOnce({api: {schema: {definition: 'type schema'}}})
+
+      const definition = await client.apiSchemaDefinition(variables, app.id, app.organizationId)
+
+      expect(definition).toBe('type schema')
+      expect(functionsRequestDoc).toHaveBeenCalledOnce()
+      expect(functionsRequestDoc).toHaveBeenCalledWith({
+        organizationId: app.organizationId,
+        query: SchemaDefinitionByApiType,
+        appId: '733',
+        variables,
+        token: 'session-token',
+        unauthorizedHandler: {type: 'token_refresh', handler: expect.any(Function)},
+      })
+      expect(appManagementRequestDoc).not.toHaveBeenCalled()
+    })
+
+    test('returns null when Functions has no API-type schema', async () => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('session-token')
+      vi.mocked(functionsRequestDoc).mockResolvedValueOnce({api: {schema: null}})
+
+      await expect(client.apiSchemaDefinition(variables, app.id, app.organizationId)).resolves.toBeNull()
+      expect(appManagementRequestDoc).not.toHaveBeenCalled()
+    })
+
+    test('wraps Functions errors in an AbortError', async () => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('session-token')
+      vi.mocked(functionsRequestDoc).mockRejectedValueOnce(new Error('Functions unavailable'))
+
+      const result = client.apiSchemaDefinition(variables, app.id, app.organizationId)
+
+      await expect(result).rejects.toThrow(AbortError)
+      await expect(result).rejects.toThrow('Failed to fetch schema definition: Error: Functions unavailable')
+      expect(appManagementRequestDoc).not.toHaveBeenCalled()
     })
   })
 })

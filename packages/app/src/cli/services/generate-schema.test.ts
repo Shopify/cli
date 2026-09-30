@@ -1,8 +1,8 @@
 import {generateSchemaService} from './generate-schema.js'
-import {testAppLinked, testDeveloperPlatformClient, testFunctionExtension} from '../models/app/app.test-data.js'
+import {testDeveloperPlatformClient, testFunctionExtension} from '../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {inTemporaryDirectory, readFile, mkdir} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import * as output from '@shopify/cli-kit/node/output'
 
@@ -28,17 +28,14 @@ describe('generateSchemaService', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const orgId = 'test'
-      const extensionDir = joinPath(tmpDir, 'extensions', 'my-function')
-      await mkdir(extensionDir)
-
-      const app = testAppLinked()
+      const appId = 'gid://shopify/App/42'
       const extension = await testFunctionExtension({
         dir: tmpDir,
       })
 
       // When
       await generateSchemaService({
-        app,
+        appId,
         extension,
         stdout: false,
         developerPlatformClient: testDeveloperPlatformClient(),
@@ -54,9 +51,8 @@ describe('generateSchemaService', () => {
   test('Print the latest GraphQL schema to stdout when stdout flag is PRESENT', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const app = testAppLinked()
-      const extension = await testFunctionExtension()
-      const path = tmpDir
+      const appId = 'gid://shopify/App/42'
+      const extension = await testFunctionExtension({dir: tmpDir})
       const stdout = true
       const orgId = '123'
       const mockOutput = vi.fn()
@@ -64,7 +60,7 @@ describe('generateSchemaService', () => {
 
       // When
       await generateSchemaService({
-        app,
+        appId,
         extension,
         stdout,
         developerPlatformClient: testDeveloperPlatformClient(),
@@ -79,10 +75,7 @@ describe('generateSchemaService', () => {
   describe('GraphQL query', () => {
     test('Uses ApiSchemaDefinitionQuery when not using targets', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
-        const extensionDir = joinPath(tmpDir, 'extensions', 'my-function')
-        await mkdir(extensionDir)
-
-        const app = testAppLinked()
+        const appId = 'gid://shopify/App/731'
         const extension = await testFunctionExtension({
           dir: tmpDir,
           config: {
@@ -99,12 +92,11 @@ describe('generateSchemaService', () => {
         })
 
         const orgId = 'test'
-        const path = tmpDir
         const version = extension.configuration.api_version
         const developerPlatformClient = testDeveloperPlatformClient()
 
         await generateSchemaService({
-          app,
+          appId,
           extension,
           stdout: false,
           developerPlatformClient,
@@ -116,18 +108,16 @@ describe('generateSchemaService', () => {
             version,
             type: extension.configuration.type,
           },
-          app.configuration.client_id,
+          appId,
           orgId,
         )
+        expect(developerPlatformClient.targetSchemaDefinition).not.toHaveBeenCalled()
       })
     })
 
     test('Uses TargetSchemaDefinitionQuery when targets present', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
-        const extensionDir = joinPath(tmpDir, 'extensions', 'my-function')
-        await mkdir(extensionDir)
-
-        const app = testAppLinked()
+        const appId = 'gid://shopify/App/732'
         const extension = await testFunctionExtension({
           dir: tmpDir,
           config: {
@@ -157,7 +147,7 @@ describe('generateSchemaService', () => {
         const developerPlatformClient = testDeveloperPlatformClient()
 
         await generateSchemaService({
-          app,
+          appId,
           extension,
           stdout: false,
           developerPlatformClient,
@@ -169,16 +159,17 @@ describe('generateSchemaService', () => {
             handle: expectedTarget,
             version,
           },
-          app.configuration.client_id,
+          appId,
           orgId,
         )
+        expect(developerPlatformClient.apiSchemaDefinition).not.toHaveBeenCalled()
       })
     })
   })
 
   test('aborts if a schema could not be generated', async () => {
     // Given
-    const app = testAppLinked()
+    const appId = 'gid://shopify/App/42'
     const extension = await testFunctionExtension()
     const orgId = '123'
     const developerPlatformClient = testDeveloperPlatformClient({
@@ -187,7 +178,7 @@ describe('generateSchemaService', () => {
 
     // When
     const result = generateSchemaService({
-      app,
+      appId,
       extension,
       stdout: true,
       developerPlatformClient,
@@ -196,5 +187,40 @@ describe('generateSchemaService', () => {
 
     // Then
     await expect(result).rejects.toThrow(AbortError)
+    await expect(result).rejects.toThrow(`A schema could not be generated for ${extension.localIdentifier}`)
+  })
+
+  test('aborts if a target schema could not be generated', async () => {
+    const appId = 'gid://shopify/App/732'
+    const extension = await testFunctionExtension({
+      config: {
+        name: 'test function extension',
+        description: 'description',
+        type: 'function',
+        targeting: [{target: 'cart.transform.run'}],
+        build: {command: 'echo "hello world"', wasm_opt: true},
+        api_version: '2025-07',
+        configuration_ui: true,
+      },
+    })
+    const developerPlatformClient = testDeveloperPlatformClient({
+      targetSchemaDefinition: () => Promise.resolve(null),
+    })
+
+    const result = generateSchemaService({
+      appId,
+      extension,
+      stdout: true,
+      developerPlatformClient,
+      orgId: '123',
+    })
+
+    await expect(result).rejects.toThrow(AbortError)
+    await expect(result).rejects.toThrow(`A schema could not be generated for ${extension.localIdentifier}`)
+    expect(developerPlatformClient.targetSchemaDefinition).toHaveBeenCalledWith(
+      {handle: 'cart.transform.run', version: '2025-07'},
+      appId,
+      '123',
+    )
   })
 })
