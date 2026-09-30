@@ -1337,7 +1337,7 @@ export function testDeveloperPlatformClient(
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
     specifications: (_app: MinimalAppIdentifiers) => Promise.resolve(testRemoteSpecifications),
-    appInstallCount: (_app: MinimalAppIdentifiers) => Promise.resolve(0),
+    appInstallCount: (_clientId: string) => Promise.resolve(0),
     templateSpecifications: (_app: MinimalAppIdentifiers) =>
       Promise.resolve({templates: testRemoteExtensionTemplates, groupOrder: []}),
     orgAndApps: (_orgId: string) =>

@@ -1580,11 +1580,7 @@ describe('client ID version and install requests', () => {
     client.token = () => Promise.resolve('token')
     vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({app: {installCount: 17}})
 
-    const count = await client.appInstallCount({
-      id: 'gid://shopify/App/123',
-      apiKey: 'client-id-123',
-      organizationId: '5',
-    })
+    const count = await client.appInstallCount('client-id-123')
 
     expect(appManagementRequestDoc).toHaveBeenCalledWith(
       expect.objectContaining({query: AppInstallCount, variables: {clientId: 'client-id-123'}}),

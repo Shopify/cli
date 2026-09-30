@@ -18,7 +18,6 @@ import type {ReadTraceResult, ResolvedAppSecurityArtifactPaths} from './app-secu
 import type {SubmitAppSecurityScanOptions} from './app-security-submit-api.js'
 import type {SecuritySubmitConfirmationAction, SecuritySubmitConfirmationInput} from './security-submit-output.js'
 import type {SecuritySubmitResult, SubmitAppSecurityScanResult} from './security-submit-result.js'
-import type {MinimalAppIdentifiers} from '../models/organization.js'
 import type {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 
 export interface SecuritySubmitOptions {
@@ -32,7 +31,8 @@ export interface SecuritySubmitOptions {
   feedback?: string
 }
 
-interface SecuritySubmitApp extends MinimalAppIdentifiers {
+interface SecuritySubmitApp {
+  apiKey: string
   title: string
 }
 
@@ -173,7 +173,7 @@ export default async function securitySubmit(
   }
 
   const result = await dependencies.submitScan({
-    app: remoteApp,
+    clientId: remoteApp.apiKey,
     payload,
     developerPlatformClient,
   })

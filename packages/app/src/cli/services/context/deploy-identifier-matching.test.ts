@@ -772,6 +772,50 @@ describe('ensureDeployIdentifiersFromAppVersion', () => {
     })
   })
 
+  test('passes the remote client ID and install count to the delete warning', async () => {
+    const appInstallCount = vi.fn<DeveloperPlatformClient['appInstallCount']>().mockResolvedValue(17)
+
+    await ensureDeployIdentifiersFromAppVersion(
+      deployOptions({
+        activeAppVersion: {appModuleVersions: [REMOTE_EXTENSION_DELETED]},
+        developerPlatformClient: testDeveloperPlatformClient({appInstallCount}),
+      }),
+    )
+
+    expect(appInstallCount).toHaveBeenCalledExactlyOnceWith(REMOTE_APP.apiKey)
+    expect(deployOrReleaseConfirmationPrompt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        extensionIdentifiersBreakdown: expect.objectContaining({
+          onlyRemote: [{title: 'Deleted Extension', uid: 'deleted-uid', experience: 'extension'}],
+        }),
+        installCount: 17,
+      }),
+    )
+  })
+
+  test('still prompts to delete when the install count request fails', async () => {
+    const appInstallCount = vi
+      .fn<DeveloperPlatformClient['appInstallCount']>()
+      .mockRejectedValue(new Error('Unavailable'))
+
+    await ensureDeployIdentifiersFromAppVersion(
+      deployOptions({
+        activeAppVersion: {appModuleVersions: [REMOTE_EXTENSION_DELETED]},
+        developerPlatformClient: testDeveloperPlatformClient({appInstallCount}),
+      }),
+    )
+
+    expect(appInstallCount).toHaveBeenCalledExactlyOnceWith(REMOTE_APP.apiKey)
+    expect(deployOrReleaseConfirmationPrompt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        extensionIdentifiersBreakdown: expect.objectContaining({
+          onlyRemote: [{title: 'Deleted Extension', uid: 'deleted-uid', experience: 'extension'}],
+        }),
+        installCount: undefined,
+      }),
+    )
+  })
+
   test('runs extension migrations before classifying the app version', async () => {
     const legacyRemoteExtension = {
       uuid: 'legacy-uuid-a',

@@ -654,9 +654,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async appInstallCount({apiKey}: MinimalAppIdentifiers): Promise<number> {
+  async appInstallCount(clientId: string): Promise<number> {
     const query = AppInstallCount
-    const variables = {clientId: apiKey}
+    const variables = {clientId}
     const result = await this.appManagementRequest({query, variables})
     return result.app.installCount ?? 0
   }

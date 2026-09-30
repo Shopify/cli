@@ -9,7 +9,6 @@ import {EnsureDeploymentIdsPresenceOptions} from './identifiers.js'
 import {remoteAppConfigurationExtensionContent} from '../app/select-app.js'
 import {AppInterface} from '../../models/app/app.js'
 import {DeployIdentifiers, ExtensionUuidsByLocalIdentifier} from '../../models/app/identifiers.js'
-import {MinimalOrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js'
 import {AppModuleVersion, AppVersion} from '../../utilities/developer-platform-client.js'
@@ -45,7 +44,9 @@ export async function ensureDeployIdentifiersFromAppVersion(
 
   const shouldFetchInstallCount =
     options.release && !options.allowDeletes && extensionIdentifiersBreakdown.onlyRemote.length > 0
-  const installCount = shouldFetchInstallCount ? await fetchInstallCount(options).catch(() => undefined) : undefined
+  const installCount = shouldFetchInstallCount
+    ? await options.developerPlatformClient.appInstallCount(options.remoteApp.apiKey).catch(() => undefined)
+    : undefined
 
   const confirmed = await deployOrReleaseConfirmationPrompt({
     extensionIdentifiersBreakdown,
@@ -203,16 +204,4 @@ function buildRemoteBreakdownInfo(remote: AppModuleVersion) {
     return buildDashboardBreakdownInfo(remote.registrationTitle)
   }
   return buildExtensionBreakdownInfo(remote.registrationTitle, remote.registrationId)
-}
-
-/** Fetches install count for delete warnings. */
-async function fetchInstallCount(options: {
-  developerPlatformClient: EnsureDeploymentIdsPresenceOptions['developerPlatformClient']
-  remoteApp: MinimalOrganizationApp
-}) {
-  return options.developerPlatformClient.appInstallCount({
-    id: options.remoteApp.id,
-    apiKey: options.remoteApp.apiKey,
-    organizationId: options.remoteApp.organizationId,
-  })
 }
