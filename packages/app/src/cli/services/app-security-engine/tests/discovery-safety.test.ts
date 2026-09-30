@@ -648,6 +648,22 @@ describe('--ignore patterns', () => {
     expect(hashedPaths(await scan(root, undefined, {ignorePatterns: ['!tmp/']}))).toContain('tmp/scratch.ts')
   })
 
+  test('re-includes a nested repository that the app repository ignores', async () => {
+    const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
+    const root = await makeRepository({
+      'shopify.app.toml': appConfiguration,
+      '.gitignore': 'inner/\n',
+      'inner/token.ts': `export const token = '${secret}'\n`,
+    })
+    const inner = join(root, 'inner')
+    git(inner, ['init', '-q', '.'])
+    git(inner, ['add', 'token.ts'])
+    git(inner, ['commit', '-qm', 'Add token'])
+
+    expect(secretFindingFiles(await scan(root))).toEqual([])
+    expect(secretFindingFiles(await scan(root, undefined, {ignorePatterns: ['!inner/']}))).toEqual(['inner/token.ts'])
+  })
+
   test('cannot re-include a file inside a gitignored folder without re-including the folder', async () => {
     const root = await makeRepository({
       'shopify.app.toml': appConfiguration,
@@ -689,16 +705,18 @@ describe('--ignore patterns', () => {
     expect(includeThenExclude).not.toContain('generated/client.ts')
   })
 
-  test('never stops the selected app configuration from loading', async () => {
+  test('never stops the selected app configuration from loading or being scanned for secrets', async () => {
+    const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
     const root = await makeDirectory()
     await writeFiles(root, {
       'shopify.app.toml': appConfiguration,
-      'shopify.app.staging.toml': 'name = "Staging"\napplication_url = "https://staging.example.com"\n',
+      'shopify.app.staging.toml': `name = "Staging"\napplication_url = "https://staging.example.com/?token=${secret}"\n`,
     })
 
     const result = await scan(root, 'staging', {ignorePatterns: ['shopify.app*.toml']})
     expect(result.app.name).toBe('Staging')
     expect(hashedPaths(result)).toContain('shopify.app.staging.toml')
+    expect(secretFindingFiles(result)).toEqual(['shopify.app.staging.toml'])
   })
 })
 
