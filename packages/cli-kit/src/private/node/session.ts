@@ -12,6 +12,7 @@ import {
 import {IdentityToken, Session, Sessions} from './session/schema.js'
 import * as sessionStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
+import {getAutomationToken, peekAutomationToken} from './session/automation-token.js'
 import {isThemeAccessSession} from './api/rest.js'
 import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
 import {UserEmailQueryString, UserEmailQuery} from './api/graphql/business-platform-destinations/user-email.js'
@@ -19,7 +20,7 @@ import {outputContent, outputToken, outputDebug, outputCompleted} from '../../pu
 import {themeToken} from '../../public/node/context/local.js'
 import {AbortError} from '../../public/node/error.js'
 import {normalizeStoreFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
-import {getIdentityTokenInformation, getAppAutomationToken} from '../../public/node/environment.js'
+import {getIdentityTokenInformation} from '../../public/node/environment.js'
 import {AdminSession, logout} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
@@ -133,7 +134,7 @@ let commandSessionId: string | undefined
  * @returns A Promise that resolves to the user ID as a string.
  */
 export async function getLastSeenUserIdAfterAuth(): Promise<string> {
-  const customToken = getAppAutomationToken() ?? themeToken()
+  const customToken = peekAutomationToken()?.value ?? themeToken()
   if (customToken) return nonRandomUUID(customToken)
 
   if (userId) return userId
@@ -165,8 +166,7 @@ export async function getLastSeenAuthMethod(): Promise<AuthMethod> {
 
   if (getCurrentSessionId()) return 'device_auth'
 
-  const appAutomationToken = getAppAutomationToken()
-  if (appAutomationToken) return 'partners_token'
+  if (peekAutomationToken()) return 'partners_token'
 
   const themePassword = themeToken()
   if (themePassword) {
@@ -270,12 +270,12 @@ ${outputToken.json(applications)}
 
   const tokens = await tokensFor(applications, completeSession)
 
-  const envToken = getAppAutomationToken()
-  if (envToken && applications.partnersApi) {
-    tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
+  const automationToken = getAutomationToken()
+  if (automationToken && applications.partnersApi) {
+    tokens.partners = (await exchangeCustomPartnerToken(automationToken.value)).accessToken
   }
 
-  setLastSeenAuthMethod(envToken ? 'partners_token' : 'device_auth')
+  setLastSeenAuthMethod(automationToken ? 'partners_token' : 'device_auth')
   setLastSeenUserIdAfterAuth(tokens.userId)
   return tokens
 }

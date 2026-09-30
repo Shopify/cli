@@ -1,9 +1,9 @@
 import {shopifyFetch} from './http.js'
 import {nonRandomUUID} from './crypto.js'
-import {getAppAutomationToken} from './environment.js'
 import {AbortError, BugError} from './error.js'
 import {outputContent, outputToken, outputDebug} from './output.js'
 import * as sessionStore from '../../private/node/session/store.js'
+import {getAutomationToken} from '../../private/node/session/automation-token.js'
 import {
   exchangeCustomPartnerToken,
   exchangeAppAutomationTokenForAppManagementAccessToken,
@@ -151,9 +151,9 @@ export async function ensureAuthenticatedPartners(
   outputDebug(outputContent`Ensuring that the user is authenticated with the Partners API with the following scopes:
 ${outputToken.json(scopes)}
 `)
-  const envToken = getAppAutomationToken()
-  if (envToken) {
-    const result = await exchangeCustomPartnerToken(envToken)
+  const automationToken = getAutomationToken()
+  if (automationToken) {
+    const result = await exchangeCustomPartnerToken(automationToken.value)
     return {token: result.accessToken, userId: result.userId}
   }
   const tokens = await ensureAuthenticated({partnersApi: {scopes}}, env, options)
@@ -182,10 +182,10 @@ export async function ensureAuthenticatedAppManagementAndBusinessPlatform(
 ${outputToken.json(appManagementScopes)}
 `)
 
-  const envToken = getAppAutomationToken()
-  if (envToken) {
-    const appManagmentToken = await exchangeAppAutomationTokenForAppManagementAccessToken(envToken)
-    const businessPlatformToken = await exchangeAppAutomationTokenForBusinessPlatformAccessToken(envToken)
+  const automationToken = getAutomationToken()
+  if (automationToken) {
+    const appManagmentToken = await exchangeAppAutomationTokenForAppManagementAccessToken(automationToken.value)
+    const businessPlatformToken = await exchangeAppAutomationTokenForBusinessPlatformAccessToken(automationToken.value)
 
     return {
       appManagementToken: appManagmentToken.accessToken,

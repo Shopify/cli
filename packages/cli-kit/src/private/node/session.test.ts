@@ -20,12 +20,12 @@ import {ApplicationToken, IdentityToken, Sessions} from './session/schema.js'
 import {validateSession} from './session/validate.js'
 import {applicationId} from './session/identity.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
+import {getAutomationToken, peekAutomationToken} from './session/automation-token.js'
 import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
 import * as fqdnModule from '../../public/node/context/fqdn.js'
 import {themeToken} from '../../public/node/context/local.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {businessPlatformRequest} from '../../public/node/api/business-platform.js'
-import {getAppAutomationToken} from '../../public/node/environment.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {terminalSupportsPrompting} from '../../public/node/system.js'
 
@@ -113,6 +113,7 @@ vi.mock('./session/exchange')
 vi.mock('./session/scopes')
 vi.mock('./session/store')
 vi.mock('./session/validate')
+vi.mock('./session/automation-token')
 vi.mock('../../public/node/api/partners.js')
 vi.mock('../../public/node/api/business-platform.js')
 vi.mock('../../store')
@@ -347,7 +348,8 @@ describe('when existing session is valid', () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(fetchSessions).mockResolvedValue(validSessions)
-    vi.mocked(getAppAutomationToken).mockReturnValue('custom_cli_token')
+    vi.mocked(getAutomationToken).mockReturnValue({value: 'custom_cli_token', source: 'app'})
+    vi.mocked(peekAutomationToken).mockReturnValue({value: 'custom_cli_token', source: 'app'})
     const expected = {...validTokens, partners: 'custom_partners_token'}
 
     // When
@@ -505,7 +507,7 @@ describe('getLastSeenUserIdAfterAuth', () => {
   test('returns UUID based on partners token if present in environment', async () => {
     // Given
     vi.mocked(getCurrentSessionId).mockReturnValue(undefined)
-    vi.mocked(getAppAutomationToken).mockReturnValue('partners-token-456')
+    vi.mocked(peekAutomationToken).mockReturnValue({value: 'partners-token-456', source: 'partners'})
 
     // When
     const userId = await getLastSeenUserIdAfterAuth()
@@ -595,7 +597,7 @@ describe('setLastSeenUserIdAfterAuth', () => {
 describe('getLastSeenAuthMethod', () => {
   beforeEach(() => {
     vi.mocked(getCurrentSessionId).mockReturnValue(undefined)
-    vi.mocked(getAppAutomationToken).mockReturnValue(undefined)
+    vi.mocked(peekAutomationToken).mockReturnValue(undefined)
     vi.mocked(themeToken).mockReturnValue(undefined)
     setLastSeenAuthMethod('none')
   })
@@ -626,7 +628,7 @@ describe('getLastSeenAuthMethod', () => {
 
   test('returns partners_token if there is a partners token in the environment', async () => {
     // Given
-    vi.mocked(getAppAutomationToken).mockReturnValue('partners-token-456')
+    vi.mocked(peekAutomationToken).mockReturnValue({value: 'partners-token-456', source: 'partners'})
 
     // When
     const method = await getLastSeenAuthMethod()

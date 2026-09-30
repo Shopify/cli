@@ -12,7 +12,6 @@ import {
 } from './session.js'
 
 import {nonRandomUUID} from './crypto.js'
-import {getAppAutomationToken} from './environment.js'
 import {shopifyFetch} from './http.js'
 import {
   ensureAuthenticated,
@@ -21,6 +20,7 @@ import {
   setLastSeenUserIdAfterAuth,
 } from '../../private/node/session.js'
 import * as sessionStore from '../../private/node/session/store.js'
+import {getAutomationToken} from '../../private/node/session/automation-token.js'
 import {ApplicationToken} from '../../private/node/session/schema.js'
 import {
   exchangeCustomPartnerToken,
@@ -41,6 +41,7 @@ const partnersToken: ApplicationToken = {
 vi.mock('../../private/node/session.js')
 vi.mock('../../private/node/session/exchange.js')
 vi.mock('../../private/node/session/store.js')
+vi.mock('../../private/node/session/automation-token.js')
 vi.mock('./environment.js')
 vi.mock('./http.js')
 
@@ -198,13 +199,14 @@ describe('ensureAuthenticatedPartners', () => {
       accessToken: partnersToken.accessToken,
       userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
     })
-    vi.mocked(getAppAutomationToken).mockReturnValue('custom_cli_token')
+    vi.mocked(getAutomationToken).mockReturnValue({value: 'custom_cli_token', source: 'app'})
 
     // When
     const got = await ensureAuthenticatedPartners([])
 
     // Then
     expect(got).toEqual({token: 'custom_partners_token', userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d'})
+    expect(exchangeCustomPartnerToken).toHaveBeenCalledWith('custom_cli_token')
     expect(ensureAuthenticated).not.toHaveBeenCalled()
   })
 })
@@ -343,7 +345,7 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
 
   test('returns app managment and business platform tokens if CLI token envvar is defined', async () => {
     // Given
-    vi.mocked(getAppAutomationToken).mockReturnValue('custom_cli_token')
+    vi.mocked(getAutomationToken).mockReturnValue({value: 'custom_cli_token', source: 'app'})
     vi.mocked(exchangeAppAutomationTokenForAppManagementAccessToken).mockResolvedValueOnce({
       accessToken: 'app-management-token',
       userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
@@ -362,6 +364,8 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
       userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
       businessPlatformToken: 'business-platform-token',
     })
+    expect(exchangeAppAutomationTokenForAppManagementAccessToken).toHaveBeenCalledWith('custom_cli_token')
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).toHaveBeenCalledWith('custom_cli_token')
     expect(ensureAuthenticated).not.toHaveBeenCalled()
   })
 })
