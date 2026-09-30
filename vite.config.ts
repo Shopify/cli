@@ -9,6 +9,7 @@ export default defineConfig({
       provider: 'istanbul',
     },
     projects: [
+      'test/vite.config.ts',
       'packages/app/vite.config.ts',
       'packages/cli/vite.config.ts',
       'packages/cli-kit/vite.config.ts',

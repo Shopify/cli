@@ -9,7 +9,7 @@ const config = [
 
   // Global ignores
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', '**/*.d.ts', '**/*.cjs'],
+    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', '**/*.d.ts', '**/*.cjs', 'test/fixtures/**'],
   },
 
   // The local ESLint plugin uses CommonJS so its rules can load themselves.

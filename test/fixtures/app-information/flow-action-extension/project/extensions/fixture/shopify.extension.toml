@@ -1,0 +1,6 @@
+[[extensions]]
+name = "Fixture"
+handle = "fixture"
+type = "flow_action"
+uid = "fixture-uid"
+runtime_url = "https://fixture.example.test/flow"

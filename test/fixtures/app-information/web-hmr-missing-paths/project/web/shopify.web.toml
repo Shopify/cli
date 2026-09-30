@@ -1,0 +1,5 @@
+roles = ["frontend"]
+[hmr_server]
+port = 8000
+[commands]
+dev = "never-run"

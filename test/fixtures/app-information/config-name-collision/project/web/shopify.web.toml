@@ -1,0 +1,4 @@
+name = "Fixture web"
+roles = ["frontend", "backend"]
+[commands]
+dev = "node server.js"

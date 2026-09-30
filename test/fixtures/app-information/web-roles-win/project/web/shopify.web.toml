@@ -1,0 +1,12 @@
+roles = ["backend", "backend"]
+type = "invalid"
+auth_callback_path = ["auth/callback", "/second"]
+webhooks_path = "hooks"
+port = 65536
+unknown = "discard"
+[hmr_server]
+http_paths = ["hmr"]
+[commands]
+dev = ""
+build = "never-build"
+predev = "never-predev"

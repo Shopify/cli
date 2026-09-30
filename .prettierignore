@@ -4,3 +4,5 @@ bin
 dist
 *.d.ts
 ./fixtures/
+# Preserve intentionally invalid JSON/TOML and exact fixture bytes.
+test/fixtures/

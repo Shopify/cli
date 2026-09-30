@@ -1,2 +1,4 @@
 **/templates/**
 docs/**
+# Fixture manifests are test input, not Nx projects.
+test/fixtures/**

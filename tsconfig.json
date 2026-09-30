@@ -1,6 +1,6 @@
 {
     "extends": "./configurations/tsconfig.json",
-    "include": ["configurations/**/*"],
+    "include": ["configurations/**/*", "vite.config.ts"],
     "references": [
       {"path": "./packages/cli"},
       {"path": "./packages/app"},

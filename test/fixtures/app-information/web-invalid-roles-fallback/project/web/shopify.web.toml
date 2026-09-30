@@ -1,0 +1,5 @@
+roles = ["invalid"]
+type = "background"
+auth_callback_path = "callback"
+[commands]
+dev = "never-run"

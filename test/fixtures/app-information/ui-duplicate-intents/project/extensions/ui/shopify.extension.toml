@@ -1,0 +1,17 @@
+api_version = "2025-10"
+[[extensions]]
+name = "Fixture UI"
+handle = "fixture-ui"
+type = "ui_extension"
+uid = "11111111-1111-1111-1111-111111111111"
+[[extensions.targeting]]
+target = "admin.product-details.action.render"
+module = "./src/index.ts"
+[[extensions.targeting.intents]]
+action = "edit"
+type = "fixture"
+schema = "./intent.json"
+[[extensions.targeting.intents]]
+action = "edit"
+type = "fixture"
+schema = "./intent.json"

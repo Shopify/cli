@@ -1,0 +1,14 @@
+{
+  "extends": "../configurations/tsconfig.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "types": ["node", "vitest/importMeta"],
+    "paths": {
+      "msw": ["../packages/cli-kit/node_modules/msw/lib/core/index.d.ts"],
+      "msw/node": ["../packages/cli-kit/node_modules/msw/lib/node/index.d.ts"]
+    }
+  },
+  "include": ["./**/*.ts"],
+  "exclude": ["./fixtures/**", "./node_modules/**"]
+}

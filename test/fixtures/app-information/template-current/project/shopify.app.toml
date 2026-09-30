@@ -1,0 +1,3 @@
+client_id = ""
+[access_scopes]
+scopes = "read_products"

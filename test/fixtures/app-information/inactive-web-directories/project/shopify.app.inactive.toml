@@ -1,0 +1,11 @@
+web_directories = ["other"]
+client_id = "synthetic-client-id"
+name = "Local fixture"
+application_url = "https://fixture.example.test"
+embedded = true
+
+[access_scopes]
+scopes = "read_products"
+
+[auth]
+redirect_urls = ["https://fixture.example.test/auth/callback"]

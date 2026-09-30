@@ -1,0 +1,8 @@
+api_version = "2025-10"
+[[extensions]]
+name = "Fixture UI"
+handle = "fixture-ui"
+type = "ui_extension"
+[[extensions.targeting]]
+target = "admin.product-details.action.render"
+module = "./src/index.ts"

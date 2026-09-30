@@ -1,0 +1,3 @@
+port = 65537
+[commands]
+dev = "never-run"

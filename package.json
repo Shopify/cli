@@ -185,7 +185,8 @@
       ".": {
         "entry": [
           "bin/**/*.js",
-          "configurations/vite.config.ts"
+          "configurations/vite.config.ts",
+          "test/support/preload.ts!"
         ],
         "ignoreBinaries": [
           "bin/*",
@@ -200,10 +201,12 @@
           "@nx/workspace",
           "graphql-tag",
           "pin-github-action",
-          "esbuild"
+          "esbuild",
+          "msw"
         ],
         "ignore": [
-          "configurations/vite.config.ts"
+          "configurations/vite.config.ts",
+          "test/fixtures/**"
         ]
       },
       "packages/app": {

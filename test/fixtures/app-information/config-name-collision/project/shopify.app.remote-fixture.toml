@@ -1,0 +1,10 @@
+client_id = "other-client"
+name = "Local fixture"
+application_url = "https://fixture.example.test"
+embedded = true
+
+[access_scopes]
+scopes = "read_products"
+
+[auth]
+redirect_urls = ["https://fixture.example.test/auth/callback"]

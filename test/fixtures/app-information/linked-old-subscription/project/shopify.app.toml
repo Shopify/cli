@@ -1,0 +1,18 @@
+client_id = "synthetic-client-id"
+name = "Local fixture"
+application_url = "https://fixture.example.test"
+embedded = true
+
+[access_scopes]
+scopes = "read_products"
+
+[auth]
+redirect_urls = ["https://fixture.example.test/auth/callback"]
+
+[webhooks]
+api_version = "2024-01"
+[[webhooks.subscriptions]]
+topics = ["orders/create"]
+uri = "/hooks"
+sub_topic = "old-subtopic"
+metafield_namespaces = ["fixture"]

@@ -1,0 +1,1 @@
+[{"name":"lookup","description":"Find a fixture","inputSchema":{"type":"object","properties":{"id":{"type":"string"}}}}]

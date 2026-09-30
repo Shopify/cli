@@ -1,0 +1,3 @@
+roles = ["frontend"]
+[commands]
+dev = "must-not-run"

@@ -1,0 +1,9 @@
+[[extensions]]
+name = "Fixture"
+handle = "fixture"
+type = "function"
+uid = "fixture-uid"
+api_version = "2025-10"
+[extensions.build]
+command = "never-run"
+path = "missing.wasm"

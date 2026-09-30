@@ -1,0 +1,19 @@
+client_id = "synthetic-client-id"
+name = "Local fixture"
+application_url = "https://fixture.example.test"
+embedded = true
+
+[access_scopes]
+required_scopes = ["read_products", "write_products"]
+optional_scopes = ["read_orders"]
+
+[auth]
+redirect_urls = ["https://fixture.example.test/auth/callback"]
+
+[build]
+include_config_on_deploy = true
+[webhooks]
+api_version = "2025-10"
+[[webhooks.subscriptions]]
+compliance_topics = ["customers/redact", "customers/data_request", "shop/redact"]
+uri = "/privacy"

@@ -1,0 +1,5 @@
+[[extensions]]
+name = "Fixture"
+handle = "fixture"
+type = "theme"
+uid = "fixture-uid"

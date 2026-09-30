@@ -1,0 +1,1 @@
+{"inputSchema":{"type":"object","properties":{"inputValue":{"type":"string"}}},"value":{"type":"object","properties":{"selectedValue":{"type":"number"}}},"outputSchema":{"type":"boolean"}}
