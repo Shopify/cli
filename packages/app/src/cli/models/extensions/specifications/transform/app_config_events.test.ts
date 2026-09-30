@@ -202,8 +202,9 @@ describe('transformFromEventsConfig', () => {
     })
   })
 
-  test('strips the handle field from a single subscription object', () => {
+  test('strips the module handle and a legacy nested handle from a single subscription module', () => {
     const content = {
+      handle: 'order-sub',
       events: {
         api_version: '2024-01',
         subscription: {

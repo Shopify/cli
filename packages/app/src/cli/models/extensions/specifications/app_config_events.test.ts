@@ -5,7 +5,7 @@ import {describe, expect, test} from 'vitest'
 const flags = [Flag.SingleSubscriptionEventsModules]
 
 describe('event module configuration', () => {
-  test('preserves unknown event fields and does not change the input', () => {
+  test('moves each subscription handle onto its module, preserves unknown fields and does not change the input', () => {
     const config = {
       events: {
         api_version: '2024-01',
@@ -19,8 +19,22 @@ describe('event module configuration', () => {
     const original = structuredClone(config)
 
     expect(appEventsSpec.expandConfig!(config, {flags})).toEqual([
-      {events: {...config.events, subscription: config.events.subscription[0]}},
-      {events: {...config.events, subscription: config.events.subscription[1]}},
+      {
+        handle: 'orders',
+        events: {
+          api_version: '2024-01',
+          future_setting: {enabled: true},
+          subscription: {topic: 'orders/create', future_field: 'value'},
+        },
+      },
+      {
+        handle: 'products',
+        events: {
+          api_version: '2024-01',
+          future_setting: {enabled: true},
+          subscription: {topic: 'products/update'},
+        },
+      },
     ])
     expect(config).toEqual(original)
   })
@@ -42,32 +56,42 @@ describe('event module configuration', () => {
     expect(appEventsSpec.getTarget!(config)).toBeUndefined()
   })
 
+  test('derives identity from the module handle of a single subscription', () => {
+    const config = {handle: 'orders', events: {api_version: '2024-01', subscription: {topic: 'orders/create'}}}
+
+    expect(appEventsSpec.getIdentity!(config)).toEqual({handle: 'orders', uid: 'orders'})
+  })
+
   test('targets the topic of a single subscription', () => {
-    const config = {events: {api_version: '2024-01', subscription: {handle: 'orders', topic: 'orders/create'}}}
+    const config = {handle: 'orders', events: {api_version: '2024-01', subscription: {topic: 'orders/create'}}}
 
     expect(appEventsSpec.getTarget!(config)).toBe('orders/create')
   })
 
   test('returns no target for a single subscription without a topic', () => {
-    const config = {events: {api_version: '2024-01', subscription: {handle: 'orders'}}}
+    const config = {handle: 'orders', events: {api_version: '2024-01', subscription: {}}}
 
     expect(appEventsSpec.getTarget!(config)).toBeUndefined()
   })
 
   test.each([undefined, '', ' ', 42, '-orders', 'orders-', 'orders/create', 'a'.repeat(51), 'events'])(
-    'rejects an invalid single-subscription handle: %j',
+    'rejects an invalid module handle for a single subscription: %j',
     (handle) => {
-      const result = appEventsSpec.parseConfigurationObject({events: {subscription: {handle}}})
+      const result = appEventsSpec.parseConfigurationObject({handle, events: {subscription: {topic: 'orders/create'}}})
 
       expect(result.state).toBe('error')
-      expect(result.errors).toEqual(
-        expect.arrayContaining([expect.objectContaining({path: ['events', 'subscription', 'handle']})]),
-      )
+      expect(result.errors).toEqual(expect.arrayContaining([expect.objectContaining({path: ['handle']})]))
     },
   )
 
+  test('does not require a module handle for a subscription list', () => {
+    const result = appEventsSpec.parseConfigurationObject({events: {subscription: [{handle: 'orders'}]}})
+
+    expect(result.state).toBe('ok')
+  })
+
   test('validates only the fields needed for local identity', () => {
-    const config = {events: {api_version: 'future', subscription: {handle: 'orders', unknown_field: true}}}
+    const config = {handle: 'orders', events: {api_version: 'future', subscription: {unknown_field: true}}}
 
     const result = appEventsSpec.parseConfigurationObject(config)
 

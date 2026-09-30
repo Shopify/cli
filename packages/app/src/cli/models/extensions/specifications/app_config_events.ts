@@ -11,34 +11,35 @@ const EventsTransformConfig: CustomTransformationConfig = {
   reverse: transformToEventsConfig,
 }
 
-const SingleSubscriptionSchema = zod
+const ModuleHandleSchema = BaseSchemaWithHandle.shape.handle.refine(
+  (handle) => handle !== EventsSpecIdentifier,
+  'The handle "events" is reserved for the legacy events module. Choose a different subscription handle.',
+)
+
+const EventsSectionSchema = zod
   .object({
-    handle: BaseSchemaWithHandle.shape.handle.refine(
-      (handle) => handle !== EventsSpecIdentifier,
-      'The handle "events" is reserved for the legacy events module. Choose a different subscription handle.',
-    ),
+    subscription: zod.unknown().optional(),
   })
   .passthrough()
 
-const SubscriptionSchema = zod.unknown().transform((subscription, context) => {
-  if (Array.isArray(subscription)) return subscription as unknown[]
-
-  const result = SingleSubscriptionSchema.safeParse(subscription)
-  if (!result.success) {
-    result.error.issues.forEach((issue) => context.addIssue(issue))
-    return zod.NEVER
-  }
-  return result.data
-})
-
+// A single-subscription module keeps its handle on the module, like every other module, so the
+// nested subscription matches the platform contract. A subscription list keeps handles on each entry.
 const EventsSchema = BaseSchemaWithoutHandle.extend({
-  events: zod
-    .object({
-      subscription: SubscriptionSchema.optional(),
-    })
-    .passthrough()
-    .optional(),
+  handle: ModuleHandleSchema.optional(),
+  events: EventsSectionSchema.optional(),
+}).superRefine((config, context) => {
+  const subscription = config.events?.subscription
+  if (subscription === undefined || Array.isArray(subscription)) return
+
+  const result = ModuleHandleSchema.safeParse(config.handle)
+  if (result.success) return
+  result.error.issues.forEach((issue) => context.addIssue({...issue, path: ['handle']}))
 })
+
+function isSingleSubscription(config: zod.infer<typeof EventsSchema>): config is typeof config & {handle: string} {
+  const subscription = config.events?.subscription
+  return subscription !== undefined && !Array.isArray(subscription) && typeof config.handle === 'string'
+}
 
 const appEventsSpec = createConfigExtensionSpecification({
   identifier: EventsSpecIdentifier,
@@ -48,19 +49,21 @@ const appEventsSpec = createConfigExtensionSpecification({
     const subscriptions = config.events?.subscription
     if (!flags.includes(Flag.SingleSubscriptionEventsModules) || !Array.isArray(subscriptions)) return [config]
 
-    return subscriptions.map((subscription) => ({events: {...config.events, subscription}}))
+    return subscriptions.map((entry) => {
+      const {handle, ...subscription} = entry as {handle?: unknown; [key: string]: unknown}
+      return {handle, events: {...config.events, subscription}}
+    })
   },
   getIdentity: (config) => {
-    const subscription = config.events?.subscription
-    if (!subscription || Array.isArray(subscription)) return undefined
-    return {handle: subscription.handle, uid: subscription.handle}
+    if (!isSingleSubscription(config)) return undefined
+    return {handle: config.handle, uid: config.handle}
   },
   // A single-subscription module targets its topic. The topic stays in the config as
   // well: Core still derives the module target from `events.subscription.topic`.
   getTarget: (config) => {
-    const subscription = config.events?.subscription
-    if (!subscription || Array.isArray(subscription)) return undefined
-    return typeof subscription.topic === 'string' ? subscription.topic : undefined
+    if (!isSingleSubscription(config)) return undefined
+    const topic = (config.events?.subscription as {topic?: unknown}).topic
+    return typeof topic === 'string' ? topic : undefined
   },
 })
 
