@@ -13,6 +13,7 @@ import {
   getCachedPartnerAccountStatus,
   setCachedPartnerAccountStatus,
   runWithRateLimit,
+  timeIntervalToMilliseconds,
 } from './conf-store.js'
 import {isLocalEnvironment} from './context/service.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
@@ -548,6 +549,7 @@ describe('runWithRateLimit', () => {
   test('runs the task as usual when the cache is populated but outdated', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
+      vi.useFakeTimers()
       const config = new LocalStorage<any>({cwd})
       for (let i = 0; i < limit; i++) {
         // eslint-disable-next-line no-await-in-loop
@@ -564,7 +566,8 @@ describe('runWithRateLimit', () => {
 
       // When
       let taskRan = false
-      vi.setSystemTime(vi.getRealSystemTime() + 1000)
+      // The rate-limit window is inclusive of its start, so advance strictly past it.
+      vi.advanceTimersByTime(timeIntervalToMilliseconds(timeout) + 1)
       const got = await runWithRateLimit(
         {
           key,
