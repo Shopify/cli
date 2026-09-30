@@ -1,4 +1,3 @@
-import {appSecurityFlags} from './flags.js'
 import {appFlags} from '../../../flags.js'
 import deliverAppSecurityInstructions from '../../../services/app-security-instructions.js'
 import {Flags} from '@oclif/core'
@@ -13,7 +12,7 @@ export default class SecurityInstructions extends BaseCommand {
 
   static descriptionWithMarkdown = `Prints the complete workflow that a coding agent should follow to review App Security results.
 
-By default, the instructions are printed to stdout. Use \`--copy\` to copy them to the clipboard or \`--write\` to write them to a file. Standalone instructions always start by running \`shopify app security check\`; only that invocation's generated review pack is trusted as workflow input. \`--config\` values and \`--ignore\` patterns are included in the generated commands.`
+By default, the instructions are printed to stdout. Use \`--copy\` to copy them to the clipboard or \`--write\` to write them to a file. Standalone instructions always start by running \`shopify app security check\`; only that invocation's generated review pack is trusted as workflow input.`
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -21,7 +20,6 @@ By default, the instructions are printed to stdout. Use \`--copy\` to copy them 
     ...globalFlags,
     path: appFlags.path,
     config: appFlags.config,
-    ...appSecurityFlags,
     copy: Flags.boolean({
       description: 'Copy the instructions to the clipboard instead of printing them.',
       default: false,
@@ -44,7 +42,6 @@ By default, the instructions are printed to stdout. Use \`--copy\` to copy them 
       configName: flags.config,
       copy: flags.copy,
       writePath: flags.write,
-      ignorePatterns: flags.ignore ?? [],
     })
   }
 }

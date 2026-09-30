@@ -1,9 +1,10 @@
-import {appSecurityFlags} from './flags.js'
 import {appFlags} from '../../../flags.js'
+import {ignorePatternProblem} from '../../../services/app-security-engine/index.js'
 import securityCheck from '../../../services/security-check.js'
 import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 import type {AppSecurityBlockingLevel} from '../../../services/app-security-api.js'
 
@@ -28,7 +29,18 @@ In interactive terminals, the command offers to copy the coding-agent instructio
     ...globalFlags,
     path: appFlags.path,
     config: appFlags.config,
-    ...appSecurityFlags,
+    // No environment variable: oclif passes a repeatable flag's variable as one string, so it could hold only one pattern.
+    // eslint-disable-next-line @shopify/cli/command-flags-with-env
+    ignore: Flags.string({
+      description:
+        'Ignore files that match this .gitignore pattern, relative to the app directory. Start the pattern with ! to include matching files again. Repeat the flag to add patterns; later patterns take precedence.',
+      multiple: true,
+      parse: async (input) => {
+        const problem = ignorePatternProblem(input)
+        if (problem) throw new AbortError(problem)
+        return input
+      },
+    }),
     ...jsonFlag,
     findings: Flags.string({
       description: 'Validate agent findings from a JSON file and compile them into the trace.',

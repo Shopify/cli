@@ -3795,8 +3795,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Prints the complete workflow that a coding agent should follow to review App Security results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's generated review pack is trusted as workflow input. `--config` values and `--ignore` patterns are included in the generated commands.",
-      "descriptionWithMarkdown": "Prints the complete workflow that a coding agent should follow to review App Security results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's generated review pack is trusted as workflow input. `--config` values and `--ignore` patterns are included in the generated commands.",
+      "description": "Prints the complete workflow that a coding agent should follow to review App Security results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's generated review pack is trusted as workflow input.",
+      "descriptionWithMarkdown": "Prints the complete workflow that a coding agent should follow to review App Security results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's generated review pack is trusted as workflow input.",
       "enableJsonFlag": false,
       "flags": {
         "config": {
@@ -3818,13 +3818,6 @@
           ],
           "name": "copy",
           "type": "boolean"
-        },
-        "ignore": {
-          "description": "Ignore files that match this .gitignore pattern, relative to the app directory. Start the pattern with ! to include matching files again. Repeat the flag to add patterns; later patterns take precedence.",
-          "hasDynamicHelp": false,
-          "multiple": true,
-          "name": "ignore",
-          "type": "option"
         },
         "json-schema": {
           "allowNo": false,
