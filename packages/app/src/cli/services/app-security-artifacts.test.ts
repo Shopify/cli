@@ -1,11 +1,18 @@
 import {
   appSecurityArtifactPaths,
   cleanAppSecurityArtifacts,
+  readAgentFindings,
   readDeterministicFindings,
+  writeAgentFindings,
   writeCheckArtifacts,
   writeSubmission,
 } from './app-security-artifacts.js'
-import {scanApp, SUBMISSION_SCHEMA_VERSION, type AppSecuritySubmission} from './app-security-engine/index.js'
+import {
+  scanApp,
+  SUBMISSION_SCHEMA_VERSION,
+  type AgentFindingsArtifact,
+  type AppSecuritySubmission,
+} from './app-security-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -16,6 +23,14 @@ const submission = {
   schemaVersion: SUBMISSION_SCHEMA_VERSION,
   report: {metadata: {}},
 } as AppSecuritySubmission
+
+const agentFindings: AgentFindingsArtifact = {
+  schema_version: 1,
+  engine: {name: 'shopify-app-security', version: '1.2.3'},
+  recorded_at: '2026-08-24T00:00:00.000Z',
+  project: {commit: null, dirty: null},
+  checks: [],
+}
 
 async function scanTestApp(directory: string) {
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Test"\nclient_id = "test"\n')
@@ -120,6 +135,61 @@ describe('readDeterministicFindings', () => {
       await expect(readDeterministicFindings(path)).resolves.toEqual({
         status: 'invalid',
         message: 'The file is larger than 5 MB.',
+      })
+    })
+  })
+})
+
+describe('readAgentFindings', () => {
+  test('returns ok with agent findings written by writeAgentFindings', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = await writeAgentFindings(directory, agentFindings)
+
+      expect(path).toBe(appSecurityArtifactPaths(directory).agentFindingsPath)
+      await expect(readAgentFindings(path)).resolves.toEqual({status: 'ok', value: agentFindings})
+    })
+  })
+
+  test('returns missing when the file does not exist', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await expect(readAgentFindings(joinPath(directory, 'agent-findings.json'))).resolves.toEqual({
+        status: 'missing',
+      })
+    })
+  })
+
+  test('returns invalid for malformed JSON', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = joinPath(directory, 'agent-findings.json')
+      await writeFile(path, '{invalid')
+
+      await expect(readAgentFindings(path)).resolves.toEqual({
+        status: 'invalid',
+        message: expect.stringContaining('Could not parse JSON'),
+      })
+    })
+  })
+
+  test('returns invalid for JSON that is not an object', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = joinPath(directory, 'agent-findings.json')
+      await writeFile(path, '[]')
+
+      await expect(readAgentFindings(path)).resolves.toEqual({
+        status: 'invalid',
+        message: 'agent findings must be a JSON object',
+      })
+    })
+  })
+
+  test('returns invalid for an unsupported schema version', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = joinPath(directory, 'agent-findings.json')
+      await writeFile(path, '{"schema_version":2,"checks":[]}')
+
+      await expect(readAgentFindings(path)).resolves.toEqual({
+        status: 'invalid',
+        message: 'unsupported schema_version: 2 (expected 1)',
       })
     })
   })

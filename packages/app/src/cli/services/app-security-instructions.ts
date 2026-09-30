@@ -30,6 +30,7 @@ interface AppSecurityInstructionPaths {
   commands: AppSecurityCommands
   scanCommand: string
   recordInstructions: string
+  reviewCommand: string
   cleanCommand: string
   deterministicFindingsPath: string
   agentChecksPath: string
@@ -95,6 +96,7 @@ function instructionPaths(
     commands: resolvedCommands,
     scanCommand: formatAppSecurityCommand(resolvedCommands.scan, shell),
     recordInstructions: recordInstructions(resolvedCommands.record, shell),
+    reviewCommand: formatAppSecurityCommand(resolvedCommands.review, shell),
     cleanCommand: formatAppSecurityCommand(resolvedCommands.clean, shell),
     deterministicFindingsPath,
     agentChecksPath,
@@ -171,6 +173,7 @@ export function appSecurityInstructions(options: {
     [SCAN_CONTEXT_PLACEHOLDER]: scanContext,
     '{{SCAN_COMMAND}}': paths.scanCommand,
     '{{RECORD_COMMAND}}': paths.recordInstructions,
+    '{{REVIEW_COMMAND}}': paths.reviewCommand,
     '{{CLEAN_COMMAND}}': paths.cleanCommand,
     '{{DETERMINISTIC_FINDINGS_PATH}}': markdownPath(paths.deterministicFindingsPath),
     '{{AGENT_CHECKS_PATH}}': markdownPath(paths.agentChecksPath),

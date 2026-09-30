@@ -89,7 +89,7 @@ describe('appSecurityInstructions', () => {
       expect(instructions).toContain(
         `shopify app security check --path ${shellQuote(appRoot)} --config ${shellQuote('staging')}`,
       )
-      expect(instructions).not.toMatch(/shopify app security (record|clean) --path .+ --config/)
+      expect(instructions).not.toMatch(/shopify app security (record|review|clean) --path .+ --config/)
     })
   })
 
@@ -106,7 +106,7 @@ describe('appSecurityInstructions', () => {
     })
   })
 
-  test('walks through check, agent checks, one findings document, and record', async () => {
+  test('walks through check, agent checks, one findings document, record, and review', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false, shell: 'posix'})
@@ -116,7 +116,7 @@ describe('appSecurityInstructions', () => {
         '### 3. Investigate each check',
         '### 4. Write one findings document',
         '### 5. Record the findings with Shopify CLI',
-        '### 6. Explain findings and help fix them',
+        '### 6. Review, explain, and help fix',
         '### 7. Check again after changes',
         '### 8. Submit only when explicitly authorized (optional)',
       ].map((heading) => instructions.indexOf(heading))
@@ -126,6 +126,9 @@ describe('appSecurityInstructions', () => {
       expect(instructions).toContain("`check_version` echoes the check's `version`")
       expect(instructions).toContain('`not_applicable` and `unresolved` require a `reason`')
       expect(instructions).toContain('Fix every reported error and run `record` again with the full document.')
+      expect(instructions).toContain(
+        codeBlock('bash', `shopify app security review --path ${quoteShellArgument(appRoot, 'posix')}`),
+      )
       expect(instructions).toContain(`\`${artifactPath(appRoot, 'agent-findings.json')}\` wholesale`)
     })
   })
@@ -334,7 +337,7 @@ describe('deliverAppSecurityInstructions', () => {
       expect(instructions).not.toContain('--source-control-hash')
       expect(instructions).toContain('Submission is not proof of App Store approval')
       const submitSection = instructions.indexOf('### 8. Submit only when explicitly authorized (optional)')
-      expect(submitSection).toBeGreaterThan(instructions.indexOf('### 6. Explain findings and help fix them'))
+      expect(submitSection).toBeGreaterThan(instructions.indexOf('### 6. Review, explain, and help fix'))
       expect(instructions).toContain('Only after reviewing the results')
       expect(instructions).not.toContain('reserved for a future authenticated upload workflow')
       expect(instructions).not.toMatch(/\{\{[A-Z_]+\}\}/)

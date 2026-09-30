@@ -121,12 +121,14 @@ function countLabel(count: number, noun: string): string {
 }
 
 /** Presents a recorded document in the terminal. */
-export function renderSecurityRecordResult(result: SecurityRecordResult): void {
+export function renderSecurityRecordResult(result: SecurityRecordResult, appRoot: string): void {
+  const commands = resolveAppSecurityCommands(appRoot)
   renderSuccess({
     headline: 'Agent findings recorded.',
     body: [
       `Recorded ${countLabel(result.checks, 'check')} and ${countLabel(result.findings, 'finding')} in`,
       {filePath: result.path},
     ],
+    nextSteps: [['Run', {command: formatAppSecurityCommand(commands.review)}, 'to see the results.']],
   })
 }

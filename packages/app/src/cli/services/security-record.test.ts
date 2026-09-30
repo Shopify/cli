@@ -353,19 +353,20 @@ describe('securityRecordJsonOutputSchema', () => {
 })
 
 describe('renderSecurityRecordResult', () => {
-  test('shows the counts and the recorded path', async () => {
+  test('shows the counts, the recorded path, and how to review the results', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       const path = appSecurityArtifactPaths(appRoot).agentFindingsPath
       const output = mockAndCaptureOutput()
       output.clear()
 
-      renderSecurityRecordResult({path, checks: 1, findings: 2})
+      renderSecurityRecordResult({path, checks: 1, findings: 2}, appRoot)
 
       const rendered = output.info()
       expect(rendered).toContain('Agent findings recorded.')
       expect(rendered).toContain('Recorded 1 check and 2 findings in')
       expect(rendered).toContain('agent-findings.json')
+      expect(rendered).toContain('shopify app security review --path')
       output.clear()
     })
   })

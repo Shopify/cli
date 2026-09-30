@@ -45,7 +45,7 @@ describe('app security record command', () => {
         await SecurityRecord.run([], import.meta.url)
 
         expect(securityRecord).toHaveBeenCalledWith({appRoot})
-        expect(renderSecurityRecordResult).toHaveBeenCalledWith(result)
+        expect(renderSecurityRecordResult).toHaveBeenCalledWith(result, appRoot)
         expect(output.info()).toBe('')
       } finally {
         vi.unstubAllEnvs()

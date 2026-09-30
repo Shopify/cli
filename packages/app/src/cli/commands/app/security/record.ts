@@ -37,7 +37,7 @@ The document is recorded all or nothing: if anything is invalid, the command fai
     if (flags.json) {
       outputResult(securityRecordJsonOutputSchema.encode(result))
     } else {
-      renderSecurityRecordResult(result)
+      renderSecurityRecordResult(result, appRoot)
     }
   }
 }

@@ -122,6 +122,7 @@ function securityNextSteps(input: SecurityReportInput): TokenItem<InlineToken>[]
   return [
     ['Have your coding agent read', {filePath: input.agentChecksPath}],
     ['Record the agent results with', {command: formatAppSecurityCommand(input.commands.record)}],
+    ['Review the results with', {command: formatAppSecurityCommand(input.commands.review)}],
   ]
 }
 

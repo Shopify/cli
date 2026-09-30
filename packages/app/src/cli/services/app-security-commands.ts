@@ -15,6 +15,7 @@ export interface AppSecurityCommand {
 export interface AppSecurityCommands {
   scan: AppSecurityCommand
   record: AppSecurityCommand
+  review: AppSecurityCommand
   clean: AppSecurityCommand
 }
 
@@ -44,6 +45,7 @@ export function resolveAppSecurityCommands(
       ],
     },
     record: {command, args: subcommandArgs('record'), stdinPlaceholder: '<findings.json>'},
+    review: {command, args: subcommandArgs('review')},
     clean: {command, args: subcommandArgs('clean')},
   }
 }

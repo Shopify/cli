@@ -164,6 +164,7 @@ describe('resolveAppSecurityCommands', () => {
       {flag: '--config', value: 'staging'},
     ])
     expect(commands.record.args).toEqual(['app', 'security', 'record', {flag: '--path', value: '/tmp/app'}])
+    expect(commands.review.args).toEqual(['app', 'security', 'review', {flag: '--path', value: '/tmp/app'}])
     expect(commands.clean.args).toEqual(['app', 'security', 'clean', {flag: '--path', value: '/tmp/app'}])
   })
 
@@ -180,6 +181,7 @@ describe('resolveAppSecurityCommands', () => {
       {flag: '--ignore', value: '!build/'},
     ])
     expect(commands.record.args).toEqual(['app', 'security', 'record', {flag: '--path', value: '/tmp/app'}])
+    expect(commands.review.args).toEqual(['app', 'security', 'review', {flag: '--path', value: '/tmp/app'}])
     expect(commands.clean.args).toEqual(['app', 'security', 'clean', {flag: '--path', value: '/tmp/app'}])
   })
 
@@ -204,6 +206,7 @@ describe('resolveAppSecurityCommands', () => {
     expect(formatAppSecurityCommand(commands.record, 'powershell')).toBe(
       "Get-Content -Raw <findings.json> | shopify app security record --path '/tmp/app'",
     )
+    expect(formatAppSecurityCommand(commands.review, 'posix')).toBe("shopify app security review --path '/tmp/app'")
     expect(formatAppSecurityCommand(commands.clean, 'posix')).toBe("shopify app security clean --path '/tmp/app'")
   })
 })
@@ -327,6 +330,14 @@ describe('formatAppSecurityCommand', () => {
       'app',
       'security',
       'check',
+      '--path',
+      PAIRED_PERCENT_ROOT,
+    ])
+    expect(splitQuotedCommand(formatAppSecurityCommand(commands.review, 'cmd'), 'cmd')).toEqual([
+      'shopify',
+      'app',
+      'security',
+      'review',
       '--path',
       PAIRED_PERCENT_ROOT,
     ])

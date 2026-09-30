@@ -3980,6 +3980,69 @@
       "strict": true,
       "summary": "Record agent App Security findings."
     },
+    "app:security:review": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Prints the deterministic findings (`.shopify/app-security/deterministic-findings.json`) and the recorded agent findings (`.shopify/app-security/agent-findings.json`), each with its path and age.\n\nThe two files are shown as they are stored. They aren't compared with each other or with the current source files.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppSecurityReviewResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"deterministic_findings\": {\n      \"anyOf\": [\n        {\n          \"$ref\": \"#/definitions/AppSecurityStoredArtifact\"\n        },\n        {\n          \"type\": \"null\"\n        }\n      ]\n    },\n    \"agent_findings\": {\n      \"anyOf\": [\n        {\n          \"$ref\": \"#/definitions/AppSecurityStoredArtifact\"\n        },\n        {\n          \"type\": \"null\"\n        }\n      ]\n    }\n  },\n  \"required\": [\n    \"deterministic_findings\",\n    \"agent_findings\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppSecurityReviewResult\",\n  \"definitions\": {\n    \"AppSecurityStoredArtifact\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"schema_version\": {\n          \"type\": \"number\"\n        }\n      },\n      \"required\": [\n        \"schema_version\"\n      ],\n      \"additionalProperties\": true\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Prints the deterministic findings (`.shopify/app-security/deterministic-findings.json`) and the recorded agent findings (`.shopify/app-security/agent-findings.json`), each with its path and age.\n\nThe two files are shown as they are stored. They aren't compared with each other or with the current source files.",
+      "enableJsonFlag": false,
+      "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:security:review",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Show the stored App Security results."
+    },
     "app:security:submit": {
       "aliases": [
       ],

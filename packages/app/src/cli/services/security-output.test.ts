@@ -135,6 +135,7 @@ describe('buildSecurityAlert', () => {
           items: [
             ['Have your coding agent read', {filePath: '/tmp/app/.shopify/app-security/agent-checks.json'}],
             ['Record the agent results with', {command: formatAppSecurityCommand(commands.record)}],
+            ['Review the results with', {command: formatAppSecurityCommand(commands.review)}],
           ],
           ordered: true,
         },
@@ -234,6 +235,7 @@ describe('buildSecurityAlert', () => {
         items: [
           ['Have your coding agent read', {filePath: '/tmp/app/.shopify/app-security/agent-checks.json'}],
           ['Record the agent results with', {command: recordCommand}],
+          ['Review the results with', {command: formatAppSecurityCommand(commands.review)}],
         ],
         ordered: true,
       },

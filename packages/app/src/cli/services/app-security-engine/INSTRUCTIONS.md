@@ -99,9 +99,15 @@ Pipe the document to `record` on stdin:
 
 When the document is accepted, `record` replaces {{AGENT_FINDINGS_PATH}} with its contents. Every run replaces the previous results, so always record the full set of checks.
 
-### 6. Explain findings and help fix them
+### 6. Review, explain, and help fix
 
-Read {{DETERMINISTIC_FINDINGS_PATH}} and {{AGENT_FINDINGS_PATH}}. Report:
+Show the recorded results:
+
+```bash
+{{REVIEW_COMMAND}}
+```
+
+It prints {{DETERMINISTIC_FINDINGS_PATH}} and {{AGENT_FINDINGS_PATH}} with their paths and ages. Report:
 
 - CLI and ruleset versions;
 - deterministic and agent finding counts, grouped by severity;

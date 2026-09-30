@@ -1,4 +1,5 @@
 import {
+  AGENT_FINDINGS_SCHEMA_VERSION,
   parseDeterministicFindings,
   type AgentChecks,
   type AgentFindingsArtifact,
@@ -92,6 +93,25 @@ export async function readDeterministicFindings(
   const parsed = parseDeterministicFindings(result.value)
   if (!parsed.ok) return {status: 'invalid', message: parsed.errors.join('; ')}
   return {status: 'ok', value: parsed.artifact}
+}
+
+/** Loosely identifies a stored agent-findings.json. Its contents are informational, so only the schema version is checked. */
+export async function readAgentFindings(path: string): Promise<ReadArtifactResult<AgentFindingsArtifact>> {
+  const result = await readJsonArtifact(path)
+  if (result.status !== 'ok') return result
+
+  const value = result.value
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return {status: 'invalid', message: 'agent findings must be a JSON object'}
+  }
+  const schemaVersion = (value as {schema_version?: unknown}).schema_version
+  if (schemaVersion !== AGENT_FINDINGS_SCHEMA_VERSION) {
+    return {
+      status: 'invalid',
+      message: `unsupported schema_version: ${String(schemaVersion)} (expected ${AGENT_FINDINGS_SCHEMA_VERSION})`,
+    }
+  }
+  return {status: 'ok', value: value as AgentFindingsArtifact}
 }
 
 async function readJsonArtifact(path: string): Promise<ReadArtifactResult<unknown>> {
