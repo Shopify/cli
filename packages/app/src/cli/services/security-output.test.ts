@@ -1,5 +1,5 @@
 import {buildSecurityAlert} from './security-output.js'
-import {resolveAppSecurityCommands} from './app-security-commands.js'
+import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {describe, expect, test} from 'vitest'
 import type {SecurityReportInput} from './security-output.js'
 import type {ScanResult} from './app-security-engine/index.js'
@@ -115,13 +115,29 @@ describe('buildSecurityAlert', () => {
         ],
       },
     })
+    const commands = resolveAppSecurityCommands('/tmp/app')
     expect(alert.options.nextSteps).toBeUndefined()
-    expect(section(reportInput(), 'Artifacts')?.body).toEqual({
+    expect(serialized).toContain('31 checks ready for your coding agent.')
+    const customSections = alert.options.customSections ?? []
+    const artifactsIndex = customSections.findIndex((entry) => entry.title === 'Artifacts')
+    expect(customSections[artifactsIndex]?.body).toEqual({
       list: {
         items: [
           ['Scan results:', {filePath: '/tmp/app/.shopify/app-security/deterministic-findings.json'}],
           ['Agent checks:', {filePath: '/tmp/app/.shopify/app-security/agent-checks.json'}],
         ],
+      },
+    })
+    expect(customSections[artifactsIndex + 1]).toEqual({
+      title: 'Next steps',
+      body: {
+        list: {
+          items: [
+            ['Have your coding agent read', {filePath: '/tmp/app/.shopify/app-security/agent-checks.json'}],
+            ['Record the agent results with', {command: formatAppSecurityCommand(commands.record)}],
+          ],
+          ordered: true,
+        },
       },
     })
     expect(alert.options.reference).toEqual([
@@ -205,6 +221,26 @@ describe('buildSecurityAlert', () => {
     const input = reportInput({scan: {...scanWithIssues, issues}})
     expect(buildSecurityAlert(input).type).toBe('warning')
     expect(section(input, 'High')).toBeUndefined()
+  })
+
+  test('quotes record commands for Windows paths with spaces and percents', () => {
+    const commands = resolveAppSecurityCommands('C:/Users/50%/my app')
+    const alert = buildSecurityAlert(reportInput({commands}))
+    const recordCommand = formatAppSecurityCommand(commands.record)
+
+    expect(alert.options.nextSteps).toBeUndefined()
+    expect(section(reportInput({commands}), 'Next steps')?.body).toEqual({
+      list: {
+        items: [
+          ['Have your coding agent read', {filePath: '/tmp/app/.shopify/app-security/agent-checks.json'}],
+          ['Record the agent results with', {command: recordCommand}],
+        ],
+        ordered: true,
+      },
+    })
+    expect(recordCommand).not.toContain('50%%')
+    expect(formatAppSecurityCommand(commands.record, 'cmd')).toContain('^%')
+    expect(formatAppSecurityCommand(commands.record, 'powershell')).toContain("'C:/Users/50%/my app'")
   })
 
   test('adds evidence, fix guidance, and scan details in verbose mode', () => {

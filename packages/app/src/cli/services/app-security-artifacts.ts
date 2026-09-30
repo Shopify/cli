@@ -1,4 +1,8 @@
-import {parseDeterministicFindings, type DeterministicFindingsDocument} from './app-security-engine/index.js'
+import {
+  parseDeterministicFindings,
+  type AgentFindingsArtifact,
+  type DeterministicFindingsDocument,
+} from './app-security-engine/index.js'
 import {fileExists, fileSize, readFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
@@ -15,7 +19,7 @@ export interface AppSecurityArtifactPaths {
 }
 
 export interface ResolvedAppSecurityArtifactPaths extends Required<AppSecurityArtifactPaths> {
-  findingsPath: string
+  agentFindingsPath: string
   submissionPath: string
 }
 
@@ -29,7 +33,7 @@ export function appSecurityArtifactPaths(appRoot: string): ResolvedAppSecurityAr
   return {
     artifactDirectory,
     agentChecksPath: joinPath(artifactDirectory, 'agent-checks.json'),
-    findingsPath: joinPath(artifactDirectory, 'findings.json'),
+    agentFindingsPath: joinPath(artifactDirectory, 'agent-findings.json'),
     submissionPath: joinPath(artifactDirectory, 'submission.json'),
     deterministicFindingsPath: joinPath(artifactDirectory, 'deterministic-findings.json'),
   }
@@ -48,7 +52,7 @@ export async function writeAppSecurityArtifacts(
   await writeAtomicArtifact(paths.deterministicFindingsPath, `${JSON.stringify(execution.artifact, null, 2)}\n`)
   await writeAtomicArtifact(paths.agentChecksPath, `${JSON.stringify(execution.agentChecks, null, 2)}\n`)
   if (options.clean) {
-    await removeStaleArtifact(paths.findingsPath)
+    await removeStaleArtifact(paths.agentFindingsPath)
     await removeStaleArtifact(paths.submissionPath)
   }
   return {
@@ -56,6 +60,13 @@ export async function writeAppSecurityArtifacts(
     agentChecksPath: paths.agentChecksPath,
     deterministicFindingsPath: paths.deterministicFindingsPath,
   }
+}
+
+export async function writeAgentFindings(appRoot: string, artifact: AgentFindingsArtifact): Promise<string> {
+  const paths = appSecurityArtifactPaths(appRoot)
+  await ensureArtifactDirectory(appRoot, paths.artifactDirectory)
+  await writeAtomicArtifact(paths.agentFindingsPath, `${JSON.stringify(artifact, null, 2)}\n`)
+  return paths.agentFindingsPath
 }
 
 async function removeStaleArtifact(path: string): Promise<void> {

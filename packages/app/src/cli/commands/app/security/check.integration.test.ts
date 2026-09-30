@@ -82,7 +82,7 @@ describe('app security check command boundary', () => {
       const firstScan = await runCommand(['--path', directory, '--json', '--skip-instructions'])
       expect(firstScan.exitCode).toBe(0)
 
-      await writeFile(paths.findingsPath, '{"sentinel":"findings"}\n')
+      await writeFile(paths.agentFindingsPath, '{"sentinel":"findings"}\n')
       await writeFile(paths.agentChecksPath, '{"sentinel":"agent-checks"}\n')
       await writeFile(paths.deterministicFindingsPath, '{"sentinel":"scan"}\n')
 
@@ -92,7 +92,7 @@ describe('app security check command boundary', () => {
       expect(unstyled(rescan.stdout)).not.toMatch(/discard/i)
       await expect(readFile(paths.agentChecksPath, 'utf8')).resolves.toContain('"checks"')
       await expect(readFile(paths.deterministicFindingsPath, 'utf8')).resolves.toContain('"schema_version"')
-      await expect(readFile(paths.findingsPath, 'utf8')).resolves.toBe('{"sentinel":"findings"}\n')
+      await expect(readFile(paths.agentFindingsPath, 'utf8')).resolves.toBe('{"sentinel":"findings"}\n')
     })
   })
 })

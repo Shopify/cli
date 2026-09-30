@@ -27,7 +27,7 @@ describe('appSecurityArtifactPaths', () => {
         'deterministic-findings.json',
       ),
       agentChecksPath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'agent-checks.json'),
-      findingsPath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'findings.json'),
+      agentFindingsPath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'agent-findings.json'),
       submissionPath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'submission.json'),
     })
   })
@@ -109,7 +109,7 @@ describe('writeAppSecurityArtifacts', () => {
       const execution = {...(await scanApp(directory)), elapsedMilliseconds: 1}
       const paths = appSecurityArtifactPaths(directory)
       await mkdir(paths.artifactDirectory)
-      await writeFile(paths.findingsPath, '{"findings":[]}')
+      await writeFile(paths.agentFindingsPath, '{"findings":[]}')
       await writeFile(paths.submissionPath, '{"submission":true}')
       const unknownPath = joinPath(paths.artifactDirectory, 'notes.txt')
       const customFindingsPath = joinPath(directory, 'custom-findings.json')
@@ -118,7 +118,7 @@ describe('writeAppSecurityArtifacts', () => {
 
       await writeAppSecurityArtifacts(execution, {clean: true})
 
-      await expect(fileExists(paths.findingsPath)).resolves.toBe(false)
+      await expect(fileExists(paths.agentFindingsPath)).resolves.toBe(false)
       await expect(fileExists(paths.submissionPath)).resolves.toBe(false)
       await expect(readFile(unknownPath)).resolves.toBe('keep')
       await expect(readFile(customFindingsPath)).resolves.toBe('keep')
@@ -132,10 +132,10 @@ describe('writeAppSecurityArtifacts', () => {
       await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Test"\nclient_id = "test"\n')
       const execution = {...(await scanApp(directory)), elapsedMilliseconds: 1}
       const paths = appSecurityArtifactPaths(directory)
-      await mkdir(paths.findingsPath)
+      await mkdir(paths.agentFindingsPath)
 
       await expect(writeAppSecurityArtifacts(execution, {clean: true})).rejects.toThrow(
-        `Could not remove stale App Security artifact at ${paths.findingsPath}`,
+        `Could not remove stale App Security artifact at ${paths.agentFindingsPath}`,
       )
       await expect(readDeterministicFindings(paths.deterministicFindingsPath)).resolves.toMatchObject({status: 'ok'})
       await expect(fileExists(paths.agentChecksPath)).resolves.toBe(true)

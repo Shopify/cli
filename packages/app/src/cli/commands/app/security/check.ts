@@ -16,7 +16,7 @@ export default class SecurityCheck extends BaseCommand {
 
   static descriptionWithMarkdown = `Runs Shopify App Security locally and writes \`deterministic-findings.json\` and \`agent-checks.json\` to \`.shopify/app-security/\`.
 
-Pass \`--clean\` to discard the current local review and start over. Use \`--config\` to select a specific app configuration when the project has multiple \`shopify.app*.toml\` files; App Security inspects only that configuration.
+\`deterministic-findings.json\` holds the deterministic scan results. \`agent-checks.json\` holds the checks for your coding agent to investigate; the agent's results are recorded with \`shopify app security record\`. Pass \`--clean\` to discard the current local review and start over. Use \`--config\` to select a specific app configuration when the project has multiple \`shopify.app*.toml\` files; App Security inspects only that configuration.
 
 Use \`--ignore\` to change which files are scanned. Each value is one \`.gitignore\` pattern relative to the app directory; prefix it with \`!\` to include a file again when it is ignored by default or by \`.gitignore\`. Repeat the flag to add patterns; later patterns take precedence. A file can't be included again while its parent folder is ignored, so include the folder again instead, for example \`--ignore '!build/'\`. Quote each value so your shell doesn't expand \`!\` or \`*\` (single quotes in POSIX shells and PowerShell). The coding-agent instructions this check offers repeat the patterns.
 

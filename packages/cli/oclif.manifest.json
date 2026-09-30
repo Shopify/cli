@@ -3660,8 +3660,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Runs Shopify App Security locally and writes `deterministic-findings.json` and `agent-checks.json` to `.shopify/app-security/`.\n\nPass `--clean` to discard the current local review and start over. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects only that configuration.\n\nUse `--ignore` to change which files are scanned. Each value is one `.gitignore` pattern relative to the app directory; prefix it with `!` to include a file again when it is ignored by default or by `.gitignore`. Repeat the flag to add patterns; later patterns take precedence. A file can't be included again while its parent folder is ignored, so include the folder again instead, for example `--ignore '!build/'`. Quote each value so your shell doesn't expand `!` or `*` (single quotes in POSIX shells and PowerShell). The coding-agent instructions this check offers repeat the patterns.\n\nIn interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app security instructions` to print, copy, or write them later.",
-      "descriptionWithMarkdown": "Runs Shopify App Security locally and writes `deterministic-findings.json` and `agent-checks.json` to `.shopify/app-security/`.\n\nPass `--clean` to discard the current local review and start over. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects only that configuration.\n\nUse `--ignore` to change which files are scanned. Each value is one `.gitignore` pattern relative to the app directory; prefix it with `!` to include a file again when it is ignored by default or by `.gitignore`. Repeat the flag to add patterns; later patterns take precedence. A file can't be included again while its parent folder is ignored, so include the folder again instead, for example `--ignore '!build/'`. Quote each value so your shell doesn't expand `!` or `*` (single quotes in POSIX shells and PowerShell). The coding-agent instructions this check offers repeat the patterns.\n\nIn interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app security instructions` to print, copy, or write them later.",
+      "description": "Runs Shopify App Security locally and writes `deterministic-findings.json` and `agent-checks.json` to `.shopify/app-security/`.\n\n`deterministic-findings.json` holds the deterministic scan results. `agent-checks.json` holds the checks for your coding agent to investigate; the agent's results are recorded with `shopify app security record`. Pass `--clean` to discard the current local review and start over. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects only that configuration.\n\nUse `--ignore` to change which files are scanned. Each value is one `.gitignore` pattern relative to the app directory; prefix it with `!` to include a file again when it is ignored by default or by `.gitignore`. Repeat the flag to add patterns; later patterns take precedence. A file can't be included again while its parent folder is ignored, so include the folder again instead, for example `--ignore '!build/'`. Quote each value so your shell doesn't expand `!` or `*` (single quotes in POSIX shells and PowerShell). The coding-agent instructions this check offers repeat the patterns.\n\nIn interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app security instructions` to print, copy, or write them later.",
+      "descriptionWithMarkdown": "Runs Shopify App Security locally and writes `deterministic-findings.json` and `agent-checks.json` to `.shopify/app-security/`.\n\n`deterministic-findings.json` holds the deterministic scan results. `agent-checks.json` holds the checks for your coding agent to investigate; the agent's results are recorded with `shopify app security record`. Pass `--clean` to discard the current local review and start over. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects only that configuration.\n\nUse `--ignore` to change which files are scanned. Each value is one `.gitignore` pattern relative to the app directory; prefix it with `!` to include a file again when it is ignored by default or by `.gitignore`. Repeat the flag to add patterns; later patterns take precedence. A file can't be included again while its parent folder is ignored, so include the folder again instead, for example `--ignore '!build/'`. Quote each value so your shell doesn't expand `!` or `*` (single quotes in POSIX shells and PowerShell). The coding-agent instructions this check offers repeat the patterns.\n\nIn interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app security instructions` to print, copy, or write them later.",
       "enableJsonFlag": false,
       "flags": {
         "blocking": {
@@ -3859,6 +3859,69 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Provide App Security instructions to a coding agent."
+    },
+    "app:security:record": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Reads a coding agent's complete findings document from stdin, validates it, and replaces `.shopify/app-security/agent-findings.json`.\n\nThe document is recorded all or nothing: if anything is invalid, the command fails with every error, writes nothing, and exits with a non-zero code. With `--json`, the errors are listed in the error document's `details.errors`. It doesn't need a previous `shopify app security check` run.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppSecurityRecordResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"path\": {\n      \"type\": \"string\"\n    },\n    \"checks\": {\n      \"type\": \"integer\"\n    },\n    \"findings\": {\n      \"type\": \"integer\"\n    }\n  },\n  \"required\": [\n    \"path\",\n    \"checks\",\n    \"findings\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppSecurityRecordResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Reads a coding agent's complete findings document from stdin, validates it, and replaces `.shopify/app-security/agent-findings.json`.\n\nThe document is recorded all or nothing: if anything is invalid, the command fails with every error, writes nothing, and exits with a non-zero code. With `--json`, the errors are listed in the error document's `details.errors`. It doesn't need a previous `shopify app security check` run.",
+      "enableJsonFlag": false,
+      "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:security:record",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Record agent App Security findings."
     },
     "app:security:submit": {
       "aliases": [

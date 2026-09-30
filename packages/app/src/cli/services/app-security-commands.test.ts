@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-imports -- cmd.exe percent expansion must be asserted with verbatim Windows arguments */
 import {
   formatAppSecurityCommand,
+  formatAppSecurityInlineStdinCommand,
   quoteShellArgument,
   resolveAppSecurityCommands,
   shellForPlatform,
@@ -152,7 +153,7 @@ describe('resolveAppSecurityCommands', () => {
     ])
   })
 
-  test('includes --config on scan for a named configuration', () => {
+  test('includes --config only on scan for a named configuration', () => {
     const commands = resolveAppSecurityCommands('/tmp/app', 'shopify.app.staging.toml')
 
     expect(commands.scan.args).toEqual([
@@ -162,9 +163,10 @@ describe('resolveAppSecurityCommands', () => {
       {flag: '--path', value: '/tmp/app'},
       {flag: '--config', value: 'staging'},
     ])
+    expect(commands.record.args).toEqual(['app', 'security', 'record', {flag: '--path', value: '/tmp/app'}])
   })
 
-  test('repeats --ignore patterns in order, after --config, on scan and clean', () => {
+  test('repeats --ignore patterns in order, after --config, on scan and clean but not record', () => {
     const commands = resolveAppSecurityCommands('/tmp/app', 'shopify.app.staging.toml', ['generated/', '!build/'])
     const scanArgs = [
       'app',
@@ -178,6 +180,7 @@ describe('resolveAppSecurityCommands', () => {
 
     expect(commands.scan.args).toEqual(scanArgs)
     expect(commands.clean.args).toEqual([...scanArgs, '--clean'])
+    expect(commands.record.args).toEqual(['app', 'security', 'record', {flag: '--path', value: '/tmp/app'}])
   })
 
   test('omits --ignore when there are no patterns', () => {
@@ -187,6 +190,20 @@ describe('resolveAppSecurityCommands', () => {
       'check',
       {flag: '--path', value: '/tmp/app'},
     ])
+  })
+
+  test('shows record reading a findings file from stdin in each shell', () => {
+    const commands = resolveAppSecurityCommands('/tmp/app')
+
+    expect(formatAppSecurityCommand(commands.record, 'posix')).toBe(
+      "shopify app security record --path '/tmp/app' < <findings.json>",
+    )
+    expect(formatAppSecurityCommand(commands.record, 'cmd')).toBe(
+      'shopify app security record --path "/tmp/app" < <findings.json>',
+    )
+    expect(formatAppSecurityCommand(commands.record, 'powershell')).toBe(
+      "Get-Content -Raw <findings.json> | shopify app security record --path '/tmp/app'",
+    )
   })
 })
 
@@ -283,6 +300,12 @@ describe('formatAppSecurityCommand', () => {
         '--path',
         WINDOWS_APP_ROOT,
       ])
+      const recordArguments = ['shopify', 'app', 'security', 'record', '--path', WINDOWS_APP_ROOT]
+      expect(splitQuotedCommand(formatAppSecurityCommand(commands.record, shell), shell)).toEqual(
+        shell === 'powershell'
+          ? ['Get-Content', '-Raw', '<findings.json>', '|', ...recordArguments]
+          : [...recordArguments, '<', '<findings.json>'],
+      )
       expect(splitQuotedCommand(formatAppSecurityCommand(commands.clean, shell), shell)).toEqual([
         'shopify',
         'app',
@@ -293,6 +316,7 @@ describe('formatAppSecurityCommand', () => {
         '--clean',
       ])
       expect(formatAppSecurityCommand(commands.scan, shell)).not.toContain('50%%')
+      expect(formatAppSecurityCommand(commands.record, shell)).not.toContain('50%%')
       expect(formatAppSecurityCommand(commands.clean, shell)).not.toContain('50%%')
     }
   })
@@ -318,7 +342,7 @@ describe('formatAppSecurityCommand', () => {
       '--clean',
     ])
     expect(formatAppSecurityCommand(commands.scan, 'cmd')).not.toContain('%NAME%')
-    expect(formatAppSecurityCommand(commands.clean, 'powershell')).toContain('%NAME%')
+    expect(formatAppSecurityCommand(commands.record, 'powershell')).toContain('%NAME%')
   })
 
   test.skipIf(process.platform !== 'win32')('cmd quoting preserves paired percents through cmd.exe', async () => {
@@ -339,5 +363,31 @@ describe('formatAppSecurityCommand', () => {
       expect(result.stdout).toBe(PAIRED_PERCENT_ROOT)
       expect(result.stdout).not.toContain('EXPANDED')
     })
+  })
+})
+
+describe('formatAppSecurityInlineStdinCommand', () => {
+  const document = '{"schema_version": 1, "note": "$HOME `id`"}'
+
+  test('pipes the document through a quoted heredoc in POSIX shells', () => {
+    const {record} = resolveAppSecurityCommands("/tmp/O'Brien app")
+
+    expect(formatAppSecurityInlineStdinCommand(record, document, 'posix')).toBe(
+      `shopify app security record --path '/tmp/O'\\''Brien app' <<'EOF'\n${document}\nEOF`,
+    )
+  })
+
+  test('pipes the document from a literal here-string in PowerShell', () => {
+    const {record} = resolveAppSecurityCommands("C:\\Users\\O'Brien\\my app")
+
+    expect(formatAppSecurityInlineStdinCommand(record, document, 'powershell')).toBe(
+      `@'\n${document}\n'@ | shopify app security record --path 'C:\\Users\\O''Brien\\my app'`,
+    )
+  })
+
+  test('has no inline form for cmd.exe', () => {
+    const {record} = resolveAppSecurityCommands('C:\\Users\\my app')
+
+    expect(formatAppSecurityInlineStdinCommand(record, document, 'cmd')).toBeUndefined()
   })
 })

@@ -8,10 +8,13 @@ type AppSecurityArgument = string | {flag: string; value: string}
 export interface AppSecurityCommand {
   command: string
   args: AppSecurityArgument[]
+  /** A placeholder for the file piped to the command's stdin. It's shown unquoted so it reads as a placeholder. */
+  stdinPlaceholder?: string
 }
 
 export interface AppSecurityCommands {
   scan: AppSecurityCommand
+  record: AppSecurityCommand
   clean: AppSecurityCommand
 }
 
@@ -22,13 +25,18 @@ export function resolveAppSecurityCommands(
   ignorePatterns: ReadonlyArray<string> = [],
 ): AppSecurityCommands {
   const configFlag = configFileName ? getAppConfigurationShorthand(configFileName) : undefined
+  const command = 'shopify'
+  // Only check reads the app configuration and discovers files, so it's the only command that takes --config or --ignore.
+  const subcommandArgs = (subcommand: string): AppSecurityArgument[] => [
+    'app',
+    'security',
+    subcommand,
+    {flag: '--path', value: appRoot},
+  ]
   const scan: AppSecurityCommand = {
-    command: 'shopify',
+    command,
     args: [
-      'app',
-      'security',
-      'check',
-      {flag: '--path', value: appRoot},
+      ...subcommandArgs('check'),
       ...(configFlag ? [{flag: '--config', value: configFlag}] : []),
       ...ignorePatterns.map((ignorePattern) => ({flag: '--ignore', value: ignorePattern})),
     ],
@@ -36,6 +44,7 @@ export function resolveAppSecurityCommands(
 
   return {
     scan,
+    record: {command, args: subcommandArgs('record'), stdinPlaceholder: '<findings.json>'},
     clean: {
       command: scan.command,
       args: [...scan.args, '--clean'],
@@ -87,10 +96,38 @@ function quoteCmdSegment(part: string): string {
   return `"${escapedQuotes}${trailingBackslashes}"`
 }
 
+/**
+ * Renders a command for the given shell. A command that reads stdin is shown reading its placeholder file:
+ * redirected with `<` in POSIX shells and cmd.exe, and piped from `Get-Content -Raw` in PowerShell,
+ * which has no `<` redirection.
+ */
 export function formatAppSecurityCommand(
   action: AppSecurityCommand,
   shell: AppSecurityShell = shellForPlatform(),
 ): string {
+  const commandLine = formatCommandLine(action, shell)
+  if (!action.stdinPlaceholder) return commandLine
+  if (shell === 'powershell') return `Get-Content -Raw ${action.stdinPlaceholder} | ${commandLine}`
+  return `${commandLine} < ${action.stdinPlaceholder}`
+}
+
+/**
+ * Renders a command that reads `document` inline from stdin: a quoted heredoc in POSIX shells and a
+ * literal here-string in PowerShell. Both keep the shell from expanding anything inside the document.
+ * Returns undefined for cmd.exe, which can't pipe multi-line text inline.
+ */
+export function formatAppSecurityInlineStdinCommand(
+  action: AppSecurityCommand,
+  document: string,
+  shell: AppSecurityShell = shellForPlatform(),
+): string | undefined {
+  const commandLine = formatCommandLine(action, shell)
+  if (shell === 'posix') return `${commandLine} <<'EOF'\n${document}\nEOF`
+  if (shell === 'powershell') return `@'\n${document}\n'@ | ${commandLine}`
+  return undefined
+}
+
+function formatCommandLine(action: AppSecurityCommand, shell: AppSecurityShell): string {
   const words = action.args.map((argument) =>
     typeof argument === 'string' ? argument : `${argument.flag} ${quoteShellArgument(argument.value, shell)}`,
   )

@@ -271,7 +271,7 @@ describe('repository discovery exclusions', () => {
     await writeFiles(root, {
       '.shopify/app-security/deterministic-findings.json': '{"changed":true}',
       '.shopify/app-security/agent-checks.json': '{"changed":true}',
-      '.shopify/app-security/findings.json': '{"changed":true}',
+      '.shopify/app-security/agent-findings.json': '{"changed":true}',
     })
     const after = await scan(root)
 

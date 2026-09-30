@@ -153,6 +153,9 @@ export interface ScanMetadata {
 
 export const DETERMINISTIC_FINDINGS_SCHEMA_VERSION = 1 as const
 export const AGENT_CHECKS_SCHEMA_VERSION = 1 as const
+/** Schema version of the findings document an agent pipes to `app security record`. */
+export const RECORD_INPUT_SCHEMA_VERSION = 1 as const
+export const AGENT_FINDINGS_SCHEMA_VERSION = 1 as const
 export const ENGINE_NAME = 'shopify-app-security' as const
 
 export interface FindingEvidence {
@@ -202,4 +205,62 @@ export interface DeterministicFindingsDocument {
     files_skipped: SkippedFile[]
     gaps: CoverageGap[]
   }
+}
+
+export type AgentCheckStatus = Extract<CheckExecutionStatus, 'executed' | 'not_applicable' | 'unresolved'>
+
+/** Why an agent check is unresolved or not applicable, in the agent's words (redacted). */
+export interface AgentCheckReason {
+  code: string
+  message: string
+}
+
+export interface AgentFindingEvidence {
+  file: string
+  line?: number
+  quote?: string
+}
+
+/** One agent finding as stored in agent-findings.json. All text is redacted. */
+export interface AgentFindingsFinding {
+  file: string
+  line: number
+  message: string
+  evidence: AgentFindingEvidence[]
+  snippet?: string
+  confidence?: 'high' | 'medium' | 'low'
+  reasoning?: string
+  suppression?: {justification: string}
+}
+
+/** Check metadata copied when `record` runs, so the artifact never needs the current catalog to be displayed. */
+export interface AgentCheckSnapshot {
+  title: string
+  severity: Severity
+  description: string
+  guide?: string
+  /** The check's version in the catalog at record time. The agent's claimed version is `AgentFindingsCheck.version`. */
+  current_version: number
+}
+
+export interface AgentFindingsCheck {
+  id: string
+  /** The version the agent claimed. Never compared with the catalog. */
+  version: number
+  status: AgentCheckStatus
+  reason?: AgentCheckReason
+  snapshot: AgentCheckSnapshot
+  findings: AgentFindingsFinding[]
+}
+
+/** agent-findings.json: the validated agentic results written by `app security record`. */
+export interface AgentFindingsArtifact {
+  schema_version: typeof AGENT_FINDINGS_SCHEMA_VERSION
+  engine: {
+    name: typeof ENGINE_NAME
+    version: string
+  }
+  recorded_at: string
+  project: ProjectState
+  checks: AgentFindingsCheck[]
 }

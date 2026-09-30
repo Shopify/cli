@@ -1,12 +1,12 @@
 import {EMBEDDED_APP_SECURITY_INSTRUCTIONS} from './checks/embedded.js'
 import {buildAgentChecks, type AgentChecks} from './checks/index.js'
 import {AppRootDiscoveryError, findAppRoot} from './scanners/discover.js'
-import {scan} from './scanners/index.js'
+import {readProjectState, scan} from './scanners/index.js'
 import {buildDeterministicFindings} from './scan-artifact/index.js'
 import {getEngineVersion} from './version.js'
 import type {DeterministicFindingsDocument, ScanOptions, ScanResult} from './types.js'
 
-export {AppRootDiscoveryError, findAppRoot}
+export {AppRootDiscoveryError, findAppRoot, getEngineVersion, readProjectState}
 
 export interface AppSecurityEngineMetadata {
   name: string

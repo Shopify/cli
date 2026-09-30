@@ -125,6 +125,7 @@ describe('app security check command', () => {
     expect(SecurityCheck.flags.clean.description).toBe('Discard the current local review and start a new scan.')
     expect(SecurityCheck.flags.yes.exclusive).toEqual(['skip-instructions'])
     expect(SecurityCheck.flags['skip-instructions'].exclusive).toEqual(['yes'])
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('`shopify app security record`')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('copy the coding-agent instructions')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('`--config`')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('copying is the default')

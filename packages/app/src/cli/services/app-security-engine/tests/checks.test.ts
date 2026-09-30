@@ -1,9 +1,9 @@
-import {loadChecks, buildAgentChecks} from '../checks/index.js'
+import {loadChecks, buildAgentChecks, validateFinding, validateAgentChecksExecuted} from '../checks/index.js'
 import {EMBEDDED_CHECK_SOURCES} from '../checks/embedded.js'
 import {describe, expect, test} from 'vitest'
 import {readFileSync, readdirSync} from 'node:fs'
 
-// These IDs are consumed by agent checks; changes must be intentional.
+// These IDs are consumed by agent checks and agent findings; changes must be intentional.
 const EXPECTED_CHECK_IDS = [
   'ACTIVE_UPLOADS_AND_PRIVILEGED_PREVIEWS',
   'APP_PROXY_LIQUID_INJECTION',
@@ -42,6 +42,24 @@ const EXPECTED_CHECK_IDS = [
   'WEAK_SHOP_VALIDATION',
 ]
 
+const validFinding = {
+  check_id: 'MISSING_TENANT_ISOLATION',
+  check_version: 1,
+  file: 'app/controllers/orders_controller.rb',
+  line: 42,
+  message: 'Query not scoped to current shop',
+  snippet: 'Product.where(id: params[:id])',
+  evidence: [
+    {
+      file: 'app/controllers/orders_controller.rb',
+      line: 42,
+      quote: 'Product.where(id: params[:id])',
+    },
+  ],
+  confidence: 'high',
+  reasoning: 'No before_action scopes by shop_id',
+}
+
 describe('check loading', () => {
   test('keeps the generated prompt sources in exact parity with markdown', () => {
     const checksDir = new URL('../checks/', import.meta.url)
@@ -71,9 +89,38 @@ describe('agent checks', () => {
     expect(agentChecks.checks.map((check) => check.id).sort()).toEqual(EXPECTED_CHECK_IDS)
   })
 
+  test('gives each check only its id, version, severity, and prompt', () => {
+    const agentChecks = buildAgentChecks('0.1.0')
+    const tenant = loadChecks().get('MISSING_TENANT_ISOLATION')!
+
+    expect(Object.keys(agentChecks).sort()).toEqual([
+      'checks',
+      'engine',
+      'generated_at',
+      'instructions',
+      'schema_version',
+    ])
+    expect(agentChecks.engine).toEqual({name: 'shopify-app-security', version: '0.1.0'})
+    expect(agentChecks.checks.find((check) => check.id === tenant.id)).toEqual({
+      id: tenant.id,
+      version: tenant.version,
+      severity: tenant.severity,
+      prompt: tenant.prompt,
+    })
+  })
+
   test('instructions tell the agent to explore and find, not adjudicate', () => {
     const agentChecks = buildAgentChecks('0.1.0')
     expect(agentChecks.instructions).toMatch(/explore|find/i)
+    expect(agentChecks.instructions).toMatch(/findings/i)
+  })
+
+  test('instructions tell the agent to pipe one findings document to record', () => {
+    const {instructions} = buildAgentChecks('0.1.0')
+    expect(instructions).toContain('ONE findings document')
+    expect(instructions).toContain('shopify app security record')
+    expect(instructions).toContain('check_version')
+    expect(instructions).not.toMatch(/source_scan_id|prompt_hash|inspected_files|--findings/)
   })
 
   test('instructions require concrete trust-boundary evidence before reporting findings', () => {
@@ -106,5 +153,117 @@ describe('agent checks', () => {
     expect(checks.get('ACTIVE_UPLOADS_AND_PRIVILEGED_PREVIEWS')!.prompt).not.toContain(
       'clearly unsafe serving configuration',
     )
+  })
+})
+
+describe('finding validation', () => {
+  test('rejects a finding with no evidence', () => {
+    expect(validateFinding({...validFinding, evidence: []})).toMatch(/evidence/)
+  })
+
+  test('rejects a finding missing required fields', () => {
+    expect(validateFinding({...validFinding, file: ''})).toMatch(/file/)
+    expect(validateFinding({...validFinding, line: undefined})).toMatch(/line/)
+    expect(validateFinding({...validFinding, line: 0})).toMatch(/line/)
+    expect(validateFinding({...validFinding, message: ''})).toMatch(/message/)
+    expect(validateFinding({...validFinding, check_version: 0})).toMatch(/check_version/)
+    expect(validateFinding({...validFinding, check_version: 1.5})).toMatch(/check_version/)
+  })
+
+  test('accepts a well-formed finding with evidence and no prompt_hash', () => {
+    expect(validateFinding(validFinding)).toBeUndefined()
+  })
+
+  test('accepts a suppression with a justification and rejects one without', () => {
+    expect(validateFinding({...validFinding, suppression: {justification: 'Scoped by middleware'}})).toBeUndefined()
+    expect(validateFinding({...validFinding, suppression: {justification: ' '}})).toMatch(/justification/)
+    expect(validateFinding({...validFinding, suppression: 'accepted risk'})).toMatch(/justification/)
+  })
+
+  test.each([
+    ['object file', {...validFinding, file: {path: 'app/a.ts'}}],
+    ['array message', {...validFinding, message: ['not a string']}],
+    ['object snippet', {...validFinding, snippet: {text: 'not a string'}}],
+    ['object reasoning', {...validFinding, reasoning: {text: 'not a string'}}],
+    ['unknown confidence', {...validFinding, confidence: 'certain'}],
+    ['null evidence', {...validFinding, evidence: [null]}],
+    ['object evidence file', {...validFinding, evidence: [{file: {path: 'app/a.ts'}}]}],
+    ['string evidence line', {...validFinding, evidence: [{file: 'app/a.ts', line: '1'}]}],
+    ['object evidence quote', {...validFinding, evidence: [{file: 'app/a.ts', quote: {text: 'quote'}}]}],
+  ])('rejects malformed JSON field types without throwing: %s', (_name, malformed) => {
+    expect(() => validateFinding(malformed)).not.toThrow()
+    expect(validateFinding(malformed)).toBeDefined()
+  })
+
+  test('rejects unsafe file and evidence paths and lines', () => {
+    expect(validateFinding({...validFinding, file: '../outside.ts'})).toMatch(/unsafe file path/)
+    expect(validateFinding({...validFinding, file: 'C:\\app\\a.ts'})).toMatch(/unsafe file path/)
+    expect(validateFinding({...validFinding, evidence: [{file: '../secret', line: 1}]})).toMatch(/unsafe evidence/)
+    expect(validateFinding({...validFinding, evidence: [{file: '/etc/passwd', line: 1}]})).toMatch(/unsafe evidence/)
+    expect(validateFinding({...validFinding, evidence: [{file: 'app/a.ts', line: 0}]})).toMatch(/evidence line/)
+  })
+
+  test('caps agent-supplied text and evidence', () => {
+    expect(validateFinding({...validFinding, message: 'x'.repeat(4_001)})).toMatch(/message exceeds/)
+    expect(validateFinding({...validFinding, file: `app/${'x'.repeat(1_024)}`})).toMatch(/file path exceeds/)
+    expect(
+      validateFinding({...validFinding, evidence: Array.from({length: 51}, () => ({file: 'app/a.ts', line: 1}))}),
+    ).toMatch(/evidence citations/)
+  })
+})
+
+describe('executed check validation', () => {
+  const tenant = loadChecks().get('MISSING_TENANT_ISOLATION')!
+
+  test('records zero-finding checks and rejects duplicate and unknown entries', () => {
+    const valid = {check_id: tenant.id, check_version: tenant.version, status: 'executed'}
+    const result = validateAgentChecksExecuted([valid, valid, {...valid, check_id: 'UNKNOWN'}], [])
+
+    expect(result.reports).toEqual([{check_id: tenant.id, check_version: tenant.version, status: 'executed'}])
+    expect(result.errors).toEqual([
+      `checks_executed[1] (${tenant.id}): duplicate check_id in checks_executed`,
+      'checks_executed[2] (UNKNOWN): unknown check_id',
+    ])
+  })
+
+  test('keeps the claimed check_version without comparing it with the catalog', () => {
+    const result = validateAgentChecksExecuted([{check_id: tenant.id, check_version: tenant.version + 7}], [])
+
+    expect(result.errors).toEqual([])
+    expect(result.reports).toEqual([{check_id: tenant.id, check_version: tenant.version + 7, status: 'executed'}])
+  })
+
+  test('requires a reason for unresolved and not_applicable checks, but no guidance', () => {
+    const reason = {code: 'no_relevant_files', message: 'No data access layer'}
+    const result = validateAgentChecksExecuted(
+      [
+        {check_id: tenant.id, check_version: 1, status: 'unresolved'},
+        {check_id: 'OPEN_REDIRECT', check_version: 1, status: 'not_applicable'},
+        {check_id: 'CSRF_MISSING_PROTECTION', check_version: 1, status: 'not_applicable', reason},
+        {check_id: 'SSRF_REQUEST_FORGERY', check_version: 1, status: 'passed'},
+        {check_id: 'UNSAFE_INNERHTML', check_version: 1, status: 'unresolved', reason: {code: 'x'}},
+      ],
+      [],
+    )
+
+    expect(result.reports).toEqual([
+      {check_id: 'CSRF_MISSING_PROTECTION', check_version: 1, status: 'not_applicable', reason},
+    ])
+    expect(result.errors).toEqual([
+      `checks_executed[0] (${tenant.id}): unresolved requires a reason`,
+      'checks_executed[1] (OPEN_REDIRECT): not_applicable requires a reason',
+      'checks_executed[3] (SSRF_REQUEST_FORGERY): status must be executed, not_applicable, or unresolved',
+      'checks_executed[4] (UNSAFE_INNERHTML): reason requires a code and message',
+    ])
+  })
+
+  test('rejects a not_applicable check that has findings', () => {
+    const result = validateAgentChecksExecuted(
+      [{check_id: tenant.id, check_version: 1, status: 'not_applicable', reason: {code: 'n/a', message: 'None'}}],
+      [validFinding],
+    )
+
+    expect(result.reports).toEqual([])
+    expect(result.errors).toEqual([`checks_executed[0] (${tenant.id}): a not_applicable check can't have findings`])
   })
 })

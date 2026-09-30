@@ -1,3 +1,4 @@
+import {formatAppSecurityCommand, type AppSecurityCommands} from './app-security-commands.js'
 import {
   groupIssues,
   type Capabilities,
@@ -7,7 +8,6 @@ import {
   type Severity,
 } from './app-security-engine/index.js'
 import {renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
-import type {AppSecurityCommands} from './app-security-commands.js'
 import type {AlertCustomSection, InlineToken, RenderAlertOptions, Token, TokenItem} from '@shopify/cli-kit/node/ui'
 
 interface SecurityEngineMetadata {
@@ -23,8 +23,8 @@ export interface SecurityReportInput {
   elapsedMilliseconds: number
   commands: AppSecurityCommands
   deterministicFindingsPath: string
-  agentChecksPath?: string
-  agentCheckCount?: number
+  agentChecksPath: string
+  agentCheckCount: number
 }
 
 type SecurityAlertType = 'success' | 'warning' | 'error'
@@ -111,13 +111,18 @@ function securityBody(input: SecurityReportInput): TokenItem {
     tokens.push({info: `\n${notApplicable} check${notApplicable === 1 ? '' : 's'} not applicable.`})
   }
 
-  if (input.agentCheckCount !== undefined) {
-    tokens.push({
-      info: `\n${input.agentCheckCount} check${input.agentCheckCount === 1 ? '' : 's'} ready for your coding agent.`,
-    })
-  }
+  tokens.push({
+    info: `\n${input.agentCheckCount} check${input.agentCheckCount === 1 ? '' : 's'} ready for your coding agent.`,
+  })
 
   return tokens
+}
+
+function securityNextSteps(input: SecurityReportInput): TokenItem<InlineToken>[] {
+  return [
+    ['Have your coding agent read', {filePath: input.agentChecksPath}],
+    ['Record the agent results with', {command: formatAppSecurityCommand(input.commands.record)}],
+  ]
 }
 
 function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]): AlertCustomSection[] {
@@ -148,19 +153,22 @@ function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]
     sections.push({title: 'Coverage gaps', body: {list: {items}}})
   }
 
-  if (input.agentChecksPath) {
-    sections.push({
-      title: 'Artifacts',
-      body: {
-        list: {
-          items: [
-            ['Scan results:', {filePath: input.deterministicFindingsPath}],
-            ['Agent checks:', {filePath: input.agentChecksPath}],
-          ],
-        },
+  sections.push({
+    title: 'Artifacts',
+    body: {
+      list: {
+        items: [
+          ['Scan results:', {filePath: input.deterministicFindingsPath}],
+          ['Agent checks:', {filePath: input.agentChecksPath}],
+        ],
       },
-    })
-  }
+    },
+  })
+
+  sections.push({
+    title: 'Next steps',
+    body: {list: {items: securityNextSteps(input), ordered: true}},
+  })
 
   if (input.verbose) {
     sections.push({
