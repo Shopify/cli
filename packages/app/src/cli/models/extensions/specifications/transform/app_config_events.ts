@@ -86,7 +86,10 @@ export function transformToEventsConfig(content: object, options?: RemoteToLocal
   if (Array.isArray(subscription)) {
     cleanedSubscriptions = subscription.map(clean)
   } else if (subscription) {
-    const handle = subscription.handle ?? options?.handle ?? handleFromSubscriptionData(subscription)
+    // The platform treats the module handle as the subscription's identity: the runtime, the uid
+    // and the identifier are all derived from it, and a nested handle is rejected on write. A
+    // nested handle only survives on older versions, so it must not win over the module handle.
+    const handle = options?.handle ?? subscription.handle ?? handleFromSubscriptionData(subscription)
     cleanedSubscriptions = [clean({...subscription, handle})]
   }
 

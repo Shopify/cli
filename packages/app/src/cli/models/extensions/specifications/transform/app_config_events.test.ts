@@ -434,10 +434,20 @@ describe('transformToEventsConfig', () => {
     })
   })
 
-  test('prefers the subscription handle over the module handle', () => {
+  test('prefers the module handle over a legacy subscription handle', () => {
     const remoteContent = {events: {subscription: {topic: 'orders', actions: ['create'], handle: 'from-config'}}}
 
     const result = transformToEventsConfig(remoteContent, {handle: 'from-module'})
+
+    expect(result).toEqual({
+      events: {subscription: [{topic: 'orders', actions: ['create'], handle: 'from-module'}]},
+    })
+  })
+
+  test('falls back to the subscription handle when no module handle is given', () => {
+    const remoteContent = {events: {subscription: {topic: 'orders', actions: ['create'], handle: 'from-config'}}}
+
+    const result = transformToEventsConfig(remoteContent)
 
     expect(result).toEqual({
       events: {subscription: [{topic: 'orders', actions: ['create'], handle: 'from-config'}]},
