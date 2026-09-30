@@ -2267,14 +2267,6 @@ describe('load', () => {
   })
 
   describe('event subscription modules', () => {
-    beforeEach(() => {
-      vi.stubEnv('SHOPIFY_CLI_EVENTS_SUBSCRIPTION_FANOUT', undefined)
-    })
-
-    afterEach(() => {
-      vi.unstubAllEnvs()
-    })
-
     const eventsConfiguration = `
       [events]
       api_version = "2024-01"
@@ -2293,12 +2285,10 @@ describe('load', () => {
       uri = "https://example.com/events/products"
     `
 
-    test.each(['environment', 'organization'] as const)('expands subscriptions with the %s opt-in', async (optIn) => {
+    test('expands subscriptions when the organization flag is enabled', async () => {
       await writeConfig(buildAppConfiguration({extra: eventsConfiguration}))
-      if (optIn === 'environment') vi.stubEnv('SHOPIFY_CLI_EVENTS_SUBSCRIPTION_FANOUT', '1')
-      const remoteFlags = optIn === 'organization' ? [Flag.SingleSubscriptionEventsModules] : []
 
-      const app = await loadTestingApp({remoteFlags})
+      const app = await loadTestingApp({remoteFlags: [Flag.SingleSubscriptionEventsModules]})
       const extensions = app.allExtensions.filter((extension) => extension.specification.identifier === 'events')
 
       expect(app.errors.isEmpty()).toBe(true)

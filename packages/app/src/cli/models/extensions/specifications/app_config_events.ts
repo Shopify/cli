@@ -2,7 +2,6 @@ import {transformToEventsConfig, transformFromEventsConfig} from './transform/ap
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {BaseSchemaWithHandle, BaseSchemaWithoutHandle} from '../schemas.js'
 import {Flag} from '../../../utilities/developer-platform-client.js'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export const EventsSpecIdentifier = 'events'
@@ -46,11 +45,8 @@ const appEventsSpec = createConfigExtensionSpecification({
   schema: EventsSchema,
   transformConfig: EventsTransformConfig,
   expandConfig: (config, {flags}) => {
-    const enabled =
-      flags.includes(Flag.SingleSubscriptionEventsModules) ||
-      isTruthy(process.env.SHOPIFY_CLI_EVENTS_SUBSCRIPTION_FANOUT)
     const subscriptions = config.events?.subscription
-    if (!enabled || !Array.isArray(subscriptions)) return [config]
+    if (!flags.includes(Flag.SingleSubscriptionEventsModules) || !Array.isArray(subscriptions)) return [config]
 
     return subscriptions.map((subscription) => ({events: {...config.events, subscription}}))
   },

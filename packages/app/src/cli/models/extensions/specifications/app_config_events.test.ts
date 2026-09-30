@@ -1,12 +1,8 @@
 import appEventsSpec from './app_config_events.js'
 import {Flag} from '../../../utilities/developer-platform-client.js'
-import {describe, expect, test, vi, afterEach} from 'vitest'
+import {describe, expect, test} from 'vitest'
 
 const flags = [Flag.SingleSubscriptionEventsModules]
-
-afterEach(() => {
-  vi.unstubAllEnvs()
-})
 
 describe('event module configuration', () => {
   test('preserves unknown event fields and does not change the input', () => {
@@ -29,8 +25,7 @@ describe('event module configuration', () => {
     expect(config).toEqual(original)
   })
 
-  test('retains the legacy configuration when neither opt-in is enabled', () => {
-    vi.stubEnv('SHOPIFY_CLI_EVENTS_SUBSCRIPTION_FANOUT', '0')
+  test('retains the legacy configuration when the flag is disabled', () => {
     const config = {events: {subscription: [{topic: 'orders/create'}]}}
 
     expect(appEventsSpec.expandConfig!(config, {flags: []})).toEqual([config])

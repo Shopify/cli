@@ -1551,7 +1551,7 @@ describe('AppManagementClient', () => {
           organizationId: '123',
           variables: {
             organizationId: encodedGidFromOrganizationIdForBP('123'),
-            flagHandles: ['f_single_subscription_events_modules_cli'],
+            flagHandles: ['f_single_subscription_events_modules'],
           },
         }),
       )

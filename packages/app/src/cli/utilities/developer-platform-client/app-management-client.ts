@@ -172,7 +172,7 @@ import {webhooksRequestDoc, WebhooksRequestOptions} from '@shopify/cli-kit/node/
 import {randomUUID} from 'crypto'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
-const SINGLE_SUBSCRIPTION_EVENTS_MODULES_EXP_FLAG = 'f_single_subscription_events_modules_cli'
+const SINGLE_SUBSCRIPTION_EVENTS_MODULES_EXP_FLAG = 'f_single_subscription_events_modules'
 const commandRunId = randomUUID()
 
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
