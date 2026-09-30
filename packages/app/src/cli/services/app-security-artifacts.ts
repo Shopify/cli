@@ -43,20 +43,9 @@ export async function writeAppSecurityArtifacts(
   execution: AppSecurityExecution,
   options: WriteAppSecurityArtifactsOptions = {},
 ): Promise<AppSecurityArtifactPaths> {
-  if (options.clean && execution.operation === 'compile') {
-    throw new AbortError(
-      "Can't clean App Security artifacts while compiling findings.",
-      'Run a scan with clean instead, or compile the findings without clean.',
-    )
-  }
-
   const paths = appSecurityArtifactPaths(execution.appRoot)
   await ensureArtifactDirectory(execution.appRoot, paths.artifactDirectory)
   await writeAtomicArtifact(paths.tracePath, `${JSON.stringify(execution.trace, null, 2)}\n`)
-  if (execution.operation !== 'scan') {
-    return {artifactDirectory: paths.artifactDirectory, tracePath: paths.tracePath}
-  }
-
   await writeAtomicArtifact(paths.reviewPath, `${JSON.stringify(execution.reviewPack, null, 2)}\n`)
   if (options.clean) {
     await removeStaleArtifact(paths.findingsPath)

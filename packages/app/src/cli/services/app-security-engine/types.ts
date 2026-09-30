@@ -10,19 +10,14 @@ export interface Issue {
   snippet?: string
   fix: Fix
   confidence?: Confidence
-  found_by?: 'static' | 'agent' | 'external'
   rule_version?: number
   evidence?: FindingEvidence[]
-  check_version?: number
-  prompt_hash?: string
-  agent_confidence?: 'high' | 'medium' | 'low'
-  agent_reasoning?: string
   detection_evidence?: string[]
 }
 
 export type Severity = 'high' | 'medium' | 'low'
 
-export type Confidence = 'definite' | 'needs_review' | 'agentic'
+export type Confidence = 'definite' | 'needs_review'
 
 export interface Location {
   file: string
@@ -100,9 +95,9 @@ export interface SkippedFile {
   detail?: string
 }
 
-export type CheckExecutionKind = 'deterministic' | 'agent' | 'external'
+export type CheckExecutionKind = 'deterministic'
 export type CheckExecutionStatus = 'executed' | 'not_applicable' | 'unsupported_framework' | 'unresolved'
-export type AnalysisMode = 'regex' | 'structured_config' | 'ast' | 'agent' | 'external'
+export type AnalysisMode = 'regex' | 'structured_config' | 'ast'
 
 export type CheckExecutionReasonCode =
   | 'capability_absent'
@@ -111,7 +106,6 @@ export type CheckExecutionReasonCode =
   | 'unsupported_language'
   | 'parser_unavailable'
   | 'agent_investigation_required'
-  | 'not_reported'
   | 'input_rejected'
 
 export interface CheckExecutionReason {
@@ -144,10 +138,8 @@ export interface CheckExecution {
   findings: number
   analysis_mode: AnalysisMode
   reason?: CheckExecutionReason
-  /** Exact semantic prompt and handoff guidance for agent implementations. */
-  prompt?: string
+  /** Handoff guidance for checks that were unsupported or unresolved. */
   guidance?: string
-  prompt_hash?: string
   /** Deterministic runner provenance when one product check has multiple implementations. */
   implementations?: CheckImplementationExecution[]
 }
@@ -169,9 +161,6 @@ export interface ScanMetadata {
   files_skipped?: SkippedFile[]
   coverage_complete: boolean
   coverage_gaps: CoverageGap[]
-  input_hash: string
-  result_hash: string
-  file_hashes?: Record<string, string>
   checks_executed: CheckExecution[]
 }
 
@@ -180,34 +169,14 @@ export const FINDINGS_SCHEMA_VERSION = 1 as const
 export const SUPPORTED_TRACE_SCHEMA_VERSIONS = [TRACE_SCHEMA_VERSION] as const
 export const ENGINE_NAME = 'shopify-app-security' as const
 
-export type FindingSource = 'deterministic' | 'agent' | 'external'
-
 export interface FindingEvidence {
   location: Location
   quote?: string
 }
 
-export interface SuppressionProvenance {
-  source: 'human' | 'policy' | 'external'
-  actor?: string
-  created_at: string
-}
-
-export interface Suppression {
-  id: string
-  finding_fingerprint: string
-  justification: string
-  provenance: SuppressionProvenance
-}
-
 export interface TraceFinding {
-  fingerprint: string
-  source: FindingSource
-  rule_id?: string
-  rule_version?: number
-  check_id?: string
-  check_version?: number
-  prompt_hash?: string
+  rule_id: string
+  rule_version: number
   severity: Severity
   title: string
   message: string
@@ -215,12 +184,6 @@ export interface TraceFinding {
   evidence: FindingEvidence[]
   snippet?: string
   fix: Fix
-  suppressed: boolean
-  suppression?: {
-    id: string
-    justification: string
-    provenance: SuppressionProvenance
-  }
 }
 
 export interface TraceV3 {
@@ -234,21 +197,14 @@ export interface TraceV3 {
   project: {
     commit: string | null
     dirty: boolean | null
-    input_hash: string
-    input_hashes: Record<string, string>
   }
   detection: ProjectDetection
   findings: TraceFinding[]
   checks_executed: CheckExecution[]
-  suppressions: Suppression[]
   coverage: {
     files_scanned: number
     files_skipped: SkippedFile[]
     complete: boolean
     gaps: CoverageGap[]
-  }
-  attestation: {
-    digest: string
-    signed: false
   }
 }

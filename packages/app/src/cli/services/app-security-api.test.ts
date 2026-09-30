@@ -1,14 +1,13 @@
 import {
   securityExitCode,
   executeAppSecurity,
-  loadAppSecurityFindings,
   resolveAppSecurityRoot,
   type AppSecurityBlockingLevel,
 } from './app-security-api.js'
-import {appSecurityArtifactPaths, readTrace, writeAppSecurityArtifacts} from './app-security-artifacts.js'
+import {writeAppSecurityArtifacts} from './app-security-artifacts.js'
 import securityCheck from './security-check.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExists, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
 import {symlink} from 'node:fs/promises'
@@ -17,10 +16,9 @@ function artifactPath(directory: string, name: string): string {
   return joinPath(directory, '.shopify', 'app-security', name)
 }
 
-async function runSecurity(options: {directory: string; blocking: AppSecurityBlockingLevel; findingsPath?: string}) {
+async function runSecurity(options: {directory: string; blocking: AppSecurityBlockingLevel}) {
   const appRoot = resolveAppSecurityRoot(options.directory)
-  const findings = options.findingsPath ? await loadAppSecurityFindings(options.findingsPath) : undefined
-  const execution = await executeAppSecurity({appRoot, findings})
+  const execution = await executeAppSecurity({appRoot})
   const artifacts = await writeAppSecurityArtifacts(execution)
   return {
     execution,
@@ -28,9 +26,8 @@ async function runSecurity(options: {directory: string; blocking: AppSecurityBlo
     exitCode: securityExitCode(execution, options.blocking),
     engine: execution.engine,
     reviewPath: artifacts.reviewPath,
-    reviewCheckCount: execution.operation === 'scan' ? execution.reviewPack.checks.length : undefined,
-    jsonReport: execution.operation === 'compile' ? execution.trace : execution.scan,
-    findings: execution.operation === 'compile' ? execution.findings : undefined,
+    reviewCheckCount: execution.reviewPack.checks.length,
+    jsonReport: execution.scan,
   }
 }
 
@@ -48,38 +45,6 @@ async function createApp(directory: string, source = 'export const loader = () =
   return sourcePath
 }
 
-async function sourceScanId(directory: string): Promise<string> {
-  const execution = await executeAppSecurity({appRoot: resolveAppSecurityRoot(directory)})
-  return execution.scan.scan.input_hash
-}
-
-async function reviewCheck(directory: string, id: string) {
-  const execution = await executeAppSecurity({appRoot: resolveAppSecurityRoot(directory)})
-  if (execution.operation !== 'scan') throw new Error('Expected a scan result')
-  const check = execution.reviewPack.checks.find((entry) => entry.id === id)
-  if (!check) throw new Error(`Missing review pack check ${id}`)
-  return {check, sourceScanId: execution.scan.scan.input_hash}
-}
-
-async function appFindingsPath(directory: string): Promise<string> {
-  const path = artifactPath(directory, 'findings.json')
-  await mkdir(joinPath(directory, '.shopify', 'app-security'))
-  return path
-}
-
-function suppressionFor(fingerprint: string) {
-  return {
-    id: 'accepted-risk',
-    finding_fingerprint: fingerprint,
-    justification: 'Accepted during migration',
-    provenance: {
-      source: 'human',
-      actor: 'security@example.com',
-      created_at: '2026-08-28T00:00:00.000Z',
-    },
-  }
-}
-
 describe('App Security CLI integration', () => {
   test('runs the in-tree engine and writes the review pack and trace', async () => {
     await inTemporaryDirectory(async (directory) => {
@@ -90,7 +55,6 @@ describe('App Security CLI integration', () => {
       const trace = JSON.parse(await readFile(artifactPath(directory, 'trace.json')))
 
       expect(review.schema_version).toBe(1)
-      expect(review.source_scan_id).toBe(result.execution.scan.scan.input_hash)
       expect(review.checks.length).toBeGreaterThan(0)
       expect(review.checks.every((check: {prompt: string}) => check.prompt.length > 0)).toBe(true)
       expect(trace.schema_version).toBe(3)
@@ -132,453 +96,17 @@ describe('App Security CLI integration', () => {
     })
   })
 
-  test('marks an execution unresolved when its submitted finding is rejected', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await createApp(directory)
-      const {check, sourceScanId: scanId} = await reviewCheck(directory, 'MISSING_TENANT_ISOLATION')
-      const findingsPath = await appFindingsPath(directory)
-      await writeFile(
-        findingsPath,
-        `${JSON.stringify({
-          schema_version: 1,
-          source_scan_id: scanId,
-          checks_executed: [
-            {
-              check_id: check.id,
-              check_version: check.version,
-              prompt_hash: check.prompt_hash,
-              status: 'executed',
-              inspected_files: ['app/routes/index.ts'],
-            },
-          ],
-          findings: [
-            {
-              check_id: check.id,
-              check_version: check.version,
-              prompt_hash: check.prompt_hash,
-              file: '../outside.ts',
-              line: 1,
-              message: 'Invalid evidence boundary.',
-              evidence: [{file: 'app/routes/index.ts', line: 1}],
-            },
-          ],
-        })}\n`,
-      )
-
-      const result = await runSecurity({
-        directory,
-        findingsPath,
-        blocking: 'none',
-      })
-      const trace = result.jsonReport as {
-        checks_executed: {kind: string; id: string; status: string; reason?: {code: string}}[]
-        coverage: {gaps: {code: string; check_id?: string}[]}
-      }
-      expect(result.exitCode).toBe(2)
-      expect(
-        trace.checks_executed.find(
-          (execution: {kind: string; id: string}) => execution.kind === 'agent' && execution.id === check.id,
-        ),
-      ).toMatchObject({status: 'unresolved', reason: {code: 'input_rejected'}})
-      expect(trace.coverage.gaps).toContainEqual(
-        expect.objectContaining({code: 'unresolved_check', check_id: check.id}),
-      )
-    })
-  })
-
-  test('returns structured rejections for malformed finding field types', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await createApp(directory)
-      const {check, sourceScanId: scanId} = await reviewCheck(directory, 'MISSING_TENANT_ISOLATION')
-      const findingsPath = await appFindingsPath(directory)
-      await writeFile(
-        findingsPath,
-        `${JSON.stringify({
-          schema_version: 1,
-          source_scan_id: scanId,
-          checks_executed: [
-            {
-              check_id: check.id,
-              check_version: check.version,
-              prompt_hash: check.prompt_hash,
-              status: 'executed',
-              inspected_files: [123],
-            },
-          ],
-          findings: [
-            {
-              check_id: check.id,
-              check_version: check.version,
-              prompt_hash: check.prompt_hash,
-              file: {},
-              line: 1,
-              message: 'Malformed location.',
-              evidence: [null],
-            },
-          ],
-        })}\n`,
-      )
-
-      const result = await runSecurity({
-        directory,
-        findingsPath,
-        blocking: 'none',
-      })
-      const trace = result.jsonReport as {coverage: {complete: boolean; gaps: {code: string; check_id?: string}[]}}
-
-      expect(result.exitCode).toBe(2)
-      expect(trace.coverage.complete).toBe(false)
-      expect(trace.coverage.gaps).toEqual(
-        expect.arrayContaining([expect.objectContaining({code: 'unresolved_check', check_id: check.id})]),
-      )
-    })
-  })
-
-  test('validates agent findings outside the app root and compiles them into the trace', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await createApp(directory)
-      const {check, sourceScanId: scanId} = await reviewCheck(directory, 'MISSING_TENANT_ISOLATION')
-      await inTemporaryDirectory(async (findingsDirectory) => {
-        const findingsPath = joinPath(findingsDirectory, 'findings.json')
-        await writeFile(
-          findingsPath,
-          `${JSON.stringify({
-            schema_version: 1,
-            source_scan_id: scanId,
-            checks_executed: [
-              {
-                check_id: check.id,
-                check_version: check.version,
-                prompt_hash: check.prompt_hash,
-                status: 'executed',
-                inspected_files: ['app/routes/index.ts'],
-              },
-            ],
-            findings: [
-              {
-                check_id: check.id,
-                check_version: check.version,
-                prompt_hash: check.prompt_hash,
-                file: 'app/routes/index.ts',
-                line: 1,
-                message: 'The query is not scoped to the current shop.',
-                evidence: [{file: 'app/routes/index.ts', line: 1, quote: 'loader'}],
-              },
-            ],
-          })}\n`,
-        )
-
-        const result = await runSecurity({
-          directory,
-          findingsPath,
-          blocking: 'none',
-        })
-        const trace = result.jsonReport as {
-          findings: {source: string; check_id: string}[]
-          checks_executed: {id: string; status: string}[]
-        }
-
-        expect(trace.findings).toEqual(
-          expect.arrayContaining([expect.objectContaining({source: 'agent', check_id: 'MISSING_TENANT_ISOLATION'})]),
-        )
-        expect(trace.checks_executed).toEqual(
-          expect.arrayContaining([expect.objectContaining({id: 'MISSING_TENANT_ISOLATION', status: 'executed'})]),
-        )
-        expect(JSON.parse(await readFile(artifactPath(directory, 'trace.json')))).toEqual(trace)
-        expect(result.exitCode).toBe(0)
-      })
-    })
-  })
-
-  test('rejects findings from a scan whose inputs have changed', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const sourcePath = await createApp(directory)
-      const initial = await executeAppSecurity({appRoot: resolveAppSecurityRoot(directory)})
-      const findingsPath = await appFindingsPath(directory)
-      await writeFile(
-        findingsPath,
-        `${JSON.stringify({
-          schema_version: 1,
-          source_scan_id: initial.scan.scan.input_hash,
-          findings: [],
-        })}\n`,
-      )
-      await writeFile(sourcePath, 'export const loader = () => ({changed: true})\n')
-
-      const result = await runSecurity({directory, findingsPath, blocking: 'none'})
-
-      expect(result.findings).toEqual({
-        accepted: 0,
-        rejected: [expect.stringContaining('does not match the current scan')],
-        warnings: [],
-      })
-      expect(result.exitCode).toBe(2)
-      expect((result.jsonReport as {findings: {source: string}[]}).findings).not.toEqual(
-        expect.arrayContaining([expect.objectContaining({source: 'agent'})]),
-      )
-    })
-  })
-
-  test('compiles findings when the compile repeats the scan --ignore patterns', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await createApp(directory)
-      await mkdir(joinPath(directory, 'generated'))
-      await writeFile(joinPath(directory, 'generated', 'client.ts'), 'export const generated = true\n')
-      const appRoot = resolveAppSecurityRoot(directory)
-      const ignorePatterns = ['generated/']
-
-      const initial = await executeAppSecurity({appRoot, ignorePatterns})
-      expect(Object.keys(initial.scan.scan.file_hashes ?? {})).not.toContain('generated/client.ts')
-      const findings = {schema_version: 1 as const, source_scan_id: initial.scan.scan.input_hash, findings: []}
-
-      const compiled = await executeAppSecurity({appRoot, findings, ignorePatterns})
-      expect(compiled.operation).toBe('compile')
-      expect(compiled.operation === 'compile' && compiled.findings.rejected).toEqual([])
-    })
-  })
-
-  test('rejects findings when the compile uses different --ignore patterns than the scan', async () => {
+  test('forwards --ignore patterns to the scan', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
       await mkdir(joinPath(directory, 'generated'))
       await writeFile(joinPath(directory, 'generated', 'client.ts'), 'export const generated = true\n')
       const appRoot = resolveAppSecurityRoot(directory)
 
-      const initial = await executeAppSecurity({appRoot, ignorePatterns: ['generated/']})
-      const findings = {schema_version: 1 as const, source_scan_id: initial.scan.scan.input_hash, findings: []}
+      const unfiltered = await executeAppSecurity({appRoot})
+      const filtered = await executeAppSecurity({appRoot, ignorePatterns: ['generated/']})
 
-      const compiled = await executeAppSecurity({appRoot, findings})
-      expect(compiled.operation === 'compile' && compiled.findings.rejected).toEqual([
-        expect.stringMatching(
-          /^Findings source scan \S+ does not match the current scan \S+; compile with the same --ignore and --config values used for the scan, since ignore patterns are not recorded in the trace\.$/,
-        ),
-      ])
-    })
-  })
-
-  test('does not apply a stale suppression whose fingerprint still matches a current finding', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const testToken = ['shpat', '0123456789abcdef0123456789abcdef'].join('_')
-      await createApp(directory, `const access_token = "${testToken}"`)
-      const initial = await executeAppSecurity({appRoot: resolveAppSecurityRoot(directory)})
-      const secretFinding = initial.trace.findings.find((finding) => finding.rule_id === 'COMMITTED_SECRET')
-      if (!secretFinding) throw new Error('Expected COMMITTED_SECRET in the initial scan')
-      const findingsPath = await appFindingsPath(directory)
-      await writeFile(
-        findingsPath,
-        `${JSON.stringify({
-          schema_version: 1,
-          source_scan_id: initial.scan.scan.input_hash,
-          findings: [],
-          suppressions: [suppressionFor(secretFinding.fingerprint)],
-        })}\n`,
-      )
-      await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Changed app"\nclient_id = "test"\n')
-
-      const result = await runSecurity({directory, findingsPath, blocking: 'none'})
-      const trace = result.jsonReport as {
-        findings: {rule_id?: string; suppressed: boolean}[]
-        suppressions: unknown[]
-      }
-      const compiledSecret = trace.findings.find((finding) => finding.rule_id === 'COMMITTED_SECRET')
-
-      expect(result.exitCode).toBe(2)
-      expect(result.findings?.rejected).toEqual([expect.stringContaining('does not match the current scan')])
-      expect(compiledSecret?.suppressed).toBe(false)
-      expect(trace.suppressions).toEqual([])
-    })
-  })
-
-  test('does not throw when a stale suppression fingerprint no longer matches', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const sourcePath = await createApp(directory)
-      const initial = await executeAppSecurity({appRoot: resolveAppSecurityRoot(directory)})
-      const findingsPath = await appFindingsPath(directory)
-      await writeFile(
-        findingsPath,
-        `${JSON.stringify({
-          schema_version: 1,
-          source_scan_id: initial.scan.scan.input_hash,
-          findings: [],
-          suppressions: [suppressionFor(`sha256:${'e'.repeat(64)}`)],
-        })}\n`,
-      )
-      await writeFile(sourcePath, 'export const loader = () => ({changed: true})\n')
-
-      const result = await runSecurity({directory, findingsPath, blocking: 'none'})
-      const trace = result.jsonReport as {suppressions: unknown[]}
-
-      expect(result.exitCode).toBe(2)
-      expect(result.findings?.rejected).toEqual([expect.stringContaining('does not match the current scan')])
-      expect(trace.suppressions).toEqual([])
-    })
-  })
-
-  test('keeps a check when inspected_files includes extra relative paths', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await createApp(directory)
-      const {check, sourceScanId: scanId} = await reviewCheck(directory, 'MISSING_TENANT_ISOLATION')
-      const findingsPath = await appFindingsPath(directory)
-      await writeFile(
-        findingsPath,
-        `${JSON.stringify({
-          schema_version: 1,
-          source_scan_id: scanId,
-          checks_executed: [
-            {
-              check_id: check.id,
-              check_version: check.version,
-              prompt_hash: check.prompt_hash,
-              status: 'executed',
-              inspected_files: ['app/routes/index.ts', 'tests/app.test.ts', 'vitest.config.ts'],
-            },
-          ],
-          findings: [],
-        })}\n`,
-      )
-
-      const result = await runSecurity({
-        directory,
-        findingsPath,
-        blocking: 'none',
-      })
-      const trace = result.jsonReport as {
-        checks_executed: {id: string; kind: string; status: string; inspected_files: string[]}[]
-      }
-      const execution = trace.checks_executed.find(
-        (entry) => entry.kind === 'agent' && entry.id === 'MISSING_TENANT_ISOLATION',
-      )
-
-      expect(result.exitCode).toBe(0)
-      expect(result.findings).toEqual({
-        accepted: 0,
-        rejected: [],
-        warnings: [
-          `${check.id}: ignored inspected file outside the scanned inputs: tests/app.test.ts`,
-          `${check.id}: ignored inspected file outside the scanned inputs: vitest.config.ts`,
-        ],
-      })
-      expect(execution).toMatchObject({
-        id: 'MISSING_TENANT_ISOLATION',
-        status: 'executed',
-        inspected_files: ['app/routes/index.ts'],
-      })
-    })
-  })
-
-  test('rejects a missing findings file', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await createApp(directory)
-      const findingsPath = joinPath(directory, 'missing-findings.json')
-
-      await expect(runSecurity({directory, findingsPath, blocking: 'none'})).rejects.toBeInstanceOf(AbortError)
-      await expect(runSecurity({directory, findingsPath, blocking: 'none'})).rejects.toThrow(
-        `Could not read App Security findings from ${findingsPath}.`,
-      )
-    })
-  })
-
-  test('rejects an unreadable findings path', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await createApp(directory)
-      const findingsPath = joinPath(directory, 'findings-dir')
-      await mkdir(findingsPath)
-
-      await expect(runSecurity({directory, findingsPath, blocking: 'none'})).rejects.toBeInstanceOf(AbortError)
-      await expect(runSecurity({directory, findingsPath, blocking: 'none'})).rejects.toThrow(
-        `Could not read App Security findings from ${findingsPath}.`,
-      )
-    })
-  })
-
-  test('rejects invalid JSON findings', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await createApp(directory)
-      const findingsPath = joinPath(directory, 'findings.json')
-      await writeFile(findingsPath, '{')
-
-      await expect(runSecurity({directory, findingsPath, blocking: 'none'})).rejects.toBeInstanceOf(AbortError)
-      await expect(runSecurity({directory, findingsPath, blocking: 'none'})).rejects.toThrow(
-        `Could not parse App Security findings from ${findingsPath}.`,
-      )
-    })
-  })
-
-  test('rejects findings without a schema version and source scan', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await createApp(directory)
-      const findingsPath = joinPath(directory, 'findings.json')
-      await writeFile(findingsPath, `${JSON.stringify({findings: []})}\n`)
-
-      await expect(runSecurity({directory, findingsPath, blocking: 'none'})).rejects.toMatchObject({
-        constructor: AbortError,
-        message: 'The App Security findings file must use schema version 1.',
-      })
-    })
-  })
-
-  test('rejects a source_scan_id that is not a SHA-256 identifier', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await createApp(directory)
-      const findingsPath = joinPath(directory, 'findings.json')
-      const oversized = `not-a-hash:${'x'.repeat(100_000)}`
-      await writeFile(findingsPath, `${JSON.stringify({schema_version: 1, source_scan_id: oversized, findings: []})}\n`)
-
-      await expect(runSecurity({directory, findingsPath, blocking: 'none'})).rejects.toMatchObject({
-        constructor: AbortError,
-        message: 'The App Security findings file must identify its source scan.',
-        tryMessage: 'Copy the source_scan_id from the generated review.json.',
-      })
-    })
-  })
-
-  test('rejects findings files larger than 5 MB', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await createApp(directory)
-      const findingsPath = joinPath(directory, 'findings.json')
-      await writeFile(findingsPath, 'x'.repeat(5_000_001))
-
-      await expect(runSecurity({directory, findingsPath, blocking: 'none'})).rejects.toMatchObject({
-        constructor: AbortError,
-        message: `Could not read App Security findings from ${findingsPath}.`,
-        tryMessage: 'The file is larger than 5 MB.',
-      })
-    })
-  })
-
-  test('does not invent a check ID from document-level rejection messages', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await createApp(directory)
-      const findingsPath = await appFindingsPath(directory)
-      await writeFile(
-        findingsPath,
-        `${JSON.stringify({
-          schema_version: 1,
-          source_scan_id: await sourceScanId(directory),
-          checks_executed: 'nope',
-          findings: [],
-        })}\n`,
-      )
-
-      const result = await runSecurity({
-        directory,
-        findingsPath,
-        blocking: 'none',
-      })
-      const trace = result.jsonReport as {coverage: {gaps: {code: string; check_id?: string; message: string}[]}}
-
-      expect(result.exitCode).toBe(2)
-      expect(result.findings?.rejected).toContain('checks_executed must be an array')
-      expect(trace.coverage.gaps).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            code: 'unresolved_check',
-            message: 'Rejected agent result: checks_executed must be an array',
-          }),
-        ]),
-      )
-      expect(trace.coverage.gaps.every((gap) => gap.check_id === undefined || gap.check_id.length > 0)).toBe(true)
-      expect(trace.coverage.gaps.some((gap) => gap.check_id === 'checks_executed must be an arra')).toBe(false)
+      expect(unfiltered.scan.scan.files_scanned - filtered.scan.scan.files_scanned).toBe(1)
     })
   })
 
@@ -654,13 +182,7 @@ describe('App Security CLI integration', () => {
         },
         {
           resolveRoot: resolveAppSecurityRoot,
-          artifactPaths: appSecurityArtifactPaths,
-          findingsFileExists: fileExists,
-          readTrace,
-          execute: async ({appRoot, findingsPath}) => {
-            const findings = findingsPath ? await loadAppSecurityFindings(findingsPath) : undefined
-            return executeAppSecurity({appRoot, findings})
-          },
+          execute: async ({appRoot}) => executeAppSecurity({appRoot}),
           writeArtifacts: writeAppSecurityArtifacts,
           canPrompt: () => false,
           selectInstructionsDestination: async () => 'nothing',

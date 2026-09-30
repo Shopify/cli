@@ -21,7 +21,7 @@ const submissionPath = '/tmp/app/.shopify/app-security/submission.json'
 
 describe('renderSecuritySubmitResult', () => {
   test('renders dry-run and submitted results through the standard human output', () => {
-    const payload = {path: submissionPath, schemaVersion: 1 as const}
+    const payload = {path: submissionPath, schemaVersion: 0 as const}
     renderSecuritySubmitResult({status: 'dry-run', payload})
     renderSecuritySubmitResult({
       status: 'submitted',
@@ -100,8 +100,8 @@ describe('renderSecuritySubmitConfirmation', () => {
       defaultValue: 'submit',
       isConfirmationPrompt: true,
       infoTable: {
-        Findings: ['1 high · 1 medium · 1 low (1 suppressed)'],
-        Checks: ['3 executed · 1 not applicable · 1 unresolved'],
+        Findings: ['1 high · 1 medium · 0 low'],
+        Checks: ['2 executed · 1 not applicable · 1 unresolved'],
         Excluded: ['file paths, code snippets, evidence, finding messages, commit SHA'],
         Payload: [{filePath: submissionPath}],
         Warning: [{warn: 'The trace was generated with uncommitted changes.'}],

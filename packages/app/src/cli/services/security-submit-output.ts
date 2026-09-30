@@ -40,10 +40,7 @@ export function renderSecuritySubmitResult(result: SecuritySubmitResult): void {
 function findingsSummary(submission: AppSecuritySubmission): string {
   const count = (severity: 'high' | 'medium' | 'low') =>
     submission.report.findings.filter((finding) => finding.severity === severity).length
-  const suppressed = submission.report.findings.filter((finding) => finding.suppressed).length
-  return `${count('high')} high · ${count('medium')} medium · ${count('low')} low${
-    suppressed === 0 ? '' : ` (${suppressed} suppressed)`
-  }`
+  return `${count('high')} high · ${count('medium')} medium · ${count('low')} low`
 }
 
 function checksSummary(submission: AppSecuritySubmission): string {

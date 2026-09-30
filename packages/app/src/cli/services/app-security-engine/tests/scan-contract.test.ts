@@ -1,14 +1,13 @@
 /* eslint-disable no-restricted-imports -- detector coverage uses real temporary repositories */
-import {buildReviewPack, searchBoundaryFiles} from '../checks/index.js'
+import {buildReviewPack} from '../checks/index.js'
 import {assertRegistryInvariants, getRegistry} from '../registry/index.js'
 import {DETERMINISTIC_CHECKS, scan} from '../scanners/index.js'
-import {compileTrace, sha256, validateTrace} from '../trace/index.js'
+import {compileTrace, validateTrace} from '../trace/index.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {afterEach, describe, expect, test} from 'vitest'
 import {mkdir, mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import type {TraceV3} from '../types.js'
 
 const directories: string[] = []
 afterEach(async () => {
@@ -30,11 +29,6 @@ async function app(files: Record<string, string>): Promise<string> {
 
 const appConfig = (scopes = '') => `name = "Scan contract"\n[access_scopes]\nscopes = "${scopes}"\n`
 const reactPackage = JSON.stringify({dependencies: {'@shopify/shopify-app-react-router': '^1.0.0'}})
-
-function resign(trace: TraceV3): void {
-  const {attestation: _attestation, ...unsigned} = trace
-  trace.attestation = {digest: sha256(unsigned), signed: false}
-}
 
 describe('framework and surface detection', () => {
   test('detects React Router only when package and structure agree', async () => {
@@ -212,7 +206,7 @@ describe('framework and surface detection', () => {
     })
   })
 
-  test('does not report findings or hashes from a sibling app configuration', async () => {
+  test('does not report findings from a sibling app configuration', async () => {
     const directory = await app({
       'shopify.app.toml': appConfig(),
       'shopify.app.production.toml': appConfig('write_script_tags'),
@@ -223,8 +217,6 @@ describe('framework and surface detection', () => {
 
     expect(deprecated).toMatchObject({status: 'executed', findings: 0, inspected_files: ['shopify.app.toml']})
     expect(result.issues.filter((issue) => issue.id === 'DEPRECATED_SCRIPT_TAG_SCOPE')).toEqual([])
-    expect(result.scan.file_hashes).not.toHaveProperty('shopify.app.production.toml')
-    expect(result.scan.file_hashes).toHaveProperty('shopify.app.toml')
   })
 
   test('keeps React Router and theme implementations inside their supported file boundaries', async () => {
@@ -300,7 +292,7 @@ describe('framework and surface detection', () => {
     expect(unsupportedStatuses).toEqual(Array.from({length: 4}, () => 'unsupported_framework'))
   })
 
-  test('includes server template formats in the agent review boundary', async () => {
+  test('detects server template formats as source languages', async () => {
     const templateFiles = [
       'views/index.ejs',
       'views/index.erb',
@@ -315,7 +307,9 @@ describe('framework and surface detection', () => {
       }),
     )
 
-    expect(searchBoundaryFiles(result)).toEqual(expect.arrayContaining(templateFiles))
+    expect(result.detection.languages.flatMap((language) => language.files)).toEqual(
+      expect.arrayContaining(templateFiles),
+    )
   })
 
   test('makes only affected checks unresolved when readable and rejected inputs coexist', async () => {
@@ -352,21 +346,6 @@ describe('framework and surface detection', () => {
       status: 'unresolved',
       reason: {code: 'input_rejected'},
       inspected_files: expect.arrayContaining(['app/routes/index.ts']),
-    })
-    const fallback = buildReviewPack('test', skippedSource).checks.find(
-      (check) => check.id === 'UNSAFE_INNERHTML',
-    )?.deterministic_fallback
-    expect(fallback).toMatchObject({
-      check_id: 'UNSAFE_INNERHTML',
-      check_version: DETERMINISTIC_CHECKS.get('UNSAFE_INNERHTML')!.version,
-      prompt_hash: expect.stringMatching(/^sha256:/),
-      framework: 'react_router',
-      surface: 'react_router',
-      languages: expect.arrayContaining([expect.objectContaining({name: 'typescript'})]),
-      inspected_files: expect.arrayContaining(['app/routes/index.ts']),
-      uninspected_files: expect.arrayContaining(['app/routes/skipped.ts']),
-      search_boundary_files: expect.arrayContaining(['app/routes/index.ts', 'app/routes/skipped.ts']),
-      reason: {code: 'input_rejected'},
     })
   })
 
@@ -489,7 +468,6 @@ describe('coverage and trace invariants', () => {
     )!
 
     sourceExecution.inspected_files = []
-    resign(trace)
     expect(validateTrace(trace).errors.join(' ')).toMatch(/requires inspected files/)
 
     trace.coverage.complete = true
@@ -497,16 +475,13 @@ describe('coverage and trace invariants', () => {
     sourceExecution.required = true
     sourceExecution.reason = {code: 'parser_unavailable', message: 'Parser failed.'}
     sourceExecution.guidance = 'Inspect this check with an agent.'
-    resign(trace)
     expect(validateTrace(trace).errors.join(' ')).toMatch(/coverage complete claim is inconsistent/)
 
     sourceExecution.status = 'unsupported_framework'
     sourceExecution.findings = 1
-    resign(trace)
     expect(validateTrace(trace).errors.join(' ')).toMatch(/zero findings/)
 
     delete sourceExecution.guidance
-    resign(trace)
     expect(validateTrace(trace).errors.join(' ')).toMatch(/reason and handoff guidance/)
   })
 })
@@ -533,27 +508,8 @@ describe('authenticated-route review handoff', () => {
       expect.objectContaining({code: 'unresolved_check', check_id: 'UNAUTHENTICATED_ENDPOINT'}),
     )
 
-    const reviewPack = buildReviewPack('test', result)
-    expect(reviewPack.checks).toContainEqual(
-      expect.objectContaining({
-        id: 'UNAUTHENTICATED_ENDPOINT',
-        version: 2,
-        deterministic_fallback: expect.objectContaining({
-          reason: expect.objectContaining({code: 'agent_investigation_required'}),
-        }),
-      }),
-    )
-
-    // A deferred context pattern must not make an unperformed agent review look complete.
-    const trace = compileTrace(result)
-    expect(trace.checks_executed).toContainEqual(
-      expect.objectContaining({
-        id: 'UNAUTHENTICATED_ENDPOINT',
-        kind: 'agent',
-        status: 'unresolved',
-        reason: expect.objectContaining({code: 'not_reported'}),
-      }),
-    )
+    const reviewPack = buildReviewPack('test')
+    expect(reviewPack.checks).toContainEqual(expect.objectContaining({id: 'UNAUTHENTICATED_ENDPOINT', version: 2}))
   })
   test('preserves ordinary findings when another handler needs context-auth review', async () => {
     const directory = await app({

@@ -1,4 +1,3 @@
-import {appSecurityArtifactPaths} from './app-security-artifacts.js'
 import {getAppConfigurationShorthand} from '../models/app/config-file-naming.js'
 
 export type AppSecurityShell = 'posix' | 'cmd' | 'powershell'
@@ -13,17 +12,15 @@ export interface AppSecurityCommand {
 
 export interface AppSecurityCommands {
   scan: AppSecurityCommand
-  compile: AppSecurityCommand
   clean: AppSecurityCommand
 }
 
-/** `ignorePatterns` are repeated on every command: a compile must discover the same files as its scan. */
+/** `ignorePatterns` are repeated so that rerunning the check discovers the same files. */
 export function resolveAppSecurityCommands(
   appRoot: string,
   configFileName?: string,
   ignorePatterns: ReadonlyArray<string> = [],
 ): AppSecurityCommands {
-  const {findingsPath} = appSecurityArtifactPaths(appRoot)
   const configFlag = configFileName ? getAppConfigurationShorthand(configFileName) : undefined
   const scan: AppSecurityCommand = {
     command: 'shopify',
@@ -39,10 +36,6 @@ export function resolveAppSecurityCommands(
 
   return {
     scan,
-    compile: {
-      command: scan.command,
-      args: [...scan.args, {flag: '--findings', value: findingsPath}],
-    },
     clean: {
       command: scan.command,
       args: [...scan.args, '--clean'],

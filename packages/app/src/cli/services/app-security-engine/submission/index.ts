@@ -6,15 +6,13 @@ import type {
   CheckExecutionStatus,
   DetectedFramework,
   DetectedSurface,
-  FindingSource,
   LanguageSupport,
   Severity,
-  SuppressionProvenance,
   TraceFinding,
   TraceV3,
 } from '../types.js'
 
-export const SUBMISSION_SCHEMA_VERSION = 1 as const
+export const SUBMISSION_SCHEMA_VERSION = 0 as const
 
 export interface BuildSubmissionOptions {
   cliVersion: string
@@ -24,17 +22,10 @@ export interface BuildSubmissionOptions {
 }
 
 interface SubmissionFinding {
-  fingerprint: string
-  source: FindingSource
+  rule_id: string
+  rule_version: number
   severity: Severity
   title: string
-  rule_id?: string
-  rule_version?: number
-  check_id?: string
-  check_version?: number
-  prompt_hash?: string
-  suppressed: boolean
-  suppression_id?: string
 }
 
 interface SubmissionCheckImplementation {
@@ -57,7 +48,6 @@ interface SubmissionCheck {
   finding_count: number
   inspected_file_count: number
   reason_code?: CheckExecutionReasonCode
-  prompt_hash?: string
   implementations?: SubmissionCheckImplementation[]
 }
 
@@ -76,7 +66,7 @@ export interface AppSecuritySubmissionReport {
   feedback: string | null
   // Always-applicable slots use null when unavailable (like project.commit); variant-dependent fields are omitted.
   metadata: {version_tag: string | null}
-  project: {dirty: boolean | null; input_hash: string}
+  project: {dirty: boolean | null}
   detection: {
     framework: DetectedFramework
     surface: DetectedSurface
@@ -84,46 +74,20 @@ export interface AppSecuritySubmissionReport {
   }
   findings: SubmissionFinding[]
   checks_executed: SubmissionCheck[]
-  suppressions: {
-    id: string
-    finding_fingerprint: string
-    provenance: {source: SuppressionProvenance['source']; created_at: string}
-  }[]
   coverage: {
     files_scanned: number
     complete: boolean
     files_skipped: {too_large: number; unreadable: number}
     gaps: {code: TraceV3['coverage']['gaps'][number]['code']; check_id?: string}[]
   }
-  attestation: {trace_digest: string}
 }
 
 function submissionFinding(finding: TraceFinding): SubmissionFinding {
-  const common = {
-    fingerprint: finding.fingerprint,
-    source: finding.source,
+  return {
+    rule_id: finding.rule_id,
+    rule_version: finding.rule_version,
     severity: finding.severity,
-    // External titles are caller-provided and may contain source code or file paths.
-    title: finding.source === 'external' ? 'External finding' : redactText(finding.title),
-    suppressed: finding.suppressed,
-    ...(finding.suppression === undefined ? {} : {suppression_id: finding.suppression.id}),
-  }
-
-  switch (finding.source) {
-    case 'agent':
-      return {
-        ...common,
-        ...(finding.check_id === undefined ? {} : {check_id: finding.check_id}),
-        ...(finding.check_version === undefined ? {} : {check_version: finding.check_version}),
-        ...(finding.prompt_hash === undefined ? {} : {prompt_hash: finding.prompt_hash}),
-      }
-    case 'deterministic':
-    case 'external':
-      return {
-        ...common,
-        ...(finding.rule_id === undefined ? {} : {rule_id: finding.rule_id}),
-        ...(finding.rule_version === undefined ? {} : {rule_version: finding.rule_version}),
-      }
+    title: redactText(finding.title),
   }
 }
 
@@ -152,7 +116,6 @@ function submissionCheck(check: CheckExecution): SubmissionCheck {
     finding_count: check.findings,
     inspected_file_count: check.inspected_files.length,
     ...(check.reason === undefined ? {} : {reason_code: check.reason.code}),
-    ...(check.prompt_hash === undefined ? {} : {prompt_hash: check.prompt_hash}),
     ...(check.implementations === undefined
       ? {}
       : {implementations: check.implementations.map(submissionImplementation)}),
@@ -189,7 +152,6 @@ export function buildSubmission(trace: TraceV3, options: BuildSubmissionOptions)
       },
       project: {
         dirty: trace.project.dirty,
-        input_hash: trace.project.input_hash,
       },
       detection: {
         framework: trace.detection.framework,
@@ -202,15 +164,6 @@ export function buildSubmission(trace: TraceV3, options: BuildSubmissionOptions)
       },
       findings: trace.findings.map(submissionFinding),
       checks_executed: trace.checks_executed.map(submissionCheck),
-      // Keep free-text justifications local; only submit suppression linkage and provenance.
-      suppressions: trace.suppressions.map((suppression) => ({
-        id: suppression.id,
-        finding_fingerprint: suppression.finding_fingerprint,
-        provenance: {
-          source: suppression.provenance.source,
-          created_at: suppression.provenance.created_at,
-        },
-      })),
       coverage: {
         files_scanned: trace.coverage.files_scanned,
         complete: trace.coverage.complete,
@@ -220,7 +173,6 @@ export function buildSubmission(trace: TraceV3, options: BuildSubmissionOptions)
           ...(gap.check_id === undefined ? {} : {check_id: gap.check_id}),
         })),
       },
-      attestation: {trace_digest: trace.attestation.digest},
     },
   }
 }

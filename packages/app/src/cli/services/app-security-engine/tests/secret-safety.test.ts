@@ -339,7 +339,6 @@ describe('git status drives severity, not .gitignore text', () => {
     writeFileSync(join(dir, '.git', 'index'), 'not an index')
 
     const result = await scan(dir)
-    expect(result.scan.file_hashes).toHaveProperty(['.env'])
     const finding = result.issues.find((issue) => issue.id === 'COMMITTED_SECRET')
     expect(finding).toMatchObject({
       severity: 'high',

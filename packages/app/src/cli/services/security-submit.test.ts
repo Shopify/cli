@@ -437,14 +437,14 @@ describe('securitySubmit', () => {
       const result = await securitySubmit({...options(directory), dryRun: true}, dependencies)
 
       const payloadPath = appSecurityArtifactPaths(directory).submissionPath
-      await expect(readFile(payloadPath)).resolves.toContain('"schemaVersion": 1')
+      await expect(readFile(payloadPath)).resolves.toContain('"schemaVersion": 0')
       expect(dependencies.buildSubmission).toHaveBeenCalledOnce()
       expect(dependencies.writeSubmission).toHaveBeenCalledOnce()
       expect(dependencies.resolveClientId).not.toHaveBeenCalled()
       expect(dependencies.fetchApp).not.toHaveBeenCalled()
       expect(dependencies.submitScan).not.toHaveBeenCalled()
       expect(dependencies.confirm).not.toHaveBeenCalled()
-      expect(result).toEqual({status: 'dry-run', payload: {path: payloadPath, schemaVersion: 1}})
+      expect(result).toEqual({status: 'dry-run', payload: {path: payloadPath, schemaVersion: 0}})
     })
   })
 
@@ -464,7 +464,7 @@ describe('securitySubmit', () => {
       expect(dependencies.submitScan).not.toHaveBeenCalled()
       expect(result).toEqual({
         status: 'dry-run',
-        payload: {path: appSecurityArtifactPaths(directory).submissionPath, schemaVersion: 1},
+        payload: {path: appSecurityArtifactPaths(directory).submissionPath, schemaVersion: 0},
       })
     })
   })
@@ -478,7 +478,7 @@ describe('securitySubmit', () => {
       await expect(securitySubmit(options(directory), dependencies)).resolves.toEqual({status: 'cancelled'})
 
       await expect(readFile(appSecurityArtifactPaths(directory).submissionPath)).resolves.toContain(
-        '"schemaVersion": 1',
+        '"schemaVersion": 0',
       )
       expect(dependencies.submitScan).not.toHaveBeenCalled()
     })
@@ -503,7 +503,7 @@ describe('securitySubmit', () => {
         status: 'submitted',
         clientId: 'api-key',
         appTitle: 'Example app',
-        payload: {path: appSecurityArtifactPaths(directory).submissionPath, schemaVersion: 1},
+        payload: {path: appSecurityArtifactPaths(directory).submissionPath, schemaVersion: 0},
         submittedAt,
       })
     })
@@ -719,7 +719,7 @@ describe('securitySubmit', () => {
       expect(result).toEqual({
         status: 'submitted',
         clientId: 'client-id',
-        payload: {path: appSecurityArtifactPaths(directory).submissionPath, schemaVersion: 1},
+        payload: {path: appSecurityArtifactPaths(directory).submissionPath, schemaVersion: 0},
         appTitle: 'Example app',
         submittedAt,
       })

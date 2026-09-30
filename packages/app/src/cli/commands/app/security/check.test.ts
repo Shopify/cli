@@ -33,7 +33,6 @@ describe('app security check command', () => {
       blocking: 'high',
       yes: false,
       skipInstructions: true,
-      findingsPath: undefined,
       clean: false,
       ignorePatterns: [],
     })
@@ -85,7 +84,6 @@ describe('app security check command', () => {
       blocking: 'none',
       yes: true,
       skipInstructions: false,
-      findingsPath: undefined,
       clean: false,
       ignorePatterns: [],
     })
@@ -100,11 +98,10 @@ describe('app security check command', () => {
     expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({configName: 'staging', skipInstructions: true}))
   })
 
-  test('forwards --clean and keeps it mutually exclusive with --findings', async () => {
+  test('forwards --clean', async () => {
     await SecurityCheck.run(['--clean', '--skip-instructions'], import.meta.url)
 
-    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({clean: true, findingsPath: undefined}))
-    expect(SecurityCheck.flags.clean.exclusive).toEqual(['findings'])
+    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({clean: true}))
   })
 
   test.each(['true', 'false'])(
@@ -116,22 +113,11 @@ describe('app security check command', () => {
 
         await SecurityCheck.run(['--skip-instructions'], import.meta.url)
         expect(securityCheck).toHaveBeenLastCalledWith(expect.objectContaining({clean: false}))
-
-        await SecurityCheck.run(['--findings', './findings.json', '--skip-instructions'], import.meta.url)
-        expect(securityCheck).toHaveBeenLastCalledWith(
-          expect.objectContaining({clean: false, findingsPath: resolvePath('./findings.json')}),
-        )
       } finally {
         vi.unstubAllEnvs()
       }
     },
   )
-
-  test('resolves and forwards an agent findings file', async () => {
-    await SecurityCheck.run(['--findings', './findings.json', '--skip-instructions'], import.meta.url)
-
-    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({findingsPath: resolvePath('./findings.json')}))
-  })
 
   test('describes --yes as printing instructions and keeps it mutually exclusive with --skip-instructions', () => {
     expect(SecurityCheck.flags.yes.description).toBe('Print coding-agent instructions without prompting.')
@@ -143,10 +129,12 @@ describe('app security check command', () => {
     expect(SecurityCheck.descriptionWithMarkdown).toContain('`--config`')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('copying is the default')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('shopify app security instructions')
-    expect(SecurityCheck.descriptionWithMarkdown).toContain('Pass `--clean` to discard that work and start over')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain(
+      'Pass `--clean` to discard the current local review and start over',
+    )
   })
 
-  test('documents --ignore as ordered .gitignore patterns that follow-up commands repeat', () => {
+  test('documents --ignore as ordered .gitignore patterns that the coding-agent instructions repeat', () => {
     expect(SecurityCheck.flags.ignore.multiple).toBe(true)
     expect(SecurityCheck.flags.ignore.description).toBe(
       'Ignore files that match this .gitignore pattern, relative to the app directory. Start the pattern with ! to include matching files again. Repeat the flag to add patterns; later patterns take precedence.',
@@ -156,7 +144,9 @@ describe('app security check command', () => {
     expect(SecurityCheck.descriptionWithMarkdown).toContain('later patterns take precedence')
     expect(SecurityCheck.descriptionWithMarkdown).toContain("--ignore '!build/'")
     expect(SecurityCheck.descriptionWithMarkdown).toContain('single quotes in POSIX shells and PowerShell')
-    expect(SecurityCheck.descriptionWithMarkdown).toContain('`--findings`')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain(
+      'The coding-agent instructions this check offers repeat the patterns.',
+    )
   })
 
   test('allows --yes in JSON mode while preserving non-interactive output behavior', async () => {

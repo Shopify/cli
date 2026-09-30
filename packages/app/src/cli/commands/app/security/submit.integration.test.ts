@@ -146,7 +146,6 @@ describe('app security submit command boundary', () => {
       const client = remoteClient()
       const paths = await writeApp(directory)
       const compiledTrace = await readFile(paths.tracePath)
-      expect(submissionTraceFixture.findings.some((finding) => finding.source === 'agent')).toBe(true)
       await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Unlinked app"\n')
       const result = await runCommand(['--path', directory, '--dry-run', ...(json ? ['--json'] : [])])
 
@@ -156,7 +155,7 @@ describe('app security submit command boundary', () => {
         expect(JSON.parse(result.stdout)).toEqual({
           operation: 'submit',
           dry_run: true,
-          payload: {path: paths.submissionPath, schema_version: 1},
+          payload: {path: paths.submissionPath, schema_version: 0},
         })
         expect(result.stderr).toBe('')
       } else {
@@ -164,7 +163,7 @@ describe('app security submit command boundary', () => {
         expect(result.stderr).toContain('Prepared the App Security submission without uploading it.')
       }
       const submission = JSON.parse(await readFile(paths.submissionPath, 'utf8'))
-      expect(submission.schemaVersion).toBe(1)
+      expect(submission.schemaVersion).toBe(0)
       expect(submission.report.metadata).toEqual({version_tag: null})
       expect(resolveSecuritySubmitClientId).not.toHaveBeenCalled()
       expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
@@ -191,10 +190,10 @@ describe('app security submit command boundary', () => {
       expect(JSON.parse(result.stdout)).toEqual({
         operation: 'submit',
         dry_run: true,
-        payload: {path: paths.submissionPath, schema_version: 1},
+        payload: {path: paths.submissionPath, schema_version: 0},
       })
       expect(resolveSecuritySubmitClientId).toHaveBeenCalledExactlyOnceWith({directory, clientId, configName})
-      await expect(readFile(paths.submissionPath, 'utf8')).resolves.toContain('"schemaVersion": 1')
+      await expect(readFile(paths.submissionPath, 'utf8')).resolves.toContain('"schemaVersion": 0')
       expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
       expect(client.appFromIdentifiers).not.toHaveBeenCalled()
       expect(client.generateSourceScanUploadUrl).not.toHaveBeenCalled()
@@ -310,13 +309,12 @@ describe('app security submit command boundary', () => {
       remoteClient()
       const paths = await writeApp(directory)
       const compiledTrace = await readFile(paths.tracePath)
-      expect(submissionTraceFixture.findings.some((finding) => finding.source === 'agent')).toBe(true)
       const result = await runCommand(['--path', directory, '--json', '--force'])
       const submission = JSON.parse(await readFile(paths.submissionPath, 'utf8'))
       expect(JSON.parse(result.stdout)).toEqual({
         operation: 'submit',
         dry_run: false,
-        payload: {path: paths.submissionPath, schema_version: 1},
+        payload: {path: paths.submissionPath, schema_version: 0},
         submitted_at: submission.report.submitted_at,
         client_id: 'api-key',
       })

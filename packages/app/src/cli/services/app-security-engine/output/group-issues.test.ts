@@ -28,17 +28,10 @@ describe('groupIssues', () => {
     expect(issues).toEqual(before)
   })
 
-  test('keeps different rules, patterns, sources, and severities separate', () => {
+  test('keeps different rules, patterns, and severities separate', () => {
     expect(
-      groupIssues([
-        issue(),
-        issue({id: 'ANOTHER_RULE'}),
-        issue({pattern_id: 'Private key'}),
-        issue({severity: 'low'}),
-        issue({found_by: 'agent'}),
-        issue({found_by: 'external'}),
-      ]),
-    ).toHaveLength(6)
+      groupIssues([issue(), issue({id: 'ANOTHER_RULE'}), issue({pattern_id: 'Private key'}), issue({severity: 'low'})]),
+    ).toHaveLength(4)
   })
 
   test('preserves exactly repeated occurrences and handles empty input', () => {

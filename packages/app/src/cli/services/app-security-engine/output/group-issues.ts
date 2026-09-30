@@ -9,7 +9,7 @@ export interface IssueGroup {
 const SEVERITY_ORDER: Record<Severity, number> = {high: 0, medium: 1, low: 2}
 
 function groupKey(issue: Issue): string {
-  return [issue.found_by ?? 'static', issue.id, issue.pattern_id ?? '', issue.severity].join('|')
+  return [issue.id, issue.pattern_id ?? '', issue.severity].join('|')
 }
 
 /** A presentation view only: never replace scan issues or trace findings with these groups. */

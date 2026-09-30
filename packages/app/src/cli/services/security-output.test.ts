@@ -1,5 +1,5 @@
 import {buildSecurityAlert} from './security-output.js'
-import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
+import {resolveAppSecurityCommands} from './app-security-commands.js'
 import {describe, expect, test} from 'vitest'
 import type {SecurityReportInput} from './security-output.js'
 import type {ScanResult} from './app-security-engine/index.js'
@@ -41,8 +41,6 @@ const scanWithIssues: ScanResult = {
     files_skipped_count: 0,
     coverage_complete: true,
     coverage_gaps: [],
-    input_hash: 'sha256:input',
-    result_hash: 'sha256:result',
     checks_executed: [],
   },
   issues: [
@@ -118,12 +116,7 @@ describe('buildSecurityAlert', () => {
         ],
       },
     })
-    expect(alert.options.nextSteps).toEqual([
-      [
-        'Investigate the review pack, then compile the trace with',
-        {command: formatAppSecurityCommand(resolveAppSecurityCommands('/tmp/app').compile)},
-      ],
-    ])
+    expect(alert.options.nextSteps).toBeUndefined()
     expect(section(reportInput(), 'Artifacts')?.body).toEqual({
       list: {
         items: [
@@ -215,19 +208,6 @@ describe('buildSecurityAlert', () => {
     expect(section(input, 'High')).toBeUndefined()
   })
 
-  test('quotes compile commands for Windows paths with spaces and percents', () => {
-    const commands = resolveAppSecurityCommands('C:/Users/50%/my app')
-    const alert = buildSecurityAlert(reportInput({commands}))
-    const compileCommand = formatAppSecurityCommand(commands.compile)
-
-    expect(alert.options.nextSteps).toEqual([
-      ['Investigate the review pack, then compile the trace with', {command: compileCommand}],
-    ])
-    expect(compileCommand).not.toContain('50%%')
-    expect(formatAppSecurityCommand(commands.compile, 'cmd')).toContain('^%')
-    expect(formatAppSecurityCommand(commands.compile, 'powershell')).toContain("'C:/Users/50%/my app'")
-  })
-
   test('adds evidence, fix guidance, and scan details in verbose mode', () => {
     const serialized = JSON.stringify(buildSecurityAlert(reportInput({verbose: true})))
 
@@ -286,39 +266,6 @@ describe('buildSecurityAlert', () => {
     expect(alert.type).toBe('warning')
     expect(alert.options.headline).toBe('1 security issue found.')
     expect(section(input, 'Medium')).toBeDefined()
-  })
-
-  test('summarizes compiled agent findings without scan next steps', () => {
-    const input = reportInput({
-      reviewPath: undefined,
-      reviewCheckCount: undefined,
-      findings: {accepted: 1, rejected: ['MISSING_TENANT_ISOLATION: file is outside the app']},
-    })
-    const alert = buildSecurityAlert(input)
-    const serialized = JSON.stringify(alert)
-
-    expect(alert.type).toBe('error')
-    expect(alert.options.headline).toBe('App Security could not compile some agent findings.')
-    expect(alert.options.nextSteps).toBeUndefined()
-    expect(serialized).toContain('Merged 1 agent finding(s) into the trace.')
-    expect(serialized).toContain('Rejected: MISSING_TENANT_ISOLATION: file is outside the app')
-    expect(section(input, 'Agent findings')).toBeDefined()
-  })
-
-  test('does not describe a rejected compile as merged zero findings', () => {
-    const input = reportInput({
-      reviewPath: undefined,
-      reviewCheckCount: undefined,
-      findings: {
-        accepted: 0,
-        rejected: ['MISSING_TENANT_ISOLATION: finding file was not part of the scanned inputs: tests/app.test.ts'],
-        warnings: ['MISSING_TENANT_ISOLATION: ignored inspected file outside the scanned inputs: vitest.config.ts'],
-      },
-    })
-    const serialized = JSON.stringify(buildSecurityAlert(input))
-
-    expect(serialized).toContain('No agent findings were merged.')
-    expect(serialized).toContain('ignored inspected file outside the scanned inputs: vitest.config.ts')
   })
 
   test('renders engine-redacted titles, paths, and verbose evidence unchanged', () => {

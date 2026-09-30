@@ -41,8 +41,6 @@ const scan: ScanResult = {
     files_skipped_count: 0,
     coverage_complete: true,
     coverage_gaps: [],
-    input_hash: 'sha256:input',
-    result_hash: 'sha256:result',
     checks_executed: [],
   },
   issues: [],
@@ -52,13 +50,11 @@ const trace: TraceV3 = {
   schema_version: 3,
   engine,
   generated_at: '2026-08-24T00:00:00.000Z',
-  project: {commit: null, dirty: null, input_hash: 'sha256:input', input_hashes: {}},
+  project: {commit: null, dirty: null},
   detection: scan.detection,
   findings: [],
   checks_executed: [],
-  suppressions: [],
   coverage: {files_scanned: 1, files_skipped: [], complete: true, gaps: []},
-  attestation: {digest: 'sha256:digest', signed: false},
 }
 
 const scanExecution: AppSecurityExecution = {
@@ -68,7 +64,6 @@ const scanExecution: AppSecurityExecution = {
   trace,
   reviewPack: {
     schema_version: 1,
-    source_scan_id: 'sha256:input',
     security_version: '1.2.3',
     generated_at: '2026-08-24T00:00:00.000Z',
     checks: [],
@@ -78,26 +73,10 @@ const scanExecution: AppSecurityExecution = {
   elapsedMilliseconds: 12,
 }
 
-const compileExecution: AppSecurityExecution = {
-  operation: 'compile',
-  appRoot: '/tmp/app',
-  scan,
-  trace,
-  findings: {accepted: 1, rejected: [], warnings: []},
-  engine,
-  elapsedMilliseconds: 15,
-}
-
 describe('App Security JSON contract', () => {
   test('encodes a tagged scan result', async () => {
     const encoded = encodeSecurityJson(toSecurityJson(scanExecution))
     const fixture = await readFile(joinPath(fixtureDirectory, 'scan.json'))
-    expect(JSON.parse(encoded)).toEqual(JSON.parse(fixture))
-  })
-
-  test('encodes a tagged compile result', async () => {
-    const encoded = encodeSecurityJson(toSecurityJson(compileExecution))
-    const fixture = await readFile(joinPath(fixtureDirectory, 'compile.json'))
     expect(JSON.parse(encoded)).toEqual(JSON.parse(fixture))
   })
 })

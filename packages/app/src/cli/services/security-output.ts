@@ -1,4 +1,3 @@
-import {formatAppSecurityCommand, type AppSecurityCommands} from './app-security-commands.js'
 import {
   groupIssues,
   type Capabilities,
@@ -8,6 +7,7 @@ import {
   type Severity,
 } from './app-security-engine/index.js'
 import {renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import type {AppSecurityCommands} from './app-security-commands.js'
 import type {AlertCustomSection, InlineToken, RenderAlertOptions, Token, TokenItem} from '@shopify/cli-kit/node/ui'
 
 interface SecurityEngineMetadata {
@@ -25,11 +25,6 @@ export interface SecurityReportInput {
   tracePath: string
   reviewPath?: string
   reviewCheckCount?: number
-  findings?: {
-    accepted: number
-    rejected: string[]
-    warnings?: string[]
-  }
 }
 
 type SecurityAlertType = 'success' | 'warning' | 'error'
@@ -52,7 +47,6 @@ export function buildSecurityAlert(input: SecurityReportInput): SecurityAlert {
     options: {
       headline: securityHeadline(input, groups),
       body: securityBody(input),
-      ...(input.findings ? {} : {nextSteps: securityNextSteps(input.commands)}),
       reference: [
         {subdued: `Engine: ${input.engine.name} ${input.engine.version}`},
         {subdued: `Ruleset: ${input.engine.ruleset}`},
@@ -83,7 +77,6 @@ function coverageIncomplete(input: SecurityReportInput): boolean {
 }
 
 function securityAlertType(input: SecurityReportInput): SecurityAlertType {
-  if (input.findings && input.findings.rejected.length > 0) return 'error'
   if (input.scan.issues.some((issue) => issue.severity === 'high')) return 'error'
   if (input.scan.issues.length > 0) return 'warning'
   if (coverageIncomplete(input)) return 'warning'
@@ -91,10 +84,6 @@ function securityAlertType(input: SecurityReportInput): SecurityAlertType {
 }
 
 function securityHeadline(input: SecurityReportInput, groups: IssueGroup[]): string {
-  if (input.findings && input.findings.rejected.length > 0) {
-    return 'App Security could not compile some agent findings.'
-  }
-
   const count = input.scan.issues.length
   if (groups.length < count) {
     return `${groups.length} security issue ${groups.length === 1 ? 'group' : 'groups'} found (${count} occurrences).`
@@ -126,12 +115,6 @@ function securityBody(input: SecurityReportInput): TokenItem {
   return tokens
 }
 
-function securityNextSteps(commands: AppSecurityCommands): TokenItem<InlineToken>[] {
-  return [
-    ['Investigate the review pack, then compile the trace with', {command: formatAppSecurityCommand(commands.compile)}],
-  ]
-}
-
 function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]): AlertCustomSection[] {
   const sections: AlertCustomSection[] = []
 
@@ -160,17 +143,7 @@ function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]
     sections.push({title: 'Coverage gaps', body: {list: {items}}})
   }
 
-  if (input.findings) {
-    const items: TokenItem<InlineToken>[] = [
-      input.findings.accepted === 0 && input.findings.rejected.length > 0
-        ? 'No agent findings were merged.'
-        : `Merged ${input.findings.accepted} agent finding(s) into the trace.`,
-      ...input.findings.rejected.map((reason) => ({error: `Rejected: ${reason}`})),
-      ...(input.findings.warnings ?? []).map((reason) => ({warn: reason})),
-      ['Trace written to', {filePath: input.tracePath}],
-    ]
-    sections.push({title: 'Agent findings', body: {list: {items}}})
-  } else if (input.reviewPath) {
+  if (input.reviewPath) {
     sections.push({
       title: 'Artifacts',
       body: {
@@ -199,8 +172,6 @@ function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]
           ['Capabilities', formatCapabilities(input.scan.capabilities)],
           ['Rules run', String(input.scan.scan.rules_run)],
           ['Not run', String(input.scan.scan.rules_skipped)],
-          ['Input hash', input.scan.scan.input_hash],
-          ['Result hash', input.scan.scan.result_hash],
         ],
         firstColumnSubdued: true,
       },

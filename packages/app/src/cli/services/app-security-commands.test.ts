@@ -152,9 +152,8 @@ describe('resolveAppSecurityCommands', () => {
     ])
   })
 
-  test('includes --config on scan and compile for a named configuration', () => {
+  test('includes --config on scan for a named configuration', () => {
     const commands = resolveAppSecurityCommands('/tmp/app', 'shopify.app.staging.toml')
-    const findingsPath = joinPath('/tmp/app', '.shopify', 'app-security', 'findings.json')
 
     expect(commands.scan.args).toEqual([
       'app',
@@ -163,19 +162,10 @@ describe('resolveAppSecurityCommands', () => {
       {flag: '--path', value: '/tmp/app'},
       {flag: '--config', value: 'staging'},
     ])
-    expect(commands.compile.args).toEqual([
-      'app',
-      'security',
-      'check',
-      {flag: '--path', value: '/tmp/app'},
-      {flag: '--config', value: 'staging'},
-      {flag: '--findings', value: findingsPath},
-    ])
   })
 
-  test('repeats --ignore patterns in order, after --config, on scan, compile, and clean', () => {
+  test('repeats --ignore patterns in order, after --config, on scan and clean', () => {
     const commands = resolveAppSecurityCommands('/tmp/app', 'shopify.app.staging.toml', ['generated/', '!build/'])
-    const findingsPath = joinPath('/tmp/app', '.shopify', 'app-security', 'findings.json')
     const scanArgs = [
       'app',
       'security',
@@ -187,7 +177,6 @@ describe('resolveAppSecurityCommands', () => {
     ]
 
     expect(commands.scan.args).toEqual(scanArgs)
-    expect(commands.compile.args).toEqual([...scanArgs, {flag: '--findings', value: findingsPath}])
     expect(commands.clean.args).toEqual([...scanArgs, '--clean'])
   })
 
@@ -273,10 +262,9 @@ describe('formatAppSecurityCommand', () => {
 
   test('leaves the command words and every flag name bare and quotes every flag value', () => {
     const commands = resolveAppSecurityCommands('/tmp/app', 'shopify.app.staging.toml', ['generated/'])
-    const findingsPath = joinPath('/tmp/app', '.shopify', 'app-security', 'findings.json')
 
-    expect(formatAppSecurityCommand(commands.compile, 'posix')).toBe(
-      `shopify app security check --path '/tmp/app' --config 'staging' --ignore 'generated/' --findings '${findingsPath}'`,
+    expect(formatAppSecurityCommand(commands.scan, 'posix')).toBe(
+      "shopify app security check --path '/tmp/app' --config 'staging' --ignore 'generated/'",
     )
     expect(formatAppSecurityCommand(commands.clean, 'posix')).toBe(
       "shopify app security check --path '/tmp/app' --config 'staging' --ignore 'generated/' --clean",
@@ -285,7 +273,6 @@ describe('formatAppSecurityCommand', () => {
 
   test('quotes a Windows path with spaces and percents for terminal and instruction shells', () => {
     const commands = resolveAppSecurityCommands(WINDOWS_APP_ROOT)
-    const findingsPath = joinPath(WINDOWS_APP_ROOT, '.shopify', 'app-security', 'findings.json')
 
     for (const shell of ['posix', 'cmd', 'powershell'] as const) {
       expect(splitQuotedCommand(formatAppSecurityCommand(commands.scan, shell), shell)).toEqual([
@@ -295,16 +282,6 @@ describe('formatAppSecurityCommand', () => {
         'check',
         '--path',
         WINDOWS_APP_ROOT,
-      ])
-      expect(splitQuotedCommand(formatAppSecurityCommand(commands.compile, shell), shell)).toEqual([
-        'shopify',
-        'app',
-        'security',
-        'check',
-        '--path',
-        WINDOWS_APP_ROOT,
-        '--findings',
-        findingsPath,
       ])
       expect(splitQuotedCommand(formatAppSecurityCommand(commands.clean, shell), shell)).toEqual([
         'shopify',
@@ -316,14 +293,12 @@ describe('formatAppSecurityCommand', () => {
         '--clean',
       ])
       expect(formatAppSecurityCommand(commands.scan, shell)).not.toContain('50%%')
-      expect(formatAppSecurityCommand(commands.compile, shell)).not.toContain('50%%')
       expect(formatAppSecurityCommand(commands.clean, shell)).not.toContain('50%%')
     }
   })
 
   test('quotes a Windows path with paired percent tokens without leaving %NAME% expandable', () => {
     const commands = resolveAppSecurityCommands(PAIRED_PERCENT_ROOT)
-    const findingsPath = joinPath(PAIRED_PERCENT_ROOT, '.shopify', 'app-security', 'findings.json')
 
     expect(splitQuotedCommand(formatAppSecurityCommand(commands.scan, 'cmd'), 'cmd')).toEqual([
       'shopify',
@@ -332,16 +307,6 @@ describe('formatAppSecurityCommand', () => {
       'check',
       '--path',
       PAIRED_PERCENT_ROOT,
-    ])
-    expect(splitQuotedCommand(formatAppSecurityCommand(commands.compile, 'cmd'), 'cmd')).toEqual([
-      'shopify',
-      'app',
-      'security',
-      'check',
-      '--path',
-      PAIRED_PERCENT_ROOT,
-      '--findings',
-      findingsPath,
     ])
     expect(splitQuotedCommand(formatAppSecurityCommand(commands.clean, 'cmd'), 'cmd')).toEqual([
       'shopify',
@@ -353,7 +318,7 @@ describe('formatAppSecurityCommand', () => {
       '--clean',
     ])
     expect(formatAppSecurityCommand(commands.scan, 'cmd')).not.toContain('%NAME%')
-    expect(formatAppSecurityCommand(commands.compile, 'powershell')).toContain('%NAME%')
+    expect(formatAppSecurityCommand(commands.clean, 'powershell')).toContain('%NAME%')
   })
 
   test.skipIf(process.platform !== 'win32')('cmd quoting preserves paired percents through cmd.exe', async () => {

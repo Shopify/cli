@@ -35,8 +35,7 @@ import {RULE_CATALOG} from '../rules/catalog.js'
 import {redactIssue} from '../trace/index.js'
 import {getEngineVersion} from '../version.js'
 import {getAppConfigurationFileName} from '../../../models/app/config-file-naming.js'
-import {basename, joinPath, relativePath} from '@shopify/cli-kit/node/path'
-import {sha256} from '@shopify/cli-kit/node/crypto'
+import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import type {Rule, ScanContext} from '../rules/types.js'
 import type {RunnerImplementationResult, RunnerResult, SourceFile} from './types.js'
@@ -67,7 +66,7 @@ export interface DeterministicCheckDefinition {
   id: string
   version: number
   lifecycle: 'active' | 'planned' | 'investigate'
-  analysisMode: Extract<AnalysisMode, 'regex' | 'structured_config' | 'ast'>
+  analysisMode: AnalysisMode
   target: CheckTarget
   requires?: keyof ScanContext['capabilities']
   guidance: string
@@ -716,27 +715,9 @@ export async function scan(
   const versionById = new Map(
     [...DETERMINISTIC_CHECKS.values()].map((definition) => [definition.id, definition.version]),
   )
-  issues = issues.map((issue) =>
-    redactIssue({...issue, found_by: 'static', rule_version: versionById.get(issue.id) ?? 1}),
-  )
+  issues = issues.map((issue) => redactIssue({...issue, rule_version: versionById.get(issue.id) ?? 1}))
   for (const execution of checksExecuted)
-    execution.findings = issues.filter((issue) => issue.id === execution.id && issue.found_by === 'static').length
-
-  const fileHashMap: Record<string, string> = {}
-  for (const file of [...sourceFiles, ...sensitiveFiles])
-    if (file.content !== undefined) fileHashMap[redactText(file.path)] = contentDigest(file.content)
-  const configFiles = [
-    ...appTomls.map((toml) => ({absolutePath: toml.path, content: toml.content})),
-    ...extensions.map((extension) => ({absolutePath: joinPath(appRoot, extension.path), content: extension.content})),
-    ...manifests.map((manifest) => ({absolutePath: manifest.absolutePath, content: manifest.content})),
-    ...dependencyAutomation.files.map((file) => ({absolutePath: joinPath(appRoot, file.path), content: file.content})),
-  ]
-  for (const {absolutePath, content} of configFiles)
-    if (content !== undefined) {
-      const relativeFilePath = relativePath(appRoot, absolutePath)
-      const path = redactText(relativeFilePath.length > 0 ? relativeFilePath : basename(absolutePath))
-      fileHashMap[path] ??= contentDigest(content)
-    }
+    execution.findings = issues.filter((issue) => issue.id === execution.id).length
 
   const skippedFiles = [
     ...new Map(
@@ -779,8 +760,6 @@ export async function scan(
     sourceFiles.filter((file) => file.content !== undefined).length,
     rulesRun,
     checksExecuted.length - rulesRun,
-    issues,
-    fileHashMap,
     skippedFiles,
     checksExecuted,
     coverageGaps,
@@ -795,9 +774,4 @@ export async function scan(
     scan: scanMetadata,
     issues,
   }
-}
-
-function contentDigest(content: string | Buffer): string {
-  const value = typeof content === 'string' ? content : content.toString('utf8')
-  return `sha256:${sha256(value).toString('hex')}`
 }

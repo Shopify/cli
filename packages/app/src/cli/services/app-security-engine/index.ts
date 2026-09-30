@@ -2,30 +2,13 @@
  * Public App Security engine API.
  *
  * CLI code outside this directory should import only these operations and result
- * types: locate an app, scan, parse/compile findings, parse a stored trace,
- * build a submission, group issues for display, and validate `--ignore`
- * patterns. Keep scanners, registries, merge helpers, and redaction inside the engine.
+ * types: locate an app, scan, parse a stored trace,
+ * build a submission, group issues for display, and validate `--ignore` patterns.
+ * Keep scanners, registries, and redaction inside the engine.
  */
-export {
-  AppRootDiscoveryError,
-  FindingsDocumentError,
-  compileFindings,
-  findAppRoot,
-  getAgentInstructions,
-  parseFindings,
-  parseTrace,
-  scanApp,
-} from './run.js'
-export type {
-  AppSecurityCompile,
-  AppSecurityEngineMetadata,
-  AppSecurityFindings,
-  AppSecurityScan,
-  FindingsDocument,
-  ParseTraceResult,
-} from './run.js'
+export {AppRootDiscoveryError, findAppRoot, getAgentInstructions, parseTrace, scanApp} from './run.js'
+export type {AppSecurityEngineMetadata, AppSecurityScan, ParseTraceResult} from './run.js'
 export {ignorePatternProblem} from './scanners/path-rules.js'
-export {hasRecordedAgentReview} from './trace/index.js'
 export {buildSubmission, SUBMISSION_SCHEMA_VERSION} from './submission/index.js'
 export type {AppSecuritySubmission, AppSecuritySubmissionReport, BuildSubmissionOptions} from './submission/index.js'
 export type {ReviewPack} from './checks/index.js'

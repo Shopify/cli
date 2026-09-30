@@ -13,7 +13,7 @@ const app = {
   id: 'gid://shopify/App/1',
 }
 
-const submission = {schemaVersion: 1, report: {}} as AppSecuritySubmission
+const submission = {schemaVersion: 0, report: {}} as AppSecuritySubmission
 
 function dependencies(upload = vi.fn(async () => {})) {
   return {upload}

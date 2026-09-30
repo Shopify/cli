@@ -1,4 +1,4 @@
-import {submissionTraceFixture, submissionTraceHashes} from './fixtures/submission-trace.js'
+import {submissionTraceFixture} from './fixtures/submission-trace.js'
 import {buildSubmission, SUBMISSION_SCHEMA_VERSION} from '../submission/index.js'
 import {validateTrace} from '../trace/index.js'
 import {readFile} from '@shopify/cli-kit/node/fs'
@@ -28,66 +28,7 @@ describe('buildSubmission', () => {
     const expected = await jsonFixture<AppSecuritySubmission>('submission.json')
 
     expect(expected.schemaVersion).toBe(SUBMISSION_SCHEMA_VERSION)
-    expect(expected.report.findings.map(({fingerprint}) => fingerprint)).toEqual([
-      submissionTraceHashes.deterministicFingerprint,
-      submissionTraceHashes.agentFingerprint,
-      submissionTraceHashes.externalFingerprint,
-    ])
-    expect(expected.report.findings[1]!.prompt_hash).toBe(submissionTraceHashes.agentPromptHash)
-    expect(expected.report.checks_executed[1]!.prompt_hash).toBe(submissionTraceHashes.agentPromptHash)
-    expect(expected.report.checks_executed[4]!.prompt_hash).toBe(submissionTraceHashes.unresolvedPromptHash)
-    expect(expected.report.attestation.trace_digest).toBe(submissionTraceHashes.traceDigest)
     expect(buildSubmission(structuredClone(submissionTraceFixture), options)).toEqual(expected)
-  })
-
-  test.each(['/Users/alice/private-app/server.ts', 'eval(req.body.code)'])(
-    'replaces external title %j only in the submission',
-    (title) => {
-      const trace = structuredClone(submissionTraceFixture)
-      const externalFinding = trace.findings.find((finding) => finding.source === 'external')!
-      externalFinding.title = title
-      const originalTrace = structuredClone(trace)
-
-      const submission = buildSubmission(trace, options)
-
-      expect(submission.report.findings.find((finding) => finding.source === 'external')).toMatchObject({
-        title: 'External finding',
-        fingerprint: externalFinding.fingerprint,
-      })
-      expect(JSON.stringify(submission)).not.toContain(title)
-      expect(
-        submission.report.findings.filter((finding) => finding.source !== 'external').map(({title}) => title),
-      ).toEqual(trace.findings.filter((finding) => finding.source !== 'external').map(({title}) => title))
-      expect(trace).toEqual(originalTrace)
-    },
-  )
-
-  test('omits suppression justifications without changing the local trace or suppression linkage', () => {
-    const trace = structuredClone(submissionTraceFixture)
-    const suppression = trace.suppressions[0]!
-    suppression.justification = 'Accepted eval(req.body.code) in /Users/alice/private-app/server.ts during migration'
-    const originalTrace = structuredClone(trace)
-
-    const submission = buildSubmission(trace, options)
-
-    expect(submission.report.suppressions).toEqual([
-      {
-        id: suppression.id,
-        finding_fingerprint: suppression.finding_fingerprint,
-        provenance: {
-          source: suppression.provenance.source,
-          created_at: suppression.provenance.created_at,
-        },
-      },
-    ])
-    expect(
-      submission.report.findings.find((finding) => finding.fingerprint === suppression.finding_fingerprint),
-    ).toMatchObject({
-      suppressed: true,
-      suppression_id: suppression.id,
-    })
-    expect(JSON.stringify(submission)).not.toContain(suppression.justification)
-    expect(trace).toEqual(originalTrace)
   })
 
   test('emits a null version tag when no app version is supplied', () => {

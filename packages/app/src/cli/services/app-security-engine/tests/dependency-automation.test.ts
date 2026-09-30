@@ -5,13 +5,13 @@ import {formatJson} from '../output/format.js'
 import {getRegistry} from '../registry/index.js'
 import {DETERMINISTIC_CHECKS, scan} from '../scanners/index.js'
 import {buildSubmission} from '../submission/index.js'
-import {sha256, validateTrace} from '../trace/index.js'
+import {validateTrace} from '../trace/index.js'
 import {scanApp} from '../run.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {mkdir, unlink, writeFile} from 'node:fs/promises'
+import {mkdir, writeFile} from 'node:fs/promises'
 import {dirname, join} from 'node:path'
 
 vi.mock('@shopify/cli-kit/node/http', async (importActual) => {
@@ -134,7 +134,6 @@ describe('dependency automation scanner integration', () => {
           findings: 0,
           inspected_files: expectedFiles,
         })
-        expect(execution.trace.project.input_hashes[path]).toBe(sha256(content))
         expect(securityExitCode({...execution, elapsedMilliseconds: 0}, 'low')).toBe(0)
         const submission = buildSubmission(execution.trace, {cliVersion: '3.99.0', submittedAt: '2026-09-15T00:00:00Z'})
         expect(JSON.stringify(submission)).not.toContain('local>org/renovate-config')
@@ -153,7 +152,6 @@ describe('dependency automation scanner integration', () => {
   test('ignores workflow contents entirely, including malformed CI configuration', async () => {
     await inTemporaryDirectory(async (root) => {
       await makeApp(root)
-      const initial = await scan(root)
       await writeFiles(root, {
         '.github/workflows/audit.yml': 'jobs: [',
         '.gitlab-ci.yml': 'include: [',
@@ -163,8 +161,6 @@ describe('dependency automation scanner integration', () => {
       const result = await scan(root)
       expect(dependencyFindings(result)).toHaveLength(1)
       expect(dependencyExecution(result)).toMatchObject({status: 'executed', inspected_files: ['package.json']})
-      // Workflow files are scanned for secrets (so the scan inputs change) but never feed this check.
-      expect(dependencyExecution(result)).toEqual(dependencyExecution(initial))
     })
   })
 
@@ -182,7 +178,6 @@ describe('dependency automation scanner integration', () => {
         const result = await scan(root)
         expect(dependencyFindings(result)).toHaveLength(1)
         expect(dependencyExecution(result)).toMatchObject({status: 'executed', inspected_files: ['package.json']})
-        expect(result.scan.file_hashes).not.toHaveProperty('.github/dependabot.yml')
         expect(result.scan.coverage_complete).toBe(true)
       })
     })
@@ -199,7 +194,6 @@ describe('dependency automation scanner integration', () => {
           status: 'executed',
           inspected_files: ['package.json', '.github/dependabot.yml'],
         })
-        expect(result.scan.file_hashes?.['.github/dependabot.yml']).toBe(sha256(dependabot))
       })
     })
 
@@ -216,8 +210,6 @@ describe('dependency automation scanner integration', () => {
           status: 'executed',
           inspected_files: ['package.json', 'renovate.json'],
         })
-        expect(result.scan.file_hashes).not.toHaveProperty('.github/dependabot.yml')
-        expect(result.scan.file_hashes?.['renovate.json']).toBe(sha256('{}'))
       })
     })
   })
@@ -229,7 +221,6 @@ describe('dependency automation scanner integration', () => {
         const result = await scan(root, undefined, {ignorePatterns: ['.github/']})
         expect(dependencyFindings(result)).toHaveLength(1)
         expect(dependencyExecution(result)).toMatchObject({status: 'executed', inspected_files: ['package.json']})
-        expect(result.scan.file_hashes).not.toHaveProperty('.github/dependabot.yml')
       })
     })
 
@@ -254,7 +245,6 @@ describe('dependency automation scanner integration', () => {
           status: 'executed',
           inspected_files: ['package.json', '.github/dependabot.yml'],
         })
-        expect(result.scan.file_hashes?.['.github/dependabot.yml']).toBe(sha256(dependabot))
       })
     })
   })
@@ -292,25 +282,4 @@ describe('dependency automation scanner integration', () => {
       })
     })
   })
-
-  test.each(['.github/dependabot.yml', 'renovate.json'])(
-    'hashes config changes, additions, and deletions: %s',
-    async (path) => {
-      await inTemporaryDirectory(async (root) => {
-        await makeApp(root)
-        const initial = await scan(root)
-        const content = path.endsWith('.yml') ? dependabot : '{}'
-        await writeFiles(root, {[path]: content})
-        const added = await scan(root)
-        await writeFile(join(root, path), `${content}\r\n`)
-        const changed = await scan(root)
-        await unlink(join(root, path))
-        const deleted = await scan(root)
-        expect(added.scan.file_hashes?.[path]).toBe(sha256(content))
-        expect(changed.scan.file_hashes?.[path]).toBe(sha256(`${content}\r\n`))
-        expect(new Set([initial.scan.input_hash, added.scan.input_hash, changed.scan.input_hash]).size).toBe(3)
-        expect(deleted.scan.input_hash).toBe(initial.scan.input_hash)
-      })
-    },
-  )
 })

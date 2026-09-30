@@ -59,15 +59,13 @@ describe('appSecurityInstructions', () => {
       expect(instructions).toContain('### 1. Run the initial scan')
       expect(instructions).toContain(`shopify app security check --path ${shellQuote(appRoot)}`)
       expect(instructions).not.toMatch(/shopify app security check --path .+ --config/)
-      expect(instructions).toContain(joinPath(appRoot, '.shopify', 'app-security', 'findings.json'))
       expect(instructions).toContain(joinPath(appRoot, '.shopify', 'app-security', 'trace.json'))
       expect(instructions).not.toContain('{{SCAN_CONTEXT}}')
       expect(instructions).not.toContain('{{SCAN_COMMAND}}')
-      expect(instructions).not.toContain('{{COMPILE_COMMAND}}')
     })
   })
 
-  test('includes --config in scan and compile commands for a named configuration', async () => {
+  test('includes --config in the scan command for a named configuration', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       await writeFile(joinPath(appRoot, 'shopify.app.staging.toml'), 'name = "Staging"\nclient_id = "staging"\n')
@@ -80,9 +78,6 @@ describe('appSecurityInstructions', () => {
       expect(instructions).toContain(
         `shopify app security check --path ${shellQuote(appRoot)} --config ${shellQuote('staging')}`,
       )
-      expect(instructions).toContain(
-        `shopify app security check --path ${shellQuote(appRoot)} --config ${shellQuote('staging')} --findings ${shellQuote(joinPath(appRoot, '.shopify', 'app-security', 'findings.json'))}`,
-      )
     })
   })
 
@@ -94,30 +89,18 @@ describe('appSecurityInstructions', () => {
       expect(instructions).toContain('### 1. Use the existing scan results')
       expect(instructions).toContain("The current invocation's initial scan has already completed.")
       expect(instructions).not.toContain('### 1. Run the initial scan')
-      expect(instructions).toContain(
-        `shopify app security check --path ${shellQuote(appRoot)} --findings ${shellQuote(joinPath(appRoot, '.shopify', 'app-security', 'findings.json'))}`,
-      )
     })
   })
 
-  test('explains guarded scans and explicit clean restarts', async () => {
+  test('explains explicit clean restarts', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       const instructions = appSecurityInstructions({directory: appRoot, scanComplete: true})
       const cleanCommand = `shopify app security check --path ${shellQuote(appRoot)} --clean`
 
-      expect(instructions).toContain(
-        'If App Security reports existing agent findings or a compiled trace, do not bypass that safeguard automatically.',
-      )
-      expect(instructions).toContain(
-        'Read the diagnostics produced by that compilation command and open the existing trace directly.',
-      )
       expect(instructions).toContain(`Start a new review with \`${cleanCommand}\``)
       expect(instructions).toContain(
-        'Submission reads the existing compiled trace and does not require or perform another scan.',
-      )
-      expect(instructions).toContain(
-        'If protected review work blocks the deterministic scan, do not use `--clean` unless the user intends to discard that work.',
+        'Submission reads the existing trace and does not require or perform another scan.',
       )
       expect(instructions).not.toContain('{{CLEAN_COMMAND}}')
     })
@@ -133,7 +116,6 @@ describe('appSecurityInstructions', () => {
         expect(instructions).toContain(joinPath(appRoot, '.shopify', 'app-security', 'review.json'))
         expect(instructions).not.toContain(otherDirectory)
         expect(instructions).not.toContain('shopify app security check\n')
-        expect(instructions).not.toContain('--findings .shopify/app-security/findings.json')
       })
     })
   })
@@ -217,7 +199,7 @@ describe('deliverAppSecurityInstructions', () => {
       expect(instructions).toContain('Read `.shopify/app-security/submission.json` before uploading')
       expect(instructions).toContain('`--config <name>` or `--client-id <id>`')
       expect(instructions).toContain('only when the user explicitly requests or authorizes an upload to Shopify')
-      expect(instructions).toContain('Do not upload automatically; local compilation does not require submission.')
+      expect(instructions).toContain('Do not upload automatically.')
       expect(instructions).toContain('normal interactive confirmation')
       expect(instructions).toContain(
         'For live automation, use `shopify app security submit --json --force` only with that authorization',
@@ -231,9 +213,9 @@ describe('deliverAppSecurityInstructions', () => {
       expect(instructions).not.toContain('--source-control-url')
       expect(instructions).not.toContain('--source-control-hash')
       expect(instructions).toContain('Submission does not make the trace signed or proof of App Store approval')
-      const submitSection = instructions.indexOf('### 7. Submit only when explicitly authorized (optional)')
-      expect(submitSection).toBeGreaterThan(instructions.indexOf('### 6. Explain findings and help fix them'))
-      expect(instructions).toContain('Only after compiling and reviewing')
+      const submitSection = instructions.indexOf('### 5. Submit only when explicitly authorized (optional)')
+      expect(submitSection).toBeGreaterThan(instructions.indexOf('### 4. Explain findings and help fix them'))
+      expect(instructions).toContain('Only after reviewing')
       expect(instructions).not.toContain('reserved for a future authenticated upload workflow')
       expect(instructions).not.toMatch(/\{\{[A-Z_]+\}\}/)
       expect(dependencies.output).not.toHaveBeenCalled()

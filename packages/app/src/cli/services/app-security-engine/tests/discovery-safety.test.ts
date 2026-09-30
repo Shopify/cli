@@ -33,6 +33,16 @@ async function makeDirectory(prefix = 'app-security-discovery-'): Promise<string
   return directory
 }
 
+/** Every project-relative path the scan reports as detected source or as inspected by a check. */
+function scannedPaths(result: ScanResult): string[] {
+  return [
+    ...new Set([
+      ...result.detection.languages.flatMap((language) => language.files),
+      ...result.scan.checks_executed.flatMap((execution) => execution.inspected_files),
+    ]),
+  ].sort()
+}
+
 async function writeFiles(root: string, files: Record<string, string>): Promise<void> {
   await Promise.all(
     Object.entries(files).map(async ([path, content]) => {
@@ -48,10 +58,6 @@ async function makeRepository(files: Record<string, string>): Promise<string> {
   git(root, ['init', '-q', '.'])
   await writeFiles(root, files)
   return root
-}
-
-function hashedPaths(result: ScanResult): string[] {
-  return Object.keys(result.scan.file_hashes ?? {})
 }
 
 function secretFindingFiles(result: ScanResult): string[] {
@@ -142,8 +148,8 @@ describe('repository discovery exclusions', () => {
     })
 
     const result = await scan(root)
-    expect(Object.keys(result.scan.file_hashes ?? {})).toContain('parent.ts')
-    expect(Object.keys(result.scan.file_hashes ?? {}).some((path) => path.startsWith('apps/child/'))).toBe(false)
+    expect(scannedPaths(result)).toContain('parent.ts')
+    expect(scannedPaths(result).some((path) => path.startsWith('apps/child/'))).toBe(false)
     expect(result.capabilities.theme_app_extension).toBe(false)
     expect(result.detection.framework).not.toBe('react_router')
     expect(JSON.stringify(result)).not.toContain(secret)
@@ -183,7 +189,7 @@ describe('repository discovery exclusions', () => {
     })
 
     const result = await scan(root)
-    const paths = hashedPaths(result)
+    const paths = scannedPaths(result)
     expect(paths).toContain('src/index.ts')
     for (const directory of ignoredDirectories)
       expect(paths.some((path) => path.includes(`/${directory}/`))).toBe(false)
@@ -216,7 +222,7 @@ describe('repository discovery exclusions', () => {
     })
 
     const result = await scan(root)
-    const paths = hashedPaths(result)
+    const paths = scannedPaths(result)
     expect(secretFindingFiles(result)).toEqual(['.github/workflows/deploy.yml'])
     expect(paths).toContain('.vscode/settings.json')
     expect(paths).toContain('.eslintrc.cjs')
@@ -251,7 +257,7 @@ describe('repository discovery exclusions', () => {
     })
 
     const result = await scan(root)
-    const paths = hashedPaths(result)
+    const paths = scannedPaths(result)
     expect(paths).toContain('src/index.ts')
     for (const directory of generatedDotFolders) expect(paths).not.toContain(`${directory}/x.ts`)
 
@@ -269,9 +275,8 @@ describe('repository discovery exclusions', () => {
     })
     const after = await scan(root)
 
-    expect(after.scan.input_hash).toBe(before.scan.input_hash)
-    expect(after.scan.file_hashes).toEqual(before.scan.file_hashes)
-    expect(Object.keys(after.scan.file_hashes ?? {}).some((path) => path.includes('.shopify/app-security'))).toBe(false)
+    expect(scannedPaths(after)).toEqual(scannedPaths(before))
+    expect(scannedPaths(after).some((path) => path.includes('.shopify/app-security'))).toBe(false)
   })
 
   test('scans unconfigured extension files outside extension_directories', async () => {
@@ -285,16 +290,11 @@ describe('repository discovery exclusions', () => {
     })
 
     const result = await scan(root)
-    const paths = Object.keys(result.scan.file_hashes ?? {})
+    const paths = scannedPaths(result)
 
     expect(result.capabilities.theme_app_extension).toBe(true)
     expect(paths).toEqual(
-      expect.arrayContaining([
-        'configured/shopify.extension.toml',
-        'configured/blocks/configured.liquid',
-        'unconfigured/shopify.extension.toml',
-        'unconfigured/blocks/unconfigured.liquid',
-      ]),
+      expect.arrayContaining(['configured/blocks/configured.liquid', 'unconfigured/blocks/unconfigured.liquid']),
     )
   })
 
@@ -367,13 +367,13 @@ describe('gitignore-driven exclusions', () => {
       'generated/client.ts': 'export const ignored = true',
     })
 
-    const paths = hashedPaths(await scan(root))
+    const paths = scannedPaths(await scan(root))
     expect(paths).toContain('src/index.ts')
     expect(paths).not.toContain('tmp/scratch.ts')
     expect(paths).not.toContain('generated/client.ts')
   })
 
-  test('neither reports nor hashes a secret in a gitignored file, but does for its non-ignored twin', async () => {
+  test('neither reports nor scans a secret in a gitignored file, but does for its non-ignored twin', async () => {
     const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
     const root = await makeRepository({
       'shopify.app.toml': appConfiguration,
@@ -385,7 +385,7 @@ describe('gitignore-driven exclusions', () => {
     const result = await scan(root)
     // The control file proves the secret is detectable, so the absence for notes.txt is not vacuous.
     expect(secretFindingFiles(result)).toEqual(['other.txt'])
-    const paths = hashedPaths(result)
+    const paths = scannedPaths(result)
     expect(paths).toContain('other.txt')
     expect(paths).not.toContain('notes.txt')
   })
@@ -399,7 +399,7 @@ describe('gitignore-driven exclusions', () => {
     })
     git(root, ['add', '-f', 'config/tracked.ts'])
 
-    const paths = hashedPaths(await scan(root))
+    const paths = scannedPaths(await scan(root))
     expect(paths).toContain('config/tracked.ts')
     expect(paths).not.toContain('config/untracked.ts')
   })
@@ -414,7 +414,7 @@ describe('gitignore-driven exclusions', () => {
     })
 
     const result = await scan(root)
-    const paths = hashedPaths(result)
+    const paths = scannedPaths(result)
     expect(paths).toContain('.env.example')
     expect(paths).not.toContain('.env')
     expect(secretFindingFiles(result)).toEqual([])
@@ -429,13 +429,13 @@ describe('gitignore-driven exclusions', () => {
       'local.ts': 'export const included = true',
     })
 
-    const paths = hashedPaths(await scan(root))
+    const paths = scannedPaths(await scan(root))
     expect(paths).toContain('packages/api/index.ts')
     expect(paths).toContain('local.ts')
     expect(paths).not.toContain('packages/api/local.ts')
   })
 
-  test('excludes gitignored files from an extension and from the scan hashes', async () => {
+  test('excludes gitignored files from an extension and from the scan', async () => {
     const root = await makeRepository({
       'shopify.app.toml': appConfiguration,
       '.gitignore': 'extensions/foo/generated.js\n',
@@ -449,7 +449,7 @@ describe('gitignore-driven exclusions', () => {
       ['extensions/foo/index.js'],
     ])
 
-    const paths = hashedPaths(await scan(root))
+    const paths = scannedPaths(await scan(root))
     expect(paths).toContain('extensions/foo/index.js')
     expect(paths).not.toContain('extensions/foo/generated.js')
   })
@@ -468,7 +468,7 @@ describe('gitignore-driven exclusions', () => {
       'space.ts': 'export const included = true',
     })
 
-    const paths = hashedPaths(await scan(root))
+    const paths = scannedPaths(await scan(root))
     expect(paths).toContain('id.ts')
     expect(paths).toContain('hash.ts')
     expect(paths).toContain('bang.ts')
@@ -487,7 +487,7 @@ describe('gitignore-driven exclusions', () => {
       'apps/web/scratch/notes.ts': 'export const ignored = true',
     })
 
-    const paths = hashedPaths(await scan(join(repository, 'apps', 'web')))
+    const paths = scannedPaths(await scan(join(repository, 'apps', 'web')))
     expect(paths).toContain('src/index.ts')
     expect(paths).not.toContain('scratch/notes.ts')
   })
@@ -500,7 +500,7 @@ describe('gitignore-driven exclusions', () => {
       'src/index.ts': 'export const included = true',
     })
 
-    const paths = hashedPaths(await scan(root))
+    const paths = scannedPaths(await scan(root))
     expect(paths).toContain('src/index.ts')
     expect(paths).not.toContain('private/keys.ts')
   })
@@ -519,7 +519,7 @@ describe('gitignore-driven exclusions', () => {
     git(repository, ['commit', '-qm', 'init'])
 
     const result = await scan(join(repository, 'apps', 'web'))
-    const paths = hashedPaths(result)
+    const paths = scannedPaths(result)
     expect(paths).toContain('.env')
     expect(paths).toContain('a.ts')
     expect(secretFindingFiles(result)).toEqual(['.env'])
@@ -539,7 +539,7 @@ describe('gitignore-driven exclusions', () => {
 
     const result = await scan(root)
     expect(inspectedManifestPaths(result)).toEqual(['legacy/package.json', 'package.json'])
-    const paths = hashedPaths(result)
+    const paths = scannedPaths(result)
     expect(paths).toContain('legacy/package.json')
     expect(paths).not.toContain('tmp/package.json')
   })
@@ -565,7 +565,7 @@ describe('gitignore-driven exclusions', () => {
     const result = await scan(root)
     // The unignored nested repository proves the secret is detectable, so the absence is not vacuous.
     expect(secretFindingFiles(result)).toEqual(['plain/token.ts'])
-    expect(hashedPaths(result)).not.toContain(`${nestedRepository}/token.ts`)
+    expect(scannedPaths(result)).not.toContain(`${nestedRepository}/token.ts`)
   })
 
   test('ignores nothing from a .gitignore outside a git repository', async () => {
@@ -576,7 +576,7 @@ describe('gitignore-driven exclusions', () => {
       'tmp/scratch.ts': 'export const scanned = true',
     })
 
-    expect(hashedPaths(await scan(root))).toContain('tmp/scratch.ts')
+    expect(scannedPaths(await scan(root))).toContain('tmp/scratch.ts')
   })
 
   test('loads and scans a gitignored selected app configuration file for secrets', async () => {
@@ -589,7 +589,7 @@ describe('gitignore-driven exclusions', () => {
 
     const result = await scan(root, 'staging')
     expect(result.app.name).toBe('Staging')
-    expect(hashedPaths(result)).toContain('shopify.app.staging.toml')
+    expect(scannedPaths(result)).toContain('shopify.app.staging.toml')
     expect(secretFindingFiles(result)).toEqual(['shopify.app.staging.toml'])
   })
 })
@@ -612,7 +612,7 @@ describe('--ignore patterns', () => {
       'web/generated/schema.ts': 'export const excluded = true',
     })
 
-    const paths = hashedPaths(await scan(root, undefined, {ignorePatterns: ['generated/']}))
+    const paths = scannedPaths(await scan(root, undefined, {ignorePatterns: ['generated/']}))
     expect(paths).toContain('src/index.ts')
     expect(paths).not.toContain('generated/client.ts')
     expect(paths).not.toContain('web/generated/schema.ts')
@@ -627,12 +627,12 @@ describe('--ignore patterns', () => {
     })
 
     // `/build/` is anchored to the app directory; the nested `build/` stays excluded by the default.
-    const anchored = hashedPaths(await scan(root, undefined, {ignorePatterns: ['!/build/']}))
+    const anchored = scannedPaths(await scan(root, undefined, {ignorePatterns: ['!/build/']}))
     expect(anchored).toContain('build/x.ts')
     expect(anchored).not.toContain('packages/a/build/y.ts')
 
     // `build/` without a slash prefix matches at any depth, like the default it overrides.
-    const unanchored = hashedPaths(await scan(root, undefined, {ignorePatterns: ['!build/']}))
+    const unanchored = scannedPaths(await scan(root, undefined, {ignorePatterns: ['!build/']}))
     expect(unanchored).toContain('build/x.ts')
     expect(unanchored).toContain('packages/a/build/y.ts')
   })
@@ -644,8 +644,8 @@ describe('--ignore patterns', () => {
       'tmp/scratch.ts': 'export const reincluded = true',
     })
 
-    expect(hashedPaths(await scan(root))).not.toContain('tmp/scratch.ts')
-    expect(hashedPaths(await scan(root, undefined, {ignorePatterns: ['!tmp/']}))).toContain('tmp/scratch.ts')
+    expect(scannedPaths(await scan(root))).not.toContain('tmp/scratch.ts')
+    expect(scannedPaths(await scan(root, undefined, {ignorePatterns: ['!tmp/']}))).toContain('tmp/scratch.ts')
   })
 
   test('re-includes a nested repository that the app repository ignores', async () => {
@@ -672,7 +672,7 @@ describe('--ignore patterns', () => {
       'tmp/scratch.ts': 'export const stillExcluded = true',
     })
 
-    const paths = hashedPaths(await scan(root, undefined, {ignorePatterns: ['!tmp/keep.ts']}))
+    const paths = scannedPaths(await scan(root, undefined, {ignorePatterns: ['!tmp/keep.ts']}))
     expect(paths).not.toContain('tmp/keep.ts')
     expect(paths).not.toContain('tmp/scratch.ts')
   })
@@ -686,7 +686,7 @@ describe('--ignore patterns', () => {
       'build/x.local.json': '{"ignored": true}',
     })
 
-    const paths = hashedPaths(await scan(root, undefined, {ignorePatterns: ['!build/']}))
+    const paths = scannedPaths(await scan(root, undefined, {ignorePatterns: ['!build/']}))
     expect(paths).toContain('build/a.ts')
     expect(paths).not.toContain('build/x.local.json')
   })
@@ -698,10 +698,14 @@ describe('--ignore patterns', () => {
       'generated/client.ts': 'export const decided = true',
     })
 
-    const excludeThenInclude = hashedPaths(await scan(root, undefined, {ignorePatterns: ['generated/', '!generated/']}))
+    const excludeThenInclude = scannedPaths(
+      await scan(root, undefined, {ignorePatterns: ['generated/', '!generated/']}),
+    )
     expect(excludeThenInclude).toContain('generated/client.ts')
 
-    const includeThenExclude = hashedPaths(await scan(root, undefined, {ignorePatterns: ['!generated/', 'generated/']}))
+    const includeThenExclude = scannedPaths(
+      await scan(root, undefined, {ignorePatterns: ['!generated/', 'generated/']}),
+    )
     expect(includeThenExclude).not.toContain('generated/client.ts')
   })
 
@@ -715,7 +719,7 @@ describe('--ignore patterns', () => {
 
     const result = await scan(root, 'staging', {ignorePatterns: ['shopify.app*.toml']})
     expect(result.app.name).toBe('Staging')
-    expect(hashedPaths(result)).toContain('shopify.app.staging.toml')
+    expect(scannedPaths(result)).toContain('shopify.app.staging.toml')
     expect(secretFindingFiles(result)).toEqual(['shopify.app.staging.toml'])
   })
 })

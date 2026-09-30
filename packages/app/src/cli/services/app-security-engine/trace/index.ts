@@ -1,7 +1,5 @@
 import {ENGINE_NAME, SUPPORTED_TRACE_SCHEMA_VERSIONS, TRACE_SCHEMA_VERSION} from '../types.js'
-import {loadChecks} from '../checks/index.js'
 import {redactText} from '../rules/secret-rules.js'
-import {sha256 as sha256Buffer} from '@shopify/cli-kit/node/crypto'
 import type {
   AnalysisMode,
   CheckExecution,
@@ -11,12 +9,10 @@ import type {
   Location,
   ScanResult,
   Severity,
-  Suppression,
   TraceFinding,
   TraceV3,
 } from '../types.js'
 
-const SHA256 = /^sha256:[0-9a-f]{64}$/
 const MAX_TRACE_VALIDATION_NODES = 500_000
 const MAX_TRACE_VALIDATION_DEPTH = 100
 const TRACE_COMPLEXITY_ERROR = 'trace is cyclic or exceeds validation complexity limits'
@@ -27,7 +23,7 @@ const EXECUTION_STATUSES = new Set<CheckExecutionStatus>([
   'unsupported_framework',
   'unresolved',
 ])
-const ANALYSIS_MODES = new Set<AnalysisMode>(['regex', 'structured_config', 'ast', 'agent', 'external'])
+const ANALYSIS_MODES = new Set<AnalysisMode>(['regex', 'structured_config', 'ast'])
 const REASON_CODES = new Set([
   'capability_absent',
   'no_relevant_files',
@@ -35,28 +31,10 @@ const REASON_CODES = new Set([
   'unsupported_language',
   'parser_unavailable',
   'agent_investigation_required',
-  'not_reported',
   'input_rejected',
 ])
 const FRAMEWORKS = new Set(['react_router', 'none', 'unknown', 'mixed'])
 const SURFACES = new Set(['react_router', 'theme_app_extension', 'config_only', 'unknown', 'mixed'])
-
-export function canonicalJson(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(',')}]`
-  if (value !== null && typeof value === 'object') {
-    const object = value as Record<string, unknown>
-    return `{${Object.keys(object)
-      .sort()
-      .map((key) => `${JSON.stringify(key)}:${canonicalJson(object[key])}`)
-      .join(',')}}`
-  }
-  return JSON.stringify(value)
-}
-
-export function sha256(value: unknown): string {
-  const input = typeof value === 'string' ? value : canonicalJson(value)
-  return `sha256:${sha256Buffer(input).toString('hex')}`
-}
 
 const safeLocation = (location: Location): Location => ({
   file: redactText(location.file.replace(/\\/g, '/')),
@@ -78,7 +56,6 @@ export function redactIssue(issue: Issue): Issue {
     message: redactText(issue.message),
     location: safeLocation(issue.location),
     ...(issue.snippet === undefined ? {} : {snippet: redactText(issue.snippet)}),
-    ...(issue.agent_reasoning === undefined ? {} : {agent_reasoning: redactText(issue.agent_reasoning)}),
     ...(issue.detection_evidence === undefined ? {} : {detection_evidence: issue.detection_evidence.map(redactText)}),
     ...(issue.evidence === undefined ? {} : {evidence: redactEvidence(issue.evidence)}),
     fix: {
@@ -89,40 +66,11 @@ export function redactIssue(issue: Issue): Issue {
   }
 }
 
-const findingFingerprintPayload = (finding: Omit<TraceFinding, 'fingerprint' | 'suppression' | 'suppressed'>) => ({
-  source: finding.source,
-  rule_id: finding.rule_id ?? null,
-  rule_version: finding.rule_version ?? null,
-  check_id: finding.check_id ?? null,
-  check_version: finding.check_version ?? null,
-  prompt_hash: finding.prompt_hash ?? null,
-  severity: finding.severity,
-  title: finding.title,
-  location: finding.location,
-  message: finding.message,
-  evidence: finding.evidence,
-  snippet: finding.snippet ?? null,
-  fix: finding.fix,
-})
-
-export function findingFingerprint(finding: Omit<TraceFinding, 'fingerprint' | 'suppression' | 'suppressed'>): string {
-  return sha256(findingFingerprintPayload(finding))
-}
-
-function issueSource(issue: Issue): TraceFinding['source'] {
-  if (issue.found_by === 'agent') return 'agent'
-  if (issue.found_by === 'external') return 'external'
-  return 'deterministic'
-}
-
 function issueToFinding(issueInput: Issue): TraceFinding {
   const issue = redactIssue(issueInput)
-  const source = issueSource(issue)
-  const core: Omit<TraceFinding, 'fingerprint' | 'suppression' | 'suppressed'> = {
-    source,
-    ...(source === 'agent'
-      ? {check_id: issue.id, check_version: issue.check_version, prompt_hash: issue.prompt_hash}
-      : {rule_id: issue.id, rule_version: issue.rule_version ?? 1}),
+  return {
+    rule_id: issue.id,
+    rule_version: issue.rule_version ?? 1,
     severity: issue.severity,
     title: issue.title,
     message: issue.message,
@@ -131,27 +79,14 @@ function issueToFinding(issueInput: Issue): TraceFinding {
     ...(issue.snippet === undefined ? {} : {snippet: issue.snippet}),
     fix: issue.fix,
   }
-  return {fingerprint: findingFingerprint(core), ...core, suppressed: false}
 }
 
-export function hasRecordedAgentReview(trace: TraceV3): boolean {
-  return (
-    trace.findings.some((finding) => finding.source === 'agent' || finding.source === 'external') ||
-    trace.checks_executed.some((execution) => {
-      if (execution.kind === 'external') return true
-      if (execution.kind !== 'agent') return false
-      return execution.status !== 'unresolved' || execution.reason?.code !== 'not_reported'
-    }) ||
-    trace.suppressions.length > 0
-  )
-}
+const findingSortKey = (finding: TraceFinding): string =>
+  `${finding.rule_id}|${finding.location.file}|${String(finding.location.line ?? 0).padStart(10, '0')}|${finding.message}`
 
 export interface CompileTraceOptions {
   engineVersion?: string
   ruleset?: string
-  suppressions?: Suppression[]
-  agentChecksExecuted?: CheckExecution[]
-  externalChecksExecuted?: CheckExecution[]
   generatedAt?: string
 }
 
@@ -159,66 +94,12 @@ export interface CompileTraceOptions {
 export function compileTrace(result: ScanResult, options: CompileTraceOptions = {}): TraceV3 {
   const findings = result.issues
     .map(issueToFinding)
-    .sort((left, right) =>
-      `${left.source}|${left.check_id ?? left.rule_id}|${left.location.file}|${left.location.line ?? 0}|${left.fingerprint}`.localeCompare(
-        `${right.source}|${right.check_id ?? right.rule_id}|${right.location.file}|${right.location.line ?? 0}|${right.fingerprint}`,
-      ),
-    )
-  const suppressions = applySuppressions(findings, options.suppressions ?? [])
-  const deterministicExecutions = result.scan.checks_executed.map((execution) => withFindingCount(execution, findings))
-  const explicitAgent = new Map((options.agentChecksExecuted ?? []).map((execution) => [execution.id, execution]))
-  const agentExecutions: CheckExecution[] = [...loadChecks().values()].map((check) => {
-    const explicit = explicitAgent.get(check.id)
-    if (explicit) return withFindingCount(explicit, findings)
-    return {
-      id: check.id,
-      version: check.version,
-      kind: 'agent',
-      status: 'unresolved',
-      required: false,
-      applicable: true,
-      languages: result.detection.languages.map((language) => language.name),
-      framework: result.detection.framework,
-      surface: result.detection.surface,
-      inspected_files: [],
-      findings: findings.filter((finding) => finding.source === 'agent' && finding.check_id === check.id).length,
-      analysis_mode: 'agent',
-      reason: {code: 'not_reported', message: 'Agent investigation was not reported as completed.'},
-      prompt: check.prompt,
-      prompt_hash: check.prompt_hash,
-      guidance: 'Run this check with a coding agent and return its structured execution record.',
-    }
-  })
-  const externalById = new Map((options.externalChecksExecuted ?? []).map((execution) => [execution.id, execution]))
-  for (const finding of findings.filter((item) => item.source === 'external')) {
-    if (finding.rule_id && !externalById.has(finding.rule_id)) {
-      externalById.set(finding.rule_id, {
-        id: finding.rule_id,
-        version: finding.rule_version ?? 1,
-        kind: 'external',
-        status: 'executed',
-        required: false,
-        applicable: true,
-        languages: result.detection.languages.map((language) => language.name),
-        framework: result.detection.framework,
-        surface: result.detection.surface,
-        inspected_files: [
-          ...new Set(
-            findings
-              .filter((item) => item.source === 'external' && item.rule_id === finding.rule_id)
-              .map((item) => item.location.file),
-          ),
-        ],
-        findings: 0,
-        analysis_mode: 'external',
-      })
-    }
-  }
-  const checksExecuted = [...deterministicExecutions, ...agentExecutions, ...externalById.values()]
+    .sort((left, right) => findingSortKey(left).localeCompare(findingSortKey(right)))
+  const checksExecuted = result.scan.checks_executed
     .map((execution) => sanitizeExecution(withFindingCount(execution, findings)))
     .sort((left, right) => `${left.kind}|${left.id}`.localeCompare(`${right.kind}|${right.id}`))
 
-  const unsigned = {
+  const trace: TraceV3 = {
     schema_version: TRACE_SCHEMA_VERSION,
     engine: {
       name: ENGINE_NAME,
@@ -229,15 +110,10 @@ export function compileTrace(result: ScanResult, options: CompileTraceOptions = 
     project: {
       commit: result.project.commit,
       dirty: result.project.dirty,
-      input_hash: result.scan.input_hash,
-      input_hashes: Object.fromEntries(
-        Object.entries(result.scan.file_hashes ?? {}).map(([path, hash]) => [redactText(path), hash]),
-      ),
     },
     detection: result.detection,
     findings,
     checks_executed: checksExecuted,
-    suppressions,
     coverage: {
       files_scanned: result.scan.files_scanned,
       files_skipped: (result.scan.files_skipped ?? []).map((file) => ({
@@ -253,7 +129,6 @@ export function compileTrace(result: ScanResult, options: CompileTraceOptions = 
       })),
     },
   }
-  const trace: TraceV3 = {...unsigned, attestation: {digest: sha256(unsigned), signed: false}}
   const validation = validateTraceValue(trace)
   if (!validation.valid) {
     // Self-compiled traces are acyclic. A complexity miss on a large app must
@@ -265,14 +140,7 @@ export function compileTrace(result: ScanResult, options: CompileTraceOptions = 
 }
 
 function withFindingCount(execution: CheckExecution, findings: TraceFinding[]): CheckExecution {
-  const source = execution.kind === 'deterministic' ? 'deterministic' : execution.kind
-  return {
-    ...execution,
-    findings: findings.filter(
-      (finding) =>
-        finding.source === source && (source === 'agent' ? finding.check_id : finding.rule_id) === execution.id,
-    ).length,
-  }
+  return {...execution, findings: findings.filter((finding) => finding.rule_id === execution.id).length}
 }
 
 function sanitizeExecution(execution: CheckExecution): CheckExecution {
@@ -294,62 +162,6 @@ function sanitizeExecution(execution: CheckExecution): CheckExecution {
         }
       : {}),
   }
-}
-
-function applySuppressions(findings: TraceFinding[], inputs: Suppression[]): Suppression[] {
-  const ids = new Set<string>()
-  const byFingerprint = new Map<string, Suppression>()
-  for (const suppression of inputs) {
-    const problem = validateSuppression(suppression)
-    if (problem) throw new Error(`Invalid suppression ${redactText(suppression.id || '<unknown>')}: ${problem}`)
-    if (ids.has(suppression.id)) throw new Error(`Duplicate suppression id: ${redactText(suppression.id)}`)
-    if (byFingerprint.has(suppression.finding_fingerprint))
-      throw new Error(`Multiple suppressions target finding ${suppression.finding_fingerprint}`)
-    ids.add(suppression.id)
-    byFingerprint.set(suppression.finding_fingerprint, suppression)
-  }
-  const used: Suppression[] = []
-  for (const finding of findings) {
-    const suppression = byFingerprint.get(finding.fingerprint)
-    if (!suppression) continue
-    const safe: Suppression = {
-      ...suppression,
-      id: redactText(suppression.id),
-      justification: redactText(suppression.justification),
-      provenance: {
-        ...suppression.provenance,
-        ...(suppression.provenance.actor ? {actor: redactText(suppression.provenance.actor)} : {}),
-      },
-    }
-    finding.suppressed = true
-    finding.suppression = {id: safe.id, justification: safe.justification, provenance: safe.provenance}
-    used.push(safe)
-  }
-  if (used.length !== inputs.length) {
-    const current = new Set(findings.map((finding) => finding.fingerprint))
-    throw new Error(
-      `Suppressions did not match current findings: ${inputs
-        .filter((item) => !current.has(item.finding_fingerprint))
-        .map((item) => redactText(item.id))
-        .join(', ')}`,
-    )
-  }
-  return used.sort((left, right) => left.id.localeCompare(right.id))
-}
-
-export function validateSuppression(value: unknown): string | undefined {
-  if (!isObject(value)) return 'must be an object'
-  if (typeof value.id !== 'string' || !value.id.trim()) return 'id is required'
-  if (typeof value.finding_fingerprint !== 'string' || !SHA256.test(value.finding_fingerprint))
-    return 'finding_fingerprint must be a SHA-256 digest'
-  if (typeof value.justification !== 'string' || !value.justification.trim()) return 'justification is required'
-  if (!isObject(value.provenance) || !['human', 'policy', 'external'].includes(String(value.provenance.source)))
-    return 'provenance source is invalid'
-  if (!(value.provenance.actor === undefined || typeof value.provenance.actor === 'string'))
-    return 'provenance actor must be a string'
-  if (typeof value.provenance.created_at !== 'string' || Number.isNaN(Date.parse(value.provenance.created_at)))
-    return 'provenance created_at must be an ISO date'
-  return undefined
 }
 
 export function isTraceSchemaVersionSupported(version: unknown): version is typeof TRACE_SCHEMA_VERSION {
@@ -420,7 +232,7 @@ const inspectUnknownValue = (root: unknown): {containsSecret: boolean; unsafe: b
       continue
     }
     // Scan keys for leaked secrets without counting them as graph nodes.
-    // Walking Object.entries().flat() treated every input_hashes path as a
+    // Walking Object.entries().flat() treated every map key as a
     // nested visit and rejected large-but-valid apps as "cyclic".
     for (const [key, child] of Object.entries(value)) {
       if (redactText(key) !== key) containsSecret = true
@@ -431,8 +243,6 @@ const inspectUnknownValue = (root: unknown): {containsSecret: boolean; unsafe: b
 }
 
 function validateFindingValue(finding: Record<string, unknown>, index: number, errors: string[]): void {
-  const source = String(finding.source)
-  if (!['deterministic', 'agent', 'external'].includes(source)) errors.push(`findings[${index}].source is invalid`)
   if (!SEVERITIES.has(finding.severity as Severity)) errors.push(`findings[${index}].severity is invalid`)
   if (!validLocation(finding.location)) errors.push(`findings[${index}].location is invalid`)
   if (
@@ -440,27 +250,16 @@ function validateFindingValue(finding: Record<string, unknown>, index: number, e
     !finding.title.trim() ||
     typeof finding.message !== 'string' ||
     !finding.message.trim() ||
-    typeof finding.fingerprint !== 'string' ||
-    !SHA256.test(finding.fingerprint) ||
-    typeof finding.suppressed !== 'boolean' ||
     !isObject(finding.fix) ||
     typeof finding.fix.automated !== 'boolean' ||
     typeof finding.fix.description !== 'string' ||
     !finding.fix.description.trim()
   )
-    errors.push(`findings[${index}] title, message, fingerprint, fix, and suppression state are required`)
+    errors.push(`findings[${index}] title, message, and fix are required`)
   if (
-    source === 'agent' &&
-    (typeof finding.check_id !== 'string' ||
-      !Number.isInteger(finding.check_version) ||
-      Number(finding.check_version) < 1 ||
-      typeof finding.prompt_hash !== 'string' ||
-      !SHA256.test(finding.prompt_hash))
-  )
-    errors.push(`findings[${index}] agent provenance is required`)
-  if (
-    source !== 'agent' &&
-    (typeof finding.rule_id !== 'string' || !Number.isInteger(finding.rule_version) || Number(finding.rule_version) < 1)
+    typeof finding.rule_id !== 'string' ||
+    !Number.isInteger(finding.rule_version) ||
+    Number(finding.rule_version) < 1
   )
     errors.push(`findings[${index}] rule provenance is required`)
   if (
@@ -468,26 +267,6 @@ function validateFindingValue(finding: Record<string, unknown>, index: number, e
     finding.evidence.some((item) => !isObject(item) || !validLocation(item.location))
   )
     errors.push(`findings[${index}].evidence is invalid`)
-  else if (validLocation(finding.location) && isObject(finding.fix) && SEVERITIES.has(finding.severity as Severity)) {
-    const core = {
-      source: finding.source as TraceFinding['source'],
-      ...(source === 'agent'
-        ? {
-            check_id: finding.check_id as string,
-            check_version: finding.check_version as number,
-            prompt_hash: finding.prompt_hash as string,
-          }
-        : {rule_id: finding.rule_id as string, rule_version: finding.rule_version as number}),
-      severity: finding.severity as Severity,
-      title: finding.title as string,
-      message: finding.message as string,
-      location: finding.location as Location,
-      evidence: finding.evidence as unknown as FindingEvidence[],
-      ...(finding.snippet === undefined ? {} : {snippet: finding.snippet as string}),
-      fix: finding.fix as unknown as TraceFinding['fix'],
-    }
-    if (finding.fingerprint !== findingFingerprint(core)) errors.push(`findings[${index}].fingerprint mismatch`)
-  }
 }
 
 function validateImplementationValue(
@@ -530,7 +309,7 @@ function validateExecutionValue(execution: Record<string, unknown>, index: numbe
     !execution.id ||
     !Number.isInteger(execution.version) ||
     Number(execution.version) < 1 ||
-    !['deterministic', 'agent', 'external'].includes(String(execution.kind)) ||
+    execution.kind !== 'deterministic' ||
     !EXECUTION_STATUSES.has(status) ||
     typeof execution.required !== 'boolean' ||
     typeof execution.applicable !== 'boolean' ||
@@ -554,31 +333,11 @@ function validateExecutionValue(execution: Record<string, unknown>, index: numbe
     errors.push(`checks_executed[${index}] not_applicable execution requires a reason`)
   if ((status === 'not_applicable') !== (execution.applicable === false))
     errors.push(`checks_executed[${index}] applicability is inconsistent with its status`)
-  if (
-    status === 'executed' &&
-    ['regex', 'ast', 'agent'].includes(mode) &&
-    (execution.inspected_files as unknown[]).length === 0
-  )
+  if (status === 'executed' && ['regex', 'ast'].includes(mode) && (execution.inspected_files as unknown[]).length === 0)
     errors.push(`checks_executed[${index}] source-based execution requires inspected files`)
-  if (
-    execution.kind === 'agent' &&
-    (typeof execution.prompt !== 'string' ||
-      !execution.prompt.trim() ||
-      typeof execution.prompt_hash !== 'string' ||
-      !SHA256.test(execution.prompt_hash) ||
-      typeof execution.guidance !== 'string' ||
-      !execution.guidance.trim())
-  )
-    errors.push(`checks_executed[${index}] agent prompt provenance is required`)
-  else if (execution.kind === 'agent' && execution.prompt_hash !== sha256(execution.prompt))
-    errors.push(`checks_executed[${index}] agent prompt hash is invalid`)
 
   if (execution.implementations !== undefined) {
-    if (
-      execution.kind !== 'deterministic' ||
-      !Array.isArray(execution.implementations) ||
-      execution.implementations.length === 0
-    ) {
+    if (!Array.isArray(execution.implementations) || execution.implementations.length === 0) {
       errors.push(`checks_executed[${index}].implementations is invalid`)
     } else {
       const implementationIds = new Set<string>()
@@ -651,13 +410,10 @@ function validateTraceValue(value: unknown): TraceValidationResult {
     errors.push('engine name, version, and ruleset are required')
   if (
     !isObject(value.project) ||
-    !SHA256.test(String(value.project.input_hash)) ||
-    !isObject(value.project.input_hashes) ||
-    !Object.entries(value.project.input_hashes).every(([path, hash]) => validPath(path) && SHA256.test(String(hash))) ||
     !(value.project.commit === null || (typeof value.project.commit === 'string' && value.project.commit.length > 0)) ||
     !(value.project.dirty === null || typeof value.project.dirty === 'boolean')
   )
-    errors.push('project commit, dirty state, input_hash, and input_hashes are required')
+    errors.push('project commit and dirty state are required')
   if (typeof value.generated_at !== 'string' || Number.isNaN(Date.parse(value.generated_at)))
     errors.push('generated_at must be an ISO date')
   if (!validDetection(value.detection)) errors.push('detection is invalid')
@@ -685,11 +441,7 @@ function validateTraceValue(value: unknown): TraceValidationResult {
       const key = `${execution.kind}|${execution.id}`
       if (keys.has(key)) errors.push(`checks_executed[${index}] is duplicated`)
       keys.add(key)
-      const source = execution.kind === 'deterministic' ? 'deterministic' : execution.kind
-      const actual = findings.filter(
-        (finding) =>
-          finding.source === source && (source === 'agent' ? finding.check_id : finding.rule_id) === execution.id,
-      ).length
+      const actual = findings.filter((finding) => finding.rule_id === execution.id).length
       if (execution.findings !== actual) errors.push(`checks_executed[${index}].findings doesn't match findings`)
       if (
         (execution.status === 'not_applicable' || execution.status === 'unsupported_framework') &&
@@ -698,27 +450,14 @@ function validateTraceValue(value: unknown): TraceValidationResult {
         errors.push(`checks_executed[${index}] must have zero findings for status ${String(execution.status)}`)
     })
     findings.forEach((finding, index) => {
-      const kind = finding.source === 'deterministic' ? 'deterministic' : finding.source
-      const id = finding.source === 'agent' ? finding.check_id : finding.rule_id
-      const execution = executions.find((candidate) => candidate.kind === kind && candidate.id === id)
+      const execution = executions.find((candidate) => candidate.id === finding.rule_id)
       if (!execution || !['executed', 'unresolved'].includes(String(execution.status))) {
         errors.push(`findings[${index}] has no executed or partially executed check record`)
-      } else if (
-        execution.version !== (finding.source === 'agent' ? finding.check_version : finding.rule_version) ||
-        (finding.source === 'agent' && execution.prompt_hash !== finding.prompt_hash)
-      ) {
+      } else if (execution.version !== finding.rule_version) {
         errors.push(`findings[${index}] provenance doesn't match its execution record`)
       }
     })
   }
-
-  if (Array.isArray(value.suppressions))
-    value.suppressions.forEach((suppression, index) => {
-      if (validateSuppression(suppression)) errors.push(`suppressions[${index}] is invalid`)
-    })
-  else errors.push('suppressions must be an array')
-  if (Array.isArray(value.findings) && Array.isArray(value.suppressions))
-    validateSuppressionLinks(value.findings, value.suppressions, errors)
 
   if (
     !isObject(value.coverage) ||
@@ -764,45 +503,7 @@ function validateTraceValue(value: unknown): TraceValidationResult {
     if (value.coverage.complete !== canBeComplete) errors.push('coverage complete claim is inconsistent')
   }
   if (inspection.containsSecret) errors.push('trace contains an unredacted matched secret')
-  if (
-    !isObject(value.attestation) ||
-    value.attestation.signed !== false ||
-    !SHA256.test(String(value.attestation.digest))
-  )
-    errors.push('attestation must contain a SHA-256 digest and signed:false')
-  else {
-    const {attestation: _attestation, ...unsigned} = value
-    if (value.attestation.digest !== sha256(unsigned)) errors.push('attestation digest mismatch')
-  }
   return {valid: errors.length === 0, errors}
-}
-
-function validateSuppressionLinks(findings: unknown[], suppressions: unknown[], errors: string[]): void {
-  const findingFingerprints = new Set(findings.filter(isObject).map((finding) => finding.fingerprint))
-  const suppressionById = new Map(suppressions.filter(isObject).map((item) => [item.id, item]))
-  suppressions.filter(isObject).forEach((suppression, index) => {
-    if (!findingFingerprints.has(suppression.finding_fingerprint))
-      errors.push(`suppressions[${index}] targets an unknown finding`)
-  })
-  findings.filter(isObject).forEach((finding, index) => {
-    if (
-      finding.suppression !== undefined &&
-      (!isObject(finding.suppression) || !suppressionById.has(finding.suppression.id))
-    )
-      errors.push(`findings[${index}].suppression is not declared`)
-    else if (isObject(finding.suppression)) {
-      const declared = suppressionById.get(finding.suppression.id)
-      if (
-        isObject(declared) &&
-        (declared.finding_fingerprint !== finding.fingerprint ||
-          declared.justification !== finding.suppression.justification ||
-          canonicalJson(declared.provenance) !== canonicalJson(finding.suppression.provenance))
-      )
-        errors.push(`findings[${index}].suppression does not match its declaration`)
-    }
-    if ((finding.suppressed === true) !== (finding.suppression !== undefined))
-      errors.push(`findings[${index}].suppression state is inconsistent`)
-  })
 }
 
 export function validateTrace(value: unknown): TraceValidationResult {

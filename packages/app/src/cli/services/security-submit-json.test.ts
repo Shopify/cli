@@ -4,7 +4,7 @@ import {joinPath, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import type {SecuritySubmitResult} from './security-submit-result.js'
 
-const payload = {path: '<APP_ROOT>/.shopify/app-security/submission.json', schemaVersion: 1 as const}
+const payload = {path: '<APP_ROOT>/.shopify/app-security/submission.json', schemaVersion: 0 as const}
 const submittedAt = '2026-09-01T09:30:00.000Z'
 
 describe('App Security submit JSON', () => {
