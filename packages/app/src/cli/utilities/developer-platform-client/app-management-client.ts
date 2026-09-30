@@ -604,7 +604,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       const registration = {
         id: mod.registrationId,
         uuid: mod.registrationUuid!,
-        title: mod.registrationTitle,
+        title: mod.handle,
         type: mod.type,
         activeVersion: mod.config
           ? {
@@ -710,7 +710,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     function formattedModule(mod: ReleasedAppModuleFragment) {
       return {
         uuid: mod.uuid,
-        registrationTitle: mod.handle,
+        handle: mod.handle,
         specification: {
           identifier: mod.specification.identifier,
           experience: normalizeExperience(mod.specification.experience, mod.specification.identifier),
@@ -1452,7 +1452,7 @@ function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVer
   return {
     registrationId: mod.userIdentifier === mod.uuid ? '' : mod.userIdentifier,
     registrationUuid: mod.uuid,
-    registrationTitle: mod.handle,
+    handle: mod.handle,
     type: mod.specification.externalIdentifier,
     config: mod.config,
     target: mod.target ?? '',
