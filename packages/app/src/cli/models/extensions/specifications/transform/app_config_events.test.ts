@@ -1,4 +1,5 @@
 import {transformToEventsConfig, transformFromEventsConfig} from './app_config_events.js'
+import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 import {describe, expect, test} from 'vitest'
 
 describe('transformFromEventsConfig', () => {
@@ -477,6 +478,74 @@ describe('transformToEventsConfig', () => {
 
     expect(result).toEqual({
       events: {subscription: [{topic: 'orders', actions: ['create', 'paid'], handle: 'orders-create-paid'}]},
+    })
+  })
+
+  test('merging single-subscription modules keeps the shared events default and only the overriding api_version', () => {
+    // Modules deployed from one configuration share events.api_version, and the platform
+    // materializes it onto every subscription that does not override it.
+    const productChanges = {
+      handle: 'rocky-product-77',
+      config: {
+        events: {
+          api_version: '2026-10',
+          subscription: {
+            identifier: 'id-77',
+            topic: 'Product',
+            actions: ['create', 'update', 'delete'],
+            uri: 'https://example.com/a',
+            api_version: '2026-10',
+          },
+        },
+      },
+    }
+    const productUpdates = {
+      handle: 'rocky-product-8',
+      config: {
+        events: {
+          api_version: '2026-10',
+          subscription: {
+            identifier: 'id-8',
+            topic: 'Product',
+            actions: ['create', 'update'],
+            uri: 'https://example.com/b',
+            api_version: 'unstable',
+          },
+        },
+      },
+    }
+    const link = (modules: {handle: string; config: object}[]) =>
+      modules
+        .map(({handle, config}) => transformToEventsConfig(config, {handle}))
+        .reduce<object>((merged, local) => deepMergeObjects(merged, local), {})
+
+    const expectedSubscriptions = {
+      'rocky-product-77': {
+        topic: 'Product',
+        actions: ['create', 'update', 'delete'],
+        uri: 'https://example.com/a',
+        handle: 'rocky-product-77',
+      },
+      'rocky-product-8': {
+        topic: 'Product',
+        actions: ['create', 'update'],
+        uri: 'https://example.com/b',
+        handle: 'rocky-product-8',
+        api_version: 'unstable',
+      },
+    }
+
+    expect(link([productChanges, productUpdates])).toEqual({
+      events: {
+        api_version: '2026-10',
+        subscription: [expectedSubscriptions['rocky-product-77'], expectedSubscriptions['rocky-product-8']],
+      },
+    })
+    expect(link([productUpdates, productChanges])).toEqual({
+      events: {
+        api_version: '2026-10',
+        subscription: [expectedSubscriptions['rocky-product-8'], expectedSubscriptions['rocky-product-77']],
+      },
     })
   })
 })
