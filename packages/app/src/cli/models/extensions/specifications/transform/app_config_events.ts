@@ -1,6 +1,8 @@
 import {prependApplicationUrl} from '../validation/url_prepender.js'
+import {MAX_EXTENSION_HANDLE_LENGTH} from '../../schemas.js'
 import {CurrentAppConfiguration} from '../../../app/app.js'
 import {getPathValue} from '@shopify/cli-kit/common/object'
+import {slugify} from '@shopify/cli-kit/common/string'
 
 interface EventSubscription {
   // The events schema is untyped locally, so a subscription may be missing its uri
@@ -57,6 +59,8 @@ interface RemoteEventSubscription {
   identifier?: string
   handle?: string
   api_version?: string
+  topic: string
+  actions: string[]
   [key: string]: unknown
 }
 
@@ -64,9 +68,9 @@ interface RemoteEventSubscription {
  * Transforms one events module from remote to local format.
  * Strips the server-managed 'identifier' field, and the per-subscription
  * 'api_version' when it matches the module default. Single-subscription
- * objects are normalized to a one-element array.
+ * objects are normalized to a one-element array and get a handle from their topic and actions when missing one.
  */
-export function transformToEventsConfig(content: object, moduleHandle?: string) {
+export function transformToEventsConfig(content: object) {
   const {api_version: apiVersion, subscription} = getPathValue<RemoteEventsModule>(content, 'events') ?? {}
 
   const clean = (sub: RemoteEventSubscription) => {
@@ -79,8 +83,8 @@ export function transformToEventsConfig(content: object, moduleHandle?: string) 
   if (Array.isArray(subscription)) {
     cleanedSubscriptions = subscription.map(clean)
   } else if (subscription) {
-    const handle = subscription.handle ?? moduleHandle
-    cleanedSubscriptions = [clean(handle ? {...subscription, handle} : subscription)]
+    const handle = subscription.handle ?? handleFromSubscriptionData(subscription)
+    cleanedSubscriptions = [clean({...subscription, handle})]
   }
 
   const events: {api_version?: string; subscription?: object[]} = {}
@@ -92,6 +96,11 @@ export function transformToEventsConfig(content: object, moduleHandle?: string) 
   }
 
   return {events}
+}
+
+function handleFromSubscriptionData(subscription: RemoteEventSubscription): string {
+  const handle = slugify([subscription.topic, ...subscription.actions].join('-'))
+  return handle.slice(0, MAX_EXTENSION_HANDLE_LENGTH).replace(/-$/, '')
 }
 
 function wrapSubscriptions<T>(subscription: T | T[]): T[] {

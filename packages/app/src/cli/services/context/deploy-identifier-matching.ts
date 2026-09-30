@@ -189,10 +189,8 @@ async function localAppConfigurationExtensionContent(app: AppInterface, apiKey: 
     // eslint-disable-next-line no-await-in-loop
     const deployConfig = await extension.deployConfig({apiKey, appConfiguration: app.configuration})
     const localConfig =
-      extension.specification.transformRemoteToLocal?.(deployConfig ?? {}, {
-        flags: app.remoteFlags,
-        module: {handle: extension.handle},
-      }) ?? extension.configuration
+      extension.specification.transformRemoteToLocal?.(deployConfig ?? {}, {flags: app.remoteFlags}) ??
+      extension.configuration
     appConfig = deepMergeObjects(appConfig, localConfig)
   }
 

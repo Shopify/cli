@@ -382,7 +382,7 @@ describe('transformToEventsConfig', () => {
       events: {
         api_version: '2024-01',
         subscription: {
-          topic: 'orders/create',
+          topic: 'orders',
           uri: 'https://example.com/a',
           actions: ['create'],
           api_version: '2024-01',
@@ -396,7 +396,7 @@ describe('transformToEventsConfig', () => {
     expect(result).toEqual({
       events: {
         api_version: '2024-01',
-        subscription: [{topic: 'orders/create', uri: 'https://example.com/a', actions: ['create']}],
+        subscription: [{topic: 'orders', uri: 'https://example.com/a', actions: ['create'], handle: 'orders-create'}],
       },
     })
   })
@@ -406,7 +406,7 @@ describe('transformToEventsConfig', () => {
       events: {
         api_version: '2024-01',
         subscription: {
-          topic: 'orders/create',
+          topic: 'orders',
           uri: 'https://example.com/a',
           actions: ['create'],
           api_version: '2025-07',
@@ -421,7 +421,13 @@ describe('transformToEventsConfig', () => {
       events: {
         api_version: '2024-01',
         subscription: [
-          {topic: 'orders/create', uri: 'https://example.com/a', actions: ['create'], api_version: '2025-07'},
+          {
+            topic: 'orders',
+            uri: 'https://example.com/a',
+            actions: ['create'],
+            api_version: '2025-07',
+            handle: 'orders-create',
+          },
         ],
       },
     })
@@ -536,12 +542,12 @@ describe('transformToEventsConfig', () => {
     })
   })
 
-  test('names a single subscription without a handle after its module', () => {
+  test('derives a handle from the topic and actions of a single subscription', () => {
     const remoteContent = {
       events: {
         api_version: '2024-01',
         subscription: {
-          topic: 'orders/create',
+          topic: 'orders',
           uri: 'https://example.com/webhook',
           actions: ['create'],
           identifier: 'id-1',
@@ -549,24 +555,40 @@ describe('transformToEventsConfig', () => {
       },
     }
 
-    const result = transformToEventsConfig(remoteContent, 'order-notifier')
+    const result = transformToEventsConfig(remoteContent)
 
     expect(result).toEqual({
       events: {
         api_version: '2024-01',
         subscription: [
           {
-            topic: 'orders/create',
+            topic: 'orders',
             uri: 'https://example.com/webhook',
             actions: ['create'],
-            handle: 'order-notifier',
+            handle: 'orders-create',
           },
         ],
       },
     })
   })
 
-  test('keeps the handle of a single subscription over the module handle', () => {
+  test('keeps a generated handle within the 50 character limit without a trailing hyphen', () => {
+    const topic = 'a'.repeat(49)
+
+    const result = transformToEventsConfig({events: {subscription: {topic, actions: ['create']}}})
+
+    expect(result).toEqual({events: {subscription: [{topic, actions: ['create'], handle: topic}]}})
+  })
+
+  test('includes multiple actions in the generated handle', () => {
+    const result = transformToEventsConfig({events: {subscription: {topic: 'orders', actions: ['create', 'paid']}}})
+
+    expect(result).toEqual({
+      events: {subscription: [{topic: 'orders', actions: ['create', 'paid'], handle: 'orders-create-paid'}]},
+    })
+  })
+
+  test('keeps the handle of a single subscription', () => {
     const remoteContent = {
       events: {
         api_version: '2024-01',
@@ -580,7 +602,7 @@ describe('transformToEventsConfig', () => {
       },
     }
 
-    const result = transformToEventsConfig(remoteContent, 'order-notifier')
+    const result = transformToEventsConfig(remoteContent)
 
     expect(result).toEqual({
       events: {
@@ -597,36 +619,7 @@ describe('transformToEventsConfig', () => {
     })
   })
 
-  test('leaves a single subscription unnamed when no module handle is provided', () => {
-    const remoteContent = {
-      events: {
-        api_version: '2024-01',
-        subscription: {
-          topic: 'orders/create',
-          uri: 'https://example.com/webhook',
-          actions: ['create'],
-          identifier: 'id-1',
-        },
-      },
-    }
-
-    const result = transformToEventsConfig(remoteContent)
-
-    expect(result).toEqual({
-      events: {
-        api_version: '2024-01',
-        subscription: [
-          {
-            topic: 'orders/create',
-            uri: 'https://example.com/webhook',
-            actions: ['create'],
-          },
-        ],
-      },
-    })
-  })
-
-  test('does not name subscriptions in a list after the module', () => {
+  test('does not generate handles for subscriptions in a list', () => {
     const remoteContent = {
       events: {
         api_version: '2024-01',
@@ -641,7 +634,7 @@ describe('transformToEventsConfig', () => {
       },
     }
 
-    const result = transformToEventsConfig(remoteContent, 'order-notifier')
+    const result = transformToEventsConfig(remoteContent)
 
     expect(result).toEqual({
       events: {

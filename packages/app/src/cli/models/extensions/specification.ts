@@ -25,14 +25,9 @@ export type ExtensionFeature =
 
 export type TransformationConfig = Record<string, string>
 
-export interface TransformRemoteToLocalOptions {
-  readonly flags?: Flag[]
-  readonly module?: {readonly handle: string}
-}
-
 export interface CustomTransformationConfig {
   forward?: (obj: object, appConfiguration: AppConfiguration, options?: {flags?: Flag[]}) => object
-  reverse?: (obj: object, options?: TransformRemoteToLocalOptions) => object
+  reverse?: (obj: object, options?: {flags?: Flag[]}) => object
 }
 
 type ExtensionExperience = 'extension' | 'configuration'
@@ -121,7 +116,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
    * @param options - Additional options to be used in the transformation
    * @returns Transformed configuration to use in place of the platform provided content
    */
-  transformRemoteToLocal?: (remoteContent: object, options?: TransformRemoteToLocalOptions) => object
+  transformRemoteToLocal?: (remoteContent: object, options?: {flags?: Flag[]}) => object
 
   uidStrategy: UidStrategy
 

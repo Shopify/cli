@@ -7,12 +7,7 @@ export const EventsSpecIdentifier = 'events'
 
 const EventsTransformConfig: CustomTransformationConfig = {
   forward: transformFromEventsConfig,
-  reverse: (content: object, options) => transformToEventsConfig(content, subscriptionHandle(options?.module?.handle)),
-}
-
-// The default events module is registered under the spec identifier; don't name a subscription after it.
-function subscriptionHandle(moduleHandle?: string): string | undefined {
-  return moduleHandle === EventsSpecIdentifier ? undefined : moduleHandle
+  reverse: transformToEventsConfig,
 }
 
 const EventsSchema = BaseSchemaWithoutHandle.extend({

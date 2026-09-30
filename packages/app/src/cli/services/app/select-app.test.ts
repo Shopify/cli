@@ -175,7 +175,7 @@ describe('remoteAppConfigurationExtensionContent', () => {
     },
   }
 
-  test('populates subscription handle from module registrationTitle when missing on single-subscription modules', async () => {
+  test('derives handles from the topics and actions of single-subscription modules', async () => {
     const specs = await configurationSpecifications()
     const moduleOne: AppModuleVersion = {
       registrationId: 'MOD_1',
@@ -186,7 +186,7 @@ describe('remoteAppConfigurationExtensionContent', () => {
         events: {
           api_version: '2024-01',
           subscription: {
-            topic: 'orders/create',
+            topic: 'orders',
             uri: 'https://example.com/orders',
             actions: ['create'],
           },
@@ -203,7 +203,7 @@ describe('remoteAppConfigurationExtensionContent', () => {
         events: {
           api_version: '2024-01',
           subscription: {
-            topic: 'products/update',
+            topic: 'products',
             uri: 'https://example.com/products',
             actions: ['update'],
           },
@@ -219,23 +219,23 @@ describe('remoteAppConfigurationExtensionContent', () => {
         api_version: '2024-01',
         subscription: [
           {
-            topic: 'orders/create',
+            topic: 'orders',
             uri: 'https://example.com/orders',
             actions: ['create'],
-            handle: 'order-notifier',
+            handle: 'orders-create',
           },
           {
-            topic: 'products/update',
+            topic: 'products',
             uri: 'https://example.com/products',
             actions: ['update'],
-            handle: 'product-sync',
+            handle: 'products-update',
           },
         ],
       },
     })
   })
 
-  test('leaves subscription unnamed when module registrationTitle is the default events handle', async () => {
+  test('derives a handle when the module registrationTitle is events', async () => {
     const specs = await configurationSpecifications()
     const moduleOne: AppModuleVersion = {
       registrationId: 'MOD_1',
@@ -246,7 +246,7 @@ describe('remoteAppConfigurationExtensionContent', () => {
         events: {
           api_version: '2024-01',
           subscription: {
-            topic: 'orders/create',
+            topic: 'orders',
             uri: 'https://example.com/orders',
             actions: ['create'],
           },
@@ -262,9 +262,10 @@ describe('remoteAppConfigurationExtensionContent', () => {
         api_version: '2024-01',
         subscription: [
           {
-            topic: 'orders/create',
+            topic: 'orders',
             uri: 'https://example.com/orders',
             actions: ['create'],
+            handle: 'orders-create',
           },
         ],
       },
@@ -282,7 +283,7 @@ describe('remoteAppConfigurationExtensionContent', () => {
         events: {
           api_version: '2024-01',
           subscription: {
-            topic: 'orders/create',
+            topic: 'orders',
             uri: 'https://example.com/orders',
             actions: ['create'],
           },
@@ -311,10 +312,10 @@ describe('remoteAppConfigurationExtensionContent', () => {
         api_version: '2024-01',
         subscription: [
           {
-            topic: 'orders/create',
+            topic: 'orders',
             uri: 'https://example.com/orders',
             actions: ['create'],
-            handle: 'order-notifier',
+            handle: 'orders-create',
           },
         ],
       },
