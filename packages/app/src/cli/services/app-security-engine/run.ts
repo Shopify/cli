@@ -139,7 +139,8 @@ export async function compileFindings(
   const result = await scan(appRoot, configFileName, options)
   const engineVersion = getEngineVersion()
   const knownFiles = new Set(searchBoundaryFiles(result))
-  // Ignore patterns change the input hash but aren't in the trace, so the hint covers both causes.
+  // Rejects findings when the current input hash differs from their source_scan_id. Ignore patterns
+  // aren't recorded in the trace, so the hint names them as a likely cause.
   const provenanceRejected =
     document.source_scan_id === result.scan.input_hash
       ? []
