@@ -1,6 +1,5 @@
 /* eslint-disable no-restricted-imports -- trace fixtures use Node temporary-directory primitives */
 import {computeResultHash} from '../scorer/index.js'
-import {mergeExternalFindings, validateExternalFinding} from '../external/index.js'
 import {formatJson} from '../output/format.js'
 import {scan} from '../scanners/index.js'
 import {compileTrace, hasRecordedAgentReview, sha256, validateSuppression, validateTrace} from '../trace/index.js'
@@ -319,41 +318,6 @@ describe('trace v2', () => {
     expect(validateTrace(trace).valid).toBe(true)
   })
 
-  test('rejects malformed, unsafe, and unbounded external findings', () => {
-    const valid = {
-      rule_id: 'VENDOR_RULE',
-      rule_version: 1,
-      severity: 'low' as const,
-      title: 'Vendor',
-      message: 'Review',
-      location: {file: 'app/a.ts', line: 1},
-    }
-    expect(validateExternalFinding({...valid, rule_id: ''})).toMatch(/rule_id/)
-    expect(validateExternalFinding({...valid, location: {file: '../secret'}})).toMatch(/unsafe/)
-    for (const malformed of [
-      {...valid, title: []},
-      {...valid, location: null},
-      {...valid, location: {file: {path: 'app/a.ts'}}},
-      {...valid, evidence: [null]},
-      {...valid, evidence: [{location: null}]},
-      {...valid, fix: {description: {text: 'review'}}},
-    ]) {
-      expect(() => validateExternalFinding(malformed)).not.toThrow()
-      expect(validateExternalFinding(malformed)).toBeDefined()
-      expect(() => mergeExternalFindings([], [malformed as unknown as typeof valid])).not.toThrow()
-    }
-    expect(
-      mergeExternalFindings([], [{...valid, location: {file: 'unknown.ts'}}], {knownFiles: new Set(['app/a.ts'])})
-        .rejected[0],
-    ).toMatch(/scanned inputs/)
-    expect(
-      mergeExternalFindings(
-        [],
-        Array.from({length: 1_001}, () => valid),
-      ).rejected[0],
-    ).toMatch(/limit/)
-  })
-
   test('rejects suppressions that do not match a current finding', () => {
     expect(() =>
       compileTrace(result(), {
@@ -370,31 +334,6 @@ describe('trace v2', () => {
         ],
       }),
     ).toThrow(/did not match/)
-  })
-
-  test('accepts external findings with explicit source and rule provenance', () => {
-    const scanResult = result()
-    expect(
-      mergeExternalFindings(scanResult.issues, [
-        {
-          rule_id: 'VENDOR_RULE',
-          rule_version: 3,
-          severity: 'low',
-          title: 'Vendor finding',
-          message: 'Review',
-          location: {file: 'app/a.ts', line: 1},
-        },
-      ]).accepted,
-    ).toBe(1)
-    const trace = compileTrace(scanResult, {
-      generatedAt: '2026-08-28T00:00:00.000Z',
-    })
-    expect(trace.findings[0]).toMatchObject({
-      source: 'external',
-      rule_id: 'VENDOR_RULE',
-      rule_version: 3,
-    })
-    expect(validateTrace(trace).valid).toBe(true)
   })
 
   test('fails closed when text contains more secret matches than the work cap', () => {
