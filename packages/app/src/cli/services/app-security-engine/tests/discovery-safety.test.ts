@@ -543,6 +543,30 @@ describe('gitignore-driven exclusions', () => {
     expect(paths).not.toContain('tmp/package.json')
   })
 
+  test.each([
+    ['inner', 'inner/'],
+    ['scratch/deep', 'scratch/'],
+  ])('excludes nested repository %s when the app repository ignores %s', async (nestedRepository, ignoredPath) => {
+    const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
+    const root = await makeRepository({
+      'shopify.app.toml': appConfiguration,
+      '.gitignore': `${ignoredPath}\n`,
+      [`${nestedRepository}/token.ts`]: `export const token = '${secret}'\n`,
+      'plain/token.ts': `export const token = '${secret}'\n`,
+    })
+    for (const repository of [nestedRepository, 'plain']) {
+      const directory = join(root, repository)
+      git(directory, ['init', '-q', '.'])
+      git(directory, ['add', 'token.ts'])
+      git(directory, ['commit', '-qm', 'Add token'])
+    }
+
+    const result = await scan(root)
+    // The unignored nested repository proves the secret is detectable, so the absence is not vacuous.
+    expect(secretFindingFiles(result)).toEqual(['plain/token.ts'])
+    expect(hashedPaths(result)).not.toContain(`${nestedRepository}/token.ts`)
+  })
+
   test('ignores nothing from a .gitignore outside a git repository', async () => {
     const root = await makeDirectory()
     await writeFiles(root, {
