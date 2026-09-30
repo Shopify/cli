@@ -191,6 +191,20 @@ describe('repository discovery exclusions', () => {
     expect(paths).not.toContain('packages/service/lib/index.spec.js')
   })
 
+  test('scans a selected app configuration file for secrets even when a default exclusion matches it', async () => {
+    const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
+    const root = await makeDirectory()
+    await writeFiles(root, {
+      'shopify.app.toml': appConfiguration,
+      // `*.test.*` is a default exclusion.
+      'shopify.app.test.toml': `name = "Test"\napplication_url = "https://test.example.com/?token=${secret}"\n`,
+    })
+
+    const result = await scan(root, 'test')
+    expect(result.app.name).toBe('Test')
+    expect(secretFindingFiles(result)).toEqual(['shopify.app.test.toml'])
+  })
+
   test('walks dot-folders and dotfiles', async () => {
     const root = await makeDirectory()
     const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
@@ -540,16 +554,18 @@ describe('gitignore-driven exclusions', () => {
     expect(hashedPaths(await scan(root))).toContain('tmp/scratch.ts')
   })
 
-  test('loads a gitignored selected app configuration file', async () => {
+  test('loads and scans a gitignored selected app configuration file for secrets', async () => {
+    const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
     const root = await makeRepository({
       'shopify.app.toml': appConfiguration,
       '.gitignore': 'shopify.app.staging.toml\n',
-      'shopify.app.staging.toml': 'name = "Staging"\napplication_url = "https://staging.example.com"\n',
+      'shopify.app.staging.toml': `name = "Staging"\napplication_url = "https://staging.example.com/?token=${secret}"\n`,
     })
 
     const result = await scan(root, 'staging')
     expect(result.app.name).toBe('Staging')
     expect(hashedPaths(result)).toContain('shopify.app.staging.toml')
+    expect(secretFindingFiles(result)).toEqual(['shopify.app.staging.toml'])
   })
 })
 

@@ -587,7 +587,6 @@ export async function scan(startPath?: string, configFileName?: string): Promise
   const selectedFileName = getAppConfigurationFileName(configFileName)
   const appToml = loadAppToml(joinPath(appRoot, selectedFileName), appRoot)
   const appTomls = appToml ? [appToml] : []
-  // The selected app configuration is loaded even if gitignored: path rules only apply to discovery.
   const gitIgnoreListing = await listGitIgnoredPaths(appRoot)
   const pathRules = buildPathRules({
     gitIgnoredPaths: gitIgnoreListing.status === 'listed' ? gitIgnoreListing.paths : [],
@@ -596,7 +595,10 @@ export async function scan(startPath?: string, configFileName?: string): Promise
   const extensions = findExtensions(appRoot, repositoryFiles)
   const sourceCandidates = findSourceCandidates(repositoryFiles)
   const sourceFiles = findAppSourceFiles(appRoot, repositoryFiles)
-  const sensitiveFiles = findSensitiveFiles(appRoot, repositoryFiles, selectedFileName)
+  // The selected app configuration is an explicit input, not a discovered path: it's loaded and
+  // scanned for secrets even when path rules exclude it.
+  const sensitivePaths = appToml ? [...new Set([...repositoryFiles, selectedFileName])].sort() : repositoryFiles
+  const sensitiveFiles = findSensitiveFiles(appRoot, sensitivePaths, selectedFileName)
   const manifestPaths = findManifestPaths(repositoryFiles)
   const manifests = findManifests(appRoot, manifestPaths)
   const dependencyAutomation = manifests.some(manifestHasDependencies)
