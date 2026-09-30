@@ -4,7 +4,7 @@ import {getAppConfigurationShorthand} from '../models/app/config-file-naming.js'
 export type AppSecurityShell = 'posix' | 'cmd' | 'powershell'
 
 /** Strings are command syntax, printed bare. Flag values are user input, so they're always quoted. */
-export type AppSecurityArgument = string | {flag: string; value: string}
+type AppSecurityArgument = string | {flag: string; value: string}
 
 export interface AppSecurityCommand {
   command: string
