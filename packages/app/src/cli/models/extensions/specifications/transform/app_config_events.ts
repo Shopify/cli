@@ -1,6 +1,7 @@
 import {prependApplicationUrl} from '../validation/url_prepender.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../schemas.js'
 import {CurrentAppConfiguration} from '../../../app/app.js'
+import {RemoteToLocalTransformOptions} from '../../specification.js'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {slugify} from '@shopify/cli-kit/common/string'
 
@@ -68,9 +69,11 @@ interface RemoteEventSubscription {
  * Transforms one events module from remote to local format.
  * Strips the server-managed 'identifier' field, and the per-subscription
  * 'api_version' when it matches the module default. Single-subscription
- * objects are normalized to a one-element array and get a handle from their topic and actions when missing one.
+ * objects are normalized to a one-element array. The platform keeps their handle
+ * on the module, not in the subscription, so the module handle is restored when given.
+ * Without one, the handle is derived from the topic and actions.
  */
-export function transformToEventsConfig(content: object) {
+export function transformToEventsConfig(content: object, options?: RemoteToLocalTransformOptions) {
   const {api_version: apiVersion, subscription} = getPathValue<RemoteEventsModule>(content, 'events') ?? {}
 
   const clean = (sub: RemoteEventSubscription) => {
@@ -83,7 +86,7 @@ export function transformToEventsConfig(content: object) {
   if (Array.isArray(subscription)) {
     cleanedSubscriptions = subscription.map(clean)
   } else if (subscription) {
-    const handle = subscription.handle ?? handleFromSubscriptionData(subscription)
+    const handle = subscription.handle ?? options?.handle ?? handleFromSubscriptionData(subscription)
     cleanedSubscriptions = [clean({...subscription, handle})]
   }
 

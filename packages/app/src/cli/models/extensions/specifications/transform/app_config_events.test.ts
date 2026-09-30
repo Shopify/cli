@@ -400,6 +400,36 @@ describe('transformToEventsConfig', () => {
     })
   })
 
+  test('uses the module handle for a single subscription without one', () => {
+    const remoteContent = {events: {subscription: {topic: 'orders', actions: ['create']}}}
+
+    const result = transformToEventsConfig(remoteContent, {handle: 'order-notifier'})
+
+    expect(result).toEqual({
+      events: {subscription: [{topic: 'orders', actions: ['create'], handle: 'order-notifier'}]},
+    })
+  })
+
+  test('prefers the subscription handle over the module handle', () => {
+    const remoteContent = {events: {subscription: {topic: 'orders', actions: ['create'], handle: 'from-config'}}}
+
+    const result = transformToEventsConfig(remoteContent, {handle: 'from-module'})
+
+    expect(result).toEqual({
+      events: {subscription: [{topic: 'orders', actions: ['create'], handle: 'from-config'}]},
+    })
+  })
+
+  test('ignores the module handle for subscriptions in an array', () => {
+    const remoteContent = {events: {subscription: [{topic: 'orders', actions: ['create'], handle: 'order-notifier'}]}}
+
+    const result = transformToEventsConfig(remoteContent, {handle: 'events'})
+
+    expect(result).toEqual({
+      events: {subscription: [{topic: 'orders', actions: ['create'], handle: 'order-notifier'}]},
+    })
+  })
+
   test.each([49, 50])('limits the generated handle for a topic with %i characters', (topicLength) => {
     const topic = 'a'.repeat(topicLength)
 
