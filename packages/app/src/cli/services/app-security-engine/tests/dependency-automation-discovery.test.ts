@@ -96,7 +96,8 @@ describe('dependency automation discovery', () => {
       // No shipped default matches an allowlisted path, hence a custom one.
       await inTemporaryDirectory(async (root) => {
         await writeFiles(root, {'.github/dependabot.yml': 'version: 2\nupdates: []\n'})
-        expect(findDependencyAutomationInputs(root, {defaults: ['.github/'], gitIgnoredPaths: []})).toEqual({files: []})
+        const rules = {defaults: ['.github/'], gitIgnoredPaths: [], overrides: []}
+        expect(findDependencyAutomationInputs(root, rules)).toEqual({files: []})
         expect(findDependencyAutomationInputs(root, NO_GIT_EXCLUSIONS).files).toHaveLength(1)
       })
     })

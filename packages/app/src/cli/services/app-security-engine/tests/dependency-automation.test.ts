@@ -168,14 +168,14 @@ describe('dependency automation scanner integration', () => {
     })
   })
 
-  describe('gitignored configuration', () => {
-    async function makeRepository(root: string, files: Record<string, string>, tracked: string[]): Promise<void> {
-      await makeApp(root, files)
-      git(root, ['init', '-q', '.'])
-      git(root, ['add', '-f', '--', 'shopify.app.toml', 'package.json', ...tracked])
-      git(root, ['commit', '-qm', 'init'])
-    }
+  async function makeRepository(root: string, files: Record<string, string>, tracked: string[]): Promise<void> {
+    await makeApp(root, files)
+    git(root, ['init', '-q', '.'])
+    git(root, ['add', '-f', '--', 'shopify.app.toml', 'package.json', ...tracked])
+    git(root, ['commit', '-qm', 'init'])
+  }
 
+  describe('gitignored configuration', () => {
     test('does not read an untracked configuration file that git ignores', async () => {
       await inTemporaryDirectory(async (root) => {
         await makeRepository(root, {'.gitignore': '.github/\n', '.github/dependabot.yml': dependabot}, ['.gitignore'])
@@ -218,6 +218,43 @@ describe('dependency automation scanner integration', () => {
         })
         expect(result.scan.file_hashes).not.toHaveProperty('.github/dependabot.yml')
         expect(result.scan.file_hashes?.['renovate.json']).toBe(sha256('{}'))
+      })
+    })
+  })
+
+  describe('--ignore', () => {
+    test('does not read a committed configuration file a pattern excludes', async () => {
+      await inTemporaryDirectory(async (root) => {
+        await makeRepository(root, {'.github/dependabot.yml': dependabot}, ['.github/dependabot.yml'])
+        const result = await scan(root, undefined, {ignorePatterns: ['.github/']})
+        expect(dependencyFindings(result)).toHaveLength(1)
+        expect(dependencyExecution(result)).toMatchObject({status: 'executed', inspected_files: ['package.json']})
+        expect(result.scan.file_hashes).not.toHaveProperty('.github/dependabot.yml')
+      })
+    })
+
+    test('reads an untracked gitignored configuration file a pattern includes again', async () => {
+      await inTemporaryDirectory(async (root) => {
+        // A tracked CODEOWNERS stops git collapsing `.github/`, so it lists the file itself.
+        await makeRepository(
+          root,
+          {
+            '.gitignore': '.github/dependabot.yml\n',
+            '.github/CODEOWNERS': '* @owners\n',
+            '.github/dependabot.yml': dependabot,
+          },
+          ['.gitignore', '.github/CODEOWNERS'],
+        )
+        const excluded = await scan(root)
+        expect(dependencyFindings(excluded)).toHaveLength(1)
+
+        const result = await scan(root, undefined, {ignorePatterns: ['!.github/dependabot.yml']})
+        expect(dependencyFindings(result)).toEqual([])
+        expect(dependencyExecution(result)).toMatchObject({
+          status: 'executed',
+          inspected_files: ['package.json', '.github/dependabot.yml'],
+        })
+        expect(result.scan.file_hashes?.['.github/dependabot.yml']).toBe(sha256(dependabot))
       })
     })
   })

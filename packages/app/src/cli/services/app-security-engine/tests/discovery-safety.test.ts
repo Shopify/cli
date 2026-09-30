@@ -67,7 +67,7 @@ function inspectedManifestPaths(result: ScanResult): string[] {
 }
 
 async function scanPathRules(appRoot: string): Promise<PathRules> {
-  const listing = await listGitIgnoredPaths(appRoot)
+  const listing = await listGitIgnoredPaths(appRoot, {pruneDefaultDirectories: true})
   return buildPathRules({gitIgnoredPaths: listing.status === 'listed' ? listing.paths : []})
 }
 
@@ -588,6 +588,132 @@ describe('gitignore-driven exclusions', () => {
     })
 
     const result = await scan(root, 'staging')
+    expect(result.app.name).toBe('Staging')
+    expect(hashedPaths(result)).toContain('shopify.app.staging.toml')
+    expect(secretFindingFiles(result)).toEqual(['shopify.app.staging.toml'])
+  })
+})
+
+describe('--ignore patterns', () => {
+  let restoreGitConfig: () => void
+  beforeEach(() => {
+    restoreGitConfig = isolateGitConfig()
+  })
+  afterEach(() => {
+    restoreGitConfig()
+  })
+
+  test('excludes a folder that neither the defaults nor .gitignore cover', async () => {
+    const root = await makeDirectory()
+    await writeFiles(root, {
+      'shopify.app.toml': appConfiguration,
+      'src/index.ts': 'export const included = true',
+      'generated/client.ts': 'export const excluded = true',
+      'web/generated/schema.ts': 'export const excluded = true',
+    })
+
+    const paths = hashedPaths(await scan(root, undefined, {ignorePatterns: ['generated/']}))
+    expect(paths).toContain('src/index.ts')
+    expect(paths).not.toContain('generated/client.ts')
+    expect(paths).not.toContain('web/generated/schema.ts')
+  })
+
+  test('re-includes a default exclusion at the root only when the pattern is anchored', async () => {
+    const root = await makeDirectory()
+    await writeFiles(root, {
+      'shopify.app.toml': appConfiguration,
+      'build/x.ts': 'export const rootBuild = true',
+      'packages/a/build/y.ts': 'export const nestedBuild = true',
+    })
+
+    // `/build/` is anchored to the app directory; the nested `build/` stays excluded by the default.
+    const anchored = hashedPaths(await scan(root, undefined, {ignorePatterns: ['!/build/']}))
+    expect(anchored).toContain('build/x.ts')
+    expect(anchored).not.toContain('packages/a/build/y.ts')
+
+    // `build/` without a slash prefix matches at any depth, like the default it overrides.
+    const unanchored = hashedPaths(await scan(root, undefined, {ignorePatterns: ['!build/']}))
+    expect(unanchored).toContain('build/x.ts')
+    expect(unanchored).toContain('packages/a/build/y.ts')
+  })
+
+  test('re-includes a gitignored folder', async () => {
+    const root = await makeRepository({
+      'shopify.app.toml': appConfiguration,
+      '.gitignore': 'tmp/\n',
+      'tmp/scratch.ts': 'export const reincluded = true',
+    })
+
+    expect(hashedPaths(await scan(root))).not.toContain('tmp/scratch.ts')
+    expect(hashedPaths(await scan(root, undefined, {ignorePatterns: ['!tmp/']}))).toContain('tmp/scratch.ts')
+  })
+
+  test('re-includes a nested repository that the app repository ignores', async () => {
+    const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
+    const root = await makeRepository({
+      'shopify.app.toml': appConfiguration,
+      '.gitignore': 'inner/\n',
+      'inner/token.ts': `export const token = '${secret}'\n`,
+    })
+    const inner = join(root, 'inner')
+    git(inner, ['init', '-q', '.'])
+    git(inner, ['add', 'token.ts'])
+    git(inner, ['commit', '-qm', 'Add token'])
+
+    expect(secretFindingFiles(await scan(root))).toEqual([])
+    expect(secretFindingFiles(await scan(root, undefined, {ignorePatterns: ['!inner/']}))).toEqual(['inner/token.ts'])
+  })
+
+  test('cannot re-include a file inside a gitignored folder without re-including the folder', async () => {
+    const root = await makeRepository({
+      'shopify.app.toml': appConfiguration,
+      '.gitignore': 'tmp/\n',
+      'tmp/keep.ts': 'export const stillExcluded = true',
+      'tmp/scratch.ts': 'export const stillExcluded = true',
+    })
+
+    const paths = hashedPaths(await scan(root, undefined, {ignorePatterns: ['!tmp/keep.ts']}))
+    expect(paths).not.toContain('tmp/keep.ts')
+    expect(paths).not.toContain('tmp/scratch.ts')
+  })
+
+  test('still applies .gitignore inside a re-included default folder', async () => {
+    // Re-including `build/` must turn off git's default-directory pruning, or git never lists this file.
+    const root = await makeRepository({
+      'shopify.app.toml': appConfiguration,
+      '.gitignore': '*.local.json\n',
+      'build/a.ts': 'export const reincluded = true',
+      'build/x.local.json': '{"ignored": true}',
+    })
+
+    const paths = hashedPaths(await scan(root, undefined, {ignorePatterns: ['!build/']}))
+    expect(paths).toContain('build/a.ts')
+    expect(paths).not.toContain('build/x.local.json')
+  })
+
+  test('applies later patterns over earlier ones', async () => {
+    const root = await makeDirectory()
+    await writeFiles(root, {
+      'shopify.app.toml': appConfiguration,
+      'generated/client.ts': 'export const decided = true',
+    })
+
+    const excludeThenInclude = hashedPaths(await scan(root, undefined, {ignorePatterns: ['generated/', '!generated/']}))
+    expect(excludeThenInclude).toContain('generated/client.ts')
+
+    const includeThenExclude = hashedPaths(await scan(root, undefined, {ignorePatterns: ['!generated/', 'generated/']}))
+    expect(includeThenExclude).not.toContain('generated/client.ts')
+  })
+
+  test('never stops the selected app configuration from loading or being scanned for secrets', async () => {
+    const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
+    const root = await makeDirectory()
+    await writeFiles(root, {
+      'shopify.app.toml': appConfiguration,
+      'shopify.app.staging.toml': `name = "Staging"\napplication_url = "https://staging.example.com/?token=${secret}"\n`,
+    })
+
+    const result = await scan(root, 'staging', {ignorePatterns: ['shopify.app*.toml']})
     expect(result.app.name).toBe('Staging')
     expect(hashedPaths(result)).toContain('shopify.app.staging.toml')
     expect(secretFindingFiles(result)).toEqual(['shopify.app.staging.toml'])

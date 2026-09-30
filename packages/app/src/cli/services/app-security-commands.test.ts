@@ -138,13 +138,17 @@ describe('quoteShellArgument', () => {
 
 describe('resolveAppSecurityCommands', () => {
   test('omits --config for the default shopify.app.toml', () => {
-    expect(resolveAppSecurityCommands('/tmp/app').scan.args).toEqual(['app', 'security', 'check', '--path', '/tmp/app'])
+    expect(resolveAppSecurityCommands('/tmp/app').scan.args).toEqual([
+      'app',
+      'security',
+      'check',
+      {flag: '--path', value: '/tmp/app'},
+    ])
     expect(resolveAppSecurityCommands('/tmp/app', 'shopify.app.toml').scan.args).toEqual([
       'app',
       'security',
       'check',
-      '--path',
-      '/tmp/app',
+      {flag: '--path', value: '/tmp/app'},
     ])
   })
 
@@ -152,22 +156,133 @@ describe('resolveAppSecurityCommands', () => {
     const commands = resolveAppSecurityCommands('/tmp/app', 'shopify.app.staging.toml')
     const findingsPath = joinPath('/tmp/app', '.shopify', 'app-security', 'findings.json')
 
-    expect(commands.scan.args).toEqual(['app', 'security', 'check', '--path', '/tmp/app', '--config', 'staging'])
+    expect(commands.scan.args).toEqual([
+      'app',
+      'security',
+      'check',
+      {flag: '--path', value: '/tmp/app'},
+      {flag: '--config', value: 'staging'},
+    ])
     expect(commands.compile.args).toEqual([
       'app',
       'security',
       'check',
-      '--path',
-      '/tmp/app',
-      '--config',
-      'staging',
-      '--findings',
-      findingsPath,
+      {flag: '--path', value: '/tmp/app'},
+      {flag: '--config', value: 'staging'},
+      {flag: '--findings', value: findingsPath},
+    ])
+  })
+
+  test('repeats --ignore patterns in order, after --config, on scan, compile, and clean', () => {
+    const commands = resolveAppSecurityCommands('/tmp/app', 'shopify.app.staging.toml', ['generated/', '!build/'])
+    const findingsPath = joinPath('/tmp/app', '.shopify', 'app-security', 'findings.json')
+    const scanArgs = [
+      'app',
+      'security',
+      'check',
+      {flag: '--path', value: '/tmp/app'},
+      {flag: '--config', value: 'staging'},
+      {flag: '--ignore', value: 'generated/'},
+      {flag: '--ignore', value: '!build/'},
+    ]
+
+    expect(commands.scan.args).toEqual(scanArgs)
+    expect(commands.compile.args).toEqual([...scanArgs, {flag: '--findings', value: findingsPath}])
+    expect(commands.clean.args).toEqual([...scanArgs, '--clean'])
+  })
+
+  test('omits --ignore when there are no patterns', () => {
+    expect(resolveAppSecurityCommands('/tmp/app', undefined, []).scan.args).toEqual([
+      'app',
+      'security',
+      'check',
+      {flag: '--path', value: '/tmp/app'},
     ])
   })
 })
 
 describe('formatAppSecurityCommand', () => {
+  test('quotes --ignore patterns so the shell does not expand `!`, `*`, or spaces', () => {
+    const ignorePatterns = ['!build/', '*.log', 'a b/']
+    const commands = resolveAppSecurityCommands('/tmp/app', undefined, ignorePatterns)
+
+    for (const shell of ['posix', 'cmd', 'powershell'] as const) {
+      const formatted = formatAppSecurityCommand(commands.scan, shell)
+      expect(splitQuotedCommand(formatted, shell)).toEqual([
+        'shopify',
+        'app',
+        'security',
+        'check',
+        '--path',
+        '/tmp/app',
+        '--ignore',
+        '!build/',
+        '--ignore',
+        '*.log',
+        '--ignore',
+        'a b/',
+      ])
+      expect(formatted).not.toMatch(/ !build\//)
+      expect(formatted).not.toMatch(/ \*\.log/)
+    }
+    expect(formatAppSecurityCommand(commands.scan, 'posix')).toContain(
+      "--ignore '!build/' --ignore '*.log' --ignore 'a b/'",
+    )
+    expect(formatAppSecurityCommand(commands.scan, 'powershell')).toContain(
+      "--ignore '!build/' --ignore '*.log' --ignore 'a b/'",
+    )
+    expect(formatAppSecurityCommand(commands.scan, 'cmd')).toContain(
+      '--ignore "!build/" --ignore "*.log" --ignore "a b/"',
+    )
+  })
+
+  test('quotes an --ignore pattern that starts with `-` or repeats a command word', () => {
+    const ignorePatterns = ['-*.log', '-tmp/', 'check']
+    const commands = resolveAppSecurityCommands('/tmp/app', undefined, ignorePatterns)
+
+    for (const shell of ['posix', 'cmd', 'powershell'] as const) {
+      const formatted = formatAppSecurityCommand(commands.scan, shell)
+      expect(splitQuotedCommand(formatted, shell)).toEqual([
+        'shopify',
+        'app',
+        'security',
+        'check',
+        '--path',
+        '/tmp/app',
+        '--ignore',
+        '-*.log',
+        '--ignore',
+        '-tmp/',
+        '--ignore',
+        'check',
+      ])
+      expect(formatted).not.toMatch(/ -\*\.log/)
+      expect(formatted).not.toMatch(/ -tmp\//)
+      expect(formatted).not.toMatch(/--ignore check/)
+    }
+    expect(formatAppSecurityCommand(commands.scan, 'posix')).toContain(
+      "--ignore '-*.log' --ignore '-tmp/' --ignore 'check'",
+    )
+    expect(formatAppSecurityCommand(commands.scan, 'powershell')).toContain(
+      "--ignore '-*.log' --ignore '-tmp/' --ignore 'check'",
+    )
+    expect(formatAppSecurityCommand(commands.scan, 'cmd')).toContain(
+      '--ignore "-*.log" --ignore "-tmp/" --ignore "check"',
+    )
+  })
+
+  test('leaves the command words and every flag name bare and quotes every flag value', () => {
+    const commands = resolveAppSecurityCommands('/tmp/app', 'shopify.app.staging.toml', ['generated/'])
+    const findingsPath = joinPath('/tmp/app', '.shopify', 'app-security', 'findings.json')
+
+    expect(formatAppSecurityCommand(commands.compile, 'posix')).toBe(
+      `shopify app security check --path '/tmp/app' --config 'staging' --ignore 'generated/' --findings '${findingsPath}'`,
+    )
+    expect(formatAppSecurityCommand(commands.clean, 'posix')).toBe(
+      "shopify app security check --path '/tmp/app' --config 'staging' --ignore 'generated/' --clean",
+    )
+  })
+
   test('quotes a Windows path with spaces and percents for terminal and instruction shells', () => {
     const commands = resolveAppSecurityCommands(WINDOWS_APP_ROOT)
     const findingsPath = joinPath(WINDOWS_APP_ROOT, '.shopify', 'app-security', 'findings.json')

@@ -3,9 +3,12 @@ import {getAppConfigurationShorthand} from '../models/app/config-file-naming.js'
 
 export type AppSecurityShell = 'posix' | 'cmd' | 'powershell'
 
+/** Strings are command syntax, printed bare. Flag values are user input, so they're always quoted. */
+type AppSecurityArgument = string | {flag: string; value: string}
+
 export interface AppSecurityCommand {
   command: string
-  args: string[]
+  args: AppSecurityArgument[]
 }
 
 export interface AppSecurityCommands {
@@ -14,19 +17,31 @@ export interface AppSecurityCommands {
   clean: AppSecurityCommand
 }
 
-export function resolveAppSecurityCommands(appRoot: string, configFileName?: string): AppSecurityCommands {
+/** `ignorePatterns` are repeated on every command: a compile must discover the same files as its scan. */
+export function resolveAppSecurityCommands(
+  appRoot: string,
+  configFileName?: string,
+  ignorePatterns: ReadonlyArray<string> = [],
+): AppSecurityCommands {
   const {findingsPath} = appSecurityArtifactPaths(appRoot)
   const configFlag = configFileName ? getAppConfigurationShorthand(configFileName) : undefined
   const scan: AppSecurityCommand = {
     command: 'shopify',
-    args: ['app', 'security', 'check', '--path', appRoot, ...(configFlag ? ['--config', configFlag] : [])],
+    args: [
+      'app',
+      'security',
+      'check',
+      {flag: '--path', value: appRoot},
+      ...(configFlag ? [{flag: '--config', value: configFlag}] : []),
+      ...ignorePatterns.map((ignorePattern) => ({flag: '--ignore', value: ignorePattern})),
+    ],
   }
 
   return {
     scan,
     compile: {
       command: scan.command,
-      args: [...scan.args, '--findings', findingsPath],
+      args: [...scan.args, {flag: '--findings', value: findingsPath}],
     },
     clean: {
       command: scan.command,
@@ -83,11 +98,8 @@ export function formatAppSecurityCommand(
   action: AppSecurityCommand,
   shell: AppSecurityShell = shellForPlatform(),
 ): string {
-  return [action.command, ...action.args]
-    .map((argument, index) => {
-      const isCommandSyntax =
-        index === 0 || argument === 'app' || argument === 'security' || argument === 'check' || argument.startsWith('-')
-      return isCommandSyntax ? argument : quoteShellArgument(argument, shell)
-    })
-    .join(' ')
+  const words = action.args.map((argument) =>
+    typeof argument === 'string' ? argument : `${argument.flag} ${quoteShellArgument(argument.value, shell)}`,
+  )
+  return [action.command, ...words].join(' ')
 }

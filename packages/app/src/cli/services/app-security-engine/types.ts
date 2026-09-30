@@ -72,6 +72,10 @@ export interface ProjectDetection {
   languages: DetectedLanguage[]
 }
 
+export interface ScanOptions {
+  ignorePatterns?: ReadonlyArray<string>
+}
+
 export interface ScanResult {
   version: string
   timestamp: string

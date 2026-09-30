@@ -12,7 +12,7 @@ import {
   findDependencyAutomationInputs,
   listRepositoryFiles,
 } from './discover.js'
-import {buildPathRules, listGitIgnoredPaths} from './path-rules.js'
+import {buildPathRules, hasIncludeOverride, ignorePatternRules, listGitIgnoredPaths} from './path-rules.js'
 import {detectCapabilities, detectProject} from '../capabilities/detect.js'
 import {computeScanMetadata} from '../scorer/index.js'
 import {deprecatedScriptTagScope, insecureWebhookUrl} from '../rules/config-rules.js'
@@ -47,6 +47,7 @@ import type {
   CheckExecutionStatus,
   CoverageGap,
   Issue,
+  ScanOptions,
   ScanResult,
   SkippedFile,
 } from '../types.js'
@@ -581,15 +582,23 @@ function normalizeRunnerResult(value: Issue[] | RunnerResult): RunnerResult {
   return Array.isArray(value) ? {issues: value} : value
 }
 
-export async function scan(startPath?: string, configFileName?: string): Promise<ScanResult> {
+export async function scan(
+  startPath?: string,
+  configFileName?: string,
+  options: ScanOptions = {},
+): Promise<ScanResult> {
   const appRoot = findAppRoot(startPath)
   resetSkippedFiles()
   const selectedFileName = getAppConfigurationFileName(configFileName)
   const appToml = loadAppToml(joinPath(appRoot, selectedFileName), appRoot)
   const appTomls = appToml ? [appToml] : []
-  const gitIgnoreListing = await listGitIgnoredPaths(appRoot)
+  const overrides = ignorePatternRules(options.ignorePatterns ?? [])
+  const gitIgnoreListing = await listGitIgnoredPaths(appRoot, {
+    pruneDefaultDirectories: !hasIncludeOverride(overrides),
+  })
   const pathRules = buildPathRules({
     gitIgnoredPaths: gitIgnoreListing.status === 'listed' ? gitIgnoreListing.paths : [],
+    overrides,
   })
   const repositoryFiles = listRepositoryFiles(appRoot, pathRules)
   const extensions = findExtensions(appRoot, repositoryFiles)

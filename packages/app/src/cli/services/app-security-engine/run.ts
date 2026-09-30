@@ -15,7 +15,7 @@ import {computeResultHash} from './scorer/index.js'
 import {compileTrace, validateTrace} from './trace/index.js'
 import {FINDINGS_SCHEMA_VERSION} from './types.js'
 import {getEngineVersion} from './version.js'
-import type {CheckExecution, ScanResult, Suppression, TraceV3} from './types.js'
+import type {CheckExecution, ScanOptions, ScanResult, Suppression, TraceV3} from './types.js'
 
 export {AppRootDiscoveryError, findAppRoot}
 
@@ -109,9 +109,13 @@ export function parseFindings(value: unknown): FindingsDocument {
   return value as FindingsDocument
 }
 
-export async function scanApp(directory?: string, configFileName?: string): Promise<AppSecurityScan> {
+export async function scanApp(
+  directory?: string,
+  configFileName?: string,
+  options?: ScanOptions,
+): Promise<AppSecurityScan> {
   const appRoot = findAppRoot(directory)
-  const result = await scan(appRoot, configFileName)
+  const result = await scan(appRoot, configFileName, options)
   const engineVersion = getEngineVersion()
   const reviewPack = buildReviewPack(engineVersion, result)
   const trace = compileTrace(result, {engineVersion, agentChecksExecuted: [], suppressions: []})
@@ -129,15 +133,20 @@ export async function compileFindings(
   directory: string,
   document: FindingsDocument,
   configFileName?: string,
+  options?: ScanOptions,
 ): Promise<AppSecurityCompile> {
   const appRoot = findAppRoot(directory)
-  const result = await scan(appRoot, configFileName)
+  const result = await scan(appRoot, configFileName, options)
   const engineVersion = getEngineVersion()
   const knownFiles = new Set(searchBoundaryFiles(result))
+  // Rejects findings when the current input hash differs from their source_scan_id. Ignore patterns
+  // aren't recorded in the trace, so the hint names them as a likely cause.
   const provenanceRejected =
     document.source_scan_id === result.scan.input_hash
       ? []
-      : [`Findings source scan ${document.source_scan_id} does not match the current scan ${result.scan.input_hash}.`]
+      : [
+          `Findings source scan ${document.source_scan_id} does not match the current scan ${result.scan.input_hash}; compile with the same --ignore and --config values used for the scan, since ignore patterns are not recorded in the trace.`,
+        ]
   const executed =
     provenanceRejected.length > 0
       ? {executions: [] as CheckExecution[], rejected: provenanceRejected, warnings: [] as string[]}

@@ -91,11 +91,13 @@ export async function executeAppSecurity(options: {
   appRoot: string
   findings?: FindingsDocument
   configFileName?: string
+  ignorePatterns?: ReadonlyArray<string>
 }): Promise<AppSecurityExecution> {
   const startTime = Date.now()
+  const scanOptions = {ignorePatterns: options.ignorePatterns}
   const result = options.findings
-    ? await compileFindings(options.appRoot, options.findings, options.configFileName)
-    : await scanApp(options.appRoot, options.configFileName)
+    ? await compileFindings(options.appRoot, options.findings, options.configFileName, scanOptions)
+    : await scanApp(options.appRoot, options.configFileName, scanOptions)
   return {
     ...result,
     elapsedMilliseconds: Date.now() - startTime,

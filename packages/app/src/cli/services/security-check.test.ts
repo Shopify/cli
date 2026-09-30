@@ -128,6 +128,7 @@ function testOptions() {
     yes: false,
     skipInstructions: false,
     clean: false,
+    ignorePatterns: [],
   }
 }
 
@@ -142,6 +143,7 @@ describe('securityCheck', () => {
       appRoot: '/tmp/unlinked-app',
       configName: undefined,
       findingsPath: undefined,
+      ignorePatterns: [],
     })
     expect(dependencies.writeArtifacts).toHaveBeenCalledWith(scanExecution, {clean: false})
     expect(dependencies.renderReport).toHaveBeenCalledWith({
@@ -167,12 +169,52 @@ describe('securityCheck', () => {
       appRoot: '/tmp/unlinked-app',
       configName: 'staging',
       findingsPath: undefined,
+      ignorePatterns: [],
     })
     expect(dependencies.renderReport).toHaveBeenCalledWith(
       expect.objectContaining({
         commands: resolveAppSecurityCommands(scanExecution.appRoot, 'shopify.app.staging.toml'),
       }),
     )
+  })
+
+  test('forwards ignorePatterns to the scan and repeats them in generated commands and instructions', async () => {
+    const dependencies = testDependencies()
+    dependencies.canPrompt.mockReturnValue(true)
+    dependencies.selectInstructionsDestination.mockResolvedValue('print')
+    const ignorePatterns = ['generated/', '!build/']
+
+    await securityCheck({...testOptions(), ignorePatterns}, dependencies)
+
+    const commands = resolveAppSecurityCommands(scanExecution.appRoot, 'shopify.app.toml', ignorePatterns)
+    expect(commands.scan.args).toContainEqual({flag: '--ignore', value: 'generated/'})
+    expect(dependencies.execute).toHaveBeenCalledWith({
+      appRoot: '/tmp/unlinked-app',
+      configName: undefined,
+      findingsPath: undefined,
+      ignorePatterns,
+    })
+    expect(dependencies.renderReport).toHaveBeenCalledWith(expect.objectContaining({commands}))
+    expect(dependencies.deliverInstructions).toHaveBeenCalledWith(expect.objectContaining({commands}))
+  })
+
+  test('repeats ignorePatterns in the recovery commands of a refused scan', async () => {
+    const dependencies = testDependencies()
+    dependencies.findingsFileExists.mockResolvedValue(true)
+    const ignorePatterns = ['generated/']
+    const commands = resolveAppSecurityCommands(scanExecution.appRoot, 'shopify.app.toml', ignorePatterns)
+
+    const error = await securityCheck({...testOptions(), ignorePatterns}, dependencies).catch((error: unknown) => error)
+
+    expect(error).toBeInstanceOf(AbortError)
+    expect(formatAppSecurityCommand(commands.compile)).toContain('--ignore')
+    expect(error).toMatchObject({
+      tryMessage: expect.stringContaining(formatAppSecurityCommand(commands.compile)),
+    })
+    expect(error).toMatchObject({
+      tryMessage: expect.stringContaining(formatAppSecurityCommand(commands.clean)),
+    })
+    expect(dependencies.execute).not.toHaveBeenCalled()
   })
 
   test('refuses to scan when agent findings exist', async () => {

@@ -40,6 +40,7 @@ interface SecurityOptions {
   skipInstructions: boolean
   findingsPath?: string
   clean: boolean
+  ignorePatterns: ReadonlyArray<string>
 }
 
 export type AppSecurityInstructionsDestination = 'copy' | 'print' | 'nothing'
@@ -49,7 +50,12 @@ interface SecurityDependencies {
   artifactPaths(appRoot: string): ResolvedAppSecurityArtifactPaths
   findingsFileExists(path: string): Promise<boolean>
   readTrace(path: string): Promise<ReadTraceResult>
-  execute(options: {appRoot: string; configName?: string; findingsPath?: string}): Promise<AppSecurityExecution>
+  execute(options: {
+    appRoot: string
+    configName?: string
+    findingsPath?: string
+    ignorePatterns: ReadonlyArray<string>
+  }): Promise<AppSecurityExecution>
   writeArtifacts(
     execution: AppSecurityExecution,
     options: WriteAppSecurityArtifactsOptions,
@@ -82,12 +88,13 @@ const defaultDependencies: SecurityDependencies = {
   artifactPaths: appSecurityArtifactPaths,
   findingsFileExists: fileExists,
   readTrace,
-  execute: async ({appRoot, configName, findingsPath}) => {
+  execute: async ({appRoot, configName, findingsPath, ignorePatterns}) => {
     const findings = findingsPath ? await loadAppSecurityFindings(findingsPath) : undefined
     return executeAppSecurity({
       appRoot,
       findings,
       configFileName: requireSecurityConfigFileName(appRoot, configName),
+      ignorePatterns,
     })
   },
   writeArtifacts: writeAppSecurityArtifacts,
@@ -156,7 +163,11 @@ export default async function securityCheck(
   dependencies: SecurityDependencies = defaultDependencies,
 ): Promise<void> {
   const appRoot = dependencies.resolveRoot(options.directory)
-  const commands = resolveAppSecurityCommands(appRoot, resolveSecurityConfigFileName(appRoot, options.configName))
+  const commands = resolveAppSecurityCommands(
+    appRoot,
+    resolveSecurityConfigFileName(appRoot, options.configName),
+    options.ignorePatterns,
+  )
   if (!options.findingsPath && !options.clean) {
     await assertCanStartScan(dependencies.artifactPaths(appRoot), commands, dependencies)
   }
@@ -165,6 +176,7 @@ export default async function securityCheck(
     appRoot,
     configName: options.configName,
     findingsPath: options.findingsPath,
+    ignorePatterns: options.ignorePatterns,
   })
   const artifacts = await dependencies.writeArtifacts(execution, {clean: options.clean})
 
