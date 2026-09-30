@@ -1,0 +1,70 @@
+<!--
+title: app_info_command_coverage
+description: Behavioral and source-coverage status for the app info command test suite.
+tags: [documentation, testing, cli, app-info, coverage]
+-->
+
+# App info command coverage checklist
+
+All 261 cases live in `app-info.test.ts` and execute the CLI through bash. This checklist separates executable assertions from outstanding work. Source percentages apply only to the declared pilot scope in `coverage-scope.json`.
+
+| Inventory area         | Implemented command cases                                                                                                                                                                                                                                                                                                                                   | Still not established                                                                                                                                 |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Result contracts       | Inline text reports including component/system rows and errors; explicit JSON configuration/project/component values and schema omission; exact web-env values/streams with and without secrets; collected versus thrown failures in all modes                                                                                                              | Every serialized internal field/input variation, terminal styling/width/capability combinations, every component's text layout                        |
+| Parsing and selection  | Aliases, selected flag/env conflicts, specific invalid-argv/file diagnostics and exit codes, missing project, path/INIT_CWD, cached/named/default configs, nested invocation; env-only config/path/client ID/auth alias/web-env/verbose; forced-color overrides                                                                                             | Exhaustive binding precedence/syntax, dotted or moved projects, all startup modes                                                                     |
+| Linking                | Successful forced link; interactive org/app selection and search; remote creation; naming errors; rename/overwrite; cancellation; failures before/after creation preserve local TOML                                                                                                                                                                        | Lost mutation responses, changing release/contracts across reloads, disappearing app/reselection                                                      |
+| Authentication         | Device success/pending/slow-down/denial/expiry; CI rejection; browser invocation; email fallback; malformed device-token success responses; independent failure of all four user-token exchanges; refresh/401 replay with distinct old/new tokens, identity-token exchange subjects and persisted credentials                                               | Every malformed OAuth response, identity/refresh environment-pair variants, cold-session 401 recursion                                                |
+| Accounts               | Alias override/duplicates, no default, stale default, missing audiences, expired Business Platform token reaching the API, legacy/new automation precedence                                                                                                                                                                                                 | Every wrong-shaped session entry, identity-host routing, persistence failure                                                                          |
+| Caches                 | Warm reuse with cached identity/organization and fresh rendered app data; changed extension contracts after warmup; six-hour boundary, corrupt JSON, cross-account organization reuse                                                                                                                                                                       | Negative-result caches, all endpoint/version/cache-key interactions                                                                                   |
+| HTTP/GraphQL           | Status errors, partial data, malformed bodies/envelopes, string throttle codes, retry exhaustion, deadlines, real loopback redirects/socket closure; enabled/disabled API network retries after a real socket failure                                                                                                                                       | Genuine proxy/TLS/DNS failures, streamed-body interruption, all connection retry classifications                                                      |
+| Local state            | Dotenv parsing/selection, environment-file shadowing, hidden-state migration/shapes/precedence, directory collisions, fixture-local symlink migration                                                                                                                                                                                                       | Real permission-denied cases across supported OSes; every shadowing/discovery combination                                                             |
+| Package/web inputs     | Marker detection/precedence, user-agent fallback, workspaces, dependencies, missing/invalid webs, duplicate roles, discovery; ordered roles/type union, role deduplication, empty/default roles, callback/webhook path normalization, HMR validation, port bounds/fraction/string, unknown-field removal, Remix detection; no rewrites or command execution | Every framework and web discovery/output combination; remaining HMR/role/layout variants                                                              |
+| Historical formats     | Template seeds enter linking; representative linked privacy, endpoint, URI shorthand, old subscription fields, required/optional scopes and mixed-privacy inputs have explicit accept/reject and normalized-output expectations                                                                                                                             | Complete L1–L7 matrix, dynamic current modules, every transformation; prototypes must not be treated as supported formats                             |
+| Extensions             | UI generation gates/imports, installed exports, helpers, tools/intents, local/HTTP references, generated-file preservation/write failures, UID insertion/skipping; representative theme/Function/Flow loading                                                                                                                                               | Every extension type, shared entrypoint aggregation, tsconfig alias/exclusion combinations, all specification merge states                            |
+| Localization           | Missing/default/empty/invalid-UTF-8 locale cases, non-JSON UTF-8 bytes, wrong location/inactive path                                                                                                                                                                                                                                                        | Duplicate locale keys, discovery ordering, permission failures                                                                                        |
+| Notifications/upgrades | Cached notice severity, JSON reader differences, duplicate-installation warning, scripted upgrade success/failure/version verification, fresh blocking upgrade notice                                                                                                                                                                                       | Real detached notification-worker delivery, every frequency/version/date rule, installer integration                                                  |
+| Telemetry              | Ordinary opt-out, local rate-limit writes, specific error-reporting requests and upgrade-error suppression                                                                                                                                                                                                                                                  | Metrics/analytics payload and delivery/retry contracts                                                                                                |
+| Observability/safety   | Separate pipe streams or honest merged PTY transcript, scripted prompts, requests, process attempts, allowed root/project file changes for reporting/linking/parser/auth/generated-file failures, unrelated stored-state preservation, signals/deadlines, default-deny network/processes                                                                    | Write-event tracing beyond final snapshots, every store-write failure and cross-OS permission boundary, complete terminal-capability matrix           |
+| Platforms              | Executed on macOS; BSD and util-linux script argument forms implemented                                                                                                                                                                                                                                                                                     | Linux and Windows CI validation; Windows PTY support is not established                                                                               |
+| Coverage evidence      | One-command V8 collection, c8 source-map conversion, and threshold checking; the full 261-case run maps the declared three-file pilot scope                                                                                                                                                                                                                 | The pilot misses per-file thresholds in `services/app/env/show.ts`; expand and verify the command-wide source scope before claiming complete coverage |
+
+## Current source-coverage result
+
+Run:
+
+```sh
+pnpm test:commands:coverage
+```
+
+The latest full run passed all 261 cases and produced this mapped result for the declared pilot scope:
+
+| Source file                |  Lines | Branches | Functions | Gate |
+| -------------------------- | -----: | -------: | --------: | ---- |
+| `commands/app/info.ts`     |   100% |     100% |      100% | Pass |
+| `services/info.ts`         | 96.73% |   83.33% |      100% | Pass |
+| `services/app/env/show.ts` | 81.08% |     100% |       50% | Fail |
+| Aggregate                  | 95.77% |   86.90% |    95.24% | Pass |
+
+The command exits 1 because every scoped file must meet its threshold. `services/app/env/show.ts` also contains the `app env show` wrapper, which `app info` does not call. Keep that limitation explicit rather than weakening the default threshold or presenting the aggregate as a pass.
+
+## Characterizations that are not desired product behavior
+
+These tests document current boundaries. A production fix may require changing the expectation rather than preserving the defect:
+
+- **Endless device polling:** the fixture's advertised device expiry does not terminate pending polling locally. The test uses an explicit deadline and verifies that no app lookup occurs.
+- **Schema socket failure:** type generation warns and the JSON report is produced, but the installed reference resolver retains its 60-second request timer after `fetch` rejects. The harness terminates the otherwise lingering process after a short deadline.
+- **Cross-account organization cache:** switching accounts refetches `UserInfo` but reuses organization detail without a user-specific cache key.
+- **Expired Business Platform token:** local validation can send it to the API without proactive refresh. A mocked accepting response proves the request boundary, not that a real service accepts expired credentials.
+- **Missing response deprecations:** a present `extensions` object without `deprecations` fails in the success callback.
+- **Numeric throttle code:** string `"429"` retries; numeric `429` is not recognized by the current string-only code scanner.
+- **Early-failure writes:** parser and malformed-token failures can still create `.shopify` files through error-metadata loading. An unknown subcommand stops earlier and leaves the sandbox unchanged.
+- **Historical linked inputs:** URI shorthand can lose unsupported fields in the JSON report without rewriting the TOML; singular endpoint subscriptions and mixed privacy forms abort with validation errors. These inline expectations characterize current behavior, not promised migration support.
+- **Non-string client ID:** the invalid-ID fixture enters linking and fails for missing noninteractive flags rather than producing a client-ID schema diagnostic.
+
+## Scope rules
+
+- A subprocess fixture validates the CLI's decision, executable/arguments, and handling of the supplied outcome. It never performs a real browser launch or package installation.
+- Loopback passthrough is limited to registered fixture-owned ports. Production destinations remain blocked.
+- Historical fixtures assert current acceptance, rejection, or linking behavior—not hypothetical migration support.
+- Supporting files count as inputs only when the info-loading path reads them. Build/deploy-only validation must not be invented as an info requirement.
+- Arbitrary repeated service invocation in one process belongs in lower-level tests. This suite covers reuse across real CLI invocations and reloads that occur during a command.

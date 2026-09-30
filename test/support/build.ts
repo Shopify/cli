@@ -16,7 +16,9 @@ const repository = fileURLToPath(new URL('../../', import.meta.url))
 export default async function setup(project: TestProject) {
   // Build the real executable, including bundled command files which take precedence
   // over package dist files. Building only TypeScript could leave an old bundle in use.
-  await promisify(execFile)('bash', ['node_modules/.bin/nx', 'run', 'cli:bundle'], {
+  const bundleArguments = ['node_modules/.bin/nx', 'run', 'cli:bundle']
+  if (process.env.SHOPIFY_CLI_SOURCE_COVERAGE === '1') bundleArguments.push('--skip-nx-cache')
+  await promisify(execFile)('bash', bundleArguments, {
     cwd: repository,
     env: {...process.env, NX_DAEMON: 'false'},
     timeout: 180000,

@@ -20,6 +20,41 @@ export const businessPlatformUrl = 'https://destinations.shopifysvc.com/destinat
 export const appAudience = '7ee65a63608843c577db8b23c4d7316ea0a01bd2f7594f8a9c06ea668c1b775c'
 export const businessAudience = '32ff8ee5-82b8-4d93-9f8a-c6997cefb7dc'
 
+async function compactV8Coverage(directory: string, scopePath?: string) {
+  const scopeFiles = scopePath
+    ? new Set(
+        (JSON.parse(await readFile(scopePath, 'utf8')) as {files: string[]}).files.map((path) =>
+          resolve(fileURLToPath(new URL('../../', import.meta.url)), path),
+        ),
+      )
+    : undefined
+
+  const coverageFiles = (await readdir(directory, {withFileTypes: true})).filter(
+    (entry) => entry.isFile() && /^coverage-.*\.json$/.test(entry.name),
+  )
+  await Promise.all(
+    coverageFiles.map(async (entry) => {
+      const path = join(directory, entry.name)
+      const report = JSON.parse(await readFile(path, 'utf8')) as {
+        result: {url: string}[]
+        'source-map-cache'?: Record<string, {data?: {sources?: string[]}}>
+      }
+      const sourceMapCache = report['source-map-cache'] ?? {}
+      report.result = report.result.filter(({url}) => {
+        if (!url.startsWith('file:')) return false
+        const generatedPath = fileURLToPath(url)
+        if (scopeFiles) {
+          const sources = sourceMapCache[url]?.data?.sources ?? []
+          return sources.some((source) => source.startsWith('file:') && scopeFiles.has(fileURLToPath(source)))
+        }
+        return generatedPath.includes(`${sep}packages${sep}cli${sep}dist${sep}`)
+      })
+      delete report['source-map-cache']
+      await writeFile(path, JSON.stringify(report))
+    }),
+  )
+}
+
 export function specification(identifier: string, experience = 'configuration', jsonSchema?: object) {
   return {
     identifier,
@@ -460,6 +495,7 @@ export class CommandFixture {
       stdin: options.stdin,
       terminateAfterStdout: options.terminateAfterStdout,
     })
+    if (coverageDirectory) await compactV8Coverage(coverageDirectory, process.env.SHOPIFY_TEST_COVERAGE_SCOPE)
     const events: CommandEvent[] = (await readFile(tracePath, 'utf8'))
       .trim()
       .split('\n')

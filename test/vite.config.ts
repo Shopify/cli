@@ -8,8 +8,9 @@ export default defineConfig({
     name: 'commands',
     include: ['*.test.ts'],
     globalSetup: ['./support/build.ts'],
-    // Cases own their CLI processes and sandboxes; avoid unbounded process fan-out.
-    maxConcurrency: availableParallelism(),
+    // Coverage builds use more memory and CPU per child. Keep enough headroom for
+    // PTY prompts and filesystem writes to complete within their normal deadlines.
+    maxConcurrency: process.env.SHOPIFY_CLI_SOURCE_COVERAGE === '1' ? 4 : availableParallelism(),
     testTimeout: 20000,
     hookTimeout: 30000,
     pool: 'forks',

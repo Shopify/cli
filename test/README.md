@@ -101,3 +101,33 @@ Root snapshots are compared against explicit allowed changes for ordinary report
 | `writeFile(relative, contents)`, `writeFileAt(absolute, contents)`, `removeFile(relative)` | Escape hatches for runtime-dependent inputs and between-command changes. Writes are confined to the sandbox.      |
 
 Static TOML, JSON, source, locale, and dependency bytes belong in the filesystem catalog. The two loopback tests still use `writeFile()` because their schema URLs contain a port allocated at runtime. Timestamps applied between invocations also remain runtime operations.
+
+## Coverage
+
+Run the app-info suite, map spawned-process V8 coverage to TypeScript sources, and check the configured thresholds with one command:
+
+```sh
+pnpm test:commands:coverage
+```
+
+The command writes its artifacts under `coverage/commands/app-info/`:
+
+- `raw/` contains the scoped V8 reports from each CLI process.
+- `report/coverage-summary.json` contains the mapped Istanbul summary.
+- `test/app-info/coverage-scope.json` defines the source files and thresholds.
+
+A nonzero exit after the tests pass means the coverage report is valid but misses a threshold. The current pilot exits 1 because `services/app/env/show.ts` does not meet its per-file line and function targets; see the [coverage checklist](./app-info/coverage.md). For a pipeline check without the full suite, pass a test name:
+
+```sh
+pnpm test:commands:coverage --test-name 'prints remote identity and local configuration'
+```
+
+A focused run is diagnostic evidence, not command-wide coverage. To check an existing mapped summary without rerunning tests, use:
+
+```sh
+pnpm test:commands:coverage:check \
+  test/app-info/coverage-scope.json \
+  coverage/commands/app-info/report/coverage-summary.json
+```
+
+Forced-kill cases might not flush V8 data. The runner reports the number of coverage files it maps and keeps the raw reports for inspection.

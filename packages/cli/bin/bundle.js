@@ -13,6 +13,7 @@ import GraphiQLImportsPlugin from '../../../bin/bundling/esbuild-plugin-graphiql
 import CliKitDedupPlugin from '../../../bin/bundling/esbuild-plugin-dedup-cli-kit.js'
 
 const require = createRequire(import.meta.url)
+const sourceCoverageBuild = process.env.SHOPIFY_CLI_SOURCE_COVERAGE === '1'
 
 const external = [
   // react-devtools-core is a dev dependency, no need to bundle it but throws errors if not included here.
@@ -97,14 +98,16 @@ esBuild({
   },
   inject: ['../../bin/bundling/cjs-shims.js'],
   external,
-  sourcemap: 'external',
+  // Coverage builds use linked maps and readable output so V8 ranges can be
+  // mapped back to meaningful source lines, branches, and functions.
+  sourcemap: sourceCoverageBuild ? 'linked' : 'external',
   loader: {'.node': 'copy'},
   splitting: true,
-  // these tree shaking and minify options remove any in-source tests from the bundle
+  // These tree shaking and minify options remove any in-source tests from normal bundles.
   treeShaking: true,
-  minifyWhitespace: true,
-  minifySyntax: true,
-  minifyIdentifiers: true,
+  minifyWhitespace: !sourceCoverageBuild,
+  minifySyntax: !sourceCoverageBuild,
+  minifyIdentifiers: !sourceCoverageBuild,
 
   plugins: [
     ShopifyVSCodePlugin,
