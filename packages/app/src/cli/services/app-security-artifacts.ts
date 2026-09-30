@@ -11,7 +11,7 @@ const MAX_ARTIFACT_FILE_SIZE_BYTES = 5_000_000
 export interface AppSecurityArtifactPaths {
   artifactDirectory: string
   deterministicFindingsPath: string
-  reviewPath?: string
+  agentChecksPath: string
 }
 
 export interface ResolvedAppSecurityArtifactPaths extends Required<AppSecurityArtifactPaths> {
@@ -28,7 +28,7 @@ export function appSecurityArtifactPaths(appRoot: string): ResolvedAppSecurityAr
   const artifactDirectory = joinPath(appRoot, '.shopify', 'app-security')
   return {
     artifactDirectory,
-    reviewPath: joinPath(artifactDirectory, 'review.json'),
+    agentChecksPath: joinPath(artifactDirectory, 'agent-checks.json'),
     findingsPath: joinPath(artifactDirectory, 'findings.json'),
     submissionPath: joinPath(artifactDirectory, 'submission.json'),
     deterministicFindingsPath: joinPath(artifactDirectory, 'deterministic-findings.json'),
@@ -46,14 +46,14 @@ export async function writeAppSecurityArtifacts(
   const paths = appSecurityArtifactPaths(execution.appRoot)
   await ensureArtifactDirectory(execution.appRoot, paths.artifactDirectory)
   await writeAtomicArtifact(paths.deterministicFindingsPath, `${JSON.stringify(execution.artifact, null, 2)}\n`)
-  await writeAtomicArtifact(paths.reviewPath, `${JSON.stringify(execution.reviewPack, null, 2)}\n`)
+  await writeAtomicArtifact(paths.agentChecksPath, `${JSON.stringify(execution.agentChecks, null, 2)}\n`)
   if (options.clean) {
     await removeStaleArtifact(paths.findingsPath)
     await removeStaleArtifact(paths.submissionPath)
   }
   return {
     artifactDirectory: paths.artifactDirectory,
-    reviewPath: paths.reviewPath,
+    agentChecksPath: paths.agentChecksPath,
     deterministicFindingsPath: paths.deterministicFindingsPath,
   }
 }

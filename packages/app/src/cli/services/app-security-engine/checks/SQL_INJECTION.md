@@ -79,8 +79,8 @@ not a finding without a complete source-to-execution path.
 
 ## What to report
 
-Use the review pack's current finding and execution schemas, including this
-check's ID, version, and prompt hash. Each finding must include:
+Use the finding and execution schemas in agent checks, including this check's
+ID and version. Each finding must include:
 
 - The controlling principal and entry point, with required access or preconditions.
 - File/line evidence for the input, every relevant transformation or persistence
@@ -99,10 +99,9 @@ Shopify GraphQL variables and search syntax are not SQL sinks without evidence
 that app code passes their content into SQL. Missing authorization and NoSQL,
 GraphQL, or shell injection are different boundaries.
 
-Record the inspected files and review boundary. If driver behavior, a stored
-procedure, a wrapper, or an upstream producer is unavailable and prevents a
-conclusion, record the check as unresolved with the review pack's structured
-reason and actionable guidance. An unreviewed path did not pass.
+If driver behavior, a stored procedure, a wrapper, or an upstream producer is
+unavailable and prevents a conclusion, record the check as unresolved with a
+reason code and message. An unreviewed path did not pass.
 
 ## Optional reference
 

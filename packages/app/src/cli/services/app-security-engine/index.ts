@@ -18,7 +18,7 @@ export {DETERMINISTIC_FINDINGS_SCHEMA_VERSION} from './types.js'
 export {ignorePatternProblem} from './scanners/path-rules.js'
 export {buildSubmission, SUBMISSION_SCHEMA_VERSION} from './submission/index.js'
 export type {AppSecuritySubmission, AppSecuritySubmissionReport, BuildSubmissionOptions} from './submission/index.js'
-export type {ReviewPack} from './checks/index.js'
+export type {AgentChecks} from './checks/index.js'
 export {groupIssues} from './output/group-issues.js'
 export type {IssueGroup} from './output/group-issues.js'
 export type {

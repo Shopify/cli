@@ -1,5 +1,5 @@
 import {EMBEDDED_CHECK_SOURCES} from './embedded.js'
-import {FINDINGS_SCHEMA_VERSION} from '../types.js'
+import {AGENT_CHECKS_SCHEMA_VERSION, ENGINE_NAME} from '../types.js'
 import {sha256} from '@shopify/cli-kit/node/crypto'
 import type {Severity} from '../types.js'
 
@@ -68,11 +68,15 @@ export const loadChecks = (): Map<string, Check> => {
   return checks
 }
 
-export interface ReviewPack {
-  schema_version: typeof FINDINGS_SCHEMA_VERSION
-  security_version: string
+/** agent-checks.json: the check prompts for the developer's agent. */
+export interface AgentChecks {
+  schema_version: typeof AGENT_CHECKS_SCHEMA_VERSION
+  engine: {
+    name: typeof ENGINE_NAME
+    version: string
+  }
   generated_at: string
-  checks: Pick<Check, 'id' | 'version' | 'prompt' | 'severity'>[]
+  checks: Pick<Check, 'id' | 'version' | 'severity' | 'prompt'>[]
   instructions: string
 }
 
@@ -91,18 +95,18 @@ Rules:
 - Don't report things you couldn't confirm — uncertainty is not a finding.`
 
 /**
- * Build the review pack — the prompts for the developer's agent.
+ * Build agent-checks.json — the prompts for the developer's agent.
  * No candidates, no scan output. The agent explores independently.
  */
-export const buildReviewPack = (securityVersion: string): ReviewPack => ({
-  schema_version: FINDINGS_SCHEMA_VERSION,
-  security_version: securityVersion,
+export const buildAgentChecks = (engineVersion: string): AgentChecks => ({
+  schema_version: AGENT_CHECKS_SCHEMA_VERSION,
+  engine: {name: ENGINE_NAME, version: engineVersion},
   generated_at: new Date().toISOString(),
   checks: [...loadChecks().values()].map((check) => ({
     id: check.id,
     version: check.version,
-    prompt: check.prompt,
     severity: check.severity,
+    prompt: check.prompt,
   })),
   instructions: INSTRUCTIONS,
 })

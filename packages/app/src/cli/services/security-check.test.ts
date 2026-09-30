@@ -4,7 +4,7 @@ import {describe, expect, test, vi} from 'vitest'
 import type {AppSecurityArtifactPaths} from './app-security-artifacts.js'
 import type {AppSecurityExecution} from './app-security-api.js'
 import type {AppSecurityInstructionsDestination} from './security-check.js'
-import type {DeterministicFindingsDocument, ScanResult} from './app-security-engine/index.js'
+import type {AgentChecks, DeterministicFindingsDocument, ScanResult} from './app-security-engine/index.js'
 
 const scan: ScanResult = {
   version: '0.1.0',
@@ -54,9 +54,9 @@ const artifact = {
   coverage: {files_scanned: 1, files_skipped: [], gaps: []},
 } as DeterministicFindingsDocument
 
-const reviewPack = {
-  schema_version: 1 as const,
-  security_version: '1.2.3',
+const agentChecks: AgentChecks = {
+  schema_version: 1,
+  engine: {name: 'shopify-app-security', version: '1.2.3'},
   generated_at: '2026-08-24T00:00:00.000Z',
   checks: Array.from({length: 31}, (_, index) => ({
     id: `CHECK_${index}`,
@@ -71,7 +71,7 @@ const scanExecution: AppSecurityExecution = {
   appRoot: '/tmp/unlinked-app',
   scan,
   artifact,
-  reviewPack,
+  agentChecks,
   engine,
   elapsedMilliseconds: 12,
 }
@@ -79,7 +79,7 @@ const scanExecution: AppSecurityExecution = {
 const artifacts: AppSecurityArtifactPaths = {
   artifactDirectory: '/tmp/unlinked-app/.shopify/app-security',
   deterministicFindingsPath: '/tmp/unlinked-app/.shopify/app-security/deterministic-findings.json',
-  reviewPath: '/tmp/unlinked-app/.shopify/app-security/review.json',
+  agentChecksPath: '/tmp/unlinked-app/.shopify/app-security/agent-checks.json',
 }
 
 function testDependencies(execution: AppSecurityExecution = scanExecution) {
@@ -129,8 +129,8 @@ describe('securityCheck', () => {
       elapsedMilliseconds: 12,
       commands: resolveAppSecurityCommands(scanExecution.appRoot, 'shopify.app.toml'),
       deterministicFindingsPath: artifacts.deterministicFindingsPath,
-      reviewPath: artifacts.reviewPath,
-      reviewCheckCount: 31,
+      agentChecksPath: artifacts.agentChecksPath,
+      agentCheckCount: 31,
     })
     expect(dependencies.output).not.toHaveBeenCalled()
   })
@@ -189,7 +189,7 @@ describe('securityCheck', () => {
     expect(JSON.parse(dependencies.output.mock.calls[0]![0])).toEqual({
       engine,
       deterministic_findings: artifact,
-      reviewPack,
+      agent_checks_path: artifacts.agentChecksPath,
     })
     expect(dependencies.renderReport).not.toHaveBeenCalled()
     expect(dependencies.canPrompt).not.toHaveBeenCalled()

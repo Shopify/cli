@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-imports -- detector coverage uses real temporary repositories */
-import {buildReviewPack} from '../checks/index.js'
+import {buildAgentChecks} from '../checks/index.js'
 import {assertRegistryInvariants, getRegistry} from '../registry/index.js'
 import {DETERMINISTIC_CHECKS, scan} from '../scanners/index.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
@@ -476,8 +476,13 @@ describe('authenticated-route review handoff', () => {
       expect.objectContaining({code: 'unresolved_check', check_id: 'UNAUTHENTICATED_ENDPOINT'}),
     )
 
-    const reviewPack = buildReviewPack('test')
-    expect(reviewPack.checks).toContainEqual(expect.objectContaining({id: 'UNAUTHENTICATED_ENDPOINT', version: 2}))
+    const agentChecks = buildAgentChecks('test')
+    expect(agentChecks.checks).toContainEqual(
+      expect.objectContaining({
+        id: 'UNAUTHENTICATED_ENDPOINT',
+        version: 2,
+      }),
+    )
   })
   test('preserves ordinary findings when another handler needs context-auth review', async () => {
     const directory = await app({

@@ -1,5 +1,5 @@
 import {EMBEDDED_APP_SECURITY_INSTRUCTIONS} from './checks/embedded.js'
-import {buildReviewPack, type ReviewPack} from './checks/index.js'
+import {buildAgentChecks, type AgentChecks} from './checks/index.js'
 import {AppRootDiscoveryError, findAppRoot} from './scanners/discover.js'
 import {scan} from './scanners/index.js'
 import {buildDeterministicFindings} from './scan-artifact/index.js'
@@ -18,7 +18,7 @@ export interface AppSecurityScan {
   appRoot: string
   scan: ScanResult
   artifact: DeterministicFindingsDocument
-  reviewPack: ReviewPack
+  agentChecks: AgentChecks
   engine: AppSecurityEngineMetadata
 }
 
@@ -34,13 +34,12 @@ export async function scanApp(
   const appRoot = findAppRoot(directory)
   const result = await scan(appRoot, configFileName, options)
   const engineVersion = getEngineVersion()
-  const reviewPack = buildReviewPack(engineVersion)
   const artifact = buildDeterministicFindings(result, {engineVersion})
   return {
     appRoot,
     scan: result,
     artifact,
-    reviewPack,
+    agentChecks: buildAgentChecks(engineVersion),
     engine: artifact.engine,
   }
 }

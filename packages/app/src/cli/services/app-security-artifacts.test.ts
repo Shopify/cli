@@ -26,7 +26,7 @@ describe('appSecurityArtifactPaths', () => {
         'app-security',
         'deterministic-findings.json',
       ),
-      reviewPath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'review.json'),
+      agentChecksPath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'agent-checks.json'),
       findingsPath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'findings.json'),
       submissionPath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'submission.json'),
     })
@@ -123,7 +123,7 @@ describe('writeAppSecurityArtifacts', () => {
       await expect(readFile(unknownPath)).resolves.toBe('keep')
       await expect(readFile(customFindingsPath)).resolves.toBe('keep')
       await expect(readDeterministicFindings(paths.deterministicFindingsPath)).resolves.toMatchObject({status: 'ok'})
-      await expect(fileExists(paths.reviewPath)).resolves.toBe(true)
+      await expect(fileExists(paths.agentChecksPath)).resolves.toBe(true)
     })
   })
 
@@ -138,7 +138,7 @@ describe('writeAppSecurityArtifacts', () => {
         `Could not remove stale App Security artifact at ${paths.findingsPath}`,
       )
       await expect(readDeterministicFindings(paths.deterministicFindingsPath)).resolves.toMatchObject({status: 'ok'})
-      await expect(fileExists(paths.reviewPath)).resolves.toBe(true)
+      await expect(fileExists(paths.agentChecksPath)).resolves.toBe(true)
     })
   })
 })

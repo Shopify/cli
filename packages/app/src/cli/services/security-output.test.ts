@@ -75,8 +75,8 @@ function reportInput(overrides: Partial<SecurityReportInput> = {}): SecurityRepo
     elapsedMilliseconds: 125,
     commands: resolveAppSecurityCommands('/tmp/app'),
     deterministicFindingsPath: '/tmp/app/.shopify/app-security/deterministic-findings.json',
-    reviewPath: '/tmp/app/.shopify/app-security/review.json',
-    reviewCheckCount: 31,
+    agentChecksPath: '/tmp/app/.shopify/app-security/agent-checks.json',
+    agentCheckCount: 31,
     ...overrides,
   }
 }
@@ -119,8 +119,8 @@ describe('buildSecurityAlert', () => {
     expect(section(reportInput(), 'Artifacts')?.body).toEqual({
       list: {
         items: [
-          ['Review pack:', {filePath: '/tmp/app/.shopify/app-security/review.json'}],
           ['Scan results:', {filePath: '/tmp/app/.shopify/app-security/deterministic-findings.json'}],
+          ['Agent checks:', {filePath: '/tmp/app/.shopify/app-security/agent-checks.json'}],
         ],
       },
     })

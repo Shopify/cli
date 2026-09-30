@@ -24,17 +24,11 @@ const artifact: DeterministicFindingsDocument = {
   coverage: {files_scanned: 1, files_skipped: [], gaps: []},
 }
 
-const reviewPack = {
-  schema_version: 1 as const,
-  security_version: '1.2.3',
-  generated_at: '2026-08-24T00:00:00.000Z',
-  checks: [],
-  instructions: 'review',
-}
-
 describe('App Security JSON contract', () => {
-  test('encodes the engine, the deterministic findings, and the review pack', async () => {
-    const encoded = encodeSecurityJson(toSecurityJson({engine, artifact, reviewPack}))
+  test('encodes the engine, the deterministic findings, and the agent checks path', async () => {
+    const encoded = encodeSecurityJson(
+      toSecurityJson({engine, artifact}, '/tmp/app/.shopify/app-security/agent-checks.json'),
+    )
     const fixture = await readFile(joinPath(fixtureDirectory, 'scan.json'))
     expect(JSON.parse(encoded)).toEqual(JSON.parse(fixture))
   })

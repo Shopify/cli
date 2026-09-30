@@ -1,9 +1,9 @@
-import {loadChecks, buildReviewPack} from '../checks/index.js'
+import {loadChecks, buildAgentChecks} from '../checks/index.js'
 import {EMBEDDED_CHECK_SOURCES} from '../checks/embedded.js'
 import {describe, expect, test} from 'vitest'
 import {readFileSync, readdirSync} from 'node:fs'
 
-// These IDs are consumed by review packs; changes must be intentional.
+// These IDs are consumed by agent checks; changes must be intentional.
 const EXPECTED_CHECK_IDS = [
   'ACTIVE_UPLOADS_AND_PRIVILEGED_PREVIEWS',
   'APP_PROXY_LIQUID_INJECTION',
@@ -65,22 +65,22 @@ describe('check loading', () => {
   })
 })
 
-describe('review pack', () => {
-  test('includes every shipped check in the review pack', () => {
-    const pack = buildReviewPack('0.1.0')
-    expect(pack.checks.map((check) => check.id).sort()).toEqual(EXPECTED_CHECK_IDS)
+describe('agent checks', () => {
+  test('includes every shipped check in agent checks', () => {
+    const agentChecks = buildAgentChecks('0.1.0')
+    expect(agentChecks.checks.map((check) => check.id).sort()).toEqual(EXPECTED_CHECK_IDS)
   })
 
   test('instructions tell the agent to explore and find, not adjudicate', () => {
-    const pack = buildReviewPack('0.1.0')
-    expect(pack.instructions).toMatch(/explore|find/i)
+    const agentChecks = buildAgentChecks('0.1.0')
+    expect(agentChecks.instructions).toMatch(/explore|find/i)
   })
 
   test('instructions require concrete trust-boundary evidence before reporting findings', () => {
-    const pack = buildReviewPack('0.1.0')
-    expect(pack.instructions).toContain('concrete trust-boundary violation')
-    expect(pack.instructions).toContain('affected authority')
-    expect(pack.instructions).toContain('code smell')
+    const agentChecks = buildAgentChecks('0.1.0')
+    expect(agentChecks.instructions).toContain('concrete trust-boundary violation')
+    expect(agentChecks.instructions).toContain('affected authority')
+    expect(agentChecks.instructions).toContain('code smell')
   })
 
   test('review prompts cover tenant provenance, authorization drift, proxy nuance, and data sensitivity', () => {

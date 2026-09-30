@@ -152,7 +152,7 @@ export interface ScanMetadata {
 }
 
 export const DETERMINISTIC_FINDINGS_SCHEMA_VERSION = 1 as const
-export const FINDINGS_SCHEMA_VERSION = 1 as const
+export const AGENT_CHECKS_SCHEMA_VERSION = 1 as const
 export const ENGINE_NAME = 'shopify-app-security' as const
 
 export interface FindingEvidence {

@@ -23,8 +23,8 @@ export interface SecurityReportInput {
   elapsedMilliseconds: number
   commands: AppSecurityCommands
   deterministicFindingsPath: string
-  reviewPath?: string
-  reviewCheckCount?: number
+  agentChecksPath?: string
+  agentCheckCount?: number
 }
 
 type SecurityAlertType = 'success' | 'warning' | 'error'
@@ -111,9 +111,9 @@ function securityBody(input: SecurityReportInput): TokenItem {
     tokens.push({info: `\n${notApplicable} check${notApplicable === 1 ? '' : 's'} not applicable.`})
   }
 
-  if (input.reviewCheckCount !== undefined) {
+  if (input.agentCheckCount !== undefined) {
     tokens.push({
-      info: `\n${input.reviewCheckCount} check${input.reviewCheckCount === 1 ? '' : 's'} ready for your coding agent.`,
+      info: `\n${input.agentCheckCount} check${input.agentCheckCount === 1 ? '' : 's'} ready for your coding agent.`,
     })
   }
 
@@ -148,14 +148,14 @@ function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]
     sections.push({title: 'Coverage gaps', body: {list: {items}}})
   }
 
-  if (input.reviewPath) {
+  if (input.agentChecksPath) {
     sections.push({
       title: 'Artifacts',
       body: {
         list: {
           items: [
-            ['Review pack:', {filePath: input.reviewPath}],
             ['Scan results:', {filePath: input.deterministicFindingsPath}],
+            ['Agent checks:', {filePath: input.agentChecksPath}],
           ],
         },
       },

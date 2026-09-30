@@ -14,7 +14,7 @@ export default class SecurityCheck extends BaseCommand {
 
   static summary = 'Check an app for Shopify-specific security issues.'
 
-  static descriptionWithMarkdown = `Runs Shopify App Security locally and creates its review pack and deterministic-findings.json.
+  static descriptionWithMarkdown = `Runs Shopify App Security locally and writes \`deterministic-findings.json\` and \`agent-checks.json\` to \`.shopify/app-security/\`.
 
 Pass \`--clean\` to discard the current local review and start over. Use \`--config\` to select a specific app configuration when the project has multiple \`shopify.app*.toml\` files; App Security inspects only that configuration.
 

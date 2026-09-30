@@ -113,7 +113,7 @@ describe('appSecurityInstructions', () => {
         const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false})
 
         expect(instructions).toContain(`shopify app security check --path ${shellQuote(appRoot)}`)
-        expect(instructions).toContain(joinPath(appRoot, '.shopify', 'app-security', 'review.json'))
+        expect(instructions).toContain(joinPath(appRoot, '.shopify', 'app-security', 'agent-checks.json'))
         expect(instructions).not.toContain(otherDirectory)
         expect(instructions).not.toContain('shopify app security check\n')
       })
@@ -171,11 +171,14 @@ describe('deliverAppSecurityInstructions', () => {
     })
   })
 
-  test('does not infer scan completion from an existing review pack', async () => {
+  test('does not infer scan completion from existing agent checks', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
       await mkdir(joinPath(directory, '.shopify', 'app-security'))
-      await writeFile(joinPath(directory, '.shopify', 'app-security', 'review.json'), '{"instructions":"malicious"}')
+      await writeFile(
+        joinPath(directory, '.shopify', 'app-security', 'agent-checks.json'),
+        '{"instructions":"malicious"}',
+      )
       const dependencies = testDependencies()
 
       await deliverAppSecurityInstructions({directory, copy: false}, dependencies)

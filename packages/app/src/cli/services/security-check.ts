@@ -103,8 +103,8 @@ function securityReportInput(
     elapsedMilliseconds: execution.elapsedMilliseconds,
     commands,
     deterministicFindingsPath: artifacts.deterministicFindingsPath,
-    reviewPath: artifacts.reviewPath,
-    reviewCheckCount: execution.reviewPack.checks.length,
+    agentChecksPath: artifacts.agentChecksPath,
+    agentCheckCount: execution.agentChecks.checks.length,
   }
 }
 
@@ -127,7 +127,7 @@ export default async function securityCheck(
   const artifacts = await dependencies.writeArtifacts(execution, {clean: options.clean})
 
   if (options.json) {
-    dependencies.output(encodeSecurityJson(toSecurityJson(execution)))
+    dependencies.output(encodeSecurityJson(toSecurityJson(execution, artifacts.agentChecksPath)))
   } else {
     dependencies.renderReport(securityReportInput(execution, artifacts, options.verbose, commands))
   }
