@@ -224,6 +224,30 @@ describe('transformToEventsConfig', () => {
     })
   })
 
+  test('strips subscription api_version matching the events default while keeping overrides', () => {
+    const remoteContent = {
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', uri: 'https://example.com/a', api_version: '2024-01', identifier: 'id-a'},
+          {topic: 'products/update', uri: 'https://example.com/b', api_version: '2025-07', identifier: 'id-b'},
+        ],
+      },
+    }
+
+    const result = transformToEventsConfig(remoteContent)
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', uri: 'https://example.com/a'},
+          {topic: 'products/update', uri: 'https://example.com/b', api_version: '2025-07'},
+        ],
+      },
+    })
+  })
+
   test('handles missing subscription field', () => {
     const remoteContent = {
       events: {

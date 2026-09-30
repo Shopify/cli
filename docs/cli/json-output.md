@@ -81,6 +81,21 @@ Events are separate from finite results. Progress events can drive spinners or s
 running, but they aren't fields in the final JSON result. Errors continue through the standard CLI error path;
 don't encode failures as successful result shapes merely to support `--json`.
 
+### Task progress events
+
+`renderTasks` uses one `operation` ID for the whole task list, including subtasks. It emits `started` for the first
+task that runs, `updated` for subsequent tasks, and `completed` after the whole list succeeds. Skipped tasks emit no
+progress events. Empty lists and lists where every task is skipped emit no events.
+
+`renderTasks` accepts a `retry` count on each task, and `renderSingleTask` accepts it in its options. It is the number
+of additional attempts after a failure and defaults to zero. Both emit `retrying` before each repeated task attempt,
+using the same operation ID. Once retries are exhausted, they emit one `failed` event and throw the original error.
+Only successful operations emit `completed`. Failure events identify the task through `message`; error details
+continue through the standard CLI error path.
+
+Cancellation does not trigger retries or a `failed` event in `renderSingleTask` when its `onAbort` callback runs.
+An interrupted operation can still end without a terminal progress event, so consumers must also handle process exit.
+
 ## Preserve compatibility
 
 Treat the JSON result as a public API. Keep existing keys, omission rules, nullability, collection shapes, and exit
@@ -109,9 +124,47 @@ finite command even when it emits progress events, writes a file, or has no inte
 
 ## Plugin authors
 
+### Enable the JSON output lint rule
+
+Other repositories can install a version of `@shopify/eslint-plugin-cli` that includes `command-json-output`
+and enable the rule in their existing ESLint flat config. Importing the plugin's `rules` does not require
+extending its full CLI configuration.
+
+For example, Hydrogen can add this entry to its existing `eslint.config.js` array:
+
+```js
+const cliPlugin = require('@shopify/eslint-plugin-cli')
+const {commandExceptions} = require('./json-output-command-exceptions.cjs')
+
+module.exports = [
+  // Other existing configuration entries.
+  {
+    files: ['packages/cli/src/commands/**/*.ts'],
+    plugins: {'@shopify/cli': cliPlugin},
+    rules: {
+      '@shopify/cli/command-json-output': ['error', {exceptions: commandExceptions}],
+    },
+  },
+]
+```
+
+Create `json-output-command-exceptions.cjs` in that repository, exporting a `commandExceptions` array.
+Use exact repository-relative paths with forward slashes, such as `packages/cli/src/commands/hydrogen/dev.ts`.
+Paths are matched individually; exempting a command does not exempt its subcommands. The rule recognizes command
+files under both `packages/*/src/commands/` and `packages/*/src/cli/commands/`.
+
+The `exceptions` option replaces the built-in Shopify CLI list. An empty array disables all exemptions;
+omitting the option preserves the built-in list. Keep the local list limited to existing finite commands awaiting
+migration and streaming commands, and remove finite entries as they adopt the contract.
+
+### Control plugin output
+
 Plugins must adopt the result contract and control their output before their commands can be used reliably in JSON
 mode. Inheriting `--json-schema` or enabling `SHOPIFY_FLAG_JSON=1` doesn't convert all plugin output automatically.
 
+- In the command event context, `renderTasks` and `renderSingleTask` run without Ink and emit JSON progress events
+  when JSON mode is enabled. This also applies when `SHOPIFY_FLAG_JSON=1` enables JSON mode for a plugin command that
+  doesn't declare a `--json` flag.
 - Oclif `init` hooks run before the command's error handling. A hook that renders a warning and calls `process.exit(1)`
   bypasses the JSON fatal error path and can leave stdout empty. Put command validation in the command lifecycle and
   throw an `AbortError` so CLI Kit can encode the failure.
@@ -134,9 +187,10 @@ Tests should verify:
 - errors and exit behavior; and
 - prompt behavior independently from `--json` and `--no-input`.
 
-Command help includes the result's JSON Schema automatically through `jsonOutputSchema`. `--json-schema` prints one
-JSON Schema (draft-07) accepting a result, a fatal error document, or a side event. The `Result`, `Error`, and `Event`
-definitions describe these separately; results and fatal errors go to stdout, and side events go to stderr.
+Non-interactive command help and generated README documentation include the result's JSON Schema automatically through
+`jsonOutputSchema`. Interactive help keeps the `--json-schema` hint and omits the schema introduction and inline schema.
+`--json-schema` prints one JSON Schema (draft-07) accepting a result, a fatal error document, or a side event. The `Result`,
+`Error`, and `Event` definitions describe these separately; results and fatal errors go to stdout, and side events go to stderr.
 
 Both outputs come from the same Zod definitions used to validate and encode results. Run the manifest,
 README, and code-documentation refresh commands required by CI after changing command metadata.

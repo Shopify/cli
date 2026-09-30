@@ -7,11 +7,12 @@ import {clientId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
+import {recordRetry} from '../../../public/node/analytics.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {isTTY} from '../../../public/node/ui.js'
 import {err, ok} from '../../../public/node/result.js'
-import {AbortError} from '../../../public/node/error.js'
-import {isCI, openURL} from '../../../public/node/system.js'
+import {AbortError, BugError} from '../../../public/node/error.js'
+import {isCI, openURL, sleep} from '../../../public/node/system.js'
 import * as output from '../../../public/node/output.js'
 
 import {beforeEach, describe, expect, test, vi} from 'vitest'
@@ -19,6 +20,7 @@ import {Response} from 'node-fetch'
 
 vi.mock('../../../public/node/context/fqdn.js')
 vi.mock('./identity')
+vi.mock('../../../public/node/analytics.js')
 vi.mock('../../../public/node/http.js')
 vi.mock('../../../public/node/ui.js')
 vi.mock('./exchange.js')
@@ -160,7 +162,7 @@ describe('requestDeviceAuthorization', () => {
     expect(outputInfo).not.toHaveBeenCalledWith('👉 Press any key to open the login page on your browser')
   })
 
-  test('when the response is not valid JSON, throw an error with context', async () => {
+  test('when the response is not valid JSON, throw an error with context without retrying', async () => {
     // Given
     const response = new Response('not valid JSON')
     Object.defineProperty(response, 'status', {value: 200})
@@ -169,10 +171,121 @@ describe('requestDeviceAuthorization', () => {
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
     vi.mocked(clientId).mockReturnValue('clientId')
 
-    // When/Then
-    await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrowError(
+    // When
+    const request = requestDeviceAuthorization(['scope1', 'scope2'])
+
+    // Then
+    await expect(request).rejects.toBeInstanceOf(BugError)
+    await expect(request).rejects.toThrowError(
       'Received invalid response from authorization service (HTTP 200). Response could not be parsed as valid JSON. If this issue persists, please contact support at https://help.shopify.com',
     )
+    expect(shopifyFetch).toHaveBeenCalledTimes(1)
+  })
+
+  test('retries a gateway response and returns once the service recovers', async () => {
+    // Given
+    vi.mocked(shopifyFetch)
+      .mockResolvedValueOnce(new Response('Service unavailable', {status: 503}))
+      .mockResolvedValueOnce(new Response(JSON.stringify(data), {status: 200}))
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    // When
+    const got = await requestDeviceAuthorization(['scope1', 'scope2'])
+
+    // Then
+    expect(got).toEqual(dataExpected)
+    expect(shopifyFetch).toHaveBeenCalledTimes(2)
+    expect(sleep).toHaveBeenCalledOnce()
+    expect(sleep).toHaveBeenCalledWith(0.2)
+    expect(recordRetry).toHaveBeenCalledWith(
+      'https://fqdn.com/oauth/device_authorization',
+      'device-authorization-gateway-error',
+    )
+  })
+
+  test.each([
+    {retryAfter: '3', expectedDelay: 3},
+    {retryAfter: '0', expectedDelay: 0},
+    {retryAfter: 'Fri, 18 Sep 2026 12:00:10 GMT', expectedDelay: 10},
+    {retryAfter: 'Fri, 18 Sep 2026 11:59:59 GMT', expectedDelay: 0},
+    {retryAfter: 'invalid', expectedDelay: 0.2},
+    {retryAfter: '-1', expectedDelay: 0.2},
+    {retryAfter: '', expectedDelay: 0.2},
+    {retryAfter: '   ', expectedDelay: 0.2},
+  ])('uses $expectedDelay seconds for Retry-After "$retryAfter"', async ({retryAfter, expectedDelay}) => {
+    const now = vi.spyOn(Date, 'now').mockReturnValue(new Date('2026-09-18T12:00:00Z').getTime())
+    vi.mocked(shopifyFetch)
+      .mockResolvedValueOnce(new Response('Service unavailable', {status: 503, headers: {'Retry-After': retryAfter}}))
+      .mockResolvedValueOnce(new Response(JSON.stringify(data), {status: 200}))
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    try {
+      const result = await requestDeviceAuthorization(['scope1', 'scope2'])
+
+      expect(result).toEqual(dataExpected)
+      expect(shopifyFetch).toHaveBeenCalledTimes(2)
+      expect(sleep).toHaveBeenCalledExactlyOnceWith(expectedDelay)
+    } finally {
+      now.mockRestore()
+    }
+  })
+
+  test('uses the Retry-After from each response and stops after two retries', async () => {
+    vi.mocked(shopifyFetch)
+      .mockResolvedValueOnce(new Response('Service unavailable', {status: 503, headers: {'Retry-After': '2'}}))
+      .mockResolvedValueOnce(new Response('Service unavailable', {status: 503, headers: {'Retry-After': '4'}}))
+      .mockResolvedValueOnce(new Response('Service unavailable', {status: 503, headers: {'Retry-After': '6'}}))
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toBeInstanceOf(AbortError)
+
+    expect(shopifyFetch).toHaveBeenCalledTimes(3)
+    expect(sleep).toHaveBeenCalledTimes(2)
+    expect(sleep).toHaveBeenNthCalledWith(1, 2)
+    expect(sleep).toHaveBeenNthCalledWith(2, 4)
+  })
+
+  test.each([502, 503, 504])(
+    'when HTTP %i gateway responses persist, throw an expected error after two retries',
+    async (status) => {
+      // Given
+      vi.mocked(shopifyFetch).mockImplementation(async () => new Response('Service unavailable', {status}))
+      vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+      vi.mocked(clientId).mockReturnValue('clientId')
+
+      // When
+      const request = requestDeviceAuthorization(['scope1', 'scope2'])
+
+      // Then
+      await expect(request).rejects.toBeInstanceOf(AbortError)
+      await expect(request).rejects.toThrowError(
+        `Received invalid response from authorization service (HTTP ${status}). The service may be experiencing issues. Response could not be parsed as valid JSON. If this issue persists, please contact support at https://help.shopify.com`,
+      )
+      expect(shopifyFetch).toHaveBeenCalledTimes(3)
+      expect(sleep).toHaveBeenNthCalledWith(1, 0.2)
+      expect(sleep).toHaveBeenNthCalledWith(2, 0.4)
+      expect(recordRetry).toHaveBeenCalledTimes(2)
+    },
+  )
+
+  test('preserves the existing error for a persistent JSON gateway response', async () => {
+    // Given
+    vi.mocked(shopifyFetch).mockImplementation(
+      async () => new Response(JSON.stringify({error: 'service_unavailable'}), {status: 503}),
+    )
+    vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+    vi.mocked(clientId).mockReturnValue('clientId')
+
+    // When
+    const request = requestDeviceAuthorization(['scope1', 'scope2'])
+
+    // Then
+    await expect(request).rejects.toBeInstanceOf(BugError)
+    await expect(request).rejects.toThrowError('Failed to start authorization process')
+    expect(shopifyFetch).toHaveBeenCalledTimes(3)
   })
 
   test('when the response is empty, throw an error with empty body message', async () => {
@@ -206,7 +319,7 @@ describe('requestDeviceAuthorization', () => {
     )
   })
 
-  test('when the server returns a 500 error with non-JSON response, throw an error with server issue message', async () => {
+  test('when the server returns a 500 error with non-JSON response, throw an error without retrying', async () => {
     // Given
     const response = new Response('Internal Server Error')
     Object.defineProperty(response, 'status', {value: 500})
@@ -219,6 +332,7 @@ describe('requestDeviceAuthorization', () => {
     await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrowError(
       'Received invalid response from authorization service (HTTP 500). The service may be experiencing issues. Response could not be parsed as valid JSON. If this issue persists, please contact support at https://help.shopify.com',
     )
+    expect(shopifyFetch).toHaveBeenCalledTimes(1)
   })
 
   test('when response.text() fails, throw an error about network/streaming issue', async () => {

@@ -13,7 +13,7 @@ export async function showEnv(
   return outputEnv(app, remoteApp, organization, 'text')
 }
 
-export async function outputEnv(
+async function outputEnv(
   app: AppInterface,
   remoteApp: OrganizationApp,
   organization: Organization,

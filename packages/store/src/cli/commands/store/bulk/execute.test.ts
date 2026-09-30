@@ -1,12 +1,23 @@
 import StoreBulkExecute from './execute.js'
-import {executeBulkOperation} from '../../../services/store/bulk/execute-bulk-operation.js'
+import {renderExecuteBulkOperationResult} from '../../../services/store/bulk/execute-result.js'
+import {logBulkOperationStart} from '../../../services/store/bulk/progress.js'
+import {executeBulkOperation, prepareBulkOperation} from '../../../services/store/bulk/execute-bulk-operation.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/store/bulk/execute-bulk-operation.js')
+vi.mock('../../../services/store/bulk/execute-result.js')
+vi.mock('../../../services/store/bulk/progress.js')
 
 describe('store bulk execute command', () => {
   beforeEach(() => {
-    vi.mocked(executeBulkOperation).mockResolvedValue()
+    vi.mocked(prepareBulkOperation).mockImplementation(async ({query, watch = false}) => ({
+      adminSession: {token: 'token', storeFqdn: 'shop.myshopify.com'},
+      version: '2026-01',
+      query,
+      variablesJsonl: undefined,
+      watch,
+    }))
+    vi.mocked(executeBulkOperation).mockResolvedValue({operation: null, userErrors: [], watchAborted: false})
   })
 
   test('passes the inline query through to the service', async () => {
@@ -17,7 +28,7 @@ describe('store bulk execute command', () => {
       'query { products { edges { node { id } } } }',
     ])
 
-    expect(executeBulkOperation).toHaveBeenCalledWith(
+    expect(prepareBulkOperation).toHaveBeenCalledWith(
       expect.objectContaining({
         store: 'shop.myshopify.com',
         query: 'query { products { edges { node { id } } } }',
@@ -37,9 +48,11 @@ describe('store bulk execute command', () => {
       '{"input":{}}',
       '--allow-mutations',
       '--watch',
+      '--output-file',
+      './results.jsonl',
     ])
 
-    expect(executeBulkOperation).toHaveBeenCalledWith(
+    expect(prepareBulkOperation).toHaveBeenCalledWith(
       expect.objectContaining({
         store: 'shop.myshopify.com',
         allowMutations: true,
@@ -47,6 +60,21 @@ describe('store bulk execute command', () => {
         variables: ['{"input":{}}'],
       }),
     )
+    expect(renderExecuteBulkOperationResult).toHaveBeenCalledWith(expect.anything(), {
+      format: 'text',
+      watch: true,
+      outputFile: expect.stringMatching(/results\.jsonl$/),
+    })
+  })
+
+  test('selects JSON presentation', async () => {
+    await StoreBulkExecute.run(['--store', 'shop.myshopify.com', '--query', '{ shop { id } }', '--json'])
+    expect(renderExecuteBulkOperationResult).toHaveBeenCalledWith(expect.anything(), {
+      format: 'json',
+      watch: false,
+      outputFile: undefined,
+    })
+    expect(logBulkOperationStart).toHaveBeenCalledWith('Starting bulk operation.', expect.any(Object), 'json')
   })
 
   test('rejects an empty query', async () => {
@@ -56,6 +84,8 @@ describe('store bulk execute command', () => {
 
   test('defines the expected flags', () => {
     expect(StoreBulkExecute.flags.store).toBeDefined()
+    expect(StoreBulkExecute.flags.json).toBeDefined()
+    expect(StoreBulkExecute.jsonOutputSchema).toBeDefined()
     expect(StoreBulkExecute.flags.query).toBeDefined()
     expect(StoreBulkExecute.flags['query-file']).toBeDefined()
     expect(StoreBulkExecute.flags.variables).toBeDefined()

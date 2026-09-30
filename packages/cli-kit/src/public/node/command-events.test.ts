@@ -29,7 +29,11 @@ describe('commandEventOutputSchema', () => {
           additionalProperties: false,
         },
         CommandProgressEvent: {
-          properties: {current: {type: 'number', minimum: 0}, total: {type: 'number', minimum: 0}},
+          properties: {
+            status: {enum: ['started', 'updated', 'retrying', 'completed', 'failed']},
+            current: {type: 'number', minimum: 0},
+            total: {type: 'number', minimum: 0},
+          },
           required: ['type', 'timestamp', 'status', 'operation'],
           additionalProperties: false,
         },
@@ -131,6 +135,20 @@ describe('renderCommandEvent', () => {
 })
 
 describe('renderCommandEventAsJson', () => {
+  test.each(['retrying', 'failed'] as const)('renders %s progress as JSON', (status) => {
+    const event: CommandEvent = {
+      type: 'progress',
+      timestamp: '2026-08-26T12:00:00.000Z',
+      operation: 'upload',
+      status,
+      message: 'Uploading files',
+    }
+
+    renderCommandEventAsJson(event)
+
+    expect(JSON.parse(outputMock.info())).toEqual(event)
+  })
+
   test.each([
     {type: 'diagnostic', level: 'unknown', message: 'Invalid level'},
     {type: 'progress', operation: 'upload', status: 'started', current: -1},

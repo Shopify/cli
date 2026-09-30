@@ -1,0 +1,8 @@
+query FindOrganization($organizationId: OrganizationID!) {
+  currentUserAccount {
+    organization(id: $organizationId) {
+      id
+      name
+    }
+  }
+}

@@ -95,7 +95,7 @@ async function getAdminStoreInfo(store: string): Promise<StoreInfoResult> {
   setLastSeenUserId(session.userId)
   const shop = await fetchAdminShopInfo(session)
 
-  return buildAdminResult({store: session.store, shop})
+  return {...buildAdminResult({store: session.store, shop}), authScopes: session.scopes}
 }
 
 async function getBusinessPlatformStoreInfo(
@@ -260,6 +260,8 @@ function buildPreviewStoreResult(args: {
   const fields: Partial<StoreInfoResult> = {
     id: buildShopGid(previewSession.preview.shopId),
     displayName: previewSession.preview.name,
+    type: 'preview',
+    country: previewSession.preview.country,
     accessUrl: previewStoreUrls.accessUrl,
     saveUrl: previewStoreUrls.saveUrl,
   }

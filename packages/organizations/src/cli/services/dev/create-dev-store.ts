@@ -1,3 +1,5 @@
+import {DEV_STORE_PLANS, type DevStorePlan} from './plans.js'
+import {createDevStoreJsonOutputSchema} from './types.js'
 import {CreateAppDevelopmentStore} from '../../api/graphql/business-platform-organizations/generated/create_app_development_store.js'
 import {
   PollStoreCreation,
@@ -12,14 +14,7 @@ import {sleep} from '@shopify/cli-kit/node/system'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {renderSingleTask, renderSuccess, type InlineToken} from '@shopify/cli-kit/node/ui'
 
-const DEV_STORE_PLANS = {
-  basic: 'BASIC_APP_DEVELOPMENT',
-  grow: 'PROFESSIONAL_APP_DEVELOPMENT',
-  advanced: 'UNLIMITED_APP_DEVELOPMENT',
-  plus: 'SHOPIFY_PLUS_APP_DEVELOPMENT',
-} as const
-export type DevStorePlan = keyof typeof DEV_STORE_PLANS
-export const devStorePlanHandles = Object.keys(DEV_STORE_PLANS) as DevStorePlan[]
+export {devStorePlanHandles, type DevStorePlan} from './plans.js'
 
 const POLL_INTERVAL_SECONDS = 2
 const POLL_TIMEOUT_MS = 5 * 60 * 1000
@@ -135,25 +130,21 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<st
 
   if (options.json) {
     outputResult(
-      JSON.stringify(
-        {
-          store: {
-            name,
-            domain: shopDomain,
-            adminUrl: shopAdminUrl,
-            plan,
-            ...(options.featurePreview ? {featurePreview: options.featurePreview} : {}),
-            ...(options.country ? {country: options.country} : {}),
-            demoData: options.withDemoData ?? false,
-          },
-          organization: {
-            id: org.id,
-            name: org.businessName,
-          },
+      createDevStoreJsonOutputSchema.encode({
+        store: {
+          name,
+          domain: shopDomain,
+          adminUrl: shopAdminUrl,
+          plan,
+          ...(options.featurePreview ? {featurePreview: options.featurePreview} : {}),
+          ...(options.country ? {country: options.country} : {}),
+          demoData: options.withDemoData ?? false,
         },
-        null,
-        2,
-      ),
+        organization: {
+          id: org.id,
+          name: org.businessName,
+        },
+      }),
     )
   } else if (options.summary !== false) {
     const rows: InlineToken[][] = []

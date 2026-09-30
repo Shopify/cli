@@ -1,21 +1,5 @@
+import {storeAuthJsonOutputSchema, type StoreAuthResult} from './types.js'
 import {outputCompleted, outputInfo, outputResult, outputToken, outputContent} from '@shopify/cli-kit/node/output'
-
-export interface StoreAuthResult {
-  store: string
-  userId: string
-  scopes: string[]
-  acquiredAt: string
-  expiresAt?: string
-  refreshTokenExpiresAt?: string
-  hasRefreshToken: boolean
-  associatedUser?: {
-    id: number
-    email?: string
-    firstName?: string
-    lastName?: string
-    accountOwner?: boolean
-  }
-}
 
 type StoreAuthOutputFormat = 'text' | 'json'
 
@@ -27,10 +11,6 @@ export interface StoreAuthPresenter {
   openingBrowser: () => void
   manualAuthUrl: (authorizationUrl: string, options?: ManualAuthUrlOptions) => boolean
   success: (result: StoreAuthResult) => void
-}
-
-function serializeStoreAuthResult(result: StoreAuthResult): string {
-  return JSON.stringify(result, null, 2)
 }
 
 function buildStoreAuthSuccessText(result: StoreAuthResult): {completed: string[]; info: string[]} {
@@ -77,7 +57,7 @@ function displayStoreAuthManualAuthUrl(authorizationUrl: string, options: Manual
 
 function displayStoreAuthResult(result: StoreAuthResult, format: StoreAuthOutputFormat = 'text'): void {
   if (format === 'json') {
-    outputResult(serializeStoreAuthResult(result))
+    outputResult(storeAuthJsonOutputSchema.encode(result))
     return
   }
 

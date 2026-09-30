@@ -1,11 +1,13 @@
 import {clientId} from './identity.js'
 import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {IdentityToken} from './schema.js'
+import {isGatewayErrorStatus} from '../api/status-checks.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
+import {recordRetry} from '../../../public/node/analytics.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {outputContent, outputDebug, outputInfo, outputToken} from '../../../public/node/output.js'
 import {AbortError, BugError} from '../../../public/node/error.js'
-import {isCI, openURL} from '../../../public/node/system.js'
+import {isCI, openURL, sleep} from '../../../public/node/system.js'
 
 import {Response} from 'node-fetch'
 
@@ -17,6 +19,9 @@ export interface DeviceAuthorizationResponse {
   verificationUriComplete?: string
   interval?: number
 }
+
+const GATEWAY_ERROR_RETRY_LIMIT = 2
+const GATEWAY_ERROR_INITIAL_RETRY_DELAY_SECONDS = 0.2
 
 /**
  * Initiate a device authorization flow.
@@ -34,22 +39,7 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
   const queryParams = {client_id: identityClientId, scope: scopes.join(' ')}
   const url = `https://${fqdn}/oauth/device_authorization`
 
-  const response = await shopifyFetch(url, {
-    method: 'POST',
-    headers: {'Content-type': 'application/x-www-form-urlencoded'},
-    body: convertRequestToParams(queryParams),
-  })
-
-  // First read the response body as text so we have it for debugging
-  let responseText: string
-  try {
-    responseText = await response.text()
-  } catch (error) {
-    throw new BugError(
-      `Failed to read response from authorization service (HTTP ${response.status}). Network or streaming error occurred.`,
-      'Check your network connection and try again.',
-    )
-  }
+  const {response, responseText} = await requestDeviceAuthorizationResponse(url, convertRequestToParams(queryParams))
 
   // Now try to parse the text as JSON
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -59,6 +49,9 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
   } catch {
     // JSON.parse failed, handle the parsing error
     const errorMessage = buildAuthorizationParseErrorMessage(response, responseText)
+    if (isGatewayErrorStatus(response.status)) {
+      throw new AbortError(errorMessage)
+    }
     throw new BugError(errorMessage)
   }
 
@@ -151,6 +144,60 @@ export async function pollForDeviceAuthorization(code: string, interval = 5): Pr
 
     startPolling()
   })
+}
+
+async function requestDeviceAuthorizationResponse(
+  url: string,
+  body: string,
+  gatewayRetriesUsed = 0,
+): Promise<{response: Response; responseText: string}> {
+  const response = await shopifyFetch(url, {
+    method: 'POST',
+    headers: {'Content-type': 'application/x-www-form-urlencoded'},
+    body,
+  })
+
+  let responseText: string
+  try {
+    responseText = await response.text()
+  } catch {
+    throw new BugError(
+      `Failed to read response from authorization service (HTTP ${response.status}). Network or streaming error occurred.`,
+      'Check your network connection and try again.',
+    )
+  }
+
+  if (!isGatewayErrorStatus(response.status) || gatewayRetriesUsed >= GATEWAY_ERROR_RETRY_LIMIT) {
+    return {response, responseText}
+  }
+
+  const retryNumber = gatewayRetriesUsed + 1
+  const retryDelaySeconds =
+    retryAfterDelaySeconds(response.headers.get('retry-after')) ??
+    GATEWAY_ERROR_INITIAL_RETRY_DELAY_SECONDS * 2 ** gatewayRetriesUsed
+  recordRetry(url, 'device-authorization-gateway-error')
+  outputDebug(
+    `Scheduling device authorization retry #${retryNumber} after HTTP ${response.status} in ${retryDelaySeconds} seconds`,
+  )
+  await sleep(retryDelaySeconds)
+
+  return requestDeviceAuthorizationResponse(url, body, retryNumber)
+}
+
+function retryAfterDelaySeconds(retryAfter: string | null): number | undefined {
+  const value = retryAfter?.trim()
+  if (!value) return undefined
+
+  // Retry-After can specify either a delay in seconds or an HTTP date.
+  const delaySeconds = Number(value)
+  if (!Number.isNaN(delaySeconds)) {
+    return Number.isFinite(delaySeconds) && delaySeconds >= 0 ? delaySeconds : undefined
+  }
+
+  const retryAt = Date.parse(value)
+  if (Number.isNaN(retryAt)) return undefined
+
+  return Math.max(0, (retryAt - Date.now()) / 1000)
 }
 
 function convertRequestToParams(queryParams: {client_id: string; scope: string}): string {

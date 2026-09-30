@@ -1,31 +1,39 @@
 import {listBusinessPlatformStores} from './list/bp-source.js'
 import {STORE_LIST_LIMIT} from './list/constants.js'
-import {type ListStoresResult, type StoreListEntry, type StoreListOrganization} from './list/types.js'
+import {type StoreListEntry, type StoreListOrganization, type StoreListResult} from './list/types.js'
 import {type StoreTypeFilter} from './store-type.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {isTTY, renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
-import {fetchOrganizationsWithAccessInfo, type Organization} from '@shopify/organizations'
+import {fetchOrganizationById, fetchOrganizationsWithAccessInfo, type Organization} from '@shopify/organizations'
 
 interface ListStoresOptions {
   organizationId?: number
   storeType?: StoreTypeFilter
 }
 
-export async function listStores(options: ListStoresOptions = {}): Promise<ListStoresResult> {
+export async function listStores(options: ListStoresOptions = {}): Promise<StoreListResult> {
   const token = await ensureAuthenticatedBusinessPlatform()
+
+  // Look the organization up directly instead of paging through every one the account belongs to.
+  // A miss falls through to the list below, which supplies the accessible organizations for the
+  // not-found error and re-resolves access granted since the lookup cached that miss.
+  if (options.organizationId) {
+    const organization = await fetchOrganizationById(options.organizationId.toString(), token)
+    if (organization) return listStoresInOrganization(token, organization, options.storeType)
+  }
+
   const organizationsResult = await fetchOrganizationsWithAccessInfo(token)
 
   if (!organizationsResult.currentUserResolved) {
     return {
       stores: [],
-      source: 'organization',
       notice: "Couldn't resolve a Shopify account for the current CLI session.",
     }
   }
 
   if (organizationsResult.organizations.length === 0) {
-    return {stores: [], source: 'organization'}
+    return {stores: []}
   }
 
   if (!options.organizationId && organizationsResult.organizations.length > 1 && !isTTY()) {
@@ -40,18 +48,21 @@ export async function listStores(options: ListStoresOptions = {}): Promise<ListS
     options.organizationId,
   )
 
-  const result = await listBusinessPlatformStores({
-    token,
-    organization: selectedOrganization,
-    storeType: options.storeType,
-  })
+  return listStoresInOrganization(token, selectedOrganization, options.storeType)
+}
+
+async function listStoresInOrganization(
+  token: string,
+  organization: Organization,
+  storeType: StoreTypeFilter | undefined,
+): Promise<StoreListResult> {
+  const result = await listBusinessPlatformStores({token, organization, storeType})
   const {stores, truncated} = limitEntries(result.entries, result.hasMore)
 
   return {
     stores,
-    source: 'organization',
-    organization: storeListOrganization(selectedOrganization),
-    ...(options.storeType ? {storeType: options.storeType} : {}),
+    organization: storeListOrganization(organization),
+    ...(storeType ? {storeType} : {}),
     ...(truncated ? {truncated: true} : {}),
   }
 }

@@ -1,7 +1,7 @@
 const plugin = {
   meta: {
     name: '@shopify/eslint-plugin-cli',
-    version: '3.47.2',
+    version: '4.0.0',
   },
   rules: {
     'command-flags-with-env': require('./rules/command-flags-with-env'),

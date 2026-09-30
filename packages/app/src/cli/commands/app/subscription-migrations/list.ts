@@ -9,7 +9,6 @@ import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-l
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export default class List extends AppLinkedCommand {
-  static hidden = true
   static summary = 'Lists app subscriptions eligible for migration.'
 
   static descriptionWithMarkdown = `Lists every app subscription eligible for migration.

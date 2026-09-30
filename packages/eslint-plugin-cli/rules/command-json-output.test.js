@@ -14,6 +14,12 @@ const ruleTester = new RuleTester({
 ruleTester.run('command-json-output', rule, {
   valid: [
     {
+      name: 'hidden command without JSON support',
+      filename: '/repo/packages/app/src/cli/commands/app/widgets/hidden.ts',
+      options: [{exceptions: []}],
+      code: 'export default class Hidden extends Command { static hidden = true }',
+    },
+    {
       name: 'finite query command',
       filename: '/repo/packages/app/src/cli/commands/app/widgets/list.ts',
       code: `
@@ -48,12 +54,69 @@ ruleTester.run('command-json-output', rule, {
       code: 'export default class Build extends Command {}',
     },
     {
+      name: 'omitted exceptions preserve the default baseline',
+      filename: '/repo/packages/app/src/cli/commands/app/build.ts',
+      options: [{}],
+      code: 'export default class Build extends Command {}',
+    },
+    {
+      name: 'custom exception in another repository',
+      filename: '/hydrogen/packages/cli/src/commands/hydrogen/dev.ts',
+      options: [{exceptions: ['packages/cli/src/commands/hydrogen/dev.ts']}],
+      code: 'export default class Dev extends Command {}',
+    },
+    {
+      name: 'custom exception matches a Windows filename',
+      filename: String.raw`C:\hydrogen\packages\cli\src\commands\hydrogen\dev.ts`,
+      options: [{exceptions: ['packages/cli/src/commands/hydrogen/dev.ts']}],
+      code: 'export default class Dev extends Command {}',
+    },
+    {
       name: 'non-command module',
       filename: '/repo/packages/app/src/cli/services/widgets.ts',
       code: 'export default class WidgetService {}',
     },
   ],
   invalid: [
+    {
+      name: 'explicitly visible command without JSON support',
+      filename: '/repo/packages/app/src/cli/commands/app/widgets/visible.ts',
+      code: 'export default class Visible extends Command { static hidden = false }',
+      errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
+    },
+    {
+      name: 'instance hidden property does not hide a command',
+      filename: '/repo/packages/app/src/cli/commands/app/widgets/visible.ts',
+      code: 'export default class Visible extends Command { hidden = true }',
+      errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
+    },
+    {
+      name: 'custom exceptions do not exempt new subcommands',
+      filename: '/hydrogen/packages/cli/src/commands/hydrogen/dev/status.ts',
+      options: [{exceptions: ['packages/cli/src/commands/hydrogen/dev.ts']}],
+      code: 'export default class DevStatus extends Command {}',
+      errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
+    },
+    {
+      name: 'custom exceptions replace the default baseline',
+      filename: '/repo/packages/app/src/cli/commands/app/build.ts',
+      options: [{exceptions: ['packages/cli/src/commands/hydrogen/dev.ts']}],
+      code: 'export default class Build extends Command {}',
+      errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
+    },
+    {
+      name: 'empty exceptions enforce the rule for legacy commands',
+      filename: '/repo/packages/app/src/cli/commands/app/build.ts',
+      options: [{exceptions: []}],
+      code: 'export default class Build extends Command {}',
+      errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
+    },
+    {
+      name: 'custom exceptions do not leak into other configurations',
+      filename: '/hydrogen/packages/cli/src/commands/hydrogen/dev.ts',
+      code: 'export default class Dev extends Command {}',
+      errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
+    },
     {
       name: 'streaming marker without an allow-list entry',
       filename: '/repo/packages/app/src/cli/commands/app/widgets/watch.ts',

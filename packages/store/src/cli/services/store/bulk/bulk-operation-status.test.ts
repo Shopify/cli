@@ -1,5 +1,5 @@
 import {getBulkOperationStatus, listBulkOperations} from './bulk-operation-status.js'
-import {prepareBulkAdminContext} from './bulk-admin-context.js'
+import {renderBulkOperationStatusResult} from './status-result.js'
 import {
   fetchBulkOperationById,
   fetchRecentBulkOperations,
@@ -9,7 +9,6 @@ import {
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
-vi.mock('./bulk-admin-context.js')
 vi.mock('@shopify/cli-kit/node/api/bulk-operations', async () => {
   const actual = await vi.importActual('@shopify/cli-kit/node/api/bulk-operations')
   return {
@@ -25,7 +24,6 @@ const operationId = 'gid://shopify/BulkOperation/123'
 const adminSession = {token: 'token', storeFqdn: store}
 
 beforeEach(() => {
-  vi.mocked(prepareBulkAdminContext).mockResolvedValue(adminSession)
   vi.mocked(resolveApiVersion).mockResolvedValue(BULK_OPERATIONS_MIN_API_VERSION)
 })
 
@@ -45,12 +43,15 @@ describe('getBulkOperationStatus', () => {
       completedAt: new Date(Date.now() - 60000).toISOString(),
       url: 'https://example.com/results.jsonl',
       partialDataUrl: null,
-    } as never)
+    })
 
     const output = mockAndCaptureOutput()
-    await getBulkOperationStatus({store, operationId})
+    const result = await getBulkOperationStatus({adminSession, operationId})
+    expect(result).toMatchObject({store, apiVersion: BULK_OPERATIONS_MIN_API_VERSION})
+    expect(fetchBulkOperationById).toHaveBeenCalledOnce()
+    expect(resolveApiVersion).toHaveBeenCalledOnce()
+    renderBulkOperationStatusResult(result, 'text')
 
-    expect(prepareBulkAdminContext).toHaveBeenCalledWith(store)
     expect(fetchBulkOperationById).toHaveBeenCalledWith({
       adminSession,
       operationId,
@@ -64,7 +65,9 @@ describe('getBulkOperationStatus', () => {
     vi.mocked(fetchBulkOperationById).mockResolvedValue(null)
 
     const output = mockAndCaptureOutput()
-    await getBulkOperationStatus({store, operationId})
+    const result = await getBulkOperationStatus({adminSession, operationId})
+    expect(result).toEqual({store, apiVersion: BULK_OPERATIONS_MIN_API_VERSION, operationId, operation: null})
+    renderBulkOperationStatusResult(result, 'text')
 
     expect(output.error()).toContain('Bulk operation not found.')
   })
@@ -75,7 +78,6 @@ describe('listBulkOperations', () => {
     vi.mocked(fetchRecentBulkOperations).mockResolvedValue([
       {
         id: 'gid://shopify/BulkOperation/1',
-        type: 'QUERY',
         status: 'COMPLETED',
         errorCode: null,
         objectCount: 123500,
@@ -84,10 +86,14 @@ describe('listBulkOperations', () => {
         url: 'https://example.com/results.jsonl',
         partialDataUrl: null,
       },
-    ] as never)
+    ])
 
     const output = mockAndCaptureOutput()
-    await listBulkOperations({store})
+    const result = await listBulkOperations({adminSession})
+    expect(result).toMatchObject({store, apiVersion: BULK_OPERATIONS_MIN_API_VERSION})
+    expect(fetchRecentBulkOperations).toHaveBeenCalledOnce()
+    expect(resolveApiVersion).toHaveBeenCalledOnce()
+    renderBulkOperationStatusResult(result, 'text')
 
     // The count is formatted as 123.5K (it may wrap across lines in the rendered table).
     expect(output.output()).toContain('123.5')
@@ -98,7 +104,9 @@ describe('listBulkOperations', () => {
     vi.mocked(fetchRecentBulkOperations).mockResolvedValue([])
 
     const output = mockAndCaptureOutput()
-    await listBulkOperations({store})
+    const result = await listBulkOperations({adminSession})
+    expect(result).toEqual({store, apiVersion: BULK_OPERATIONS_MIN_API_VERSION, operations: []})
+    renderBulkOperationStatusResult(result, 'text')
 
     expect(output.info()).toContain('No bulk operations found in the last 7 days.')
   })

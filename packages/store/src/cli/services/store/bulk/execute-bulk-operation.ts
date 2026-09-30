@@ -1,31 +1,21 @@
-import {formatOperationInfo, validateMutationsAllowed} from './common.js'
+import {validateMutationsAllowed} from './common.js'
 import {prepareBulkAdminContext} from './bulk-admin-context.js'
+import {executeBulkOperationJsonOutputSchema, type ExecuteBulkOperationResult} from './types.js'
 import {
   runBulkOperationQuery,
   runBulkOperationMutation,
   watchBulkOperation,
   shortBulkOperationPoll,
-  formatBulkOperationStatus,
   downloadBulkOperationResults,
-  resultsContainUserErrors,
   resolveApiVersion,
   isMutation,
-  extractBulkOperationId,
   BULK_OPERATIONS_MIN_API_VERSION,
-  type BulkOperation,
 } from '@shopify/cli-kit/node/api/bulk-operations'
-import {
-  renderSuccess,
-  renderInfo,
-  renderError,
-  renderWarning,
-  renderSingleTask,
-  TokenItem,
-} from '@shopify/cli-kit/node/ui'
-import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {renderSingleTask} from '@shopify/cli-kit/node/ui'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {readFile, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
+import {readFile, fileExists} from '@shopify/cli-kit/node/fs'
 
 interface ExecuteBulkOperationInput {
   store: string
@@ -33,7 +23,6 @@ interface ExecuteBulkOperationInput {
   variables?: string[]
   variableFile?: string
   watch?: boolean
-  outputFile?: string
   version?: string
   allowMutations?: boolean
 }
@@ -55,13 +44,12 @@ async function parseVariablesToJsonl(variables?: string[], variableFile?: string
   }
 }
 
-export async function executeBulkOperation(input: ExecuteBulkOperationInput): Promise<void> {
+export async function prepareBulkOperation(input: ExecuteBulkOperationInput) {
   const {
     store,
     query,
     variables,
     variableFile,
-    outputFile,
     watch = false,
     version: userSpecifiedVersion,
     allowMutations = false,
@@ -87,138 +75,48 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
 
   validateBulkOperationVariables(query, variablesJsonl)
 
-  renderInfo({
-    headline: 'Starting bulk operation.',
-    body: [
-      {
-        list: {
-          items: formatOperationInfo({storeFqdn: adminSession.storeFqdn, version}),
-        },
-      },
-    ],
-  })
+  return {adminSession, version, query, variablesJsonl, watch}
+}
 
-  const bulkOperationResponse = isMutation(query)
+export async function executeBulkOperation(
+  input: Awaited<ReturnType<typeof prepareBulkOperation>>,
+): Promise<ExecuteBulkOperationResult> {
+  const {adminSession, version, query, variablesJsonl, watch} = input
+  const response = isMutation(query)
     ? await runBulkOperationMutation({adminSession, query, variablesJsonl, version})
     : await runBulkOperationQuery({adminSession, query, version})
 
-  if (bulkOperationResponse?.userErrors?.length) {
-    renderError({
-      headline: 'Error creating bulk operation.',
-      body: {
-        list: {
-          items: bulkOperationResponse.userErrors.map((error) =>
-            error.field ? `${error.field.join('.')}: ${error.message}` : error.message,
-          ),
-        },
-      },
+  if (response?.userErrors?.length || !response?.bulkOperation) {
+    return executeBulkOperationJsonOutputSchema.validate({
+      store: adminSession.storeFqdn,
+      apiVersion: version,
+      operation: response?.bulkOperation ?? null,
+      userErrors: response?.userErrors ?? [],
+      watchAborted: false,
     })
-    return
   }
 
-  const createdOperation = bulkOperationResponse?.bulkOperation
-  if (createdOperation) {
-    if (watch) {
-      const abortController = new AbortController()
-      const operation = await watchBulkOperation(adminSession, createdOperation.id, abortController.signal, () =>
+  const abortController = new AbortController()
+  const operation = watch
+    ? await watchBulkOperation(adminSession, response.bulkOperation.id, abortController.signal, () =>
         abortController.abort(),
       )
+    : await shortBulkOperationPoll(adminSession, response.bulkOperation.id)
 
-      if (abortController.signal.aborted) {
-        renderInfo({
-          headline: `Bulk operation ${operation.id} is still running in the background.`,
-          body: statusCommandHelpMessage(operation.id),
-        })
-      } else {
-        await renderBulkOperationResult(operation, outputFile)
-      }
-    } else {
-      const operation = await shortBulkOperationPoll(adminSession, createdOperation.id)
-      const errorStatuses = ['FAILED', 'CANCELED', 'EXPIRED']
-      if (errorStatuses.includes(operation.status)) {
-        await renderBulkOperationResult(operation, outputFile)
-      } else {
-        renderSuccess({
-          headline: 'Bulk operation is running.',
-          body: statusCommandHelpMessage(operation.id),
-          customSections: [{body: [{list: {items: [outputContent`ID: ${outputToken.cyan(operation.id)}`.value]}}]}],
-        })
-      }
-    }
-  } else {
-    renderWarning({
-      headline: 'Bulk operation not created successfully.',
-      body: 'This is an unexpected error. Please try again later.',
-    })
-    throw new BugError('Bulk operation response returned null with no error message.')
-  }
-}
+  // Only --watch downloads completed results; a short poll keeps the existing background behavior.
+  const results =
+    watch && !abortController.signal.aborted && operation.status === 'COMPLETED' && operation.url
+      ? await downloadBulkOperationResults(operation.url)
+      : undefined
 
-async function renderBulkOperationResult(operation: BulkOperation, outputFile?: string): Promise<void> {
-  const headline = formatBulkOperationStatus(operation).value
-  const items = [
-    outputContent`ID: ${outputToken.cyan(operation.id)}`.value,
-    outputContent`Status: ${outputToken.yellow(operation.status)}`.value,
-    outputContent`Created at: ${outputToken.gray(String(operation.createdAt))}`.value,
-    ...(operation.completedAt
-      ? [outputContent`Completed at: ${outputToken.gray(String(operation.completedAt))}`.value]
-      : []),
-  ]
-
-  const customSections = [{body: [{list: {items}}]}]
-
-  switch (operation.status) {
-    case 'CREATED':
-      renderSuccess({
-        headline: 'Bulk operation started.',
-        body: statusCommandHelpMessage(operation.id),
-        customSections,
-      })
-      break
-    case 'RUNNING':
-      renderSuccess({
-        headline: 'Bulk operation is running.',
-        body: statusCommandHelpMessage(operation.id),
-        customSections,
-      })
-      break
-    case 'COMPLETED':
-      if (operation.url) {
-        const results = await downloadBulkOperationResults(operation.url)
-        const hasUserErrors = resultsContainUserErrors(results)
-
-        if (outputFile) {
-          await writeFile(outputFile, results)
-        } else {
-          outputResult(results)
-        }
-
-        if (hasUserErrors) {
-          renderWarning({
-            headline: 'Bulk operation completed with errors.',
-            body: outputFile
-              ? `Results written to ${outputFile}. Check file for error details.`
-              : 'Check results for error details.',
-            customSections,
-          })
-        } else {
-          renderSuccess({
-            headline,
-            body: outputFile ? [`Results written to ${outputFile}`] : undefined,
-            customSections,
-          })
-        }
-      } else {
-        renderSuccess({headline, customSections})
-      }
-      break
-    case 'CANCELED':
-    case 'CANCELING':
-    case 'EXPIRED':
-    case 'FAILED':
-      renderError({headline, customSections})
-      break
-  }
+  return executeBulkOperationJsonOutputSchema.validate({
+    store: adminSession.storeFqdn,
+    apiVersion: version,
+    operation,
+    userErrors: [],
+    watchAborted: abortController.signal.aborted,
+    results,
+  })
 }
 
 function validateBulkOperationVariables(graphqlOperation: string, variablesJsonl?: string): void {
@@ -237,11 +135,4 @@ function validateBulkOperationVariables(graphqlOperation: string, variablesJsonl
       )} flags can only be used with mutations, not queries.`,
     )
   }
-}
-
-function statusCommandHelpMessage(operationId: string): TokenItem {
-  return [
-    'Monitor its progress with:\n',
-    {command: `shopify store bulk status --id=${extractBulkOperationId(operationId)}`},
-  ]
 }

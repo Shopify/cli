@@ -1,3 +1,4 @@
+import {resolveAppRelativeUrl} from './validation/app_relative_urls.js'
 import {BaseSchemaWithHandle} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {
@@ -8,8 +9,11 @@ import {
 } from '../../../services/flow/validation.js'
 import {serializeFields} from '../../../services/flow/serialize-fields.js'
 import {FLOW_ACTION_URL_FIELDS} from '../../../services/flow/types.js'
-import {loadSchemaFromPath, resolveFlowActionUrl} from '../../../services/flow/utils.js'
+import {loadSchemaFromPath} from '../../../services/flow/utils.js'
 import {zod} from '@shopify/cli-kit/node/schema'
+
+/** Prefixes the error messages raised while resolving this extension's URL fields. */
+const FLOW_ACTION_LABEL = 'Flow action'
 
 const FlowActionExtensionSchema = BaseSchemaWithHandle.extend({
   type: zod.literal('flow_action'),
@@ -58,7 +62,7 @@ const flowActionSpecification = createExtensionSpecification({
     for (const key of FLOW_ACTION_URL_FIELDS) {
       const value = config[key]
       if (typeof value === 'string' && value.startsWith('/')) {
-        config[key] = resolveFlowActionUrl(key, value, urls.applicationUrl)
+        config[key] = resolveAppRelativeUrl(FLOW_ACTION_LABEL, key, value, urls.applicationUrl)
       }
     }
   },
@@ -69,16 +73,16 @@ const flowActionSpecification = createExtensionSpecification({
     return {
       title: config.name,
       description: config.description,
-      url: resolveFlowActionUrl('runtime_url', config.runtime_url, appUrl),
+      url: resolveAppRelativeUrl(FLOW_ACTION_LABEL, 'runtime_url', config.runtime_url, appUrl),
       fields: serializeFields('flow_action', config.settings?.fields),
       validation_url: config.validation_url
-        ? resolveFlowActionUrl('validation_url', config.validation_url, appUrl)
+        ? resolveAppRelativeUrl(FLOW_ACTION_LABEL, 'validation_url', config.validation_url, appUrl)
         : undefined,
       custom_configuration_page_url: config.config_page_url
-        ? resolveFlowActionUrl('config_page_url', config.config_page_url, appUrl)
+        ? resolveAppRelativeUrl(FLOW_ACTION_LABEL, 'config_page_url', config.config_page_url, appUrl)
         : undefined,
       custom_configuration_page_preview_url: config.config_page_preview_url
-        ? resolveFlowActionUrl('config_page_preview_url', config.config_page_preview_url, appUrl)
+        ? resolveAppRelativeUrl(FLOW_ACTION_LABEL, 'config_page_preview_url', config.config_page_preview_url, appUrl)
         : undefined,
       schema_patch: await loadSchemaFromPath(extensionPath, config.schema),
       return_type_ref: config.return_type_ref,

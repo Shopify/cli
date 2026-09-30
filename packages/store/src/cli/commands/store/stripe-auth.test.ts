@@ -1,4 +1,5 @@
 import StoreStripeAuth, {readSignupJwtFromStdin} from './stripe-auth.js'
+import {storeAuthJsonOutputSchema} from '../../services/store/auth/types.js'
 import {authenticateStoreWithApp} from '../../services/store/auth/index.js'
 import {createStoreAuthPresenter} from '../../services/store/auth/result.js'
 import {isStdinPiped} from '@shopify/cli-kit/node/system'
@@ -60,6 +61,7 @@ describe('store stripe-auth command', () => {
   })
 
   test('defines the expected flags', () => {
+    expect(StoreStripeAuth.jsonOutputSchema).toBe(storeAuthJsonOutputSchema)
     expect(StoreStripeAuth.flags.store).toBeDefined()
     expect(StoreStripeAuth.flags.scopes).toBeDefined()
     expect(StoreStripeAuth.flags.signup).toBeDefined()

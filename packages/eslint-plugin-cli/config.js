@@ -27,7 +27,7 @@ const rules = {
 const cliPlugin = {
   meta: {
     name: '@shopify/eslint-plugin-cli',
-    version: '3.47.2',
+    version: '4.0.0',
   },
   rules,
 }

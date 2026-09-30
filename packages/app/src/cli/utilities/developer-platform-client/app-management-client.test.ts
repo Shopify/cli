@@ -41,12 +41,12 @@ import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
-import {MinimalAppIdentifiers} from '../../models/organization.js'
+import {MinimalAppIdentifiers, OrganizationSource} from '../../models/organization.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
 import {RequestSourceScanUploadUrl} from '../../api/graphql/app-management/generated/request-source-scan-upload-url.js'
 import {CreateSourceScan} from '../../api/graphql/app-management/generated/create-source-scan.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
-import {fetchOrganizations} from '@shopify/organizations'
+import {fetchOrganizationById, fetchOrganizations} from '@shopify/organizations'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -56,6 +56,7 @@ import {
   businessPlatformRequestDoc,
 } from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
+import {appDevRequestDoc} from '@shopify/cli-kit/node/api/app-dev'
 import {BugError} from '@shopify/cli-kit/node/error'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {webhooksRequestDoc} from '@shopify/cli-kit/node/api/webhooks'
@@ -63,6 +64,7 @@ import {webhooksRequestDoc} from '@shopify/cli-kit/node/api/webhooks'
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/api/business-platform')
 vi.mock('@shopify/cli-kit/node/api/app-management')
+vi.mock('@shopify/cli-kit/node/api/app-dev')
 vi.mock('@shopify/organizations')
 vi.mock('@shopify/cli-kit/node/api/webhooks')
 
@@ -1016,6 +1018,64 @@ describe('sendSampleWebhook', () => {
     expect(result.sendSampleWebhook.headers).toEqual('{}')
     expect(result.sendSampleWebhook.success).toEqual(false)
     expect(result.sendSampleWebhook.userErrors).toEqual([{message: 'Invalid api_version', fields: []}])
+  })
+})
+
+describe('dev session requests', () => {
+  test('sends the enabled unsafe validation value to create and update requests', async () => {
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+
+    await client.devSessionCreate({
+      appId: 'gid://shopify/App/123',
+      assetsUrl: 'https://assets.test',
+      shopFqdn: 'test.myshopify.com',
+      websocketUrl: 'wss://test.dev/extensions',
+      unsafeValidation: true,
+    })
+    await client.devSessionUpdate({
+      appId: 'gid://shopify/App/123',
+      assetsUrl: 'https://assets.test',
+      shopFqdn: 'test.myshopify.com',
+      manifest: {name: 'App', handle: 'app', modules: []},
+      inheritedModuleUids: [],
+      unsafeValidation: true,
+    })
+
+    expect(appDevRequestDoc).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({variables: expect.objectContaining({unsafeValidation: true})}),
+    )
+    expect(appDevRequestDoc).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({variables: expect.objectContaining({unsafeValidation: true})}),
+    )
+  })
+
+  test('sends false when unsafe validation is omitted', async () => {
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+
+    await client.devSessionCreate({
+      appId: 'gid://shopify/App/123',
+      assetsUrl: 'https://assets.test',
+      shopFqdn: 'test.myshopify.com',
+    })
+    await client.devSessionUpdate({
+      appId: 'gid://shopify/App/123',
+      shopFqdn: 'test.myshopify.com',
+      manifest: {name: 'App', handle: 'app', modules: []},
+      inheritedModuleUids: [],
+    })
+
+    expect(appDevRequestDoc).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({variables: expect.objectContaining({unsafeValidation: false})}),
+    )
+    expect(appDevRequestDoc).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({variables: expect.objectContaining({unsafeValidation: false})}),
+    )
   })
 })
 
@@ -2386,6 +2446,39 @@ describe('uidStrategyFromTypename', () => {
 
   test('returns uuid as default for unknown typename', () => {
     expect(uidStrategyFromTypename('UnknownStrategy')).toBe('uuid')
+  })
+})
+
+describe('orgFromId', () => {
+  test('resolves the organization through the shared lookup and stamps the source', async () => {
+    vi.mocked(fetchOrganizationById).mockResolvedValueOnce({id: '123', businessName: 'Org 123'})
+
+    const client = AppManagementClient.getInstance()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const unsafeRefreshToken = vi.spyOn(client, 'unsafeRefreshToken').mockResolvedValue('refreshed-token')
+    client.session = vi.fn().mockResolvedValue({
+      token: 'refreshed-token',
+      businessPlatformToken: 'refreshed-business-platform-token',
+    }) as unknown as typeof client.session
+
+    const result = await client.orgFromId('123')
+
+    expect(result).toEqual({id: '123', businessName: 'Org 123', source: OrganizationSource.BusinessPlatform})
+    // The client's own handler refreshes its cached session, not just the stored token.
+    const [organizationId, token, unauthorizedHandler] = vi.mocked(fetchOrganizationById).mock.calls[0]!
+    expect(organizationId).toBe('123')
+    expect(token).toBe('business-platform-token')
+    await expect(unauthorizedHandler!.handler()).resolves.toEqual({token: 'refreshed-business-platform-token'})
+    expect(unsafeRefreshToken).toHaveBeenCalledOnce()
+  })
+
+  test('returns undefined when the lookup finds no organization', async () => {
+    vi.mocked(fetchOrganizationById).mockResolvedValueOnce(undefined)
+
+    const client = AppManagementClient.getInstance()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+
+    await expect(client.orgFromId('9999999')).resolves.toBeUndefined()
   })
 })
 

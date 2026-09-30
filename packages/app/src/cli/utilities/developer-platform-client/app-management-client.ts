@@ -111,7 +111,6 @@ import {AppInstallCount} from '../../api/graphql/app-management/generated/app-in
 import {CreateApp, CreateAppMutationVariables} from '../../api/graphql/app-management/generated/create-app.js'
 import {FetchSpecifications} from '../../api/graphql/app-management/generated/specifications.js'
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
-import {FindOrganizations} from '../../api/graphql/business-platform-destinations/generated/find-organizations.js'
 import {UserInfo} from '../../api/graphql/business-platform-destinations/generated/user-info.js'
 import {AvailableTopics} from '../../api/graphql/webhooks/generated/available-topics.js'
 import {CliTesting} from '../../api/graphql/webhooks/generated/cli-testing.js'
@@ -134,7 +133,7 @@ import {
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {WebhookSubscriptionSpecIdentifier} from '../../models/extensions/specifications/app_config_webhook_subscription.js'
-import {fetchOrganizations} from '@shopify/organizations'
+import {fetchOrganizationById, fetchOrganizations} from '@shopify/organizations'
 import {getAppAutomationToken} from '@shopify/cli-kit/node/environment'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform, Session} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -377,22 +376,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async orgFromId(orgId: string): Promise<Organization | undefined> {
-    const base64Id = encodedGidFromOrganizationIdForBP(orgId)
-    const variables = {organizationId: base64Id}
-    const organizationResult = await this.businessPlatformRequest({
-      query: FindOrganizations,
-      variables,
-      cacheOptions: {cacheTTL: {hours: 6}},
-    })
-    const org = organizationResult.currentUserAccount?.organization
+    const org = await fetchOrganizationById(
+      orgId,
+      await this.businessPlatformToken(),
+      this.createUnauthorizedHandler('businessPlatform'),
+    )
     if (!org) {
       return
     }
-    return {
-      id: orgId,
-      businessName: org.name,
-      source: this.organizationSource,
-    }
+    return {...org, source: this.organizationSource}
   }
 
   async orgAndApps(
@@ -1038,12 +1030,18 @@ export class AppManagementClient implements DeveloperPlatformClient {
     assetsUrl,
     shopFqdn,
     websocketUrl,
+    unsafeValidation,
   }: DevSessionCreateOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
     return this.appDevRequest({
       query: DevSessionCreate,
       shopFqdn,
-      variables: {appId: appIdNumber, assetsUrl: assetsUrl ?? '', websocketUrl},
+      variables: {
+        appId: appIdNumber,
+        assetsUrl: assetsUrl ?? '',
+        websocketUrl,
+        unsafeValidation: unsafeValidation ?? false,
+      },
       requestOptions: {requestMode: 'slow-request'},
     })
   }
@@ -1054,6 +1052,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     shopFqdn,
     manifest,
     inheritedModuleUids,
+    unsafeValidation,
   }: DevSessionUpdateOptions): Promise<DevSessionUpdateMutation> {
     const appIdNumber = String(numberFromGid(appId))
     const variables: DevSessionUpdateMutationVariables = {
@@ -1061,6 +1060,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       assetsUrl,
       manifest: JSON.stringify(manifest),
       inheritedModuleUids,
+      unsafeValidation: unsafeValidation ?? false,
     }
     return this.appDevRequest({query: DevSessionUpdate, shopFqdn, variables})
   }

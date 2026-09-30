@@ -1,8 +1,9 @@
 import {LocalStorage} from './local-storage.js'
-import {inTemporaryDirectory, readFile, writeFile} from './fs.js'
-import {AbortError} from './error.js'
+import {chmod, inTemporaryDirectory, mkdir, readFile, writeFile} from './fs.js'
+import {AbortError, BugError} from './error.js'
 import {joinPath} from './path.js'
 import * as fs from './fs.js'
+import Config from 'conf'
 import {describe, expect, test, vi} from 'vitest'
 
 interface TestSchema {
@@ -96,6 +97,112 @@ describe('storage', () => {
 })
 
 describe('error handling', () => {
+  test('throws AbortError for a structured EPERM during initialization', async () => {
+    await inTemporaryDirectory((cwd) => {
+      // Given
+      const permissionError = Object.assign(new Error('Permission denied'), {
+        code: 'EPERM',
+        syscall: 'mkdir',
+        path: joinPath(cwd, 'shopify-cli-test-nodejs'),
+      })
+      const storeSpy = vi.spyOn(Config.prototype, 'store', 'get').mockImplementationOnce(() => {
+        throw permissionError
+      })
+
+      try {
+        // When
+        const storage = new LocalStorage<TestSchema>({cwd})
+        expect(storage).toBeDefined()
+        expect.fail('Should have thrown')
+      } catch (error) {
+        // Then
+        if (!(error instanceof AbortError)) throw error
+        expect(error.message).toContain('Failed to access local storage (initialize)')
+      } finally {
+        storeSpy.mockRestore()
+      }
+    })
+  })
+
+  test.skipIf(process.platform === 'win32')(
+    'throws AbortError when the config directory cannot be created',
+    async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        // Given
+        const readOnlyDirectory = joinPath(cwd, 'read-only')
+        const configDirectory = joinPath(readOnlyDirectory, 'shopify-cli-test-nodejs')
+        const configPath = joinPath(configDirectory, 'config.json')
+        await mkdir(readOnlyDirectory)
+        await chmod(readOnlyDirectory, 0o555)
+
+        try {
+          // When
+          const storage = new LocalStorage<TestSchema>({cwd: configDirectory})
+          expect(storage).toBeDefined()
+          expect.fail('Should have thrown')
+        } catch (error) {
+          // Then
+          expect(error).toBeInstanceOf(AbortError)
+          if (!(error instanceof AbortError)) throw error
+
+          expect(error.message).toContain('Failed to access local storage (initialize)')
+          const tryMessage = JSON.stringify(error.tryMessage)
+          expect(error.tryMessage).toContainEqual({filePath: readOnlyDirectory})
+          expect(tryMessage).not.toContain(configPath)
+          expect(error.tryMessage).not.toContainEqual({command: `rm -rf ${configDirectory}`})
+        } finally {
+          await chmod(readOnlyDirectory, 0o755)
+        }
+      })
+    },
+  )
+
+  test.skipIf(process.platform === 'win32')('throws AbortError when the config file cannot be read', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const configPath = joinPath(cwd, 'config.json')
+      await writeFile(configPath, '{"testValue":"test"}')
+      await chmod(configPath, 0o200)
+
+      try {
+        // When
+        const storage = new LocalStorage<TestSchema>({cwd})
+        expect(storage).toBeDefined()
+        expect.fail('Should have thrown')
+      } catch (error) {
+        // Then
+        expect(error).toBeInstanceOf(AbortError)
+        if (!(error instanceof AbortError)) throw error
+
+        expect(error.message).toContain('Failed to access local storage (initialize)')
+        expect(error.tryMessage).toContainEqual({filePath: configPath})
+        expect(error.tryMessage).toContainEqual({filePath: cwd})
+        expect(JSON.stringify(error.tryMessage)).not.toContain('rm -rf')
+      } finally {
+        await chmod(configPath, 0o600)
+      }
+    })
+  })
+
+  test('preserves initialization errors that are unrelated to permissions', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const filePath = joinPath(cwd, 'file')
+      await writeFile(filePath, 'content')
+
+      try {
+        // When
+        const storage = new LocalStorage<TestSchema>({cwd: joinPath(filePath, 'config')})
+        expect(storage).toBeDefined()
+        expect.fail('Should have thrown')
+      } catch (error) {
+        // Then
+        if ((error as NodeJS.ErrnoException).code !== 'ENOTDIR') throw error
+        expect(error).not.toBeInstanceOf(BugError)
+      }
+    })
+  })
+
   test('throws AbortError when file lacks write permissions', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given

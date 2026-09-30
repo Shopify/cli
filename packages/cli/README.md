@@ -29,6 +29,11 @@
 * [`shopify app logs`](#shopify-app-logs)
 * [`shopify app logs sources`](#shopify-app-logs-sources)
 * [`shopify app release --version <version>`](#shopify-app-release---version-version)
+* [`shopify app subscription-migrations cancel`](#shopify-app-subscription-migrations-cancel)
+* [`shopify app subscription-migrations list`](#shopify-app-subscription-migrations-list)
+* [`shopify app subscription-migrations schedule`](#shopify-app-subscription-migrations-schedule)
+* [`shopify app subscription-migrations status`](#shopify-app-subscription-migrations-status)
+* [`shopify app subscription-migrations unschedule`](#shopify-app-subscription-migrations-unschedule)
 * [`shopify app versions list`](#shopify-app-versions-list)
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
 * [`shopify auth login`](#shopify-auth-login)
@@ -695,7 +700,7 @@ USAGE
     [--install-mkcert --use-localhost] [--json-schema] [--localhost-port <value>] [--no-color] [--no-update] [--notify
     <value>] [--path <value>] [--reset | ] [--skip-dependencies-installation] [-s <value>] [--store-password <value>]
     [--subscription-product-url <value>] [-t <value>] [--theme-app-extension-port <value>] [--tunnel-url <value> | ]
-    [--verbose]
+    [--unsafe-validation] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -774,6 +779,10 @@ FLAGS
   --tunnel-url=<value>
       Use a custom tunnel, it must be running before executing dev. Format: "https://my-tunnel-url:port".
       [env: SHOPIFY_FLAG_TUNNEL_URL]
+
+  --unsafe-validation
+      Allow app dev to continue with warnings for eligible app version validation failures.
+      [env: SHOPIFY_FLAG_UNSAFE_VALIDATION]
 
   --use-localhost
       Service entry point will listen to localhost. A tunnel won't be used. Will work for testing many app features, but
@@ -1676,6 +1685,887 @@ DESCRIPTION
   - The "structure" (https://shopify.dev/docs/apps/tools/cli/structure) of your app project.
   - The "access scopes" (https://shopify.dev/docs/api/usage) your app has requested.
   - System information, including the package manager and version of Shopify CLI used in the project.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppInfoResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/AppInfoWebEnvironment"
+      },
+      {
+        "$ref": "#/definitions/AppInfo"
+      }
+    ],
+    "title": "AppInfoResult",
+    "definitions": {
+      "AppInfo": {
+        "type": "object",
+        "properties": {
+          "remoteApp": {
+            "$ref": "#/definitions/AppInfoRemoteApp"
+          },
+          "account": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "UserAccount"
+                  },
+                  "email": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "email"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "ServiceAccount"
+                  },
+                  "orgName": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "orgName"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "UnknownAccount"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "project": {
+            "$ref": "#/definitions/AppInfoProject"
+          },
+          "system": {
+            "$ref": "#/definitions/AppInfoSystem"
+          },
+          "devStoreUrl": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "idEnvironmentVariableName": {
+            "type": "string",
+            "const": "SHOPIFY_API_KEY"
+          },
+          "directory": {
+            "type": "string"
+          },
+          "configPath": {
+            "type": "string"
+          },
+          "configuration": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "webs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppInfoWeb"
+            }
+          },
+          "dotenv": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "variables": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "path",
+              "variables"
+            ],
+            "additionalProperties": true
+          },
+          "errors": {
+            "type": "object",
+            "properties": {
+              "errors": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/AppInfoConfigurationError"
+                }
+              }
+            },
+            "required": [
+              "errors"
+            ],
+            "additionalProperties": true
+          },
+          "specifications": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppInfoSpecification"
+            }
+          },
+          "remoteFlags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "realExtensions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppInfoExtension"
+            }
+          },
+          "devApplicationURLs": {
+            "$ref": "#/definitions/AppInfo/properties/configuration"
+          },
+          "_hiddenConfig": {
+            "$ref": "#/definitions/AppInfo/properties/configuration"
+          },
+          "packageManager": {
+            "type": "string"
+          },
+          "nodeDependencies": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "usesWorkspaces": {
+            "type": "boolean"
+          },
+          "organization": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "businessName": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "businessName",
+              "source"
+            ],
+            "additionalProperties": false
+          },
+          "allExtensions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppInfoExtension"
+            }
+          }
+        },
+        "required": [
+          "remoteApp",
+          "account",
+          "project",
+          "system",
+          "name",
+          "idEnvironmentVariableName",
+          "directory",
+          "configPath",
+          "configuration",
+          "webs",
+          "errors",
+          "specifications",
+          "remoteFlags",
+          "realExtensions",
+          "_hiddenConfig",
+          "packageManager",
+          "nodeDependencies",
+          "usesWorkspaces",
+          "organization",
+          "allExtensions"
+        ],
+        "additionalProperties": true
+      },
+      "AppInfoRemoteApp": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "apiKey": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "appType": {
+            "type": "string"
+          },
+          "newApp": {
+            "type": "boolean"
+          },
+          "grantedScopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "developmentStorePreviewEnabled": {
+            "type": "boolean"
+          },
+          "applicationUrl": {
+            "type": "string"
+          },
+          "redirectUrlWhitelist": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "requestedAccessScopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "webhookApiVersion": {
+            "type": "string"
+          },
+          "embedded": {
+            "type": "boolean"
+          },
+          "posEmbedded": {
+            "type": "boolean"
+          },
+          "preferencesUrl": {
+            "type": "string"
+          },
+          "gdprWebhooks": {
+            "type": "object",
+            "properties": {
+              "customerDeletionUrl": {
+                "type": "string"
+              },
+              "customerDataRequestUrl": {
+                "type": "string"
+              },
+              "shopDeletionUrl": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "appProxy": {
+            "type": "object",
+            "properties": {
+              "subPath": {
+                "type": "string"
+              },
+              "subPathPrefix": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "subPath",
+              "subPathPrefix",
+              "url"
+            ],
+            "additionalProperties": false
+          },
+          "configuration": {
+            "$ref": "#/definitions/AppInfo/properties/configuration"
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "apiKey",
+          "organizationId",
+          "grantedScopes",
+          "flags"
+        ],
+        "additionalProperties": false
+      },
+      "AppInfoProject": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string"
+          },
+          "appConfigFiles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "content": {
+                  "$ref": "#/definitions/AppInfo/properties/configuration"
+                },
+                "errors": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      },
+                      "message": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "path",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "path",
+                "content",
+                "errors"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "extensionConfigFiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppInfoProject/properties/appConfigFiles/items"
+            }
+          },
+          "webConfigFiles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppInfoProject/properties/appConfigFiles/items"
+            }
+          },
+          "dotenvFiles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppInfoProject/properties/appConfigFiles/items/properties/errors/items"
+            }
+          }
+        },
+        "required": [
+          "directory",
+          "appConfigFiles",
+          "extensionConfigFiles",
+          "webConfigFiles",
+          "dotenvFiles",
+          "errors"
+        ],
+        "additionalProperties": false
+      },
+      "AppInfoSystem": {
+        "type": "object",
+        "properties": {
+          "cliVersion": {
+            "type": "string"
+          },
+          "nodeVersion": {
+            "type": "string"
+          },
+          "platform": {
+            "type": "string"
+          },
+          "arch": {
+            "type": "string"
+          },
+          "shell": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cliVersion",
+          "nodeVersion",
+          "platform",
+          "arch"
+        ],
+        "additionalProperties": false
+      },
+      "AppInfoWebEnvironment": {
+        "type": "object",
+        "properties": {
+          "SHOPIFY_API_KEY": {
+            "type": "string"
+          },
+          "SHOPIFY_API_SECRET": {
+            "type": "string"
+          },
+          "SCOPES": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "SHOPIFY_API_KEY",
+          "SCOPES"
+        ],
+        "additionalProperties": false
+      },
+      "AppInfoExtension": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "externalType": {
+            "type": "string"
+          },
+          "humanName": {
+            "type": "string"
+          },
+          "surface": {
+            "type": "string"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dependency": {
+            "type": "string"
+          },
+          "entrySourceFilePath": {
+            "type": "string"
+          },
+          "devUUID": {
+            "type": "string"
+          },
+          "localIdentifier": {
+            "type": "string"
+          },
+          "idEnvironmentVariableName": {
+            "type": "string"
+          },
+          "directory": {
+            "type": "string"
+          },
+          "configuration": {
+            "$ref": "#/definitions/AppInfo/properties/configuration"
+          },
+          "configurationPath": {
+            "type": "string"
+          },
+          "outputPath": {
+            "type": "string"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "specification": {
+            "$ref": "#/definitions/AppInfoSpecification"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "externalType",
+          "humanName",
+          "surface",
+          "features",
+          "entrySourceFilePath",
+          "devUUID",
+          "localIdentifier",
+          "idEnvironmentVariableName",
+          "directory",
+          "configuration",
+          "configurationPath",
+          "outputPath",
+          "handle",
+          "specification",
+          "uid"
+        ],
+        "additionalProperties": true
+      },
+      "AppInfoSpecification": {
+        "type": "object",
+        "properties": {
+          "identifier": {
+            "type": "string"
+          },
+          "externalIdentifier": {
+            "type": "string"
+          },
+          "externalName": {
+            "type": "string"
+          },
+          "group": {
+            "type": "string"
+          },
+          "additionalIdentifiers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "partnersWebIdentifier": {
+            "type": "string"
+          },
+          "surface": {
+            "type": "string"
+          },
+          "registrationLimit": {
+            "type": "number"
+          },
+          "experience": {
+            "type": "string",
+            "enum": [
+              "extension",
+              "configuration"
+            ]
+          },
+          "uidStrategy": {
+            "type": "string",
+            "enum": [
+              "single",
+              "dynamic",
+              "uuid"
+            ]
+          },
+          "dependency": {
+            "type": "string"
+          },
+          "graphQLType": {
+            "type": "string"
+          },
+          "clientSteps": {
+            "$ref": "#/definitions/AppInfoClientSteps"
+          },
+          "loadedRemoteSpecs": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "identifier",
+          "externalIdentifier",
+          "externalName",
+          "additionalIdentifiers",
+          "partnersWebIdentifier",
+          "surface",
+          "registrationLimit",
+          "experience",
+          "uidStrategy"
+        ],
+        "additionalProperties": false
+      },
+      "AppInfoClientSteps": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "lifecycle": {
+              "type": "string",
+              "const": "deploy"
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "continueOnError": {
+                        "type": "boolean"
+                      },
+                      "type": {
+                        "type": "string",
+                        "const": "include_assets"
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {
+                          "generatesAssetsManifest": {
+                            "type": "boolean"
+                          },
+                          "inclusions": {
+                            "type": "array",
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "pattern"
+                                    },
+                                    "baseDir": {
+                                      "type": "string"
+                                    },
+                                    "include": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "ignore": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "destination": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "type"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "static"
+                                    },
+                                    "source": {
+                                      "type": "string"
+                                    },
+                                    "destination": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "source"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "type": {
+                                      "type": "string",
+                                      "const": "configKey"
+                                    },
+                                    "key": {
+                                      "type": "string"
+                                    },
+                                    "destination": {
+                                      "type": "string"
+                                    },
+                                    "anchor": {
+                                      "type": "string"
+                                    },
+                                    "groupBy": {
+                                      "type": "string"
+                                    },
+                                    "preserveFilePaths": {
+                                      "type": "boolean"
+                                    }
+                                  },
+                                  "required": [
+                                    "type",
+                                    "key"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "inclusions"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "type",
+                      "config"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "$ref": "#/definitions/AppInfoClientSteps/items/properties/steps/items/anyOf/0/properties/id"
+                      },
+                      "name": {
+                        "$ref": "#/definitions/AppInfoClientSteps/items/properties/steps/items/anyOf/0/properties/name"
+                      },
+                      "continueOnError": {
+                        "$ref": "#/definitions/AppInfoClientSteps/items/properties/steps/items/anyOf/0/properties/continueOnError"
+                      },
+                      "type": {
+                        "type": "string",
+                        "const": "bundle_ui"
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {
+                          "generatesAssetsManifest": {
+                            "type": "boolean"
+                          },
+                          "bundleFolder": {
+                            "type": "string"
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "type"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "$ref": "#/definitions/AppInfoClientSteps/items/properties/steps/items/anyOf/0/properties/id"
+                      },
+                      "name": {
+                        "$ref": "#/definitions/AppInfoClientSteps/items/properties/steps/items/anyOf/0/properties/name"
+                      },
+                      "continueOnError": {
+                        "$ref": "#/definitions/AppInfoClientSteps/items/properties/steps/items/anyOf/0/properties/continueOnError"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "build_theme",
+                          "bundle_theme",
+                          "build_function",
+                          "create_tax_stub"
+                        ]
+                      },
+                      "config": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "not": {}
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "type"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          },
+          "required": [
+            "lifecycle",
+            "steps"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "AppInfoWeb": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string"
+          },
+          "configuration": {
+            "$ref": "#/definitions/AppInfo/properties/configuration"
+          }
+        },
+        "required": [
+          "directory"
+        ],
+        "additionalProperties": true
+      },
+      "AppInfoConfigurationError": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "message"
+        ],
+        "additionalProperties": true
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app init`
@@ -1825,13 +2715,17 @@ Print out a list of sources that may be used with the logs command.
 
 ```
 USAGE
-  $ shopify app logs sources [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--path <value>] [--reset | ] [--verbose]
+  $ shopify app logs sources [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -1866,6 +2760,99 @@ DESCRIPTION
 
   The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently
   only function extensions are supported as sources.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppLogSourcesResult` schema.
+
+  ```json
+  {
+    "type": "array",
+    "items": {
+      "$ref": "#/definitions/AppLogSource"
+    },
+    "title": "AppLogSourcesResult",
+    "definitions": {
+      "AppLogSource": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "namespace": {
+            "type": "string",
+            "const": "extensions"
+          },
+          "handle": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "externalType": {
+            "type": "string"
+          },
+          "humanName": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "directory": {
+            "type": "string"
+          },
+          "configurationPath": {
+            "type": "string"
+          },
+          "configuration": {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          "entrySourceFilePath": {
+            "type": "string"
+          },
+          "outputPath": {
+            "type": "string"
+          },
+          "surface": {
+            "type": "string"
+          },
+          "features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dependency": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "namespace",
+          "handle",
+          "name",
+          "type",
+          "externalType",
+          "humanName",
+          "uid",
+          "directory",
+          "configurationPath",
+          "configuration",
+          "entrySourceFilePath",
+          "outputPath",
+          "surface",
+          "features"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app release --version <version>`
@@ -1929,6 +2916,436 @@ DESCRIPTION
   Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
 ```
 
+## `shopify app subscription-migrations cancel`
+
+Cancels app subscription migration operations.
+
+```
+USAGE
+  $ shopify app subscription-migrations cancel --id <value>... [--auth-alias <value>] [--client-id <value> | -c <value>] [-j]
+    [--json-schema] [--no-color] [--path <value>] [--reset | ] [--verbose]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --auth-alias=<value>
+      Alias of the Shopify account to use for authentication.
+      [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --id=<value>...
+      (required) The app subscription migration operation ID. Can be specified multiple times.
+      [env: SHOPIFY_FLAG_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --reset
+      Reset all your settings.
+      [env: SHOPIFY_FLAG_RESET]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  Cancels app subscription migration operations.
+
+  Cancels app subscription migration operations.
+
+  Canceling stops additional unprocessed shops, but does not undo shops that have already been scheduled or migrated.
+  Use `unschedule` for reversible schedules.
+
+  Repeat `--id` to cancel every operation GID returned by a multi-batch submission. Use `--json` to output the resulting
+  operation states and per-shop results as structured JSON.
+
+  Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path`
+  to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app
+  within the project. Use `--reset` to relink the app.
+
+EXAMPLES
+  $ shopify app subscription-migrations cancel --id <operation-id>
+
+  $ shopify app subscription-migrations cancel --path ../my-app --config staging --id <operation-id-1> --id <operation-id-2>
+
+  $ shopify app subscription-migrations cancel --client-id <client-id> --id <operation-id> --json
+```
+
+## `shopify app subscription-migrations list`
+
+Lists app subscriptions eligible for migration.
+
+```
+USAGE
+  $ shopify app subscription-migrations list [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--path <value>] [--reset | ] [--status UNSCHEDULED|SCHEDULED|MIGRATED] [--verbose]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --auth-alias=<value>
+      Alias of the Shopify account to use for authentication.
+      [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --reset
+      Reset all your settings.
+      [env: SHOPIFY_FLAG_RESET]
+
+  --status=<option>
+      Filter subscriptions by migration status.
+      [env: SHOPIFY_FLAG_STATUS]
+      <options: UNSCHEDULED|SCHEDULED|MIGRATED>
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  Lists app subscriptions eligible for migration.
+
+  Lists every app subscription eligible for migration.
+
+  By default, the command writes CSV to stdout, streaming each page of results as it arrives. If a later page fails, the
+  rows already written remain valid CSV. Use `--json` to fetch all pages first and then write a single versioned JSON
+  envelope to stdout. Use shell redirection to save either format, for example `shopify app subscription-migrations list
+  > subscriptions.csv` or `shopify app subscription-migrations list --json > subscriptions.json`.
+
+  Use `--status` to filter subscriptions by migration status. Supported values are `UNSCHEDULED`, `SCHEDULED`, and
+  `MIGRATED`.
+
+  Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path`
+  to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app
+  within the project. Use `--reset` to relink the app.
+
+EXAMPLES
+  $ shopify app subscription-migrations list
+
+  $ shopify app subscription-migrations list --status SCHEDULED > scheduled-subscriptions.csv
+
+  $ shopify app subscription-migrations list --json
+
+  $ shopify app subscription-migrations list --json > subscriptions.json
+
+  $ shopify app subscription-migrations list --client-id <client-id> > subscriptions.csv
+```
+
+## `shopify app subscription-migrations schedule`
+
+Schedules manual-billing subscriptions to migrate to Shopify-managed app pricing.
+
+```
+USAGE
+  $ shopify app subscription-migrations schedule [--auth-alias <value>] [--client-id <value> | -c <value>] [-f] [-i <value>] [-j]
+    [--json-schema] [--no-color] [--path <value>] [--reset | ] [--verbose] [--watch]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -f, --force
+      Skip confirmation. Required if non interactive.
+      [env: SHOPIFY_FLAG_FORCE]
+
+  -i, --input=<value>
+      Path to the migration CSV. If omitted, standard input is used.
+      [env: SHOPIFY_FLAG_INPUT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --auth-alias=<value>
+      Alias of the Shopify account to use for authentication.
+      [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --reset
+      Reset all your settings.
+      [env: SHOPIFY_FLAG_RESET]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --watch
+      Display the current operation state while polling, then output the final outcome when every operation reaches a
+      terminal status.
+      [env: SHOPIFY_FLAG_WATCH]
+
+DESCRIPTION
+  Schedules manual-billing subscriptions to migrate to Shopify-managed app pricing.
+
+  Schedules manual-billing subscriptions to migrate to Shopify-managed app pricing.
+
+  When `--input` is omitted, the command reads CSV data from stdin. Use `--input <path>` to read from a file. `--input
+  -` is also supported as an explicit stdin path.
+
+  - Required CSV columns: `shop_id`, `target_plan_handle`, and `price_behavior`.
+  - Optional CSV column: `notification`.
+  - Example header: `shop_id,target_plan_handle,price_behavior,notification`.
+  - Example row: `123456789,pro,HONOR_BILLING_PRICE,WHEN_REQUIRED`.
+
+  `price_behavior` must be `HONOR_BILLING_PRICE` or `PLAN_PRICE`. `notification` can be `OPT_OUT` or `WHEN_REQUIRED` and
+  defaults to `WHEN_REQUIRED` when omitted or blank.
+
+  Validation is atomic: the command submits no operations unless the entire CSV is valid. Valid rows are submitted in
+  batches of 250 shops. Preserve every operation GID printed by the command so you can check or cancel the submitted
+  operations.
+
+  Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path`
+  to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app
+  within the project. Use `--reset` to relink the app.
+
+  Use `--force` to skip confirmation and immediately submit every valid row. With `--watch`, human-readable output shows
+  accepted identifiers before polling begins, then displays operation progress and the final outcome. With `--json
+  --watch`, the command outputs one structured JSON document after every operation reaches a terminal status.
+
+EXAMPLES
+  $ shopify app subscription-migrations schedule --input migrations.csv --force
+
+  cat migrations.csv | shopify app subscription-migrations schedule --force
+
+  $ shopify app subscription-migrations schedule --input migrations.csv --path ../my-app --config staging --force --json
+
+  $ shopify app subscription-migrations schedule --input migrations.csv --client-id <client-id> --force
+
+  $ shopify app subscription-migrations schedule --input - --force --watch
+```
+
+## `shopify app subscription-migrations status`
+
+Checks the status of app subscription migration operations.
+
+```
+USAGE
+  $ shopify app subscription-migrations status --id <value>... [--auth-alias <value>] [--client-id <value> | -c <value>] [-j]
+    [--json-schema] [--no-color] [--path <value>] [--reset | ] [--verbose] [--watch]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --auth-alias=<value>
+      Alias of the Shopify account to use for authentication.
+      [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --id=<value>...
+      (required) The app subscription migration operation ID. Can be specified multiple times.
+      [env: SHOPIFY_FLAG_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --reset
+      Reset all your settings.
+      [env: SHOPIFY_FLAG_RESET]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --watch
+      Display the current operation state while polling, then output the final state when every operation reaches a
+      terminal status.
+      [env: SHOPIFY_FLAG_WATCH]
+
+DESCRIPTION
+  Checks the status of app subscription migration operations.
+
+  Checks app subscription migration operation status.
+
+  Repeat `--id` for every operation GID returned by a multi-batch submission. With `--watch`, the command displays the
+  current state while polling and outputs the final state after all requested operations reach a terminal status.
+
+  `RUNNING` means an operation is still processing. `COMPLETED` means processing finished, but you must inspect the
+  per-shop results to confirm each outcome. `FAILED` means the operation failed, and `CANCELED` means cancellation
+  stopped further processing.
+
+  Use `--json` to output every operation and its per-shop results as structured JSON.
+
+  Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path`
+  to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app
+  within the project. Use `--reset` to relink the app.
+
+EXAMPLES
+  $ shopify app subscription-migrations status --id <operation-id>
+
+  $ shopify app subscription-migrations status --path ../my-app --config staging --id <operation-id-1> --id <operation-id-2> --watch
+
+  $ shopify app subscription-migrations status --client-id <client-id> --id <operation-id> --json
+```
+
+## `shopify app subscription-migrations unschedule`
+
+Reverses app subscription migrations that are still scheduled.
+
+```
+USAGE
+  $ shopify app subscription-migrations unschedule [--auth-alias <value>] [--client-id <value> | -c <value>] [-f] [-i <value>] [-j]
+    [--json-schema] [--no-color] [--path <value>] [--reset | ] [--verbose] [--watch]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -f, --force
+      Skip confirmation. Required if non interactive.
+      [env: SHOPIFY_FLAG_FORCE]
+
+  -i, --input=<value>
+      Path to the migration CSV. If omitted, standard input is used.
+      [env: SHOPIFY_FLAG_INPUT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --auth-alias=<value>
+      Alias of the Shopify account to use for authentication.
+      [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --reset
+      Reset all your settings.
+      [env: SHOPIFY_FLAG_RESET]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --watch
+      Display the current operation state while polling, then output the final outcome when every operation reaches a
+      terminal status.
+      [env: SHOPIFY_FLAG_WATCH]
+
+DESCRIPTION
+  Reverses app subscription migrations that are still scheduled.
+
+  Reverses scheduled app subscription migrations that have not migrated yet.
+
+  When `--input` is omitted, the command reads CSV data from stdin. Use `--input <path>` to read from a file. `--input
+  -` is also supported as an explicit stdin path.
+
+  - Required CSV header: `shop_id`.
+  - Example row: `123456789`.
+
+  The CSV can contain only the `shop_id` header, or it can reuse the complete CSV supplied to `schedule`; schedule-only
+  columns are ignored.
+
+  Unscheduling is not a rollback after a subscription has migrated. The command validates the entire CSV before sending
+  any mutation. Use `--force` to skip confirmation and immediately submit every valid row.
+
+  Operations are submitted in batches of 250 shops. Preserve every operation GID printed by the command so you can check
+  or cancel the submitted operations. With `--watch`, human-readable output shows accepted identifiers before polling
+  begins, then displays operation progress and the final outcome. With `--json --watch`, the command outputs one
+  structured JSON document after every operation reaches a terminal status.
+
+  Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path`
+  to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app
+  within the project. Use `--reset` to relink the app.
+
+EXAMPLES
+  $ shopify app subscription-migrations unschedule --input migrations.csv --force
+
+  cat migrations.csv | shopify app subscription-migrations unschedule --force
+
+  $ shopify app subscription-migrations unschedule --input migrations.csv --path ../my-app --config staging --force --json
+
+  $ shopify app subscription-migrations unschedule --input migrations.csv --client-id <client-id> --force
+
+  $ shopify app subscription-migrations unschedule --input - --force --watch
+```
+
 ## `shopify app versions list`
 
 List deployed versions of your app.
@@ -1980,9 +3397,9 @@ DESCRIPTION
 
   Lists the deployed app versions. An app version is a snapshot of your app extensions.
 
-  Output from `--json` conforms to the `AppVersionsListResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppVersionsListResult` schema.
 
   ```json
   {
@@ -2464,6 +3881,10 @@ ARGUMENTS
   [COMMAND...]  Command to show help for.
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   -n, --nested-commands
       Include all nested commands in the output.
       [env: SHOPIFY_FLAG_CLI_NESTED_COMMANDS]
@@ -2474,6 +3895,328 @@ FLAGS
 
 DESCRIPTION
   Display help for Shopify CLI
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `HelpResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "root"
+          },
+          "commands": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/HelpCommandSummary"
+            }
+          },
+          "topics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/HelpTopic"
+            }
+          }
+        },
+        "required": [
+          "kind",
+          "commands",
+          "topics"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "topic"
+          },
+          "topic": {
+            "$ref": "#/definitions/HelpTopic"
+          },
+          "commands": {
+            "$ref": "#/definitions/HelpResult/anyOf/0/properties/commands"
+          },
+          "topics": {
+            "$ref": "#/definitions/HelpResult/anyOf/0/properties/topics"
+          }
+        },
+        "required": [
+          "kind",
+          "topic",
+          "commands",
+          "topics"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "command"
+          },
+          "command": {
+            "$ref": "#/definitions/HelpCommand"
+          },
+          "commands": {
+            "$ref": "#/definitions/HelpResult/anyOf/0/properties/commands"
+          },
+          "topics": {
+            "$ref": "#/definitions/HelpResult/anyOf/0/properties/topics"
+          }
+        },
+        "required": [
+          "kind",
+          "command",
+          "commands",
+          "topics"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "HelpResult",
+    "definitions": {
+      "HelpCommandSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "hidden": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      "HelpTopic": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "hidden": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "HelpArgument": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean",
+            "default": false
+          },
+          "hidden": {
+            "type": "boolean",
+            "default": false
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "default": {}
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "HelpFlag": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "boolean",
+              "option"
+            ]
+          },
+          "char": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "env": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean",
+            "default": false
+          },
+          "hidden": {
+            "type": "boolean",
+            "default": false
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "default": {},
+          "multiple": {
+            "type": "boolean"
+          },
+          "allowNo": {
+            "type": "boolean"
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "dependsOn": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exclusive": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exactlyOne": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "HelpCommand": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/HelpCommandSummary/properties/id"
+          },
+          "summary": {
+            "$ref": "#/definitions/HelpCommandSummary/properties/summary"
+          },
+          "hidden": {
+            "$ref": "#/definitions/HelpCommandSummary/properties/hidden"
+          },
+          "description": {
+            "type": "string"
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "usage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "examples": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "description": {
+                      "type": "string"
+                    },
+                    "command": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "description",
+                    "command"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "strict": {
+            "type": "boolean",
+            "default": true
+          },
+          "args": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/definitions/HelpArgument"
+            }
+          },
+          "flags": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/definitions/HelpFlag"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "aliases",
+          "args",
+          "flags"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify hydrogen build`
@@ -3469,9 +5212,9 @@ DESCRIPTION
 
   Lists the Shopify organizations that you have access to, along with their organization IDs.
 
-  Output from `--json` conforms to the `OrganizationListResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `OrganizationListResult` schema.
 
   ```json
   {
@@ -3813,6 +5556,10 @@ USAGE
   $ shopify search [query]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
@@ -3829,6 +5576,28 @@ DESCRIPTION
   Search shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces
   of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc
   fetch`.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `SearchResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "url": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "required": [
+      "url"
+    ],
+    "additionalProperties": false,
+    "title": "SearchResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   # open the search modal on Shopify.dev
@@ -3880,6 +5649,81 @@ DESCRIPTION
 
   Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.
 
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `StoreAuthResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "store": {
+        "type": "string"
+      },
+      "userId": {
+        "type": "string"
+      },
+      "scopes": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "acquiredAt": {
+        "type": "string"
+      },
+      "expiresAt": {
+        "type": "string"
+      },
+      "refreshTokenExpiresAt": {
+        "type": "string"
+      },
+      "hasRefreshToken": {
+        "type": "boolean"
+      },
+      "associatedUser": {
+        "$ref": "#/definitions/StoreAuthAssociatedUser"
+      }
+    },
+    "required": [
+      "store",
+      "userId",
+      "scopes",
+      "acquiredAt",
+      "hasRefreshToken"
+    ],
+    "additionalProperties": false,
+    "title": "StoreAuthResult",
+    "definitions": {
+      "StoreAuthAssociatedUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "accountOwner": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products
 
@@ -3919,6 +5763,102 @@ DESCRIPTION
   Use this command to find stores that can be used with store-authenticated commands such as `shopify store execute`.
   To list stores in a Shopify organization, run `shopify store list`.
 
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `StoreAuthListResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "sessions": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/StoreAuthListSession"
+        }
+      },
+      "message": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "sessions"
+    ],
+    "additionalProperties": false,
+    "title": "StoreAuthListResult",
+    "definitions": {
+      "StoreAuthListSession": {
+        "type": "object",
+        "properties": {
+          "subdomain": {
+            "type": "string"
+          },
+          "connected": {
+            "type": "string"
+          },
+          "store": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "acquiredAt": {
+            "type": "string",
+            "description": "When the stored token was acquired, in ISO 8601 format."
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "When the stored access token expires, in ISO 8601 format."
+          },
+          "refreshTokenExpiresAt": {
+            "type": "string",
+            "description": "When the stored refresh token expires, in ISO 8601 format."
+          },
+          "associatedUser": {
+            "$ref": "#/definitions/StoreAuthAssociatedUser"
+          }
+        },
+        "required": [
+          "subdomain",
+          "connected"
+        ],
+        "additionalProperties": false
+      },
+      "StoreAuthAssociatedUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "email": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "accountOwner": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify store auth list
 
@@ -3931,9 +5871,13 @@ Cancel a bulk operation on a store.
 
 ```
 USAGE
-  $ shopify store bulk cancel --id <value> -s <value> [--json-schema] [--no-color] [--verbose]
+  $ shopify store bulk cancel --id <value> -s <value> [-j] [--json-schema] [--no-color] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   -s, --store=<value>
       (required) The myshopify.com domain of the store.
       [env: SHOPIFY_FLAG_STORE]
@@ -3961,6 +5905,152 @@ DESCRIPTION
 
   Run `shopify store auth` first to create stored auth for the store.
 
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `CancelBulkOperationResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "store": {
+        "type": "string"
+      },
+      "apiVersion": {
+        "type": "string",
+        "description": "The API version selected for the request."
+      },
+      "operation": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/BulkOperation"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "userErrors": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/BulkOperationUserError"
+        }
+      }
+    },
+    "required": [
+      "operation",
+      "userErrors"
+    ],
+    "additionalProperties": false,
+    "title": "CancelBulkOperationResult",
+    "definitions": {
+      "BulkOperation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "QUERY",
+              "MUTATION"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "RUNNING",
+              "COMPLETED",
+              "FAILED",
+              "CANCELED",
+              "CANCELING",
+              "EXPIRED"
+            ]
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ACCESS_DENIED",
+                  "INTERNAL_SERVER_ERROR",
+                  "TIMEOUT"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "objectCount": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "partialDataUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "status",
+          "createdAt",
+          "objectCount"
+        ],
+        "additionalProperties": false
+      },
+      "BulkOperationUserError": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify store bulk cancel --store shop.myshopify.com --id 123456789
 ```
@@ -3971,11 +6061,15 @@ Execute bulk operations on a store.
 
 ```
 USAGE
-  $ shopify store bulk execute -s <value> [--allow-mutations] [--json-schema] [--no-color] [--output-file <value>
+  $ shopify store bulk execute -s <value> [--allow-mutations] [-j] [--json-schema] [--no-color] [--output-file <value>
     --watch] [-q <value>] [--query-file <value>] [--variable-file <value> | -v <value>...] [--verbose] [--version
     <value>]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   -q, --query=<value>
       The GraphQL query or mutation to run as a bulk operation.
       [env: SHOPIFY_FLAG_QUERY]
@@ -4043,6 +6137,164 @@ DESCRIPTION
   Use "`store bulk status`" (https://shopify.dev/docs/api/shopify-cli/store/store-bulk-status) to check the status of
   your bulk operations.
 
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ExecuteBulkOperationResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "store": {
+        "type": "string"
+      },
+      "apiVersion": {
+        "type": "string",
+        "description": "The API version selected for the request."
+      },
+      "operation": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/BulkOperation"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "userErrors": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/BulkOperationUserError"
+        }
+      },
+      "watchAborted": {
+        "type": "boolean"
+      },
+      "results": {
+        "type": "string",
+        "description": "Downloaded results in JSONL format."
+      },
+      "outputFile": {
+        "type": "string",
+        "description": "The file containing the downloaded JSONL results."
+      }
+    },
+    "required": [
+      "operation",
+      "userErrors",
+      "watchAborted"
+    ],
+    "additionalProperties": false,
+    "title": "ExecuteBulkOperationResult",
+    "definitions": {
+      "BulkOperation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "QUERY",
+              "MUTATION"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "RUNNING",
+              "COMPLETED",
+              "FAILED",
+              "CANCELED",
+              "CANCELING",
+              "EXPIRED"
+            ]
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ACCESS_DENIED",
+                  "INTERNAL_SERVER_ERROR",
+                  "TIMEOUT"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "objectCount": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "partialDataUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "status",
+          "createdAt",
+          "objectCount"
+        ],
+        "additionalProperties": false
+      },
+      "BulkOperationUserError": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify store bulk execute --store shop.myshopify.com --query "query { products { edges { node { id } } } }"
 
@@ -4057,9 +6309,13 @@ Check the status of bulk operations on a store.
 
 ```
 USAGE
-  $ shopify store bulk status -s <value> [--id <value>] [--json-schema] [--no-color] [--verbose]
+  $ shopify store bulk status -s <value> [--id <value>] [-j] [--json-schema] [--no-color] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   -s, --store=<value>
       (required) The myshopify.com domain of the store.
       [env: SHOPIFY_FLAG_STORE]
@@ -4091,6 +6347,191 @@ DESCRIPTION
 
   Use "`store bulk execute`" (https://shopify.dev/docs/api/shopify-cli/store/store-bulk-execute) to start a new bulk
   operation.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `BulkOperationStatusResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/GetBulkOperationStatusResult"
+      },
+      {
+        "$ref": "#/definitions/ListBulkOperationsResult"
+      }
+    ],
+    "title": "BulkOperationStatusResult",
+    "definitions": {
+      "GetBulkOperationStatusResult": {
+        "type": "object",
+        "properties": {
+          "store": {
+            "type": "string"
+          },
+          "apiVersion": {
+            "type": "string",
+            "description": "The API version selected for the request."
+          },
+          "operationId": {
+            "type": "string"
+          },
+          "operation": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/BulkOperation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "operationId",
+          "operation"
+        ],
+        "additionalProperties": false
+      },
+      "ListBulkOperationsResult": {
+        "type": "object",
+        "properties": {
+          "store": {
+            "$ref": "#/definitions/GetBulkOperationStatusResult/properties/store"
+          },
+          "apiVersion": {
+            "$ref": "#/definitions/GetBulkOperationStatusResult/properties/apiVersion"
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListedBulkOperation"
+            }
+          }
+        },
+        "required": [
+          "operations"
+        ],
+        "additionalProperties": false
+      },
+      "BulkOperation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "QUERY",
+              "MUTATION"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CREATED",
+              "RUNNING",
+              "COMPLETED",
+              "FAILED",
+              "CANCELED",
+              "CANCELING",
+              "EXPIRED"
+            ]
+          },
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ACCESS_DENIED",
+                  "INTERNAL_SERVER_ERROR",
+                  "TIMEOUT"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "objectCount": {
+            "type": [
+              "string",
+              "number"
+            ]
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "partialDataUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "status",
+          "createdAt",
+          "objectCount"
+        ],
+        "additionalProperties": false
+      },
+      "ListedBulkOperation": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "$ref": "#/definitions/BulkOperation/properties/id"
+          },
+          "status": {
+            "$ref": "#/definitions/BulkOperation/properties/status"
+          },
+          "errorCode": {
+            "$ref": "#/definitions/BulkOperation/properties/errorCode"
+          },
+          "createdAt": {
+            "$ref": "#/definitions/BulkOperation/properties/createdAt"
+          },
+          "completedAt": {
+            "$ref": "#/definitions/BulkOperation/properties/completedAt"
+          },
+          "objectCount": {
+            "$ref": "#/definitions/BulkOperation/properties/objectCount"
+          },
+          "url": {
+            "$ref": "#/definitions/BulkOperation/properties/url"
+          },
+          "partialDataUrl": {
+            "$ref": "#/definitions/BulkOperation/properties/partialDataUrl"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "createdAt",
+          "objectCount"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   $ shopify store bulk status --store shop.myshopify.com
@@ -4154,6 +6595,126 @@ DESCRIPTION
 
   Creates a new dev store in your organization.
 
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `CreateDevStoreResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "store": {
+            "$ref": "#/definitions/CreatedDevStore"
+          },
+          "organization": {
+            "$ref": "#/definitions/StoreOrganization"
+          }
+        },
+        "required": [
+          "store",
+          "organization"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "$ref": "#/definitions/StoreCommandError"
+      }
+    ],
+    "title": "CreateDevStoreResult",
+    "definitions": {
+      "CreatedDevStore": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "adminUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "plan": {
+            "type": "string",
+            "enum": [
+              "basic",
+              "grow",
+              "advanced",
+              "plus"
+            ]
+          },
+          "featurePreview": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "demoData": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "domain",
+          "plan",
+          "demoData"
+        ],
+        "additionalProperties": false
+      },
+      "StoreOrganization": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "StoreCommandError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "const": true
+          },
+          "message": {
+            "type": "string"
+          },
+          "nextSteps": {
+            "type": "array",
+            "items": {},
+            "description": "Suggested next steps, as text or formatted UI tokens."
+          },
+          "exitCode": {
+            "type": "number",
+            "const": 1
+          }
+        },
+        "required": [
+          "error",
+          "message",
+          "nextSteps",
+          "exitCode"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify store create dev
 
@@ -4201,6 +6762,83 @@ DESCRIPTION
   Create a preview Shopify store.
 
   Creates a new Shopify store, with no need for an existing account.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `CreatePreviewStoreResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "message": {
+        "type": "string"
+      },
+      "store": {
+        "$ref": "#/definitions/PreviewStore"
+      },
+      "next_steps": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "status",
+      "message",
+      "store",
+      "next_steps"
+    ],
+    "additionalProperties": false,
+    "title": "CreatePreviewStoreResult",
+    "definitions": {
+      "PreviewStore": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "subdomain": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "storefrontUrl": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "const": "preview"
+          },
+          "authScopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Preapproved Admin API scopes for the preview store."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "subdomain",
+          "storefrontUrl"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   $ shopify store create preview --name "Lavender Candles"
@@ -4251,6 +6889,108 @@ DESCRIPTION
   Delete a dev store.
 
   Deletes a dev store from your organization.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `DeleteDevStoreResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "store": {
+            "$ref": "#/definitions/DeletedStore"
+          },
+          "organization": {
+            "$ref": "#/definitions/StoreOrganization"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "store",
+          "organization"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "$ref": "#/definitions/StoreCommandError"
+      }
+    ],
+    "title": "DeleteDevStoreResult",
+    "definitions": {
+      "DeletedStore": {
+        "type": "object",
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "deletionRequested": {
+            "type": "boolean",
+            "const": true
+          },
+          "deletionConfirmed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "domain",
+          "deletionRequested",
+          "deletionConfirmed"
+        ],
+        "additionalProperties": false
+      },
+      "StoreOrganization": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "StoreCommandError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "const": true
+          },
+          "message": {
+            "type": "string"
+          },
+          "nextSteps": {
+            "type": "array",
+            "items": {},
+            "description": "Suggested next steps, as text or formatted UI tokens."
+          },
+          "exitCode": {
+            "type": "number",
+            "const": 1
+          }
+        },
+        "required": [
+          "error",
+          "message",
+          "nextSteps",
+          "exitCode"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   $ shopify store delete --store shop.myshopify.com --organization-id 1234567
@@ -4326,6 +7066,26 @@ DESCRIPTION
   Run `shopify store auth` first to create stored auth for the store.
 
   Mutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `StoreExecuteResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "additionalProperties": {}
+      },
+      {
+        "type": "null"
+      }
+    ],
+    "title": "StoreExecuteResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   $ shopify store execute --store shop.myshopify.com --query "query { shop { name } }"
@@ -4435,6 +7195,84 @@ DESCRIPTION
 
   Use `--json` for machine-readable output.
 
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `StoreInfoResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "displayName": {
+        "type": "string"
+      },
+      "subdomain": {
+        "type": "string"
+      },
+      "organizationId": {
+        "type": "string"
+      },
+      "organizationName": {
+        "type": "string"
+      },
+      "storeOwner": {
+        "$ref": "#/definitions/StoreInfoStoreOwner"
+      },
+      "type": {
+        "type": "string"
+      },
+      "country": {
+        "type": "string",
+        "description": "The country selected when creating the preview store, if specified."
+      },
+      "plan": {
+        "type": "string"
+      },
+      "featurePreview": {
+        "type": "string"
+      },
+      "adminUrl": {
+        "type": "string"
+      },
+      "accessUrl": {
+        "type": "string"
+      },
+      "saveUrl": {
+        "type": "string"
+      },
+      "authScopes": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "subdomain"
+    ],
+    "additionalProperties": false,
+    "title": "StoreInfoResult",
+    "definitions": {
+      "StoreInfoStoreOwner": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify store info --store shop.myshopify.com
 
@@ -4487,6 +7325,106 @@ DESCRIPTION
 
   Run `shopify organization list` to find organization IDs.
 
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `StoreListResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "stores": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/StoreListEntry"
+        }
+      },
+      "organization": {
+        "$ref": "#/definitions/StoreListOrganization"
+      },
+      "storeType": {
+        "type": "string",
+        "enum": [
+          "dev",
+          "production",
+          "client-transfer",
+          "collaborator"
+        ]
+      },
+      "notice": {
+        "type": "string"
+      },
+      "truncated": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "stores"
+    ],
+    "additionalProperties": false,
+    "title": "StoreListResult",
+    "definitions": {
+      "StoreListEntry": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "store": {
+            "type": "string"
+          },
+          "primaryDomain": {
+            "type": "string",
+            "description": "The primary storefront hostname, which may be a custom domain."
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          },
+          "organizationName": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "plan": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "store",
+          "createdAt",
+          "organizationId",
+          "organizationName"
+        ],
+        "additionalProperties": false
+      },
+      "StoreListOrganization": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify store list
 
@@ -4503,9 +7441,13 @@ Open your Shopify store in the default web browser.
 
 ```
 USAGE
-  $ shopify store open -s <value> [--json-schema] [--no-color] [--verbose]
+  $ shopify store open -s <value> [-j] [--json-schema] [--no-color] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   -s, --store=<value>
       (required) The myshopify.com domain of the store.
       [env: SHOPIFY_FLAG_STORE]
@@ -4526,6 +7468,35 @@ DESCRIPTION
   Open your Shopify store in the default web browser.
 
   Opens the storefront for a store you have access to in your default web browser.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `OpenStoreResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "store": {
+        "type": "string"
+      },
+      "url": {
+        "type": "string"
+      },
+      "opened": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "store",
+      "url",
+      "opened"
+    ],
+    "additionalProperties": false,
+    "title": "OpenStoreResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   $ shopify store open --store shop.myshopify.com
@@ -5947,14 +8918,47 @@ Shopify CLI version currently installed.
 
 ```
 USAGE
-  $ shopify version [--json-schema]
+  $ shopify version [-j] [--json-schema] [--no-color] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
   Shopify CLI version currently installed.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `VersionResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "version": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "version"
+    ],
+    "additionalProperties": false,
+    "title": "VersionResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 <!-- commandsstop -->
