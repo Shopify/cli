@@ -21,7 +21,7 @@ vi.mock('../release/version-diff')
 
 const VERSION_DIFF_CONFIG_A: AppVersionsDiffExtensionSchema = {
   uuid: 'UUID_C_A',
-  registrationTitle: 'Registration title',
+  handle: 'Registration title',
   specification: {
     identifier: 'app_access',
     experience: 'configuration',
@@ -33,7 +33,7 @@ const VERSION_DIFF_CONFIG_A: AppVersionsDiffExtensionSchema = {
 
 const VERSION_DIFF_DASH_A: AppVersionsDiffExtensionSchema = {
   uuid: 'UUID_D_A',
-  registrationTitle: 'Dashboard A',
+  handle: 'Dashboard A',
   specification: {
     identifier: 'flow_action_definition',
     experience: 'legacy',
@@ -45,7 +45,7 @@ const VERSION_DIFF_DASH_A: AppVersionsDiffExtensionSchema = {
 
 const VERSION_DIFF_CLI_A: AppVersionsDiffExtensionSchema = {
   uuid: 'UUID_B',
-  registrationTitle: 'Checkout post purchase',
+  handle: 'Checkout post purchase',
   specification: {
     identifier: 'checkout_post_purchase',
     experience: 'extension',
@@ -57,7 +57,7 @@ const VERSION_DIFF_CLI_A: AppVersionsDiffExtensionSchema = {
 
 const VERSION_DIFF_DELETED_CLI_B: AppVersionsDiffExtensionSchema = {
   uuid: 'UUID_A',
-  registrationTitle: 'Checkout post purchase Deleted B',
+  handle: 'Checkout post purchase Deleted B',
   specification: {
     identifier: 'checkout_post_purchase',
     experience: 'extension',
@@ -69,7 +69,7 @@ const VERSION_DIFF_DELETED_CLI_B: AppVersionsDiffExtensionSchema = {
 
 const VERSION_DIFF_DELETED_CLI_WEBHOOK: AppVersionsDiffExtensionSchema = {
   uuid: 'UUID_WEBOOK',
-  registrationTitle: 'Webhook Subscription Deleted',
+  handle: 'Webhook Subscription Deleted',
   specification: {
     identifier: 'webhook_subscription',
     experience: 'extension',
@@ -268,7 +268,7 @@ function configModule(identifier: string, config: {[key: string]: unknown}): App
   return {
     registrationId: `${identifier}-id`,
     registrationUuid: `${identifier}-uuid`,
-    registrationTitle: identifier,
+    handle: identifier,
     type: identifier,
     config,
     specification: {

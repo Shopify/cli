@@ -48,11 +48,11 @@ export async function extensionsIdentifiersReleaseBreakdown(
           extension.specification.experience === 'extension' &&
           extension.specification.identifier !== 'webhook_subscription',
       )
-      .map((extension) => buildExtensionBreakdownInfo(extension.registrationTitle, undefined))
+      .map((extension) => buildExtensionBreakdownInfo(extension.handle, undefined))
   const mapIsDashboard = (extensions: AppVersionsDiffExtensionSchema[]) =>
     extensions
       .filter((extension) => extension.specification.options.managementExperience === 'dashboard')
-      .map((extension) => buildDashboardBreakdownInfo(extension.registrationTitle))
+      .map((extension) => buildDashboardBreakdownInfo(extension.handle))
 
   const extensionIdentifiersBreakdown = {
     onlyRemote: [...mapIsExtension(versionsDiff.removed), ...mapIsDashboard(versionsDiff.removed)],
