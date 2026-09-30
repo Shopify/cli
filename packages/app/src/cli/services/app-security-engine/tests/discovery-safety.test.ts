@@ -11,7 +11,7 @@ import {
 } from '../scanners/discover.js'
 import {scan} from '../scanners/index.js'
 import {buildPathRules, listGitIgnoredPaths} from '../scanners/path-rules.js'
-import {normalizePath} from '@shopify/cli-kit/node/path'
+import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {afterEach, beforeEach, describe, expect, test} from 'vitest'
 import {chmod, mkdir, mkdtemp, rm, symlink, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
@@ -341,7 +341,8 @@ describe('repository discovery exclusions', () => {
     })
     expect(extensions[2]!.files[1]).toEqual({
       path: 'extensions/alpha/src/index.tsx',
-      absolutePath: join(root, 'extensions/alpha/src/index.tsx'),
+      // Discovery joins with cli-kit, which uses `/` on every platform.
+      absolutePath: joinPath(root, 'extensions/alpha/src/index.tsx'),
       ext: '.tsx',
       content: 'export const alpha = true',
     })
