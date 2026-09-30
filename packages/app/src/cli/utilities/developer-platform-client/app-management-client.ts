@@ -172,7 +172,9 @@ import {webhooksRequestDoc, WebhooksRequestOptions} from '@shopify/cli-kit/node/
 import {randomUUID} from 'crypto'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
-const SINGLE_SUBSCRIPTION_EVENTS_MODULES_EXP_FLAG = 'f_single_subscription_events_modules'
+// Business Platform's `enabledFlags` resolves hashed client handles rather than readable
+// Verdict handles. This is the client handle for `f_single_subscription_events_modules`.
+const SINGLE_SUBSCRIPTION_EVENTS_MODULES_EXP_FLAG = 'f12fb419'
 const commandRunId = randomUUID()
 
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
