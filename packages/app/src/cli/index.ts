@@ -8,6 +8,7 @@ import DemoWatcher from './commands/app/demo/watcher.js'
 import Deploy from './commands/app/deploy.js'
 import Dev from './commands/app/dev.js'
 import SecurityCheck from './commands/app/security/check.js'
+import SecurityClean from './commands/app/security/clean.js'
 import SecurityInstructions from './commands/app/security/instructions.js'
 import SecurityRecord from './commands/app/security/record.js'
 import SecuritySubmit from './commands/app/security/submit.js'
@@ -60,6 +61,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:dev': Dev,
   'app:dev:clean': DevClean,
   'app:security:check': SecurityCheck,
+  'app:security:clean': SecurityClean,
   'app:security:instructions': SecurityInstructions,
   'app:security:record': SecurityRecord,
   'app:security:submit': SecuritySubmit,

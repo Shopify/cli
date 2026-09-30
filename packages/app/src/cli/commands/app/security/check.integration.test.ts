@@ -38,6 +38,19 @@ async function createApp(directory: string): Promise<{nestedDirectory: string}> 
   return {nestedDirectory: routesDirectory}
 }
 
+async function readJson(path: string): Promise<unknown> {
+  return JSON.parse(await readFile(path, 'utf8'))
+}
+
+function errorText(stderr: string): string {
+  return unstyled(stderr).replaceAll('│', '').replace(/\s+/g, ' ')
+}
+
+// The error box wraps long paths across lines, so compare them with whitespace removed.
+function expectMentionsPath(message: string, path: string): void {
+  expect(message.replaceAll(' ', '')).toContain(path)
+}
+
 async function runCommand(argv: string[]) {
   let stdout = ''
   let stderr = ''
@@ -74,7 +87,35 @@ async function runCommand(argv: string[]) {
 }
 
 describe('app security check command boundary', () => {
-  test('a plain scan replaces agent checks and scan while earlier artifacts exist', async () => {
+  test('scans an app from a nested directory and writes deterministic-findings.json and agent-checks.json', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const {nestedDirectory} = await createApp(directory)
+      const paths = appSecurityArtifactPaths(directory)
+
+      const result = await runCommand(['--path', nestedDirectory, '--json', '--skip-instructions'])
+
+      expect(result.exitCode).toBe(0)
+      const output = JSON.parse(result.stdout)
+      expect(Object.keys(output).sort()).toEqual(['agent_checks_path', 'deterministic_findings', 'engine'])
+      expect(output.agent_checks_path).toBe(paths.agentChecksPath)
+      expect(output.engine).toMatchObject({name: 'shopify-app-security'})
+      await expect(readJson(paths.deterministicFindingsPath)).resolves.toEqual(output.deterministic_findings)
+      await expect(readJson(paths.deterministicFindingsPath)).resolves.toMatchObject({
+        schema_version: 1,
+        engine: {name: 'shopify-app-security'},
+        findings: expect.any(Array),
+      })
+      await expect(readJson(paths.agentChecksPath)).resolves.toMatchObject({
+        schema_version: 1,
+        checks: expect.arrayContaining([
+          expect.objectContaining({id: expect.any(String), version: expect.any(Number)}),
+        ]),
+      })
+      await expect(readFile(paths.agentFindingsPath)).rejects.toMatchObject({code: 'ENOENT'})
+    })
+  })
+
+  test('re-scanning replaces the check artifacts without prompting and leaves agent findings untouched', async () => {
     await inTemporaryDirectory(async (directory) => {
       const {nestedDirectory} = await createApp(directory)
       const paths = appSecurityArtifactPaths(directory)
@@ -82,17 +123,47 @@ describe('app security check command boundary', () => {
       const firstScan = await runCommand(['--path', directory, '--json', '--skip-instructions'])
       expect(firstScan.exitCode).toBe(0)
 
-      await writeFile(paths.agentFindingsPath, '{"sentinel":"findings"}\n')
-      await writeFile(paths.agentChecksPath, '{"sentinel":"agent-checks"}\n')
-      await writeFile(paths.deterministicFindingsPath, '{"sentinel":"scan"}\n')
+      // Check must not read, validate, or rewrite the agent's findings, so any bytes survive a re-scan.
+      const agentFindings = '{"recorded": "by the agent",  "kept": "byte for byte"}'
+      await writeFile(paths.agentFindingsPath, agentFindings)
+      await writeFile(paths.deterministicFindingsPath, '{"sentinel": "previous scan"}\n')
+      await writeFile(paths.agentChecksPath, '{"sentinel": "previous agent checks"}\n')
+      await writeFile(joinPath(nestedDirectory, 'index.ts'), 'export const loader = () => ({changed: true})')
 
-      const rescan = await runCommand(['--path', nestedDirectory, '--skip-instructions'])
+      const rescan = await runCommand(['--path', directory, '--skip-instructions'])
 
       expect(rescan.exitCode).toBe(0)
       expect(unstyled(rescan.stdout)).not.toMatch(/discard/i)
-      await expect(readFile(paths.agentChecksPath, 'utf8')).resolves.toContain('"checks"')
-      await expect(readFile(paths.deterministicFindingsPath, 'utf8')).resolves.toContain('"schema_version"')
-      await expect(readFile(paths.agentFindingsPath, 'utf8')).resolves.toBe('{"sentinel":"findings"}\n')
+      await expect(readJson(paths.deterministicFindingsPath)).resolves.toMatchObject({
+        schema_version: 1,
+        findings: expect.any(Array),
+      })
+      await expect(readJson(paths.agentChecksPath)).resolves.toMatchObject({
+        schema_version: 1,
+        checks: expect.any(Array),
+      })
+      await expect(readFile(paths.agentFindingsPath, 'utf8')).resolves.toBe(agentFindings)
+    })
+  })
+
+  test('rejects a missing config', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const paths = appSecurityArtifactPaths(directory)
+
+      const result = await runCommand([
+        '--path',
+        directory,
+        '--config',
+        'shopify.app.dev-dashboard.json',
+        '--skip-instructions',
+      ])
+
+      expect(result.exitCode).toBe(1)
+      const message = errorText(result.stderr)
+      expect(message).toContain("Couldn't find app configuration at")
+      expectMentionsPath(message, joinPath(directory, 'shopify.app.shopifyappdev-dashboardjson.toml'))
+      await expect(readFile(paths.deterministicFindingsPath)).rejects.toMatchObject({code: 'ENOENT'})
     })
   })
 })

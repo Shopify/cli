@@ -3,14 +3,15 @@ import {
   executeAppSecurity,
   resolveAppSecurityRoot,
   type AppSecurityBlockingLevel,
+  type AppSecurityExecution,
 } from './app-security-api.js'
-import {writeAppSecurityArtifacts} from './app-security-artifacts.js'
-import securityCheck from './security-check.js'
+import {writeCheckArtifacts} from './app-security-artifacts.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {symlink} from 'node:fs/promises'
+import type {Issue} from './app-security-engine/index.js'
 
 function artifactPath(directory: string, name: string): string {
   return joinPath(directory, '.shopify', 'app-security', name)
@@ -19,16 +20,8 @@ function artifactPath(directory: string, name: string): string {
 async function runSecurity(options: {directory: string; blocking: AppSecurityBlockingLevel}) {
   const appRoot = resolveAppSecurityRoot(options.directory)
   const execution = await executeAppSecurity({appRoot})
-  const artifacts = await writeAppSecurityArtifacts(execution)
-  return {
-    execution,
-    artifacts,
-    exitCode: securityExitCode(execution, options.blocking),
-    engine: execution.engine,
-    agentChecksPath: artifacts.agentChecksPath,
-    agentCheckCount: execution.agentChecks.checks.length,
-    jsonReport: execution.scan,
-  }
+  const artifacts = await writeCheckArtifacts(execution.appRoot, execution)
+  return {execution, artifacts, exitCode: securityExitCode(execution, options.blocking)}
 }
 
 async function createApp(directory: string, source = 'export const loader = () => ({ok: true})'): Promise<string> {
@@ -45,28 +38,47 @@ async function createApp(directory: string, source = 'export const loader = () =
   return sourcePath
 }
 
+function executionWithIssues(severities: Issue['severity'][]): AppSecurityExecution {
+  return {
+    scan: {issues: severities.map((severity) => ({severity}))},
+  } as unknown as AppSecurityExecution
+}
+
+describe('securityExitCode', () => {
+  test('returns 1 only when an issue meets the blocking severity', () => {
+    expect(securityExitCode(executionWithIssues(['medium']), 'high')).toBe(0)
+    expect(securityExitCode(executionWithIssues(['medium']), 'medium')).toBe(1)
+    expect(securityExitCode(executionWithIssues(['medium']), 'low')).toBe(1)
+    expect(securityExitCode(executionWithIssues(['high']), 'none')).toBe(0)
+    expect(securityExitCode(executionWithIssues([]), 'low')).toBe(0)
+  })
+})
+
 describe('App Security CLI integration', () => {
-  test('runs the in-tree engine and writes agent checks and scan', async () => {
+  test('runs the in-tree engine and writes the scan and agent checks', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
 
       const result = await runSecurity({directory, blocking: 'none'})
+      const scan = JSON.parse(await readFile(artifactPath(directory, 'deterministic-findings.json')))
       const agentChecks = JSON.parse(await readFile(artifactPath(directory, 'agent-checks.json')))
-      const deterministicFindings = JSON.parse(await readFile(artifactPath(directory, 'deterministic-findings.json')))
 
+      expect(scan.schema_version).toBe(1)
+      expect(scan.engine.name).toBe('shopify-app-security')
+      expect(result.execution.engine).toEqual(scan.engine)
+      expect(result.execution.elapsedMilliseconds).toEqual(expect.any(Number))
       expect(agentChecks.schema_version).toBe(1)
       expect(agentChecks.checks.length).toBeGreaterThan(0)
       expect(agentChecks.checks.every((check: {prompt: string}) => check.prompt.length > 0)).toBe(true)
-      expect(deterministicFindings.schema_version).toBe(1)
-      expect(deterministicFindings.engine.name).toBe('shopify-app-security')
-      expect(result.engine).toEqual(deterministicFindings.engine)
-      expect(result.agentChecksPath).toBe(artifactPath(directory, 'agent-checks.json'))
-      expect(result.agentCheckCount).toBe(agentChecks.checks.length)
+      expect(result.artifacts).toEqual({
+        deterministicFindingsPath: artifactPath(directory, 'deterministic-findings.json'),
+        agentChecksPath: artifactPath(directory, 'agent-checks.json'),
+      })
       expect(result.exitCode).toBe(0)
     })
   })
 
-  test('replaces seeded agent checks instead of treating it as instructions', async () => {
+  test('replaces seeded agent checks instead of treating them as instructions', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
       await mkdir(joinPath(directory, '.shopify', 'app-security'))
@@ -83,15 +95,15 @@ describe('App Security CLI integration', () => {
     })
   })
 
-  test('preserves JSON output and applies the requested blocking severity', async () => {
+  test('redacts secrets from the deterministic findings and applies the requested blocking severity', async () => {
     await inTemporaryDirectory(async (directory) => {
       const testToken = ['shpat', '0123456789abcdef0123456789abcdef'].join('_')
       await createApp(directory, `const access_token = "${testToken}"`)
 
       const result = await runSecurity({directory, blocking: 'high'})
 
-      expect(result.jsonReport).toEqual(expect.any(Object))
-      expect(JSON.stringify(result.jsonReport)).not.toContain(testToken)
+      expect(JSON.stringify(result.execution.artifact)).not.toContain(testToken)
+      await expect(readFile(artifactPath(directory, 'deterministic-findings.json'))).resolves.not.toContain(testToken)
       expect(result.exitCode).toBe(1)
     })
   })
@@ -164,46 +176,6 @@ describe('App Security CLI integration', () => {
           readFile(joinPath(externalDirectory, 'app-security', 'deterministic-findings.json')),
         ).rejects.toThrow()
       })
-    })
-  })
-
-  test('unmocked securityCheck scan writes artifacts, JSON output, and a zero exit status', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await createApp(directory)
-      const output = vi.fn()
-      const setExitCode = vi.fn()
-
-      await securityCheck(
-        {
-          directory,
-          json: true,
-          verbose: false,
-          blocking: 'none',
-          yes: false,
-          skipInstructions: true,
-          clean: false,
-          ignorePatterns: [],
-        },
-        {
-          resolveRoot: resolveAppSecurityRoot,
-          execute: async ({appRoot}) => executeAppSecurity({appRoot}),
-          writeArtifacts: writeAppSecurityArtifacts,
-          canPrompt: () => false,
-          selectInstructionsDestination: async () => 'nothing',
-          deliverInstructions: async () => {},
-          output,
-          renderReport: vi.fn(),
-          setExitCode,
-        },
-      )
-
-      const payload = JSON.parse(output.mock.calls[0]![0]) as {deterministic_findings: {schema_version: number}}
-      expect(payload.deterministic_findings.schema_version).toBe(1)
-      await expect(readFile(artifactPath(directory, 'agent-checks.json'))).resolves.toContain('"checks"')
-      await expect(readFile(artifactPath(directory, 'deterministic-findings.json'))).resolves.toContain(
-        '"schema_version"',
-      )
-      expect(setExitCode).not.toHaveBeenCalled()
     })
   })
 })

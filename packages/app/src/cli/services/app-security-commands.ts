@@ -18,7 +18,7 @@ export interface AppSecurityCommands {
   clean: AppSecurityCommand
 }
 
-/** `ignorePatterns` are repeated so that rerunning the check discovers the same files. */
+/** `ignorePatterns` are repeated on scan so that rerunning the check discovers the same files. */
 export function resolveAppSecurityCommands(
   appRoot: string,
   configFileName?: string,
@@ -33,22 +33,18 @@ export function resolveAppSecurityCommands(
     subcommand,
     {flag: '--path', value: appRoot},
   ]
-  const scan: AppSecurityCommand = {
-    command,
-    args: [
-      ...subcommandArgs('check'),
-      ...(configFlag ? [{flag: '--config', value: configFlag}] : []),
-      ...ignorePatterns.map((ignorePattern) => ({flag: '--ignore', value: ignorePattern})),
-    ],
-  }
 
   return {
-    scan,
-    record: {command, args: subcommandArgs('record'), stdinPlaceholder: '<findings.json>'},
-    clean: {
-      command: scan.command,
-      args: [...scan.args, '--clean'],
+    scan: {
+      command,
+      args: [
+        ...subcommandArgs('check'),
+        ...(configFlag ? [{flag: '--config', value: configFlag}] : []),
+        ...ignorePatterns.map((ignorePattern) => ({flag: '--ignore', value: ignorePattern})),
+      ],
     },
+    record: {command, args: subcommandArgs('record'), stdinPlaceholder: '<findings.json>'},
+    clean: {command, args: subcommandArgs('clean')},
   }
 }
 

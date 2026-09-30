@@ -1,5 +1,6 @@
 import {
   parseDeterministicFindings,
+  type AgentChecks,
   type AgentFindingsArtifact,
   type DeterministicFindingsDocument,
 } from './app-security-engine/index.js'
@@ -8,7 +9,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {randomBytes} from 'node:crypto'
 import {lstat, mkdir, realpath, rename, unlink, writeFile} from 'node:fs/promises'
-import type {AppSecurityExecution} from './app-security-api.js'
+import type {Stats} from 'node:fs'
 
 const MAX_ARTIFACT_FILE_SIZE_BYTES = 5_000_000
 
@@ -16,11 +17,10 @@ export interface AppSecurityArtifactPaths {
   artifactDirectory: string
   deterministicFindingsPath: string
   agentChecksPath: string
-}
-
-export interface ResolvedAppSecurityArtifactPaths extends Required<AppSecurityArtifactPaths> {
   agentFindingsPath: string
   submissionPath: string
+  /** Artifacts written by earlier CLI versions. Nothing reads them; `clean` removes them. */
+  legacyPaths: string[]
 }
 
 export type ReadArtifactResult<T> =
@@ -28,54 +28,140 @@ export type ReadArtifactResult<T> =
   | {status: 'missing'}
   | {status: 'invalid'; message: string}
 
-export function appSecurityArtifactPaths(appRoot: string): ResolvedAppSecurityArtifactPaths {
+export function appSecurityArtifactPaths(appRoot: string): AppSecurityArtifactPaths {
   const artifactDirectory = joinPath(appRoot, '.shopify', 'app-security')
   return {
     artifactDirectory,
+    deterministicFindingsPath: joinPath(artifactDirectory, 'deterministic-findings.json'),
     agentChecksPath: joinPath(artifactDirectory, 'agent-checks.json'),
     agentFindingsPath: joinPath(artifactDirectory, 'agent-findings.json'),
     submissionPath: joinPath(artifactDirectory, 'submission.json'),
-    deterministicFindingsPath: joinPath(artifactDirectory, 'deterministic-findings.json'),
+    legacyPaths: ['trace.json', 'review.json', 'findings.json'].map((name) => joinPath(artifactDirectory, name)),
   }
 }
 
-export interface WriteAppSecurityArtifactsOptions {
-  clean?: boolean
-}
-
-export async function writeAppSecurityArtifacts(
-  execution: AppSecurityExecution,
-  options: WriteAppSecurityArtifactsOptions = {},
-): Promise<AppSecurityArtifactPaths> {
-  const paths = appSecurityArtifactPaths(execution.appRoot)
-  await ensureArtifactDirectory(execution.appRoot, paths.artifactDirectory)
-  await writeAtomicArtifact(paths.deterministicFindingsPath, `${JSON.stringify(execution.artifact, null, 2)}\n`)
-  await writeAtomicArtifact(paths.agentChecksPath, `${JSON.stringify(execution.agentChecks, null, 2)}\n`)
-  if (options.clean) {
-    await removeStaleArtifact(paths.agentFindingsPath)
-    await removeStaleArtifact(paths.submissionPath)
-  }
-  return {
-    artifactDirectory: paths.artifactDirectory,
-    agentChecksPath: paths.agentChecksPath,
-    deterministicFindingsPath: paths.deterministicFindingsPath,
-  }
+export async function writeCheckArtifacts(
+  appRoot: string,
+  {artifact, agentChecks}: {artifact: DeterministicFindingsDocument; agentChecks: AgentChecks},
+): Promise<Pick<AppSecurityArtifactPaths, 'deterministicFindingsPath' | 'agentChecksPath'>> {
+  const paths = appSecurityArtifactPaths(appRoot)
+  await ensureArtifactDirectory(appRoot, paths.artifactDirectory)
+  await writeAtomicArtifact(paths.deterministicFindingsPath, encodeArtifact(artifact))
+  await writeAtomicArtifact(paths.agentChecksPath, encodeArtifact(agentChecks))
+  return {deterministicFindingsPath: paths.deterministicFindingsPath, agentChecksPath: paths.agentChecksPath}
 }
 
 export async function writeAgentFindings(appRoot: string, artifact: AgentFindingsArtifact): Promise<string> {
   const paths = appSecurityArtifactPaths(appRoot)
   await ensureArtifactDirectory(appRoot, paths.artifactDirectory)
-  await writeAtomicArtifact(paths.agentFindingsPath, `${JSON.stringify(artifact, null, 2)}\n`)
+  await writeAtomicArtifact(paths.agentFindingsPath, encodeArtifact(artifact))
   return paths.agentFindingsPath
 }
 
-async function removeStaleArtifact(path: string): Promise<void> {
+export async function writeSubmission(appRoot: string, bytes: Buffer): Promise<void> {
+  const paths = appSecurityArtifactPaths(appRoot)
+  await ensureArtifactDirectory(appRoot, paths.artifactDirectory)
+  await writeAtomicArtifact(paths.submissionPath, bytes)
+}
+
+/**
+ * Removes every current and legacy App Security artifact that exists, and returns the removed paths.
+ * Other files in the artifact directory are left alone.
+ */
+export async function cleanAppSecurityArtifacts(appRoot: string): Promise<string[]> {
+  const paths = appSecurityArtifactPaths(appRoot)
+  if (!(await existingArtifactDirectory(appRoot, paths.artifactDirectory))) return []
+
+  const candidates = [
+    paths.deterministicFindingsPath,
+    paths.agentChecksPath,
+    paths.agentFindingsPath,
+    paths.submissionPath,
+    ...paths.legacyPaths,
+  ]
+  const removed = await Promise.all(candidates.map(removeArtifactFile))
+  return candidates.filter((_path, index) => removed[index])
+}
+
+export async function readDeterministicFindings(
+  path: string,
+): Promise<ReadArtifactResult<DeterministicFindingsDocument>> {
+  const result = await readJsonArtifact(path)
+  if (result.status !== 'ok') return result
+
+  const parsed = parseDeterministicFindings(result.value)
+  if (!parsed.ok) return {status: 'invalid', message: parsed.errors.join('; ')}
+  return {status: 'ok', value: parsed.artifact}
+}
+
+async function readJsonArtifact(path: string): Promise<ReadArtifactResult<unknown>> {
+  if (!(await fileExists(path))) return {status: 'missing'}
+
+  let content: string
   try {
-    await unlink(path)
+    if ((await fileSize(path)) > MAX_ARTIFACT_FILE_SIZE_BYTES) {
+      return {status: 'invalid', message: 'The file is larger than 5 MB.'}
+    }
+    content = await readFile(path)
+    // Filesystem failures are returned for command-layer rendering.
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    // Missing stale artifacts are already clean.
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return
-    throw new AbortError(`Could not remove stale App Security artifact at ${path}.`, errorMessage(error))
+    return {status: 'invalid', message: `Could not read the file: ${errorMessage(error)}`}
+  }
+
+  try {
+    return {status: 'ok', value: JSON.parse(content)}
+    // JSON is an untrusted artifact boundary.
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    return {status: 'invalid', message: `Could not parse JSON: ${errorMessage(error)}`}
+  }
+}
+
+function encodeArtifact(value: unknown): string {
+  return `${JSON.stringify(value, null, 2)}\n`
+}
+
+/**
+ * Whether the artifact directory exists. Refuses a directory reached through a link or outside the app,
+ * so removing artifacts can never delete files elsewhere.
+ */
+async function existingArtifactDirectory(appRoot: string, artifactDirectory: string): Promise<boolean> {
+  const resolvedRoot = resolvePath(appRoot)
+  const rootStats = await lstat(resolvedRoot)
+  if (rootStats.isSymbolicLink() || !rootStats.isDirectory()) refuseArtifactPath(resolvePath(artifactDirectory))
+
+  let currentPath = resolvedRoot
+  for (const component of ['.shopify', 'app-security']) {
+    currentPath = joinPath(currentPath, component)
+    // Each component must be checked in order so a parent link can't redirect the deletions.
+    // eslint-disable-next-line no-await-in-loop
+    const stats = await lstatIfExists(currentPath)
+    if (!stats) return false
+    if (stats.isSymbolicLink() || !stats.isDirectory()) refuseArtifactPath(currentPath)
+  }
+
+  assertWithinRoot(await realpath(resolvedRoot), await realpath(resolvePath(artifactDirectory)))
+  return true
+}
+
+async function removeArtifactFile(path: string): Promise<boolean> {
+  try {
+    // unlink removes a symbolic link itself and never follows it to its target.
+    await unlink(path)
+    return true
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false
+    throw new AbortError(`Could not remove the App Security artifact at ${path}.`, errorMessage(error))
+  }
+}
+
+async function lstatIfExists(path: string): Promise<Stats | undefined> {
+  try {
+    return await lstat(path)
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined
+    throw error
   }
 }
 
@@ -155,45 +241,4 @@ async function assertNotSymbolicLink(path: string): Promise<void> {
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
-}
-
-export async function readDeterministicFindings(
-  path: string,
-): Promise<ReadArtifactResult<DeterministicFindingsDocument>> {
-  const result = await readJsonArtifact(path)
-  if (result.status !== 'ok') return result
-
-  const parsed = parseDeterministicFindings(result.value)
-  if (!parsed.ok) return {status: 'invalid', message: parsed.errors.join('; ')}
-  return {status: 'ok', value: parsed.artifact}
-}
-
-async function readJsonArtifact(path: string): Promise<ReadArtifactResult<unknown>> {
-  if (!(await fileExists(path))) return {status: 'missing'}
-
-  let content: string
-  try {
-    if ((await fileSize(path)) > MAX_ARTIFACT_FILE_SIZE_BYTES) {
-      return {status: 'invalid', message: 'The file is larger than 5 MB.'}
-    }
-    content = await readFile(path)
-    // Filesystem failures are returned for command-layer rendering.
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    return {status: 'invalid', message: `Could not read the file: ${errorMessage(error)}`}
-  }
-
-  try {
-    return {status: 'ok', value: JSON.parse(content)}
-    // JSON is an untrusted artifact boundary.
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    return {status: 'invalid', message: `Could not parse JSON: ${errorMessage(error)}`}
-  }
-}
-
-export async function writeSubmission(appRoot: string, bytes: Buffer): Promise<void> {
-  const paths = appSecurityArtifactPaths(appRoot)
-  await ensureArtifactDirectory(appRoot, paths.artifactDirectory)
-  await writeAtomicArtifact(paths.submissionPath, bytes)
 }

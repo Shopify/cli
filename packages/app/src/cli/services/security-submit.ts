@@ -15,7 +15,7 @@ import {defaultDeveloperPlatformClient} from '../utilities/developer-platform-cl
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readStdinString, terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
-import type {ReadArtifactResult, ResolvedAppSecurityArtifactPaths} from './app-security-artifacts.js'
+import type {AppSecurityArtifactPaths, ReadArtifactResult} from './app-security-artifacts.js'
 import type {SubmitAppSecurityScanOptions} from './app-security-submit-api.js'
 import type {SecuritySubmitConfirmationAction, SecuritySubmitConfirmationInput} from './security-submit-output.js'
 import type {SecuritySubmitResult, SubmitAppSecurityScanResult} from './security-submit-result.js'
@@ -44,7 +44,7 @@ interface SecuritySubmitAppContext {
 
 export interface SecuritySubmitDependencies {
   findRoot(directory: string): string
-  artifactPaths(appRoot: string): ResolvedAppSecurityArtifactPaths
+  artifactPaths(appRoot: string): AppSecurityArtifactPaths
   readDeterministicFindings(path: string): Promise<ReadArtifactResult<DeterministicFindingsDocument>>
   resolveClientId(options: {directory: string; clientId?: string; configName?: string}): Promise<string>
   fetchApp(clientId: string): Promise<SecuritySubmitAppContext>

@@ -1,10 +1,17 @@
 import securityCheck, {appSecurityInstructionsPrompt} from './security-check.js'
 import {resolveAppSecurityCommands} from './app-security-commands.js'
+import {appSecurityArtifactPaths, writeCheckArtifacts} from './app-security-artifacts.js'
+import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {describe, expect, test, vi} from 'vitest'
-import type {AppSecurityArtifactPaths} from './app-security-artifacts.js'
 import type {AppSecurityExecution} from './app-security-api.js'
 import type {AppSecurityInstructionsDestination} from './security-check.js'
 import type {AgentChecks, DeterministicFindingsDocument, ScanResult} from './app-security-engine/index.js'
+
+vi.mock('./app-security-config.js', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./app-security-config.js')>()
+  // Unit tests use a fake app directory; check.integration.test.ts covers the missing-config error.
+  return {...original, requireSecurityConfigFileName: original.resolveSecurityConfigFileName}
+})
 
 const scan: ScanResult = {
   version: '0.1.0',
@@ -43,16 +50,16 @@ const engine = {
   ruleset: '2026.08.28',
 }
 
-const artifact = {
+const artifact: DeterministicFindingsDocument = {
   schema_version: 1,
-  engine,
+  engine: {name: 'shopify-app-security', version: '1.2.3', ruleset: '2026.08.28'},
   generated_at: '2026-08-24T00:00:00.000Z',
   project: {commit: null, dirty: null},
   detection: scan.detection,
   findings: [],
   checks_executed: [],
   coverage: {files_scanned: 1, files_skipped: [], gaps: []},
-} as DeterministicFindingsDocument
+}
 
 const agentChecks: AgentChecks = {
   schema_version: 1,
@@ -76,15 +83,14 @@ const scanExecution: AppSecurityExecution = {
   elapsedMilliseconds: 12,
 }
 
-const artifacts: AppSecurityArtifactPaths = {
-  artifactDirectory: '/tmp/unlinked-app/.shopify/app-security',
+const artifacts = {
   deterministicFindingsPath: '/tmp/unlinked-app/.shopify/app-security/deterministic-findings.json',
   agentChecksPath: '/tmp/unlinked-app/.shopify/app-security/agent-checks.json',
 }
 
 function testDependencies(execution: AppSecurityExecution = scanExecution) {
   return {
-    resolveRoot: vi.fn(() => scanExecution.appRoot),
+    resolveRoot: vi.fn(() => execution.appRoot),
     execute: vi.fn(async () => execution),
     writeArtifacts: vi.fn(async () => artifacts),
     canPrompt: vi.fn(() => false),
@@ -104,7 +110,6 @@ function testOptions() {
     blocking: 'none' as const,
     yes: false,
     skipInstructions: false,
-    clean: false,
     ignorePatterns: [],
   }
 }
@@ -118,10 +123,10 @@ describe('securityCheck', () => {
     expect(dependencies.resolveRoot).toHaveBeenCalledWith('/tmp/unlinked-app')
     expect(dependencies.execute).toHaveBeenCalledWith({
       appRoot: '/tmp/unlinked-app',
-      configName: undefined,
+      configFileName: 'shopify.app.toml',
       ignorePatterns: [],
     })
-    expect(dependencies.writeArtifacts).toHaveBeenCalledWith(scanExecution, {clean: false})
+    expect(dependencies.writeArtifacts).toHaveBeenCalledWith('/tmp/unlinked-app', {artifact, agentChecks})
     expect(dependencies.renderReport).toHaveBeenCalledWith({
       scan,
       engine,
@@ -142,7 +147,7 @@ describe('securityCheck', () => {
 
     expect(dependencies.execute).toHaveBeenCalledWith({
       appRoot: '/tmp/unlinked-app',
-      configName: 'staging',
+      configFileName: 'shopify.app.staging.toml',
       ignorePatterns: [],
     })
     expect(dependencies.renderReport).toHaveBeenCalledWith(
@@ -164,28 +169,61 @@ describe('securityCheck', () => {
     expect(commands.scan.args).toContainEqual({flag: '--ignore', value: 'generated/'})
     expect(dependencies.execute).toHaveBeenCalledWith({
       appRoot: '/tmp/unlinked-app',
-      configName: undefined,
+      configFileName: 'shopify.app.toml',
       ignorePatterns,
     })
     expect(dependencies.renderReport).toHaveBeenCalledWith(expect.objectContaining({commands}))
     expect(dependencies.deliverInstructions).toHaveBeenCalledWith(expect.objectContaining({commands}))
   })
 
-  test('does not clean artifacts when the replacement scan fails', async () => {
+  test('re-scanning overwrites the check artifacts without prompting and leaves agent findings untouched', async () => {
+    await inTemporaryDirectory(async (appRoot) => {
+      const paths = appSecurityArtifactPaths(appRoot)
+      await mkdir(paths.artifactDirectory)
+      await writeFile(paths.deterministicFindingsPath, '{"previous": "scan"}\n')
+      await writeFile(paths.agentChecksPath, '{"previous": "agent checks"}\n')
+      // Not valid findings on purpose: check must not read, validate, or rewrite this file.
+      const agentFindings = '{"recorded": "by the agent",  "kept": "byte for byte"}'
+      await writeFile(paths.agentFindingsPath, agentFindings)
+
+      const rescanArtifact: DeterministicFindingsDocument = {...artifact, generated_at: '2026-09-01T00:00:00.000Z'}
+      const dependencies = {
+        ...testDependencies({...scanExecution, appRoot, artifact: rescanArtifact}),
+        writeArtifacts: writeCheckArtifacts,
+        canPrompt: vi.fn(() => true),
+      }
+
+      await securityCheck({...testOptions(), directory: appRoot, skipInstructions: true}, dependencies)
+
+      expect(JSON.parse(await readFile(paths.deterministicFindingsPath))).toEqual(rescanArtifact)
+      expect(JSON.parse(await readFile(paths.agentChecksPath))).toEqual(agentChecks)
+      await expect(readFile(paths.agentFindingsPath)).resolves.toBe(agentFindings)
+      expect(dependencies.canPrompt).not.toHaveBeenCalled()
+      expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
+      expect(dependencies.renderReport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          deterministicFindingsPath: paths.deterministicFindingsPath,
+          agentChecksPath: paths.agentChecksPath,
+        }),
+      )
+      expect(dependencies.setExitCode).not.toHaveBeenCalled()
+    })
+  })
+
+  test('does not write artifacts when the scan fails', async () => {
     const dependencies = testDependencies()
     dependencies.execute.mockRejectedValue(new Error('scan failed'))
 
-    await expect(securityCheck({...testOptions(), clean: true}, dependencies)).rejects.toThrow('scan failed')
+    await expect(securityCheck(testOptions(), dependencies)).rejects.toThrow('scan failed')
 
     expect(dependencies.writeArtifacts).not.toHaveBeenCalled()
   })
 
-  test('encodes a tagged JSON scan result', async () => {
+  test('prints the engine, deterministic findings, and agent checks path as JSON', async () => {
     const dependencies = testDependencies()
 
     await securityCheck({...testOptions(), json: true, yes: true}, dependencies)
 
-    expect(dependencies.execute).toHaveBeenCalledWith(expect.objectContaining({appRoot: '/tmp/unlinked-app'}))
     expect(JSON.parse(dependencies.output.mock.calls[0]![0])).toEqual({
       engine,
       deterministic_findings: artifact,
@@ -305,5 +343,13 @@ describe('securityCheck', () => {
     await securityCheck({...testOptions(), blocking: 'high'}, dependencies)
 
     expect(dependencies.setExitCode).toHaveBeenCalledWith(1)
+  })
+
+  test('keeps the default exit code when no finding reaches the blocking level', async () => {
+    const dependencies = testDependencies()
+
+    await securityCheck({...testOptions(), blocking: 'low'}, dependencies)
+
+    expect(dependencies.setExitCode).not.toHaveBeenCalled()
   })
 })

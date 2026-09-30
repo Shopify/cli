@@ -164,11 +164,13 @@ describe('resolveAppSecurityCommands', () => {
       {flag: '--config', value: 'staging'},
     ])
     expect(commands.record.args).toEqual(['app', 'security', 'record', {flag: '--path', value: '/tmp/app'}])
+    expect(commands.clean.args).toEqual(['app', 'security', 'clean', {flag: '--path', value: '/tmp/app'}])
   })
 
-  test('repeats --ignore patterns in order, after --config, on scan and clean but not record', () => {
+  test('repeats --ignore patterns in order, after --config, on scan only', () => {
     const commands = resolveAppSecurityCommands('/tmp/app', 'shopify.app.staging.toml', ['generated/', '!build/'])
-    const scanArgs = [
+
+    expect(commands.scan.args).toEqual([
       'app',
       'security',
       'check',
@@ -176,11 +178,9 @@ describe('resolveAppSecurityCommands', () => {
       {flag: '--config', value: 'staging'},
       {flag: '--ignore', value: 'generated/'},
       {flag: '--ignore', value: '!build/'},
-    ]
-
-    expect(commands.scan.args).toEqual(scanArgs)
-    expect(commands.clean.args).toEqual([...scanArgs, '--clean'])
+    ])
     expect(commands.record.args).toEqual(['app', 'security', 'record', {flag: '--path', value: '/tmp/app'}])
+    expect(commands.clean.args).toEqual(['app', 'security', 'clean', {flag: '--path', value: '/tmp/app'}])
   })
 
   test('omits --ignore when there are no patterns', () => {
@@ -204,6 +204,7 @@ describe('resolveAppSecurityCommands', () => {
     expect(formatAppSecurityCommand(commands.record, 'powershell')).toBe(
       "Get-Content -Raw <findings.json> | shopify app security record --path '/tmp/app'",
     )
+    expect(formatAppSecurityCommand(commands.clean, 'posix')).toBe("shopify app security clean --path '/tmp/app'")
   })
 })
 
@@ -283,9 +284,7 @@ describe('formatAppSecurityCommand', () => {
     expect(formatAppSecurityCommand(commands.scan, 'posix')).toBe(
       "shopify app security check --path '/tmp/app' --config 'staging' --ignore 'generated/'",
     )
-    expect(formatAppSecurityCommand(commands.clean, 'posix')).toBe(
-      "shopify app security check --path '/tmp/app' --config 'staging' --ignore 'generated/' --clean",
-    )
+    expect(formatAppSecurityCommand(commands.clean, 'posix')).toBe("shopify app security clean --path '/tmp/app'")
   })
 
   test('quotes a Windows path with spaces and percents for terminal and instruction shells', () => {
@@ -310,10 +309,9 @@ describe('formatAppSecurityCommand', () => {
         'shopify',
         'app',
         'security',
-        'check',
+        'clean',
         '--path',
         WINDOWS_APP_ROOT,
-        '--clean',
       ])
       expect(formatAppSecurityCommand(commands.scan, shell)).not.toContain('50%%')
       expect(formatAppSecurityCommand(commands.record, shell)).not.toContain('50%%')
@@ -336,10 +334,9 @@ describe('formatAppSecurityCommand', () => {
       'shopify',
       'app',
       'security',
-      'check',
+      'clean',
       '--path',
       PAIRED_PERCENT_ROOT,
-      '--clean',
     ])
     expect(formatAppSecurityCommand(commands.scan, 'cmd')).not.toContain('%NAME%')
     expect(formatAppSecurityCommand(commands.record, 'powershell')).toContain('%NAME%')

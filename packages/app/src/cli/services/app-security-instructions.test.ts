@@ -89,7 +89,7 @@ describe('appSecurityInstructions', () => {
       expect(instructions).toContain(
         `shopify app security check --path ${shellQuote(appRoot)} --config ${shellQuote('staging')}`,
       )
-      expect(instructions).not.toMatch(/shopify app security record --path .+ --config/)
+      expect(instructions).not.toMatch(/shopify app security (record|clean) --path .+ --config/)
     })
   })
 
@@ -174,6 +174,20 @@ describe('appSecurityInstructions', () => {
     })
   })
 
+  test('mentions clean as the way to delete every local artifact', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+      const instructions = appSecurityInstructions({directory: appRoot, scanComplete: true, shell: 'posix'})
+
+      expect(instructions).toContain(
+        'To delete every local App Security artifact, including files left by earlier Shopify CLI versions, run:',
+      )
+      expect(instructions).toContain(
+        codeBlock('bash', `shopify app security clean --path ${quoteShellArgument(appRoot, 'posix')}`),
+      )
+    })
+  })
+
   test.each<[AppSecurityShell, boolean]>([
     ['posix', false],
     ['posix', true],
@@ -187,7 +201,7 @@ describe('appSecurityInstructions', () => {
       expect(instructions).not.toMatch(/compil/i)
       expect(instructions).not.toMatch(/attestation|unsigned/i)
       expect(instructions).not.toMatch(/stale|protected review/i)
-      for (const removed of ['--findings', 'source_scan_id', 'prompt_hash', 'trace.json', 'review.json']) {
+      for (const removed of ['--findings', '--clean', 'source_scan_id', 'prompt_hash', 'trace.json', 'review.json']) {
         expect(instructions).not.toContain(removed)
       }
       expect(instructions).not.toMatch(/\{\{[A-Z_]+\}\}/)

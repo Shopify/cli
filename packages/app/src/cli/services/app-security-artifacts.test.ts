@@ -1,34 +1,56 @@
 import {
   appSecurityArtifactPaths,
+  cleanAppSecurityArtifacts,
   readDeterministicFindings,
-  writeAppSecurityArtifacts,
+  writeCheckArtifacts,
   writeSubmission,
 } from './app-security-artifacts.js'
 import {scanApp, SUBMISSION_SCHEMA_VERSION, type AppSecuritySubmission} from './app-security-engine/index.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
+import {symlink} from 'node:fs/promises'
 
 const submission = {
   schemaVersion: SUBMISSION_SCHEMA_VERSION,
   report: {metadata: {}},
 } as AppSecuritySubmission
 
-describe('appSecurityArtifactPaths', () => {
-  test('resolves every artifact under .shopify/app-security', () => {
-    const paths = appSecurityArtifactPaths('/tmp/example-app')
+async function scanTestApp(directory: string) {
+  await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Test"\nclient_id = "test"\n')
+  return scanApp(directory)
+}
 
-    expect(paths).toEqual({
-      artifactDirectory: joinPath('/tmp/example-app', '.shopify', 'app-security'),
-      deterministicFindingsPath: joinPath(
-        '/tmp/example-app',
-        '.shopify',
-        'app-security',
-        'deterministic-findings.json',
-      ),
-      agentChecksPath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'agent-checks.json'),
-      agentFindingsPath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'agent-findings.json'),
-      submissionPath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'submission.json'),
+async function writeEveryArtifact(directory: string): Promise<string[]> {
+  const paths = appSecurityArtifactPaths(directory)
+  const artifactPaths = [
+    paths.deterministicFindingsPath,
+    paths.agentChecksPath,
+    paths.agentFindingsPath,
+    paths.submissionPath,
+    ...paths.legacyPaths,
+  ]
+  await mkdir(paths.artifactDirectory)
+  await Promise.all(artifactPaths.map((path) => writeFile(path, '{}')))
+  return artifactPaths
+}
+
+describe('appSecurityArtifactPaths', () => {
+  test('resolves every current and legacy artifact under .shopify/app-security', () => {
+    const artifactDirectory = joinPath('/tmp/example-app', '.shopify', 'app-security')
+
+    expect(appSecurityArtifactPaths('/tmp/example-app')).toEqual({
+      artifactDirectory,
+      deterministicFindingsPath: joinPath(artifactDirectory, 'deterministic-findings.json'),
+      agentChecksPath: joinPath(artifactDirectory, 'agent-checks.json'),
+      agentFindingsPath: joinPath(artifactDirectory, 'agent-findings.json'),
+      submissionPath: joinPath(artifactDirectory, 'submission.json'),
+      legacyPaths: [
+        joinPath(artifactDirectory, 'trace.json'),
+        joinPath(artifactDirectory, 'review.json'),
+        joinPath(artifactDirectory, 'findings.json'),
+      ],
     })
   })
 })
@@ -36,12 +58,13 @@ describe('appSecurityArtifactPaths', () => {
 describe('readDeterministicFindings', () => {
   test('returns ok with deterministic findings written by a scan', async () => {
     await inTemporaryDirectory(async (directory) => {
-      await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Test"\nclient_id = "test"\n')
-      const {artifact} = await scanApp(directory)
-      const path = joinPath(directory, 'deterministic-findings.json')
-      await writeFile(path, `${JSON.stringify(artifact)}\n`)
+      const {artifact, agentChecks} = await scanTestApp(directory)
+      const {deterministicFindingsPath} = await writeCheckArtifacts(directory, {artifact, agentChecks})
 
-      await expect(readDeterministicFindings(path)).resolves.toEqual({status: 'ok', value: artifact})
+      await expect(readDeterministicFindings(deterministicFindingsPath)).resolves.toEqual({
+        status: 'ok',
+        value: artifact,
+      })
     })
   })
 
@@ -102,43 +125,130 @@ describe('readDeterministicFindings', () => {
   })
 })
 
-describe('writeAppSecurityArtifacts', () => {
-  test('clean writes a fresh scan before removing only stale default artifacts', async () => {
+describe('writeCheckArtifacts', () => {
+  test('writes deterministic-findings.json and agent-checks.json', async () => {
     await inTemporaryDirectory(async (directory) => {
-      await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Test"\nclient_id = "test"\n')
-      const execution = {...(await scanApp(directory)), elapsedMilliseconds: 1}
+      const {artifact, agentChecks} = await scanTestApp(directory)
       const paths = appSecurityArtifactPaths(directory)
-      await mkdir(paths.artifactDirectory)
-      await writeFile(paths.agentFindingsPath, '{"findings":[]}')
-      await writeFile(paths.submissionPath, '{"submission":true}')
-      const unknownPath = joinPath(paths.artifactDirectory, 'notes.txt')
-      const customFindingsPath = joinPath(directory, 'custom-findings.json')
-      await writeFile(unknownPath, 'keep')
-      await writeFile(customFindingsPath, 'keep')
 
-      await writeAppSecurityArtifacts(execution, {clean: true})
+      await expect(writeCheckArtifacts(directory, {artifact, agentChecks})).resolves.toEqual({
+        deterministicFindingsPath: paths.deterministicFindingsPath,
+        agentChecksPath: paths.agentChecksPath,
+      })
 
-      await expect(fileExists(paths.agentFindingsPath)).resolves.toBe(false)
-      await expect(fileExists(paths.submissionPath)).resolves.toBe(false)
-      await expect(readFile(unknownPath)).resolves.toBe('keep')
-      await expect(readFile(customFindingsPath)).resolves.toBe('keep')
-      await expect(readDeterministicFindings(paths.deterministicFindingsPath)).resolves.toMatchObject({status: 'ok'})
-      await expect(fileExists(paths.agentChecksPath)).resolves.toBe(true)
+      expect(JSON.parse(await readFile(paths.deterministicFindingsPath))).toEqual(artifact)
+      expect(JSON.parse(await readFile(paths.agentChecksPath))).toEqual(agentChecks)
     })
   })
 
-  test('clean surfaces deletion failures after writing the replacement artifacts', async () => {
+  test('overwrites earlier check artifacts and leaves agent-findings.json untouched', async () => {
     await inTemporaryDirectory(async (directory) => {
-      await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Test"\nclient_id = "test"\n')
-      const execution = {...(await scanApp(directory)), elapsedMilliseconds: 1}
+      const {artifact, agentChecks} = await scanTestApp(directory)
       const paths = appSecurityArtifactPaths(directory)
-      await mkdir(paths.agentFindingsPath)
+      await mkdir(paths.artifactDirectory)
+      await writeFile(paths.deterministicFindingsPath, '{"stale":true}')
+      await writeFile(paths.agentChecksPath, '{"stale":true}')
+      await writeFile(paths.agentFindingsPath, '{"recorded":"by the agent"}')
 
-      await expect(writeAppSecurityArtifacts(execution, {clean: true})).rejects.toThrow(
-        `Could not remove stale App Security artifact at ${paths.agentFindingsPath}`,
-      )
-      await expect(readDeterministicFindings(paths.deterministicFindingsPath)).resolves.toMatchObject({status: 'ok'})
-      await expect(fileExists(paths.agentChecksPath)).resolves.toBe(true)
+      await writeCheckArtifacts(directory, {artifact, agentChecks})
+
+      expect(JSON.parse(await readFile(paths.deterministicFindingsPath))).toEqual(artifact)
+      expect(JSON.parse(await readFile(paths.agentChecksPath))).toEqual(agentChecks)
+      await expect(readFile(paths.agentFindingsPath)).resolves.toBe('{"recorded":"by the agent"}')
+    })
+  })
+
+  test('refuses to write through a .shopify symlink that targets outside the app', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const {artifact, agentChecks} = await scanTestApp(directory)
+      await inTemporaryDirectory(async (externalDirectory) => {
+        await symlink(externalDirectory, joinPath(directory, '.shopify'), 'dir')
+
+        await expect(writeCheckArtifacts(directory, {artifact, agentChecks})).rejects.toMatchObject({
+          constructor: AbortError,
+          message: expect.stringMatching(/outside the app/),
+        })
+        await expect(
+          fileExists(joinPath(externalDirectory, 'app-security', 'deterministic-findings.json')),
+        ).resolves.toBe(false)
+      })
+    })
+  })
+})
+
+describe('cleanAppSecurityArtifacts', () => {
+  test('removes every current and legacy artifact and returns the removed paths', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const artifactPaths = await writeEveryArtifact(directory)
+      const unrelatedPath = joinPath(appSecurityArtifactPaths(directory).artifactDirectory, 'notes.txt')
+      await writeFile(unrelatedPath, 'keep')
+
+      await expect(cleanAppSecurityArtifacts(directory)).resolves.toEqual(artifactPaths)
+
+      const remaining = await Promise.all(artifactPaths.map((path) => fileExists(path)))
+      expect(remaining.every((exists) => !exists)).toBe(true)
+      await expect(readFile(unrelatedPath)).resolves.toBe('keep')
+    })
+  })
+
+  test('returns only the artifacts that existed', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const paths = appSecurityArtifactPaths(directory)
+      await mkdir(paths.artifactDirectory)
+      await writeFile(paths.agentFindingsPath, '{}')
+      await writeFile(joinPath(paths.artifactDirectory, 'trace.json'), '{}')
+
+      await expect(cleanAppSecurityArtifacts(directory)).resolves.toEqual([
+        paths.agentFindingsPath,
+        joinPath(paths.artifactDirectory, 'trace.json'),
+      ])
+    })
+  })
+
+  test('returns an empty list without creating the artifact directory when none exist', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await expect(cleanAppSecurityArtifacts(directory)).resolves.toEqual([])
+      await expect(fileExists(appSecurityArtifactPaths(directory).artifactDirectory)).resolves.toBe(false)
+    })
+  })
+
+  test('returns an empty list when the artifact directory is empty', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await mkdir(appSecurityArtifactPaths(directory).artifactDirectory)
+
+      await expect(cleanAppSecurityArtifacts(directory)).resolves.toEqual([])
+    })
+  })
+
+  test('refuses a .shopify symlink that targets outside the app without deleting its files', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await inTemporaryDirectory(async (externalDirectory) => {
+        const externalScanPath = joinPath(externalDirectory, 'app-security', 'deterministic-findings.json')
+        await mkdir(joinPath(externalDirectory, 'app-security'))
+        await writeFile(externalScanPath, '{}')
+        await symlink(externalDirectory, joinPath(directory, '.shopify'), 'dir')
+
+        await expect(cleanAppSecurityArtifacts(directory)).rejects.toMatchObject({
+          constructor: AbortError,
+          message: expect.stringMatching(/symbolic link/),
+        })
+        await expect(fileExists(externalScanPath)).resolves.toBe(true)
+      })
+    })
+  })
+
+  test('removes an artifact symlink without deleting its target', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await inTemporaryDirectory(async (externalDirectory) => {
+        const paths = appSecurityArtifactPaths(directory)
+        const targetPath = joinPath(externalDirectory, 'deterministic-findings.json')
+        await writeFile(targetPath, 'keep')
+        await mkdir(paths.artifactDirectory)
+        await symlink(targetPath, paths.deterministicFindingsPath, 'file')
+
+        await expect(cleanAppSecurityArtifacts(directory)).resolves.toEqual([paths.deterministicFindingsPath])
+        await expect(readFile(targetPath)).resolves.toBe('keep')
+      })
     })
   })
 })

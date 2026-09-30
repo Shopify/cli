@@ -142,6 +142,16 @@ Don't include source code, file paths or secrets in your optional feedback.
 Optionally use `--version` to identify the app version corresponding to the scanned files. This may be a past, current, or future app version. Providing it does not create an app version.
 Submission is not proof of App Store approval; the results remain informational.
 
+## Removing local artifacts
+
+To delete every local App Security artifact, including files left by earlier Shopify CLI versions, run:
+
+```bash
+{{CLEAN_COMMAND}}
+```
+
+Run it only when the user wants the local results removed.
+
 ## Deterministic-only mode
 
 When the user explicitly wants a fast local or CI scan without semantic investigation, run:
