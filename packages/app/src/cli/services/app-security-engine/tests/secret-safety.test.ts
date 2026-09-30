@@ -283,7 +283,10 @@ describe('git status drives severity, not .gitignore text', () => {
       points: -50,
       title: 'Environment file with secrets is ignored by a repository that does not own this app',
       pattern_id: 'environment-file:unconfirmed',
+      rule_version: 3,
     })
+    const execution = result.scan.checks_executed.find((candidate) => candidate.id === 'COMMITTED_SECRET')
+    expect(execution?.version).toBe(3)
     expect(finding!.detection_evidence?.join(' ')).toContain('→ ignored')
     expect(finding!.message).toContain('.env is ignored by an enclosing git repository')
     expect(finding!.message).not.toContain('could not be confirmed')
