@@ -15,6 +15,7 @@ import {OrganizationApp} from '../../models/organization.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {BaseConfigType} from '../../models/extensions/schemas.js'
 import {createConfigExtensionSpecification} from '../../models/extensions/specification.js'
+import appEventsSpec from '../../models/extensions/specifications/app_config_events.js'
 import {AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js'
 import {migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
@@ -495,6 +496,58 @@ describe('classifyDeployExtensionChanges', () => {
       expect.objectContaining({
         configExtensionIdentifiersBreakdown: {
           existingFieldNames: ['webhooks'],
+          existingUpdatedFieldNames: [],
+          newFieldNames: [],
+          deletedFieldNames: [],
+        },
+      }),
+    )
+  })
+
+  test('does not mark events as updated when single-subscription modules match the remote ones', async () => {
+    const localEvents = ['order-notifier', 'product-sync'].map(
+      (handle) =>
+        new ExtensionInstance({
+          specification: appEventsSpec,
+          configuration: {
+            events: {
+              api_version: '2024-01',
+              subscription: {handle, topic: `${handle}/create`, actions: ['create'], uri: 'https://example.com'},
+            },
+          } as BaseConfigType,
+          configurationPath: '/app/shopify.app.toml',
+          directory: '/app',
+        }),
+    )
+    const remoteEvents = await Promise.all(
+      localEvents.map(
+        async (extension): Promise<AppModuleVersion> => ({
+          registrationId: extension.uid,
+          registrationUuid: `${extension.uid}-uuid`,
+          registrationTitle: extension.handle,
+          type: 'events',
+          config: await extension.deployConfig({apiKey: REMOTE_APP.apiKey, appConfiguration: APP.configuration}),
+          specification: {
+            identifier: 'events',
+            name: 'Events',
+            experience: 'configuration',
+            options: {managementExperience: 'cli'},
+          },
+        }),
+      ),
+    )
+
+    await ensureDeployIdentifiersFromAppVersion(
+      deployOptions({
+        app: testApp({...APP, allExtensions: localEvents, specifications: [appEventsSpec]}),
+        activeAppVersion: {appModuleVersions: remoteEvents},
+      }),
+    )
+
+    expect(deployOrReleaseConfirmationPrompt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        configExtensionIdentifiersBreakdown: {
+          existingFieldNames: ['events'],
           existingUpdatedFieldNames: [],
           newFieldNames: [],
           deletedFieldNames: [],
