@@ -1,0 +1,13 @@
+{
+  "label": "app info renderer pilot; extend from the call path for command-wide coverage",
+  "files": [
+    "packages/app/src/cli/commands/app/info.ts",
+    "packages/app/src/cli/services/info.ts",
+    "packages/app/src/cli/services/app/env/show.ts"
+  ],
+  "thresholds": {
+    "lines": 90,
+    "branches": 80,
+    "functions": 90
+  }
+}

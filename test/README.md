@@ -6,7 +6,7 @@ tags: [documentation, testing, cli, vitest]
 
 # CLI command tests
 
-The tests in this directory execute the real CLI end to end through bash. They use isolated fixture directories, intercepted network requests, and real persistent stores. Each test file targets one command.
+The tests in this directory execute the real CLI end to end through bash. They use isolated fixture directories, intercepted network requests, and real persistent stores. Each test file targets one command. Use the [CLI command tests skill](../.agents/skills/cli-command-tests/SKILL.md) to research, write, or extend a suite.
 
 ## Run
 
