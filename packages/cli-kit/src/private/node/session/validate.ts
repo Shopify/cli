@@ -4,6 +4,7 @@ import {applicationId} from './identity.js'
 import {sessionConstants} from '../constants.js'
 import {OAuthApplications} from '../session.js'
 import {outputDebug} from '../../../public/node/output.js'
+import {getArrayRejectingUndefined} from '../../../public/common/array.js'
 
 type ValidationResult = 'needs_refresh' | 'needs_full_auth' | 'ok'
 
@@ -31,32 +32,17 @@ export async function validateSession(
   if (!session) return 'needs_full_auth'
   const scopesAreValid = validateScopes(scopes, session.identity)
   if (!scopesAreValid) return 'needs_full_auth'
-  let tokensAreExpired = isTokenExpired(session.identity)
 
-  if (applications.partnersApi) {
-    const appId = applicationId('partners')
-    const token = session.applications[appId]!
-    tokensAreExpired = tokensAreExpired || isTokenExpired(token)
-  }
+  const requestedTokenIds = getArrayRejectingUndefined([
+    applications.partnersApi ? applicationId('partners') : undefined,
+    applications.appManagementApi ? applicationId('app-management') : undefined,
+    applications.storefrontRendererApi ? applicationId('storefront-renderer') : undefined,
+    applications.adminApi ? `${applications.adminApi.storeFqdn}-${applicationId('admin')}` : undefined,
+  ])
 
-  if (applications.appManagementApi) {
-    const appId = applicationId('app-management')
-    const token = session.applications[appId]!
-    tokensAreExpired = tokensAreExpired || isTokenExpired(token)
-  }
-
-  if (applications.storefrontRendererApi) {
-    const appId = applicationId('storefront-renderer')
-    const token = session.applications[appId]!
-    tokensAreExpired = tokensAreExpired || isTokenExpired(token)
-  }
-
-  if (applications.adminApi) {
-    const appId = applicationId('admin')
-    const realAppId = `${applications.adminApi.storeFqdn}-${appId}`
-    const token = session.applications[realAppId]!
-    tokensAreExpired = tokensAreExpired || isTokenExpired(token)
-  }
+  const tokensAreExpired =
+    isTokenExpired(session.identity) ||
+    requestedTokenIds.some((tokenId) => isTokenExpired(session.applications[tokenId]!))
 
   outputDebug(`- Token validation -> It's expired: ${tokensAreExpired}`)
 
