@@ -10,7 +10,9 @@ import {
   findManifests,
   findManifestPaths,
   findDependencyAutomationInputs,
+  listRepositoryFiles,
 } from './discover.js'
+import {buildPathRules, listGitIgnoredPaths} from './path-rules.js'
 import {detectCapabilities, detectProject} from '../capabilities/detect.js'
 import {computeScanMetadata} from '../scorer/index.js'
 import {deprecatedScriptTagScope, insecureWebhookUrl} from '../rules/config-rules.js'
@@ -156,12 +158,12 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
   configRule(insecureWebhookUrl, 2),
   {
     id: 'COMMITTED_SECRET',
-    version: 2,
+    version: 3,
     lifecycle: 'active',
     analysisMode: 'regex',
     target: 'secrets',
     guidance: "Review secret-bearing files and rotate any exposed credential; don't include secret values in evidence.",
-    runner: (context) => scanCommittedSecrets(context.sensitiveFiles, context.appRoot),
+    runner: (context) => scanCommittedSecrets(context.sensitiveFiles, context.appRoot, context.gitIgnoreListing),
   },
   jsCheck('CREDENTIAL_LOG_LEAKAGE', (context) => scanCredentialLogLeakage(context.sourceFiles)),
   jsCheck('CREDENTIAL_BROWSER_LEAKAGE', (context) => scanCredentialBrowserLeakage(context.sourceFiles)),
@@ -585,14 +587,22 @@ export async function scan(startPath?: string, configFileName?: string): Promise
   const selectedFileName = getAppConfigurationFileName(configFileName)
   const appToml = loadAppToml(joinPath(appRoot, selectedFileName), appRoot)
   const appTomls = appToml ? [appToml] : []
-  const extensions = findExtensions(appRoot)
-  const sourceCandidates = findSourceCandidates(appRoot)
-  const sourceFiles = findAppSourceFiles(appRoot)
-  const sensitiveFiles = findSensitiveFiles(appRoot, selectedFileName)
-  const manifestPaths = findManifestPaths(appRoot)
+  const gitIgnoreListing = await listGitIgnoredPaths(appRoot)
+  const pathRules = buildPathRules({
+    gitIgnoredPaths: gitIgnoreListing.status === 'listed' ? gitIgnoreListing.paths : [],
+  })
+  const repositoryFiles = listRepositoryFiles(appRoot, pathRules)
+  const extensions = findExtensions(appRoot, repositoryFiles)
+  const sourceCandidates = findSourceCandidates(repositoryFiles)
+  const sourceFiles = findAppSourceFiles(appRoot, repositoryFiles)
+  // The selected app configuration is an explicit input, not a discovered path: it's loaded and
+  // scanned for secrets even when path rules exclude it.
+  const sensitivePaths = appToml ? [...new Set([...repositoryFiles, selectedFileName])].sort() : repositoryFiles
+  const sensitiveFiles = findSensitiveFiles(appRoot, sensitivePaths, selectedFileName)
+  const manifestPaths = findManifestPaths(repositoryFiles)
   const manifests = findManifests(appRoot, manifestPaths)
   const dependencyAutomation = manifests.some(manifestHasDependencies)
-    ? findDependencyAutomationInputs(appRoot)
+    ? findDependencyAutomationInputs(appRoot, pathRules)
     : {files: []}
   const capabilities = detectCapabilities(appToml, extensions, sourceFiles, appTomls)
   const detection = detectProject(manifests, extensions, sourceCandidates)
@@ -608,6 +618,7 @@ export async function scan(startPath?: string, configFileName?: string): Promise
     capabilities,
     detection,
     sourceCandidates,
+    gitIgnoreListing: gitIgnoreListing.status,
   }
 
   let issues: Issue[] = []

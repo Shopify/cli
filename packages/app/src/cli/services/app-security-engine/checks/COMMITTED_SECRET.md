@@ -1,6 +1,6 @@
 ---
 id: COMMITTED_SECRET
-version: 2
+version: 3
 severity: high
 ---
 

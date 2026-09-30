@@ -51,6 +51,7 @@ function context(
     },
     detection: {framework: input.framework ?? 'react_router', surface: 'react_router', languages: []},
     sourceCandidates: [],
+    gitIgnoreListing: 'listed',
   }
 }
 
