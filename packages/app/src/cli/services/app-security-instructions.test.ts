@@ -59,7 +59,7 @@ describe('appSecurityInstructions', () => {
       expect(instructions).toContain('### 1. Run the initial scan')
       expect(instructions).toContain(`shopify app security check --path ${shellQuote(appRoot)}`)
       expect(instructions).not.toMatch(/shopify app security check --path .+ --config/)
-      expect(instructions).toContain(joinPath(appRoot, '.shopify', 'app-security', 'trace.json'))
+      expect(instructions).toContain(joinPath(appRoot, '.shopify', 'app-security', 'deterministic-findings.json'))
       expect(instructions).not.toContain('{{SCAN_CONTEXT}}')
       expect(instructions).not.toContain('{{SCAN_COMMAND}}')
     })
@@ -100,7 +100,7 @@ describe('appSecurityInstructions', () => {
 
       expect(instructions).toContain(`Start a new review with \`${cleanCommand}\``)
       expect(instructions).toContain(
-        'Submission reads the existing trace and does not require or perform another scan.',
+        `Submission reads the existing \`${joinPath(appRoot, '.shopify', 'app-security', 'deterministic-findings.json')}\` and does not require or perform another scan.`,
       )
       expect(instructions).not.toContain('{{CLEAN_COMMAND}}')
     })
@@ -212,7 +212,7 @@ describe('deliverAppSecurityInstructions', () => {
       )
       expect(instructions).not.toContain('--source-control-url')
       expect(instructions).not.toContain('--source-control-hash')
-      expect(instructions).toContain('Submission does not make the trace signed or proof of App Store approval')
+      expect(instructions).toContain('Submission does not make the scan signed or proof of App Store approval')
       const submitSection = instructions.indexOf('### 5. Submit only when explicitly authorized (optional)')
       expect(submitSection).toBeGreaterThan(instructions.indexOf('### 4. Explain findings and help fix them'))
       expect(instructions).toContain('Only after reviewing')

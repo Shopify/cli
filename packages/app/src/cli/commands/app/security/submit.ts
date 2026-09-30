@@ -14,7 +14,7 @@ export default class SecuritySubmit extends BaseCommand {
 
   static summary = 'Submit App Security results to Shopify.'
 
-  static descriptionWithMarkdown = `Reads the most recent App Security trace, writes a \`.shopify/app-security/submission.json\` file for inspection, asks for confirmation, and uploads the result to Shopify.
+  static descriptionWithMarkdown = `Reads the most recent App Security scan (\`.shopify/app-security/deterministic-findings.json\`), writes a \`.shopify/app-security/submission.json\` file for inspection, asks for confirmation, and uploads the result to Shopify.
 
 Generated report fields exclude source code, file paths, code snippets, evidence, finding messages, and commit identifiers. Optional feedback is included without redaction. Optionally use \`--version\` to identify the app version corresponding to the scanned files. Use \`--dry-run\` to write and inspect the exact payload without uploading it.`
 

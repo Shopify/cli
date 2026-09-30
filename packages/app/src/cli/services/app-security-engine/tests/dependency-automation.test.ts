@@ -5,7 +5,7 @@ import {formatJson} from '../output/format.js'
 import {getRegistry} from '../registry/index.js'
 import {DETERMINISTIC_CHECKS, scan} from '../scanners/index.js'
 import {buildSubmission} from '../submission/index.js'
-import {validateTrace} from '../trace/index.js'
+import {parseDeterministicFindings} from '../scan-artifact/index.js'
 import {scanApp} from '../run.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -88,7 +88,7 @@ describe('dependency automation scanner integration', () => {
     })
   })
 
-  test('reports one ordinary finding through scoring, blocking, trace, and submission', async () => {
+  test('reports one ordinary finding through scoring, blocking, deterministic-findings.json, and submission', async () => {
     await inTemporaryDirectory(async (root) => {
       await makeApp(root, {
         'extensions/app-home/package.json': JSON.stringify({dependencies: {react: '^19.0.0'}}),
@@ -99,14 +99,16 @@ describe('dependency automation scanner integration', () => {
       ])
       expect(dependencyExecution(execution.scan)).toMatchObject({
         status: 'executed',
-        required: true,
         findings: 1,
         inspected_files: ['extensions/app-home/package.json', 'package.json'],
       })
       expect(formatJson(execution.scan)).toContain(checkId)
-      expect(validateTrace(execution.trace)).toEqual({valid: true, errors: []})
-      const submission = buildSubmission(execution.trace, {cliVersion: '3.99.0', submittedAt: '2026-09-15T00:00:00Z'})
-      for (const findings of [execution.trace.findings, submission.report.findings]) {
+      expect(parseDeterministicFindings(execution.artifact).ok).toBe(true)
+      const submission = buildSubmission(execution.artifact, {
+        cliVersion: '3.99.0',
+        submittedAt: '2026-09-15T00:00:00Z',
+      })
+      for (const findings of [execution.artifact.findings, submission.report.findings]) {
         expect(findings).toContainEqual(expect.objectContaining({rule_id: checkId, severity: 'low'}))
       }
       expect(securityExitCode({...execution, elapsedMilliseconds: 0}, 'low')).toBe(1)
@@ -135,9 +137,12 @@ describe('dependency automation scanner integration', () => {
           inspected_files: expectedFiles,
         })
         expect(securityExitCode({...execution, elapsedMilliseconds: 0}, 'low')).toBe(0)
-        const submission = buildSubmission(execution.trace, {cliVersion: '3.99.0', submittedAt: '2026-09-15T00:00:00Z'})
+        const submission = buildSubmission(execution.artifact, {
+          cliVersion: '3.99.0',
+          submittedAt: '2026-09-15T00:00:00Z',
+        })
         expect(JSON.stringify(submission)).not.toContain('local>org/renovate-config')
-        expect(JSON.stringify(execution.trace)).not.toContain('local>org/renovate-config')
+        expect(JSON.stringify(execution.artifact)).not.toContain('local>org/renovate-config')
         // Outside any repository, ignored-path discovery stops at its first probe.
         expect(vi.mocked(captureOutputWithExitCode).mock.calls.map(([command, args]) => [command, args])).toEqual([
           ['git', ['rev-parse', '--is-inside-work-tree', '--show-prefix']],
@@ -178,7 +183,7 @@ describe('dependency automation scanner integration', () => {
         const result = await scan(root)
         expect(dependencyFindings(result)).toHaveLength(1)
         expect(dependencyExecution(result)).toMatchObject({status: 'executed', inspected_files: ['package.json']})
-        expect(result.scan.coverage_complete).toBe(true)
+        expect(result.scan.coverage_gaps).toEqual([])
       })
     })
 
@@ -265,7 +270,7 @@ describe('dependency automation scanner integration', () => {
       const result = await scan(root)
       expect(dependencyFindings(result)).toEqual([])
       expect(dependencyExecution(result)).toMatchObject({status: 'unresolved', findings: 0})
-      expect(result.scan.coverage_complete).toBe(false)
+      expect(result.scan.coverage_gaps).not.toEqual([])
     })
   })
 

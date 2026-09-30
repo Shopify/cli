@@ -24,7 +24,7 @@ describe('app security submit command', () => {
     process.exitCode = previousExitCode
   })
 
-  test('is hidden and lets the service link only after trace validation', () => {
+  test('is hidden and lets the service link only after reading the scan', () => {
     expect(SecuritySubmit.hidden).toBe(true)
     expect(SecuritySubmit.prototype).toBeInstanceOf(BaseCommand)
     expect(SecuritySubmit.prototype).not.toBeInstanceOf(AppLinkedCommand)
@@ -32,6 +32,7 @@ describe('app security submit command', () => {
     expect(SecuritySubmit.flags.config).toBe(appFlags.config)
     expect(SecuritySubmit.flags['client-id']).toBe(appFlags['client-id'])
     expect(SecuritySubmit.args).not.toHaveProperty('directory')
+    expect(SecuritySubmit.descriptionWithMarkdown).toContain('`.shopify/app-security/deterministic-findings.json`')
     expect(SecuritySubmit.descriptionWithMarkdown).toContain('Generated report fields exclude source code, file paths')
     expect(SecuritySubmit.descriptionWithMarkdown).toContain('Optional feedback is included without redaction')
     expect(SecuritySubmit.descriptionWithMarkdown).not.toContain(

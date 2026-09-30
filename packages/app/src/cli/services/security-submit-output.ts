@@ -83,9 +83,6 @@ export function renderSecuritySubmitConfirmation(
       ...(input.submission.report.feedback === null ? {} : {Included: ['Optional feedback, sent without redaction']}),
       Excluded: ['file paths, code snippets, evidence, finding messages, commit SHA'],
       Payload: [{filePath: input.submissionPath}],
-      ...(input.submission.report.project.dirty === true
-        ? {Warning: [{warn: 'The trace was generated with uncommitted changes.'}]}
-        : {}),
     },
   })
 }

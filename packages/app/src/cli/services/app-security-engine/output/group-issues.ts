@@ -12,7 +12,7 @@ function groupKey(issue: Issue): string {
   return [issue.id, issue.pattern_id ?? '', issue.severity].join('|')
 }
 
-/** A presentation view only: never replace scan issues or trace findings with these groups. */
+/** A presentation view only: never replace scan issues or deterministic-findings.json findings with these groups. */
 export function groupIssues(issues: Issue[]): IssueGroup[] {
   const groups = new Map<string, IssueGroup>()
   const sorted = [...issues].sort(

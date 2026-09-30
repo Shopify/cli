@@ -39,7 +39,6 @@ const scanWithIssues: ScanResult = {
     rules_run: 18,
     rules_skipped: 0,
     files_skipped_count: 0,
-    coverage_complete: true,
     coverage_gaps: [],
     checks_executed: [],
   },
@@ -75,7 +74,7 @@ function reportInput(overrides: Partial<SecurityReportInput> = {}): SecurityRepo
     verbose: false,
     elapsedMilliseconds: 125,
     commands: resolveAppSecurityCommands('/tmp/app'),
-    tracePath: '/tmp/app/.shopify/app-security/trace.json',
+    deterministicFindingsPath: '/tmp/app/.shopify/app-security/deterministic-findings.json',
     reviewPath: '/tmp/app/.shopify/app-security/review.json',
     reviewCheckCount: 31,
     ...overrides,
@@ -121,7 +120,7 @@ describe('buildSecurityAlert', () => {
       list: {
         items: [
           ['Review pack:', {filePath: '/tmp/app/.shopify/app-security/review.json'}],
-          ['Trace:', {filePath: '/tmp/app/.shopify/app-security/trace.json'}],
+          ['Scan results:', {filePath: '/tmp/app/.shopify/app-security/deterministic-findings.json'}],
         ],
       },
     })
@@ -240,7 +239,6 @@ describe('buildSecurityAlert', () => {
         detection: {...scanWithIssues.detection, framework: 'unknown', surface: 'unknown'},
         scan: {
           ...scanWithIssues.scan,
-          coverage_complete: false,
           coverage_gaps: [{code: 'unsupported_framework', message: 'Backend could not be classified.'}],
         },
       },

@@ -46,20 +46,20 @@ async function createApp(directory: string, source = 'export const loader = () =
 }
 
 describe('App Security CLI integration', () => {
-  test('runs the in-tree engine and writes the review pack and trace', async () => {
+  test('runs the in-tree engine and writes the review pack and scan', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
 
       const result = await runSecurity({directory, blocking: 'none'})
       const review = JSON.parse(await readFile(artifactPath(directory, 'review.json')))
-      const trace = JSON.parse(await readFile(artifactPath(directory, 'trace.json')))
+      const deterministicFindings = JSON.parse(await readFile(artifactPath(directory, 'deterministic-findings.json')))
 
       expect(review.schema_version).toBe(1)
       expect(review.checks.length).toBeGreaterThan(0)
       expect(review.checks.every((check: {prompt: string}) => check.prompt.length > 0)).toBe(true)
-      expect(trace.schema_version).toBe(3)
-      expect(trace.engine.name).toBe('shopify-app-security')
-      expect(result.engine).toEqual(trace.engine)
+      expect(deterministicFindings.schema_version).toBe(1)
+      expect(deterministicFindings.engine.name).toBe('shopify-app-security')
+      expect(result.engine).toEqual(deterministicFindings.engine)
       expect(result.reviewPath).toBe(artifactPath(directory, 'review.json'))
       expect(result.reviewCheckCount).toBe(review.checks.length)
       expect(result.exitCode).toBe(0)
@@ -142,7 +142,9 @@ describe('App Security CLI integration', () => {
           message: expect.stringMatching(/outside the app/),
           tryMessage: 'Remove or replace the unsafe App Security artifact path, then run the command again.',
         })
-        await expect(readFile(joinPath(externalDirectory, 'app-security', 'trace.json'))).rejects.toThrow()
+        await expect(
+          readFile(joinPath(externalDirectory, 'app-security', 'deterministic-findings.json')),
+        ).rejects.toThrow()
       })
     })
   })
@@ -158,7 +160,9 @@ describe('App Security CLI integration', () => {
           message: expect.stringMatching(/outside the app/),
           tryMessage: 'Remove or replace the unsafe App Security artifact path, then run the command again.',
         })
-        await expect(readFile(joinPath(externalDirectory, 'app-security', 'trace.json'))).rejects.toThrow()
+        await expect(
+          readFile(joinPath(externalDirectory, 'app-security', 'deterministic-findings.json')),
+        ).rejects.toThrow()
       })
     })
   })
@@ -193,11 +197,12 @@ describe('App Security CLI integration', () => {
         },
       )
 
-      const payload = JSON.parse(output.mock.calls[0]![0]) as {operation: string; trace: {schema_version: number}}
-      expect(payload.operation).toBe('scan')
-      expect(payload.trace.schema_version).toBe(3)
+      const payload = JSON.parse(output.mock.calls[0]![0]) as {deterministic_findings: {schema_version: number}}
+      expect(payload.deterministic_findings.schema_version).toBe(1)
       await expect(readFile(artifactPath(directory, 'review.json'))).resolves.toContain('"checks"')
-      await expect(readFile(artifactPath(directory, 'trace.json'))).resolves.toContain('"schema_version"')
+      await expect(readFile(artifactPath(directory, 'deterministic-findings.json'))).resolves.toContain(
+        '"schema_version"',
+      )
       expect(setExitCode).not.toHaveBeenCalled()
     })
   })

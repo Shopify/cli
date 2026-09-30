@@ -405,7 +405,7 @@ function readBoundedFile(path: string): RepositoryReadResult {
     const size = fileSizeSync(path)
     if (size > MAX_REPOSITORY_FILE_SIZE_BYTES) return {ok: false, reason: 'too_large', sizeBytes: size}
     return {ok: true, content: readFileSync(path)}
-    // Discovery records unreadable files for trace coverage.
+    // Discovery records unreadable files as scan coverage gaps.
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return {

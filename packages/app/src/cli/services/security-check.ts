@@ -102,7 +102,7 @@ function securityReportInput(
     verbose,
     elapsedMilliseconds: execution.elapsedMilliseconds,
     commands,
-    tracePath: artifacts.tracePath,
+    deterministicFindingsPath: artifacts.deterministicFindingsPath,
     reviewPath: artifacts.reviewPath,
     reviewCheckCount: execution.reviewPack.checks.length,
   }

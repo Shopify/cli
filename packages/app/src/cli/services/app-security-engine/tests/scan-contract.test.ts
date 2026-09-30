@@ -2,7 +2,6 @@
 import {buildReviewPack} from '../checks/index.js'
 import {assertRegistryInvariants, getRegistry} from '../registry/index.js'
 import {DETERMINISTIC_CHECKS, scan} from '../scanners/index.js'
-import {compileTrace, validateTrace} from '../trace/index.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {afterEach, describe, expect, test} from 'vitest'
 import {mkdir, mkdtemp, rm, writeFile} from 'node:fs/promises'
@@ -46,7 +45,7 @@ describe('framework and surface detection', () => {
   test('detects config-only, theme extension, mixed, and unknown surfaces', async () => {
     const configOnly = await scan(await app({'shopify.app.toml': appConfig()}))
     expect(configOnly.detection).toMatchObject({framework: 'none', surface: 'config_only'})
-    expect(configOnly.scan.coverage_complete).toBe(true)
+    expect(configOnly.scan.coverage_gaps).toEqual([])
 
     const theme = await scan(
       await app({
@@ -71,7 +70,7 @@ describe('framework and surface detection', () => {
 
     const unknown = await scan(await app({'shopify.app.toml': appConfig(), 'server.ts': 'export const server = {}'}))
     expect(unknown.detection).toMatchObject({framework: 'unknown', surface: 'unknown'})
-    expect(unknown.scan.coverage_complete).toBe(false)
+    expect(unknown.scan.coverage_gaps).not.toEqual([])
     expect(
       unknown.scan.checks_executed.find((execution) => execution.id === 'MISSING_COMPLIANCE_WEBHOOKS'),
     ).toMatchObject({status: 'executed'})
@@ -99,7 +98,6 @@ describe('framework and surface detection', () => {
       {
         status: 'unresolved',
         reason: {code: 'parser_unavailable'},
-        guidance: expect.stringMatching(/offline-token/i),
       },
     )
 
@@ -206,7 +204,7 @@ describe('framework and surface detection', () => {
     })
   })
 
-  test('does not report findings from a sibling app configuration', async () => {
+  test('does not report findings or inspect a sibling app configuration', async () => {
     const directory = await app({
       'shopify.app.toml': appConfig(),
       'shopify.app.production.toml': appConfig('write_script_tags'),
@@ -217,6 +215,9 @@ describe('framework and surface detection', () => {
 
     expect(deprecated).toMatchObject({status: 'executed', findings: 0, inspected_files: ['shopify.app.toml']})
     expect(result.issues.filter((issue) => issue.id === 'DEPRECATED_SCRIPT_TAG_SCOPE')).toEqual([])
+    expect(result.scan.checks_executed.flatMap((execution) => execution.inspected_files)).not.toContain(
+      'shopify.app.production.toml',
+    )
   })
 
   test('keeps React Router and theme implementations inside their supported file boundaries', async () => {
@@ -234,9 +235,9 @@ describe('framework and surface detection', () => {
     expect(themeRequestCheck.status).toBe('not_applicable')
     expect(themeRequestCheck.inspected_files).toEqual([])
     expect(themeUnsafe.status).toBe('executed')
-    expect(themeUnsafe.implementations?.map((implementation) => implementation.id)).toEqual([
-      'theme-js-regex',
-      'theme-liquid-ast',
+    expect(themeUnsafe.inspected_files).toEqual([
+      'extensions/theme/assets/widget.mjs',
+      'extensions/theme/blocks/app.liquid',
     ])
 
     const mixed = await scan(
@@ -256,13 +257,13 @@ describe('framework and surface detection', () => {
     const mixedUnsafe = mixed.scan.checks_executed.find((execution) => execution.id === 'UNSAFE_INNERHTML')!
     expect(mixed.detection).toMatchObject({framework: 'react_router', surface: 'mixed'})
     expect(mixedRequestCheck.inspected_files).not.toContain('extensions/theme/assets/widget.cjs')
-    expect(mixedUnsafe.implementations?.map((implementation) => implementation.id)).toEqual([
-      'react-router-js-regex',
-      'theme-js-regex',
-      'theme-liquid-ast',
+    expect(mixedUnsafe.inspected_files).toEqual([
+      'app/routes/index.mts',
+      'app/shopify.server.mts',
+      'extensions/theme/assets/widget.cjs',
+      'extensions/theme/blocks/app.liquid',
     ])
     expect(mixed.issues.filter((issue) => issue.id === 'UNSAFE_INNERHTML')).toHaveLength(2)
-    expect(validateTrace(compileTrace(mixed)).valid).toBe(true)
   })
 
   test('requires the Shopify React Router package and reports unsupported app languages', async () => {
@@ -382,7 +383,7 @@ redirect_urls = ["http://app.example/callback"]
     const execution = result.scan.checks_executed.find((check) => check.id === 'INSECURE_WEBHOOK_URL')
     const issue = result.issues.find((finding) => finding.id === 'INSECURE_WEBHOOK_URL')
 
-    expect(execution).toMatchObject({status: 'executed', required: true, applicable: true})
+    expect(execution).toMatchObject({status: 'executed', applicable: true})
     expect(issue).toMatchObject({
       title: 'Configured callback URL is not HTTPS',
       message: expect.stringContaining('OAuth redirect URI'),
@@ -410,7 +411,7 @@ redirect_urls = ["http://app.example/callback"]
       status: 'unresolved',
       reason: {code: 'input_rejected'},
     })
-    expect(result.scan.coverage_complete).toBe(false)
+    expect(result.scan.coverage_gaps).not.toEqual([])
     expect(result.issues.map((issue) => issue.id)).toContain('DEPRECATED_SCRIPT_TAG_SCOPE')
   })
 })
@@ -450,39 +451,6 @@ describe('runtime identities', () => {
         agent: [],
       }),
     ).toThrow(/has no runner/)
-  })
-})
-
-describe('coverage and trace invariants', () => {
-  test('rejects impossible execution and completeness combinations', async () => {
-    const directory = await app({
-      'shopify.app.toml': appConfig(),
-      'package.json': reactPackage,
-      'app/shopify.server.ts': 'export const shopify = {}',
-      'app/routes/index.ts': 'export const loader = () => null',
-    })
-    const trace = compileTrace(await scan(directory), {generatedAt: '2026-08-31T00:00:00.000Z'})
-    const sourceExecution = trace.checks_executed.find(
-      (execution) =>
-        execution.kind === 'deterministic' && execution.analysis_mode === 'regex' && execution.status === 'executed',
-    )!
-
-    sourceExecution.inspected_files = []
-    expect(validateTrace(trace).errors.join(' ')).toMatch(/requires inspected files/)
-
-    trace.coverage.complete = true
-    sourceExecution.status = 'unresolved'
-    sourceExecution.required = true
-    sourceExecution.reason = {code: 'parser_unavailable', message: 'Parser failed.'}
-    sourceExecution.guidance = 'Inspect this check with an agent.'
-    expect(validateTrace(trace).errors.join(' ')).toMatch(/coverage complete claim is inconsistent/)
-
-    sourceExecution.status = 'unsupported_framework'
-    sourceExecution.findings = 1
-    expect(validateTrace(trace).errors.join(' ')).toMatch(/zero findings/)
-
-    delete sourceExecution.guidance
-    expect(validateTrace(trace).errors.join(' ')).toMatch(/reason and handoff guidance/)
   })
 })
 

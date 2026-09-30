@@ -1,7 +1,7 @@
 {
   "schemaVersion": 0,
   "report": {
-    "trace_schema_version": 3,
+    "scan_schema_version": 1,
     "engine": {
       "name": "shopify-app-security",
       "version": "0.1.0",
@@ -49,64 +49,42 @@
     ],
     "checks_executed": [
       {
-        "id": "UNSAFE_INNERHTML",
-        "version": 2,
-        "kind": "deterministic",
-        "status": "executed",
-        "required": true,
-        "applicable": true,
-        "analysis_mode": "regex",
-        "finding_count": 1,
-        "inspected_file_count": 1,
-        "implementations": [
-          {
-            "id": "react-router-js-regex",
-            "analysis_mode": "regex",
-            "status": "executed",
-            "finding_count": 1,
-            "inspected_file_count": 1
-          }
-        ]
-      },
-      {
         "id": "CREDENTIAL_LOG_LEAKAGE",
         "version": 1,
-        "kind": "deterministic",
         "status": "executed",
-        "required": false,
         "applicable": true,
         "analysis_mode": "regex",
-        "finding_count": 1,
-        "inspected_file_count": 1
+        "finding_count": 1
       },
       {
-        "id": "NO_RELEVANT_CHECK",
+        "id": "LIQUID_UNSAFE_RENDER",
         "version": 1,
-        "kind": "deterministic",
-        "status": "not_applicable",
-        "required": false,
-        "applicable": false,
-        "analysis_mode": "regex",
-        "finding_count": 0,
-        "inspected_file_count": 0,
-        "reason_code": "no_relevant_files"
-      },
-      {
-        "id": "UNRESOLVED_CHECK",
-        "version": 1,
-        "kind": "deterministic",
         "status": "unresolved",
-        "required": true,
         "applicable": true,
         "analysis_mode": "ast",
         "finding_count": 0,
-        "inspected_file_count": 0,
         "reason_code": "parser_unavailable"
+      },
+      {
+        "id": "STATIC_FRAME_ANCESTORS",
+        "version": 1,
+        "status": "not_applicable",
+        "applicable": false,
+        "analysis_mode": "regex",
+        "finding_count": 0,
+        "reason_code": "capability_absent"
+      },
+      {
+        "id": "UNSAFE_INNERHTML",
+        "version": 2,
+        "status": "executed",
+        "applicable": true,
+        "analysis_mode": "regex",
+        "finding_count": 1
       }
     ],
     "coverage": {
       "files_scanned": 3,
-      "complete": false,
       "files_skipped": {
         "too_large": 1,
         "unreadable": 2
@@ -117,7 +95,7 @@
         },
         {
           "code": "unresolved_check",
-          "check_id": "UNRESOLVED_CHECK"
+          "check_id": "LIQUID_UNSAFE_RENDER"
         }
       ]
     }

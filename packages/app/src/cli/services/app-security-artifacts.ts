@@ -1,4 +1,4 @@
-import {parseTrace, type TraceV3} from './app-security-engine/index.js'
+import {parseDeterministicFindings, type DeterministicFindingsDocument} from './app-security-engine/index.js'
 import {fileExists, fileSize, readFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
@@ -6,11 +6,11 @@ import {randomBytes} from 'node:crypto'
 import {lstat, mkdir, realpath, rename, unlink, writeFile} from 'node:fs/promises'
 import type {AppSecurityExecution} from './app-security-api.js'
 
-const MAX_TRACE_FILE_SIZE_BYTES = 5_000_000
+const MAX_ARTIFACT_FILE_SIZE_BYTES = 5_000_000
 
 export interface AppSecurityArtifactPaths {
   artifactDirectory: string
-  tracePath: string
+  deterministicFindingsPath: string
   reviewPath?: string
 }
 
@@ -19,10 +19,10 @@ export interface ResolvedAppSecurityArtifactPaths extends Required<AppSecurityAr
   submissionPath: string
 }
 
-export type ReadTraceResult =
-  | {status: 'ok'; trace: TraceV3}
+export type ReadArtifactResult<T> =
+  | {status: 'ok'; value: T}
   | {status: 'missing'}
-  | {status: 'invalid'; errors: string[]}
+  | {status: 'invalid'; message: string}
 
 export function appSecurityArtifactPaths(appRoot: string): ResolvedAppSecurityArtifactPaths {
   const artifactDirectory = joinPath(appRoot, '.shopify', 'app-security')
@@ -31,7 +31,7 @@ export function appSecurityArtifactPaths(appRoot: string): ResolvedAppSecurityAr
     reviewPath: joinPath(artifactDirectory, 'review.json'),
     findingsPath: joinPath(artifactDirectory, 'findings.json'),
     submissionPath: joinPath(artifactDirectory, 'submission.json'),
-    tracePath: joinPath(artifactDirectory, 'trace.json'),
+    deterministicFindingsPath: joinPath(artifactDirectory, 'deterministic-findings.json'),
   }
 }
 
@@ -45,7 +45,7 @@ export async function writeAppSecurityArtifacts(
 ): Promise<AppSecurityArtifactPaths> {
   const paths = appSecurityArtifactPaths(execution.appRoot)
   await ensureArtifactDirectory(execution.appRoot, paths.artifactDirectory)
-  await writeAtomicArtifact(paths.tracePath, `${JSON.stringify(execution.trace, null, 2)}\n`)
+  await writeAtomicArtifact(paths.deterministicFindingsPath, `${JSON.stringify(execution.artifact, null, 2)}\n`)
   await writeAtomicArtifact(paths.reviewPath, `${JSON.stringify(execution.reviewPack, null, 2)}\n`)
   if (options.clean) {
     await removeStaleArtifact(paths.findingsPath)
@@ -54,7 +54,7 @@ export async function writeAppSecurityArtifacts(
   return {
     artifactDirectory: paths.artifactDirectory,
     reviewPath: paths.reviewPath,
-    tracePath: paths.tracePath,
+    deterministicFindingsPath: paths.deterministicFindingsPath,
   }
 }
 
@@ -146,33 +146,39 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
-export async function readTrace(path: string): Promise<ReadTraceResult> {
+export async function readDeterministicFindings(
+  path: string,
+): Promise<ReadArtifactResult<DeterministicFindingsDocument>> {
+  const result = await readJsonArtifact(path)
+  if (result.status !== 'ok') return result
+
+  const parsed = parseDeterministicFindings(result.value)
+  if (!parsed.ok) return {status: 'invalid', message: parsed.errors.join('; ')}
+  return {status: 'ok', value: parsed.artifact}
+}
+
+async function readJsonArtifact(path: string): Promise<ReadArtifactResult<unknown>> {
   if (!(await fileExists(path))) return {status: 'missing'}
 
   let content: string
   try {
-    if ((await fileSize(path)) > MAX_TRACE_FILE_SIZE_BYTES) {
-      return {status: 'invalid', errors: ['The trace file is larger than 5 MB.']}
+    if ((await fileSize(path)) > MAX_ARTIFACT_FILE_SIZE_BYTES) {
+      return {status: 'invalid', message: 'The file is larger than 5 MB.'}
     }
     content = await readFile(path)
     // Filesystem failures are returned for command-layer rendering.
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return {status: 'invalid', errors: [`Could not read the trace file: ${errorMessage(error)}`]}
+    return {status: 'invalid', message: `Could not read the file: ${errorMessage(error)}`}
   }
 
-  let parsed: unknown
   try {
-    parsed = JSON.parse(content)
+    return {status: 'ok', value: JSON.parse(content)}
     // JSON is an untrusted artifact boundary.
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return {status: 'invalid', errors: [`Could not parse JSON: ${errorMessage(error)}`]}
+    return {status: 'invalid', message: `Could not parse JSON: ${errorMessage(error)}`}
   }
-
-  const trace = parseTrace(parsed)
-  if (!trace.ok) return {status: 'invalid', errors: trace.errors}
-  return {status: 'ok', trace: trace.trace}
 }
 
 export async function writeSubmission(appRoot: string, bytes: Buffer): Promise<void> {

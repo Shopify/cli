@@ -1,53 +1,11 @@
 {
-  "operation": "scan",
   "engine": {
     "name": "shopify-app-security",
     "version": "1.2.3",
     "ruleset": "2026.08.28"
   },
-  "scan": {
-    "version": "1.2.3",
-    "timestamp": "2026-08-24T00:00:00.000Z",
-    "project": {
-      "commit": null,
-      "dirty": null
-    },
-    "app": {
-      "name": "Test",
-      "type": "public"
-    },
-    "detection": {
-      "framework": "none",
-      "surface": "config_only",
-      "languages": []
-    },
-    "capabilities": {
-      "theme_app_extension": false,
-      "app_embed": false,
-      "embedded_app": false,
-      "script_tags": false,
-      "webhooks": false,
-      "app_proxy": false,
-      "storefront_metafield_writes": false,
-      "has_backend": false,
-      "declared_ip_allowlist": false,
-      "checkout_extension": false
-    },
-    "scan": {
-      "timestamp": "2026-08-24T00:00:00.000Z",
-      "security_version": "1.2.3",
-      "files_scanned": 1,
-      "rules_run": 1,
-      "rules_skipped": 0,
-      "files_skipped_count": 0,
-      "coverage_complete": true,
-      "coverage_gaps": [],
-      "checks_executed": []
-    },
-    "issues": []
-  },
-  "trace": {
-    "schema_version": 3,
+  "deterministic_findings": {
+    "schema_version": 1,
     "engine": {
       "name": "shopify-app-security",
       "version": "1.2.3",
@@ -68,7 +26,6 @@
     "coverage": {
       "files_scanned": 1,
       "files_skipped": [],
-      "complete": true,
       "gaps": []
     }
   },

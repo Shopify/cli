@@ -1,6 +1,6 @@
 import {
   appSecurityArtifactPaths,
-  readTrace,
+  readDeterministicFindings,
   writeAppSecurityArtifacts,
   writeSubmission,
 } from './app-security-artifacts.js'
@@ -20,7 +20,12 @@ describe('appSecurityArtifactPaths', () => {
 
     expect(paths).toEqual({
       artifactDirectory: joinPath('/tmp/example-app', '.shopify', 'app-security'),
-      tracePath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'trace.json'),
+      deterministicFindingsPath: joinPath(
+        '/tmp/example-app',
+        '.shopify',
+        'app-security',
+        'deterministic-findings.json',
+      ),
       reviewPath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'review.json'),
       findingsPath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'findings.json'),
       submissionPath: joinPath('/tmp/example-app', '.shopify', 'app-security', 'submission.json'),
@@ -28,71 +33,70 @@ describe('appSecurityArtifactPaths', () => {
   })
 })
 
-describe('readTrace', () => {
-  test('returns a validated v2 trace', async () => {
+describe('readDeterministicFindings', () => {
+  test('returns ok with deterministic findings written by a scan', async () => {
     await inTemporaryDirectory(async (directory) => {
       await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Test"\nclient_id = "test"\n')
-      const {trace} = await scanApp(directory)
-      const path = joinPath(directory, 'trace.json')
-      await writeFile(path, `${JSON.stringify(trace)}\n`)
+      const {artifact} = await scanApp(directory)
+      const path = joinPath(directory, 'deterministic-findings.json')
+      await writeFile(path, `${JSON.stringify(artifact)}\n`)
 
-      await expect(readTrace(path)).resolves.toEqual({status: 'ok', trace})
+      await expect(readDeterministicFindings(path)).resolves.toEqual({status: 'ok', value: artifact})
     })
   })
 
   test('returns missing when the file does not exist', async () => {
     await inTemporaryDirectory(async (directory) => {
-      await expect(readTrace(joinPath(directory, 'trace.json'))).resolves.toEqual({status: 'missing'})
+      await expect(readDeterministicFindings(joinPath(directory, 'deterministic-findings.json'))).resolves.toEqual({
+        status: 'missing',
+      })
     })
   })
 
-  test('returns a parse error for invalid JSON', async () => {
+  test('returns invalid for malformed JSON', async () => {
     await inTemporaryDirectory(async (directory) => {
-      const path = joinPath(directory, 'trace.json')
+      const path = joinPath(directory, 'deterministic-findings.json')
       await writeFile(path, '{invalid')
 
-      const result = await readTrace(path)
-
-      expect(result.status).toBe('invalid')
-      if (result.status === 'invalid') expect(result.errors[0]).toContain('Could not parse JSON')
+      await expect(readDeterministicFindings(path)).resolves.toEqual({
+        status: 'invalid',
+        message: expect.stringContaining('Could not parse JSON'),
+      })
     })
   })
 
-  test('preserves every validateTrace schema error as a list', async () => {
+  test('returns invalid with every schema error for an unrecognized artifact', async () => {
     await inTemporaryDirectory(async (directory) => {
-      const path = joinPath(directory, 'trace.json')
-      await writeFile(path, '{}')
+      const path = joinPath(directory, 'deterministic-findings.json')
+      await writeFile(path, '{"schema_version":3}')
 
-      const result = await readTrace(path)
-
-      expect(result.status).toBe('invalid')
-      if (result.status === 'invalid') {
-        expect(result.errors.length).toBeGreaterThan(1)
-        expect(result.errors).toContain('unsupported schema_version: undefined')
-      }
+      await expect(readDeterministicFindings(path)).resolves.toEqual({
+        status: 'invalid',
+        message: 'unsupported schema_version: 3 (expected 1); findings must be an array',
+      })
     })
   })
 
-  test('returns invalid for an unreadable artifact path', async () => {
+  test('returns invalid for an unreadable path', async () => {
     await inTemporaryDirectory(async (directory) => {
-      const path = joinPath(directory, 'trace.json')
+      const path = joinPath(directory, 'deterministic-findings.json')
       await mkdir(path)
 
-      const result = await readTrace(path)
-
-      expect(result.status).toBe('invalid')
-      if (result.status === 'invalid') expect(result.errors).toHaveLength(1)
+      await expect(readDeterministicFindings(path)).resolves.toEqual({
+        status: 'invalid',
+        message: expect.stringContaining('Could not read the file'),
+      })
     })
   })
 
-  test('rejects a real file larger than 5 MB before parsing', async () => {
+  test('rejects a file larger than 5 MB before parsing', async () => {
     await inTemporaryDirectory(async (directory) => {
-      const path = joinPath(directory, 'trace.json')
+      const path = joinPath(directory, 'deterministic-findings.json')
       await writeFile(path, 'x'.repeat(5_000_001))
 
-      await expect(readTrace(path)).resolves.toEqual({
+      await expect(readDeterministicFindings(path)).resolves.toEqual({
         status: 'invalid',
-        errors: ['The trace file is larger than 5 MB.'],
+        message: 'The file is larger than 5 MB.',
       })
     })
   })
@@ -118,7 +122,7 @@ describe('writeAppSecurityArtifacts', () => {
       await expect(fileExists(paths.submissionPath)).resolves.toBe(false)
       await expect(readFile(unknownPath)).resolves.toBe('keep')
       await expect(readFile(customFindingsPath)).resolves.toBe('keep')
-      await expect(readTrace(paths.tracePath)).resolves.toMatchObject({status: 'ok'})
+      await expect(readDeterministicFindings(paths.deterministicFindingsPath)).resolves.toMatchObject({status: 'ok'})
       await expect(fileExists(paths.reviewPath)).resolves.toBe(true)
     })
   })
@@ -133,7 +137,7 @@ describe('writeAppSecurityArtifacts', () => {
       await expect(writeAppSecurityArtifacts(execution, {clean: true})).rejects.toThrow(
         `Could not remove stale App Security artifact at ${paths.findingsPath}`,
       )
-      await expect(readTrace(paths.tracePath)).resolves.toMatchObject({status: 'ok'})
+      await expect(readDeterministicFindings(paths.deterministicFindingsPath)).resolves.toMatchObject({status: 'ok'})
       await expect(fileExists(paths.reviewPath)).resolves.toBe(true)
     })
   })

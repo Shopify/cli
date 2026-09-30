@@ -2,7 +2,7 @@ import SecuritySubmit from './submit.js'
 import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts.js'
 import {resolveSecuritySubmitClientId} from '../../../services/app-security-submit-target.js'
 import {clearCachedAppInfo, setCachedAppInfo} from '../../../services/local-storage.js'
-import {submissionTraceFixture} from '../../../services/app-security-engine/tests/fixtures/submission-trace.js'
+import {submissionScanFixture} from '../../../services/app-security-engine/tests/fixtures/submission-scan.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {defaultDeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {Config} from '@oclif/core'
@@ -82,7 +82,7 @@ async function writeApp(directory: string) {
   const paths = appSecurityArtifactPaths(directory)
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'client_id = "configured-client-id"\n')
   await mkdir(paths.artifactDirectory, {recursive: true})
-  await writeFile(paths.tracePath, JSON.stringify(submissionTraceFixture))
+  await writeFile(paths.deterministicFindingsPath, JSON.stringify(submissionScanFixture))
   return paths
 }
 
@@ -141,11 +141,11 @@ describe('app security submit command boundary', () => {
     })
   })
 
-  test.each([false, true])('dry-run uses real root, trace and artifact I/O (json=%s)', async (json) => {
+  test.each([false, true])('dry-run uses real root, scan and artifact I/O (json=%s)', async (json) => {
     await inTemporaryDirectory(async (directory) => {
       const client = remoteClient()
       const paths = await writeApp(directory)
-      const compiledTrace = await readFile(paths.tracePath)
+      const scan = await readFile(paths.deterministicFindingsPath)
       await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Unlinked app"\n')
       const result = await runCommand(['--path', directory, '--dry-run', ...(json ? ['--json'] : [])])
 
@@ -164,12 +164,13 @@ describe('app security submit command boundary', () => {
       }
       const submission = JSON.parse(await readFile(paths.submissionPath, 'utf8'))
       expect(submission.schemaVersion).toBe(0)
+      expect(submission.report).not.toHaveProperty('attestation')
       expect(submission.report.metadata).toEqual({version_tag: null})
       expect(resolveSecuritySubmitClientId).not.toHaveBeenCalled()
       expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
       expect(client.appFromIdentifiers).not.toHaveBeenCalled()
       expect(fetch).not.toHaveBeenCalled()
-      await expect(readFile(paths.tracePath)).resolves.toEqual(compiledTrace)
+      await expect(readFile(paths.deterministicFindingsPath)).resolves.toEqual(scan)
       await expect(readdir(joinPath(directory, '.shopify'))).resolves.toEqual(['app-security'])
     })
   })
@@ -308,7 +309,7 @@ describe('app security submit command boundary', () => {
     await inTemporaryDirectory(async (directory) => {
       remoteClient()
       const paths = await writeApp(directory)
-      const compiledTrace = await readFile(paths.tracePath)
+      const scan = await readFile(paths.deterministicFindingsPath)
       const result = await runCommand(['--path', directory, '--json', '--force'])
       const submission = JSON.parse(await readFile(paths.submissionPath, 'utf8'))
       expect(JSON.parse(result.stdout)).toEqual({
@@ -320,7 +321,7 @@ describe('app security submit command boundary', () => {
       })
       expect(submission).not.toHaveProperty('client_id')
       expect(submission.report).not.toHaveProperty('client_id')
-      await expect(readFile(paths.tracePath)).resolves.toEqual(compiledTrace)
+      await expect(readFile(paths.deterministicFindingsPath)).resolves.toEqual(scan)
       expect(result.stderr).toBe('')
       expect(result.exitCode).toBe(0)
     })
@@ -391,7 +392,7 @@ describe('app security submit command boundary', () => {
         expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
         expect(client.appFromIdentifiers).not.toHaveBeenCalled()
         expect(fetch).not.toHaveBeenCalled()
-        await expect(readdir(paths.artifactDirectory)).resolves.toEqual(['trace.json'])
+        await expect(readdir(paths.artifactDirectory)).resolves.toEqual(['deterministic-findings.json'])
       })
     },
   )
@@ -430,7 +431,7 @@ describe('app security submit command boundary', () => {
         expect(client.generateSourceScanUploadUrl).not.toHaveBeenCalled()
         expect(client.createSourceScan).not.toHaveBeenCalled()
         expect(fetch).not.toHaveBeenCalled()
-        await expect(readdir(paths.artifactDirectory)).resolves.toEqual(['trace.json'])
+        await expect(readdir(paths.artifactDirectory)).resolves.toEqual(['deterministic-findings.json'])
         await expect(readFile(configPath, 'utf8')).resolves.toBe(configContent)
       } finally {
         if (selection === 'cached') clearCachedAppInfo(directory)
@@ -483,7 +484,7 @@ describe('app security submit command boundary', () => {
     await inTemporaryDirectory(async (directory) => {
       remoteClient()
       vi.mocked(terminalSupportsPrompting).mockReturnValue(tty)
-      // Even target and trace validation would fail; the force guard must win first.
+      // Even target and scan validation would fail; the force guard must win first.
       await writeFile(joinPath(directory, 'shopify.app.toml'), 'invalid toml')
       const result = await runCommand(['--path', directory, '--json', '--config', 'missing', '--feedback', '-'])
 

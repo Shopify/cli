@@ -71,13 +71,16 @@ export interface ScanOptions {
   ignorePatterns?: ReadonlyArray<string>
 }
 
+/** Git state of an app root. Display only: nothing compares it with the current source. */
+export interface ProjectState {
+  commit: string | null
+  dirty: boolean | null
+}
+
 export interface ScanResult {
   version: string
   timestamp: string
-  project: {
-    commit: string | null
-    dirty: boolean | null
-  }
+  project: ProjectState
   app: {
     name: string
     type: string
@@ -113,23 +116,12 @@ export interface CheckExecutionReason {
   message: string
 }
 
-export interface CheckImplementationExecution {
-  /** Stable runner identity within a product check. */
-  id: string
-  analysis_mode: AnalysisMode
-  status: CheckExecutionStatus
-  inspected_files: string[]
-  findings: number
-  reason?: CheckExecutionReason
-}
-
 export interface CheckExecution {
   /** Stable product check ID. Implementations are distinguished by kind and runner identity. */
   id: string
   version: number
   kind: CheckExecutionKind
   status: CheckExecutionStatus
-  required: boolean
   applicable: boolean
   languages: string[]
   framework: DetectedFramework
@@ -138,10 +130,6 @@ export interface CheckExecution {
   findings: number
   analysis_mode: AnalysisMode
   reason?: CheckExecutionReason
-  /** Handoff guidance for checks that were unsupported or unresolved. */
-  guidance?: string
-  /** Deterministic runner provenance when one product check has multiple implementations. */
-  implementations?: CheckImplementationExecution[]
 }
 
 export interface CoverageGap {
@@ -159,14 +147,12 @@ export interface ScanMetadata {
   rules_skipped: number
   files_skipped_count: number
   files_skipped?: SkippedFile[]
-  coverage_complete: boolean
   coverage_gaps: CoverageGap[]
   checks_executed: CheckExecution[]
 }
 
-export const TRACE_SCHEMA_VERSION = 3 as const
+export const DETERMINISTIC_FINDINGS_SCHEMA_VERSION = 1 as const
 export const FINDINGS_SCHEMA_VERSION = 1 as const
-export const SUPPORTED_TRACE_SCHEMA_VERSIONS = [TRACE_SCHEMA_VERSION] as const
 export const ENGINE_NAME = 'shopify-app-security' as const
 
 export interface FindingEvidence {
@@ -174,7 +160,8 @@ export interface FindingEvidence {
   quote?: string
 }
 
-export interface TraceFinding {
+/** A deterministic finding as stored in deterministic-findings.json. It carries everything needed to display it. */
+export interface DeterministicFinding {
   rule_id: string
   rule_version: number
   severity: Severity
@@ -186,25 +173,33 @@ export interface TraceFinding {
   fix: Fix
 }
 
-export interface TraceV3 {
-  schema_version: typeof TRACE_SCHEMA_VERSION
+/** A deterministic check execution as stored in deterministic-findings.json. */
+export interface DeterministicCheckExecution {
+  id: string
+  version: number
+  status: CheckExecutionStatus
+  applicable: boolean
+  analysis_mode: AnalysisMode
+  findings: number
+  reason?: CheckExecutionReason
+}
+
+/** deterministic-findings.json: the deterministic results of one `app security check` run. */
+export interface DeterministicFindingsDocument {
+  schema_version: typeof DETERMINISTIC_FINDINGS_SCHEMA_VERSION
   engine: {
     name: typeof ENGINE_NAME
     version: string
     ruleset: string
   }
   generated_at: string
-  project: {
-    commit: string | null
-    dirty: boolean | null
-  }
+  project: ProjectState
   detection: ProjectDetection
-  findings: TraceFinding[]
-  checks_executed: CheckExecution[]
+  findings: DeterministicFinding[]
+  checks_executed: DeterministicCheckExecution[]
   coverage: {
     files_scanned: number
     files_skipped: SkippedFile[]
-    complete: boolean
     gaps: CoverageGap[]
   }
 }

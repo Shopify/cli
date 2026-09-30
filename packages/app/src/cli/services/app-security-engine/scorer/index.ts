@@ -17,7 +17,6 @@ export function computeScanMetadata(
     rules_skipped: rulesSkipped,
     files_skipped_count: filesSkipped.length,
     ...(filesSkipped.length > 0 ? {files_skipped: filesSkipped} : {}),
-    coverage_complete: coverageGaps.length === 0,
     coverage_gaps: coverageGaps,
     checks_executed: checksExecuted,
   }

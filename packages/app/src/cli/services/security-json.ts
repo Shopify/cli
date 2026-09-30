@@ -1,20 +1,18 @@
 import type {AppSecurityEngineMetadata, AppSecurityExecution} from './app-security-api.js'
-import type {ReviewPack, ScanResult, TraceV3} from './app-security-engine/index.js'
+import type {ReviewPack, DeterministicFindingsDocument} from './app-security-engine/index.js'
 
 interface AppSecurityJsonResult {
-  operation: 'scan'
   engine: AppSecurityEngineMetadata
-  scan: ScanResult
-  trace: TraceV3
+  deterministic_findings: DeterministicFindingsDocument
   reviewPack: ReviewPack
 }
 
-export function toSecurityJson(execution: AppSecurityExecution): AppSecurityJsonResult {
+export function toSecurityJson(
+  execution: Pick<AppSecurityExecution, 'engine' | 'artifact' | 'reviewPack'>,
+): AppSecurityJsonResult {
   return {
-    operation: 'scan',
     engine: execution.engine,
-    scan: execution.scan,
-    trace: execution.trace,
+    deterministic_findings: execution.artifact,
     reviewPack: execution.reviewPack,
   }
 }

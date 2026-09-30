@@ -5,7 +5,7 @@ import {
   renderSecuritySubmitSuccess,
   renderSecuritySubmitResult,
 } from './security-submit-output.js'
-import {submissionTraceFixture} from './app-security-engine/tests/fixtures/submission-trace.js'
+import {submissionScanFixture} from './app-security-engine/tests/fixtures/submission-scan.js'
 import {buildSubmission} from './app-security-engine/index.js'
 import {renderInfo, renderSelectPrompt, renderSuccess, renderTextPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AbortError, shouldReportErrorAsUnexpected} from '@shopify/cli-kit/node/error'
@@ -13,7 +13,7 @@ import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
-const submission = buildSubmission(submissionTraceFixture, {
+const submission = buildSubmission(submissionScanFixture, {
   cliVersion: '3.99.0',
   submittedAt: '2026-09-01T09:30:00.000Z',
 })
@@ -104,14 +104,13 @@ describe('renderSecuritySubmitConfirmation', () => {
         Checks: ['2 executed · 1 not applicable · 1 unresolved'],
         Excluded: ['file paths, code snippets, evidence, finding messages, commit SHA'],
         Payload: [{filePath: submissionPath}],
-        Warning: [{warn: 'The trace was generated with uncommitted changes.'}],
       },
     })
   })
 
   test('discloses supplied feedback and does not offer to collect it again', async () => {
     vi.mocked(renderSelectPrompt).mockResolvedValue('submit')
-    const submissionWithFeedback = buildSubmission(submissionTraceFixture, {
+    const submissionWithFeedback = buildSubmission(submissionScanFixture, {
       cliVersion: '3.99.0',
       submittedAt: '2026-09-01T09:30:00.000Z',
       feedback: 'Something was inaccurate.',

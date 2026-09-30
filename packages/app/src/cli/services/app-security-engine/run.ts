@@ -2,9 +2,9 @@ import {EMBEDDED_APP_SECURITY_INSTRUCTIONS} from './checks/embedded.js'
 import {buildReviewPack, type ReviewPack} from './checks/index.js'
 import {AppRootDiscoveryError, findAppRoot} from './scanners/discover.js'
 import {scan} from './scanners/index.js'
-import {compileTrace, validateTrace} from './trace/index.js'
+import {buildDeterministicFindings} from './scan-artifact/index.js'
 import {getEngineVersion} from './version.js'
-import type {ScanOptions, ScanResult, TraceV3} from './types.js'
+import type {DeterministicFindingsDocument, ScanOptions, ScanResult} from './types.js'
 
 export {AppRootDiscoveryError, findAppRoot}
 
@@ -15,23 +15,15 @@ export interface AppSecurityEngineMetadata {
 }
 
 export interface AppSecurityScan {
-  operation: 'scan'
   appRoot: string
   scan: ScanResult
-  trace: TraceV3
+  artifact: DeterministicFindingsDocument
   reviewPack: ReviewPack
   engine: AppSecurityEngineMetadata
 }
 
-export type ParseTraceResult = {ok: true; trace: TraceV3} | {ok: false; errors: string[]}
-
 export function getAgentInstructions(): string {
   return EMBEDDED_APP_SECURITY_INSTRUCTIONS
-}
-
-export function parseTrace(value: unknown): ParseTraceResult {
-  const validation = validateTrace(value)
-  return validation.valid ? {ok: true, trace: value as TraceV3} : {ok: false, errors: validation.errors}
 }
 
 export async function scanApp(
@@ -43,13 +35,12 @@ export async function scanApp(
   const result = await scan(appRoot, configFileName, options)
   const engineVersion = getEngineVersion()
   const reviewPack = buildReviewPack(engineVersion)
-  const trace = compileTrace(result, {engineVersion})
+  const artifact = buildDeterministicFindings(result, {engineVersion})
   return {
-    operation: 'scan',
     appRoot,
     scan: result,
-    trace,
+    artifact,
     reviewPack,
-    engine: trace.engine,
+    engine: artifact.engine,
   }
 }

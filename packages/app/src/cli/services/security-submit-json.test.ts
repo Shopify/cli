@@ -52,9 +52,9 @@ describe('App Security submit JSON', () => {
   })
 
   test('local failures do not invent API response fields', () => {
-    expect(toSecuritySubmitJson({status: 'failed', error: {stage: 'preparation', message: 'Missing trace'}})).toEqual({
+    expect(toSecuritySubmitJson({status: 'failed', error: {stage: 'preparation', message: 'Missing scan'}})).toEqual({
       operation: 'submit',
-      error: {stage: 'preparation', message: 'Missing trace'},
+      error: {stage: 'preparation', message: 'Missing scan'},
     })
   })
 
@@ -88,18 +88,18 @@ describe('App Security submit JSON', () => {
     expect(
       toSecuritySubmitJson({
         status: 'failed',
-        error: {stage: 'preparation', message: 'Missing trace', tryMessage, nextSteps: undefined},
+        error: {stage: 'preparation', message: 'Missing scan', tryMessage, nextSteps: undefined},
       }),
-    ).toEqual({operation: 'submit', error: {stage: 'preparation', message: 'Missing trace'}})
+    ).toEqual({operation: 'submit', error: {stage: 'preparation', message: 'Missing scan'}})
   })
 
   test('retains an explicitly empty next steps list', () => {
     expect(
       toSecuritySubmitJson({
         status: 'failed',
-        error: {stage: 'preparation', message: 'Missing trace', nextSteps: []},
+        error: {stage: 'preparation', message: 'Missing scan', nextSteps: []},
       }),
-    ).toEqual({operation: 'submit', error: {stage: 'preparation', message: 'Missing trace', next_steps: []}})
+    ).toEqual({operation: 'submit', error: {stage: 'preparation', message: 'Missing scan', next_steps: []}})
   })
 
   test('upload URL failures retain empty errors without adding an accepted state', () => {

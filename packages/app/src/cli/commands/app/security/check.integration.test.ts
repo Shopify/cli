@@ -74,7 +74,7 @@ async function runCommand(argv: string[]) {
 }
 
 describe('app security check command boundary', () => {
-  test('a plain scan replaces the review pack and trace while earlier artifacts exist', async () => {
+  test('a plain scan replaces the review pack and scan while earlier artifacts exist', async () => {
     await inTemporaryDirectory(async (directory) => {
       const {nestedDirectory} = await createApp(directory)
       const paths = appSecurityArtifactPaths(directory)
@@ -84,14 +84,14 @@ describe('app security check command boundary', () => {
 
       await writeFile(paths.findingsPath, '{"sentinel":"findings"}\n')
       await writeFile(paths.reviewPath, '{"sentinel":"review"}\n')
-      await writeFile(paths.tracePath, '{"sentinel":"trace"}\n')
+      await writeFile(paths.deterministicFindingsPath, '{"sentinel":"scan"}\n')
 
       const rescan = await runCommand(['--path', nestedDirectory, '--skip-instructions'])
 
       expect(rescan.exitCode).toBe(0)
       expect(unstyled(rescan.stdout)).not.toMatch(/discard/i)
       await expect(readFile(paths.reviewPath, 'utf8')).resolves.toContain('"checks"')
-      await expect(readFile(paths.tracePath, 'utf8')).resolves.toContain('"schema_version"')
+      await expect(readFile(paths.deterministicFindingsPath, 'utf8')).resolves.toContain('"schema_version"')
       await expect(readFile(paths.findingsPath, 'utf8')).resolves.toBe('{"sentinel":"findings"}\n')
     })
   })

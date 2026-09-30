@@ -22,7 +22,7 @@ export interface SecurityReportInput {
   verbose: boolean
   elapsedMilliseconds: number
   commands: AppSecurityCommands
-  tracePath: string
+  deterministicFindingsPath: string
   reviewPath?: string
   reviewCheckCount?: number
 }
@@ -51,7 +51,12 @@ export function buildSecurityAlert(input: SecurityReportInput): SecurityAlert {
         {subdued: `Engine: ${input.engine.name} ${input.engine.version}`},
         {subdued: `Ruleset: ${input.engine.ruleset}`},
         ...(groups.some((group) => group.issues.length > 1) && !input.verbose
-          ? [{subdued: 'Use --verbose for every occurrence and fix. The trace retains all file and line details.'}]
+          ? [
+              {
+                subdued:
+                  'Use --verbose for every occurrence and fix. deterministic-findings.json retains all file and line details.',
+              },
+            ]
           : []),
       ],
       customSections: securityCustomSections(input, groups),
@@ -73,7 +78,7 @@ export function renderSecurityReport(input: SecurityReportInput): void {
 }
 
 function coverageIncomplete(input: SecurityReportInput): boolean {
-  return !input.scan.scan.coverage_complete || input.scan.scan.coverage_gaps.length > 0
+  return input.scan.scan.coverage_gaps.length > 0
 }
 
 function securityAlertType(input: SecurityReportInput): SecurityAlertType {
@@ -150,7 +155,7 @@ function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]
         list: {
           items: [
             ['Review pack:', {filePath: input.reviewPath}],
-            ['Trace:', {filePath: input.tracePath}],
+            ['Scan results:', {filePath: input.deterministicFindingsPath}],
           ],
         },
       },

@@ -4,7 +4,7 @@ import {describe, expect, test, vi} from 'vitest'
 import type {AppSecurityArtifactPaths} from './app-security-artifacts.js'
 import type {AppSecurityExecution} from './app-security-api.js'
 import type {AppSecurityInstructionsDestination} from './security-check.js'
-import type {ScanResult, TraceV3} from './app-security-engine/index.js'
+import type {DeterministicFindingsDocument, ScanResult} from './app-security-engine/index.js'
 
 const scan: ScanResult = {
   version: '0.1.0',
@@ -31,7 +31,6 @@ const scan: ScanResult = {
     rules_run: 1,
     rules_skipped: 0,
     files_skipped_count: 0,
-    coverage_complete: true,
     coverage_gaps: [],
     checks_executed: [],
   },
@@ -44,16 +43,16 @@ const engine = {
   ruleset: '2026.08.28',
 }
 
-const trace = {
-  schema_version: 3,
+const artifact = {
+  schema_version: 1,
   engine,
   generated_at: '2026-08-24T00:00:00.000Z',
   project: {commit: null, dirty: null},
   detection: scan.detection,
   findings: [],
   checks_executed: [],
-  coverage: {files_scanned: 1, files_skipped: [], complete: true, gaps: []},
-} as TraceV3
+  coverage: {files_scanned: 1, files_skipped: [], gaps: []},
+} as DeterministicFindingsDocument
 
 const reviewPack = {
   schema_version: 1 as const,
@@ -69,10 +68,9 @@ const reviewPack = {
 }
 
 const scanExecution: AppSecurityExecution = {
-  operation: 'scan',
   appRoot: '/tmp/unlinked-app',
   scan,
-  trace,
+  artifact,
   reviewPack,
   engine,
   elapsedMilliseconds: 12,
@@ -80,7 +78,7 @@ const scanExecution: AppSecurityExecution = {
 
 const artifacts: AppSecurityArtifactPaths = {
   artifactDirectory: '/tmp/unlinked-app/.shopify/app-security',
-  tracePath: '/tmp/unlinked-app/.shopify/app-security/trace.json',
+  deterministicFindingsPath: '/tmp/unlinked-app/.shopify/app-security/deterministic-findings.json',
   reviewPath: '/tmp/unlinked-app/.shopify/app-security/review.json',
 }
 
@@ -130,7 +128,7 @@ describe('securityCheck', () => {
       verbose: true,
       elapsedMilliseconds: 12,
       commands: resolveAppSecurityCommands(scanExecution.appRoot, 'shopify.app.toml'),
-      tracePath: artifacts.tracePath,
+      deterministicFindingsPath: artifacts.deterministicFindingsPath,
       reviewPath: artifacts.reviewPath,
       reviewCheckCount: 31,
     })
@@ -189,10 +187,8 @@ describe('securityCheck', () => {
 
     expect(dependencies.execute).toHaveBeenCalledWith(expect.objectContaining({appRoot: '/tmp/unlinked-app'}))
     expect(JSON.parse(dependencies.output.mock.calls[0]![0])).toEqual({
-      operation: 'scan',
       engine,
-      scan,
-      trace,
+      deterministic_findings: artifact,
       reviewPack,
     })
     expect(dependencies.renderReport).not.toHaveBeenCalled()

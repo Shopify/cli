@@ -62,6 +62,7 @@ export interface ManifestFile {
   devDependencies?: Record<string, string>
 }
 
+/** One implementation inside a multi-implementation runner. Used to derive the runner result; never written out. */
 export interface RunnerImplementationResult {
   id: string
   analysisMode: AnalysisMode
@@ -76,5 +77,4 @@ export interface RunnerResult {
   unresolvedReason?: string
   unresolvedReasonCode?: CheckExecutionReason['code']
   inspectedFiles?: string[]
-  implementations?: RunnerImplementationResult[]
 }

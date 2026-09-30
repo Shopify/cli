@@ -21,13 +21,9 @@ const severityRank: Record<Severity, number> = {
 }
 
 export function securityExitCode(execution: AppSecurityExecution, blocking: AppSecurityBlockingLevel): number {
-  if (shouldBlock(execution.scan.issues, blocking)) return 1
-  return 0
-}
-
-function shouldBlock(issues: {severity: Severity}[], blocking: AppSecurityBlockingLevel): boolean {
-  if (blocking === 'none') return false
-  return issues.some((issue) => severityRank[issue.severity] >= severityRank[blocking])
+  if (blocking === 'none') return 0
+  const blocks = execution.scan.issues.some((issue) => severityRank[issue.severity] >= severityRank[blocking])
+  return blocks ? 1 : 0
 }
 
 export function resolveAppSecurityRoot(directory?: string): string {
