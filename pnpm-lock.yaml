@@ -206,6 +206,9 @@ importers:
       esbuild:
         specifier: 0.28.1
         version: 0.28.1
+      graphql:
+        specifier: 16.14.2
+        version: 16.14.2
       graphql-request:
         specifier: 6.1.0
         version: 6.1.0(graphql@16.14.2)

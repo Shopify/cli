@@ -5874,6 +5874,116 @@
       "value": "export interface hydrogenupgrade {\n  /**\n   * Ignore warnings and force the upgrade to the target version\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * A target hydrogen version to update to\n   *\n   */\n  '-v, --version <value>'?: string\n}"
     }
   },
+  "logs": {
+    "docs-shopify.dev/commands/interfaces/logs.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/logs.interface.ts",
+      "name": "logs",
+      "description": "The following flags are available for the `logs` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/logs.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--auth-alias <value>",
+          "value": "string",
+          "description": "Alias of the Shopify account to use for authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_AUTH_ALIAS"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/logs.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--json-schema",
+          "value": "''",
+          "description": "Print the command's JSON schemas.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON_SCHEMA"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/logs.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/logs.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-prompt",
+          "value": "''",
+          "description": "Fail instead of prompting for authentication when no valid session is available.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_PROMPT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/logs.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--operation-name <value>",
+          "value": "string",
+          "description": "The operation to execute when the document contains multiple operations.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_OPERATION_NAME"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/logs.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--query-file <value>",
+          "value": "string",
+          "description": "Path to a GraphQL document, or - to read from stdin.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_QUERY_FILE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/logs.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--variable-file <value>",
+          "value": "string",
+          "description": "Path to a file containing GraphQL variables in JSON format. Can't be used with --variables.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VARIABLE_FILE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/logs.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/logs.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/logs.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-q, --query <value>",
+          "value": "string",
+          "description": "The GraphQL query or mutation, as a string.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_QUERY"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/logs.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-v, --variables <value>",
+          "value": "string",
+          "description": "The values for any GraphQL variables in your query or mutation, in JSON format.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VARIABLES"
+        }
+      ],
+      "value": "export interface logs {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Fail instead of prompting for authentication when no valid session is available.\n   * @environment SHOPIFY_FLAG_NO_PROMPT\n   */\n  '--no-prompt'?: ''\n\n  /**\n   * The operation to execute when the document contains multiple operations.\n   * @environment SHOPIFY_FLAG_OPERATION_NAME\n   */\n  '--operation-name <value>'?: string\n\n  /**\n   * The GraphQL query or mutation, as a string.\n   * @environment SHOPIFY_FLAG_QUERY\n   */\n  '-q, --query <value>'?: string\n\n  /**\n   * Path to a GraphQL document, or - to read from stdin.\n   * @environment SHOPIFY_FLAG_QUERY_FILE\n   */\n  '--query-file <value>'?: string\n\n  /**\n   * Path to a file containing GraphQL variables in JSON format. Can't be used with --variables.\n   * @environment SHOPIFY_FLAG_VARIABLE_FILE\n   */\n  '--variable-file <value>'?: string\n\n  /**\n   * The values for any GraphQL variables in your query or mutation, in JSON format.\n   * @environment SHOPIFY_FLAG_VARIABLES\n   */\n  '-v, --variables <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+    }
+  },
   "organizationlist": {
     "docs-shopify.dev/commands/interfaces/organization-list.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/organization-list.interface.ts",

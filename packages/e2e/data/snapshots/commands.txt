@@ -90,6 +90,8 @@
 │  ├─ shortcut
 │  ├─ unlink
 │  └─ upgrade
+├─ logs
+│  └─ schema
 ├─ organization
 │  └─ list
 ├─ plugins
