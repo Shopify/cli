@@ -17,9 +17,12 @@ const severity = (value) => {
   return {off: 0, allow: 0, warn: 1, error: 2, deny: 2}[level] ?? level
 }
 
-const stable = (value) => JSON.stringify(value, (_, item) =>
-  item && typeof item === 'object' && !Array.isArray(item)
-    ? Object.fromEntries(Object.entries(item).sort(([first], [second]) => first.localeCompare(second))) : item)
+const stable = (value) =>
+  JSON.stringify(value, (_, item) =>
+    item && typeof item === 'object' && !Array.isArray(item)
+      ? Object.fromEntries(Object.entries(item).sort(([first], [second]) => first.localeCompare(second)))
+      : item,
+  )
 
 const missing = new Map()
 const options = new Set()
@@ -43,9 +46,14 @@ for (const group of baseline.configurations) {
       if (match(file, override.files) && !match(file, override.excludeFiles)) Object.assign(after, override.rules)
     }
     // Preserve file-wide exemptions while comparing effective file scopes.
-    const header = readFileSync(resolve(root, file), 'utf8').match(/^(?:\s*(?:\/\/[^\n]*(?:\n|$)|\/\*[\s\S]*?\*\/))*/)?.[0] ?? ''
+    const header =
+      readFileSync(resolve(root, file), 'utf8').match(/^(?:\s*(?:\/\/[^\n]*(?:\n|$)|\/\*[\s\S]*?\*\/))*/)?.[0] ?? ''
     for (const directive of header.matchAll(/eslint-disable(?!-)([^\n*]*)/g)) {
-      for (const name of directive[1].split(' -- ')[0].split(',').map((name) => name.trim())) delete after[name]
+      for (const name of directive[1]
+        .split(' -- ')[0]
+        .split(',')
+        .map((name) => name.trim()))
+        delete after[name]
     }
     if (!match(file, formattingInputs)) missingFormatting.push(file)
     for (const [name, value] of Object.entries(before)) {
@@ -64,12 +72,20 @@ for (const group of baseline.configurations) {
       supported.add(name)
       if (replacement.status === 'partial') partial.add(name)
       if (severity(value) !== severity(after[replacement.replacement])) severities.add(name)
-      const parameters = (configuration) => Array.isArray(configuration) ? configuration.slice(1) : []
+      const parameters = (configuration) => (Array.isArray(configuration) ? configuration.slice(1) : [])
       if (stable(parameters(value)) !== stable(parameters(after[replacement.replacement]))) options.add(name)
     }
     filesCompared++
   }
 }
+
+// This supplementary inventory records verified tool overlap. It does not turn
+// a missing dedicated rule into a claim of equivalent behavior or file scope.
+const otherToolCoverage = Object.fromEntries(
+  [...unsupported]
+    .filter((name) => mapping[name].otherToolCoverage)
+    .map((name) => [name, mapping[name].otherToolCoverage]),
+)
 
 const summary = {
   baselineCommit: baseline.baselineCommit,
@@ -78,7 +94,8 @@ const summary = {
   baselineLintRules: Object.keys(mapping).length,
   rulesWithReplacements: supported.size,
   partialReplacements: partial.size,
-  unsupportedRules: unsupported.size,
+  rulesWithoutDedicatedReplacement: unsupported.size,
+  rulesWithOtherToolCoverage: Object.keys(otherToolCoverage).length,
   rulesWithScopeGaps: missing.size,
   optionDifferences: options.size,
   severityDifferences: severities.size,
@@ -88,7 +105,8 @@ const findings = {
   scopeGaps: Object.fromEntries(missing),
   optionDifferences: [...options].sort(),
   severityDifferences: [...severities].sort(),
-  unsupportedRules: [...unsupported].sort(),
+  rulesWithoutDedicatedReplacement: [...unsupported].sort(),
+  otherToolCoverage,
   partialReplacements: [...partial].sort(),
   missingFormatting,
 }
