@@ -46,7 +46,7 @@ describe('throwStoredStoreAuthError', () => {
     let captured: AbortError | undefined
     try {
       throwStoredStoreAuthError(SHOP)
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch (error) {
       captured = error as AbortError
     }
@@ -65,7 +65,7 @@ describe('throwReauthenticateStoreAuthError', () => {
     let captured: AbortError | undefined
     try {
       throwReauthenticateStoreAuthError('Custom message.', standardSession())
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch (error) {
       captured = error as AbortError
     }
@@ -86,7 +86,7 @@ describe('throwReauthenticateStoreAuthError', () => {
     let captured: AbortError | undefined
     try {
       throwReauthenticateStoreAuthError('Custom message.', previewSession())
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch (error) {
       captured = error as AbortError
     }
@@ -109,7 +109,7 @@ describe('throwStoredAuthInvalidError', () => {
     let captured: AbortError | undefined
     try {
       throwStoredAuthInvalidError(standardSession())
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch (error) {
       captured = error as AbortError
     }
@@ -130,7 +130,7 @@ describe('throwStoredAuthInvalidError', () => {
     let captured: AbortError | undefined
     try {
       throwStoredAuthInvalidError(previewSession())
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch (error) {
       captured = error as AbortError
     }

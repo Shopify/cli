@@ -35,13 +35,13 @@ export default class HelpCommand extends Command {
   async run(): Promise<void> {
     const {argv, flags} = await this.parse(HelpCommand)
     if (flags.json) {
-      const result = await helpService(this.config, argv as string[], flags['nested-commands'])
+      const result = await helpService(this.config, argv, flags['nested-commands'])
       presentHelpResult(result)
       return
     }
 
     const Help = await loadHelpClass(this.config)
     const help = new Help(this.config, {all: flags['nested-commands']})
-    await help.showHelp(argv as string[])
+    await help.showHelp(argv)
   }
 }

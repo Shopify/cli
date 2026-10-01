@@ -287,7 +287,7 @@ export const storeTestFixture = appTestFixture.extend<{storeFqdn: string}>({
     const storeName = generateStoreName(wi)
     const fqdn = await createDevStoreWithCli({cli, workerIndex: wi, storeName, orgId: env.orgId})
 
-    env.processEnv.SHOPIFY_FLAG_STORE = fqdn // eslint-disable-line compat/require-atomic-updates
+    env.processEnv.SHOPIFY_FLAG_STORE = fqdn
 
     await use(fqdn)
   },

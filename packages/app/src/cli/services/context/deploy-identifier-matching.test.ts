@@ -1,4 +1,3 @@
-/* eslint-disable compat/shopify-prefer-module-scope-constants */
 import {classifyDeployExtensionChanges, ensureDeployIdentifiersFromAppVersion} from './deploy-identifier-matching.js'
 import {extensionMigrationPrompt} from './prompts.js'
 import {EnsureDeploymentIdsPresenceOptions} from './identifiers.js'
@@ -90,7 +89,7 @@ function remoteWebhookModule(
       experience: 'configuration',
       options: {managementExperience: 'cli'},
     },
-  } as AppModuleVersion
+  }
 }
 
 // The option bag both entry points accept; each test overrides only what it exercises.

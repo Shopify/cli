@@ -321,7 +321,7 @@ export async function checkForNewVersion(
   let lastVersion
   try {
     lastVersion = await cacheRetrieveOrRepopulate(cacheKey, getLatestVersion, cacheExpiryInHours * 3600 * 1000)
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (error) {
     return undefined
   }

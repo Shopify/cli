@@ -1723,7 +1723,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
               main: {
                 module: './src/another-target-module.jsx',
               },
-            } as any,
+            },
           },
         })
 
@@ -2042,7 +2042,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
               main: {
                 module: './src/orders.jsx',
               },
-            } as any,
+            },
           },
         })
 
@@ -2102,7 +2102,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
               main: {
                 module: './src/checkout.jsx',
               },
-            } as any,
+            },
           },
         })
 

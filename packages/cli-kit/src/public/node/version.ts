@@ -11,7 +11,7 @@ export async function localCLIVersion(directory: string): Promise<string | undef
   try {
     const output = await captureOutput('npm', ['list', '@shopify/cli'], {cwd: directory})
     return output.match(/@shopify\/cli@([\w.-]*)/)?.[1]
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     return undefined
   }
@@ -37,7 +37,7 @@ export async function globalCLIVersion(): Promise<string | undefined> {
       }
     }
     return undefined
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     return undefined
   }

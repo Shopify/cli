@@ -218,7 +218,7 @@ async function readTomlFilesCollectingErrors(paths: string[], errors: TomlFileEr
     paths.map(async (filePath) => {
       try {
         files.push(await TomlFile.read(filePath))
-        // eslint-disable-next-line no-catch-all/no-catch-all
+        // eslint-disable-next-line @shopify/cli/no-catch-all
       } catch (err) {
         const tomlError = err instanceof TomlFileError ? err : new TomlFileError(filePath, `Failed to read ${filePath}`)
         const file = new TomlFile(filePath, {})
@@ -245,7 +245,7 @@ async function discoverDotEnvFiles(directory: string): Promise<Map<string, DotEn
       try {
         const dotenv = await readAndParseDotEnv(filePath)
         return [basename(filePath), dotenv] as const
-        // eslint-disable-next-line no-catch-all/no-catch-all
+        // eslint-disable-next-line @shopify/cli/no-catch-all
       } catch {
         return undefined
       }
@@ -267,7 +267,7 @@ async function loadRawHiddenConfig(directory: string): Promise<JsonMapType> {
       const raw = await readFile(hiddenPath)
       return JSON.parse(raw) as JsonMapType
     }
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     // Parse errors are not fatal
   }

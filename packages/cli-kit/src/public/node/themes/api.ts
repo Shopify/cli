@@ -66,7 +66,7 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
       })
     }
 
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (error) {
     abortIfMissingThemeAccessScope(error)
     /**

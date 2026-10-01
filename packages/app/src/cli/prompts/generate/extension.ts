@@ -30,7 +30,7 @@ export interface GenerateExtensionContentOutput {
 }
 
 export function buildChoices(extensionTemplates: ExtensionTemplate[], unavailableExtensions: ExtensionTemplate[] = []) {
-  type ArrElement<TArrType> = TArrType extends ReadonlyArray<infer ElementType> ? ElementType : never
+  type ArrElement<TArrType> = TArrType extends ReadonlyArray<infer TElementType> ? TElementType : never
 
   const templateSpecChoices = [
     ...extensionTemplates.map((spec) => {
@@ -82,7 +82,6 @@ const generateExtensionPrompts = async (
       throw new AbortError('You have reached the limit for the number of extensions you can create.')
     }
 
-    // eslint-disable-next-line compat/require-atomic-updates
     templateType = await renderAutocompletePrompt({
       message: 'Type of extension?',
       choices: buildChoices(extensionTemplates, options.unavailableExtensions),

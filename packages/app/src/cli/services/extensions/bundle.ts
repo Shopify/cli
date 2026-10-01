@@ -123,7 +123,7 @@ async function writeMetafile(result: EsbuildResult | null, outputPath: string) {
   const metafilePath = joinPath(dir, `${name}.metafile.json`)
   try {
     await writeFile(metafilePath, JSON.stringify(result.metafile))
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (error) {
     outputWarn(`Failed to write metafile to ${metafilePath}: ${error}`)
   }
@@ -198,14 +198,14 @@ function getESBuildOptions(options: BundleOptions, processEnv = process.env): Pa
 function getPlugins(resolveDir: string | undefined, processEnv = process.env): Plugin[] {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  const plugins: Plugin[] = [graphqlLoaderPlugin.default()]
+  const plugins: Plugin[] = [graphqlLoaderPlugin.default()] // eslint-disable-line import/no-named-as-default-member -- CommonJS exposes its factory through default.
 
   const skipReactDeduplication = isTruthy(processEnv[environmentVariableNames.skipEsbuildReactDedeuplication])
   if (resolveDir && !skipReactDeduplication) {
     let resolvedReactPath: string | undefined
     try {
       resolvedReactPath = require.resolve('react', {paths: [resolveDir]})
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch {
       // If weren't able to find React, that's fine. It might not be used.
       outputDebug(`Unable to load React in ${resolveDir}, skipping React de-duplication`)

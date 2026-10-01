@@ -143,7 +143,7 @@ export async function createOrUpdateManifestFile(
     try {
       const content = await readFile(manifestPath)
       existing = JSON.parse(content)
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch {
       outputDebug(`Warning: could not parse existing manifest.json, starting fresh\n`, context.options.stdout)
     }

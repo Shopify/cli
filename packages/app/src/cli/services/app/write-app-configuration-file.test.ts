@@ -113,7 +113,7 @@ url = "https://example.com/prefs"
             api_version: '2023-04',
             privacy_compliance: {},
           },
-        } as CurrentAppConfiguration,
+        },
         filePath,
       )
 
@@ -136,7 +136,7 @@ url = "https://example.com/prefs"
         {
           ...FULL_CONFIGURATION,
           auth: {redirect_urls: []},
-        } as CurrentAppConfiguration,
+        },
         filePath,
       )
 

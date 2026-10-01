@@ -26,7 +26,7 @@ export async function findStoreOwningOrganization(
     }
 
     return {id: owningOrganization.id, businessName: owningOrganization.name}
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (error) {
     outputDebug(`Could not infer the owning organization for ${store}: ${errorMessage(error)}`)
     return undefined

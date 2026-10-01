@@ -26,7 +26,7 @@ export async function renderUncaughtError(error: unknown): Promise<void> {
     } else {
       writeRawError(error)
     }
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     writeRawError(error)
   }

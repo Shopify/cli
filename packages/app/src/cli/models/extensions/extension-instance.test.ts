@@ -7,7 +7,7 @@ import {
   createExtensionSpecification,
 } from './specification.js'
 import {loadLocalExtensionsSpecifications} from './load-specifications.js'
-import {BaseConfigType, BaseSchema, MAX_EXTENSION_HANDLE_LENGTH} from './schemas.js'
+import {BaseSchema, MAX_EXTENSION_HANDLE_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {
   testApp,
@@ -813,7 +813,7 @@ describe('getDevSessionUpdateMessages', () => {
 
   function instanceFor(specification: ExtensionSpecification): ExtensionInstance {
     return new ExtensionInstance({
-      configuration: {name: 'test extension', type: specification.identifier} as BaseConfigType,
+      configuration: {name: 'test extension', type: specification.identifier},
       configurationPath: '',
       directory: '/tmp/test-extension',
       specification,

@@ -192,7 +192,7 @@ export async function sendErrorToBugsnag(
       })
     }
     return {error: reportableError, reported: report, unhandled}
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (err) {
     outputDebug(`Error reporting to Bugsnag: ${err}`)
     return {error, reported: false, unhandled: undefined}
@@ -258,7 +258,7 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
     })
     try {
       await addBugsnagMetadata(event, config)
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch (metadataError) {
       outputDebug(`There was an error adding metadata to the Bugsnag report; Ignoring and carrying on ${metadataError}`)
     }

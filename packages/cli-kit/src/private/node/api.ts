@@ -209,7 +209,7 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
     response.headers.forEach((value: any, key: any) => {
       if (responseHeaderIsInteresting(key)) responseHeaders[key] = value
     })
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (err) {
     const t1 = performance.now()
     duration = Math.round(t1 - t0)
@@ -227,7 +227,7 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
 
         try {
           delayMs = responseHeaders['retry-after'] ? Number.parseInt(responseHeaders['retry-after'], 10) : undefined
-          // eslint-disable-next-line no-catch-all/no-catch-all
+          // eslint-disable-next-line @shopify/cli/no-catch-all
         } catch {
           // ignore errors in extracting retry-after header
         }

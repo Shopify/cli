@@ -63,7 +63,7 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
             break
           }
           log.log(wCtx, `(${attempt}/3) app uninstall attempt failed, app still visible`)
-          // eslint-disable-next-line no-catch-all/no-catch-all
+          // eslint-disable-next-line @shopify/cli/no-catch-all
         } catch (err) {
           log.log(wCtx, `(${attempt}/3) app uninstall attempt failed: ${err instanceof Error ? err.message : err}`)
         }
@@ -102,7 +102,7 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
           log.error(wCtx, 'store has apps installed, skipping delete')
         }
       }
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch (err) {
       log.error(wCtx, `store empty state unclear, skipping delete: ${err instanceof Error ? err.message : err}`)
     }
@@ -118,7 +118,7 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
           log.log(wCtx, deletionConfirmed ? 'store deletion confirmed by CLI' : 'store deletion requested with CLI')
           storeDeletionRequested = true
           break
-          // eslint-disable-next-line no-catch-all/no-catch-all
+          // eslint-disable-next-line @shopify/cli/no-catch-all
         } catch (err) {
           log.log(wCtx, `(${attempt}/3) store deletion failed: ${err instanceof Error ? err.message : err}`)
         }
@@ -164,7 +164,7 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
         break
       }
       log.log(wCtx, `(${attempt}/3) app deletion failed`)
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch (err) {
       // Fail fast: Delete button stays disabled while installs exist — retries won't help.
       // cleanup-apps.ts reaps the orphan.

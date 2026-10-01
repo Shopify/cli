@@ -75,7 +75,7 @@ async function persistPreviewStoreSession(
   dependencies.setLastSeenUserId(userId)
   try {
     await dependencies.recordStoreFqdnMetadata(response.shop.domain, true, response.shop.id)
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     // Store metadata is best-effort; credentials and access URL are already persisted.
   }

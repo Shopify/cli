@@ -78,7 +78,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
           try {
             return await process.action(stdout, stderr, signal)
-            // eslint-disable-next-line no-catch-all/no-catch-all
+            // eslint-disable-next-line @shopify/cli/no-catch-all
           } catch (error) {
             abortController.abort(error)
           }
@@ -163,7 +163,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
   const activeShortcuts = devStatusShortcuts.filter((shortcut) => shortcut.condition?.() ?? true)
 
   const tabs: {[key: string]: Tab} = {
-    // eslint-disable-next-line compat/id-length
+    // eslint-disable-next-line @shopify/cli/id-length
     d: {
       label: 'Dev status',
       shortcuts: devStatusShortcuts,
@@ -210,7 +210,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         </>
       ),
     },
-    // eslint-disable-next-line compat/id-length
+    // eslint-disable-next-line @shopify/cli/id-length
     a: {
       label: 'App info',
       content: (
@@ -227,7 +227,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         </Box>
       ),
     },
-    // eslint-disable-next-line compat/id-length
+    // eslint-disable-next-line @shopify/cli/id-length
     s: {
       label: 'Store info',
       content: (

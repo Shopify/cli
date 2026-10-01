@@ -45,7 +45,7 @@ function highlightedLabel(label: string, term: string | undefined) {
   let regex
   try {
     regex = new RegExp(term, 'i')
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (error) {
     // term is user provided and could be an invalid regex at that moment (e.g. ending in '\')
     return label

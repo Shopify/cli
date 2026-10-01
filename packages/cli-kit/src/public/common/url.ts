@@ -23,7 +23,7 @@ export function isValidURL(url: string): boolean {
 export function safeParseURL(url: string): URL | undefined {
   try {
     return new URL(url)
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (error) {
     return undefined
   }

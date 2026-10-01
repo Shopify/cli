@@ -140,7 +140,7 @@ export function testAppWithConfig(options?: TestAppWithConfigOptions): AppLinked
   app.configuration = {
     ...DEFAULT_CONFIG,
     ...options?.config,
-  } as CurrentAppConfiguration
+  }
 
   return app
 }
@@ -274,7 +274,7 @@ export async function testUIExtension(
   const specification = allSpecs.find((spec) => spec.identifier === configuration.type)!
 
   const extension = new ExtensionInstance({
-    configuration: configuration as BaseConfigType,
+    configuration,
     configurationPath,
     entryPath,
     directory,

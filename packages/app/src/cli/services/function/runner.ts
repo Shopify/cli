@@ -69,7 +69,7 @@ async function warnIfProfileWillNotContainFunctionNames(
         ' in shopify.extension.toml, configure the compiler to emit function names, and rebuild the function.',
       ],
     })
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     // Inspecting function names is best-effort and must never prevent the function from running.
   }

@@ -127,7 +127,7 @@ describe('token client', () => {
   test('fetchCurrentStoreAuthScopes returns current scope handles', async () => {
     vi.mocked(graphqlRequest).mockResolvedValue({
       currentAppInstallation: {accessScopes: [{handle: 'read_products'}, {handle: 'read_orders'}]},
-    } as any)
+    })
 
     await expect(fetchCurrentStoreAuthScopes({store: 'shop.myshopify.com', accessToken: 'token'})).resolves.toEqual([
       'read_products',
@@ -155,7 +155,7 @@ describe('token client', () => {
   test('fetchCurrentStoreAuthScopes throws on invalid response shape', async () => {
     vi.mocked(graphqlRequest).mockResolvedValue({
       currentAppInstallation: undefined,
-    } as any)
+    })
 
     await expect(fetchCurrentStoreAuthScopes({store: 'shop.myshopify.com', accessToken: 'token'})).rejects.toThrow(
       'Shopify did not return currentAppInstallation.accessScopes.',

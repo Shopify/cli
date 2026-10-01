@@ -311,7 +311,7 @@ export async function symlink(target: string, path: string): Promise<void> {
     if (stats.isDirectory()) {
       type = 'junction'
     }
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     // If we can't stat the target, assume it's a file
   }
@@ -462,7 +462,7 @@ export async function fileLastUpdatedTimestamp(path: string): Promise<number | u
   try {
     const lastUpdatedDateTime = await fileLastUpdated(path)
     return lastUpdatedDateTime.getTime()
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     return undefined
   }
@@ -502,7 +502,7 @@ export async function fileHasExecutablePermissions(path: string): Promise<boolea
   try {
     await fsAccess(path, fsConstants.X_OK)
     return true
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     return false
   }
@@ -512,7 +512,7 @@ export function fileHasWritePermissions(path: string): boolean {
   try {
     accessSync(path, fsConstants.W_OK)
     return true
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     return false
   }
@@ -528,7 +528,7 @@ export function unixFileIsOwnedByCurrentUser(path: string): boolean | undefined 
     const currentUid = process.getuid()
 
     return stats.uid === currentUid
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     return false
   }
@@ -544,7 +544,7 @@ export async function fileExists(path: string): Promise<boolean> {
   try {
     await fsAccess(path)
     return true
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     return false
   }

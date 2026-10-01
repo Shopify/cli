@@ -39,7 +39,7 @@ function validateSubscriptions(webhookConfig: WebhooksConfig) {
     }
   }
 
-  // eslint-disable-next-line compat/typescript-eslint-naming-convention
+  // eslint-disable-next-line @shopify/cli/naming-convention
   for (const [i, {uri, topics = [], compliance_topics = [], filter = ''}] of subscriptions.entries()) {
     const path = ['subscriptions', i]
 

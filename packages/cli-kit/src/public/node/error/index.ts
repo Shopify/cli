@@ -187,7 +187,7 @@ export function errorMapper(error: unknown): Promise<unknown> {
 function isFatal(error: unknown): error is FatalError {
   try {
     return Object.prototype.hasOwnProperty.call(error, 'type')
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     return false
   }

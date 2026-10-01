@@ -6,11 +6,11 @@ import {describe, expect, test} from 'vitest'
 
 function clientError(status: number, code?: string): ClientError {
   const errors = code ? [{message: 'boom', extensions: {code}}] : undefined
-  return new ClientError({status, errors, headers: {}} as any, {query: 'q'} as any)
+  return new ClientError({status, errors, headers: {}} as any, {query: 'q'})
 }
 
 function clientErrorWithErrors(status: number, errors: unknown[]): ClientError {
-  return new ClientError({status, errors, headers: {}} as any, {query: 'q'} as any)
+  return new ClientError({status, errors, headers: {}} as any, {query: 'q'})
 }
 
 describe('errorGroupingSignals', () => {

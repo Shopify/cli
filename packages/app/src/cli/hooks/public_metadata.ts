@@ -16,7 +16,7 @@ async function logAppContextMetadata(directory: string): Promise<void> {
         timer = setTimeout(resolve, APP_CONTEXT_METADATA_TIMEOUT_MS)
       }),
     ])
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     // Metadata is strictly best-effort: never surface errors or affect the command.
   } finally {

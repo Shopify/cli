@@ -39,7 +39,7 @@ function transformToPrivacyComplianceWebhooksModule(content: object, appConfigur
   if (Object.keys(urls).length === 0) {
     return urls
   } else {
-    // eslint-disable-next-line compat/typescript-eslint-naming-convention
+    // eslint-disable-next-line @shopify/cli/naming-convention
     const {api_version} = webhooks
     return {
       api_version,

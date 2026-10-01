@@ -370,7 +370,7 @@ describe('dev() Ctrl-C analytics', () => {
     const exitOrder = exitSpy.mock.invocationCallOrder[0]!
     expect(reportOrder).toBeLessThan(exitOrder)
 
-    await reportDevAnalytics(mockConfig, adminSession as any)
+    await reportDevAnalytics(mockConfig, adminSession)
 
     expect(reportAnalyticsEvent).toHaveBeenCalledTimes(1)
   })

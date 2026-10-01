@@ -207,7 +207,7 @@ export async function hasBlockingAutoUpgradeNotification(): Promise<boolean> {
     // written to the lastShown cache for these notifications.
     const matching = filterNotifications(notifications, '', ['autoupgrade'])
     return matching.some((notification) => notification.type === 'error')
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     return false
   }

@@ -318,7 +318,7 @@ export default abstract class ThemeCommand extends Command {
                 }
               })
 
-              // eslint-disable-next-line no-catch-all/no-catch-all
+              // eslint-disable-next-line @shopify/cli/no-catch-all
             } catch (error) {
               if (error instanceof Error) {
                 error.message = `Environment ${environment} failed: \n\n${error.message}`

@@ -3,7 +3,7 @@ import * as server from './extension/server.js'
 import * as websocket from './extension/websocket.js'
 import {devUIExtensions, ExtensionDevOptions} from './extension.js'
 import {ExtensionsEndpointPayload} from './extension/payload/models.js'
-import {WebsocketConnection} from './extension/websocket/models.js'
+
 import {AppEventWatcher} from './app-events/app-event-watcher.js'
 import {testAppLinked} from '../../models/app/app.test-data.js'
 import {describe, test, vi, expect} from 'vitest'
@@ -37,14 +37,14 @@ describe('devUIExtensions()', () => {
       return {
         mock: 'payload-store',
       } as unknown as store.ExtensionsPayloadStore
-    } as any)
+    })
     vi.spyOn(server, 'setupHTTPServer').mockReturnValue({
       mock: 'http-server',
       close: serverCloseSpy,
     } as unknown as Server)
     vi.spyOn(websocket, 'setupWebsocketConnection').mockReturnValue({
       close: websocketCloseSpy,
-    } as unknown as WebsocketConnection)
+    })
   }
 
   test('initializes the payload store', async () => {

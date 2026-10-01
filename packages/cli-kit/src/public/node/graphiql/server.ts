@@ -216,7 +216,7 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
       try {
         await fetchApiVersionsWithTokenRefresh()
         return {status: 'OK', storeFqdn, appName: appContext?.appName, appUrl: appContext?.appUrl}
-        // eslint-disable-next-line no-catch-all/no-catch-all
+        // eslint-disable-next-line @shopify/cli/no-catch-all
       } catch {
         return {status: 'UNAUTHENTICATED'}
       }
@@ -334,7 +334,7 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
         setResponseHeader(event, 'Content-Type', 'application/json')
         setResponseStatus(event, result.status)
         return result.json()
-        // eslint-disable-next-line no-catch-all/no-catch-all
+        // eslint-disable-next-line @shopify/cli/no-catch-all
       } catch (error: unknown) {
         setResponseStatus(event, 500)
         if (error instanceof Error) {

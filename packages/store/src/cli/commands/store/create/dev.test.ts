@@ -131,9 +131,9 @@ describe('store create dev command', () => {
   })
 
   test('rejects an invalid --country value without calling the service', async () => {
-    const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {
+    const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('process.exit')
-    }) as never)
+    })
 
     await expect(
       StoreCreateDev.run([
@@ -235,9 +235,9 @@ describe('store create dev command', () => {
           return all[index - 1] !== `--${missingFlag}`
         },
       )
-      const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {
+      const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => {
         throw new Error('process.exit')
-      }) as never)
+      })
 
       await expect(StoreCreateDev.run(argv)).rejects.toThrow()
       expect(createDevStore).not.toHaveBeenCalled()
@@ -258,9 +258,9 @@ describe('store create dev command', () => {
 
   test('outputs structured JSON error when --json is active and service throws AbortError', async () => {
     vi.mocked(createDevStore).mockRejectedValueOnce(new AbortError('Something went wrong'))
-    const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {
+    const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('process.exit')
-    }) as never)
+    })
 
     await expect(
       StoreCreateDev.run(['--name', 'my-test-store', '--plan', 'plus', '--organization-id', '12345', '--json']),

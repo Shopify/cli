@@ -336,7 +336,7 @@ async function targetExportsShopifyGlobal(targetDtsPath: string): Promise<boolea
   let content: string
   try {
     content = readFileSync(targetDtsPath).toString()
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     return false
   }

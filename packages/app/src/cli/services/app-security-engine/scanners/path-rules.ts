@@ -182,7 +182,7 @@ export async function listNestedRepository(directory: string): Promise<GitIgnore
   let stats: Stats
   try {
     stats = lstatSync(joinPath(directory, '.git'))
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (error) {
     return isMissingFilesystemEntry(error) ? undefined : {status: 'failed'}
   }

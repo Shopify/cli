@@ -50,7 +50,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     const optionsChanged = JSON.stringify(newOptions) !== JSON.stringify(this.options)
 
     if (optionsChanged) {
-      this.options = newOptions as ExtensionServer.Options
+      this.options = newOptions
       this.setupConnection(true)
     }
 
@@ -75,7 +75,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     event: TEvent,
     data: ExtensionServer.OutboundPersistEvents[TEvent],
   ): void {
-    if (this.EVENT_THAT_WILL_MUTATE_THE_SERVER.includes(event as string)) {
+    if (this.EVENT_THAT_WILL_MUTATE_THE_SERVER.includes(event)) {
       if (!this.options.locales) {
         return this.connection?.send(JSON.stringify({event, data}))
       }
@@ -128,7 +128,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     const event = args[0]
     const data = args.length > 1 ? args[1] : undefined
 
-    if (this.EVENT_THAT_WILL_MUTATE_THE_SERVER.includes(event as string)) {
+    if (this.EVENT_THAT_WILL_MUTATE_THE_SERVER.includes(event)) {
       return console.warn(
         `You tried to use "emit" with a the "${event}" event. Please use the "persist" method instead to persist changes to the server.`,
       )
@@ -178,7 +178,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
         this.listeners[event]?.forEach((listener) => {
           listener({...typedData, extensions: this._getLocalizedExtensions(filteredExtensions)})
         })
-        // eslint-disable-next-line no-catch-all/no-catch-all
+        // eslint-disable-next-line @shopify/cli/no-catch-all
       } catch (err) {
         console.error(
           `[ExtensionServer] Something went wrong while parsing a server message:`,

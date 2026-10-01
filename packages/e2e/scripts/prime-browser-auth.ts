@@ -47,7 +47,7 @@ interface PrimeBrowserAuthOptions {
 function isAccountsShopifyUrl(rawUrl: string): boolean {
   try {
     return new URL(rawUrl).hostname === 'accounts.shopify.com'
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     return false
   }
@@ -180,7 +180,7 @@ async function primeCliAuth(page: Page, email: string, password: string, env: No
   } finally {
     try {
       ptyProcess.kill()
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch (_error) {
       // Process may already be dead.
     }
@@ -190,7 +190,7 @@ async function primeCliAuth(page: Page, email: string, password: string, env: No
 async function attemptVisitAndHandleAccountPicker(page: Page, url: string, email: string, label: string) {
   try {
     await visitAndHandleAccountPicker(page, url, email)
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (err) {
     console.warn(
       `[prime-browser-auth] Browser session prewarm for ${label} failed: ${err instanceof Error ? err.message : err}`,

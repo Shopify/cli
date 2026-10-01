@@ -7,7 +7,6 @@ import {
   getPackageManager,
   usesWorkspaces,
   packageManagerFromUserAgent,
-  PackageManager,
 } from './node-package-manager.js'
 import {exec, isCI} from './system.js'
 import {
@@ -220,7 +219,7 @@ describe('runCLIUpgrade', () => {
     // Given
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
     // 'unknown' is returned by inferPackageManagerForGlobalCLI for local installs
-    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('unknown' as PackageManager)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('unknown')
 
     // When/Then
     await expect(runCLIUpgrade()).rejects.toThrow('Could not determine the package manager')

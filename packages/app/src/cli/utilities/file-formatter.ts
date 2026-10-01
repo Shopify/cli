@@ -1,4 +1,4 @@
-import prettier from 'prettier'
+import {format} from 'prettier'
 import type {Options} from 'prettier'
 
 /**
@@ -8,5 +8,5 @@ import type {Options} from 'prettier'
  * @returns The formatted content.
  */
 export async function formatContent(content: string, options?: Options): Promise<string> {
-  return prettier.format(content, options)
+  return format(content, options)
 }
