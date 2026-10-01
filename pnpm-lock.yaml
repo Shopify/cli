@@ -582,6 +582,9 @@ importers:
 
   packages/eslint-plugin-cli:
     dependencies:
+      '@microsoft/tsdoc':
+        specifier: 0.16.0
+        version: 0.16.0
       '@shopify/eslint-plugin':
         specifier: 50.0.0
         version: 50.0.0(@typescript-eslint/eslint-plugin@8.56.1(@typescript-eslint/parser@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(@typescript-eslint/parser@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(@typescript-eslint/utils@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(prettier@3.8.4)(typescript@5.9.3)
