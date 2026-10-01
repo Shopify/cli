@@ -1,3 +1,4 @@
+import {appSecurityBlockingFlag} from './blocking-flag.js'
 import {appFlags} from '../../../flags.js'
 import {ignorePatternProblem} from '../../../services/app-security-engine/index.js'
 import securityCheck from '../../../services/security-check.js'
@@ -5,9 +6,6 @@ import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import type {AppSecurityBlockingLevel} from '../../../services/app-security-api.js'
-
-const blockingLevels: AppSecurityBlockingLevel[] = ['high', 'medium', 'low', 'none']
 
 export default class SecurityCheck extends BaseCommand {
   static hidden = true
@@ -42,12 +40,7 @@ In interactive terminals, the command offers to copy the coding-agent instructio
       },
     }),
     ...jsonFlag,
-    blocking: Flags.string({
-      description: 'The minimum finding severity that causes a non-zero exit code.',
-      options: blockingLevels,
-      default: 'none',
-      env: 'SHOPIFY_FLAG_APP_SECURITY_BLOCKING',
-    }),
+    ...appSecurityBlockingFlag,
     yes: Flags.boolean({
       description: 'Print coding-agent instructions without prompting.',
       default: false,
@@ -70,7 +63,7 @@ In interactive terminals, the command offers to copy the coding-agent instructio
       configName: flags.config,
       json: flags.json,
       verbose: Boolean(flags.verbose),
-      blocking: flags.blocking as AppSecurityBlockingLevel,
+      blocking: flags.blocking,
       yes: flags.yes,
       skipInstructions: flags['skip-instructions'],
       ignorePatterns: flags.ignore ?? [],

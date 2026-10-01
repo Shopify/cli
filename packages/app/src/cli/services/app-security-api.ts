@@ -2,6 +2,7 @@ import {
   AppRootDiscoveryError,
   findAppRoot,
   scanApp,
+  SEVERITY_RANK,
   type AppSecurityEngineMetadata,
   type AppSecurityScan,
   type Severity,
@@ -14,15 +15,9 @@ export type AppSecurityBlockingLevel = Severity | 'none'
 
 export type AppSecurityExecution = AppSecurityScan & {elapsedMilliseconds: number}
 
-const severityRank: Record<Severity, number> = {
-  high: 3,
-  medium: 2,
-  low: 1,
-}
-
 export function securityExitCode(execution: AppSecurityExecution, blocking: AppSecurityBlockingLevel): number {
   if (blocking === 'none') return 0
-  const blocks = execution.scan.issues.some((issue) => severityRank[issue.severity] >= severityRank[blocking])
+  const blocks = execution.scan.issues.some((issue) => SEVERITY_RANK[issue.severity] >= SEVERITY_RANK[blocking])
   return blocks ? 1 : 0
 }
 

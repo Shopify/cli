@@ -1,18 +1,13 @@
 import {
   appSecurityArtifactPaths,
   cleanAppSecurityArtifacts,
-  readAgentFindings,
-  readDeterministicFindings,
+  readFindingsDocument,
   writeAgentFindings,
   writeCheckArtifacts,
   writeSubmission,
 } from './app-security-artifacts.js'
-import {
-  scanApp,
-  SUBMISSION_SCHEMA_VERSION,
-  type AgentFindingsArtifact,
-  type AppSecuritySubmission,
-} from './app-security-engine/index.js'
+import {scanApp, SUBMISSION_SCHEMA_VERSION, type AppSecuritySubmission} from './app-security-engine/index.js'
+import {agentFindingsDocument} from './app-security-engine/tests/fixtures/findings-documents.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -23,14 +18,6 @@ const submission = {
   schemaVersion: SUBMISSION_SCHEMA_VERSION,
   report: {metadata: {}},
 } as AppSecuritySubmission
-
-const agentFindings: AgentFindingsArtifact = {
-  schema_version: 1,
-  engine: {name: 'shopify-app-security', version: '1.2.3'},
-  recorded_at: '2026-08-24T00:00:00.000Z',
-  project: {commit: null, dirty: null},
-  checks: [],
-}
 
 async function scanTestApp(directory: string) {
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Test"\nclient_id = "test"\n')
@@ -70,91 +57,59 @@ describe('appSecurityArtifactPaths', () => {
   })
 })
 
-describe('readDeterministicFindings', () => {
-  test('returns ok with deterministic findings written by a scan', async () => {
+describe('readFindingsDocument', () => {
+  test('returns ok with the deterministic document written by check', async () => {
     await inTemporaryDirectory(async (directory) => {
-      const {artifact, agentChecks} = await scanTestApp(directory)
-      const {deterministicFindingsPath} = await writeCheckArtifacts(directory, {artifact, agentChecks})
+      const {deterministicFindings, agentChecks} = await scanTestApp(directory)
+      const {deterministicFindingsPath} = await writeCheckArtifacts(directory, {deterministicFindings, agentChecks})
 
-      await expect(readDeterministicFindings(deterministicFindingsPath)).resolves.toEqual({
+      await expect(readFindingsDocument(deterministicFindingsPath, 'deterministic')).resolves.toEqual({
         status: 'ok',
-        value: artifact,
+        value: deterministicFindings,
       })
     })
   })
 
-  test('returns missing when the file does not exist', async () => {
+  test('returns ok with the agent document written by writeAgentFindings', async () => {
     await inTemporaryDirectory(async (directory) => {
-      await expect(readDeterministicFindings(joinPath(directory, 'deterministic-findings.json'))).resolves.toEqual({
-        status: 'missing',
-      })
-    })
-  })
-
-  test('returns invalid for malformed JSON', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const path = joinPath(directory, 'deterministic-findings.json')
-      await writeFile(path, '{invalid')
-
-      await expect(readDeterministicFindings(path)).resolves.toEqual({
-        status: 'invalid',
-        message: expect.stringContaining('Could not parse JSON'),
-      })
-    })
-  })
-
-  test('returns invalid with every schema error for an unrecognized artifact', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const path = joinPath(directory, 'deterministic-findings.json')
-      await writeFile(path, '{"schema_version":3}')
-
-      await expect(readDeterministicFindings(path)).resolves.toEqual({
-        status: 'invalid',
-        message: 'unsupported schema_version: 3 (expected 1); findings must be an array',
-      })
-    })
-  })
-
-  test('returns invalid for an unreadable path', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const path = joinPath(directory, 'deterministic-findings.json')
-      await mkdir(path)
-
-      await expect(readDeterministicFindings(path)).resolves.toEqual({
-        status: 'invalid',
-        message: expect.stringContaining('Could not read the file'),
-      })
-    })
-  })
-
-  test('rejects a file larger than 5 MB before parsing', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const path = joinPath(directory, 'deterministic-findings.json')
-      await writeFile(path, 'x'.repeat(5_000_001))
-
-      await expect(readDeterministicFindings(path)).resolves.toEqual({
-        status: 'invalid',
-        message: 'The file is larger than 5 MB.',
-      })
-    })
-  })
-})
-
-describe('readAgentFindings', () => {
-  test('returns ok with agent findings written by writeAgentFindings', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const path = await writeAgentFindings(directory, agentFindings)
+      const path = await writeAgentFindings(directory, agentFindingsDocument)
 
       expect(path).toBe(appSecurityArtifactPaths(directory).agentFindingsPath)
-      await expect(readAgentFindings(path)).resolves.toEqual({status: 'ok', value: agentFindings})
+      await expect(readFindingsDocument(path, 'agent')).resolves.toEqual({status: 'ok', value: agentFindingsDocument})
+    })
+  })
+
+  test('narrows the document to the expected source so callers need no further checks', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const {deterministicFindings, agentChecks} = await scanTestApp(directory)
+      const {deterministicFindingsPath} = await writeCheckArtifacts(directory, {deterministicFindings, agentChecks})
+      const agentFindingsPath = await writeAgentFindings(directory, agentFindingsDocument)
+
+      const deterministic = await readFindingsDocument(deterministicFindingsPath, 'deterministic')
+      const agent = await readFindingsDocument(agentFindingsPath, 'agent')
+
+      // Source-specific fields compile without narrowing on `source`.
+      expect(deterministic.status === 'ok' && deterministic.value.detection).toEqual(deterministicFindings.detection)
+      expect(agent.status === 'ok' && agent.value.engine).toEqual(agentFindingsDocument.engine)
+    })
+  })
+
+  test('returns invalid when the document comes from the other source', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = await writeAgentFindings(directory, agentFindingsDocument)
+
+      await expect(readFindingsDocument(path, 'deterministic')).resolves.toEqual({
+        status: 'invalid',
+        errors: ['source is "agent", but this file must hold "deterministic" findings.'],
+      })
     })
   })
 
   test('returns missing when the file does not exist', async () => {
     await inTemporaryDirectory(async (directory) => {
-      await expect(readAgentFindings(joinPath(directory, 'agent-findings.json'))).resolves.toEqual({
-        status: 'missing',
-      })
+      const path = joinPath(directory, 'deterministic-findings.json')
+
+      await expect(readFindingsDocument(path, 'deterministic')).resolves.toEqual({status: 'missing'})
     })
   })
 
@@ -163,9 +118,43 @@ describe('readAgentFindings', () => {
       const path = joinPath(directory, 'agent-findings.json')
       await writeFile(path, '{invalid')
 
-      await expect(readAgentFindings(path)).resolves.toEqual({
+      await expect(readFindingsDocument(path, 'agent')).resolves.toEqual({
         status: 'invalid',
-        message: expect.stringContaining('Could not parse JSON'),
+        errors: [expect.stringContaining('Could not parse JSON')],
+      })
+    })
+  })
+
+  test('returns invalid with every translation error, without the path', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = joinPath(directory, 'agent-findings.json')
+      const document = {...agentFindingsDocument, engine: {name: 'other'}, checks: [{id: 'X', status: 'skipped'}]}
+      await writeFile(path, JSON.stringify(document))
+
+      const result = await readFindingsDocument(path, 'agent')
+
+      expect(result.status).toBe('invalid')
+      if (result.status !== 'invalid') return
+      expect(result.errors).toEqual(
+        expect.arrayContaining([
+          expect.stringMatching(/^engine\.name: /),
+          expect.stringMatching(/^engine\.version: /),
+          expect.stringMatching(/^checks\[0\]\.status: /),
+          expect.stringMatching(/^checks\[0\]\.snapshot: /),
+        ]),
+      )
+      for (const error of result.errors) expect(error).not.toContain(path)
+    })
+  })
+
+  test('returns invalid for an unsupported schema version', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = joinPath(directory, 'deterministic-findings.json')
+      await writeFile(path, '{"schema_version":3}')
+
+      await expect(readFindingsDocument(path, 'deterministic')).resolves.toEqual({
+        status: 'invalid',
+        errors: ['unsupported schema_version: 3 (expected 1)'],
       })
     })
   })
@@ -175,21 +164,33 @@ describe('readAgentFindings', () => {
       const path = joinPath(directory, 'agent-findings.json')
       await writeFile(path, '[]')
 
-      await expect(readAgentFindings(path)).resolves.toEqual({
+      await expect(readFindingsDocument(path, 'agent')).resolves.toEqual({
         status: 'invalid',
-        message: 'agent findings must be a JSON object',
+        errors: ['expected a JSON object, received array'],
       })
     })
   })
 
-  test('returns invalid for an unsupported schema version', async () => {
+  test('returns invalid for an unreadable path', async () => {
     await inTemporaryDirectory(async (directory) => {
-      const path = joinPath(directory, 'agent-findings.json')
-      await writeFile(path, '{"schema_version":2,"checks":[]}')
+      const path = joinPath(directory, 'deterministic-findings.json')
+      await mkdir(path)
 
-      await expect(readAgentFindings(path)).resolves.toEqual({
+      await expect(readFindingsDocument(path, 'deterministic')).resolves.toEqual({
         status: 'invalid',
-        message: 'unsupported schema_version: 2 (expected 1)',
+        errors: [expect.stringContaining('Could not read the file')],
+      })
+    })
+  })
+
+  test('rejects a file larger than 5 MB before parsing', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = joinPath(directory, 'deterministic-findings.json')
+      await writeFile(path, 'x'.repeat(5_000_001))
+
+      await expect(readFindingsDocument(path, 'deterministic')).resolves.toEqual({
+        status: 'invalid',
+        errors: ['The file is larger than 5 MB.'],
       })
     })
   })
@@ -198,31 +199,31 @@ describe('readAgentFindings', () => {
 describe('writeCheckArtifacts', () => {
   test('writes deterministic-findings.json and agent-checks.json', async () => {
     await inTemporaryDirectory(async (directory) => {
-      const {artifact, agentChecks} = await scanTestApp(directory)
+      const {deterministicFindings, agentChecks} = await scanTestApp(directory)
       const paths = appSecurityArtifactPaths(directory)
 
-      await expect(writeCheckArtifacts(directory, {artifact, agentChecks})).resolves.toEqual({
+      await expect(writeCheckArtifacts(directory, {deterministicFindings, agentChecks})).resolves.toEqual({
         deterministicFindingsPath: paths.deterministicFindingsPath,
         agentChecksPath: paths.agentChecksPath,
       })
 
-      expect(JSON.parse(await readFile(paths.deterministicFindingsPath))).toEqual(artifact)
+      expect(JSON.parse(await readFile(paths.deterministicFindingsPath))).toEqual(deterministicFindings)
       expect(JSON.parse(await readFile(paths.agentChecksPath))).toEqual(agentChecks)
     })
   })
 
   test('overwrites earlier check artifacts and leaves agent-findings.json untouched', async () => {
     await inTemporaryDirectory(async (directory) => {
-      const {artifact, agentChecks} = await scanTestApp(directory)
+      const {deterministicFindings, agentChecks} = await scanTestApp(directory)
       const paths = appSecurityArtifactPaths(directory)
       await mkdir(paths.artifactDirectory)
       await writeFile(paths.deterministicFindingsPath, '{"stale":true}')
       await writeFile(paths.agentChecksPath, '{"stale":true}')
       await writeFile(paths.agentFindingsPath, '{"recorded":"by the agent"}')
 
-      await writeCheckArtifacts(directory, {artifact, agentChecks})
+      await writeCheckArtifacts(directory, {deterministicFindings, agentChecks})
 
-      expect(JSON.parse(await readFile(paths.deterministicFindingsPath))).toEqual(artifact)
+      expect(JSON.parse(await readFile(paths.deterministicFindingsPath))).toEqual(deterministicFindings)
       expect(JSON.parse(await readFile(paths.agentChecksPath))).toEqual(agentChecks)
       await expect(readFile(paths.agentFindingsPath)).resolves.toBe('{"recorded":"by the agent"}')
     })
@@ -230,11 +231,11 @@ describe('writeCheckArtifacts', () => {
 
   test('refuses to write through a .shopify symlink that targets outside the app', async () => {
     await inTemporaryDirectory(async (directory) => {
-      const {artifact, agentChecks} = await scanTestApp(directory)
+      const {deterministicFindings, agentChecks} = await scanTestApp(directory)
       await inTemporaryDirectory(async (externalDirectory) => {
         await symlink(externalDirectory, joinPath(directory, '.shopify'), 'dir')
 
-        await expect(writeCheckArtifacts(directory, {artifact, agentChecks})).rejects.toMatchObject({
+        await expect(writeCheckArtifacts(directory, {deterministicFindings, agentChecks})).rejects.toMatchObject({
           constructor: AbortError,
           message: expect.stringMatching(/outside the app/),
         })
@@ -293,16 +294,16 @@ describe('cleanAppSecurityArtifacts', () => {
   test('refuses a .shopify symlink that targets outside the app without deleting its files', async () => {
     await inTemporaryDirectory(async (directory) => {
       await inTemporaryDirectory(async (externalDirectory) => {
-        const externalScanPath = joinPath(externalDirectory, 'app-security', 'deterministic-findings.json')
+        const externalFindingsPath = joinPath(externalDirectory, 'app-security', 'deterministic-findings.json')
         await mkdir(joinPath(externalDirectory, 'app-security'))
-        await writeFile(externalScanPath, '{}')
+        await writeFile(externalFindingsPath, '{}')
         await symlink(externalDirectory, joinPath(directory, '.shopify'), 'dir')
 
         await expect(cleanAppSecurityArtifacts(directory)).rejects.toMatchObject({
           constructor: AbortError,
           message: expect.stringMatching(/symbolic link/),
         })
-        await expect(fileExists(externalScanPath)).resolves.toBe(true)
+        await expect(fileExists(externalFindingsPath)).resolves.toBe(true)
       })
     })
   })

@@ -1,17 +1,19 @@
+import {appSecurityBlockingFlag} from './blocking-flag.js'
 import {appFlags} from '../../../flags.js'
 import securityReview from '../../../services/security-review.js'
 import {securityReviewJsonOutputSchema} from '../../../services/security-review-json.js'
+import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class SecurityReview extends BaseCommand {
   static hidden = true
 
-  static summary = 'Show the stored App Security results.'
+  static summary = 'Show the combined App Security results.'
 
-  static descriptionWithMarkdown = `Prints the deterministic findings (\`.shopify/app-security/deterministic-findings.json\`) and the recorded agent findings (\`.shopify/app-security/agent-findings.json\`), each with its path and age.
+  static descriptionWithMarkdown = `Combines the deterministic results (\`.shopify/app-security/deterministic-findings.json\`, written by \`shopify app security check\`) with the recorded agent results (\`.shopify/app-security/agent-findings.json\`, written by \`shopify app security record\`) and shows one view of every check: its findings, status and source.
 
-The two files are shown as they are stored. They aren't compared with each other or with the current source files.`
+The agent results are optional. Use \`--check-id\` to narrow the review to specific checks, \`--verbose\` for full reasoning, evidence and suppressed findings, and \`--blocking\` to exit with code 1 when a check with findings is at or above a severity.`
 
   static get jsonOutputSchema() {
     return securityReviewJsonOutputSchema
@@ -23,11 +25,23 @@ The two files are shown as they are stored. They aren't compared with each other
     ...globalFlags,
     path: appFlags.path,
     ...jsonFlag,
+    'check-id': Flags.string({
+      description: 'Show only this check. Repeat the flag to show several checks.',
+      env: 'SHOPIFY_FLAG_CHECK_ID',
+      multiple: true,
+    }),
+    ...appSecurityBlockingFlag,
   }
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(SecurityReview)
 
-    await securityReview({directory: flags.path, json: flags.json})
+    await securityReview({
+      directory: flags.path,
+      json: flags.json,
+      verbose: Boolean(flags.verbose),
+      checkIds: flags['check-id'] ?? [],
+      blocking: flags.blocking,
+    })
   }
 }

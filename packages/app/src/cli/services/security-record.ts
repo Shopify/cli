@@ -1,10 +1,11 @@
 import {writeAgentFindings} from './app-security-artifacts.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
+import {countLabel} from './app-security-format.js'
 import {
   getEngineVersion,
   readProjectState,
   recordAgentFindings,
-  type AgentFindingsArtifact,
+  type AgentFindingsDocument,
   type ProjectState,
 } from './app-security-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -23,7 +24,7 @@ export interface SecurityRecordDependencies {
   readStdin(): Promise<string | undefined>
   readProjectState(appRoot: string): Promise<ProjectState>
   engineVersion(): string
-  writeAgentFindings(appRoot: string, artifact: AgentFindingsArtifact): Promise<string>
+  writeAgentFindings(appRoot: string, document: AgentFindingsDocument): Promise<string>
 }
 
 const defaultDependencies: SecurityRecordDependencies = {
@@ -65,7 +66,8 @@ async function readStdinDocument(
   }
 }
 
-async function readFindingsDocument(
+/** The agent's record input, parsed from stdin. Not a stored findings document: `recordAgentFindings` validates it. */
+async function readInputDocument(
   commands: AppSecurityCommands,
   dependencies: SecurityRecordDependencies,
 ): Promise<unknown> {
@@ -100,24 +102,20 @@ export default async function securityRecord(
   dependencies: SecurityRecordDependencies = defaultDependencies,
 ): Promise<SecurityRecordResult> {
   const commands = resolveAppSecurityCommands(options.appRoot)
-  const document = await readFindingsDocument(commands, dependencies)
+  const input = await readInputDocument(commands, dependencies)
 
-  const recorded = recordAgentFindings(document, {
+  const recorded = recordAgentFindings(input, {
     engineVersion: dependencies.engineVersion(),
     project: await dependencies.readProjectState(options.appRoot),
   })
   if (!recorded.ok) throw rejectedDocumentError(recorded.errors, commands)
 
-  const path = await dependencies.writeAgentFindings(options.appRoot, recorded.artifact)
+  const path = await dependencies.writeAgentFindings(options.appRoot, recorded.document)
   return {
     path,
-    checks: recorded.artifact.checks.length,
-    findings: recorded.artifact.checks.reduce((total, check) => total + check.findings.length, 0),
+    checks: recorded.document.checks.length,
+    findings: recorded.document.checks.reduce((total, check) => total + check.findings.length, 0),
   }
-}
-
-function countLabel(count: number, noun: string): string {
-  return `${count} ${noun}${count === 1 ? '' : 's'}`
 }
 
 /** Presents a recorded document in the terminal. */

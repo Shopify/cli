@@ -2,6 +2,7 @@
 id: STATIC_FRAME_ANCESTORS
 version: 1
 severity: high
+precedence: prefer-agent
 ---
 
 # Static Frame Ancestors

@@ -2,7 +2,10 @@ import SecuritySubmit from './submit.js'
 import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts.js'
 import {resolveSecuritySubmitClientId} from '../../../services/app-security-submit-target.js'
 import {clearCachedAppInfo, setCachedAppInfo} from '../../../services/local-storage.js'
-import {submissionScanFixture} from '../../../services/app-security-engine/tests/fixtures/submission-scan.js'
+import {
+  agentFindingsDocument,
+  deterministicFindingsDocument,
+} from '../../../services/app-security-engine/tests/fixtures/findings-documents.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {defaultDeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {Config} from '@oclif/core'
@@ -78,13 +81,16 @@ function remoteClient() {
   return {appFromIdentifiers, accountInfo, generateSourceScanUploadUrl, createSourceScan}
 }
 
-async function writeApp(directory: string) {
+async function writeApp(directory: string, {agent = true}: {agent?: boolean} = {}) {
   const paths = appSecurityArtifactPaths(directory)
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'client_id = "configured-client-id"\n')
   await mkdir(paths.artifactDirectory, {recursive: true})
-  await writeFile(paths.deterministicFindingsPath, JSON.stringify(submissionScanFixture))
+  await writeFile(paths.deterministicFindingsPath, JSON.stringify(deterministicFindingsDocument))
+  if (agent) await writeFile(paths.agentFindingsPath, JSON.stringify(agentFindingsDocument))
   return paths
 }
+
+const resultFileNames = ['agent-findings.json', 'deterministic-findings.json']
 
 async function runCommand(argv: string[]) {
   let stdout = ''
@@ -141,11 +147,16 @@ describe('app security submit command boundary', () => {
     })
   })
 
-  test.each([false, true])('dry-run uses real root, scan and artifact I/O (json=%s)', async (json) => {
+  test.each([
+    {json: false, agent: true},
+    {json: true, agent: true},
+    {json: false, agent: false},
+    {json: true, agent: false},
+  ])('dry-run uses real root, results and artifact I/O (json=$json, agent=$agent)', async ({json, agent}) => {
     await inTemporaryDirectory(async (directory) => {
       const client = remoteClient()
-      const paths = await writeApp(directory)
-      const scan = await readFile(paths.deterministicFindingsPath)
+      const paths = await writeApp(directory, {agent})
+      const deterministic = await readFile(paths.deterministicFindingsPath)
       await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Unlinked app"\n')
       const result = await runCommand(['--path', directory, '--dry-run', ...(json ? ['--json'] : [])])
 
@@ -155,23 +166,56 @@ describe('app security submit command boundary', () => {
         expect(JSON.parse(result.stdout)).toEqual({
           operation: 'submit',
           dry_run: true,
-          payload: {path: paths.submissionPath, schema_version: 0},
+          payload: {path: paths.submissionPath, schema_version: 2},
         })
         expect(result.stderr).toBe('')
       } else {
         expect(result.stdout).toBe('')
-        expect(result.stderr).toContain('Prepared the App Security submission without uploading it.')
+        expect(result.stderr).toContain('Prepared the App Security submission without sending it.')
       }
       const submission = JSON.parse(await readFile(paths.submissionPath, 'utf8'))
-      expect(submission.schemaVersion).toBe(0)
+      expect(submission.schemaVersion).toBe(2)
       expect(submission.report).not.toHaveProperty('attestation')
       expect(submission.report.metadata).toEqual({version_tag: null})
+      expect(submission.report.sources.deterministic).toMatchObject({source: 'deterministic'})
+      expect(submission.report.sources.agent).toEqual(agent ? expect.objectContaining({source: 'agent'}) : null)
       expect(resolveSecuritySubmitClientId).not.toHaveBeenCalled()
       expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
       expect(client.appFromIdentifiers).not.toHaveBeenCalled()
       expect(fetch).not.toHaveBeenCalled()
-      await expect(readFile(paths.deterministicFindingsPath)).resolves.toEqual(scan)
+      await expect(readFile(paths.deterministicFindingsPath)).resolves.toEqual(deterministic)
       await expect(readdir(joinPath(directory, '.shopify'))).resolves.toEqual(['app-security'])
+    })
+  })
+
+  test.each([false, true])('missing results are an expected error with a next step (json=%s)', async (json) => {
+    await inTemporaryDirectory(async (directory) => {
+      remoteClient()
+      await writeFile(joinPath(directory, 'shopify.app.toml'), 'client_id = "configured-client-id"\n')
+      const paths = appSecurityArtifactPaths(directory)
+      const result = await runCommand(['--path', directory, '--force', ...(json ? ['--json'] : [])])
+
+      expect(result.exitCode).toBe(1)
+      if (json) {
+        expect(JSON.parse(result.stdout)).toEqual({
+          operation: 'submit',
+          error: {
+            stage: 'preparation',
+            message: `No App Security results found in ${paths.artifactDirectory}.`,
+            next_steps: [expect.stringMatching(/^Run shopify app security check --path .* first, then submit\.$/)],
+          },
+        })
+        expect(result.stderr).toBe('')
+      } else {
+        expect(result.stdout).toBe('')
+        const messageText = unstyled(result.stderr).replaceAll('│', '').replace(/\s+/g, ' ')
+        expect(messageText).toContain('No App Security results found in')
+        expect(messageText).toContain('first, then submit.')
+        expect(result.stderr).not.toContain('To investigate the issue, examine this stack trace:')
+      }
+      expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
+      expect(fetch).not.toHaveBeenCalled()
+      await expect(readdir(directory)).resolves.toEqual(['shopify.app.toml'])
     })
   })
 
@@ -191,10 +235,10 @@ describe('app security submit command boundary', () => {
       expect(JSON.parse(result.stdout)).toEqual({
         operation: 'submit',
         dry_run: true,
-        payload: {path: paths.submissionPath, schema_version: 0},
+        payload: {path: paths.submissionPath, schema_version: 2},
       })
       expect(resolveSecuritySubmitClientId).toHaveBeenCalledExactlyOnceWith({directory, clientId, configName})
-      await expect(readFile(paths.submissionPath, 'utf8')).resolves.toContain('"schemaVersion": 0')
+      await expect(readFile(paths.submissionPath, 'utf8')).resolves.toContain('"schemaVersion": 2')
       expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
       expect(client.appFromIdentifiers).not.toHaveBeenCalled()
       expect(client.generateSourceScanUploadUrl).not.toHaveBeenCalled()
@@ -315,7 +359,7 @@ describe('app security submit command boundary', () => {
       expect(JSON.parse(result.stdout)).toEqual({
         operation: 'submit',
         dry_run: false,
-        payload: {path: paths.submissionPath, schema_version: 0},
+        payload: {path: paths.submissionPath, schema_version: 2},
         submitted_at: submission.report.submitted_at,
         client_id: 'api-key',
       })
@@ -392,7 +436,7 @@ describe('app security submit command boundary', () => {
         expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
         expect(client.appFromIdentifiers).not.toHaveBeenCalled()
         expect(fetch).not.toHaveBeenCalled()
-        await expect(readdir(paths.artifactDirectory)).resolves.toEqual(['deterministic-findings.json'])
+        await expect(readdir(paths.artifactDirectory)).resolves.toEqual(resultFileNames)
       })
     },
   )
@@ -431,7 +475,7 @@ describe('app security submit command boundary', () => {
         expect(client.generateSourceScanUploadUrl).not.toHaveBeenCalled()
         expect(client.createSourceScan).not.toHaveBeenCalled()
         expect(fetch).not.toHaveBeenCalled()
-        await expect(readdir(paths.artifactDirectory)).resolves.toEqual(['deterministic-findings.json'])
+        await expect(readdir(paths.artifactDirectory)).resolves.toEqual(resultFileNames)
         await expect(readFile(configPath, 'utf8')).resolves.toBe(configContent)
       } finally {
         if (selection === 'cached') clearCachedAppInfo(directory)

@@ -55,17 +55,18 @@ describe('securityExitCode', () => {
 })
 
 describe('App Security CLI integration', () => {
-  test('runs the in-tree engine and writes the scan and agent checks', async () => {
+  test('runs the in-tree engine and writes the deterministic findings and agent checks', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
 
       const result = await runSecurity({directory, blocking: 'none'})
-      const scan = JSON.parse(await readFile(artifactPath(directory, 'deterministic-findings.json')))
+      const deterministicFindings = JSON.parse(await readFile(artifactPath(directory, 'deterministic-findings.json')))
       const agentChecks = JSON.parse(await readFile(artifactPath(directory, 'agent-checks.json')))
 
-      expect(scan.schema_version).toBe(1)
-      expect(scan.engine.name).toBe('shopify-app-security')
-      expect(result.execution.engine).toEqual(scan.engine)
+      expect(deterministicFindings.schema_version).toBe(1)
+      expect(deterministicFindings.source).toBe('deterministic')
+      expect(deterministicFindings.engine.name).toBe('shopify-app-security')
+      expect(result.execution.engine).toEqual(deterministicFindings.engine)
       expect(result.execution.elapsedMilliseconds).toEqual(expect.any(Number))
       expect(agentChecks.schema_version).toBe(1)
       expect(agentChecks.checks.length).toBeGreaterThan(0)
@@ -102,7 +103,7 @@ describe('App Security CLI integration', () => {
 
       const result = await runSecurity({directory, blocking: 'high'})
 
-      expect(JSON.stringify(result.execution.artifact)).not.toContain(testToken)
+      expect(JSON.stringify(result.execution.deterministicFindings)).not.toContain(testToken)
       await expect(readFile(artifactPath(directory, 'deterministic-findings.json'))).resolves.not.toContain(testToken)
       expect(result.exitCode).toBe(1)
     })

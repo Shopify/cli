@@ -102,8 +102,9 @@ describe('app security check command boundary', () => {
       await expect(readJson(paths.deterministicFindingsPath)).resolves.toEqual(output.deterministic_findings)
       await expect(readJson(paths.deterministicFindingsPath)).resolves.toMatchObject({
         schema_version: 1,
+        source: 'deterministic',
         engine: {name: 'shopify-app-security'},
-        findings: expect.any(Array),
+        checks: expect.any(Array),
       })
       await expect(readJson(paths.agentChecksPath)).resolves.toMatchObject({
         schema_version: 1,
@@ -136,7 +137,8 @@ describe('app security check command boundary', () => {
       expect(unstyled(rescan.stdout)).not.toMatch(/discard/i)
       await expect(readJson(paths.deterministicFindingsPath)).resolves.toMatchObject({
         schema_version: 1,
-        findings: expect.any(Array),
+        source: 'deterministic',
+        checks: expect.any(Array),
       })
       await expect(readJson(paths.agentChecksPath)).resolves.toMatchObject({
         schema_version: 1,

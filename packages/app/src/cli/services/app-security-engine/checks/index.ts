@@ -3,21 +3,22 @@ import {redactText} from '../rules/secret-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {
   AGENT_CHECKS_SCHEMA_VERSION,
-  AGENT_FINDINGS_SCHEMA_VERSION,
   ENGINE_NAME,
+  FINDINGS_SCHEMA_VERSION,
   RECORD_INPUT_SCHEMA_VERSION,
 } from '../types.js'
 import {sha256} from '@shopify/cli-kit/node/crypto'
 import type {
   AgentCheckReason,
-  AgentCheckSnapshot,
   AgentCheckStatus,
   AgentFindingEvidence,
-  AgentFindingsArtifact,
-  AgentFindingsCheck,
-  AgentFindingsFinding,
+  AgentFindingsDocument,
+  CheckPrecedence,
+  CheckSnapshot,
   ProjectState,
   Severity,
+  StoredCheck,
+  StoredFinding,
 } from '../types.js'
 
 /**
@@ -48,10 +49,26 @@ export interface Check {
   prompt: string
   /** Hash of the prompt body. Used only inside the engine registry; never written to an artifact. */
   prompt_hash: string
+  /**
+   * How this check's findings combine with a deterministic implementation of the same ID.
+   * `prefer-agent` is only valid for shared IDs (enforced by the registry invariants).
+   */
+  precedence: CheckPrecedence
 }
 
 const isSeverity = (value: string | undefined): value is Severity =>
   value === 'high' || value === 'medium' || value === 'low'
+
+const isPrecedence = (value: string): value is CheckPrecedence => value === 'union' || value === 'prefer-agent'
+
+/** Frontmatter `precedence`, defaulting to `union` when omitted. Anything else is an authoring error. */
+const parsePrecedence = (id: string, value: string | undefined): CheckPrecedence => {
+  if (value === undefined) return 'union'
+  if (!isPrecedence(value)) {
+    throw new Error(`Invalid precedence for agent check ${id}: ${value} (expected union or prefer-agent)`)
+  }
+  return value
+}
 
 const parseFrontmatter = (raw: string): {meta: Record<string, string>; body: string} => {
   const match = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/.exec(raw)
@@ -66,10 +83,11 @@ const parseFrontmatter = (raw: string): {meta: Record<string, string>; body: str
   return {meta, body: prompt.trim()}
 }
 
-export const loadChecks = (): Map<string, Check> => {
+/** Parse check markdown sources. `sources` is a parameter only so tests can load hand-written frontmatter. */
+export const loadChecks = (sources: ReadonlyArray<string> = EMBEDDED_CHECK_SOURCES): Map<string, Check> => {
   const checks = new Map<string, Check>()
 
-  for (const source of EMBEDDED_CHECK_SOURCES) {
+  for (const source of sources) {
     const {meta, body} = parseFrontmatter(source)
     if (!meta.id) continue
     if (checks.has(meta.id)) throw new Error(`Duplicate agent stable ID: ${meta.id}`)
@@ -80,6 +98,7 @@ export const loadChecks = (): Map<string, Check> => {
       severity: isSeverity(meta.severity) ? meta.severity : 'medium',
       prompt: body,
       prompt_hash: `sha256:${sha256(body).toString('hex')}`,
+      precedence: parsePrecedence(meta.id, meta.precedence),
     })
   }
   return checks
@@ -348,14 +367,12 @@ export function validateAgentChecksExecuted(
 
 const redactPath = (path: string): string => redactText(path.replace(/\\/g, '/'))
 
-/** Copy only the known fields of a validated finding, redacting all agent text. */
-const redactFinding = (finding: AgentFinding): AgentFindingsFinding => ({
-  file: redactPath(finding.file),
-  line: finding.line,
+/** Copy only the known fields of a validated finding into the stored shape, redacting all agent text. */
+const redactFinding = (finding: AgentFinding): StoredFinding => ({
+  location: {file: redactPath(finding.file), line: finding.line},
   message: redactText(finding.message),
   evidence: finding.evidence.map((item) => ({
-    file: redactPath(item.file),
-    ...(item.line === undefined ? {} : {line: item.line}),
+    location: {file: redactPath(item.file), ...(item.line === undefined ? {} : {line: item.line})},
     ...(item.quote === undefined ? {} : {quote: redactText(item.quote)}),
   })),
   ...(finding.snippet === undefined ? {} : {snippet: redactText(finding.snippet)}),
@@ -418,7 +435,7 @@ function groupFindingsByCheck(
 }
 
 /** Check metadata as it stands in the catalog and frontmatter right now. */
-function snapshotCheck(check: Check): AgentCheckSnapshot {
+function snapshotCheck(check: Check): CheckSnapshot {
   // registry/index.ts guarantees every agent check has a catalog entry ("Orphan agent implementation").
   const entry = RULE_CATALOG.find((catalogEntry) => catalogEntry.id === check.id)
   if (!entry) throw new Error(`Agent check has no catalog entry: ${check.id}`)
@@ -428,6 +445,8 @@ function snapshotCheck(check: Check): AgentCheckSnapshot {
     description: entry.description,
     ...(entry.guide ? {guide: entry.guide} : {}),
     current_version: check.version,
+    // Always written, even for the default, so the stored file describes itself without the current catalog.
+    precedence: check.precedence,
   }
 }
 
@@ -443,17 +462,17 @@ export interface RecordAgentFindingsOptions {
   engineVersion: string
   project: ProjectState
   /** Defaults to now. */
-  recordedAt?: string
+  generatedAt?: string
 }
 
-export type RecordAgentFindingsResult = {ok: true; artifact: AgentFindingsArtifact} | {ok: false; errors: string[]}
+export type RecordAgentFindingsResult = {ok: true; document: AgentFindingsDocument} | {ok: false; errors: string[]}
 
 /**
  * Validate an agent's findings document and build agent-findings.json from it.
  *
- * All or nothing: every problem is collected, and no artifact is returned if
+ * All or nothing: every problem is collected, and no document is returned if
  * there is any. Nothing here reads or compares scan results; `check_version`
- * is recorded as claimed. The per-check snapshot makes the artifact
+ * is recorded as claimed. The per-check snapshot makes the document
  * self-describing, so it can be shown without the catalog that produced it.
  */
 export function recordAgentFindings(document: unknown, options: RecordAgentFindingsOptions): RecordAgentFindingsResult {
@@ -490,9 +509,9 @@ export function recordAgentFindings(document: unknown, options: RecordAgentFindi
   errors.push(...grouped.errors)
   if (errors.length > 0) return {ok: false, errors}
 
-  const artifactChecks = grouped.groups
+  const storedChecks = grouped.groups
     .map(
-      ({report, findings: checkFindings}): AgentFindingsCheck => ({
+      ({report, findings: checkFindings}): StoredCheck => ({
         id: report.check_id,
         version: report.check_version,
         status: report.status,
@@ -505,12 +524,13 @@ export function recordAgentFindings(document: unknown, options: RecordAgentFindi
 
   return {
     ok: true,
-    artifact: {
-      schema_version: AGENT_FINDINGS_SCHEMA_VERSION,
+    document: {
+      schema_version: FINDINGS_SCHEMA_VERSION,
+      source: 'agent',
       engine: {name: ENGINE_NAME, version: options.engineVersion},
-      recorded_at: options.recordedAt ?? new Date().toISOString(),
+      generated_at: options.generatedAt ?? new Date().toISOString(),
       project: options.project,
-      checks: artifactChecks,
+      checks: storedChecks,
     },
   }
 }

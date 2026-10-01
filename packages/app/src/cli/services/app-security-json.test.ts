@@ -13,23 +13,23 @@ const engine = {
   ruleset: '2026.08.28',
 }
 
-const artifact: DeterministicFindingsDocument = {
+const deterministicFindings: DeterministicFindingsDocument = {
   schema_version: 1,
+  source: 'deterministic',
   engine,
   generated_at: '2026-08-24T00:00:00.000Z',
   project: {commit: null, dirty: null},
   detection: {framework: 'none', surface: 'config_only', languages: []},
-  findings: [],
-  checks_executed: [],
   coverage: {files_scanned: 1, files_skipped: [], gaps: []},
+  checks: [],
 }
 
 describe('App Security JSON contract', () => {
-  test('encodes the engine, the deterministic findings, and the agent checks path', async () => {
+  test('encodes the engine, the deterministic findings document, and the agent checks path', async () => {
     const encoded = encodeSecurityJson(
-      toSecurityJson({engine, artifact}, '/tmp/app/.shopify/app-security/agent-checks.json'),
+      toSecurityJson({engine, deterministicFindings}, '/tmp/app/.shopify/app-security/agent-checks.json'),
     )
-    const fixture = await readFile(joinPath(fixtureDirectory, 'scan.json'))
+    const fixture = await readFile(joinPath(fixtureDirectory, 'check.json'))
     expect(JSON.parse(encoded)).toEqual(JSON.parse(fixture))
   })
 })

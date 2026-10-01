@@ -24,7 +24,7 @@ describe('app security submit command', () => {
     process.exitCode = previousExitCode
   })
 
-  test('is hidden and lets the service link only after reading the scan', () => {
+  test('is hidden and lets the service link only after loading the results', () => {
     expect(SecuritySubmit.hidden).toBe(true)
     expect(SecuritySubmit.prototype).toBeInstanceOf(BaseCommand)
     expect(SecuritySubmit.prototype).not.toBeInstanceOf(AppLinkedCommand)
@@ -32,19 +32,31 @@ describe('app security submit command', () => {
     expect(SecuritySubmit.flags.config).toBe(appFlags.config)
     expect(SecuritySubmit.flags['client-id']).toBe(appFlags['client-id'])
     expect(SecuritySubmit.args).not.toHaveProperty('directory')
-    expect(SecuritySubmit.descriptionWithMarkdown).toContain('`.shopify/app-security/deterministic-findings.json`')
-    expect(SecuritySubmit.descriptionWithMarkdown).toContain('Generated report fields exclude source code, file paths')
-    expect(SecuritySubmit.descriptionWithMarkdown).toContain('Optional feedback is included without redaction')
-    expect(SecuritySubmit.descriptionWithMarkdown).not.toContain(
-      'No source code, file paths, snippets, or commit identifiers are sent',
+  })
+
+  test('frames the upload as sending the results review shows, plus feedback', () => {
+    expect(SecuritySubmit.summary).toBe('Send App Security results and feedback to Shopify.')
+    expect(SecuritySubmit.descriptionWithMarkdown).toBe(
+      'Sends the App Security results that `shopify app security review` shows to Shopify, with your optional feedback. ' +
+        'Reads `.shopify/app-security/deterministic-findings.json` and, when present, `agent-findings.json`, writes ' +
+        '`.shopify/app-security/submission.json` for inspection, and asks for confirmation before uploading.\n\n' +
+        'The upload excludes source code, file paths, code snippets, evidence, finding messages, agent reasoning and ' +
+        'reasons, suppression justifications, and commit identifiers. Feedback is sent without redaction. Optionally ' +
+        'use `--version` to identify the app version these results came from. Use `--dry-run` to write and inspect ' +
+        'the exact payload without uploading it.',
     )
-    expect(SecuritySubmit.descriptionWithMarkdown).toContain('--version')
     expect(SecuritySubmit.descriptionWithMarkdown).not.toContain('--source-control-url')
   })
 
   test('describes the optional app version corresponding to the scanned files', () => {
     expect(SecuritySubmit.flags.version.description).toBe(
       'Optional app version corresponding to the files used to generate these results.',
+    )
+  })
+
+  test('describes feedback as optional and about the results or the tool', () => {
+    expect(SecuritySubmit.flags.feedback.description).toBe(
+      'Optional feedback about these App Security results or this tool. Use - to read from stdin.',
     )
   })
 

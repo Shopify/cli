@@ -1,9 +1,10 @@
 import {
-  AGENT_FINDINGS_SCHEMA_VERSION,
-  parseDeterministicFindings,
+  translateFindingsDocument,
   type AgentChecks,
-  type AgentFindingsArtifact,
+  type AgentFindingsDocument,
   type DeterministicFindingsDocument,
+  type FindingsDocument,
+  type FindingsSource,
 } from './app-security-engine/index.js'
 import {fileExists, fileSize, readFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -24,10 +25,11 @@ export interface AppSecurityArtifactPaths {
   legacyPaths: string[]
 }
 
+/** An invalid artifact carries every problem the reader found, without the file's path: callers show that. */
 export type ReadArtifactResult<T> =
   | {status: 'ok'; value: T}
   | {status: 'missing'}
-  | {status: 'invalid'; message: string}
+  | {status: 'invalid'; errors: string[]}
 
 export function appSecurityArtifactPaths(appRoot: string): AppSecurityArtifactPaths {
   const artifactDirectory = joinPath(appRoot, '.shopify', 'app-security')
@@ -41,21 +43,27 @@ export function appSecurityArtifactPaths(appRoot: string): AppSecurityArtifactPa
   }
 }
 
+export type CheckArtifactPaths = Pick<AppSecurityArtifactPaths, 'deterministicFindingsPath' | 'agentChecksPath'>
+
+/** Writes the two files `check` produces: deterministic-findings.json and agent-checks.json. */
 export async function writeCheckArtifacts(
   appRoot: string,
-  {artifact, agentChecks}: {artifact: DeterministicFindingsDocument; agentChecks: AgentChecks},
-): Promise<Pick<AppSecurityArtifactPaths, 'deterministicFindingsPath' | 'agentChecksPath'>> {
+  {
+    deterministicFindings,
+    agentChecks,
+  }: {deterministicFindings: DeterministicFindingsDocument; agentChecks: AgentChecks},
+): Promise<CheckArtifactPaths> {
   const paths = appSecurityArtifactPaths(appRoot)
   await ensureArtifactDirectory(appRoot, paths.artifactDirectory)
-  await writeAtomicArtifact(paths.deterministicFindingsPath, encodeArtifact(artifact))
+  await writeAtomicArtifact(paths.deterministicFindingsPath, encodeArtifact(deterministicFindings))
   await writeAtomicArtifact(paths.agentChecksPath, encodeArtifact(agentChecks))
   return {deterministicFindingsPath: paths.deterministicFindingsPath, agentChecksPath: paths.agentChecksPath}
 }
 
-export async function writeAgentFindings(appRoot: string, artifact: AgentFindingsArtifact): Promise<string> {
+export async function writeAgentFindings(appRoot: string, document: AgentFindingsDocument): Promise<string> {
   const paths = appSecurityArtifactPaths(appRoot)
   await ensureArtifactDirectory(appRoot, paths.artifactDirectory)
-  await writeAtomicArtifact(paths.agentFindingsPath, encodeArtifact(artifact))
+  await writeAtomicArtifact(paths.agentFindingsPath, encodeArtifact(document))
   return paths.agentFindingsPath
 }
 
@@ -84,34 +92,37 @@ export async function cleanAppSecurityArtifacts(appRoot: string): Promise<string
   return candidates.filter((_path, index) => removed[index])
 }
 
-export async function readDeterministicFindings(
+/** The findings document type for one source: DeterministicFindingsDocument or AgentFindingsDocument. */
+export type FindingsDocumentFor<TSource extends FindingsSource> = Extract<FindingsDocument, {source: TSource}>
+
+/**
+ * Reads and translates a stored findings document. `expectedSource` is the source the file at `path` must
+ * hold, so a document copied into the wrong file is reported as invalid instead of being displayed as the
+ * other source's results. The result is typed for that source, so callers never re-narrow on `source`.
+ */
+export async function readFindingsDocument<TSource extends FindingsSource>(
   path: string,
-): Promise<ReadArtifactResult<DeterministicFindingsDocument>> {
+  expectedSource: TSource,
+): Promise<ReadArtifactResult<FindingsDocumentFor<TSource>>> {
   const result = await readJsonArtifact(path)
   if (result.status !== 'ok') return result
 
-  const parsed = parseDeterministicFindings(result.value)
-  if (!parsed.ok) return {status: 'invalid', message: parsed.errors.join('; ')}
-  return {status: 'ok', value: parsed.artifact}
-}
-
-/** Loosely identifies a stored agent-findings.json. Its contents are informational, so only the schema version is checked. */
-export async function readAgentFindings(path: string): Promise<ReadArtifactResult<AgentFindingsArtifact>> {
-  const result = await readJsonArtifact(path)
-  if (result.status !== 'ok') return result
-
-  const value = result.value
-  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
-    return {status: 'invalid', message: 'agent findings must be a JSON object'}
-  }
-  const schemaVersion = (value as {schema_version?: unknown}).schema_version
-  if (schemaVersion !== AGENT_FINDINGS_SCHEMA_VERSION) {
+  const translated = translateFindingsDocument(result.value)
+  if (!translated.ok) return {status: 'invalid', errors: translated.errors}
+  if (!hasSource(translated.document, expectedSource)) {
     return {
       status: 'invalid',
-      message: `unsupported schema_version: ${String(schemaVersion)} (expected ${AGENT_FINDINGS_SCHEMA_VERSION})`,
+      errors: [`source is "${translated.document.source}", but this file must hold "${expectedSource}" findings.`],
     }
   }
-  return {status: 'ok', value: value as AgentFindingsArtifact}
+  return {status: 'ok', value: translated.document}
+}
+
+function hasSource<TSource extends FindingsSource>(
+  document: FindingsDocument,
+  source: TSource,
+): document is FindingsDocumentFor<TSource> {
+  return document.source === source
 }
 
 async function readJsonArtifact(path: string): Promise<ReadArtifactResult<unknown>> {
@@ -120,13 +131,13 @@ async function readJsonArtifact(path: string): Promise<ReadArtifactResult<unknow
   let content: string
   try {
     if ((await fileSize(path)) > MAX_ARTIFACT_FILE_SIZE_BYTES) {
-      return {status: 'invalid', message: 'The file is larger than 5 MB.'}
+      return {status: 'invalid', errors: ['The file is larger than 5 MB.']}
     }
     content = await readFile(path)
     // Filesystem failures are returned for command-layer rendering.
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return {status: 'invalid', message: `Could not read the file: ${errorMessage(error)}`}
+    return {status: 'invalid', errors: [`Could not read the file: ${errorMessage(error)}`]}
   }
 
   try {
@@ -134,7 +145,7 @@ async function readJsonArtifact(path: string): Promise<ReadArtifactResult<unknow
     // JSON is an untrusted artifact boundary.
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return {status: 'invalid', message: `Could not parse JSON: ${errorMessage(error)}`}
+    return {status: 'invalid', errors: [`Could not parse JSON: ${errorMessage(error)}`]}
   }
 }
 

@@ -2,6 +2,7 @@
 id: REQUEST_CONTROLLED_ADMIN_CONTEXT
 version: 3
 severity: high
+precedence: prefer-agent
 ---
 
 # Request Controlled Admin Context

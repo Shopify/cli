@@ -1,12 +1,19 @@
-import {appSecurityArtifactPaths, readDeterministicFindings, writeSubmission} from './app-security-artifacts.js'
+import {appSecurityArtifactPaths, writeSubmission} from './app-security-artifacts.js'
 import {resolveAppSecurityRoot} from './app-security-api.js'
+import {
+  formatAppSecurityCommand,
+  resolveAppSecurityCommands,
+  type AppSecurityCommands,
+} from './app-security-commands.js'
 import {
   buildSubmission,
   containsUnredactedSecret,
   type AppSecuritySubmission,
   type BuildSubmissionOptions,
-  type DeterministicFindingsDocument,
+  type BuildSubmissionSources,
+  type FindingsSource,
 } from './app-security-engine/index.js'
+import {loadAppSecurityResults, regenerateResultsFileStep} from './app-security-results.js'
 import {submitAppSecurityScan} from './app-security-submit-api.js'
 import {resolveSecuritySubmitClientId} from './app-security-submit-target.js'
 import {prepareSubmissionPayload} from './app-security-submission-payload.js'
@@ -15,7 +22,8 @@ import {defaultDeveloperPlatformClient} from '../utilities/developer-platform-cl
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readStdinString, terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
-import type {AppSecurityArtifactPaths, ReadArtifactResult} from './app-security-artifacts.js'
+import type {AppSecurityArtifactPaths} from './app-security-artifacts.js'
+import type {AppSecurityResults} from './app-security-results.js'
 import type {SubmitAppSecurityScanOptions} from './app-security-submit-api.js'
 import type {SecuritySubmitConfirmationAction, SecuritySubmitConfirmationInput} from './security-submit-output.js'
 import type {SecuritySubmitResult, SubmitAppSecurityScanResult} from './security-submit-result.js'
@@ -45,13 +53,10 @@ interface SecuritySubmitAppContext {
 export interface SecuritySubmitDependencies {
   findRoot(directory: string): string
   artifactPaths(appRoot: string): AppSecurityArtifactPaths
-  readDeterministicFindings(path: string): Promise<ReadArtifactResult<DeterministicFindingsDocument>>
+  loadResults(appRoot: string): Promise<AppSecurityResults>
   resolveClientId(options: {directory: string; clientId?: string; configName?: string}): Promise<string>
   fetchApp(clientId: string): Promise<SecuritySubmitAppContext>
-  buildSubmission(
-    deterministicFindings: DeterministicFindingsDocument,
-    options: BuildSubmissionOptions,
-  ): AppSecuritySubmission
+  buildSubmission(sources: BuildSubmissionSources, options: BuildSubmissionOptions): AppSecuritySubmission
   writeSubmission(appRoot: string, bytes: Buffer): Promise<void>
   canPrompt(): boolean
   readStdin(): Promise<string | undefined>
@@ -65,7 +70,7 @@ export interface SecuritySubmitDependencies {
 const defaultDependencies: SecuritySubmitDependencies = {
   findRoot: resolveAppSecurityRoot,
   artifactPaths: appSecurityArtifactPaths,
-  readDeterministicFindings,
+  loadResults: loadAppSecurityResults,
   resolveClientId: resolveSecuritySubmitClientId,
   fetchApp: async (clientId) => {
     const remoteApp = await defaultDeveloperPlatformClient().appFromIdentifiers(clientId)
@@ -103,6 +108,19 @@ async function resolveExplicitFeedback(
   return feedback
 }
 
+/** The stored files are redacted when written; this guards against edits made since. */
+function assertRedacted(
+  file: {path: string; document: unknown} | null,
+  source: FindingsSource,
+  commands: AppSecurityCommands,
+): void {
+  if (file === null || !containsUnredactedSecret(file.document)) return
+
+  throw new AbortError(`The App Security results at ${file.path} contain an unredacted secret.`, null, [
+    regenerateResultsFileStep(source, commands, 'it, then submit.'),
+  ])
+}
+
 export default async function securitySubmit(
   options: SecuritySubmitOptions,
   dependencies: SecuritySubmitDependencies = defaultDependencies,
@@ -113,31 +131,27 @@ export default async function securitySubmit(
 
   const appRoot = dependencies.findRoot(options.directory)
   const paths = dependencies.artifactPaths(appRoot)
-  const scanResult = await dependencies.readDeterministicFindings(paths.deterministicFindingsPath)
+  const commands = resolveAppSecurityCommands(appRoot)
+  // An invalid file raises the shared error from the loader itself.
+  const results = await dependencies.loadResults(appRoot)
 
-  if (scanResult.status === 'missing') {
-    throw new AbortError(`No App Security scan found in ${paths.artifactDirectory}.`, null, [
-      `Run \`shopify app security check --path ${options.directory}\` first, then submit.`,
+  if (results.sources.deterministic === null && results.sources.agent === null) {
+    throw new AbortError(`No App Security results found in ${paths.artifactDirectory}.`, null, [
+      ['Run', {command: formatAppSecurityCommand(commands.scan)}, 'first, then submit.'],
     ])
   }
-  if (scanResult.status === 'invalid') {
-    throw new AbortError(`The App Security scan at ${paths.deterministicFindingsPath} is not valid.`, null, [
-      scanResult.message,
-    ])
-  }
-  const deterministicFindings = scanResult.value
-  if (containsUnredactedSecret(deterministicFindings)) {
-    throw new AbortError(
-      `The App Security scan at ${paths.deterministicFindingsPath} contains an unredacted secret.`,
-      null,
-      [`Run \`shopify app security check --path ${options.directory}\` to regenerate it, then submit.`],
-    )
-  }
+  assertRedacted(results.sources.deterministic, 'deterministic', commands)
+  assertRedacted(results.sources.agent, 'agent', commands)
 
+  // Submit has no --check-id: every present source is always sent.
+  const sources: BuildSubmissionSources = {
+    deterministic: results.sources.deterministic?.document ?? null,
+    agent: results.sources.agent?.document ?? null,
+  }
   const submittedAt = dependencies.now()
   const prepareFeedback = (feedback: string | undefined) =>
     prepareSubmissionPayload(
-      dependencies.buildSubmission(deterministicFindings, {
+      dependencies.buildSubmission(sources, {
         cliVersion: dependencies.cliVersion,
         submittedAt,
         versionTag: options.versionTag,
@@ -175,6 +189,7 @@ export default async function securitySubmit(
       appTitle: remoteApp.title,
       submissionPath: paths.submissionPath,
       submission: payload.submission,
+      results,
       canAddFeedback: options.feedback === undefined,
     })
     if (confirmationAction === 'cancel') return {status: 'cancelled'}
@@ -199,5 +214,6 @@ export default async function securitySubmit(
     submittedAt: payload.submission.report.submitted_at,
     appTitle: remoteApp.title,
     clientId: remoteApp.apiKey,
+    feedbackIncluded: payload.submission.report.feedback !== null,
   }
 }

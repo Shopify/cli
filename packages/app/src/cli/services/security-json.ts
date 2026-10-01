@@ -8,12 +8,12 @@ interface AppSecurityJsonResult {
 }
 
 export function toSecurityJson(
-  execution: Pick<AppSecurityExecution, 'engine' | 'artifact'>,
+  execution: Pick<AppSecurityExecution, 'engine' | 'deterministicFindings'>,
   agentChecksPath: string,
 ): AppSecurityJsonResult {
   return {
     engine: execution.engine,
-    deterministic_findings: execution.artifact,
+    deterministic_findings: execution.deterministicFindings,
     agent_checks_path: agentChecksPath,
   }
 }

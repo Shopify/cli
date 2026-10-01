@@ -3,6 +3,6 @@
   "dry_run": true,
   "payload": {
     "path": "<APP_ROOT>/.shopify/app-security/submission.json",
-    "schema_version": 0
+    "schema_version": 2
   }
 }

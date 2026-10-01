@@ -2,6 +2,7 @@
 id: EOL_API_VERSION
 version: 1
 severity: low
+precedence: prefer-agent
 ---
 
 # Eol Api Version

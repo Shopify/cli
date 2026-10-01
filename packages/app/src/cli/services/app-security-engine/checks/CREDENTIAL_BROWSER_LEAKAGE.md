@@ -2,6 +2,7 @@
 id: CREDENTIAL_BROWSER_LEAKAGE
 version: 1
 severity: high
+precedence: prefer-agent
 ---
 
 # Credential Browser Leakage

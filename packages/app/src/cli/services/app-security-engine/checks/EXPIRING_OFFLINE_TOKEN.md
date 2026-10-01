@@ -2,6 +2,7 @@
 id: EXPIRING_OFFLINE_TOKEN
 version: 1
 severity: medium
+precedence: prefer-agent
 ---
 
 # Expiring Offline Token

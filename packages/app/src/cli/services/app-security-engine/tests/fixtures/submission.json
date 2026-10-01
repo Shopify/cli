@@ -1,103 +1,213 @@
 {
-  "schemaVersion": 0,
+  "schemaVersion": 2,
   "report": {
-    "scan_schema_version": 1,
-    "engine": {
-      "name": "shopify-app-security",
-      "version": "0.1.0",
-      "ruleset": "app-security-rules@0.1.0"
-    },
     "cli_version": "3.99.0",
-    "generated_at": "2026-08-31T10:00:00.000Z",
     "submitted_at": "2026-09-01T09:30:00.000Z",
     "feedback": "The result for /Users/example/app included AKIA1234567890ABCDEF inaccurately.",
     "metadata": {
       "version_tag": "v1.2.3"
     },
-    "project": {
-      "dirty": true
-    },
-    "detection": {
-      "framework": "react_router",
-      "surface": "mixed",
-      "languages": [
-        {
-          "name": "typescript",
-          "support": "supported",
-          "file_count": 2
+    "sources": {
+      "deterministic": {
+        "schema_version": 1,
+        "source": "deterministic",
+        "engine": {
+          "name": "shopify-app-security",
+          "version": "3.99.0",
+          "ruleset": "app-security-rules@3.99.0"
         },
-        {
-          "name": "liquid",
-          "support": "supported",
-          "file_count": 1
-        }
-      ]
-    },
-    "findings": [
-      {
-        "rule_id": "UNSAFE_INNERHTML",
-        "rule_version": 2,
-        "severity": "high",
-        "title": "Unsafe HTML assignment"
-      },
-      {
-        "rule_id": "CREDENTIAL_LOG_LEAKAGE",
-        "rule_version": 1,
-        "severity": "medium",
-        "title": "Credential logged"
-      }
-    ],
-    "checks_executed": [
-      {
-        "id": "CREDENTIAL_LOG_LEAKAGE",
-        "version": 1,
-        "status": "executed",
-        "applicable": true,
-        "analysis_mode": "regex",
-        "finding_count": 1
-      },
-      {
-        "id": "LIQUID_UNSAFE_RENDER",
-        "version": 1,
-        "status": "unresolved",
-        "applicable": true,
-        "analysis_mode": "ast",
-        "finding_count": 0,
-        "reason_code": "parser_unavailable"
-      },
-      {
-        "id": "STATIC_FRAME_ANCESTORS",
-        "version": 1,
-        "status": "not_applicable",
-        "applicable": false,
-        "analysis_mode": "regex",
-        "finding_count": 0,
-        "reason_code": "capability_absent"
-      },
-      {
-        "id": "UNSAFE_INNERHTML",
-        "version": 2,
-        "status": "executed",
-        "applicable": true,
-        "analysis_mode": "regex",
-        "finding_count": 1
-      }
-    ],
-    "coverage": {
-      "files_scanned": 3,
-      "files_skipped": {
-        "too_large": 1,
-        "unreadable": 2
-      },
-      "gaps": [
-        {
-          "code": "skipped_file"
+        "generated_at": "2026-09-01T10:00:00.000Z",
+        "project": {
+          "dirty": false
         },
-        {
-          "code": "unresolved_check",
-          "check_id": "LIQUID_UNSAFE_RENDER"
+        "checks": [
+          {
+            "id": "CREDENTIAL_LOG_LEAKAGE",
+            "version": 1,
+            "status": "executed",
+            "analysis_mode": "ast",
+            "generated_at": "2026-09-01T10:00:00.000Z",
+            "snapshot": {
+              "title": "Credential reaches a log sink",
+              "severity": "high",
+              "current_version": 1
+            },
+            "findings": [
+              {
+                "suppressed": false
+              },
+              {
+                "suppressed": false
+              }
+            ]
+          },
+          {
+            "id": "EOL_API_VERSION",
+            "version": 1,
+            "status": "executed",
+            "analysis_mode": "structured_config",
+            "generated_at": "2026-09-01T10:00:00.000Z",
+            "snapshot": {
+              "title": "End-of-life API version",
+              "severity": "low",
+              "current_version": 1
+            },
+            "findings": [
+              {
+                "suppressed": false
+              }
+            ]
+          },
+          {
+            "id": "MISSING_TENANT_ISOLATION",
+            "version": 4,
+            "status": "unresolved",
+            "reason_code": "parser_unavailable",
+            "analysis_mode": "ast",
+            "generated_at": "2026-09-01T10:00:00.000Z",
+            "snapshot": {
+              "title": "Database query may not be scoped by shop",
+              "severity": "high",
+              "current_version": 4
+            },
+            "findings": []
+          },
+          {
+            "id": "OPEN_REDIRECT",
+            "version": 2,
+            "status": "executed",
+            "analysis_mode": "ast",
+            "generated_at": "2026-09-01T10:00:00.000Z",
+            "snapshot": {
+              "title": "Open redirect in auth callback",
+              "severity": "medium",
+              "current_version": 2
+            },
+            "findings": []
+          },
+          {
+            "id": "UNSAFE_INNERHTML",
+            "version": 1,
+            "status": "not_applicable",
+            "reason_code": "capability_absent",
+            "analysis_mode": "regex",
+            "generated_at": "2026-09-01T10:00:00.000Z",
+            "snapshot": {
+              "title": "Unsafe HTML assignment",
+              "severity": "high",
+              "current_version": 1
+            },
+            "findings": []
+          }
+        ],
+        "detection": {
+          "framework": "react_router",
+          "surface": "react_router",
+          "languages": [
+            {
+              "name": "typescript",
+              "support": "supported",
+              "file_count": 2
+            }
+          ]
+        },
+        "coverage": {
+          "files_scanned": 12,
+          "files_skipped": {
+            "too_large": 1,
+            "unreadable": 0
+          },
+          "gaps": [
+            {
+              "code": "skipped_file"
+            },
+            {
+              "code": "unresolved_check",
+              "check_id": "MISSING_TENANT_ISOLATION"
+            }
+          ]
         }
-      ]
+      },
+      "agent": {
+        "schema_version": 1,
+        "source": "agent",
+        "engine": {
+          "name": "shopify-app-security",
+          "version": "3.99.0"
+        },
+        "generated_at": "2026-09-01T11:30:00.000Z",
+        "project": {
+          "dirty": true
+        },
+        "checks": [
+          {
+            "id": "CREDENTIAL_LOG_LEAKAGE",
+            "version": 1,
+            "status": "executed",
+            "generated_at": "2026-09-01T11:30:00.000Z",
+            "snapshot": {
+              "title": "Credential reaches a log sink",
+              "severity": "high",
+              "current_version": 1,
+              "precedence": "prefer-agent"
+            },
+            "findings": [
+              {
+                "confidence": "high",
+                "suppressed": false
+              }
+            ]
+          },
+          {
+            "id": "MISSING_TENANT_ISOLATION",
+            "version": 4,
+            "status": "executed",
+            "generated_at": "2026-09-01T11:30:00.000Z",
+            "snapshot": {
+              "title": "Database query may not be scoped by shop",
+              "severity": "high",
+              "current_version": 4,
+              "precedence": "union"
+            },
+            "findings": [
+              {
+                "confidence": "high",
+                "suppressed": false
+              },
+              {
+                "confidence": "medium",
+                "suppressed": true
+              }
+            ]
+          },
+          {
+            "id": "OPEN_REDIRECT",
+            "version": 2,
+            "status": "not_applicable",
+            "generated_at": "2026-09-01T11:30:00.000Z",
+            "snapshot": {
+              "title": "Open redirect in auth callback",
+              "severity": "medium",
+              "current_version": 2,
+              "precedence": "union"
+            },
+            "findings": []
+          },
+          {
+            "id": "UNAUTHENTICATED_ENDPOINT",
+            "version": 2,
+            "status": "unresolved",
+            "generated_at": "2026-09-01T11:30:00.000Z",
+            "snapshot": {
+              "title": "Route handler lacks recognized auth verification",
+              "severity": "high",
+              "current_version": 2,
+              "precedence": "union"
+            },
+            "findings": []
+          }
+        ]
+      }
     }
   }
 }

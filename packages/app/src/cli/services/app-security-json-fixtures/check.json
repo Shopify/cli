@@ -6,6 +6,7 @@
   },
   "deterministic_findings": {
     "schema_version": 1,
+    "source": "deterministic",
     "engine": {
       "name": "shopify-app-security",
       "version": "1.2.3",
@@ -21,13 +22,12 @@
       "surface": "config_only",
       "languages": []
     },
-    "findings": [],
-    "checks_executed": [],
     "coverage": {
       "files_scanned": 1,
       "files_skipped": [],
       "gaps": []
-    }
+    },
+    "checks": []
   },
   "agent_checks_path": "/tmp/app/.shopify/app-security/agent-checks.json"
 }

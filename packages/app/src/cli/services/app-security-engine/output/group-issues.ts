@@ -1,12 +1,10 @@
-import type {Issue, Severity} from '../types.js'
+import {SEVERITY_RANK, type Issue, type Severity} from '../types.js'
 
 export interface IssueGroup {
   severity: Severity
   issues: Issue[]
   files: string[]
 }
-
-const SEVERITY_ORDER: Record<Severity, number> = {high: 0, medium: 1, low: 2}
 
 function groupKey(issue: Issue): string {
   return [issue.id, issue.pattern_id ?? '', issue.severity].join('|')
@@ -17,7 +15,7 @@ export function groupIssues(issues: Issue[]): IssueGroup[] {
   const groups = new Map<string, IssueGroup>()
   const sorted = [...issues].sort(
     (left, right) =>
-      SEVERITY_ORDER[left.severity] - SEVERITY_ORDER[right.severity] ||
+      SEVERITY_RANK[right.severity] - SEVERITY_RANK[left.severity] ||
       left.location.file.localeCompare(right.location.file) ||
       (left.location.line ?? 0) - (right.location.line ?? 0) ||
       (left.location.column ?? 0) - (right.location.column ?? 0) ||

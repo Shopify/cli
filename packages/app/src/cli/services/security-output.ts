@@ -159,7 +159,7 @@ function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]
     body: {
       list: {
         items: [
-          ['Scan results:', {filePath: input.deterministicFindingsPath}],
+          ['Deterministic findings:', {filePath: input.deterministicFindingsPath}],
           ['Agent checks:', {filePath: input.agentChecksPath}],
         ],
       },

@@ -2,6 +2,7 @@
 id: MISSING_COMPLIANCE_WEBHOOKS
 version: 1
 severity: medium
+precedence: prefer-agent
 ---
 
 # Missing Compliance Webhooks

@@ -8,7 +8,7 @@ import {renderSecurityReport} from './security-output.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
-import type {AppSecurityArtifactPaths} from './app-security-artifacts.js'
+import type {CheckArtifactPaths} from './app-security-artifacts.js'
 import type {AgentChecks, DeterministicFindingsDocument} from './app-security-engine/index.js'
 import type {AppSecurityBlockingLevel, AppSecurityExecution} from './app-security-api.js'
 import type {SecurityReportInput} from './security-output.js'
@@ -27,8 +27,6 @@ interface SecurityOptions {
 
 export type AppSecurityInstructionsDestination = 'copy' | 'print' | 'nothing'
 
-type CheckArtifactPaths = Pick<AppSecurityArtifactPaths, 'deterministicFindingsPath' | 'agentChecksPath'>
-
 interface SecurityDependencies {
   resolveRoot(directory: string): string
   execute(options: {
@@ -38,7 +36,7 @@ interface SecurityDependencies {
   }): Promise<AppSecurityExecution>
   writeArtifacts(
     appRoot: string,
-    artifacts: {artifact: DeterministicFindingsDocument; agentChecks: AgentChecks},
+    artifacts: {deterministicFindings: DeterministicFindingsDocument; agentChecks: AgentChecks},
   ): Promise<CheckArtifactPaths>
   canPrompt(): boolean
   selectInstructionsDestination(): Promise<AppSecurityInstructionsDestination>
@@ -106,8 +104,8 @@ function securityReportInput(
 }
 
 /**
- * Scans the app and replaces deterministic-findings.json and agent-checks.json. Scanning never reads or changes the agent's
- * recorded findings, so it's always safe to run again.
+ * Scans the app and replaces deterministic-findings.json and agent-checks.json. Scanning never reads or
+ * changes the agent's recorded findings, so it's always safe to run again.
  */
 export default async function securityCheck(
   options: SecurityOptions,
@@ -119,7 +117,7 @@ export default async function securityCheck(
 
   const execution = await dependencies.execute({appRoot, configFileName, ignorePatterns: options.ignorePatterns})
   const artifacts = await dependencies.writeArtifacts(appRoot, {
-    artifact: execution.artifact,
+    deterministicFindings: execution.deterministicFindings,
     agentChecks: execution.agentChecks,
   })
 

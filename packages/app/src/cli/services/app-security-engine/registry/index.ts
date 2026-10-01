@@ -1,4 +1,4 @@
-import {loadChecks} from '../checks/index.js'
+import {loadChecks, type Check} from '../checks/index.js'
 import {RULE_CATALOG, type RuleCatalogEntry} from '../rules/catalog.js'
 import {DETERMINISTIC_CHECKS, type DeterministicCheckDefinition} from '../scanners/index.js'
 
@@ -22,7 +22,8 @@ export interface RegistryEntry {
 interface RegistryInvariantInput {
   catalog: ReadonlyArray<RuleCatalogEntry>
   deterministic: ReadonlyArray<DeterministicCheckDefinition>
-  agent: ReadonlyArray<{id: string; version: number; prompt_hash: string}>
+  /** Derived from `Check` so the invariant input can't drift from the real agent check shape. */
+  agent: ReadonlyArray<Pick<Check, 'id' | 'version' | 'prompt_hash' | 'precedence'>>
 }
 
 /** Assert identities before they are exposed or executed. */
@@ -52,6 +53,9 @@ export function assertRegistryInvariants(input: RegistryInvariantInput): void {
     const deterministic = input.deterministic.find((definition) => definition.id === check.id)
     if (deterministic && deterministic.version !== check.version)
       throw new Error(`Deterministic and agent versions differ for shared product ID: ${check.id}`)
+    // Preferring the agent only makes sense when there is a deterministic result to prefer it over.
+    if (check.precedence === 'prefer-agent' && !deterministic)
+      throw new Error(`prefer-agent check has no deterministic implementation: ${check.id}`)
   }
 
   const implementedProducts = new Set([

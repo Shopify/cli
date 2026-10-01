@@ -424,7 +424,7 @@ describe('runtime identities', () => {
       assertRegistryInvariants({
         catalog: sharedCatalog,
         deterministic: [shared],
-        agent: [{id: shared.id, version: shared.version, prompt_hash: `sha256:${'a'.repeat(64)}`}],
+        agent: [{id: shared.id, version: shared.version, prompt_hash: `sha256:${'a'.repeat(64)}`, precedence: 'union'}],
       }),
     ).not.toThrow()
     expect(() =>
