@@ -1,6 +1,7 @@
 import SecuritySubmit from './submit.js'
 import {appFlags} from '../../../flags.js'
 import securitySubmit from '../../../services/security-submit.js'
+import {securitySubmitJsonOutputSchema} from '../../../services/security-submit-json.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -26,6 +27,7 @@ describe('app security submit command', () => {
 
   test('is hidden and lets the service link only after trace validation', () => {
     expect(SecuritySubmit.hidden).toBe(true)
+    expect(SecuritySubmit.jsonOutputSchema).toBe(securitySubmitJsonOutputSchema)
     expect(SecuritySubmit.prototype).toBeInstanceOf(BaseCommand)
     expect(SecuritySubmit.prototype).not.toBeInstanceOf(AppLinkedCommand)
     expect(SecuritySubmit.flags.path).toBe(appFlags.path)
@@ -39,6 +41,19 @@ describe('app security submit command', () => {
     )
     expect(SecuritySubmit.descriptionWithMarkdown).toContain('--version')
     expect(SecuritySubmit.descriptionWithMarkdown).not.toContain('--source-control-url')
+  })
+
+  test('emits one cancellation document with a zero exit status', async () => {
+    const resultOutput = vi.spyOn(output, 'outputResult')
+    try {
+      await SecuritySubmit.run(['--json'], import.meta.url)
+      expect(resultOutput).toHaveBeenCalledExactlyOnceWith(
+        JSON.stringify({status: 'cancelled', operation: 'submit'}, null, 2),
+      )
+      expect(process.exitCode).toBe(previousExitCode)
+    } finally {
+      resultOutput.mockRestore()
+    }
   })
 
   test('describes the optional app version corresponding to the scanned files', () => {
@@ -141,8 +156,11 @@ describe('app security submit command', () => {
       expect(resultOutput).toHaveBeenCalledExactlyOnceWith(
         JSON.stringify(
           {
-            operation: 'submit',
-            error: {message: 'Pass --force to submit without confirmation.', stage: 'preparation'},
+            error: {
+              type: 'abort',
+              message: 'Pass --force to submit without confirmation.',
+              details: {stage: 'preparation'},
+            },
           },
           null,
           2,
@@ -167,8 +185,11 @@ describe('app security submit command', () => {
       expect(resultOutput).toHaveBeenCalledExactlyOnceWith(
         JSON.stringify(
           {
-            operation: 'submit',
-            error: {message: 'Rejected scan', stage: 'create', user_errors: userErrors, accepted: true},
+            error: {
+              type: 'abort',
+              message: 'Rejected scan',
+              details: {stage: 'create', userErrors, accepted: true},
+            },
           },
           null,
           2,

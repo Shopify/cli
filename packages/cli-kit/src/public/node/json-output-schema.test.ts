@@ -1,9 +1,22 @@
-import {defineJsonOutputSchema, type InferJsonOutputSchema} from './json-output-schema.js'
+import {defineJsonOutputSchema, jsonOutputTimestampSchema, type InferJsonOutputSchema} from './json-output-schema.js'
 import {zod} from './schema.js'
 import {describe, expect, expectTypeOf, test} from 'vitest'
 import {Ajv} from 'ajv'
 
 describe('JSON output schemas', () => {
+  test('accepts UTC instants with milliseconds and rejects other timestamp formats', () => {
+    expect(jsonOutputTimestampSchema.parse('2026-09-30T12:34:56.789Z')).toBe('2026-09-30T12:34:56.789Z')
+    for (const value of [
+      '2026-09-30',
+      '2026-09-30 12:34:56',
+      '2026-09-30T12:34:56Z',
+      '2026-09-30T12:34:56.789+00:00',
+      '2026-09-31T12:34:56.789Z',
+    ]) {
+      expect(jsonOutputTimestampSchema.safeParse(value).success).toBe(false)
+    }
+  })
+
   test('infers, validates, and encodes the result from one schema', () => {
     const outputSchema = defineJsonOutputSchema({
       name: 'Result',

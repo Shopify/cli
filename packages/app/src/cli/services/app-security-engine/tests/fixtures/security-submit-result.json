@@ -1,10 +1,11 @@
 {
+  "status": "success",
   "operation": "submit",
-  "dry_run": false,
+  "dryRun": false,
   "payload": {
     "path": "<APP_ROOT>/.shopify/app-security/submission.json",
-    "schema_version": 1
+    "schemaVersion": 1
   },
-  "submitted_at": "2026-09-01T09:30:00.000Z",
-  "client_id": "example-client-id"
+  "submittedAt": "2026-09-01T09:30:00.000Z",
+  "clientId": "example-client-id"
 }

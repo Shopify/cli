@@ -1,6 +1,10 @@
 import {appFlags} from '../../../flags.js'
 import securitySubmit from '../../../services/security-submit.js'
-import {encodeSecuritySubmitJson, toSecuritySubmitJson} from '../../../services/security-submit-json.js'
+import {
+  encodeSecuritySubmitJson,
+  toSecuritySubmitJson,
+  securitySubmitJsonOutputSchema,
+} from '../../../services/security-submit-json.js'
 import {securitySubmitFailure} from '../../../services/security-submit-result.js'
 import {renderSecuritySubmitResult} from '../../../services/security-submit-output.js'
 import {Flags} from '@oclif/core'
@@ -18,7 +22,11 @@ export default class SecuritySubmit extends BaseCommand {
 
 Generated report fields exclude source code, file paths, code snippets, evidence, finding messages, and commit identifiers. Optional feedback is included without redaction. Optionally use \`--version\` to identify the app version corresponding to the scanned files. Use \`--dry-run\` to write and inspect the exact payload without uploading it.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static get jsonOutputSchema() {
+    return securitySubmitJsonOutputSchema
+  }
+
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
@@ -74,11 +82,10 @@ Generated report fields exclude source code, file paths, code snippets, evidence
       result = failure
     }
 
-    if (result.status === 'cancelled') return
     if (flags.json) {
       outputResult(encodeSecuritySubmitJson(toSecuritySubmitJson(result)))
       if (result.status === 'failed') process.exitCode = 1
-    } else {
+    } else if (result.status !== 'cancelled') {
       renderSecuritySubmitResult(result)
     }
   }

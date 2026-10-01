@@ -103,7 +103,7 @@ export default async function securitySubmit(
   options: SecuritySubmitOptions,
   dependencies: SecuritySubmitDependencies = defaultDependencies,
 ): Promise<SecuritySubmitResult> {
-  if (!options.dryRun && !options.force && (options.json || !dependencies.canPrompt())) {
+  if (!options.dryRun && !options.force && !dependencies.canPrompt()) {
     throw new AbortError('Pass --force to submit without confirmation.')
   }
 

@@ -1,52 +1,80 @@
 import {itemToString, unstyled} from '@shopify/cli-kit/node/output'
-import type {SecuritySubmitError, SecuritySubmitPayload, SecuritySubmitResult} from './security-submit-result.js'
+import {
+  defineJsonOutputSchema,
+  jsonOutputTimestampSchema,
+  type InferJsonOutputSchema,
+} from '@shopify/cli-kit/node/json-output-schema'
+import {jsonErrorOutputSchema} from '@shopify/cli-kit/node/error/schema'
+import {zod} from '@shopify/cli-kit/node/schema'
+import type {SecuritySubmitResult} from './security-submit-result.js'
+import type {JsonErrorDocument} from '@shopify/cli-kit/node/error/types'
 
-interface SecuritySubmitJsonPayload {
-  path: string
-  schema_version: SecuritySubmitPayload['schemaVersion']
-}
+const SecuritySubmitPayloadSchema = zod
+  .object({
+    path: zod.string().describe('The absolute path of the native submission artifact.'),
+    schemaVersion: zod.number().int().nonnegative().describe('The independently versioned submission artifact format.'),
+  })
+  .strict()
+const SecuritySubmitSuccessSchema = zod
+  .object({
+    status: zod.literal('success'),
+    operation: zod.literal('submit'),
+    dryRun: zod.boolean(),
+    payload: SecuritySubmitPayloadSchema,
+  })
+  .strict()
 
-type SecuritySubmitJsonResult =
-  | {operation: 'submit'; dry_run: true; payload: SecuritySubmitJsonPayload}
-  | {operation: 'submit'; dry_run: false; payload: SecuritySubmitJsonPayload; submitted_at: string; client_id: string}
-  | {
-      operation: 'submit'
-      error: {
-        message: string
-        stage: SecuritySubmitError['stage']
-        user_errors?: SecuritySubmitError['userErrors']
-        accepted?: boolean
-        try_message?: string
-        next_steps?: string[]
-      }
-    }
+export const securitySubmitJsonOutputSchema = defineJsonOutputSchema({
+  name: 'SecuritySubmitResult',
+  schema: zod.union([
+    SecuritySubmitSuccessSchema.extend({dryRun: zod.literal(true)}),
+    SecuritySubmitSuccessSchema.extend({
+      dryRun: zod.literal(false),
+      submittedAt: jsonOutputTimestampSchema,
+      clientId: zod.string(),
+    }),
+    zod.object({status: zod.literal('cancelled'), operation: zod.literal('submit')}).strict(),
+  ]),
+  definitions: {SecuritySubmitPayload: SecuritySubmitPayloadSchema},
+})
 
-export function toSecuritySubmitJson(
-  result: Exclude<SecuritySubmitResult, {status: 'cancelled'}>,
-): SecuritySubmitJsonResult {
+type SecuritySubmitJsonResult = InferJsonOutputSchema<typeof securitySubmitJsonOutputSchema> | JsonErrorDocument
+
+export function toSecuritySubmitJson(result: SecuritySubmitResult): SecuritySubmitJsonResult {
   if (result.status === 'failed') {
     return {
-      operation: 'submit',
       error: {
+        type: 'abort',
         message: result.error.message,
-        stage: result.error.stage,
-        ...(result.error.userErrors === undefined ? {} : {user_errors: result.error.userErrors}),
-        ...(result.error.accepted === undefined ? {} : {accepted: result.error.accepted}),
         ...(result.error.tryMessage === undefined || result.error.tryMessage === null
           ? {}
-          : {try_message: unstyled(itemToString(result.error.tryMessage))}),
+          : {tryMessage: unstyled(itemToString(result.error.tryMessage))}),
         ...(result.error.nextSteps === undefined
           ? {}
-          : {next_steps: result.error.nextSteps.map((step) => unstyled(itemToString(step)))}),
+          : {nextSteps: result.error.nextSteps.map((step) => unstyled(itemToString(step)))}),
+        details: {
+          stage: result.error.stage,
+          ...(result.error.userErrors === undefined ? {} : {userErrors: result.error.userErrors}),
+          ...(result.error.accepted === undefined ? {} : {accepted: result.error.accepted}),
+        },
       },
     }
   }
 
-  const payload = {path: result.payload.path, schema_version: result.payload.schemaVersion}
-  if (result.status === 'dry-run') return {operation: 'submit', dry_run: true, payload}
-  return {operation: 'submit', dry_run: false, payload, submitted_at: result.submittedAt, client_id: result.clientId}
+  if (result.status === 'cancelled') return {status: 'cancelled', operation: 'submit'}
+
+  const payload = {path: result.payload.path, schemaVersion: result.payload.schemaVersion}
+  if (result.status === 'dry-run') return {status: 'success', operation: 'submit', dryRun: true, payload}
+  return {
+    status: 'success',
+    operation: 'submit',
+    dryRun: false,
+    payload,
+    submittedAt: new Date(result.submittedAt).toISOString(),
+    clientId: result.clientId,
+  }
 }
 
 export function encodeSecuritySubmitJson(result: SecuritySubmitJsonResult): string {
-  return JSON.stringify(result, null, 2)
+  return 'error' in result ? jsonErrorOutputSchema.encode(result) : securitySubmitJsonOutputSchema.encode(result)
 }
