@@ -41,7 +41,8 @@ describe('resultsContainUserErrors', () => {
   })
 
   test('returns false when no line reports user errors', () => {
-    const results = '{"data":{"productUpdate":{"product":{"id":"gid://shopify/Product/1"},"userErrors":[]}}}'
+    const results =
+      '{"data":{"productUpdate":{"product":{"id":"gid://shopify/Product/1"},"userErrors":[]}},"errors":[]}'
     expect(resultsContainUserErrors(results)).toBe(false)
   })
 
@@ -50,6 +51,15 @@ describe('resultsContainUserErrors', () => {
       '{"data":{"productUpdate":{"product":null,"userErrors":[{"message":"Invalid"}]}}}',
       '{"data":{"productUpdate":{"product":{"id":"gid://shopify/Product/2"},"userErrors":[]}}}',
     ].join('\n')
+    expect(resultsContainUserErrors(results)).toBe(true)
+  })
+
+  test.each([
+    '{"errors":[{"message":"Variable input has an unrecognizable field"}]}',
+    '{"data":null,"errors":[{"message":"Variable input has an unrecognizable field"}]}',
+    '{"data":{"productUpdate":null},"errors":[{"message":"Access denied"}]}',
+  ])('returns true when a line reports top-level GraphQL errors: %s', (errorResult) => {
+    const results = ['{"data":{"productUpdate":{"userErrors":[]}}}', errorResult].join('\n')
     expect(resultsContainUserErrors(results)).toBe(true)
   })
 

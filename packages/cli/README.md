@@ -2880,10 +2880,19 @@ DESCRIPTION
 
   ```json
   {
-    "type": "array",
-    "items": {
-      "$ref": "#/definitions/AppLogSource"
+    "type": "object",
+    "properties": {
+      "sources": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/AppLogSource"
+        }
+      }
     },
+    "required": [
+      "sources"
+    ],
+    "additionalProperties": false,
     "title": "AppLogSourcesResult",
     "definitions": {
       "AppLogSource": {
@@ -6083,33 +6092,37 @@ DESCRIPTION
   {
     "type": "object",
     "properties": {
-      "store": {
-        "type": "string"
-      },
-      "apiVersion": {
-        "type": "string",
-        "description": "The API version selected for the request."
-      },
-      "operation": {
+      "storeDomain": {
         "anyOf": [
           {
-            "$ref": "#/definitions/BulkOperation"
+            "type": "string",
+            "pattern": "^[^.]+\\.myshopify\\.com$"
           },
           {
             "type": "null"
           }
         ]
       },
-      "userErrors": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/BulkOperationUserError"
-        }
+      "apiVersion": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "The API version selected for the request."
+      },
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "operation": {
+        "$ref": "#/definitions/BulkOperation"
       }
     },
     "required": [
-      "operation",
-      "userErrors"
+      "storeDomain",
+      "apiVersion",
+      "status",
+      "operation"
     ],
     "additionalProperties": false,
     "title": "CancelBulkOperationResult",
@@ -6117,102 +6130,78 @@ DESCRIPTION
       "BulkOperation": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/BulkOperation\\/[^/]+$",
+            "description": "The Shopify global ID of a bulk operation."
           },
           "type": {
-            "type": "string",
-            "enum": [
-              "QUERY",
-              "MUTATION"
-            ]
+            "type": "string"
           },
           "status": {
-            "type": "string",
-            "enum": [
-              "CREATED",
-              "RUNNING",
-              "COMPLETED",
-              "FAILED",
-              "CANCELED",
-              "CANCELING",
-              "EXPIRED"
-            ]
+            "type": "string"
           },
           "errorCode": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "ACCESS_DENIED",
-                  "INTERNAL_SERVER_ERROR",
-                  "TIMEOUT"
-                ]
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ]
           },
           "createdAt": {
-            "type": "string"
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
           },
           "completedAt": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "objectCount": {
-            "type": [
-              "string",
-              "number"
-            ]
-          },
-          "url": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "partialDataUrl": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "id",
-          "type",
-          "status",
-          "createdAt",
-          "objectCount"
-        ],
-        "additionalProperties": false
-      },
-      "BulkOperationUserError": {
-        "type": "object",
-        "properties": {
-          "field": {
             "anyOf": [
               {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
+                "$ref": "#/definitions/BulkOperation/properties/createdAt"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          },
+          "objectCount": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "A nonnegative decimal count, without loss of integer precision."
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
               },
               {
                 "type": "null"
               }
             ]
           },
-          "message": {
-            "type": "string"
+          "partialDataUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
-          "message"
+          "gid",
+          "type",
+          "status",
+          "errorCode",
+          "createdAt",
+          "completedAt",
+          "objectCount",
+          "url",
+          "partialDataUrl"
         ],
         "additionalProperties": false
       }
@@ -6317,150 +6306,158 @@ DESCRIPTION
 
   ```json
   {
-    "type": "object",
-    "properties": {
-      "store": {
-        "type": "string"
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ExecuteBulkOperationResult"
       },
-      "apiVersion": {
-        "type": "string",
-        "description": "The API version selected for the request."
-      },
-      "operation": {
-        "anyOf": [
-          {
-            "$ref": "#/definitions/BulkOperation"
-          },
-          {
-            "type": "null"
-          }
-        ]
-      },
-      "userErrors": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/BulkOperationUserError"
-        }
-      },
-      "watchAborted": {
-        "type": "boolean"
-      },
-      "results": {
-        "type": "string",
-        "description": "Downloaded results in JSONL format."
-      },
-      "outputFile": {
-        "type": "string",
-        "description": "The file containing the downloaded JSONL results."
+      {
+        "$ref": "#/definitions/BulkOperationFile"
       }
-    },
-    "required": [
-      "operation",
-      "userErrors",
-      "watchAborted"
     ],
-    "additionalProperties": false,
     "title": "ExecuteBulkOperationResult",
     "definitions": {
       "BulkOperation": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/BulkOperation\\/[^/]+$",
+            "description": "The Shopify global ID of a bulk operation."
           },
           "type": {
-            "type": "string",
-            "enum": [
-              "QUERY",
-              "MUTATION"
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "errorCode": {
+            "type": [
+              "string",
+              "null"
             ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          },
+          "completedAt": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/BulkOperation/properties/createdAt"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          },
+          "objectCount": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "A nonnegative decimal count, without loss of integer precision."
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "partialDataUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "gid",
+          "type",
+          "status",
+          "errorCode",
+          "createdAt",
+          "completedAt",
+          "objectCount",
+          "url",
+          "partialDataUrl"
+        ],
+        "additionalProperties": false
+      },
+      "ExecuteBulkOperationResult": {
+        "type": "object",
+        "properties": {
+          "storeDomain": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[^.]+\\.myshopify\\.com$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "apiVersion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The API version selected for the request."
           },
           "status": {
             "type": "string",
             "enum": [
-              "CREATED",
-              "RUNNING",
-              "COMPLETED",
-              "FAILED",
-              "CANCELED",
-              "CANCELING",
-              "EXPIRED"
+              "success",
+              "partial",
+              "cancelled"
             ]
           },
-          "errorCode": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "ACCESS_DENIED",
-                  "INTERNAL_SERVER_ERROR",
-                  "TIMEOUT"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ]
+          "reason": {
+            "type": "string",
+            "const": "watch-aborted"
           },
-          "createdAt": {
-            "type": "string"
+          "operation": {
+            "$ref": "#/definitions/BulkOperation"
           },
-          "completedAt": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "objectCount": {
-            "type": [
-              "string",
-              "number"
-            ]
-          },
-          "url": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "partialDataUrl": {
-            "type": [
-              "string",
-              "null"
-            ]
+          "resultsJsonl": {
+            "type": "string",
+            "description": "Downloaded results in their native JSONL format."
           }
         },
         "required": [
-          "id",
-          "type",
+          "storeDomain",
+          "apiVersion",
           "status",
-          "createdAt",
-          "objectCount"
+          "operation"
         ],
         "additionalProperties": false
       },
-      "BulkOperationUserError": {
+      "BulkOperationFile": {
         "type": "object",
         "properties": {
-          "field": {
-            "anyOf": [
-              {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              {
-                "type": "null"
-              }
-            ]
+          "path": {
+            "type": "string",
+            "description": "The absolute path of the downloaded results file."
           },
-          "message": {
-            "type": "string"
+          "format": {
+            "type": "string",
+            "const": "jsonl"
           }
         },
         "required": [
-          "message"
+          "path",
+          "format"
         ],
         "additionalProperties": false
       }
@@ -6545,15 +6542,28 @@ DESCRIPTION
       "GetBulkOperationStatusResult": {
         "type": "object",
         "properties": {
-          "store": {
-            "type": "string"
+          "storeDomain": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[^.]+\\.myshopify\\.com$"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "apiVersion": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "description": "The API version selected for the request."
           },
-          "operationId": {
-            "type": "string"
+          "operationGid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/BulkOperation\\/[^/]+$",
+            "description": "The Shopify global ID of a bulk operation."
           },
           "operation": {
             "anyOf": [
@@ -6567,7 +6577,9 @@ DESCRIPTION
           }
         },
         "required": [
-          "operationId",
+          "storeDomain",
+          "apiVersion",
+          "operationGid",
           "operation"
         ],
         "additionalProperties": false
@@ -6575,8 +6587,8 @@ DESCRIPTION
       "ListBulkOperationsResult": {
         "type": "object",
         "properties": {
-          "store": {
-            "$ref": "#/definitions/GetBulkOperationStatusResult/properties/store"
+          "storeDomain": {
+            "$ref": "#/definitions/GetBulkOperationStatusResult/properties/storeDomain"
           },
           "apiVersion": {
             "$ref": "#/definitions/GetBulkOperationStatusResult/properties/apiVersion"
@@ -6586,95 +6598,113 @@ DESCRIPTION
             "items": {
               "$ref": "#/definitions/ListedBulkOperation"
             }
+          },
+          "pageInfo": {
+            "type": "object",
+            "properties": {
+              "hasNextPage": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "Unknown when the API result reaches the fetch limit."
+              }
+            },
+            "required": [
+              "hasNextPage"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
-          "operations"
+          "storeDomain",
+          "apiVersion",
+          "operations",
+          "pageInfo"
         ],
         "additionalProperties": false
       },
       "BulkOperation": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string"
+          "gid": {
+            "$ref": "#/definitions/GetBulkOperationStatusResult/properties/operationGid"
           },
           "type": {
-            "type": "string",
-            "enum": [
-              "QUERY",
-              "MUTATION"
-            ]
+            "type": "string"
           },
           "status": {
-            "type": "string",
-            "enum": [
-              "CREATED",
-              "RUNNING",
-              "COMPLETED",
-              "FAILED",
-              "CANCELED",
-              "CANCELING",
-              "EXPIRED"
-            ]
+            "type": "string"
           },
           "errorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          },
+          "completedAt": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/BulkOperation/properties/createdAt"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          },
+          "objectCount": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "A nonnegative decimal count, without loss of integer precision."
+          },
+          "url": {
             "anyOf": [
               {
                 "type": "string",
-                "enum": [
-                  "ACCESS_DENIED",
-                  "INTERNAL_SERVER_ERROR",
-                  "TIMEOUT"
-                ]
+                "format": "uri"
               },
               {
                 "type": "null"
               }
             ]
           },
-          "createdAt": {
-            "type": "string"
-          },
-          "completedAt": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "objectCount": {
-            "type": [
-              "string",
-              "number"
-            ]
-          },
-          "url": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "partialDataUrl": {
-            "type": [
-              "string",
-              "null"
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
             ]
           }
         },
         "required": [
-          "id",
+          "gid",
           "type",
           "status",
+          "errorCode",
           "createdAt",
-          "objectCount"
+          "completedAt",
+          "objectCount",
+          "url",
+          "partialDataUrl"
         ],
         "additionalProperties": false
       },
       "ListedBulkOperation": {
         "type": "object",
         "properties": {
-          "id": {
-            "$ref": "#/definitions/BulkOperation/properties/id"
+          "gid": {
+            "$ref": "#/definitions/GetBulkOperationStatusResult/properties/operationGid"
           },
           "status": {
             "$ref": "#/definitions/BulkOperation/properties/status"
@@ -6699,10 +6729,14 @@ DESCRIPTION
           }
         },
         "required": [
-          "id",
+          "gid",
           "status",
+          "errorCode",
           "createdAt",
-          "objectCount"
+          "completedAt",
+          "objectCount",
+          "url",
+          "partialDataUrl"
         ],
         "additionalProperties": false
       }
@@ -7690,18 +7724,27 @@ DESCRIPTION
   {
     "type": "object",
     "properties": {
-      "store": {
-        "type": "string"
+      "storeDomain": {
+        "anyOf": [
+          {
+            "type": "string",
+            "pattern": "^[^.]+\\.myshopify\\.com$"
+          },
+          {
+            "type": "null"
+          }
+        ]
       },
       "url": {
-        "type": "string"
+        "type": "string",
+        "format": "uri"
       },
       "opened": {
         "type": "boolean"
       }
     },
     "required": [
-      "store",
+      "storeDomain",
       "url",
       "opened"
     ],

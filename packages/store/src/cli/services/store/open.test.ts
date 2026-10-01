@@ -18,7 +18,7 @@ describe('openStore', () => {
 
     expect(getStoreInfo).toHaveBeenCalledWith({store: 'shop.myshopify.com'})
     expect(openURL).toHaveBeenCalledWith('https://shop.myshopify.com')
-    expect(result).toEqual({store: 'shop.myshopify.com', url: 'https://shop.myshopify.com', opened: true})
+    expect(result).toEqual({storeDomain: 'shop.myshopify.com', url: 'https://shop.myshopify.com', opened: true})
   })
 
   test('prefers the preview-store access URL when present', async () => {
@@ -39,6 +39,19 @@ describe('openStore', () => {
 
     const result = await openStore({store: 'shop.myshopify.com'})
 
-    expect(result).toEqual({store: 'shop.myshopify.com', url: 'https://shop.myshopify.com', opened: false})
+    expect(result).toEqual({storeDomain: 'shop.myshopify.com', url: 'https://shop.myshopify.com', opened: false})
+  })
+
+  test('uses the resolved canonical domain when the requested hostname differs', async () => {
+    vi.mocked(getStoreInfo).mockResolvedValue({subdomain: 'canonical.myshopify.com'})
+    const result = await openStore({store: 'custom.example.com'})
+    expect(result.storeDomain).toBe('canonical.myshopify.com')
+  })
+
+  test('does not label a custom hostname as a canonical store domain', async () => {
+    vi.mocked(getStoreInfo).mockResolvedValue({subdomain: 'custom.example.com'})
+    const result = await openStore({store: 'custom.example.com'})
+    expect(result.storeDomain).toBeNull()
+    expect(result.url).toBe('https://custom.example.com')
   })
 })

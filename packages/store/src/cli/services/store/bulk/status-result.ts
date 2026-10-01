@@ -1,4 +1,5 @@
 import {bulkOperationStatusJsonOutputSchema, type BulkOperationStatusResult} from './types.js'
+import {bulkOperationJsonContext, toBulkOperationJson} from './json.js'
 import {
   formatBulkOperationStatus,
   extractBulkOperationId,
@@ -11,7 +12,21 @@ import colors from '@shopify/cli-kit/node/colors'
 
 export function renderBulkOperationStatusResult(result: BulkOperationStatusResult, format: 'text' | 'json'): void {
   if (format === 'json') {
-    outputResult(bulkOperationStatusJsonOutputSchema.encode(result))
+    outputResult(
+      bulkOperationStatusJsonOutputSchema.encode({
+        ...bulkOperationJsonContext(result),
+        ...('operation' in result
+          ? {
+              operationGid: result.operationId,
+              operation: result.operation ? toBulkOperationJson(result.operation) : null,
+            }
+          : {
+              operations: result.operations.map(toBulkOperationJson),
+              // The query does not fetch a cursor or hasNextPage; a full page cannot prove completeness.
+              pageInfo: {hasNextPage: result.operations.length < 100 ? false : null},
+            }),
+      }),
+    )
     return
   }
   if ('operation' in result) {
