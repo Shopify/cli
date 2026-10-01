@@ -40,5 +40,10 @@
   "publishConfig": {
     "@shopify:registry": "https://registry.npmjs.org",
     "access": "public"
+  },
+  "devDependencies": {
+    "@nx/eslint-plugin": "22.7.7",
+    "eslint-plugin-jsdoc": "50.8.0",
+    "oxlint": "1.75.0"
   }
 }

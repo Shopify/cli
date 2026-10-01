@@ -51,7 +51,7 @@ describe('CardPresentPaymentsAppExtensionSchema', () => {
   })
 
   test('returns an error if payment_session_url is not provided', async () => {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+    // eslint-disable-next-line compat/typescript-eslint-naming-convention
     const {payment_session_url, ...rest} = config
     expect(() =>
       CardPresentPaymentsAppExtensionSchema.parse({
@@ -71,7 +71,7 @@ describe('CardPresentPaymentsAppExtensionSchema', () => {
   })
 
   test('returns an error if refund_session_url is not provided', async () => {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+    // eslint-disable-next-line compat/typescript-eslint-naming-convention
     const {refund_session_url, ...rest} = config
     expect(() =>
       CardPresentPaymentsAppExtensionSchema.parse({
@@ -91,7 +91,7 @@ describe('CardPresentPaymentsAppExtensionSchema', () => {
   })
 
   test('returns an error if capture_session_url is not provided', async () => {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+    // eslint-disable-next-line compat/typescript-eslint-naming-convention
     const {capture_session_url, ...rest} = config
     expect(() =>
       CardPresentPaymentsAppExtensionSchema.parse({
@@ -111,7 +111,7 @@ describe('CardPresentPaymentsAppExtensionSchema', () => {
   })
 
   test('returns an error if void_session_url is not provided', async () => {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+    // eslint-disable-next-line compat/typescript-eslint-naming-convention
     const {void_session_url, ...rest} = config
     expect(() =>
       CardPresentPaymentsAppExtensionSchema.parse({
@@ -131,7 +131,7 @@ describe('CardPresentPaymentsAppExtensionSchema', () => {
   })
 
   test('validates with optional sync_terminal_transaction_result_url', async () => {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+    // eslint-disable-next-line compat/typescript-eslint-naming-convention
     const {sync_terminal_transaction_result_url, ...rest} = config
     const {success} = CardPresentPaymentsAppExtensionSchema.safeParse({
       ...rest,

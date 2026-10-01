@@ -444,7 +444,7 @@ async function removeDuplicatedPlugins(config: Config): Promise<void> {
     })
   }
   const filteredPlugins = plugins.filter((plugin) => !bundlePlugins.includes(plugin.name))
-  // eslint-disable-next-line require-atomic-updates -- config.plugins won't be modified by renderWarning above
+  // eslint-disable-next-line compat/require-atomic-updates -- config.plugins won't be modified by renderWarning above
   config.plugins = new Map(filteredPlugins.map((plugin) => [plugin.name, plugin]))
 }
 
