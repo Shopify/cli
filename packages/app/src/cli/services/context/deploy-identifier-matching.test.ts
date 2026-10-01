@@ -89,7 +89,7 @@ function remoteWebhookModule(
       experience: 'configuration',
       options: {managementExperience: 'cli'},
     },
-  }
+  } as AppModuleVersion
 }
 
 // The option bag both entry points accept; each test overrides only what it exercises.

@@ -7,10 +7,12 @@ import {
 } from './declarative-definitions.js'
 import {
   MetaobjectDefinitions,
+  MetaobjectDefinitionsQuery,
   MetaobjectForImportFragment,
 } from '../../../api/graphql/admin/generated/metaobject_definitions.js'
 import {
   MetafieldDefinitions,
+  MetafieldDefinitionsQuery,
   MetafieldForImportFragment,
 } from '../../../api/graphql/admin/generated/metafield_definitions.js'
 import {adminAsAppRequestDoc} from '../../../api/admin-as-app.js'
@@ -107,7 +109,7 @@ describe('processDeclarativeDefinitionNodes', () => {
           {
             namespace: 'app--123456',
             ...defaultMetafieldFragment,
-          },
+          } as MetafieldForImportFragment,
         ],
       },
     ]
@@ -135,7 +137,7 @@ describe('processDeclarativeDefinitionNodes', () => {
           {
             namespace: 'app--123456--custom',
             ...defaultMetafieldFragment,
-          },
+          } as MetafieldForImportFragment,
         ],
       },
     ]
@@ -162,7 +164,7 @@ describe('processDeclarativeDefinitionNodes', () => {
           {
             namespace: 'custom',
             ...defaultMetafieldFragment,
-          },
+          } as MetafieldForImportFragment,
         ],
       },
     ]
@@ -187,7 +189,7 @@ describe('processDeclarativeDefinitionNodes', () => {
               {name: 'max', value: '50'},
               {name: 'choices', value: '["red", "blue", "green"]'},
             ],
-          },
+          } as MetafieldForImportFragment,
         ],
       },
     ]
@@ -224,7 +226,7 @@ describe('processDeclarativeDefinitionNodes', () => {
               storefront: 'PUBLIC_READ',
               customerAccount: 'READ',
             },
-          },
+          } as MetafieldForImportFragment,
         ],
       },
     ]
@@ -258,7 +260,7 @@ describe('processDeclarativeDefinitionNodes', () => {
                 enabled: true,
               },
             },
-          },
+          } as MetafieldForImportFragment,
         ],
       },
     ]
@@ -287,13 +289,13 @@ describe('processDeclarativeDefinitionNodes', () => {
             ...defaultMetafieldFragment,
             key: 'color',
             name: 'Color',
-          },
+          } as MetafieldForImportFragment,
           {
             namespace: 'app--123456',
             ...defaultMetafieldFragment,
             key: 'size',
             name: 'Size',
-          },
+          } as MetafieldForImportFragment,
         ],
       },
       {
@@ -305,7 +307,7 @@ describe('processDeclarativeDefinitionNodes', () => {
             ...defaultMetafieldFragment,
             key: 'vip_status',
             name: 'VIP Status',
-          },
+          } as MetafieldForImportFragment,
         ],
       },
     ]
@@ -340,7 +342,7 @@ describe('processDeclarativeDefinitionNodes', () => {
       {
         type: 'app--345678--test',
         ...defaultMetaobjectFragment,
-      },
+      } as MetaobjectForImportFragment,
     ]
 
     const result = processDeclarativeDefinitionNodes([], metaobjectNodes)
@@ -397,7 +399,7 @@ describe('processDeclarativeDefinitionNodes', () => {
             ],
           },
         ],
-      },
+      } as MetaobjectForImportFragment,
     ]
 
     const result = processDeclarativeDefinitionNodes([], metaobjectNodes)
@@ -435,7 +437,7 @@ describe('processDeclarativeDefinitionNodes', () => {
       {
         type: 'custom',
         ...defaultMetaobjectFragment,
-      },
+      } as MetaobjectForImportFragment,
     ]
 
     const result = processDeclarativeDefinitionNodes([], metaobjectNodes)
@@ -453,7 +455,7 @@ describe('processDeclarativeDefinitionNodes', () => {
           {
             namespace: 'app--123456',
             ...defaultMetafieldFragment,
-          },
+          } as MetafieldForImportFragment,
         ],
       },
     ]
@@ -462,7 +464,7 @@ describe('processDeclarativeDefinitionNodes', () => {
       {
         type: 'app--345678--test',
         ...defaultMetaobjectFragment,
-      },
+      } as MetaobjectForImportFragment,
     ]
 
     const result = processDeclarativeDefinitionNodes(metafieldNodes, metaobjectNodes)
@@ -494,7 +496,7 @@ describe('processDeclarativeDefinitionNodes', () => {
             ...defaultMetafieldFragment,
             key: 'samename',
             name: 'samename',
-          },
+          } as MetafieldForImportFragment,
         ],
       },
     ]
@@ -528,7 +530,7 @@ describe('processDeclarativeDefinitionNodes', () => {
               {name: 'array_strings', value: '["a", "b"]'},
               {name: 'complex_object', value: '{"nested": {"value": 123}}'},
             ],
-          },
+          } as MetafieldForImportFragment,
         ],
       },
     ]
@@ -562,7 +564,7 @@ describe('processDeclarativeDefinitionNodes', () => {
             namespace: 'app--123456',
             ...defaultMetafieldFragment,
             description: null,
-          },
+          } as MetafieldForImportFragment,
         ],
       },
     ]
@@ -589,7 +591,7 @@ describe('processDeclarativeDefinitionNodes', () => {
             namespace: 'app--123456',
             ...defaultMetafieldFragment,
             validations: [],
-          },
+          } as MetafieldForImportFragment,
         ],
       },
     ]
@@ -623,7 +625,7 @@ describe('processDeclarativeDefinitionNodes', () => {
             validations: [],
           },
         ],
-      },
+      } as MetaobjectForImportFragment,
     ]
 
     const result = processDeclarativeDefinitionNodes([], metaobjectNodes)
@@ -651,7 +653,7 @@ describe('processDeclarativeDefinitionNodes', () => {
               {name: 'min', value: '5'},
               {name: 'max', value: null},
             ],
-          },
+          } as MetafieldForImportFragment,
         ],
       },
     ]
@@ -682,7 +684,7 @@ describe('processDeclarativeDefinitionNodes', () => {
           admin: 'MERCHANT_READ',
           storefront: 'NONE',
         },
-      },
+      } as MetaobjectForImportFragment,
     ]
 
     const result = processDeclarativeDefinitionNodes([], metaobjectNodes)
@@ -704,7 +706,7 @@ describe('processDeclarativeDefinitionNodes', () => {
           ...defaultMetaobjectFragment.capabilities,
           renderable: null,
         },
-      },
+      } as MetaobjectForImportFragment,
     ]
 
     const result = processDeclarativeDefinitionNodes([], metaobjectNodes)
@@ -747,7 +749,7 @@ describe('processDeclarativeDefinitionNodes', () => {
             ],
           },
         ],
-      },
+      } as MetaobjectForImportFragment,
     ]
 
     const result = processDeclarativeDefinitionNodes([], metaobjectNodes)
@@ -791,7 +793,7 @@ describe('processDeclarativeDefinitionNodes', () => {
             ],
           },
         ],
-      },
+      } as MetaobjectForImportFragment,
     ]
 
     const result = processDeclarativeDefinitionNodes([], metaobjectNodes)
@@ -817,7 +819,7 @@ describe('processDeclarativeDefinitionNodes', () => {
             // No trailing segment like "--custom"
             namespace: 'app--999999',
             ...defaultMetafieldFragment,
-          },
+          } as MetafieldForImportFragment,
         ],
       },
     ]
@@ -843,7 +845,7 @@ describe('processDeclarativeDefinitionNodes', () => {
         // No trailing segment
         type: 'app--999999',
         ...defaultMetaobjectFragment,
-      },
+      } as MetaobjectForImportFragment,
     ]
 
     const result = processDeclarativeDefinitionNodes([], metaobjectNodes)
@@ -876,7 +878,7 @@ describe('processDeclarativeDefinitionNodes', () => {
               // Invalid JSON - should be returned as-is
               {name: 'invalid_json', value: 'this is not valid json {{'},
             ],
-          },
+          } as MetafieldForImportFragment,
         ],
       },
     ]
@@ -915,7 +917,7 @@ describe('processDeclarativeDefinitionNodes', () => {
               // Testing the READ_WRITE case
               customerAccount: 'READ_WRITE',
             },
-          },
+          } as MetafieldForImportFragment,
         ],
       },
     ]
@@ -1206,7 +1208,7 @@ describe('importDeclarativeDefinitions', () => {
               },
             ],
           },
-        }
+        } as MetafieldDefinitionsQuery
       }
       if (query === MetafieldDefinitions) {
         return {
@@ -1214,7 +1216,7 @@ describe('importDeclarativeDefinitions', () => {
             pageInfo: {hasNextPage: false, endCursor: null},
             nodes: [],
           },
-        }
+        } as MetafieldDefinitionsQuery
       }
       if (query === MetaobjectDefinitions) {
         return {
@@ -1279,7 +1281,7 @@ describe('importDeclarativeDefinitions', () => {
               },
             ],
           },
-        }
+        } as MetaobjectDefinitionsQuery
       }
       return {}
     })

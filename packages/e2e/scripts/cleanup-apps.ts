@@ -95,7 +95,7 @@ const DASHBOARD_ERROR_PATTERN = /(unprocessable entity|request can't be processe
 function isAccountsShopifyUrl(rawUrl: string): boolean {
   try {
     return new URL(rawUrl).hostname === 'accounts.shopify.com'
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false
   }
@@ -577,7 +577,7 @@ async function uninstallApp(page: Page, appUrl: string, appName: string): Promis
     try {
       const uninstalled = await uninstallAppFromStore(page, storeSlug, appName)
       if (!uninstalled) allUninstalled = false
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (err) {
       console.warn(`    Failed to uninstall from ${storeSlug}: ${err instanceof Error ? err.message : String(err)}`)
       allUninstalled = false

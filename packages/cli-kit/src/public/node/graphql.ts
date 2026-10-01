@@ -22,7 +22,7 @@ export function containsMutation(query: string, operationName?: string): boolean
   let document
   try {
     document = parse(query)
-    // eslint-disable-next-line @shopify/cli/no-catch-all -- swallowing parse errors is the entire purpose
+    // eslint-disable-next-line no-catch-all/no-catch-all -- swallowing parse errors is the entire purpose
   } catch {
     return false
   }

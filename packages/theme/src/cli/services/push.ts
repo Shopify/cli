@@ -1,4 +1,4 @@
-/* eslint-disable @shopify/cli/tsdoc-syntax */
+/* eslint-disable tsdoc/syntax */
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {uploadTheme} from '../utilities/theme-uploader.js'
 import {ensureDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'

@@ -7,6 +7,10 @@ tester.run('naming-convention', rules['naming-convention'], {
   valid: [
     {code: 'interface Widget {}', options: [{selector: 'typeLike', format: ['PascalCase']}]},
     {
+      code: 'type Element<TValues> = TValues extends ReadonlyArray<infer Value> ? Value : never',
+      options: [{selector: 'typeParameter', format: ['PascalCase'], prefix: ['T']}],
+    },
+    {
       code: 'type Widget<T1, _TValue> = T1',
       options: [{selector: 'typeParameter', format: ['PascalCase'], prefix: ['T']}],
     },
@@ -163,7 +167,7 @@ tester.run('commonjs-redeclarations', rules['no-redeclare'], {
   ],
 })
 
-test('blocks project imports while ESLint and upstream plugins are forbidden', () => {
+test('runs independent rules and legacy suppressions without ESLint', () => {
   const {mkdtempSync, mkdirSync, writeFileSync, rmSync} = require('node:fs')
   const {tmpdir} = require('node:os')
   const {join, resolve, dirname} = require('node:path')
@@ -197,15 +201,57 @@ test('blocks project imports while ESLint and upstream plugins are forbidden', (
           : 'export function read() { return 1 }',
       )
     }
+    const legacyFile = join(workspace, 'packages', 'app', 'src', 'legacy.ts')
+    const legacySource = `/** @param value Description. */
+function read(value) { try { run() } catch (error) { log(error) } }
+interface widget {}`
+    writeFileSync(
+      legacyFile,
+      `/* eslint-disable compat/typescript-eslint-naming-convention, no-catch-all/no-catch-all, tsdoc/syntax */\n${legacySource}`,
+    )
     writeFileSync(
       join(workspace, 'oxlint.json'),
       JSON.stringify({
-        jsPlugins: [{name: 'cli', specifier: resolve(__dirname, 'oxlint.js')}],
+        jsPlugins: [
+          {name: 'cli', specifier: resolve(__dirname, 'oxlint.js')},
+          {name: 'compat', specifier: resolve(__dirname, 'oxlint-compat-names.js')},
+          {name: 'no-catch-all', specifier: resolve(__dirname, 'oxlint-no-catch-all.js')},
+          {name: 'tsdoc', specifier: resolve(__dirname, 'oxlint-tsdoc.js')},
+        ],
         categories: {correctness: 'off'},
-        rules: {'cli/module-boundaries': 'error'},
+        rules: {
+          'cli/module-boundaries': 'error',
+          'compat/typescript-eslint-naming-convention': ['error', {selector: 'typeLike', format: ['PascalCase']}],
+          'no-catch-all/no-catch-all': 'error',
+          'tsdoc/syntax': 'error',
+        },
       }),
     )
     const result = spawnSync(
+      process.execPath,
+      [
+        join(dirname(require.resolve('oxlint/package.json')), 'bin/oxlint'),
+        '--config',
+        'oxlint.json',
+        '--format',
+        'json',
+        '--deny-warnings',
+        '--report-unused-disable-directives',
+        'packages',
+      ],
+      {
+        cwd: workspace,
+        encoding: 'utf8',
+        env: {...process.env, NODE_OPTIONS: `--require "${guard.replaceAll('\\', '/')}"`},
+      },
+    )
+    expect(result.status, result.stdout + result.stderr).toBe(1)
+    expect(result.stdout, result.stderr).not.toBe('')
+    expect(JSON.parse(result.stdout).diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
+      'cli(module-boundaries)',
+    ])
+    writeFileSync(legacyFile, legacySource)
+    const unsuppressed = spawnSync(
       process.execPath,
       [
         join(dirname(require.resolve('oxlint/package.json')), 'bin/oxlint'),
@@ -221,10 +267,17 @@ test('blocks project imports while ESLint and upstream plugins are forbidden', (
         env: {...process.env, NODE_OPTIONS: `--require "${guard.replaceAll('\\', '/')}"`},
       },
     )
-    expect(result.status, result.stdout + result.stderr).toBe(1)
-    expect(result.stdout, result.stderr).not.toBe('')
-    expect(JSON.parse(result.stdout).diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
+    expect(unsuppressed.status, unsuppressed.stdout + unsuppressed.stderr).toBe(1)
+    expect(unsuppressed.stdout, unsuppressed.stderr).not.toBe('')
+    expect(
+      JSON.parse(unsuppressed.stdout)
+        .diagnostics.map((diagnostic) => diagnostic.code)
+        .sort(),
+    ).toEqual([
       'cli(module-boundaries)',
+      'compat(typescript-eslint-naming-convention)',
+      'no-catch-all(no-catch-all)',
+      'tsdoc(syntax)',
     ])
   } finally {
     rmSync(workspace, {recursive: true, force: true})

@@ -9,6 +9,7 @@ import {
   CurrentAppConfiguration,
   getAppVersionedSchema,
   AppSchema,
+  SchemaForConfig,
   AppLinkedInterface,
 } from './app.js'
 import {parseStructuredErrors} from './error-parsing.js'
@@ -302,7 +303,7 @@ export async function loadAppFromContext<TModuleSpec extends ExtensionSpecificat
   }
 
   const appVersionedSchema = getAppVersionedSchema(specifications)
-  const configSchema = appVersionedSchema
+  const configSchema = appVersionedSchema as SchemaForConfig<CurrentAppConfiguration>
   const configurationPath = activeConfig.file.path
   const configurationFileName = basename(configurationPath) as AppConfigurationFileName
 
@@ -320,7 +321,7 @@ export async function loadAppFromContext<TModuleSpec extends ExtensionSpecificat
   let gitTracked = false
   try {
     gitTracked = await checkIfGitTracked(project.directory, configurationPath)
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     // leave as false
   }
@@ -419,7 +420,7 @@ export async function loadOpaqueApp(options: {
       remoteFlags: options.remoteFlags,
     })
     return {state: 'loaded-app', app, configuration: app.configuration, packageManager: project.packageManager}
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     // loadApp failed - try loading as raw template config
     try {
@@ -435,7 +436,7 @@ export async function loadOpaqueApp(options: {
         appDirectory: project.directory,
         packageManager: project.packageManager,
       }
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
       // Both attempts failed
       return {state: 'error'}
@@ -755,7 +756,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
       this.errors.addErrors(webhookResult.errors)
       return []
     }
-    // eslint-disable-next-line @shopify/cli/naming-convention
+    // eslint-disable-next-line compat/typescript-eslint-naming-convention
     const {api_version, subscriptions = []} = webhookResult.data.webhooks
     // Find all unique subscriptions
     const webhookSubscriptions = getArrayRejectingUndefined(

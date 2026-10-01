@@ -35,10 +35,10 @@ export async function username(platform: typeof process.platform = process.platf
       const {stdout} = await execa('id', ['-un', userId])
       return stdout
 
-      // eslint-disable-next-line @shopify/cli/no-catch-all, no-empty
+      // eslint-disable-next-line no-catch-all/no-catch-all, no-empty
     } catch {}
     return makeUsernameFromId(userId)
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return null
   }
@@ -78,7 +78,7 @@ function getEnvironmentVariable() {
 function getUsernameFromOsUserInfo(): string | null {
   try {
     return osUserInfo().username
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return null
   }

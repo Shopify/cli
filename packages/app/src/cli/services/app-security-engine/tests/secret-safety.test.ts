@@ -1,4 +1,4 @@
-/* eslint-disable @shopify/cli/id-length, no-restricted-imports -- security fixtures exercise raw git and filesystem behavior */
+/* eslint-disable compat/id-length, no-restricted-imports -- security fixtures exercise raw git and filesystem behavior */
 import {git, isolateGitConfig} from './git-test-helpers.js'
 import {scan} from '../scanners/index.js'
 import {

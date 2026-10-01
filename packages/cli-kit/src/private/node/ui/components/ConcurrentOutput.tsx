@@ -183,7 +183,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         if (!keepRunningAfterProcessesResolve) {
           setCompletionResult({})
         }
-        // eslint-disable-next-line @shopify/cli/no-catch-all
+        // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (error: unknown) {
         if (!keepRunningAfterProcessesResolve) {
           setCompletionResult({error: error as Error})

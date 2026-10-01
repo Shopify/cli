@@ -16,7 +16,7 @@ function renderHook<THookResult>(renderHookCallback: () => THookResult) {
     try {
       const hookResult = renderHookCallback()
       result.lastResult = hookResult
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (errorFromHook) {
       result.lastError = errorFromHook
     }

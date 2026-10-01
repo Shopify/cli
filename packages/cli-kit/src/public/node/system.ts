@@ -60,7 +60,7 @@ export async function openURL(url: string): Promise<boolean> {
   try {
     await externalOpen.default(url)
     return true
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return false
   }
@@ -380,7 +380,7 @@ export async function isWsl(overrides: WslDetectionOverrides = {}): Promise<bool
   try {
     const procVersion = overrides.procVersion ?? readFileSync('/proc/version', 'utf8')
     return procVersion.toLowerCase().includes('microsoft') ? !insideContainer() : false
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false
   }
@@ -397,7 +397,7 @@ export function isInsideContainer(): boolean {
   if (existsSync('/run/.containerenv') || existsSync('/.dockerenv')) return true
   try {
     return readFileSync('/proc/self/cgroup', 'utf8').includes('docker')
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false
   }
@@ -414,7 +414,7 @@ export function isStdinPiped(): boolean {
   try {
     const stats = fstatSync(0)
     return stats.isFIFO() || stats.isFile() || stats.isSocket()
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false
   }

@@ -327,7 +327,7 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
 
   return createExtensionSpecification({
     identifier: spec.identifier,
-    schema: zod.any({}),
+    schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures: spec.appModuleFeatures,
     experience: spec.experience,
     clientSteps: spec.clientSteps,

@@ -343,7 +343,7 @@ export async function readProjectState(appRoot: string): Promise<ProjectState> {
   const run = async (args: string[]): Promise<{exitCode: number; stdout: string} | undefined> => {
     try {
       return await captureOutputWithExitCode('git', args, {cwd: appRoot})
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
       return undefined
     }

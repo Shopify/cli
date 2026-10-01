@@ -1,6 +1,6 @@
 import {isDevelopment, isUnitTest} from './context/local.js'
 import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI} from './is-global.js'
-import {checkForCachedNewVersion, packageManagerFromUserAgent} from './node-package-manager.js'
+import {checkForCachedNewVersion, packageManagerFromUserAgent, PackageManager} from './node-package-manager.js'
 import {exec, isCI} from './system.js'
 import {
   cliInstallCommand,
@@ -201,7 +201,7 @@ describe('runCLIUpgrade', () => {
     // Given
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
     // 'unknown' is returned by inferPackageManagerForGlobalCLI for local installs
-    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('unknown')
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('unknown' as PackageManager)
 
     // When/Then
     await expect(runCLIUpgrade()).rejects.toThrow('Could not determine the package manager')

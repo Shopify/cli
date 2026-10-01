@@ -197,7 +197,7 @@ function parseEmbeddedJson(message: string): EmbeddedGraphQLPayload | undefined 
 
   try {
     return JSON.parse(message.slice(jsonStart)) as EmbeddedGraphQLPayload
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return undefined
   }

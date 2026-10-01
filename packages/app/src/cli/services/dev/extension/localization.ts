@@ -31,11 +31,13 @@ export async function getLocalization(
     return {localization: undefined, status: ''}
   }
 
-  const localization = options.currentLocalizationPayload ?? {
-    defaultLocale: 'en',
-    translations: {},
-    lastUpdated: 0,
-  }
+  const localization =
+    options.currentLocalizationPayload ??
+    ({
+      defaultLocale: 'en',
+      translations: {},
+      lastUpdated: 0,
+    } as Localization)
 
   let status: ExtensionAssetBuildStatus = 'success'
 
@@ -55,7 +57,7 @@ export async function getLocalization(
     )
     localization.lastUpdated = Date.now()
     outputDebug(`Parsed locales for extension ${extension.handle} at ${extension.directory}`, options.stdout)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @shopify/cli/no-catch-all
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-catch-all/no-catch-all
   } catch (error: any) {
     status = 'error'
   }

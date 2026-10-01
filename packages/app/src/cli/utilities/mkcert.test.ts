@@ -9,7 +9,7 @@ import which from 'which'
 import {downloadGitHubRelease} from '@shopify/cli-kit/node/github'
 import {testWithTempDir} from '@shopify/cli-kit/node/testing/test-with-temp-dir'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fetch} from '@shopify/cli-kit/node/http'
+import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {keypress, renderWarning} from '@shopify/cli-kit/node/ui'
 
@@ -305,7 +305,7 @@ describe('mkcert', () => {
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,
         text: async () => 'LICENSE CONTENT',
-      })
+      } as unknown as Response)
 
       vi.mocked(fetch).mockImplementation(mockFetch)
 
@@ -331,7 +331,7 @@ describe('mkcert', () => {
       const mockFetch = vi.fn().mockResolvedValue({
         ok: false,
         text: async () => 'LICENSE CONTENT',
-      })
+      } as unknown as Response)
       const mockOutput = mockAndCaptureOutput()
 
       vi.mocked(fetch).mockImplementation(mockFetch)

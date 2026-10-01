@@ -101,7 +101,7 @@ export class FileWatcher {
       fullExtensionDirectories.map(async (dir) => {
         try {
           await mkdir(dir.replace(/\/\*+$/, ''))
-          // eslint-disable-next-line @shopify/cli/no-catch-all
+          // eslint-disable-next-line no-catch-all/no-catch-all
         } catch {
           // Non-fatal: directory may be unwritable (e.g. test fixtures)
         }

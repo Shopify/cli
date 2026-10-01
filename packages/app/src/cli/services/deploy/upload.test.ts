@@ -254,7 +254,7 @@ describe('uploadExtensionsBundle', () => {
           release: true,
         })
 
-        // eslint-disable-next-line @shopify/cli/no-catch-all
+        // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (error: any) {
         expect(error.message).toEqual("Version couldn't be created.")
         expect(error.customSections).toEqual([
@@ -702,7 +702,7 @@ describe('deploymentErrorsToCustomSections', () => {
 
     // When
     const customSections = deploymentErrorsToCustomSections(
-      errors,
+      errors as AppDeploySchema['appDeploy']['userErrors'],
       {
         'webhook-subscription-1': '1',
         'webhook-subscription-2': '2',

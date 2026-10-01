@@ -514,7 +514,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         `Import scan for "${this.handle}": ${entryFiles.length} entries, ${this.cachedImportPaths.length} files, ${elapsed}ms${cacheInfo}`,
       )
       return this.cachedImportPaths
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
       outputDebug(`Failed to scan imports for extension ${this.handle}: ${error}`)
       this.cachedImportPaths = []

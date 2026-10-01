@@ -127,7 +127,7 @@ export function isExpectedAuthDestination(rawUrl: string, hostname: string, path
   try {
     const url = new URL(rawUrl)
     return url.hostname === hostname && (!pathnamePrefix || url.pathname.startsWith(pathnamePrefix))
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false
   }
