@@ -286,6 +286,10 @@ const config = [
   },
   eslintCompatibilityConfig(oxlintConfig),
   ...oxlintConfig.overrides.map((override) => eslintCompatibilityConfig(override)),
+  {
+    files: ['packages/app/src/cli/services/app-security-engine/embed-checks.mjs'],
+    rules: {'@shopify/strict-component-boundaries': 'off'},
+  },
 ]
 
 export default config
