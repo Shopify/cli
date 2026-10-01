@@ -26,9 +26,19 @@ export type ExtensionFeature =
 
 export type TransformationConfig = Record<string, string>
 
+/**
+ * Options for converting platform content to the local format.
+ *
+ * `handle` is the module handle. Some modules keep it outside their config, so the config alone can't restore it.
+ */
+export interface RemoteToLocalTransformOptions {
+  flags?: Flag[]
+  handle?: string
+}
+
 export interface CustomTransformationConfig {
   forward?: (obj: object, appConfiguration: AppConfiguration, options?: {flags?: Flag[]}) => object
-  reverse?: (obj: object, options?: {flags?: Flag[]}) => object
+  reverse?: (obj: object, options?: RemoteToLocalTransformOptions) => object
 }
 
 type ExtensionExperience = 'extension' | 'configuration'
@@ -119,7 +129,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
    * @param options - Additional options to be used in the transformation
    * @returns Transformed configuration to use in place of the platform provided content
    */
-  transformRemoteToLocal?: (remoteContent: object, options?: {flags?: Flag[]}) => object
+  transformRemoteToLocal?: (remoteContent: object, options?: RemoteToLocalTransformOptions) => object
 
   uidStrategy: UidStrategy
 

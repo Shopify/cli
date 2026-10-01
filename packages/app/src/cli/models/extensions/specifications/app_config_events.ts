@@ -7,7 +7,7 @@ export const EventsSpecIdentifier = 'events'
 
 const EventsTransformConfig: CustomTransformationConfig = {
   forward: transformFromEventsConfig,
-  reverse: (content: object) => transformToEventsConfig(content),
+  reverse: transformToEventsConfig,
 }
 
 const EventsSchema = BaseSchemaWithoutHandle.extend({

@@ -504,6 +504,58 @@ describe('classifyDeployExtensionChanges', () => {
     )
   })
 
+  test('does not mark events as updated when single-subscription modules match the remote ones', async () => {
+    const localEvents = ['order-notifier', 'product-sync'].map(
+      (handle) =>
+        new ExtensionInstance({
+          specification: appEventsSpec,
+          configuration: {
+            events: {
+              api_version: '2024-01',
+              subscription: {handle, topic: `${handle}/create`, actions: ['create'], uri: 'https://example.com'},
+            },
+          } as BaseConfigType,
+          configurationPath: '/app/shopify.app.toml',
+          directory: '/app',
+        }),
+    )
+    const remoteEvents = await Promise.all(
+      localEvents.map(
+        async (extension): Promise<AppModuleVersion> => ({
+          registrationId: extension.uid,
+          registrationUuid: `${extension.uid}-uuid`,
+          registrationTitle: extension.handle,
+          type: 'events',
+          config: await extension.deployConfig({apiKey: REMOTE_APP.apiKey, appConfiguration: APP.configuration}),
+          specification: {
+            identifier: 'events',
+            name: 'Events',
+            experience: 'configuration',
+            options: {managementExperience: 'cli'},
+          },
+        }),
+      ),
+    )
+
+    await ensureDeployIdentifiersFromAppVersion(
+      deployOptions({
+        app: testApp({...APP, allExtensions: localEvents, specifications: [appEventsSpec]}),
+        activeAppVersion: {appModuleVersions: remoteEvents},
+      }),
+    )
+
+    expect(deployOrReleaseConfirmationPrompt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        configExtensionIdentifiersBreakdown: {
+          existingFieldNames: ['events'],
+          existingUpdatedFieldNames: [],
+          newFieldNames: [],
+          deletedFieldNames: [],
+        },
+      }),
+    )
+  })
+
   test('relinks a created local to an un-migrated remote that shares its handle and type', async () => {
     const pendingRemote = {
       registrationId: '',

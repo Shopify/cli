@@ -1,4 +1,4 @@
-import {fetchAppRemoteConfiguration} from './select-app.js'
+import {fetchAppRemoteConfiguration, remoteAppConfigurationExtensionContent} from './select-app.js'
 import {configurationSpecifications, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers, MinimalOrganizationApp} from '../../models/organization.js'
@@ -162,5 +162,42 @@ describe('fetchAppRemoteConfiguration', () => {
 
     // Then
     expect(result).toBeUndefined()
+  })
+})
+
+describe('remoteAppConfigurationExtensionContent', () => {
+  test('restores single-subscription events handles from their modules', async () => {
+    // Given
+    const eventsModule = (handle: string, topic: string): AppModuleVersion => ({
+      registrationId: handle,
+      registrationUuid: `UUID_${handle}`,
+      registrationTitle: handle,
+      type: 'events',
+      config: {events: {api_version: '2024-01', subscription: {topic, actions: ['create'], uri: 'https://myapp.com'}}},
+      specification: {
+        identifier: 'events',
+        name: 'Events',
+        experience: 'configuration',
+        options: {managementExperience: 'cli'},
+      },
+    })
+
+    // When
+    const result = remoteAppConfigurationExtensionContent(
+      [eventsModule('order-notifier', 'orders/create'), eventsModule('product-sync', 'products/create')],
+      await configurationSpecifications(),
+      [],
+    )
+
+    // Then
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', actions: ['create'], uri: 'https://myapp.com', handle: 'order-notifier'},
+          {topic: 'products/create', actions: ['create'], uri: 'https://myapp.com', handle: 'product-sync'},
+        ],
+      },
+    })
   })
 })
