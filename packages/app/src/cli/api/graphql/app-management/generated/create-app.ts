@@ -1,6 +1,6 @@
 import * as Types from './types.js'
-
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
+
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
 export type CreateAppMutationVariables = Types.Exact<{
