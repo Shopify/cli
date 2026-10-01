@@ -29,9 +29,3 @@ export const logsScopeFlags = {
     exclusive: ['client-id', 'config', 'path'],
   }),
 }
-
-export const logsTypeFlag = Flags.string({
-  env: 'SHOPIFY_FLAG_LOG_TYPE',
-  description: 'Event type. Repeat to include multiple types. Discover values with shopify app logs types.',
-  multiple: true,
-})

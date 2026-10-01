@@ -1,6 +1,6 @@
 import {fetchLogsSchema} from '../../../services/logs-schema.js'
 import {logsAccountFlags, logsScopeFlags} from '../../../services/logs-flags.js'
-import {resolveLogsApp} from '../../../services/logs-search.js'
+import {resolveLogsApp} from '../../../services/logs-app.js'
 import {logsJsonOutputSchema} from '../../../services/logs-query.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {authAliasFlag, globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
@@ -11,7 +11,7 @@ export default class LogsSchema extends BaseCommand {
 
   static summary = 'Fetch the app logs GraphQL schema.'
 
-  static descriptionWithMarkdown = `Fetches the live schema using the same app and account as \`shopify app logs\`. Prints GraphQL SDL with descriptions, field arguments, defaults, enums, and deprecations. Save it to a file and reuse it while composing queries.
+  static descriptionWithMarkdown = `Fetches the live GraphQL schema for your app. Uses the current app configuration unless you pass \`--client-id\`. Prints GraphQL SDL with descriptions, field arguments, defaults, enums, and deprecations. Save it to a file and reuse it while composing queries.
 
 Use \`--json\` for the full introspection JSON response. HTTP or GraphQL errors print the JSON response instead of SDL and produce a nonzero exit status.`
 

@@ -32,9 +32,7 @@
 │  ├─ info
 │  ├─ init
 │  ├─ logs
-│  │  ├─ filters
-│  │  ├─ schema
-│  │  └─ types
+│  │  └─ schema
 │  ├─ release
 │  ├─ subscription-migrations
 │  │  ├─ cancel

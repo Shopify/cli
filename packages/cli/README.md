@@ -26,10 +26,8 @@
 * [`shopify app import dashboard-extensions`](#shopify-app-import-dashboard-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app init`](#shopify-app-init)
-* [`shopify app logs [--client-id <id>] [--type <type>] [--since <time>] [--limit <n>] [flags]`](#shopify-app-logs---client-id-id---type-type---since-time---limit-n-flags)
-* [`shopify app logs filters [flags]`](#shopify-app-logs-filters-flags)
+* [`shopify app logs (--query <query> | --query-file <path>) [flags]`](#shopify-app-logs---query-query----query-file-path-flags)
 * [`shopify app logs schema [flags]`](#shopify-app-logs-schema-flags)
-* [`shopify app logs types [flags]`](#shopify-app-logs-types-flags)
 * [`shopify app release --version <version>`](#shopify-app-release---version-version)
 * [`shopify app subscription-migrations cancel`](#shopify-app-subscription-migrations-cancel)
 * [`shopify app subscription-migrations list`](#shopify-app-subscription-migrations-list)
@@ -2634,51 +2632,34 @@ EXAMPLES
   $ shopify app init --client-id 123 --template none
 ```
 
-## `shopify app logs [--client-id <id>] [--type <type>] [--since <time>] [--limit <n>] [flags]`
+## `shopify app logs (--query <query> | --query-file <path>) [flags]`
 
-Query historical logs for your Shopify app.
+Query historical app logs with GraphQL.
 
 ```
 USAGE
-  $ shopify app logs [--client-id <id>] [--type <type>] [--since <time>] [--limit <n>] [flags]
   $ shopify app logs (--query <query> | --query-file <path>) [flags]
 
 FLAGS
-  -c, --config=<value>
-      The name of the app configuration.
-      [env: SHOPIFY_FLAG_APP_CONFIG]
-
   -j, --json
       Output the result as JSON. Automatically disables color output.
       [env: SHOPIFY_FLAG_JSON]
 
   -q, --query=<value>
-      The GraphQL query, as a string. Can’t be combined with filter flags.
+      The GraphQL query, as a string.
       [env: SHOPIFY_FLAG_QUERY]
 
   -v, --variables=<value>
       GraphQL variables as a JSON object.
       [env: SHOPIFY_FLAG_VARIABLES]
 
-  --app=<value>
-      Alias for --client-id.
-      [env: SHOPIFY_FLAG_APP]
-
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
 
-  --client-id=<value>
-      The Client ID of your app. Defaults to the current app configuration.
-      [env: SHOPIFY_FLAG_CLIENT_ID]
-
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
-
-  --limit=<value>
-      Maximum number of events (1–1000). Defaults to 50.
-      [env: SHOPIFY_FLAG_LIMIT]
 
   --no-color
       Disable color output.
@@ -2688,46 +2669,13 @@ FLAGS
       Fail instead of prompting when no valid account session is available.
       [env: SHOPIFY_FLAG_NO_PROMPT]
 
-  --offset=<value>
-      Rows to skip in a sorted search (0–100000).
-      [env: SHOPIFY_FLAG_OFFSET]
-
   --operation-name=<value>
       The operation to execute when the document contains multiple operations.
       [env: SHOPIFY_FLAG_OPERATION_NAME]
 
-  --path=<value>
-      The path to your app directory.
-      [env: SHOPIFY_FLAG_PATH]
-
   --query-file=<value>
-      Path to a GraphQL document, or - to read from stdin. Can’t be combined with filter flags.
+      Path to a GraphQL document, or - to read from stdin.
       [env: SHOPIFY_FLAG_QUERY_FILE]
-
-  --shop=<value>
-      Filter by the permanent myshopify.com domain.
-      [env: SHOPIFY_FLAG_SHOP]
-
-  --since=<value>
-      Start time: a duration such as 15m or 1h, or an ISO 8601 timestamp. Defaults to 1h ago.
-      [env: SHOPIFY_FLAG_SINCE]
-
-  --sort=<option>
-      Order results. Omit for a faster, unordered search.
-      [env: SHOPIFY_FLAG_SORT]
-      <options: TIMESTAMP_ASC|TIMESTAMP_DESC|RECORD_ID_ASC|RECORD_ID_DESC>
-
-  --status-code=<value>
-      Webhook response status code. Requires --type WEBHOOK_DELIVERY.
-      [env: SHOPIFY_FLAG_STATUS_CODE]
-
-  --type=<value>...
-      Event type. Repeat to include multiple types. Discover values with shopify app logs types.
-      [env: SHOPIFY_FLAG_LOG_TYPE]
-
-  --until=<value>
-      End time as an ISO 8601 timestamp. Defaults to now.
-      [env: SHOPIFY_FLAG_UNTIL]
 
   --variable-file=<value>
       Path to a JSON file containing GraphQL variables.
@@ -2738,23 +2686,17 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Query historical logs for your Shopify app.
+  Query historical app logs with GraphQL.
 
-  Searches app logs using common filters or an explicit GraphQL query. Uses the current app configuration unless you
-  pass `--client-id` (alias `--app`). Defaults to the last hour and up to 50 events across all supported event types.
+  Runs a GraphQL query against app logs. Pass the document with `--query`, load it with `--query-file`, or use
+  `--query-file -` to read from stdin. Supply JSON variables with `--variables` or `--variable-file`.
 
-  Use `--type`, `--since`, `--until`, `--shop`, and `--limit` for common searches. Use `--status-code` with `--type
-  WEBHOOK_DELIVERY`. Run `shopify app logs types` and `shopify app logs filters` to discover event types and supported
-  filters.
+  Specify the app, time range, filters, and selected fields in the GraphQL document or variables. Run `shopify app logs
+  schema` to fetch the live GraphQL schema.
 
-  For advanced requests, use `--query` or `--query-file` with optional JSON variables. Specify the app and filters in
-  the GraphQL document; query mode can’t be combined with app selection or filter flags. Run `shopify app logs schema`
-  to fetch the live GraphQL schema.
-
-  Prints query responses as JSON, including GraphQL errors, partial data, and query metadata. Use `--json` to also
-  format CLI errors as JSON. HTTP or GraphQL errors produce a nonzero exit status. Results are unordered unless `--sort`
-  is specified. A reached limit does not guarantee another page or complete coverage; narrow the search when possible.
-  `--offset` requires `--sort`. This command retrieves historical logs; it doesn’t stream.
+  Prints the full query response as JSON, including GraphQL errors, partial data, and query metadata. Use `--json` to
+  also format CLI errors as JSON. HTTP or GraphQL errors produce a nonzero exit status. This command retrieves
+  historical logs; it doesn’t stream.
 
   Output from `--json` conforms to the `LogsGraphQLResponse` schema.
 
@@ -2803,119 +2745,11 @@ DESCRIPTION
   ```
 
 EXAMPLES
-  $ shopify app logs --since 1h --limit 50 --json
-
-  $ shopify app logs --client-id APP_CLIENT_ID --type WEBHOOK_DELIVERY --status-code 500 --since 15m
+  $ shopify app logs --query '{ app(key: "APP_CLIENT_ID") { key } }'
 
   $ shopify app logs --query-file ./logs.graphql --variable-file ./variables.json
 
   $ shopify app logs --query-file - --operation-name Logs
-```
-
-## `shopify app logs filters [flags]`
-
-Explain filters supported by app log event types.
-
-```
-USAGE
-  $ shopify app logs filters [flags]
-
-FLAGS
-  -c, --config=<value>
-      The name of the app configuration.
-      [env: SHOPIFY_FLAG_APP_CONFIG]
-
-  -j, --json
-      Output the result as JSON. Automatically disables color output.
-      [env: SHOPIFY_FLAG_JSON]
-
-  --app=<value>
-      Alias for --client-id.
-      [env: SHOPIFY_FLAG_APP]
-
-  --auth-alias=<value>
-      Alias of the Shopify account to use for authentication.
-      [env: SHOPIFY_FLAG_AUTH_ALIAS]
-
-  --client-id=<value>
-      The Client ID of your app. Defaults to the current app configuration.
-      [env: SHOPIFY_FLAG_CLIENT_ID]
-
-  --json-schema
-      Print the command's JSON schemas.
-      [env: SHOPIFY_FLAG_JSON_SCHEMA]
-
-  --no-color
-      Disable color output.
-      [env: SHOPIFY_FLAG_NO_COLOR]
-
-  --no-prompt
-      Fail instead of prompting when no valid account session is available.
-      [env: SHOPIFY_FLAG_NO_PROMPT]
-
-  --path=<value>
-      The path to your app directory.
-      [env: SHOPIFY_FLAG_PATH]
-
-  --type=<value>...
-      Event type. Repeat to include multiple types. Discover values with shopify app logs types.
-      [env: SHOPIFY_FLAG_LOG_TYPE]
-
-  --verbose
-      Increase the verbosity of the output. May include sensitive data.
-      [env: SHOPIFY_FLAG_VERBOSE]
-
-DESCRIPTION
-  Explain filters supported by app log event types.
-
-  Lists filter fields, value types, and operators supported by every selected event type. Use these definitions in
-  advanced GraphQL queries. Omit `--type` to see filters shared by all event types. No log search is performed.
-
-  Output from `--json` conforms to the `LogsGraphQLResponse` schema.
-
-  Use `--json-schema` to print the result, error, and event schemas.
-
-  ```json
-  {
-    "type": "object",
-    "properties": {
-      "data": {
-        "anyOf": [
-          {
-            "type": "object",
-            "additionalProperties": {}
-          },
-          {
-            "type": "null"
-          }
-        ]
-      },
-      "errors": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "message": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "message"
-          ],
-          "additionalProperties": true
-        },
-        "minItems": 1
-      },
-      "extensions": {
-        "type": "object",
-        "additionalProperties": {}
-      }
-    },
-    "additionalProperties": true,
-    "title": "LogsGraphQLResponse",
-    "$schema": "http://json-schema.org/draft-07/schema#"
-  }
-  ```
 ```
 
 ## `shopify app logs schema [flags]`
@@ -2970,8 +2804,9 @@ FLAGS
 DESCRIPTION
   Fetch the app logs GraphQL schema.
 
-  Fetches the live schema using the same app and account as `shopify app logs`. Prints GraphQL SDL with descriptions,
-  field arguments, defaults, enums, and deprecations. Save it to a file and reuse it while composing queries.
+  Fetches the live GraphQL schema for your app. Uses the current app configuration unless you pass `--client-id`. Prints
+  GraphQL SDL with descriptions, field arguments, defaults, enums, and deprecations. Save it to a file and reuse it
+  while composing queries.
 
   Use `--json` for the full introspection JSON response. HTTP or GraphQL errors print the JSON response instead of SDL
   and produce a nonzero exit status.
@@ -3026,108 +2861,6 @@ EXAMPLES
   $ shopify app logs schema > app-logs.graphql
 
   $ shopify app logs schema --client-id APP_CLIENT_ID --json
-```
-
-## `shopify app logs types [flags]`
-
-List available app log event types.
-
-```
-USAGE
-  $ shopify app logs types [flags]
-
-FLAGS
-  -c, --config=<value>
-      The name of the app configuration.
-      [env: SHOPIFY_FLAG_APP_CONFIG]
-
-  -j, --json
-      Output the result as JSON. Automatically disables color output.
-      [env: SHOPIFY_FLAG_JSON]
-
-  --app=<value>
-      Alias for --client-id.
-      [env: SHOPIFY_FLAG_APP]
-
-  --auth-alias=<value>
-      Alias of the Shopify account to use for authentication.
-      [env: SHOPIFY_FLAG_AUTH_ALIAS]
-
-  --client-id=<value>
-      The Client ID of your app. Defaults to the current app configuration.
-      [env: SHOPIFY_FLAG_CLIENT_ID]
-
-  --json-schema
-      Print the command's JSON schemas.
-      [env: SHOPIFY_FLAG_JSON_SCHEMA]
-
-  --no-color
-      Disable color output.
-      [env: SHOPIFY_FLAG_NO_COLOR]
-
-  --no-prompt
-      Fail instead of prompting when no valid account session is available.
-      [env: SHOPIFY_FLAG_NO_PROMPT]
-
-  --path=<value>
-      The path to your app directory.
-      [env: SHOPIFY_FLAG_PATH]
-
-  --verbose
-      Increase the verbosity of the output. May include sensitive data.
-      [env: SHOPIFY_FLAG_VERBOSE]
-
-DESCRIPTION
-  List available app log event types.
-
-  Lists event types and their descriptions from the live GraphQL schema. Use these values with `shopify app logs
-  --type`.
-
-  Output from `--json` conforms to the `LogsGraphQLResponse` schema.
-
-  Use `--json-schema` to print the result, error, and event schemas.
-
-  ```json
-  {
-    "type": "object",
-    "properties": {
-      "data": {
-        "anyOf": [
-          {
-            "type": "object",
-            "additionalProperties": {}
-          },
-          {
-            "type": "null"
-          }
-        ]
-      },
-      "errors": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "message": {
-              "type": "string"
-            }
-          },
-          "required": [
-            "message"
-          ],
-          "additionalProperties": true
-        },
-        "minItems": 1
-      },
-      "extensions": {
-        "type": "object",
-        "additionalProperties": {}
-      }
-    },
-    "additionalProperties": true,
-    "title": "LogsGraphQLResponse",
-    "$schema": "http://json-schema.org/draft-07/schema#"
-  }
-  ```
 ```
 
 ## `shopify app release --version <version>`
