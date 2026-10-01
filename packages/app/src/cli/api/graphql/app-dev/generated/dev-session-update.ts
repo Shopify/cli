@@ -5,7 +5,7 @@ import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
 export type DevSessionUpdateMutationVariables = Types.Exact<{
-  appId: Types.Scalars['String']['input']
+  clientId: Types.Scalars['String']['input']
   assetsUrl?: Types.InputMaybe<Types.Scalars['String']['input']>
   manifest?: Types.InputMaybe<Types.Scalars['JSON']['input']>
   inheritedModuleUids: Types.Scalars['String']['input'][] | Types.Scalars['String']['input']
@@ -35,7 +35,7 @@ export const DevSessionUpdate = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: {kind: 'Variable', name: {kind: 'Name', value: 'appId'}},
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'clientId'}},
           type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}},
         },
         {
@@ -74,8 +74,8 @@ export const DevSessionUpdate = {
             arguments: [
               {
                 kind: 'Argument',
-                name: {kind: 'Name', value: 'appId'},
-                value: {kind: 'Variable', name: {kind: 'Name', value: 'appId'}},
+                name: {kind: 'Name', value: 'clientId'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'clientId'}},
               },
               {
                 kind: 'Argument',

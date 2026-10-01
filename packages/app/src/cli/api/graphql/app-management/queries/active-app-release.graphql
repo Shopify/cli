@@ -1,9 +1,3 @@
-query activeAppRelease($appId: ID!) {
-  app(id: $appId) {
-    ...AppVersionInfo
-  }
-}
-
 fragment AppVersionInfo on App {
   id
   key

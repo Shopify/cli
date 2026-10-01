@@ -85,11 +85,11 @@ import {
   ProvisionShopAccessMutationVariables,
 } from '../../api/graphql/business-platform-organizations/generated/provision_shop_access.js'
 import {Store} from '../../api/graphql/business-platform-organizations/generated/types.js'
+import {ReleasedAppModuleFragment} from '../../api/graphql/app-management/generated/active-app-release.js'
 import {
-  ActiveAppReleaseQuery,
-  ReleasedAppModuleFragment,
-} from '../../api/graphql/app-management/generated/active-app-release.js'
-import {ActiveAppReleaseFromApiKey} from '../../api/graphql/app-management/generated/active-app-release-from-api-key.js'
+  ActiveAppReleaseFromApiKey,
+  ActiveAppReleaseFromApiKeyQuery,
+} from '../../api/graphql/app-management/generated/active-app-release-from-api-key.js'
 import {ReleaseVersion} from '../../api/graphql/app-management/generated/release-version.js'
 import {
   CreateAppVersion,
@@ -619,9 +619,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async appVersions({id, organizationId, title}: MinimalOrganizationApp): Promise<AppVersionsQuerySchemaInterface> {
+  async appVersions({apiKey, organizationId, title}: MinimalOrganizationApp): Promise<AppVersionsQuerySchemaInterface> {
     const query = AppVersions
-    const variables = {appId: id}
+    const variables = {clientId: apiKey}
     const result = await this.appManagementRequest({query, variables})
     if (!result.app) {
       return {app: null}
@@ -654,19 +654,19 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async appInstallCount({id}: MinimalAppIdentifiers): Promise<number> {
+  async appInstallCount(clientId: string): Promise<number> {
     const query = AppInstallCount
-    const variables = {appId: id}
+    const variables = {clientId}
     const result = await this.appManagementRequest({query, variables})
     return result.app.installCount ?? 0
   }
 
   async appVersionByTag(
-    {id: appId, organizationId}: MinimalOrganizationApp,
+    {id: appId, apiKey, organizationId}: MinimalOrganizationApp,
     versionTag: string,
   ): Promise<AppVersionWithContext> {
     const query = AppVersionByTag
-    const variables = {versionTag}
+    const variables = {clientId: apiKey, versionTag}
     const result = await this.appManagementRequest({query, variables})
     const version = result.versionByTag
     if (!version) {
@@ -749,8 +749,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async generateSourceScanUploadUrl({appId, byteSize}: SourceScanUploadUrlInput): Promise<SourceScanUploadUrlSchema> {
-    const variables: RequestSourceScanUploadUrlMutationVariables = {appId, byteSize}
+  async generateSourceScanUploadUrl({
+    clientId,
+    byteSize,
+  }: SourceScanUploadUrlInput): Promise<SourceScanUploadUrlSchema> {
+    const variables: RequestSourceScanUploadUrlMutationVariables = {clientId, byteSize}
     const result = await this.appManagementRequest({
       query: RequestSourceScanUploadUrl,
       variables,
@@ -758,8 +761,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return result.appRequestSourceScanUploadUrl
   }
 
-  async createSourceScan({appId, sourceScanUrl}: SourceScanCreateInput): Promise<SourceScanCreateSchema> {
-    const variables: CreateSourceScanMutationVariables = {appId, sourceScanUrl}
+  async createSourceScan({clientId, sourceScanUrl}: SourceScanCreateInput): Promise<SourceScanCreateSchema> {
+    const variables: CreateSourceScanMutationVariables = {clientId, sourceScanUrl}
     const result = await this.appManagementRequest({query: CreateSourceScan, variables})
     return result.appSourceScanCreate
   }
@@ -767,6 +770,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async deploy({
     appManifest,
     appId,
+    apiKey,
     organizationId,
     versionTag,
     message,
@@ -779,7 +783,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       ? {sourceUrl: bundleUrl}
       : {source: appManifest}
 
-    const variables: CreateAppVersionMutationVariables = {appId, version: queryVersion, metadata}
+    const variables: CreateAppVersionMutationVariables = {clientId: apiKey, version: queryVersion, metadata}
 
     const result = await this.appManagementRequest({
       query: CreateAppVersion,
@@ -812,7 +816,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
     if (noRelease) return versionResult
 
-    const releaseVariables = {appId, versionId: version.id}
+    const releaseVariables = {clientId: apiKey, versionId: version.id}
     const releaseResult = await this.appManagementRequest({
       query: ReleaseVersion,
       variables: releaseVariables,
@@ -827,13 +831,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async release({
-    app: {id: appId, organizationId},
+    app: {id: appId, apiKey, organizationId},
     version: {versionId},
   }: {
     app: MinimalOrganizationApp
     version: AppVersionIdentifiers
   }): Promise<AppReleaseSchema> {
-    const releaseVariables = {appId, versionId}
+    const releaseVariables = {clientId: apiKey, versionId}
     const releaseResult = await this.appManagementRequest({
       query: ReleaseVersion,
       variables: releaseVariables,
@@ -1026,18 +1030,17 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async devSessionCreate({
-    appId,
+    clientId,
     assetsUrl,
     shopFqdn,
     websocketUrl,
     unsafeValidation,
   }: DevSessionCreateOptions): Promise<DevSessionCreateMutation> {
-    const appIdNumber = String(numberFromGid(appId))
     return this.appDevRequest({
       query: DevSessionCreate,
       shopFqdn,
       variables: {
-        appId: appIdNumber,
+        clientId,
         assetsUrl: assetsUrl ?? '',
         websocketUrl,
         unsafeValidation: unsafeValidation ?? false,
@@ -1047,16 +1050,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async devSessionUpdate({
-    appId,
+    clientId,
     assetsUrl,
     shopFqdn,
     manifest,
     inheritedModuleUids,
     unsafeValidation,
   }: DevSessionUpdateOptions): Promise<DevSessionUpdateMutation> {
-    const appIdNumber = String(numberFromGid(appId))
     const variables: DevSessionUpdateMutationVariables = {
-      appId: appIdNumber,
+      clientId,
       assetsUrl,
       manifest: JSON.stringify(manifest),
       inheritedModuleUids,
@@ -1065,9 +1067,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return this.appDevRequest({query: DevSessionUpdate, shopFqdn, variables})
   }
 
-  async devSessionDelete({appId, shopFqdn}: DevSessionDeleteOptions): Promise<DevSessionDeleteMutation> {
-    const appIdNumber = String(numberFromGid(appId))
-    return this.appDevRequest({query: DevSessionDelete, shopFqdn, variables: {appId: appIdNumber}})
+  async devSessionDelete({clientId, shopFqdn}: DevSessionDeleteOptions): Promise<DevSessionDeleteMutation> {
+    return this.appDevRequest({query: DevSessionDelete, shopFqdn, variables: {clientId}})
   }
 
   async getCreateDevStoreLink(org: Organization): Promise<TokenItem> {
@@ -1078,7 +1079,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     ]
   }
 
-  private async activeAppVersionRawResult(apiKey: string): Promise<ActiveAppReleaseQuery> {
+  private async activeAppVersionRawResult(apiKey: string): Promise<ActiveAppReleaseFromApiKeyQuery> {
     return this.appManagementRequest({query: ActiveAppReleaseFromApiKey, variables: {apiKey}})
   }
 

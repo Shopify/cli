@@ -4,7 +4,7 @@ import * as Types from './types.js'
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
 export type AppVersionsQueryVariables = Types.Exact<{
-  appId: Types.Scalars['ID']['input']
+  clientId: Types.Scalars['String']['input']
 }>
 
 export type AppVersionsQuery = {
@@ -35,8 +35,8 @@ export const AppVersions = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: {kind: 'Variable', name: {kind: 'Name', value: 'appId'}},
-          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'ID'}}},
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'clientId'}},
+          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}},
         },
       ],
       selectionSet: {
@@ -44,12 +44,13 @@ export const AppVersions = {
         selections: [
           {
             kind: 'Field',
-            name: {kind: 'Name', value: 'app'},
+            alias: {kind: 'Name', value: 'app'},
+            name: {kind: 'Name', value: 'appByKey'},
             arguments: [
               {
                 kind: 'Argument',
-                name: {kind: 'Name', value: 'id'},
-                value: {kind: 'Variable', name: {kind: 'Name', value: 'appId'}},
+                name: {kind: 'Name', value: 'key'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'clientId'}},
               },
             ],
             selectionSet: {

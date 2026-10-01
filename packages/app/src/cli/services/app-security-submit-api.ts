@@ -2,11 +2,10 @@ import {uploadToGCS} from './bundle.js'
 import {securitySubmitFailure} from './security-submit-result.js'
 import type {AppSecuritySubmissionPayload} from './app-security-submission-payload.js'
 import type {SecuritySubmitError, SubmitAppSecurityScanResult} from './security-submit-result.js'
-import type {MinimalAppIdentifiers} from '../models/organization.js'
 import type {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 
 export interface SubmitAppSecurityScanOptions {
-  app: MinimalAppIdentifiers
+  clientId: string
   payload: AppSecuritySubmissionPayload
   developerPlatformClient: DeveloperPlatformClient
 }
@@ -28,7 +27,7 @@ export async function submitAppSecurityScan(
   let stage: SecuritySubmitError['stage'] = 'upload-url'
   try {
     const uploadResult = await options.developerPlatformClient.generateSourceScanUploadUrl({
-      appId: options.app.id,
+      clientId: options.clientId,
       byteSize: options.payload.bytes.length,
     })
     if (!uploadResult.sourceScanUploadUrl || uploadResult.userErrors.length > 0) {
@@ -50,7 +49,7 @@ export async function submitAppSecurityScan(
 
     stage = 'create'
     const createResult = await options.developerPlatformClient.createSourceScan({
-      appId: options.app.id,
+      clientId: options.clientId,
       sourceScanUrl: uploadResult.sourceScanUploadUrl,
     })
     if (createResult.userErrors.length > 0 || !createResult.accepted) {

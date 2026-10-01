@@ -7,11 +7,7 @@ import type {AppSecuritySubmission} from './app-security-engine/index.js'
 import type {uploadToGCS} from './bundle.js'
 import type {SourceScanCreateSchema, SourceScanUploadUrlSchema} from '../utilities/developer-platform-client.js'
 
-const app = {
-  apiKey: 'api-key',
-  organizationId: '123',
-  id: 'gid://shopify/App/1',
-}
+const clientId = 'api-key'
 
 const submission = {schemaVersion: 1, report: {}} as AppSecuritySubmission
 
@@ -29,7 +25,7 @@ function options() {
   const createSourceScan = vi.fn(async (): Promise<SourceScanCreateSchema> => ({accepted: true, userErrors: []}))
   return {
     input: {
-      app,
+      clientId,
       payload: {submission, bytes: Buffer.from(JSON.stringify(submission))},
       // testDeveloperPlatformClient defaults are plain functions, not spies.
       // Always inject explicit vi.fn stubs before making call/mocking assertions.
@@ -189,7 +185,10 @@ describe('submitAppSecurityScan', () => {
 
     await expect(submitAppSecurityScan(input, {upload})).resolves.toEqual({status: 'submitted'})
 
-    expect(generateSourceScanUploadUrl).toHaveBeenCalledWith({appId: app.id, byteSize: input.payload.bytes.length})
+    expect(generateSourceScanUploadUrl).toHaveBeenCalledWith({
+      clientId,
+      byteSize: input.payload.bytes.length,
+    })
     expect(generateSourceScanUploadUrl.mock.invocationCallOrder[0]).toBeLessThan(upload.mock.invocationCallOrder[0]!)
     expect(upload).toHaveBeenCalledOnce()
     const [url, bytes, uploadOptions] = upload.mock.calls[0]!
@@ -197,7 +196,7 @@ describe('submitAppSecurityScan', () => {
     expect(bytes).toBe(input.payload.bytes)
     expect(uploadOptions).toEqual({artifactName: 'App Security submission', contentType: 'application/json'})
     expect(createSourceScan).toHaveBeenCalledWith({
-      appId: app.id,
+      clientId,
       sourceScanUrl: 'source-scan-upload-url',
     })
   })

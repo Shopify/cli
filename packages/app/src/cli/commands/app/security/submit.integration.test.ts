@@ -280,7 +280,14 @@ describe('app security submit command boundary', () => {
         'slow-request',
       )
       expect(JSON.parse(writtenBytes.toString()).report.feedback).toBe('src/private.ts secret')
-      expect(client.generateSourceScanUploadUrl).toHaveBeenCalledWith({appId: '1', byteSize: writtenBytes.length})
+      expect(client.generateSourceScanUploadUrl).toHaveBeenCalledWith({
+        clientId: 'api-key',
+        byteSize: writtenBytes.length,
+      })
+      expect(client.createSourceScan).toHaveBeenCalledWith({
+        clientId: 'api-key',
+        sourceScanUrl: signedUploadUrl,
+      })
       await expect(readdir(joinPath(directory, '.shopify'))).resolves.toEqual(['app-security'])
     })
   })

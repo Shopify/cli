@@ -40,12 +40,7 @@ function testDependencies(directory: string): SecuritySubmitDependencies {
     ),
     resolveClientId: vi.fn<SecuritySubmitDependencies['resolveClientId']>(async ({clientId}) => clientId ?? 'api-key'),
     fetchApp: vi.fn(async (clientId: string) => ({
-      remoteApp: {
-        apiKey: clientId,
-        organizationId: '123',
-        id: 'gid://shopify/App/1',
-        title: 'Example app',
-      },
+      remoteApp: {apiKey: clientId, title: 'Example app'},
       developerPlatformClient: testDeveloperPlatformClient(),
     })),
     buildSubmission: vi.fn(buildSubmission),
@@ -509,6 +504,42 @@ describe('securitySubmit', () => {
     })
   })
 
+  test('uses the fetched app key for both scan mutations and its title for confirmation and output', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const dependencies = testDependencies(directory)
+      const generateSourceScanUploadUrl = vi.fn(async () => ({
+        sourceScanUploadUrl: 'source-scan-upload-url',
+        userErrors: [],
+      }))
+      const createSourceScan = vi.fn(async () => ({accepted: true, userErrors: []}))
+      const developerPlatformClient = testDeveloperPlatformClient({generateSourceScanUploadUrl, createSourceScan})
+      vi.mocked(dependencies.fetchApp).mockResolvedValue({
+        remoteApp: {apiKey: 'fetched-client-id', title: 'Fetched app title'},
+        developerPlatformClient,
+      })
+      vi.mocked(dependencies.canPrompt).mockReturnValue(true)
+      const upload = vi.fn<typeof uploadToGCS>().mockResolvedValue(undefined)
+      vi.mocked(dependencies.submitScan).mockImplementation((input) => submitAppSecurityScan(input, {upload}))
+
+      const result = await securitySubmit({...options(directory), clientId: 'selected-client-id'}, dependencies)
+
+      expect(dependencies.fetchApp).toHaveBeenCalledExactlyOnceWith('selected-client-id')
+      expect(dependencies.confirm).toHaveBeenCalledWith(expect.objectContaining({appTitle: 'Fetched app title'}))
+      expect(dependencies.submitScan).toHaveBeenCalledWith(
+        expect.objectContaining({clientId: 'fetched-client-id', developerPlatformClient}),
+      )
+      expect(generateSourceScanUploadUrl).toHaveBeenCalledExactlyOnceWith({
+        clientId: 'fetched-client-id',
+        byteSize: vi.mocked(dependencies.submitScan).mock.calls[0]![0].payload.bytes.length,
+      })
+      expect(createSourceScan).toHaveBeenCalledExactlyOnceWith({
+        clientId: 'fetched-client-id',
+        sourceScanUrl: 'source-scan-upload-url',
+      })
+      expect(result).toMatchObject({status: 'submitted', clientId: 'fetched-client-id', appTitle: 'Fetched app title'})
+    })
+  })
+
   describe.each([false, true])('target resolution (json=%s)', (json) => {
     test.each([
       {
@@ -550,9 +581,7 @@ describe('securitySubmit', () => {
 
           expect(dependencies.resolveClientId).toHaveBeenCalledExactlyOnceWith({directory, clientId, configName})
           expect(dependencies.fetchApp).toHaveBeenCalledExactlyOnceWith(expectedClientId)
-          expect(dependencies.submitScan).toHaveBeenCalledWith(
-            expect.objectContaining({app: expect.objectContaining({apiKey: expectedClientId})}),
-          )
+          expect(dependencies.submitScan).toHaveBeenCalledWith(expect.objectContaining({clientId: expectedClientId}))
           await expect(fileExists(joinPath(directory, '.shopify', 'project.json'))).resolves.toBe(false)
         })
       },

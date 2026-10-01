@@ -1,12 +1,12 @@
 mutation DevSessionUpdate(
-  $appId: String!
+  $clientId: String!
   $assetsUrl: String
   $manifest: JSON
   $inheritedModuleUids: [String!]!
   $unsafeValidation: Boolean
 ) {
   devSessionUpdate(
-    appId: $appId
+    clientId: $clientId
     assetsUrl: $assetsUrl
     manifest: $manifest
     inheritedModuleUids: $inheritedModuleUids

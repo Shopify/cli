@@ -115,7 +115,7 @@ export type AppDeployOptions = AppDeployVariables & {
 
 interface DevSessionSharedOptions {
   shopFqdn: string
-  appId: string
+  clientId: string
 }
 
 export interface DevSessionCreateOptions extends DevSessionSharedOptions {
@@ -149,12 +149,12 @@ export type SourceScanUploadUrlSchema = WithUserErrors<{
 }>
 
 export interface SourceScanUploadUrlInput {
-  appId: string
+  clientId: string
   byteSize: number
 }
 
 export interface SourceScanCreateInput {
-  appId: string
+  clientId: string
   sourceScanUrl: string
 }
 
@@ -237,7 +237,7 @@ export interface DeveloperPlatformClient {
     activeAppVersion?: AppVersion,
   ) => Promise<AllAppExtensionRegistrationsQuerySchema>
   appVersions: (app: OrganizationApp) => Promise<AppVersionsQuerySchema>
-  appInstallCount: (app: MinimalAppIdentifiers) => Promise<number>
+  appInstallCount: (clientId: string) => Promise<number>
   activeAppVersion: (app: MinimalAppIdentifiers) => Promise<AppVersion | undefined>
   appVersionByTag: (app: MinimalOrganizationApp, tag: string) => Promise<AppVersionWithContext>
   appVersionsDiff: (app: MinimalOrganizationApp, version: AppVersionIdentifiers) => Promise<AppVersionsDiffSchema>

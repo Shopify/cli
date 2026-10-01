@@ -341,7 +341,7 @@ async function launchDevProcesses({
 
   const developerPlatformClient = config.developerPlatformClient
   const app = {
-    id: config.remoteApp.id,
+    apiKey: config.remoteApp.apiKey,
     developerPlatformClient,
   }
 
