@@ -4,14 +4,13 @@ import {SchemaDefinitionByApiTypeQueryVariables} from '../api/graphql/functions/
 import {SchemaDefinitionByTargetQueryVariables} from '../api/graphql/functions/generated/schema-definition-by-target.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../models/extensions/specifications/function.js'
-import {AppLinkedInterface} from '../models/app/app.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputInfo, outputResult} from '@shopify/cli-kit/node/output'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 interface GenerateSchemaOptions {
-  app: AppLinkedInterface
+  appId: string
   extension: ExtensionInstance<FunctionConfigType>
   stdout: boolean
   developerPlatformClient: DeveloperPlatformClient
@@ -19,16 +18,14 @@ interface GenerateSchemaOptions {
 }
 
 export async function generateSchemaService(options: GenerateSchemaOptions) {
-  const {extension, stdout, developerPlatformClient, app, orgId} = options
-  const apiKey = app.configuration.client_id
+  const {extension, stdout, developerPlatformClient, appId, orgId} = options
   const {api_version: version, type, targeting} = extension.configuration
   const usingTargets = Boolean(targeting?.length)
   const fetchedDefinition = await (usingTargets
     ? generateSchemaFromTarget({
         localIdentifier: extension.localIdentifier,
         developerPlatformClient,
-        apiKey,
-
+        appId,
         target: targeting![0]!.target,
         version,
         orgId,
@@ -36,7 +33,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
     : generateSchemaFromApiType({
         localIdentifier: extension.localIdentifier,
         developerPlatformClient,
-        apiKey,
+        appId,
         type,
         version,
         orgId,
@@ -56,7 +53,7 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
 interface BaseGenerateSchemaOptions {
   localIdentifier: string
   developerPlatformClient: DeveloperPlatformClient
-  apiKey: string
+  appId: string
   version: string
   orgId: string
 }
@@ -68,7 +65,7 @@ interface GenerateSchemaFromTargetOptions extends BaseGenerateSchemaOptions {
 async function generateSchemaFromTarget({
   localIdentifier,
   developerPlatformClient,
-  apiKey,
+  appId,
   target,
   version,
   orgId,
@@ -77,8 +74,7 @@ async function generateSchemaFromTarget({
     handle: target,
     version,
   }
-  // Api key required for partners reqs, can be removed once fully migrated to AMF
-  const definition = await developerPlatformClient.targetSchemaDefinition(variables, apiKey, orgId)
+  const definition = await developerPlatformClient.targetSchemaDefinition(variables, appId, orgId)
 
   if (!definition) {
     throw new AbortError(
@@ -97,7 +93,7 @@ interface GenerateSchemaFromType extends BaseGenerateSchemaOptions {
 async function generateSchemaFromApiType({
   localIdentifier,
   developerPlatformClient,
-  apiKey,
+  appId,
   version,
   type,
   orgId,
@@ -107,7 +103,7 @@ async function generateSchemaFromApiType({
     type,
   }
 
-  const definition = await developerPlatformClient.apiSchemaDefinition(variables, apiKey, orgId)
+  const definition = await developerPlatformClient.apiSchemaDefinition(variables, appId, orgId)
 
   if (!definition) {
     throw new AbortError(

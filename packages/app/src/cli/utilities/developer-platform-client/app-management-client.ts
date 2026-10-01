@@ -974,12 +974,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async targetSchemaDefinition(
     input: SchemaDefinitionByTargetQueryVariables,
-    apiKey: string,
+    appId: string,
     organizationId: string,
   ): Promise<string | null> {
     try {
-      const {app} = await this.activeAppVersionRawResult(apiKey)
-      const appIdNumber = String(numberFromGid(app.id))
+      const appIdNumber = String(numberFromGid(appId))
       const result = await this.functionsRequest({
         organizationId,
         query: SchemaDefinitionByTarget,
@@ -998,12 +997,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   async apiSchemaDefinition(
     input: SchemaDefinitionByApiTypeQueryVariables,
-    apiKey: string,
+    appId: string,
     organizationId: string,
   ): Promise<string | null> {
     try {
-      const {app} = await this.activeAppVersionRawResult(apiKey)
-      const appIdNumber = String(numberFromGid(app.id))
+      const appIdNumber = String(numberFromGid(appId))
       const result = await this.functionsRequest({
         organizationId,
         query: SchemaDefinitionByApiType,

@@ -53,7 +53,7 @@ export async function getOrGenerateSchemaPath(
     return path
   }
 
-  const {app, developerPlatformClient, organization} = await linkedAppContext({
+  const {remoteApp, developerPlatformClient, organization} = await linkedAppContext({
     directory: appDirectory,
     clientId,
     forceRelink,
@@ -61,7 +61,7 @@ export async function getOrGenerateSchemaPath(
   })
 
   await generateSchemaService({
-    app,
+    appId: remoteApp.id,
     developerPlatformClient,
     extension,
     stdout: false,

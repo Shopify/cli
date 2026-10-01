@@ -10,7 +10,6 @@ import {AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {generateSchemaService} from '../generate-schema.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {linkedAppContext} from '../app-context.js'
 import {describe, vi, expect, beforeEach, test} from 'vitest'
 import {renderAutocompletePrompt, renderFatalError} from '@shopify/cli-kit/node/ui'
@@ -33,7 +32,7 @@ beforeEach(async () => {
   app = testAppLinked({allExtensions: [ourFunction]})
   vi.mocked(linkedAppContext).mockResolvedValue({
     app,
-    remoteApp: testOrganizationApp(),
+    remoteApp: testOrganizationApp({id: 'gid://shopify/App/731', apiKey: 'remote-client-id'}),
     developerPlatformClient: testDeveloperPlatformClient(),
     specifications: [],
     organization: testOrganization(),
@@ -47,10 +46,8 @@ beforeEach(async () => {
 
 describe('getOrGenerateSchemaPath', () => {
   let app: AppLinkedInterface
-  let developerPlatformClient: DeveloperPlatformClient
   beforeEach(() => {
     app = testAppLinked()
-    developerPlatformClient = testDeveloperPlatformClient()
   })
 
   test('returns the path if the schema file exists', async () => {
@@ -69,6 +66,8 @@ describe('getOrGenerateSchemaPath', () => {
 
       // Then
       expect(result).toBe(expectedPath)
+      expect(linkedAppContext).not.toHaveBeenCalled()
+      expect(generateSchemaService).not.toHaveBeenCalled()
     })
   })
 
@@ -91,6 +90,38 @@ describe('getOrGenerateSchemaPath', () => {
 
       // Then
       expect(result).toBe(expectedPath)
+      expect(linkedAppContext).toHaveBeenCalledWith({
+        directory: app.directory,
+        clientId: '123',
+        forceRelink: false,
+        userProvidedConfigName: undefined,
+      })
+      expect(generateSchemaService).toHaveBeenCalledWith({
+        appId: 'gid://shopify/App/731',
+        developerPlatformClient: expect.anything(),
+        extension,
+        stdout: false,
+        orgId: '1',
+      })
+    })
+  })
+
+  test('returns undefined when the fetched schema is not written', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extension = {directory: tmpDir} as ExtensionInstance<FunctionConfigType>
+
+      const result = await getOrGenerateSchemaPath(extension, app.directory, undefined, true, 'staging')
+
+      expect(result).toBeUndefined()
+      expect(linkedAppContext).toHaveBeenCalledWith({
+        directory: app.directory,
+        clientId: undefined,
+        forceRelink: true,
+        userProvidedConfigName: 'staging',
+      })
+      expect(generateSchemaService).toHaveBeenCalledWith(
+        expect.objectContaining({appId: 'gid://shopify/App/731', extension, stdout: false}),
+      )
     })
   })
 })

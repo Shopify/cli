@@ -30,7 +30,7 @@ export default class FetchSchema extends AppLinkedCommand {
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(FetchSchema)
 
-    const {app, developerPlatformClient, organization} = await linkedAppContext({
+    const {app, remoteApp, developerPlatformClient, organization} = await linkedAppContext({
       directory: flags.path,
       clientId: flags['client-id'],
       forceRelink: flags.reset,
@@ -40,7 +40,7 @@ export default class FetchSchema extends AppLinkedCommand {
     const ourFunction = await chooseFunction(app, flags.path)
 
     await generateSchemaService({
-      app,
+      appId: remoteApp.id,
       extension: ourFunction,
       stdout: flags.stdout,
       developerPlatformClient,

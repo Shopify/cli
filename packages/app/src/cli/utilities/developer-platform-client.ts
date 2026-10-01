@@ -252,12 +252,12 @@ export interface DeveloperPlatformClient {
   updateURLs: (input: UpdateURLsVariables) => Promise<UpdateURLsSchema>
   targetSchemaDefinition: (
     input: SchemaDefinitionByTargetQueryVariables,
-    apiKey: string,
+    appId: string,
     organizationId: string,
   ) => Promise<string | null>
   apiSchemaDefinition: (
     input: SchemaDefinitionByApiTypeQueryVariables,
-    apiKey: string,
+    appId: string,
     organizationId: string,
   ) => Promise<string | null>
   toExtensionGraphQLType: (input: string) => string
