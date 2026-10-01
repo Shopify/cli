@@ -220,7 +220,7 @@ jobs:
                   'Test the snapshot by installing your package globally:',
                   [
                     '```bash',
-                    `npm i -g --@shopify:registry=https://registry.npmjs.org @shopify/cli@${version}`,
+                    `pnpm i -g --@shopify:registry=https://registry.npmjs.org @shopify/cli@${version}`,
                     '```',
                   ].join('\n'),
                   [
