@@ -2,6 +2,7 @@ import {themeComponent} from '../utilities/theme-ui.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themePublish} from '@shopify/cli-kit/node/themes/api'
 import {themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
+import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderConfirmationPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
@@ -21,7 +22,7 @@ export async function publish(adminSession: AdminSession, options: PublishServic
     },
   })
 
-  const previewUrl = themePreviewUrl({...themeToPublish, role: 'live'}, adminSession)
+  const previewUrl = themePreviewUrl({...themeToPublish, role: 'live'} as Theme, adminSession)
 
   if (!options.force && !multiEnvironment) {
     const accept = await renderConfirmationPrompt({

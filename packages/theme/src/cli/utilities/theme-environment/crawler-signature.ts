@@ -133,7 +133,7 @@ export async function fetchOrCreateCrawlerSignatureHeaders(
     )
 
     return headers
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     outputDebug(`Could not obtain crawler signature headers; continuing without them. ${message}`)

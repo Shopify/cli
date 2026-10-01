@@ -127,7 +127,7 @@ describe('runtime metadata', () => {
       clock.restore()
     }
 
-    // eslint-disable-next-line @shopify/cli/id-length
+    // eslint-disable-next-line compat/id-length
     const {a, b, c, d, e} = container.getAllPublicMetadata() as any
 
     expect(a).toBeGreaterThanOrEqual(0)
@@ -170,7 +170,7 @@ describe('runtime metadata', () => {
           throw new Error('error inside a nested timed section')
         })
       })
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
       errorOccurred = true
     } finally {
@@ -179,7 +179,7 @@ describe('runtime metadata', () => {
 
     expect(errorOccurred).toBe(true)
 
-    // eslint-disable-next-line @shopify/cli/id-length
+    // eslint-disable-next-line compat/id-length
     const {a, b} = container.getAllPublicMetadata() as any
     expect(a).toBeGreaterThanOrEqual(0)
     expect(b).toBeGreaterThanOrEqual(0)

@@ -219,7 +219,7 @@ describe('runCLIUpgrade', () => {
     // Given
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
     // 'unknown' is returned by inferPackageManagerForGlobalCLI for local installs
-    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('unknown')
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('unknown' as PackageManager)
 
     // When/Then
     await expect(runCLIUpgrade()).rejects.toThrow('Could not determine the package manager')

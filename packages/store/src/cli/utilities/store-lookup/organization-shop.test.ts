@@ -35,7 +35,7 @@ describe('fetchOrganizationShop', () => {
         name: 'Acme',
         accessibleShops: {edges: [{node: shopNode()}]},
       },
-    })
+    } as never)
 
     const shop = await fetchOrganizationShop({store: SHOP, organizationId: ORG_ID})
     expect(shop.name).toBe('My Shop')
@@ -55,7 +55,7 @@ describe('fetchOrganizationShop', () => {
         name: 'Acme',
         accessibleShops: {edges: [{node: shopNode({primaryDomain: 'https://other.myshopify.com'})}]},
       },
-    })
+    } as never)
 
     await expect(fetchOrganizationShop({store: SHOP, organizationId: ORG_ID})).rejects.toBeInstanceOf(AbortError)
   })
@@ -63,7 +63,7 @@ describe('fetchOrganizationShop', () => {
   test('passes organizationId and search variable to the request', async () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce({
       organization: {id: 'gid', name: 'Acme', accessibleShops: {edges: [{node: shopNode()}]}},
-    })
+    } as never)
 
     await fetchOrganizationShop({store: SHOP, organizationId: ORG_ID, token: 'preset'})
 
@@ -77,7 +77,7 @@ describe('fetchOrganizationShop', () => {
   test('passes noPrompt through when authenticating', async () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce({
       organization: {id: 'gid', name: 'Acme', accessibleShops: {edges: [{node: shopNode()}]}},
-    })
+    } as never)
 
     await fetchOrganizationShop({store: SHOP, organizationId: ORG_ID, noPrompt: true})
 
@@ -85,7 +85,7 @@ describe('fetchOrganizationShop', () => {
   })
 
   test('throws when organization is missing', async () => {
-    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce({organization: null})
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce({organization: null} as never)
     await expect(fetchOrganizationShop({store: SHOP, organizationId: ORG_ID})).rejects.toBeInstanceOf(AbortError)
   })
 })

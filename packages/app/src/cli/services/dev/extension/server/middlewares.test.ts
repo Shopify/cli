@@ -455,7 +455,7 @@ describe('getExtensionAssetMiddleware()', () => {
           handle: 'test-ext',
           metafields: [],
           extension_points: [{target: 'target1', tools: '../tools.json'}],
-        },
+        } as any,
       })
       const outputDir = joinPath(extDir, 'dist')
       await mkdir(outputDir)

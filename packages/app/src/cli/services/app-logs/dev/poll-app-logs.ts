@@ -143,7 +143,7 @@ export const pollAppLogs = async ({
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })
     }, retryIntervalMs)
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     outputWarn(`Error while polling app logs.`, stdout)
     outputWarn(`Retrying in ${POLLING_ERROR_RETRY_INTERVAL_MS / 1000} seconds.`, stdout)

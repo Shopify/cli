@@ -87,7 +87,7 @@ function isSafeConfiguredUrl(value: string, webhook: boolean): boolean {
     if (url.username || url.password || url.hash) return false
     return url.pathname.startsWith('/') && !url.pathname.includes('*')
     // URL construction is intentionally validation: malformed input is unsafe.
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false
   }

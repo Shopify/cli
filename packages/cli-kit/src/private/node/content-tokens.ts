@@ -78,7 +78,7 @@ export class JsonContentToken extends ContentToken<any> {
   output(): string {
     try {
       return colorJson(stringifyMessage(this.value) ?? {})
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (_) {
       return JSON.stringify(stringifyMessage(this.value) ?? {}, null, 2)
     }

@@ -15,11 +15,11 @@ Consumers must configure those separately. This is a breaking public config chan
 
 The original configuration at `656de9379cb7b4e2af6fe0bc6c8d81b1a50163f7` enabled
 301 lint rule names plus `prettier/prettier`. The migration has replacements for
-246 lint rule names: 197 native counterparts, 14 retained implementations, and
+243 lint rule names: 194 native counterparts, 14 retained implementations, and
 35 partial independent replacements. Prettier covers formatting separately.
-There are 55 rule names without a dedicated replacement. Of those, 11 have
+There are 58 rule names without a dedicated replacement. Of those, 11 have
 identified coverage or overlap elsewhere in the existing toolchain. These are
-not 55 wholly missing capabilities, and overlap does not establish full parity.
+not 58 wholly missing capabilities, and overlap does not establish full parity.
 
 The independent plugin in `packages/eslint-plugin-cli/oxlint.js` adds naming,
 member ordering, identifier length, import ordering, project boundaries, unused
@@ -36,9 +36,18 @@ fixes for contiguous imports without comments or side effects. Public parameter 
 return documentation checks cover directly exported functions; destructured parameter
 paths and full export reachability are not equivalent to the original JSDoc rules.
 
-Native rules can report additional cases, including unnecessary type assertions
-and ambiguous default imports. Existing code and directives are updated for these
-diagnostics. Unused imports in tests remain checked even though unused local variables
+To keep the migration small, existing type assertions and default imports are
+preserved. The native `typescript/no-unnecessary-type-assertion`,
+`import/no-named-as-default`, and `import/no-named-as-default-member` checks are
+disabled because they report existing code accepted by ESLint and have no exact
+compatibility option. These are three explicit coverage gaps, not equivalent
+replacements. Declared type parameters keep their naming checks; inferred type
+parameter names retain their existing spelling.
+
+Small dependency-free alias plugins preserve the existing `compat/*`,
+`no-catch-all/no-catch-all`, and `tsdoc/syntax` suppression names. They call the
+independent implementations and do not load ESLint or upstream plugins. Obsolete
+and unused suppressions are removed. Unused imports in tests remain checked even though unused local variables
 are allowed. Import-removal fixes differ from the original dedicated plugin.
 
 ## Coverage from other existing tools
@@ -89,9 +98,9 @@ The complete rule-by-rule mapping and limitations are in
 
 | Family | Remaining checks |
 | --- | --- |
-| Import analysis | Deprecated imports and redundant path segments; resolution, dependency, and unused-export coverage outside Knip/compiler scopes |
+| Import analysis | Deprecated imports, redundant path segments, and ambiguous default-import checks; resolution, dependency, and unused-export coverage outside Knip/compiler scopes |
 | JSDoc | Advanced tag/type validation, parameter path matching, return/throw/yield consistency, layout beyond Prettier |
-| Control flow | Consistent returns, atomic updates, early-return conventions |
+| Control flow and assertions | Consistent returns, atomic updates, early-return conventions, redundant type assertions |
 | Node APIs | Deprecated or unsupported APIs, callback conventions, promise API preferences, executable/shebang checks |
 | Shopify conventions | Image imports, context menus, module-scope constants, Twine, singular enum names |
 | Style and directives | Camel case in JavaScript, line-comment placement, statement padding, class sorting, explicit strict-directive policy, directive conventions beyond unused suppressions |

@@ -21,7 +21,7 @@ export function scanLiquidSecurity(files: SourceFile[]): LiquidScanResult {
     try {
       ast = toLiquidHTMLAST(file.content)
       // Parser failures are coverage gaps and are handed to the agent tier.
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
       parserFailures.push(file.path)
       continue

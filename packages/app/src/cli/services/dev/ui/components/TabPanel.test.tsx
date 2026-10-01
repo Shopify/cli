@@ -43,7 +43,7 @@ describe('TabPanel', () => {
   const mockShortcutAction = vi.fn()
 
   const sampleTabs: {[key: string]: Tab} = {
-    // eslint-disable-next-line @shopify/cli/id-length
+    // eslint-disable-next-line compat/id-length
     a: {
       label: 'First Tab',
       content: <Text>First tab content</Text>,
@@ -54,12 +54,12 @@ describe('TabPanel', () => {
         },
       ],
     },
-    // eslint-disable-next-line @shopify/cli/id-length
+    // eslint-disable-next-line compat/id-length
     b: {
       label: 'Second Tab',
       content: <Text>Second tab content</Text>,
     },
-    // eslint-disable-next-line @shopify/cli/id-length
+    // eslint-disable-next-line compat/id-length
     c: {
       label: 'Action Tab',
       action: mockAction,
@@ -138,13 +138,13 @@ describe('TabPanel', () => {
   test('only executes shortcuts for the active tab', async () => {
     const secondTabShortcut = vi.fn()
     const tabsWithMultipleShortcuts: {[key: string]: Tab} = {
-      // eslint-disable-next-line @shopify/cli/id-length
+      // eslint-disable-next-line compat/id-length
       a: {
         label: 'First Tab',
         content: <Text>First tab content</Text>,
         shortcuts: [{key: 'x', action: mockShortcutAction}],
       },
-      // eslint-disable-next-line @shopify/cli/id-length
+      // eslint-disable-next-line compat/id-length
       b: {
         label: 'Second Tab',
         content: <Text>Second tab content</Text>,
@@ -175,7 +175,7 @@ describe('TabPanel', () => {
     const actionWhenConditionNotMet = vi.fn()
 
     const tabsWithConditions: {[key: string]: Tab} = {
-      // eslint-disable-next-line @shopify/cli/id-length
+      // eslint-disable-next-line compat/id-length
       a: {
         label: 'Conditional Tab',
         content: <Text>Conditional tab content</Text>,
@@ -251,18 +251,18 @@ describe('TabPanel', () => {
 
   test('supports arrow key navigation for content tabs', async () => {
     const tabsWithContent: {[key: string]: Tab} = {
-      // eslint-disable-next-line @shopify/cli/id-length
+      // eslint-disable-next-line compat/id-length
       a: {
         label: 'First Tab',
         content: <Text>First tab content</Text>,
       },
-      // eslint-disable-next-line @shopify/cli/id-length
+      // eslint-disable-next-line compat/id-length
       b: {
         label: 'Action Tab',
         // No content - should be skipped in navigation
         action: mockAction,
       },
-      // eslint-disable-next-line @shopify/cli/id-length
+      // eslint-disable-next-line compat/id-length
       c: {
         label: 'Second Tab',
         content: <Text>Second tab content</Text>,
@@ -296,12 +296,12 @@ describe('TabPanel', () => {
 
   test('arrow key navigation loops through content tabs', async () => {
     const tabsWithContent: {[key: string]: Tab} = {
-      // eslint-disable-next-line @shopify/cli/id-length
+      // eslint-disable-next-line compat/id-length
       a: {
         label: 'First Tab',
         content: <Text>First tab content</Text>,
       },
-      // eslint-disable-next-line @shopify/cli/id-length
+      // eslint-disable-next-line compat/id-length
       b: {
         label: 'Second Tab',
         content: <Text>Second tab content</Text>,
@@ -340,17 +340,17 @@ describe('TabPanel', () => {
 
   test('tab key functions like right arrow for navigation', async () => {
     const tabsWithContent: {[key: string]: Tab} = {
-      // eslint-disable-next-line @shopify/cli/id-length
+      // eslint-disable-next-line compat/id-length
       a: {
         label: 'First Tab',
         content: <Text>First tab content</Text>,
       },
-      // eslint-disable-next-line @shopify/cli/id-length
+      // eslint-disable-next-line compat/id-length
       b: {
         label: 'Second Tab',
         content: <Text>Second tab content</Text>,
       },
-      // eslint-disable-next-line @shopify/cli/id-length
+      // eslint-disable-next-line compat/id-length
       c: {
         label: 'Third Tab',
         content: <Text>Third tab content</Text>,
@@ -402,7 +402,7 @@ describe('TabPanel', () => {
     mocks.measureElement.mockReturnValue({width: 70})
 
     const tabsWithActions: {[key: string]: Tab} = {
-      // eslint-disable-next-line @shopify/cli/id-length
+      // eslint-disable-next-line compat/id-length
       a: {
         label: 'Content Tab',
         content: <Text>Content</Text>,
@@ -445,7 +445,7 @@ describe('TabPanel', () => {
     mocks.measureElement.mockReturnValue({width: 50})
 
     const tabsWithActions: {[key: string]: Tab} = {
-      // eslint-disable-next-line @shopify/cli/id-length
+      // eslint-disable-next-line compat/id-length
       a: {
         label: 'Content Tab',
         content: <Text>Content</Text>,

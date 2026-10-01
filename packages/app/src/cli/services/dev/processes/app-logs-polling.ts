@@ -107,7 +107,7 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
 
         try {
           await startPolling(pollingAbortController.signal)
-          // eslint-disable-next-line @shopify/cli/no-catch-all
+          // eslint-disable-next-line no-catch-all/no-catch-all
         } catch (error) {
           outputDebug(`Failed to start function logs: ${error}`, _stderr)
         }
@@ -120,6 +120,6 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
     }
 
     appWatcher.onStart(startPollingIfNeeded).onEvent(startPollingIfNeeded)
-    // eslint-disable-next-line @shopify/cli/no-catch-all, no-empty
+    // eslint-disable-next-line no-catch-all/no-catch-all, no-empty
   } catch (error) {}
 }

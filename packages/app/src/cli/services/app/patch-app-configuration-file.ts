@@ -11,7 +11,7 @@ export async function patchAppHiddenConfigFile(path: string, clientId: string, c
   try {
     const jsonContents = await readFile(path)
     configuration = JSON.parse(jsonContents)
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     // Do nothing if the file doesn't exist or can't be loaded
   }

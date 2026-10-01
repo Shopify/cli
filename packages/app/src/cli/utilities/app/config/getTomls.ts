@@ -17,7 +17,7 @@ export async function getTomls(appDirectory?: string): Promise<{[clientId: strin
       if (isValidFormatAppConfigurationFileName(file)) {
         const filePath = joinPath(appDirectory, file)
         const tomlFile = await TomlFile.read(filePath)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, typescript/no-unnecessary-type-assertion -- TOML values need narrowing before indexing by client_id.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const parsedToml = tomlFile.content as {[key: string]: any}
 
         if (parsedToml.client_id) {

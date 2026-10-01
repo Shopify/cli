@@ -30,7 +30,7 @@ export interface GenerateExtensionContentOutput {
 }
 
 export function buildChoices(extensionTemplates: ExtensionTemplate[], unavailableExtensions: ExtensionTemplate[] = []) {
-  type ArrElement<TArrType> = TArrType extends ReadonlyArray<infer TElementType> ? TElementType : never
+  type ArrElement<TArrType> = TArrType extends ReadonlyArray<infer ElementType> ? ElementType : never
 
   const templateSpecChoices = [
     ...extensionTemplates.map((spec) => {

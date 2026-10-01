@@ -24,7 +24,7 @@ describe('setupWebsocketConnection', () => {
     vi.useFakeTimers()
     vi.mocked(WebSocketServer).mockImplementation(function () {
       return websocketServer
-    })
+    } as any)
   })
 
   afterEach(() => {

@@ -1,6 +1,6 @@
 {
   "@nx/enforce-module-boundaries": {
-    "replacement": "@shopify/cli/module-boundaries",
+    "replacement": "compat/nx-enforce-module-boundaries",
     "status": "partial",
     "limitation": "Relative cross-project imports and re-exports are checked. Nx graph cycles, tag constraints, lazy-loading checks and buildability checks are not retained."
   },
@@ -97,7 +97,7 @@
     "limitation": "The specialized Shopify rule is not ported."
   },
   "@shopify/strict-component-boundaries": {
-    "replacement": "@shopify/cli/module-boundaries",
+    "replacement": "compat/nx-enforce-module-boundaries",
     "status": "partial",
     "limitation": "Relative imports between projects are rejected. Resolver-based component entrypoint checks are not retained."
   },
@@ -147,9 +147,9 @@
     "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
   },
   "@typescript-eslint/naming-convention": {
-    "replacement": "@shopify/cli/naming-convention",
+    "replacement": "compat/typescript-eslint-naming-convention",
     "status": "partial",
-    "limitation": "Configured declaration, parameter, property and type names are checked. Type filters, all upstream selectors and modifier precedence are not implemented."
+    "limitation": "Configured declaration, parameter, property and type names are checked. Type filters, all upstream selectors and modifier precedence are not implemented. Inferred type parameters keep their existing names; naming enforcement applies to declared type parameters."
   },
   "@typescript-eslint/no-array-constructor": {
     "replacement": "no-array-constructor",
@@ -197,9 +197,9 @@
     "limitation": "Native behavior and option support may differ from ESLint."
   },
   "@typescript-eslint/no-unnecessary-type-assertion": {
-    "replacement": "typescript/no-unnecessary-type-assertion",
-    "status": "native",
-    "limitation": "Native behavior and option support may differ from ESLint."
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Disabled during migration because the native checker flags assertions accepted by the original ESLint setup, including intentional test fixtures. Existing casts are retained; there is no exact compatibility option."
   },
   "@typescript-eslint/no-unnecessary-type-constraint": {
     "replacement": "typescript/no-unnecessary-type-constraint",
@@ -372,7 +372,7 @@
     "limitation": "Native behavior and option support may differ from ESLint."
   },
   "id-length": {
-    "replacement": "@shopify/cli/id-length",
+    "replacement": "compat/id-length",
     "status": "partial",
     "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
   },
@@ -452,14 +452,14 @@
     "limitation": "Native behavior and option support may differ from ESLint."
   },
   "import-x/no-named-as-default": {
-    "replacement": "import/no-named-as-default",
-    "status": "native",
-    "limitation": "Native behavior and option support may differ from ESLint."
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Disabled during migration because native module analysis flags existing default WebSocket imports accepted by ESLint. Existing imports are retained; this check is currently lost."
   },
   "import-x/no-named-as-default-member": {
-    "replacement": "import/no-named-as-default-member",
-    "status": "native",
-    "limitation": "Native behavior and option support may differ from ESLint."
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Disabled during migration because native module analysis flags existing Prettier and CommonJS GraphQL-loader access accepted by ESLint. Existing imports are retained; this check is currently lost."
   },
   "import-x/no-named-default": {
     "replacement": "import/no-named-default",
@@ -787,7 +787,7 @@
     "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
   },
   "n/prefer-global/console": {
-    "replacement": "@shopify/cli/prefer-global-console",
+    "replacement": "compat/n-prefer-global-console",
     "status": "partial",
     "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
   },
@@ -807,7 +807,7 @@
     "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
   },
   "n/prefer-global/url": {
-    "replacement": "@shopify/cli/prefer-global-url",
+    "replacement": "compat/n-prefer-global-url",
     "status": "partial",
     "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
   },
@@ -867,7 +867,7 @@
     "limitation": "Native behavior and option support may differ from ESLint."
   },
   "no-catch-all/no-catch-all": {
-    "replacement": "@shopify/cli/no-catch-all",
+    "replacement": "no-catch-all/no-catch-all",
     "status": "retained"
   },
   "no-catch-shadow": {
@@ -1191,7 +1191,7 @@
     "limitation": "Native behavior and option support may differ from ESLint."
   },
   "no-restricted-syntax": {
-    "replacement": "@shopify/cli/restricted-syntax",
+    "replacement": "compat/no-restricted-syntax",
     "status": "partial",
     "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
   },
@@ -1496,7 +1496,7 @@
     "limitation": "Native behavior and option support may differ from ESLint."
   },
   "tsdoc/syntax": {
-    "replacement": "@shopify/cli/tsdoc-syntax",
+    "replacement": "tsdoc/syntax",
     "status": "partial",
     "limitation": "Uses the same TSDoc parser with its default configuration. Per-directory tsdoc.json loading is not implemented; this repository has no such file."
   },

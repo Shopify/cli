@@ -30,7 +30,7 @@ vi.mock('@bugsnag/js', () => {
         }
         eventHandler(mockEvent)
         capturedEventHandler(mockEvent)
-        lastBugsnagEvent = mockEvent
+        lastBugsnagEvent = mockEvent as any
         callback(null)
       },
       isStarted: () => true,
@@ -218,7 +218,7 @@ describe('sends errors to Bugsnag', () => {
   })
 
   test('processes string instances', async () => {
-    const res = await sendErrorToBugsnag('In test', 'unexpected_error')
+    const res = await sendErrorToBugsnag('In test' as any, 'unexpected_error')
     expect(res.reported).toEqual(true)
     const {error} = res as any
     expect(error.stack).toMatch(/^Error: In test/)

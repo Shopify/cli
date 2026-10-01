@@ -87,7 +87,7 @@ async function fetchOwningOrg(
     }
     const decodedId = org.id ? numericIdFromEncodedGid(org.id) : undefined
     return {name: org.name, ...(decodedId ? {id: decodedId} : {})}
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     outputDebug(`Failed to resolve owning organization: ${errorMessage(error)}`)
     return undefined

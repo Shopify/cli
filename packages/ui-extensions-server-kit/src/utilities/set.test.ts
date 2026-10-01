@@ -1,4 +1,4 @@
-/* eslint-disable @shopify/cli/id-length */
+/* eslint-disable compat/id-length */
 import {set} from './set'
 
 describe('set()', () => {

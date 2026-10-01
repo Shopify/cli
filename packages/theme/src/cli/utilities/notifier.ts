@@ -30,7 +30,7 @@ export class Notifier {
       } else {
         await this.notifyFile(fileName)
       }
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
       recordError(error)
 
@@ -64,7 +64,7 @@ export class Notifier {
     try {
       const parsedUrl = new URL(url)
       return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:'
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
       return false
     }

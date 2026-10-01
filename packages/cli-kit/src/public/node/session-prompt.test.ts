@@ -125,7 +125,7 @@ describe('promptSessionSelect', () => {
             scopes: ['scope3'],
             userId: 'user3',
             // Missing alias
-            alias: undefined,
+            alias: undefined as any,
           },
           applications: {},
         },

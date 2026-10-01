@@ -2,7 +2,7 @@ import {getProxyingWebServer} from './http-reverse-proxy.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {describe, test, expect} from 'vitest'
 import fetch from 'node-fetch'
-import {WebSocket, WebSocketServer} from 'ws'
+import WebSocket, {WebSocketServer} from 'ws'
 import http from 'http'
 import https from 'https'
 import net from 'net'
@@ -91,7 +91,7 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
         try {
           await fetch(`${protocol}://localhost:${setup.proxyPort}/path1`, {agent})
           return 'open'
-          // eslint-disable-next-line @shopify/cli/no-catch-all
+          // eslint-disable-next-line no-catch-all/no-catch-all
         } catch {
           return 'closed'
         }

@@ -467,7 +467,7 @@ describe('renderConcurrent', async () => {
 
     try {
       await renderConcurrent({processes: [throwingProcess]})
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
       renderFatalError(error as FatalError)
     }
@@ -725,7 +725,7 @@ describe('renderTasks', async () => {
 
     try {
       await renderTasks([throwingTask])
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error: any) {
       renderWarning({
         headline: error.message,
@@ -786,7 +786,7 @@ describe('keypress', async () => {
     let rejected = false
     try {
       await promise
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (rejection: any) {
       expect(rejection.type).toEqual(FatalErrorType.AbortSilent)
       rejected = true

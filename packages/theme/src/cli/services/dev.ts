@@ -194,7 +194,7 @@ export async function reportDevAnalytics(config: Config, session: AdminSession):
     await addPublicMetadata(() => ({store_fqdn_hash: hashString(session.storeFqdn)}))
     await addSensitiveMetadata(() => ({store_fqdn: session.storeFqdn}))
     await reportAnalyticsEvent({config, exitMode: 'ok'})
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (_error) {
     // Analytics must never block exit.
   }

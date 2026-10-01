@@ -5,6 +5,18 @@
     {
       "name": "@shopify/cli",
       "specifier": "./packages/eslint-plugin-cli/oxlint.js"
+    },
+    {
+      "name": "compat",
+      "specifier": "./packages/eslint-plugin-cli/oxlint-compat-names.js"
+    },
+    {
+      "name": "no-catch-all",
+      "specifier": "./packages/eslint-plugin-cli/oxlint-no-catch-all.js"
+    },
+    {
+      "name": "tsdoc",
+      "specifier": "./packages/eslint-plugin-cli/oxlint-tsdoc.js"
     }
   ],
   "categories": {
@@ -494,7 +506,6 @@
     "node/no-new-require": "error",
     "node/no-path-concat": "error",
     "node/no-exports-assign": "error",
-    "@shopify/cli/id-length": "off",
     "@shopify/cli/no-implicit-globals": [
       "error",
       {
@@ -506,7 +517,8 @@
       {
         "builtinGlobals": true
       }
-    ]
+    ],
+    "compat/id-length": "off"
   },
   "overrides": [
     {
@@ -705,12 +717,12 @@
         "@shopify/cli/banner-headline-format": "error",
         "@shopify/cli/required-fields-when-loading-app": "error",
         "@shopify/cli/no-inline-graphql": "error",
-        "@shopify/cli/no-catch-all": "error",
-        "@shopify/cli/tsdoc-syntax": "error",
         "@shopify/cli/command-json-output": "error",
         "no-array-constructor": "off",
         "@shopify/cli/unused-imports": "error",
-        "@shopify/cli/no-redeclare": "off"
+        "@shopify/cli/no-redeclare": "off",
+        "no-catch-all/no-catch-all": "error",
+        "tsdoc/syntax": "error"
       },
       "plugins": ["vitest", "jsdoc", "react"],
       "env": {
@@ -878,7 +890,6 @@
         "curly": ["error", "all"],
         "no-unexpected-multiline": "error",
         "no-object-constructor": "off",
-        "@shopify/cli/restricted-syntax": "off",
         "no-undef": [
           "error",
           {
@@ -903,7 +914,13 @@
         "@shopify/cli/consistent-this": ["error", "self"],
         "@shopify/cli/one-var": ["error", "never"],
         "@shopify/cli/no-undef-init": "error",
-        "@shopify/cli/id-length": [
+        "@shopify/cli/exports-style": ["error", "module.exports"],
+        "@shopify/cli/prefer-global-buffer": "error",
+        "@shopify/cli/prefer-global-process": "error",
+        "@shopify/cli/prefer-global-text-decoder": "error",
+        "@shopify/cli/prefer-global-text-encoder": "error",
+        "@shopify/cli/prefer-global-url-search-params": "error",
+        "compat/id-length": [
           "error",
           {
             "exceptionPatterns": [],
@@ -912,14 +929,9 @@
             "properties": "always"
           }
         ],
-        "@shopify/cli/exports-style": ["error", "module.exports"],
-        "@shopify/cli/prefer-global-buffer": "error",
-        "@shopify/cli/prefer-global-console": "error",
-        "@shopify/cli/prefer-global-process": "error",
-        "@shopify/cli/prefer-global-text-decoder": "error",
-        "@shopify/cli/prefer-global-text-encoder": "error",
-        "@shopify/cli/prefer-global-url-search-params": "error",
-        "@shopify/cli/prefer-global-url": "error"
+        "compat/n-prefer-global-console": "error",
+        "compat/n-prefer-global-url": "error",
+        "compat/no-restricted-syntax": "off"
       }
     },
     {
@@ -945,8 +957,8 @@
             "warnOnUnassignedImports": false
           }
         ],
-        "import/no-named-as-default": "error",
-        "import/no-named-as-default-member": "error",
+        "import/no-named-as-default": "off",
+        "import/no-named-as-default-member": "off",
         "no-new-native-nonconstructor": "error"
       }
     },
@@ -975,7 +987,16 @@
           }
         ],
         "no-unused-vars": "off",
-        "@shopify/cli/naming-convention": [
+        "typescript/no-unnecessary-type-assertion": "off",
+        "no-unused-expressions": "error",
+        "no-undef": "off",
+        "import/named": "off",
+        "import/export": "off",
+        "@shopify/cli/no-fully-static-classes": "off",
+        "no-new-native-nonconstructor": "off",
+        "@shopify/cli/prefer-pascal-case-enums": "error",
+        "@shopify/cli/prefer-build-client-schema": "error",
+        "compat/typescript-eslint-naming-convention": [
           "error",
           {
             "selector": "default",
@@ -1008,16 +1029,7 @@
               "match": false
             }
           }
-        ],
-        "typescript/no-unnecessary-type-assertion": "off",
-        "no-unused-expressions": "error",
-        "no-undef": "off",
-        "import/named": "off",
-        "import/export": "off",
-        "@shopify/cli/no-fully-static-classes": "off",
-        "no-new-native-nonconstructor": "off",
-        "@shopify/cli/prefer-pascal-case-enums": "error",
-        "@shopify/cli/prefer-build-client-schema": "error"
+        ]
       }
     },
     {
@@ -1053,7 +1065,29 @@
             "warnOnUnassignedImports": false
           }
         ],
-        "@shopify/cli/naming-convention": [
+        "typescript/no-unnecessary-type-assertion": "off",
+        "no-unused-vars": [
+          "error",
+          {
+            "args": "all",
+            "argsIgnorePattern": "^_",
+            "caughtErrors": "none",
+            "caughtErrorsIgnorePattern": "^_",
+            "destructuredArrayIgnorePattern": "^_",
+            "varsIgnorePattern": "^_",
+            "ignoreRestSiblings": true
+          }
+        ],
+        "no-unused-expressions": [
+          "error",
+          {
+            "allowShortCircuit": false,
+            "allowTaggedTemplates": false,
+            "allowTernary": true
+          }
+        ],
+        "@shopify/cli/command-json-output": "error",
+        "compat/typescript-eslint-naming-convention": [
           "error",
           {
             "selector": "default",
@@ -1091,8 +1125,7 @@
             "format": null
           }
         ],
-        "typescript/no-unnecessary-type-assertion": "error",
-        "@shopify/cli/restricted-syntax": [
+        "compat/no-restricted-syntax": [
           "error",
           {
             "selector": "Literal[value=/(cannot|will not|do not)/i]",
@@ -1102,28 +1135,7 @@
             "selector": "TemplateElement[value.raw=/(cannot|will not|do not)/i]",
             "message": "Be human - prefer don't to do not, won't to will not etc."
           }
-        ],
-        "no-unused-vars": [
-          "error",
-          {
-            "args": "all",
-            "argsIgnorePattern": "^_",
-            "caughtErrors": "none",
-            "caughtErrorsIgnorePattern": "^_",
-            "destructuredArrayIgnorePattern": "^_",
-            "varsIgnorePattern": "^_",
-            "ignoreRestSiblings": true
-          }
-        ],
-        "no-unused-expressions": [
-          "error",
-          {
-            "allowShortCircuit": false,
-            "allowTaggedTemplates": false,
-            "allowTernary": true
-          }
-        ],
-        "@shopify/cli/command-json-output": "error"
+        ]
       }
     },
     {
@@ -1136,27 +1148,27 @@
     {
       "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.test-data.ts", "**/testing/*.ts", "**/testing/*.tsx"],
       "rules": {
-        "@shopify/cli/restricted-syntax": "off",
         "no-unused-vars": "off",
-        "@shopify/cli/required-fields-when-loading-app": "off"
+        "@shopify/cli/required-fields-when-loading-app": "off",
+        "compat/no-restricted-syntax": "off"
       }
     },
     {
       "files": ["**/bin/*.js"],
       "rules": {
-        "@shopify/cli/module-boundaries": "off"
+        "compat/nx-enforce-module-boundaries": "off"
       }
     },
     {
       "files": ["**/*.ts", "**/*.tsx"],
       "rules": {
-        "@shopify/cli/module-boundaries": "error"
+        "compat/nx-enforce-module-boundaries": "error"
       }
     },
     {
       "files": ["packages/theme/src/**/*.ts"],
       "rules": {
-        "@shopify/cli/module-boundaries": [
+        "compat/nx-enforce-module-boundaries": [
           "error",
           {
             "checkDynamicDependenciesExceptions": ["@shopify/cli-kit/**"]
@@ -1241,13 +1253,13 @@
     {
       "files": ["**/*.test.ts"],
       "rules": {
-        "@shopify/cli/restricted-syntax": "off"
+        "compat/no-restricted-syntax": "off"
       }
     },
     {
       "files": ["src/private/node/ui/components/**/*.tsx"],
       "rules": {
-        "@shopify/cli/naming-convention": [
+        "compat/typescript-eslint-naming-convention": [
           "error",
           {
             "selector": "interface",
@@ -1263,7 +1275,7 @@
     {
       "files": ["packages/cli/src/**/*.ts"],
       "rules": {
-        "@shopify/cli/module-boundaries": "off"
+        "compat/nx-enforce-module-boundaries": "off"
       }
     },
     {
@@ -1275,7 +1287,6 @@
     {
       "files": ["packages/eslint-plugin-cli/**/*.js"],
       "rules": {
-        "@shopify/cli/tsdoc-syntax": "off",
         "@shopify/cli/no-implicit-globals": [
           "error",
           {
@@ -1288,7 +1299,8 @@
             "builtinGlobals": true
           }
         ],
-        "@shopify/cli/module-boundaries": "error"
+        "tsdoc/syntax": "off",
+        "compat/nx-enforce-module-boundaries": "error"
       }
     },
     {
@@ -1308,9 +1320,9 @@
       "files": ["packages/eslint-plugin-cli/vite.config.ts"],
       "rules": {
         "typescript/no-unnecessary-type-assertion": "off",
-        "@shopify/cli/module-boundaries": "off",
         "@shopify/cli/no-implicit-globals": "off",
-        "@shopify/cli/no-redeclare": "off"
+        "@shopify/cli/no-redeclare": "off",
+        "compat/nx-enforce-module-boundaries": "off"
       }
     }
   ]

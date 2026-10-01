@@ -91,7 +91,7 @@ describe('Config pipeline snapshots', () => {
       const {configSpecifications: specs} = await buildVersionedAppSchema()
 
       // First write
-      await writeAppConfigurationFile(REALISTIC_CONFIG, filePath)
+      await writeAppConfigurationFile(REALISTIC_CONFIG as CurrentAppConfiguration, filePath)
 
       // Read back through the full parse pipeline (which fires Zod transforms)
       const parsedConfig = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
@@ -114,7 +114,7 @@ describe('Config pipeline snapshots', () => {
       const {configSpecifications: specs} = await buildVersionedAppSchema()
 
       // First write + read + second write (reordering happens here)
-      await writeAppConfigurationFile(REALISTIC_CONFIG, filePath)
+      await writeAppConfigurationFile(REALISTIC_CONFIG as CurrentAppConfiguration, filePath)
       const parsed1 = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
       await writeAppConfigurationFile(parsed1, filePath)
       const secondWrite = await readFile(filePath)
@@ -160,7 +160,7 @@ describe('Config pipeline snapshots', () => {
       }
 
       // Snapshot the first write
-      await writeAppConfigurationFile(config, filePath)
+      await writeAppConfigurationFile(config as CurrentAppConfiguration, filePath)
       const firstWrite = await readFile(filePath)
       expect(firstWrite).toMatchSnapshot()
 
@@ -194,7 +194,7 @@ describe('Config pipeline snapshots', () => {
       }
 
       // Write, read, write (first round-trip may reorder)
-      await writeAppConfigurationFile(config, filePath)
+      await writeAppConfigurationFile(config as CurrentAppConfiguration, filePath)
       const parsed1 = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
       await writeAppConfigurationFile(parsed1, filePath)
       const secondWrite = await readFile(filePath)
@@ -250,7 +250,7 @@ describe('Config pipeline snapshots', () => {
         },
       }
 
-      await writeAppConfigurationFile(config, filePath)
+      await writeAppConfigurationFile(config as CurrentAppConfiguration, filePath)
       const firstWrite = await readFile(filePath)
       expect(firstWrite).toMatchSnapshot()
 
@@ -286,7 +286,7 @@ describe('Config pipeline snapshots', () => {
         },
       }
 
-      await writeAppConfigurationFile(config, filePath)
+      await writeAppConfigurationFile(config as CurrentAppConfiguration, filePath)
       const firstWrite = await readFile(filePath)
       expect(firstWrite).toMatchSnapshot()
 
@@ -322,7 +322,7 @@ describe('Config pipeline snapshots', () => {
         },
       }
 
-      await writeAppConfigurationFile(config, filePath)
+      await writeAppConfigurationFile(config as CurrentAppConfiguration, filePath)
       const firstWrite = await readFile(filePath)
 
       const parsedConfig = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)

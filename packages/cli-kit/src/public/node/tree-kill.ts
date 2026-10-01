@@ -139,7 +139,7 @@ function killAll(
         killed.add(pid)
       }
     })
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (err: unknown) {
     // @ts-ignore
     callback(err)

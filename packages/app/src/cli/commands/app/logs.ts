@@ -69,7 +69,6 @@ export default class Logs extends AppLinkedCommand {
       storeFqdns: flags.store,
       sources: flags.source,
       status: flags.status,
-      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- Preserve the literal-union type when building the options object.
       format: (flags.json ? 'json' : 'text') as Format,
     }
 

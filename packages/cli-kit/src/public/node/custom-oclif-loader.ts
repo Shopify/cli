@@ -84,7 +84,7 @@ function setShellVariableWhenUserLookupFails(): void {
 
   try {
     os.userInfo()
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     process.env.SHELL = 'unknown'
   }
