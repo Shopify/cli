@@ -11,9 +11,9 @@ import SecurityCheck from './commands/app/security/check.js'
 import SecurityInstructions from './commands/app/security/instructions.js'
 import SecuritySubmit from './commands/app/security/submit.js'
 import Logs from './commands/app/logs.js'
-import QueryLogs from './commands/logs.js'
-import LogsSchema from './commands/logs/schema.js'
-import Sources from './commands/app/app-logs/sources.js'
+import LogsSchema from './commands/app/app-logs/schema.js'
+import LogsTypes from './commands/app/app-logs/types.js'
+import LogsFilters from './commands/app/app-logs/filters.js'
 import EnvPull from './commands/app/env/pull.js'
 import EnvShow from './commands/app/env/show.js'
 import BulkExecute from './commands/app/bulk/execute.js'
@@ -64,9 +64,9 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:security:instructions': SecurityInstructions,
   'app:security:submit': SecuritySubmit,
   'app:logs': Logs,
-  logs: QueryLogs,
-  'logs:schema': LogsSchema,
-  'app:logs:sources': Sources,
+  'app:logs:schema': LogsSchema,
+  'app:logs:types': LogsTypes,
+  'app:logs:filters': LogsFilters,
   'app:import:custom-data-definitions': ImportCustomDataDefinitions,
   'app:import:dashboard-extensions': ImportDashboardExtensions,
   // Deprecated paths, kept registered (and hidden) so existing scripts keep working.

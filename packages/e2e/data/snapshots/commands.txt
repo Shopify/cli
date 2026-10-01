@@ -32,7 +32,9 @@
 │  ├─ info
 │  ├─ init
 │  ├─ logs
-│  │  └─ sources
+│  │  ├─ filters
+│  │  ├─ schema
+│  │  └─ types
 │  ├─ release
 │  ├─ subscription-migrations
 │  │  ├─ cancel
@@ -90,8 +92,6 @@
 │  ├─ shortcut
 │  ├─ unlink
 │  └─ upgrade
-├─ logs
-│  └─ schema
 ├─ organization
 │  └─ list
 ├─ plugins

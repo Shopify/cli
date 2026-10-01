@@ -17,7 +17,13 @@ vi.mock('./logs-query.js', async (importOriginal) => ({
   executeLogsQuery: vi.fn(),
 }))
 
-const options = {api: 'app-logs', noPrompt: true, demo: true, json: false, variables: '{"organizationId":5}'}
+const options = {appKey: 'test-app', noPrompt: true, demo: true, json: false}
+
+const appField = {
+  type: new GraphQLObjectType({name: 'App', fields: {key: {type: GraphQLString}}}),
+  args: {key: {type: new GraphQLNonNull(GraphQLString)}},
+  resolve: (_root: unknown, args: {key: string}) => ({key: args.key}),
+}
 
 test('fetches live SDL with descriptions, defaults, nested types and deprecations', async () => {
   const status = new GraphQLEnumType({
@@ -36,6 +42,7 @@ test('fetches live SDL with descriptions, defaults, nested types and deprecation
       name: 'Query',
       description: 'Available log queries.',
       fields: {
+        app: appField,
         logs: {
           type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(event))),
           args: {limit: {type: GraphQLInt, defaultValue: 50}},
@@ -52,13 +59,12 @@ test('fetches live SDL with descriptions, defaults, nested types and deprecation
   const result = await fetchLogsSchema(options)
 
   expect(result.failed).toBe(false)
+  expect(vi.mocked(executeLogsQuery).mock.calls[0]![0].query).toContain('app(key: "test-app")')
   expect(result.output).toContain('"""Available log queries."""')
   expect(result.output).toContain('logs(limit: Int = 50): [Event!]!')
   expect(result.output).toContain('@deprecated(reason: "Use status")')
   expect(result.output).toContain('"""Delivery succeeded."""')
-  expect(executeLogsQuery).toHaveBeenCalledExactlyOnceWith(
-    expect.objectContaining({api: 'app-logs', variables: options.variables, noPrompt: true, demo: true}),
-  )
+  expect(executeLogsQuery).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({noPrompt: true, demo: true}))
 })
 
 test('JSON mode preserves the complete introspection response', async () => {
@@ -67,7 +73,7 @@ test('JSON mode preserves the complete introspection response', async () => {
     const response = {
       ...graphqlSync({
         schema: new GraphQLSchema({
-          query: new GraphQLObjectType({name: 'Query', fields: {ping: {type: GraphQLString}}}),
+          query: new GraphQLObjectType({name: 'Query', fields: {app: appField, ping: {type: GraphQLString}}}),
         }),
         source: query!,
       }),

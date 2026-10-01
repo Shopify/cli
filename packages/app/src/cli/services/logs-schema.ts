@@ -7,26 +7,42 @@ import {
   lexicographicSortSchema,
   printSchema,
   type IntrospectionQuery,
+  Kind,
+  parse,
+  print,
 } from 'graphql'
 
-interface LogsSchemaOptions extends Pick<LogsQueryOptions, 'api' | 'variables' | 'variableFile' | 'noPrompt' | 'demo'> {
+interface LogsSchemaOptions extends Pick<LogsQueryOptions, 'noPrompt' | 'demo'> {
+  appKey: string
   json: boolean
 }
 
 export async function fetchLogsSchema(options: LogsSchemaOptions): Promise<{output: string; failed: boolean}> {
-  const {response, failed} = await executeLogsQuery({
-    api: options.api,
-    variables: options.variables,
-    variableFile: options.variableFile,
-    noPrompt: options.noPrompt,
-    demo: options.demo,
-    query: getIntrospectionQuery({
+  const document = parse(
+    getIntrospectionQuery({
       descriptions: true,
       specifiedByUrl: true,
       directiveIsRepeatable: true,
       inputValueDeprecation: true,
     }),
+  )
+  const scope = parse(`{ app(key: ${JSON.stringify(options.appKey)}) { key } }`).definitions[0]!
+  if (scope.kind !== Kind.OPERATION_DEFINITION) throw new AbortError('Invalid schema scope.')
+  const query = print({
+    ...document,
+    definitions: document.definitions.map((definition) =>
+      definition.kind === Kind.OPERATION_DEFINITION
+        ? {
+            ...definition,
+            selectionSet: {
+              ...definition.selectionSet,
+              selections: [...scope.selectionSet.selections, ...definition.selectionSet.selections],
+            },
+          }
+        : definition,
+    ),
   })
+  const {response, failed} = await executeLogsQuery({noPrompt: options.noPrompt, demo: options.demo, query})
   if (failed) return {output: logsJsonOutputSchema.encode(response), failed}
 
   let schema

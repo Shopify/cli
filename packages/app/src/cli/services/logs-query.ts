@@ -25,7 +25,6 @@ export const logsJsonOutputSchema = defineJsonOutputSchema({
 })
 
 export interface LogsQueryOptions {
-  api?: string
   query?: string
   queryFile?: string
   variables?: string
@@ -41,9 +40,6 @@ interface LogsQueryResult {
 }
 
 export async function executeLogsQuery(options: LogsQueryOptions): Promise<LogsQueryResult> {
-  if (options.api !== undefined && options.api !== 'app-logs') {
-    throw new AbortError('Unsupported logs API. Use --api app-logs.')
-  }
   if (process.env.SHOPIFY_APP_LOG_QUERY_PROTOTYPE !== '1' || process.env.SHOPIFY_SERVICE_ENV !== 'local') {
     throw new AbortError('Prototype only: set SHOPIFY_APP_LOG_QUERY_PROTOTYPE=1 and SHOPIFY_SERVICE_ENV=local.')
   }
