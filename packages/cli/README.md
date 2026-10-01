@@ -2751,10 +2751,10 @@ DESCRIPTION
   the GraphQL document; query mode can’t be combined with app selection or filter flags. Run `shopify app logs schema`
   to fetch the live GraphQL schema.
 
-  Always prints JSON, including errors, partial data, and query metadata. `--json` is optional. HTTP or GraphQL errors
-  produce a nonzero exit status. Results are unordered unless `--sort` is specified. A reached limit does not guarantee
-  another page or complete coverage; narrow the search when possible. Nonzero `--offset` requires sorting. This command
-  retrieves historical logs; it doesn’t stream.
+  Prints query responses as JSON, including GraphQL errors, partial data, and query metadata. Use `--json` to also
+  format CLI errors as JSON. HTTP or GraphQL errors produce a nonzero exit status. Results are unordered unless `--sort`
+  is specified. A reached limit does not guarantee another page or complete coverage; narrow the search when possible.
+  `--offset` requires `--sort`. This command retrieves historical logs; it doesn’t stream.
 
   Output from `--json` conforms to the `LogsGraphQLResponse` schema.
 
