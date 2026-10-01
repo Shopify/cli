@@ -66,7 +66,7 @@ import {
 } from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
 import {appDevRequestDoc} from '@shopify/cli-kit/node/api/app-dev'
-import {BugError} from '@shopify/cli-kit/node/error'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {webhooksRequestDoc} from '@shopify/cli-kit/node/api/webhooks'
 
@@ -1573,6 +1573,26 @@ describe('client ID version and install requests', () => {
     expect(result.message).toBe('Tagged version')
     expect(result.location).toBe('https://dev.shopify.com/dashboard/5/apps/123/versions/456')
     expect(result.appModuleVersions).toEqual([])
+  })
+
+  test('rejects a missing tag scoped to the app client ID', async () => {
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({versionByTag: null})
+
+    const lookup = client.appVersionByTag(
+      {id: 'gid://shopify/App/123', apiKey: 'client-id-123', organizationId: '5', title: 'Test App'},
+      '1.0.0',
+    )
+
+    await expect(lookup).rejects.toThrow(AbortError)
+    await expect(lookup).rejects.toThrow('Version not found for tag: 1.0.0')
+    expect(appManagementRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: AppVersionByTag,
+        variables: {clientId: 'client-id-123', versionTag: '1.0.0'},
+      }),
+    )
   })
 
   test('reads the install count by client ID for delete warnings', async () => {

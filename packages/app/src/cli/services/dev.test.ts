@@ -84,6 +84,40 @@ describe('dev', () => {
     addPublicMetadata.mockRestore()
     addSensitiveMetadata.mockRestore()
   })
+
+  test('passes the remote app client ID to the Dev UI', async () => {
+    const app = testAppLinked()
+    const developerPlatformClient = testDeveloperPlatformClient()
+    vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue({name: 'Remote app', application_url: '', embedded: true})
+    vi.mocked(getAvailableTCPPort).mockResolvedValue(3456)
+    vi.mocked(checkPortAvailability).mockResolvedValue(true)
+    vi.mocked(setupDevProcesses).mockResolvedValue({
+      processes: [],
+      previewUrl: 'https://dev-store.myshopify.com/admin/apps/client-id-123',
+      graphiqlUrl: undefined,
+      devSessionStatusManager: {} as any,
+    })
+    vi.mocked(renderDev).mockResolvedValue(undefined)
+
+    await dev({
+      app,
+      project: testProject({usesWorkspaces: true}),
+      remoteApp: testOrganizationApp({id: 'gid://shopify/App/123', apiKey: 'client-id-123'}),
+      organization: testOrganization(),
+      specifications: [],
+      developerPlatformClient,
+      store: testOrganizationStore({shopDomain: 'dev-store.myshopify.com'}),
+      directory: app.directory,
+      update: false,
+      commandConfig: {} as any,
+      skipDependenciesInstallation: true,
+      tunnel: {mode: 'custom', url: 'https://localhost:3456'},
+    })
+
+    expect(renderDev).toHaveBeenCalledWith(
+      expect.objectContaining({app: {apiKey: 'client-id-123', developerPlatformClient}}),
+    )
+  })
 })
 
 describe('blockIfMigrationIncomplete', () => {
