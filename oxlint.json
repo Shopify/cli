@@ -1360,7 +1360,6 @@
         "**/api/graphql/**/generated/*.ts"
       ],
       "rules": {
-        "typescript/array-type": "off",
         "typescript/consistent-type-definitions": "off",
         "compat/typescript-eslint-naming-convention": "off",
         "typescript/no-duplicate-type-constituents": "off",
