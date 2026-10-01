@@ -1,10 +1,10 @@
 import {prepareSubmissionPayload} from './app-security-submission-payload.js'
 import {buildSubmission} from './app-security-engine/index.js'
-import {submissionTraceFixture} from './app-security-engine/tests/fixtures/submission-trace.js'
+import {submissionScanFixture} from './app-security-engine/tests/fixtures/submission-scan.js'
 import {describe, expect, test} from 'vitest'
 
 function submissionFixture() {
-  return buildSubmission(submissionTraceFixture, {cliVersion: 'test', submittedAt: '2026-09-08'})
+  return buildSubmission(submissionScanFixture, {cliVersion: 'test', submittedAt: '2026-09-08'})
 }
 
 describe('prepareSubmissionPayload', () => {

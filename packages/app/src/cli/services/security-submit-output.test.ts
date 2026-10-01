@@ -5,7 +5,7 @@ import {
   renderSecuritySubmitSuccess,
   renderSecuritySubmitResult,
 } from './security-submit-output.js'
-import {submissionTraceFixture} from './app-security-engine/tests/fixtures/submission-trace.js'
+import {submissionScanFixture} from './app-security-engine/tests/fixtures/submission-scan.js'
 import {buildSubmission} from './app-security-engine/index.js'
 import {renderInfo, renderSelectPrompt, renderSuccess, renderTextPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AbortError, shouldReportErrorAsUnexpected} from '@shopify/cli-kit/node/error'
@@ -13,7 +13,7 @@ import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/ui')
 
-const submission = buildSubmission(submissionTraceFixture, {
+const submission = buildSubmission(submissionScanFixture, {
   cliVersion: '3.99.0',
   submittedAt: '2026-09-01T09:30:00.000Z',
 })
@@ -21,7 +21,7 @@ const submissionPath = '/tmp/app/.shopify/app-security/submission.json'
 
 describe('renderSecuritySubmitResult', () => {
   test('renders dry-run and submitted results through the standard human output', () => {
-    const payload = {path: submissionPath, schemaVersion: 1 as const}
+    const payload = {path: submissionPath, schemaVersion: 0 as const}
     renderSecuritySubmitResult({status: 'dry-run', payload})
     renderSecuritySubmitResult({
       status: 'submitted',
@@ -100,18 +100,17 @@ describe('renderSecuritySubmitConfirmation', () => {
       defaultValue: 'submit',
       isConfirmationPrompt: true,
       infoTable: {
-        Findings: ['1 high · 1 medium · 1 low (1 suppressed)'],
-        Checks: ['3 executed · 1 not applicable · 1 unresolved'],
+        Findings: ['1 high · 1 medium · 0 low'],
+        Checks: ['2 executed · 1 not applicable · 1 unresolved'],
         Excluded: ['file paths, code snippets, evidence, finding messages, commit SHA'],
         Payload: [{filePath: submissionPath}],
-        Warning: [{warn: 'The trace was generated with uncommitted changes.'}],
       },
     })
   })
 
   test('discloses supplied feedback and does not offer to collect it again', async () => {
     vi.mocked(renderSelectPrompt).mockResolvedValue('submit')
-    const submissionWithFeedback = buildSubmission(submissionTraceFixture, {
+    const submissionWithFeedback = buildSubmission(submissionScanFixture, {
       cliVersion: '3.99.0',
       submittedAt: '2026-09-01T09:30:00.000Z',
       feedback: 'Something was inaccurate.',

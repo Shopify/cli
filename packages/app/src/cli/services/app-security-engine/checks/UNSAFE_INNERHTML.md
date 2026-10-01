@@ -123,6 +123,5 @@ Do not report:
 - `eval()` or `new Function()` with literal strings (no user input)
 
 If missing producer, sanitizer, or execution-context evidence prevents a
-conclusion, record the check as unresolved with the review pack's structured
-reason and actionable guidance. Do not turn incomplete tracing into a finding
-or a pass.
+conclusion, record the check as unresolved with a reason code and message. Do
+not turn incomplete tracing into a finding or a pass.

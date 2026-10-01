@@ -1,20 +1,19 @@
 import {redactText} from '../rules/secret-rules.js'
 import type {
   AnalysisMode,
-  CheckExecution,
   CheckExecutionReasonCode,
   CheckExecutionStatus,
+  CoverageGap,
   DetectedFramework,
   DetectedSurface,
-  FindingSource,
   LanguageSupport,
+  DeterministicFindingsDocument,
+  DeterministicCheckExecution,
+  DeterministicFinding,
   Severity,
-  SuppressionProvenance,
-  TraceFinding,
-  TraceV3,
 } from '../types.js'
 
-export const SUBMISSION_SCHEMA_VERSION = 1 as const
+export const SUBMISSION_SCHEMA_VERSION = 0 as const
 
 export interface BuildSubmissionOptions {
   cliVersion: string
@@ -24,41 +23,20 @@ export interface BuildSubmissionOptions {
 }
 
 interface SubmissionFinding {
-  fingerprint: string
-  source: FindingSource
+  rule_id: string
+  rule_version: number
   severity: Severity
   title: string
-  rule_id?: string
-  rule_version?: number
-  check_id?: string
-  check_version?: number
-  prompt_hash?: string
-  suppressed: boolean
-  suppression_id?: string
-}
-
-interface SubmissionCheckImplementation {
-  id: string
-  analysis_mode: AnalysisMode
-  status: CheckExecutionStatus
-  finding_count: number
-  inspected_file_count: number
-  reason_code?: CheckExecutionReasonCode
 }
 
 interface SubmissionCheck {
   id: string
   version: number
-  kind: CheckExecution['kind']
   status: CheckExecutionStatus
-  required: boolean
   applicable: boolean
   analysis_mode: AnalysisMode
   finding_count: number
-  inspected_file_count: number
   reason_code?: CheckExecutionReasonCode
-  prompt_hash?: string
-  implementations?: SubmissionCheckImplementation[]
 }
 
 export interface AppSecuritySubmission {
@@ -68,7 +46,7 @@ export interface AppSecuritySubmission {
 }
 
 export interface AppSecuritySubmissionReport {
-  trace_schema_version: TraceV3['schema_version']
+  scan_schema_version: DeterministicFindingsDocument['schema_version']
   engine: {name: string; version: string; ruleset: string}
   cli_version: string
   generated_at: string
@@ -76,7 +54,7 @@ export interface AppSecuritySubmissionReport {
   feedback: string | null
   // Always-applicable slots use null when unavailable (like project.commit); variant-dependent fields are omitted.
   metadata: {version_tag: string | null}
-  project: {dirty: boolean | null; input_hash: string}
+  project: {dirty: boolean | null}
   detection: {
     framework: DetectedFramework
     surface: DetectedSurface
@@ -84,83 +62,39 @@ export interface AppSecuritySubmissionReport {
   }
   findings: SubmissionFinding[]
   checks_executed: SubmissionCheck[]
-  suppressions: {
-    id: string
-    finding_fingerprint: string
-    provenance: {source: SuppressionProvenance['source']; created_at: string}
-  }[]
   coverage: {
     files_scanned: number
-    complete: boolean
     files_skipped: {too_large: number; unreadable: number}
-    gaps: {code: TraceV3['coverage']['gaps'][number]['code']; check_id?: string}[]
-  }
-  attestation: {trace_digest: string}
-}
-
-function submissionFinding(finding: TraceFinding): SubmissionFinding {
-  const common = {
-    fingerprint: finding.fingerprint,
-    source: finding.source,
-    severity: finding.severity,
-    // External titles are caller-provided and may contain source code or file paths.
-    title: finding.source === 'external' ? 'External finding' : redactText(finding.title),
-    suppressed: finding.suppressed,
-    ...(finding.suppression === undefined ? {} : {suppression_id: finding.suppression.id}),
-  }
-
-  switch (finding.source) {
-    case 'agent':
-      return {
-        ...common,
-        ...(finding.check_id === undefined ? {} : {check_id: finding.check_id}),
-        ...(finding.check_version === undefined ? {} : {check_version: finding.check_version}),
-        ...(finding.prompt_hash === undefined ? {} : {prompt_hash: finding.prompt_hash}),
-      }
-    case 'deterministic':
-    case 'external':
-      return {
-        ...common,
-        ...(finding.rule_id === undefined ? {} : {rule_id: finding.rule_id}),
-        ...(finding.rule_version === undefined ? {} : {rule_version: finding.rule_version}),
-      }
+    gaps: {code: CoverageGap['code']; check_id?: string}[]
   }
 }
 
-function submissionImplementation(
-  implementation: NonNullable<CheckExecution['implementations']>[number],
-): SubmissionCheckImplementation {
+function submissionFinding(finding: DeterministicFinding): SubmissionFinding {
   return {
-    id: implementation.id,
-    analysis_mode: implementation.analysis_mode,
-    status: implementation.status,
-    finding_count: implementation.findings,
-    inspected_file_count: implementation.inspected_files.length,
-    ...(implementation.reason === undefined ? {} : {reason_code: implementation.reason.code}),
+    rule_id: finding.rule_id,
+    rule_version: finding.rule_version,
+    severity: finding.severity,
+    title: redactText(finding.title),
   }
 }
 
-function submissionCheck(check: CheckExecution): SubmissionCheck {
+function submissionCheck(check: DeterministicCheckExecution): SubmissionCheck {
   return {
     id: check.id,
     version: check.version,
-    kind: check.kind,
     status: check.status,
-    required: check.required,
     applicable: check.applicable,
     analysis_mode: check.analysis_mode,
     finding_count: check.findings,
-    inspected_file_count: check.inspected_files.length,
     ...(check.reason === undefined ? {} : {reason_code: check.reason.code}),
-    ...(check.prompt_hash === undefined ? {} : {prompt_hash: check.prompt_hash}),
-    ...(check.implementations === undefined
-      ? {}
-      : {implementations: check.implementations.map(submissionImplementation)}),
   }
 }
 
-function skippedFileCounts(trace: TraceV3): {too_large: number; unreadable: number} {
-  return trace.coverage.files_skipped.reduce(
+function skippedFileCounts(deterministicFindings: DeterministicFindingsDocument): {
+  too_large: number
+  unreadable: number
+} {
+  return deterministicFindings.coverage.files_skipped.reduce(
     (counts, file) =>
       file.reason === 'too_large'
         ? {...counts, too_large: counts.too_large + 1}
@@ -169,18 +103,21 @@ function skippedFileCounts(trace: TraceV3): {too_large: number; unreadable: numb
   )
 }
 
-export function buildSubmission(trace: TraceV3, options: BuildSubmissionOptions): AppSecuritySubmission {
+export function buildSubmission(
+  deterministicFindings: DeterministicFindingsDocument,
+  options: BuildSubmissionOptions,
+): AppSecuritySubmission {
   return {
     schemaVersion: SUBMISSION_SCHEMA_VERSION,
     report: {
-      trace_schema_version: trace.schema_version,
+      scan_schema_version: deterministicFindings.schema_version,
       engine: {
-        name: redactText(trace.engine.name),
-        version: redactText(trace.engine.version),
-        ruleset: redactText(trace.engine.ruleset),
+        name: redactText(deterministicFindings.engine.name),
+        version: redactText(deterministicFindings.engine.version),
+        ruleset: redactText(deterministicFindings.engine.ruleset),
       },
       cli_version: options.cliVersion,
-      generated_at: trace.generated_at,
+      generated_at: deterministicFindings.generated_at,
       submitted_at: options.submittedAt,
       // Feedback intentionally bypasses redactText; callers are responsible for the accompanying disclosure.
       feedback: options.feedback ?? null,
@@ -188,39 +125,27 @@ export function buildSubmission(trace: TraceV3, options: BuildSubmissionOptions)
         version_tag: options.versionTag === undefined ? null : redactText(options.versionTag),
       },
       project: {
-        dirty: trace.project.dirty,
-        input_hash: trace.project.input_hash,
+        dirty: deterministicFindings.project.dirty,
       },
       detection: {
-        framework: trace.detection.framework,
-        surface: trace.detection.surface,
-        languages: trace.detection.languages.map((language) => ({
+        framework: deterministicFindings.detection.framework,
+        surface: deterministicFindings.detection.surface,
+        languages: deterministicFindings.detection.languages.map((language) => ({
           name: language.name,
           support: language.support,
           file_count: language.files.length,
         })),
       },
-      findings: trace.findings.map(submissionFinding),
-      checks_executed: trace.checks_executed.map(submissionCheck),
-      // Keep free-text justifications local; only submit suppression linkage and provenance.
-      suppressions: trace.suppressions.map((suppression) => ({
-        id: suppression.id,
-        finding_fingerprint: suppression.finding_fingerprint,
-        provenance: {
-          source: suppression.provenance.source,
-          created_at: suppression.provenance.created_at,
-        },
-      })),
+      findings: deterministicFindings.findings.map(submissionFinding),
+      checks_executed: deterministicFindings.checks_executed.map(submissionCheck),
       coverage: {
-        files_scanned: trace.coverage.files_scanned,
-        complete: trace.coverage.complete,
-        files_skipped: skippedFileCounts(trace),
-        gaps: trace.coverage.gaps.map((gap) => ({
+        files_scanned: deterministicFindings.coverage.files_scanned,
+        files_skipped: skippedFileCounts(deterministicFindings),
+        gaps: deterministicFindings.coverage.gaps.map((gap) => ({
           code: gap.code,
           ...(gap.check_id === undefined ? {} : {check_id: gap.check_id}),
         })),
       },
-      attestation: {trace_digest: trace.attestation.digest},
     },
   }
 }

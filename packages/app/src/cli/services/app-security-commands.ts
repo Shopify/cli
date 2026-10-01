@@ -1,4 +1,3 @@
-import {appSecurityArtifactPaths} from './app-security-artifacts.js'
 import {getAppConfigurationShorthand} from '../models/app/config-file-naming.js'
 
 export type AppSecurityShell = 'posix' | 'cmd' | 'powershell'
@@ -9,44 +8,45 @@ type AppSecurityArgument = string | {flag: string; value: string}
 export interface AppSecurityCommand {
   command: string
   args: AppSecurityArgument[]
+  /** A placeholder for the file piped to the command's stdin. It's shown unquoted so it reads as a placeholder. */
+  stdinPlaceholder?: string
 }
 
 export interface AppSecurityCommands {
   scan: AppSecurityCommand
-  compile: AppSecurityCommand
+  record: AppSecurityCommand
+  review: AppSecurityCommand
   clean: AppSecurityCommand
 }
 
-/** `ignorePatterns` are repeated on every command: a compile must discover the same files as its scan. */
+/** `ignorePatterns` are repeated on scan so that rerunning the check discovers the same files. */
 export function resolveAppSecurityCommands(
   appRoot: string,
   configFileName?: string,
   ignorePatterns: ReadonlyArray<string> = [],
 ): AppSecurityCommands {
-  const {findingsPath} = appSecurityArtifactPaths(appRoot)
   const configFlag = configFileName ? getAppConfigurationShorthand(configFileName) : undefined
-  const scan: AppSecurityCommand = {
-    command: 'shopify',
-    args: [
-      'app',
-      'security',
-      'check',
-      {flag: '--path', value: appRoot},
-      ...(configFlag ? [{flag: '--config', value: configFlag}] : []),
-      ...ignorePatterns.map((ignorePattern) => ({flag: '--ignore', value: ignorePattern})),
-    ],
-  }
+  const command = 'shopify'
+  // Only check reads the app configuration and discovers files, so it's the only command that takes --config or --ignore.
+  const subcommandArgs = (subcommand: string): AppSecurityArgument[] => [
+    'app',
+    'security',
+    subcommand,
+    {flag: '--path', value: appRoot},
+  ]
 
   return {
-    scan,
-    compile: {
-      command: scan.command,
-      args: [...scan.args, {flag: '--findings', value: findingsPath}],
+    scan: {
+      command,
+      args: [
+        ...subcommandArgs('check'),
+        ...(configFlag ? [{flag: '--config', value: configFlag}] : []),
+        ...ignorePatterns.map((ignorePattern) => ({flag: '--ignore', value: ignorePattern})),
+      ],
     },
-    clean: {
-      command: scan.command,
-      args: [...scan.args, '--clean'],
-    },
+    record: {command, args: subcommandArgs('record'), stdinPlaceholder: '<findings.json>'},
+    review: {command, args: subcommandArgs('review')},
+    clean: {command, args: subcommandArgs('clean')},
   }
 }
 
@@ -94,10 +94,38 @@ function quoteCmdSegment(part: string): string {
   return `"${escapedQuotes}${trailingBackslashes}"`
 }
 
+/**
+ * Renders a command for the given shell. A command that reads stdin is shown reading its placeholder file:
+ * redirected with `<` in POSIX shells and cmd.exe, and piped from `Get-Content -Raw` in PowerShell,
+ * which has no `<` redirection.
+ */
 export function formatAppSecurityCommand(
   action: AppSecurityCommand,
   shell: AppSecurityShell = shellForPlatform(),
 ): string {
+  const commandLine = formatCommandLine(action, shell)
+  if (!action.stdinPlaceholder) return commandLine
+  if (shell === 'powershell') return `Get-Content -Raw ${action.stdinPlaceholder} | ${commandLine}`
+  return `${commandLine} < ${action.stdinPlaceholder}`
+}
+
+/**
+ * Renders a command that reads `document` inline from stdin: a quoted heredoc in POSIX shells and a
+ * literal here-string in PowerShell. Both keep the shell from expanding anything inside the document.
+ * Returns undefined for cmd.exe, which can't pipe multi-line text inline.
+ */
+export function formatAppSecurityInlineStdinCommand(
+  action: AppSecurityCommand,
+  document: string,
+  shell: AppSecurityShell = shellForPlatform(),
+): string | undefined {
+  const commandLine = formatCommandLine(action, shell)
+  if (shell === 'posix') return `${commandLine} <<'EOF'\n${document}\nEOF`
+  if (shell === 'powershell') return `@'\n${document}\n'@ | ${commandLine}`
+  return undefined
+}
+
+function formatCommandLine(action: AppSecurityCommand, shell: AppSecurityShell): string {
   const words = action.args.map((argument) =>
     typeof argument === 'string' ? argument : `${argument.flag} ${quoteShellArgument(argument.value, shell)}`,
   )

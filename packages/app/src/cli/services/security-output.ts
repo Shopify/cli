@@ -22,14 +22,9 @@ export interface SecurityReportInput {
   verbose: boolean
   elapsedMilliseconds: number
   commands: AppSecurityCommands
-  tracePath: string
-  reviewPath?: string
-  reviewCheckCount?: number
-  findings?: {
-    accepted: number
-    rejected: string[]
-    warnings?: string[]
-  }
+  deterministicFindingsPath: string
+  agentChecksPath: string
+  agentCheckCount: number
 }
 
 type SecurityAlertType = 'success' | 'warning' | 'error'
@@ -52,12 +47,16 @@ export function buildSecurityAlert(input: SecurityReportInput): SecurityAlert {
     options: {
       headline: securityHeadline(input, groups),
       body: securityBody(input),
-      ...(input.findings ? {} : {nextSteps: securityNextSteps(input.commands)}),
       reference: [
         {subdued: `Engine: ${input.engine.name} ${input.engine.version}`},
         {subdued: `Ruleset: ${input.engine.ruleset}`},
         ...(groups.some((group) => group.issues.length > 1) && !input.verbose
-          ? [{subdued: 'Use --verbose for every occurrence and fix. The trace retains all file and line details.'}]
+          ? [
+              {
+                subdued:
+                  'Use --verbose for every occurrence and fix. deterministic-findings.json retains all file and line details.',
+              },
+            ]
           : []),
       ],
       customSections: securityCustomSections(input, groups),
@@ -79,11 +78,10 @@ export function renderSecurityReport(input: SecurityReportInput): void {
 }
 
 function coverageIncomplete(input: SecurityReportInput): boolean {
-  return !input.scan.scan.coverage_complete || input.scan.scan.coverage_gaps.length > 0
+  return input.scan.scan.coverage_gaps.length > 0
 }
 
 function securityAlertType(input: SecurityReportInput): SecurityAlertType {
-  if (input.findings && input.findings.rejected.length > 0) return 'error'
   if (input.scan.issues.some((issue) => issue.severity === 'high')) return 'error'
   if (input.scan.issues.length > 0) return 'warning'
   if (coverageIncomplete(input)) return 'warning'
@@ -91,10 +89,6 @@ function securityAlertType(input: SecurityReportInput): SecurityAlertType {
 }
 
 function securityHeadline(input: SecurityReportInput, groups: IssueGroup[]): string {
-  if (input.findings && input.findings.rejected.length > 0) {
-    return 'App Security could not compile some agent findings.'
-  }
-
   const count = input.scan.issues.length
   if (groups.length < count) {
     return `${groups.length} security issue ${groups.length === 1 ? 'group' : 'groups'} found (${count} occurrences).`
@@ -117,18 +111,18 @@ function securityBody(input: SecurityReportInput): TokenItem {
     tokens.push({info: `\n${notApplicable} check${notApplicable === 1 ? '' : 's'} not applicable.`})
   }
 
-  if (input.reviewCheckCount !== undefined) {
-    tokens.push({
-      info: `\n${input.reviewCheckCount} check${input.reviewCheckCount === 1 ? '' : 's'} ready for your coding agent.`,
-    })
-  }
+  tokens.push({
+    info: `\n${input.agentCheckCount} check${input.agentCheckCount === 1 ? '' : 's'} ready for your coding agent.`,
+  })
 
   return tokens
 }
 
-function securityNextSteps(commands: AppSecurityCommands): TokenItem<InlineToken>[] {
+function securityNextSteps(input: SecurityReportInput): TokenItem<InlineToken>[] {
   return [
-    ['Investigate the review pack, then compile the trace with', {command: formatAppSecurityCommand(commands.compile)}],
+    ['Have your coding agent read', {filePath: input.agentChecksPath}],
+    ['Record the agent results with', {command: formatAppSecurityCommand(input.commands.record)}],
+    ['Review the results with', {command: formatAppSecurityCommand(input.commands.review)}],
   ]
 }
 
@@ -160,29 +154,22 @@ function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]
     sections.push({title: 'Coverage gaps', body: {list: {items}}})
   }
 
-  if (input.findings) {
-    const items: TokenItem<InlineToken>[] = [
-      input.findings.accepted === 0 && input.findings.rejected.length > 0
-        ? 'No agent findings were merged.'
-        : `Merged ${input.findings.accepted} agent finding(s) into the trace.`,
-      ...input.findings.rejected.map((reason) => ({error: `Rejected: ${reason}`})),
-      ...(input.findings.warnings ?? []).map((reason) => ({warn: reason})),
-      ['Trace written to', {filePath: input.tracePath}],
-    ]
-    sections.push({title: 'Agent findings', body: {list: {items}}})
-  } else if (input.reviewPath) {
-    sections.push({
-      title: 'Artifacts',
-      body: {
-        list: {
-          items: [
-            ['Review pack:', {filePath: input.reviewPath}],
-            ['Trace:', {filePath: input.tracePath}],
-          ],
-        },
+  sections.push({
+    title: 'Artifacts',
+    body: {
+      list: {
+        items: [
+          ['Scan results:', {filePath: input.deterministicFindingsPath}],
+          ['Agent checks:', {filePath: input.agentChecksPath}],
+        ],
       },
-    })
-  }
+    },
+  })
+
+  sections.push({
+    title: 'Next steps',
+    body: {list: {items: securityNextSteps(input), ordered: true}},
+  })
 
   if (input.verbose) {
     sections.push({
@@ -199,8 +186,6 @@ function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]
           ['Capabilities', formatCapabilities(input.scan.capabilities)],
           ['Rules run', String(input.scan.scan.rules_run)],
           ['Not run', String(input.scan.scan.rules_skipped)],
-          ['Input hash', input.scan.scan.input_hash],
-          ['Result hash', input.scan.scan.result_hash],
         ],
         firstColumnSubdued: true,
       },

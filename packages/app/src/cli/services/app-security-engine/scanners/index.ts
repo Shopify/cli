@@ -32,11 +32,10 @@ import {scanExpiringOfflineTokens} from '../rules/token-rules.js'
 import {scanStaticFrameAncestors} from '../rules/csp-rules.js'
 import {scanDependencyAutomation} from '../rules/dependency-automation-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
-import {redactIssue} from '../trace/index.js'
+import {redactIssue} from '../scan-artifact/index.js'
 import {getEngineVersion} from '../version.js'
 import {getAppConfigurationFileName} from '../../../models/app/config-file-naming.js'
-import {basename, joinPath, relativePath} from '@shopify/cli-kit/node/path'
-import {sha256} from '@shopify/cli-kit/node/crypto'
+import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import type {Rule, ScanContext} from '../rules/types.js'
 import type {RunnerImplementationResult, RunnerResult, SourceFile} from './types.js'
@@ -47,6 +46,7 @@ import type {
   CheckExecutionStatus,
   CoverageGap,
   Issue,
+  ProjectState,
   ScanOptions,
   ScanResult,
   SkippedFile,
@@ -67,10 +67,9 @@ export interface DeterministicCheckDefinition {
   id: string
   version: number
   lifecycle: 'active' | 'planned' | 'investigate'
-  analysisMode: Extract<AnalysisMode, 'regex' | 'structured_config' | 'ast'>
+  analysisMode: AnalysisMode
   target: CheckTarget
   requires?: keyof ScanContext['capabilities']
-  guidance: string
   extensions?: string[]
   runner?: Runner
 }
@@ -84,7 +83,6 @@ const configRule = (rule: Rule, version = 1): DeterministicCheckDefinition => ({
   analysisMode: 'structured_config',
   target: 'config',
   requires: rule.requires,
-  guidance: `Review ${rule.id} in the selected shopify.app*.toml file and resolve any parse error.`,
   runner: (context) => rule.check(context),
 })
 
@@ -100,7 +98,6 @@ const jsCheck = (
   analysisMode: 'regex',
   target,
   extensions: JAVASCRIPT_EXTENSIONS,
-  guidance: `Review ${id} using the matching version ${version} agent prompt; trace aliases, computed access, and non-local flows in the listed files.`,
   runner,
 })
 
@@ -113,8 +110,6 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     lifecycle: 'active',
     analysisMode: 'structured_config',
     target: 'dependency_automation',
-    guidance:
-      'Resolve unreadable configuration files. Repository-level configuration is not inspected for nested apps; verify existing dependency automation manually.',
     runner: (context) => scanDependencyAutomation(context),
   },
   {
@@ -124,21 +119,15 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     analysisMode: 'regex',
     target: 'config_and_source',
     extensions: JAVASCRIPT_EXTENSIONS,
-    guidance:
-      'Inspect the selected shopify.app*.toml and high-signal React Router shopify.server ApiVersion declarations using the matching version 1 agent prompt.',
     runner: (context) => scanEolApiVersions(context),
   },
   {
     ...jsCheck('EXPIRING_OFFLINE_TOKEN', (context) => scanExpiringOfflineTokens(context)),
     extensions: [...JAVASCRIPT_EXTENSIONS, '.prisma'],
-    guidance:
-      'Review offline-token feature configuration, session storage refresh metadata, and ambiguous setup using the matching version 1 agent prompt.',
   },
   {
     ...jsCheck('UNAUTHENTICATED_ENDPOINT', (context) => scanUnauthenticatedEndpoints(context.sourceFiles), 'source', 2),
     requires: 'has_backend',
-    guidance:
-      'Trace context.shopify.authenticate.admin in the listed routes with the matching agent prompt. Confirm the context origin, completed request verification, and protected operations; the syntax hint is not a pass.',
   },
   jsCheck(
     'REQUEST_CONTROLLED_ADMIN_CONTEXT',
@@ -163,7 +152,6 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     lifecycle: 'active',
     analysisMode: 'regex',
     target: 'secrets',
-    guidance: "Review secret-bearing files and rotate any exposed credential; don't include secret values in evidence.",
     runner: (context) => scanCommittedSecrets(context.sensitiveFiles, context.appRoot, context.gitIgnoreListing),
   },
   jsCheck('CREDENTIAL_LOG_LEAKAGE', (context) => scanCredentialLogLeakage(context.sourceFiles)),
@@ -176,8 +164,6 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     target: 'theme',
     requires: 'theme_app_extension',
     extensions: ['.liquid', '.html'],
-    guidance:
-      'Use the matching version 1 prompt to inspect metafield and block/section setting output in files the Liquid parser could not parse.',
     runner: (context) => liquidRunner(context, 'LIQUID_UNSAFE_RENDER'),
   },
   {
@@ -287,7 +273,6 @@ function unsafeInnerHtmlRunner(context: ScanContext): RunnerResult {
   }
   return {
     issues,
-    implementations,
     inspectedFiles: [...new Set(implementations.flatMap((implementation) => implementation.inspectedFiles))],
     ...(implementations.some((implementation) => implementation.status === 'unresolved')
       ? {
@@ -353,7 +338,8 @@ function reactRouterFiles(context: ScanContext): SourceFile[] {
   return appSourceFiles(context)
 }
 
-async function gitProject(appRoot: string): Promise<ScanResult['project']> {
+/** Read the git commit and dirty state of an app root. Both are null when git can't answer. */
+export async function readProjectState(appRoot: string): Promise<ProjectState> {
   const run = async (args: string[]): Promise<{exitCode: number; stdout: string} | undefined> => {
     try {
       return await captureOutputWithExitCode('git', args, {cwd: appRoot})
@@ -632,10 +618,11 @@ export async function scan(
 
   let issues: Issue[] = []
   const checksExecuted: CheckExecution[] = []
+  // Only required checks that could not run are reported as coverage gaps.
+  const requiredCheckIds = new Set<string>()
   for (const definition of DETERMINISTIC_CHECKS.values()) {
     let disposition = executionDisposition(definition, context)
     let inspectedFiles = disposition.status === 'unsupported_framework' ? [] : selectedFiles(definition, context)
-    let implementations: RunnerImplementationResult[] | undefined
     const before = issues.length
     const rejectedInputs = skippedInputsForCheck(definition, context, getSkippedFiles())
     const suppressRunnerForRejectedInput = definition.target === 'dependency_automation' && rejectedInputs.length > 0
@@ -647,7 +634,6 @@ export async function scan(
       // eslint-disable-next-line no-await-in-loop
       const output = normalizeRunnerResult(await definition.runner(runnerContext(definition, context)))
       if (definition.target !== 'dependency_automation' || !output.unresolvedReason) issues.push(...output.issues)
-      implementations = output.implementations
       if (output.inspectedFiles) inspectedFiles = output.inspectedFiles
       if (output.unresolvedReason)
         disposition = {
@@ -663,19 +649,8 @@ export async function scan(
     if (disposition.status !== 'unsupported_framework' && rejectedInputs.length > 0) {
       const reason = skippedInputReason(definition, rejectedInputs)
       disposition = {status: 'unresolved', required: true, applicable: true, reason}
-      if (implementations)
-        implementations = [
-          ...implementations,
-          {
-            id: 'safe-read-coverage',
-            analysisMode: definition.analysisMode,
-            status: 'unresolved',
-            inspectedFiles: [],
-            findings: 0,
-            reason,
-          },
-        ]
     }
+    if (disposition.required) requiredCheckIds.add(definition.id)
     const languages = [
       ...new Set(
         inspectedFiles.map((path) => languageForPath(path, context)).filter((value): value is string => Boolean(value)),
@@ -686,7 +661,6 @@ export async function scan(
       version: definition.version,
       kind: 'deterministic',
       status: disposition.status,
-      required: disposition.required,
       applicable: disposition.applicable,
       languages,
       framework: detection.framework,
@@ -695,48 +669,15 @@ export async function scan(
       findings: issues.length - before,
       analysis_mode: definition.analysisMode,
       ...(disposition.reason ? {reason: disposition.reason} : {}),
-      ...(disposition.status === 'unsupported_framework' || disposition.status === 'unresolved'
-        ? {guidance: definition.guidance}
-        : {}),
-      ...(implementations
-        ? {
-            implementations: implementations.map((implementation) => ({
-              id: implementation.id,
-              analysis_mode: implementation.analysisMode,
-              status: implementation.status,
-              inspected_files: implementation.inspectedFiles,
-              findings: implementation.findings,
-              ...(implementation.reason ? {reason: implementation.reason} : {}),
-            })),
-          }
-        : {}),
     })
   }
 
   const versionById = new Map(
     [...DETERMINISTIC_CHECKS.values()].map((definition) => [definition.id, definition.version]),
   )
-  issues = issues.map((issue) =>
-    redactIssue({...issue, found_by: 'static', rule_version: versionById.get(issue.id) ?? 1}),
-  )
+  issues = issues.map((issue) => redactIssue({...issue, rule_version: versionById.get(issue.id) ?? 1}))
   for (const execution of checksExecuted)
-    execution.findings = issues.filter((issue) => issue.id === execution.id && issue.found_by === 'static').length
-
-  const fileHashMap: Record<string, string> = {}
-  for (const file of [...sourceFiles, ...sensitiveFiles])
-    if (file.content !== undefined) fileHashMap[redactText(file.path)] = contentDigest(file.content)
-  const configFiles = [
-    ...appTomls.map((toml) => ({absolutePath: toml.path, content: toml.content})),
-    ...extensions.map((extension) => ({absolutePath: joinPath(appRoot, extension.path), content: extension.content})),
-    ...manifests.map((manifest) => ({absolutePath: manifest.absolutePath, content: manifest.content})),
-    ...dependencyAutomation.files.map((file) => ({absolutePath: joinPath(appRoot, file.path), content: file.content})),
-  ]
-  for (const {absolutePath, content} of configFiles)
-    if (content !== undefined) {
-      const relativeFilePath = relativePath(appRoot, absolutePath)
-      const path = redactText(relativeFilePath.length > 0 ? relativeFilePath : basename(absolutePath))
-      fileHashMap[path] ??= contentDigest(content)
-    }
+    execution.findings = issues.filter((issue) => issue.id === execution.id).length
 
   const skippedFiles = [
     ...new Map(
@@ -763,7 +704,8 @@ export async function scan(
         }),
       ),
     ...checksExecuted.flatMap((execution): CoverageGap[] =>
-      !execution.required || (execution.status !== 'unsupported_framework' && execution.status !== 'unresolved')
+      !requiredCheckIds.has(execution.id) ||
+      (execution.status !== 'unsupported_framework' && execution.status !== 'unresolved')
         ? []
         : [
             {
@@ -779,8 +721,6 @@ export async function scan(
     sourceFiles.filter((file) => file.content !== undefined).length,
     rulesRun,
     checksExecuted.length - rulesRun,
-    issues,
-    fileHashMap,
     skippedFiles,
     checksExecuted,
     coverageGaps,
@@ -788,16 +728,11 @@ export async function scan(
   return {
     version: getEngineVersion(),
     timestamp: new Date().toISOString(),
-    project: await gitProject(appRoot),
+    project: await readProjectState(appRoot),
     app: {name: redactText(String(appToml?.raw.name ?? 'Unknown')), type: 'public'},
     capabilities,
     detection,
     scan: scanMetadata,
     issues,
   }
-}
-
-function contentDigest(content: string | Buffer): string {
-  const value = typeof content === 'string' ? content : content.toString('utf8')
-  return `sha256:${sha256(value).toString('hex')}`
 }

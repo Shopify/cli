@@ -1,39 +1,20 @@
-import type {AppSecurityEngineMetadata, AppSecurityExecution, AppSecurityFindings} from './app-security-api.js'
-import type {ReviewPack, ScanResult, TraceV3} from './app-security-engine/index.js'
+import type {AppSecurityEngineMetadata, AppSecurityExecution} from './app-security-api.js'
+import type {DeterministicFindingsDocument} from './app-security-engine/index.js'
 
-type AppSecurityJsonResult =
-  | {
-      operation: 'scan'
-      engine: AppSecurityEngineMetadata
-      scan: ScanResult
-      trace: TraceV3
-      reviewPack: ReviewPack
-    }
-  | {
-      operation: 'compile'
-      engine: AppSecurityEngineMetadata
-      scan: ScanResult
-      trace: TraceV3
-      findings: AppSecurityFindings
-    }
+interface AppSecurityJsonResult {
+  engine: AppSecurityEngineMetadata
+  deterministic_findings: DeterministicFindingsDocument
+  agent_checks_path: string
+}
 
-export function toSecurityJson(execution: AppSecurityExecution): AppSecurityJsonResult {
-  if (execution.operation === 'scan') {
-    return {
-      operation: 'scan',
-      engine: execution.engine,
-      scan: execution.scan,
-      trace: execution.trace,
-      reviewPack: execution.reviewPack,
-    }
-  }
-
+export function toSecurityJson(
+  execution: Pick<AppSecurityExecution, 'engine' | 'artifact'>,
+  agentChecksPath: string,
+): AppSecurityJsonResult {
   return {
-    operation: 'compile',
     engine: execution.engine,
-    scan: execution.scan,
-    trace: execution.trace,
-    findings: execution.findings,
+    deterministic_findings: execution.artifact,
+    agent_checks_path: agentChecksPath,
   }
 }
 

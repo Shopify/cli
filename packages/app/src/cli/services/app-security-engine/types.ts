@@ -10,19 +10,14 @@ export interface Issue {
   snippet?: string
   fix: Fix
   confidence?: Confidence
-  found_by?: 'static' | 'agent' | 'external'
   rule_version?: number
   evidence?: FindingEvidence[]
-  check_version?: number
-  prompt_hash?: string
-  agent_confidence?: 'high' | 'medium' | 'low'
-  agent_reasoning?: string
   detection_evidence?: string[]
 }
 
 export type Severity = 'high' | 'medium' | 'low'
 
-export type Confidence = 'definite' | 'needs_review' | 'agentic'
+export type Confidence = 'definite' | 'needs_review'
 
 export interface Location {
   file: string
@@ -76,13 +71,16 @@ export interface ScanOptions {
   ignorePatterns?: ReadonlyArray<string>
 }
 
+/** Git state of an app root. Display only: nothing compares it with the current source. */
+export interface ProjectState {
+  commit: string | null
+  dirty: boolean | null
+}
+
 export interface ScanResult {
   version: string
   timestamp: string
-  project: {
-    commit: string | null
-    dirty: boolean | null
-  }
+  project: ProjectState
   app: {
     name: string
     type: string
@@ -100,9 +98,9 @@ export interface SkippedFile {
   detail?: string
 }
 
-export type CheckExecutionKind = 'deterministic' | 'agent' | 'external'
+export type CheckExecutionKind = 'deterministic'
 export type CheckExecutionStatus = 'executed' | 'not_applicable' | 'unsupported_framework' | 'unresolved'
-export type AnalysisMode = 'regex' | 'structured_config' | 'ast' | 'agent' | 'external'
+export type AnalysisMode = 'regex' | 'structured_config' | 'ast'
 
 export type CheckExecutionReasonCode =
   | 'capability_absent'
@@ -111,22 +109,11 @@ export type CheckExecutionReasonCode =
   | 'unsupported_language'
   | 'parser_unavailable'
   | 'agent_investigation_required'
-  | 'not_reported'
   | 'input_rejected'
 
 export interface CheckExecutionReason {
   code: CheckExecutionReasonCode
   message: string
-}
-
-export interface CheckImplementationExecution {
-  /** Stable runner identity within a product check. */
-  id: string
-  analysis_mode: AnalysisMode
-  status: CheckExecutionStatus
-  inspected_files: string[]
-  findings: number
-  reason?: CheckExecutionReason
 }
 
 export interface CheckExecution {
@@ -135,7 +122,6 @@ export interface CheckExecution {
   version: number
   kind: CheckExecutionKind
   status: CheckExecutionStatus
-  required: boolean
   applicable: boolean
   languages: string[]
   framework: DetectedFramework
@@ -144,12 +130,6 @@ export interface CheckExecution {
   findings: number
   analysis_mode: AnalysisMode
   reason?: CheckExecutionReason
-  /** Exact semantic prompt and handoff guidance for agent implementations. */
-  prompt?: string
-  guidance?: string
-  prompt_hash?: string
-  /** Deterministic runner provenance when one product check has multiple implementations. */
-  implementations?: CheckImplementationExecution[]
 }
 
 export interface CoverageGap {
@@ -167,47 +147,26 @@ export interface ScanMetadata {
   rules_skipped: number
   files_skipped_count: number
   files_skipped?: SkippedFile[]
-  coverage_complete: boolean
   coverage_gaps: CoverageGap[]
-  input_hash: string
-  result_hash: string
-  file_hashes?: Record<string, string>
   checks_executed: CheckExecution[]
 }
 
-export const TRACE_SCHEMA_VERSION = 3 as const
-export const FINDINGS_SCHEMA_VERSION = 1 as const
-export const SUPPORTED_TRACE_SCHEMA_VERSIONS = [TRACE_SCHEMA_VERSION] as const
+export const DETERMINISTIC_FINDINGS_SCHEMA_VERSION = 1 as const
+export const AGENT_CHECKS_SCHEMA_VERSION = 1 as const
+/** Schema version of the findings document an agent pipes to `app security record`. */
+export const RECORD_INPUT_SCHEMA_VERSION = 1 as const
+export const AGENT_FINDINGS_SCHEMA_VERSION = 1 as const
 export const ENGINE_NAME = 'shopify-app-security' as const
-
-export type FindingSource = 'deterministic' | 'agent' | 'external'
 
 export interface FindingEvidence {
   location: Location
   quote?: string
 }
 
-export interface SuppressionProvenance {
-  source: 'human' | 'policy' | 'external'
-  actor?: string
-  created_at: string
-}
-
-export interface Suppression {
-  id: string
-  finding_fingerprint: string
-  justification: string
-  provenance: SuppressionProvenance
-}
-
-export interface TraceFinding {
-  fingerprint: string
-  source: FindingSource
-  rule_id?: string
-  rule_version?: number
-  check_id?: string
-  check_version?: number
-  prompt_hash?: string
+/** A deterministic finding as stored in deterministic-findings.json. It carries everything needed to display it. */
+export interface DeterministicFinding {
+  rule_id: string
+  rule_version: number
   severity: Severity
   title: string
   message: string
@@ -215,40 +174,93 @@ export interface TraceFinding {
   evidence: FindingEvidence[]
   snippet?: string
   fix: Fix
-  suppressed: boolean
-  suppression?: {
-    id: string
-    justification: string
-    provenance: SuppressionProvenance
-  }
 }
 
-export interface TraceV3 {
-  schema_version: typeof TRACE_SCHEMA_VERSION
+/** A deterministic check execution as stored in deterministic-findings.json. */
+export interface DeterministicCheckExecution {
+  id: string
+  version: number
+  status: CheckExecutionStatus
+  applicable: boolean
+  analysis_mode: AnalysisMode
+  findings: number
+  reason?: CheckExecutionReason
+}
+
+/** deterministic-findings.json: the deterministic results of one `app security check` run. */
+export interface DeterministicFindingsDocument {
+  schema_version: typeof DETERMINISTIC_FINDINGS_SCHEMA_VERSION
   engine: {
     name: typeof ENGINE_NAME
     version: string
     ruleset: string
   }
   generated_at: string
-  project: {
-    commit: string | null
-    dirty: boolean | null
-    input_hash: string
-    input_hashes: Record<string, string>
-  }
+  project: ProjectState
   detection: ProjectDetection
-  findings: TraceFinding[]
-  checks_executed: CheckExecution[]
-  suppressions: Suppression[]
+  findings: DeterministicFinding[]
+  checks_executed: DeterministicCheckExecution[]
   coverage: {
     files_scanned: number
     files_skipped: SkippedFile[]
-    complete: boolean
     gaps: CoverageGap[]
   }
-  attestation: {
-    digest: string
-    signed: false
+}
+
+export type AgentCheckStatus = Extract<CheckExecutionStatus, 'executed' | 'not_applicable' | 'unresolved'>
+
+/** Why an agent check is unresolved or not applicable, in the agent's words (redacted). */
+export interface AgentCheckReason {
+  code: string
+  message: string
+}
+
+export interface AgentFindingEvidence {
+  file: string
+  line?: number
+  quote?: string
+}
+
+/** One agent finding as stored in agent-findings.json. All text is redacted. */
+export interface AgentFindingsFinding {
+  file: string
+  line: number
+  message: string
+  evidence: AgentFindingEvidence[]
+  snippet?: string
+  confidence?: 'high' | 'medium' | 'low'
+  reasoning?: string
+  suppression?: {justification: string}
+}
+
+/** Check metadata copied when `record` runs, so the artifact never needs the current catalog to be displayed. */
+export interface AgentCheckSnapshot {
+  title: string
+  severity: Severity
+  description: string
+  guide?: string
+  /** The check's version in the catalog at record time. The agent's claimed version is `AgentFindingsCheck.version`. */
+  current_version: number
+}
+
+export interface AgentFindingsCheck {
+  id: string
+  /** The version the agent claimed. Never compared with the catalog. */
+  version: number
+  status: AgentCheckStatus
+  reason?: AgentCheckReason
+  snapshot: AgentCheckSnapshot
+  findings: AgentFindingsFinding[]
+}
+
+/** agent-findings.json: the validated agentic results written by `app security record`. */
+export interface AgentFindingsArtifact {
+  schema_version: typeof AGENT_FINDINGS_SCHEMA_VERSION
+  engine: {
+    name: typeof ENGINE_NAME
+    version: string
   }
+  recorded_at: string
+  project: ProjectState
+  checks: AgentFindingsCheck[]
 }

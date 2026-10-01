@@ -40,10 +40,7 @@ export function renderSecuritySubmitResult(result: SecuritySubmitResult): void {
 function findingsSummary(submission: AppSecuritySubmission): string {
   const count = (severity: 'high' | 'medium' | 'low') =>
     submission.report.findings.filter((finding) => finding.severity === severity).length
-  const suppressed = submission.report.findings.filter((finding) => finding.suppressed).length
-  return `${count('high')} high · ${count('medium')} medium · ${count('low')} low${
-    suppressed === 0 ? '' : ` (${suppressed} suppressed)`
-  }`
+  return `${count('high')} high · ${count('medium')} medium · ${count('low')} low`
 }
 
 function checksSummary(submission: AppSecuritySubmission): string {
@@ -86,9 +83,6 @@ export function renderSecuritySubmitConfirmation(
       ...(input.submission.report.feedback === null ? {} : {Included: ['Optional feedback, sent without redaction']}),
       Excluded: ['file paths, code snippets, evidence, finding messages, commit SHA'],
       Payload: [{filePath: input.submissionPath}],
-      ...(input.submission.report.project.dirty === true
-        ? {Warning: [{warn: 'The trace was generated with uncommitted changes.'}]}
-        : {}),
     },
   })
 }

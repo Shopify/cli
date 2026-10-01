@@ -39,10 +39,7 @@ const scanWithIssues: ScanResult = {
     rules_run: 18,
     rules_skipped: 0,
     files_skipped_count: 0,
-    coverage_complete: true,
     coverage_gaps: [],
-    input_hash: 'sha256:input',
-    result_hash: 'sha256:result',
     checks_executed: [],
   },
   issues: [
@@ -77,9 +74,9 @@ function reportInput(overrides: Partial<SecurityReportInput> = {}): SecurityRepo
     verbose: false,
     elapsedMilliseconds: 125,
     commands: resolveAppSecurityCommands('/tmp/app'),
-    tracePath: '/tmp/app/.shopify/app-security/trace.json',
-    reviewPath: '/tmp/app/.shopify/app-security/review.json',
-    reviewCheckCount: 31,
+    deterministicFindingsPath: '/tmp/app/.shopify/app-security/deterministic-findings.json',
+    agentChecksPath: '/tmp/app/.shopify/app-security/agent-checks.json',
+    agentCheckCount: 31,
     ...overrides,
   }
 }
@@ -118,18 +115,30 @@ describe('buildSecurityAlert', () => {
         ],
       },
     })
-    expect(alert.options.nextSteps).toEqual([
-      [
-        'Investigate the review pack, then compile the trace with',
-        {command: formatAppSecurityCommand(resolveAppSecurityCommands('/tmp/app').compile)},
-      ],
-    ])
-    expect(section(reportInput(), 'Artifacts')?.body).toEqual({
+    const commands = resolveAppSecurityCommands('/tmp/app')
+    expect(alert.options.nextSteps).toBeUndefined()
+    expect(serialized).toContain('31 checks ready for your coding agent.')
+    const customSections = alert.options.customSections ?? []
+    const artifactsIndex = customSections.findIndex((entry) => entry.title === 'Artifacts')
+    expect(customSections[artifactsIndex]?.body).toEqual({
       list: {
         items: [
-          ['Review pack:', {filePath: '/tmp/app/.shopify/app-security/review.json'}],
-          ['Trace:', {filePath: '/tmp/app/.shopify/app-security/trace.json'}],
+          ['Scan results:', {filePath: '/tmp/app/.shopify/app-security/deterministic-findings.json'}],
+          ['Agent checks:', {filePath: '/tmp/app/.shopify/app-security/agent-checks.json'}],
         ],
+      },
+    })
+    expect(customSections[artifactsIndex + 1]).toEqual({
+      title: 'Next steps',
+      body: {
+        list: {
+          items: [
+            ['Have your coding agent read', {filePath: '/tmp/app/.shopify/app-security/agent-checks.json'}],
+            ['Record the agent results with', {command: formatAppSecurityCommand(commands.record)}],
+            ['Review the results with', {command: formatAppSecurityCommand(commands.review)}],
+          ],
+          ordered: true,
+        },
       },
     })
     expect(alert.options.reference).toEqual([
@@ -215,17 +224,25 @@ describe('buildSecurityAlert', () => {
     expect(section(input, 'High')).toBeUndefined()
   })
 
-  test('quotes compile commands for Windows paths with spaces and percents', () => {
+  test('quotes record commands for Windows paths with spaces and percents', () => {
     const commands = resolveAppSecurityCommands('C:/Users/50%/my app')
     const alert = buildSecurityAlert(reportInput({commands}))
-    const compileCommand = formatAppSecurityCommand(commands.compile)
+    const recordCommand = formatAppSecurityCommand(commands.record)
 
-    expect(alert.options.nextSteps).toEqual([
-      ['Investigate the review pack, then compile the trace with', {command: compileCommand}],
-    ])
-    expect(compileCommand).not.toContain('50%%')
-    expect(formatAppSecurityCommand(commands.compile, 'cmd')).toContain('^%')
-    expect(formatAppSecurityCommand(commands.compile, 'powershell')).toContain("'C:/Users/50%/my app'")
+    expect(alert.options.nextSteps).toBeUndefined()
+    expect(section(reportInput({commands}), 'Next steps')?.body).toEqual({
+      list: {
+        items: [
+          ['Have your coding agent read', {filePath: '/tmp/app/.shopify/app-security/agent-checks.json'}],
+          ['Record the agent results with', {command: recordCommand}],
+          ['Review the results with', {command: formatAppSecurityCommand(commands.review)}],
+        ],
+        ordered: true,
+      },
+    })
+    expect(recordCommand).not.toContain('50%%')
+    expect(formatAppSecurityCommand(commands.record, 'cmd')).toContain('^%')
+    expect(formatAppSecurityCommand(commands.record, 'powershell')).toContain("'C:/Users/50%/my app'")
   })
 
   test('adds evidence, fix guidance, and scan details in verbose mode', () => {
@@ -260,7 +277,6 @@ describe('buildSecurityAlert', () => {
         detection: {...scanWithIssues.detection, framework: 'unknown', surface: 'unknown'},
         scan: {
           ...scanWithIssues.scan,
-          coverage_complete: false,
           coverage_gaps: [{code: 'unsupported_framework', message: 'Backend could not be classified.'}],
         },
       },
@@ -286,39 +302,6 @@ describe('buildSecurityAlert', () => {
     expect(alert.type).toBe('warning')
     expect(alert.options.headline).toBe('1 security issue found.')
     expect(section(input, 'Medium')).toBeDefined()
-  })
-
-  test('summarizes compiled agent findings without scan next steps', () => {
-    const input = reportInput({
-      reviewPath: undefined,
-      reviewCheckCount: undefined,
-      findings: {accepted: 1, rejected: ['MISSING_TENANT_ISOLATION: file is outside the app']},
-    })
-    const alert = buildSecurityAlert(input)
-    const serialized = JSON.stringify(alert)
-
-    expect(alert.type).toBe('error')
-    expect(alert.options.headline).toBe('App Security could not compile some agent findings.')
-    expect(alert.options.nextSteps).toBeUndefined()
-    expect(serialized).toContain('Merged 1 agent finding(s) into the trace.')
-    expect(serialized).toContain('Rejected: MISSING_TENANT_ISOLATION: file is outside the app')
-    expect(section(input, 'Agent findings')).toBeDefined()
-  })
-
-  test('does not describe a rejected compile as merged zero findings', () => {
-    const input = reportInput({
-      reviewPath: undefined,
-      reviewCheckCount: undefined,
-      findings: {
-        accepted: 0,
-        rejected: ['MISSING_TENANT_ISOLATION: finding file was not part of the scanned inputs: tests/app.test.ts'],
-        warnings: ['MISSING_TENANT_ISOLATION: ignored inspected file outside the scanned inputs: vitest.config.ts'],
-      },
-    })
-    const serialized = JSON.stringify(buildSecurityAlert(input))
-
-    expect(serialized).toContain('No agent findings were merged.')
-    expect(serialized).toContain('ignored inspected file outside the scanned inputs: vitest.config.ts')
   })
 
   test('renders engine-redacted titles, paths, and verbose evidence unchanged', () => {

@@ -1,0 +1,304 @@
+import {loadChecks, recordAgentFindings, type RecordAgentFindingsOptions} from '../checks/index.js'
+import {RULE_CATALOG} from '../rules/catalog.js'
+import {AGENT_FINDINGS_SCHEMA_VERSION, ENGINE_NAME} from '../types.js'
+import {describe, expect, test} from 'vitest'
+import type {AgentFindingsArtifact} from '../types.js'
+
+const options: RecordAgentFindingsOptions = {
+  engineVersion: '3.99.0',
+  project: {commit: 'abc123', dirty: false},
+  recordedAt: '2026-01-02T03:04:05.000Z',
+}
+
+// Composed at runtime so the literal token never appears in the repository.
+const FAKE_SHOPIFY_TOKEN = ['shpat', '_', '0123456789abcdef'.repeat(2)].join('')
+
+const tenant = loadChecks().get('MISSING_TENANT_ISOLATION')!
+
+function finding(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    check_id: tenant.id,
+    check_version: tenant.version,
+    file: 'app/routes/orders.tsx',
+    line: 12,
+    message: 'Orders are loaded without a shop filter',
+    evidence: [{file: 'app/routes/orders.tsx', line: 12, quote: 'prisma.order.findMany()'}],
+    ...overrides,
+  }
+}
+
+function recordAccepted(document: unknown): AgentFindingsArtifact {
+  const result = recordAgentFindings(document, options)
+  if (!result.ok) throw new Error(`Expected the document to be accepted: ${result.errors.join('; ')}`)
+  return result.artifact
+}
+
+function recordRejected(document: unknown): string[] {
+  const result = recordAgentFindings(document, options)
+  if (result.ok) throw new Error('Expected the document to be rejected')
+  return result.errors
+}
+
+describe('recordAgentFindings', () => {
+  test('accepts a valid document and groups findings under their check', () => {
+    const artifact = recordAccepted({
+      schema_version: 1,
+      checks_executed: [
+        {check_id: tenant.id, check_version: tenant.version, status: 'executed'},
+        {
+          check_id: 'OPEN_REDIRECT',
+          check_version: 1,
+          status: 'not_applicable',
+          reason: {code: 'no_redirects', message: 'The app never redirects'},
+        },
+      ],
+      findings: [
+        finding(),
+        finding({
+          line: 30,
+          snippet: 'db.order.delete()',
+          confidence: 'high',
+          reasoning: 'No session check',
+          suppression: {justification: 'Admin-only route'},
+        }),
+      ],
+    })
+
+    expect(artifact).toMatchObject({
+      schema_version: AGENT_FINDINGS_SCHEMA_VERSION,
+      engine: {name: ENGINE_NAME, version: '3.99.0'},
+      recorded_at: '2026-01-02T03:04:05.000Z',
+      project: {commit: 'abc123', dirty: false},
+    })
+    expect(artifact.checks.map((check) => [check.id, check.status, check.findings.length])).toEqual([
+      [tenant.id, 'executed', 2],
+      ['OPEN_REDIRECT', 'not_applicable', 0],
+    ])
+    expect(artifact.checks[1]!.reason).toEqual({code: 'no_redirects', message: 'The app never redirects'})
+    expect(artifact.checks[0]!.findings[1]).toEqual({
+      file: 'app/routes/orders.tsx',
+      line: 30,
+      message: 'Orders are loaded without a shop filter',
+      evidence: [{file: 'app/routes/orders.tsx', line: 12, quote: 'prisma.order.findMany()'}],
+      snippet: 'db.order.delete()',
+      confidence: 'high',
+      reasoning: 'No session check',
+      suppression: {justification: 'Admin-only route'},
+    })
+  })
+
+  test('defaults recorded_at to the current time', () => {
+    const result = recordAgentFindings({schema_version: 1}, {...options, recordedAt: undefined})
+
+    expect(result.ok && Date.parse(result.artifact.recorded_at)).toBeGreaterThan(0)
+  })
+
+  test('rejects the whole document and reports every error', () => {
+    const errors = recordRejected({
+      schema_version: 2,
+      checks_executed: [
+        {check_id: tenant.id, check_version: 0},
+        {check_id: 'OPEN_REDIRECT', check_version: 1, status: 'unresolved'},
+      ],
+      findings: [finding(), finding({line: 0}), finding({evidence: []})],
+    })
+
+    expect(errors).toEqual([
+      'schema_version must be 1',
+      `checks_executed[0] (${tenant.id}): missing or invalid check_version`,
+      'checks_executed[1] (OPEN_REDIRECT): unresolved requires a reason',
+      `findings[1] (${tenant.id}): invalid line number: 0`,
+      `findings[2] (${tenant.id}): finding requires at least one evidence citation`,
+    ])
+  })
+
+  test('rejects a document that is not an object or has malformed arrays', () => {
+    expect(recordRejected([])).toEqual(['The findings document must be a JSON object.'])
+    expect(recordRejected({schema_version: 1, checks_executed: {}, findings: 'none'})).toEqual([
+      'checks_executed must be an array',
+      'findings must be an array',
+    ])
+  })
+
+  test('rejects an unknown check_id in checks_executed and findings', () => {
+    const errors = recordRejected({
+      schema_version: 1,
+      checks_executed: [{check_id: 'NOT_A_CHECK', check_version: 1, status: 'executed'}],
+      findings: [finding({check_id: 'ALSO_NOT_A_CHECK'})],
+    })
+
+    expect(errors).toEqual([
+      'checks_executed[0] (NOT_A_CHECK): unknown check_id',
+      'findings[0] (ALSO_NOT_A_CHECK): unknown check_id',
+    ])
+  })
+
+  test('keeps the claimed check_version even when it differs from the current version', () => {
+    const claimedVersion = tenant.version + 4
+    const artifact = recordAccepted({
+      schema_version: 1,
+      checks_executed: [{check_id: tenant.id, check_version: claimedVersion, status: 'executed'}],
+      findings: [finding({check_version: claimedVersion})],
+    })
+
+    expect(artifact.checks[0]!.version).toBe(claimedVersion)
+    expect(artifact.checks[0]!.snapshot.current_version).toBe(tenant.version)
+  })
+
+  test('snapshots title, description, and guide from the catalog, and severity and version from the check', () => {
+    const artifact = recordAccepted({
+      schema_version: 1,
+      checks_executed: [{check_id: 'SCOPE_OVER_REQUEST', check_version: 1, status: 'executed'}],
+    })
+    const entry = RULE_CATALOG.find((catalogEntry) => catalogEntry.id === 'SCOPE_OVER_REQUEST')!
+    const check = loadChecks().get('SCOPE_OVER_REQUEST')!
+
+    expect(artifact.checks[0]!.snapshot).toEqual({
+      title: entry.title,
+      severity: check.severity,
+      description: entry.description,
+      guide: entry.guide,
+      current_version: check.version,
+    })
+  })
+
+  test('redacts secrets in every piece of agent text', () => {
+    const artifact = recordAccepted({
+      schema_version: 1,
+      checks_executed: [
+        {
+          check_id: 'OPEN_REDIRECT',
+          check_version: 1,
+          status: 'unresolved',
+          reason: {code: 'needs_runtime', message: `Token ${FAKE_SHOPIFY_TOKEN} is used at runtime`},
+        },
+      ],
+      findings: [
+        finding({
+          file: `app/${FAKE_SHOPIFY_TOKEN}.ts`,
+          message: `Leaks ${FAKE_SHOPIFY_TOKEN}`,
+          snippet: `const token = "${FAKE_SHOPIFY_TOKEN}"`,
+          reasoning: `Found ${FAKE_SHOPIFY_TOKEN}`,
+          suppression: {justification: `Rotated ${FAKE_SHOPIFY_TOKEN}`},
+          evidence: [{file: `config/${FAKE_SHOPIFY_TOKEN}.ts`, line: 1, quote: FAKE_SHOPIFY_TOKEN}],
+        }),
+      ],
+    })
+
+    const serialized = JSON.stringify(artifact)
+    expect(serialized).not.toContain(FAKE_SHOPIFY_TOKEN)
+    expect(serialized).toContain('[REDACTED:')
+    expect(artifact.checks.find((check) => check.id === 'OPEN_REDIRECT')!.reason!.message).toMatch(/REDACTED/)
+  })
+
+  test('rejects a not_applicable check that has findings', () => {
+    const errors = recordRejected({
+      schema_version: 1,
+      checks_executed: [
+        {check_id: tenant.id, check_version: 1, status: 'not_applicable', reason: {code: 'n/a', message: 'No data'}},
+      ],
+      findings: [finding()],
+    })
+
+    expect(errors).toEqual([`checks_executed[0] (${tenant.id}): a not_applicable check can't have findings`])
+  })
+
+  test('rejects an unresolved check without a reason', () => {
+    const errors = recordRejected({
+      schema_version: 1,
+      checks_executed: [{check_id: tenant.id, check_version: 1, status: 'unresolved'}],
+    })
+
+    expect(errors).toEqual([`checks_executed[0] (${tenant.id}): unresolved requires a reason`])
+  })
+
+  test('rejects a duplicate check_id in checks_executed', () => {
+    const entry = {check_id: tenant.id, check_version: 1, status: 'executed'}
+    const errors = recordRejected({schema_version: 1, checks_executed: [entry, entry]})
+
+    expect(errors).toEqual([`checks_executed[1] (${tenant.id}): duplicate check_id in checks_executed`])
+  })
+
+  test('creates an executed entry, using the claimed version, for a finding without a checks_executed entry', () => {
+    const artifact = recordAccepted({
+      schema_version: 1,
+      findings: [finding({check_version: 5}), finding({line: 2, check_version: 5})],
+    })
+
+    expect(artifact.checks).toHaveLength(1)
+    expect(artifact.checks[0]).toMatchObject({id: tenant.id, version: 5, status: 'executed'})
+    expect(artifact.checks[0]!.findings).toHaveLength(2)
+    expect(artifact.checks[0]!.reason).toBeUndefined()
+  })
+
+  test('rejects findings that disagree on check_version', () => {
+    expect(
+      recordRejected({schema_version: 1, findings: [finding({check_version: 1}), finding({check_version: 2})]}),
+    ).toEqual([`${tenant.id}: findings claim different check_version values (1, 2)`])
+    expect(
+      recordRejected({
+        schema_version: 1,
+        checks_executed: [{check_id: tenant.id, check_version: 3, status: 'executed'}],
+        findings: [finding({check_version: 1})],
+      }),
+    ).toEqual([`${tenant.id}: findings claim check_version 1, but its checks_executed entry claims 3`])
+  })
+
+  test('rejects unsafe paths', () => {
+    const errors = recordRejected({
+      schema_version: 1,
+      findings: [
+        finding({file: '../outside.ts'}),
+        finding({file: '/etc/passwd'}),
+        finding({evidence: [{file: 'C:\\Windows\\system.ini', line: 1}]}),
+      ],
+    })
+
+    expect(errors).toEqual([
+      `findings[0] (${tenant.id}): unsafe file path (must be relative and inside the app): ../outside.ts`,
+      `findings[1] (${tenant.id}): unsafe file path (must be relative and inside the app): /etc/passwd`,
+      `findings[2] (${tenant.id}): unsafe evidence file path: C:\\Windows\\system.ini`,
+    ])
+  })
+
+  test('rejects more findings than the cap without validating each one', () => {
+    const errors = recordRejected({schema_version: 1, findings: Array.from({length: 1_001}, () => ({}))})
+
+    expect(errors).toEqual(['findings contains 1001 findings, exceeding the limit of 1000'])
+  })
+
+  test('rejects more checks_executed entries than known checks without validating each one', () => {
+    const checkCount = loadChecks().size
+    const result = recordAgentFindings(
+      {schema_version: 1, checks_executed: Array.from({length: checkCount + 1}, () => ({}))},
+      options,
+    )
+
+    if (result.ok) throw new Error('Expected the document to be rejected')
+    expect(result.errors).toEqual([
+      `checks_executed contains ${checkCount + 1} entries, exceeding the limit of ${checkCount}`,
+    ])
+  })
+
+  test('ignores unknown keys and does not require source_scan_id, prompt_hash, or inspected_files', () => {
+    const artifact = recordAccepted({
+      schema_version: 1,
+      source_scan_id: 'sha256:whatever',
+      extra: {nested: true},
+      checks_executed: [
+        {check_id: tenant.id, check_version: tenant.version, status: 'executed', prompt_hash: 'sha256:old', notes: 'x'},
+      ],
+      findings: [
+        finding({prompt_hash: 'sha256:old', severity: 'low', evidence: [{file: 'app/a.ts', line: 1, extra: 1}]}),
+      ],
+    })
+
+    expect(artifact.checks[0]!.findings[0]).toEqual({
+      file: 'app/routes/orders.tsx',
+      line: 12,
+      message: 'Orders are loaded without a shop filter',
+      evidence: [{file: 'app/a.ts', line: 1}],
+    })
+    expect(JSON.stringify(artifact)).not.toMatch(/source_scan_id|prompt_hash|inspected_files|notes|extra/)
+  })
+})

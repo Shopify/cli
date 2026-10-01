@@ -40,7 +40,7 @@ describe('securitySubmitFailure', () => {
   })
 
   test('does not invent API response state for local errors', () => {
-    const result = securitySubmitFailure(new AbortError('Missing trace'), 'preparation')
+    const result = securitySubmitFailure(new AbortError('Missing scan'), 'preparation')
 
     expect(result?.error).not.toHaveProperty('accepted')
     expect(result?.error).not.toHaveProperty('userErrors')

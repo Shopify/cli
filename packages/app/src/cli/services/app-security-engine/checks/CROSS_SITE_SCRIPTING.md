@@ -101,8 +101,8 @@ same input is used elsewhere.
 
 ## What to report
 
-Use the review pack's current finding and execution schemas, including this
-check's ID, version, and prompt hash. Each finding must include:
+Use the finding and execution schemas in agent checks, including this check's
+ID and version. Each finding must include:
 
 - The controlling principal, entry point, victim interaction, and required access.
 - File/line evidence for input or persistence, transformations, render call,
@@ -123,10 +123,9 @@ executable path, server-side template execution, and unsafe redirects are not
 by themselves proof of XSS. Email/PDF output is not browser script execution
 without evidence of an affected active renderer.
 
-Record the inspected files and review boundary. If a missing producer, renderer,
-sanitizer implementation, or execution context prevents a conclusion, record
-an unresolved check with the review pack's structured reason and actionable
-guidance. Do not turn incomplete tracing into either a finding or a pass.
+If a missing producer, renderer, sanitizer implementation, or execution context
+prevents a conclusion, record an unresolved check with a reason code and
+message. Do not turn incomplete tracing into either a finding or a pass.
 
 ## Optional reference
 

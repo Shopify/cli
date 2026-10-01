@@ -3,6 +3,7 @@ import {appFlags} from '../../../flags.js'
 import securityCheck from '../../../services/security-check.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
@@ -19,6 +20,12 @@ describe('app security check command', () => {
     expect(SecurityCheck.args).not.toHaveProperty('directory')
   })
 
+  test('accepts only the scan flags, with no findings or clean flags', () => {
+    const commandFlags = Object.keys(SecurityCheck.flags).filter((name) => !(name in globalFlags))
+
+    expect(commandFlags.sort()).toEqual(['blocking', 'config', 'ignore', 'json', 'path', 'skip-instructions', 'yes'])
+  })
+
   test('forwards --path and flags to the service', async () => {
     await SecurityCheck.run(
       ['--path', './fixtures/unlinked-app', '--json', '--verbose', '--blocking', 'high', '--skip-instructions'],
@@ -33,8 +40,6 @@ describe('app security check command', () => {
       blocking: 'high',
       yes: false,
       skipInstructions: true,
-      findingsPath: undefined,
-      clean: false,
       ignorePatterns: [],
     })
   })
@@ -85,8 +90,6 @@ describe('app security check command', () => {
       blocking: 'none',
       yes: true,
       skipInstructions: false,
-      findingsPath: undefined,
-      clean: false,
       ignorePatterns: [],
     })
   })
@@ -100,53 +103,27 @@ describe('app security check command', () => {
     expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({configName: 'staging', skipInstructions: true}))
   })
 
-  test('forwards --clean and keeps it mutually exclusive with --findings', async () => {
-    await SecurityCheck.run(['--clean', '--skip-instructions'], import.meta.url)
-
-    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({clean: true, findingsPath: undefined}))
-    expect(SecurityCheck.flags.clean.exclusive).toEqual(['findings'])
+  test.each(['--findings', '--clean'])('rejects the removed %s flag', async (removedFlag) => {
+    await expect(SecurityCheck.run([removedFlag, '--skip-instructions'], import.meta.url)).rejects.toThrow()
   })
 
-  test.each(['true', 'false'])(
-    'ignores an inherited SHOPIFY_FLAG_APP_SECURITY_CLEAN=%s so a plain scan stays non-destructive',
-    async (inheritedValue) => {
-      vi.stubEnv('SHOPIFY_FLAG_APP_SECURITY_CLEAN', inheritedValue)
-      try {
-        expect(SecurityCheck.flags.clean).not.toHaveProperty('env')
-
-        await SecurityCheck.run(['--skip-instructions'], import.meta.url)
-        expect(securityCheck).toHaveBeenLastCalledWith(expect.objectContaining({clean: false}))
-
-        await SecurityCheck.run(['--findings', './findings.json', '--skip-instructions'], import.meta.url)
-        expect(securityCheck).toHaveBeenLastCalledWith(
-          expect.objectContaining({clean: false, findingsPath: resolvePath('./findings.json')}),
-        )
-      } finally {
-        vi.unstubAllEnvs()
-      }
-    },
-  )
-
-  test('resolves and forwards an agent findings file', async () => {
-    await SecurityCheck.run(['--findings', './findings.json', '--skip-instructions'], import.meta.url)
-
-    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({findingsPath: resolvePath('./findings.json')}))
-  })
-
-  test('describes --yes as printing instructions and keeps it mutually exclusive with --skip-instructions', () => {
+  test('describes the artifacts it writes and how agent results are recorded', () => {
     expect(SecurityCheck.flags.yes.description).toBe('Print coding-agent instructions without prompting.')
     expect(SecurityCheck.flags['skip-instructions'].description).toBe("Don't offer to show coding-agent instructions.")
-    expect(SecurityCheck.flags.clean.description).toBe('Discard the current local review and start a new scan.')
     expect(SecurityCheck.flags.yes.exclusive).toEqual(['skip-instructions'])
     expect(SecurityCheck.flags['skip-instructions'].exclusive).toEqual(['yes'])
+    expect(SecurityCheck.summary).toContain('deterministic-findings.json')
+    expect(SecurityCheck.summary).toContain('agent-checks.json')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('`deterministic-findings.json` and `agent-checks.json`')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('`shopify app security record`')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('copy the coding-agent instructions')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('`--config`')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('copying is the default')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('shopify app security instructions')
-    expect(SecurityCheck.descriptionWithMarkdown).toContain('Pass `--clean` to discard that work and start over')
+    expect(SecurityCheck.descriptionWithMarkdown).not.toMatch(/--findings|--clean|compile|trace/)
   })
 
-  test('documents --ignore as ordered .gitignore patterns that follow-up commands repeat', () => {
+  test('documents --ignore as ordered .gitignore patterns that the coding-agent instructions repeat', () => {
     expect(SecurityCheck.flags.ignore.multiple).toBe(true)
     expect(SecurityCheck.flags.ignore.description).toBe(
       'Ignore files that match this .gitignore pattern, relative to the app directory. Start the pattern with ! to include matching files again. Repeat the flag to add patterns; later patterns take precedence.',
@@ -156,7 +133,10 @@ describe('app security check command', () => {
     expect(SecurityCheck.descriptionWithMarkdown).toContain('later patterns take precedence')
     expect(SecurityCheck.descriptionWithMarkdown).toContain("--ignore '!build/'")
     expect(SecurityCheck.descriptionWithMarkdown).toContain('single quotes in POSIX shells and PowerShell')
-    expect(SecurityCheck.descriptionWithMarkdown).toContain('`--findings`')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain(
+      'The coding-agent instructions this check offers repeat the patterns.',
+    )
+    expect(SecurityCheck.descriptionWithMarkdown).toContain("Other `app security` commands don't take `--ignore`")
   })
 
   test('allows --yes in JSON mode while preserving non-interactive output behavior', async () => {

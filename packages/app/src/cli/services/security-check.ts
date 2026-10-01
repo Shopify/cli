@@ -1,31 +1,15 @@
-import {
-  securityExitCode,
-  executeAppSecurity,
-  loadAppSecurityFindings,
-  resolveAppSecurityRoot,
-} from './app-security-api.js'
-import {appSecurityArtifactPaths, readTrace, writeAppSecurityArtifacts} from './app-security-artifacts.js'
-import {requireSecurityConfigFileName, resolveSecurityConfigFileName} from './app-security-config.js'
+import {securityExitCode, executeAppSecurity, resolveAppSecurityRoot} from './app-security-api.js'
+import {writeCheckArtifacts} from './app-security-artifacts.js'
+import {requireSecurityConfigFileName} from './app-security-config.js'
 import deliverAppSecurityInstructions from './app-security-instructions.js'
-import {
-  formatAppSecurityCommand,
-  resolveAppSecurityCommands,
-  type AppSecurityCommands,
-} from './app-security-commands.js'
-import {hasRecordedAgentReview} from './app-security-engine/index.js'
+import {resolveAppSecurityCommands, type AppSecurityCommands} from './app-security-commands.js'
 import {encodeSecurityJson, toSecurityJson} from './security-json.js'
 import {renderSecurityReport} from './security-output.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExists} from '@shopify/cli-kit/node/fs'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
-import type {
-  AppSecurityArtifactPaths,
-  ReadTraceResult,
-  ResolvedAppSecurityArtifactPaths,
-  WriteAppSecurityArtifactsOptions,
-} from './app-security-artifacts.js'
+import type {AppSecurityArtifactPaths} from './app-security-artifacts.js'
+import type {AgentChecks, DeterministicFindingsDocument} from './app-security-engine/index.js'
 import type {AppSecurityBlockingLevel, AppSecurityExecution} from './app-security-api.js'
 import type {SecurityReportInput} from './security-output.js'
 import type {RenderSelectPromptOptions} from '@shopify/cli-kit/node/ui'
@@ -38,28 +22,24 @@ interface SecurityOptions {
   blocking: AppSecurityBlockingLevel
   yes: boolean
   skipInstructions: boolean
-  findingsPath?: string
-  clean: boolean
   ignorePatterns: ReadonlyArray<string>
 }
 
 export type AppSecurityInstructionsDestination = 'copy' | 'print' | 'nothing'
 
+type CheckArtifactPaths = Pick<AppSecurityArtifactPaths, 'deterministicFindingsPath' | 'agentChecksPath'>
+
 interface SecurityDependencies {
   resolveRoot(directory: string): string
-  artifactPaths(appRoot: string): ResolvedAppSecurityArtifactPaths
-  findingsFileExists(path: string): Promise<boolean>
-  readTrace(path: string): Promise<ReadTraceResult>
   execute(options: {
     appRoot: string
-    configName?: string
-    findingsPath?: string
+    configFileName: string
     ignorePatterns: ReadonlyArray<string>
   }): Promise<AppSecurityExecution>
   writeArtifacts(
-    execution: AppSecurityExecution,
-    options: WriteAppSecurityArtifactsOptions,
-  ): Promise<AppSecurityArtifactPaths>
+    appRoot: string,
+    artifacts: {artifact: DeterministicFindingsDocument; agentChecks: AgentChecks},
+  ): Promise<CheckArtifactPaths>
   canPrompt(): boolean
   selectInstructionsDestination(): Promise<AppSecurityInstructionsDestination>
   deliverInstructions(options: {
@@ -85,19 +65,8 @@ export const appSecurityInstructionsPrompt: RenderSelectPromptOptions<AppSecurit
 
 const defaultDependencies: SecurityDependencies = {
   resolveRoot: resolveAppSecurityRoot,
-  artifactPaths: appSecurityArtifactPaths,
-  findingsFileExists: fileExists,
-  readTrace,
-  execute: async ({appRoot, configName, findingsPath, ignorePatterns}) => {
-    const findings = findingsPath ? await loadAppSecurityFindings(findingsPath) : undefined
-    return executeAppSecurity({
-      appRoot,
-      findings,
-      configFileName: requireSecurityConfigFileName(appRoot, configName),
-      ignorePatterns,
-    })
-  },
-  writeArtifacts: writeAppSecurityArtifacts,
+  execute: executeAppSecurity,
+  writeArtifacts: writeCheckArtifacts,
   canPrompt: terminalSupportsPrompting,
   selectInstructionsDestination: () => renderSelectPrompt(appSecurityInstructionsPrompt),
   deliverInstructions: deliverAppSecurityInstructions,
@@ -112,7 +81,7 @@ async function instructionsDestination(
   options: SecurityOptions,
   dependencies: SecurityDependencies,
 ): Promise<AppSecurityInstructionsDestination> {
-  if (options.json || options.skipInstructions || options.findingsPath) return 'nothing'
+  if (options.json || options.skipInstructions) return 'nothing'
   if (options.yes) return 'print'
   if (!dependencies.canPrompt()) return 'nothing'
   return dependencies.selectInstructionsDestination()
@@ -120,7 +89,7 @@ async function instructionsDestination(
 
 function securityReportInput(
   execution: AppSecurityExecution,
-  artifacts: AppSecurityArtifactPaths,
+  artifacts: CheckArtifactPaths,
   verbose: boolean,
   commands: AppSecurityCommands,
 ): SecurityReportInput {
@@ -130,58 +99,32 @@ function securityReportInput(
     verbose,
     elapsedMilliseconds: execution.elapsedMilliseconds,
     commands,
-    tracePath: artifacts.tracePath,
-    reviewPath: artifacts.reviewPath,
-    reviewCheckCount: execution.operation === 'scan' ? execution.reviewPack.checks.length : undefined,
-    findings: execution.operation === 'compile' ? execution.findings : undefined,
+    deterministicFindingsPath: artifacts.deterministicFindingsPath,
+    agentChecksPath: artifacts.agentChecksPath,
+    agentCheckCount: execution.agentChecks.checks.length,
   }
 }
 
-async function assertCanStartScan(
-  paths: ResolvedAppSecurityArtifactPaths,
-  commands: AppSecurityCommands,
-  dependencies: SecurityDependencies,
-): Promise<void> {
-  const traceResult = await dependencies.readTrace(paths.tracePath)
-  if (traceResult.status === 'ok' && hasRecordedAgentReview(traceResult.trace)) {
-    throw new AbortError(
-      'App Security did not start a new scan.',
-      `The existing trace contains agent review results:\n  ${paths.tracePath}\n\nUse the existing trace, or discard the current review and start over:\n  ${formatAppSecurityCommand(commands.clean)}`,
-    )
-  }
-
-  if (await dependencies.findingsFileExists(paths.findingsPath)) {
-    throw new AbortError(
-      'App Security did not start a new scan.',
-      `Agent findings exist at:\n  ${paths.findingsPath}\n\nCompile those findings:\n  ${formatAppSecurityCommand(commands.compile)}\n\nTo discard the current agent findings and start over:\n  ${formatAppSecurityCommand(commands.clean)}`,
-    )
-  }
-}
-
+/**
+ * Scans the app and replaces deterministic-findings.json and agent-checks.json. Scanning never reads or changes the agent's
+ * recorded findings, so it's always safe to run again.
+ */
 export default async function securityCheck(
   options: SecurityOptions,
   dependencies: SecurityDependencies = defaultDependencies,
 ): Promise<void> {
   const appRoot = dependencies.resolveRoot(options.directory)
-  const commands = resolveAppSecurityCommands(
-    appRoot,
-    resolveSecurityConfigFileName(appRoot, options.configName),
-    options.ignorePatterns,
-  )
-  if (!options.findingsPath && !options.clean) {
-    await assertCanStartScan(dependencies.artifactPaths(appRoot), commands, dependencies)
-  }
+  const configFileName = requireSecurityConfigFileName(appRoot, options.configName)
+  const commands = resolveAppSecurityCommands(appRoot, configFileName, options.ignorePatterns)
 
-  const execution = await dependencies.execute({
-    appRoot,
-    configName: options.configName,
-    findingsPath: options.findingsPath,
-    ignorePatterns: options.ignorePatterns,
+  const execution = await dependencies.execute({appRoot, configFileName, ignorePatterns: options.ignorePatterns})
+  const artifacts = await dependencies.writeArtifacts(appRoot, {
+    artifact: execution.artifact,
+    agentChecks: execution.agentChecks,
   })
-  const artifacts = await dependencies.writeArtifacts(execution, {clean: options.clean})
 
   if (options.json) {
-    dependencies.output(encodeSecurityJson(toSecurityJson(execution)))
+    dependencies.output(encodeSecurityJson(toSecurityJson(execution, artifacts.agentChecksPath)))
   } else {
     dependencies.renderReport(securityReportInput(execution, artifacts, options.verbose, commands))
   }

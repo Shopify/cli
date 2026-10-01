@@ -1,10 +1,11 @@
-import {appSecurityArtifactPaths, readTrace, writeSubmission} from './app-security-artifacts.js'
+import {appSecurityArtifactPaths, readDeterministicFindings, writeSubmission} from './app-security-artifacts.js'
 import {resolveAppSecurityRoot} from './app-security-api.js'
 import {
   buildSubmission,
+  containsUnredactedSecret,
   type AppSecuritySubmission,
   type BuildSubmissionOptions,
-  type TraceV3,
+  type DeterministicFindingsDocument,
 } from './app-security-engine/index.js'
 import {submitAppSecurityScan} from './app-security-submit-api.js'
 import {resolveSecuritySubmitClientId} from './app-security-submit-target.js'
@@ -14,7 +15,7 @@ import {defaultDeveloperPlatformClient} from '../utilities/developer-platform-cl
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readStdinString, terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
-import type {ReadTraceResult, ResolvedAppSecurityArtifactPaths} from './app-security-artifacts.js'
+import type {AppSecurityArtifactPaths, ReadArtifactResult} from './app-security-artifacts.js'
 import type {SubmitAppSecurityScanOptions} from './app-security-submit-api.js'
 import type {SecuritySubmitConfirmationAction, SecuritySubmitConfirmationInput} from './security-submit-output.js'
 import type {SecuritySubmitResult, SubmitAppSecurityScanResult} from './security-submit-result.js'
@@ -43,11 +44,14 @@ interface SecuritySubmitAppContext {
 
 export interface SecuritySubmitDependencies {
   findRoot(directory: string): string
-  artifactPaths(appRoot: string): ResolvedAppSecurityArtifactPaths
-  readTrace(path: string): Promise<ReadTraceResult>
+  artifactPaths(appRoot: string): AppSecurityArtifactPaths
+  readDeterministicFindings(path: string): Promise<ReadArtifactResult<DeterministicFindingsDocument>>
   resolveClientId(options: {directory: string; clientId?: string; configName?: string}): Promise<string>
   fetchApp(clientId: string): Promise<SecuritySubmitAppContext>
-  buildSubmission(trace: TraceV3, options: BuildSubmissionOptions): AppSecuritySubmission
+  buildSubmission(
+    deterministicFindings: DeterministicFindingsDocument,
+    options: BuildSubmissionOptions,
+  ): AppSecuritySubmission
   writeSubmission(appRoot: string, bytes: Buffer): Promise<void>
   canPrompt(): boolean
   readStdin(): Promise<string | undefined>
@@ -61,7 +65,7 @@ export interface SecuritySubmitDependencies {
 const defaultDependencies: SecuritySubmitDependencies = {
   findRoot: resolveAppSecurityRoot,
   artifactPaths: appSecurityArtifactPaths,
-  readTrace,
+  readDeterministicFindings,
   resolveClientId: resolveSecuritySubmitClientId,
   fetchApp: async (clientId) => {
     const remoteApp = await defaultDeveloperPlatformClient().appFromIdentifiers(clientId)
@@ -109,21 +113,31 @@ export default async function securitySubmit(
 
   const appRoot = dependencies.findRoot(options.directory)
   const paths = dependencies.artifactPaths(appRoot)
-  const traceResult = await dependencies.readTrace(paths.tracePath)
+  const scanResult = await dependencies.readDeterministicFindings(paths.deterministicFindingsPath)
 
-  if (traceResult.status === 'missing') {
-    throw new AbortError(`No App Security trace found in ${paths.artifactDirectory}.`, null, [
+  if (scanResult.status === 'missing') {
+    throw new AbortError(`No App Security scan found in ${paths.artifactDirectory}.`, null, [
       `Run \`shopify app security check --path ${options.directory}\` first, then submit.`,
     ])
   }
-  if (traceResult.status === 'invalid') {
-    throw new AbortError(`The App Security trace at ${paths.tracePath} is not valid.`, null, traceResult.errors)
+  if (scanResult.status === 'invalid') {
+    throw new AbortError(`The App Security scan at ${paths.deterministicFindingsPath} is not valid.`, null, [
+      scanResult.message,
+    ])
+  }
+  const deterministicFindings = scanResult.value
+  if (containsUnredactedSecret(deterministicFindings)) {
+    throw new AbortError(
+      `The App Security scan at ${paths.deterministicFindingsPath} contains an unredacted secret.`,
+      null,
+      [`Run \`shopify app security check --path ${options.directory}\` to regenerate it, then submit.`],
+    )
   }
 
   const submittedAt = dependencies.now()
   const prepareFeedback = (feedback: string | undefined) =>
     prepareSubmissionPayload(
-      dependencies.buildSubmission(traceResult.trace, {
+      dependencies.buildSubmission(deterministicFindings, {
         cliVersion: dependencies.cliVersion,
         submittedAt,
         versionTag: options.versionTag,
