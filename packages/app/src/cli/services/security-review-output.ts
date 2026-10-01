@@ -289,11 +289,6 @@ function nextSteps(
   } else if (summary.withFindings === 0 && result.sources.agent === null) {
     steps.push(['For a deeper review, have your coding agent run', checkCommand, {char: '.'}])
   }
-  steps.push([
-    'Send these results and your feedback to Shopify with',
-    {command: formatAppSecurityCommand(commands.submit)},
-    {char: '.'},
-  ])
   return steps
 }
 
@@ -322,7 +317,8 @@ function summaryAlert(summary: SecurityReviewSummary): SecurityReviewAlert {
     },
   })
   if (summary.blocking === undefined) {
-    sections.push({title: 'Next steps', body: {list: {items: summary.nextSteps}}})
+    // Nothing left to suggest when both result files are present and no check has findings or is stale.
+    if (summary.nextSteps.length > 0) sections.push({title: 'Next steps', body: {list: {items: summary.nextSteps}}})
   } else {
     sections.push({title: 'Blocking', body: summary.blocking})
   }
