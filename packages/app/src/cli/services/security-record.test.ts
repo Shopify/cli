@@ -1,9 +1,9 @@
 import securityRecord, {renderSecurityRecordResult} from './security-record.js'
 import {securityRecordJsonOutputSchema} from './security-record-json.js'
 import {resolveAppSecurityRoot} from './app-security-api.js'
-import {appSecurityArtifactPaths, writeAgentFindings} from './app-security-artifacts.js'
+import {appSecurityArtifactPaths, readFindingsDocument, writeAgentFindings} from './app-security-artifacts.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
-import {fileExists, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, fileSize, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortError, handler} from '@shopify/cli-kit/node/error'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -371,6 +371,40 @@ describe('securityRecord', () => {
     const document = JSON.stringify({...validDocument(), padding: 'é'.repeat(2_600_000)})
 
     await expectRejected(document, [expect.stringContaining('the limit is 5 MB')])
+  })
+
+  describe('near the 5 MB limit', () => {
+    // 1,000 findings of about 5 KB each. The stored document adds about 180 KB of snapshots and indentation,
+    // so the reasoning length decides which side of the limit the stored file lands on.
+    function nearLimitDocument(reasoningLength: number): string {
+      return JSON.stringify({
+        schema_version: 1,
+        findings: Array.from({length: 1_000}, (_, index) =>
+          finding({line: index + 1, message: 'm'.repeat(4_000), reasoning: 'r'.repeat(reasoningLength)}),
+        ),
+      })
+    }
+
+    test('rejects a document under the input limit whose stored form review could not read', async () => {
+      const document = nearLimitDocument(700)
+      expect(Buffer.byteLength(document)).toBeLessThan(5_000_000)
+
+      await expectRejected(document, [
+        expect.stringMatching(/^The recorded findings would be stored as \d+ bytes; the limit is 5 MB\./),
+      ])
+    })
+
+    test('records a document that review can read', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        const {agentFindingsPath} = appSecurityArtifactPaths(appRoot)
+
+        await securityRecord({appRoot}, testDependencies(nearLimitDocument(500)))
+
+        await expect(fileSize(agentFindingsPath)).resolves.toBeGreaterThan(4_900_000)
+        await expect(readFindingsDocument(agentFindingsPath, 'agent')).resolves.toMatchObject({status: 'ok'})
+      })
+    })
   })
 
   test('rejects invalid JSON', async () => {

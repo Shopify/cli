@@ -13,7 +13,8 @@ import {randomBytes} from 'node:crypto'
 import {lstat, mkdir, realpath, rename, unlink, writeFile} from 'node:fs/promises'
 import type {Stats} from 'node:fs'
 
-const MAX_ARTIFACT_FILE_SIZE_BYTES = 5_000_000
+/** Readers reject an artifact larger than this, so writers check `encodedArtifactSize` against it first. */
+export const MAX_ARTIFACT_FILE_SIZE_BYTES = 5_000_000
 
 export interface AppSecurityArtifactPaths {
   artifactDirectory: string
@@ -138,6 +139,11 @@ async function readJsonArtifact(path: string): Promise<ReadArtifactResult<unknow
   } catch (error) {
     return {status: 'invalid', errors: [`Could not parse JSON: ${errorMessage(error)}`]}
   }
+}
+
+/** The size in bytes of `value` once it's written as an artifact. */
+export function encodedArtifactSize(value: unknown): number {
+  return Buffer.byteLength(encodeArtifact(value), 'utf8')
 }
 
 function encodeArtifact(value: unknown): string {

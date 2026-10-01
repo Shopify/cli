@@ -1,4 +1,4 @@
-import {writeAgentFindings} from './app-security-artifacts.js'
+import {encodedArtifactSize, MAX_ARTIFACT_FILE_SIZE_BYTES, writeAgentFindings} from './app-security-artifacts.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {countLabel} from './app-security-format.js'
 import {
@@ -109,6 +109,16 @@ export default async function securityRecord(
     project: await dependencies.readProjectState(options.appRoot),
   })
   if (!recorded.ok) throw rejectedDocumentError(recorded.errors, commands)
+
+  // The stored document adds check snapshots and indentation, so an input under the limit can still be stored
+  // over it. `review` can't read a file that large, so refuse to replace the existing one with it.
+  const storedSize = encodedArtifactSize(recorded.document)
+  if (storedSize > MAX_ARTIFACT_FILE_SIZE_BYTES) {
+    throw rejectedDocumentError(
+      [`The recorded findings would be stored as ${storedSize} bytes; the limit is 5 MB. Shorten or remove findings.`],
+      commands,
+    )
+  }
 
   const path = await dependencies.writeAgentFindings(options.appRoot, recorded.document)
   return {
