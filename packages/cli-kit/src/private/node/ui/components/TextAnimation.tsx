@@ -1,4 +1,4 @@
-/* eslint-disable id-length */
+/* eslint-disable compat/id-length */
 import {Text, useStdout} from 'ink'
 import React, {memo, useCallback, useLayoutEffect, useRef, useState} from 'react'
 import gradient from 'gradient-string'
