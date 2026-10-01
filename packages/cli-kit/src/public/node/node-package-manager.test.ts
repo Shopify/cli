@@ -28,16 +28,25 @@ import {captureOutput, exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
 import {joinPath, dirname, normalizePath} from './path.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
+import {fetch} from './http.js'
 import {cacheClear} from '../../private/node/conf-store.js'
-import latestVersion from 'latest-version'
 import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
 
 vi.mock('./version.js')
 vi.mock('./system.js')
-vi.mock('latest-version')
+vi.mock('./http.js')
 vi.mock('./is-global')
 
 const mockedExec = vi.mocked(exec)
+const mockedFetch = vi.mocked(fetch)
+
+function mockRegistryLatestVersion(version: string) {
+  mockedFetch.mockResolvedValue({
+    status: 200,
+    statusText: 'OK',
+    json: async () => ({version}),
+  } as unknown as Awaited<ReturnType<typeof fetch>>)
+}
 const mockedCaptureOutput = vi.mocked(captureOutput)
 
 describe('installNPMDependenciesRecursively', () => {
@@ -558,7 +567,7 @@ describe('checkForCachedNewVersion', () => {
     const currentVersion = '2.2.2'
     const newestVersion = '2.2.2'
     const dependency = 'dependency'
-    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
+    mockRegistryLatestVersion(newestVersion)
     await checkForNewVersion(dependency, currentVersion)
 
     // When
@@ -573,7 +582,7 @@ describe('checkForCachedNewVersion', () => {
     const currentVersion = '2.2.2'
     const newestVersion = '2.2.3'
     const dependency = 'dependency'
-    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
+    mockRegistryLatestVersion(newestVersion)
     await checkForNewVersion(dependency, currentVersion)
 
     // When
@@ -595,7 +604,7 @@ describe('checkForNewVersion', () => {
     const currentVersion = '2.2.2'
     const newestVersion = '2.2.2'
     const dependency = 'dependency'
-    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
+    mockRegistryLatestVersion(newestVersion)
 
     // When
     const result = await checkForNewVersion(dependency, currentVersion)
@@ -609,7 +618,7 @@ describe('checkForNewVersion', () => {
     const currentVersion = '2.2.2'
     const newestVersion = '2.2.3'
     const dependency = 'dependency'
-    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
+    mockRegistryLatestVersion(newestVersion)
 
     // When
     const result = await checkForNewVersion(dependency, currentVersion)
@@ -618,11 +627,27 @@ describe('checkForNewVersion', () => {
     expect(result).toBe(newestVersion)
   })
 
+  test('always queries the public registry and sends no credentials', async () => {
+    // Given
+    mockRegistryLatestVersion('2.2.3')
+
+    // When
+    await checkForNewVersion('@shopify/cli', '2.2.2')
+
+    // Then
+    // The update check must not be influenced by the npm configuration of the directory the
+    // command happens to run in: a cloned repository could otherwise choose the registry and
+    // have a token attached to the request.
+    const [url, init] = mockedFetch.mock.calls[0] ?? []
+    expect(url).toBe('https://registry.npmjs.org/@shopify%2Fcli/latest')
+    expect(init).toBeUndefined()
+  })
+
   test('returns undefined when error is thrown retrieving newest version', async () => {
     // Given
     const currentVersion = '2.2.2'
     const dependency = 'dependency'
-    vi.mocked(latestVersion).mockRejectedValue(undefined)
+    mockedFetch.mockRejectedValue(new Error('Network error'))
 
     // When
     const result = await checkForNewVersion(dependency, currentVersion)
@@ -636,7 +661,7 @@ describe('checkForNewVersion', () => {
     const currentVersion = '2.2.2'
     const newestVersion = '2.2.3'
     const dependency = 'dependency'
-    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
+    mockRegistryLatestVersion(newestVersion)
 
     // When
     await checkForNewVersion(dependency, currentVersion)
@@ -645,7 +670,7 @@ describe('checkForNewVersion', () => {
 
     // Then
     expect(result).toBe(newestVersion)
-    expect(latestVersion).toHaveBeenCalledTimes(1)
+    expect(mockedFetch).toHaveBeenCalledTimes(1)
   })
 
   test('refreshes results when given a nonzero timeout that has expired', async () => {
@@ -653,7 +678,7 @@ describe('checkForNewVersion', () => {
     const currentVersion = '2.2.2'
     const newestVersion = '2.2.3'
     const dependency = 'dependency'
-    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
+    mockRegistryLatestVersion(newestVersion)
 
     // When
     await checkForNewVersion(dependency, currentVersion)
@@ -662,7 +687,7 @@ describe('checkForNewVersion', () => {
 
     // Then
     expect(result).toBe(newestVersion)
-    expect(latestVersion).toHaveBeenCalledTimes(2)
+    expect(mockedFetch).toHaveBeenCalledTimes(2)
   })
 
   test('refreshes results when given no timeout', async () => {
@@ -670,7 +695,7 @@ describe('checkForNewVersion', () => {
     const currentVersion = '2.2.2'
     const newestVersion = '2.2.3'
     const dependency = 'dependency'
-    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
+    mockRegistryLatestVersion(newestVersion)
 
     // When
     await checkForNewVersion(dependency, currentVersion)
@@ -678,7 +703,7 @@ describe('checkForNewVersion', () => {
 
     // Then
     expect(result).toBe(newestVersion)
-    expect(latestVersion).toHaveBeenCalledTimes(2)
+    expect(mockedFetch).toHaveBeenCalledTimes(2)
   })
 })
 

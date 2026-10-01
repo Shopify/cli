@@ -1,4 +1,5 @@
 import {captureOutput} from './system.js'
+import {homeDirectory} from './context/local.js'
 import which from 'which'
 import {satisfies, SemVer} from 'semver'
 /**
@@ -28,7 +29,10 @@ export async function globalCLIVersion(): Promise<string | undefined> {
     // Both execa and which find the project dependency. We need to exclude it.
     const shopifyBinaries = which.sync('shopify', {all: true}).filter((path) => !path.includes('node_modules'))
     if (!shopifyBinaries[0]) return undefined
-    const output = await captureOutput(shopifyBinaries[0], [], {env})
+    // Run from the home directory rather than wherever the developer happens to be: this is an
+    // automatic invocation, and a cloned repository shouldn't get to supply package manager or
+    // CLI configuration for it.
+    const output = await captureOutput(shopifyBinaries[0], [], {env, cwd: homeDirectory()})
     const versionMatch = output.match(/@shopify\/cli\/([^\s]+)/)
     if (versionMatch && versionMatch[1]) {
       const version = versionMatch[1]

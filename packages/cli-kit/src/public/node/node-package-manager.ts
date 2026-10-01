@@ -5,6 +5,7 @@ import {fileExists, readFile, writeFile, findPathUp, glob, fileExistsSync} from 
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
+import {fetch} from './http.js'
 import {outputToken, outputContent, outputDebug} from './output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import {parseJSON} from '../common/json.js'
@@ -695,16 +696,37 @@ export async function addResolutionOrOverride(directory: string, dependencies: R
 }
 
 /**
+ * The public NPM registry. Version checks for the CLI's own packages always go here.
+ */
+const publicNPMRegistry = 'https://registry.npmjs.org'
+
+/**
  * Returns the latest available version of an NPM package.
  * @param name - The name of the NPM package.
  * @returns A promise to get the latest available version of a package.
  */
-async function getLatestNPMPackageVersion(name: string) {
+async function getLatestNPMPackageVersion(name: string): Promise<string> {
   outputDebug(outputContent`Getting the latest version of NPM package: ${outputToken.raw(name)}`)
-  return runWithTimer('cmd_all_timing_network_ms')(async () => {
-    const {default: latestVersion} = await import('latest-version')
-    return latestVersion(name)
+  // SECURITY: this deliberately talks to the public registry directly and sends no
+  // credentials, instead of going through `latest-version`/`package-json`. Those resolve
+  // both the registry and an `Authorization` header from the npm config found by walking
+  // up from `process.cwd()`, which for a background check means a cloned repository's
+  // `.npmrc` decides where the CLI asks for its own latest version — poisoning the cached
+  // version that drives auto-upgrade, and leaking any matching token from the developer's
+  // npm config or environment to a host the repository chose.
+  const response = await fetch(`${publicNPMRegistry}/${name.replace('/', '%2F')}/latest`, undefined, {
+    useNetworkLevelRetry: false,
+    useAbortSignal: true,
+    timeoutMs: 5 * 1000,
   })
+  if (response.status !== 200) {
+    throw new Error(`Failed to fetch the latest version of ${name}: ${response.statusText}`)
+  }
+  const manifest = (await response.json()) as {version?: string}
+  if (!manifest.version) {
+    throw new Error(`Couldn't find a version in the registry response for ${name}`)
+  }
+  return manifest.version
 }
 
 /**

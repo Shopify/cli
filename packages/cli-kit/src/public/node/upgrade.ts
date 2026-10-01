@@ -1,5 +1,5 @@
 import {fetchNotifications, filterNotifications} from './notifications-system.js'
-import {isDevelopment} from './context/local.js'
+import {homeDirectory, isDevelopment} from './context/local.js'
 import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI, getProjectDir} from './is-global.js'
 import {
   checkForCachedNewVersion,
@@ -105,7 +105,7 @@ export async function runCLIUpgrade(options: RunCLIUpgradeOptions = {}): Promise
       outputContent`${headline}
    Now upgrading by running: ${outputToken.genericShellCommand(installCommand)}...`,
     )
-    await exec(command, args, {stdio: 'inherit'})
+    await exec(command, args, {stdio: 'inherit', ...trustedPackageManagerContext()})
 
     // A zero exit code doesn't guarantee the right version landed: the version check above
     // queries the public npm registry, while the install goes through whatever registry the
@@ -135,6 +135,22 @@ export async function runCLIUpgrade(options: RunCLIUpgradeOptions = {}): Promise
   } else {
     throw new Error('Could not determine the local project directory')
   }
+}
+
+/**
+ * Options that keep an automatic package manager invocation out of the reach of the directory
+ * the developer happens to be in.
+ *
+ * Package managers read configuration from their working directory: Yarn Classic executes the
+ * `yarn-path` script declared in a `.yarnrc` before it does anything else, and a project
+ * `.npmrc` can redirect the registry an install resolves from. This upgrade targets the global
+ * CLI — and usually runs automatically from the postrun hook — so it must not inherit
+ * configuration from a directory whose contents may have come from a cloned repository.
+ *
+ * @returns Exec options pinning the working directory and disabling Yarn's `yarn-path`.
+ */
+function trustedPackageManagerContext(): {cwd: string; env: NodeJS.ProcessEnv} {
+  return {cwd: homeDirectory(), env: {...process.env, YARN_IGNORE_PATH: '1'}}
 }
 
 /**
