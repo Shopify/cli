@@ -105,7 +105,7 @@ describe('blockIfMigrationIncomplete', () => {
             configurationRegistrations: [],
             dashboardManagedExtensionRegistrations: [],
           },
-        }
+        } as any
       },
     })
 
@@ -129,7 +129,7 @@ describe('blockIfMigrationIncomplete', () => {
             configurationRegistrations: [],
             dashboardManagedExtensionRegistrations: [],
           },
-        }
+        } as any
       },
     })
 

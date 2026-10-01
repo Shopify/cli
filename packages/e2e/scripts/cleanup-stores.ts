@@ -81,7 +81,7 @@ export interface CleanupStoresOptions {
 function isAccountsShopifyUrl(rawUrl: string): boolean {
   try {
     return new URL(rawUrl).hostname === 'accounts.shopify.com'
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false
   }
@@ -245,7 +245,7 @@ export async function cleanupStores(opts: CleanupStoresOptions = {}): Promise<vo
               console.log(deletionConfirmed ? '  Deletion confirmed by CLI' : '  Deletion requested with CLI')
               deletionRequested = true
               break
-              // eslint-disable-next-line @shopify/cli/no-catch-all
+              // eslint-disable-next-line no-catch-all/no-catch-all
             } catch (err) {
               console.log(`    (${attempt}/3) deletion failed: ${err instanceof Error ? err.message : err}`)
             }
@@ -301,7 +301,7 @@ interface FindStoresOptions {
 async function findStores(page: Page, opts: FindStoresOptions): Promise<StoreInfo[]> {
   try {
     return await findStoresWithBusinessPlatformApi(opts.pattern, opts.orgId)
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (err) {
     console.warn(
       `[cleanup-stores] API discovery failed, falling back to Dev Dashboard UI: ${err instanceof Error ? err.message : err}`,

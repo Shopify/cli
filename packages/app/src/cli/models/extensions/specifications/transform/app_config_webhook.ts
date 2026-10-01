@@ -5,7 +5,7 @@ export function transformFromWebhookConfig(content: object) {
   const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
   if (!webhooks) return content
 
-  // eslint-disable-next-line @shopify/cli/naming-convention
+  // eslint-disable-next-line compat/typescript-eslint-naming-convention
   const {api_version} = webhooks
 
   return {api_version}
@@ -33,14 +33,14 @@ export function mergeAllWebhooks(subscriptions: WebhookSubscription[]): WebhookS
   if (subscriptions.length === 0) return
   const topicSubscriptions = subscriptions
     .filter((subscription) => subscription.topics !== undefined)
-    // eslint-disable-next-line @shopify/cli/naming-convention
+    // eslint-disable-next-line compat/typescript-eslint-naming-convention
     .flatMap(({compliance_topics, topics, ...rest}) => {
       const sortedTopics = sortArrayAlphabetically(topics)
       return sortedTopics?.map((topic) => ({topics: [topic], ...rest})) ?? []
     })
   const complianceSubscriptions = subscriptions
     .filter((subscription) => subscription.topics === undefined || subscription.compliance_topics !== undefined)
-    // eslint-disable-next-line @shopify/cli/naming-convention
+    // eslint-disable-next-line compat/typescript-eslint-naming-convention
     .map(({compliance_topics, topics, ...rest}) => {
       return {compliance_topics, ...rest}
     })
@@ -81,7 +81,6 @@ export function reduceWebhooks(
     const existingSubscription = findSubscription(accumulator, subscription)
     if (existingSubscription) {
       if (property && subscription?.[property]?.length) {
-        // eslint-disable-next-line typescript/no-unnecessary-type-assertion
         existingSubscription[property]?.push(...subscription[property]!)
       } else {
         if (subscription.topics) {

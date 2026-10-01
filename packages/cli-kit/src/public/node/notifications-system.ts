@@ -41,7 +41,7 @@ function url(): string {
       outputDebug(
         `The notifications URL provided via SHOPIFY_CLI_NOTIFICATIONS_URL (${envUrl}) must use https, or http with a loopback host. Falling back to default.`,
       )
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
       outputDebug(
         `The notifications URL provided via SHOPIFY_CLI_NOTIFICATIONS_URL (${envUrl}) is not a valid URL. Falling back to default.`,

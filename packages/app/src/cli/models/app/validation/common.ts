@@ -24,7 +24,7 @@ function isValidUrl(input: string, httpsOnly: boolean) {
   try {
     const url = new URL(input)
     return httpsOnly ? url.protocol === 'https:' : ['http:', 'https:'].includes(url.protocol)
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (TypeError) {
     // new URL() throws a TypeError if the input is not a valid URL
     return false

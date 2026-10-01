@@ -357,7 +357,7 @@ describe('functionConfiguration', () => {
     // When
     const extension = await testFunctionExtension({
       dir: '/function',
-      config: configWithTypegen,
+      config: configWithTypegen as FunctionConfigType,
     })
 
     // Then
@@ -380,7 +380,7 @@ describe('functionConfiguration', () => {
     // When
     const extension = await testFunctionExtension({
       dir: '/function',
-      config: configWithoutBuild,
+      config: configWithoutBuild as FunctionConfigType,
     })
 
     // Then

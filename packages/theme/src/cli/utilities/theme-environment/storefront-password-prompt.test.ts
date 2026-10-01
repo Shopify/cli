@@ -118,7 +118,7 @@ describe('ensureValidPassword', () => {
     // Given
     vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(true)
     vi.mocked(isStorefrontPasswordCorrect).mockResolvedValue(true)
-    vi.mocked(getThemeStore).mockReturnValue(undefined)
+    vi.mocked(getThemeStore).mockReturnValue(undefined as any)
 
     // When
     await ensureValidPassword('testPassword', 'test-store')

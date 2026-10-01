@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-
 import {enableCompileCache} from 'node:module'
 
 if (enableCompileCache) enableCompileCache()

@@ -240,7 +240,7 @@ export async function hasGit(): Promise<boolean> {
   try {
     await lazyExec('git', ['--version'])
     return true
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false
   }

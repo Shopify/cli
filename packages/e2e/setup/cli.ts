@@ -260,7 +260,7 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
           kill() {
             try {
               ptyProcess.kill()
-              // eslint-disable-next-line @shopify/cli/no-catch-all
+              // eslint-disable-next-line no-catch-all/no-catch-all
             } catch (_error) {
               // Process may already be dead
             }

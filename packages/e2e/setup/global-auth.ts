@@ -30,7 +30,7 @@ import type {IPty} from 'node-pty'
 function isAccountsShopifyUrl(rawUrl: string): boolean {
   try {
     return new URL(rawUrl).hostname === 'accounts.shopify.com'
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false
   }
@@ -179,7 +179,7 @@ async function authenticateOnce({
   } finally {
     try {
       ptyProcess.kill()
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (_error) {
       // Process may already be dead
     }

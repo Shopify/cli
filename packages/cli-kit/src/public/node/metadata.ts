@@ -92,7 +92,7 @@ export function createRuntimeMetadataContainer<
     } else {
       try {
         await getAndSet()
-        // eslint-disable-next-line @shopify/cli/no-catch-all, @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
       } catch (error: any) {
         // This is very prone to becoming a circular dependency, so we import it dynamically
         const {sendErrorToBugsnag} = await import('./error-handler.js')

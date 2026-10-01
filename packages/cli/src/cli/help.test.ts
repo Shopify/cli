@@ -32,7 +32,11 @@ function renderFlags(flags: Command.Flag.Any[]): [string, string | undefined][] 
 }
 
 function renderDescription(command: Partial<Command.Loadable>, maxWidth = 80): string | undefined {
-  const help = new ShopifyCommandHelp(command as Command.Loadable, {} as Interfaces.Config, {maxWidth})
+  const help = new ShopifyCommandHelp(
+    command as Command.Loadable,
+    {} as Interfaces.Config,
+    {maxWidth} as Interfaces.HelpOptions,
+  )
   return (help as unknown as {description: () => string | undefined}).description()
 }
 
@@ -66,7 +70,11 @@ interface Result {
 
   test('uses the default description formatting when there are no code blocks', () => {
     const command = {summary: 'Return a value.', description: 'A regular command description.'}
-    const defaultHelp = new CommandHelp(command as Command.Loadable, {} as Interfaces.Config, {maxWidth: 80})
+    const defaultHelp = new CommandHelp(
+      command as Command.Loadable,
+      {} as Interfaces.Config,
+      {maxWidth: 80} as Interfaces.HelpOptions,
+    )
     const defaultDescription = (defaultHelp as unknown as {description: () => string | undefined}).description()
 
     expect(renderDescription(command)).toBe(defaultDescription)
@@ -146,7 +154,11 @@ interface Result {
 
   test('renders flags with enough width to keep long env labels intact', () => {
     // Given
-    const help = new ShopifyCommandHelp({} as Command.Loadable, {} as Interfaces.Config, {maxWidth: 80})
+    const help = new ShopifyCommandHelp(
+      {} as Command.Loadable,
+      {} as Interfaces.Config,
+      {maxWidth: 80} as Interfaces.HelpOptions,
+    )
     const rows = [
       [
         '--skip-dependencies-installation',

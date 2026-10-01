@@ -179,7 +179,7 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
 
     return {creationOptions: app.creationDefaultOptions(), appDirectory: app.directory}
 
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return {creationOptions: appCreationDefaults(options.directory)}
   }

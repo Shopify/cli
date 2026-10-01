@@ -126,7 +126,7 @@ export const handleFetchAppLogsError = async (
       try {
         nextJwtToken = await input.onResubscribe()
         resubscribeResult = 'succeeded'
-        // eslint-disable-next-line @shopify/cli/no-catch-all
+        // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (resubscribeError) {
         outputDebug(`Failed to resubscribe to app logs: ${resubscribeError}`)
         retryIntervalMs = POLLING_THROTTLE_RETRY_INTERVAL_MS
@@ -260,7 +260,7 @@ export function prettyPrintJsonIfPossible(json: unknown): string | undefined {
 const parseJson = (json: string): object | string => {
   try {
     return JSON.parse(json)
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return json
   }

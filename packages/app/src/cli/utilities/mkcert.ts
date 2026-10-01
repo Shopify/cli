@@ -109,7 +109,7 @@ async function downloadMkcertLicense(dotShopifyPath: string): Promise<undefined 
     }
     // We don't want to throw an error if we can't download the license
     // Instead we renderInfo explaining it failed
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return errorAlertOptions
   }

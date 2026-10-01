@@ -41,7 +41,7 @@ export async function detectedAgentEnvironmentVariables(
       SHOPIFY_CLI_AGENT_INFO: `n:${toolkitAgentNamesByDetectedName.get(detectedName) ?? detectedName}`,
     })
 
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     let message = 'Unable to detect which AI agent is running the CLI'
     if (error instanceof Error) {

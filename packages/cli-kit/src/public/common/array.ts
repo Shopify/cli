@@ -19,7 +19,7 @@ export function takeRandomFromArray<T>(array: T[]): T {
  * @returns A copy of the array with the undefined elements deleted.
  */
 export function getArrayRejectingUndefined<T>(array: (T | undefined)[]): T[] {
-  return array.filter((item) => item !== undefined)
+  return array.filter((item) => item !== undefined) as Exclude<T, null | undefined>[]
 }
 
 /**

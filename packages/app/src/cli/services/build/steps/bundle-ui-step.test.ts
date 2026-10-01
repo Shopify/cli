@@ -101,7 +101,7 @@ describe('executeBundleUIStep', () => {
         extension_points: [
           {target: 'admin.product-details.action.render', build_manifest: {assets: {main: {filepath: 'main.js'}}}},
         ],
-      }
+      } as ExtensionInstance['configuration']
       vi.mocked(buildExtension.buildUIExtension).mockResolvedValue(joinPath(localOutputDir, 'handle.js'))
 
       // When

@@ -774,7 +774,7 @@ describe('ImportExtensionsIfNeeded', () => {
     vi.mocked(isTTY).mockReturnValue(true)
     vi.mocked(getExtensions).mockResolvedValue(mockExtensions as any)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-    vi.mocked(reloadApp).mockResolvedValue(reloadedApp)
+    vi.mocked(reloadApp).mockResolvedValue(reloadedApp as any)
 
     // When
     const result = await importExtensionsIfNeeded({

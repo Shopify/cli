@@ -347,7 +347,7 @@ describe('applying environments', async () => {
       testResult = {}
       testError = undefined
       await inTemporaryDirectory(async (tmpDir) => {
-        await writeFile(joinPath(tmpDir, 'shopify.environments.toml'), encodeTOML(allEnvironments))
+        await writeFile(joinPath(tmpDir, 'shopify.environments.toml'), encodeTOML(allEnvironments as any))
         await testFunc(tmpDir)
       })
     })
@@ -874,7 +874,7 @@ const deleteDefaultEnvironment = async (tmpDir: string): Promise<void> => {
   const clone = {...allEnvironments}
   clone.environments = {...allEnvironments.environments}
   delete clone.environments.default
-  await writeFile(joinPath(tmpDir, 'shopify.environments.toml'), encodeTOML({environments: clone}))
+  await writeFile(joinPath(tmpDir, 'shopify.environments.toml'), encodeTOML({environments: clone} as any))
 }
 
 describe('removeDuplicatedPlugins', () => {

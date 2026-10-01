@@ -54,10 +54,10 @@ describe('resolveExistingStoreAuthScopes', () => {
       refreshToken: 'fresh-refresh-token',
       scopes: ['read_orders'],
       acquiredAt: '2026-04-02T00:00:00.000Z',
-    })
+    } as any)
     vi.mocked(graphqlRequest).mockResolvedValue({
       currentAppInstallation: {accessScopes: [{handle: 'read_products'}, {handle: 'read_customers'}]},
-    })
+    } as any)
 
     await expect(resolveExistingStoreAuthScopes('shop.myshopify.com')).resolves.toEqual({
       scopes: ['read_products', 'read_customers'],
@@ -111,7 +111,7 @@ describe('resolveExistingStoreAuthScopes', () => {
       refreshToken: 'fresh-refresh-token',
       scopes: ['read_orders'],
       acquiredAt: '2026-04-02T00:00:00.000Z',
-    })
+    } as any)
     const scopeLookupError = new Error('GraphQL Error (Code: 401)')
     Object.assign(scopeLookupError, {
       response: {
@@ -153,10 +153,10 @@ describe('resolveExistingStoreAuthScopes', () => {
       refreshToken: 'fresh-refresh-token',
       scopes: ['read_orders'],
       acquiredAt: '2026-04-02T00:00:00.000Z',
-    })
+    } as any)
     vi.mocked(graphqlRequest).mockResolvedValue({
       currentAppInstallation: undefined,
-    })
+    } as any)
 
     await expect(resolveExistingStoreAuthScopes('shop.myshopify.com')).resolves.toEqual({
       scopes: ['read_orders'],

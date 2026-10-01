@@ -236,7 +236,7 @@ export function downloadFile(url: string, to: string): Promise<string> {
         if (fileExistsSync(to)) {
           unlinkFileSync(to)
         }
-        // eslint-disable-next-line @shopify/cli/no-catch-all
+        // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (err: unknown) {
         outputDebug(outputContent`Failed to remove file ${outputToken.path(to)}: ${outputToken.raw(String(err))}`)
       }

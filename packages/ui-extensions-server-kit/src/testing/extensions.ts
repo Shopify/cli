@@ -57,7 +57,7 @@ export function mockExtension(obj: DeepPartial<ExtensionPayload> = {}): Extensio
     supportedFeatures: obj.supportedFeatures as any,
     localization: obj.localization as any,
     metafields: obj.metafields as any,
-    authenticatedRedirectStartUrl: obj.authenticatedRedirectStartUrl,
+    authenticatedRedirectStartUrl: obj.authenticatedRedirectStartUrl as any,
     authenticatedRedirectRedirectUrls: obj.authenticatedRedirectRedirectUrls as any,
     settings: {
       fields: [

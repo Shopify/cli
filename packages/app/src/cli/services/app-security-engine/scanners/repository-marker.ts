@@ -12,7 +12,7 @@ export function findRepositoryMarker(start: string): RepositoryMarker {
       const stats = lstatSync(joinPath(directory, '.git'))
       if (stats.isDirectory() || stats.isFile()) return {status: 'found', directory}
       return {status: 'ambiguous', reason: 'Could not determine repository ownership from .git'}
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
       if (!isMissingFilesystemEntry(error)) return {status: 'ambiguous', reason: inspectErrorReason('.git', error)}
     }

@@ -26,7 +26,7 @@ describe('fetchDestinationsContext', () => {
   test('throws AbortError when no destination matches the domain', async () => {
     vi.mocked(businessPlatformRequestDoc).mockResolvedValueOnce({
       currentUserAccount: {destinations: {nodes: []}},
-    })
+    } as never)
 
     const err = await fetchDestinationsContext({store: SHOP}).catch((error: unknown) => error)
     expect(err).toBeInstanceOf(AbortError)
@@ -45,7 +45,7 @@ describe('fetchDestinationsContext', () => {
           ],
         },
       },
-    })
+    } as never)
 
     const err = await fetchDestinationsContext({store: SHOP}).catch((error: unknown) => error)
     expect(err).toBeInstanceOf(AbortError)
@@ -56,10 +56,10 @@ describe('fetchDestinationsContext', () => {
     vi.mocked(businessPlatformRequestDoc)
       .mockResolvedValueOnce({
         currentUserAccount: {destinations: {nodes: [destinationNode()]}},
-      })
+      } as never)
       .mockResolvedValueOnce({
         currentUserAccount: {organizationForDestination: {id: 'gid', name: 'Org'}},
-      })
+      } as never)
 
     await fetchDestinationsContext({store: SHOP})
 
@@ -75,10 +75,10 @@ describe('fetchDestinationsContext', () => {
             nodes: [destinationNode({primaryDomain: `https://${devStore}`, webUrl: `https://${devStore}/admin`})],
           },
         },
-      })
+      } as never)
       .mockResolvedValueOnce({
         currentUserAccount: {organizationForDestination: {id: 'gid', name: 'Org'}},
-      })
+      } as never)
 
     await fetchDestinationsContext({store: devStore})
 
@@ -89,7 +89,7 @@ describe('fetchDestinationsContext', () => {
     vi.mocked(businessPlatformRequestDoc)
       .mockResolvedValueOnce({
         currentUserAccount: {destinations: {nodes: [destinationNode()]}},
-      })
+      } as never)
       .mockResolvedValueOnce({
         currentUserAccount: {
           organizationForDestination: {
@@ -97,7 +97,7 @@ describe('fetchDestinationsContext', () => {
             name: 'Acme Org',
           },
         },
-      })
+      } as never)
 
     const ctx = await fetchDestinationsContext({store: SHOP})
 
@@ -111,7 +111,7 @@ describe('fetchDestinationsContext', () => {
     vi.mocked(businessPlatformRequestDoc)
       .mockResolvedValueOnce({
         currentUserAccount: {destinations: {nodes: [destinationNode()]}},
-      })
+      } as never)
       .mockRejectedValueOnce(new Error('boom'))
 
     const ctx = await fetchDestinationsContext({store: SHOP})
@@ -123,10 +123,10 @@ describe('fetchDestinationsContext', () => {
     vi.mocked(businessPlatformRequestDoc)
       .mockResolvedValueOnce({
         currentUserAccount: {destinations: {nodes: [destinationNode()]}},
-      })
+      } as never)
       .mockResolvedValueOnce({
         currentUserAccount: {organizationForDestination: null},
-      })
+      } as never)
 
     const ctx = await fetchDestinationsContext({store: SHOP})
 
@@ -136,10 +136,10 @@ describe('fetchDestinationsContext', () => {
   test('uses a provided token without re-authenticating', async () => {
     vi.mocked(businessPlatformRequestDoc).mockResolvedValueOnce({
       currentUserAccount: {destinations: {nodes: [destinationNode()]}},
-    })
+    } as never)
     vi.mocked(businessPlatformRequestDoc).mockResolvedValueOnce({
       currentUserAccount: {organizationForDestination: {id: 'gid', name: 'O'}},
-    })
+    } as never)
 
     await fetchDestinationsContext({store: SHOP, token: 'preset'})
 
@@ -150,10 +150,10 @@ describe('fetchDestinationsContext', () => {
   test('passes noPrompt through when authenticating', async () => {
     vi.mocked(businessPlatformRequestDoc).mockResolvedValueOnce({
       currentUserAccount: {destinations: {nodes: [destinationNode()]}},
-    })
+    } as never)
     vi.mocked(businessPlatformRequestDoc).mockResolvedValueOnce({
       currentUserAccount: {organizationForDestination: {id: 'gid', name: 'O'}},
-    })
+    } as never)
 
     await fetchDestinationsContext({store: SHOP, noPrompt: true})
 

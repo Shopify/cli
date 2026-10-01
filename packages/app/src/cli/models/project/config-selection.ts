@@ -56,7 +56,7 @@ export async function resolveHiddenConfig(project: Project, clientId: string | u
     try {
       const hiddenConfigPath = await getOrCreateAppConfigHiddenPath(project.directory)
       await patchAppHiddenConfigFile(hiddenConfigPath, clientId, {dev_store_url: raw.dev_store_url})
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
       // Migration failure is not fatal
     }

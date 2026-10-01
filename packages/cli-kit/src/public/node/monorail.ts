@@ -234,7 +234,7 @@ export async function publishMonorailEvent<TSchemaId extends keyof Schemas, TPay
       outputDebug(`Failed to report usage analytics: ${response.statusText}`)
       return {type: 'error', message: response.statusText}
     }
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     let message = 'Failed to report usage analytics'
     if (error instanceof Error) {

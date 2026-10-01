@@ -90,7 +90,7 @@ export abstract class DoctorSuite<TContext extends DoctorContext = DoctorContext
           duration: Date.now() - startTime,
           assertions: [...this.assertions],
         })
-        // eslint-disable-next-line @shopify/cli/no-catch-all
+        // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (error) {
         results.push({
           name: registeredTest.name,
@@ -126,7 +126,7 @@ export abstract class DoctorSuite<TContext extends DoctorContext = DoctorContext
   // Command execution
   // ============================================
 
-  /* eslint-disable @shopify/cli/tsdoc-syntax -- jsdoc/require-param expects dotted names for destructured options; tsdoc disallows dots */
+  /* eslint-disable tsdoc/syntax -- jsdoc/require-param expects dotted names for destructured options; tsdoc disallows dots */
   /**
    * Run a CLI command and return the result.
    *
@@ -173,7 +173,7 @@ export abstract class DoctorSuite<TContext extends DoctorContext = DoctorContext
 
     try {
       await execCommand(command, {cwd, env: options?.env, stdin: 'inherit'})
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
       exitCode = 1
     }
@@ -187,7 +187,7 @@ export abstract class DoctorSuite<TContext extends DoctorContext = DoctorContext
       success: exitCode === 0,
     }
   }
-  /* eslint-enable @shopify/cli/tsdoc-syntax */
+  /* eslint-enable tsdoc/syntax */
 
   // ============================================
   // Assertions
@@ -372,7 +372,7 @@ export abstract class DoctorSuite<TContext extends DoctorContext = DoctorContext
         })
       }
       return json
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
       this.assertions.push({
         description: message ?? 'Output is valid JSON',

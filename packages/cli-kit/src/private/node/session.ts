@@ -37,7 +37,7 @@ async function fetchEmail(businessPlatformToken: string | undefined): Promise<st
   try {
     const userEmailResult = await businessPlatformRequest<UserEmailQuery>(UserEmailQueryString, businessPlatformToken)
     return userEmailResult.currentUserAccount?.email ?? undefined
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     outputDebug(outputContent`Failed to fetch user email: ${(error as Error).message ?? String(error)}`)
     return undefined

@@ -54,7 +54,7 @@ export function loadAppToml(appConfigFilePath: string, appDirectory: string): Ap
     const raw = decodeToml(content) as Record<string, unknown>
     return parseAppToml(raw, appConfigFilePath, content, appDirectory)
     // Invalid repository TOML is a coverage gap, not a scanner crash.
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     recordSkippedFile(appConfigFilePath, {
       ok: false,
@@ -189,7 +189,7 @@ function readDirectoryEntries(absolutePath: string, isScanDirectory: boolean): D
   try {
     return readdirSync(absolutePath, {withFileTypes: true})
     // An unreadable directory is a coverage gap, not a scanner crash.
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     recordSkippedFile(absolutePath, {
       ok: false,
@@ -410,7 +410,7 @@ export function findExtensions(appRoot: string, repositoryFiles: ReadonlyArray<s
       const files = findAppSourceFiles(appRoot, sourcePathsByDirectory.get(dirname(tomlPath)) ?? [])
       return [{path: tomlPath, type, content, files}]
       // Invalid repository TOML is a coverage gap, not a scanner crash.
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
       recordSkippedFile(fullPath, {
         ok: false,
@@ -498,7 +498,7 @@ function readBoundedFile(path: string): RepositoryReadResult {
     if (size > MAX_REPOSITORY_FILE_SIZE_BYTES) return {ok: false, reason: 'too_large', sizeBytes: size}
     return {ok: true, content: readFileSync(path)}
     // Discovery records unreadable files as scan coverage gaps.
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return {
       ok: false,
@@ -537,7 +537,7 @@ function inspectRepositoryPath(scanDirectory: string, path: string): InspectedPa
   let canonicalRoot: string
   try {
     canonicalRoot = realpathSync(absoluteRoot)
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return {status: 'unresolved', reason: inspectErrorReason('scan directory', error)}
   }
@@ -557,7 +557,7 @@ function inspectRepositoryPath(scanDirectory: string, path: string): InspectedPa
       return {status: 'unresolved', reason: `${display} is not a file`}
     }
     return {status: 'file', path: canonicalPath}
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     if (isMissingFilesystemEntry(error)) {
       return inspectMissingRepositoryPath(canonicalRoot, segments, display)
@@ -587,7 +587,7 @@ function inspectMissingRepositoryPath(canonicalRoot: string, segments: string[],
       currentPath = canonicalPath
       // Discovery must distinguish a missing optional allowlist entry from an
       // entry that exists but cannot be inspected safely.
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
       if (isMissingFilesystemEntry(error)) {
         // lstat succeeds for a dangling link, so ENOENT from realpath is an
@@ -596,7 +596,7 @@ function inspectMissingRepositoryPath(canonicalRoot: string, segments: string[],
           if (lstatSync(currentPath).isSymbolicLink()) {
             return {status: 'unresolved', reason: `${display} contains a dangling symbolic link`}
           }
-          // eslint-disable-next-line @shopify/cli/no-catch-all
+          // eslint-disable-next-line no-catch-all/no-catch-all
         } catch {
           return {status: 'missing'}
         }
@@ -820,7 +820,7 @@ export function findDependencyAutomationInputs(
     if (!lstatSync(canonicalRoot).isDirectory()) {
       return {files: [], unresolvedReason: 'App root is not a directory'}
     }
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return {files: [], unresolvedReason: inspectErrorReason('app root', error)}
   }
@@ -885,7 +885,7 @@ export function findManifests(appRoot: string, discoveredPaths: ReadonlyArray<st
         devDependencies: pkg.devDependencies ?? {},
       })
       // Invalid repository JSON is a coverage gap, not a scanner crash.
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
       manifests.push({
         path: pkgPath,

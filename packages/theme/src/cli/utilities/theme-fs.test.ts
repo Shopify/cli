@@ -796,7 +796,7 @@ describe('theme-fs', () => {
         }
 
         // When
-        await themeFileSystem.write(asset)
+        await themeFileSystem.write(asset as any)
 
         // Then
         await expect(readFile(joinPath(root, 'sections/announcement-bar.liquid'))).resolves.toBe(asset.value)

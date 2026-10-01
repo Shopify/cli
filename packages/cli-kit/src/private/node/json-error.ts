@@ -19,7 +19,7 @@ export function renderFatalErrorAsJson(error: unknown): void {
     const document = {error: errorToJson(error)}
     serializedDocument = JSON.stringify(jsonErrorOutputSchema.validate(document))
     // Serialization must not replace the JSON contract with a text banner.
-    // eslint-disable-next-line @shopify/cli/no-catch-all
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     serializedDocument = JSON.stringify({error: {type: 'bug', message: 'Failed to serialize the error as JSON.'}})
   }

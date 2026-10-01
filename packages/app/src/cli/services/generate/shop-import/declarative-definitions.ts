@@ -559,7 +559,7 @@ function validationsNodeToObject(validations: {name: string; value?: string | nu
   const safelyJsonParse = (value: string) => {
     try {
       return JSON.parse(value)
-      // eslint-disable-next-line @shopify/cli/no-catch-all
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
       return value
     }

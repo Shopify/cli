@@ -25,7 +25,7 @@ function inMemoryStorage() {
 
   return {
     get(key: string) {
-      return values.get(key)
+      return values.get(key) as any
     },
     set(key: string, value: unknown) {
       values.set(key, value)
