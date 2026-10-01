@@ -5,9 +5,10 @@ import {
   quoteShellArgument,
   resolveAppSecurityCommands,
   shellForPlatform,
+  type AppSecurityCommand,
   type AppSecurityShell,
 } from './app-security-commands.js'
-import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import {spawnSync} from 'node:child_process'
@@ -204,7 +205,7 @@ describe('resolveAppSecurityCommands', () => {
       'shopify app security record --path "/tmp/app" < <findings.json>',
     )
     expect(formatAppSecurityCommand(commands.record, 'powershell')).toBe(
-      "Get-Content -Raw <findings.json> | shopify app security record --path '/tmp/app'",
+      "Get-Content -Raw -Encoding UTF8 <findings.json> | shopify app security record --path '/tmp/app'",
     )
     expect(formatAppSecurityCommand(commands.review, 'posix')).toBe("shopify app security review --path '/tmp/app'")
     expect(formatAppSecurityCommand(commands.clean, 'posix')).toBe("shopify app security clean --path '/tmp/app'")
@@ -321,7 +322,7 @@ describe('formatAppSecurityCommand', () => {
       const recordArguments = ['shopify', 'app', 'security', 'record', '--path', WINDOWS_APP_ROOT]
       expect(splitQuotedCommand(formatAppSecurityCommand(commands.record, shell), shell)).toEqual(
         shell === 'powershell'
-          ? ['Get-Content', '-Raw', '<findings.json>', '|', ...recordArguments]
+          ? ['Get-Content', '-Raw', '-Encoding', 'UTF8', '<findings.json>', '|', ...recordArguments]
           : [...recordArguments, '<', '<findings.json>'],
       )
       expect(splitQuotedCommand(formatAppSecurityCommand(commands.clean, shell), shell)).toEqual([
@@ -388,6 +389,40 @@ describe('formatAppSecurityCommand', () => {
       expect(result.stdout).not.toContain('EXPANDED')
     })
   })
+
+  test.skipIf(process.platform !== 'win32')(
+    'the PowerShell record command reads a findings file without a byte order mark as UTF-8 in Windows PowerShell 5.1',
+    async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const findingsPath = joinPath(directory, 'findings.json')
+        const receivedPath = joinPath(directory, 'received.json')
+        const saveStdin = joinPath(directory, 'save-stdin.js')
+        // writeFile writes UTF-8 without a byte order mark.
+        await writeFile(findingsPath, '{"file": "app/café.ts"}')
+        // Saves stdin's bytes to a file, so PowerShell's console encoding can't change what the test reads back.
+        await writeFile(
+          saveStdin,
+          "const chunks = []\nprocess.stdin.on('data', (chunk) => chunks.push(chunk))\nprocess.stdin.on('end', () => require('fs').writeFileSync(process.argv[2], Buffer.concat(chunks)))\n",
+        )
+        // The record command's stdin form, with node in place of shopify.
+        const record: AppSecurityCommand = {
+          command: `& ${quoteShellArgument(process.execPath, 'powershell')}`,
+          args: [quoteShellArgument(saveStdin, 'powershell'), quoteShellArgument(receivedPath, 'powershell')],
+          stdinPlaceholder: quoteShellArgument(findingsPath, 'powershell'),
+        }
+        // As the instructions say: without this, Windows PowerShell 5.1 pipes text to node as ASCII.
+        const script = `$OutputEncoding = [System.Text.UTF8Encoding]::new(); ${formatAppSecurityCommand(record, 'powershell')}`
+        const result = spawnSync(
+          'powershell.exe',
+          ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')],
+          {encoding: 'utf8', windowsHide: true},
+        )
+
+        expect(result.status, result.stderr).toBe(0)
+        expect(JSON.parse(await readFile(receivedPath))).toStrictEqual({file: 'app/café.ts'})
+      })
+    },
+  )
 })
 
 describe('formatAppSecurityInlineStdinCommand', () => {

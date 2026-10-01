@@ -156,7 +156,11 @@ describe('appSecurityInstructions', () => {
       expect(instructions).toContain(
         codeBlock('powershell', "@'", '<the findings document from step 4>', `'@ | ${record}`),
       )
-      expect(instructions).toContain(codeBlock('powershell', `Get-Content -Raw <findings.json> | ${record}`))
+      // The encoding note follows both forms, since both pipe text to record.
+      expect(instructions).toContain(
+        `${codeBlock('powershell', `Get-Content -Raw -Encoding UTF8 <findings.json> | ${record}`)}\n\nWindows PowerShell 5.1 pipes text to \`record\` as ASCII by default.`,
+      )
+      expect(instructions).toContain('`$OutputEncoding = [System.Text.UTF8Encoding]::new()` before either command.')
       expect(instructions).toContain("The closing `'@` must start its line.")
       expect(instructions).not.toContain("<<'EOF'")
       expect(instructions).not.toContain(`${record} <`)
