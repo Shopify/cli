@@ -274,6 +274,64 @@ describe('securityRecord', () => {
     })
   })
 
+  describe('redacts secrets quoted in validation errors', () => {
+    const documentWithSecrets = JSON.stringify({
+      schema_version: 1,
+      checks_executed: [{check_id: FAKE_SHOPIFY_TOKEN, check_version: 1}],
+      findings: [
+        finding({check_id: FAKE_SHOPIFY_TOKEN}),
+        finding({file: `../${FAKE_SHOPIFY_TOKEN}`}),
+        finding({line: FAKE_SHOPIFY_TOKEN}),
+      ],
+    })
+    const redactedErrors = [
+      expect.stringMatching(/^checks_executed\[0\] \(.*REDACTED.*\): unknown check_id$/),
+      expect.stringMatching(/^findings\[0\] \(.*REDACTED.*\): unknown check_id$/),
+      expect.stringMatching(/^findings\[1\] \(MISSING_TENANT_ISOLATION\): unsafe file path .*REDACTED/),
+      expect.stringMatching(/^findings\[2\] \(MISSING_TENANT_ISOLATION\): invalid line number: .*REDACTED/),
+    ]
+
+    test('in the terminal', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        const error = await recordError(appRoot, testDependencies(documentWithSecrets))
+        expect(error.details).toStrictEqual({errors: redactedErrors})
+
+        const output = mockAndCaptureOutput()
+        output.clear()
+        try {
+          await handler(error)
+
+          expect(output.error()).toContain('unknown check_id')
+          expect(output.error()).toContain('REDACTED')
+          expect(output.error()).not.toContain(FAKE_SHOPIFY_TOKEN)
+        } finally {
+          output.clear()
+        }
+      })
+    })
+
+    test('in JSON mode', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        const error = await recordError(appRoot, testDependencies(documentWithSecrets))
+
+        const output = mockAndCaptureOutput()
+        output.clear()
+        vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
+        try {
+          await handler(error)
+
+          expect(JSON.parse(output.info()).error.details).toStrictEqual({errors: redactedErrors})
+          expect(output.info()).not.toContain(FAKE_SHOPIFY_TOKEN)
+        } finally {
+          vi.unstubAllEnvs()
+          output.clear()
+        }
+      })
+    })
+  })
+
   test('fails when nothing is piped on stdin', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
