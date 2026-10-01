@@ -1,4 +1,5 @@
 import nxPlugin from '@nx/eslint-plugin'
+import compatibilityPlugin from './packages/eslint-plugin-cli/oxlint-compat.js'
 import cliPlugin from '@shopify/eslint-plugin-cli'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
 import {readFileSync} from 'node:fs'
@@ -12,6 +13,7 @@ const eslintPluginNames = {
 }
 
 const eslintRuleName = (oxlintRuleName) => {
+  if (oxlintRuleName.startsWith('compat/')) return compatibilityPlugin.ruleNames[oxlintRuleName.slice(7)]
   const [pluginName, ...ruleNameParts] = oxlintRuleName.split('/')
   const eslintPluginName = eslintPluginNames[pluginName]
   return eslintPluginName ? `${eslintPluginName}/${ruleNameParts.join('/')}` : oxlintRuleName
@@ -33,6 +35,7 @@ const eslintCompatibilityConfig = ({files, rules}) => ({
 
 // Spread the CLI plugin's base config which includes all necessary plugins
 export const eslintBaseConfig = [
+  {plugins: {compat: compatibilityPlugin}},
   // Base config from @shopify/eslint-plugin-cli (includes shopify, typescript, prettier, etc.)
   ...cliPlugin.configs.config,
 

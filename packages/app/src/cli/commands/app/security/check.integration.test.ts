@@ -6,7 +6,7 @@ import {unstyled} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
 import {mkdir, readFile, writeFile} from 'node:fs/promises'
-// eslint-disable-next-line n/prefer-global/console
+// eslint-disable-next-line compat/n-prefer-global-console
 import {Console} from 'node:console'
 
 // Exercise actual stdout/stderr instead of CLI-kit's unit-test log collector.

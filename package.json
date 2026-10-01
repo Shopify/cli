@@ -23,7 +23,7 @@
     "lint:fix": "pnpm prettier:fix && pnpm lint:oxlint --fix && nx run-many --target=lint:fix --all --skip-nx-cache",
     "lint": "pnpm prettier && pnpm lint:oxlint && pnpm lint:eslint",
     "lint:eslint": "nx run-many --target=lint --all",
-    "lint:oxlint": "oxlint --config oxlint.json --deny-warnings packages/app/src packages/cli-kit/src packages/cli/src packages/create-app/src packages/organizations/src packages/plugin-cloudflare/src packages/plugin-did-you-mean/src packages/store/src packages/theme/src packages/ui-extensions-server-kit/src packages/ui-extensions-test-utils/src packages/cli/bin packages/e2e",
+    "lint:oxlint": "nx graph --file .nx/oxlint-project-graph.json && oxlint --config oxlint.json --deny-warnings --report-unused-disable-directives packages/app/src packages/cli-kit/src packages/cli/src packages/create-app/src packages/organizations/src packages/plugin-cloudflare/src packages/plugin-did-you-mean/src packages/store/src packages/theme/src packages/ui-extensions-server-kit/src packages/ui-extensions-test-utils/src packages/cli/bin packages/e2e",
     "prettier": "prettier --check \"packages/{app,cli-kit,cli,create-app,organizations,plugin-cloudflare,plugin-did-you-mean,store,theme,ui-extensions-server-kit,ui-extensions-test-utils}/src/**/*.{js,ts,tsx}\" \"packages/cli/bin/*.js\" \"packages/e2e/{setup,helpers,tests}/**/*.ts\" \"packages/e2e/*.ts\"",
     "prettier:fix": "prettier --write \"packages/{app,cli-kit,cli,create-app,organizations,plugin-cloudflare,plugin-did-you-mean,store,theme,ui-extensions-server-kit,ui-extensions-test-utils}/src/**/*.{js,ts,tsx}\" \"packages/cli/bin/*.js\" \"packages/e2e/{setup,helpers,tests}/**/*.ts\" \"packages/e2e/*.ts\"",
     "create-homebrew-pr": "bin/create-homebrew-pr.js",

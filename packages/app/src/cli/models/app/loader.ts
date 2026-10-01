@@ -756,7 +756,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
       this.errors.addErrors(webhookResult.errors)
       return []
     }
-    // eslint-disable-next-line @typescript-eslint/naming-convention
+    // eslint-disable-next-line compat/typescript-eslint-naming-convention
     const {api_version, subscriptions = []} = webhookResult.data.webhooks
     // Find all unique subscriptions
     const webhookSubscriptions = getArrayRejectingUndefined(

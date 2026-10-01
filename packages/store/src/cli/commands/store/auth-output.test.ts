@@ -1,6 +1,6 @@
 import {describe, expect, test, vi} from 'vitest'
 // Vitest intercepts console.warn; use Node's console to exercise the real stderr writer.
-// eslint-disable-next-line n/prefer-global/console
+// eslint-disable-next-line compat/n-prefer-global-console
 import {Console} from 'node:console'
 import type * as System from '@shopify/cli-kit/node/system'
 
