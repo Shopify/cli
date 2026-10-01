@@ -300,6 +300,27 @@ describe('importChannelConfig', () => {
     })
   })
 
+  test('treats an empty extension_directories like the default and creates the extension', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      vi.mocked(fetchChannelSpecExport).mockResolvedValue(successResult())
+      const base = testAppLinked({directory: tmpDir})
+      const app = testAppLinked({
+        directory: tmpDir,
+        configuration: {...base.configuration, extension_directories: []},
+      })
+
+      // When
+      await importChannelConfig(testOptions(app))
+
+      // Then
+      await expect(
+        fileExists(joinPath(tmpDir, CHANNEL_SPEC_EXTENSION_DIRECTORY, 'shopify.extension.toml')),
+      ).resolves.toBe(true)
+      await expect(fileExists(joinPath(tmpDir, CHANNEL_SPEC_DIRECTORY, 'example.toml'))).resolves.toBe(true)
+    })
+  })
+
   test('creates the extension when extension_directories includes extensions/*', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given

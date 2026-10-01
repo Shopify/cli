@@ -1,6 +1,10 @@
 import {fetchChannelSpecExport} from './fetch.js'
 import {importChannelConfigJsonOutputSchema} from './types.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
+import {
+  CHANNEL_CONFIG_IDENTIFIER,
+  CHANNEL_CONFIG_SPECIFICATIONS_DIRECTORY,
+} from '../../models/extensions/specifications/channel.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -10,12 +14,13 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 
 export const CHANNEL_SPEC_EXTENSION_DIRECTORY = joinPath('extensions', 'channel-config')
-export const CHANNEL_SPEC_DIRECTORY = joinPath(CHANNEL_SPEC_EXTENSION_DIRECTORY, 'specifications')
+export const CHANNEL_SPEC_DIRECTORY = joinPath(
+  CHANNEL_SPEC_EXTENSION_DIRECTORY,
+  CHANNEL_CONFIG_SPECIFICATIONS_DIRECTORY,
+)
 
 const EXTENSION_CONFIG_FILENAME = 'shopify.extension.toml'
-const EXTENSION_CONFIG_CONTENT = 'name = "Channel config"\ntype = "channel_config"\nhandle = "channel-config"\n'
-const CHANNEL_CONFIG_EXTENSION_TYPE = 'channel_config'
-const SPECIFICATIONS_DIRECTORY = 'specifications'
+const EXTENSION_CONFIG_CONTENT = `name = "Channel config"\ntype = "${CHANNEL_CONFIG_IDENTIFIER}"\nhandle = "channel-config"\n`
 const DEFAULT_EXTENSION_DIRECTORIES = ['extensions/*']
 
 const FAILURE_MESSAGES: {[reason: string]: string} = {
@@ -52,7 +57,7 @@ export async function importChannelConfig(options: ImportChannelConfigOptions): 
   const {extensionDirectory, createExtension} = resolveExtensionDirectory(app)
 
   // basename() so a filename with path separators can't escape the specifications directory
-  const outputPath = joinPath(extensionDirectory, SPECIFICATIONS_DIRECTORY, basename(result.filename))
+  const outputPath = joinPath(extensionDirectory, CHANNEL_CONFIG_SPECIFICATIONS_DIRECTORY, basename(result.filename))
   if (!force && (await fileExists(outputPath))) {
     throw new AbortError(
       `A channel spec already exists at ${relativePath(app.directory, outputPath)}.`,
@@ -109,12 +114,12 @@ export async function importChannelConfig(options: ImportChannelConfigOptions): 
  * extensions/channel-config, as long as the app's extension_directories would pick it up.
  */
 function resolveExtensionDirectory(app: AppLinkedInterface): {extensionDirectory: string; createExtension: boolean} {
-  const existing = app.allExtensions.filter((extension) => extension.type === CHANNEL_CONFIG_EXTENSION_TYPE)
+  const existing = app.allExtensions.filter((extension) => extension.type === CHANNEL_CONFIG_IDENTIFIER)
 
   if (existing.length > 1) {
     const paths = existing.map((extension) => relativePath(app.directory, extension.directory)).join(', ')
     throw new AbortError(
-      `This app has more than one ${CHANNEL_CONFIG_EXTENSION_TYPE} extension (${paths}).`,
+      `This app has more than one ${CHANNEL_CONFIG_IDENTIFIER} extension (${paths}).`,
       'Only one is allowed. Remove the extras and try again.',
     )
   }
@@ -123,14 +128,17 @@ function resolveExtensionDirectory(app: AppLinkedInterface): {extensionDirectory
     return {extensionDirectory: existing[0]!.directory, createExtension: false}
   }
 
-  const extensionDirectories = app.configuration.extension_directories ?? DEFAULT_EXTENSION_DIRECTORIES
+  // The loader treats an empty extension_directories the same as an unset one (extensions/*).
+  const configuredDirectories = app.configuration.extension_directories
+  const extensionDirectories =
+    configuredDirectories && configuredDirectories.length > 0 ? configuredDirectories : DEFAULT_EXTENSION_DIRECTORIES
   const wouldBeDiscovered = extensionDirectories.some((pattern) =>
     matchGlob(`${CHANNEL_SPEC_EXTENSION_DIRECTORY}/${EXTENSION_CONFIG_FILENAME}`, `${pattern}/*.extension.toml`),
   )
   if (!wouldBeDiscovered) {
     throw new AbortError(
       `Your shopify.app.toml only loads extensions from ${extensionDirectories.join(', ')}, so a new extension at ${CHANNEL_SPEC_EXTENSION_DIRECTORY} wouldn't be deployed.`,
-      `Create a ${CHANNEL_CONFIG_EXTENSION_TYPE} extension in one of those directories with a ${EXTENSION_CONFIG_FILENAME} like:\n\n${EXTENSION_CONFIG_CONTENT}\nthen re-run this command.`,
+      `Create a ${CHANNEL_CONFIG_IDENTIFIER} extension in one of those directories with a ${EXTENSION_CONFIG_FILENAME} like:\n\n${EXTENSION_CONFIG_CONTENT}\nthen re-run this command.`,
     )
   }
 
