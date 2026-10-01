@@ -329,7 +329,12 @@
   "eslint-comments/no-unused-disable": {
     "replacement": null,
     "status": "unsupported",
-    "limitation": "ESLint directive conventions are removed; Oxlint still checks unused disable directives."
+    "limitation": "ESLint directive conventions are removed; Oxlint still checks unused disable directives.",
+    "otherToolCoverage": {
+      "tools": ["Oxlint unused-disable reporting"],
+      "scope": "Full pnpm lint and the PR Oxlint job pass --report-unused-disable-directives with --deny-warnings.",
+      "limitation": "This covers unused suppressions for enabled Oxlint rules. Per-project lint targets do not all pass this flag; other ESLint directive conventions remain separate gaps."
+    }
   },
   "eslint-comments/no-unused-enable": {
     "replacement": null,
@@ -434,7 +439,12 @@
   "import-x/no-extraneous-dependencies": {
     "replacement": null,
     "status": "unsupported",
-    "limitation": "The ESLint import resolver and project-wide export analysis are removed."
+    "limitation": "The ESLint import resolver and project-wide export analysis are removed.",
+    "otherToolCoverage": {
+      "tools": ["Knip unlisted"],
+      "scope": "Analyzed imports must have a declared dependency under Knip resolution.",
+      "limitation": "The original ESLint rule applied only to JavaScript. Knip exclusions and ancestor-workspace dependency lookup prevent identical coverage; default mode also accepts devDependencies."
+    }
   },
   "import-x/no-mutable-exports": {
     "replacement": "import/no-mutable-exports",
@@ -464,12 +474,22 @@
   "import-x/no-unresolved": {
     "replacement": null,
     "status": "unsupported",
-    "limitation": "The ESLint import resolver and project-wide export analysis are removed."
+    "limitation": "The ESLint import resolver and project-wide export analysis are removed.",
+    "otherToolCoverage": {
+      "tools": ["Knip unresolved", "TypeScript module resolution", "esbuild resolution"],
+      "scope": "Knip checks analyzed imports; TypeScript and esbuild check their compilation/bundle inputs.",
+      "limitation": "The original ESLint rule applied only to JavaScript. Knip excludes the plugin and e2e workspaces and selected files; TypeScript does not type-check all JavaScript, and externalized bundle imports need not resolve."
+    }
   },
   "import-x/no-unused-modules": {
     "replacement": null,
     "status": "unsupported",
-    "limitation": "The ESLint import resolver and project-wide export analysis are removed."
+    "limitation": "The ESLint import resolver and project-wide export analysis are removed.",
+    "otherToolCoverage": {
+      "tools": ["Knip exports", "Knip types", "Knip files"],
+      "scope": "Knip reports unused exports, types, and files in its analyzed graph.",
+      "limitation": "Public entry exports are retained by default. Ignored workspaces, generated files, and configured entry points differ from ESLint scopes."
+    }
   },
   "import-x/no-useless-path-segments": {
     "replacement": null,
@@ -494,12 +514,22 @@
   "jsdoc/check-alignment": {
     "replacement": null,
     "status": "unsupported",
-    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks."
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks.",
+    "otherToolCoverage": {
+      "tools": ["Prettier"],
+      "scope": "Prettier normalizes indentation of JSDoc blocks whose lines start with asterisks.",
+      "limitation": "This is formatting overlap, not complete JSDoc layout validation; missing asterisks and tag-column alignment are not supplied."
+    }
   },
   "jsdoc/check-indentation": {
     "replacement": null,
     "status": "unsupported",
-    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks."
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks.",
+    "otherToolCoverage": {
+      "tools": ["Prettier"],
+      "scope": "Prettier normalizes indentation of supported JSDoc blocks.",
+      "limitation": "It does not validate all indentation within comment prose and examples or repair arbitrary malformed block comments."
+    }
   },
   "jsdoc/check-line-alignment": {
     "replacement": null,
@@ -519,7 +549,12 @@
   "jsdoc/check-syntax": {
     "replacement": null,
     "status": "unsupported",
-    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks."
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks.",
+    "otherToolCoverage": {
+      "tools": ["TSDoc parser"],
+      "scope": "The enabled tsdoc-syntax rule rejects malformed TSDoc, including invalid typed @param syntax.",
+      "limitation": "TSDoc and JSDoc have different grammars. This does not validate documentation against function signatures or replace the original JSDoc syntax policy."
+    }
   },
   "jsdoc/check-tag-names": {
     "replacement": "jsdoc/check-tag-names",
@@ -838,7 +873,12 @@
   "no-catch-shadow": {
     "replacement": null,
     "status": "unsupported",
-    "limitation": "No independent implementation is enabled."
+    "limitation": "No independent implementation is enabled.",
+    "otherToolCoverage": {
+      "tools": ["Oxlint no-shadow"],
+      "scope": "The enabled JavaScript no-shadow rule catches a catch binding that shadows an existing outer variable.",
+      "limitation": "General shadowing options and hoisting behavior differ from the legacy IE8-specific rule."
+    }
   },
   "no-class-assign": {
     "replacement": "no-class-assign",
@@ -893,7 +933,12 @@
   "no-dupe-args": {
     "replacement": null,
     "status": "unsupported",
-    "limitation": "No independent implementation is enabled."
+    "limitation": "No independent implementation is enabled.",
+    "otherToolCoverage": {
+      "tools": ["Oxlint parser", "Independent no-redeclare rule"],
+      "scope": "The ESM parser rejects duplicate parameters; the enabled independent no-redeclare rule also catches duplicate parameters in CommonJS plugin files.",
+      "limitation": "The original rule was enabled only for JavaScript. The CommonJS parser alone accepts duplicates; the independent rule is not a full equivalence proof for all parameter shapes."
+    }
   },
   "no-dupe-class-members": {
     "replacement": "no-dupe-class-members",
@@ -1093,12 +1138,22 @@
   "no-octal": {
     "replacement": null,
     "status": "unsupported",
-    "limitation": "No independent implementation is enabled."
+    "limitation": "No independent implementation is enabled.",
+    "otherToolCoverage": {
+      "tools": ["TypeScript", "Prettier TypeScript parser", "Oxlint ESM parser"],
+      "scope": "TypeScript checking and Prettier parsing reject legacy octal literals in TypeScript; Oxlint rejects them in strict ES modules.",
+      "limitation": "CommonJS JavaScript still accepts legacy octal syntax. Prettier does not reject or rewrite it there."
+    }
   },
   "no-octal-escape": {
     "replacement": null,
     "status": "unsupported",
-    "limitation": "No independent implementation is enabled."
+    "limitation": "No independent implementation is enabled.",
+    "otherToolCoverage": {
+      "tools": ["TypeScript", "Prettier TypeScript parser", "Oxlint ESM parser"],
+      "scope": "TypeScript checking and Prettier parsing reject legacy octal escapes in TypeScript; Oxlint rejects them in strict ES modules.",
+      "limitation": "CommonJS JavaScript still accepts legacy octal escapes. Prettier does not reject or rewrite them there."
+    }
   },
   "no-param-reassign": {
     "replacement": "no-param-reassign",
