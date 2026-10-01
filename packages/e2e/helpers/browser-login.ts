@@ -78,7 +78,7 @@ export async function completeLogin(page: Page, loginUrl: string, email: string,
     try {
       const btn = page.locator('button[type="submit"]').first()
       if (await isVisibleWithin(btn, BROWSER_TIMEOUT.long)) await btn.click()
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch (_error) {
       // No confirmation page — expected
     }

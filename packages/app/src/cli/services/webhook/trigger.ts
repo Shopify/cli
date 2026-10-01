@@ -106,7 +106,7 @@ function formatErrors(errors: UserErrors[]): string {
           .join('\n'),
       )
       .join('\n')
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (err) {
     return JSON.stringify(errors)
   }

@@ -17,14 +17,14 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint \"setup/**/*.ts\" \"helpers/**/*.ts\" \"tests/**/*.ts\" \"*.ts\"",
+        "command": "pnpm oxlint --config ../../oxlint.json --deny-warnings .",
         "cwd": "packages/e2e"
       }
     },
     "lint:fix": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint 'setup/**/*.ts' 'helpers/**/*.ts' 'tests/**/*.ts' '*.ts' --fix",
+        "command": "pnpm oxlint --config ../../oxlint.json --fix .",
         "cwd": "packages/e2e"
       }
     },

@@ -1,4 +1,3 @@
-/* eslint-disable compat/line-comment-position */
 import {TEST_TIMEOUT} from './setup/constants.js'
 import {config} from 'dotenv'
 import {defineConfig} from '@playwright/test'

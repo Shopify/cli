@@ -89,7 +89,7 @@ export default async function install(env = process.env, platform = process.plat
         outputDebug('cloudflared already installed, skipping')
         return
       }
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch {
       outputDebug('version check failed, reinstalling')
     }

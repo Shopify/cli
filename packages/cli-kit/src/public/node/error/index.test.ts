@@ -14,7 +14,7 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 function clientError(status: number, code?: string): ClientError {
   const errors = code ? [{message: 'boom', extensions: {code}}] : undefined
-  return new ClientError({status, errors, headers: {}} as any, {query: 'q'} as any)
+  return new ClientError({status, errors, headers: {}} as any, {query: 'q'})
 }
 
 vi.mock('../ui.js')
@@ -160,7 +160,7 @@ describe('shouldReportErrorAsUnexpected helper', () => {
   test('returns false for a rate-limit code on a later error entry, not just the first', () => {
     const error = new ClientError(
       {status: 200, errors: [{message: 'noise'}, {extensions: {code: 'THROTTLED'}}], headers: {}} as any,
-      {query: 'q'} as any,
+      {query: 'q'},
     )
     expect(shouldReportErrorAsUnexpected(error)).toBe(false)
   })

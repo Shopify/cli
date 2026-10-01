@@ -92,7 +92,7 @@ export async function sendAnalyticsEventFromStdin(): Promise<void> {
     }
 
     await sendAnalyticsEvent(payload, skipMonorailAnalytics, skipMetricAnalytics)
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
     outputDebug(`Failed to send analytics in background: ${message}`)
@@ -166,7 +166,7 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
     // eslint-disable-next-line no-void
     void analyticsProcess
 
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (error) {
     let message = 'Failed to report usage analytics'
     if (error instanceof Error) {

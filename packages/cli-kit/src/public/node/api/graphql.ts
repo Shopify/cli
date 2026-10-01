@@ -276,7 +276,7 @@ async function logLastRequestIdFromResponse(response: GraphQLResponse<unknown>) 
     await addPublicMetadata(() => ({
       cmd_all_last_graphql_request_id: requestId ?? undefined,
     }))
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     // no problem if unable to get request ID.
   }

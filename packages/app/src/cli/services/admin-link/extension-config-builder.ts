@@ -33,7 +33,7 @@ export function buildExtensionConfig(
       fullUrl.search = linkUrl.search
       fullUrl.hash = linkUrl.hash
       config.url = fullUrl.toString()
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch (error) {
       // Keep original URL if parsing fails
     }

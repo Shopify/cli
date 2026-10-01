@@ -7,7 +7,6 @@ import {
   normaliseJsonSchema,
 } from '@shopify/cli-kit/node/json-schema'
 import {isEmpty} from '@shopify/cli-kit/common/object'
-import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 /**
  * The base properties that are added to all JSON Schema contracts.
@@ -49,7 +48,7 @@ export async function unifiedConfigurationParserFactory(
 
     // Then, even if this failed, we try to validate against the contract.
     const zodValidatedData = zodParse.state === 'ok' ? zodParse.data : undefined
-    const subjectForAjv = zodValidatedData ?? (config as JsonMapType)
+    const subjectForAjv = zodValidatedData ?? config
 
     const jsonSchemaParse = jsonSchemaValidate(
       subjectForAjv,

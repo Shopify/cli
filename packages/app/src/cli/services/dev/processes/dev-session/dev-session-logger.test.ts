@@ -6,9 +6,9 @@ import {
   ExtensionInstance,
 } from '../../../../models/extensions/extension-instance.js'
 import {createExtensionSpecification} from '../../../../models/extensions/specification.js'
-import {BaseConfigType, BaseSchema} from '../../../../models/extensions/schemas.js'
+import {BaseSchema} from '../../../../models/extensions/schemas.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
-import {JsonMapType} from '@shopify/cli-kit/node/toml'
+
 import {Writable} from 'stream'
 
 function extensionWithNoLocalDevOutput(handle: string): ExtensionInstance {
@@ -19,7 +19,7 @@ function extensionWithNoLocalDevOutput(handle: string): ExtensionInstance {
     uidStrategy: 'single',
   })
   return new ExtensionInstance({
-    configuration: {name: handle, type: specification.identifier, handle} as BaseConfigType,
+    configuration: {name: handle, type: specification.identifier, handle},
     configurationPath: '',
     directory: '/tmp/test-extension',
     specification,
@@ -118,7 +118,7 @@ describe('DevSessionLogger', () => {
         {
           message: 'test error',
           category: 'test',
-          on: {user_identifier: 'test-id'} as JsonMapType,
+          on: {user_identifier: 'test-id'},
         },
       ] as UserError[]
       await logger.logUserErrors(errors, extensions)

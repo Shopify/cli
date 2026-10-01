@@ -40,7 +40,7 @@ export async function formatBundleSize(filePath: string) {
   try {
     const {rawBytes, compressedBytes} = await getBundleSize(filePath)
     return ` (${formatSize(rawBytes)} original, ~${formatSize(compressedBytes)} compressed)`
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (error) {
     outputDebug(`Failed to get bundle size for ${filePath}: ${error}`)
     return ''

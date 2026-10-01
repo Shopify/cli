@@ -1,4 +1,4 @@
-/* eslint-disable compat/id-length */
+/* eslint-disable @shopify/cli/id-length */
 import {replaceUpdated} from './replaceUpdated'
 
 describe('replaceUpdated', () => {

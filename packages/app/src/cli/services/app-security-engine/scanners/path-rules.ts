@@ -195,7 +195,7 @@ async function runGit(directory: string, args: string[]): Promise<{exitCode: num
   try {
     const result = await captureOutputWithExitCode('git', args, {cwd: directory})
     return {exitCode: result.exitCode, stdout: result.stdout}
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     return undefined
   }
