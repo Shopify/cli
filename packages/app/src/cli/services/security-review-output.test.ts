@@ -768,7 +768,7 @@ describe('renderSecurityReview', () => {
     expect(rendered).toContain('No App Security results to review.')
     expect(rendered).toContain('deterministic-findings.json  not found')
     expect(rendered).toContain('agent-findings.json          not found')
-    expect(rendered).toContain("• Run `shopify app security check --path '/tmp/review-app'` or have your")
+    expect(rendered).toContain(`• Run \`${checkCommand}\` or have your`)
     expect(rendered).toContain('coding agent run it.')
     expect(rendered).not.toContain('Deterministic coverage')
     expect(rendered).not.toContain('--check-id')
