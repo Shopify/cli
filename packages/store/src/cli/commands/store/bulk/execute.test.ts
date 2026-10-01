@@ -82,6 +82,22 @@ describe('store bulk execute command', () => {
     expect(executeBulkOperation).not.toHaveBeenCalled()
   })
 
+  test('rejects JSON file output without watching before authentication or execution', async () => {
+    await expect(
+      StoreBulkExecute.run([
+        '--store',
+        'shop.myshopify.com',
+        '--query',
+        '{ shop { id } }',
+        '--json',
+        '--output-file',
+        './results.jsonl',
+      ]),
+    ).rejects.toThrow()
+    expect(prepareBulkOperation).not.toHaveBeenCalled()
+    expect(executeBulkOperation).not.toHaveBeenCalled()
+  })
+
   test('defines the expected flags', () => {
     expect(StoreBulkExecute.flags.store).toBeDefined()
     expect(StoreBulkExecute.flags.json).toBeDefined()

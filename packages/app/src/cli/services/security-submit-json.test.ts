@@ -1,4 +1,4 @@
-import {encodeSecuritySubmitJson, toSecuritySubmitJson} from './security-submit-json.js'
+import {encodeSecuritySubmitJson, toSecuritySubmitJson, securitySubmitJsonOutputSchema} from './security-submit-json.js'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
@@ -8,6 +8,24 @@ const payload = {path: '<APP_ROOT>/.shopify/app-security/submission.json', schem
 const submittedAt = '2026-09-01T09:30:00.000Z'
 
 describe('App Security submit JSON', () => {
+  test('represents declined confirmation as an explicit successful cancellation', () => {
+    expect(JSON.parse(encodeSecuritySubmitJson(toSecuritySubmitJson({status: 'cancelled'})))).toEqual({
+      status: 'cancelled',
+      operation: 'submit',
+    })
+  })
+
+  test('normalizes submission timestamps and rejects accidental CLI fields', () => {
+    const result = toSecuritySubmitJson({
+      status: 'submitted',
+      payload,
+      submittedAt: '2026-09-01T11:30:00+02:00',
+      appTitle: 'Example',
+      clientId: 'client',
+    })
+    expect(JSON.parse(encodeSecuritySubmitJson(result)).submittedAt).toBe('2026-09-01T09:30:00.000Z')
+    expect(() => securitySubmitJsonOutputSchema.validate({...result, accidentalField: true})).toThrow()
+  })
   test.each([
     {result: {status: 'dry-run', payload}, fixture: 'security-submit-dry-run-result.json'},
     {
@@ -40,21 +58,18 @@ describe('App Security submit JSON', () => {
         error: {stage: 'create', message: 'First error, Second error', userErrors, accepted, tryMessage: 'Retry.'},
       }),
     ).toEqual({
-      operation: 'submit',
       error: {
-        stage: 'create',
+        type: 'abort',
         message: 'First error, Second error',
-        user_errors: userErrors,
-        accepted,
-        try_message: 'Retry.',
+        tryMessage: 'Retry.',
+        details: {stage: 'create', userErrors, accepted},
       },
     })
   })
 
   test('local failures do not invent API response fields', () => {
     expect(toSecuritySubmitJson({status: 'failed', error: {stage: 'preparation', message: 'Missing trace'}})).toEqual({
-      operation: 'submit',
-      error: {stage: 'preparation', message: 'Missing trace'},
+      error: {type: 'abort', message: 'Missing trace', details: {stage: 'preparation'}},
     })
   })
 
@@ -74,12 +89,12 @@ describe('App Security submit JSON', () => {
     })
 
     expect(JSON.parse(encodeSecuritySubmitJson(result))).toEqual({
-      operation: 'submit',
       error: {
-        stage: 'preparation',
+        type: 'abort',
         message: 'Missing target',
-        try_message: 'Pass --client-id <client-id>.',
-        next_steps: ['Select an existing config with --config <name>.', 'See configuration docs', 'Try again.'],
+        tryMessage: 'Pass --client-id <client-id>.',
+        nextSteps: ['Select an existing config with --config <name>.', 'See configuration docs', 'Try again.'],
+        details: {stage: 'preparation'},
       },
     })
   })
@@ -90,7 +105,7 @@ describe('App Security submit JSON', () => {
         status: 'failed',
         error: {stage: 'preparation', message: 'Missing trace', tryMessage, nextSteps: undefined},
       }),
-    ).toEqual({operation: 'submit', error: {stage: 'preparation', message: 'Missing trace'}})
+    ).toEqual({error: {type: 'abort', message: 'Missing trace', details: {stage: 'preparation'}}})
   })
 
   test('retains an explicitly empty next steps list', () => {
@@ -99,12 +114,12 @@ describe('App Security submit JSON', () => {
         status: 'failed',
         error: {stage: 'preparation', message: 'Missing trace', nextSteps: []},
       }),
-    ).toEqual({operation: 'submit', error: {stage: 'preparation', message: 'Missing trace', next_steps: []}})
+    ).toEqual({error: {type: 'abort', message: 'Missing trace', nextSteps: [], details: {stage: 'preparation'}}})
   })
 
   test('upload URL failures retain empty errors without adding an accepted state', () => {
     expect(
       toSecuritySubmitJson({status: 'failed', error: {stage: 'upload-url', message: 'Missing URL', userErrors: []}}),
-    ).toEqual({operation: 'submit', error: {stage: 'upload-url', message: 'Missing URL', user_errors: []}})
+    ).toEqual({error: {type: 'abort', message: 'Missing URL', details: {stage: 'upload-url', userErrors: []}}})
   })
 })

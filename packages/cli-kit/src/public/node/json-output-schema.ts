@@ -1,5 +1,13 @@
+import {zod} from './schema.js'
 import {zodToJsonSchema} from 'zod-to-json-schema'
 import type {ZodTypeAny, z} from 'zod'
+
+/** UTC instants in CLI-owned results always include milliseconds and the Z timezone marker. */
+export const jsonOutputTimestampSchema = zod
+  .string()
+  .datetime({precision: 3})
+  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
+  .describe('A UTC ISO 8601 instant with milliseconds and the Z timezone marker.')
 
 interface JsonOutputSchemaDefinition<TSchema extends ZodTypeAny = ZodTypeAny> {
   readonly name: string

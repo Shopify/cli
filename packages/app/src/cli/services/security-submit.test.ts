@@ -612,7 +612,7 @@ describe('securitySubmit', () => {
     })
   })
 
-  test('--json without --force fails before reading inputs, writing artifacts, or resolving the target', async () => {
+  test('non-interactive --json without --force fails before reading inputs, writing artifacts, or resolving the target', async () => {
     await inTemporaryDirectory(async (directory) => {
       const dependencies = testDependencies(directory)
 
@@ -627,6 +627,19 @@ describe('securitySubmit', () => {
       expect(dependencies.fetchApp).not.toHaveBeenCalled()
       expect(dependencies.submitScan).not.toHaveBeenCalled()
       expectNoOutput(dependencies)
+    })
+  })
+
+  test('JSON format does not disable interactive confirmation', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const dependencies = testDependencies(directory)
+      vi.mocked(dependencies.canPrompt).mockReturnValue(true)
+      vi.mocked(dependencies.confirm).mockResolvedValue('cancel')
+      await expect(securitySubmit({...options(directory), json: true}, dependencies)).resolves.toEqual({
+        status: 'cancelled',
+      })
+      expect(dependencies.confirm).toHaveBeenCalledOnce()
+      expect(dependencies.submitScan).not.toHaveBeenCalled()
     })
   })
 

@@ -154,9 +154,10 @@ describe('app security submit command boundary', () => {
       expect(result.exits).toEqual([])
       if (json) {
         expect(JSON.parse(result.stdout)).toEqual({
+          status: 'success',
           operation: 'submit',
-          dry_run: true,
-          payload: {path: paths.submissionPath, schema_version: 1},
+          dryRun: true,
+          payload: {path: paths.submissionPath, schemaVersion: 1},
         })
         expect(result.stderr).toBe('')
       } else {
@@ -189,9 +190,10 @@ describe('app security submit command boundary', () => {
       expect(result.exitCode).toBe(0)
       expect(result.stderr).toBe('')
       expect(JSON.parse(result.stdout)).toEqual({
+        status: 'success',
         operation: 'submit',
-        dry_run: true,
-        payload: {path: paths.submissionPath, schema_version: 1},
+        dryRun: true,
+        payload: {path: paths.submissionPath, schemaVersion: 1},
       })
       expect(resolveSecuritySubmitClientId).toHaveBeenCalledExactlyOnceWith({directory, clientId, configName})
       await expect(readFile(paths.submissionPath, 'utf8')).resolves.toContain('"schemaVersion": 1')
@@ -227,8 +229,7 @@ describe('app security submit command boundary', () => {
         expect(result.exitCode).toBe(1)
         if (json) {
           expect(JSON.parse(result.stdout)).toMatchObject({
-            operation: 'submit',
-            error: {stage: 'preparation', message: expect.stringContaining(message)},
+            error: {type: 'abort', message: expect.stringContaining(message), details: {stage: 'preparation'}},
           })
           expect(result.stderr).toBe('')
         } else {
@@ -259,13 +260,11 @@ describe('app security submit command boundary', () => {
       expect(result.stdout).not.toContain(signedUploadUrl)
       expect(result.stderr).toBe('')
       expect(JSON.parse(result.stdout)).toEqual({
-        operation: 'submit',
         error: {
-          stage: 'create',
+          type: 'abort',
           message: 'First rejection, Second rejection',
-          user_errors: userErrors,
-          accepted,
-          try_message: 'Try submitting the App Security results again.',
+          tryMessage: 'Try submitting the App Security results again.',
+          details: {stage: 'create', userErrors, accepted},
         },
       })
       expect(client.appFromIdentifiers).toHaveBeenCalledWith('configured-client-id')
@@ -295,8 +294,7 @@ describe('app security submit command boundary', () => {
 
       expect(result.exitCode).toBe(1)
       expect(JSON.parse(result.stdout)).toEqual({
-        operation: 'submit',
-        error: {stage: 'upload-url', message: 'Invalid app', user_errors: userErrors},
+        error: {type: 'abort', message: 'Invalid app', details: {stage: 'upload-url', userErrors}},
       })
       expect(result.stdout).not.toContain(signedUploadUrl)
       expect(result.stderr).toBe('')
@@ -314,11 +312,12 @@ describe('app security submit command boundary', () => {
       const result = await runCommand(['--path', directory, '--json', '--force'])
       const submission = JSON.parse(await readFile(paths.submissionPath, 'utf8'))
       expect(JSON.parse(result.stdout)).toEqual({
+        status: 'success',
         operation: 'submit',
-        dry_run: false,
-        payload: {path: paths.submissionPath, schema_version: 1},
-        submitted_at: submission.report.submitted_at,
-        client_id: 'api-key',
+        dryRun: false,
+        payload: {path: paths.submissionPath, schemaVersion: 1},
+        submittedAt: submission.report.submitted_at,
+        clientId: 'api-key',
       })
       expect(submission).not.toHaveProperty('client_id')
       expect(submission.report).not.toHaveProperty('client_id')
@@ -336,11 +335,11 @@ describe('app security submit command boundary', () => {
       expect(result.exitCode).toBe(1)
       if (json) {
         expect(JSON.parse(result.stdout)).toEqual({
-          operation: 'submit',
           error: {
-            stage: 'preparation',
+            type: 'abort',
             message: `Could not find a shopify.app*.toml from: ${directory}`,
-            try_message: 'Run this command from a Shopify app directory or pass --path to one.',
+            tryMessage: 'Run this command from a Shopify app directory or pass --path to one.',
+            details: {stage: 'preparation'},
           },
         })
         expect(result.stderr).toBe('')
@@ -377,17 +376,17 @@ describe('app security submit command boundary', () => {
         expect(result.exitCode).toBe(1)
         expect(result.stderr).toBe('')
         expect(JSON.parse(result.stdout)).toEqual({
-          operation: 'submit',
           error: {
-            stage: 'preparation',
+            type: 'abort',
             message: configName
               ? `Couldn't find app configuration at ${configPath}.`
               : `App configuration at ${configPath} must contain a non-empty string client_id.`,
-            next_steps: [
+            nextSteps: [
               configName
                 ? 'Pass `--config <name>` to select an existing app configuration, or `--client-id <client-id>` to select the app directly.'
                 : 'Pass `--client-id <client-id>` to select the app directly, or run `shopify app config link` to link the app configuration.',
             ],
+            details: {stage: 'preparation'},
           },
         })
         expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
@@ -420,11 +419,11 @@ describe('app security submit command boundary', () => {
         expect(result.stderr).toBe('')
         expect(parserError).toBeInstanceOf(AbortError)
         expect(JSON.parse(result.stdout)).toEqual({
-          operation: 'submit',
           error: {
-            stage: 'preparation',
+            type: 'abort',
             message: `Couldn't read app configuration at ${configPath}: ${(parserError as AbortError).message}`,
-            next_steps: [expect.stringMatching(/--config.*--client-id/)],
+            nextSteps: [expect.stringMatching(/--config.*--client-id/)],
+            details: {stage: 'preparation'},
           },
         })
         expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
@@ -451,14 +450,14 @@ describe('app security submit command boundary', () => {
       if (json) {
         expect(result.stderr).toBe('')
         expect(JSON.parse(result.stdout)).toEqual({
-          operation: 'submit',
           error: {
-            stage: 'preparation',
+            type: 'abort',
             message: "Couldn't find an app with the selected client ID, or you don't have access to it.",
-            next_steps: [
+            nextSteps: [
               'Check `--client-id <client-id>` or `--config <name>` to select the intended app.',
               'Run `shopify auth login` with an account that has permission to access the app.',
             ],
+            details: {stage: 'preparation'},
           },
         })
       } else {
@@ -481,18 +480,21 @@ describe('app security submit command boundary', () => {
     })
   })
 
-  test.each([false, true])('JSON missing force fails before target, network, stdin or write (TTY=%s)', async (tty) => {
+  test('non-interactive JSON submission requires force before target, network, stdin or write', async () => {
     await inTemporaryDirectory(async (directory) => {
       remoteClient()
-      vi.mocked(terminalSupportsPrompting).mockReturnValue(tty)
+      vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
       // Even target and trace validation would fail; the force guard must win first.
       await writeFile(joinPath(directory, 'shopify.app.toml'), 'invalid toml')
       const result = await runCommand(['--path', directory, '--json', '--config', 'missing', '--feedback', '-'])
 
       expect(result.exitCode).toBe(1)
       expect(JSON.parse(result.stdout)).toEqual({
-        operation: 'submit',
-        error: {stage: 'preparation', message: 'Pass --force to submit without confirmation.'},
+        error: {
+          type: 'abort',
+          message: 'Pass --force to submit without confirmation.',
+          details: {stage: 'preparation'},
+        },
       })
       expect(result.stderr).toBe('')
       expect(result.exits).toEqual([])
@@ -554,11 +556,11 @@ describe('app security submit command boundary', () => {
 
       expect(result.exitCode).toBe(1)
       expect(JSON.parse(result.stdout)).toEqual({
-        operation: 'submit',
         error: {
-          stage: 'upload',
+          type: 'abort',
           message: 'A network error interrupted the App Security submission.',
-          try_message: 'Check your network connection and try submitting the App Security results again.',
+          tryMessage: 'Check your network connection and try submitting the App Security results again.',
+          details: {stage: 'upload'},
         },
       })
       expect(result.stdout).not.toContain(signedUploadUrl)
@@ -601,12 +603,12 @@ describe('app security submit command boundary', () => {
       expect(result.exitCode).toBe(1)
       expect(result.stderr).toBe('')
       expect(JSON.parse(result.stdout)).toEqual({
-        operation: 'submit',
         error: {
-          stage: 'upload',
+          type: 'abort',
           message: 'Failed to upload your App Security submission to storage (HTTP 403).',
-          try_message: 'This is usually transient. Please try again, and check your network connection if it persists.',
-          next_steps: ['Storage responded with: Access denied'],
+          tryMessage: 'This is usually transient. Please try again, and check your network connection if it persists.',
+          nextSteps: ['Storage responded with: Access denied'],
+          details: {stage: 'upload'},
         },
       })
       expect(fetch).toHaveBeenCalledOnce()
@@ -619,15 +621,15 @@ describe('app security submit command boundary', () => {
       error: new AbortError('Authentication failed', 'Log in again.', ['Run `shopify auth login`.']),
       expected: {
         message: 'Authentication failed',
-        try_message: 'Log in again.',
-        next_steps: ['Run `shopify auth login`.'],
+        tryMessage: 'Log in again.',
+        nextSteps: ['Run `shopify auth login`.'],
       },
     },
     {
       error: new FetchError(`request to ${signedUploadUrl} failed`, 'system', {code: 'ENOTFOUND'}),
       expected: {
         message: 'A network error interrupted the App Security submission.',
-        try_message: 'Check your network connection and try submitting the App Security results again.',
+        tryMessage: 'Check your network connection and try submitting the App Security results again.',
       },
     },
   ])('app lookup failure retains preparation JSON and help ($error.name)', async ({error, expected}) => {
@@ -639,7 +641,7 @@ describe('app security submit command boundary', () => {
 
       expect(result.exitCode).toBe(1)
       expect(result.stderr).toBe('')
-      expect(JSON.parse(result.stdout)).toEqual({operation: 'submit', error: {stage: 'preparation', ...expected}})
+      expect(JSON.parse(result.stdout)).toEqual({error: {type: 'abort', ...expected, details: {stage: 'preparation'}}})
       expect(result.stdout).not.toContain('signed-upload-token')
       expect(client.appFromIdentifiers).toHaveBeenCalledExactlyOnceWith('configured-client-id')
       expect(client.accountInfo).not.toHaveBeenCalled()
@@ -674,8 +676,7 @@ describe('app security submit command boundary', () => {
       const result = await runCommand(['--path', directory, '--force', '--json'])
       expect(result.exitCode).toBe(1)
       expect(JSON.parse(result.stdout)).toEqual({
-        operation: 'submit',
-        error: {stage: 'upload', message: 'Network unavailable'},
+        error: {type: 'abort', message: 'Network unavailable', details: {stage: 'upload'}},
       })
       expect(result.stderr).toBe('')
       expect(client.createSourceScan).not.toHaveBeenCalled()

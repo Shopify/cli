@@ -1,8 +1,9 @@
 {
+  "status": "success",
   "operation": "submit",
-  "dry_run": true,
+  "dryRun": true,
   "payload": {
     "path": "<APP_ROOT>/.shopify/app-security/submission.json",
-    "schema_version": 1
+    "schemaVersion": 1
   }
 }
