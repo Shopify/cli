@@ -36,7 +36,7 @@ export function groupIssues(issues: Issue[]): IssueGroup[] {
 }
 
 /** How many files the deterministic scan skipped, by reason. */
-export interface SkippedFileCounts {
+interface SkippedFileCounts {
   too_large: number
   unreadable: number
 }

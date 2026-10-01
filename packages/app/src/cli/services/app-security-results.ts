@@ -20,7 +20,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {basename} from '@shopify/cli-kit/node/path'
 import type {AlertCustomSection, InlineToken, TokenItem} from '@shopify/cli-kit/node/ui'
 
-/** The two stored result files, loaded and combined (§6). `review` and `submit` both present this. */
+/** The two stored result files, loaded and combined (§6). `review` presents this. */
 export interface AppSecurityResults {
   sources: {
     deterministic: {path: string; document: DeterministicFindingsDocument} | null
@@ -108,7 +108,7 @@ function invalidResultsError(invalidFiles: InvalidResultsFile[], commands: AppSe
  * The next step that regenerates one result file: `check` rewrites deterministic-findings.json, and only the
  * coding agent rewrites agent-findings.json. `tail` completes the sentence after "regenerate".
  */
-export function regenerateResultsFileStep(
+function regenerateResultsFileStep(
   source: FindingsSource,
   commands: AppSecurityCommands,
   tail: string,

@@ -1,8 +1,8 @@
 import type {CombinedChecksSummary} from './app-security-engine/index.js'
 
 /**
- * Words shared by the App Security commands' terminal output. `review`'s summary box and `submit`'s
- * confirmation both describe the same combined checks, so they take their count phrases from here.
+ * Words shared by the App Security commands' terminal output, so `review` and `record` describe checks and
+ * counts the same way.
  */
 
 /** "1 check", "2 checks". */

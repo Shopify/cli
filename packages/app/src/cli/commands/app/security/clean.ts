@@ -11,7 +11,7 @@ export default class SecurityClean extends BaseCommand {
 
   static summary = 'Remove local App Security artifacts.'
 
-  static descriptionWithMarkdown = `Deletes the App Security artifacts in \`.shopify/app-security/\` without asking: the scan, the agent checks, the recorded agent findings, the submission payload, and files left by earlier CLI versions. Prints each removed path.`
+  static descriptionWithMarkdown = `Deletes the App Security artifacts in \`.shopify/app-security/\` without asking: the scan, the agent checks, the recorded agent findings, and files left by earlier CLI versions. Prints each removed path.`
 
   static get jsonOutputSchema() {
     return securityCleanJsonOutputSchema

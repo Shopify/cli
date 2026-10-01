@@ -3775,8 +3775,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Deletes the App Security artifacts in `.shopify/app-security/` without asking: the scan, the agent checks, the recorded agent findings, the submission payload, and files left by earlier CLI versions. Prints each removed path.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppSecurityCleanResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"removed\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"required\": [\n    \"removed\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppSecurityCleanResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
-      "descriptionWithMarkdown": "Deletes the App Security artifacts in `.shopify/app-security/` without asking: the scan, the agent checks, the recorded agent findings, the submission payload, and files left by earlier CLI versions. Prints each removed path.",
+      "description": "Deletes the App Security artifacts in `.shopify/app-security/` without asking: the scan, the agent checks, the recorded agent findings, and files left by earlier CLI versions. Prints each removed path.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppSecurityCleanResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"removed\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"required\": [\n    \"removed\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppSecurityCleanResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Deletes the App Security artifacts in `.shopify/app-security/` without asking: the scan, the agent checks, the recorded agent findings, and files left by earlier CLI versions. Prints each removed path.",
       "enableJsonFlag": false,
       "flags": {
         "json": {
@@ -4065,123 +4065,6 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Show the combined App Security results."
-    },
-    "app:security:submit": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "customPluginName": "@shopify/app",
-      "description": "Sends the App Security results that `shopify app security review` shows to Shopify, with your optional feedback. Reads `.shopify/app-security/deterministic-findings.json` and, when present, `agent-findings.json`, writes `.shopify/app-security/submission.json` for inspection, and asks for confirmation before uploading.\n\nThe upload excludes source code, file paths, code snippets, evidence, finding messages, agent reasoning and reasons, suppression justifications, and commit identifiers. Feedback is sent without redaction. Optionally use `--version` to identify the app version these results came from. Use `--dry-run` to write and inspect the exact payload without uploading it.",
-      "descriptionWithMarkdown": "Sends the App Security results that `shopify app security review` shows to Shopify, with your optional feedback. Reads `.shopify/app-security/deterministic-findings.json` and, when present, `agent-findings.json`, writes `.shopify/app-security/submission.json` for inspection, and asks for confirmation before uploading.\n\nThe upload excludes source code, file paths, code snippets, evidence, finding messages, agent reasoning and reasons, suppression justifications, and commit identifiers. Feedback is sent without redaction. Optionally use `--version` to identify the app version these results came from. Use `--dry-run` to write and inspect the exact payload without uploading it.",
-      "enableJsonFlag": false,
-      "flags": {
-        "client-id": {
-          "description": "The Client ID of your app.",
-          "env": "SHOPIFY_FLAG_CLIENT_ID",
-          "exclusive": [
-            "config"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "client-id",
-          "type": "option"
-        },
-        "config": {
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "env": "SHOPIFY_FLAG_APP_CONFIG",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "config",
-          "type": "option"
-        },
-        "dry-run": {
-          "allowNo": false,
-          "description": "Write the submission payload without uploading it.",
-          "env": "SHOPIFY_FLAG_APP_SECURITY_DRY_RUN",
-          "name": "dry-run",
-          "type": "boolean"
-        },
-        "feedback": {
-          "description": "Optional feedback about these App Security results or this tool. Use - to read from stdin.",
-          "env": "SHOPIFY_FLAG_APP_SECURITY_FEEDBACK",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "feedback",
-          "type": "option"
-        },
-        "force": {
-          "allowNo": false,
-          "char": "f",
-          "description": "Skip confirmation. Required if non interactive.",
-          "env": "SHOPIFY_FLAG_FORCE",
-          "name": "force",
-          "type": "boolean"
-        },
-        "json": {
-          "allowNo": false,
-          "char": "j",
-          "description": "Output the result as JSON. Automatically disables color output.",
-          "env": "SHOPIFY_FLAG_JSON",
-          "hidden": false,
-          "name": "json",
-          "type": "boolean"
-        },
-        "json-schema": {
-          "allowNo": false,
-          "description": "Print the command's JSON schemas.",
-          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
-          "name": "json-schema",
-          "type": "boolean"
-        },
-        "no-color": {
-          "allowNo": false,
-          "description": "Disable color output.",
-          "env": "SHOPIFY_FLAG_NO_COLOR",
-          "hidden": false,
-          "name": "no-color",
-          "type": "boolean"
-        },
-        "path": {
-          "description": "The path to your app directory.",
-          "env": "SHOPIFY_FLAG_PATH",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "path",
-          "noCacheDefault": true,
-          "type": "option"
-        },
-        "verbose": {
-          "allowNo": false,
-          "description": "Increase the verbosity of the output. May include sensitive data.",
-          "env": "SHOPIFY_FLAG_VERBOSE",
-          "hidden": false,
-          "name": "verbose",
-          "type": "boolean"
-        },
-        "version": {
-          "description": "Optional app version corresponding to the files used to generate these results.",
-          "env": "SHOPIFY_FLAG_VERSION",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "version",
-          "type": "option"
-        }
-      },
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [
-      ],
-      "id": "app:security:submit",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true,
-      "summary": "Send App Security results and feedback to Shopify."
     },
     "app:subscription-migrations:cancel": {
       "aliases": [

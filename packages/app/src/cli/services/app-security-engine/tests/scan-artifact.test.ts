@@ -3,7 +3,7 @@ import {combineFindings} from '../results/combine.js'
 import {translateFindingsDocument} from '../results/translate.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {scan} from '../scanners/index.js'
-import {buildDeterministicFindings, containsUnredactedSecret} from '../scan-artifact/index.js'
+import {buildDeterministicFindings} from '../scan-artifact/index.js'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
@@ -250,7 +250,6 @@ describe('buildDeterministicFindings', () => {
     expect(document.coverage.gaps).toContainEqual(
       expect.objectContaining({code: 'unresolved_check', check_id: 'CREDENTIAL_LOG_LEAKAGE'}),
     )
-    expect(containsUnredactedSecret(document)).toBe(false)
   })
 
   test('fails closed when text contains more secret matches than the work cap', () => {
@@ -318,25 +317,5 @@ describe('buildDeterministicFindings', () => {
       expect(document.checks.length).toBeGreaterThan(0)
       expect(translateFindingsDocument(JSON.parse(JSON.stringify(document)))).toEqual({ok: true, document})
     })
-  })
-})
-
-describe('containsUnredactedSecret', () => {
-  const secret = `shpat_${'a'.repeat(24)}`
-
-  test('finds secrets in nested strings and object keys', () => {
-    expect(containsUnredactedSecret({findings: [{message: 'safe'}]})).toBe(false)
-    expect(containsUnredactedSecret({findings: [{message: `leaked ${secret}`}]})).toBe(true)
-    expect(containsUnredactedSecret({coverage: {[secret]: true}})).toBe(true)
-  })
-
-  test('handles cycles and fails closed on excessively deep input', () => {
-    const cyclic: Record<string, unknown> = {message: 'safe'}
-    cyclic.self = cyclic
-    expect(containsUnredactedSecret(cyclic)).toBe(false)
-
-    let deep: unknown = 'safe'
-    for (let depth = 0; depth < 200; depth++) deep = [deep]
-    expect(containsUnredactedSecret(deep)).toBe(true)
   })
 })

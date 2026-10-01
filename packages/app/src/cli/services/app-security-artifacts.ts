@@ -20,7 +20,6 @@ export interface AppSecurityArtifactPaths {
   deterministicFindingsPath: string
   agentChecksPath: string
   agentFindingsPath: string
-  submissionPath: string
   /** Artifacts written by earlier CLI versions. Nothing reads them; `clean` removes them. */
   legacyPaths: string[]
 }
@@ -38,7 +37,6 @@ export function appSecurityArtifactPaths(appRoot: string): AppSecurityArtifactPa
     deterministicFindingsPath: joinPath(artifactDirectory, 'deterministic-findings.json'),
     agentChecksPath: joinPath(artifactDirectory, 'agent-checks.json'),
     agentFindingsPath: joinPath(artifactDirectory, 'agent-findings.json'),
-    submissionPath: joinPath(artifactDirectory, 'submission.json'),
     legacyPaths: ['trace.json', 'review.json', 'findings.json'].map((name) => joinPath(artifactDirectory, name)),
   }
 }
@@ -67,12 +65,6 @@ export async function writeAgentFindings(appRoot: string, document: AgentFinding
   return paths.agentFindingsPath
 }
 
-export async function writeSubmission(appRoot: string, bytes: Buffer): Promise<void> {
-  const paths = appSecurityArtifactPaths(appRoot)
-  await ensureArtifactDirectory(appRoot, paths.artifactDirectory)
-  await writeAtomicArtifact(paths.submissionPath, bytes)
-}
-
 /**
  * Removes every current and legacy App Security artifact that exists, and returns the removed paths.
  * Other files in the artifact directory are left alone.
@@ -85,7 +77,6 @@ export async function cleanAppSecurityArtifacts(appRoot: string): Promise<string
     paths.deterministicFindingsPath,
     paths.agentChecksPath,
     paths.agentFindingsPath,
-    paths.submissionPath,
     ...paths.legacyPaths,
   ]
   const removed = await Promise.all(candidates.map(removeArtifactFile))
