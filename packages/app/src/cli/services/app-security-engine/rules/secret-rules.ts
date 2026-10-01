@@ -351,7 +351,7 @@ async function runGit(cwd: string, args: string[]): Promise<{exitCode?: number; 
     const result = await captureOutputWithExitCode('git', args, {cwd})
     return {exitCode: result.exitCode, out: result.stdout.trim()}
     // Missing Git or a failed probe is unknown status, not proof the file is safe.
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     return {exitCode: undefined, out: ''}
   }

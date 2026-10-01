@@ -125,9 +125,9 @@ describe('store delete command', () => {
 
   test('outputs structured JSON error when --json is active and --force is missing in a non-interactive run', async () => {
     vi.mocked(isTTY).mockReturnValue(false)
-    const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {
+    const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('process.exit')
-    }) as never)
+    })
 
     await expect(
       StoreDelete.run(['--store', 'my-store.myshopify.com', '--organization-id', '12345', '--json']),
@@ -150,9 +150,9 @@ describe('store delete command', () => {
 
   test('outputs structured JSON error when --json is active and service throws AbortError', async () => {
     vi.mocked(deleteDevStore).mockRejectedValueOnce(new AbortError('Something went wrong'))
-    const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {
+    const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('process.exit')
-    }) as never)
+    })
 
     await expect(
       StoreDelete.run(['--store', 'my-store.myshopify.com', '--organization-id', '12345', '--json']),
@@ -174,9 +174,9 @@ describe('store delete command', () => {
 
   test('outputs structured JSON error when --json is active and organization resolution throws AbortError', async () => {
     vi.mocked(resolveOrganizationForStore).mockRejectedValueOnce(new AbortError('Could not resolve organization'))
-    const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {
+    const mockExit = vi.spyOn(process, 'exit').mockImplementation(() => {
       throw new Error('process.exit')
-    }) as never)
+    })
 
     await expect(StoreDelete.run(['--store', 'my-store.myshopify.com', '--json'])).rejects.toThrow('process.exit')
 

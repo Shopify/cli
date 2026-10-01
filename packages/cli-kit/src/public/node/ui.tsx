@@ -1,4 +1,4 @@
-/* eslint-disable tsdoc/syntax */
+/* eslint-disable @shopify/cli/tsdoc-syntax */
 import {AbortError, AbortSilentError, FatalError as Fatal} from './error.js'
 import {commandEventOutputMode, emitCommandEvent} from './command-events.js'
 import {randomUUID} from './crypto.js'

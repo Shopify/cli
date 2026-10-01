@@ -54,7 +54,7 @@ export function waitForPostRunHookAndExit(): void {
 
 // This hook is called after each successful command run. More info: https://oclif.io/docs/hooks
 export const hook: Hook.Postrun = async ({config, Command}) => {
-  await detectStopCommand(Command as unknown as typeof Command)
+  await detectStopCommand(Command)
 
   const metadata = await import('../metadata.js')
   const {commandStartOptions} = metadata.getAllSensitiveMetadata()
@@ -147,7 +147,7 @@ async function performAutoUpgrade(newerVersion: string): Promise<void> {
   try {
     await runCLIUpgrade({autoupgrade: true})
     await metadata.addPublicMetadata(() => ({env_auto_upgrade_success: true}))
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (error) {
     const errorMessage = `Auto-upgrade failed: ${error}`
     outputDebug(errorMessage)

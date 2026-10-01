@@ -200,12 +200,9 @@ describe('fetchApiVersions error classification', () => {
   // Mirrors `packages/cli-kit/src/public/node/error/index.test.ts`: a real `ClientError`, because
   // the branches under test use `instanceof ClientError`.
   function clientError(status: number, errors: unknown): ClientError {
-    return new ClientError(
-      {status, errors, headers: {}} as any,
-      {
-        query: 'query publicApiVersions { publicApiVersions { handle supported } }',
-      } as any,
-    )
+    return new ClientError({status, errors, headers: {}} as any, {
+      query: 'query publicApiVersions { publicApiVersions { handle supported } }',
+    })
   }
 
   test('reports a 402 Unavailable Shop as an expected store-state failure, not a CLI bug', async () => {

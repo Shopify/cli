@@ -60,7 +60,7 @@ export class HostThemeManager extends ThemeManager {
         } else {
           throw new Error()
         }
-        // eslint-disable-next-line no-catch-all/no-catch-all
+        // eslint-disable-next-line @shopify/cli/no-catch-all
       } catch (error) {
         outputDebug(`Failed to create theme with name "${options.name}" and role "${options.role}". Retrying...`)
       }

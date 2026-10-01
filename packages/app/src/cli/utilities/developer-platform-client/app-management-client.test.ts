@@ -1443,7 +1443,7 @@ describe('AppManagementClient', () => {
         query: CreateAssetUrl,
         token: 'token',
         variables: {
-          sourceExtension: 'BR' as SourceExtension,
+          sourceExtension: 'BR',
           organizationId: 'gid://shopify/Organization/213141',
         },
         unauthorizedHandler: {
@@ -2402,7 +2402,7 @@ describe('orgFromId', () => {
     client.session = vi.fn().mockResolvedValue({
       token: 'refreshed-token',
       businessPlatformToken: 'refreshed-business-platform-token',
-    }) as unknown as typeof client.session
+    })
 
     const result = await client.orgFromId('123')
 
@@ -2440,7 +2440,7 @@ describe('devStoreCapReached', () => {
     client.session = vi.fn().mockResolvedValue({
       token: 'refreshed-app-management-token',
       businessPlatformToken: 'refreshed-business-platform-token',
-    }) as unknown as typeof client.session
+    })
 
     const result = await client.devStoreCapReached('gid://shopify/Organization/123')
 

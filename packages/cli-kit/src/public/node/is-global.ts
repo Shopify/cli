@@ -41,7 +41,7 @@ export function currentProcessIsGlobal(argv = process.argv): boolean {
 
     _isGlobal = !isLocal
     return _isGlobal
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (error) {
     return false
   }
@@ -111,7 +111,7 @@ export function inferPackageManagerForGlobalCLI(argv = process.argv, env = proce
   let realPath = symlinkPath
   try {
     realPath = realpathSync(processArgv).toLowerCase()
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (error) {
     // fall back to using the original path for detection
   }
@@ -151,7 +151,7 @@ export function getProjectDir(directory: string): string | undefined {
       type: 'file',
     })
     if (configFile) return dirname(configFile)
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (error) {
     return undefined
   }

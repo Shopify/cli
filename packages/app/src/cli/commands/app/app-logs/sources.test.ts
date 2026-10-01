@@ -4,7 +4,6 @@ import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
 import {formatSection} from '@shopify/cli-kit/node/output'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-// eslint-disable-next-line compat/n-prefer-global-console
 import {Console} from 'node:console'
 
 vi.mock('../../../services/app-context.js')
@@ -26,14 +25,14 @@ function captureStandardStreams() {
   const stdout: string[] = []
   const stderr: string[] = []
 
-  const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(((chunk: string | Uint8Array) => {
+  const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation((chunk: string | Uint8Array) => {
     stdout.push(typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'))
     return true
-  }) as typeof process.stdout.write)
-  const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(((chunk: string | Uint8Array) => {
+  })
+  const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation((chunk: string | Uint8Array) => {
     stderr.push(typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'))
     return true
-  }) as typeof process.stderr.write)
+  })
   // Vitest intercepts console.warn; use Node's console to exercise the captured streams.
   const warnSpy = vi.spyOn(console, 'warn').mockImplementation(new Console(process.stdout, process.stderr).warn)
 

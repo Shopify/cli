@@ -287,7 +287,7 @@ function cliErrorsSections(
     }
 
     sections.forEach((section) => {
-      // eslint-disable-next-line compat/id-length
+      // eslint-disable-next-line @shopify/cli/id-length
       ;(section.body as ListToken[]).sort((a, b) => {
         if (a.list.title === VALIDATION_ERRORS_TITLE) {
           return 1

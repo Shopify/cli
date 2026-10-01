@@ -129,7 +129,7 @@ describe('dev proxy', () => {
       const standardEventsCtx = {
         ...ctx,
         options: {...ctx.options, standardEventsDevBundle: true},
-      } as unknown as DevServerContext
+      }
       const content = `
         const runtimeUrl = "${standardEventsRuntimeUrl}";
         import("${standardEventsRuntimeUrl}");
@@ -274,7 +274,7 @@ describe('dev proxy', () => {
       const standardEventsCtx = {
         ...ctx,
         options: {...ctx.options, standardEventsInspector: true},
-      } as unknown as DevServerContext
+      }
 
       const renderingResponse = new Response('<html><head><meta charset="utf-8"></head><body></body></html>')
 
@@ -289,7 +289,7 @@ describe('dev proxy', () => {
       const standardEventsCtx = {
         ...ctx,
         options: {...ctx.options, standardEventsInspector: true},
-      } as unknown as DevServerContext
+      }
 
       const renderingResponse = new Response(
         `<html><head><script src="${standardEventsRuntimeUrl}"></script></head><body></body></html>`,

@@ -152,7 +152,7 @@ async function extensionInit(options: ExtensionInitOptions) {
 async function removePartiallyGeneratedExtension(directory: string): Promise<void> {
   try {
     await removeFile(directory, {maxRetries: 10, retryDelay: 100})
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     renderWarning({
       headline: ["Couldn't remove", {filePath: directory}, {char: '.'}],

@@ -66,7 +66,7 @@ export class LocalStorage<T extends Record<string, any>> {
   get<TKey extends keyof T>(key: TKey): T[TKey] | undefined {
     try {
       return this.config.get(key)
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch (error) {
       this.handleError(error, 'get')
     }
@@ -83,7 +83,7 @@ export class LocalStorage<T extends Record<string, any>> {
   set<TKey extends keyof T>(key: TKey, value?: T[TKey]): void {
     try {
       this.config.set(key, value)
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch (error) {
       this.handleError(error, 'set')
     }
@@ -99,7 +99,7 @@ export class LocalStorage<T extends Record<string, any>> {
   delete<TKey extends keyof T>(key: TKey): void {
     try {
       this.config.delete(key)
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch (error) {
       this.handleError(error, 'delete')
     }
@@ -114,7 +114,7 @@ export class LocalStorage<T extends Record<string, any>> {
   clear(): void {
     try {
       this.config.clear()
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch (error) {
       this.handleError(error, 'clear')
     }

@@ -268,7 +268,7 @@ describe('executeBulkOperation', () => {
         bulkOperation: createdBulkOperation,
         userErrors: [],
       }
-      vi.mocked(runBulkOperationMutation).mockResolvedValue(mockResponse as any)
+      vi.mocked(runBulkOperationMutation).mockResolvedValue(mockResponse)
 
       await executeBulkOperation({
         organization: mockOrganization,

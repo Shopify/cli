@@ -33,7 +33,7 @@ export async function hookStart(port: number): Promise<TunnelStartReturn> {
     const client = new TunnelClientInstance(port)
     await client.startTunnel()
     return ok(client)
-    // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @shopify/cli/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
     const tunnelError = new TunnelError('unknown', error.message)
     return err(tunnelError)
@@ -55,7 +55,7 @@ class TunnelClientInstance implements TunnelClient {
     try {
       await install()
       this.tunnel()
-      // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @shopify/cli/no-catch-all, @typescript-eslint/no-explicit-any
     } catch (error: any) {
       this.currentStatus = {status: 'error', message: error.message, tryMessage: whatToTry()}
     }

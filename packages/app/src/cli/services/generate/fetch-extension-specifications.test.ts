@@ -131,7 +131,7 @@ describe('getDevSessionUpdateMessages for remotely-sourced specifications', () =
 
   function instanceFor(specification: ExtensionSpecification): ExtensionInstance {
     return new ExtensionInstance({
-      configuration: {name: 'analytics app events', type: specification.identifier} as BaseConfigType,
+      configuration: {name: 'analytics app events', type: specification.identifier},
       configurationPath: '',
       directory: '/tmp/test-extension',
       specification,

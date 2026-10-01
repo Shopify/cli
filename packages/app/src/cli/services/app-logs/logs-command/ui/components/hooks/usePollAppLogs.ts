@@ -180,9 +180,9 @@ export function usePollAppLogs({
     }
 
     // ESLint is concerned about these updates being atomic, but the approach to useSelfAdjustingInterval ensures that is the case.
-    // eslint-disable-next-line compat/require-atomic-updates
+
     nextJwtToken.current = res.nextJwtToken
-    // eslint-disable-next-line compat/require-atomic-updates
+
     cursor.current = res.cursor
 
     retryIntervalMs.current = res.retryIntervalMs

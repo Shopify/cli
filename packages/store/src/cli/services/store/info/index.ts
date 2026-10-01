@@ -185,7 +185,7 @@ async function safeFetchOrganizationShop(
   }
   try {
     return await fetchOrganizationShop({store, organizationId: ctx.owningOrg.id, noPrompt: options.noPrompt})
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (error) {
     outputDebug(`BP Organizations shop lookup failed: ${error instanceof Error ? error.message : String(error)}`)
     return undefined
@@ -223,7 +223,7 @@ function buildAdminResult(args: BuildAdminResultArgs): StoreInfoResult {
     adminUrl: buildAdminUrl(extractMyshopifyHandle(subdomain)),
   }
 
-  return {...compact(fields), subdomain} as StoreInfoResult
+  return {...compact(fields), subdomain}
 }
 
 interface BuildBusinessPlatformResultArgs {
@@ -247,7 +247,7 @@ function buildBusinessPlatformResult(args: BuildBusinessPlatformResultArgs): Sto
     adminUrl: buildAdminUrl(extractMyshopifyHandle(store)),
   }
 
-  return {...compact(fields), subdomain: store} as StoreInfoResult
+  return {...compact(fields), subdomain: store}
 }
 
 function buildPreviewStoreResult(args: {
@@ -268,7 +268,7 @@ function buildPreviewStoreResult(args: {
 
   // `authScopes` is always present for preview stores (even when empty) so consumers can rely on the
   // key to learn which Admin API scopes are preapproved. There's no way to grant more scopes later.
-  return {...compact(fields), subdomain: store, authScopes: previewSession.scopes} as StoreInfoResult
+  return {...compact(fields), subdomain: store, authScopes: previewSession.scopes}
 }
 
 // The BP `ShopifyShopID` scalar is the bare numeric id; the admin GID is derived locally.

@@ -63,7 +63,7 @@ describe('createHostValidationHandler', () => {
             cidr: '192.168.1.50/24',
           },
         ],
-      } as ReturnType<typeof networkInterfaces>)
+      })
     })
 
     const buildHandler = () => createHostValidationHandler('0.0.0.0', 9292)

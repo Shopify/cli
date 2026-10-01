@@ -55,9 +55,6 @@ web_modules/
 # Optional npm cache directory
 .npm
 
-# Optional eslint cache
-.eslintcache
-
 # Optional stylelint cache
 .stylelintcache
 
@@ -174,9 +171,6 @@ testing.mjs
 
 # NX
 .nx
-
-# ESLint reports
-eslint-report.json
 
 # Generated docs
 docs/api

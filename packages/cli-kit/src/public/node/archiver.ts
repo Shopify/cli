@@ -195,7 +195,7 @@ export async function brotliCompress(options: BrotliOptions): Promise<void> {
   } finally {
     try {
       await removeFile(tempTarPath)
-      // eslint-disable-next-line no-catch-all/no-catch-all
+      // eslint-disable-next-line @shopify/cli/no-catch-all
     } catch (error) {
       outputDebug(outputContent`Failed to clean up temporary file: ${outputToken.path(tempTarPath)}`)
     }

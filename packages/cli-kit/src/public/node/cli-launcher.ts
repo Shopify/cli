@@ -47,7 +47,7 @@ export async function launchCLI(options: Options): Promise<void> {
 
     await run(argv, config)
     await flush()
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch (error) {
     const {errorHandler} = await import('./error-handler.js')
     await errorHandler(error as Error)

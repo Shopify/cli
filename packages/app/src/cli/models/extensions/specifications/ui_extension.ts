@@ -323,7 +323,7 @@ const uiExtensionSpec = createExtensionSpecification({
             } else if (tools.status === 'invalid') {
               outputWarn(`Invalid tools definition in "${toolsDefinition}": ${tools.issues}`)
             }
-            // eslint-disable-next-line no-catch-all/no-catch-all
+            // eslint-disable-next-line @shopify/cli/no-catch-all
           } catch (error) {
             outputWarn(
               `Failed to create tools type definition for tools file "${toolsDefinition}": ${
@@ -452,7 +452,7 @@ async function parseIntentTypeDefinitions(
           valueSchema: intentSchema.data.value,
           outputSchema: intentSchema.data.outputSchema,
         }
-        // eslint-disable-next-line no-catch-all/no-catch-all
+        // eslint-disable-next-line @shopify/cli/no-catch-all
       } catch (error) {
         outputWarn(
           `Failed to create intent type definition for intent schema file "${intent.schema}": ${

@@ -278,7 +278,7 @@ describe('file-watcher events', () => {
           configuration: {
             ...DEFAULT_CONFIG,
             extension_directories: ['extensions'],
-          } as any,
+          },
         })
 
         let eventHandler: any
@@ -374,7 +374,7 @@ describe('file-watcher events', () => {
           configuration: {
             ...DEFAULT_CONFIG,
             extension_directories: ['extensions'],
-          } as any,
+          },
         })
 
         const onChange = vi.fn()
@@ -736,7 +736,7 @@ describe('file-watcher events', () => {
           configuration: {
             ...DEFAULT_CONFIG,
             extension_directories: ['extensions'],
-          } as any,
+          },
         })
 
         let eventHandler: any
@@ -785,7 +785,7 @@ describe('file-watcher events', () => {
           configuration: {
             ...DEFAULT_CONFIG,
             extension_directories: ['extensions'],
-          } as any,
+          },
         })
 
         let eventHandler: any
@@ -827,7 +827,7 @@ describe('file-watcher events', () => {
           configuration: {
             ...DEFAULT_CONFIG,
             extension_directories: ['extensions'],
-          } as any,
+          },
         })
 
         let eventHandler: any

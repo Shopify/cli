@@ -280,17 +280,17 @@ function mockBusinessPlatformRequests(options: {mutationResult?: unknown; pollSh
     const variables = request.variables as Record<string, unknown>
 
     if ('search' in variables) {
-      return defaultShopLookupResult as never
+      return defaultShopLookupResult
     }
 
     if ('storeFqdn' in variables) {
-      return mutationResult as never
+      return mutationResult
     }
 
     if ('id' in variables) {
       const shop = pollShops[Math.min(pollIndex, pollShops.length - 1)]
       pollIndex++
-      return {organization: {accessibleShop: shop}} as never
+      return {organization: {accessibleShop: shop}}
     }
 
     throw new Error(`Unexpected request variables: ${JSON.stringify(variables)}`)

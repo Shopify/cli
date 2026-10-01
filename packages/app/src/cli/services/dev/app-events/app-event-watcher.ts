@@ -1,4 +1,4 @@
-/* eslint-disable tsdoc/syntax */
+/* eslint-disable @shopify/cli/tsdoc-syntax */
 import {FileWatcher, OutputContextOptions} from './file-watcher.js'
 import {handleWatcherEvents} from './app-event-watcher-handler.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
@@ -239,7 +239,7 @@ export class AppEventWatcher extends EventEmitter {
           events.forEach((event) => {
             event.buildResult = buildResult
           })
-          // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+          // eslint-disable-next-line @shopify/cli/no-catch-all, @typescript-eslint/no-explicit-any
         } catch (error: any) {
           // If there is an `errors` array, it's an esbuild error, format it and log it
           // If not, just print the error message to stderr.

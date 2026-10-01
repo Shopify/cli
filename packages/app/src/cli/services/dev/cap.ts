@@ -10,7 +10,7 @@ export async function devStoreCapReached(
 
   try {
     return await developerPlatformClient.devStoreCapReached(organizationId)
-    // eslint-disable-next-line no-catch-all/no-catch-all
+    // eslint-disable-next-line @shopify/cli/no-catch-all
   } catch {
     return false
   }

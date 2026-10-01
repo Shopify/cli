@@ -20,7 +20,6 @@ import {
   UnknownPackageManagerError,
   checkForCachedNewVersion,
   inferPackageManager,
-  PackageManager,
   npmLockfile,
   lockfilesByManager,
 } from './node-package-manager.js'
@@ -1217,7 +1216,7 @@ describe('inferPackageManager', () => {
 
   test('ignores invalid package manager in options', () => {
     const mockEnv = {npm_config_user_agent: 'npm/1.0.0'}
-    expect(inferPackageManager('invalid' as PackageManager, mockEnv)).toBe('npm')
+    expect(inferPackageManager('invalid', mockEnv)).toBe('npm')
   })
 
   test('infers package manager from user agent when not provided in options', () => {

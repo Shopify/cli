@@ -91,7 +91,7 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
 
   test('returns an error if encryption certificate fingerprint is not present', async () => {
     // When/Then
-    // eslint-disable-next-line compat/typescript-eslint-naming-convention
+    // eslint-disable-next-line @shopify/cli/naming-convention
     const {encryption_certificate_fingerprint, ...rest} = config
     expect(() =>
       CreditCardPaymentsAppExtensionSchema.parse({
