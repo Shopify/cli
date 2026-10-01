@@ -623,6 +623,60 @@ describe('buildSecurityReviewAlerts', () => {
     ])
   })
 
+  test('lists the suppressed and superseded findings of unresolved checks in full with --verbose', () => {
+    // The agent's prefer-agent result supersedes both deterministic findings, and its own finding is suppressed,
+    // so the unresolved check has no active findings.
+    const agent: AgentFindingsDocument = {
+      ...agentFindingsDocument,
+      checks: agentFindingsDocument.checks.map((check) =>
+        check.id === 'CREDENTIAL_LOG_LEAKAGE'
+          ? {
+              ...check,
+              status: 'unresolved',
+              reason: {code: 'dynamic_logger', message: 'The logger is configured at runtime.'},
+              findings: check.findings.map((finding) => ({
+                ...finding,
+                suppression: {justification: 'The token is redacted by the logger.'},
+              })),
+            }
+          : check,
+      ),
+    }
+    const sources: Sources = {deterministic: deterministicFindingsDocument, agent}
+
+    const [concise] = buildSecurityReviewAlerts(presenterInput(sources, {checkIds: ['CREDENTIAL_LOG_LEAKAGE']}))
+    const [verbose] = buildSecurityReviewAlerts(
+      presenterInput(sources, {checkIds: ['CREDENTIAL_LOG_LEAKAGE'], verbose: true}),
+    )
+
+    expect(concise!.options.headline).toBe('1 check unresolved.')
+    expect(concise!.options.customSections).toHaveLength(1)
+    expect(verbose!.options.headline).toBe('1 check unresolved.')
+    const sections = verbose!.options.customSections!
+    expect(sections[0]).toEqual(concise!.options.customSections![0])
+    expect(sections.slice(1).map((section) => section.title)).toEqual([
+      'CREDENTIAL_LOG_LEAKAGE \u00b7 deterministic \u00b7 app/routes/orders.tsx:12 (superseded)',
+      'CREDENTIAL_LOG_LEAKAGE \u00b7 agent \u00b7 app/routes/orders.tsx:12 (suppressed)',
+      'CREDENTIAL_LOG_LEAKAGE \u00b7 deterministic \u00b7 app/shopify.server.ts:40 (superseded)',
+    ])
+    expect(sections[1]!.body).toContainEqual({
+      subdued: '\nEvidence: app/routes/orders.tsx:12 \u2014 console.log(session.accessToken)',
+    })
+    expect(sections[2]).toEqual({
+      title: 'CREDENTIAL_LOG_LEAKAGE \u00b7 agent \u00b7 app/routes/orders.tsx:12 (suppressed)',
+      body: [
+        'The session access token is written to the server log.',
+        {subdued: '\nConfidence: high'},
+        {
+          subdued:
+            '\nReasoning: The logged object is the authenticated session, whose accessToken is a live credential.',
+        },
+        {subdued: '\nEvidence: app/routes/orders.tsx:12 \u2014 console.log(session.accessToken)'},
+        {subdued: '\nSuppressed: The token is redacted by the logger.'},
+      ],
+    })
+  })
+
   test('lists passed and not applicable checks with their disposition counts', () => {
     // With no active findings, MISSING_TENANT_ISOLATION passes; its one finding is suppressed.
     const agent: AgentFindingsDocument = {

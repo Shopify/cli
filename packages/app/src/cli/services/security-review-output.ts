@@ -119,7 +119,7 @@ export function buildSecurityReviewAlerts(input: SecurityReviewPresenterInput): 
   const withFindings = checks.filter((check) => activeFindings(check).length > 0)
 
   return [
-    ...(unresolved.length > 0 ? [unresolvedChecksAlert(unresolved)] : []),
+    ...(unresolved.length > 0 ? [unresolvedChecksAlert(unresolved, input.verbose)] : []),
     ...(passedOrNotApplicable.length > 0 ? [passedChecksAlert(passedOrNotApplicable, input.verbose)] : []),
     ...withFindings.map((check) => checkWithFindingsAlert(check, input.verbose, input.now)),
     summaryAlert(buildSecurityReviewSummary(input)),
@@ -331,15 +331,22 @@ function resultsFileCells(row: ResultsFileRow): InlineToken[] {
   return [row.name, row.updated, row.commit, row.engine]
 }
 
-function unresolvedChecksAlert(checks: CombinedCheck[]): SecurityReviewAlert {
+/**
+ * Unresolved checks with no active findings. With `--verbose`, each check's suppressed and superseded findings
+ * follow it in full, prefixed by the check ID, as in the passed checks box.
+ */
+function unresolvedChecksAlert(checks: CombinedCheck[], verbose: boolean): SecurityReviewAlert {
   return {
     type: 'warning',
     options: {
       headline: `${countLabel(checks.length, 'check')} unresolved.`,
-      customSections: checks.map((check) => ({
-        title: `${check.id} · ${check.title}`,
-        body: {tabularData: sourceStatusRows(check, {withDispositions: true}), firstColumnSubdued: true},
-      })),
+      customSections: checks.flatMap((check) => [
+        {
+          title: `${check.id} · ${check.title}`,
+          body: {tabularData: sourceStatusRows(check, {withDispositions: true}), firstColumnSubdued: true},
+        },
+        ...(verbose ? check.findings.map((finding) => findingSection(finding, verbose, `${check.id} · `)) : []),
+      ]),
     },
   }
 }
