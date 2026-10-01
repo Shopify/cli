@@ -510,15 +510,17 @@ describe('classifyDeployExtensionChanges', () => {
         new ExtensionInstance({
           specification: appEventsSpec,
           configuration: {
+            handle,
             events: {
               api_version: '2024-01',
-              subscription: {handle, topic: `${handle}/create`, actions: ['create'], uri: 'https://example.com'},
+              subscription: {topic: `${handle}/create`, actions: ['create'], uri: 'https://example.com'},
             },
           } as BaseConfigType,
           configurationPath: '/app/shopify.app.toml',
           directory: '/app',
         }),
     )
+    expect(localEvents.map((extension) => extension.uid)).toEqual(['order-notifier', 'product-sync'])
     const remoteEvents = await Promise.all(
       localEvents.map(
         async (extension): Promise<AppModuleVersion> => ({

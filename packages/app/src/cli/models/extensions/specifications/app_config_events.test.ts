@@ -90,6 +90,26 @@ describe('event module configuration', () => {
     expect(result.state).toBe('ok')
   })
 
+  test.each(['my_app', 'a'.repeat(51), 'events'])('excludes the app handle %s from a subscription list', (handle) => {
+    const events = {subscription: [{handle: 'orders', topic: 'orders/create'}]}
+    const config = {handle, events}
+    const original = structuredClone(config)
+
+    expect(appEventsSpec.parseConfigurationObject(config)).toEqual({state: 'ok', data: {events}, errors: undefined})
+    expect(config).toEqual(original)
+  })
+
+  test.each([{}, {events: {api_version: '2024-01'}}, {events: {subscription: []}}])(
+    'excludes the app handle when there is no single subscription: %j',
+    (config) => {
+      expect(appEventsSpec.parseConfigurationObject({handle: 'my_app', ...config})).toEqual({
+        state: 'ok',
+        data: config,
+        errors: undefined,
+      })
+    },
+  )
+
   test('validates only the fields needed for local identity', () => {
     const config = {handle: 'orders', events: {api_version: 'future', subscription: {unknown_field: true}}}
 

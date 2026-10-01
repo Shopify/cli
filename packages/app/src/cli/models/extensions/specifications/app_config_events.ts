@@ -3,6 +3,7 @@ import {CustomTransformationConfig, createConfigExtensionSpecification} from '..
 import {BaseSchemaWithHandle, BaseSchemaWithoutHandle} from '../schemas.js'
 import {Flag} from '../../../utilities/developer-platform-client.js'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 
 export const EventsSpecIdentifier = 'events'
 
@@ -24,7 +25,7 @@ const EventsSectionSchema = zod
 
 // A single-subscription module keeps its handle on the module, like every other module, so the
 // nested subscription matches the platform contract. A subscription list keeps handles on each entry.
-const EventsSchema = BaseSchemaWithoutHandle.extend({
+const EventsModuleSchema = BaseSchemaWithoutHandle.extend({
   handle: ModuleHandleSchema.optional(),
   events: EventsSectionSchema.optional(),
 }).superRefine((config, context) => {
@@ -35,6 +36,18 @@ const EventsSchema = BaseSchemaWithoutHandle.extend({
   if (result.success) return
   result.error.issues.forEach((issue) => context.addIssue({...issue, path: ['handle']}))
 })
+
+// This parser also receives full app configuration before expanding to multiple modules.
+// Only single-subscription modules own a top-level handle.
+const EventsSchema = zod.preprocess((config) => {
+  if (typeof config !== 'object' || config === null || Array.isArray(config) || !('handle' in config)) return config
+
+  const subscription = getPathValue(config, 'events.subscription')
+  if (subscription !== undefined && !Array.isArray(subscription)) return config
+
+  const {handle: _, ...configurationWithoutHandle} = config
+  return configurationWithoutHandle
+}, EventsModuleSchema)
 
 function isSingleSubscription(config: zod.infer<typeof EventsSchema>): config is typeof config & {handle: string} {
   const subscription = config.events?.subscription
