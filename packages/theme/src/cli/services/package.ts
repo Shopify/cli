@@ -6,6 +6,8 @@ import {resolvePath, relativizePath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
 
 const themeFilesPattern = [
+  'AGENTS.md',
+  'DESIGN.md',
   'assets/**',
   'blocks/**',
   'config/**',
