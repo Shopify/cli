@@ -738,7 +738,7 @@
         }
       },
       "customPluginName": "@shopify/app",
-      "description": "Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll be prompted to choose from the configuration files in your project.",
+      "description": "Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll be prompted to choose from the configuration files in your project.\n\nOutput from `--json` conforms to the `AppConfigUseResult` schema.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"configFile\": {\n      \"type\": [\n        \"string\",\n        \"null\"\n      ]\n    },\n    \"clientId\": {\n      \"type\": [\n        \"string\",\n        \"null\"\n      ]\n    }\n  },\n  \"required\": [\n    \"configFile\",\n    \"clientId\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppConfigUseResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll be prompted to choose from the configuration files in your project.",
       "flags": {
         "auth-alias": {
@@ -760,6 +760,15 @@
           "multiple": false,
           "name": "client-id",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,
