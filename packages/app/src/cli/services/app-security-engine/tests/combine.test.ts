@@ -1,7 +1,6 @@
 import {agentFindingsDocument, deterministicFindingsDocument} from './fixtures/findings-documents.js'
 import {
   activeFindings,
-  checkGeneratedAt,
   combineFindings,
   isAgentResultStale,
   isCheckPassed,
@@ -398,12 +397,6 @@ describe('combineFindings', () => {
       expect(isSuppressed(finding(), 'agent')).toBe(false)
       expect(isSuppressed(suppressed, 'deterministic')).toBe(false)
       expect(isSuppressed(finding(), 'deterministic')).toBe(false)
-    })
-  })
-
-  describe('checkGeneratedAt', () => {
-    test("is the document's generated_at", () => {
-      expect(checkGeneratedAt(check(), {generated_at: NEWER})).toBe(NEWER)
     })
   })
 

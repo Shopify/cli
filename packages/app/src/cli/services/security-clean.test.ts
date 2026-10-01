@@ -21,7 +21,6 @@ async function writeEveryArtifact(paths: AppSecurityArtifactPaths): Promise<stri
     paths.deterministicFindingsPath,
     paths.agentChecksPath,
     paths.agentFindingsPath,
-    paths.submissionPath,
     ...paths.legacyPaths,
   ]
   await mkdir(paths.artifactDirectory)
@@ -116,7 +115,6 @@ describe('renderSecurityCleanResult', () => {
       expect(rendered).toContain('deterministic-findings.json')
       expect(rendered).toContain('agent-checks.json')
       expect(rendered).toContain('agent-findings.json')
-      expect(rendered).toContain('submission.json')
       output.clear()
     })
   })

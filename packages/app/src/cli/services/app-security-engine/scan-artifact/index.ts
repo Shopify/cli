@@ -15,9 +15,6 @@ import type {
   StoredFinding,
 } from '../types.js'
 
-const MAX_SECRET_INSPECTION_NODES = 500_000
-const MAX_SECRET_INSPECTION_DEPTH = 100
-
 const safeLocation = (location: Location): Location => ({
   file: redactText(location.file.replace(/\\/g, '/')),
   ...(location.line === undefined ? {} : {line: location.line}),
@@ -158,35 +155,4 @@ export function buildDeterministicFindings(
     },
     checks,
   }
-}
-
-/**
- * Whether any string or object key in `value` still contains a secret that redaction would change.
- * Values too large or too deep to inspect completely count as containing a secret, so callers fail closed.
- */
-export function containsUnredactedSecret(value: unknown): boolean {
-  const stack: {value: unknown; depth: number}[] = [{value, depth: 0}]
-  const seen = new WeakSet<object>()
-  let visited = 0
-  while (stack.length > 0) {
-    const current = stack.pop()!
-    visited += 1
-    if (visited > MAX_SECRET_INSPECTION_NODES || current.depth > MAX_SECRET_INSPECTION_DEPTH) return true
-    if (typeof current.value === 'string') {
-      if (redactText(current.value) !== current.value) return true
-      continue
-    }
-    if (current.value === null || typeof current.value !== 'object') continue
-    if (seen.has(current.value)) continue
-    seen.add(current.value)
-    if (Array.isArray(current.value)) {
-      for (const item of current.value) stack.push({value: item, depth: current.depth + 1})
-      continue
-    }
-    for (const [key, child] of Object.entries(current.value)) {
-      if (redactText(key) !== key) return true
-      stack.push({value: child, depth: current.depth + 1})
-    }
-  }
-  return false
 }

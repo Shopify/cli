@@ -22,7 +22,6 @@ const appRoot = '/tmp/review-app'
 const paths = appSecurityArtifactPaths(appRoot)
 const commands = resolveAppSecurityCommands(appRoot)
 const checkCommand = formatAppSecurityCommand(commands.scan)
-const submitCommand = formatAppSecurityCommand(commands.submit)
 // One hour after the agent file, two and a half after the deterministic one.
 const now = new Date('2026-09-01T12:30:00.000Z')
 
@@ -300,7 +299,7 @@ describe('buildSecurityReviewSummary', () => {
   })
 
   describe('next steps', () => {
-    test('offers fixing and feedback when there are active findings', () => {
+    test('offers fixing when there are active findings', () => {
       const summary = buildSecurityReviewSummary(presenterInput(both))
 
       expect(summary.blocking).toBeUndefined()
@@ -312,18 +311,16 @@ describe('buildSecurityReviewSummary', () => {
           {filePath: 'agent-findings.json'},
           {char: '.'},
         ],
-        ['Send these results and your feedback to Shopify with', {command: submitCommand}, {char: '.'}],
       ])
     })
 
-    test('offers a deeper review and feedback when only the deterministic file is present and nothing is found', () => {
+    test('offers a deeper review when only the deterministic file is present and nothing is found', () => {
       const summary = buildSecurityReviewSummary(
         presenterInput(deterministicOnly, {checkIds: ['OPEN_REDIRECT', 'UNSAFE_INNERHTML']}),
       )
 
       expect(summary.nextSteps).toEqual([
         ['For a deeper review, have your coding agent run', {command: checkCommand}, {char: '.'}],
-        ['Send these results and your feedback to Shopify with', {command: submitCommand}, {char: '.'}],
       ])
     })
 
@@ -343,34 +340,27 @@ describe('buildSecurityReviewSummary', () => {
           {command: checkCommand},
           'to refresh them.',
         ],
-        ['Send these results and your feedback to Shopify with', {command: submitCommand}, {char: '.'}],
       ])
     })
 
     test('omits the refresh step when no filtered check is stale', () => {
       const summary = buildSecurityReviewSummary(presenterInput(staleAgent, {checkIds: ['EOL_API_VERSION']}))
 
-      expect(summary.nextSteps).toEqual([
-        expect.arrayContaining(['Fix the issues, then run']),
-        ['Send these results and your feedback to Shopify with', {command: submitCommand}, {char: '.'}],
-      ])
+      expect(summary.nextSteps).toEqual([expect.arrayContaining(['Fix the issues, then run'])])
     })
 
-    test('offers fixing before feedback, without a deeper review, when the deterministic file alone has findings', () => {
+    test('offers fixing without a deeper review when the deterministic file alone has findings', () => {
       const summary = buildSecurityReviewSummary(presenterInput(deterministicOnly))
 
       expect(summary.nextSteps?.map((step) => (Array.isArray(step) ? step[0] : step))).toEqual([
         'Fix the issues, then run',
-        'Send these results and your feedback to Shopify with',
       ])
     })
 
-    test('offers feedback alone when both files are present and nothing is found', () => {
+    test('offers no next steps when both files are present and nothing is found', () => {
       const summary = buildSecurityReviewSummary(presenterInput(bothWithoutFindings))
 
-      expect(summary.nextSteps).toEqual([
-        ['Send these results and your feedback to Shopify with', {command: submitCommand}, {char: '.'}],
-      ])
+      expect(summary.nextSteps).toEqual([])
     })
 
     test('offers a single create step when both files are missing', () => {
@@ -402,7 +392,7 @@ describe('buildSecurityReviewSummary', () => {
       )
 
       expect(summary.blocking).toBeUndefined()
-      expect(summary.nextSteps).toHaveLength(2)
+      expect(summary.nextSteps).toHaveLength(1)
     })
   })
 })
@@ -755,7 +745,6 @@ describe('renderSecurityReview', () => {
     expect(summaryBox).toContain('agent-findings.json          1 hour ago   aaaaaaa (uncommitted)  3.99.0')
     expect(summaryBox).toContain('Next steps')
     expect(summaryBox).toContain('• Fix the issues, then run `shopify app security check --path')
-    expect(summaryBox).toContain('• Send these results and your feedback to Shopify with `shopify app')
   })
 
   test('renders an info box with not found rows when no file is present', () => {
@@ -774,6 +763,15 @@ describe('renderSecurityReview', () => {
     expect(rendered).not.toContain('--check-id')
     expect(output.error()).toBe('')
     expect(output.warn()).toBe('')
+  })
+
+  test('leaves out the next steps section when there is nothing to suggest', () => {
+    const output = mockAndCaptureOutput()
+    output.clear()
+
+    renderSecurityReview(presenterInput(bothWithoutFindings))
+
+    expect(unstyled(output.output())).not.toContain('Next steps')
   })
 
   test('renders the Blocking section instead of next steps when breached', () => {

@@ -18,9 +18,9 @@ import {join} from 'node:path'
  * suite and the eval gate passed cleanly:
  *
  *   1. The secret scanner printed detected AWS keys verbatim into the console
- *      AND into the deterministic findings in .shopify/app-security/ — the artifact developers
- *      are told to submit to Shopify. Detection patterns and redaction patterns were two
- *      independent lists, and they drifted.
+ *      AND into the deterministic findings stored in .shopify/app-security/.
+ *      Detection patterns and redaction patterns were two independent lists,
+ *      and they drifted.
  *
  *   2. A .env that was committed and only afterwards added to .gitignore was
  *      downgraded from high to medium, because the rule inferred "not
@@ -154,7 +154,7 @@ describe('redaction never emits known secrets', () => {
     expect(redacted).not.toContain(keyBody)
   })
 
-  test('does not leak a detected secret into the deterministic findings written for submission', async () => {
+  test('does not leak a detected secret into the stored deterministic findings', async () => {
     const dir = makeApp({
       'config.js': `const shopifyToken = "${PROBES.shopifyToken}";\n`,
     })

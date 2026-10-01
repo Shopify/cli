@@ -2,7 +2,7 @@ import type {AgentFindingsDocument, DeterministicFindingsDocument} from '../../t
 
 /**
  * Representative stored documents, as `check` and `record` write them. Shared by the translation,
- * combination, review and submit tests, so keep their shape stable and realistic: every check ID is a
+ * combination and review tests, so keep their shape stable and realistic: every check ID is a
  * real catalog entry. Checks in both sources cover both precedences: CREDENTIAL_LOG_LEAKAGE is
  * `prefer-agent`; MISSING_TENANT_ISOLATION and OPEN_REDIRECT are `union`.
  */

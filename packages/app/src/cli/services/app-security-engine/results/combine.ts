@@ -90,8 +90,7 @@ interface SourceChecks {
 }
 
 /**
- * Combines the two stored result files into one check per ID (§5). The server recomputes this combination from
- * the submission payload, so the rules here are part of that contract:
+ * Combines the two stored result files into one check per ID (§5), following these rules:
  * - `precedence` is the agent snapshot's, defaulting to 'union'.
  * - The agent snapshot describes a check (title, severity, description, guide) whenever the agent recorded it.
  * - 'prefer-agent' applies only when the agent result is at least as new as the deterministic one, comparing the
@@ -129,8 +128,8 @@ export function isAgentResultStale(check: CombinedCheck): boolean {
 }
 
 /**
- * The one rule for the `suppression` combination input, shared by the combination and the submission payload so
- * `review` and the server agree. Only the agent suppresses findings today; when suppression becomes uniform
+ * The one rule for the `suppression` combination input, used by the combination and by `review`'s
+ * finding display, so both agree. Only the agent suppresses findings today; when suppression becomes uniform
  * across sources, only this function changes.
  */
 export function isSuppressed(finding: StoredFinding, source: FindingsSource): boolean {
@@ -188,11 +187,11 @@ function sourceChecksById({deterministic, agent}: CombineFindingsInput): Map<str
 }
 
 /**
- * The one rule for the time a source recorded a check, shared by the combination and the submission payload so
- * `review` and the server agree. Today that is the document's `generated_at`; a per-check time on StoredCheck,
+ * The one rule for the time a source recorded a check, used when comparing the agent and deterministic
+ * results. Today that is the document's `generated_at`; a per-check time on StoredCheck,
  * if one is added, would take precedence here (check time ?? document time) without changing callers.
  */
-export function checkGeneratedAt(_check: StoredCheck, document: Pick<FindingsDocument, 'generated_at'>): string {
+function checkGeneratedAt(_check: StoredCheck, document: Pick<FindingsDocument, 'generated_at'>): string {
   return document.generated_at
 }
 

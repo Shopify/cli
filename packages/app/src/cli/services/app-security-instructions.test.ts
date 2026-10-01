@@ -118,7 +118,6 @@ describe('appSecurityInstructions', () => {
         '### 5. Record the findings with Shopify CLI',
         '### 6. Review, explain, and help fix',
         '### 7. Check again after changes',
-        '### 8. Submit only when explicitly authorized (optional)',
       ].map((heading) => instructions.indexOf(heading))
 
       expect(sections).not.toContain(-1)
@@ -308,7 +307,7 @@ describe('deliverAppSecurityInstructions', () => {
     })
   })
 
-  test('copies instructions including the optional authorized submission workflow without printing them', async () => {
+  test('copies instructions without printing them', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
       const dependencies = testDependencies()
@@ -318,28 +317,7 @@ describe('deliverAppSecurityInstructions', () => {
       expect(dependencies.copyToClipboard).toHaveBeenCalledOnce()
       const instructions = dependencies.copyToClipboard.mock.calls[0]![0]
       expect(instructions).toContain('Use the existing scan results')
-      expect(instructions).toContain('shopify app security submit --dry-run')
-      expect(instructions).toContain('Read `.shopify/app-security/submission.json` before uploading')
-      expect(instructions).toContain('`--config <name>` or `--client-id <id>`')
-      expect(instructions).toContain('only when the user explicitly requests or authorizes an upload to Shopify')
-      expect(instructions).toContain('Do not upload automatically; local results do not require submission.')
-      expect(instructions).toContain('normal interactive confirmation')
-      expect(instructions).toContain(
-        'For live automation, use `shopify app security submit --json --force` only with that authorization',
-      )
-      expect(instructions).toContain('`--feedback <text>` or read it from stdin with `--feedback -`')
-      expect(instructions).toContain('Feedback is passed without redaction')
-      expect(instructions).toContain("Don't include source code, file paths or secrets in your optional feedback.")
-      expect(instructions).toContain(
-        'Optionally use `--version` to identify the app version corresponding to the scanned files. This may be a past, current, or future app version. Providing it does not create an app version.',
-      )
-      expect(instructions).not.toContain('--source-control-url')
-      expect(instructions).not.toContain('--source-control-hash')
-      expect(instructions).toContain('Submission is not proof of App Store approval')
-      const submitSection = instructions.indexOf('### 8. Submit only when explicitly authorized (optional)')
-      expect(submitSection).toBeGreaterThan(instructions.indexOf('### 6. Review, explain, and help fix'))
-      expect(instructions).toContain('Only after reviewing the results')
-      expect(instructions).not.toContain('reserved for a future authenticated upload workflow')
+      expect(instructions).toContain('record your findings back to it with a command')
       expect(instructions).not.toMatch(/\{\{[A-Z_]+\}\}/)
       expect(dependencies.output).not.toHaveBeenCalled()
       expect(dependencies.outputConfirmation).toHaveBeenCalledWith('Copied App Security instructions to the clipboard')

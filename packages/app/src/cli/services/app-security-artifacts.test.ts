@@ -4,20 +4,14 @@ import {
   readFindingsDocument,
   writeAgentFindings,
   writeCheckArtifacts,
-  writeSubmission,
 } from './app-security-artifacts.js'
-import {scanApp, SUBMISSION_SCHEMA_VERSION, type AppSecuritySubmission} from './app-security-engine/index.js'
+import {scanApp} from './app-security-engine/index.js'
 import {agentFindingsDocument} from './app-security-engine/tests/fixtures/findings-documents.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import {symlink} from 'node:fs/promises'
-
-const submission = {
-  schemaVersion: SUBMISSION_SCHEMA_VERSION,
-  report: {metadata: {}},
-} as AppSecuritySubmission
 
 async function scanTestApp(directory: string) {
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Test"\nclient_id = "test"\n')
@@ -30,7 +24,6 @@ async function writeEveryArtifact(directory: string): Promise<string[]> {
     paths.deterministicFindingsPath,
     paths.agentChecksPath,
     paths.agentFindingsPath,
-    paths.submissionPath,
     ...paths.legacyPaths,
   ]
   await mkdir(paths.artifactDirectory)
@@ -47,7 +40,6 @@ describe('appSecurityArtifactPaths', () => {
       deterministicFindingsPath: joinPath(artifactDirectory, 'deterministic-findings.json'),
       agentChecksPath: joinPath(artifactDirectory, 'agent-checks.json'),
       agentFindingsPath: joinPath(artifactDirectory, 'agent-findings.json'),
-      submissionPath: joinPath(artifactDirectory, 'submission.json'),
       legacyPaths: [
         joinPath(artifactDirectory, 'trace.json'),
         joinPath(artifactDirectory, 'review.json'),
@@ -320,19 +312,6 @@ describe('cleanAppSecurityArtifacts', () => {
         await expect(cleanAppSecurityArtifacts(directory)).resolves.toEqual([paths.deterministicFindingsPath])
         await expect(readFile(targetPath)).resolves.toBe('keep')
       })
-    })
-  })
-})
-
-describe('writeSubmission', () => {
-  test('creates parent directories and writes the provided bytes without re-encoding', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const path = joinPath(directory, '.shopify', 'app-security', 'submission.json')
-
-      const bytes = Buffer.from(`${JSON.stringify(submission)}\n`, 'utf8')
-      await writeSubmission(directory, bytes)
-
-      await expect(readFile(path)).resolves.toBe(bytes.toString())
     })
   })
 })
