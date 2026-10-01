@@ -168,7 +168,7 @@ test('blocks project imports while ESLint and upstream plugins are forbidden', (
   const {tmpdir} = require('node:os')
   const {join, resolve, dirname} = require('node:path')
   const {spawnSync} = require('node:child_process')
-  const workspace = mkdtempSync(join(tmpdir(), 'cli-independent-oxlint-'))
+  const workspace = mkdtempSync(join(tmpdir(), 'cli independent oxlint-'))
   try {
     const guard = join(workspace, 'forbid-eslint.cjs')
     writeFileSync(
@@ -215,9 +215,14 @@ test('blocks project imports while ESLint and upstream plugins are forbidden', (
         'json',
         'packages',
       ],
-      {cwd: workspace, encoding: 'utf8', env: {...process.env, NODE_OPTIONS: `--require "${guard}"`}},
+      {
+        cwd: workspace,
+        encoding: 'utf8',
+        env: {...process.env, NODE_OPTIONS: `--require "${guard.replaceAll('\\', '/')}"`},
+      },
     )
     expect(result.status, result.stdout + result.stderr).toBe(1)
+    expect(result.stdout, result.stderr).not.toBe('')
     expect(JSON.parse(result.stdout).diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
       'cli(module-boundaries)',
     ])
