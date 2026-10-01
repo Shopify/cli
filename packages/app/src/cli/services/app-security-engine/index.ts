@@ -53,9 +53,9 @@ export {
   SEVERITY_RANK,
 } from './types.js'
 export {ignorePatternProblem} from './scanners/path-rules.js'
-export {buildSubmission, skippedFileCounts, SUBMISSION_SCHEMA_VERSION} from './submission/index.js'
+export {buildSubmission, SUBMISSION_SCHEMA_VERSION} from './submission/index.js'
 export type {AppSecuritySubmission, BuildSubmissionOptions, BuildSubmissionSources} from './submission/index.js'
-export {groupIssues} from './output/group-issues.js'
+export {groupIssues, skippedFileCounts} from './output/group-issues.js'
 export type {IssueGroup} from './output/group-issues.js'
 export type {
   AgentFindingsDocument,

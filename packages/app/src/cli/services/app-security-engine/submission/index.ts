@@ -1,4 +1,5 @@
 import {redactText} from '../rules/secret-rules.js'
+import {skippedFileCounts, type SkippedFileCounts} from '../output/group-issues.js'
 import {checkGeneratedAt, isSuppressed} from '../results/combine.js'
 import {FINDINGS_SCHEMA_VERSION} from '../types.js'
 import type {
@@ -13,7 +14,6 @@ import type {
   FindingsSource,
   LanguageSupport,
   Severity,
-  SkippedFile,
   StoredCheck,
   StoredCheckStatus,
   StoredFinding,
@@ -76,12 +76,6 @@ export interface SubmissionDetection {
   framework: DetectedFramework
   surface: DetectedSurface
   languages: {name: string; support: LanguageSupport; file_count: number}[]
-}
-
-/** How many files the deterministic scan skipped, by reason. */
-export interface SkippedFileCounts {
-  too_large: number
-  unreadable: number
 }
 
 export interface SubmissionCoverage {
@@ -163,13 +157,6 @@ function submissionDetection(document: DeterministicFindingsDocument): Submissio
       support: language.support,
       file_count: language.files.length,
     })),
-  }
-}
-
-export function skippedFileCounts(files: SkippedFile[]): SkippedFileCounts {
-  return {
-    too_large: files.filter((file) => file.reason === 'too_large').length,
-    unreadable: files.filter((file) => file.reason === 'unreadable').length,
   }
 }
 

@@ -1,4 +1,4 @@
-import {SEVERITY_RANK, type Issue, type Severity} from '../types.js'
+import {SEVERITY_RANK, type Issue, type Severity, type SkippedFile} from '../types.js'
 
 export interface IssueGroup {
   severity: Severity
@@ -33,4 +33,17 @@ export function groupIssues(issues: Issue[]): IssueGroup[] {
     }
   }
   return [...groups.values()]
+}
+
+/** How many files the deterministic scan skipped, by reason. */
+export interface SkippedFileCounts {
+  too_large: number
+  unreadable: number
+}
+
+export function skippedFileCounts(files: SkippedFile[]): SkippedFileCounts {
+  return {
+    too_large: files.filter((file) => file.reason === 'too_large').length,
+    unreadable: files.filter((file) => file.reason === 'unreadable').length,
+  }
 }
