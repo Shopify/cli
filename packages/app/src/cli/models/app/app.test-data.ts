@@ -28,10 +28,6 @@ import {WebhooksConfig} from '../extensions/specifications/types/app_config_webh
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
 import {
   AppLogsResponse,
-  SourceScanCreateInput,
-  SourceScanCreateSchema,
-  SourceScanUploadUrlInput,
-  SourceScanUploadUrlSchema,
   AppVersion,
   AppVersionIdentifiers,
   AppVersionWithContext,
@@ -1249,16 +1245,6 @@ const generateSignedUploadUrlResponse: AssetUrlSchema = {
   userErrors: [],
 }
 
-const generateSourceScanUploadUrlResponse: SourceScanUploadUrlSchema = {
-  sourceScanUploadUrl: 'source-scan-upload-url',
-  userErrors: [],
-}
-
-const createSourceScanResponse: SourceScanCreateSchema = {
-  accepted: true,
-  userErrors: [],
-}
-
 const organizationsResponse: OrganizationWithDetails[] = [
   {
     ...testOrganization(),
@@ -1354,9 +1340,6 @@ export function testDeveloperPlatformClient(
     deploy: (_input: AppDeployVariables) => Promise.resolve(deployResponse),
     release: (_input: {app: MinimalAppIdentifiers; version: AppVersionIdentifiers}) => Promise.resolve(releaseResponse),
     generateSignedUploadUrl: (_app: MinimalAppIdentifiers) => Promise.resolve(generateSignedUploadUrlResponse),
-    generateSourceScanUploadUrl: (_input: SourceScanUploadUrlInput) =>
-      Promise.resolve(generateSourceScanUploadUrlResponse),
-    createSourceScan: (_input: SourceScanCreateInput) => Promise.resolve(createSourceScanResponse),
     sendSampleWebhook: (_input: SendSampleWebhookVariables) => Promise.resolve(sendSampleWebhookResponse),
     apiVersions: () => Promise.resolve(apiVersionsResponse),
     topics: (_input: WebhookTopicsVariables) => Promise.resolve(topicsResponse),
