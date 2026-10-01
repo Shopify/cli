@@ -1,9 +1,11 @@
 import {appFlags} from '../../../flags.js'
 import {linkedAppContext} from '../../../services/app-context.js'
-import link, {LinkOptions} from '../../../services/app/config/link.js'
+import {linkAppConfiguration, LinkOptions} from '../../../services/app/config/link.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
+import {appConfigLinkJsonOutputSchema} from '../../../services/app/config/link/types.js'
+import {renderAppConfigLinkResult} from '../../../services/app/config/link/result.js'
 import {Flags} from '@oclif/core'
-import {globalFlags, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 
 export default class ConfigLink extends AppLinkedCommand {
   static summary = 'Fetch your app configuration from the Developer Dashboard.'
@@ -13,10 +15,15 @@ export default class ConfigLink extends AppLinkedCommand {
   For more information on the format of the created TOML configuration file, refer to the [App configuration](https://shopify.dev/docs/apps/tools/cli/configuration) page.
   `
 
+  static get jsonOutputSchema() {
+    return appConfigLinkJsonOutputSchema
+  }
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     ...appFlags,
     'organization-id': Flags.string({
       hidden: true,
@@ -50,7 +57,7 @@ export default class ConfigLink extends AppLinkedCommand {
       force: flags.force ?? false,
     }
 
-    const result = await link(options)
+    const result = await linkAppConfiguration(options)
 
     const {app} = await linkedAppContext({
       directory: flags.path,
@@ -58,6 +65,8 @@ export default class ConfigLink extends AppLinkedCommand {
       forceRelink: false,
       userProvidedConfigName: result.configFileName,
     })
+
+    renderAppConfigLinkResult(result.result, result.packageManager, flags.json ? 'json' : 'text')
 
     return {app}
   }
