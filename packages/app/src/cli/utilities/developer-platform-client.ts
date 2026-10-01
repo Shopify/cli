@@ -160,9 +160,7 @@ export type SourceScanCreateSchema = WithUserErrors<{
   accepted: boolean
 }>
 
-export enum Flag {
-  SingleSubscriptionEventsModules = 'single_subscription_events_modules',
-}
+export enum Flag {}
 
 const FlagMap: {[key: string]: Flag} = {}
 

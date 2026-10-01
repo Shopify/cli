@@ -2336,101 +2336,93 @@ describe('load', () => {
       )
     }
 
-    test.each([false, true])(
-      'loads and round-trips the remote contract with expansion enabled: %s',
-      async (enabled) => {
-        const configuration = eventsConfiguration.replace(
-          'actions = ["create"]',
-          'actions = ["create"]\nfuture_field = "value"',
-        )
-        await writeConfig(buildAppConfiguration({handle: 'my_app', extra: configuration}))
-        const contractSpecifications = await specificationsWithEventsContract()
-        const remoteFlags = enabled ? [Flag.SingleSubscriptionEventsModules] : []
-        const loadOptions = {
-          directory: tmpDir,
-          userProvidedConfigName: undefined,
-          specifications: contractSpecifications,
-          remoteFlags,
-        }
+    test('loads and round-trips the remote contract without rollout flags', async () => {
+      const configuration = eventsConfiguration.replace(
+        'actions = ["create"]',
+        'actions = ["create"]\nfuture_field = "value"',
+      )
+      await writeConfig(buildAppConfiguration({handle: 'my_app', extra: configuration}))
+      const contractSpecifications = await specificationsWithEventsContract()
+      const loadOptions = {
+        directory: tmpDir,
+        userProvidedConfigName: undefined,
+        specifications: contractSpecifications,
+      }
 
-        const app = await loadApp(loadOptions)
-        const extensions = app.allExtensions.filter((extension) => extension.specification.identifier === 'events')
-        const expectedHandles = enabled ? ['order-notifier', 'product-sync'] : ['events']
-        const payloads = await Promise.all(
-          extensions.map((extension) =>
-            extension.deployConfig({apiKey: 'test-client-id', appConfiguration: app.configuration}),
-          ),
-        )
+      const app = await loadApp(loadOptions)
+      const extensions = app.allExtensions.filter((extension) => extension.specification.identifier === 'events')
+      const expectedHandles = ['order-notifier', 'product-sync']
+      const payloads = await Promise.all(
+        extensions.map((extension) =>
+          extension.deployConfig({apiKey: 'test-client-id', appConfiguration: app.configuration}),
+        ),
+      )
 
-        expect(app.errors.getErrors()).toEqual([])
-        expect(app.configuration.handle).toBe('my_app')
-        expect(extensions.map((extension) => extension.handle)).toEqual(expectedHandles)
-        expect(extensions.map((extension) => extension.uid)).toEqual(expectedHandles)
-        expect(extensions.map((extension) => extension.configuration.handle)).toEqual(
-          enabled ? expectedHandles : [undefined],
-        )
-        expect(extensions.map((extension) => extension.contextValue)).toEqual(
-          enabled ? ['orders/create', 'products/update'] : [''],
-        )
-        expect(payloads.every((payload) => !Object.hasOwn(payload!, 'handle'))).toBe(true)
-        expect(payloads.map((payload) => Array.isArray(getPathValue(payload!, 'events.subscription')))).toEqual(
-          enabled ? [false, false] : [true],
-        )
+      expect(app.errors.getErrors()).toEqual([])
+      expect(app.configuration.handle).toBe('my_app')
+      expect(extensions.map((extension) => extension.handle)).toEqual(expectedHandles)
+      expect(extensions.map((extension) => extension.uid)).toEqual(expectedHandles)
+      expect(extensions.map((extension) => extension.configuration.handle)).toEqual(expectedHandles)
+      expect(extensions.map((extension) => extension.contextValue)).toEqual(['orders/create', 'products/update'])
+      expect(payloads.every((payload) => !Object.hasOwn(payload!, 'handle'))).toBe(true)
+      expect(payloads.map((payload) => Array.isArray(getPathValue(payload!, 'events.subscription')))).toEqual([
+        false,
+        false,
+      ])
 
-        const remoteModules = extensions.map(
-          (extension, index): AppModuleVersion => ({
-            registrationId: extension.uid,
-            registrationTitle: extension.handle,
-            type: 'events',
-            config: payloads[index],
-            specification: {
-              identifier: 'events',
-              name: 'Events',
-              experience: 'configuration',
-              options: {managementExperience: 'cli'},
-            },
-          }),
-        )
-        const linked = remoteAppConfigurationExtensionContent(remoteModules, contractSpecifications, remoteFlags)
-        expect(linked).toEqual({
-          events: {
-            api_version: '2024-01',
-            subscription: [
-              {
-                handle: 'order-notifier',
-                topic: 'orders/create',
-                actions: ['create'],
-                uri: 'https://example.com/events/orders',
-                future_field: 'value',
-              },
-              {
-                handle: 'product-sync',
-                topic: 'products/update',
-                actions: ['update'],
-                api_version: '2025-01',
-                uri: 'https://example.com/events/products',
-              },
-            ],
+      const remoteModules = extensions.map(
+        (extension, index): AppModuleVersion => ({
+          registrationId: extension.uid,
+          registrationTitle: extension.handle,
+          type: 'events',
+          config: payloads[index],
+          specification: {
+            identifier: 'events',
+            name: 'Events',
+            experience: 'configuration',
+            options: {managementExperience: 'cli'},
           },
-        })
+        }),
+      )
+      const linked = remoteAppConfigurationExtensionContent(remoteModules, contractSpecifications, [])
+      expect(linked).toEqual({
+        events: {
+          api_version: '2024-01',
+          subscription: [
+            {
+              handle: 'order-notifier',
+              topic: 'orders/create',
+              actions: ['create'],
+              uri: 'https://example.com/events/orders',
+              future_field: 'value',
+            },
+            {
+              handle: 'product-sync',
+              topic: 'products/update',
+              actions: ['update'],
+              api_version: '2025-01',
+              uri: 'https://example.com/events/products',
+            },
+          ],
+        },
+      })
 
-        await writeAppConfigurationFile({...app.configuration, ...linked}, app.configPath)
-        const linkedApp = await loadApp(loadOptions)
-        const linkedExtensions = linkedApp.allExtensions.filter(
-          (extension) => extension.specification.identifier === 'events',
-        )
-        expect(linkedApp.errors.getErrors()).toEqual([])
-        expect(linkedApp.configuration.handle).toBe('my_app')
-        expect(linkedExtensions.map((extension) => extension.uid)).toEqual(expectedHandles)
-        await expect(
-          Promise.all(
-            linkedExtensions.map((extension) =>
-              extension.deployConfig({apiKey: 'test-client-id', appConfiguration: linkedApp.configuration}),
-            ),
+      await writeAppConfigurationFile({...app.configuration, ...linked}, app.configPath)
+      const linkedApp = await loadApp(loadOptions)
+      const linkedExtensions = linkedApp.allExtensions.filter(
+        (extension) => extension.specification.identifier === 'events',
+      )
+      expect(linkedApp.errors.getErrors()).toEqual([])
+      expect(linkedApp.configuration.handle).toBe('my_app')
+      expect(linkedExtensions.map((extension) => extension.uid)).toEqual(expectedHandles)
+      await expect(
+        Promise.all(
+          linkedExtensions.map((extension) =>
+            extension.deployConfig({apiKey: 'test-client-id', appConfiguration: linkedApp.configuration}),
           ),
-        ).resolves.toEqual(payloads)
-      },
-    )
+        ),
+      ).resolves.toEqual(payloads)
+    })
 
     test('does not create a module from the app handle without events configuration', async () => {
       await writeConfig(buildAppConfiguration({handle: 'my-app'}))
@@ -2439,17 +2431,16 @@ describe('load', () => {
         directory: tmpDir,
         userProvidedConfigName: undefined,
         specifications: await specificationsWithEventsContract(),
-        remoteFlags: [Flag.SingleSubscriptionEventsModules],
       })
 
       expect(app.errors.getErrors()).toEqual([])
       expect(app.allExtensions.some((extension) => extension.specification.identifier === 'events')).toBe(false)
     })
 
-    test('expands subscriptions when the organization flag is enabled', async () => {
+    test('expands subscriptions into individual modules by default', async () => {
       await writeConfig(buildAppConfiguration({extra: eventsConfiguration}))
 
-      const app = await loadTestingApp({remoteFlags: [Flag.SingleSubscriptionEventsModules]})
+      const app = await loadTestingApp()
       const extensions = app.allExtensions.filter((extension) => extension.specification.identifier === 'events')
 
       expect(app.errors.isEmpty()).toBe(true)
@@ -2486,27 +2477,10 @@ describe('load', () => {
       ])
     })
 
-    test('keeps the subscription list and legacy identity when disabled', async () => {
-      await writeConfig(buildAppConfiguration({extra: eventsConfiguration}))
-
-      const app = await loadTestingApp({remoteFlags: []})
-      const extensions = app.allExtensions.filter((extension) => extension.specification.identifier === 'events')
-
-      expect(app.errors.isEmpty()).toBe(true)
-      expect(extensions).toMatchObject([
-        {
-          handle: 'events',
-          uid: 'events',
-          contextValue: '',
-          configuration: {events: {subscription: [{handle: 'order-notifier'}, {handle: 'product-sync'}]}},
-        },
-      ])
-    })
-
     test('rejects duplicate subscription handles', async () => {
       await writeConfig(buildAppConfiguration({extra: eventsConfiguration.replace('product-sync', 'order-notifier')}))
 
-      const app = await loadTestingApp({remoteFlags: [Flag.SingleSubscriptionEventsModules]})
+      const app = await loadTestingApp()
 
       expect(app.errors.getErrors()).toEqual([
         expect.objectContaining({message: expect.stringContaining('Duplicated handle "order-notifier"')}),
@@ -2518,7 +2492,7 @@ describe('load', () => {
         buildAppConfiguration({handle: 'my_app', extra: eventsConfiguration.replace('handle = "order-notifier"', '')}),
       )
 
-      const app = await loadTestingApp({remoteFlags: [Flag.SingleSubscriptionEventsModules]})
+      const app = await loadTestingApp()
 
       expect(app.errors.isEmpty()).toBe(false)
       expect(app.allExtensions.filter((extension) => extension.specification.identifier === 'events')).toMatchObject([
@@ -2530,7 +2504,7 @@ describe('load', () => {
     test('creates no events modules for an empty subscription list', async () => {
       await writeConfig(buildAppConfiguration({extra: '[events]\napi_version = "2024-01"\nsubscription = []'}))
 
-      const app = await loadTestingApp({remoteFlags: [Flag.SingleSubscriptionEventsModules]})
+      const app = await loadTestingApp()
 
       expect(app.errors.isEmpty()).toBe(true)
       expect(app.allExtensions.some((extension) => extension.specification.identifier === 'events')).toBe(false)

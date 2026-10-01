@@ -1,7 +1,6 @@
 import {transformToEventsConfig, transformFromEventsConfig} from './transform/app_config_events.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {BaseSchemaWithHandle, BaseSchemaWithoutHandle} from '../schemas.js'
-import {Flag} from '../../../utilities/developer-platform-client.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 
@@ -58,9 +57,9 @@ const appEventsSpec = createConfigExtensionSpecification({
   identifier: EventsSpecIdentifier,
   schema: EventsSchema,
   transformConfig: EventsTransformConfig,
-  expandConfig: (config, {flags}) => {
+  expandConfig: (config) => {
     const subscriptions = config.events?.subscription
-    if (!flags.includes(Flag.SingleSubscriptionEventsModules) || !Array.isArray(subscriptions)) return [config]
+    if (!Array.isArray(subscriptions)) return [config]
 
     return subscriptions.map((entry) => {
       const {handle, ...subscription} = entry as {handle?: unknown; [key: string]: unknown}

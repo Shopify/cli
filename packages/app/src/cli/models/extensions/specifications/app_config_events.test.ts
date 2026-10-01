@@ -1,8 +1,5 @@
 import appEventsSpec from './app_config_events.js'
-import {Flag} from '../../../utilities/developer-platform-client.js'
 import {describe, expect, test} from 'vitest'
-
-const flags = [Flag.SingleSubscriptionEventsModules]
 
 describe('event module configuration', () => {
   test('moves each subscription handle onto its module, preserves unknown fields and does not change the input', () => {
@@ -18,7 +15,7 @@ describe('event module configuration', () => {
     }
     const original = structuredClone(config)
 
-    expect(appEventsSpec.expandConfig!(config, {flags})).toEqual([
+    expect(appEventsSpec.expandConfig!(config, {flags: []})).toEqual([
       {
         handle: 'orders',
         events: {
@@ -39,19 +36,10 @@ describe('event module configuration', () => {
     expect(config).toEqual(original)
   })
 
-  test('retains the legacy configuration when the flag is disabled', () => {
-    const config = {events: {subscription: [{topic: 'orders/create'}]}}
-
-    expect(appEventsSpec.expandConfig!(config, {flags: []})).toEqual([config])
-    expect(appEventsSpec.getIdentity!(config)).toBeUndefined()
-    expect(appEventsSpec.getTarget!(config)).toBeUndefined()
-    expect(appEventsSpec.parseConfigurationObject(config).state).toBe('ok')
-  })
-
   test('retains the configuration when there is no subscription list', () => {
     const config = {events: {api_version: '2024-01'}}
 
-    expect(appEventsSpec.expandConfig!(config, {flags})).toEqual([config])
+    expect(appEventsSpec.expandConfig!(config, {flags: []})).toEqual([config])
     expect(appEventsSpec.getIdentity!(config)).toBeUndefined()
     expect(appEventsSpec.getTarget!(config)).toBeUndefined()
   })
@@ -121,10 +109,10 @@ describe('event module configuration', () => {
   test('keeps identity stable when subscription content or position changes', () => {
     const first = {handle: 'orders', topic: 'orders/create', uri: '/original'}
     const second = {handle: 'products', topic: 'products/update'}
-    const original = appEventsSpec.expandConfig!({events: {subscription: [first, second]}}, {flags})
+    const original = appEventsSpec.expandConfig!({events: {subscription: [first, second]}}, {flags: []})
     const reordered = appEventsSpec.expandConfig!(
       {events: {subscription: [second, {...first, uri: '/updated'}]}},
-      {flags},
+      {flags: []},
     )
     const identities = (configs: object[]) =>
       configs.map((config) => {
