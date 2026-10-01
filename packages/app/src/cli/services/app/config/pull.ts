@@ -11,6 +11,7 @@ import {basename} from '@shopify/cli-kit/node/path'
 
 interface PullOptions {
   app: AppLinkedInterface
+  directory: string
   configName?: string
   remoteApp: OrganizationApp
 }
@@ -25,8 +26,8 @@ interface PullOutput {
  * Refresh an already-linked app configuration without prompting for org/app.
  */
 export default async function pull(options: PullOptions): Promise<PullOutput> {
-  const {app, configName, remoteApp} = options
-  const {directory, configPath, configuration} = app
+  const {app, directory, configName, remoteApp} = options
+  const {configPath, configuration} = app
   const developerPlatformClient = remoteApp.developerPlatformClient
 
   // Fetch remote specs/flags for that app
@@ -54,7 +55,7 @@ export default async function pull(options: PullOptions): Promise<PullOutput> {
     specifications,
     flags,
     configFileName,
-    appDirectory: directory,
+    appDirectory: localAppOptions.appDirectory ?? directory,
     localAppOptions,
   })
 

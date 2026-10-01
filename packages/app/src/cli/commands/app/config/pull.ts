@@ -32,6 +32,7 @@ This command reuses the existing linked app and organization and skips all inter
 
     const {configuration, configPath} = await pull({
       app,
+      directory: flags.path,
       configName: flags.config,
       remoteApp,
     })

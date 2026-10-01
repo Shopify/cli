@@ -2,7 +2,7 @@ import ConfigPull from './pull.js'
 import pull from '../../../services/app/config/pull.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
@@ -18,13 +18,16 @@ describe('app config pull command', () => {
     vi.mocked(renderSuccess).mockReset()
   })
 
-  test('pulls the app returned by the linked app context', async () => {
+  test('passes a subdirectory invocation and client ID override with the linked app', async () => {
     await inTemporaryDirectory(async (tmp) => {
+      const invocationDirectory = joinPath(tmp, 'extensions', 'example')
+      await mkdir(invocationDirectory)
+      const remoteApp = testOrganizationApp({apiKey: 'new-client-id'})
       const app = testAppLinked({
         directory: tmp,
-        configPath: joinPath(tmp, 'shopify.app.staging.toml'),
+        configPath: joinPath(tmp, 'shopify.app.toml'),
       })
-      const remoteApp = testOrganizationApp()
+      app.configuration = {...app.configuration, client_id: remoteApp.apiKey}
       vi.mocked(linkedAppContext).mockResolvedValue({app, remoteApp} as Awaited<ReturnType<typeof linkedAppContext>>)
       vi.mocked(pull).mockResolvedValue({
         configPath: app.configPath,
@@ -32,18 +35,18 @@ describe('app config pull command', () => {
         remoteApp,
       })
 
-      await ConfigPull.run(['--path', tmp, '--config', 'staging'], import.meta.url)
+      await ConfigPull.run(['--path', invocationDirectory, '--client-id', remoteApp.apiKey], import.meta.url)
 
       expect(linkedAppContext).toHaveBeenCalledWith({
-        directory: tmp,
-        clientId: undefined,
+        directory: invocationDirectory,
+        clientId: remoteApp.apiKey,
         forceRelink: false,
-        userProvidedConfigName: 'staging',
+        userProvidedConfigName: undefined,
       })
-      expect(pull).toHaveBeenCalledWith({app, configName: 'staging', remoteApp})
+      expect(pull).toHaveBeenCalledWith({app, directory: invocationDirectory, configName: undefined, remoteApp})
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'Pulled latest configuration for "my app"',
-        body: 'Updated shopify.app.staging.toml with the remote data.',
+        body: 'Updated shopify.app.toml with the remote data.',
       })
     })
   })

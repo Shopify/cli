@@ -33,7 +33,7 @@ describe('pull', () => {
     vi.mocked(loadLocalAppOptions).mockResolvedValue(localAppOptions)
     vi.mocked(overwriteLocalConfigFileWithRemoteAppConfiguration).mockResolvedValue(app.configuration)
 
-    const result = await pull({app, configName: 'staging', remoteApp})
+    const result = await pull({app, directory: app.directory, configName: 'staging', remoteApp})
 
     expect(loadLocalAppOptions).toHaveBeenCalledWith(
       {
@@ -60,5 +60,49 @@ describe('pull', () => {
       configuration: app.configuration,
       remoteApp,
     })
+  })
+
+  test('falls back to the invocation subdirectory when a different client ID prevents reusing the local app', async () => {
+    const invocationDirectory = '/linked-app/subdirectory'
+    const remoteApp = testOrganizationApp({apiKey: 'new-client-id'})
+    const app = testAppLinked({
+      directory: '/linked-app',
+      configPath: '/linked-app/shopify.app.toml',
+    })
+    // linkedAppContext applies --client-id to the in-memory app, while loadLocalAppOptions sees the different ID on disk.
+    app.configuration = {...app.configuration, client_id: remoteApp.apiKey}
+    const localAppOptions: Awaited<ReturnType<typeof loadLocalAppOptions>> = {
+      state: 'unable-to-reuse-current-config',
+      scopes: '',
+      localAppIdMatchedRemote: true,
+      existingBuildOptions: undefined,
+      existingConfig: undefined,
+      appDirectory: undefined,
+      packageManager: 'npm',
+    }
+    vi.mocked(fetchSpecifications).mockResolvedValue([])
+    vi.mocked(loadLocalAppOptions).mockResolvedValue(localAppOptions)
+    vi.mocked(overwriteLocalConfigFileWithRemoteAppConfiguration).mockResolvedValue(app.configuration)
+
+    await pull({app, directory: invocationDirectory, remoteApp})
+
+    expect(loadLocalAppOptions).toHaveBeenCalledWith(
+      {
+        directory: invocationDirectory,
+        configName: undefined,
+        developerPlatformClient: remoteApp.developerPlatformClient,
+        apiKey: remoteApp.apiKey,
+      },
+      [],
+      remoteApp.flags,
+      remoteApp.apiKey,
+    )
+    expect(overwriteLocalConfigFileWithRemoteAppConfiguration).toHaveBeenCalledWith(
+      expect.objectContaining({
+        configFileName: 'shopify.app.toml',
+        appDirectory: invocationDirectory,
+        localAppOptions,
+      }),
+    )
   })
 })
