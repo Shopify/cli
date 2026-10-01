@@ -97,7 +97,8 @@ function quoteCmdSegment(part: string): string {
 /**
  * Renders a command for the given shell. A command that reads stdin is shown reading its placeholder file:
  * redirected with `<` in POSIX shells and cmd.exe, and piped from `Get-Content -Raw` in PowerShell,
- * which has no `<` redirection.
+ * which has no `<` redirection. `-Encoding UTF8` because Windows PowerShell 5.1 otherwise reads a file
+ * without a byte order mark in the ANSI code page.
  */
 export function formatAppSecurityCommand(
   action: AppSecurityCommand,
@@ -105,7 +106,7 @@ export function formatAppSecurityCommand(
 ): string {
   const commandLine = formatCommandLine(action, shell)
   if (!action.stdinPlaceholder) return commandLine
-  if (shell === 'powershell') return `Get-Content -Raw ${action.stdinPlaceholder} | ${commandLine}`
+  if (shell === 'powershell') return `Get-Content -Raw -Encoding UTF8 ${action.stdinPlaceholder} | ${commandLine}`
   return `${commandLine} < ${action.stdinPlaceholder}`
 }
 

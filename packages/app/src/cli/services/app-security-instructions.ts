@@ -69,8 +69,13 @@ ${fileCommand}`
 
   const shellNotes =
     shell === 'powershell'
-      ? `The closing \`'@\` must start its line. The single-quoted here-string keeps PowerShell from expanding \`$\` in the document. Windows PowerShell 5.1 pipes text as ASCII by default, so if the document contains non-ASCII characters, run \`$OutputEncoding = [System.Text.UTF8Encoding]::new()\` first.`
+      ? `The closing \`'@\` must start its line. The single-quoted here-string keeps PowerShell from expanding \`$\` in the document.`
       : `The quoted \`'EOF'\` keeps the shell from expanding \`$\` and backticks in the document.`
+  // Both PowerShell forms pipe text to a native command, which Windows PowerShell 5.1 encodes as ASCII.
+  const encodingNote =
+    shell === 'powershell'
+      ? `\n\nWindows PowerShell 5.1 pipes text to \`record\` as ASCII by default. If the document contains non-ASCII characters, run \`$OutputEncoding = [System.Text.UTF8Encoding]::new()\` before either command.`
+      : ''
 
   return `${codeBlock(inlineCommand, shell)}
 
@@ -78,7 +83,7 @@ Replace \`${RECORD_DOCUMENT_PLACEHOLDER}\` with the document itself; you don't n
 
 If you'd rather write the document to a file, pipe the file instead, ${replaceFilePlaceholder}:
 
-${fileCommand}`
+${fileCommand}${encodingNote}`
 }
 
 function instructionPaths(
