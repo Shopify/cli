@@ -14,6 +14,8 @@ vi.mock('@shopify/cli-kit/node/output')
 vi.mock('../utilities/theme-environment/storefront-password-prompt.js')
 vi.mock('../utilities/theme-environment/storefront-session.js')
 vi.mock('../utilities/theme-environment/storefront-renderer.js')
+// Session setup must not request crawler signatures from the Admin API in these unit tests.
+vi.mock('../utilities/theme-environment/crawler-signature.js')
 
 describe('profile', () => {
   const mockProfileData = {
