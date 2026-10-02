@@ -8,7 +8,9 @@ import {
 } from './app-security-commands.js'
 import {
   effectiveClientId,
+  mergeScanDirectories,
   resolveAppSecuritySelection,
+  resolveIncludeDirectories,
   resultsKey,
   selectedConfigFileName,
   type AppSecurityScanDirectory,
@@ -36,6 +38,7 @@ interface SecurityOptions {
   blocking: AppSecurityBlockingLevel
   yes: boolean
   skipInstructions: boolean
+  includeDirs: ReadonlyArray<string>
   excludePatterns: ReadonlyArray<string>
   noGitIgnore: boolean
 }
@@ -139,6 +142,8 @@ export default async function securityCheck(
   options: SecurityOptions,
   dependencies: SecurityDependencies = defaultDependencies,
 ): Promise<void> {
+  // Resolved first so a mistyped directory fails before any prompt.
+  const includeDirectories = await resolveIncludeDirectories(options.includeDirs)
   const canPrompt = !options.json && dependencies.canPrompt()
   const selection = await dependencies.resolveSelection({
     path: options.directory,
@@ -153,6 +158,7 @@ export default async function securityCheck(
     selectedConfigFileName(selection),
     options.excludePatterns,
     options.noGitIgnore,
+    options.includeDirs,
   )
   // The prompt is only shown when no TOML was found and `--without-app-config` wasn't passed.
   if (selection.kind === 'no-config' && !options.withoutAppConfig) {
@@ -161,11 +167,12 @@ export default async function securityCheck(
       body: [{command: formatAppSecurityCommand(commands.scan)}],
     })
   }
-  const scanDirectories: AppSecurityScanDirectory[] = [{directory: appDirectory, origin: 'app_directory'}]
+  const {scanDirectories, requestedScanDirectories} = mergeScanDirectories(appDirectory, includeDirectories)
 
   const execution = await dependencies.execute({
     appDirectory,
     scanDirectories: scanDirectories.map(({directory}) => directory),
+    requestedScanDirectories,
     appConfigFilePath: selection.kind === 'config' ? selection.appConfigFilePath : undefined,
     clientId: effectiveClientId(selection),
     excludePatterns: options.excludePatterns,

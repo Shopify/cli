@@ -20,6 +20,7 @@ function scanInputFor(directory: string) {
   return {
     appDirectory: directory,
     scanDirectories: [directory],
+    requestedScanDirectories: [directory],
     appConfigFilePath: joinPath(directory, 'shopify.app.toml'),
   }
 }

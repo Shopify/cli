@@ -1,8 +1,10 @@
 import {
   clientIdSource,
   effectiveClientId,
+  mergeScanDirectories,
   resolveAppDirectory,
   resolveAppSecuritySelection,
+  resolveIncludeDirectories,
   resultsKey,
   selectedConfigFileName,
   type AppSecuritySelection,
@@ -16,7 +18,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {symlink} from 'node:fs/promises'
 import type {OrganizationApp} from '../models/organization.js'
 
@@ -35,6 +37,10 @@ vi.mock('@shopify/cli-kit/node/ui', async (importOriginal) => ({
 
 beforeEach(() => {
   vi.mocked(getCachedAppInfo).mockReturnValue(undefined)
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
 })
 
 async function writeConfiguration(directory: string, clientId: string, name = 'shopify.app.toml'): Promise<void> {
@@ -487,5 +493,142 @@ describe('resolveAppDirectory', () => {
       })
       expect(renderConfirmationPrompt).not.toHaveBeenCalled()
     })
+  })
+})
+
+describe('resolveIncludeDirectories', () => {
+  test('resolves each value against the working directory and keeps the order', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const workingDirectory = joinPath(directory, 'work')
+      await mkdir(workingDirectory)
+      await mkdir(joinPath(directory, 'backend'))
+      await mkdir(joinPath(workingDirectory, 'lib'))
+      vi.stubEnv('INIT_CWD', workingDirectory)
+
+      await expect(resolveIncludeDirectories(['../backend', 'lib', '.'])).resolves.toEqual([
+        await fileRealPath(joinPath(directory, 'backend')),
+        await fileRealPath(joinPath(workingDirectory, 'lib')),
+        await fileRealPath(workingDirectory),
+      ])
+    })
+  })
+
+  test('gives the real path of a symbolic link', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await mkdir(joinPath(directory, 'real'))
+      await symlink(joinPath(directory, 'real'), joinPath(directory, 'alias'))
+      vi.stubEnv('INIT_CWD', directory)
+
+      await expect(resolveIncludeDirectories(['alias'])).resolves.toEqual([
+        await fileRealPath(joinPath(directory, 'real')),
+      ])
+    })
+  })
+
+  test('allows the directory of another app', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await mkdir(joinPath(directory, 'other-app'))
+      await writeConfiguration(joinPath(directory, 'other-app'), 'other-client-id')
+      vi.stubEnv('INIT_CWD', directory)
+
+      await expect(resolveIncludeDirectories(['other-app'])).resolves.toEqual([
+        await fileRealPath(joinPath(directory, 'other-app')),
+      ])
+    })
+  })
+
+  test("aborts with the typed value when the directory doesn't exist", async () => {
+    await inTemporaryDirectory(async (directory) => {
+      vi.stubEnv('INIT_CWD', directory)
+
+      await expect(resolveIncludeDirectories(['missing'])).rejects.toMatchObject({
+        message: "--include-dir missing: directory doesn't exist.",
+      })
+    })
+  })
+
+  test('aborts with the typed value when the path is a file', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeFile(joinPath(directory, 'file.txt'), 'x')
+      vi.stubEnv('INIT_CWD', directory)
+
+      await expect(resolveIncludeDirectories(['./file.txt'])).rejects.toMatchObject({
+        message: '--include-dir ./file.txt: not a directory.',
+      })
+    })
+  })
+
+  test('aborts when a symbolic link points at nothing', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await symlink(joinPath(directory, 'gone'), joinPath(directory, 'dangling'))
+      vi.stubEnv('INIT_CWD', directory)
+
+      await expect(resolveIncludeDirectories(['dangling'])).rejects.toMatchObject({
+        message: "--include-dir dangling: directory doesn't exist.",
+      })
+    })
+  })
+})
+
+describe('mergeScanDirectories', () => {
+  test('lists the app directory first and then each include directory', () => {
+    expect(mergeScanDirectories('/work/app', ['/work/backend', '/work/library'])).toEqual({
+      scanDirectories: [
+        {directory: '/work/app', origin: 'app_directory'},
+        {directory: '/work/backend', origin: 'include_dir'},
+        {directory: '/work/library', origin: 'include_dir'},
+      ],
+      requestedScanDirectories: ['/work/app', '/work/backend', '/work/library'],
+    })
+  })
+
+  test('drops a duplicate include directory', () => {
+    expect(mergeScanDirectories('/work/app', ['/work/backend', '/work/backend']).scanDirectories).toEqual([
+      {directory: '/work/app', origin: 'app_directory'},
+      {directory: '/work/backend', origin: 'include_dir'},
+    ])
+  })
+
+  test('counts an include directory that is the app directory as the app directory', () => {
+    expect(mergeScanDirectories('/work/app', ['/work/app']).scanDirectories).toEqual([
+      {directory: '/work/app', origin: 'app_directory'},
+    ])
+  })
+
+  test('drops an include directory inside another scan directory, and keeps it as requested', () => {
+    expect(mergeScanDirectories('/work/app', ['/work/app/vendor/sdk', '/work/backend']).scanDirectories).toEqual([
+      {directory: '/work/app', origin: 'app_directory'},
+      {directory: '/work/backend', origin: 'include_dir'},
+    ])
+    expect(mergeScanDirectories('/work/app', ['/work/app/vendor/sdk']).requestedScanDirectories).toEqual([
+      '/work/app',
+      '/work/app/vendor/sdk',
+    ])
+  })
+
+  test('drops the app directory when an include directory contains it', () => {
+    expect(mergeScanDirectories('/work/mono/app', ['/work/mono']).scanDirectories).toEqual([
+      {directory: '/work/mono', origin: 'include_dir'},
+    ])
+  })
+
+  test('keeps a directory whose name only starts like another directory', () => {
+    expect(mergeScanDirectories('/work/app', ['/work/app-library']).scanDirectories).toHaveLength(2)
+  })
+
+  test('rejects an include directory on another Windows drive', () => {
+    expect(() => mergeScanDirectories('C:/work/app', ['C:/work/backend', 'D:/backend'])).toThrowError(
+      new AbortError('--include-dir D:/backend: must be on the same drive as the app directory.'),
+    )
+  })
+
+  test('rejects an include directory on a Windows network share', () => {
+    expect(() => mergeScanDirectories('C:/work/app', ['//server/share/backend'])).toThrowError(
+      new AbortError('--include-dir //server/share/backend: must be on the same drive as the app directory.'),
+    )
+  })
+
+  test('accepts an include directory elsewhere on the same Windows drive', () => {
+    expect(mergeScanDirectories('C:/work/app', ['C:/backend']).scanDirectories).toHaveLength(2)
   })
 })

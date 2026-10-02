@@ -1,8 +1,9 @@
 import securityCheck, {appSecurityInstructionsPrompt} from './security-check.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {appSecurityArtifactPaths, writeCheckArtifacts} from './app-security-artifacts.js'
-import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {describe, expect, test, vi} from 'vitest'
+import {fileRealPath, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 import type {AppSecurityExecution} from './app-security-api.js'
 import type {AppSecuritySelection} from './app-security-selection.js'
 import type {AppSecurityInstructionsDestination} from './security-check.js'
@@ -120,12 +121,17 @@ function testOptions() {
     blocking: 'none' as const,
     yes: false,
     skipInstructions: false,
+    includeDirs: [],
     excludePatterns: [],
     noGitIgnore: false,
   }
 }
 
 describe('securityCheck', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   test('executes, writes artifacts, then renders a report', async () => {
     const dependencies = testDependencies()
 
@@ -141,6 +147,7 @@ describe('securityCheck', () => {
     expect(dependencies.execute).toHaveBeenCalledWith({
       appDirectory,
       scanDirectories: [appDirectory],
+      requestedScanDirectories: [appDirectory],
       appConfigFilePath: `${appDirectory}/shopify.app.toml`,
       clientId: 'toml-client-id',
       excludePatterns: [],
@@ -205,6 +212,94 @@ describe('securityCheck', () => {
     expect(dependencies.execute).toHaveBeenCalledWith(expect.objectContaining({excludePatterns, noGitIgnore: true}))
     expect(dependencies.renderReport).toHaveBeenCalledWith(expect.objectContaining({commands}))
     expect(dependencies.deliverInstructions).toHaveBeenCalledWith(expect.objectContaining({commands}))
+  })
+
+  test('scans each --include-dir after the app directory, reports it, and repeats it before --exclude', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await mkdir(joinPath(directory, 'backend'))
+      vi.stubEnv('INIT_CWD', directory)
+      const backend = await fileRealPath(joinPath(directory, 'backend'))
+      const dependencies = testDependencies()
+      dependencies.canPrompt.mockReturnValue(true)
+      dependencies.selectInstructionsDestination.mockResolvedValue('print')
+      const options = {...testOptions(), includeDirs: ['backend', './backend'], excludePatterns: ['generated']}
+
+      await securityCheck(options, dependencies)
+
+      expect(dependencies.execute).toHaveBeenCalledWith(
+        expect.objectContaining({
+          scanDirectories: [appDirectory, backend],
+          requestedScanDirectories: [appDirectory, backend],
+        }),
+      )
+      const commands = resolveAppSecurityCommands(appDirectory, 'shopify.app.toml', ['generated'], false, [
+        'backend',
+        './backend',
+      ])
+      expect(commands.scan.args.slice(-3)).toEqual([
+        {flag: '--include-dir', value: 'backend'},
+        {flag: '--include-dir', value: './backend'},
+        {flag: '--exclude', value: 'generated'},
+      ])
+      expect(dependencies.renderReport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          commands,
+          scanDirectories: [
+            {directory: appDirectory, origin: 'app_directory'},
+            {directory: backend, origin: 'include_dir'},
+          ],
+        }),
+      )
+      expect(dependencies.deliverInstructions).toHaveBeenCalledWith(expect.objectContaining({commands}))
+    })
+  })
+
+  test('lists absolute scan directories with their origins in the JSON selection', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await mkdir(joinPath(directory, 'backend'))
+      vi.stubEnv('INIT_CWD', directory)
+      const backend = await fileRealPath(joinPath(directory, 'backend'))
+      const dependencies = testDependencies()
+
+      await securityCheck({...testOptions(), json: true, includeDirs: ['backend']}, dependencies)
+
+      expect(JSON.parse(dependencies.output.mock.calls[0]![0]).selection.scan_directories).toEqual([
+        {directory: appDirectory, origin: 'app_directory'},
+        {directory: backend, origin: 'include_dir'},
+      ])
+    })
+  })
+
+  test('leaves out an --include-dir inside the app directory, but still passes it for the Git ignore warning', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const realDirectory = await fileRealPath(directory)
+      await mkdir(joinPath(directory, 'vendor'))
+      vi.stubEnv('INIT_CWD', directory)
+      const dependencies = testDependencies(scanExecution, {...configSelection, appDirectory: realDirectory})
+
+      await securityCheck({...testOptions(), includeDirs: ['vendor']}, dependencies)
+
+      expect(dependencies.execute).toHaveBeenCalledWith(
+        expect.objectContaining({
+          scanDirectories: [realDirectory],
+          requestedScanDirectories: [realDirectory, await fileRealPath(joinPath(directory, 'vendor'))],
+        }),
+      )
+    })
+  })
+
+  test('aborts on a wrong --include-dir before resolving the selection or scanning', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      vi.stubEnv('INIT_CWD', directory)
+      const dependencies = testDependencies()
+
+      await expect(securityCheck({...testOptions(), includeDirs: ['missing']}, dependencies)).rejects.toThrow(
+        "--include-dir missing: directory doesn't exist.",
+      )
+
+      expect(dependencies.resolveSelection).not.toHaveBeenCalled()
+      expect(dependencies.execute).not.toHaveBeenCalled()
+    })
   })
 
   test('warns once for each scan directory that Git ignores, relative to the working directory', async () => {
@@ -303,6 +398,7 @@ describe('securityCheck', () => {
     expect(dependencies.execute).toHaveBeenCalledWith({
       appDirectory,
       scanDirectories: [appDirectory],
+      requestedScanDirectories: [appDirectory],
       appConfigFilePath: undefined,
       clientId: 'flag-client-id',
       excludePatterns: [],

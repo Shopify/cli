@@ -192,6 +192,31 @@ describe('resolveAppSecurityCommands', () => {
     expect(commands.clean.args).toEqual(['app', 'security', 'clean', {flag: '--path', value: '/tmp/app'}])
   })
 
+  test('repeats --include-dir values as typed, in order, before --exclude, on scan only', () => {
+    const commands = resolveAppSecurityCommands('/tmp/app', 'shopify.app.staging.toml', ['generated'], true, [
+      '../backend',
+      './lib/',
+      '../backend',
+    ])
+
+    expect(commands.scan.args).toEqual([
+      'app',
+      'security',
+      'check',
+      {flag: '--path', value: '/tmp/app'},
+      {flag: '--config', value: 'staging'},
+      {flag: '--include-dir', value: '../backend'},
+      {flag: '--include-dir', value: './lib/'},
+      {flag: '--include-dir', value: '../backend'},
+      {flag: '--exclude', value: 'generated'},
+      '--no-git-ignore',
+    ])
+    expect(commands.record.args).toEqual(['app', 'security', 'record', {flag: '--path', value: '/tmp/app'}])
+    expect(formatAppSecurityCommand(commands.scan, 'posix')).toContain(
+      "--include-dir '../backend' --include-dir './lib/' --include-dir '../backend' --exclude 'generated'",
+    )
+  })
+
   test('omits --exclude and --no-git-ignore when they were not passed', () => {
     expect(resolveAppSecurityCommands('/tmp/app', undefined, [], false).scan.args).toEqual([
       'app',

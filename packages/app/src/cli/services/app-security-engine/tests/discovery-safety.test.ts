@@ -80,6 +80,8 @@ function inspectedManifestPaths(result: ScanResult): string[] {
 interface GatherOptions {
   appDirectory?: string
   scanDirectories?: string[]
+  /** Defaults to `scanDirectories`. */
+  requestedScanDirectories?: string[]
   selectedAppConfigFilePath?: string
   excludePatterns?: string[]
   noGitIgnore?: boolean
@@ -97,6 +99,7 @@ async function gather(root: string, options: GatherOptions = {}) {
   return gatherPaths({
     appDirectory,
     scanDirectories,
+    requestedScanDirectories: options.requestedScanDirectories ?? scanDirectories,
     selectedAppConfigFilePath: options.selectedAppConfigFilePath,
     rules: createPathRules({excludePatterns: options.excludePatterns ?? [], noGitIgnore: options.noGitIgnore ?? false}),
   })

@@ -203,6 +203,11 @@ interface GatherInput {
   appDirectory: string
   /** Absolute real paths of the directories to walk. */
   scanDirectories: ReadonlyArray<string>
+  /**
+   * Every directory that was asked for, including those inside another scan directory, so each can be checked for the
+   * ignored-scan-directory warning. It contains every entry of `scanDirectories`.
+   */
+  requestedScanDirectories: ReadonlyArray<string>
   /** Added after filtering, so no path rule can remove it. */
   selectedAppConfigFilePath?: string
   rules: PathRules
@@ -211,7 +216,7 @@ interface GatherInput {
 interface GatheredPaths {
   /** Sorted and unique, relative to the app directory, written with `/`. They may start with `../`. */
   paths: string[]
-  /** Scan directories that their repository ignores, so only the files Git tracks in them were gathered. */
+  /** Requested directories that their repository ignores, so only the files Git tracks in them are gathered. */
   ignoredScanDirectories: string[]
   /** How the first scan directory's ignored paths were found. Secret findings use it to explain why an ignored file was scanned. */
   listingStatus: GatheredListingStatus
@@ -219,20 +224,28 @@ interface GatheredPaths {
 
 interface GatheredScanDirectory {
   absolutePaths: string[]
-  ignored: boolean
   listingStatus: GatheredPaths['listingStatus']
 }
 
 export async function gatherPaths({
   appDirectory,
   scanDirectories,
+  requestedScanDirectories,
   selectedAppConfigFilePath,
   rules,
 }: GatherInput): Promise<GatheredPaths> {
+  const ignoredScanDirectories: string[] = []
+  if (rules.gitFiltering) {
+    for (const requestedDirectory of requestedScanDirectories) {
+      // eslint-disable-next-line no-await-in-loop
+      if (await isIgnoredByParentRepository(requestedDirectory)) ignoredScanDirectories.push(requestedDirectory)
+    }
+  }
+
   const gathered: GatheredScanDirectory[] = []
   for (const scanDirectory of scanDirectories) {
     // eslint-disable-next-line no-await-in-loop
-    gathered.push(await gatherScanDirectory(scanDirectory, rules))
+    gathered.push(await gatherScanDirectory(scanDirectory, rules, ignoredScanDirectories.includes(scanDirectory)))
   }
 
   const absolutePaths = [
@@ -241,21 +254,24 @@ export async function gatherPaths({
   ]
   return {
     paths: [...new Set(absolutePaths.map((path) => normalizeCliPath(relativePath(appDirectory, path))))].sort(),
-    ignoredScanDirectories: scanDirectories.filter((_directory, index) => gathered[index]?.ignored),
+    ignoredScanDirectories,
     listingStatus: gathered[0]?.listingStatus ?? (rules.gitFiltering ? 'tracked-only' : 'git-ignore-off'),
   }
 }
 
-async function gatherScanDirectory(scanDirectory: string, rules: PathRules): Promise<GatheredScanDirectory> {
+async function gatherScanDirectory(
+  scanDirectory: string,
+  rules: PathRules,
+  ignoredByRepository: boolean,
+): Promise<GatheredScanDirectory> {
   if (!rules.gitFiltering) {
     return {
       absolutePaths: await walkDirectory(scanDirectory, rules, undefined),
-      ignored: false,
       listingStatus: 'git-ignore-off',
     }
   }
 
-  if (await isIgnoredByParentRepository(scanDirectory)) {
+  if (ignoredByRepository) {
     const trackedPaths = await listTrackedFiles(scanDirectory)
     // A normal walk would scan the untracked files that Git was told to ignore.
     if (trackedPaths === undefined) {
@@ -266,7 +282,6 @@ async function gatherScanDirectory(scanDirectory: string, rules: PathRules): Pro
         .filter((trackedPath) => !isDroppedTrackedPath(rules, scanDirectory, trackedPath))
         .map((trackedPath) => joinPath(scanDirectory, trackedPath))
         .filter(isTrackedFile),
-      ignored: true,
       listingStatus: 'tracked-only',
     }
   }
@@ -274,7 +289,6 @@ async function gatherScanDirectory(scanDirectory: string, rules: PathRules): Pro
   const listing = await listGitIgnoredPaths(scanDirectory)
   return {
     absolutePaths: await walkDirectory(scanDirectory, rules, repositoryIgnoredPaths(scanDirectory, listing)),
-    ignored: false,
     listingStatus: listing.status,
   }
 }
@@ -483,15 +497,7 @@ type InspectedPath = {status: 'missing'} | {status: 'file'; path: string} | {sta
 
 function repositoryDisplayPath(path: string): string {
   const relative = normalizeCliPath(relativePath(configuredReader().appDirectory, path))
-  if (
-    relative.length === 0 ||
-    relative === '.' ||
-    relative === '..' ||
-    relative.startsWith('../') ||
-    isAbsolutePath(relative)
-  ) {
-    return 'path'
-  }
+  if (relative.length === 0 || relative === '.' || isAbsolutePath(relative)) return 'path'
   return relative
 }
 
