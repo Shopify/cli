@@ -24,6 +24,8 @@ import {
   AppModuleVersion,
   CreateAppOptions,
   AppLogsResponse,
+  ChannelSpecExportBody,
+  ChannelSpecExportResponse,
   createUnauthorizedHandler,
   DevSessionUpdateOptions,
   DevSessionCreateOptions,
@@ -130,6 +132,7 @@ import {fetch, shopifyFetch, Response} from '@shopify/cli-kit/node/http'
 import {
   appManagementRequestDoc,
   appManagementAppLogsUrl,
+  appManagementChannelSpecExportUrl,
   appManagementHeaders,
   AppManagementRequestOptions,
 } from '@shopify/cli-kit/node/api/app-management'
@@ -250,6 +253,31 @@ export class AppManagementClient implements DeveloperPlatformClient {
         status: response.status,
       }
     }
+  }
+
+  async channelSpecExport(app: MinimalAppIdentifiers): Promise<ChannelSpecExportResponse> {
+    const appId = numericIdFromGid(app.id) ?? app.id
+    const url = await appManagementChannelSpecExportUrl(app.organizationId, appId)
+    const response = await shopifyFetch(url, {
+      method: 'GET',
+      headers: appManagementHeaders(await this.token()),
+    })
+
+    let decoded: unknown
+    try {
+      decoded = await response.json()
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      decoded = undefined
+    }
+
+    const body =
+      typeof decoded === 'object' && decoded !== null && !Array.isArray(decoded)
+        ? (decoded as ChannelSpecExportBody)
+        : undefined
+
+    if (response.ok && body) return {ok: true, status: response.status, body}
+    return {ok: false, status: response.status, body}
   }
 
   async session(): Promise<Session> {

@@ -1,10 +1,13 @@
 import {createContractBasedModuleSpecification} from '../specification.js'
 
-const SUBDIRECTORY_NAME = 'specifications'
+export const CHANNEL_CONFIG_IDENTIFIER = 'channel_config'
+// Directory inside the extension that holds the spec files; the deploy step below copies it as-is.
+export const CHANNEL_CONFIG_SPECIFICATIONS_DIRECTORY = 'specifications'
+
 const FILE_EXTENSIONS = ['json', 'toml', 'yaml', 'yml', 'svg']
 
 const channelSpecificationSpec = createContractBasedModuleSpecification({
-  identifier: 'channel_config',
+  identifier: CHANNEL_CONFIG_IDENTIFIER,
   uidStrategy: 'single',
   experience: 'extension',
   clientSteps: [
@@ -19,8 +22,8 @@ const channelSpecificationSpec = createContractBasedModuleSpecification({
             inclusions: [
               {
                 type: 'pattern',
-                baseDir: SUBDIRECTORY_NAME,
-                destination: SUBDIRECTORY_NAME,
+                baseDir: CHANNEL_CONFIG_SPECIFICATIONS_DIRECTORY,
+                destination: CHANNEL_CONFIG_SPECIFICATIONS_DIRECTORY,
                 include: FILE_EXTENSIONS.map((ext) => `**/*.${ext}`),
               },
             ],
