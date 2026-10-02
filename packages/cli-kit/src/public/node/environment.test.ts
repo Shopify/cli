@@ -3,6 +3,7 @@ import {environmentVariables, systemEnvironmentVariables} from '../../private/no
 import {describe, expect, test, beforeEach} from 'vitest'
 
 beforeEach(() => {
+  delete process.env[environmentVariables.organizationAutomationToken]
   delete process.env[environmentVariables.appAutomationToken]
   delete process.env[environmentVariables.partnersToken]
   delete process.env[systemEnvironmentVariables.backendPort]
@@ -30,6 +31,26 @@ describe('getAppAutomationToken', () => {
   })
 
   test('returns undefined when neither env var is set', () => {
+    expect(getAppAutomationToken()).toBeUndefined()
+  })
+
+  test('returns SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN when set', () => {
+    process.env[environmentVariables.organizationAutomationToken] = 'org-token'
+
+    expect(getAppAutomationToken()).toBe('org-token')
+  })
+
+  test('returns undefined when SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN is set together with another variable', () => {
+    process.env[environmentVariables.organizationAutomationToken] = 'org-token'
+    process.env[environmentVariables.appAutomationToken] = 'new-token'
+
+    expect(getAppAutomationToken()).toBeUndefined()
+  })
+
+  test('returns undefined when the selected variable is empty, even if a later one has a value', () => {
+    process.env[environmentVariables.appAutomationToken] = ''
+    process.env[environmentVariables.partnersToken] = 'old-token'
+
     expect(getAppAutomationToken()).toBeUndefined()
   })
 })
