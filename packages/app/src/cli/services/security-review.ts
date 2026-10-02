@@ -1,5 +1,11 @@
+import {appSecurityArtifactPaths} from './app-security-artifacts.js'
 import {resolveAppSecurityCommands} from './app-security-commands.js'
-import {resolveAppSecuritySelection} from './app-security-selection.js'
+import {
+  resolveAppSecuritySelection,
+  resultsKey,
+  selectedConfigFileName,
+  type AppSecuritySelection,
+} from './app-security-selection.js'
 import {loadAppSecurityResults, type AppSecurityResults} from './app-security-results.js'
 import {securityReviewJsonOutputSchema, toSecurityReviewJson} from './security-review-json.js'
 import {renderSecurityReview, type SecurityReviewPresenterInput} from './security-review-output.js'
@@ -10,6 +16,9 @@ import type {AppSecurityBlockingLevel} from './app-security-api.js'
 
 interface SecurityReviewOptions {
   directory: string
+  configName?: string
+  clientId?: string
+  withoutAppConfig?: boolean
   json: boolean
   verbose: boolean
   /** Exact check IDs from `--check-id`; empty means every check. */
@@ -19,7 +28,7 @@ interface SecurityReviewOptions {
 
 /** The reviewed results: the loaded sources, the checks after `--check-id`, and the blocking outcome. */
 export interface SecurityReviewResult {
-  appRoot: string
+  resultsDirectory: string
   sources: AppSecurityResults['sources']
   /** Every combined check, before `--check-id`. */
   allChecks: CombinedCheck[]
@@ -34,8 +43,8 @@ export interface SecurityReviewResult {
 }
 
 export interface SecurityReviewDependencies {
-  resolveRoot(directory: string): Promise<string>
-  loadResults(appRoot: string): Promise<AppSecurityResults>
+  resolveSelection(options: SecurityReviewOptions): Promise<AppSecuritySelection>
+  loadResults(selection: AppSecuritySelection): Promise<AppSecurityResults>
   output(content: string): void
   render(input: SecurityReviewPresenterInput): void
   now(): Date
@@ -43,8 +52,14 @@ export interface SecurityReviewDependencies {
 }
 
 const defaultDependencies: SecurityReviewDependencies = {
-  resolveRoot: async (directory) =>
-    (await resolveAppSecuritySelection({path: directory, allowPrompts: false})).appDirectory,
+  resolveSelection: (options) =>
+    resolveAppSecuritySelection({
+      path: options.directory,
+      config: options.configName,
+      clientId: options.clientId,
+      withoutAppConfig: options.withoutAppConfig,
+      allowPrompts: false,
+    }),
   loadResults: loadAppSecurityResults,
   output: outputResult,
   render: renderSecurityReview,
@@ -64,7 +79,7 @@ function isBlockingBreached(result: SecurityReviewResult): boolean {
  */
 export function reviewAppSecurityResults(
   results: AppSecurityResults,
-  options: {appRoot: string; checkIds: string[]; blocking: AppSecurityBlockingLevel},
+  options: {resultsDirectory: string; checkIds: string[]; blocking: AppSecurityBlockingLevel},
 ): SecurityReviewResult {
   const filter = options.checkIds.length > 0 ? {checkIds: options.checkIds} : null
   const anyFilePresent = results.sources.deterministic !== null || results.sources.agent !== null
@@ -74,7 +89,7 @@ export function reviewAppSecurityResults(
   const checks = filter ? results.checks.filter((check) => filter.checkIds.includes(check.id)) : results.checks
 
   return {
-    appRoot: options.appRoot,
+    resultsDirectory: options.resultsDirectory,
     sources: results.sources,
     allChecks: results.checks,
     checks,
@@ -117,10 +132,10 @@ export default async function securityReview(
   options: SecurityReviewOptions,
   dependencies: SecurityReviewDependencies = defaultDependencies,
 ): Promise<void> {
-  const appRoot = await dependencies.resolveRoot(options.directory)
-  const results = await dependencies.loadResults(appRoot)
+  const selection = await dependencies.resolveSelection(options)
+  const results = await dependencies.loadResults(selection)
   const result = reviewAppSecurityResults(results, {
-    appRoot,
+    resultsDirectory: appSecurityArtifactPaths(selection.appDirectory, resultsKey(selection)).resultsDirectory,
     checkIds: options.checkIds,
     blocking: options.blocking,
   })
@@ -132,7 +147,7 @@ export default async function securityReview(
       result,
       verbose: options.verbose,
       now: dependencies.now(),
-      commands: resolveAppSecurityCommands(appRoot),
+      commands: resolveAppSecurityCommands(selection.appDirectory, selectedConfigFileName(selection)),
     })
   }
 

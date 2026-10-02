@@ -7,7 +7,7 @@
   },
   "sources": {
     "deterministic": {
-      "path": "/tmp/review-app/.shopify/app-security/deterministic-findings.json",
+      "path": "/tmp/review-app/.shopify/app-security/shopify.app/deterministic-findings.json",
       "schema_version": 1,
       "engine": {
         "name": "shopify-app-security",
@@ -15,10 +15,6 @@
         "ruleset": "app-security-rules@3.99.0"
       },
       "generated_at": "2026-09-01T10:00:00.000Z",
-      "project": {
-        "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "dirty": false
-      },
       "detection": {
         "framework": "react_router",
         "surface": "react_router",

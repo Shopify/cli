@@ -11,7 +11,6 @@ import type {AgentChecks, DeterministicFindingsDocument, ScanResult} from './app
 const scan: ScanResult = {
   version: '0.1.0',
   timestamp: '2026-08-24T00:00:00.000Z',
-  project: {commit: null, dirty: null},
   app: {name: 'Test', type: 'public'},
   detection: {framework: 'none', surface: 'config_only', languages: []},
   capabilities: {
@@ -50,7 +49,6 @@ const deterministicFindings: DeterministicFindingsDocument = {
   source: 'deterministic',
   engine: {name: 'shopify-app-security', version: '1.2.3', ruleset: '2026.08.28'},
   generated_at: '2026-08-24T00:00:00.000Z',
-  project: {commit: null, dirty: null},
   detection: scan.detection,
   coverage: {files_scanned: 1, files_skipped: [], gaps: []},
   checks: [],
@@ -143,7 +141,10 @@ describe('securityCheck', () => {
       clientId: 'toml-client-id',
       ignorePatterns: [],
     })
-    expect(dependencies.writeArtifacts).toHaveBeenCalledWith(appDirectory, {deterministicFindings, agentChecks})
+    expect(dependencies.writeArtifacts).toHaveBeenCalledWith(appDirectory, 'shopify.app', {
+      deterministicFindings,
+      agentChecks,
+    })
     expect(dependencies.renderReport).toHaveBeenCalledWith({
       scan,
       selection: configSelection,
@@ -202,8 +203,8 @@ describe('securityCheck', () => {
 
   test('re-scanning overwrites the check artifacts without prompting and leaves agent findings untouched', async () => {
     await inTemporaryDirectory(async (appRoot) => {
-      const paths = appSecurityArtifactPaths(appRoot)
-      await mkdir(paths.artifactDirectory)
+      const paths = appSecurityArtifactPaths(appRoot, 'shopify.app')
+      await mkdir(paths.resultsDirectory)
       await writeFile(paths.deterministicFindingsPath, '{"previous": "scan"}\n')
       await writeFile(paths.agentChecksPath, '{"previous": "agent checks"}\n')
       // Not valid findings on purpose: check must not read, validate, or rewrite this file.
@@ -274,6 +275,7 @@ describe('securityCheck', () => {
       clientId: 'flag-client-id',
       ignorePatterns: [],
     })
+    expect(dependencies.writeArtifacts).toHaveBeenCalledWith(appDirectory, 'flag-client-id', expect.anything())
     expect(dependencies.renderInfo).not.toHaveBeenCalled()
     expect(dependencies.renderReport).toHaveBeenCalledWith(
       expect.objectContaining({commands: resolveAppSecurityCommands(appDirectory)}),
@@ -372,6 +374,7 @@ describe('securityCheck', () => {
     expect(dependencies.selectInstructionsDestination).toHaveBeenCalledOnce()
     expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
       appDirectory,
+      resultsKey: 'shopify.app',
       copy: true,
       scanComplete: true,
       commands: resolveAppSecurityCommands(appDirectory, 'shopify.app.toml'),
@@ -387,6 +390,7 @@ describe('securityCheck', () => {
 
     expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
       appDirectory,
+      resultsKey: 'shopify.app',
       copy: false,
       scanComplete: true,
       commands: resolveAppSecurityCommands(appDirectory, 'shopify.app.toml'),
@@ -411,6 +415,7 @@ describe('securityCheck', () => {
     expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
     expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
       appDirectory,
+      resultsKey: 'shopify.app',
       copy: false,
       scanComplete: true,
       commands: resolveAppSecurityCommands(appDirectory, 'shopify.app.toml'),

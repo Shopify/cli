@@ -1,13 +1,8 @@
 import {encodedArtifactSize, MAX_ARTIFACT_FILE_SIZE_BYTES, writeAgentFindings} from './app-security-artifacts.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {countLabel} from './app-security-format.js'
-import {
-  getEngineVersion,
-  readProjectState,
-  recordAgentFindings,
-  type AgentFindingsDocument,
-  type ProjectState,
-} from './app-security-engine/index.js'
+import {getEngineVersion, recordAgentFindings, type AgentFindingsDocument} from './app-security-engine/index.js'
+import {resultsKey, selectedConfigFileName, type AppSecuritySelection} from './app-security-selection.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readStdinString} from '@shopify/cli-kit/node/system'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -17,19 +12,17 @@ import type {SecurityRecordResult} from './security-record-json.js'
 const MAX_FINDINGS_DOCUMENT_BYTES = 5_000_000
 
 interface SecurityRecordOptions {
-  appRoot: string
+  selection: AppSecuritySelection
 }
 
 export interface SecurityRecordDependencies {
   readStdin(): Promise<string | undefined>
-  readProjectState(appRoot: string): Promise<ProjectState>
   engineVersion(): string
-  writeAgentFindings(appRoot: string, document: AgentFindingsDocument): Promise<string>
+  writeAgentFindings(appDirectory: string, resultsKey: string, document: AgentFindingsDocument): Promise<string>
 }
 
 const defaultDependencies: SecurityRecordDependencies = {
   readStdin: readStdinString,
-  readProjectState,
   engineVersion: getEngineVersion,
   writeAgentFindings,
 }
@@ -101,12 +94,12 @@ export default async function securityRecord(
   options: SecurityRecordOptions,
   dependencies: SecurityRecordDependencies = defaultDependencies,
 ): Promise<SecurityRecordResult> {
-  const commands = resolveAppSecurityCommands(options.appRoot)
+  const {selection} = options
+  const commands = resolveAppSecurityCommands(selection.appDirectory, selectedConfigFileName(selection))
   const input = await readInputDocument(commands, dependencies)
 
   const recorded = recordAgentFindings(input, {
     engineVersion: dependencies.engineVersion(),
-    project: await dependencies.readProjectState(options.appRoot),
   })
   if (!recorded.ok) throw rejectedDocumentError(recorded.errors, commands)
 
@@ -120,7 +113,7 @@ export default async function securityRecord(
     )
   }
 
-  const path = await dependencies.writeAgentFindings(options.appRoot, recorded.document)
+  const path = await dependencies.writeAgentFindings(selection.appDirectory, resultsKey(selection), recorded.document)
   return {
     path,
     checks: recorded.document.checks.length,
@@ -129,8 +122,8 @@ export default async function securityRecord(
 }
 
 /** Presents a recorded document in the terminal. */
-export function renderSecurityRecordResult(result: SecurityRecordResult, appRoot: string): void {
-  const commands = resolveAppSecurityCommands(appRoot)
+export function renderSecurityRecordResult(result: SecurityRecordResult, selection: AppSecuritySelection): void {
+  const commands = resolveAppSecurityCommands(selection.appDirectory, selectedConfigFileName(selection))
   renderSuccess({
     headline: 'Agent findings recorded.',
     body: [

@@ -9,7 +9,7 @@
  * schemas are exported too, so the public `review --json` schema is composed from them rather than re-declared.
  * Keep scanners, registries, validators, redaction, and the rest of the stored-schema details inside the engine.
  */
-export {getAgentInstructions, getEngineVersion, readProjectState, scanApp} from './run.js'
+export {getAgentInstructions, getEngineVersion, scanApp} from './run.js'
 export type {AppSecurityEngineMetadata, AppSecurityScan} from './run.js'
 export {translateFindingsDocument} from './results/translate.js'
 export type {TranslateFindingsDocumentResult} from './results/translate.js'
@@ -20,7 +20,6 @@ export {
   coverageSchema,
   deterministicFindingsDocumentSchema,
   projectDetectionSchema,
-  projectStateSchema,
   severitySchema,
   storedCheckSchema,
   storedFindingSchema,
@@ -56,7 +55,6 @@ export type {
   FindingsDocument,
   FindingsSource,
   Issue,
-  ProjectState,
   ScanInput,
   ScanResult,
   Severity,

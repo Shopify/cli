@@ -12,7 +12,6 @@ export const deterministicFindingsDocument: DeterministicFindingsDocument = {
   source: 'deterministic',
   engine: {name: 'shopify-app-security', version: '3.99.0', ruleset: 'app-security-rules@3.99.0'},
   generated_at: '2026-09-01T10:00:00.000Z',
-  project: {commit: 'a'.repeat(40), dirty: false},
   detection: {
     framework: 'react_router',
     surface: 'react_router',
@@ -147,7 +146,6 @@ export const agentFindingsDocument: AgentFindingsDocument = {
   source: 'agent',
   engine: {name: 'shopify-app-security', version: '3.99.0'},
   generated_at: '2026-09-01T11:30:00.000Z',
-  project: {commit: 'a'.repeat(40), dirty: true},
   checks: [
     {
       id: 'CREDENTIAL_LOG_LEAKAGE',

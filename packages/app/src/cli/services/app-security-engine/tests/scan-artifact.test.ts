@@ -27,7 +27,6 @@ const execution = (overrides: Partial<CheckExecution> = {}): CheckExecution => (
 const result = (issues: Issue[] = [], checksExecuted: CheckExecution[] = [execution()]): ScanResult => ({
   version: '0.1.0',
   timestamp: '2026-08-28T00:00:00.000Z',
-  project: {commit: 'a'.repeat(40), dirty: false},
   app: {name: 'scan-artifact-test', type: 'public'},
   detection: {
     framework: 'react_router',
@@ -89,7 +88,6 @@ describe('buildDeterministicFindings', () => {
       source: 'deterministic',
       engine: {name: 'shopify-app-security', version: '0.1.0', ruleset: 'app-security-rules@0.1.0'},
       generated_at: '2026-08-28T00:00:00.000Z',
-      project: {commit: 'a'.repeat(40), dirty: false},
       detection: {
         framework: 'react_router',
         surface: 'react_router',

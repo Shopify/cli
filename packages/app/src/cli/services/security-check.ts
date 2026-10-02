@@ -9,6 +9,7 @@ import {
 import {
   effectiveClientId,
   resolveAppSecuritySelection,
+  resultsKey,
   selectedConfigFileName,
   type AppSecurityScanDirectory,
   type AppSecuritySelection,
@@ -49,13 +50,15 @@ interface SecurityDependencies {
   }): Promise<AppSecuritySelection>
   execute(options: ScanInput & {ignorePatterns: ReadonlyArray<string>}): Promise<AppSecurityExecution>
   writeArtifacts(
-    appRoot: string,
+    appDirectory: string,
+    resultsKey: string,
     artifacts: {deterministicFindings: DeterministicFindingsDocument; agentChecks: AgentChecks},
   ): Promise<CheckArtifactPaths>
   canPrompt(): boolean
   selectInstructionsDestination(): Promise<AppSecurityInstructionsDestination>
   deliverInstructions(options: {
     appDirectory: string
+    resultsKey: string
     copy: boolean
     scanComplete: boolean
     commands: AppSecurityCommands
@@ -157,7 +160,7 @@ export default async function securityCheck(
     clientId: effectiveClientId(selection),
     ignorePatterns: options.ignorePatterns,
   })
-  const artifacts = await dependencies.writeArtifacts(appDirectory, {
+  const artifacts = await dependencies.writeArtifacts(appDirectory, resultsKey(selection), {
     deterministicFindings: execution.deterministicFindings,
     agentChecks: execution.agentChecks,
   })
@@ -176,6 +179,7 @@ export default async function securityCheck(
   if (destination !== 'nothing') {
     await dependencies.deliverInstructions({
       appDirectory,
+      resultsKey: resultsKey(selection),
       copy: destination === 'copy',
       scanComplete: true,
       commands,
