@@ -8765,13 +8765,17 @@ Download metafields definitions from your shop into a local file.
 
 ```
 USAGE
-  $ shopify theme metafields pull [--auth-alias <value>] [-e <value>...] [--json-schema] [--no-color] [--password <value>]
-    [--path <value>] [-s <value>] [--verbose]
+  $ shopify theme metafields pull [--auth-alias <value>] [-e <value>...] [-j] [--json-schema] [--no-color] [--password
+    <value>] [--path <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
       The environment to apply to the current command.
       [env: SHOPIFY_FLAG_ENVIRONMENT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
@@ -8808,6 +8812,245 @@ DESCRIPTION
   Retrieves metafields from Shopify Admin.
 
   If the metafields file already exists, it will be overwritten.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeMetafieldsPullResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "downloaded"
+          },
+          "path": {
+            "type": "string"
+          },
+          "definitions": {
+            "$ref": "#/definitions/MetafieldDefinitions"
+          },
+          "failedOwnerTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/MetafieldOwnerType"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "path",
+          "definitions",
+          "failedOwnerTypes"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "failed"
+          },
+          "failedOwnerTypes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/MetafieldOwnerType"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "failedOwnerTypes"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "skipped"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "not-a-theme",
+              "cancelled"
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeMetafieldsPullResult",
+    "definitions": {
+      "MetafieldOwnerType": {
+        "type": "string",
+        "enum": [
+          "ARTICLE",
+          "BLOG",
+          "COLLECTION",
+          "COMPANY",
+          "COMPANY_LOCATION",
+          "LOCATION",
+          "MARKET",
+          "ORDER",
+          "PAGE",
+          "PRODUCT",
+          "PRODUCTVARIANT",
+          "SHOP"
+        ]
+      },
+      "MetafieldType": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "category"
+        ],
+        "additionalProperties": false
+      },
+      "MetafieldDefinition": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "namespace": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "$ref": "#/definitions/MetafieldType"
+          }
+        },
+        "required": [
+          "key",
+          "namespace",
+          "name",
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "MetafieldDefinitions": {
+        "type": "object",
+        "properties": {
+          "article": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/MetafieldDefinition"
+            }
+          },
+          "blog": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/MetafieldDefinition"
+            }
+          },
+          "collection": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/MetafieldDefinition"
+            }
+          },
+          "company": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/MetafieldDefinition"
+            }
+          },
+          "company_location": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/MetafieldDefinition"
+            }
+          },
+          "location": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/MetafieldDefinition"
+            }
+          },
+          "market": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/MetafieldDefinition"
+            }
+          },
+          "order": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/MetafieldDefinition"
+            }
+          },
+          "page": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/MetafieldDefinition"
+            }
+          },
+          "product": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/MetafieldDefinition"
+            }
+          },
+          "variant": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/MetafieldDefinition"
+            }
+          },
+          "shop": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/MetafieldDefinition"
+            }
+          }
+        },
+        "required": [
+          "article",
+          "blog",
+          "collection",
+          "company",
+          "company_location",
+          "location",
+          "market",
+          "order",
+          "page",
+          "product",
+          "variant",
+          "shop"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme open`

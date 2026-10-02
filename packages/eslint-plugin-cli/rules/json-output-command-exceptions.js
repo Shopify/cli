@@ -43,7 +43,6 @@ const commandExceptions = [
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/off.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/on.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/status.ts',
-  'packages/theme/src/cli/commands/theme/metafields/pull.ts',
 
   // Streaming commands without a single finite result.
   'packages/app/src/cli/commands/app/dev.ts',
