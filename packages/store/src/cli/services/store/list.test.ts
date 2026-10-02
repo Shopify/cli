@@ -48,6 +48,7 @@ describe('listStores', () => {
 
     const result = await listStores()
 
+    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledWith([], {allowAutomationToken: true})
     expect(bpSource.listBusinessPlatformStores).toHaveBeenCalledWith({
       token: 'bp-token',
       organization: acme,

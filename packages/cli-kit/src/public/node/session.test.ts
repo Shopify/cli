@@ -308,6 +308,51 @@ describe('ensureAuthenticatedBusinessPlatform', () => {
     // Then
     await expect(got).rejects.toThrow(`No business-platform token`)
   })
+
+  test('exchanges the automation token with no fixed scopes when the caller allows one', async () => {
+    // Given
+    vi.mocked(getAppAutomationToken).mockReturnValue('custom_cli_token')
+    vi.mocked(exchangeAppAutomationTokenForBusinessPlatformAccessToken).mockResolvedValueOnce({
+      accessToken: 'business-platform-token',
+      userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
+    })
+
+    // When
+    const got = await ensureAuthenticatedBusinessPlatform([], {noPrompt: true, allowAutomationToken: true})
+
+    // Then
+    expect(got).toEqual('business-platform-token')
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).toHaveBeenCalledWith('custom_cli_token', [])
+    expect(exchangeAppAutomationTokenForAppManagementAccessToken).not.toHaveBeenCalled()
+    expect(ensureAuthenticated).not.toHaveBeenCalled()
+  })
+
+  test('uses the logged-in session when the caller allows a token but none is set', async () => {
+    // Given
+    vi.mocked(getAppAutomationToken).mockReturnValue(undefined)
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({businessPlatform: 'business_platform', userId: '1234-5678'})
+
+    // When
+    const got = await ensureAuthenticatedBusinessPlatform([], {noPrompt: true, allowAutomationToken: true})
+
+    // Then
+    expect(got).toEqual('business_platform')
+    expect(ensureAuthenticated).toHaveBeenCalledWith({businessPlatformApi: {scopes: []}}, process.env, {noPrompt: true})
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).not.toHaveBeenCalled()
+  })
+
+  test('ignores the automation token when the caller does not allow one', async () => {
+    // Given
+    vi.mocked(getAppAutomationToken).mockReturnValue('custom_cli_token')
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({businessPlatform: 'business_platform', userId: '1234-5678'})
+
+    // When
+    const got = await ensureAuthenticatedBusinessPlatform()
+
+    // Then
+    expect(got).toEqual('business_platform')
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).not.toHaveBeenCalled()
+  })
 })
 
 describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
@@ -362,6 +407,8 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
       userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
       businessPlatformToken: 'business-platform-token',
     })
+    // App commands keep the exchange's default Business Platform scopes.
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).toHaveBeenCalledWith('custom_cli_token')
     expect(ensureAuthenticated).not.toHaveBeenCalled()
   })
 })

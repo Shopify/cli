@@ -157,6 +157,6 @@ describe('fetchDestinationsContext', () => {
 
     await fetchDestinationsContext({store: SHOP, noPrompt: true})
 
-    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledWith([], {noPrompt: true})
+    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledWith([], {noPrompt: true, allowAutomationToken: true})
   })
 })
