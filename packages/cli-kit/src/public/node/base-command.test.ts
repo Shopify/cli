@@ -2,7 +2,7 @@ import Command from './base-command.js'
 import {Environments} from './environments.js'
 import {encodeToml as encodeTOML} from './toml/codec.js'
 import {globalFlags, jsonFlag, requiredIfNonInteractive} from './cli.js'
-import {emitCommandEvent} from './command-events.js'
+import {emitCommandEvent, runWithCommandEvents} from './command-events.js'
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
 import {joinPath, resolvePath, cwd} from './path.js'
 import {mockAndCaptureOutput} from './testing/output.js'
@@ -10,7 +10,7 @@ import {unstyled} from './output.js'
 import {defineJsonOutputSchema} from './json-output-schema.js'
 import {zod} from './schema.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {Flags} from '@oclif/core'
+import {Config, Flags} from '@oclif/core'
 import {Ajv} from 'ajv'
 
 let originalStdinIsTTY: boolean | undefined
@@ -54,6 +54,7 @@ class MockCommand extends Command {
       default: 'default stringy',
     }),
     password: Flags.string({}),
+    'store-password': Flags.string({}),
     environment: Flags.string({
       multiple: true,
       default: [],
@@ -220,6 +221,11 @@ const environmentWithPassword = {
   password: 'password',
 }
 
+const environmentWithCredentials = {
+  password: 'admin-password',
+  'store-password': 'storefront-secret',
+}
+
 const allEnvironments: Environments = {
   environments: {
     validEnvironment,
@@ -232,6 +238,7 @@ const allEnvironments: Environments = {
     environmentMatchingDefault,
     environmentWithDefaultOverride,
     environmentWithPassword,
+    environmentWithCredentials,
   },
 }
 
@@ -785,6 +792,31 @@ describe('applying environments', async () => {
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
     `)
+  })
+
+  runTestInTmpDir('reports environment settings as JSON diagnostics with masked passwords', async (tmpDir) => {
+    const sink = vi.fn()
+    const output = mockAndCaptureOutput()
+    output.clear()
+    await runWithCommandEvents({outputMode: 'json', sink}, async () => {
+      const config = new Config({root: __dirname})
+      await config.load()
+      const command = new MockCommand(['--path', tmpDir, '--environment', 'environmentWithCredentials'], config)
+      await command.run()
+    })
+
+    expect(sink).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'diagnostic',
+        level: 'info',
+        message:
+          'Using applicable flags from environmentWithCredentials environment:\npassword: ********word\nstore-password: ********cret',
+      }),
+    )
+    for (const credential of Object.values(environmentWithCredentials)) {
+      expect(JSON.stringify(sink.mock.calls)).not.toContain(credential)
+    }
+    expect(output.info()).toBe('')
   })
 
   runTestInTmpDir('reports environment settings with masked passwords', async (tmpDir: string) => {

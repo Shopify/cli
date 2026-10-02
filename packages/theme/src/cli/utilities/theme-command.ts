@@ -118,14 +118,12 @@ export default abstract class ThemeCommand extends Command {
 
     // Multiple environments
     if (requiredFlags === null) {
-      renderWarning({body: 'This command does not support multiple environments.'})
-      return
+      throw new AbortError('This command does not support multiple environments.')
     }
 
     const {flags: flagsWithoutDefaults} = await this.parse(noDefaultsOptions(klass), this.argv)
     if ('path' in flagsWithoutDefaults) {
       this.errorOnGlobalPath()
-      return
     }
 
     const environmentsMap = await this.loadEnvironments(environments, flags, flagsWithoutDefaults)
@@ -134,11 +132,29 @@ export default abstract class ThemeCommand extends Command {
     const commandAllowsForceFlag = 'force' in klass.flags
 
     if (commandAllowsForceFlag && !flags.force) {
-      const confirmed = await this.showConfirmation(this.constructor.name, requiredFlags, validationResults)
+      const confirmed = await this.showConfirmation(
+        (this.id ?? 'theme').replaceAll(':', ' '),
+        requiredFlags,
+        validationResults,
+      )
       if (!confirmed) return
     }
 
     await this.runConcurrent(validationResults.valid)
+  }
+
+  protected validateNonTTYFlags(flags: FlagOutput): void {
+    // Multiple environments must be validated after their configured flags are loaded.
+    const command = this.constructor
+    if (
+      'multiEnvironmentsFlags' in command &&
+      command.multiEnvironmentsFlags !== undefined &&
+      Array.isArray(flags.environment) &&
+      flags.environment.length > 1
+    ) {
+      return
+    }
+    super.validateNonTTYFlags(flags)
   }
 
   /**
@@ -224,6 +240,7 @@ export default abstract class ThemeCommand extends Command {
         invalid.push({environment: environmentName, reason: `Missing flags: ${missingFlagsText}`})
         continue
       }
+      super.validateNonTTYFlags(flags)
       valid.push({environment: environmentName, flags, requiresAuth, storeAuthSession})
     }
 
@@ -514,17 +531,12 @@ export default abstract class ThemeCommand extends Command {
     const tomlPath = joinPath(cwd(), 'shopify.theme.toml')
     const tomlInCwd = fileExistsSync(tomlPath)
 
-    renderError({
-      body: [
-        "Can't use `--path` flag with multiple environments.",
-        ...(tomlInCwd
-          ? ["Configure each environment's theme path in your shopify.theme.toml file instead."]
-          : [
-              'Run this command from the directory containing shopify.theme.toml.',
-              'No shopify.theme.toml found in current directory.',
-            ]),
-      ],
-    })
+    throw new AbortError(
+      "Can't use `--path` flag with multiple environments.",
+      tomlInCwd
+        ? "Configure each environment's theme path in your shopify.theme.toml file instead."
+        : 'Run this command from the directory containing shopify.theme.toml. No shopify.theme.toml found in current directory.',
+    )
   }
 
   private async logAnalyticsData(session?: AdminSession): Promise<void> {
