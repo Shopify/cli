@@ -22,8 +22,8 @@ function recordedResult(appRoot: string) {
 }
 
 describe('app security record command', () => {
-  test('is hidden, does not require linked app context, and takes no --config', () => {
-    expect(SecurityRecord.hidden).toBe(true)
+  test('is visible, does not require linked app context, and takes no --config', () => {
+    expect(SecurityRecord.hidden).toBeFalsy()
     expect(SecurityRecord.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityRecord.prototype).not.toBeInstanceOf(AppLinkedCommand)
     expect(SecurityRecord.flags.path).toBe(appFlags.path)

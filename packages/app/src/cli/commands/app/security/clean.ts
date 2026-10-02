@@ -7,8 +7,6 @@ import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {outputResult} from '@shopify/cli-kit/node/output'
 
 export default class SecurityClean extends BaseCommand {
-  static hidden = true
-
   static summary = 'Remove local App Security artifacts.'
 
   static descriptionWithMarkdown = `Deletes the App Security artifacts in \`.shopify/app-security/\` without asking: the scan, the agent checks, the recorded agent findings, and files left by earlier CLI versions. Prints each removed path.`

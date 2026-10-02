@@ -3349,6 +3349,411 @@
       "value": "export interface apprelease {\n  /**\n   * Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates. Required in non-interactive environments unless --allow-updates is provided.\n   * @environment SHOPIFY_FLAG_ALLOW_DELETES\n   */\n  '--allow-deletes'?: ''\n\n  /**\n   * Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments. Required in non-interactive environments unless --allow-deletes is provided.\n   * @environment SHOPIFY_FLAG_ALLOW_UPDATES\n   */\n  '--allow-updates'?: ''\n\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * The name of the app version to release.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>': string\n}"
     }
   },
+  "appsecuritycheck": {
+    "docs-shopify.dev/commands/interfaces/app-security-check.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/app-security-check.interface.ts",
+      "name": "appsecuritycheck",
+      "description": "The following flags are available for the `app security check` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-check.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--blocking <value>",
+          "value": "string",
+          "description": "The minimum finding severity that causes a non-zero exit code.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_APP_SECURITY_BLOCKING"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-check.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--ignore <value>",
+          "value": "string",
+          "description": "Ignore files that match this .gitignore pattern, relative to the app directory. Start the pattern with ! to include matching files again. Repeat the flag to add patterns; later patterns take precedence.",
+          "isOptional": true
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-check.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--json-schema",
+          "value": "''",
+          "description": "Print the command's JSON schemas.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON_SCHEMA"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-check.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-check.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-check.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--path <value>",
+          "value": "string",
+          "description": "The path to your app directory.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-check.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--skip-instructions",
+          "value": "''",
+          "description": "Don't offer to show coding-agent instructions.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_APP_SECURITY_SKIP_INSTRUCTIONS"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-check.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-check.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--yes",
+          "value": "''",
+          "description": "Print coding-agent instructions without prompting.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_YES"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-check.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-c, --config <value>",
+          "value": "string",
+          "description": "The name of the app configuration.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_APP_CONFIG"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-check.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        }
+      ],
+      "value": "export interface appsecuritycheck {\n  /**\n   * The minimum finding severity that causes a non-zero exit code.\n   * @environment SHOPIFY_FLAG_APP_SECURITY_BLOCKING\n   */\n  '--blocking <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Ignore files that match this .gitignore pattern, relative to the app directory. Start the pattern with ! to include matching files again. Repeat the flag to add patterns; later patterns take precedence.\n   *\n   */\n  '--ignore <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Don't offer to show coding-agent instructions.\n   * @environment SHOPIFY_FLAG_APP_SECURITY_SKIP_INSTRUCTIONS\n   */\n  '--skip-instructions'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Print coding-agent instructions without prompting.\n   * @environment SHOPIFY_FLAG_YES\n   */\n  '--yes'?: ''\n}"
+    }
+  },
+  "appsecurityclean": {
+    "docs-shopify.dev/commands/interfaces/app-security-clean.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/app-security-clean.interface.ts",
+      "name": "appsecurityclean",
+      "description": "The following flags are available for the `app security clean` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-clean.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--json-schema",
+          "value": "''",
+          "description": "Print the command's JSON schemas.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON_SCHEMA"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-clean.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-clean.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-clean.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--path <value>",
+          "value": "string",
+          "description": "The path to your app directory.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-clean.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-clean.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        }
+      ],
+      "value": "export interface appsecurityclean {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+    }
+  },
+  "appsecurityinstructions": {
+    "docs-shopify.dev/commands/interfaces/app-security-instructions.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/app-security-instructions.interface.ts",
+      "name": "appsecurityinstructions",
+      "description": "The following flags are available for the `app security instructions` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-instructions.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--copy",
+          "value": "''",
+          "description": "Copy the instructions to the clipboard instead of printing them.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_COPY"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-instructions.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--json-schema",
+          "value": "''",
+          "description": "Print the command's JSON schemas.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON_SCHEMA"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-instructions.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-instructions.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-instructions.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--path <value>",
+          "value": "string",
+          "description": "The path to your app directory.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-instructions.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-instructions.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--write <value>",
+          "value": "string",
+          "description": "Write the instructions to a file instead of printing them.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_WRITE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-instructions.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-c, --config <value>",
+          "value": "string",
+          "description": "The name of the app configuration.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_APP_CONFIG"
+        }
+      ],
+      "value": "export interface appsecurityinstructions {\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Copy the instructions to the clipboard instead of printing them.\n   * @environment SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_COPY\n   */\n  '--copy'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Write the instructions to a file instead of printing them.\n   * @environment SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_WRITE\n   */\n  '--write <value>'?: string\n}"
+    }
+  },
+  "appsecurityrecord": {
+    "docs-shopify.dev/commands/interfaces/app-security-record.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/app-security-record.interface.ts",
+      "name": "appsecurityrecord",
+      "description": "The following flags are available for the `app security record` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-record.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--json-schema",
+          "value": "''",
+          "description": "Print the command's JSON schemas.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON_SCHEMA"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-record.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-record.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-record.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--path <value>",
+          "value": "string",
+          "description": "The path to your app directory.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-record.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-record.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        }
+      ],
+      "value": "export interface appsecurityrecord {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+    }
+  },
+  "appsecurityreview": {
+    "docs-shopify.dev/commands/interfaces/app-security-review.interface.ts": {
+      "filePath": "docs-shopify.dev/commands/interfaces/app-security-review.interface.ts",
+      "name": "appsecurityreview",
+      "description": "The following flags are available for the `app security review` command:",
+      "isPublicDocs": true,
+      "members": [
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-review.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--blocking <value>",
+          "value": "string",
+          "description": "The minimum finding severity that causes a non-zero exit code.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_APP_SECURITY_BLOCKING"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-review.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--check-id <value>",
+          "value": "string",
+          "description": "Show only this check. Repeat the flag to show several checks.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_CHECK_ID"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-review.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--json-schema",
+          "value": "''",
+          "description": "Print the command's JSON schemas.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON_SCHEMA"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-review.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-review.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-review.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--path <value>",
+          "value": "string",
+          "description": "The path to your app directory.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-review.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-review.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        }
+      ],
+      "value": "export interface appsecurityreview {\n  /**\n   * The minimum finding severity that causes a non-zero exit code.\n   * @environment SHOPIFY_FLAG_APP_SECURITY_BLOCKING\n   */\n  '--blocking <value>'?: string\n\n  /**\n   * Show only this check. Repeat the flag to show several checks.\n   * @environment SHOPIFY_FLAG_CHECK_ID\n   */\n  '--check-id <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+    }
+  },
   "appsubscriptionmigrationscancel": {
     "docs-shopify.dev/commands/interfaces/app-subscription-migrations-cancel.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/app-subscription-migrations-cancel.interface.ts",

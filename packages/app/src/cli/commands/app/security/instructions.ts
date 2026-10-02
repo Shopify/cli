@@ -6,8 +6,6 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class SecurityInstructions extends BaseCommand {
-  static hidden = true
-
   static summary = 'Provide App Security instructions to a coding agent.'
 
   static descriptionWithMarkdown = `Prints the complete workflow that a coding agent should follow to review App Security results.

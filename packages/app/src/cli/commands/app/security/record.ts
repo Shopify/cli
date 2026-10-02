@@ -7,8 +7,6 @@ import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {outputResult} from '@shopify/cli-kit/node/output'
 
 export default class SecurityRecord extends BaseCommand {
-  static hidden = true
-
   static summary = 'Record agent App Security findings.'
 
   static descriptionWithMarkdown = `Reads a coding agent's complete findings document from stdin, validates it, and replaces \`.shopify/app-security/agent-findings.json\`.
