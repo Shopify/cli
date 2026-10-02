@@ -1,5 +1,13 @@
 # @shopify/theme
 
+## 4.8.4
+
+### Patch Changes
+
+- 1fbf91d: Bring `AGENTS.md` and `DESIGN.md` back to `shopify theme pull`, `push`, and `package`.
+- a1be0ec: Bump Shopify/theme-tools packages
+  - @shopify/cli-kit@4.8.4
+
 ## 4.8.3
 
 ### Patch Changes

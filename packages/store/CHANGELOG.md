@@ -1,5 +1,12 @@
 # @shopify/store
 
+## 4.8.4
+
+### Patch Changes
+
+- @shopify/organizations@4.8.4
+- @shopify/cli-kit@4.8.4
+
 ## 4.8.3
 
 ### Patch Changes
