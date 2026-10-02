@@ -1,15 +1,22 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {devWithOverrideFile} from '../../services/dev-override.js'
+import {renderThemePreviewResult, renderThemePreviewOpenError} from '../../services/dev-override/result.js'
+import {themePreviewJsonOutputSchema} from '../../services/dev-override/types.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {openURL} from '@shopify/cli-kit/node/system'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {InferredFlags} from '@oclif/core/interfaces'
 
 type PreviewFlags = InferredFlags<typeof Preview.flags>
 
 export default class Preview extends ThemeCommand {
+  static get jsonOutputSchema() {
+    return themePreviewJsonOutputSchema
+  }
+
   static summary = 'Applies JSON overrides to a theme and returns a preview URL.'
 
   static descriptionWithMarkdown = `Applies a JSON overrides file to a theme and creates or updates a preview. This lets you quickly preview changes.
@@ -20,6 +27,7 @@ export default class Preview extends ThemeCommand {
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     ...themeFlags,
     theme: Flags.string({
       char: 't',
@@ -42,6 +50,7 @@ export default class Preview extends ThemeCommand {
       default: false,
     }),
     json: Flags.boolean({
+      ...jsonFlag.json,
       description: 'Output the preview URL and identifier as JSON.',
       env: 'SHOPIFY_FLAG_JSON',
       default: false,
@@ -52,14 +61,17 @@ export default class Preview extends ThemeCommand {
 
   async command(flags: PreviewFlags, adminSession: AdminSession) {
     const theme = await findOrSelectTheme(adminSession, {filter: {theme: flags.theme}})
-    await devWithOverrideFile({
+    const result = await devWithOverrideFile({
       adminSession,
       overrideJson: flags.overrides,
       themeId: theme.id.toString(),
       previewIdentifier: flags['preview-id'],
-      open: flags.open,
       password: flags.password,
-      json: flags.json,
     })
+    const format = flags.json ? 'json' : 'text'
+    renderThemePreviewResult(result, format, Boolean(flags['preview-id']))
+    if (flags.open) {
+      openURL(result.url).catch((error: Error) => renderThemePreviewOpenError(error, format))
+    }
   }
 }
