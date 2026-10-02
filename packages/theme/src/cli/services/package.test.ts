@@ -33,7 +33,7 @@ describe('packageTheme', () => {
       )
 
       // When
-      await packageTheme(inputDirectory)
+      const result = await packageTheme(inputDirectory)
 
       // Then
       const expectedOutputZipPath = joinPath(inputDirectory, 'Dawn-7.0.2.zip')
@@ -42,9 +42,8 @@ describe('packageTheme', () => {
       const archiveEntries = await readArchiveFiles(expectedOutputZipPath)
       expect(themeRelativePaths.sort()).toEqual(archiveEntries.sort())
 
-      expect(renderSuccess).toBeCalledWith({
-        body: ['Your local theme was packaged in', {filePath: expectedOutputZipPath}],
-      })
+      expect(result).toEqual({path: expectedOutputZipPath})
+      expect(renderSuccess).not.toHaveBeenCalled()
     })
   })
 
@@ -73,7 +72,7 @@ describe('packageTheme', () => {
       )
 
       // When
-      await packageTheme(inputDirectory)
+      const result = await packageTheme(inputDirectory)
 
       // Then
       const expectedOutputZipPath = joinPath(inputDirectory, 'Dawn-7.0.2.zip')
@@ -82,9 +81,8 @@ describe('packageTheme', () => {
       const archiveEntries = await readArchiveFiles(expectedOutputZipPath)
       expect(expectedThemeRelativePaths.sort()).toEqual(archiveEntries.sort())
 
-      expect(renderSuccess).toBeCalledWith({
-        body: ['Your local theme was packaged in', {filePath: expectedOutputZipPath}],
-      })
+      expect(result).toEqual({path: expectedOutputZipPath})
+      expect(renderSuccess).not.toHaveBeenCalled()
     })
   })
 
@@ -105,7 +103,7 @@ describe('packageTheme', () => {
       await createSettingsSchema('[{"name": "theme_info", "theme_name": "Dawn"}]', inputDirectory)
 
       // When
-      await packageTheme(inputDirectory)
+      const result = await packageTheme(inputDirectory)
 
       // Then
       const expectedOutputZipPath = joinPath(inputDirectory, 'Dawn.zip')
@@ -114,9 +112,8 @@ describe('packageTheme', () => {
       const archiveEntries = await readArchiveFiles(expectedOutputZipPath)
       expect(themeRelativePaths.sort()).toEqual(archiveEntries.sort())
 
-      expect(renderSuccess).toBeCalledWith({
-        body: ['Your local theme was packaged in', {filePath: expectedOutputZipPath}],
-      })
+      expect(result).toEqual({path: expectedOutputZipPath})
+      expect(renderSuccess).not.toHaveBeenCalled()
     })
   })
 
