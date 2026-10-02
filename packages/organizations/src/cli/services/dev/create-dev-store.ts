@@ -57,7 +57,7 @@ function friendlyStatus(status: StoreCreationStatus): string {
 
 export async function createDevStore(options: CreateDevStoreOptions): Promise<string> {
   const {organization: org, name, plan} = options
-  const token = await ensureAuthenticatedBusinessPlatform()
+  const token = await ensureAuthenticatedBusinessPlatform([], {allowAutomationToken: true})
   const unauthorizedHandler = businessPlatformTokenRefreshHandler()
 
   const mutationResult = await businessPlatformOrganizationsRequestDoc({
