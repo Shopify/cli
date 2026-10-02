@@ -186,6 +186,49 @@ describe('setupGraphiQLServer', () => {
     expect(response.status).toBe(404)
   })
 
+  test('does not grant cross-origin access to the proxy endpoint', async () => {
+    const tokenProvider: TokenProvider = {getToken: async () => 'access-token'}
+    const {url} = await startServer({tokenProvider, key: 'k'})
+
+    const response = await fetch(`${url}/graphiql/graphql.json?key=k&api_version=2024-10`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', Origin: 'https://evil.example.com'},
+      body: JSON.stringify({query: '{ shop { name } }'}),
+    })
+
+    expect(response.headers.get('access-control-allow-origin')).toBeNull()
+  })
+
+  test('does not grant cross-origin access to the unauthenticated status endpoint', async () => {
+    const tokenProvider: TokenProvider = {getToken: async () => 'access-token'}
+    const {url} = await startServer({tokenProvider, key: 'k'})
+
+    const response = await fetch(`${url}/graphiql/status`, {headers: {Origin: 'https://evil.example.com'}})
+
+    expect(response.headers.get('access-control-allow-origin')).toBeNull()
+    expect(response.headers.get('vary')).toBe('Origin')
+  })
+
+  test('grants same-origin requests from the served GraphiQL page', async () => {
+    const tokenProvider: TokenProvider = {getToken: async () => 'access-token'}
+    const {url} = await startServer({tokenProvider, key: 'k'})
+
+    const response = await fetch(`${url}/graphiql/ping`, {headers: {Origin: url}})
+
+    expect(response.status).toBe(200)
+    expect(response.headers.get('access-control-allow-origin')).toBe(url)
+  })
+
+  test('leaves requests without an Origin header working', async () => {
+    const tokenProvider: TokenProvider = {getToken: async () => 'access-token'}
+    const {url} = await startServer({tokenProvider, key: 'k'})
+
+    const response = await fetch(`${url}/graphiql/ping`)
+
+    expect(response.status).toBe(200)
+    await expect(response.text()).resolves.toBe('pong')
+  })
+
   test('renders app install guidance for unauthorized app GraphiQL sessions', async () => {
     const tokenProvider: TokenProvider = {getToken: async () => Promise.reject(new Error('No token'))}
     const {url} = await startServer({
