@@ -1,4 +1,5 @@
 import {profile} from './profile.js'
+import {renderThemeProfileResult} from './profile/result.js'
 import {render} from '../utilities/theme-environment/storefront-renderer.js'
 import {ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {openURL} from '@shopify/cli-kit/node/system'
@@ -18,7 +19,9 @@ vi.mock('../utilities/theme-environment/storefront-renderer.js')
 describe('profile', () => {
   const mockProfileData = {
     name: 'test-profile',
-    data: 'sample-data',
+    $schema: 'https://www.speedscope.app/file-format-schema.json',
+    profiles: [],
+    shared: {frames: []},
   }
   const mockToken = 'mock-token'
   const mockAdminSession = {token: mockToken, storeFqdn: 'test-store.myshopify.com'}
@@ -39,7 +42,9 @@ describe('profile', () => {
 
   test('outputs JSON to stdout when asJson is true', async () => {
     // When
-    await profile(mockAdminSession, themeId, urlPath, true, undefined, undefined)
+    const result = await profile(mockAdminSession, themeId, urlPath)
+    expect(result.result).toEqual(mockProfileData)
+    await renderThemeProfileResult(result, 'json')
 
     // Then
     expect(render).toHaveBeenCalledWith(
@@ -62,7 +67,7 @@ describe('profile', () => {
 
   test('opens profile in browser when asJson is false', async () => {
     // When
-    await profile(mockAdminSession, themeId, urlPath, false, undefined, undefined)
+    await renderThemeProfileResult(await profile(mockAdminSession, themeId, urlPath), 'text')
 
     // Then
     // Verify fetch was called correctly
@@ -88,7 +93,7 @@ describe('profile', () => {
     vi.mocked(render).mockRejectedValue(new Error('Network error'))
 
     // When
-    const result = profile(mockAdminSession, themeId, urlPath, true, undefined, undefined)
+    const result = profile(mockAdminSession, themeId, urlPath)
 
     // Then
     await expect(result).rejects.toThrow('Network error')
@@ -104,7 +109,7 @@ describe('profile', () => {
     )
 
     // When
-    const result = profile(mockAdminSession, themeId, urlPath, true, undefined, undefined)
+    const result = profile(mockAdminSession, themeId, urlPath)
 
     // Then
     await expect(result).rejects.toThrow('Bad response: 404: {"error":"Some error message"}')
@@ -112,7 +117,7 @@ describe('profile', () => {
 
   test('throws error when a password is used', async () => {
     // When
-    const result = profile(mockAdminSession, themeId, urlPath, true, 'shpat_hello', undefined)
+    const result = profile(mockAdminSession, themeId, urlPath, 'shpat_hello')
 
     // Then
     await expect(result).rejects.toThrow(
@@ -134,7 +139,7 @@ describe('profile', () => {
       vi.mocked(openURL).mockResolvedValue(true)
 
       // When
-      await profile(mockAdminSession, themeId, urlPath, false, undefined, undefined)
+      await renderThemeProfileResult(await profile(mockAdminSession, themeId, urlPath), 'text')
 
       // Then
       expect(openURL).toHaveBeenCalledWith(expect.stringMatching(/^file:\/\/\/\/wsl\$\/Ubuntu.*\.html$/))
@@ -146,7 +151,7 @@ describe('profile', () => {
       vi.mocked(openURL).mockResolvedValue(true)
 
       // When
-      await profile(mockAdminSession, themeId, urlPath, false, undefined, undefined)
+      await renderThemeProfileResult(await profile(mockAdminSession, themeId, urlPath), 'text')
 
       // Then
       expect(openURL).toHaveBeenCalledWith(expect.stringMatching(/^file:\/\/.*\.html$/))
