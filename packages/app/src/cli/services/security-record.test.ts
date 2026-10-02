@@ -78,6 +78,7 @@ function testDependencies(stdin: string | undefined): SecurityRecordDependencies
     readStdin: vi.fn(async () => stdin),
     engineVersion: () => '3.99.0',
     writeAgentFindings: vi.fn(writeAgentFindings),
+    recordMetadata: vi.fn(async () => {}),
   }
 }
 
@@ -106,6 +107,7 @@ async function expectRejected(stdin: string | undefined, expectedErrors: unknown
     expect(error.message).toBe(REJECTED_MESSAGE)
     expect(error.details).toEqual({errors: expectedErrors})
     expect(dependencies.writeAgentFindings).not.toHaveBeenCalled()
+    expect(dependencies.recordMetadata).not.toHaveBeenCalled()
     await expect(fileExists(artifactPaths(appRoot).agentFindingsPath)).resolves.toBe(false)
   })
 }
@@ -133,6 +135,17 @@ describe('securityRecord', () => {
       expect(output.warn()).toBe('')
       expect(output.error()).toBe('')
       output.clear()
+    })
+  })
+
+  test('records the number of agent findings in the command metadata', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+      const dependencies = testDependencies(JSON.stringify(validDocument()))
+
+      await record(appRoot, dependencies)
+
+      expect(dependencies.recordMetadata).toHaveBeenCalledWith({num_security_findings: 2})
     })
   })
 

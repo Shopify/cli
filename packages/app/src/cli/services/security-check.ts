@@ -17,6 +17,7 @@ import {
 } from './app-security-selection.js'
 import {encodeSecurityJson, toSecurityJson} from './security-json.js'
 import {renderSecurityReport} from './security-output.js'
+import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {cwd, relativePath} from '@shopify/cli-kit/node/path'
@@ -89,6 +90,7 @@ interface SecurityDependencies {
   renderWarning(options: RenderAlertOptions): void
   renderReport(input: SecurityReportInput): void
   setExitCode(exitCode: number): void
+  recordMetadata(fields: AppSecurityMetadata): Promise<void>
 }
 
 export function appSecurityInstructionsPrompt(
@@ -121,6 +123,7 @@ const defaultDependencies: SecurityDependencies = {
   setExitCode: (exitCode) => {
     process.exitCode = exitCode
   },
+  recordMetadata: recordAppSecurityMetadata,
 }
 
 async function instructionsDestination(
@@ -228,6 +231,7 @@ export default async function securityCheck(
 
   const execution = await dependencies.execute(scanOptions)
   renderIgnoredScanDirectoryWarnings(execution.ignoredScanDirectories, dependencies)
+  await dependencies.recordMetadata({num_security_findings: execution.scan.issues.length})
   const artifacts = await dependencies.writeArtifacts(appDirectory, resultsKey(selection), {
     deterministicFindings: execution.deterministicFindings,
     agentChecks: execution.agentChecks,

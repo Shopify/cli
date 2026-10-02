@@ -4,6 +4,7 @@ import {resolveAppSecuritySelection, resultsKey, type AppSecuritySelection} from
 import {loadAppSecurityResults, type AppSecurityResults} from './app-security-results.js'
 import {securityReviewJsonOutputSchema, toSecurityReviewJson} from './security-review-json.js'
 import {renderSecurityReview, type SecurityReviewPresenterInput} from './security-review-output.js'
+import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
 import {activeFindings, SEVERITY_RANK, type CombinedCheck} from './app-security-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputResult} from '@shopify/cli-kit/node/output'
@@ -46,6 +47,7 @@ export interface SecurityReviewDependencies {
   render(input: SecurityReviewPresenterInput): void
   now(): Date
   setExitCode(exitCode: number): void
+  recordMetadata(fields: AppSecurityMetadata): Promise<void>
 }
 
 const defaultDependencies: SecurityReviewDependencies = {
@@ -64,6 +66,7 @@ const defaultDependencies: SecurityReviewDependencies = {
   setExitCode: (exitCode) => {
     process.exitCode = exitCode
   },
+  recordMetadata: recordAppSecurityMetadata,
 }
 
 function isBlockingBreached(result: SecurityReviewResult): boolean {
@@ -143,6 +146,13 @@ export default async function securityReview(
     checkIds: options.checkIds,
     blocking: options.blocking,
   })
+
+  // Every check, not just the --check-id ones, so the count doesn't depend on the filter. Without result files
+  // there's nothing to count, so the field stays unset rather than reporting zero.
+  if (result.sources.deterministic !== null || result.sources.agent !== null) {
+    const findings = result.allChecks.reduce((total, check) => total + activeFindings(check).length, 0)
+    await dependencies.recordMetadata({num_security_findings: findings})
+  }
 
   if (options.json) {
     dependencies.output(securityReviewJsonOutputSchema.encode(toSecurityReviewJson(result)))

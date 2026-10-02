@@ -1,6 +1,7 @@
 import {encodedArtifactSize, MAX_ARTIFACT_FILE_SIZE_BYTES, writeAgentFindings} from './app-security-artifacts.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {countLabel} from './app-security-format.js'
+import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
 import {getEngineVersion, recordAgentFindings, type AgentFindingsDocument} from './app-security-engine/index.js'
 import {resultsKey, type AppSecuritySelection} from './app-security-selection.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -21,12 +22,14 @@ export interface SecurityRecordDependencies {
   readStdin(): Promise<string | undefined>
   engineVersion(): string
   writeAgentFindings(appDirectory: string, resultsKey: string, document: AgentFindingsDocument): Promise<string>
+  recordMetadata(fields: AppSecurityMetadata): Promise<void>
 }
 
 const defaultDependencies: SecurityRecordDependencies = {
   readStdin: readStdinString,
   engineVersion: getEngineVersion,
   writeAgentFindings,
+  recordMetadata: recordAppSecurityMetadata,
 }
 
 function recordCommand(commands: AppSecurityCommands): string {
@@ -116,11 +119,9 @@ export default async function securityRecord(
   }
 
   const path = await dependencies.writeAgentFindings(selection.appDirectory, resultsKey(selection), recorded.document)
-  return {
-    path,
-    checks: recorded.document.checks.length,
-    findings: recorded.document.checks.reduce((total, check) => total + check.findings.length, 0),
-  }
+  const findings = recorded.document.checks.reduce((total, check) => total + check.findings.length, 0)
+  await dependencies.recordMetadata({num_security_findings: findings})
+  return {path, checks: recorded.document.checks.length, findings}
 }
 
 /** Presents a recorded document in the terminal. */
