@@ -101,13 +101,13 @@ describe('translateFindingsDocument', () => {
 
   test('reports missing required fields with readable paths', () => {
     const document = asJson(deterministicFindingsDocument) as Record<string, any>
-    delete document.project
+    delete document.generated_at
     delete document.checks[0].snapshot.title
     delete document.checks[0].findings[0].location.file
     document.checks[0].findings[0].evidence = 'none'
 
     expect(translateInvalid(document)).toEqual([
-      expect.stringMatching(/^project: /),
+      expect.stringMatching(/^generated_at: /),
       expect.stringMatching(/^checks\[0\]\.snapshot\.title: /),
       expect.stringMatching(/^checks\[0\]\.findings\[0\]\.location\.file: /),
       expect.stringMatching(/^checks\[0\]\.findings\[0\]\.evidence: /),

@@ -5,6 +5,7 @@ import {
   toSecurityReviewJson,
 } from './security-review-json.js'
 import {reviewAppSecurityResults} from './security-review.js'
+import {appSecurityArtifactPaths} from './app-security-artifacts.js'
 import {appSecurityResultsFor} from './app-security-results.test-data.js'
 import {
   agentFindingsDocument,
@@ -18,9 +19,11 @@ import type {AppSecurityResults} from './app-security-results.js'
 
 const fixtureDirectory = fileURLToPath(new URL('./app-security-json-fixtures', import.meta.url))
 const appRoot = '/tmp/review-app'
+const resultsKey = 'shopify.app'
+const resultsDirectory = appSecurityArtifactPaths(appRoot, resultsKey).resultsDirectory
 
 function results(sources: {deterministic: boolean; agent: boolean}): AppSecurityResults {
-  return appSecurityResultsFor(appRoot, {
+  return appSecurityResultsFor(appRoot, resultsKey, {
     deterministic: sources.deterministic ? deterministicFindingsDocument : null,
     agent: sources.agent ? agentFindingsDocument : null,
   })
@@ -35,7 +38,7 @@ describe('App Security review JSON contract', () => {
 
   test('encodes both sources without their checks, the combined checks, and a null filter', async () => {
     const result = reviewAppSecurityResults(results({deterministic: true, agent: true}), {
-      appRoot,
+      resultsDirectory,
       checkIds: [],
       blocking: 'none',
     })
@@ -48,7 +51,7 @@ describe('App Security review JSON contract', () => {
 
   test('encodes the --check-id filter and only the filtered checks', async () => {
     const result = reviewAppSecurityResults(results({deterministic: true, agent: false}), {
-      appRoot,
+      resultsDirectory,
       checkIds: ['OPEN_REDIRECT', 'CREDENTIAL_LOG_LEAKAGE'],
       blocking: 'none',
     })
@@ -61,7 +64,7 @@ describe('App Security review JSON contract', () => {
 
   test('encodes missing files as null sources with no checks', () => {
     const result = reviewAppSecurityResults(results({deterministic: false, agent: false}), {
-      appRoot,
+      resultsDirectory,
       checkIds: [],
       blocking: 'none',
     })
@@ -77,7 +80,7 @@ describe('App Security review JSON contract', () => {
 
   test('echoes the requested IDs when no file is present', () => {
     const result = reviewAppSecurityResults(results({deterministic: false, agent: false}), {
-      appRoot,
+      resultsDirectory,
       checkIds: ['UNKNOWN_CHECK'],
       blocking: 'none',
     })
@@ -93,7 +96,7 @@ describe('App Security review JSON contract', () => {
 
   test('rejects a finding whose disposition is unknown', () => {
     const result = reviewAppSecurityResults(results({deterministic: true, agent: true}), {
-      appRoot,
+      resultsDirectory,
       checkIds: [],
       blocking: 'none',
     })

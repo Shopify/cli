@@ -92,7 +92,7 @@ describe('app security check command boundary', () => {
     await inTemporaryDirectory(async (directory) => {
       const {nestedDirectory} = await createApp(directory)
       const appDirectory = await fileRealPath(directory)
-      const paths = appSecurityArtifactPaths(appDirectory)
+      const paths = appSecurityArtifactPaths(appDirectory, 'shopify.app')
 
       const result = await runCommand(['--path', nestedDirectory, '--json', '--skip-instructions'])
 
@@ -125,10 +125,52 @@ describe('app security check command boundary', () => {
     })
   })
 
+  test('writes the results under the --client-id results key and creates .shopify/.gitignore', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const appDirectory = await fileRealPath(directory)
+      const paths = appSecurityArtifactPaths(appDirectory, 'other-client-id')
+
+      const result = await runCommand([
+        '--path',
+        directory,
+        '--client-id',
+        'other-client-id',
+        '--json',
+        '--skip-instructions',
+      ])
+
+      expect(result.exitCode).toBe(0)
+      expect(JSON.parse(result.stdout).agent_checks_path).toBe(paths.agentChecksPath)
+      await expect(readJson(paths.deterministicFindingsPath)).resolves.toMatchObject({source: 'deterministic'})
+      await expect(
+        readFile(appSecurityArtifactPaths(appDirectory, 'shopify.app').agentChecksPath),
+      ).rejects.toMatchObject({code: 'ENOENT'})
+      await expect(readFile(joinPath(appDirectory, '.shopify', '.gitignore'), 'utf8')).resolves.toContain('*')
+    })
+  })
+
+  test('writes the results under the configuration name without --client-id, per selected configuration', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      await writeFile(joinPath(directory, 'shopify.app.staging.toml'), validAppConfiguration('staging-client-id'))
+      const appDirectory = await fileRealPath(directory)
+
+      const result = await runCommand(['--path', directory, '--config', 'staging', '--json', '--skip-instructions'])
+
+      expect(result.exitCode).toBe(0)
+      const stagingPaths = appSecurityArtifactPaths(appDirectory, 'shopify.app.staging')
+      await expect(readJson(stagingPaths.deterministicFindingsPath)).resolves.toMatchObject({source: 'deterministic'})
+      await expect(
+        readFile(appSecurityArtifactPaths(appDirectory, 'staging-client-id').deterministicFindingsPath),
+      ).rejects.toMatchObject({code: 'ENOENT'})
+    })
+  })
+
   test('re-scanning replaces the check artifacts without prompting and leaves agent findings untouched', async () => {
     await inTemporaryDirectory(async (directory) => {
       const {nestedDirectory} = await createApp(directory)
-      const paths = appSecurityArtifactPaths(directory)
+      const paths = appSecurityArtifactPaths(directory, 'shopify.app')
 
       const firstScan = await runCommand(['--path', directory, '--json', '--skip-instructions'])
       expect(firstScan.exitCode).toBe(0)
@@ -160,7 +202,7 @@ describe('app security check command boundary', () => {
   test('rejects a missing config', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
-      const paths = appSecurityArtifactPaths(directory)
+      const paths = appSecurityArtifactPaths(directory, 'shopify.app')
 
       const result = await runCommand([
         '--path',

@@ -19,7 +19,6 @@ const deterministicFindings: DeterministicFindingsDocument = {
   source: 'deterministic',
   engine,
   generated_at: '2026-08-24T00:00:00.000Z',
-  project: {commit: null, dirty: null},
   detection: {framework: 'none', surface: 'config_only', languages: []},
   coverage: {files_scanned: 1, files_skipped: [], gaps: []},
   checks: [],

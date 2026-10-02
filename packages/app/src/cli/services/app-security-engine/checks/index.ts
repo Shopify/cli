@@ -15,7 +15,6 @@ import type {
   AgentFindingsDocument,
   CheckPrecedence,
   CheckSnapshot,
-  ProjectState,
   Severity,
   StoredCheck,
   StoredFinding,
@@ -460,7 +459,6 @@ const optionalArray = (document: Record<string, unknown>, key: string, errors: s
 
 export interface RecordAgentFindingsOptions {
   engineVersion: string
-  project: ProjectState
   /** Defaults to now. */
   generatedAt?: string
 }
@@ -531,7 +529,6 @@ export function recordAgentFindings(document: unknown, options: RecordAgentFindi
       source: 'agent',
       engine: {name: ENGINE_NAME, version: options.engineVersion},
       generated_at: options.generatedAt ?? new Date().toISOString(),
-      project: options.project,
       checks: storedChecks,
     },
   }

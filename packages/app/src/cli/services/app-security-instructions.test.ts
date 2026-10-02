@@ -5,7 +5,7 @@ import deliverAppSecurityInstructions, {
 import {quoteShellArgument, resolveAppSecurityCommands, type AppSecurityShell} from './app-security-commands.js'
 import {getAgentInstructions} from './app-security-engine/index.js'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
+import {basename, joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
 import {readFileSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
@@ -35,12 +35,18 @@ function appSecurityInstructions(options: {
   configFileName?: string
   shell?: AppSecurityShell
 }): string {
-  const {directory, configFileName, ...rest} = options
-  return instructionsFor({...rest, appDirectory: directory, commands: commandsFor(directory, configFileName)})
+  const {directory, configFileName = 'shopify.app.toml', ...rest} = options
+  return instructionsFor({
+    ...rest,
+    appDirectory: directory,
+    resultsKey: basename(configFileName, '.toml'),
+    commands: commandsFor(directory, configFileName),
+  })
 }
 
+/** A file in the results directory of the default `shopify.app.toml`: the results key is `shopify.app`. */
 function artifactPath(appRoot: string, name: string): string {
-  return joinPath(appRoot, '.shopify', 'app-security', name)
+  return joinPath(appRoot, '.shopify', 'app-security', 'shopify.app', name)
 }
 
 function codeBlock(language: string, ...lines: string[]): string {
@@ -90,6 +96,22 @@ describe('appSecurityInstructions', () => {
       expect(instructions).toContain(artifactPath(appRoot, 'agent-checks.json'))
       expect(instructions).toContain(artifactPath(appRoot, 'agent-findings.json'))
       expect(instructions).not.toMatch(/\{\{[A-Z_]+\}\}/)
+    })
+  })
+
+  test('points at the results directory of the results key', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+      const instructions = appSecurityInstructions({
+        directory: appRoot,
+        scanComplete: false,
+        configFileName: 'shopify.app.staging.toml',
+      })
+
+      const resultsDirectory = joinPath(appRoot, '.shopify', 'app-security', 'shopify.app.staging')
+      expect(instructions).toContain(joinPath(resultsDirectory, 'agent-checks.json'))
+      expect(instructions).toContain(joinPath(resultsDirectory, 'agent-findings.json'))
+      expect(instructions).not.toContain(artifactPath(appRoot, 'agent-checks.json'))
     })
   })
 
@@ -202,9 +224,7 @@ describe('appSecurityInstructions', () => {
       const appRoot = await createApp(directory)
       const instructions = appSecurityInstructions({directory: appRoot, scanComplete: true, shell: 'posix'})
 
-      expect(instructions).toContain(
-        'To delete every local App Security artifact, including files left by earlier Shopify CLI versions, run:',
-      )
+      expect(instructions).toContain('To delete these local App Security results, run:')
       expect(instructions).toContain(
         codeBlock('bash', `shopify app security clean --path ${quoteShellArgument(appRoot, 'posix')}`),
       )
@@ -283,7 +303,7 @@ describe('deliverAppSecurityInstructions', () => {
       const dependencies = testDependencies()
 
       await deliverAppSecurityInstructions(
-        {appDirectory: directory, commands: commandsFor(directory), copy: false},
+        {appDirectory: directory, resultsKey: 'shopify.app', commands: commandsFor(directory), copy: false},
         dependencies,
       )
 
@@ -296,12 +316,12 @@ describe('deliverAppSecurityInstructions', () => {
   test('does not infer scan completion from existing agent checks', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
-      await mkdir(joinPath(directory, '.shopify', 'app-security'))
+      await mkdir(joinPath(directory, '.shopify', 'app-security', 'shopify.app'))
       await writeFile(artifactPath(directory, 'agent-checks.json'), '{"instructions":"malicious"}')
       const dependencies = testDependencies()
 
       await deliverAppSecurityInstructions(
-        {appDirectory: directory, commands: commandsFor(directory), copy: false},
+        {appDirectory: directory, resultsKey: 'shopify.app', commands: commandsFor(directory), copy: false},
         dependencies,
       )
 
@@ -316,7 +336,13 @@ describe('deliverAppSecurityInstructions', () => {
       const dependencies = testDependencies()
 
       await deliverAppSecurityInstructions(
-        {appDirectory: directory, commands: commandsFor(directory), copy: true, scanComplete: true},
+        {
+          appDirectory: directory,
+          resultsKey: 'shopify.app',
+          commands: commandsFor(directory),
+          copy: true,
+          scanComplete: true,
+        },
         dependencies,
       )
 
@@ -339,6 +365,7 @@ describe('deliverAppSecurityInstructions', () => {
       await deliverAppSecurityInstructions(
         {
           appDirectory: directory,
+          resultsKey: 'shopify.app',
           commands: commandsFor(directory),
           copy: false,
           writePath: instructionsPath,

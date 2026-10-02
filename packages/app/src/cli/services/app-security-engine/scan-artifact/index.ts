@@ -129,10 +129,6 @@ export function buildDeterministicFindings(
       ruleset: redactText(options.ruleset ?? `app-security-rules@${result.version}`),
     },
     generated_at: options.generatedAt ?? new Date().toISOString(),
-    project: {
-      commit: result.project.commit,
-      dirty: result.project.dirty,
-    },
     detection: {
       ...result.detection,
       languages: result.detection.languages.map((language) => ({

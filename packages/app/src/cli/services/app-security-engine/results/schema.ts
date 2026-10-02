@@ -80,11 +80,6 @@ const storedChecksSchema = zod.array(storedCheckSchema).superRefine((checks, con
   })
 })
 
-export const projectStateSchema = zod.object({
-  commit: zod.string().nullable(),
-  dirty: zod.boolean().nullable(),
-})
-
 export const projectDetectionSchema = zod.object({
   framework: zod.enum(['react_router', 'none', 'unknown', 'mixed']),
   surface: zod.enum(['react_router', 'theme_app_extension', 'config_only', 'unknown', 'mixed']),
@@ -120,7 +115,6 @@ export const coverageSchema = zod.object({
 const documentBase = {
   schema_version: zod.literal(FINDINGS_SCHEMA_VERSION),
   generated_at: zod.string(),
-  project: projectStateSchema,
   checks: storedChecksSchema,
 }
 
