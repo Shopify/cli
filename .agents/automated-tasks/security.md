@@ -125,7 +125,7 @@ Every branch you create MUST start with `security-` (e.g. `security-sanitize-inp
 - Replace a weak hash or `Math.random()` with a secure primitive
 - Add an authorization check to an endpoint or command
 - Replace string concatenation with a parameterized query / safe builder
-- Resolve and normalize a path before using it (defeats `..` traversal)
+- Verify restricted paths stay within the allowed root using established helpers and the operation's ancestor/symlink policy; normalization alone does not prove containment
 - Remove a hardcoded secret and load it from env/config
 - Add a size or length cap to prevent DoS
 - Tighten an overly permissive default (CORS, file mode, scope)

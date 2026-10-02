@@ -1,10 +1,10 @@
 # Agent Instructions
 
-As a Principal Developer, the highest ranking engineer at our company, you are tasked with creating clear, readable code in TypeScript. You use the latest version of all of these technologies, and follow their best practices and conventions.
+Contribute clear, readable TypeScript that follows repository conventions. Use versions supported by the package engines, lockfile, and workflows, not the latest versions by default.
 
 Match your planning to the complexity of the task. For anything beyond a small or obvious change, outline your intended approach before writing code — which files you'll touch and the shape of the solution — so it can be checked before you commit to an implementation. Keep this to a few sentences or bullets. For trivial changes, skip straight to the implementation.
 
-You carefully provide accurate, factual, thoughtful answers, and are a genius at reasoning; but you always admit when you don't know the answer.
+Give accurate, factual answers. State uncertainty and material trade-offs; do not guess.
 
 Remember the following important mindset when providing code, in the following order:
 - Adherence to conventions and patterns in the rest of the codebase
@@ -21,7 +21,7 @@ Adhere to the following guidelines in your code:
 - Fully implement all requested functionality
 - Leave no TODOs, FIXMEs, placeholders or missing pieces.
 - Always consider the experience of a developer who will be reading your code.
-- Use comments to explain why you are doing something in a certain way, if it is not obvious. If unsure, leave a comment.
+- Use comments for durable, non-obvious reasons or invariants, not code narration, old-implementation history, PR explanations, or fragile benchmark figures. Preserve public JSDoc.
 - Employ descriptive, human-readable variable and function/const names.
 - Prefer writing in a functional style, producing pure functions that do not cause side effects.
 - The codebase is strictly linted; follow the existing code style to ensure consistency.
@@ -40,7 +40,7 @@ Adhere to the following guidelines in your code:
 - Write a concise description, explaining the problem and the high-level approach. Include implementation details only when they help reviewers understand a decision or tradeoff. Avoid repeating what is clear from the diff. Example for the WHAT section: "Refresh expired credentials before retrying the requests, so users can continue without signing in again".
 - Remove empty sections and hidden comments.
 - Do not mark checklist items as completed (except the changelog one if added).
-- In "How to test your changes?" only include CLI commands to test locally, do not add commands to run tests or other checks.
+- In "How to manually test your changes?", give useful local reviewer steps or CLI commands, not commands to run tests or other checks. This does not require live-state-changing commands.
 
 ## Changesets
 
@@ -56,29 +56,36 @@ If the change is not ready to be public, do not add a changeset.
 
 ## Further reading
 
+Read the guides that apply to your task.
+
 ### CLI
 
-- [docs/README.md](docs/README.md)
-- [docs/cli/architecture.md](docs/cli/architecture.md)
-- [docs/cli/conventions.md](docs/cli/conventions.md)
-- [docs/cli/cross-os-compatibility.md](docs/cli/cross-os-compatibility.md)
-- [docs/cli/debugging.md](docs/cli/debugging.md)
-- [docs/cli/eslint-rules.md](docs/cli/eslint-rules.md)
-- [docs/cli/faq.md](docs/cli/faq.md)
-- [docs/cli/get-started.md](docs/cli/get-started.md)
-- [docs/cli/naming-conventions.md](docs/cli/naming-conventions.md)
-- [docs/cli/performance.md](docs/cli/performance.md)
-- [docs/cli/testing-strategy.md](docs/cli/testing-strategy.md)
-- [docs/cli/troubleshooting.md](docs/cli/troubleshooting.md)
+- [Docs index](docs/README.md): find related guides and the reasons behind past decisions.
+- [Architecture](docs/cli/architecture.md): choose the right package for new or moved code.
+- [Conventions](docs/cli/conventions.md): follow shared patterns for modules, state, resource cleanup, and file IO.
+- [Cross-OS compatibility](docs/cli/cross-os-compatibility.md): avoid OS-specific failures when working with paths, processes, and dependencies.
+- [Debugging](docs/cli/debugging.md): investigate failures with the debugger and check diagnostics for credential leaks.
+- [ESLint rules](docs/cli/eslint-rules.md): understand local lint rules for command flags and environment variables.
+- [FAQ](docs/cli/faq.md): understand the choice of TOML for configuration files.
+- [Get started](docs/cli/get-started.md): set up the repository and run the CLI against a local project.
+- [Naming conventions](docs/cli/naming-conventions.md): use reserved command names, flags, and short forms consistently.
+- [Performance](docs/cli/performance.md): measure performance changes and control startup cost and concurrent work.
+- [Testing strategy](docs/cli/testing-strategy.md): write tests that detect regressions and choose the appropriate test suite.
+- [Troubleshooting](docs/cli/troubleshooting.md): resolve known Vitest mocking problems.
+- [Contributing](CONTRIBUTING.md): check changeset, versioning, and deprecation rules before changing public behavior.
+- [JSON output contracts](docs/cli/json-output.md): check result and error contracts before changing `--json` output.
+- [CLI pre-submit CI](.agents/skills/cli-pre-submit-ci/SKILL.md): choose local checks and generated-file updates that match your change.
 
 ### CLI kit
 
-- [docs/cli-kit/command-guidelines.md](docs/cli-kit/command-guidelines.md)
-- [docs/cli-kit/errors.md](docs/cli-kit/errors.md)
-- [packages/cli/README.md](packages/cli/README.md)
+- [Command guidelines](docs/cli-kit/command-guidelines.md): design commands and flags with consistent structure, defaults, and dependencies.
+- [Error handling](docs/cli/error_handling.md): choose error types, report failures, and retry only known recoverable conditions.
+- [Command reference](packages/cli/README.md): check documented command usage, flags, and examples.
 
 ### UI kit
 
-- [docs/cli-kit/ui-kit/contributing.md](docs/cli-kit/ui-kit/contributing.md)
-- [docs/cli-kit/ui-kit/guidelines.md](docs/cli-kit/ui-kit/guidelines.md)
-- [docs/cli-kit/ui-kit/readme.md](docs/cli-kit/ui-kit/readme.md)
+- [Contributing to UI Kit](docs/cli-kit/ui-kit/contributing.md): follow component design and testing patterns when changing UI Kit.
+- [Content guidelines](docs/cli-kit/ui-kit/guidelines.md): keep prompts, progress messages, and error text consistent.
+- [Using UI Kit](docs/cli-kit/ui-kit/readme.md): use existing prompt and output APIs for consistent terminal UI.
+
+Follow the check requirements of the active automation task.
