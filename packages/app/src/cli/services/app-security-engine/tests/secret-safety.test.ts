@@ -322,7 +322,7 @@ describe('git status drives severity, not .gitignore text', () => {
     })
   })
 
-  test('reports a secret inside a nested repository that the app repository ignores by name', async () => {
+  test("judges a secret inside a nested repository by that repository's rules, not the app repository's", async () => {
     const dir = removeAfterTest(makeApp({'.gitignore': '.env\n'}))
     git(dir, ['init', '-q', '.'])
     const inner = join(dir, 'inner')
@@ -334,14 +334,11 @@ describe('git status drives severity, not .gitignore text', () => {
     const finding = result.issues.find((i) => i.id === 'COMMITTED_SECRET')
     expect(finding).toMatchObject({
       location: {file: 'inner/.env'},
-      title: 'Environment file with secrets is inside a nested git repository',
+      title: 'Environment file with secrets is not ignored by git',
       pattern_id: 'environment-file:unconfirmed',
     })
-    expect(finding!.message).toContain('inner/.env belongs to a nested git repository')
-    expect(finding!.message).not.toContain('could not be confirmed')
-    const evidence = finding!.detection_evidence?.join(' ')
-    expect(evidence).toContain('→ ignored')
-    expect(evidence).toContain('git rev-parse --show-toplevel → differs')
+    expect(finding!.message).toContain('inner/.env is untracked but not ignored')
+    expect(finding!.detection_evidence).toContain('git check-ignore -q inner/.env → not ignored')
   })
 
   test('says the ignored-file listing failed when git ignores a file that was still scanned', async () => {
@@ -400,7 +397,7 @@ describe('git status drives severity, not .gitignore text', () => {
 
   test('reports tri-state status rather than a boolean guess', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'app-security-nogit-'))
-    const status = await gitStatusFor(dir, '.env')
+    const status = await gitStatusFor({path: '.env', absolutePath: join(dir, '.env')})
     // Outside a repo both answers are unknown — not `false`.
     expect(status.tracked).toBeUndefined()
     expect(status.ignored).toBeUndefined()
@@ -416,7 +413,7 @@ describe('git status drives severity, not .gitignore text', () => {
     writeFileSync(join(dir, '.gitignore'), '.env*\n!.env.example\n')
     writeFileSync(join(dir, '.env.example'), 'SHOPIFY_API_KEY=placeholder\n')
 
-    const status = await gitStatusFor(dir, '.env.example')
+    const status = await gitStatusFor({path: '.env.example', absolutePath: join(dir, '.env.example')})
     expect(status.ignored).toBe(false) // negated back in
     rmSync(dir, {recursive: true, force: true})
   })

@@ -28,6 +28,7 @@ describe('app security check command', () => {
       'client-id',
       'config',
       'exclude',
+      'include-dir',
       'json',
       'no-git-ignore',
       'path',
@@ -53,6 +54,7 @@ describe('app security check command', () => {
       blocking: 'high',
       yes: false,
       skipInstructions: true,
+      includeDirs: [],
       excludePatterns: [],
       noGitIgnore: false,
     })
@@ -69,13 +71,26 @@ describe('app security check command', () => {
     )
   })
 
+  test('forwards repeated --include-dir values exactly as typed, without resolving them', async () => {
+    await SecurityCheck.run(
+      ['--include-dir', '../backend', '--include-dir', './lib/', '--include-dir', 'a b', '--skip-instructions'],
+      import.meta.url,
+    )
+
+    expect(securityCheck).toHaveBeenCalledWith(
+      expect.objectContaining({includeDirs: ['../backend', './lib/', 'a b'], skipInstructions: true}),
+    )
+  })
+
   test('forwards --no-git-ignore', async () => {
     await SecurityCheck.run(['--no-git-ignore', '--skip-instructions'], import.meta.url)
 
     expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({noGitIgnore: true, skipInstructions: true}))
   })
 
-  test('does not read --exclude or --no-git-ignore from the environment', () => {
+  test('reads --include-dir and --exclude only from the command line', () => {
+    expect(SecurityCheck.flags['include-dir'].env).toBeUndefined()
+    expect(SecurityCheck.flags['include-dir'].multiple).toBe(true)
     expect(SecurityCheck.flags.exclude.env).toBeUndefined()
     expect(SecurityCheck.flags['no-git-ignore'].env).toBe('SHOPIFY_FLAG_NO_GIT_IGNORE')
   })
@@ -97,6 +112,7 @@ describe('app security check command', () => {
       blocking: 'none',
       yes: true,
       skipInstructions: false,
+      includeDirs: [],
       excludePatterns: [],
       noGitIgnore: false,
     })

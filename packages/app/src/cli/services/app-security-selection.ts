@@ -4,7 +4,7 @@ import {fetchOrCreateOrganizationApp} from './context.js'
 import {NoAppConfigurationFoundError} from '../models/project/project.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath, isDirectory} from '@shopify/cli-kit/node/fs'
-import {basename, joinPath} from '@shopify/cli-kit/node/path'
+import {basename, cwd, isSubpath, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 export type AppSecuritySelection =
@@ -27,8 +27,9 @@ export type AppSecuritySelection =
       clientIdSource: 'flag' | 'picker'
     }
 
-/** A directory that is walked. Until `--include-dir` exists, the app directory is the only one. */
+/** A directory that is walked. */
 export interface AppSecurityScanDirectory {
+  /** Absolute; the real path. */
   directory: string
   origin: 'app_directory' | 'include_dir'
 }
@@ -144,6 +145,51 @@ async function resolveWithoutAppConfigurationFile(
     appDirectory,
     clientId: await dependencies.pickClientId(appDirectory),
     clientIdSource: 'picker',
+  }
+}
+
+/**
+ * Resolves each `--include-dir` value, as typed, against the working directory. Returns real paths in the order
+ * given. Another app's directory is allowed.
+ */
+export async function resolveIncludeDirectories(includeDirs: ReadonlyArray<string>): Promise<string[]> {
+  const directories: string[] = []
+  for (const typedValue of includeDirs) {
+    const absolutePath = resolvePath(cwd(), typedValue)
+    // eslint-disable-next-line no-await-in-loop
+    const realPath = await realPathIfExists(absolutePath)
+    if (realPath === undefined) throw new AbortError(`--include-dir ${typedValue}: directory doesn't exist.`)
+    // eslint-disable-next-line no-await-in-loop
+    if (!(await isDirectory(realPath))) throw new AbortError(`--include-dir ${typedValue}: not a directory.`)
+    directories.push(realPath)
+  }
+  return directories
+}
+
+/**
+ * The app directory, then each include directory, compared by real path. A duplicate is dropped, so an include
+ * directory that is the app directory counts as the app directory. A directory inside another one is dropped too,
+ * because walking the outer one covers it; that includes the app directory when an include directory contains it.
+ * `requestedScanDirectories` keeps the directories that were dropped for being nested, since each still gets the
+ * ignored-scan-directory warning.
+ */
+export function mergeScanDirectories(
+  appDirectory: string,
+  includeDirectories: ReadonlyArray<string>,
+): {scanDirectories: AppSecurityScanDirectory[]; requestedScanDirectories: string[]} {
+  const requested = [
+    {directory: appDirectory, origin: 'app_directory' as const},
+    ...includeDirectories.map((directory) => ({directory, origin: 'include_dir' as const})),
+  ].filter((candidate, index, all) => all.findIndex(({directory}) => directory === candidate.directory) === index)
+
+  return {
+    scanDirectories: requested.filter(
+      (candidate) =>
+        !requested.some(
+          ({directory}) => directory !== candidate.directory && isSubpath(directory, candidate.directory),
+        ),
+    ),
+    requestedScanDirectories: requested.map(({directory}) => directory),
   }
 }
 

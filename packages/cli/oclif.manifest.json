@@ -3925,6 +3925,13 @@
           "name": "exclude",
           "type": "option"
         },
+        "include-dir": {
+          "description": "Also scan this directory, relative to the working directory. Repeat the flag to add directories. Use it for code that lives outside the app directory, such as a backend or a shared library.",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "name": "include-dir",
+          "type": "option"
+        },
         "json": {
           "allowNo": false,
           "char": "j",

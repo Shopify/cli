@@ -76,8 +76,10 @@ export interface ProjectDetection {
 /** What to scan, already resolved: the engine doesn't look for an app directory or choose a configuration. */
 export interface ScanInput {
   appDirectory: string
-  /** Absolute real paths of the directories to walk. */
+  /** Absolute real paths of the directories to walk. None is inside another. */
   scanDirectories: ReadonlyArray<string>
+  /** Absolute real paths of every directory that was asked for, including those that `scanDirectories` leaves out because they are inside another. */
+  requestedScanDirectories: ReadonlyArray<string>
   /** Absolute path of the selected app configuration file. Absent when scanning without app configuration. */
   appConfigFilePath?: string
   clientId?: string
@@ -105,7 +107,7 @@ export interface ScanResult {
 
 /** What gathering reports besides the result, for the caller to show. It isn't part of the stored findings. */
 export interface ScanOutput extends ScanResult {
-  /** Absolute paths of the scan directories that their repository ignores, so only the files Git tracks in them were scanned. */
+  /** Absolute paths of the requested scan directories that their repository ignores, so only the files Git tracks in them were scanned. */
   ignoredScanDirectories: string[]
 }
 

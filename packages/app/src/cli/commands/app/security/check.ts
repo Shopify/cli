@@ -26,6 +26,13 @@ In interactive terminals, the command offers to copy the coding-agent instructio
   static flags = {
     ...globalFlags,
     ...appSecuritySelectionFlags,
+    // No environment variable: oclif passes a repeatable flag's variable as one string, so it could hold only one directory.
+    // eslint-disable-next-line @shopify/cli/command-flags-with-env
+    'include-dir': Flags.string({
+      description:
+        'Also scan this directory, relative to the working directory. Repeat the flag to add directories. Use it for code that lives outside the app directory, such as a backend or a shared library.',
+      multiple: true,
+    }),
     // No environment variable: oclif passes a repeatable flag's variable as one string, so it could hold only one pattern.
     // eslint-disable-next-line @shopify/cli/command-flags-with-env
     exclude: Flags.string({
@@ -67,6 +74,7 @@ In interactive terminals, the command offers to copy the coding-agent instructio
       blocking: flags.blocking,
       yes: flags.yes,
       skipInstructions: flags['skip-instructions'],
+      includeDirs: flags['include-dir'] ?? [],
       excludePatterns: flags.exclude ?? [],
       noGitIgnore: Boolean(flags['no-git-ignore']),
     })
