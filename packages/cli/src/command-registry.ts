@@ -14,6 +14,19 @@
 import {dirname, joinPath, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {existsSync, readFileSync} from 'fs'
 import {fileURLToPath, pathToFileURL} from 'url'
+import type {Command} from '@oclif/core'
+
+type CommandClass = typeof Command
+
+/**
+ * Look up a command class in the command table exported by an external plugin
+ * package. Each package compiles against its own `@oclif/core`, so its command
+ * classes are not statically assignable to this workspace's `typeof Command`;
+ * this helper is the single place where that boundary is bridged.
+ */
+function commandFromTable(table: unknown, id: string): CommandClass | undefined {
+  return (table as Record<string, CommandClass | undefined>)[id]
+}
 
 interface ManifestCommand {
   customPluginName?: string
@@ -81,8 +94,7 @@ const packagesWithPerFileLoading = new Set(['@shopify/cli', '@shopify/app', '@sh
  * derives the file path from the command ID, and imports only that file.
  * Falls back to importing the full package for external plugins.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function loadCommand(id: string): Promise<any | undefined> {
+export async function loadCommand(id: string): Promise<CommandClass | undefined> {
   const commands = getManifestCommands()
   const entry = commands[id]
   if (!entry) return undefined
@@ -112,39 +124,33 @@ function resolveCommandRoot(id: string, packageName: string): string {
   return resolvePackageDir(packageName)
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function loadCommandPerFile(id: string, packageName: string): Promise<any | undefined> {
+async function loadCommandPerFile(id: string, packageName: string): Promise<CommandClass | undefined> {
   const entryPoint = entryPointForCommand(id)
   const root = resolveCommandRoot(id, packageName)
   const modulePath = pathToFileURL(joinPath(root, entryPoint)).href
-  const module = await import(modulePath)
+  const module: {default?: CommandClass} = await import(modulePath)
   return module.default
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function loadCommandFromPackage(id: string, packageName: string): Promise<any | undefined> {
+async function loadCommandFromPackage(id: string, packageName: string): Promise<CommandClass | undefined> {
   if (packageName === '@shopify/cli-hydrogen') {
     const {COMMANDS} = await import('@shopify/cli-hydrogen')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (COMMANDS as any)?.[id]
+    return commandFromTable(COMMANDS, id)
   }
 
   if (packageName === '@oclif/plugin-commands') {
     const {commands} = await import('@oclif/plugin-commands')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (commands as any)[id]
+    return commandFromTable(commands, id)
   }
 
   if (packageName === '@oclif/plugin-plugins') {
     const {commands} = await import('@oclif/plugin-plugins')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (commands as any)[id]
+    return commandFromTable(commands, id)
   }
 
   if (packageName === '@shopify/plugin-did-you-mean') {
     const {DidYouMeanCommands} = await import('@shopify/plugin-did-you-mean')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (DidYouMeanCommands as any)[id]
+    return commandFromTable(DidYouMeanCommands, id)
   }
 
   return undefined
