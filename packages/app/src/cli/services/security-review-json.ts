@@ -76,6 +76,7 @@ const agentSourceSchema = zod.object({
   schema_version: zod.literal(FINDINGS_SCHEMA_VERSION),
   engine: agentFindingsDocumentSchema.shape.engine,
   generated_at: zod.string(),
+  scope: agentFindingsDocumentSchema.shape.scope,
 })
 
 export const securityReviewJsonOutputSchema = defineJsonOutputSchema({
@@ -86,6 +87,7 @@ export const securityReviewJsonOutputSchema = defineJsonOutputSchema({
       deterministic: deterministicSourceSchema.nullable(),
       agent: agentSourceSchema.nullable(),
     }),
+    scope_differs: zod.boolean(),
     checks: zod.array(combinedCheckSchema),
   }),
   definitions: {
@@ -110,7 +112,7 @@ export const SOURCES_MATCH_REVIEW_JSON: Equals<
   Omit<zod.infer<typeof deterministicSourceSchema>, 'path'>
 > &
   Equals<
-    Pick<AgentFindingsDocument, 'schema_version' | 'engine' | 'generated_at'>,
+    Pick<AgentFindingsDocument, 'schema_version' | 'engine' | 'generated_at' | 'scope'>,
     Omit<zod.infer<typeof agentSourceSchema>, 'path'>
   > = true
 
@@ -136,9 +138,11 @@ export function toSecurityReviewJson(result: SecurityReviewResult): SecurityRevi
             schema_version: agent.document.schema_version,
             engine: agent.document.engine,
             generated_at: agent.document.generated_at,
+            scope: agent.document.scope,
           }
         : null,
     },
+    scope_differs: result.scopeDiffers,
     checks: result.checks,
   }
 }

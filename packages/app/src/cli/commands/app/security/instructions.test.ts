@@ -4,7 +4,7 @@ import {appFlags} from '../../../flags.js'
 import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts.js'
 import {resolveAppSecurityCommands} from '../../../services/app-security-commands.js'
 import deliverAppSecurityInstructions from '../../../services/app-security-instructions.js'
-import {resolveAppSecuritySelection} from '../../../services/app-security-selection.js'
+import {resolveAppSecuritySelection, type AppSecuritySelection} from '../../../services/app-security-selection.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {fileRealPath, inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
@@ -39,6 +39,10 @@ async function createApp(
   return appDirectory
 }
 
+function configSelection(appDirectory: string, configFileName: string): AppSecuritySelection {
+  return {kind: 'config', appDirectory, appConfigFilePath: joinPath(appDirectory, configFileName)}
+}
+
 describe('app security instructions command', () => {
   test('is hidden and does not require linked app context', () => {
     expect(SecurityInstructions.hidden).toBe(true)
@@ -70,7 +74,7 @@ describe('app security instructions command', () => {
       expect(deliverAppSecurityInstructions).toHaveBeenCalledWith({
         appDirectory,
         resultsKey: 'shopify.app',
-        commands: resolveAppSecurityCommands(appDirectory, 'shopify.app.toml'),
+        commands: resolveAppSecurityCommands(configSelection(appDirectory, 'shopify.app.toml'), cwd()),
         copy: false,
         writePath: undefined,
       })
@@ -115,7 +119,10 @@ describe('app security instructions command', () => {
       expect(deliverAppSecurityInstructions).toHaveBeenCalledWith(
         expect.objectContaining({
           resultsKey: 'shopify.app.staging',
-          commands: resolveAppSecurityCommands(appDirectory, 'shopify.app.staging.toml'),
+          commands: resolveAppSecurityCommands(
+            configSelection(appDirectory, 'shopify.app.staging.toml'),
+            resolvePath('./fixtures/unlinked-app'),
+          ),
         }),
       )
     })

@@ -547,10 +547,35 @@ function normalizeRunnerResult(value: Issue[] | RunnerResult): RunnerResult {
   return Array.isArray(value) ? {issues: value} : value
 }
 
-export async function scan(
-  {appDirectory: appRoot, scanDirectories, requestedScanDirectories, appConfigFilePath}: ScanInput,
-  options: ScanOptions = {},
-): Promise<ScanOutput> {
+function gatherScanPaths(
+  {appDirectory, scanDirectories, requestedScanDirectories, appConfigFilePath}: ScanInput,
+  options: ScanOptions,
+) {
+  return gatherPaths({
+    appDirectory,
+    scanDirectories,
+    requestedScanDirectories,
+    selectedAppConfigFilePath: appConfigFilePath,
+    rules: createPathRules({excludePatterns: options.excludePatterns ?? [], noGitIgnore: options.noGitIgnore ?? false}),
+  })
+}
+
+/**
+ * Only gathers: nothing is read, and no check runs. The reader is configured because walking records directories
+ * it can't list as skipped files, which are dropped here.
+ */
+export async function listGatheredPaths(input: ScanInput, options: ScanOptions = {}) {
+  configureRepositoryReader({
+    appDirectory: input.appDirectory,
+    scanDirectories: input.scanDirectories,
+    explicitInputs: new Set(),
+  })
+  const {paths, ignoredScanDirectories} = await gatherScanPaths(input, options)
+  return {paths, ignoredScanDirectories}
+}
+
+export async function scan(input: ScanInput, options: ScanOptions = {}): Promise<ScanOutput> {
+  const {appDirectory: appRoot, scanDirectories, appConfigFilePath} = input
   // The selected app configuration is an explicit input: it's read even when it is a symbolic link
   // that leaves the app directory.
   configureRepositoryReader({
@@ -561,17 +586,7 @@ export async function scan(
   const selectedFileName = appConfigFilePath ? basename(appConfigFilePath) : undefined
   const appToml = appConfigFilePath ? loadAppToml(appConfigFilePath, appRoot) : null
   const appTomls = appToml ? [appToml] : []
-  const {
-    paths: repositoryFiles,
-    ignoredScanDirectories,
-    listingStatus,
-  } = await gatherPaths({
-    appDirectory: appRoot,
-    scanDirectories,
-    requestedScanDirectories,
-    selectedAppConfigFilePath: appConfigFilePath,
-    rules: createPathRules({excludePatterns: options.excludePatterns ?? [], noGitIgnore: options.noGitIgnore ?? false}),
-  })
+  const {paths: repositoryFiles, ignoredScanDirectories, listingStatus} = await gatherScanPaths(input, options)
   const extensions = findExtensions(appRoot, repositoryFiles)
   const sourceCandidates = findSourceCandidates(repositoryFiles)
   const sourceFiles = findAppSourceFiles(appRoot, repositoryFiles)
