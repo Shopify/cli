@@ -8,6 +8,7 @@ import {commands} from '../../../index.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {cancelMigrationOperations} from '../../../services/subscription-migrations/cancel-operations.js'
+import {migrationCancellationJsonOutputSchema} from '../../../services/subscription-migrations/types.js'
 import {outputOperations} from '../../../services/subscription-migrations/command-output.js'
 import {getMigrationOperations} from '../../../services/subscription-migrations/get-operations.js'
 import {runSubmissionCommand} from '../../../services/subscription-migrations/run-submission-command.js'
@@ -18,11 +19,14 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import type {MigrationOperation} from '../../../models/subscription-migrations.js'
-import type {MigrationCancellationResult} from '../../../services/subscription-migrations/cancel-operations.js'
+import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
 import type {MigrationSubmissionResult} from '../../../services/subscription-migrations/submit-migration-plan.js'
 
 vi.mock('../../../services/app-context.js')
-vi.mock('../../../services/subscription-migrations/cancel-operations.js')
+vi.mock('../../../services/subscription-migrations/cancel-operations.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../services/subscription-migrations/cancel-operations.js')>()),
+  cancelMigrationOperations: vi.fn(),
+}))
 vi.mock('../../../services/subscription-migrations/command-output.js')
 vi.mock('../../../services/subscription-migrations/get-operations.js')
 vi.mock('../../../services/subscription-migrations/run-submission-command.js')
@@ -109,10 +113,9 @@ describe('subscription migration submission commands', () => {
       watch: true,
     })
     expect(outputResult).toHaveBeenCalledOnce()
-    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
-      schemaVersion: 1,
-      ...successfulSubmissionResult.submission,
-    })
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(
+      successfulSubmissionResult.submission,
+    )
     expect(result).toEqual({app})
   })
 
@@ -192,7 +195,6 @@ describe('subscription migration submission commands', () => {
     expect(process.exitCode).toBe(1)
     expect(outputResult).toHaveBeenCalledOnce()
     expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
-      schemaVersion: 1,
       ...failedResult.submission,
       failure: failedResult.failure,
     })
@@ -326,7 +328,6 @@ describe('subscription migration operation commands', () => {
     })
     expect(outputResult).toHaveBeenCalledOnce()
     expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
-      schemaVersion: 1,
       outcomes: result.outcomes,
     })
     expect(process.exitCode).toBe(1)
@@ -428,6 +429,10 @@ describe('subscription migration command metadata', () => {
 
   test.each([Schedule, Unschedule, Status, Cancel, List])('$name uses the canonical JSON flag', (Command) => {
     expect(Command.flags.json).toBe(jsonFlag.json)
+  })
+
+  test('cancel exposes its JSON output schema', () => {
+    expect(Cancel.jsonOutputSchema).toBe(migrationCancellationJsonOutputSchema)
   })
 
   test.each([Schedule, Unschedule, Status, Cancel, List])('$name has no legacy migration flags', (Command) => {
@@ -549,10 +554,15 @@ describe('subscription migration command metadata', () => {
     },
   )
 
-  test.each([Schedule, Unschedule, Status, Cancel, List])(
+  test.each([Schedule, Unschedule, Status, List])(
     '$name has no fenced-code markers in its plain description',
     (Command) => {
       expect(Command.description).not.toContain('```')
     },
   )
+
+  test('cancel documents its JSON output schema', () => {
+    expect(Cancel.description).toContain('`MigrationCancellationResult` schema')
+    expect(Cancel.description).toContain('```json')
+  })
 })

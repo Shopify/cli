@@ -1,18 +1,5 @@
-import {cancelMigrationOperation, type MigrationUserError} from './partners-api.js'
-import type {MigrationOperation} from '../../models/subscription-migrations.js'
-
-export type MigrationCancellationOutcome =
-  | {status: 'success'; operationId: string; operation: MigrationOperation}
-  | {
-      status: 'failed'
-      operationId: string
-      operation: MigrationOperation | null
-      userErrors: MigrationUserError[]
-    }
-
-export interface MigrationCancellationResult {
-  outcomes: MigrationCancellationOutcome[]
-}
+import {cancelMigrationOperation} from './partners-api.js'
+import type {MigrationCancellationOutcome, MigrationCancellationResult} from './types.js'
 
 export class MigrationCancellationProtocolError extends Error {
   readonly operationId: string
