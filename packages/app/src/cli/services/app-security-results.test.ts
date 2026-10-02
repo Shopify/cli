@@ -1,7 +1,8 @@
 import {loadAppSecurityResults} from './app-security-results.js'
 import {appSecurityArtifactPaths, writeAgentFindings, writeCheckArtifacts} from './app-security-artifacts.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
-import {combineFindings, scanApp} from './app-security-engine/index.js'
+import {combineFindings} from './app-security-engine/index.js'
+import {scanAppDirectory} from './app-security-engine/tests/scan-directory.js'
 import {agentFindingsDocument} from './app-security-engine/tests/fixtures/findings-documents.js'
 import {AbortError, handler} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
@@ -19,7 +20,7 @@ async function createApp(directory: string): Promise<string> {
 
 /** Writes a real deterministic-findings.json by running `check` on the app. */
 async function writeDeterministicFindings(appRoot: string): Promise<DeterministicFindingsDocument> {
-  const {deterministicFindings, agentChecks} = await scanApp(appRoot)
+  const {deterministicFindings, agentChecks} = await scanAppDirectory(appRoot)
   await writeCheckArtifacts(appRoot, {deterministicFindings, agentChecks})
   return deterministicFindings
 }

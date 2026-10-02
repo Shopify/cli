@@ -1,5 +1,4 @@
 import securityReview, {reviewAppSecurityResults, type SecurityReviewDependencies} from './security-review.js'
-import {resolveAppSecurityRoot} from './app-security-api.js'
 import {appSecurityArtifactPaths} from './app-security-artifacts.js'
 import {loadAppSecurityResults} from './app-security-results.js'
 import {appSecurityResultsFor} from './app-security-results.test-data.js'
@@ -32,7 +31,7 @@ async function createApp(directory: string, files: Files): Promise<string> {
 
 function testDependencies() {
   const dependencies = {
-    resolveRoot: resolveAppSecurityRoot,
+    resolveRoot: async (directory: string) => directory,
     loadResults: loadAppSecurityResults,
     output: vi.fn(),
     render: vi.fn(),

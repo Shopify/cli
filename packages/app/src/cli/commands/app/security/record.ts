@@ -1,5 +1,5 @@
 import {appFlags} from '../../../flags.js'
-import {resolveAppSecurityRoot} from '../../../services/app-security-api.js'
+import {resolveAppSecuritySelection} from '../../../services/app-security-selection.js'
 import securityRecord, {renderSecurityRecordResult} from '../../../services/security-record.js'
 import {securityRecordJsonOutputSchema} from '../../../services/security-record-json.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
@@ -31,7 +31,7 @@ The document is recorded all or nothing: if anything is invalid, the command fai
   public async run(): Promise<void> {
     const {flags} = await this.parse(SecurityRecord)
 
-    const appRoot = resolveAppSecurityRoot(flags.path)
+    const {appDirectory: appRoot} = await resolveAppSecuritySelection({path: flags.path, allowPrompts: false})
     const result = await securityRecord({appRoot})
 
     if (flags.json) {

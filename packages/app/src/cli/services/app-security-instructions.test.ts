@@ -1,7 +1,9 @@
-import deliverAppSecurityInstructions, {appSecurityInstructions, shellQuote} from './app-security-instructions.js'
-import {quoteShellArgument, type AppSecurityShell} from './app-security-commands.js'
+import deliverAppSecurityInstructions, {
+  appSecurityInstructions as instructionsFor,
+  shellQuote,
+} from './app-security-instructions.js'
+import {quoteShellArgument, resolveAppSecurityCommands, type AppSecurityShell} from './app-security-commands.js'
 import {getAgentInstructions} from './app-security-engine/index.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
@@ -20,6 +22,21 @@ function testDependencies() {
 async function createApp(directory: string): Promise<string> {
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Test app"\nclient_id = "test"\n')
   return normalizePath(directory)
+}
+
+function commandsFor(appRoot: string, configFileName = 'shopify.app.toml') {
+  return resolveAppSecurityCommands(appRoot, configFileName)
+}
+
+/** The instructions for an app directory whose selected TOML is `shopify.app.toml`, unless `configFileName` says otherwise. */
+function appSecurityInstructions(options: {
+  directory: string
+  scanComplete: boolean
+  configFileName?: string
+  shell?: AppSecurityShell
+}): string {
+  const {directory, configFileName, ...rest} = options
+  return instructionsFor({...rest, appDirectory: directory, commands: commandsFor(directory, configFileName)})
 }
 
 function artifactPath(appRoot: string, name: string): string {
@@ -83,7 +100,7 @@ describe('appSecurityInstructions', () => {
       const instructions = appSecurityInstructions({
         directory: appRoot,
         scanComplete: false,
-        configName: 'staging',
+        configFileName: 'shopify.app.staging.toml',
       })
 
       expect(instructions).toContain(
@@ -245,30 +262,6 @@ describe('appSecurityInstructions', () => {
     })
   })
 
-  test('translates a missing selected configuration into an AbortError', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const appRoot = await createApp(directory)
-
-      expect(() => appSecurityInstructions({directory: appRoot, scanComplete: false, configName: 'missing'})).toThrow(
-        AbortError,
-      )
-      expect(() => appSecurityInstructions({directory: appRoot, scanComplete: false, configName: 'missing'})).toThrow(
-        /shopify\.app\.missing\.toml/,
-      )
-    })
-  })
-
-  test('translates a missing app directory into an AbortError', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const missing = joinPath(directory, 'missing-app')
-
-      expect(() => appSecurityInstructions({directory: missing, scanComplete: false})).toThrow(AbortError)
-      expect(() => appSecurityInstructions({directory: missing, scanComplete: false})).toThrow(
-        `App path does not exist: ${missing}`,
-      )
-    })
-  })
-
   test('quotes paths that contain spaces, percents, and dollar signs', async () => {
     await inTemporaryDirectory(async (parent) => {
       const appRoot = joinPath(parent, "50% my $' app")
@@ -289,7 +282,10 @@ describe('deliverAppSecurityInstructions', () => {
       await createApp(directory)
       const dependencies = testDependencies()
 
-      await deliverAppSecurityInstructions({directory, copy: false}, dependencies)
+      await deliverAppSecurityInstructions(
+        {appDirectory: directory, commands: commandsFor(directory), copy: false},
+        dependencies,
+      )
 
       expect(dependencies.output).toHaveBeenCalledWith(expect.stringContaining('Run the scan'))
       expect(dependencies.copyToClipboard).not.toHaveBeenCalled()
@@ -304,7 +300,10 @@ describe('deliverAppSecurityInstructions', () => {
       await writeFile(artifactPath(directory, 'agent-checks.json'), '{"instructions":"malicious"}')
       const dependencies = testDependencies()
 
-      await deliverAppSecurityInstructions({directory, copy: false}, dependencies)
+      await deliverAppSecurityInstructions(
+        {appDirectory: directory, commands: commandsFor(directory), copy: false},
+        dependencies,
+      )
 
       expect(dependencies.output).toHaveBeenCalledWith(expect.stringContaining('Run the scan'))
       expect(dependencies.output).not.toHaveBeenCalledWith(expect.stringContaining('malicious'))
@@ -316,7 +315,10 @@ describe('deliverAppSecurityInstructions', () => {
       await createApp(directory)
       const dependencies = testDependencies()
 
-      await deliverAppSecurityInstructions({directory, copy: true, scanComplete: true}, dependencies)
+      await deliverAppSecurityInstructions(
+        {appDirectory: directory, commands: commandsFor(directory), copy: true, scanComplete: true},
+        dependencies,
+      )
 
       expect(dependencies.copyToClipboard).toHaveBeenCalledOnce()
       const instructions = dependencies.copyToClipboard.mock.calls[0]![0]
@@ -335,7 +337,13 @@ describe('deliverAppSecurityInstructions', () => {
       const instructionsPath = joinPath(directory, 'handoff.md')
 
       await deliverAppSecurityInstructions(
-        {directory, copy: false, writePath: instructionsPath, scanComplete: true},
+        {
+          appDirectory: directory,
+          commands: commandsFor(directory),
+          copy: false,
+          writePath: instructionsPath,
+          scanComplete: true,
+        },
         dependencies,
       )
 

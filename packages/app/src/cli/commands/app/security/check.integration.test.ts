@@ -1,9 +1,10 @@
 import SecurityCheck from './check.js'
 import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts.js'
+import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
 import {Config} from '@oclif/core'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {fileRealPath, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {unstyled} from '@shopify/cli-kit/node/output'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
 import {mkdir, readFile, writeFile} from 'node:fs/promises'
 // eslint-disable-next-line n/prefer-global/console
@@ -28,7 +29,7 @@ vi.mock('@shopify/cli-kit/node/session', async (importOriginal) => ({
 async function createApp(directory: string): Promise<{nestedDirectory: string}> {
   const routesDirectory = joinPath(directory, 'app', 'routes')
   await mkdir(routesDirectory, {recursive: true})
-  await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Test app"\nclient_id = "test"\n')
+  await writeFile(joinPath(directory, 'shopify.app.toml'), validAppConfiguration())
   await writeFile(
     joinPath(directory, 'package.json'),
     '{"name":"test-app","dependencies":{"@shopify/shopify-app-react-router":"1.0.0"}}\n',
@@ -90,14 +91,22 @@ describe('app security check command boundary', () => {
   test('scans an app from a nested directory and writes deterministic-findings.json and agent-checks.json', async () => {
     await inTemporaryDirectory(async (directory) => {
       const {nestedDirectory} = await createApp(directory)
-      const paths = appSecurityArtifactPaths(directory)
+      const appDirectory = await fileRealPath(directory)
+      const paths = appSecurityArtifactPaths(appDirectory)
 
       const result = await runCommand(['--path', nestedDirectory, '--json', '--skip-instructions'])
 
       expect(result.exitCode).toBe(0)
       const output = JSON.parse(result.stdout)
-      expect(Object.keys(output).sort()).toEqual(['agent_checks_path', 'deterministic_findings', 'engine'])
+      expect(Object.keys(output).sort()).toEqual(['agent_checks_path', 'deterministic_findings', 'engine', 'selection'])
       expect(output.agent_checks_path).toBe(paths.agentChecksPath)
+      expect(output.selection).toEqual({
+        app_directory: appDirectory,
+        app_config_file: joinPath(appDirectory, 'shopify.app.toml'),
+        client_id: 'test-client-id',
+        client_id_source: 'config',
+        scan_directories: [{directory: appDirectory, origin: 'app_directory'}],
+      })
       expect(output.engine).toMatchObject({name: 'shopify-app-security'})
       await expect(readJson(paths.deterministicFindingsPath)).resolves.toEqual(output.deterministic_findings)
       await expect(readJson(paths.deterministicFindingsPath)).resolves.toMatchObject({
@@ -163,8 +172,8 @@ describe('app security check command boundary', () => {
 
       expect(result.exitCode).toBe(1)
       const message = errorText(result.stderr)
-      expect(message).toContain("Couldn't find app configuration at")
-      expectMentionsPath(message, joinPath(directory, 'shopify.app.shopifyappdev-dashboardjson.toml'))
+      expect(message).toContain("Couldn't find shopify.app.shopifyappdev-dashboardjson.toml in")
+      expectMentionsPath(message, normalizePath(await fileRealPath(directory)))
       await expect(readFile(paths.deterministicFindingsPath)).rejects.toMatchObject({code: 'ENOENT'})
     })
   })

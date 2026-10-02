@@ -5,7 +5,7 @@ import {
   writeAgentFindings,
   writeCheckArtifacts,
 } from './app-security-artifacts.js'
-import {scanApp} from './app-security-engine/index.js'
+import {scanAppDirectory} from './app-security-engine/tests/scan-directory.js'
 import {agentFindingsDocument} from './app-security-engine/tests/fixtures/findings-documents.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
@@ -15,7 +15,7 @@ import {symlink} from 'node:fs/promises'
 
 async function scanTestApp(directory: string) {
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Test"\nclient_id = "test"\n')
-  return scanApp(directory)
+  return scanAppDirectory(directory)
 }
 
 async function writeEveryArtifact(directory: string): Promise<string[]> {

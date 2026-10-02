@@ -2,14 +2,13 @@ import {inspectErrorReason, isMissingFilesystemEntry} from './filesystem-errors.
 import {createFilePathMatcher, createPathMatcher} from './path-rules.js'
 import {findRepositoryMarker} from './repository-marker.js'
 import {DEPENDENCY_AUTOMATION_CONFIG_PATHS} from '../rules/dependency-automation-rules.js'
-import {APP_CONFIG_FILE_GLOB, isValidFormatAppConfigurationFileName} from '../../../models/app/config-file-naming.js'
+import {isValidFormatAppConfigurationFileName} from '../../../models/app/config-file-naming.js'
 import {AppAccessScopesSchema, AppAuthSchema} from '../../../models/extensions/specifications/app_config_app_access.js'
 import {WebhookSubscriptionSchema} from '../../../models/extensions/specifications/app_config_webhook_schemas/webhook_subscription_schema.js'
 import {removeTrailingSlash} from '../../../models/extensions/specifications/validation/common.js'
-import {fileExistsSync, fileSizeSync, globSync, readFileSync} from '@shopify/cli-kit/node/fs'
+import {fileSizeSync, readFileSync} from '@shopify/cli-kit/node/fs'
 import {
   basename,
-  cwd,
   dirname,
   extname,
   isAbsolutePath,
@@ -34,75 +33,19 @@ import type {
 } from './types.js'
 import type {Dirent} from 'node:fs'
 
-/** Expected user error while locating a Shopify app root. */
-export class AppRootDiscoveryError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'AppRootDiscoveryError'
-  }
-}
-
 /**
- * Find the nearest app root without ever substituting CWD for a bad explicit path.
- *
- * App identity matches the rest of Shopify CLI: walk up for
- * `shopify.app.toml` / `shopify.app.<name>.toml` using
- * `isValidFormatAppConfigurationFileName`. This is not `Project.load()` — that
- * loader also reads package, environment, and hidden configuration, follows
- * different symlink policy, and does not keep the bounded raw bytes App Security
- * hashes and reports as coverage.
+ * Load the selected shopify.app.toml file.
  */
-export function findAppRoot(startPath?: string): string {
-  const requestedPath = resolvePath(startPath ?? cwd())
-  if (startPath && !fileExistsSync(requestedPath)) {
-    throw new AppRootDiscoveryError(`App path does not exist: ${startPath}`)
-  }
-
-  let directory = requestedPath
-  if (startPath && lstatSync(requestedPath).isFile()) {
-    if (!isValidFormatAppConfigurationFileName(basename(requestedPath))) {
-      throw new AppRootDiscoveryError(`App path is not a directory or Shopify app configuration file: ${startPath}`)
-    }
-    return dirname(requestedPath)
-  }
-  if (!lstatSync(directory).isDirectory()) {
-    throw new AppRootDiscoveryError(`App path is not a directory: ${startPath ?? directory}`)
-  }
-
-  while (true) {
-    if (listAppConfigFiles(directory).length > 0) return directory
-
-    const parent = dirname(directory)
-    if (parent === directory) break
-    directory = parent
-  }
-
-  throw new AppRootDiscoveryError(`Could not find a shopify.app*.toml from: ${startPath ?? cwd()}`)
-}
-
-function listAppConfigFiles(directory: string): string[] {
-  return globSync(APP_CONFIG_FILE_GLOB, {
-    cwd: directory,
-    deep: 1,
-    dot: false,
-    onlyFiles: false,
-    followSymbolicLinks: false,
-  }).filter((file) => isValidFormatAppConfigurationFileName(basename(file)))
-}
-
-/**
- * Load a specific shopify.app.toml file.
- */
-export function loadAppToml(tomlPath: string, appRoot = dirname(tomlPath)): AppTomlContent | null {
-  const content = readRepositoryText(appRoot, tomlPath)
+export function loadAppToml(appConfigFilePath: string, appDirectory: string): AppTomlContent | null {
+  const content = readRepositoryText(appDirectory, appConfigFilePath)
   if (content === undefined) return null
   try {
     const raw = decodeToml(content) as Record<string, unknown>
-    return parseAppToml(raw, tomlPath, content, appRoot)
+    return parseAppToml(raw, appConfigFilePath, content, appDirectory)
     // Invalid repository TOML is a coverage gap, not a scanner crash.
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
-    recordSkippedFile(appRoot, tomlPath, {
+    recordSkippedFile(appDirectory, appConfigFilePath, {
       ok: false,
       reason: 'unreadable',
       detail: 'TOML could not be parsed',

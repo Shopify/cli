@@ -1,5 +1,5 @@
 import {appFlags} from '../../../flags.js'
-import {resolveAppSecurityRoot} from '../../../services/app-security-api.js'
+import {resolveAppSecuritySelection} from '../../../services/app-security-selection.js'
 import securityClean, {renderSecurityCleanResult} from '../../../services/security-clean.js'
 import {securityCleanJsonOutputSchema} from '../../../services/security-clean-json.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
@@ -28,7 +28,7 @@ export default class SecurityClean extends BaseCommand {
   public async run(): Promise<void> {
     const {flags} = await this.parse(SecurityClean)
 
-    const appRoot = resolveAppSecurityRoot(flags.path)
+    const {appDirectory: appRoot} = await resolveAppSecuritySelection({path: flags.path, allowPrompts: false})
     const result = await securityClean({appRoot})
 
     if (flags.json) {

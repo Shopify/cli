@@ -1,5 +1,7 @@
 import {appFlags} from '../../../flags.js'
+import {resolveAppSecurityCommands} from '../../../services/app-security-commands.js'
 import deliverAppSecurityInstructions from '../../../services/app-security-instructions.js'
+import {resolveAppSecuritySelection, selectedConfigFileName} from '../../../services/app-security-selection.js'
 import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -37,9 +39,15 @@ By default, the instructions are printed to stdout. Use \`--copy\` to copy them 
   public async run(): Promise<void> {
     const {flags} = await this.parse(SecurityInstructions)
 
+    const selection = await resolveAppSecuritySelection({
+      path: flags.path,
+      config: flags.config,
+      allowPrompts: false,
+    })
+
     await deliverAppSecurityInstructions({
-      directory: flags.path,
-      configName: flags.config,
+      appDirectory: selection.appDirectory,
+      commands: resolveAppSecurityCommands(selection.appDirectory, selectedConfigFileName(selection)),
       copy: flags.copy,
       writePath: flags.write,
     })

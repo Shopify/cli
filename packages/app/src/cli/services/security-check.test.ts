@@ -1,17 +1,12 @@
 import securityCheck, {appSecurityInstructionsPrompt} from './security-check.js'
-import {resolveAppSecurityCommands} from './app-security-commands.js'
+import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {appSecurityArtifactPaths, writeCheckArtifacts} from './app-security-artifacts.js'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {describe, expect, test, vi} from 'vitest'
 import type {AppSecurityExecution} from './app-security-api.js'
+import type {AppSecuritySelection} from './app-security-selection.js'
 import type {AppSecurityInstructionsDestination} from './security-check.js'
 import type {AgentChecks, DeterministicFindingsDocument, ScanResult} from './app-security-engine/index.js'
-
-vi.mock('./app-security-config.js', async (importOriginal) => {
-  const original = await importOriginal<typeof import('./app-security-config.js')>()
-  // Unit tests use a fake app directory; check.integration.test.ts covers the missing-config error.
-  return {...original, requireSecurityConfigFileName: original.resolveSecurityConfigFileName}
-})
 
 const scan: ScanResult = {
   version: '0.1.0',
@@ -75,7 +70,6 @@ const agentChecks: AgentChecks = {
 }
 
 const scanExecution: AppSecurityExecution = {
-  appRoot: '/tmp/unlinked-app',
   scan,
   deterministicFindings,
   agentChecks,
@@ -88,15 +82,30 @@ const artifacts = {
   agentChecksPath: '/tmp/unlinked-app/.shopify/app-security/agent-checks.json',
 }
 
-function testDependencies(execution: AppSecurityExecution = scanExecution) {
+const appDirectory = '/tmp/unlinked-app'
+
+const configSelection: AppSecuritySelection = {
+  kind: 'config',
+  appDirectory,
+  appConfigFilePath: `${appDirectory}/shopify.app.toml`,
+  configClientId: 'toml-client-id',
+}
+
+const scanDirectories = [{directory: appDirectory, origin: 'app_directory' as const}]
+
+function testDependencies(
+  execution: AppSecurityExecution = scanExecution,
+  selection: AppSecuritySelection = configSelection,
+) {
   return {
-    resolveRoot: vi.fn(() => execution.appRoot),
+    resolveSelection: vi.fn(async () => selection),
     execute: vi.fn(async () => execution),
     writeArtifacts: vi.fn(async () => artifacts),
     canPrompt: vi.fn(() => false),
     selectInstructionsDestination: vi.fn(async (): Promise<AppSecurityInstructionsDestination> => 'nothing'),
     deliverInstructions: vi.fn(async () => {}),
     output: vi.fn(),
+    renderInfo: vi.fn(),
     renderReport: vi.fn(),
     setExitCode: vi.fn(),
   }
@@ -104,7 +113,8 @@ function testDependencies(execution: AppSecurityExecution = scanExecution) {
 
 function testOptions() {
   return {
-    directory: '/tmp/unlinked-app',
+    directory: appDirectory,
+    withoutAppConfig: false,
     json: false,
     verbose: false,
     blocking: 'none' as const,
@@ -120,19 +130,28 @@ describe('securityCheck', () => {
 
     await securityCheck({...testOptions(), verbose: true, blocking: 'high'}, dependencies)
 
-    expect(dependencies.resolveRoot).toHaveBeenCalledWith('/tmp/unlinked-app')
+    expect(dependencies.resolveSelection).toHaveBeenCalledWith({
+      path: appDirectory,
+      config: undefined,
+      clientId: undefined,
+      withoutAppConfig: false,
+      allowPrompts: false,
+    })
     expect(dependencies.execute).toHaveBeenCalledWith({
-      appRoot: '/tmp/unlinked-app',
-      configFileName: 'shopify.app.toml',
+      appDirectory,
+      appConfigFilePath: `${appDirectory}/shopify.app.toml`,
+      clientId: 'toml-client-id',
       ignorePatterns: [],
     })
-    expect(dependencies.writeArtifacts).toHaveBeenCalledWith('/tmp/unlinked-app', {deterministicFindings, agentChecks})
+    expect(dependencies.writeArtifacts).toHaveBeenCalledWith(appDirectory, {deterministicFindings, agentChecks})
     expect(dependencies.renderReport).toHaveBeenCalledWith({
       scan,
+      selection: configSelection,
+      scanDirectories,
       engine,
       verbose: true,
       elapsedMilliseconds: 12,
-      commands: resolveAppSecurityCommands(scanExecution.appRoot, 'shopify.app.toml'),
+      commands: resolveAppSecurityCommands(appDirectory, 'shopify.app.toml'),
       deterministicFindingsPath: artifacts.deterministicFindingsPath,
       agentChecksPath: artifacts.agentChecksPath,
       agentCheckCount: 31,
@@ -140,21 +159,30 @@ describe('securityCheck', () => {
     expect(dependencies.output).not.toHaveBeenCalled()
   })
 
-  test('forwards configName and includes --config in generated commands', async () => {
-    const dependencies = testDependencies()
+  test('forwards the config name and includes --config in generated commands', async () => {
+    const dependencies = testDependencies(scanExecution, {
+      ...configSelection,
+      appConfigFilePath: `${appDirectory}/shopify.app.staging.toml`,
+    })
 
     await securityCheck({...testOptions(), configName: 'staging'}, dependencies)
 
-    expect(dependencies.execute).toHaveBeenCalledWith({
-      appRoot: '/tmp/unlinked-app',
-      configFileName: 'shopify.app.staging.toml',
-      ignorePatterns: [],
-    })
-    expect(dependencies.renderReport).toHaveBeenCalledWith(
-      expect.objectContaining({
-        commands: resolveAppSecurityCommands(scanExecution.appRoot, 'shopify.app.staging.toml'),
-      }),
+    expect(dependencies.resolveSelection).toHaveBeenCalledWith(expect.objectContaining({config: 'staging'}))
+    expect(dependencies.execute).toHaveBeenCalledWith(
+      expect.objectContaining({appConfigFilePath: `${appDirectory}/shopify.app.staging.toml`}),
     )
+    expect(dependencies.renderReport).toHaveBeenCalledWith(
+      expect.objectContaining({commands: resolveAppSecurityCommands(appDirectory, 'shopify.app.staging.toml')}),
+    )
+  })
+
+  test('scans with the --client-id override as the effective client ID', async () => {
+    const dependencies = testDependencies(scanExecution, {...configSelection, clientIdOverride: 'flag-client-id'})
+
+    await securityCheck({...testOptions(), clientId: 'flag-client-id'}, dependencies)
+
+    expect(dependencies.resolveSelection).toHaveBeenCalledWith(expect.objectContaining({clientId: 'flag-client-id'}))
+    expect(dependencies.execute).toHaveBeenCalledWith(expect.objectContaining({clientId: 'flag-client-id'}))
   })
 
   test('forwards ignorePatterns to the scan and repeats them in generated commands and instructions', async () => {
@@ -165,13 +193,9 @@ describe('securityCheck', () => {
 
     await securityCheck({...testOptions(), ignorePatterns}, dependencies)
 
-    const commands = resolveAppSecurityCommands(scanExecution.appRoot, 'shopify.app.toml', ignorePatterns)
+    const commands = resolveAppSecurityCommands(appDirectory, 'shopify.app.toml', ignorePatterns)
     expect(commands.scan.args).toContainEqual({flag: '--ignore', value: 'generated/'})
-    expect(dependencies.execute).toHaveBeenCalledWith({
-      appRoot: '/tmp/unlinked-app',
-      configFileName: 'shopify.app.toml',
-      ignorePatterns,
-    })
+    expect(dependencies.execute).toHaveBeenCalledWith(expect.objectContaining({ignorePatterns}))
     expect(dependencies.renderReport).toHaveBeenCalledWith(expect.objectContaining({commands}))
     expect(dependencies.deliverInstructions).toHaveBeenCalledWith(expect.objectContaining({commands}))
   })
@@ -191,7 +215,10 @@ describe('securityCheck', () => {
         generated_at: '2026-09-01T00:00:00.000Z',
       }
       const dependencies = {
-        ...testDependencies({...scanExecution, appRoot, deterministicFindings: rescanFindings}),
+        ...testDependencies(
+          {...scanExecution, deterministicFindings: rescanFindings},
+          {...configSelection, appDirectory: appRoot, appConfigFilePath: `${appRoot}/shopify.app.toml`},
+        ),
         writeArtifacts: writeCheckArtifacts,
         canPrompt: vi.fn(() => true),
       }
@@ -201,7 +228,6 @@ describe('securityCheck', () => {
       expect(JSON.parse(await readFile(paths.deterministicFindingsPath))).toEqual(rescanFindings)
       expect(JSON.parse(await readFile(paths.agentChecksPath))).toEqual(agentChecks)
       await expect(readFile(paths.agentFindingsPath)).resolves.toBe(agentFindings)
-      expect(dependencies.canPrompt).not.toHaveBeenCalled()
       expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
       expect(dependencies.renderReport).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -213,6 +239,76 @@ describe('securityCheck', () => {
     })
   })
 
+  test('allows prompts only in an interactive terminal without --json', async () => {
+    const interactive = testDependencies()
+    interactive.canPrompt.mockReturnValue(true)
+    await securityCheck({...testOptions(), skipInstructions: true}, interactive)
+    expect(interactive.resolveSelection).toHaveBeenCalledWith(expect.objectContaining({allowPrompts: true}))
+
+    const nonInteractive = testDependencies()
+    await securityCheck({...testOptions(), skipInstructions: true}, nonInteractive)
+    expect(nonInteractive.resolveSelection).toHaveBeenCalledWith(expect.objectContaining({allowPrompts: false}))
+  })
+
+  test('scans without app configuration, with no selected TOML and the client ID from the flag', async () => {
+    const selection: AppSecuritySelection = {
+      kind: 'no-config',
+      appDirectory,
+      clientId: 'flag-client-id',
+      clientIdSource: 'flag',
+    }
+    const dependencies = testDependencies(scanExecution, selection)
+    dependencies.canPrompt.mockReturnValue(true)
+
+    await securityCheck(
+      {...testOptions(), withoutAppConfig: true, clientId: 'flag-client-id', skipInstructions: true},
+      dependencies,
+    )
+
+    expect(dependencies.resolveSelection).toHaveBeenCalledWith(
+      expect.objectContaining({withoutAppConfig: true, clientId: 'flag-client-id'}),
+    )
+    expect(dependencies.execute).toHaveBeenCalledWith({
+      appDirectory,
+      appConfigFilePath: undefined,
+      clientId: 'flag-client-id',
+      ignorePatterns: [],
+    })
+    expect(dependencies.renderInfo).not.toHaveBeenCalled()
+    expect(dependencies.renderReport).toHaveBeenCalledWith(
+      expect.objectContaining({commands: resolveAppSecurityCommands(appDirectory)}),
+    )
+  })
+
+  test('shows the generated check command after the no-TOML prompt flow', async () => {
+    const selection: AppSecuritySelection = {
+      kind: 'no-config',
+      appDirectory,
+      clientId: 'picked-client-id',
+      clientIdSource: 'picker',
+    }
+    const dependencies = testDependencies(scanExecution, selection)
+    dependencies.canPrompt.mockReturnValue(true)
+
+    await securityCheck({...testOptions(), skipInstructions: true}, dependencies)
+
+    expect(dependencies.renderInfo).toHaveBeenCalledWith({
+      headline: 'To skip these prompts next time, run:',
+      body: [{command: formatAppSecurityCommand(resolveAppSecurityCommands(appDirectory).scan)}],
+    })
+    expect(dependencies.renderInfo.mock.invocationCallOrder[0]).toBeLessThan(
+      dependencies.execute.mock.invocationCallOrder[0]!,
+    )
+  })
+
+  test('does not show the prompt-flow command when a TOML was found', async () => {
+    const dependencies = testDependencies()
+
+    await securityCheck(testOptions(), dependencies)
+
+    expect(dependencies.renderInfo).not.toHaveBeenCalled()
+  })
+
   test('does not write artifacts when the scan fails', async () => {
     const dependencies = testDependencies()
     dependencies.execute.mockRejectedValue(new Error('scan failed'))
@@ -222,17 +318,26 @@ describe('securityCheck', () => {
     expect(dependencies.writeArtifacts).not.toHaveBeenCalled()
   })
 
-  test('prints the engine, deterministic findings, and agent checks path as JSON', async () => {
+  test('prints the engine, selection, deterministic findings, and agent checks path as JSON', async () => {
     const dependencies = testDependencies()
+    dependencies.canPrompt.mockReturnValue(true)
 
     await securityCheck({...testOptions(), json: true, yes: true}, dependencies)
 
     expect(JSON.parse(dependencies.output.mock.calls[0]![0])).toEqual({
       engine,
+      selection: {
+        app_directory: appDirectory,
+        app_config_file: `${appDirectory}/shopify.app.toml`,
+        client_id: 'toml-client-id',
+        client_id_source: 'config',
+        scan_directories: scanDirectories,
+      },
       deterministic_findings: deterministicFindings,
       agent_checks_path: artifacts.agentChecksPath,
     })
     expect(dependencies.renderReport).not.toHaveBeenCalled()
+    expect(dependencies.resolveSelection).toHaveBeenCalledWith(expect.objectContaining({allowPrompts: false}))
     expect(dependencies.canPrompt).not.toHaveBeenCalled()
     expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
     expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
@@ -266,10 +371,10 @@ describe('securityCheck', () => {
     })
     expect(dependencies.selectInstructionsDestination).toHaveBeenCalledOnce()
     expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
-      directory: '/tmp/unlinked-app',
+      appDirectory,
       copy: true,
       scanComplete: true,
-      commands: resolveAppSecurityCommands(scanExecution.appRoot),
+      commands: resolveAppSecurityCommands(appDirectory, 'shopify.app.toml'),
     })
   })
 
@@ -281,10 +386,10 @@ describe('securityCheck', () => {
     await securityCheck(testOptions(), dependencies)
 
     expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
-      directory: '/tmp/unlinked-app',
+      appDirectory,
       copy: false,
       scanComplete: true,
-      commands: resolveAppSecurityCommands(scanExecution.appRoot),
+      commands: resolveAppSecurityCommands(appDirectory, 'shopify.app.toml'),
     })
   })
 
@@ -303,13 +408,12 @@ describe('securityCheck', () => {
 
     await securityCheck({...testOptions(), yes: true}, dependencies)
 
-    expect(dependencies.canPrompt).not.toHaveBeenCalled()
     expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
     expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
-      directory: '/tmp/unlinked-app',
+      appDirectory,
       copy: false,
       scanComplete: true,
-      commands: resolveAppSecurityCommands(scanExecution.appRoot),
+      commands: resolveAppSecurityCommands(appDirectory, 'shopify.app.toml'),
     })
   })
 
@@ -319,7 +423,6 @@ describe('securityCheck', () => {
 
     await securityCheck({...testOptions(), skipInstructions: true}, dependencies)
 
-    expect(dependencies.canPrompt).not.toHaveBeenCalled()
     expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
     expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
   })
