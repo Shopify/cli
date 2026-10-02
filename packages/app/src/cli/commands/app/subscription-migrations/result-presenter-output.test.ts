@@ -48,12 +48,17 @@ describe('migration cancellation JSON output', () => {
 })
 
 describe('migration submission JSON output', () => {
-  test.each([false, true])('writes one final failure document with watch=%s', (watch) => {
+  test.each([
+    {action: 'schedule' as const, watch: false},
+    {action: 'schedule' as const, watch: true},
+    {action: 'unschedule' as const, watch: false},
+    {action: 'unschedule' as const, watch: true},
+  ])('writes one final $action failure document with watch=$watch', ({action, watch}) => {
     const stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
     const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
     const submission = {
       clientId: 'client-id',
-      action: 'schedule' as const,
+      action,
       inputDigest: 'input-digest',
       total: 2,
       operations: [
