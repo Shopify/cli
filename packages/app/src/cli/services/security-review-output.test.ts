@@ -14,13 +14,17 @@ import {
 } from './app-security-engine/tests/fixtures/findings-documents.js'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {unstyled} from '@shopify/cli-kit/node/output'
+import {cwd} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import type {AppSecurityBlockingLevel} from './app-security-api.js'
 import type {AgentFindingsDocument, DeterministicFindingsDocument} from './app-security-engine/index.js'
 
 const appRoot = '/tmp/review-app'
 const paths = appSecurityArtifactPaths(appRoot, 'shopify.app')
-const commands = resolveAppSecurityCommands(appRoot)
+const commands = resolveAppSecurityCommands(
+  {kind: 'config', appDirectory: appRoot, appConfigFilePath: `${appRoot}/shopify.app.toml`},
+  cwd(),
+)
 const checkCommand = formatAppSecurityCommand(commands.scan)
 // One hour after the agent file, two and a half after the deterministic one.
 const now = new Date('2026-09-01T12:30:00.000Z')
@@ -255,6 +259,93 @@ describe('buildSecurityReviewSummary', () => {
 
     test('is omitted when the deterministic file is missing', () => {
       expect(buildSecurityReviewSummary(presenterInput(agentOnly)).coverage).toBeUndefined()
+    })
+  })
+
+  describe('scope', () => {
+    const differentScope = {include_dirs: ['../backend'], excludes: ['**/generated'], no_git_ignore: true}
+    const scopedScan: DeterministicFindingsDocument = {
+      ...deterministicFindingsDocument,
+      coverage: {
+        ...deterministicFindingsDocument.coverage,
+        scope: differentScope,
+        scan_directories: [
+          {directory: '.', origin: 'app_directory'},
+          {directory: '../backend', origin: 'include_dir'},
+        ],
+      },
+    }
+    const note = 'Agent findings were recorded for a different scope than the latest scan.'
+
+    test('shows the scan directories, the scan scope and the scope the agent reported', () => {
+      const summary = buildSecurityReviewSummary(
+        presenterInput({deterministic: scopedScan, agent: {...agentFindingsDocument, scope: differentScope}}),
+      )
+
+      expect(summary.scopeLines).toEqual([
+        'Scan directories: ., ../backend',
+        'Scan scope: --include-dir ../backend --exclude **/generated --no-git-ignore',
+        'Scope reported by the agent: --include-dir ../backend --exclude **/generated --no-git-ignore',
+      ])
+    })
+
+    test('says none for a scope without flags and shows only the sources that exist', () => {
+      expect(buildSecurityReviewSummary(presenterInput(deterministicOnly)).scopeLines).toEqual([
+        'Scan directories: .',
+        'Scan scope: none',
+      ])
+      expect(buildSecurityReviewSummary(presenterInput(agentOnly)).scopeLines).toEqual([
+        'Scope reported by the agent: none',
+      ])
+      expect(buildSecurityReviewSummary(presenterInput(none)).scopeLines).toEqual([])
+    })
+
+    test('notes when the agent findings were recorded for a different scope than the latest scan', () => {
+      const summary = buildSecurityReviewSummary(
+        presenterInput({deterministic: scopedScan, agent: agentFindingsDocument}),
+      )
+
+      expect(summary.scopeNote).toBe(note)
+    })
+
+    test('has no note when the scopes match, or when only one source exists', () => {
+      const matching = {deterministic: scopedScan, agent: {...agentFindingsDocument, scope: differentScope}}
+
+      expect(buildSecurityReviewSummary(presenterInput(matching)).scopeNote).toBeUndefined()
+      expect(buildSecurityReviewSummary(presenterInput(both)).scopeNote).toBeUndefined()
+      expect(buildSecurityReviewSummary(presenterInput(deterministicOnly)).scopeNote).toBeUndefined()
+      expect(buildSecurityReviewSummary(presenterInput(agentOnly)).scopeNote).toBeUndefined()
+    })
+
+    test('treats the same values in a different order as a different scope', () => {
+      const reordered = {...differentScope, excludes: ['b', 'a']}
+      const sources = {
+        deterministic: {
+          ...scopedScan,
+          coverage: {...scopedScan.coverage, scope: {...differentScope, excludes: ['a', 'b']}},
+        },
+        agent: {...agentFindingsDocument, scope: reordered},
+      }
+
+      expect(buildSecurityReviewSummary(presenterInput(sources)).scopeNote).toBe(note)
+    })
+
+    test('renders the scopes, and the note only when they differ', () => {
+      const output = mockAndCaptureOutput()
+      output.clear()
+
+      renderSecurityReview(presenterInput({deterministic: scopedScan, agent: agentFindingsDocument}))
+
+      const different = unstyled(output.error())
+      expect(different).toContain('Scan directories: ., ../backend')
+      expect(different).toContain('Scope reported by the agent: none')
+      expect(different).toContain(note)
+      output.clear()
+
+      renderSecurityReview(presenterInput(both))
+
+      expect(unstyled(output.error())).not.toContain(note)
+      output.clear()
     })
   })
 
@@ -740,11 +831,12 @@ describe('buildSecurityReviewAlerts', () => {
       undefined,
       'Checks with findings',
       undefined,
+      undefined,
       `Results files in ${paths.resultsDirectory}`,
       'Blocking',
     ])
     expect(summary.options.customSections![0]!.body).toEqual({subdued: 'Showing 1 of 6 checks (--check-id).'})
-    expect(summary.options.customSections![4]!.body).toBe('1 check at or above low (--blocking low).')
+    expect(summary.options.customSections![5]!.body).toBe('1 check at or above low (--blocking low).')
   })
 
   test('puts the stale line after Other checks and before Deterministic coverage', () => {
@@ -756,6 +848,7 @@ describe('buildSecurityReviewAlerts', () => {
       'Other checks',
       undefined,
       undefined,
+      undefined,
       `Results files in ${paths.resultsDirectory}`,
       'Next steps',
     ])
@@ -763,6 +856,7 @@ describe('buildSecurityReviewAlerts', () => {
       '1 check shows both sources because the agent results are older than the deterministic results.',
     )
     expect(sections[3]!.body).toEqual({subdued: expect.stringContaining('Deterministic coverage')})
+    expect(sections[4]!.body).toEqual({subdued: expect.stringContaining('Scan directories: .')})
   })
 })
 
@@ -787,7 +881,7 @@ describe('renderSecurityReview', () => {
     expect(summaryBox).toContain('deterministic-findings.json  2 hours ago  3.99.0')
     expect(summaryBox).toContain('agent-findings.json          1 hour ago   3.99.0')
     expect(summaryBox).toContain('Next steps')
-    expect(summaryBox).toContain('• Fix the issues, then run `shopify app security check --path')
+    expect(summaryBox).toContain('• Fix the issues, then run `shopify app security check`')
   })
 
   test('renders an info box with not found rows when no file is present', () => {

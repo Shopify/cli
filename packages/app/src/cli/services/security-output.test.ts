@@ -1,9 +1,17 @@
 import {buildSecurityAlert} from './security-output.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
+import {cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import type {SecurityReportInput} from './security-output.js'
 import type {AppSecuritySelection} from './app-security-selection.js'
 import type {ScanResult} from './app-security-engine/index.js'
+
+const appSelection: AppSecuritySelection = {
+  kind: 'config',
+  appDirectory: '/tmp/app',
+  appConfigFilePath: '/tmp/app/shopify.app.toml',
+  configClientId: 'toml-client-id',
+}
 
 const engine = {
   name: 'shopify-app-security',
@@ -70,17 +78,12 @@ const scanWithIssues: ScanResult = {
 function reportInput(overrides: Partial<SecurityReportInput> = {}): SecurityReportInput {
   return {
     scan: scanWithIssues,
-    selection: {
-      kind: 'config',
-      appDirectory: '/tmp/app',
-      appConfigFilePath: '/tmp/app/shopify.app.toml',
-      configClientId: 'toml-client-id',
-    },
+    selection: appSelection,
     scanDirectories: [{directory: '/tmp/app', origin: 'app_directory'}],
     engine,
     verbose: false,
     elapsedMilliseconds: 125,
-    commands: resolveAppSecurityCommands('/tmp/app'),
+    commands: resolveAppSecurityCommands(appSelection, cwd()),
     deterministicFindingsPath: '/tmp/app/.shopify/app-security/deterministic-findings.json',
     agentChecksPath: '/tmp/app/.shopify/app-security/agent-checks.json',
     agentCheckCount: 31,
@@ -181,7 +184,7 @@ describe('buildSecurityAlert', () => {
         ],
       },
     })
-    const commands = resolveAppSecurityCommands('/tmp/app')
+    const commands = resolveAppSecurityCommands(appSelection, cwd())
     expect(alert.options.nextSteps).toBeUndefined()
     expect(serialized).toContain('31 checks ready for your coding agent.')
     const customSections = alert.options.customSections ?? []
@@ -291,7 +294,7 @@ describe('buildSecurityAlert', () => {
   })
 
   test('quotes record commands for Windows paths with spaces and percents', () => {
-    const commands = resolveAppSecurityCommands('C:/Users/50%/my app')
+    const commands = resolveAppSecurityCommands(appSelection, joinPath(cwd(), '50% my app'))
     const alert = buildSecurityAlert(reportInput({commands}))
     const recordCommand = formatAppSecurityCommand(commands.record)
 
@@ -308,7 +311,7 @@ describe('buildSecurityAlert', () => {
     })
     expect(recordCommand).not.toContain('50%%')
     expect(formatAppSecurityCommand(commands.record, 'cmd')).toContain('^%')
-    expect(formatAppSecurityCommand(commands.record, 'powershell')).toContain("'C:/Users/50%/my app'")
+    expect(formatAppSecurityCommand(commands.record, 'powershell')).toContain("'50% my app'")
   })
 
   test('adds evidence, fix guidance, and scan details in verbose mode', () => {

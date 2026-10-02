@@ -30,6 +30,7 @@ describe('app security check command', () => {
       'exclude',
       'include-dir',
       'json',
+      'list-files',
       'no-git-ignore',
       'path',
       'skip-instructions',
@@ -57,6 +58,7 @@ describe('app security check command', () => {
       includeDirs: [],
       excludePatterns: [],
       noGitIgnore: false,
+      listFiles: false,
     })
   })
 
@@ -95,6 +97,22 @@ describe('app security check command', () => {
     expect(SecurityCheck.flags['no-git-ignore'].env).toBe('SHOPIFY_FLAG_NO_GIT_IGNORE')
   })
 
+  test('forwards --list-files, which is also set by its environment variable', async () => {
+    await SecurityCheck.run(['--list-files', '--json'], import.meta.url)
+
+    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({listFiles: true, json: true}))
+    expect(SecurityCheck.flags['list-files'].env).toBe('SHOPIFY_FLAG_LIST_FILES')
+  })
+
+  test('keeps --list-files exclusive with --yes, --skip-instructions and --blocking', async () => {
+    expect(SecurityCheck.flags['list-files'].exclusive).toEqual(['yes', 'skip-instructions', 'blocking'])
+
+    for (const incompatible of [['--yes'], ['--skip-instructions'], ['--blocking', 'high']]) {
+      // eslint-disable-next-line no-await-in-loop
+      await expect(SecurityCheck.run(['--list-files', ...incompatible], import.meta.url)).rejects.toThrow()
+    }
+  })
+
   test('rejects the removed --ignore flag', async () => {
     await expect(SecurityCheck.run(['--ignore', 'build/', '--skip-instructions'], import.meta.url)).rejects.toThrow()
   })
@@ -115,6 +133,7 @@ describe('app security check command', () => {
       includeDirs: [],
       excludePatterns: [],
       noGitIgnore: false,
+      listFiles: false,
     })
   })
 

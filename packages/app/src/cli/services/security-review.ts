@@ -1,11 +1,6 @@
 import {appSecurityArtifactPaths} from './app-security-artifacts.js'
 import {resolveAppSecurityCommands} from './app-security-commands.js'
-import {
-  resolveAppSecuritySelection,
-  resultsKey,
-  selectedConfigFileName,
-  type AppSecuritySelection,
-} from './app-security-selection.js'
+import {resolveAppSecuritySelection, resultsKey, type AppSecuritySelection} from './app-security-selection.js'
 import {loadAppSecurityResults, type AppSecurityResults} from './app-security-results.js'
 import {securityReviewJsonOutputSchema, toSecurityReviewJson} from './security-review-json.js'
 import {renderSecurityReview, type SecurityReviewPresenterInput} from './security-review-output.js'
@@ -35,6 +30,8 @@ export interface SecurityReviewResult {
   /** The combined checks after `--check-id`, in canonical order. */
   checks: CombinedCheck[]
   filter: {checkIds: string[]} | null
+  /** The agent recorded its findings for a different scope than the latest scan. False unless both results exist. */
+  scopeDiffers: boolean
   blocking: {
     level: AppSecurityBlockingLevel
     /** Filtered checks with an active finding at or above the level. Zero for `none`. */
@@ -44,7 +41,7 @@ export interface SecurityReviewResult {
 
 export interface SecurityReviewDependencies {
   resolveSelection(options: SecurityReviewOptions): Promise<AppSecuritySelection>
-  loadResults(selection: AppSecuritySelection): Promise<AppSecurityResults>
+  loadResults(selection: AppSecuritySelection, path: string): Promise<AppSecurityResults>
   output(content: string): void
   render(input: SecurityReviewPresenterInput): void
   now(): Date
@@ -94,8 +91,15 @@ export function reviewAppSecurityResults(
     allChecks: results.checks,
     checks,
     filter,
+    scopeDiffers: scopeDiffers(results.sources),
     blocking: {level: options.blocking, blockedChecks: countBlockedChecks(checks, options.blocking)},
   }
+}
+
+/** Compares the scope blocks as recorded: the same values in the same order. */
+function scopeDiffers({deterministic, agent}: AppSecurityResults['sources']): boolean {
+  if (!deterministic || !agent) return false
+  return JSON.stringify(deterministic.document.coverage.scope) !== JSON.stringify(agent.document.scope)
 }
 
 /**
@@ -133,7 +137,7 @@ export default async function securityReview(
   dependencies: SecurityReviewDependencies = defaultDependencies,
 ): Promise<void> {
   const selection = await dependencies.resolveSelection(options)
-  const results = await dependencies.loadResults(selection)
+  const results = await dependencies.loadResults(selection, options.directory)
   const result = reviewAppSecurityResults(results, {
     resultsDirectory: appSecurityArtifactPaths(selection.appDirectory, resultsKey(selection)).resultsDirectory,
     checkIds: options.checkIds,
@@ -147,7 +151,7 @@ export default async function securityReview(
       result,
       verbose: options.verbose,
       now: dependencies.now(),
-      commands: resolveAppSecurityCommands(selection.appDirectory, selectedConfigFileName(selection)),
+      commands: resolveAppSecurityCommands(selection, options.directory),
     })
   }
 

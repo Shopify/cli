@@ -14,6 +14,8 @@ export default class SecurityRecord extends BaseCommand {
 
   static descriptionWithMarkdown = `Reads a coding agent's complete findings document from stdin, validates it, and replaces \`agent-findings.json\` in the results directory, \`.shopify/app-security/<results key>/\`. The results key is \`--client-id\` when you pass it, and otherwise the name of the app configuration file without \`.toml\`.
 
+The document must include a \`scope\` with the \`include_dirs\`, \`excludes\` and \`no_git_ignore\` values of the \`check\` run it describes, exactly as typed. It's recorded as reported and never compared with the scan's files.
+
 The document is recorded all or nothing: if anything is invalid, the command fails with every error, writes nothing, and exits with a non-zero code. With \`--json\`, the errors are listed in the error document's \`details.errors\`. It needs the results directory that \`shopify app security check\` creates.`
 
   static get jsonOutputSchema() {
@@ -38,13 +40,13 @@ The document is recorded all or nothing: if anything is invalid, the command fai
       withoutAppConfig: flags['without-app-config'],
       allowPrompts: false,
     })
-    await requireResultsDirectory(selection)
-    const result = await securityRecord({selection})
+    await requireResultsDirectory(selection, flags.path)
+    const result = await securityRecord({selection, path: flags.path})
 
     if (flags.json) {
       outputResult(securityRecordJsonOutputSchema.encode(result))
     } else {
-      renderSecurityRecordResult(result, selection)
+      renderSecurityRecordResult(result, selection, flags.path)
     }
   }
 }

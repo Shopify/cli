@@ -47,7 +47,7 @@ Use \`--all\` to delete every results directory under \`.shopify/app-security/\`
     const options = flags.all
       ? {all: true as const, appDirectory: await resolveAppDirectory(selectionOptions)}
       : {all: false as const, selection: await resolveAppSecuritySelection({...selectionOptions, allowPrompts: false})}
-    if (!options.all) await requireResultsDirectory(options.selection)
+    if (!options.all) await requireResultsDirectory(options.selection, flags.path)
 
     const result = await securityClean(options)
     const appDirectory = options.all ? options.appDirectory : options.selection.appDirectory

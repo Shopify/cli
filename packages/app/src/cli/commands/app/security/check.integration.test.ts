@@ -150,6 +150,49 @@ describe('app security check command boundary', () => {
     })
   })
 
+  test('scans without app configuration under the --client-id results key and records the scope', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeFile(joinPath(directory, 'index.ts'), 'export const loader = () => ({ok: true})')
+      const appDirectory = await fileRealPath(directory)
+      const paths = appSecurityArtifactPaths(appDirectory, 'configless-client-id')
+
+      const result = await runCommand([
+        '--path',
+        directory,
+        '--client-id',
+        'configless-client-id',
+        '--without-app-config',
+        '--exclude',
+        'vendor',
+        '--json',
+        '--skip-instructions',
+      ])
+
+      expect(result.exitCode).toBe(0)
+      expect(JSON.parse(result.stdout).selection).toMatchObject({
+        app_directory: appDirectory,
+        app_config_file: null,
+        client_id: 'configless-client-id',
+        client_id_source: 'flag',
+      })
+      const deterministicFindings = await readJson(paths.deterministicFindingsPath)
+      expect(deterministicFindings).toMatchObject({
+        source: 'deterministic',
+        coverage: {scope: {include_dirs: [], excludes: ['vendor'], no_git_ignore: false}},
+      })
+      // With no app configuration, config checks can't run, so they're reported as unresolved rather than passing.
+      expect(deterministicFindings).toMatchObject({
+        checks: expect.arrayContaining([
+          expect.objectContaining({
+            status: 'unresolved',
+            reason: {code: 'parser_unavailable', message: 'No readable Shopify app configuration was available.'},
+          }),
+        ]),
+      })
+      await expect(readJson(paths.agentChecksPath)).resolves.toMatchObject({checks: expect.any(Array)})
+    })
+  })
+
   test('writes the results under the configuration name without --client-id, per selected configuration', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)

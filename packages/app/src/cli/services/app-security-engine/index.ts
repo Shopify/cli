@@ -10,6 +10,7 @@
  * Keep scanners, registries, validators, redaction, and the rest of the stored-schema details inside the engine.
  */
 export {getAgentInstructions, getEngineVersion, scanApp} from './run.js'
+export {listGatheredPaths} from './scanners/index.js'
 export type {AppSecurityEngineMetadata, AppSecurityScan} from './run.js'
 export {translateFindingsDocument} from './results/translate.js'
 export type {TranslateFindingsDocumentResult} from './results/translate.js'
@@ -47,9 +48,11 @@ export {groupIssues, skippedFileCounts} from './output/group-issues.js'
 export type {IssueGroup} from './output/group-issues.js'
 export type {
   AgentFindingsDocument,
+  AppSecurityScope,
   Capabilities,
   CheckPrecedence,
   CheckSnapshot,
+  CoverageScanDirectory,
   DeterministicFindingsDocument,
   FindingsDocument,
   FindingsSource,

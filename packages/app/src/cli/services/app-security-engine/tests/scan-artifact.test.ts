@@ -3,11 +3,20 @@ import {formatJson} from '../output/format.js'
 import {combineFindings} from '../results/combine.js'
 import {translateFindingsDocument} from '../results/translate.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
-import {buildDeterministicFindings} from '../scan-artifact/index.js'
+import {buildDeterministicFindings as buildFindings} from '../scan-artifact/index.js'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
+import type {BuildDeterministicFindingsOptions} from '../scan-artifact/index.js'
 import type {CheckExecution, Issue, ScanResult} from '../types.js'
+
+function buildDeterministicFindings(scanResult: ScanResult, options: Partial<BuildDeterministicFindingsOptions> = {}) {
+  return buildFindings(scanResult, {
+    scope: {include_dirs: [], excludes: [], no_git_ignore: false},
+    scanDirectories: [{directory: '.', origin: 'app_directory'}],
+    ...options,
+  })
+}
 
 const execution = (overrides: Partial<CheckExecution> = {}): CheckExecution => ({
   id: 'CREDENTIAL_LOG_LEAKAGE',
@@ -93,7 +102,13 @@ describe('buildDeterministicFindings', () => {
         surface: 'react_router',
         languages: [{name: 'typescript', support: 'supported', files: ['app/a.ts']}],
       },
-      coverage: {files_scanned: 1, files_skipped: [], gaps: []},
+      coverage: {
+        files_scanned: 1,
+        files_skipped: [],
+        gaps: [],
+        scope: {include_dirs: [], excludes: [], no_git_ignore: false},
+        scan_directories: [{directory: '.', origin: 'app_directory'}],
+      },
       checks: [
         {
           id: 'CREDENTIAL_LOG_LEAKAGE',
@@ -118,6 +133,20 @@ describe('buildDeterministicFindings', () => {
         },
       ],
     })
+    expect(translateFindingsDocument(JSON.parse(JSON.stringify(document)))).toEqual({ok: true, document})
+  })
+
+  test('records the scope as typed and the scan directories in coverage', () => {
+    const scope = {include_dirs: ['../backend', './lib/'], excludes: ['generated', '**/*.log'], no_git_ignore: true}
+    const scanDirectories = [
+      {directory: '.', origin: 'app_directory' as const},
+      {directory: '../backend', origin: 'include_dir' as const},
+    ]
+
+    const document = buildDeterministicFindings(result(), {scope, scanDirectories})
+
+    expect(document.coverage.scope).toEqual(scope)
+    expect(document.coverage.scan_directories).toEqual(scanDirectories)
     expect(translateFindingsDocument(JSON.parse(JSON.stringify(document)))).toEqual({ok: true, document})
   })
 
