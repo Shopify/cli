@@ -144,8 +144,6 @@ describe('dependency automation scanner integration', () => {
         // Outside any repository, ignored-path discovery stops at its first probe.
         expect(vi.mocked(captureOutputWithExitCode).mock.calls.map(([command, args]) => [command, args])).toEqual([
           ['git', ['rev-parse', '--is-inside-work-tree', '--show-prefix']],
-          ['git', ['rev-parse', 'HEAD']],
-          ['git', ['status', '--porcelain']],
         ])
         expect(fetch).not.toHaveBeenCalled()
       })

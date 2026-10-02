@@ -1,5 +1,4 @@
 import {formatAppSecurityCommand, type AppSecurityCommands} from './app-security-commands.js'
-import {appSecurityArtifactPaths} from './app-security-artifacts.js'
 import {checkStatusLabels, checksWithFindingsLabel, countLabel} from './app-security-format.js'
 import {
   activeFindings,
@@ -49,10 +48,10 @@ interface ChecksWithFindingsRow {
   counts: string
 }
 
-/** A results file is either missing, or present with its relative age, commit and engine version. */
+/** A results file is either missing, or present with its relative age and engine version. */
 type ResultsFileRow =
-  | {name: string; updated: 'not found'; commit?: never; engine?: never}
-  | {name: string; updated: string; commit: string; engine: string}
+  | {name: string; updated: 'not found'; engine?: never}
+  | {name: string; updated: string; engine: string}
 
 /** The summary closes with the next steps, or with the Blocking line when `--blocking` is breached. */
 type SecurityReviewSummaryClosing =
@@ -91,7 +90,6 @@ const FILE_NAMES: Record<FindingsSource, string> = {
   agent: 'agent-findings.json',
 }
 const CONCISE_REASONING_LINES = 3
-const SHORT_COMMIT_LENGTH = 7
 /** Marks a check whose `prefer-agent` agent result is older than the deterministic one, so both sources count. */
 const STALE_AGENT_RESULT_MARKER = 'agent result stale'
 const STALE_AGENT_RESULT_EXPLANATION = 'The agent result is older than the deterministic result, so both are shown.'
@@ -145,7 +143,7 @@ export function buildSecurityReviewSummary(input: SecurityReviewPresenterInput):
     ...(staleChecks > 0 ? {staleAgentResults: staleAgentResultsLine(staleChecks)} : {}),
     ...(deterministic ? {coverage: coverageLine(deterministic)} : {}),
     resultsFiles: {
-      directory: appSecurityArtifactPaths(result.appRoot).artifactDirectory,
+      directory: result.resultsDirectory,
       rows: SOURCE_ORDER.map((source) => resultsFileRow(source, result.sources[source]?.document, input.now)),
     },
     ...(breached
@@ -240,7 +238,6 @@ function resultsFileRow(source: FindingsSource, document: FindingsDocument | und
   return {
     name,
     updated: formatAge(document.generated_at, now),
-    commit: formatCommit(document.project),
     engine: document.engine.version,
   }
 }
@@ -249,13 +246,6 @@ function formatAge(timestamp: string, now: Date): string {
   const time = Date.parse(timestamp)
   if (Number.isNaN(time)) return 'unknown'
   return timeAgo(new Date(time), now)
-}
-
-/** The commit is abbreviated as git does, since the full hash doesn't fit the 80-column table. */
-function formatCommit(project: {commit: string | null; dirty: boolean | null}): string {
-  if (project.commit === null) return 'unknown'
-  const commit = project.commit.slice(0, SHORT_COMMIT_LENGTH)
-  return project.dirty ? `${commit} (uncommitted)` : commit
 }
 
 function nextSteps(
@@ -311,7 +301,7 @@ function summaryAlert(summary: SecurityReviewSummary): SecurityReviewAlert {
     title: `Results files in ${summary.resultsFiles.directory}`,
     body: {
       tabularData: [
-        ['', {subdued: 'Updated'}, {subdued: 'Commit'}, {subdued: 'Engine'}],
+        ['', {subdued: 'Updated'}, {subdued: 'Engine'}],
         ...summary.resultsFiles.rows.map(resultsFileCells),
       ],
     },
@@ -327,8 +317,8 @@ function summaryAlert(summary: SecurityReviewSummary): SecurityReviewAlert {
 }
 
 function resultsFileCells(row: ResultsFileRow): InlineToken[] {
-  if (row.commit === undefined) return [row.name, {subdued: row.updated}]
-  return [row.name, row.updated, row.commit, row.engine]
+  if (row.engine === undefined) return [row.name, {subdued: row.updated}]
+  return [row.name, row.updated, row.engine]
 }
 
 /**

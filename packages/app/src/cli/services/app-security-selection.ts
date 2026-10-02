@@ -67,10 +67,28 @@ export function effectiveClientId(selection: AppSecuritySelection): string | und
   return selection.kind === 'no-config' ? selection.clientId : (selection.clientIdOverride ?? selection.configClientId)
 }
 
+/**
+ * The name of the selection's results directory. The TOML's own `client_id` is never the key, so two
+ * configurations of one app, and one configuration scanned as two apps, keep separate results.
+ */
+export function resultsKey(selection: AppSecuritySelection): string {
+  if (selection.kind === 'no-config') return selection.clientId
+  return selection.clientIdOverride ?? basename(selection.appConfigFilePath, '.toml')
+}
+
 export function clientIdSource(selection: AppSecuritySelection): 'config' | 'flag' | 'picker' | undefined {
   if (selection.kind === 'no-config') return selection.clientIdSource
   if (selection.clientIdOverride) return 'flag'
   return selection.configClientId ? 'config' : undefined
+}
+
+/**
+ * The app directory alone, for `clean --all`, which needs no client ID and no results key. With
+ * `--without-app-config` that's `--path` itself, so no client ID is required to find it.
+ */
+export async function resolveAppDirectory(options: Omit<AppSecuritySelectionOptions, 'allowPrompts'>): Promise<string> {
+  if (options.withoutAppConfig) return realDirectory(options.path)
+  return (await resolveAppSecuritySelection({...options, allowPrompts: false})).appDirectory
 }
 
 export async function resolveAppSecuritySelection(

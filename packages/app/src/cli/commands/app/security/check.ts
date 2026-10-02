@@ -1,5 +1,5 @@
 import {appSecurityBlockingFlag} from './blocking-flag.js'
-import {appFlags} from '../../../flags.js'
+import {appSecuritySelectionFlags} from './selection-flags.js'
 import {ignorePatternProblem} from '../../../services/app-security-engine/index.js'
 import securityCheck from '../../../services/security-check.js'
 import {Flags} from '@oclif/core'
@@ -13,7 +13,7 @@ export default class SecurityCheck extends BaseCommand {
   static summary =
     'Check an app for Shopify-specific security issues and write deterministic-findings.json and agent-checks.json.'
 
-  static descriptionWithMarkdown = `Runs Shopify App Security locally and writes \`deterministic-findings.json\` and \`agent-checks.json\` to \`.shopify/app-security/\`. Every run replaces both files, so it's always safe to run the check again.
+  static descriptionWithMarkdown = `Runs Shopify App Security locally and writes \`deterministic-findings.json\` and \`agent-checks.json\` to the results directory, \`.shopify/app-security/<results key>/\`. The results key is \`--client-id\` when you pass it, and otherwise the name of the app configuration file without \`.toml\`; the other \`app security\` commands take the same selection flags and find the same directory. Every run replaces both files, so it's always safe to run the check again.
 
 \`deterministic-findings.json\` holds the deterministic scan results. \`agent-checks.json\` holds the checks for your coding agent to investigate; the agent's results are recorded with \`shopify app security record\`. Use \`--config\` to select a specific app configuration when the project has multiple \`shopify.app*.toml\` files; App Security inspects only that configuration. Use \`--client-id\` to replace the configuration's client ID for this run. When no app configuration exists, use \`--without-app-config --client-id <client-id>\` to scan \`--path\` anyway with config checks skipped; in an interactive terminal the command offers to do this.
 
@@ -25,16 +25,7 @@ In interactive terminals, the command offers to copy the coding-agent instructio
 
   static flags = {
     ...globalFlags,
-    path: appFlags.path,
-    config: appFlags.config,
-    'client-id': appFlags['client-id'],
-    'without-app-config': Flags.boolean({
-      description:
-        'Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.',
-      env: 'SHOPIFY_FLAG_WITHOUT_APP_CONFIG',
-      exclusive: ['config'],
-      dependsOn: ['client-id'],
-    }),
+    ...appSecuritySelectionFlags,
     // No environment variable: oclif passes a repeatable flag's variable as one string, so it could hold only one pattern.
     // eslint-disable-next-line @shopify/cli/command-flags-with-env
     ignore: Flags.string({

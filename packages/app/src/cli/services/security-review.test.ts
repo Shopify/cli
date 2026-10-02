@@ -7,13 +7,16 @@ import {
   deterministicFindingsDocument,
 } from './app-security-engine/tests/fixtures/findings-documents.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
 import type {AppSecurityBlockingLevel} from './app-security-api.js'
 import type {AgentFindingsDocument, DeterministicFindingsDocument} from './app-security-engine/index.js'
 
 const now = new Date('2026-09-01T12:30:00.000Z')
+
+// The results key of `createApp`'s shopify.app.toml.
+const RESULTS_KEY = 'shopify.app'
 
 interface Files {
   deterministic?: DeterministicFindingsDocument
@@ -22,8 +25,8 @@ interface Files {
 
 async function createApp(directory: string, files: Files): Promise<string> {
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'client_id = "test"\n')
-  const paths = appSecurityArtifactPaths(directory)
-  await mkdir(paths.artifactDirectory)
+  const paths = appSecurityArtifactPaths(directory, RESULTS_KEY)
+  await mkdir(paths.resultsDirectory)
   if (files.deterministic) await writeFile(paths.deterministicFindingsPath, JSON.stringify(files.deterministic))
   if (files.agent) await writeFile(paths.agentFindingsPath, JSON.stringify(files.agent))
   return directory
@@ -31,7 +34,12 @@ async function createApp(directory: string, files: Files): Promise<string> {
 
 function testDependencies() {
   const dependencies = {
-    resolveRoot: async (directory: string) => directory,
+    resolveSelection: async ({directory}) =>
+      ({
+        kind: 'config',
+        appDirectory: directory,
+        appConfigFilePath: joinPath(directory, 'shopify.app.toml'),
+      }) as const,
     loadResults: loadAppSecurityResults,
     output: vi.fn(),
     render: vi.fn(),
@@ -42,12 +50,12 @@ function testDependencies() {
 }
 
 function review(files: Files, options: {checkIds?: string[]; blocking?: AppSecurityBlockingLevel} = {}) {
-  const results = appSecurityResultsFor('/tmp/review-app', {
+  const results = appSecurityResultsFor('/tmp/review-app', RESULTS_KEY, {
     deterministic: files.deterministic ?? null,
     agent: files.agent ?? null,
   })
   return reviewAppSecurityResults(results, {
-    appRoot: '/tmp/review-app',
+    resultsDirectory: appSecurityArtifactPaths('/tmp/review-app', RESULTS_KEY).resultsDirectory,
     checkIds: options.checkIds ?? [],
     blocking: options.blocking ?? 'none',
   })
@@ -204,8 +212,10 @@ describe('securityReview', () => {
       expect(input.verbose).toBe(true)
       expect(input.now).toBe(now)
       expect(input.commands.scan.args).toContainEqual({flag: '--path', value: appRoot})
-      expect(input.result.appRoot).toBe(appRoot)
-      expect(input.result.sources.deterministic?.path).toBe(appSecurityArtifactPaths(appRoot).deterministicFindingsPath)
+      expect(input.result.resultsDirectory).toBe(appSecurityArtifactPaths(appRoot, RESULTS_KEY).resultsDirectory)
+      expect(input.result.sources.deterministic?.path).toBe(
+        appSecurityArtifactPaths(appRoot, RESULTS_KEY).deterministicFindingsPath,
+      )
       expect(input.result.checks).toHaveLength(6)
     })
   })
@@ -225,7 +235,9 @@ describe('securityReview', () => {
       const json = JSON.parse(dependencies.output.mock.calls[0]![0])
       expect(json.filter).toEqual({check_ids: ['OPEN_REDIRECT']})
       expect(json.sources.agent).toBeNull()
-      expect(json.sources.deterministic.path).toBe(appSecurityArtifactPaths(appRoot).deterministicFindingsPath)
+      expect(json.sources.deterministic.path).toBe(
+        appSecurityArtifactPaths(appRoot, RESULTS_KEY).deterministicFindingsPath,
+      )
       expect(json.checks.map((check: {id: string}) => check.id)).toEqual(['OPEN_REDIRECT'])
     })
   })
@@ -301,13 +313,27 @@ describe('securityReview', () => {
   test('lets the loader abort on an invalid file', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, {deterministic: deterministicFindingsDocument})
-      await writeFile(appSecurityArtifactPaths(appRoot).agentFindingsPath, '{not json')
+      await writeFile(appSecurityArtifactPaths(appRoot, RESULTS_KEY).agentFindingsPath, '{not json')
       const dependencies = testDependencies()
 
       await expect(
         securityReview({directory: appRoot, json: true, verbose: false, checkIds: [], blocking: 'none'}, dependencies),
       ).rejects.toThrow('The App Security results could not be loaded because a results file is invalid.')
 
+      expect(dependencies.output).not.toHaveBeenCalled()
+    })
+  })
+
+  test('aborts with "No results found" when the results directory does not exist', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await fileRealPath(directory)
+      const dependencies = testDependencies()
+
+      await expect(
+        securityReview({directory: appRoot, json: false, verbose: false, checkIds: [], blocking: 'none'}, dependencies),
+      ).rejects.toMatchObject({message: `No App Security results for ${RESULTS_KEY} in ${appRoot}.`})
+
+      expect(dependencies.render).not.toHaveBeenCalled()
       expect(dependencies.output).not.toHaveBeenCalled()
     })
   })

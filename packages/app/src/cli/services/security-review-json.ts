@@ -6,7 +6,6 @@ import {
   deterministicFindingsDocumentSchema,
   FINDINGS_SCHEMA_VERSION,
   projectDetectionSchema,
-  projectStateSchema,
   severitySchema,
   storedCheckSchema,
   storedFindingSchema,
@@ -68,7 +67,6 @@ const deterministicSourceSchema = zod.object({
   schema_version: zod.literal(FINDINGS_SCHEMA_VERSION),
   engine: deterministicFindingsDocumentSchema.shape.engine,
   generated_at: zod.string(),
-  project: projectStateSchema,
   detection: projectDetectionSchema,
   coverage: coverageSchema,
 })
@@ -78,7 +76,6 @@ const agentSourceSchema = zod.object({
   schema_version: zod.literal(FINDINGS_SCHEMA_VERSION),
   engine: agentFindingsDocumentSchema.shape.engine,
   generated_at: zod.string(),
-  project: projectStateSchema,
 })
 
 export const securityReviewJsonOutputSchema = defineJsonOutputSchema({
@@ -109,14 +106,11 @@ export const COMBINED_CHECK_MATCHES_REVIEW_JSON: Equals<CombinedCheck, zod.infer
  * pins a field added to a stored document later would silently vanish from `--json`.
  */
 export const SOURCES_MATCH_REVIEW_JSON: Equals<
-  Pick<
-    DeterministicFindingsDocument,
-    'schema_version' | 'engine' | 'generated_at' | 'project' | 'detection' | 'coverage'
-  >,
+  Pick<DeterministicFindingsDocument, 'schema_version' | 'engine' | 'generated_at' | 'detection' | 'coverage'>,
   Omit<zod.infer<typeof deterministicSourceSchema>, 'path'>
 > &
   Equals<
-    Pick<AgentFindingsDocument, 'schema_version' | 'engine' | 'generated_at' | 'project'>,
+    Pick<AgentFindingsDocument, 'schema_version' | 'engine' | 'generated_at'>,
     Omit<zod.infer<typeof agentSourceSchema>, 'path'>
   > = true
 
@@ -132,7 +126,6 @@ export function toSecurityReviewJson(result: SecurityReviewResult): SecurityRevi
             schema_version: deterministic.document.schema_version,
             engine: deterministic.document.engine,
             generated_at: deterministic.document.generated_at,
-            project: deterministic.document.project,
             detection: deterministic.document.detection,
             coverage: deterministic.document.coverage,
           }
@@ -143,7 +136,6 @@ export function toSecurityReviewJson(result: SecurityReviewResult): SecurityRevi
             schema_version: agent.document.schema_version,
             engine: agent.document.engine,
             generated_at: agent.document.generated_at,
-            project: agent.document.project,
           }
         : null,
     },

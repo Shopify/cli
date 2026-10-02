@@ -1,22 +1,31 @@
 import SecurityRecord from './record.js'
+import SecurityCheck from './check.js'
 import {appFlags} from '../../../flags.js'
+import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts.js'
 import {resolveAppSecuritySelection} from '../../../services/app-security-selection.js'
 import securityRecord, {renderSecurityRecordResult} from '../../../services/security-record.js'
 import {securityRecordJsonOutputSchema} from '../../../services/security-record-json.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {fileRealPath, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/security-record.js')
-vi.mock('../../../services/app-security-selection.js')
+vi.mock('../../../services/app-security-selection.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../services/app-security-selection.js')>()),
+  resolveAppSecuritySelection: vi.fn(),
+}))
 
-/** Creates an app directory and makes the selection resolver find it, as the real resolver would. */
-async function createApp(directory: string): Promise<string> {
+/**
+ * Creates an app directory and makes the selection resolver find it, as the real resolver would. The results
+ * directory of its `shopify.app` results key exists only when `withResults` is set.
+ */
+async function createApp(directory: string, {withResults = true} = {}): Promise<string> {
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'client_id = "test"\n')
   const appDirectory = await fileRealPath(directory)
+  if (withResults) await mkdir(appSecurityArtifactPaths(appDirectory, 'shopify.app').resultsDirectory)
   vi.mocked(resolveAppSecuritySelection).mockResolvedValue({
     kind: 'config',
     appDirectory,
@@ -26,18 +35,23 @@ async function createApp(directory: string): Promise<string> {
 }
 
 function recordedResult(appRoot: string) {
-  return {path: joinPath(appRoot, '.shopify', 'app-security', 'agent-findings.json'), checks: 2, findings: 3}
+  return {path: appSecurityArtifactPaths(appRoot, 'shopify.app').agentFindingsPath, checks: 2, findings: 3}
 }
 
 describe('app security record command', () => {
-  test('is hidden, does not require linked app context, and takes no --config', () => {
+  test('is hidden and does not require linked app context', () => {
     expect(SecurityRecord.hidden).toBe(true)
     expect(SecurityRecord.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityRecord.prototype).not.toBeInstanceOf(AppLinkedCommand)
-    expect(SecurityRecord.flags.path).toBe(appFlags.path)
     expect(SecurityRecord.flags).toHaveProperty('json')
-    expect(SecurityRecord.flags).not.toHaveProperty('config')
     expect(SecurityRecord.jsonOutputSchema).toBe(securityRecordJsonOutputSchema)
+  })
+
+  test('defines the selection flags as check does', () => {
+    expect(SecurityRecord.flags.path).toBe(appFlags.path)
+    expect(SecurityRecord.flags.config).toBe(appFlags.config)
+    expect(SecurityRecord.flags['client-id']).toBe(appFlags['client-id'])
+    expect(SecurityRecord.flags['without-app-config']).toBe(SecurityCheck.flags['without-app-config'])
   })
 
   test('records for the app in the current directory by default and presents the result', async () => {
@@ -52,9 +66,16 @@ describe('app security record command', () => {
       try {
         await SecurityRecord.run([], import.meta.url)
 
-        expect(resolveAppSecuritySelection).toHaveBeenCalledWith({path: cwd(), allowPrompts: false})
-        expect(securityRecord).toHaveBeenCalledWith({appRoot})
-        expect(renderSecurityRecordResult).toHaveBeenCalledWith(result, appRoot)
+        expect(resolveAppSecuritySelection).toHaveBeenCalledWith({
+          path: cwd(),
+          config: undefined,
+          clientId: undefined,
+          withoutAppConfig: undefined,
+          allowPrompts: false,
+        })
+        const selection = await vi.mocked(resolveAppSecuritySelection).mock.results[0]!.value
+        expect(securityRecord).toHaveBeenCalledWith({selection})
+        expect(renderSecurityRecordResult).toHaveBeenCalledWith(result, selection)
         expect(output.info()).toBe('')
       } finally {
         vi.unstubAllEnvs()
@@ -73,8 +94,10 @@ describe('app security record command', () => {
       try {
         await SecurityRecord.run(['--path', directory, '--json'], import.meta.url)
 
-        expect(resolveAppSecuritySelection).toHaveBeenCalledWith({path: directory, allowPrompts: false})
-        expect(securityRecord).toHaveBeenCalledWith({appRoot})
+        expect(resolveAppSecuritySelection).toHaveBeenCalledWith(expect.objectContaining({path: directory}))
+        expect(securityRecord).toHaveBeenCalledWith({
+          selection: await vi.mocked(resolveAppSecuritySelection).mock.results[0]!.value,
+        })
         expect(output.info()).toBe(
           [
             '{',
@@ -86,6 +109,54 @@ describe('app security record command', () => {
         )
         expect(renderSecurityRecordResult).not.toHaveBeenCalled()
       } finally {
+        output.clear()
+      }
+    })
+  })
+
+  test('forwards --config, --client-id and --without-app-config to the resolver without prompting', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+      await mkdir(appSecurityArtifactPaths(appRoot, 'abc123').resultsDirectory)
+      vi.mocked(securityRecord).mockResolvedValue(recordedResult(appRoot))
+      const output = mockAndCaptureOutput()
+      output.clear()
+
+      try {
+        await SecurityRecord.run(
+          ['--path', directory, '--without-app-config', '--client-id', 'abc123', '--json'],
+          import.meta.url,
+        )
+
+        expect(resolveAppSecuritySelection).toHaveBeenCalledWith({
+          path: directory,
+          config: undefined,
+          clientId: 'abc123',
+          withoutAppConfig: true,
+          allowPrompts: false,
+        })
+      } finally {
+        output.clear()
+      }
+    })
+  })
+
+  test('aborts with "No results found" before reading stdin when the results directory does not exist', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory, {withResults: false})
+      const output = mockAndCaptureOutput()
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      try {
+        await expect(SecurityRecord.run(['--path', directory], import.meta.url)).rejects.toThrow(
+          'process.exit unexpectedly called with "1"',
+        )
+
+        expect(output.error()).toContain('No App Security results for shopify.app in')
+        expect(output.error()).toContain('shopify app security check')
+        expect(securityRecord).not.toHaveBeenCalled()
+      } finally {
+        consoleErrorSpy.mockRestore()
         output.clear()
       }
     })

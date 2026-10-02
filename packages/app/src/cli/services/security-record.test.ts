@@ -15,6 +15,7 @@ import {AbortError, handler} from '@shopify/cli-kit/node/error'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
+import type {AppSecuritySelection} from './app-security-selection.js'
 import type {SecurityRecordDependencies} from './security-record.js'
 import type {AgentFindingsDocument} from './app-security-engine/index.js'
 
@@ -56,10 +57,22 @@ async function createApp(directory: string): Promise<string> {
   return fileRealPath(directory)
 }
 
+/** The selection that `createApp`'s `shopify.app.toml` gives. Its results key is `shopify.app`. */
+function selectionFor(appRoot: string): AppSecuritySelection {
+  return {kind: 'config', appDirectory: appRoot, appConfigFilePath: joinPath(appRoot, 'shopify.app.toml')}
+}
+
+function artifactPaths(appRoot: string) {
+  return appSecurityArtifactPaths(appRoot, 'shopify.app')
+}
+
+async function record(appRoot: string, dependencies: SecurityRecordDependencies) {
+  return securityRecord({selection: selectionFor(appRoot)}, dependencies)
+}
+
 function testDependencies(stdin: string | undefined): SecurityRecordDependencies {
   return {
     readStdin: vi.fn(async () => stdin),
-    readProjectState: vi.fn(async () => ({commit: 'abc123', dirty: true})),
     engineVersion: () => '3.99.0',
     writeAgentFindings: vi.fn(writeAgentFindings),
   }
@@ -70,11 +83,11 @@ function recordCommand(appRoot: string): string {
 }
 
 async function readRecorded(appRoot: string): Promise<AgentFindingsDocument> {
-  return JSON.parse(await readFile(appSecurityArtifactPaths(appRoot).agentFindingsPath)) as AgentFindingsDocument
+  return JSON.parse(await readFile(artifactPaths(appRoot).agentFindingsPath)) as AgentFindingsDocument
 }
 
 async function recordError(appRoot: string, dependencies: SecurityRecordDependencies): Promise<AbortError> {
-  const error: unknown = await securityRecord({appRoot}, dependencies).catch((error: unknown) => error)
+  const error: unknown = await record(appRoot, dependencies).catch((error: unknown) => error)
   expect(error).toBeInstanceOf(AbortError)
   return error as AbortError
 }
@@ -90,7 +103,7 @@ async function expectRejected(stdin: string | undefined, expectedErrors: unknown
     expect(error.message).toBe(REJECTED_MESSAGE)
     expect(error.details).toEqual({errors: expectedErrors})
     expect(dependencies.writeAgentFindings).not.toHaveBeenCalled()
-    await expect(fileExists(appSecurityArtifactPaths(appRoot).agentFindingsPath)).resolves.toBe(false)
+    await expect(fileExists(artifactPaths(appRoot).agentFindingsPath)).resolves.toBe(false)
   })
 }
 
@@ -101,12 +114,12 @@ describe('securityRecord', () => {
       const output = mockAndCaptureOutput()
       output.clear()
 
-      const result = await securityRecord({appRoot}, testDependencies(JSON.stringify(validDocument())))
+      const result = await record(appRoot, testDependencies(JSON.stringify(validDocument())))
 
-      expect(result).toStrictEqual({path: appSecurityArtifactPaths(appRoot).agentFindingsPath, checks: 2, findings: 2})
+      expect(result).toStrictEqual({path: artifactPaths(appRoot).agentFindingsPath, checks: 2, findings: 2})
       const recorded = await readRecorded(appRoot)
       expect(recorded.engine.version).toBe('3.99.0')
-      expect(recorded.project).toEqual({commit: 'abc123', dirty: true})
+      expect(recorded).not.toHaveProperty('project')
       expect(recorded.checks.map((check) => [check.id, check.findings.length])).toEqual([
         ['MISSING_TENANT_ISOLATION', 2],
         ['OPEN_REDIRECT', 0],
@@ -123,20 +136,33 @@ describe('securityRecord', () => {
   test('records findings when there is no deterministic-findings.json', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
-      const paths = appSecurityArtifactPaths(appRoot)
+      const paths = artifactPaths(appRoot)
 
-      await securityRecord({appRoot}, testDependencies(JSON.stringify(validDocument())))
+      await record(appRoot, testDependencies(JSON.stringify(validDocument())))
 
       await expect(fileExists(paths.deterministicFindingsPath)).resolves.toBe(false)
       await expect(fileExists(paths.agentFindingsPath)).resolves.toBe(true)
     })
   })
 
+  test('writes agent-findings.json under the --client-id results key when one is passed', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+      const selection = {...selectionFor(appRoot), clientIdOverride: 'other-client-id'}
+
+      const result = await securityRecord({selection}, testDependencies(JSON.stringify(validDocument())))
+
+      expect(result.path).toBe(appSecurityArtifactPaths(appRoot, 'other-client-id').agentFindingsPath)
+      await expect(fileExists(result.path)).resolves.toBe(true)
+      await expect(fileExists(artifactPaths(appRoot).agentFindingsPath)).resolves.toBe(false)
+    })
+  })
+
   test('ignores an existing deterministic-findings.json, even one that disagrees with the recorded findings', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
-      const paths = appSecurityArtifactPaths(appRoot)
-      await mkdir(paths.artifactDirectory)
+      const paths = artifactPaths(appRoot)
+      await mkdir(paths.resultsDirectory)
       const staleScan = JSON.stringify({
         schema_version: 1,
         commit: 'zzz999-does-not-match',
@@ -145,7 +171,7 @@ describe('securityRecord', () => {
       })
       await writeFile(paths.deterministicFindingsPath, staleScan)
 
-      await securityRecord({appRoot}, testDependencies(JSON.stringify(validDocument())))
+      await record(appRoot, testDependencies(JSON.stringify(validDocument())))
 
       await expect(fileExists(paths.agentFindingsPath)).resolves.toBe(true)
       await expect(readFile(paths.deterministicFindingsPath)).resolves.toBe(staleScan)
@@ -155,8 +181,8 @@ describe('securityRecord', () => {
   test('rejects the whole document with every error and leaves the existing file untouched', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
-      const paths = appSecurityArtifactPaths(appRoot)
-      await mkdir(paths.artifactDirectory)
+      const paths = artifactPaths(appRoot)
+      await mkdir(paths.resultsDirectory)
       const previousFindings = '{"previous": "findings — ünchanged"}\n'
       await writeFile(paths.agentFindingsPath, previousFindings)
       const dependencies = testDependencies(
@@ -242,7 +268,7 @@ describe('securityRecord', () => {
         findings: [finding({check_version: 99})],
       }
 
-      await securityRecord({appRoot}, testDependencies(JSON.stringify(document)))
+      await record(appRoot, testDependencies(JSON.stringify(document)))
 
       const [check] = (await readRecorded(appRoot)).checks
       expect(check!.version).toBe(99)
@@ -273,9 +299,9 @@ describe('securityRecord', () => {
         ],
       }
 
-      await securityRecord({appRoot}, testDependencies(JSON.stringify(document)))
+      await record(appRoot, testDependencies(JSON.stringify(document)))
 
-      const written = await readFile(appSecurityArtifactPaths(appRoot).agentFindingsPath)
+      const written = await readFile(artifactPaths(appRoot).agentFindingsPath)
       expect(written).toContain('Leaks')
       expect(written).not.toContain(FAKE_SHOPIFY_TOKEN)
     })
@@ -352,8 +378,7 @@ describe('securityRecord', () => {
       ])
       expect(recordCommand(appRoot)).toContain('shopify app security record --path')
       expect(error.details).toBeUndefined()
-      expect(dependencies.readProjectState).not.toHaveBeenCalled()
-      await expect(fileExists(appSecurityArtifactPaths(appRoot).agentFindingsPath)).resolves.toBe(false)
+      await expect(fileExists(artifactPaths(appRoot).agentFindingsPath)).resolves.toBe(false)
     })
   })
 
@@ -369,7 +394,7 @@ describe('securityRecord', () => {
 
       expect(error.message).toBe(REJECTED_MESSAGE)
       expect(error.details).toStrictEqual({errors: ['Stdin input exceeded the maximum allowed size.']})
-      await expect(fileExists(appSecurityArtifactPaths(appRoot).agentFindingsPath)).resolves.toBe(false)
+      await expect(fileExists(artifactPaths(appRoot).agentFindingsPath)).resolves.toBe(false)
     })
   })
 
@@ -404,9 +429,9 @@ describe('securityRecord', () => {
     test('records a document that review can read', async () => {
       await inTemporaryDirectory(async (directory) => {
         const appRoot = await createApp(directory)
-        const {agentFindingsPath} = appSecurityArtifactPaths(appRoot)
+        const {agentFindingsPath} = artifactPaths(appRoot)
 
-        await securityRecord({appRoot}, testDependencies(nearLimitDocument(500)))
+        await record(appRoot, testDependencies(nearLimitDocument(500)))
 
         await expect(fileSize(agentFindingsPath)).resolves.toBeGreaterThan(4_900_000)
         await expect(readFindingsDocument(agentFindingsPath, 'agent')).resolves.toMatchObject({status: 'ok'})
@@ -455,11 +480,11 @@ describe('renderSecurityRecordResult', () => {
   test('shows the counts, the recorded path, and how to review the results', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
-      const path = appSecurityArtifactPaths(appRoot).agentFindingsPath
+      const path = artifactPaths(appRoot).agentFindingsPath
       const output = mockAndCaptureOutput()
       output.clear()
 
-      renderSecurityRecordResult({path, checks: 1, findings: 2}, appRoot)
+      renderSecurityRecordResult({path, checks: 1, findings: 2}, selectionFor(appRoot))
 
       const rendered = output.info()
       expect(rendered).toContain('Agent findings recorded.')

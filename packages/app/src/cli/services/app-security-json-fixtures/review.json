@@ -2,7 +2,7 @@
   "filter": null,
   "sources": {
     "deterministic": {
-      "path": "/tmp/review-app/.shopify/app-security/deterministic-findings.json",
+      "path": "/tmp/review-app/.shopify/app-security/shopify.app/deterministic-findings.json",
       "schema_version": 1,
       "engine": {
         "name": "shopify-app-security",
@@ -10,10 +10,6 @@
         "ruleset": "app-security-rules@3.99.0"
       },
       "generated_at": "2026-09-01T10:00:00.000Z",
-      "project": {
-        "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "dirty": false
-      },
       "detection": {
         "framework": "react_router",
         "surface": "react_router",
@@ -52,17 +48,13 @@
       }
     },
     "agent": {
-      "path": "/tmp/review-app/.shopify/app-security/agent-findings.json",
+      "path": "/tmp/review-app/.shopify/app-security/shopify.app/agent-findings.json",
       "schema_version": 1,
       "engine": {
         "name": "shopify-app-security",
         "version": "3.99.0"
       },
-      "generated_at": "2026-09-01T11:30:00.000Z",
-      "project": {
-        "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-        "dirty": true
-      }
+      "generated_at": "2026-09-01T11:30:00.000Z"
     }
   },
   "checks": [

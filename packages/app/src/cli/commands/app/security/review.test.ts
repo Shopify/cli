@@ -15,9 +15,15 @@ describe('app security review command', () => {
     expect(SecurityReview.hidden).toBe(true)
     expect(SecurityReview.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityReview.prototype).not.toBeInstanceOf(AppLinkedCommand)
-    expect(SecurityReview.flags.path).toBe(appFlags.path)
     expect(SecurityReview.flags).toHaveProperty('json')
     expect(SecurityReview.jsonOutputSchema).toBe(securityReviewJsonOutputSchema)
+  })
+
+  test('defines the selection flags as check does', () => {
+    expect(SecurityReview.flags.path).toBe(appFlags.path)
+    expect(SecurityReview.flags.config).toBe(appFlags.config)
+    expect(SecurityReview.flags['client-id']).toBe(appFlags['client-id'])
+    expect(SecurityReview.flags['without-app-config']).toBe(SecurityCheck.flags['without-app-config'])
   })
 
   test('shares the --blocking flag with check', () => {
@@ -36,11 +42,33 @@ describe('app security review command', () => {
 
     expect(securityReview).toHaveBeenCalledWith({
       directory: cwd(),
+      configName: undefined,
+      clientId: undefined,
+      withoutAppConfig: false,
       json: false,
       verbose: false,
       checkIds: [],
       blocking: 'none',
     })
+  })
+
+  test('forwards --path, --config, --client-id and --without-app-config', async () => {
+    await SecurityReview.run(
+      ['--path', './fixtures/app', '--without-app-config', '--client-id', 'abc123'],
+      import.meta.url,
+    )
+
+    expect(securityReview).toHaveBeenCalledWith(
+      expect.objectContaining({
+        directory: resolvePath('./fixtures/app'),
+        clientId: 'abc123',
+        withoutAppConfig: true,
+      }),
+    )
+
+    await SecurityReview.run(['--path', './fixtures/app', '--config', 'staging'], import.meta.url)
+
+    expect(securityReview).toHaveBeenLastCalledWith(expect.objectContaining({configName: 'staging'}))
   })
 
   test('forwards --path, --json, --verbose, every --check-id and --blocking', async () => {
@@ -62,6 +90,9 @@ describe('app security review command', () => {
 
     expect(securityReview).toHaveBeenCalledWith({
       directory: resolvePath('./fixtures/app'),
+      configName: undefined,
+      clientId: undefined,
+      withoutAppConfig: false,
       json: true,
       verbose: true,
       checkIds: ['OPEN_REDIRECT', 'EOL_API_VERSION'],
