@@ -8,8 +8,6 @@ import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export default class SecurityCheck extends BaseCommand {
-  static hidden = true
-
   static summary =
     'Check an app for Shopify-specific security issues and write deterministic-findings.json and agent-checks.json.'
 
