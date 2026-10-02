@@ -16,6 +16,7 @@ export {
   getEngineVersion,
   readProjectState,
   scanApp,
+  createAppSecurityEngine,
 } from './run.js'
 export type {AppSecurityEngineMetadata, AppSecurityScan} from './run.js'
 export {translateFindingsDocument} from './results/translate.js'
@@ -71,3 +72,5 @@ export type {
   StoredEvidence,
   StoredFinding,
 } from './types.js'
+
+export type {AppSecurityCheckSet} from './check-set.js'

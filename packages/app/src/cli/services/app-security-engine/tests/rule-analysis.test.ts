@@ -1,14 +1,14 @@
-import {scanEolApiVersions, isEolApiVersion} from '../rules/compliance-rules.js'
+import {scanEolApiVersions, isEolApiVersion} from '@shopify/app-security-checks/rules/compliance-rules'
 import {
   scanCredentialBrowserLeakage,
   scanCredentialLogLeakage,
   scanRequestControlledAdminContext,
   scanUnsafeInnerHTML,
-} from '../rules/js-rules.js'
-import {scanLiquidSecurity} from '../rules/liquid-rules.js'
-import {scanDeprecatedScriptTagApi} from '../rules/shopify-rules.js'
-import {scanAppProxyLiquidInjection} from '../rules/proxy-rules.js'
-import {scanExpiringOfflineTokens} from '../rules/token-rules.js'
+} from '@shopify/app-security-checks/rules/js-rules'
+import {scanLiquidSecurity} from '@shopify/app-security-checks/rules/liquid-rules'
+import {scanDeprecatedScriptTagApi} from '@shopify/app-security-checks/rules/shopify-rules'
+import {scanAppProxyLiquidInjection} from '@shopify/app-security-checks/rules/proxy-rules'
+import {scanExpiringOfflineTokens} from '@shopify/app-security-checks/rules/token-rules'
 import {extname} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import type {ScanContext, SourceFile} from '../rules/types.js'

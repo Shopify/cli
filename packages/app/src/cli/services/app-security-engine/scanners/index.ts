@@ -15,32 +15,22 @@ import {
 import {buildPathRules, hasIncludeOverride, ignorePatternRules, listGitIgnoredPaths} from './path-rules.js'
 import {detectCapabilities, detectProject} from '../capabilities/detect.js'
 import {computeScanMetadata} from '../scorer/index.js'
-import {deprecatedScriptTagScope, insecureWebhookUrl} from '../rules/config-rules.js'
+import {redactText} from '../rules/secret-rules.js'
+import {getRegistry} from '../registry/index.js'
 import {
-  scanCredentialBrowserLeakage,
-  scanCredentialLogLeakage,
-  scanRequestControlledAdminContext,
-  scanUnauthenticatedEndpoints,
-  scanUnsafeInnerHTML,
-} from '../rules/js-rules.js'
-import {scanLiquidSecurity} from '../rules/liquid-rules.js'
-import {redactText, scanCommittedSecrets} from '../rules/secret-rules.js'
-import {scanDeprecatedScriptTagApi} from '../rules/shopify-rules.js'
-import {missingComplianceWebhooks, scanEolApiVersions} from '../rules/compliance-rules.js'
-import {scanAppProxyLiquidInjection} from '../rules/proxy-rules.js'
-import {scanExpiringOfflineTokens} from '../rules/token-rules.js'
-import {scanStaticFrameAncestors} from '../rules/csp-rules.js'
-import {scanDependencyAutomation} from '../rules/dependency-automation-rules.js'
-import {RULE_CATALOG} from '../rules/catalog.js'
+  defaultCheckSet,
+  deterministicChecks,
+  type AppSecurityCheckSet,
+  type DeterministicCheckDefinition,
+} from '../check-set.js'
 import {redactIssue} from '../scan-artifact/index.js'
 import {getEngineVersion} from '../version.js'
 import {getAppConfigurationFileName} from '../../../models/app/config-file-naming.js'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
-import type {Rule, ScanContext} from '../rules/types.js'
-import type {RunnerImplementationResult, RunnerResult, SourceFile} from './types.js'
+import type {ScanContext} from '../rules/types.js'
+import type {RunnerResult, SourceFile} from './types.js'
 import type {
-  AnalysisMode,
   CheckExecution,
   CheckExecutionReason,
   CheckExecutionStatus,
@@ -52,278 +42,13 @@ import type {
   SkippedFile,
 } from '../types.js'
 
-type CheckTarget =
-  | 'config'
-  | 'source'
-  | 'app_source'
-  | 'theme'
-  | 'secrets'
-  | 'config_and_source'
-  | 'source_and_theme'
-  | 'dependency_automation'
-type Runner = (context: ScanContext) => Issue[] | RunnerResult | Promise<Issue[] | RunnerResult>
-
-export interface DeterministicCheckDefinition {
-  id: string
-  version: number
-  lifecycle: 'active' | 'planned' | 'investigate'
-  analysisMode: AnalysisMode
-  target: CheckTarget
-  requires?: keyof ScanContext['capabilities']
-  extensions?: string[]
-  runner?: Runner
-}
-
-const JAVASCRIPT_EXTENSIONS = ['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.mts', '.cts']
-
-const configRule = (rule: Rule, version = 1): DeterministicCheckDefinition => ({
-  id: rule.id,
-  version,
-  lifecycle: 'active',
-  analysisMode: 'structured_config',
-  target: 'config',
-  requires: rule.requires,
-  runner: (context) => rule.check(context),
-})
-
-const jsCheck = (
-  id: string,
-  runner: Runner,
-  target: CheckTarget = 'source',
-  version = 1,
-): DeterministicCheckDefinition => ({
-  id,
-  version,
-  lifecycle: 'active',
-  analysisMode: 'regex',
-  target,
-  extensions: JAVASCRIPT_EXTENSIONS,
-  runner,
-})
-
-/** The only active deterministic product checks. Shared agent IDs are deliberate fallback coverage. */
-const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinition> = [
-  configRule(missingComplianceWebhooks),
-  {
-    id: 'MISSING_DEPENDENCY_SECURITY_AUTOMATION',
-    version: 1,
-    lifecycle: 'active',
-    analysisMode: 'structured_config',
-    target: 'dependency_automation',
-    runner: (context) => scanDependencyAutomation(context),
-  },
-  {
-    id: 'EOL_API_VERSION',
-    version: 1,
-    lifecycle: 'active',
-    analysisMode: 'regex',
-    target: 'config_and_source',
-    extensions: JAVASCRIPT_EXTENSIONS,
-    runner: (context) => scanEolApiVersions(context),
-  },
-  {
-    ...jsCheck('EXPIRING_OFFLINE_TOKEN', (context) => scanExpiringOfflineTokens(context)),
-    extensions: [...JAVASCRIPT_EXTENSIONS, '.prisma'],
-  },
-  {
-    ...jsCheck('UNAUTHENTICATED_ENDPOINT', (context) => scanUnauthenticatedEndpoints(context.sourceFiles), 'source', 2),
-    requires: 'has_backend',
-  },
-  jsCheck(
-    'REQUEST_CONTROLLED_ADMIN_CONTEXT',
-    (context) => scanRequestControlledAdminContext(context.sourceFiles),
-    'source',
-    3,
-  ),
-  {
-    ...configRule(deprecatedScriptTagScope),
-    target: 'config_and_source',
-    analysisMode: 'regex',
-    extensions: JAVASCRIPT_EXTENSIONS,
-    runner: (context) => [
-      ...deprecatedScriptTagScope.check(context),
-      ...scanDeprecatedScriptTagApi(context.sourceFiles),
-    ],
-  },
-  configRule(insecureWebhookUrl, 2),
-  {
-    id: 'COMMITTED_SECRET',
-    version: 3,
-    lifecycle: 'active',
-    analysisMode: 'regex',
-    target: 'secrets',
-    runner: (context) => scanCommittedSecrets(context.sensitiveFiles, context.appRoot, context.gitIgnoreListing),
-  },
-  jsCheck('CREDENTIAL_LOG_LEAKAGE', (context) => scanCredentialLogLeakage(context.sourceFiles)),
-  jsCheck('CREDENTIAL_BROWSER_LEAKAGE', (context) => scanCredentialBrowserLeakage(context.sourceFiles)),
-  {
-    id: 'LIQUID_UNSAFE_RENDER',
-    version: 1,
-    lifecycle: 'active',
-    analysisMode: 'ast',
-    target: 'theme',
-    requires: 'theme_app_extension',
-    extensions: ['.liquid', '.html'],
-    runner: (context) => liquidRunner(context, 'LIQUID_UNSAFE_RENDER'),
-  },
-  {
-    ...jsCheck('UNSAFE_INNERHTML', unsafeInnerHtmlRunner, 'source_and_theme', 2),
-    analysisMode: 'regex',
-    extensions: [...JAVASCRIPT_EXTENSIONS, '.liquid', '.html'],
-  },
-  {
-    ...jsCheck(
-      'APP_PROXY_LIQUID_INJECTION',
-      (context) => scanAppProxyLiquidInjection(context.sourceFiles),
-      'source',
-      2,
-    ),
-    requires: 'app_proxy',
-  },
-  {
-    ...jsCheck('STATIC_FRAME_ANCESTORS', (context) => scanStaticFrameAncestors(context.sourceFiles), 'app_source'),
-    requires: 'embedded_app',
-  },
-]
-
-function unsafeInnerHtmlRunner(context: ScanContext): RunnerResult {
-  const issues: Issue[] = []
-  const implementations: RunnerImplementationResult[] = []
-  if (context.detection.framework === 'react_router') {
-    const files = reactRouterFiles(context).filter(
-      (file) => file.content !== undefined && JAVASCRIPT_EXTENSIONS.includes(file.ext),
-    )
-    const findings = scanUnsafeInnerHTML(files)
-    issues.push(...findings)
-    implementations.push({
-      id: 'react-router-js-regex',
-      analysisMode: 'regex',
-      status: 'executed',
-      inspectedFiles: files.map((file) => file.path),
-      findings: findings.length,
-    })
-  }
-  if (context.capabilities.theme_app_extension) {
-    const themeSources = themeFiles(context)
-    const themePaths = new Set(themeSources.map((file) => file.path))
-    if (
-      context.detection.framework !== 'react_router' &&
-      context.sourceCandidates.some((candidate) => !themePaths.has(candidate.path))
-    )
-      implementations.push({
-        id: 'app-source-unsupported',
-        analysisMode: 'regex',
-        status: 'unsupported_framework',
-        inspectedFiles: [],
-        findings: 0,
-        reason: {
-          code: 'unsupported_framework',
-          message: 'The non-theme app source framework is not supported by deterministic analysis.',
-        },
-      })
-    const javascriptFiles = themeSources.filter(
-      (file) => file.content !== undefined && JAVASCRIPT_EXTENSIONS.includes(file.ext),
-    )
-    const javascriptFindings = scanUnsafeInnerHTML(javascriptFiles)
-    issues.push(...javascriptFindings)
-    implementations.push(
-      javascriptFiles.length > 0
-        ? {
-            id: 'theme-js-regex',
-            analysisMode: 'regex',
-            status: 'executed',
-            inspectedFiles: javascriptFiles.map((file) => file.path),
-            findings: javascriptFindings.length,
-          }
-        : {
-            id: 'theme-js-regex',
-            analysisMode: 'regex',
-            status: 'not_applicable',
-            inspectedFiles: [],
-            findings: 0,
-            reason: {code: 'no_relevant_files', message: 'The theme app extensions contain no JavaScript files.'},
-          },
-    )
-    const liquidFiles = themeSources.filter(
-      (file) => file.content !== undefined && (file.ext === '.liquid' || file.ext === '.html'),
-    )
-    const liquid = scanLiquidSecurity(liquidFiles)
-    const liquidFindings = liquid.issues.filter((issue) => issue.id === 'UNSAFE_INNERHTML')
-    issues.push(...liquidFindings)
-    let liquidStatus: CheckExecutionStatus = 'executed'
-    let liquidReason: CheckExecutionReason | undefined
-    if (liquidFiles.length === 0) {
-      liquidStatus = 'not_applicable'
-      liquidReason = {code: 'no_relevant_files', message: 'The theme app extensions contain no Liquid files.'}
-    } else if (liquid.parserFailures.length > 0) {
-      liquidStatus = 'unresolved'
-      liquidReason = {
-        code: 'parser_unavailable',
-        message: `Liquid parser failed for: ${liquid.parserFailures.join(', ')}`,
-      }
-    }
-    implementations.push({
-      id: 'theme-liquid-ast',
-      analysisMode: 'ast',
-      status: liquidStatus,
-      inspectedFiles: liquidFiles.map((file) => file.path),
-      findings: liquidFindings.length,
-      ...(liquidReason ? {reason: liquidReason} : {}),
-    })
-  }
-  return {
-    issues,
-    inspectedFiles: [...new Set(implementations.flatMap((implementation) => implementation.inspectedFiles))],
-    ...(implementations.some((implementation) => implementation.status === 'unresolved')
-      ? {
-          unresolvedReason: implementations
-            .filter((implementation) => implementation.status === 'unresolved')
-            .map((implementation) => implementation.reason?.message)
-            .filter(Boolean)
-            .join('; '),
-        }
-      : {}),
-  }
-}
-
-function liquidRunner(context: ScanContext, id: 'LIQUID_UNSAFE_RENDER' | 'UNSAFE_INNERHTML'): RunnerResult {
-  const scanResult = scanLiquidSecurity(themeFiles(context).filter((file) => file.content !== undefined))
-  const parserFailures = scanResult.parserFailures
-  return {
-    issues: scanResult.issues.filter((issue) => issue.id === id),
-    ...(parserFailures.length > 0 ? {unresolvedReason: `Liquid parser failed for: ${parserFailures.join(', ')}`} : {}),
-  }
-}
-
-export const DETERMINISTIC_CHECKS: ReadonlyMap<string, DeterministicCheckDefinition> = createDeterministicCheckMap(
-  DETERMINISTIC_CHECK_DEFINITIONS,
-)
-assertRunnableDefinitions([...DETERMINISTIC_CHECKS.values()])
+export type {DeterministicCheckDefinition} from '../check-set.js'
+export const DETERMINISTIC_CHECKS = deterministicChecks(defaultCheckSet)
 export const DETERMINISTIC_RULES = [...DETERMINISTIC_CHECKS.values()].map(({id, version, requires}) => ({
   id,
   version,
   requires,
 }))
-
-function createDeterministicCheckMap(definitions: ReadonlyArray<DeterministicCheckDefinition>) {
-  const checks = new Map<string, DeterministicCheckDefinition>()
-  for (const definition of definitions) {
-    if (checks.has(definition.id)) throw new Error(`Duplicate deterministic stable ID: ${definition.id}`)
-    checks.set(definition.id, definition)
-  }
-  return checks
-}
-
-function assertRunnableDefinitions(definitions: ReadonlyArray<DeterministicCheckDefinition>): void {
-  const catalogIds = new Set(RULE_CATALOG.map((entry) => entry.id))
-  for (const definition of definitions) {
-    if (!catalogIds.has(definition.id)) throw new Error(`Orphan deterministic runner: ${definition.id}`)
-    if (definition.lifecycle === 'active' && !definition.runner)
-      throw new Error(`Active deterministic check has no runner: ${definition.id}`)
-    if (definition.lifecycle !== 'active' && definition.runner)
-      throw new Error(`A non-active deterministic check can't have a runner: ${definition.id}`)
-  }
-}
 
 function themeFiles(context: ScanContext): SourceFile[] {
   return context.extensions.filter((extension) => extension.type === 'theme').flatMap((extension) => extension.files)
@@ -338,7 +63,6 @@ function reactRouterFiles(context: ScanContext): SourceFile[] {
   return appSourceFiles(context)
 }
 
-/** Read the git commit and dirty state of an app root. Both are null when git can't answer. */
 export async function readProjectState(appRoot: string): Promise<ProjectState> {
   const run = async (args: string[]): Promise<{exitCode: number; stdout: string} | undefined> => {
     try {
@@ -572,7 +296,10 @@ export async function scan(
   startPath?: string,
   configFileName?: string,
   options: ScanOptions = {},
+  checkSet: AppSecurityCheckSet = defaultCheckSet,
 ): Promise<ScanResult> {
+  getRegistry(checkSet)
+  const definitions = deterministicChecks(checkSet)
   const appRoot = findAppRoot(startPath)
   resetSkippedFiles()
   const selectedFileName = getAppConfigurationFileName(configFileName)
@@ -620,7 +347,7 @@ export async function scan(
   const checksExecuted: CheckExecution[] = []
   // Only required checks that could not run are reported as coverage gaps.
   const requiredCheckIds = new Set<string>()
-  for (const definition of DETERMINISTIC_CHECKS.values()) {
+  for (const definition of definitions.values()) {
     let disposition = executionDisposition(definition, context)
     let inspectedFiles = disposition.status === 'unsupported_framework' ? [] : selectedFiles(definition, context)
     const before = issues.length
@@ -672,9 +399,7 @@ export async function scan(
     })
   }
 
-  const versionById = new Map(
-    [...DETERMINISTIC_CHECKS.values()].map((definition) => [definition.id, definition.version]),
-  )
+  const versionById = new Map([...definitions.values()].map((definition) => [definition.id, definition.version]))
   issues = issues.map((issue) => redactIssue({...issue, rule_version: versionById.get(issue.id) ?? 1}))
   for (const execution of checksExecuted)
     execution.findings = issues.filter((issue) => issue.id === execution.id).length

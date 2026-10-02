@@ -1,4 +1,4 @@
-import {scanUnauthenticatedEndpoints} from '../rules/js-rules.js'
+import {scanUnauthenticatedEndpoints} from '@shopify/app-security-checks/rules/js-rules'
 import {describe, expect, test} from 'vitest'
 import type {SourceFile} from '../rules/types.js'
 

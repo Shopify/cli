@@ -1,13 +1,8 @@
 /* eslint-disable id-length, line-comment-position, no-restricted-imports -- security fixtures exercise raw git and filesystem behavior */
 import {git, isolateGitConfig} from './git-test-helpers.js'
 import {scan} from '../scanners/index.js'
-import {
-  SHOPIFY_SECRET_PATTERNS,
-  redactMatch,
-  redactText,
-  gitStatusFor,
-  scanCommittedSecrets,
-} from '../rules/secret-rules.js'
+import {SHOPIFY_SECRET_PATTERNS, redactMatch, redactText} from '../rules/secret-rules.js'
+import {gitStatusFor, scanCommittedSecrets} from '@shopify/app-security-checks/rules/secret-rules'
 import {afterEach, beforeEach, describe, expect, test} from 'vitest'
 import {mkdtempSync, writeFileSync, mkdirSync, rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
