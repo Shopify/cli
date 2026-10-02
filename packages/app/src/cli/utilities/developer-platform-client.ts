@@ -87,7 +87,7 @@ interface AppModuleVersionSpecification {
 export interface AppModuleVersion {
   registrationId: string
   registrationUuid?: string
-  registrationTitle: string
+  handle: string
   config?: object
   target?: string
   type: string
