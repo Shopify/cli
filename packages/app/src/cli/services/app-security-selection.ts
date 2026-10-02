@@ -87,6 +87,9 @@ export async function resolveAppSecuritySelection(
     }
   }
 
+  // Walking up from a missing directory would find, and scan, the app above it.
+  await realDirectory(options.path)
+
   try {
     const {app} = await localAppContext({
       directory: options.path,

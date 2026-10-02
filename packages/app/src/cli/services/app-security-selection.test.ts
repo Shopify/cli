@@ -83,6 +83,17 @@ describe('resolveAppSecuritySelection with an app configuration', () => {
     })
   })
 
+  test('aborts when --path does not exist instead of walking up to the app above it', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeConfiguration(directory, 'default-client-id')
+      const missing = joinPath(directory, 'missing-app')
+
+      const error = await selectionError(resolveAppSecuritySelection({path: missing, allowPrompts: false}))
+
+      expect(error.message).toBe(`--path ${missing}: not a directory.`)
+    })
+  })
+
   test('roots the TOML path on the real app directory when --path goes through a symbolic link', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appDirectory = joinPath(directory, 'real-app')
