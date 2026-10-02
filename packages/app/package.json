@@ -55,6 +55,7 @@
     ]
   },
   "dependencies": {
+    "@shopify/app-security-checks": "link:../../.poc/app-security-checks",
     "@graphql-typed-document-node/core": "3.2.0",
     "@luckycatfactory/esbuild-graphql-loader": "3.8.1",
     "@oclif/core": "4.8.3",

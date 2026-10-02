@@ -1,4 +1,4 @@
-import {scanDependencyAutomation} from '../rules/dependency-automation-rules.js'
+import {scanDependencyAutomation} from '@shopify/app-security-checks/rules/dependency-automation-rules'
 import {describe, expect, test} from 'vitest'
 import type {ManifestFile, ScanContext} from '../rules/types.js'
 

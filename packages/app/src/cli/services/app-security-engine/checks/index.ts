@@ -1,6 +1,5 @@
-import {EMBEDDED_CHECK_SOURCES} from './embedded.js'
+import {defaultCheckSet, type AppSecurityCheckSet} from '../check-set.js'
 import {redactText} from '../rules/secret-rules.js'
-import {RULE_CATALOG} from '../rules/catalog.js'
 import {
   AGENT_CHECKS_SCHEMA_VERSION,
   ENGINE_NAME,
@@ -84,7 +83,7 @@ const parseFrontmatter = (raw: string): {meta: Record<string, string>; body: str
 }
 
 /** Parse check markdown sources. `sources` is a parameter only so tests can load hand-written frontmatter. */
-export const loadChecks = (sources: ReadonlyArray<string> = EMBEDDED_CHECK_SOURCES): Map<string, Check> => {
+export const loadChecks = (sources: ReadonlyArray<string> = defaultCheckSet.agentSources): Map<string, Check> => {
   const checks = new Map<string, Check>()
 
   for (const source of sources) {
@@ -153,11 +152,14 @@ Rules:
  * Build agent-checks.json — the prompts for the developer's agent.
  * No candidates, no scan output. The agent explores independently.
  */
-export const buildAgentChecks = (engineVersion: string): AgentChecks => ({
+export const buildAgentChecks = (
+  engineVersion: string,
+  checkSet: AppSecurityCheckSet = defaultCheckSet,
+): AgentChecks => ({
   schema_version: AGENT_CHECKS_SCHEMA_VERSION,
   engine: {name: ENGINE_NAME, version: engineVersion},
   generated_at: new Date().toISOString(),
-  checks: [...loadChecks().values()].map((check) => ({
+  checks: [...loadChecks(checkSet.agentSources).values()].map((check) => ({
     id: check.id,
     version: check.version,
     severity: check.severity,
@@ -435,9 +437,9 @@ function groupFindingsByCheck(
 }
 
 /** Check metadata as it stands in the catalog and frontmatter right now. */
-function snapshotCheck(check: Check): CheckSnapshot {
+function snapshotCheck(check: Check, checkSet: AppSecurityCheckSet): CheckSnapshot {
   // registry/index.ts guarantees every agent check has a catalog entry ("Orphan agent implementation").
-  const entry = RULE_CATALOG.find((catalogEntry) => catalogEntry.id === check.id)
+  const entry = checkSet.catalog.find((catalogEntry) => catalogEntry.id === check.id)
   if (!entry) throw new Error(`Agent check has no catalog entry: ${check.id}`)
   return {
     title: entry.title,
@@ -459,6 +461,7 @@ const optionalArray = (document: Record<string, unknown>, key: string, errors: s
 }
 
 export interface RecordAgentFindingsOptions {
+  checkSet?: AppSecurityCheckSet
   engineVersion: string
   project: ProjectState
   /** Defaults to now. */
@@ -483,7 +486,8 @@ export function recordAgentFindings(document: unknown, options: RecordAgentFindi
   const claims = optionalArray(document, 'checks_executed', errors)
   const rawFindings = optionalArray(document, 'findings', errors)
 
-  const checks = loadChecks()
+  const checkSet = options.checkSet ?? defaultCheckSet
+  const checks = loadChecks(checkSet.agentSources)
   const executed = validateAgentChecksExecuted(claims, rawFindings, checks)
   errors.push(...executed.errors)
 
@@ -518,7 +522,7 @@ export function recordAgentFindings(document: unknown, options: RecordAgentFindi
         version: report.check_version,
         status: report.status,
         ...(report.reason ? {reason: report.reason} : {}),
-        snapshot: snapshotCheck(checks.get(report.check_id)!),
+        snapshot: snapshotCheck(checks.get(report.check_id)!, checkSet),
         findings: checkFindings.map(redactFinding),
       }),
     )
