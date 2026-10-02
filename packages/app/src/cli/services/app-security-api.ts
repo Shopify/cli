@@ -1,13 +1,11 @@
 import {
-  AppRootDiscoveryError,
-  findAppRoot,
   scanApp,
   SEVERITY_RANK,
   type AppSecurityEngineMetadata,
   type AppSecurityScan,
+  type ScanInput,
   type Severity,
 } from './app-security-engine/index.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
 
 export type {AppSecurityEngineMetadata}
 
@@ -21,24 +19,12 @@ export function securityExitCode(execution: AppSecurityExecution, blocking: AppS
   return blocks ? 1 : 0
 }
 
-export function resolveAppSecurityRoot(directory?: string): string {
-  try {
-    return findAppRoot(directory)
-  } catch (error) {
-    if (error instanceof AppRootDiscoveryError) {
-      throw new AbortError(error.message, 'Run this command from a Shopify app directory or pass --path to one.')
-    }
-    throw error
-  }
-}
-
-export async function executeAppSecurity(options: {
-  appRoot: string
-  configFileName?: string
-  ignorePatterns?: ReadonlyArray<string>
-}): Promise<AppSecurityExecution> {
+export async function executeAppSecurity({
+  ignorePatterns,
+  ...scanInput
+}: ScanInput & {ignorePatterns?: ReadonlyArray<string>}): Promise<AppSecurityExecution> {
   const startTime = Date.now()
-  const result = await scanApp(options.appRoot, options.configFileName, {ignorePatterns: options.ignorePatterns})
+  const result = await scanApp(scanInput, {ignorePatterns})
   return {
     ...result,
     elapsedMilliseconds: Date.now() - startTime,

@@ -23,7 +23,17 @@ describe('app security check command', () => {
   test('accepts only the scan flags, with no findings or clean flags', () => {
     const commandFlags = Object.keys(SecurityCheck.flags).filter((name) => !(name in globalFlags))
 
-    expect(commandFlags.sort()).toEqual(['blocking', 'config', 'ignore', 'json', 'path', 'skip-instructions', 'yes'])
+    expect(commandFlags.sort()).toEqual([
+      'blocking',
+      'client-id',
+      'config',
+      'ignore',
+      'json',
+      'path',
+      'skip-instructions',
+      'without-app-config',
+      'yes',
+    ])
   })
 
   test('forwards --path and flags to the service', async () => {
@@ -35,6 +45,8 @@ describe('app security check command', () => {
     expect(securityCheck).toHaveBeenCalledWith({
       directory: resolvePath('./fixtures/unlinked-app'),
       configName: undefined,
+      clientId: undefined,
+      withoutAppConfig: false,
       json: true,
       verbose: true,
       blocking: 'high',
@@ -85,6 +97,8 @@ describe('app security check command', () => {
     expect(securityCheck).toHaveBeenCalledWith({
       directory: '/tmp/directory-without-shopify-toml',
       configName: undefined,
+      clientId: undefined,
+      withoutAppConfig: false,
       json: false,
       verbose: false,
       blocking: 'none',
@@ -92,6 +106,34 @@ describe('app security check command', () => {
       skipInstructions: false,
       ignorePatterns: [],
     })
+  })
+
+  test('forwards --client-id and --without-app-config', async () => {
+    await SecurityCheck.run(['--without-app-config', '--client-id', 'abc123', '--skip-instructions'], import.meta.url)
+
+    expect(securityCheck).toHaveBeenCalledWith(
+      expect.objectContaining({clientId: 'abc123', withoutAppConfig: true, skipInstructions: true}),
+    )
+  })
+
+  test.each([
+    [['--without-app-config'], 'client-id'],
+    [['--without-app-config', '--client-id', 'abc123', '--config', 'staging'], 'config'],
+    [['--client-id', 'abc123', '--config', 'staging'], 'config'],
+  ])('rejects the flags %j', async (flags, expectedFlag) => {
+    const outputMock = mockAndCaptureOutput()
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    try {
+      await expect(SecurityCheck.run([...flags, '--skip-instructions'], import.meta.url)).rejects.toThrow(
+        'process.exit unexpectedly called with "1"',
+      )
+      expect(outputMock.error()).toContain(expectedFlag)
+      expect(securityCheck).not.toHaveBeenCalled()
+    } finally {
+      consoleErrorSpy.mockRestore()
+      outputMock.clear()
+    }
   })
 
   test('forwards --config without requiring a linked app', async () => {

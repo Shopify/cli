@@ -1,22 +1,34 @@
-import {securityExitCode, executeAppSecurity, resolveAppSecurityRoot} from './app-security-api.js'
+import {securityExitCode, executeAppSecurity} from './app-security-api.js'
 import {writeCheckArtifacts} from './app-security-artifacts.js'
-import {requireSecurityConfigFileName} from './app-security-config.js'
 import deliverAppSecurityInstructions from './app-security-instructions.js'
-import {resolveAppSecurityCommands, type AppSecurityCommands} from './app-security-commands.js'
+import {
+  formatAppSecurityCommand,
+  resolveAppSecurityCommands,
+  type AppSecurityCommands,
+} from './app-security-commands.js'
+import {
+  effectiveClientId,
+  resolveAppSecuritySelection,
+  selectedConfigFileName,
+  type AppSecurityScanDirectory,
+  type AppSecuritySelection,
+} from './app-security-selection.js'
 import {encodeSecurityJson, toSecurityJson} from './security-json.js'
 import {renderSecurityReport} from './security-output.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
-import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import type {CheckArtifactPaths} from './app-security-artifacts.js'
-import type {AgentChecks, DeterministicFindingsDocument} from './app-security-engine/index.js'
+import type {AgentChecks, DeterministicFindingsDocument, ScanInput} from './app-security-engine/index.js'
 import type {AppSecurityBlockingLevel, AppSecurityExecution} from './app-security-api.js'
 import type {SecurityReportInput} from './security-output.js'
-import type {RenderSelectPromptOptions} from '@shopify/cli-kit/node/ui'
+import type {RenderAlertOptions, RenderSelectPromptOptions} from '@shopify/cli-kit/node/ui'
 
 interface SecurityOptions {
   directory: string
   configName?: string
+  clientId?: string
+  withoutAppConfig: boolean
   json: boolean
   verbose: boolean
   blocking: AppSecurityBlockingLevel
@@ -28,12 +40,14 @@ interface SecurityOptions {
 export type AppSecurityInstructionsDestination = 'copy' | 'print' | 'nothing'
 
 interface SecurityDependencies {
-  resolveRoot(directory: string): string
-  execute(options: {
-    appRoot: string
-    configFileName: string
-    ignorePatterns: ReadonlyArray<string>
-  }): Promise<AppSecurityExecution>
+  resolveSelection(options: {
+    path: string
+    config?: string
+    clientId?: string
+    withoutAppConfig: boolean
+    allowPrompts: boolean
+  }): Promise<AppSecuritySelection>
+  execute(options: ScanInput & {ignorePatterns: ReadonlyArray<string>}): Promise<AppSecurityExecution>
   writeArtifacts(
     appRoot: string,
     artifacts: {deterministicFindings: DeterministicFindingsDocument; agentChecks: AgentChecks},
@@ -41,12 +55,13 @@ interface SecurityDependencies {
   canPrompt(): boolean
   selectInstructionsDestination(): Promise<AppSecurityInstructionsDestination>
   deliverInstructions(options: {
-    directory: string
+    appDirectory: string
     copy: boolean
     scanComplete: boolean
     commands: AppSecurityCommands
   }): Promise<void>
   output(content: string): void
+  renderInfo(options: RenderAlertOptions): void
   renderReport(input: SecurityReportInput): void
   setExitCode(exitCode: number): void
 }
@@ -62,13 +77,14 @@ export const appSecurityInstructionsPrompt: RenderSelectPromptOptions<AppSecurit
 }
 
 const defaultDependencies: SecurityDependencies = {
-  resolveRoot: resolveAppSecurityRoot,
+  resolveSelection: resolveAppSecuritySelection,
   execute: executeAppSecurity,
   writeArtifacts: writeCheckArtifacts,
   canPrompt: terminalSupportsPrompting,
   selectInstructionsDestination: () => renderSelectPrompt(appSecurityInstructionsPrompt),
   deliverInstructions: deliverAppSecurityInstructions,
   output: outputResult,
+  renderInfo,
   renderReport: renderSecurityReport,
   setExitCode: (exitCode) => {
     process.exitCode = exitCode
@@ -78,10 +94,11 @@ const defaultDependencies: SecurityDependencies = {
 async function instructionsDestination(
   options: SecurityOptions,
   dependencies: SecurityDependencies,
+  canPrompt: boolean,
 ): Promise<AppSecurityInstructionsDestination> {
   if (options.json || options.skipInstructions) return 'nothing'
   if (options.yes) return 'print'
-  if (!dependencies.canPrompt()) return 'nothing'
+  if (!canPrompt) return 'nothing'
   return dependencies.selectInstructionsDestination()
 }
 
@@ -90,9 +107,13 @@ function securityReportInput(
   artifacts: CheckArtifactPaths,
   verbose: boolean,
   commands: AppSecurityCommands,
+  selection: AppSecuritySelection,
+  scanDirectories: AppSecurityScanDirectory[],
 ): SecurityReportInput {
   return {
     scan: execution.scan,
+    selection,
+    scanDirectories,
     engine: execution.engine,
     verbose,
     elapsedMilliseconds: execution.elapsedMilliseconds,
@@ -111,26 +132,50 @@ export default async function securityCheck(
   options: SecurityOptions,
   dependencies: SecurityDependencies = defaultDependencies,
 ): Promise<void> {
-  const appRoot = dependencies.resolveRoot(options.directory)
-  const configFileName = requireSecurityConfigFileName(appRoot, options.configName)
-  const commands = resolveAppSecurityCommands(appRoot, configFileName, options.ignorePatterns)
+  const canPrompt = !options.json && dependencies.canPrompt()
+  const selection = await dependencies.resolveSelection({
+    path: options.directory,
+    config: options.configName,
+    clientId: options.clientId,
+    withoutAppConfig: options.withoutAppConfig,
+    allowPrompts: canPrompt,
+  })
+  const {appDirectory} = selection
+  const commands = resolveAppSecurityCommands(appDirectory, selectedConfigFileName(selection), options.ignorePatterns)
+  // The prompt is only shown when no TOML was found and `--without-app-config` wasn't passed.
+  if (selection.kind === 'no-config' && !options.withoutAppConfig) {
+    dependencies.renderInfo({
+      headline: 'To skip these prompts next time, run:',
+      body: [{command: formatAppSecurityCommand(commands.scan)}],
+    })
+  }
+  const scanDirectories: AppSecurityScanDirectory[] = [{directory: appDirectory, origin: 'app_directory'}]
 
-  const execution = await dependencies.execute({appRoot, configFileName, ignorePatterns: options.ignorePatterns})
-  const artifacts = await dependencies.writeArtifacts(appRoot, {
+  const execution = await dependencies.execute({
+    appDirectory,
+    appConfigFilePath: selection.kind === 'config' ? selection.appConfigFilePath : undefined,
+    clientId: effectiveClientId(selection),
+    ignorePatterns: options.ignorePatterns,
+  })
+  const artifacts = await dependencies.writeArtifacts(appDirectory, {
     deterministicFindings: execution.deterministicFindings,
     agentChecks: execution.agentChecks,
   })
 
   if (options.json) {
-    dependencies.output(encodeSecurityJson(toSecurityJson(execution, artifacts.agentChecksPath)))
+    dependencies.output(
+      encodeSecurityJson(toSecurityJson(execution, artifacts.agentChecksPath, selection, scanDirectories)),
+    )
   } else {
-    dependencies.renderReport(securityReportInput(execution, artifacts, options.verbose, commands))
+    dependencies.renderReport(
+      securityReportInput(execution, artifacts, options.verbose, commands, selection, scanDirectories),
+    )
   }
 
-  const destination = await instructionsDestination(options, dependencies)
+  const destination = await instructionsDestination(options, dependencies, canPrompt)
   if (destination !== 'nothing') {
     await dependencies.deliverInstructions({
-      directory: options.directory,
+      appDirectory,
       copy: destination === 'copy',
       scanComplete: true,
       commands,

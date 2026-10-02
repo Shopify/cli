@@ -1,11 +1,12 @@
-import {resolveAppSecurityRoot, type AppSecurityBlockingLevel} from './app-security-api.js'
 import {resolveAppSecurityCommands} from './app-security-commands.js'
+import {resolveAppSecuritySelection} from './app-security-selection.js'
 import {loadAppSecurityResults, type AppSecurityResults} from './app-security-results.js'
 import {securityReviewJsonOutputSchema, toSecurityReviewJson} from './security-review-json.js'
 import {renderSecurityReview, type SecurityReviewPresenterInput} from './security-review-output.js'
 import {activeFindings, SEVERITY_RANK, type CombinedCheck} from './app-security-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputResult} from '@shopify/cli-kit/node/output'
+import type {AppSecurityBlockingLevel} from './app-security-api.js'
 
 interface SecurityReviewOptions {
   directory: string
@@ -33,7 +34,7 @@ export interface SecurityReviewResult {
 }
 
 export interface SecurityReviewDependencies {
-  resolveRoot(directory: string): string
+  resolveRoot(directory: string): Promise<string>
   loadResults(appRoot: string): Promise<AppSecurityResults>
   output(content: string): void
   render(input: SecurityReviewPresenterInput): void
@@ -42,7 +43,8 @@ export interface SecurityReviewDependencies {
 }
 
 const defaultDependencies: SecurityReviewDependencies = {
-  resolveRoot: resolveAppSecurityRoot,
+  resolveRoot: async (directory) =>
+    (await resolveAppSecuritySelection({path: directory, allowPrompts: false})).appDirectory,
   loadResults: loadAppSecurityResults,
   output: outputResult,
   render: renderSecurityReview,
@@ -115,7 +117,7 @@ export default async function securityReview(
   options: SecurityReviewOptions,
   dependencies: SecurityReviewDependencies = defaultDependencies,
 ): Promise<void> {
-  const appRoot = dependencies.resolveRoot(options.directory)
+  const appRoot = await dependencies.resolveRoot(options.directory)
   const results = await dependencies.loadResults(appRoot)
   const result = reviewAppSecurityResults(results, {
     appRoot,

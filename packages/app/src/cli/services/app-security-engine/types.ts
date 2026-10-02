@@ -73,6 +73,14 @@ export interface ProjectDetection {
   languages: DetectedLanguage[]
 }
 
+/** What to scan, already resolved: the engine doesn't look for an app directory or choose a configuration. */
+export interface ScanInput {
+  appDirectory: string
+  /** Absolute path of the selected app configuration file. Absent when scanning without app configuration. */
+  appConfigFilePath?: string
+  clientId?: string
+}
+
 export interface ScanOptions {
   ignorePatterns?: ReadonlyArray<string>
 }

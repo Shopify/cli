@@ -2,6 +2,7 @@ import {buildSecurityAlert} from './security-output.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {describe, expect, test} from 'vitest'
 import type {SecurityReportInput} from './security-output.js'
+import type {AppSecuritySelection} from './app-security-selection.js'
 import type {ScanResult} from './app-security-engine/index.js'
 
 const engine = {
@@ -70,6 +71,13 @@ const scanWithIssues: ScanResult = {
 function reportInput(overrides: Partial<SecurityReportInput> = {}): SecurityReportInput {
   return {
     scan: scanWithIssues,
+    selection: {
+      kind: 'config',
+      appDirectory: '/tmp/app',
+      appConfigFilePath: '/tmp/app/shopify.app.toml',
+      configClientId: 'toml-client-id',
+    },
+    scanDirectories: [{directory: '/tmp/app', origin: 'app_directory'}],
     engine,
     verbose: false,
     elapsedMilliseconds: 125,
@@ -85,7 +93,66 @@ function section(input: SecurityReportInput, title: string) {
   return buildSecurityAlert(input).options.customSections?.find((entry) => entry.title === title)
 }
 
+function selectionRows(selection: AppSecuritySelection) {
+  return section(reportInput({selection}), 'Selection')?.body
+}
+
 describe('buildSecurityAlert', () => {
+  test('shows the app directory, the config file, the client ID and the scan directories', () => {
+    expect(selectionRows(reportInput().selection)).toEqual({
+      tabularData: [
+        ['App directory', '/tmp/app'],
+        ['Config file', 'shopify.app.toml'],
+        ['Client ID', 'toml-client-id'],
+        ['Scan directories', '.'],
+      ],
+      firstColumnSubdued: true,
+    })
+  })
+
+  test('says where the client ID came from when --client-id overrides the TOML', () => {
+    const rows = selectionRows({
+      kind: 'config',
+      appDirectory: '/tmp/app',
+      appConfigFilePath: '/tmp/app/shopify.app.staging.toml',
+      configClientId: 'toml-client-id',
+      clientIdOverride: 'flag-client-id',
+    })
+
+    expect(rows).toMatchObject({
+      tabularData: expect.arrayContaining([
+        ['Config file', 'shopify.app.staging.toml'],
+        ['Client ID', 'flag-client-id (from --client-id)'],
+      ]),
+    })
+  })
+
+  test('shows an unlinked configuration as not linked', () => {
+    const rows = selectionRows({
+      kind: 'config',
+      appDirectory: '/tmp/app',
+      appConfigFilePath: '/tmp/app/shopify.app.toml',
+    })
+
+    expect(rows).toMatchObject({tabularData: expect.arrayContaining([['Client ID', 'not linked']])})
+  })
+
+  test('shows no config file when scanning without app configuration', () => {
+    const rows = selectionRows({
+      kind: 'no-config',
+      appDirectory: '/tmp/app',
+      clientId: 'chosen-id',
+      clientIdSource: 'picker',
+    })
+
+    expect(rows).toMatchObject({
+      tabularData: expect.arrayContaining([
+        ['Config file', 'none'],
+        ['Client ID', 'chosen-id'],
+      ]),
+    })
+  })
+
   test('renders a concise grouped error report for high-severity issues', () => {
     const alert = buildSecurityAlert(reportInput())
     const serialized = JSON.stringify(alert)

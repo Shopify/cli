@@ -1,21 +1,29 @@
 import SecurityClean from './clean.js'
 import {appFlags} from '../../../flags.js'
-import {resolveAppSecurityRoot} from '../../../services/app-security-api.js'
+import {resolveAppSecuritySelection} from '../../../services/app-security-selection.js'
 import securityClean, {renderSecurityCleanResult} from '../../../services/security-clean.js'
 import {securityCleanJsonOutputSchema} from '../../../services/security-clean-json.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {fileRealPath, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 import type {SecurityCleanResult} from '../../../services/security-clean-json.js'
 
 vi.mock('../../../services/security-clean.js')
+vi.mock('../../../services/app-security-selection.js')
 
+/** Creates an app directory and makes the selection resolver find it, as the real resolver would. */
 async function createApp(directory: string): Promise<string> {
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'client_id = "test"\n')
-  return resolveAppSecurityRoot(directory)
+  const appDirectory = await fileRealPath(directory)
+  vi.mocked(resolveAppSecuritySelection).mockResolvedValue({
+    kind: 'config',
+    appDirectory,
+    appConfigFilePath: joinPath(appDirectory, 'shopify.app.toml'),
+  })
+  return appDirectory
 }
 
 function cleanedResult(appRoot: string): SecurityCleanResult {
@@ -44,6 +52,7 @@ describe('app security clean command', () => {
       try {
         await SecurityClean.run([], import.meta.url)
 
+        expect(resolveAppSecuritySelection).toHaveBeenCalledWith({path: cwd(), allowPrompts: false})
         expect(securityClean).toHaveBeenCalledWith({appRoot})
         expect(renderSecurityCleanResult).toHaveBeenCalledWith(result, appRoot)
         expect(output.info()).toBe('')
@@ -65,6 +74,7 @@ describe('app security clean command', () => {
       try {
         await SecurityClean.run(['--path', directory, '--json'], import.meta.url)
 
+        expect(resolveAppSecuritySelection).toHaveBeenCalledWith({path: directory, allowPrompts: false})
         expect(securityClean).toHaveBeenCalledWith({appRoot})
         expect(output.info()).toBe(
           ['{', '  "removed": [', `    ${JSON.stringify(result.removed[0])}`, '  ]', '}'].join('\n'),
