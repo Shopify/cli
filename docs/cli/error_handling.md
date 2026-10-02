@@ -25,7 +25,7 @@ The CLI defines `FatalError` and several subtypes of `FatalError`. Within the CL
 * Use `AbortSilentError` for user-initiated cancellations
 * Use `ExternalError` when external commands fail
 
-Please, **don't** use the global `process.exit` and `process.abort` APIs. Also, don't `try {} catch {}` abort errors. If you need to communicate the failure of an operation to the caller (e.g., a 5xx HTTP response), use the result type from the following section.
+Please, **don't** use the global `process.exit` and `process.abort` APIs. Do not catch abort errors indiscriminately to continue anyway. Catch only a named domain condition that the operation explicitly expects and can recover from, such as `StoreNotFoundError` while waiting for a newly created store. Rethrow unrelated failures, including ordinary auth/session failures, and preserve user cancellation. If you need to communicate the failure of an operation to the caller (e.g., a 5xx HTTP response), use the result type from the following section.
 
 #### AbortError
 
@@ -196,6 +196,10 @@ result.isErr() // true
 result.valueOrBug() // throws!
 result.mapError((error) => new FatalError("other error"))
 ```
+
+## Narrow recovery and retries
+
+Use stable API codes or domain state for retry decisions when supplied, not broad or localized message matches. Test false-positive messages and unrelated failures. When no structured signal exists, retain justified narrow string handling and test the producer-to-consumer contract; the conservative OS/environment backstop below remains valid.
 
 ## Environmental Issue Detection
 
