@@ -6,7 +6,11 @@ import type {ScanInput, ScanOptions} from '../types.js'
 
 /** Resolves a test app the way the CLI would: the named configuration file in the directory is the selected TOML. */
 function scanInputFor(appDirectory: string, configName?: string): ScanInput {
-  return {appDirectory, appConfigFilePath: joinPath(appDirectory, getAppConfigurationFileName(configName))}
+  return {
+    appDirectory,
+    scanDirectories: [appDirectory],
+    appConfigFilePath: joinPath(appDirectory, getAppConfigurationFileName(configName)),
+  }
 }
 
 export function scanDirectory(appDirectory: string, configName?: string, options?: ScanOptions) {

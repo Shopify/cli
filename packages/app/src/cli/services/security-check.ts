@@ -18,9 +18,10 @@ import {encodeSecurityJson, toSecurityJson} from './security-json.js'
 import {renderSecurityReport} from './security-output.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
-import {renderInfo, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {cwd, relativePath} from '@shopify/cli-kit/node/path'
+import {renderInfo, renderSelectPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
 import type {CheckArtifactPaths} from './app-security-artifacts.js'
-import type {AgentChecks, DeterministicFindingsDocument, ScanInput} from './app-security-engine/index.js'
+import type {AgentChecks, DeterministicFindingsDocument, ScanInput, ScanOptions} from './app-security-engine/index.js'
 import type {AppSecurityBlockingLevel, AppSecurityExecution} from './app-security-api.js'
 import type {SecurityReportInput} from './security-output.js'
 import type {RenderAlertOptions, RenderSelectPromptOptions} from '@shopify/cli-kit/node/ui'
@@ -35,7 +36,8 @@ interface SecurityOptions {
   blocking: AppSecurityBlockingLevel
   yes: boolean
   skipInstructions: boolean
-  ignorePatterns: ReadonlyArray<string>
+  excludePatterns: ReadonlyArray<string>
+  noGitIgnore: boolean
 }
 
 export type AppSecurityInstructionsDestination = 'copy' | 'print' | 'nothing'
@@ -48,7 +50,7 @@ interface SecurityDependencies {
     withoutAppConfig: boolean
     allowPrompts: boolean
   }): Promise<AppSecuritySelection>
-  execute(options: ScanInput & {ignorePatterns: ReadonlyArray<string>}): Promise<AppSecurityExecution>
+  execute(options: ScanInput & Required<ScanOptions>): Promise<AppSecurityExecution>
   writeArtifacts(
     appDirectory: string,
     resultsKey: string,
@@ -65,6 +67,7 @@ interface SecurityDependencies {
   }): Promise<void>
   output(content: string): void
   renderInfo(options: RenderAlertOptions): void
+  renderWarning(options: RenderAlertOptions): void
   renderReport(input: SecurityReportInput): void
   setExitCode(exitCode: number): void
 }
@@ -88,6 +91,7 @@ const defaultDependencies: SecurityDependencies = {
   deliverInstructions: deliverAppSecurityInstructions,
   output: outputResult,
   renderInfo,
+  renderWarning,
   renderReport: renderSecurityReport,
   setExitCode: (exitCode) => {
     process.exitCode = exitCode
@@ -144,7 +148,12 @@ export default async function securityCheck(
     allowPrompts: canPrompt,
   })
   const {appDirectory} = selection
-  const commands = resolveAppSecurityCommands(appDirectory, selectedConfigFileName(selection), options.ignorePatterns)
+  const commands = resolveAppSecurityCommands(
+    appDirectory,
+    selectedConfigFileName(selection),
+    options.excludePatterns,
+    options.noGitIgnore,
+  )
   // The prompt is only shown when no TOML was found and `--without-app-config` wasn't passed.
   if (selection.kind === 'no-config' && !options.withoutAppConfig) {
     dependencies.renderInfo({
@@ -156,10 +165,18 @@ export default async function securityCheck(
 
   const execution = await dependencies.execute({
     appDirectory,
+    scanDirectories: scanDirectories.map(({directory}) => directory),
     appConfigFilePath: selection.kind === 'config' ? selection.appConfigFilePath : undefined,
     clientId: effectiveClientId(selection),
-    ignorePatterns: options.ignorePatterns,
+    excludePatterns: options.excludePatterns,
+    noGitIgnore: options.noGitIgnore,
   })
+  for (const directory of execution.ignoredScanDirectories) {
+    dependencies.renderWarning({
+      headline: `${relativePath(cwd(), directory) || '.'} is ignored by Git, so only the files Git tracks in it are scanned.`,
+      body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
+    })
+  }
   const artifacts = await dependencies.writeArtifacts(appDirectory, resultsKey(selection), {
     deterministicFindings: execution.deterministicFindings,
     agentChecks: execution.agentChecks,
