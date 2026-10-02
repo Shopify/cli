@@ -1,6 +1,8 @@
+import {themePullResultSchema, type ThemePullResult} from './pull/types.js'
+import {renderThemePullResult} from './pull/result.js'
 import {downloadTheme} from '../utilities/theme-downloader.js'
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
-import {ensureDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
+import {ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {rejectGeneratedStaticAssets} from '../utilities/asset-checksum.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
@@ -9,7 +11,6 @@ import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {cwd} from '@shopify/cli-kit/node/path'
 import {insideGitDirectory, isClean} from '@shopify/cli-kit/node/git'
@@ -100,12 +101,12 @@ export interface PullFlags {
  *
  * @param flags - All flags are optional.
  */
-export async function pull(
+export async function executeThemePull(
   flags: PullFlags,
   session?: AdminSession,
   multiEnvironment?: boolean,
   context?: {stdout?: Writable; stderr?: Writable},
-): Promise<void> {
+): Promise<ThemePullResult | undefined> {
   recordTiming('theme-service:pull:setup')
   configureCLIEnvironment({verbose: flags.verbose, noColor: flags.noColor})
 
@@ -131,7 +132,7 @@ export async function pull(
   })
   recordTiming('theme-service:pull:setup')
 
-  await executePull(
+  return executePull(
     theme,
     adminSession,
     {
@@ -168,28 +169,19 @@ async function executePull(
 
   await downloadTheme(theme, session, themeChecksums, themeFileSystem, options, context)
 
-  const header = options.environment ? `Environment: ${options.environment}` : ''
-  renderSuccess({
-    headline: header,
-    body: ['The theme', ...themeComponent(theme), 'has been pulled.'],
-    nextSteps: [
-      [
-        {
-          link: {
-            label: 'View your theme',
-            url: themePreviewUrl(theme, session),
-          },
-        },
-      ],
-      [
-        {
-          link: {
-            label: 'Customize your theme at the theme editor',
-            url: themeEditorUrl(theme, session),
-          },
-        },
-      ],
-    ],
+  return themePullResultSchema.parse({
+    environment: options.environment,
+    path: options.path,
+    theme: {
+      id: theme.id,
+      name: theme.name,
+      role: theme.role,
+      processing: theme.processing,
+      src: theme.src,
+      shop: session.storeFqdn,
+      editor_url: themeEditorUrl(theme, session),
+      preview_url: themePreviewUrl(theme, session),
+    },
   })
 }
 
@@ -252,4 +244,15 @@ async function validateDirectory(path: string, force: boolean, environment?: str
   }
 
   return true
+}
+
+/** Compatibility adapter for callers of the exported theme API. */
+export async function pull(
+  flags: PullFlags,
+  session?: AdminSession,
+  multiEnvironment?: boolean,
+  context?: {stdout?: Writable; stderr?: Writable},
+): Promise<void> {
+  const result = await executeThemePull(flags, session, multiEnvironment, context)
+  if (result) renderThemePullResult(result, 'text')
 }
