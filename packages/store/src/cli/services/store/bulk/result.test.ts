@@ -42,6 +42,17 @@ function completedResult(): ExecuteBulkOperationResult {
   }
 }
 
+// The list query omits the operation type.
+function listedOperation() {
+  const {type: _type, ...operation} = completedResult().operation!
+  return {
+    ...operation,
+    id: 'gid://shopify/BulkOperation/1',
+    createdAt: '2025-11-10T12:37:52Z',
+    completedAt: '2025-11-10T16:37:12Z',
+  }
+}
+
 test('preserves raw counts, nullable fields, and omitted fields through encoding', () => {
   const result = completedResult()
   const {completedAt: _completedAt, ...operation} = result.operation!
@@ -193,6 +204,70 @@ test('outputs status JSON without a table or terminal banners', () => {
   expect(JSON.parse(output.output())).toEqual({operations: []})
   expect(renderTable).not.toHaveBeenCalled()
   expect(renderInfo).not.toHaveBeenCalled()
+})
+
+test.each([
+  [999, '999'],
+  [1000, '1.0K'],
+  [123500, '123.5K'],
+  [999999, '1000.0K'],
+  [1000000, '1.0M'],
+  [2450000, '2.5M'],
+])('abbreviates an object count of %i as %s in the table', (objectCount, expectedCount) => {
+  renderBulkOperationStatusResult({operations: [{...listedOperation(), objectCount}]}, 'text')
+
+  expect(renderTable).toHaveBeenCalledWith(
+    expect.objectContaining({rows: [expect.objectContaining({count: expectedCount})]}),
+  )
+})
+
+test('shortens the operation ID and links the results for a completed operation', () => {
+  renderBulkOperationStatusResult({operations: [listedOperation()]}, 'text')
+
+  expect(renderTable).toHaveBeenCalledWith(
+    expect.objectContaining({
+      rows: [
+        expect.objectContaining({
+          id: '1',
+          status: expect.stringContaining('COMPLETED'),
+          dateCreated: '2025-11-10 12:37:52',
+          dateFinished: '2025-11-10 16:37:12',
+          results: expect.stringContaining('https://example.com/results.jsonl'),
+        }),
+      ],
+    }),
+  )
+})
+
+test('falls back to the partial results link while an operation is unfinished', () => {
+  const operation = {
+    ...listedOperation(),
+    status: 'FAILED' as const,
+    completedAt: undefined,
+    url: null,
+    partialDataUrl: 'https://example.com/partial.jsonl',
+  }
+
+  renderBulkOperationStatusResult({operations: [operation]}, 'text')
+
+  expect(renderTable).toHaveBeenCalledWith(
+    expect.objectContaining({
+      rows: [
+        expect.objectContaining({
+          dateFinished: '',
+          results: expect.stringContaining('https://example.com/partial.jsonl'),
+        }),
+      ],
+    }),
+  )
+})
+
+test('leaves the results cell empty when an operation has no download links', () => {
+  const operation = {...listedOperation(), status: 'RUNNING' as const, url: null, partialDataUrl: null}
+
+  renderBulkOperationStatusResult({operations: [operation]}, 'text')
+
+  expect(renderTable).toHaveBeenCalledWith(expect.objectContaining({rows: [expect.objectContaining({results: ''})]}))
 })
 
 test('keeps missing status and cancellation results nonfatal in text mode', () => {
