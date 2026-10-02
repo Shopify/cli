@@ -1,4 +1,5 @@
-import {themeInfoJSON, fetchThemeInfo, themeEnvironmentInfoJSON} from './info.js'
+import {getThemeEnvironmentInfo, themeInfoJSON, fetchThemeInfo, themeEnvironmentInfoJSON} from './info.js'
+import {themeInfoJsonOutputSchema} from './info/types.js'
 import {getDevelopmentTheme, getThemeStore} from './local-storage.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
@@ -47,6 +48,7 @@ describe('info', () => {
     expect(output).toHaveProperty('theme.shop', session.storeFqdn)
     expect(output).toHaveProperty('theme.preview_url', expect.stringContaining(session.storeFqdn))
     expect(output).toHaveProperty('theme.editor_url', expect.stringContaining(session.storeFqdn))
+    expect(themeInfoJsonOutputSchema.validate(output)).toEqual(output)
   })
 
   describe('themeEnvironmentInfoJSON', () => {
@@ -65,6 +67,33 @@ describe('info', () => {
       expect(output).toHaveProperty('os', expect.stringContaining('-'))
       expect(output).toHaveProperty('shell', process.env.SHELL ?? 'unknown')
       expect(output).toHaveProperty('node_version', process.version)
+      expect(themeInfoJsonOutputSchema.validate(output)).toEqual(output)
+    })
+  })
+
+  test('uses the JSON fallback values without reading the development theme when no store is configured', () => {
+    vi.mocked(getThemeStore).mockReturnValue(undefined)
+    vi.mocked(getDevelopmentTheme).mockImplementation(() => {
+      throw new Error('The development theme needs a configured store')
+    })
+
+    expect(themeEnvironmentInfoJSON({cliVersion: '3.91.0'})).toMatchObject({
+      store: 'Not configured',
+      development_theme_id: null,
+      cli_version: '3.91.0',
+      shell: process.env.SHELL ?? 'unknown',
+      node_version: process.version,
+    })
+    expect(getDevelopmentTheme).not.toHaveBeenCalled()
+  })
+
+  test('retains the raw development theme ID for text presentation', () => {
+    vi.mocked(getThemeStore).mockReturnValue('my-shop.myshopify.com')
+    vi.mocked(getDevelopmentTheme).mockReturnValue('0')
+
+    expect(getThemeEnvironmentInfo({cliVersion: '3.91.0'})).toMatchObject({
+      result: {development_theme_id: null},
+      developmentTheme: '0',
     })
   })
 
