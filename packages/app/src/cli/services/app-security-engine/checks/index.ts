@@ -207,20 +207,13 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isPositiveInteger = (value: unknown): value is number => Number.isInteger(value) && (value as number) >= 1
 
 /**
- * Reject paths that escape the app root or are absolute.
- *
- * The findings document is developer-controlled input that ends up verbatim in
- * agent-findings.json. A path like `../../../etc/passwd` is never a legitimate
- * finding location.
+ * Reject absolute paths. A path may start with `../`: a scan directory can sit outside the app directory, and
+ * finding locations are relative to the app directory.
  */
 const isSafeRelativePath = (path: string): boolean => {
   if (!path) return false
-  // Reject absolute POSIX and Windows paths.
   if (path.startsWith('/') || /^[a-zA-Z]:[\\/]/.test(path)) return false
-  if (path.includes('\0')) return false
-  // Normalise separators and reject any traversal segment.
-  const segments = path.replace(/\\/g, '/').split('/')
-  return !segments.includes('..')
+  return !path.includes('\0')
 }
 
 /**
@@ -240,8 +233,7 @@ export const validateFinding = (value: unknown): string | undefined => {
     return 'finding requires at least one evidence citation'
   if (finding.evidence.length > MAX_EVIDENCE) return `finding exceeds ${MAX_EVIDENCE} evidence citations`
   if (finding.file.length > MAX_PATH_LENGTH) return `file path exceeds ${MAX_PATH_LENGTH} characters`
-  if (!isSafeRelativePath(finding.file))
-    return `unsafe file path (must be relative and inside the app): ${finding.file}`
+  if (!isSafeRelativePath(finding.file)) return `unsafe file path (must be relative): ${finding.file}`
   if (finding.message.length > MAX_MESSAGE_LENGTH) return `message exceeds ${MAX_MESSAGE_LENGTH} characters`
   if (finding.snippet !== undefined && typeof finding.snippet !== 'string') return 'snippet must be a string'
   if (typeof finding.snippet === 'string' && finding.snippet.length > MAX_SNIPPET_LENGTH)

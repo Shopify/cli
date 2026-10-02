@@ -9,6 +9,7 @@ function scanInputFor(appDirectory: string, configName?: string): ScanInput {
   return {
     appDirectory,
     scanDirectories: [appDirectory],
+    requestedScanDirectories: [appDirectory],
     appConfigFilePath: joinPath(appDirectory, getAppConfigurationFileName(configName)),
   }
 }

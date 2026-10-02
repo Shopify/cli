@@ -1,4 +1,4 @@
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {basename, dirname} from '@shopify/cli-kit/node/path'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import type {ScanContext, SourceFile} from './types.js'
 import type {Issue} from '../types.js'
@@ -156,15 +156,14 @@ async function gitTopLevel(cwd: string): Promise<string | undefined> {
 
 /** When git listed ignored paths, a nested repository is confirmed by comparing top levels. */
 async function ignoredFileScanReason(
-  appRoot: string,
-  path: string,
+  file: SourceFile,
   gitIgnoreListing: ScanContext['gitIgnoreListing'],
   appTopLevel: () => Promise<string | undefined>,
 ): Promise<{reason: IgnoredFileScanReason; evidence: string[]}> {
   if (gitIgnoreListing === 'failed') return {reason: 'listing-failed', evidence: []}
   if (gitIgnoreListing === 'not-a-repository') return {reason: 'unknown', evidence: []}
 
-  const fileTopLevel = await gitTopLevel(dirname(joinPath(appRoot, path)))
+  const fileTopLevel = await gitTopLevel(dirname(file.absolutePath))
   const appRootTopLevel = await appTopLevel()
   const bothKnown = fileTopLevel !== undefined && appRootTopLevel !== undefined
   const nested = bothKnown && fileTopLevel !== appRootTopLevel
@@ -173,7 +172,7 @@ async function ignoredFileScanReason(
   else if (bothKnown) verdict = 'same'
   return {
     reason: nested ? 'nested-repository' : 'unknown',
-    evidence: [`git rev-parse --show-toplevel → ${verdict} for ${path} and the app root`],
+    evidence: [`git rev-parse --show-toplevel → ${verdict} for ${file.path} and the app root`],
   }
 }
 
@@ -263,7 +262,7 @@ export async function scanCommittedSecrets(
 
     // Keep git probes sequential to avoid spawning competing processes for one repository.
     // eslint-disable-next-line no-await-in-loop
-    const status = await gitStatusFor(appRoot, file.path)
+    const status = await gitStatusFor(file)
     // Empty named secret files stay fail-closed only when git confirms they are
     // tracked — history may still contain prior secrets. Unknown git plus empty
     // contents is not a provable leak.
@@ -279,7 +278,7 @@ export async function scanCommittedSecrets(
       // With --no-git-ignore the file was scanned only because filtering was off, and Git still protects it.
       if (gitIgnoreListing === 'git-ignore-off') continue
       // eslint-disable-next-line no-await-in-loop
-      const scanReason = await ignoredFileScanReason(appRoot, file.path, gitIgnoreListing, appRootTopLevel)
+      const scanReason = await ignoredFileScanReason(file, gitIgnoreListing, appRootTopLevel)
       ignoredScanReason = scanReason.reason
       evidence = [...evidence, ...scanReason.evidence]
     }
@@ -353,8 +352,10 @@ async function runGit(cwd: string, args: string[]): Promise<{exitCode?: number; 
   }
 }
 
-export async function gitStatusFor(appRoot: string, file: string): Promise<GitFileStatus> {
-  const run = async (args: string[]) => runGit(appRoot, args)
+/** Asks the file's own repository, which may differ from the app's: a scan directory can be another repository. */
+export async function gitStatusFor(file: Pick<SourceFile, 'path' | 'absolutePath'>): Promise<GitFileStatus> {
+  const run = async (args: string[]) => runGit(dirname(file.absolutePath), args)
+  const name = basename(file.absolutePath)
 
   // Is this even a git repo? If not, we cannot confirm anything.
   const inRepo = await run(['rev-parse', '--is-inside-work-tree'])
@@ -371,25 +372,25 @@ export async function gitStatusFor(appRoot: string, file: string): Promise<GitFi
 
   // Exit 1 is git's conclusive "no match" result. Any other failure remains
   // unknown instead of being silently interpreted as an untracked file.
-  const ls = await run(['ls-files', '--error-unmatch', '--', file])
+  const ls = await run(['ls-files', '--error-unmatch', '--', name])
   let tracked: boolean | undefined
   if (ls.exitCode === 0 && ls.out.length > 0) tracked = true
   else if (ls.exitCode === 1) tracked = false
   let trackedVerdict = 'unknown'
   if (tracked === true) trackedVerdict = 'TRACKED'
   else if (tracked === false) trackedVerdict = 'untracked'
-  evidence.push(`git ls-files --error-unmatch ${file} → ${trackedVerdict}`)
+  evidence.push(`git ls-files --error-unmatch ${file.path} → ${trackedVerdict}`)
 
   // check-ignore likewise defines 0 as ignored and 1 as conclusively not
   // ignored. Exit codes above 1 are command errors and must fail closed.
-  const checkIgnore = await run(['check-ignore', '-q', '--', file])
+  const checkIgnore = await run(['check-ignore', '-q', '--', name])
   let ignored: boolean | undefined
   if (checkIgnore.exitCode === 0) ignored = true
   else if (checkIgnore.exitCode === 1) ignored = false
   let ignoredVerdict = 'unknown'
   if (ignored === true) ignoredVerdict = 'ignored'
   else if (ignored === false) ignoredVerdict = 'not ignored'
-  evidence.push(`git check-ignore -q ${file} → ${ignoredVerdict}`)
+  evidence.push(`git check-ignore -q ${file.path} → ${ignoredVerdict}`)
 
   return {
     tracked,
