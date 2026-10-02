@@ -5,11 +5,9 @@ import type {MigrationOperation} from '../../../models/subscription-migrations.j
 import type {
   MigrationCancellationOutcome,
   MigrationCancellationResult,
-} from '../../../services/subscription-migrations/types.js'
-import type {
   MigrationSubmission,
   MigrationSubmissionResult,
-} from '../../../services/subscription-migrations/submit-migration-plan.js'
+} from '../../../services/subscription-migrations/types.js'
 
 interface SubmissionPresentationOptions {
   json: boolean
