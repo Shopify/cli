@@ -99,6 +99,7 @@ function testDependencies(execution: AppSecurityExecution = scanExecution) {
     output: vi.fn(),
     renderReport: vi.fn(),
     setExitCode: vi.fn(),
+    recordMetadata: vi.fn(async () => {}),
   }
 }
 
@@ -346,6 +347,34 @@ describe('securityCheck', () => {
     await securityCheck({...testOptions(), blocking: 'high'}, dependencies)
 
     expect(dependencies.setExitCode).toHaveBeenCalledWith(1)
+  })
+
+  test('records the number of deterministic issues in the command metadata', async () => {
+    const issue = {
+      id: 'COMMITTED_SECRET',
+      severity: 'high' as const,
+      points: -25,
+      title: 'Secret',
+      message: 'secret',
+      location: {file: 'app/routes/index.ts'},
+      fix: {automated: false, description: 'remove it'},
+    }
+    const dependencies = testDependencies({
+      ...scanExecution,
+      scan: {...scan, issues: [issue, {...issue, location: {file: 'app/routes/other.ts'}}]},
+    })
+
+    await securityCheck({...testOptions(), json: true}, dependencies)
+
+    expect(dependencies.recordMetadata).toHaveBeenCalledWith({num_security_findings: 2})
+  })
+
+  test('records zero findings when the scan finds no issues', async () => {
+    const dependencies = testDependencies()
+
+    await securityCheck(testOptions(), dependencies)
+
+    expect(dependencies.recordMetadata).toHaveBeenCalledWith({num_security_findings: 0})
   })
 
   test('keeps the default exit code when no finding reaches the blocking level', async () => {
