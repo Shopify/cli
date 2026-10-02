@@ -48,11 +48,6 @@ const EventsSchema = zod.preprocess((config) => {
   return configurationWithoutHandle
 }, EventsModuleSchema)
 
-function isSingleSubscription(config: zod.infer<typeof EventsSchema>): config is typeof config & {handle: string} {
-  const subscription = config.events?.subscription
-  return subscription !== undefined && !Array.isArray(subscription) && typeof config.handle === 'string'
-}
-
 const appEventsSpec = createConfigExtensionSpecification({
   identifier: EventsSpecIdentifier,
   schema: EventsSchema,
@@ -67,14 +62,13 @@ const appEventsSpec = createConfigExtensionSpecification({
     })
   },
   getIdentity: (config) => {
-    if (!isSingleSubscription(config)) return undefined
+    if (!config.handle) return undefined
     return {handle: config.handle, uid: config.handle}
   },
   // A single-subscription module targets its topic. The topic stays in the config as
   // well: Core still derives the module target from `events.subscription.topic`.
   getTarget: (config) => {
-    if (!isSingleSubscription(config)) return undefined
-    const topic = (config.events?.subscription as {topic?: unknown}).topic
+    const topic = (config.events?.subscription as {topic?: unknown})?.topic
     return typeof topic === 'string' ? topic : undefined
   },
 })
