@@ -12,8 +12,10 @@ import {
 import {IdentityToken, Session, Sessions} from './session/schema.js'
 import * as sessionStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
+import {automationTokenVariable, automationTokenVariablesProblem} from './session/automation-token.js'
 import {isThemeAccessSession} from './api/rest.js'
 import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
+import {environmentVariables} from './constants.js'
 import {UserEmailQueryString, UserEmailQuery} from './api/graphql/business-platform-destinations/user-email.js'
 import {outputContent, outputToken, outputDebug, outputCompleted} from '../../public/node/output.js'
 import {themeToken} from '../../public/node/context/local.js'
@@ -203,6 +205,18 @@ export async function ensureAuthenticated(
   _env?: NodeJS.ProcessEnv,
   {forceRefresh = false, noPrompt = false, forceNewSession = false}: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<OAuthSession> {
+  // Commands that support automation tokens exchange them before calling this function, and getAppAutomationToken
+  // returns no token when the variables are invalid, so an invalid environment always reaches this check before any
+  // login starts.
+  const variablesProblem = automationTokenVariablesProblem()
+  if (variablesProblem) throw new AbortError(variablesProblem.message, variablesProblem.tryMessage)
+  if (automationTokenVariable() === environmentVariables.organizationAutomationToken) {
+    throw new AbortError(
+      `This command can't use ${environmentVariables.organizationAutomationToken}.`,
+      `Unset ${environmentVariables.organizationAutomationToken} to run it with your Shopify account.`,
+    )
+  }
+
   const fqdn = await identityFqdn()
 
   const previousStoreFqdn = applications.adminApi?.storeFqdn
