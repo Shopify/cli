@@ -1,5 +1,5 @@
 import type {Issue, Capabilities, ProjectDetection, Severity, SourceCandidate} from '../types.js'
-import type {GitIgnoreListing} from '../scanners/path-rules.js'
+import type {GatheredListingStatus} from '../scanners/path-rules.js'
 import type {
   AppTomlContent,
   DependencyAutomationInputs,
@@ -57,6 +57,6 @@ export interface ScanContext {
   detection: ProjectDetection
   /** Path-only inventory, including unsupported source candidates. */
   sourceCandidates: SourceCandidate[]
-  /** Outcome of listing git's ignored paths. */
-  gitIgnoreListing: GitIgnoreListing['status']
+  /** Outcome of listing git's ignored paths for the first scan directory. */
+  gitIgnoreListing: GatheredListingStatus
 }

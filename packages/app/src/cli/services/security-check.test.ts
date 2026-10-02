@@ -69,6 +69,7 @@ const agentChecks: AgentChecks = {
 
 const scanExecution: AppSecurityExecution = {
   scan,
+  ignoredScanDirectories: [],
   deterministicFindings,
   agentChecks,
   engine,
@@ -104,6 +105,7 @@ function testDependencies(
     deliverInstructions: vi.fn(async () => {}),
     output: vi.fn(),
     renderInfo: vi.fn(),
+    renderWarning: vi.fn(),
     renderReport: vi.fn(),
     setExitCode: vi.fn(),
   }
@@ -118,7 +120,8 @@ function testOptions() {
     blocking: 'none' as const,
     yes: false,
     skipInstructions: false,
-    ignorePatterns: [],
+    excludePatterns: [],
+    noGitIgnore: false,
   }
 }
 
@@ -137,9 +140,11 @@ describe('securityCheck', () => {
     })
     expect(dependencies.execute).toHaveBeenCalledWith({
       appDirectory,
+      scanDirectories: [appDirectory],
       appConfigFilePath: `${appDirectory}/shopify.app.toml`,
       clientId: 'toml-client-id',
-      ignorePatterns: [],
+      excludePatterns: [],
+      noGitIgnore: false,
     })
     expect(dependencies.writeArtifacts).toHaveBeenCalledWith(appDirectory, 'shopify.app', {
       deterministicFindings,
@@ -186,19 +191,45 @@ describe('securityCheck', () => {
     expect(dependencies.execute).toHaveBeenCalledWith(expect.objectContaining({clientId: 'flag-client-id'}))
   })
 
-  test('forwards ignorePatterns to the scan and repeats them in generated commands and instructions', async () => {
+  test('forwards the scope flags to the scan and repeats them in generated commands and instructions', async () => {
     const dependencies = testDependencies()
     dependencies.canPrompt.mockReturnValue(true)
     dependencies.selectInstructionsDestination.mockResolvedValue('print')
-    const ignorePatterns = ['generated/', '!build/']
+    const excludePatterns = ['generated', '../shared/**']
 
-    await securityCheck({...testOptions(), ignorePatterns}, dependencies)
+    await securityCheck({...testOptions(), excludePatterns, noGitIgnore: true}, dependencies)
 
-    const commands = resolveAppSecurityCommands(appDirectory, 'shopify.app.toml', ignorePatterns)
-    expect(commands.scan.args).toContainEqual({flag: '--ignore', value: 'generated/'})
-    expect(dependencies.execute).toHaveBeenCalledWith(expect.objectContaining({ignorePatterns}))
+    const commands = resolveAppSecurityCommands(appDirectory, 'shopify.app.toml', excludePatterns, true)
+    expect(commands.scan.args).toContainEqual({flag: '--exclude', value: 'generated'})
+    expect(commands.scan.args).toContain('--no-git-ignore')
+    expect(dependencies.execute).toHaveBeenCalledWith(expect.objectContaining({excludePatterns, noGitIgnore: true}))
     expect(dependencies.renderReport).toHaveBeenCalledWith(expect.objectContaining({commands}))
     expect(dependencies.deliverInstructions).toHaveBeenCalledWith(expect.objectContaining({commands}))
+  })
+
+  test('warns once for each scan directory that Git ignores, relative to the working directory', async () => {
+    vi.stubEnv('INIT_CWD', '/tmp')
+    const dependencies = testDependencies({...scanExecution, ignoredScanDirectories: [appDirectory, '/tmp']})
+
+    await securityCheck(testOptions(), dependencies)
+
+    expect(dependencies.renderWarning).toHaveBeenCalledTimes(2)
+    expect(dependencies.renderWarning).toHaveBeenNthCalledWith(1, {
+      headline: 'unlinked-app is ignored by Git, so only the files Git tracks in it are scanned.',
+      body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
+    })
+    expect(dependencies.renderWarning).toHaveBeenNthCalledWith(2, {
+      headline: '. is ignored by Git, so only the files Git tracks in it are scanned.',
+      body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
+    })
+  })
+
+  test('does not warn when no scan directory is ignored', async () => {
+    const dependencies = testDependencies()
+
+    await securityCheck(testOptions(), dependencies)
+
+    expect(dependencies.renderWarning).not.toHaveBeenCalled()
   })
 
   test('re-scanning overwrites the check artifacts without prompting and leaves agent findings untouched', async () => {
@@ -271,9 +302,11 @@ describe('securityCheck', () => {
     )
     expect(dependencies.execute).toHaveBeenCalledWith({
       appDirectory,
+      scanDirectories: [appDirectory],
       appConfigFilePath: undefined,
       clientId: 'flag-client-id',
-      ignorePatterns: [],
+      excludePatterns: [],
+      noGitIgnore: false,
     })
     expect(dependencies.writeArtifacts).toHaveBeenCalledWith(appDirectory, 'flag-client-id', expect.anything())
     expect(dependencies.renderInfo).not.toHaveBeenCalled()

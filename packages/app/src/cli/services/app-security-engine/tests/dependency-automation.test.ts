@@ -11,7 +11,8 @@ import {fetch} from '@shopify/cli-kit/node/http'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {mkdir, writeFile} from 'node:fs/promises'
-import {dirname, join} from 'node:path'
+import {basename, dirname, join} from 'node:path'
+import type {ScanResult} from '../types.js'
 
 vi.mock('@shopify/cli-kit/node/http', async (importActual) => {
   const actual: any = await importActual()
@@ -56,11 +57,11 @@ uri = "https://example.test/webhooks"
   })
 }
 
-function dependencyExecution(result: Awaited<ReturnType<typeof scan>>) {
+function dependencyExecution(result: ScanResult) {
   return result.scan.checks_executed.find((execution) => execution.id === checkId)!
 }
 
-function dependencyFindings(result: Awaited<ReturnType<typeof scan>>) {
+function dependencyFindings(result: ScanResult) {
   return result.issues.filter((issue) => issue.id === checkId)
 }
 
@@ -141,9 +142,10 @@ describe('dependency automation scanner integration', () => {
         })
         expect(securityExitCode({...execution, elapsedMilliseconds: 0}, 'low')).toBe(0)
         expect(JSON.stringify(execution.deterministicFindings)).not.toContain('local>org/renovate-config')
-        // Outside any repository, ignored-path discovery stops at its first probe.
+        // Outside any repository, gathering stops after asking whether the directory is ignored and probing for a repository.
         expect(vi.mocked(captureOutputWithExitCode).mock.calls.map(([command, args]) => [command, args])).toEqual([
-          ['git', ['rev-parse', '--is-inside-work-tree', '--show-prefix']],
+          ['git', ['check-ignore', '--no-index', '-q', '--', basename(root)]],
+          ['git', ['rev-parse', '--is-inside-work-tree']],
         ])
         expect(fetch).not.toHaveBeenCalled()
       })
@@ -215,17 +217,18 @@ describe('dependency automation scanner integration', () => {
     })
   })
 
-  describe('--ignore', () => {
-    test('does not read a committed configuration file a pattern excludes', async () => {
+  describe('--exclude and --no-git-ignore', () => {
+    test('does not read a committed configuration file an exclusion matches', async () => {
       await inTemporaryDirectory(async (root) => {
+        vi.stubEnv('INIT_CWD', root)
         await makeRepository(root, {'.github/dependabot.yml': dependabot}, ['.github/dependabot.yml'])
-        const result = await scan(root, undefined, {ignorePatterns: ['.github/']})
+        const result = await scan(root, undefined, {excludePatterns: ['.github']})
         expect(dependencyFindings(result)).toHaveLength(1)
         expect(dependencyExecution(result)).toMatchObject({status: 'executed', inspected_files: ['package.json']})
       })
     })
 
-    test('reads an untracked gitignored configuration file a pattern includes again', async () => {
+    test('reads an untracked gitignored configuration file with --no-git-ignore', async () => {
       await inTemporaryDirectory(async (root) => {
         // A tracked CODEOWNERS stops git collapsing `.github/`, so it lists the file itself.
         await makeRepository(
@@ -237,10 +240,10 @@ describe('dependency automation scanner integration', () => {
           },
           ['.gitignore', '.github/CODEOWNERS'],
         )
-        const excluded = await scan(root)
-        expect(dependencyFindings(excluded)).toHaveLength(1)
+        const ignored = await scan(root)
+        expect(dependencyFindings(ignored)).toHaveLength(1)
 
-        const result = await scan(root, undefined, {ignorePatterns: ['!.github/dependabot.yml']})
+        const result = await scan(root, undefined, {noGitIgnore: true})
         expect(dependencyFindings(result)).toEqual([])
         expect(dependencyExecution(result)).toMatchObject({
           status: 'executed',

@@ -19,15 +19,16 @@ export interface AppSecurityCommands {
   clean: AppSecurityCommand
 }
 
-/** `ignorePatterns` are repeated on scan so that rerunning the check discovers the same files. */
+/** `excludePatterns` and `noGitIgnore` are repeated on scan so that rerunning the check gathers the same files. */
 export function resolveAppSecurityCommands(
   appRoot: string,
   configFileName?: string,
-  ignorePatterns: ReadonlyArray<string> = [],
+  excludePatterns: ReadonlyArray<string> = [],
+  noGitIgnore = false,
 ): AppSecurityCommands {
   const configFlag = configFileName ? getAppConfigurationShorthand(configFileName) : undefined
   const command = 'shopify'
-  // Only check reads the app configuration and discovers files, so it's the only command that takes --config or --ignore.
+  // Only check reads the app configuration and discovers files, so it's the only command that takes --config, --exclude or --no-git-ignore.
   const subcommandArgs = (subcommand: string): AppSecurityArgument[] => [
     'app',
     'security',
@@ -41,7 +42,8 @@ export function resolveAppSecurityCommands(
       args: [
         ...subcommandArgs('check'),
         ...(configFlag ? [{flag: '--config', value: configFlag}] : []),
-        ...ignorePatterns.map((ignorePattern) => ({flag: '--ignore', value: ignorePattern})),
+        ...excludePatterns.map((excludePattern) => ({flag: '--exclude', value: excludePattern})),
+        ...(noGitIgnore ? ['--no-git-ignore'] : []),
       ],
     },
     record: {command, args: subcommandArgs('record'), stdinPlaceholder: '<findings.json>'},

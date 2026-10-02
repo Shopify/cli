@@ -15,6 +15,8 @@ export interface AppSecurityEngineMetadata {
 
 export interface AppSecurityScan {
   scan: ScanResult
+  /** Absolute paths of the scan directories that their repository ignores, so only the files Git tracks in them were scanned. */
+  ignoredScanDirectories: string[]
   deterministicFindings: DeterministicFindingsDocument
   agentChecks: AgentChecks
   engine: AppSecurityEngineMetadata
@@ -25,11 +27,12 @@ export function getAgentInstructions(): string {
 }
 
 export async function scanApp(input: ScanInput, options?: ScanOptions): Promise<AppSecurityScan> {
-  const result = await scan(input, options)
+  const {ignoredScanDirectories, ...result} = await scan(input, options)
   const engineVersion = getEngineVersion()
   const deterministicFindings = buildDeterministicFindings(result, {engineVersion})
   return {
     scan: result,
+    ignoredScanDirectories,
     deterministicFindings,
     agentChecks: buildAgentChecks(engineVersion),
     engine: deterministicFindings.engine,

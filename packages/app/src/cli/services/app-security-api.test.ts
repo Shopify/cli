@@ -8,7 +8,7 @@ import {writeCheckArtifacts} from './app-security-artifacts.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {describe, expect, test} from 'vitest'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 import {symlink} from 'node:fs/promises'
 import type {Issue} from './app-security-engine/index.js'
 
@@ -17,8 +17,16 @@ function artifactPath(directory: string, name: string): string {
 }
 
 function scanInputFor(directory: string) {
-  return {appDirectory: directory, appConfigFilePath: joinPath(directory, 'shopify.app.toml')}
+  return {
+    appDirectory: directory,
+    scanDirectories: [directory],
+    appConfigFilePath: joinPath(directory, 'shopify.app.toml'),
+  }
 }
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
 
 async function runSecurity(options: {directory: string; blocking: AppSecurityBlockingLevel}) {
   const execution = await executeAppSecurity(scanInputFor(options.directory))
@@ -111,15 +119,16 @@ describe('App Security CLI integration', () => {
     })
   })
 
-  test('forwards --ignore patterns to the scan', async () => {
+  test('forwards --exclude patterns to the scan', async () => {
     await inTemporaryDirectory(async (directory) => {
+      vi.stubEnv('INIT_CWD', directory)
       await createApp(directory)
       await mkdir(joinPath(directory, 'generated'))
       await writeFile(joinPath(directory, 'generated', 'client.ts'), 'export const generated = true\n')
       const scanInput = scanInputFor(directory)
 
       const unfiltered = await executeAppSecurity(scanInput)
-      const filtered = await executeAppSecurity({...scanInput, ignorePatterns: ['generated/']})
+      const filtered = await executeAppSecurity({...scanInput, excludePatterns: ['generated']})
 
       expect(unfiltered.scan.scan.files_scanned - filtered.scan.scan.files_scanned).toBe(1)
     })
