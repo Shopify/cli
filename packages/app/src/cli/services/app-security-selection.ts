@@ -4,7 +4,7 @@ import {fetchOrCreateOrganizationApp} from './context.js'
 import {NoAppConfigurationFoundError} from '../models/project/project.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath, isDirectory} from '@shopify/cli-kit/node/fs'
-import {basename, cwd, isSubpath, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
+import {basename, cwd, isSubpath, joinPath, normalizePath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
 export type AppSecuritySelection =
@@ -172,11 +172,19 @@ export async function resolveIncludeDirectories(includeDirs: ReadonlyArray<strin
  * because walking the outer one covers it; that includes the app directory when an include directory contains it.
  * `requestedScanDirectories` keeps the directories that were dropped for being nested, since each still gets the
  * ignored-scan-directory warning.
+ *
+ * Aborts on an include directory on another Windows drive or network share. Gathered files are stored relative to the
+ * app directory and read back with `joinPath`, which can't reach those, so their files would be silently left unscanned.
  */
 export function mergeScanDirectories(
   appDirectory: string,
   includeDirectories: ReadonlyArray<string>,
 ): {scanDirectories: AppSecurityScanDirectory[]; requestedScanDirectories: string[]} {
+  const otherDrive = includeDirectories.find(
+    (directory) => joinPath(appDirectory, relativePath(appDirectory, directory)) !== normalizePath(directory),
+  )
+  if (otherDrive) throw new AbortError(`--include-dir ${otherDrive}: must be on the same drive as the app directory.`)
+
   const requested = [
     {directory: appDirectory, origin: 'app_directory' as const},
     ...includeDirectories.map((directory) => ({directory, origin: 'include_dir' as const})),

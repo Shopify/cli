@@ -615,4 +615,20 @@ describe('mergeScanDirectories', () => {
   test('keeps a directory whose name only starts like another directory', () => {
     expect(mergeScanDirectories('/work/app', ['/work/app-library']).scanDirectories).toHaveLength(2)
   })
+
+  test('rejects an include directory on another Windows drive', () => {
+    expect(() => mergeScanDirectories('C:/work/app', ['C:/work/backend', 'D:/backend'])).toThrowError(
+      new AbortError('--include-dir D:/backend: must be on the same drive as the app directory.'),
+    )
+  })
+
+  test('rejects an include directory on a Windows network share', () => {
+    expect(() => mergeScanDirectories('C:/work/app', ['//server/share/backend'])).toThrowError(
+      new AbortError('--include-dir //server/share/backend: must be on the same drive as the app directory.'),
+    )
+  })
+
+  test('accepts an include directory elsewhere on the same Windows drive', () => {
+    expect(mergeScanDirectories('C:/work/app', ['C:/backend']).scanDirectories).toHaveLength(2)
+  })
 })
