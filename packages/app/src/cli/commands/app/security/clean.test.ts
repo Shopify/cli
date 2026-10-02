@@ -75,8 +75,8 @@ function cleanedResult(appDirectory: string): SecurityCleanResult {
 }
 
 describe('app security clean command', () => {
-  test('is hidden and does not require linked app context', () => {
-    expect(SecurityClean.hidden).toBe(true)
+  test('is visible and does not require linked app context', () => {
+    expect(SecurityClean.hidden).toBeFalsy()
     expect(SecurityClean.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityClean.prototype).not.toBeInstanceOf(AppLinkedCommand)
     expect(SecurityClean.flags).not.toHaveProperty('json')

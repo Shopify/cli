@@ -29,6 +29,11 @@
 * [`shopify app logs`](#shopify-app-logs)
 * [`shopify app logs sources`](#shopify-app-logs-sources)
 * [`shopify app release --version <version>`](#shopify-app-release---version-version)
+* [`shopify app security check`](#shopify-app-security-check)
+* [`shopify app security clean`](#shopify-app-security-clean)
+* [`shopify app security instructions`](#shopify-app-security-instructions)
+* [`shopify app security record`](#shopify-app-security-record)
+* [`shopify app security review`](#shopify-app-security-review)
 * [`shopify app subscription-migrations cancel`](#shopify-app-subscription-migrations-cancel)
 * [`shopify app subscription-migrations list`](#shopify-app-subscription-migrations-list)
 * [`shopify app subscription-migrations schedule`](#shopify-app-subscription-migrations-schedule)
@@ -3044,6 +3049,357 @@ DESCRIPTION
   Release an app version.
 
   Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
+```
+
+## `shopify app security check`
+
+Check an app for Shopify-specific security issues and write deterministic-findings.json and agent-checks.json.
+
+```
+USAGE
+  $ shopify app security check [--exclude <value>...] [--include-dir <value>...] [--json-schema] [--list-files | --yes |
+    --skip-instructions | --blocking high|medium|low|none] [--no-color] [--no-git-ignore] [--no-input] [--path <value>]
+    [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  --blocking=<option>
+      [default: none] The minimum finding severity that causes a non-zero exit code.
+      [env: SHOPIFY_FLAG_APP_SECURITY_BLOCKING]
+      <options: high|medium|low|none>
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --exclude=<value>...
+      Skip paths that match this glob, relative to the working directory. Repeat the flag to add globs. The selected app
+      configuration file can't be excluded.
+
+  --include-dir=<value>...
+      Also scan this directory, relative to the working directory. Repeat the flag to add directories. Use it for code
+      that lives outside the app directory, such as a backend or a shared library.
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --list-files
+      Print the files the check would gather, one path per line, and stop. Nothing is scanned, no results are written, and
+      nothing is prompted for.
+      [env: SHOPIFY_FLAG_LIST_FILES]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-git-ignore
+      Turn off Git ignore rules for every scanned directory, so files that Git ignores are scanned too. Files that Git
+      tracks are always scanned.
+      [env: SHOPIFY_FLAG_NO_GIT_IGNORE]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --skip-instructions
+      Don't offer to show coding-agent instructions.
+      [env: SHOPIFY_FLAG_APP_SECURITY_SKIP_INSTRUCTIONS]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --without-app-config
+      Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.
+      [env: SHOPIFY_FLAG_WITHOUT_APP_CONFIG]
+
+  --yes
+      Print coding-agent instructions without prompting.
+      [env: SHOPIFY_FLAG_YES]
+
+DESCRIPTION
+  Check an app for Shopify-specific security issues and write deterministic-findings.json and agent-checks.json.
+
+  Runs an app security check locally and writes `deterministic-findings.json` and `agent-checks.json` to the results
+  directory, `.shopify/app-security/<results key>/`. The results key is `--client-id` when you pass it, and otherwise
+  the name of the app configuration file without `.toml`; the other `app security` commands take the same selection
+  flags and find the same directory. Every run replaces both files, so it's always safe to run the check again.
+
+  `deterministic-findings.json` holds the deterministic scan results. `agent-checks.json` holds the checks for your
+  coding agent to investigate; the agent's results are recorded with `shopify app security record`. Use `--config` to
+  select a specific app configuration when the project has multiple `shopify.app*.toml` files; the check inspects only
+  that configuration. Use `--client-id` to replace the configuration's client ID for this run. `--client-id` is checked
+  against your Shopify account before anything is scanned, so it needs you to be logged in. When no app configuration
+  exists, use `--without-app-config --client-id <client-id>` to scan `--path` anyway with config checks skipped; in an
+  interactive terminal the command offers to do this.
+
+  The check scans the app directory and each `--include-dir`. Git ignore rules apply by default: a file or directory
+  that Git ignores is skipped, using the rules of the repository that contains it, while files that Git tracks are
+  always scanned. Use `--no-git-ignore` to turn Git ignore rules off for every scanned directory.
+
+  Use `--exclude` to skip more paths. Each value is a glob that is matched against the path relative to the working
+  directory, so a path above it starts with `../`, and a name at any depth needs `**/`, for example `--exclude
+  '**/generated'`. Repeat the flag to add globs. An exclusion can't remove the selected app configuration file. Quote
+  each value so your shell doesn't expand `*`. The coding-agent instructions this check offers repeat the globs. Other
+  `app security` commands don't take `--exclude` or `--no-git-ignore`, so pass the same flags each time you run the
+  check.
+
+  Use `--list-files` to check the scope before scanning: it prints the files the check would gather, one path per line
+  and relative to the app directory, and then stops. It writes no results and never prompts. `--client-id` is still
+  checked, but doesn't change the list.
+
+  In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing;
+  copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass
+  `--yes`, which prints them. You can also run `shopify app security instructions` to print, copy, or write them later.
+```
+
+## `shopify app security clean`
+
+Remove local app security check results.
+
+```
+USAGE
+  $ shopify app security clean [--all | -c <value> | --client-id <value>] [--json-schema] [--no-color] [--no-input]
+    [--path <value>] [--verbose] [--without-app-config | ]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  --all
+      Delete every results directory under .shopify/app-security/, not only the selected one.
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --without-app-config
+      Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.
+      [env: SHOPIFY_FLAG_WITHOUT_APP_CONFIG]
+
+DESCRIPTION
+  Remove local app security check results.
+
+  Deletes the results directory, `.shopify/app-security/<results key>/`, without asking. The results key is
+  `--client-id` when you pass it, and otherwise the name of the app configuration file without `.toml`. Other results
+  directories are left alone. Prints each removed path.
+
+  Use `--all` to delete every results directory under `.shopify/app-security/` instead. `--all` takes neither `--config`
+  nor `--client-id`, and with `--without-app-config` it doesn't need `--client-id`.
+```
+
+## `shopify app security instructions`
+
+Provide app security check instructions to a coding agent.
+
+```
+USAGE
+  $ shopify app security instructions [--copy | --write <value>] [--json-schema] [--no-color] [--no-input] [--path <value>]
+    [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --copy
+      Copy the instructions to the clipboard instead of printing them.
+      [env: SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_COPY]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --without-app-config
+      Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.
+      [env: SHOPIFY_FLAG_WITHOUT_APP_CONFIG]
+
+  --write=<value>
+      Write the instructions to a file instead of printing them.
+      [env: SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_WRITE]
+
+DESCRIPTION
+  Provide app security check instructions to a coding agent.
+
+  Prints the complete workflow that a coding agent should follow to review app security check results.
+
+  By default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write
+  them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's
+  generated review pack is trusted as workflow input.
+```
+
+## `shopify app security record`
+
+Record agent findings from an app security check.
+
+```
+USAGE
+  $ shopify app security record [--json-schema] [--no-color] [--no-input] [--path <value>] [--verbose]
+    [--without-app-config [--client-id <value> | -c <value>]]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --without-app-config
+      Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.
+      [env: SHOPIFY_FLAG_WITHOUT_APP_CONFIG]
+
+DESCRIPTION
+  Record agent findings from an app security check.
+
+  Reads a coding agent's complete findings document from stdin, validates it, and replaces `agent-findings.json` in the
+  results directory, `.shopify/app-security/<results key>/`. The results key is `--client-id` when you pass it, and
+  otherwise the name of the app configuration file without `.toml`. `--client-id` is checked against your Shopify
+  account before anything is read, so it needs you to be logged in.
+
+  The document must include a `scope` with the `include_dirs`, `excludes` and `no_git_ignore` values of the `check` run
+  it describes, exactly as typed. It's recorded as reported and never compared with the scan's files.
+
+  The document is recorded all or nothing: if anything is invalid, the command fails with every error, writes nothing,
+  and exits with a non-zero code. It needs the results directory that `shopify app security check` creates.
+```
+
+## `shopify app security review`
+
+Show the combined app security check results.
+
+```
+USAGE
+  $ shopify app security review [--blocking high|medium|low|none] [--check-id <value>...] [--json-schema] [--no-color]
+    [--no-input] [--path <value>] [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  --blocking=<option>
+      [default: none] The minimum finding severity that causes a non-zero exit code.
+      [env: SHOPIFY_FLAG_APP_SECURITY_BLOCKING]
+      <options: high|medium|low|none>
+
+  --check-id=<value>...
+      Show only this check. Repeat the flag to show several checks.
+      [env: SHOPIFY_FLAG_CHECK_ID]
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --without-app-config
+      Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.
+      [env: SHOPIFY_FLAG_WITHOUT_APP_CONFIG]
+
+DESCRIPTION
+  Show the combined app security check results.
+
+  Combines the deterministic results (`deterministic-findings.json`, written by `shopify app security check`) with the
+  recorded agent results (`agent-findings.json`, written by `shopify app security record`) and shows one view of every
+  check: its findings, status and source. Both files are in the results directory, `.shopify/app-security/<results
+  key>/`. `--client-id` is checked against your Shopify account before any results are read, so it needs you to be
+  logged in.
+
+  The summary shows the scan directories and the scope of the latest scan, and the scope the agent reported. It notes
+  when the agent findings were recorded for a different scope than the latest scan; that doesn't change the exit code.
+
+  The agent results are optional. Use `--check-id` to narrow the review to specific checks, `--verbose` for full
+  reasoning, evidence and suppressed findings, and `--blocking` to exit with code 1 when a check with findings is at or
+  above a severity.
 ```
 
 ## `shopify app subscription-migrations cancel`

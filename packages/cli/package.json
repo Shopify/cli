@@ -136,8 +136,7 @@
         "description": "Migrate app subscriptions to Shopify-managed pricing."
       },
       "app:security": {
-        "description": "Check an app for Shopify-specific security issues.",
-        "hidden": true
+        "description": "Check an app for Shopify-specific security issues."
       },
       "auth": {
         "description": "Auth operations."

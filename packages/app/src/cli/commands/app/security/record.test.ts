@@ -66,8 +66,8 @@ function recordedResult(appRoot: string) {
 }
 
 describe('app security record command', () => {
-  test('is hidden and does not require linked app context', () => {
-    expect(SecurityRecord.hidden).toBe(true)
+  test('is visible and does not require linked app context', () => {
+    expect(SecurityRecord.hidden).toBeFalsy()
     expect(SecurityRecord.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityRecord.prototype).not.toBeInstanceOf(AppLinkedCommand)
     expect(SecurityRecord.flags).not.toHaveProperty('json')
