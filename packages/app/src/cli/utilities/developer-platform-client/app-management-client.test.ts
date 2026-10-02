@@ -1561,6 +1561,7 @@ describe('AppManagementClient', () => {
         flags: [],
         developerPlatformClient: client,
       })
+      expect(businessPlatformOrganizationsRequestDoc).not.toHaveBeenCalled()
     })
   })
 })
