@@ -398,9 +398,6 @@ redirect_urls = ["http://app.example/callback"]
     const directory = await app({
       'shopify.app.toml': appConfig('write_script_tags'),
       'app/Main.java': 'x'.repeat(500_001),
-      'node_modules/vendor/index.java': 'ignored',
-      'tests/example.java': 'ignored',
-      'fixtures/example.java': 'ignored',
     })
     const result = await scan(directory)
 

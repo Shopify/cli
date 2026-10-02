@@ -1,20 +1,19 @@
 /* eslint-disable no-restricted-imports -- path rules are verified against real temporary git repositories */
 import {git, isolateGitConfig} from './git-test-helpers.js'
 import {
-  DEFAULT_EXCLUDE_PATTERNS,
-  buildPathRules,
-  createFilePathMatcher,
-  createPathMatcher,
+  createPathRules,
+  isDroppedEntry,
+  isDroppedTrackedPath,
+  isIgnoredByParentRepository,
   listGitIgnoredPaths,
-  ignorePatternProblem,
-  ignorePatternRules,
+  listNestedRepository,
+  listTrackedFiles,
+  repositoryIgnoredPaths,
 } from '../scanners/path-rules.js'
-import {BugError} from '@shopify/cli-kit/node/error'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync} from 'node:fs'
+import {mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import type {PathOverride, PathRules} from '../scanners/path-rules.js'
 
 const temporaryDirectories: string[] = []
 let restoreGitConfig: (() => void) | undefined
@@ -29,7 +28,7 @@ afterEach(() => {
 })
 
 function makeDirectory(prefix = 'app-security-path-rules-'): string {
-  const directory = mkdtempSync(join(tmpdir(), prefix))
+  const directory = realpathSync(mkdtempSync(join(tmpdir(), prefix)))
   temporaryDirectories.push(directory)
   return directory
 }
@@ -49,17 +48,13 @@ function makeRepository(files: Record<string, string>): string {
   return root
 }
 
-const DEFAULTS_ONLY: PathRules = {defaults: DEFAULT_EXCLUDE_PATTERNS, gitIgnoredPaths: [], overrides: []}
+function commitAll(root: string): void {
+  git(root, ['add', '-A'])
+  git(root, ['commit', '-qm', 'init'])
+}
 
-const gitIgnoredOnly = (paths: string[]): PathRules => ({defaults: [], gitIgnoredPaths: paths, overrides: []})
-
-const cliExclude = (pattern: string): PathOverride => ({action: 'exclude', pattern, source: 'cli'})
-const cliInclude = (pattern: string): PathOverride => ({action: 'include', pattern, source: 'cli'})
-
-const PRUNED = {pruneDefaultDirectories: true}
-
-async function listedPaths(appRoot: string, options = PRUNED): Promise<string[]> {
-  const listing = await listGitIgnoredPaths(appRoot, options)
+async function listedPaths(directory: string): Promise<string[]> {
+  const listing = await listGitIgnoredPaths(directory)
   expect(listing.status).toBe('listed')
   return listing.status === 'listed' ? listing.paths : []
 }
@@ -68,7 +63,7 @@ describe('listGitIgnoredPaths', () => {
   test('collapses a fully ignored directory to a single trailing-slash entry', async () => {
     const root = makeRepository({'.gitignore': 'tmp/\n', 'tmp/a.ts': '', 'tmp/nested/b.ts': '', 'src/index.ts': ''})
 
-    await expect(listGitIgnoredPaths(root, PRUNED)).resolves.toEqual({status: 'listed', paths: ['tmp/']})
+    await expect(listGitIgnoredPaths(root)).resolves.toEqual({status: 'listed', paths: ['tmp/']})
   })
 
   test('reports an ignored single file', async () => {
@@ -85,13 +80,25 @@ describe('listGitIgnoredPaths', () => {
     await expect(listedPaths(root)).resolves.toEqual([])
   })
 
+  test('does not exclude node_modules or any other directory by name', async () => {
+    const root = makeRepository({
+      '.gitignore': '*.log\n',
+      'node_modules/pkg/index.js': '',
+      'node_modules/pkg/debug.log': '',
+      'src/index.ts': '',
+      'src/app.log': '',
+    })
+
+    await expect(listedPaths(root)).resolves.toEqual(['node_modules/pkg/debug.log', 'src/app.log'])
+  })
+
   test('honours gitignore negation', async () => {
     const root = makeRepository({'.gitignore': '.env*\n!.env.example\n', '.env': 'SECRET=1\n', '.env.example': 'X=\n'})
 
     await expect(listedPaths(root)).resolves.toEqual(['.env'])
   })
 
-  test('honours a nested .gitignore and reports paths relative to the app root', async () => {
+  test('honours a nested .gitignore and reports paths relative to the listed directory', async () => {
     const root = makeRepository({
       'web/.gitignore': 'generated/\n',
       'web/generated/schema.ts': '',
@@ -108,7 +115,7 @@ describe('listGitIgnoredPaths', () => {
     await expect(listedPaths(root)).resolves.toEqual(['scratch.ts'])
   })
 
-  test('reports paths relative to an app nested inside a larger repository, applying the parent .gitignore', async () => {
+  test('reports paths relative to a directory nested inside a larger repository, applying the parent .gitignore', async () => {
     const repository = makeRepository({
       '.gitignore': 'tmp/\n*.log\n',
       'apps/my-app/shopify.app.toml': '',
@@ -149,7 +156,6 @@ describe('listGitIgnoredPaths', () => {
       symlinkSync(join(root, 'real'), join(root, '.github'), 'dir')
 
       await expect(listedPaths(root)).resolves.toEqual(['.github'])
-      expect(createFilePathMatcher(gitIgnoredOnly(['.github']))('.github/dependabot.yml')).toBe(false)
     },
   )
 
@@ -174,74 +180,13 @@ describe('listGitIgnoredPaths', () => {
       const root = makeDirectory()
       writeFiles(root, {'.gitignore': 'tmp/\n', 'tmp/a.ts': ''})
 
-      await expect(listGitIgnoredPaths(root, PRUNED)).resolves.toEqual({status: 'not-a-repository'})
-    })
-
-    test('reports an app folder the enclosing repository ignores, even with a force-tracked descendant', async () => {
-      // A force-tracked file stops git collapsing the app to `./`; it lists each file instead.
-      const repository = makeRepository({
-        '.gitignore': 'apps/web/\n',
-        'apps/web/README.md': 'docs',
-        'apps/web/.env': 'SECRET=1\n',
-        'apps/web/a.ts': '',
-      })
-      git(repository, ['add', '-f', 'apps/web/README.md', '.gitignore'])
-      git(repository, ['commit', '-qm', 'init'])
-
-      await expect(listGitIgnoredPaths(join(repository, 'apps', 'web'), PRUNED)).resolves.toEqual({
-        status: 'app-root-ignored',
-      })
-    })
-
-    test('reports an app folder whose ancestor the enclosing repository ignores', async () => {
-      const repository = makeRepository({
-        '.gitignore': 'apps/\n',
-        'apps/web/shopify.app.toml': '',
-        'apps/web/src/index.ts': '',
-      })
-
-      // Control: from the repository root, git lists the ignored folder.
-      await expect(listedPaths(repository)).resolves.toEqual(['apps/'])
-
-      await expect(listGitIgnoredPaths(join(repository, 'apps', 'web'), PRUNED)).resolves.toEqual({
-        status: 'app-root-ignored',
-      })
-    })
-
-    test('does not treat the top level of a repository as ignored', async () => {
-      const root = makeRepository({'.gitignore': 'tmp/\n', 'tmp/a.ts': ''})
-
-      await expect(listGitIgnoredPaths(root, PRUNED)).resolves.toEqual({status: 'listed', paths: ['tmp/']})
-    })
-
-    test('does not treat the top level of a whitelist-style repository as ignored', async () => {
-      const root = makeRepository({
-        '.gitignore': '*\n!src/\n!src/**\n!.gitignore\n',
-        'src/index.ts': '',
-        'tmp.log': '',
-      })
-
-      await expect(listGitIgnoredPaths(root, PRUNED)).resolves.toEqual({status: 'listed', paths: ['tmp.log']})
-    })
-
-    test('does not treat an app folder a whitelist-style repository re-includes as ignored', async () => {
-      const repository = makeRepository({
-        '.gitignore': '*\n!*/\n!*.ts\n!.gitignore\n',
-        'apps/web/shopify.app.toml': '',
-        'apps/web/src/index.ts': '',
-        'apps/web/.env': 'SECRET=1\n',
-      })
-
-      await expect(listGitIgnoredPaths(join(repository, 'apps', 'web'), PRUNED)).resolves.toEqual({
-        status: 'listed',
-        paths: ['.env', 'shopify.app.toml'],
-      })
+      await expect(listGitIgnoredPaths(root)).resolves.toEqual({status: 'not-a-repository'})
     })
 
     test('reports a directory inside .git as not being in a repository', async () => {
       const root = makeRepository({})
 
-      await expect(listGitIgnoredPaths(join(root, '.git'), PRUNED)).resolves.toEqual({status: 'not-a-repository'})
+      await expect(listGitIgnoredPaths(join(root, '.git'))).resolves.toEqual({status: 'not-a-repository'})
     })
 
     test.each([
@@ -252,11 +197,10 @@ describe('listGitIgnoredPaths', () => {
       async (file, content) => {
         // Both make `rev-parse` exit 128, as it does outside any repository.
         const root = makeRepository({'.gitignore': 'tmp/\n', 'tmp/a.ts': ''})
-        git(root, ['add', '.gitignore'])
-        git(root, ['commit', '-qm', 'init'])
+        commitAll(root)
         writeFileSync(join(root, '.git', file), content)
 
-        await expect(listGitIgnoredPaths(root, PRUNED)).resolves.toEqual({status: 'failed'})
+        await expect(listGitIgnoredPaths(root)).resolves.toEqual({status: 'failed'})
       },
     )
 
@@ -268,485 +212,247 @@ describe('listGitIgnoredPaths', () => {
         writeFiles(root, {'.gitignore': 'tmp/\n', 'tmp/a.ts': ''})
         symlinkSync(join(root, 'missing-git-dir'), join(root, '.git'))
 
-        await expect(listGitIgnoredPaths(root, PRUNED)).resolves.toEqual({status: 'failed'})
+        await expect(listGitIgnoredPaths(root)).resolves.toEqual({status: 'failed'})
       },
     )
 
-    test('reports a failure when git refuses a repository enclosing the app folder', async () => {
+    test('reports a failure when git refuses a repository enclosing the directory', async () => {
       const repository = makeRepository({'apps/web/src/index.ts': ''})
       writeFileSync(join(repository, '.git', 'config'), '[core\nbogus')
 
-      await expect(listGitIgnoredPaths(join(repository, 'apps', 'web'), PRUNED)).resolves.toEqual({status: 'failed'})
+      await expect(listGitIgnoredPaths(join(repository, 'apps', 'web'))).resolves.toEqual({status: 'failed'})
     })
 
     test('reports a failure when git cannot list the working tree', async () => {
       const root = makeRepository({'.gitignore': 'tmp/\n', 'tmp/a.ts': ''})
       git(root, ['add', '.gitignore'])
       git(root, ['commit', '-qm', 'init'])
-      // A truncated index leaves `rev-parse` and `check-ignore --no-index` working but makes
-      // `ls-files` exit with a fatal error.
+      // A truncated index leaves `rev-parse` working but makes `ls-files` exit with a fatal error.
       writeFileSync(join(root, '.git', 'index'), 'not an index')
 
-      await expect(listGitIgnoredPaths(root, PRUNED)).resolves.toEqual({status: 'failed'})
-    })
-  })
-
-  describe('default directories are excluded from the git listing', () => {
-    test('never lists paths inside an unignored node_modules directory', async () => {
-      const root = makeRepository({
-        '.gitignore': '*.log\n',
-        'node_modules/pkg/index.js': '',
-        'node_modules/pkg/debug.log': '',
-        'packages/api/node_modules/other/error.log': '',
-        'my-fixtures/sub/fixture.log': '',
-        'src/index.ts': '',
-        'src/app.log': '',
-      })
-
-      const paths = await listedPaths(root)
-
-      expect(paths.some((path) => path.includes('node_modules'))).toBe(false)
-      expect(paths.some((path) => path.includes('my-fixtures'))).toBe(false)
-      expect(paths).toEqual(['src/app.log'])
-    })
-
-    test('still lists an ignored file inside a folder that is not a default exclusion', async () => {
-      const root = makeRepository({
-        '.gitignore': '*.log\n',
-        'scratch/notes.log': '',
-        'scratch/keep.ts': '',
-        'node_modules/pkg/debug.log': '',
-        'node_modules/pkg/index.js': '',
-      })
-
-      await expect(listedPaths(root)).resolves.toEqual(['scratch/notes.log'])
-    })
-
-    test('lists paths inside the default directories when pruning is off', async () => {
-      const root = makeRepository({
-        '.gitignore': '*.log\n',
-        'node_modules/pkg/index.js': '',
-        'node_modules/pkg/debug.log': '',
-        'src/index.ts': '',
-        'src/app.log': '',
-      })
-
-      await expect(listedPaths(root)).resolves.toEqual(['src/app.log'])
-      await expect(listedPaths(root, {pruneDefaultDirectories: false})).resolves.toEqual([
-        'node_modules/pkg/debug.log',
-        'src/app.log',
-      ])
+      await expect(listGitIgnoredPaths(root)).resolves.toEqual({status: 'failed'})
     })
   })
 })
 
-describe('gitIgnoredPaths', () => {
-  test('excludes exactly the reported path, never a sibling, whatever characters it contains', () => {
-    const cases: {path: string; siblings: string[]}[] = [
-      {path: 'q?.ts', siblings: ['qx.ts', 'q.ts', 'sub/q?.ts']},
-      {path: '[id].ts', siblings: ['id.ts', 'i.ts', 'sub/[id].ts']},
-      {path: 'a*b.ts', siblings: ['axb.ts', 'ab.ts', 'sub/a*b.ts']},
-      {path: '#hash.ts', siblings: ['hash.ts', 'sub/#hash.ts']},
-      {path: '!bang.ts', siblings: ['bang.ts', 'sub/!bang.ts']},
-      {path: 'sp ace.ts', siblings: ['space.ts', 'sub/sp ace.ts']},
-      {path: 'back\\slash.ts', siblings: ['backslash.ts', 'sub/back\\slash.ts']},
-      {path: 'line\nbreak.ts', siblings: ['linebreak.ts', 'line', 'break.ts']},
-      {path: 'carriage\rreturn.ts', siblings: ['carriagereturn.ts']},
-    ]
+describe('isIgnoredByParentRepository', () => {
+  test('is true for a directory that the repository containing its parent ignores', async () => {
+    const repository = makeRepository({'.gitignore': 'dist/\n', 'dist/a.js': '', 'src/a.ts': ''})
 
-    for (const {path, siblings} of cases) {
-      const isExcluded = createPathMatcher(gitIgnoredOnly([path]))
-      expect(isExcluded(path, {directory: false}), `${JSON.stringify(path)} should be excluded`).toBe(true)
-      for (const sibling of siblings) {
-        expect(
-          isExcluded(sibling, {directory: false}),
-          `${JSON.stringify(sibling)} should not be excluded by ${JSON.stringify(path)}`,
-        ).toBe(false)
-      }
-    }
+    await expect(isIgnoredByParentRepository(join(repository, 'dist'))).resolves.toBe(true)
+    await expect(isIgnoredByParentRepository(join(repository, 'src'))).resolves.toBe(false)
   })
 
-  test('matches a collapsed directory entry as a directory only', () => {
-    // Contents of `tmp/` are never asked about: the walker prunes the excluded directory.
-    const isExcluded = createPathMatcher(gitIgnoredOnly(['tmp/']))
+  test('is true even when a file in the directory is force-tracked', async () => {
+    const repository = makeRepository({'.gitignore': 'dist/\n', 'dist/a.js': '', 'dist/b.js': ''})
+    git(repository, ['add', '-f', 'dist/a.js', '.gitignore'])
+    git(repository, ['commit', '-qm', 'init'])
 
-    expect(isExcluded('tmp', {directory: true})).toBe(true)
-    expect(isExcluded('tmp', {directory: false})).toBe(false)
-    expect(isExcluded('src/tmp.ts', {directory: false})).toBe(false)
-    expect(isExcluded('src/tmp', {directory: true})).toBe(false)
+    await expect(isIgnoredByParentRepository(join(repository, 'dist'))).resolves.toBe(true)
   })
 
-  test('matches a file entry as a file only', () => {
-    const isExcluded = createPathMatcher(gitIgnoredOnly(['notes.txt']))
+  test('is true for a directory whose ancestor the repository ignores', async () => {
+    const repository = makeRepository({'.gitignore': 'apps/\n', 'apps/web/src/index.ts': ''})
 
-    expect(isExcluded('notes.txt', {directory: false})).toBe(true)
-    expect(isExcluded('notes.txt', {directory: true})).toBe(false)
-    expect(isExcluded('sub/notes.txt', {directory: false})).toBe(false)
+    await expect(isIgnoredByParentRepository(join(repository, 'apps', 'web'))).resolves.toBe(true)
   })
 
-  test('applies alongside the defaults', () => {
-    const isExcluded = createPathMatcher(buildPathRules({gitIgnoredPaths: ['notes.txt', 'tmp/']}))
+  test("is true for a nested repository's top level that the outer repository ignores", async () => {
+    const outer = makeRepository({'.gitignore': 'inner/\n'})
+    const inner = join(outer, 'inner')
+    mkdirSync(inner)
+    git(inner, ['init', '-q', '.'])
 
-    expect(isExcluded('notes.txt', {directory: false})).toBe(true)
-    expect(isExcluded('tmp', {directory: true})).toBe(true)
-    expect(isExcluded('node_modules', {directory: true})).toBe(true)
-    expect(isExcluded('src/index.ts', {directory: false})).toBe(false)
+    await expect(isIgnoredByParentRepository(inner)).resolves.toBe(true)
+  })
+
+  test('is false when the directory is the top level of its own repository and nothing ignores it', async () => {
+    const repository = makeRepository({'src/a.ts': ''})
+
+    await expect(isIgnoredByParentRepository(repository)).resolves.toBe(false)
+  })
+
+  test("is false when the parent isn't in a repository", async () => {
+    const root = makeDirectory()
+    writeFiles(root, {'.gitignore': 'app/\n', 'app/a.ts': ''})
+
+    await expect(isIgnoredByParentRepository(join(root, 'app'))).resolves.toBe(false)
+  })
+
+  test('is false for a directory whose name starts with a dash', async () => {
+    const repository = makeRepository({'-odd/a.ts': ''})
+
+    await expect(isIgnoredByParentRepository(join(repository, '-odd'))).resolves.toBe(false)
   })
 })
 
-describe('DEFAULT_EXCLUDE_PATTERNS', () => {
-  const isExcluded = createPathMatcher(DEFAULTS_ONLY)
+describe('listTrackedFiles', () => {
+  test('lists only the files git tracks in the directory, relative to it', async () => {
+    const repository = makeRepository({
+      '.gitignore': 'dist/\n',
+      'apps/web/src/a.ts': '',
+      'apps/web/dist/b.js': '',
+      'apps/web/untracked.ts': '',
+      'other/c.ts': '',
+    })
+    git(repository, ['add', '-f', 'apps/web/src/a.ts', 'apps/web/dist/b.js', 'other/c.ts'])
+    git(repository, ['commit', '-qm', 'init'])
 
-  test('excludes every default directory at the root and at any depth', () => {
-    const directories = [
-      'node_modules',
-      'vendor',
-      '.next',
-      'coverage',
-      'dist',
-      'build',
-      '.shopify',
-      'test',
-      'tests',
-      'spec',
-      'specs',
-      '__tests__',
-      'fixtures',
-      'my-fixtures',
-      '__fixtures__',
-      '.yarn',
-      '.react-router',
-      '.cache',
-      '.turbo',
-      '.vercel',
-      '.netlify',
-      '.output',
-      '.nuxt',
-      '.svelte-kit',
-    ]
-
-    for (const directory of directories) {
-      expect(isExcluded(directory, {directory: true}), `${directory}/ at root`).toBe(true)
-      expect(isExcluded(`packages/a/${directory}`, {directory: true}), `nested ${directory}/`).toBe(true)
-      expect(isExcluded(`${directory}/index.ts`, {directory: false}), `file inside ${directory}/`).toBe(true)
-    }
+    await expect(listTrackedFiles(join(repository, 'apps', 'web'))).resolves.toEqual(['dist/b.js', 'src/a.ts'])
   })
 
-  test('excludes .git as both a directory and the file used by git worktrees', () => {
-    expect(isExcluded('.git', {directory: true})).toBe(true)
-    expect(isExcluded('.git', {directory: false})).toBe(true)
-    expect(isExcluded('packages/a/.git', {directory: false})).toBe(true)
-  })
+  test('is undefined outside a repository', async () => {
+    const root = makeDirectory()
 
-  test('excludes test files and fixture directories by pattern', () => {
-    expect(isExcluded('a.test.ts', {directory: false})).toBe(true)
-    expect(isExcluded('src/a.spec.tsx', {directory: false})).toBe(true)
-    expect(isExcluded('my-fixtures/x.ts', {directory: false})).toBe(true)
-  })
-
-  test('does not exclude source, environment files, or CI and editor configuration', () => {
-    const scannable = [
-      '.github/workflows/ci.yml',
-      '.vscode/settings.json',
-      '.devcontainer/devcontainer.json',
-      '.circleci/config.yml',
-      '.env',
-      'src/index.ts',
-      '.eslintrc.cjs',
-      'testing/helpers.ts',
-      'src/builder.ts',
-    ]
-
-    for (const path of scannable) {
-      expect(isExcluded(path, {directory: false}), `${path} should be scanned`).toBe(false)
-    }
-  })
-
-  test('does not throw for names made only of dots', () => {
-    expect(isExcluded('...', {directory: false})).toBe(false)
-    expect(isExcluded('src/...', {directory: false})).toBe(false)
-    expect(isExcluded('...', {directory: true})).toBe(false)
+    await expect(listTrackedFiles(root)).resolves.toBeUndefined()
   })
 })
 
-describe('createPathMatcher', () => {
-  test('is case sensitive', () => {
-    const isExcluded = createPathMatcher({defaults: ['Build/'], gitIgnoredPaths: [], overrides: []})
+describe('listNestedRepository', () => {
+  test('is undefined for a directory without a .git entry', async () => {
+    const root = makeRepository({'src/a.ts': ''})
 
-    expect(isExcluded('Build/a.ts', {directory: false})).toBe(true)
-    expect(isExcluded('build/a.ts', {directory: false})).toBe(false)
+    await expect(listNestedRepository(join(root, 'src'))).resolves.toBeUndefined()
   })
 
-  describe('with overrides', () => {
-    test('an include re-includes a gitignored directory and, as it is no longer pruned, its contents', () => {
-      const isExcluded = createPathMatcher({
-        defaults: DEFAULT_EXCLUDE_PATTERNS,
-        gitIgnoredPaths: ['tmp/'],
-        overrides: [cliInclude('tmp/')],
-      })
+  test('lists the repository whose top level is the directory, using its own ignore rules', async () => {
+    const outer = makeRepository({'.gitignore': 'outer-only.ts\n'})
+    const inner = join(outer, 'inner')
+    writeFiles(inner, {'.gitignore': 'inner-only.ts\n', 'inner-only.ts': '', 'outer-only.ts': ''})
+    git(inner, ['init', '-q', '.'])
 
-      expect(isExcluded('tmp', {directory: true})).toBe(false)
-      expect(isExcluded('tmp/a.ts', {directory: false})).toBe(false)
-    })
+    await expect(listNestedRepository(inner)).resolves.toEqual({status: 'listed', paths: ['inner-only.ts']})
+  })
 
-    test('an include for one file inside a gitignored directory does not re-include the directory', () => {
-      const isExcluded = createPathMatcher({
-        defaults: DEFAULT_EXCLUDE_PATTERNS,
-        gitIgnoredPaths: ['tmp/'],
-        overrides: [cliInclude('tmp/keep.ts')],
-      })
+  test('lists a submodule, whose .git is a file', async () => {
+    const submodule = makeRepository({'.gitignore': 'generated/\n', 'generated/a.ts': '', 'a.ts': ''})
+    commitAll(submodule)
+    const outer = makeRepository({})
+    git(outer, ['-c', 'protocol.file.allow=always', 'submodule', 'add', '-q', submodule, 'vendor/sub'])
+    writeFiles(join(outer, 'vendor', 'sub'), {'generated/a.ts': ''})
 
-      expect(isExcluded('tmp', {directory: true})).toBe(true)
-    })
-
-    test('an exclude wins over the defaults, the git literals and an earlier include', () => {
-      const isExcluded = createPathMatcher({
-        defaults: DEFAULT_EXCLUDE_PATTERNS,
-        gitIgnoredPaths: ['notes.txt'],
-        overrides: [cliInclude('keep.ts'), cliExclude('keep.ts'), cliExclude('*.md'), cliExclude('generated/')],
-      })
-
-      expect(isExcluded('keep.ts', {directory: false})).toBe(true)
-      expect(isExcluded('README.md', {directory: false})).toBe(true)
-      expect(isExcluded('docs/guide.md', {directory: false})).toBe(true)
-      expect(isExcluded('generated', {directory: true})).toBe(true)
-      expect(isExcluded('web/generated', {directory: true})).toBe(true)
-      expect(isExcluded('notes.txt', {directory: false})).toBe(true)
-      expect(isExcluded('node_modules', {directory: true})).toBe(true)
-      expect(isExcluded('src/index.ts', {directory: false})).toBe(false)
-    })
-
-    test('an include re-includes a default exclusion without touching other defaults', () => {
-      const isExcluded = createPathMatcher({
-        defaults: DEFAULT_EXCLUDE_PATTERNS,
-        gitIgnoredPaths: ['notes.txt'],
-        overrides: [cliInclude('web/build/')],
-      })
-
-      expect(isExcluded('web/build', {directory: true})).toBe(false)
-      expect(isExcluded('web/build/a.ts', {directory: false})).toBe(false)
-      expect(isExcluded('build/a.ts', {directory: false})).toBe(true)
-      expect(isExcluded('notes.txt', {directory: false})).toBe(true)
-    })
-
-    test('a default that matches a file inside a re-included directory still excludes it', () => {
-      const isExcluded = createPathMatcher({
-        defaults: DEFAULT_EXCLUDE_PATTERNS,
-        gitIgnoredPaths: ['notes.txt'],
-        overrides: [cliInclude('web/build/')],
-      })
-
-      expect(isExcluded('web/build/a.test.ts', {directory: false})).toBe(true)
-    })
-
-    test('the defaults and the git literals decide when no override matches', () => {
-      const isExcluded = createPathMatcher({
-        defaults: ['*.log'],
-        gitIgnoredPaths: ['notes.txt'],
-        overrides: [cliInclude('other.ts')],
-      })
-
-      expect(isExcluded('debug.log', {directory: false})).toBe(true)
-      expect(isExcluded('notes.txt', {directory: false})).toBe(true)
-      expect(isExcluded('other.ts', {directory: false})).toBe(false)
-      expect(isExcluded('src/index.ts', {directory: false})).toBe(false)
+    await expect(listNestedRepository(join(outer, 'vendor', 'sub'))).resolves.toEqual({
+      status: 'listed',
+      paths: ['generated/'],
     })
   })
 
-  describe('with --ignore patterns', () => {
-    test('later CLI patterns win over earlier ones', () => {
-      const fromPatterns = (ignorePatterns: string[]) =>
-        createPathMatcher(buildPathRules({gitIgnoredPaths: [], overrides: ignorePatternRules(ignorePatterns)}))
-      const excludeThenInclude = fromPatterns(['generated/', '!generated/'])
-      const includeThenExclude = fromPatterns(['!generated/', 'generated/'])
+  test.skipIf(process.platform === 'win32')('is failed when .git is a symbolic link', async () => {
+    const outer = makeRepository({})
+    const inner = join(outer, 'inner')
+    const target = makeRepository({})
+    mkdirSync(inner)
+    symlinkSync(join(target, '.git'), join(inner, '.git'), 'dir')
 
-      expect(excludeThenInclude('generated', {directory: true})).toBe(false)
-      expect(includeThenExclude('generated', {directory: true})).toBe(true)
-    })
-  })
-
-  test('handles many gitignore literals and many lookups', () => {
-    // Compiling literals into patterns instead of a Set makes this take about a minute.
-    const rules = buildPathRules({
-      gitIgnoredPaths: Array.from({length: 50_000}, (_, index) => `dir${index % 100}/.DS_Store${index}`),
-    })
-    const isExcluded = createPathMatcher(rules)
-    const paths = Array.from({length: 50_000}, (_, index) => `src/module${index % 500}/file${index}.ts`)
-
-    let excluded = 0
-    for (const path of paths) if (isExcluded(path, {directory: false})) excluded += 1
-
-    expect(excluded).toBe(0)
-    expect(isExcluded('dir7/.DS_Store7', {directory: false})).toBe(true)
-    expect(isExcluded('dir7/.DS_Store', {directory: false})).toBe(false)
+    await expect(listNestedRepository(inner)).resolves.toEqual({status: 'failed'})
   })
 })
 
-describe('createFilePathMatcher', () => {
-  test('tests a root-level file against the rules directly', () => {
-    const isExcluded = createFilePathMatcher(gitIgnoredOnly(['.env']))
+describe('path rules', () => {
+  const noGitFiltering = {gitFiltering: false, excludePatterns: [], workingDirectory: '/work'}
 
-    expect(isExcluded('.env')).toBe(true)
-    expect(isExcluded('.env.example')).toBe(false)
+  test('drops an entry named .git, a directory or a worktree file, at any depth, when Git filtering is on', () => {
+    const rules = {gitFiltering: true, excludePatterns: [], workingDirectory: '/work'}
+
+    expect(isDroppedEntry(rules, undefined, {absolutePath: '/work/.git', isDirectory: true})).toBe(true)
+    expect(isDroppedEntry(rules, undefined, {absolutePath: '/work/packages/a/.git', isDirectory: false})).toBe(true)
+    expect(isDroppedEntry(rules, undefined, {absolutePath: '/work/.github', isDirectory: true})).toBe(false)
+    expect(isDroppedEntry(noGitFiltering, undefined, {absolutePath: '/work/.git', isDirectory: true})).toBe(false)
   })
 
-  test('excludes a file below a collapsed git directory literal', () => {
-    const isExcluded = createFilePathMatcher(gitIgnoredOnly(['tmp/']))
+  test("drops what the entry's own repository lists as ignored, keyed by the repository directory", () => {
+    const rules = {gitFiltering: true, excludePatterns: [], workingDirectory: '/work'}
+    const outer = repositoryIgnoredPaths('/work', {status: 'listed', paths: ['dist/', 'notes.txt']})
+    const inner = repositoryIgnoredPaths('/work/inner', {status: 'listed', paths: ['build/']})
 
-    expect(isExcluded('tmp/a/b.ts')).toBe(true)
+    expect(isDroppedEntry(rules, outer, {absolutePath: '/work/dist', isDirectory: true})).toBe(true)
+    expect(isDroppedEntry(rules, outer, {absolutePath: '/work/notes.txt', isDirectory: false})).toBe(true)
+    expect(isDroppedEntry(rules, outer, {absolutePath: '/work/src/notes.txt', isDirectory: false})).toBe(false)
+    // A directory entry never matches a file of the same name.
+    expect(isDroppedEntry(rules, outer, {absolutePath: '/work/dist', isDirectory: false})).toBe(false)
+    expect(isDroppedEntry(rules, inner, {absolutePath: '/work/inner/build', isDirectory: true})).toBe(true)
+    expect(isDroppedEntry(rules, inner, {absolutePath: '/work/inner/dist', isDirectory: true})).toBe(false)
   })
 
-  test('does not exclude a sibling whose name merely starts with an excluded directory', () => {
-    const isExcluded = createFilePathMatcher(gitIgnoredOnly(['tmp/']))
+  test('applies no repository rules when Git filtering is off or the repository has no listing', () => {
+    const outer = repositoryIgnoredPaths('/work', {status: 'listed', paths: ['dist/']})
 
-    expect(isExcluded('tmpx/a.ts')).toBe(false)
+    expect(isDroppedEntry(noGitFiltering, outer, {absolutePath: '/work/dist', isDirectory: true})).toBe(false)
+    expect(repositoryIgnoredPaths('/work', {status: 'failed'})).toBeUndefined()
+    expect(repositoryIgnoredPaths('/work', {status: 'not-a-repository'})).toBeUndefined()
   })
 
-  test('excludes a file below a default pattern directory at any depth', () => {
-    const isExcluded = createFilePathMatcher(DEFAULTS_ONLY)
-
-    expect(isExcluded('packages/web/node_modules/dep/index.js')).toBe(true)
-    expect(isExcluded('packages/web/src/index.js')).toBe(false)
-  })
-
-  test('lets an include override re-include a git file literal', () => {
-    const isExcluded = createFilePathMatcher({
-      defaults: [],
-      gitIgnoredPaths: ['.github/dependabot.yml'],
-      overrides: [cliInclude('.github/dependabot.yml')],
-    })
-
-    expect(isExcluded('.github/dependabot.yml')).toBe(false)
-  })
-
-  test('lets an exclude override exclude a file the defaults and git would keep', () => {
-    const isExcluded = createFilePathMatcher({defaults: [], gitIgnoredPaths: [], overrides: [cliExclude('.github/')]})
-
-    expect(isExcluded('.github/dependabot.yml')).toBe(true)
-    expect(isExcluded('renovate.json')).toBe(false)
-  })
-})
-
-describe('ignorePatternRules', () => {
-  test('turns a plain line into a CLI exclude rule and a `!` line into a CLI include rule', () => {
-    expect(ignorePatternRules(['generated/', '!build/', '*.log', '/docs'])).toEqual([
-      cliExclude('generated/'),
-      cliInclude('build/'),
-      cliExclude('*.log'),
-      cliExclude('/docs'),
-    ])
-  })
-
-  test('passes gitignore escapes through unchanged so `\\!` excludes a literal `!` name', () => {
-    const overrides = ignorePatternRules(['\\!bang.ts', '\\#hash.ts'])
-    expect(overrides).toEqual([cliExclude('\\!bang.ts'), cliExclude('\\#hash.ts')])
-
-    const isExcluded = createPathMatcher({defaults: [], gitIgnoredPaths: [], overrides})
-    expect(isExcluded('!bang.ts', {directory: false})).toBe(true)
-    expect(isExcluded('bang.ts', {directory: false})).toBe(false)
-    expect(isExcluded('#hash.ts', {directory: false})).toBe(true)
-  })
-
-  test('returns no rules for no patterns', () => {
-    expect(ignorePatternRules([])).toEqual([])
-  })
-
-  test('rejects a value the flag layer should already have refused as a bug', () => {
-    expect(() => ignorePatternRules(['!'])).toThrow(BugError)
-    expect(() => ignorePatternRules(['!'])).toThrow(/nothing after/)
-    expect(() => ignorePatternRules([''])).toThrow(/empty/)
-  })
-})
-
-describe('ignorePatternProblem', () => {
-  test('accepts ordinary .gitignore lines', () => {
-    for (const value of [
-      'generated/',
-      '!build/',
-      '*.log',
-      '/docs',
-      '\\#hash.ts',
-      '\\!bang.ts',
-      'a b/',
-      '!.env',
-      'build\\\\',
-      'build\\\\\\\\',
-      'trailing\\ ',
-      'app/[id]/x.ts',
-    ]) {
-      expect(ignorePatternProblem(value), value).toBeUndefined()
+  describe('--exclude', () => {
+    function rulesFor(workingDirectory: string, excludePatterns: string[], gitFiltering = true) {
+      vi.stubEnv('INIT_CWD', workingDirectory)
+      return createPathRules({excludePatterns, noGitIgnore: !gitFiltering})
     }
-  })
 
-  test('rejects empty and whitespace-only values', () => {
-    expect(ignorePatternProblem('')).toMatch(/empty/)
-    expect(ignorePatternProblem('   ')).toMatch(/empty/)
-  })
+    test('matches a bare name only at the top of the working directory', () => {
+      const working = makeDirectory()
+      const rules = rulesFor(working, ['generated'])
 
-  test('rejects a .gitignore comment and suggests escaping the #', () => {
-    const problem = ignorePatternProblem('#hash.ts')
-    expect(problem).toMatch(/comment/)
-    expect(problem).toContain('\\#')
-  })
-
-  test('rejects a `!` with nothing to re-include', () => {
-    expect(ignorePatternProblem('!')).toMatch(/nothing after/)
-    expect(ignorePatternProblem('!  ')).toMatch(/nothing after/)
-  })
-
-  test('rejects a trailing unescaped backslash, which `ignore` would silently drop or fail to compile', () => {
-    for (const value of ['build\\', 'src\\lib\\', '!build\\', '\\', 'build\\\\\\', '!build\\\\\\\\\\', '\\\\\\']) {
-      const problem = ignorePatternProblem(value)
-      expect(problem, value).toMatch(/ends with a backslash/)
-      expect(problem, value).toContain('/')
-      expect(problem, value).toContain('\\\\')
-    }
-  })
-
-  test('rejects values that span more than one line', () => {
-    for (const value of ['build/\ngenerated/', 'build/\r\n', 'build/\r', '\nbuild/']) {
-      expect(ignorePatternProblem(value), JSON.stringify(value)).toMatch(/single line/)
-    }
-  })
-
-  test('rejects patterns with `..` as a whole path segment', () => {
-    for (const value of ['..', '../x', 'x/..', 'a/../b', '**/../x', '!../shared/']) {
-      expect(ignorePatternProblem(value), value).toBe(
-        `The --ignore pattern "${value}" contains "..". Patterns are relative to the app directory and can't point outside it.`,
+      expect(isDroppedEntry(rules, undefined, {absolutePath: join(working, 'generated'), isDirectory: true})).toBe(true)
+      expect(isDroppedEntry(rules, undefined, {absolutePath: join(working, 'src/generated'), isDirectory: true})).toBe(
+        false,
       )
-    }
-  })
+    })
 
-  test('rejects patterns the `ignore` matcher cannot compile, instead of crashing the scan', () => {
-    for (const value of ['src/[id/x.ts', '![/', 'a\\\\[b', 'a\\\\(b']) {
-      expect(ignorePatternProblem(value), value).toBe(
-        `The --ignore pattern "${value}" can't be read as a .gitignore pattern. Check for an unclosed "[" or a backslash before a special character.`,
-      )
-      expect(() => ignorePatternRules([value]), value).toThrow(BugError)
-    }
-  })
+    test('matches a name at any depth with **/', () => {
+      const working = makeDirectory()
+      const rules = rulesFor(working, ['**/generated'])
 
-  test('allows patterns where dots are part of a path segment', () => {
-    for (const value of ['..cache/', 'a..b', '...', 'x/..y']) {
-      expect(ignorePatternProblem(value), value).toBeUndefined()
-    }
-  })
-})
+      expect(isDroppedEntry(rules, undefined, {absolutePath: join(working, 'generated'), isDirectory: true})).toBe(true)
+      expect(
+        isDroppedEntry(rules, undefined, {absolutePath: join(working, 'src/a/generated'), isDirectory: true}),
+      ).toBe(true)
+      expect(
+        isDroppedEntry(rules, undefined, {absolutePath: join(working, 'src/generated.ts'), isDirectory: false}),
+      ).toBe(false)
+    })
 
-describe('buildPathRules', () => {
-  test('keeps the defaults, the git literals and the overrides as separate phases, in input order', () => {
-    const overrides = [cliExclude('generated/'), cliInclude('build/')]
+    test('matches a path outside the working directory with ../', () => {
+      const parent = makeDirectory()
+      const working = join(parent, 'app')
+      mkdirSync(working)
+      const rules = rulesFor(working, ['../backend/**'])
 
-    expect(buildPathRules({gitIgnoredPaths: ['notes.txt', 'tmp/'], overrides})).toEqual({
-      defaults: DEFAULT_EXCLUDE_PATTERNS,
-      gitIgnoredPaths: ['notes.txt', 'tmp/'],
-      overrides,
+      expect(
+        isDroppedEntry(rules, undefined, {absolutePath: join(parent, 'backend/src/a.ts'), isDirectory: false}),
+      ).toBe(true)
+      expect(
+        isDroppedEntry(rules, undefined, {absolutePath: join(parent, 'frontend/src/a.ts'), isDirectory: false}),
+      ).toBe(false)
+    })
+
+    test('applies with --no-git-ignore too', () => {
+      const working = makeDirectory()
+      const rules = rulesFor(working, ['generated'], false)
+
+      expect(rules.gitFiltering).toBe(false)
+      expect(isDroppedEntry(rules, undefined, {absolutePath: join(working, 'generated'), isDirectory: true})).toBe(true)
+    })
+
+    test('is relative to the real path of the working directory', () => {
+      const real = makeDirectory()
+      const link = join(makeDirectory(), 'link')
+      symlinkSync(real, link, 'dir')
+      const rules = rulesFor(link, ['generated'])
+
+      expect(rules.workingDirectory).toBe(real)
+      expect(isDroppedEntry(rules, undefined, {absolutePath: join(real, 'generated'), isDirectory: true})).toBe(true)
     })
   })
 
-  test('has no git literals and no overrides when neither was supplied', () => {
-    const expected = {defaults: DEFAULT_EXCLUDE_PATTERNS, gitIgnoredPaths: [], overrides: []}
-    expect(buildPathRules({gitIgnoredPaths: []})).toEqual(expected)
-    expect(buildPathRules({gitIgnoredPaths: [], overrides: []})).toEqual(expected)
+  describe('tracked paths', () => {
+    test('are dropped by .git and --exclude at any depth of the path, never by repository ignore rules', () => {
+      const working = makeDirectory()
+      vi.stubEnv('INIT_CWD', working)
+      const rules = createPathRules({excludePatterns: ['generated'], noGitIgnore: false})
+
+      expect(isDroppedTrackedPath(rules, working, 'generated/a.ts')).toBe(true)
+      expect(isDroppedTrackedPath(rules, working, 'vendor/.git/config')).toBe(true)
+      expect(isDroppedTrackedPath(rules, working, 'dist/a.js')).toBe(false)
+    })
   })
 })

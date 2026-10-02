@@ -5,7 +5,7 @@
  * types: read the git state, scan, record agent findings, translate
  * a stored findings document (deterministic-findings.json or agent-findings.json, which share the
  * converged FindingsDocument schema), combine the two result files into per-check results, group
- * issues for display, and validate `--ignore` patterns. The stored documents' Zod
+ * issues for display. The stored documents' Zod
  * schemas are exported too, so the public `review --json` schema is composed from them rather than re-declared.
  * Keep scanners, registries, validators, redaction, and the rest of the stored-schema details inside the engine.
  */
@@ -43,7 +43,6 @@ export {
   RECORD_INPUT_SCHEMA_VERSION,
   SEVERITY_RANK,
 } from './types.js'
-export {ignorePatternProblem} from './scanners/path-rules.js'
 export {groupIssues, skippedFileCounts} from './output/group-issues.js'
 export type {IssueGroup} from './output/group-issues.js'
 export type {
@@ -56,6 +55,7 @@ export type {
   FindingsSource,
   Issue,
   ScanInput,
+  ScanOptions,
   ScanResult,
   Severity,
   StoredCheck,
