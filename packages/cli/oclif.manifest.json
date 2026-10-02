@@ -4151,7 +4151,6 @@
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "app:security:check",
@@ -4273,7 +4272,6 @@
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "app:security:clean",
@@ -4390,7 +4388,6 @@
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "app:security:instructions",
@@ -4495,7 +4492,6 @@
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "app:security:record",
@@ -4623,7 +4619,6 @@
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "app:security:review",

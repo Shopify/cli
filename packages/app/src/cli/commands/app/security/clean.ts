@@ -9,8 +9,6 @@ import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {outputResult} from '@shopify/cli-kit/node/output'
 
 export default class SecurityClean extends BaseCommand {
-  static hidden = true
-
   static summary = 'Remove local App Security results.'
 
   static descriptionWithMarkdown = `Deletes the results directory, \`.shopify/app-security/<results key>/\`, without asking. The results key is \`--client-id\` when you pass it, and otherwise the name of the app configuration file without \`.toml\`. Other results directories are left alone. Prints each removed path.

@@ -8,8 +8,6 @@ import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {outputResult} from '@shopify/cli-kit/node/output'
 
 export default class SecurityRecord extends BaseCommand {
-  static hidden = true
-
   static summary = 'Record agent App Security findings.'
 
   static descriptionWithMarkdown = `Reads a coding agent's complete findings document from stdin, validates it, and replaces \`agent-findings.json\` in the results directory, \`.shopify/app-security/<results key>/\`. The results key is \`--client-id\` when you pass it, and otherwise the name of the app configuration file without \`.toml\`.

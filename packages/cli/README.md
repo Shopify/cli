@@ -29,6 +29,11 @@
 * [`shopify app logs`](#shopify-app-logs)
 * [`shopify app logs sources`](#shopify-app-logs-sources)
 * [`shopify app release --version <version>`](#shopify-app-release---version-version)
+* [`shopify app security check`](#shopify-app-security-check)
+* [`shopify app security clean`](#shopify-app-security-clean)
+* [`shopify app security instructions`](#shopify-app-security-instructions)
+* [`shopify app security record`](#shopify-app-security-record)
+* [`shopify app security review`](#shopify-app-security-review)
 * [`shopify app subscription-migrations cancel`](#shopify-app-subscription-migrations-cancel)
 * [`shopify app subscription-migrations list`](#shopify-app-subscription-migrations-list)
 * [`shopify app subscription-migrations schedule`](#shopify-app-subscription-migrations-schedule)
@@ -3040,6 +3045,1048 @@ DESCRIPTION
   Release an app version.
 
   Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
+```
+
+## `shopify app security check`
+
+Check an app for Shopify-specific security issues and write deterministic-findings.json and agent-checks.json.
+
+```
+USAGE
+  $ shopify app security check [--exclude <value>...] [--include-dir <value>...] [-j] [--json-schema] [--list-files |
+    --yes | --skip-instructions | --blocking high|medium|low|none] [--no-color] [--no-git-ignore] [--no-input] [--path
+    <value>] [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --blocking=<option>
+      [default: none] The minimum finding severity that causes a non-zero exit code.
+      [env: SHOPIFY_FLAG_APP_SECURITY_BLOCKING]
+      <options: high|medium|low|none>
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --exclude=<value>...
+      Skip paths that match this glob, relative to the working directory. Repeat the flag to add globs. The selected app
+      configuration file can't be excluded.
+
+  --include-dir=<value>...
+      Also scan this directory, relative to the working directory. Repeat the flag to add directories. Use it for code
+      that lives outside the app directory, such as a backend or a shared library.
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --list-files
+      Print the files the check would gather, one path per line, and stop. Nothing is scanned, recorded or prompted for.
+      [env: SHOPIFY_FLAG_LIST_FILES]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-git-ignore
+      Turn off Git ignore rules for every scanned directory, so files that Git ignores are scanned too. Files that Git
+      tracks are always scanned.
+      [env: SHOPIFY_FLAG_NO_GIT_IGNORE]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --skip-instructions
+      Don't offer to show coding-agent instructions.
+      [env: SHOPIFY_FLAG_APP_SECURITY_SKIP_INSTRUCTIONS]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --without-app-config
+      Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.
+      [env: SHOPIFY_FLAG_WITHOUT_APP_CONFIG]
+
+  --yes
+      Print coding-agent instructions without prompting.
+      [env: SHOPIFY_FLAG_YES]
+
+DESCRIPTION
+  Check an app for Shopify-specific security issues and write deterministic-findings.json and agent-checks.json.
+
+  Runs Shopify App Security locally and writes `deterministic-findings.json` and `agent-checks.json` to the results
+  directory, `.shopify/app-security/<results key>/`. The results key is `--client-id` when you pass it, and otherwise
+  the name of the app configuration file without `.toml`; the other `app security` commands take the same selection
+  flags and find the same directory. Every run replaces both files, so it's always safe to run the check again.
+
+  `deterministic-findings.json` holds the deterministic scan results. `agent-checks.json` holds the checks for your
+  coding agent to investigate; the agent's results are recorded with `shopify app security record`. Use `--config` to
+  select a specific app configuration when the project has multiple `shopify.app*.toml` files; App Security inspects
+  only that configuration. Use `--client-id` to replace the configuration's client ID for this run. When no app
+  configuration exists, use `--without-app-config --client-id <client-id>` to scan `--path` anyway with config checks
+  skipped; in an interactive terminal the command offers to do this.
+
+  The check scans the app directory and each `--include-dir`. Git ignore rules apply by default: a file or directory
+  that Git ignores is skipped, using the rules of the repository that contains it, while files that Git tracks are
+  always scanned. Use `--no-git-ignore` to turn Git ignore rules off for every scanned directory.
+
+  Use `--exclude` to skip more paths. Each value is a glob that is matched against the path relative to the working
+  directory, so a path above it starts with `../`, and a name at any depth needs `**/`, for example `--exclude
+  '**/generated'`. Repeat the flag to add globs. An exclusion can't remove the selected app configuration file. Quote
+  each value so your shell doesn't expand `*`. The coding-agent instructions this check offers repeat the globs. Other
+  `app security` commands don't take `--exclude` or `--no-git-ignore`, so pass the same flags each time you run the
+  check.
+
+  Use `--list-files` to check the scope before scanning: it prints the files the check would gather, one path per line
+  and relative to the app directory (`{"files": [...]}` with `--json`), and then stops. It writes no results and never
+  prompts. `--client-id` is accepted but has no effect on the list.
+
+  In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing;
+  copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass
+  `--yes`, which prints them. JSON output never prompts or prints those instructions. You can also run `shopify app
+  security instructions` to print, copy, or write them later.
+```
+
+## `shopify app security clean`
+
+Remove local App Security results.
+
+```
+USAGE
+  $ shopify app security clean [--all | -c <value> | --client-id <value>] [-j] [--json-schema] [--no-color] [--no-input]
+    [--path <value>] [--verbose] [--without-app-config | ]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --all
+      Delete every results directory under .shopify/app-security/, not only the selected one.
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --without-app-config
+      Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.
+      [env: SHOPIFY_FLAG_WITHOUT_APP_CONFIG]
+
+DESCRIPTION
+  Remove local App Security results.
+
+  Deletes the results directory, `.shopify/app-security/<results key>/`, without asking. The results key is
+  `--client-id` when you pass it, and otherwise the name of the app configuration file without `.toml`. Other results
+  directories are left alone. Prints each removed path.
+
+  Use `--all` to delete every results directory under `.shopify/app-security/` instead. `--all` takes neither `--config`
+  nor `--client-id`, and with `--without-app-config` it doesn't need `--client-id`.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppSecurityCleanResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "removed": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": [
+      "removed"
+    ],
+    "additionalProperties": false,
+    "title": "AppSecurityCleanResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+```
+
+## `shopify app security instructions`
+
+Provide App Security instructions to a coding agent.
+
+```
+USAGE
+  $ shopify app security instructions [--copy | --write <value>] [--json-schema] [--no-color] [--no-input] [--path <value>]
+    [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --copy
+      Copy the instructions to the clipboard instead of printing them.
+      [env: SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_COPY]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --without-app-config
+      Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.
+      [env: SHOPIFY_FLAG_WITHOUT_APP_CONFIG]
+
+  --write=<value>
+      Write the instructions to a file instead of printing them.
+      [env: SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_WRITE]
+
+DESCRIPTION
+  Provide App Security instructions to a coding agent.
+
+  Prints the complete workflow that a coding agent should follow to review App Security results.
+
+  By default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write
+  them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's
+  generated review pack is trusted as workflow input.
+```
+
+## `shopify app security record`
+
+Record agent App Security findings.
+
+```
+USAGE
+  $ shopify app security record [-j] [--json-schema] [--no-color] [--no-input] [--path <value>] [--verbose]
+    [--without-app-config [--client-id <value> | -c <value>]]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --without-app-config
+      Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.
+      [env: SHOPIFY_FLAG_WITHOUT_APP_CONFIG]
+
+DESCRIPTION
+  Record agent App Security findings.
+
+  Reads a coding agent's complete findings document from stdin, validates it, and replaces `agent-findings.json` in the
+  results directory, `.shopify/app-security/<results key>/`. The results key is `--client-id` when you pass it, and
+  otherwise the name of the app configuration file without `.toml`.
+
+  The document must include a `scope` with the `include_dirs`, `excludes` and `no_git_ignore` values of the `check` run
+  it describes, exactly as typed. It's recorded as reported and never compared with the scan's files.
+
+  The document is recorded all or nothing: if anything is invalid, the command fails with every error, writes nothing,
+  and exits with a non-zero code. With `--json`, the errors are listed in the error document's `details.errors`. It
+  needs the results directory that `shopify app security check` creates.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppSecurityRecordResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string"
+      },
+      "checks": {
+        "type": "integer"
+      },
+      "findings": {
+        "type": "integer"
+      }
+    },
+    "required": [
+      "path",
+      "checks",
+      "findings"
+    ],
+    "additionalProperties": false,
+    "title": "AppSecurityRecordResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+```
+
+## `shopify app security review`
+
+Show the combined App Security results.
+
+```
+USAGE
+  $ shopify app security review [--blocking high|medium|low|none] [--check-id <value>...] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --blocking=<option>
+      [default: none] The minimum finding severity that causes a non-zero exit code.
+      [env: SHOPIFY_FLAG_APP_SECURITY_BLOCKING]
+      <options: high|medium|low|none>
+
+  --check-id=<value>...
+      Show only this check. Repeat the flag to show several checks.
+      [env: SHOPIFY_FLAG_CHECK_ID]
+
+  --client-id=<value>
+      The Client ID of your app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+  --without-app-config
+      Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.
+      [env: SHOPIFY_FLAG_WITHOUT_APP_CONFIG]
+
+DESCRIPTION
+  Show the combined App Security results.
+
+  Combines the deterministic results (`deterministic-findings.json`, written by `shopify app security check`) with the
+  recorded agent results (`agent-findings.json`, written by `shopify app security record`) and shows one view of every
+  check: its findings, status and source. Both files are in the results directory, `.shopify/app-security/<results
+  key>/`.
+
+  The summary shows the scan directories and the scope of the latest scan, and the scope the agent reported. It notes
+  when the agent findings were recorded for a different scope than the latest scan; that doesn't change the exit code.
+
+  The agent results are optional. Use `--check-id` to narrow the review to specific checks, `--verbose` for full
+  reasoning, evidence and suppressed findings, and `--blocking` to exit with code 1 when a check with findings is at or
+  above a severity.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppSecurityReviewResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "filter": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "check_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "check_ids"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "sources": {
+        "type": "object",
+        "properties": {
+          "deterministic": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/AppSecurityDeterministicSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "agent": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/AppSecurityAgentSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "deterministic",
+          "agent"
+        ],
+        "additionalProperties": false
+      },
+      "scope_differs": {
+        "type": "boolean"
+      },
+      "checks": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/AppSecurityCombinedCheck"
+        }
+      }
+    },
+    "required": [
+      "filter",
+      "sources",
+      "scope_differs",
+      "checks"
+    ],
+    "additionalProperties": false,
+    "title": "AppSecurityReviewResult",
+    "definitions": {
+      "AppSecurityDeterministicSource": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "schema_version": {
+            "type": "number",
+            "const": 1
+          },
+          "engine": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "const": "shopify-app-security"
+              },
+              "version": {
+                "type": "string"
+              },
+              "ruleset": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "version",
+              "ruleset"
+            ],
+            "additionalProperties": false
+          },
+          "generated_at": {
+            "type": "string"
+          },
+          "detection": {
+            "type": "object",
+            "properties": {
+              "framework": {
+                "type": "string",
+                "enum": [
+                  "react_router",
+                  "none",
+                  "unknown",
+                  "mixed"
+                ]
+              },
+              "surface": {
+                "type": "string",
+                "enum": [
+                  "react_router",
+                  "theme_app_extension",
+                  "config_only",
+                  "unknown",
+                  "mixed"
+                ]
+              },
+              "languages": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "support": {
+                      "type": "string",
+                      "enum": [
+                        "supported",
+                        "unsupported"
+                      ]
+                    },
+                    "files": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "support",
+                    "files"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "framework",
+              "surface",
+              "languages"
+            ],
+            "additionalProperties": false
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "files_scanned": {
+                "type": "number"
+              },
+              "files_skipped": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": "string",
+                      "enum": [
+                        "too_large",
+                        "unreadable"
+                      ]
+                    },
+                    "size_bytes": {
+                      "type": "number"
+                    },
+                    "detail": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "reason"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "gaps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "skipped_file",
+                        "unsupported_framework",
+                        "unsupported_language",
+                        "unresolved_check"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "check_id": {
+                      "type": "string"
+                    },
+                    "file": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "scope": {
+                "type": "object",
+                "properties": {
+                  "include_dirs": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "excludes": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "no_git_ignore": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "include_dirs",
+                  "excludes",
+                  "no_git_ignore"
+                ],
+                "additionalProperties": false
+              },
+              "scan_directories": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "directory": {
+                      "type": "string"
+                    },
+                    "origin": {
+                      "type": "string",
+                      "enum": [
+                        "app_directory",
+                        "include_dir"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "directory",
+                    "origin"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "files_scanned",
+              "files_skipped",
+              "gaps",
+              "scope",
+              "scan_directories"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "path",
+          "schema_version",
+          "engine",
+          "generated_at",
+          "detection",
+          "coverage"
+        ],
+        "additionalProperties": false
+      },
+      "AppSecurityAgentSource": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "schema_version": {
+            "type": "number",
+            "const": 1
+          },
+          "engine": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "const": "shopify-app-security"
+              },
+              "version": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "version"
+            ],
+            "additionalProperties": false
+          },
+          "generated_at": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "object",
+            "properties": {
+              "include_dirs": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "excludes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "no_git_ignore": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "include_dirs",
+              "excludes",
+              "no_git_ignore"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "path",
+          "schema_version",
+          "engine",
+          "generated_at",
+          "scope"
+        ],
+        "additionalProperties": false
+      },
+      "AppSecurityCombinedCheck": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "guide": {
+            "type": "string"
+          },
+          "precedence": {
+            "type": "string",
+            "enum": [
+              "union",
+              "prefer-agent"
+            ]
+          },
+          "applied_precedence": {
+            "$ref": "#/definitions/AppSecurityCombinedCheck/properties/precedence"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed",
+              "not_applicable",
+              "unresolved"
+            ]
+          },
+          "by_source": {
+            "type": "object",
+            "properties": {
+              "deterministic": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "version": {
+                        "type": "number"
+                      },
+                      "status": {
+                        "$ref": "#/definitions/AppSecurityCombinedCheck/properties/status"
+                      },
+                      "reason": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "message"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "analysis_mode": {
+                        "type": "string",
+                        "enum": [
+                          "regex",
+                          "structured_config",
+                          "ast"
+                        ]
+                      },
+                      "generated_at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "version",
+                      "status",
+                      "generated_at"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "agent": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/AppSecurityCombinedCheck/properties/by_source/properties/deterministic/anyOf/0"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "deterministic",
+              "agent"
+            ],
+            "additionalProperties": false
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppSecurityCombinedFinding"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "severity",
+          "description",
+          "precedence",
+          "applied_precedence",
+          "status",
+          "by_source",
+          "findings"
+        ],
+        "additionalProperties": false
+      },
+      "AppSecurityCombinedFinding": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "deterministic",
+              "agent"
+            ]
+          },
+          "disposition": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suppressed",
+              "superseded"
+            ]
+          },
+          "location": {
+            "type": "object",
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "line": {
+                "type": "number"
+              },
+              "column": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "file"
+            ],
+            "additionalProperties": false
+          },
+          "message": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "location": {
+                  "$ref": "#/definitions/AppSecurityCombinedFinding/properties/location"
+                },
+                "quote": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "location"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "snippet": {
+            "type": "string"
+          },
+          "fix": {
+            "type": "object",
+            "properties": {
+              "automated": {
+                "type": "boolean"
+              },
+              "guide": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "automated",
+              "description"
+            ],
+            "additionalProperties": false
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "reasoning": {
+            "type": "string"
+          },
+          "suppression": {
+            "type": "object",
+            "properties": {
+              "justification": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "justification"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "source",
+          "disposition",
+          "location",
+          "message",
+          "evidence"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app subscription-migrations cancel`
