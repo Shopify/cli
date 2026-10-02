@@ -28,9 +28,10 @@ import {captureOutput, exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
 import {joinPath, dirname, normalizePath} from './path.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
-import {cacheClear} from '../../private/node/conf-store.js'
+import {LocalStorage} from './local-storage.js'
+import * as confStore from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
-import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
+import {vi, describe, test, expect, afterEach} from 'vitest'
 
 vi.mock('./version.js')
 vi.mock('./system.js')
@@ -539,9 +540,7 @@ describe('addNPMDependenciesIfNeeded', () => {
 })
 
 describe('checkForCachedNewVersion', () => {
-  beforeEach(() => cacheClear())
-
-  test('returnes undefined when there is no cached value', () => {
+  testWithIsolatedVersionCache('returnes undefined when there is no cached value', () => {
     // Given
     const currentVersion = '2.2.2'
     const dependency = 'dependency'
@@ -553,58 +552,66 @@ describe('checkForCachedNewVersion', () => {
     expect(result).toBeUndefined()
   })
 
-  test('returnes undefined when the cached value is lower than or equal to the current version', async () => {
-    // Given
-    const currentVersion = '2.2.2'
-    const newestVersion = '2.2.2'
-    const dependency = 'dependency'
-    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
-    await checkForNewVersion(dependency, currentVersion)
+  testWithIsolatedVersionCache(
+    'returnes undefined when the cached value is lower than or equal to the current version',
+    async () => {
+      // Given
+      const currentVersion = '2.2.2'
+      const newestVersion = '2.2.2'
+      const dependency = 'dependency'
+      vi.mocked(latestVersion).mockResolvedValue(newestVersion)
+      await checkForNewVersion(dependency, currentVersion)
 
-    // When
-    const result = checkForCachedNewVersion(dependency, currentVersion)
+      // When
+      const result = checkForCachedNewVersion(dependency, currentVersion)
 
-    // Then
-    expect(result).toBe(undefined)
-  })
+      // Then
+      expect(result).toBe(undefined)
+    },
+  )
 
-  test('returnes a version string when the cached value is greater than the current version', async () => {
-    // Given
-    const currentVersion = '2.2.2'
-    const newestVersion = '2.2.3'
-    const dependency = 'dependency'
-    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
-    await checkForNewVersion(dependency, currentVersion)
+  testWithIsolatedVersionCache(
+    'returnes a version string when the cached value is greater than the current version',
+    async () => {
+      // Given
+      const currentVersion = '2.2.2'
+      const newestVersion = '2.2.3'
+      const dependency = 'dependency'
+      vi.mocked(latestVersion).mockResolvedValue(newestVersion)
+      await checkForNewVersion(dependency, currentVersion)
 
-    // When
-    const result = checkForCachedNewVersion(dependency, currentVersion)
+      // When
+      const result = checkForCachedNewVersion(dependency, currentVersion)
 
-    // Then
-    expect(result).toEqual(newestVersion)
-  })
+      // Then
+      expect(result).toEqual(newestVersion)
+    },
+  )
 })
 
 describe('checkForNewVersion', () => {
-  beforeEach(() => cacheClear())
   afterEach(() => {
     vi.useRealTimers()
   })
 
-  test('returns undefined when last version is lower or equals than current version', async () => {
-    // Given
-    const currentVersion = '2.2.2'
-    const newestVersion = '2.2.2'
-    const dependency = 'dependency'
-    vi.mocked(latestVersion).mockResolvedValue(newestVersion)
+  testWithIsolatedVersionCache(
+    'returns undefined when last version is lower or equals than current version',
+    async () => {
+      // Given
+      const currentVersion = '2.2.2'
+      const newestVersion = '2.2.2'
+      const dependency = 'dependency'
+      vi.mocked(latestVersion).mockResolvedValue(newestVersion)
 
-    // When
-    const result = await checkForNewVersion(dependency, currentVersion)
+      // When
+      const result = await checkForNewVersion(dependency, currentVersion)
 
-    // Then
-    expect(result).toBe(undefined)
-  })
+      // Then
+      expect(result).toBe(undefined)
+    },
+  )
 
-  test('returns undefined when last version greater than current version', async () => {
+  testWithIsolatedVersionCache('returns undefined when last version greater than current version', async () => {
     // Given
     const currentVersion = '2.2.2'
     const newestVersion = '2.2.3'
@@ -618,7 +625,7 @@ describe('checkForNewVersion', () => {
     expect(result).toBe(newestVersion)
   })
 
-  test('returns undefined when error is thrown retrieving newest version', async () => {
+  testWithIsolatedVersionCache('returns undefined when error is thrown retrieving newest version', async () => {
     // Given
     const currentVersion = '2.2.2'
     const dependency = 'dependency'
@@ -631,7 +638,7 @@ describe('checkForNewVersion', () => {
     expect(result).toBe(undefined)
   })
 
-  test('caches results when given a nonzero timeout', async () => {
+  testWithIsolatedVersionCache('caches results when given a nonzero timeout', async () => {
     // Given
     const currentVersion = '2.2.2'
     const newestVersion = '2.2.3'
@@ -648,7 +655,7 @@ describe('checkForNewVersion', () => {
     expect(latestVersion).toHaveBeenCalledTimes(1)
   })
 
-  test('refreshes results when given a nonzero timeout that has expired', async () => {
+  testWithIsolatedVersionCache('refreshes results when given a nonzero timeout that has expired', async () => {
     // Given
     const currentVersion = '2.2.2'
     const newestVersion = '2.2.3'
@@ -665,7 +672,7 @@ describe('checkForNewVersion', () => {
     expect(latestVersion).toHaveBeenCalledTimes(2)
   })
 
-  test('refreshes results when given no timeout', async () => {
+  testWithIsolatedVersionCache('refreshes results when given no timeout', async () => {
     // Given
     const currentVersion = '2.2.2'
     const newestVersion = '2.2.3'
@@ -1230,3 +1237,23 @@ describe('inferPackageManager', () => {
     expect(inferPackageManager(undefined, mockEnv)).toBe('npm')
   })
 })
+
+// Use real storage in a separate directory so other test workers cannot clear it.
+function testWithIsolatedVersionCache(name: string, run: () => void | Promise<void>) {
+  test(name, () =>
+    inTemporaryDirectory(async (cwd) => {
+      const config = new LocalStorage<confStore.ConfSchema>({cwd})
+      const {cacheRetrieve, cacheRetrieveOrRepopulate} = confStore
+      const retrieve = vi.spyOn(confStore, 'cacheRetrieve').mockImplementation((key) => cacheRetrieve(key, config))
+      const repopulate = vi
+        .spyOn(confStore, 'cacheRetrieveOrRepopulate')
+        .mockImplementation((key, callback, timeout) => cacheRetrieveOrRepopulate(key, callback, timeout, config))
+      try {
+        await run()
+      } finally {
+        retrieve.mockRestore()
+        repopulate.mockRestore()
+      }
+    }),
+  )
+}
