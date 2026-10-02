@@ -3093,6 +3093,13 @@
           "name": "no-color",
           "type": "boolean"
         },
+        "no-input": {
+          "allowNo": false,
+          "description": "Disable interactive prompts and browser authentication.",
+          "env": "SHOPIFY_FLAG_NO_INPUT",
+          "name": "no-input",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to your app directory.",
           "env": "SHOPIFY_FLAG_PATH",
