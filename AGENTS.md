@@ -60,6 +60,7 @@ If the change is not ready to be public, do not add a changeset.
 
 - [docs/README.md](docs/README.md)
 - [docs/cli/architecture.md](docs/cli/architecture.md)
+- [docs/cli/designing-for-cli.md](docs/cli/designing-for-cli.md) — Design command outcomes, lifetimes, and long-running workflows.
 - [docs/cli/conventions.md](docs/cli/conventions.md)
 - [docs/cli/cross-os-compatibility.md](docs/cli/cross-os-compatibility.md)
 - [docs/cli/debugging.md](docs/cli/debugging.md)
@@ -73,12 +74,12 @@ If the change is not ready to be public, do not add a changeset.
 
 ### CLI kit
 
-- [docs/cli-kit/command-guidelines.md](docs/cli-kit/command-guidelines.md)
-- [docs/cli-kit/errors.md](docs/cli-kit/errors.md)
+- [docs/cli-kit/command-guidelines.md](docs/cli-kit/command-guidelines.md) — Define command syntax, flags, option values, and help text.
+- [docs/cli/error_handling.md](docs/cli/error_handling.md)
 - [packages/cli/README.md](packages/cli/README.md)
 
 ### UI kit
 
 - [docs/cli-kit/ui-kit/contributing.md](docs/cli-kit/ui-kit/contributing.md)
-- [docs/cli-kit/ui-kit/guidelines.md](docs/cli-kit/ui-kit/guidelines.md)
+- [docs/cli-kit/ui-kit/guidelines.md](docs/cli-kit/ui-kit/guidelines.md) — Write prompts, banners, progress, and logs, and use semantic styling.
 - [docs/cli-kit/ui-kit/readme.md](docs/cli-kit/ui-kit/readme.md)
