@@ -1,57 +1,78 @@
 # Command guidelines
 
+Use [Designing for CLI](../cli/designing-for-cli.md) to choose the command's outcome and flow. These guidelines cover its public syntax and help. Check the [reserved command and flag names](../cli/naming-conventions.md) before you add a name.
+
 ## General command structure
 
-When the CLI is installed via an app package, then commands are structured like this:
+Commands move from a broad domain to a specific action:
 
-| package manager | CLI (always Shopify) | Topic | Command | Argument | Flags (with or without options) |
-| :------------- | :------------- | :------------- | :------------- |:------------- |:------------- |
-| yarn | Shopify | app | generate | extension | --type checkout_ui
+| CLI | Topic | Command | Subcommand | Flag and value |
+| --- | --- | --- | --- | --- |
+| `shopify` | `app` | `deploy` | | |
+| `shopify` | `app` | `generate` | `extension` | |
+| `shopify` | `theme` | `dev` | | `--live-reload full-page` |
 
-When the CLI is installed globally, then commands are structured like this:
+If a verb applies to more than one object, put the verb before the object: `shopify app generate extension`. Here, `extension` is a subcommand, not a positional argument. Add further subcommands only when they are necessary for clarity. Separate command words with spaces, not hyphens.
 
-|CLI (always Shopify) | Topic | Command | Argument | Flags (with or without options) |
-| :------------- | :------------- | :------------- | :------------- | :------------- |
-| shopify | hydrogen | add | eslint | _no flag_ |
+A global installation is available across projects. A local installation belongs to one project or directory. For a project-local installation, use that project's package-manager invocation. For example, a project with a local Shopify CLI can use:
 
-Generic commands that cross domains don't have topics. Examples include help, version, upgrade, and logs:
+```sh
+npm exec -- shopify app generate extension
+```
 
-| package manager | CLI (always Shopify) | Topic | Command | Argument | Flags (with or without options) |
-| :------------- | :------------- | :------------- | :------------- | :------------- | :------------- |
-| npm run | shopify | _no topic_ | help | extension | _no flag_ |
+The command hierarchy stays the same when the CLI is installed globally:
 
-## Topics
+```sh
+shopify app generate extension
+```
 
-A new topic should only be created when an entirely new domain is being added to the CLI. Today, topics include adds, themes, and hydrogen.
+### Topics
+
+Create a topic only when you add an entirely new domain to the CLI. Get maintainer input before you add one. Domain topics include `app` and `theme`. Hydrogen commands are supplied by a separate plugin; see the [architecture guide](../cli/architecture.md).
+
+Commands that apply across domains do not need a domain topic. Examples include `shopify help`, `shopify version`, and `shopify upgrade`.
 
 ## Flags
 
-Any given flag needs to be consistent not only within a topic, but also across the main CLI package. A flag always means the same thing, and it can be pre-set to a specific value.
+Use flags, rather than positional arguments, to modify command behavior. Named flags make the choice explicit, do not depend on argument order, and are easier to extend without ambiguity.
 
-Flags should be semantically meaningful. When in doubt, optimize for clarity, not brevity. This is particularly important in non-interactive or CI environments, where a command is likely to be a write-once, run-many situation. Verbose flags are better for self-documention.
+A flag must mean the same thing within a topic and across the main CLI package. It can have a pre-set value. Prefer clarity over brevity, especially in scripts and CI environments where a descriptive name documents the developer's intent.
 
-| ✅ | Do:  | pnpm add <package> --ignore-workspace-root-check | This flag is long, but it accurately describes the choice the developer is making. |
-| :------------- | :------------- | :------------- | :------------- |
-|  ❌ | Don't: | rsync --owner | Because it’s unnecessarily terse, it’s ambiguous whether this flag means “preserve the current owner” or “assign ownership”.|
+For example, these names explain both choices:
 
-## Aliases / shortcuts for flags
+```sh
+shopify theme dev --theme-editor-sync --live-reload full-page
+```
 
-As a general rule, don't create shortcuts for flags. Create single-letter short-form flag aliases only if the flag is frequently or repetitively used in day-to-day interactive development work.
+Do not shorten them to `--sync` and `--reload`: those names remove context. They are not supported alternatives for this command.
 
-Shortcuts can leave off the topic keyspace of the command.
+### Aliases / shortcuts for flags
 
-## Booleans
+Use a full name with two hyphens, such as `--store`. As a general rule, do not add a short alias. Add a single-letter alias only for a flag used frequently or repeatedly in daily interactive development.
 
-A boolean flag takes the options of either true ('--OPTION') or false ('--no-OPTION'). In general, make the true option the default.  That is, `--OPTION` should be the same as not passing the flag at all. Ex: '--tunnel' / '--no-tunnel'.
+Short aliases use one hyphen and can omit context already supplied by the topic. Preserve the reserved meanings of common aliases, such as `-s` for `--store`, and existing topic-specific aliases, such as `-t` for `--theme` in theme commands.
 
-## Options
+### Booleans
 
-A flag can accept specific values (called “options”). The CLI should accept either a space or an equals sign:
-* generate extension --type checkout_ui
-* generate extension --type=checkout_ui
+For a boolean with a supported negated form, `--OPTION` enables the behavior and `--no-OPTION` disables it. In general, make the enabled behavior the default when it is safe and useful for most developers. Do not apply this rule to safety controls or other documented opt-in modes. For example, `shopify theme dev --allow-live` must remain an explicit choice.
 
-By default, two-word options are formatted with hyphens but should also accept underscores.
+Preserve each existing command's documented defaults and supported flag forms. Do not assume that every boolean automatically supports a `--no-` form.
+
+### Options
+
+A flag can accept specific values, called options. Accept a space or an equals sign between a flag and its value:
+
+```sh
+shopify theme dev --live-reload full-page
+shopify theme dev --live-reload=full-page
+```
+
+For new multi-word option values, use hyphens by default and accept underscore aliases where appropriate. Define and document those aliases explicitly. Existing commands' accepted-value contracts remain authoritative: do not assume an underscore spelling works for every existing option.
+
+Use a space between the flag and value in documentation. If the value contains spaces, use an equals sign and quote the value so the shell passes it as one value.
 
 ## Help
 
-Every command should have a corresponding description in the help directory. The help description should be a sentence fragment in the third-person singular, as if it's a sentence that starts with "This command...' For example: "Adds an extension to your app project" is the description for the command "shopify hydrogen info".
+Give every command, flag, and accepted option a description in command help. For a command, write a sentence fragment in the third-person singular, as if it starts with "This command...". For example, describe `shopify app generate extension` as "Generates a new app extension."
+
+Explain what the command does, not its internal implementation. Keep help, accepted values, and examples consistent with the command definition. Follow the [JSON output contracts](../cli/json-output.md) for result schema documentation.
