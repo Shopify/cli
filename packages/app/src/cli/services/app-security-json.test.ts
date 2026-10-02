@@ -20,7 +20,13 @@ const deterministicFindings: DeterministicFindingsDocument = {
   engine,
   generated_at: '2026-08-24T00:00:00.000Z',
   detection: {framework: 'none', surface: 'config_only', languages: []},
-  coverage: {files_scanned: 1, files_skipped: [], gaps: []},
+  coverage: {
+    files_scanned: 1,
+    files_skipped: [],
+    gaps: [],
+    scope: {include_dirs: [], excludes: [], no_git_ignore: false},
+    scan_directories: [{directory: '.', origin: 'app_directory'}],
+  },
   checks: [],
 }
 

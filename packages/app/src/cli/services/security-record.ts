@@ -2,7 +2,7 @@ import {encodedArtifactSize, MAX_ARTIFACT_FILE_SIZE_BYTES, writeAgentFindings} f
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {countLabel} from './app-security-format.js'
 import {getEngineVersion, recordAgentFindings, type AgentFindingsDocument} from './app-security-engine/index.js'
-import {resultsKey, selectedConfigFileName, type AppSecuritySelection} from './app-security-selection.js'
+import {resultsKey, type AppSecuritySelection} from './app-security-selection.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readStdinString} from '@shopify/cli-kit/node/system'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -13,6 +13,8 @@ const MAX_FINDINGS_DOCUMENT_BYTES = 5_000_000
 
 interface SecurityRecordOptions {
   selection: AppSecuritySelection
+  /** The `--path` value that was typed. */
+  path: string
 }
 
 export interface SecurityRecordDependencies {
@@ -95,7 +97,7 @@ export default async function securityRecord(
   dependencies: SecurityRecordDependencies = defaultDependencies,
 ): Promise<SecurityRecordResult> {
   const {selection} = options
-  const commands = resolveAppSecurityCommands(selection.appDirectory, selectedConfigFileName(selection))
+  const commands = resolveAppSecurityCommands(selection, options.path)
   const input = await readInputDocument(commands, dependencies)
 
   const recorded = recordAgentFindings(input, {
@@ -122,8 +124,12 @@ export default async function securityRecord(
 }
 
 /** Presents a recorded document in the terminal. */
-export function renderSecurityRecordResult(result: SecurityRecordResult, selection: AppSecuritySelection): void {
-  const commands = resolveAppSecurityCommands(selection.appDirectory, selectedConfigFileName(selection))
+export function renderSecurityRecordResult(
+  result: SecurityRecordResult,
+  selection: AppSecuritySelection,
+  path: string,
+): void {
+  const commands = resolveAppSecurityCommands(selection, path)
   renderSuccess({
     headline: 'Agent findings recorded.',
     body: [

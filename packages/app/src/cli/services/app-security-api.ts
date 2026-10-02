@@ -1,4 +1,5 @@
 import {
+  listGatheredPaths,
   scanApp,
   SEVERITY_RANK,
   type AppSecurityEngineMetadata,
@@ -21,14 +22,25 @@ export function securityExitCode(execution: AppSecurityExecution, blocking: AppS
 }
 
 export async function executeAppSecurity({
+  includeDirs,
   excludePatterns,
   noGitIgnore,
   ...scanInput
 }: ScanInput & ScanOptions): Promise<AppSecurityExecution> {
   const startTime = Date.now()
-  const result = await scanApp(scanInput, {excludePatterns, noGitIgnore})
+  const result = await scanApp(scanInput, {includeDirs, excludePatterns, noGitIgnore})
   return {
     ...result,
     elapsedMilliseconds: Date.now() - startTime,
   }
+}
+
+/** Gathers the paths a scan would walk, without reading any file or running any check. */
+export function listAppSecurityFiles({
+  includeDirs,
+  excludePatterns,
+  noGitIgnore,
+  ...scanInput
+}: ScanInput & ScanOptions): ReturnType<typeof listGatheredPaths> {
+  return listGatheredPaths(scanInput, {includeDirs, excludePatterns, noGitIgnore})
 }

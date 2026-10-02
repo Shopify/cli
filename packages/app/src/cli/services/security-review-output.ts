@@ -7,6 +7,7 @@ import {
   isSuppressed,
   skippedFileCounts,
   summarizeCombinedChecks,
+  type AppSecurityScope,
   type CombinedCheck,
   type CombinedChecksSummary,
   type CombinedFinding,
@@ -68,6 +69,9 @@ type SecurityReviewSummary = {
   /** Present when a filtered check shows both sources because its agent result is stale. */
   staleAgentResults?: string
   coverage?: string
+  /** The latest scan's directories and scope, and the scope the agent reported. Empty without any results file. */
+  scopeLines: string[]
+  scopeNote?: string
   resultsFiles: {directory: string; rows: ResultsFileRow[]}
 } & SecurityReviewSummaryClosing
 
@@ -90,6 +94,7 @@ const FILE_NAMES: Record<FindingsSource, string> = {
   agent: 'agent-findings.json',
 }
 const CONCISE_REASONING_LINES = 3
+const SCOPE_DIFFERS_NOTE = 'Agent findings were recorded for a different scope than the latest scan.'
 /** Marks a check whose `prefer-agent` agent result is older than the deterministic one, so both sources count. */
 const STALE_AGENT_RESULT_MARKER = 'agent result stale'
 const STALE_AGENT_RESULT_EXPLANATION = 'The agent result is older than the deterministic result, so both are shown.'
@@ -142,6 +147,8 @@ export function buildSecurityReviewSummary(input: SecurityReviewPresenterInput):
     otherChecks: otherChecksLines(summary),
     ...(staleChecks > 0 ? {staleAgentResults: staleAgentResultsLine(staleChecks)} : {}),
     ...(deterministic ? {coverage: coverageLine(deterministic)} : {}),
+    scopeLines: scopeLines(result.sources),
+    ...(result.scopeDiffers ? {scopeNote: SCOPE_DIFFERS_NOTE} : {}),
     resultsFiles: {
       directory: result.resultsDirectory,
       rows: SOURCE_ORDER.map((source) => resultsFileRow(source, result.sources[source]?.document, input.now)),
@@ -232,6 +239,27 @@ function coverageLine(document: DeterministicFindingsDocument): string {
   return `Deterministic coverage: ${countLabel(document.coverage.files_scanned, 'file')} scanned, ${skippedText}.${languagesText}`
 }
 
+function formatScope(scope: AppSecurityScope): string {
+  const flags = [
+    ...scope.include_dirs.map((includeDir) => `--include-dir ${includeDir}`),
+    ...scope.excludes.map((excludePattern) => `--exclude ${excludePattern}`),
+    ...(scope.no_git_ignore ? ['--no-git-ignore'] : []),
+  ]
+  return flags.length === 0 ? 'none' : flags.join(' ')
+}
+
+function scopeLines({deterministic, agent}: SecurityReviewResult['sources']): string[] {
+  return [
+    ...(deterministic
+      ? [
+          `Scan directories: ${deterministic.document.coverage.scan_directories.map(({directory}) => directory).join(', ')}`,
+          `Scan scope: ${formatScope(deterministic.document.coverage.scope)}`,
+        ]
+      : []),
+    ...(agent ? [`Scope reported by the agent: ${formatScope(agent.document.scope)}`] : []),
+  ]
+}
+
 function resultsFileRow(source: FindingsSource, document: FindingsDocument | undefined, now: Date): ResultsFileRow {
   const name = FILE_NAMES[source]
   if (!document) return {name, updated: 'not found'}
@@ -297,6 +325,8 @@ function summaryAlert(summary: SecurityReviewSummary): SecurityReviewAlert {
   if (summary.otherChecks.length > 0) sections.push({title: 'Other checks', body: summary.otherChecks.join('\n')})
   if (summary.staleAgentResults) sections.push({body: summary.staleAgentResults})
   if (summary.coverage) sections.push({body: {subdued: summary.coverage}})
+  if (summary.scopeLines.length > 0) sections.push({body: {subdued: summary.scopeLines.join('\n')}})
+  if (summary.scopeNote) sections.push({body: summary.scopeNote})
   sections.push({
     title: `Results files in ${summary.resultsFiles.directory}`,
     body: {

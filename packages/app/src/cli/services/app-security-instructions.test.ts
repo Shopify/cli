@@ -3,12 +3,13 @@ import deliverAppSecurityInstructions, {
   shellQuote,
 } from './app-security-instructions.js'
 import {quoteShellArgument, resolveAppSecurityCommands, type AppSecurityShell} from './app-security-commands.js'
-import {getAgentInstructions} from './app-security-engine/index.js'
+import {getAgentInstructions, type AppSecurityScope} from './app-security-engine/index.js'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {basename, joinPath, normalizePath} from '@shopify/cli-kit/node/path'
+import {basename, cwd, joinPath, normalizePath, relativePath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
 import {readFileSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
+import type {AppSecuritySelection} from './app-security-selection.js'
 
 function testDependencies() {
   return {
@@ -24,20 +25,36 @@ async function createApp(directory: string): Promise<string> {
   return normalizePath(directory)
 }
 
-function commandsFor(appRoot: string, configFileName = 'shopify.app.toml') {
-  return resolveAppSecurityCommands(appRoot, configFileName)
+function selectionFor(appRoot: string, configFileName: string): AppSecuritySelection {
+  return {kind: 'config', appDirectory: appRoot, appConfigFilePath: joinPath(appRoot, configFileName)}
 }
 
-/** The instructions for an app directory whose selected TOML is `shopify.app.toml`, unless `configFileName` says otherwise. */
+function commandsFor(appRoot: string, configFileName = 'shopify.app.toml') {
+  return resolveAppSecurityCommands(selectionFor(appRoot, configFileName), appRoot)
+}
+
+/** The `--path` value the generated commands render for an app directory: relative to the working directory. */
+function renderedPath(appRoot: string): string {
+  return relativePath(cwd(), appRoot)
+}
+
+const noScope: AppSecurityScope = {include_dirs: [], excludes: [], no_git_ignore: false}
+
+/**
+ * The instructions for an app directory whose selected TOML is `shopify.app.toml`, unless `configFileName` says otherwise.
+ * A completed scan ran with `scope`, which is no scope unless given.
+ */
 function appSecurityInstructions(options: {
   directory: string
   scanComplete: boolean
+  scope?: AppSecurityScope
   configFileName?: string
   shell?: AppSecurityShell
 }): string {
-  const {directory, configFileName = 'shopify.app.toml', ...rest} = options
+  const {directory, configFileName = 'shopify.app.toml', scanComplete, scope = noScope, ...rest} = options
   return instructionsFor({
     ...rest,
+    scanScope: scanComplete ? scope : undefined,
     appDirectory: directory,
     resultsKey: basename(configFileName, '.toml'),
     commands: commandsFor(directory, configFileName),
@@ -89,8 +106,11 @@ describe('appSecurityInstructions', () => {
       const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false})
 
       expect(instructions).toContain('### 1. Run the scan')
-      expect(instructions).toContain(`shopify app security check --path ${shellQuote(appRoot)}`)
-      expect(instructions).toContain("It's always safe to rerun.")
+      expect(instructions).toContain(`shopify app security check --path ${shellQuote(renderedPath(appRoot))}`)
+      expect(instructions).toContain(
+        `\`shopify app security check --path ${shellQuote(renderedPath(appRoot))} --list-files\``,
+      )
+      expect(instructions).toContain('Decide what to scan before running the check.')
       expect(instructions).not.toMatch(/shopify app security check --path .+ --config/)
       expect(instructions).toContain(artifactPath(appRoot, 'deterministic-findings.json'))
       expect(instructions).toContain(artifactPath(appRoot, 'agent-checks.json'))
@@ -115,7 +135,7 @@ describe('appSecurityInstructions', () => {
     })
   })
 
-  test('includes --config only in scan commands for a named configuration', async () => {
+  test('includes --config in every command for a named configuration', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       await writeFile(joinPath(appRoot, 'shopify.app.staging.toml'), 'name = "Staging"\nclient_id = "staging"\n')
@@ -126,9 +146,13 @@ describe('appSecurityInstructions', () => {
       })
 
       expect(instructions).toContain(
-        `shopify app security check --path ${shellQuote(appRoot)} --config ${shellQuote('staging')}`,
+        `shopify app security check --path ${shellQuote(renderedPath(appRoot))} --config ${shellQuote('staging')}`,
       )
-      expect(instructions).not.toMatch(/shopify app security (record|review|clean) --path .+ --config/)
+      for (const subcommand of ['record', 'review', 'clean']) {
+        expect(instructions).toContain(
+          `shopify app security ${subcommand} --path ${shellQuote(renderedPath(appRoot))} --config ${shellQuote('staging')}`,
+        )
+      }
     })
   })
 
@@ -142,6 +166,47 @@ describe('appSecurityInstructions', () => {
       expect(instructions).toContain('Running `check` again is always safe')
       expect(instructions).not.toContain('### 1. Run the scan')
       expect(instructions).not.toMatch(/rerun the scan/i)
+    })
+  })
+
+  test('names the working directory before the commands', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+      const expected = `Run these commands from \`${cwd()}\`.`
+
+      for (const scanComplete of [false, true]) {
+        const instructions = appSecurityInstructions({directory: appRoot, scanComplete})
+
+        expect(instructions).toContain(expected)
+        expect(instructions.indexOf(expected)).toBeLessThan(instructions.indexOf('```'))
+      }
+    })
+  })
+
+  test('embeds the exact scope of the check run and tells the agent to copy it unchanged', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+      const scope: AppSecurityScope = {
+        include_dirs: ['../backend', './lib/'],
+        excludes: ['**/generated', '!keep'],
+        no_git_ignore: true,
+      }
+      const instructions = appSecurityInstructions({directory: appRoot, scanComplete: true, scope})
+
+      expect(instructions).toContain(`  "scope": ${JSON.stringify(scope)},`)
+      expect(instructions).toContain('Copy it into the document unchanged.')
+      expect(instructions).not.toContain('--list-files')
+    })
+  })
+
+  test('tells the agent to fill in the scope from --list-files when no check has run', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+      const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false})
+
+      expect(instructions).toContain(`  "scope": ${JSON.stringify(noScope)},`)
+      expect(instructions).toContain('Fill in `scope` with the flags you settled on with `--list-files`')
+      expect(instructions).not.toContain('Copy it into the document unchanged.')
     })
   })
 
@@ -165,7 +230,7 @@ describe('appSecurityInstructions', () => {
       expect(instructions).toContain('`not_applicable` and `unresolved` require a `reason`')
       expect(instructions).toContain('Fix every reported error and run `record` again with the full document.')
       expect(instructions).toContain(
-        codeBlock('bash', `shopify app security review --path ${quoteShellArgument(appRoot, 'posix')}`),
+        codeBlock('bash', `shopify app security review --path ${quoteShellArgument(renderedPath(appRoot), 'posix')}`),
       )
       expect(instructions).toContain(`\`${artifactPath(appRoot, 'agent-findings.json')}\` wholesale`)
     })
@@ -175,7 +240,7 @@ describe('appSecurityInstructions', () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false, shell: 'posix'})
-      const record = `shopify app security record --path ${quoteShellArgument(appRoot, 'posix')}`
+      const record = `shopify app security record --path ${quoteShellArgument(renderedPath(appRoot), 'posix')}`
 
       expect(instructions).toContain(
         codeBlock('bash', `${record} <<'EOF'`, '<the findings document from step 4>', 'EOF'),
@@ -190,7 +255,7 @@ describe('appSecurityInstructions', () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false, shell: 'powershell'})
-      const record = `shopify app security record --path ${quoteShellArgument(appRoot, 'powershell')}`
+      const record = `shopify app security record --path ${quoteShellArgument(renderedPath(appRoot), 'powershell')}`
 
       expect(instructions).toContain(
         codeBlock('powershell', "@'", '<the findings document from step 4>', `'@ | ${record}`),
@@ -210,7 +275,7 @@ describe('appSecurityInstructions', () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false, shell: 'cmd'})
-      const record = `shopify app security record --path ${quoteShellArgument(appRoot, 'cmd')}`
+      const record = `shopify app security record --path ${quoteShellArgument(renderedPath(appRoot), 'cmd')}`
 
       expect(instructions).toContain("cmd.exe can't pipe multi-line text inline")
       expect(instructions).toContain(codeBlock('bat', `${record} < <findings.json>`))
@@ -226,7 +291,7 @@ describe('appSecurityInstructions', () => {
 
       expect(instructions).toContain('To delete these local App Security results, run:')
       expect(instructions).toContain(
-        codeBlock('bash', `shopify app security clean --path ${quoteShellArgument(appRoot, 'posix')}`),
+        codeBlock('bash', `shopify app security clean --path ${quoteShellArgument(renderedPath(appRoot), 'posix')}`),
       )
     })
   })
@@ -274,7 +339,7 @@ describe('appSecurityInstructions', () => {
       await inTemporaryDirectory(async (otherDirectory) => {
         const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false})
 
-        expect(instructions).toContain(`shopify app security check --path ${shellQuote(appRoot)}`)
+        expect(instructions).toContain(`shopify app security check --path ${shellQuote(renderedPath(appRoot))}`)
         expect(instructions).toContain(artifactPath(appRoot, 'agent-checks.json'))
         expect(instructions).not.toContain(otherDirectory)
         expect(instructions).not.toContain('shopify app security check\n')
@@ -289,8 +354,8 @@ describe('appSecurityInstructions', () => {
       await createApp(appRoot)
       const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false})
 
-      expect(instructions).toContain(`shopify app security check --path ${shellQuote(normalizePath(appRoot))}`)
-      expect(instructions).toContain(`shopify app security record --path ${shellQuote(normalizePath(appRoot))}`)
+      expect(instructions).toContain(`shopify app security check --path ${shellQuote(renderedPath(appRoot))}`)
+      expect(instructions).toContain(`shopify app security record --path ${shellQuote(renderedPath(appRoot))}`)
       expect(instructions).not.toContain('50%%')
     })
   })
@@ -341,7 +406,7 @@ describe('deliverAppSecurityInstructions', () => {
           resultsKey: 'shopify.app',
           commands: commandsFor(directory),
           copy: true,
-          scanComplete: true,
+          scanScope: noScope,
         },
         dependencies,
       )
@@ -369,7 +434,7 @@ describe('deliverAppSecurityInstructions', () => {
           commands: commandsFor(directory),
           copy: false,
           writePath: instructionsPath,
-          scanComplete: true,
+          scanScope: noScope,
         },
         dependencies,
       )

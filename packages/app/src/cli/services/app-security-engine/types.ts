@@ -85,7 +85,22 @@ export interface ScanInput {
   clientId?: string
 }
 
+/** The flags that choose which files `check` gathers, with the values as typed. */
+export interface AppSecurityScope {
+  include_dirs: string[]
+  excludes: string[]
+  no_git_ignore: boolean
+}
+
+/** A scan directory as recorded in coverage: relative to the app directory, `.` for the app directory itself. */
+export interface CoverageScanDirectory {
+  directory: string
+  origin: 'app_directory' | 'include_dir'
+}
+
 export interface ScanOptions {
+  /** `--include-dir` values, as typed. Only recorded in the scope: the directories to walk are `ScanInput.scanDirectories`. */
+  includeDirs?: ReadonlyArray<string>
   /** `--exclude` globs, as typed. */
   excludePatterns?: ReadonlyArray<string>
   /** Turns off Git ignore rules for every scan directory. */
@@ -246,13 +261,21 @@ export interface DeterministicFindingsDocument extends FindingsDocumentBase {
   source: 'deterministic'
   engine: {name: typeof ENGINE_NAME; version: string; ruleset: string}
   detection: ProjectDetection
-  coverage: {files_scanned: number; files_skipped: SkippedFile[]; gaps: CoverageGap[]}
+  coverage: {
+    files_scanned: number
+    files_skipped: SkippedFile[]
+    gaps: CoverageGap[]
+    scope: AppSecurityScope
+    scan_directories: CoverageScanDirectory[]
+  }
 }
 
 /** agent-findings.json: the validated agentic results written by `app security record`. */
 export interface AgentFindingsDocument extends FindingsDocumentBase {
   source: 'agent'
   engine: {name: typeof ENGINE_NAME; version: string}
+  /** The scope the agent reports it used. `record` doesn't check it against the scan. */
+  scope: AppSecurityScope
 }
 
 export type FindingsDocument = DeterministicFindingsDocument | AgentFindingsDocument
