@@ -605,8 +605,8 @@ Deploy your Shopify app.
 
 ```
 USAGE
-  $ shopify app deploy [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--message
-    <value>] [--no-build] [--no-color] [--no-release | --allow-updates | --allow-deletes] [--path <value>] [--reset | ]
+  $ shopify app deploy [--auth-alias <value>] [--client-id <value>] [--json-schema] [--message <value>]
+    [--no-build] [--no-color] [--no-release | --allow-updates | --allow-deletes] [--path <value>] [--reset | -c <value>]
     [--source-control-url <value>] [--verbose] [--version <value>]
 
 FLAGS
@@ -630,7 +630,8 @@ FLAGS
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
 
   --client-id=<value>
-      The Client ID of your app.
+      The Client ID of your app. Use with --config to deploy that configuration to a different app than the one it is
+      linked to.
       [env: SHOPIFY_FLAG_CLIENT_ID]
 
   --json-schema
