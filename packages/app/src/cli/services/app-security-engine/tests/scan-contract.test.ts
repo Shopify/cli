@@ -1,7 +1,8 @@
 /* eslint-disable no-restricted-imports -- detector coverage uses real temporary repositories */
+import {scanDirectory as scan} from './scan-directory.js'
 import {buildAgentChecks} from '../checks/index.js'
 import {assertRegistryInvariants, getRegistry} from '../registry/index.js'
-import {DETERMINISTIC_CHECKS, scan} from '../scanners/index.js'
+import {DETERMINISTIC_CHECKS} from '../scanners/index.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {afterEach, describe, expect, test} from 'vitest'
 import {mkdir, mkdtemp, rm, writeFile} from 'node:fs/promises'

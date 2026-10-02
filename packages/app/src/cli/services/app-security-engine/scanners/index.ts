@@ -1,5 +1,4 @@
 import {
-  findAppRoot,
   loadAppToml,
   findExtensions,
   findAppSourceFiles,
@@ -34,8 +33,7 @@ import {scanDependencyAutomation} from '../rules/dependency-automation-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {redactIssue} from '../scan-artifact/index.js'
 import {getEngineVersion} from '../version.js'
-import {getAppConfigurationFileName} from '../../../models/app/config-file-naming.js'
-import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
+import {basename, relativePath} from '@shopify/cli-kit/node/path'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import type {Rule, ScanContext} from '../rules/types.js'
 import type {RunnerImplementationResult, RunnerResult, SourceFile} from './types.js'
@@ -47,6 +45,7 @@ import type {
   CoverageGap,
   Issue,
   ProjectState,
+  ScanInput,
   ScanOptions,
   ScanResult,
   SkippedFile,
@@ -569,14 +568,12 @@ function normalizeRunnerResult(value: Issue[] | RunnerResult): RunnerResult {
 }
 
 export async function scan(
-  startPath?: string,
-  configFileName?: string,
+  {appDirectory: appRoot, appConfigFilePath}: ScanInput,
   options: ScanOptions = {},
 ): Promise<ScanResult> {
-  const appRoot = findAppRoot(startPath)
   resetSkippedFiles()
-  const selectedFileName = getAppConfigurationFileName(configFileName)
-  const appToml = loadAppToml(joinPath(appRoot, selectedFileName), appRoot)
+  const selectedFileName = appConfigFilePath ? basename(appConfigFilePath) : undefined
+  const appToml = appConfigFilePath ? loadAppToml(appConfigFilePath, appRoot) : null
   const appTomls = appToml ? [appToml] : []
   const overrides = ignorePatternRules(options.ignorePatterns ?? [])
   const gitIgnoreListing = await listGitIgnoredPaths(appRoot, {
@@ -592,7 +589,8 @@ export async function scan(
   const sourceFiles = findAppSourceFiles(appRoot, repositoryFiles)
   // The selected app configuration is an explicit input, not a discovered path: it's loaded and
   // scanned for secrets even when path rules exclude it.
-  const sensitivePaths = appToml ? [...new Set([...repositoryFiles, selectedFileName])].sort() : repositoryFiles
+  const sensitivePaths =
+    appToml && selectedFileName ? [...new Set([...repositoryFiles, selectedFileName])].sort() : repositoryFiles
   const sensitiveFiles = findSensitiveFiles(appRoot, sensitivePaths, selectedFileName)
   const manifestPaths = findManifestPaths(repositoryFiles)
   const manifests = findManifests(appRoot, manifestPaths)

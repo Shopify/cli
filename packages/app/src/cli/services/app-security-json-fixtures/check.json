@@ -4,6 +4,13 @@
     "version": "1.2.3",
     "ruleset": "2026.08.28"
   },
+  "selection": {
+    "app_directory": "/tmp/app",
+    "app_config_file": "/tmp/app/shopify.app.toml",
+    "client_id": "test-client-id",
+    "client_id_source": "config",
+    "scan_directories": [{"directory": "/tmp/app", "origin": "app_directory"}]
+  },
   "deterministic_findings": {
     "schema_version": 1,
     "source": "deterministic",

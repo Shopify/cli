@@ -1,6 +1,6 @@
 /* eslint-disable id-length, line-comment-position, no-restricted-imports -- security fixtures exercise raw git and filesystem behavior */
 import {git, isolateGitConfig} from './git-test-helpers.js'
-import {scan} from '../scanners/index.js'
+import {scanDirectory as scan} from './scan-directory.js'
 import {
   SHOPIFY_SECRET_PATTERNS,
   redactMatch,

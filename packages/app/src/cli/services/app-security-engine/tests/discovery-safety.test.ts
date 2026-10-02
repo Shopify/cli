@@ -1,17 +1,15 @@
 /* eslint-disable no-restricted-imports -- discovery boundaries use real temporary repositories */
 import {git, isolateGitConfig} from './git-test-helpers.js'
+import {scanDirectory as scan} from './scan-directory.js'
 import {
-  AppRootDiscoveryError,
-  findAppRoot,
   findExtensions,
   findSourceCandidates,
   getSkippedFiles,
   listRepositoryFiles,
   resetSkippedFiles,
 } from '../scanners/discover.js'
-import {scan} from '../scanners/index.js'
 import {buildPathRules, listGitIgnoredPaths} from '../scanners/path-rules.js'
-import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {afterEach, beforeEach, describe, expect, test} from 'vitest'
 import {chmod, mkdir, mkdtemp, rm, symlink, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
@@ -76,53 +74,6 @@ async function scanPathRules(appRoot: string): Promise<PathRules> {
   const listing = await listGitIgnoredPaths(appRoot, {pruneDefaultDirectories: true})
   return buildPathRules({gitIgnoredPaths: listing.status === 'listed' ? listing.paths : []})
 }
-
-describe.sequential('app root discovery', () => {
-  test('walks up from explicit and current subdirectories and accepts an explicit TOML', async () => {
-    const root = await makeDirectory()
-    const routes = join(root, 'app', 'routes')
-    const toml = join(root, 'shopify.app.staging.toml')
-    await mkdir(routes, {recursive: true})
-    await writeFile(toml, appConfiguration)
-
-    const normalizedRoot = normalizePath(root)
-    expect(findAppRoot(routes)).toBe(normalizedRoot)
-    expect(findAppRoot(toml)).toBe(normalizedRoot)
-
-    const previousInitialDirectory = process.env.INIT_CWD
-    process.env.INIT_CWD = routes
-    try {
-      expect(findAppRoot()).toBe(normalizedRoot)
-    } finally {
-      if (previousInitialDirectory === undefined) delete process.env.INIT_CWD
-      else process.env.INIT_CWD = previousInitialDirectory
-    }
-  })
-
-  test('fails clearly for an explicit missing path instead of scanning cwd', async () => {
-    const root = await makeDirectory()
-    const missing = join(root, 'missing-app')
-    expect(() => findAppRoot(missing)).toThrow(AppRootDiscoveryError)
-    expect(() => findAppRoot(missing)).toThrow(`App path does not exist: ${missing}`)
-  })
-
-  test('ignores files that match the glob but are not CLI app configuration names', async () => {
-    const root = await makeDirectory()
-    await writeFile(join(root, 'shopify.application.toml'), appConfiguration)
-    await writeFile(join(root, 'shopify.app.foo.bar.toml'), appConfiguration)
-    expect(() => findAppRoot(root)).toThrow(AppRootDiscoveryError)
-  })
-
-  test('rejects an explicit non-app TOML path with a configuration-file error', async () => {
-    const root = await makeDirectory()
-    const webToml = join(root, 'shopify.web.toml')
-    await writeFile(webToml, 'type = "frontend"\n')
-    expect(() => findAppRoot(webToml)).toThrow(AppRootDiscoveryError)
-    expect(() => findAppRoot(webToml)).toThrow(
-      `App path is not a directory or Shopify app configuration file: ${webToml}`,
-    )
-  })
-})
 
 describe('repository discovery exclusions', () => {
   let restoreGitConfig: (() => void) | undefined

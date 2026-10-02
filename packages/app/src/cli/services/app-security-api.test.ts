@@ -1,7 +1,6 @@
 import {
   securityExitCode,
   executeAppSecurity,
-  resolveAppSecurityRoot,
   type AppSecurityBlockingLevel,
   type AppSecurityExecution,
 } from './app-security-api.js'
@@ -17,10 +16,13 @@ function artifactPath(directory: string, name: string): string {
   return joinPath(directory, '.shopify', 'app-security', name)
 }
 
+function scanInputFor(directory: string) {
+  return {appDirectory: directory, appConfigFilePath: joinPath(directory, 'shopify.app.toml')}
+}
+
 async function runSecurity(options: {directory: string; blocking: AppSecurityBlockingLevel}) {
-  const appRoot = resolveAppSecurityRoot(options.directory)
-  const execution = await executeAppSecurity({appRoot})
-  const artifacts = await writeCheckArtifacts(execution.appRoot, execution)
+  const execution = await executeAppSecurity(scanInputFor(options.directory))
+  const artifacts = await writeCheckArtifacts(options.directory, execution)
   return {execution, artifacts, exitCode: securityExitCode(execution, options.blocking)}
 }
 
@@ -114,33 +116,12 @@ describe('App Security CLI integration', () => {
       await createApp(directory)
       await mkdir(joinPath(directory, 'generated'))
       await writeFile(joinPath(directory, 'generated', 'client.ts'), 'export const generated = true\n')
-      const appRoot = resolveAppSecurityRoot(directory)
+      const scanInput = scanInputFor(directory)
 
-      const unfiltered = await executeAppSecurity({appRoot})
-      const filtered = await executeAppSecurity({appRoot, ignorePatterns: ['generated/']})
+      const unfiltered = await executeAppSecurity(scanInput)
+      const filtered = await executeAppSecurity({...scanInput, ignorePatterns: ['generated/']})
 
       expect(unfiltered.scan.scan.files_scanned - filtered.scan.scan.files_scanned).toBe(1)
-    })
-  })
-
-  test('translates a missing --path into an AbortError with a next step', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const missing = joinPath(directory, 'missing-app')
-
-      await expect(runSecurity({directory: missing, blocking: 'none'})).rejects.toMatchObject({
-        constructor: AbortError,
-        message: `App path does not exist: ${missing}`,
-        tryMessage: 'Run this command from a Shopify app directory or pass --path to one.',
-      })
-    })
-  })
-
-  test('translates a directory without an app configuration into an AbortError', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await expect(runSecurity({directory, blocking: 'none'})).rejects.toBeInstanceOf(AbortError)
-      await expect(runSecurity({directory, blocking: 'none'})).rejects.toThrow(
-        `Could not find a shopify.app*.toml from: ${directory}`,
-      )
     })
   })
 
