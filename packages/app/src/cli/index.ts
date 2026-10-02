@@ -7,9 +7,11 @@ import ConfigPull from './commands/app/config/pull.js'
 import DemoWatcher from './commands/app/demo/watcher.js'
 import Deploy from './commands/app/deploy.js'
 import Dev from './commands/app/dev.js'
-import DoctorInstructions from './commands/app/doctor/instructions.js'
-import DoctorSubmit from './commands/app/doctor/submit.js'
-import Doctor from './commands/app/doctor.js'
+import SecurityCheck from './commands/app/security/check.js'
+import SecurityClean from './commands/app/security/clean.js'
+import SecurityInstructions from './commands/app/security/instructions.js'
+import SecurityRecord from './commands/app/security/record.js'
+import SecurityReview from './commands/app/security/review.js'
 import Logs from './commands/app/logs.js'
 import Sources from './commands/app/app-logs/sources.js'
 import EnvPull from './commands/app/env/pull.js'
@@ -58,9 +60,11 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:deploy': Deploy,
   'app:dev': Dev,
   'app:dev:clean': DevClean,
-  'app:doctor:instructions': DoctorInstructions,
-  'app:doctor:submit': DoctorSubmit,
-  'app:doctor': Doctor,
+  'app:security:check': SecurityCheck,
+  'app:security:clean': SecurityClean,
+  'app:security:instructions': SecurityInstructions,
+  'app:security:record': SecurityRecord,
+  'app:security:review': SecurityReview,
   'app:logs': Logs,
   'app:logs:sources': Sources,
   'app:import:custom-data-definitions': ImportCustomDataDefinitions,

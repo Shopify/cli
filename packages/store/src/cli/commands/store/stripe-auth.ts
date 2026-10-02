@@ -1,3 +1,4 @@
+import {storeAuthJsonOutputSchema} from '../../services/store/auth/types.js'
 import {authenticateStoreWithApp} from '../../services/store/auth/index.js'
 import {createStoreAuthPresenter} from '../../services/store/auth/result.js'
 import StoreCommand from '../../utilities/store-command.js'
@@ -36,6 +37,10 @@ export default class StoreStripeAuth extends StoreCommand {
       env: 'SHOPIFY_FLAG_SIGNUP',
       required: false,
     }),
+  }
+
+  static get jsonOutputSchema() {
+    return storeAuthJsonOutputSchema
   }
 
   public async run(): Promise<void> {

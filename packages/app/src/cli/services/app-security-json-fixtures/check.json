@@ -1,0 +1,33 @@
+{
+  "engine": {
+    "name": "shopify-app-security",
+    "version": "1.2.3",
+    "ruleset": "2026.08.28"
+  },
+  "deterministic_findings": {
+    "schema_version": 1,
+    "source": "deterministic",
+    "engine": {
+      "name": "shopify-app-security",
+      "version": "1.2.3",
+      "ruleset": "2026.08.28"
+    },
+    "generated_at": "2026-08-24T00:00:00.000Z",
+    "project": {
+      "commit": null,
+      "dirty": null
+    },
+    "detection": {
+      "framework": "none",
+      "surface": "config_only",
+      "languages": []
+    },
+    "coverage": {
+      "files_scanned": 1,
+      "files_skipped": [],
+      "gaps": []
+    },
+    "checks": []
+  },
+  "agent_checks_path": "/tmp/app/.shopify/app-security/agent-checks.json"
+}

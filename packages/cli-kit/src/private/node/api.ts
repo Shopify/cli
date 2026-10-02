@@ -138,6 +138,34 @@ export function isNetworkError(error: unknown): boolean {
   return false
 }
 
+/**
+ * Lower-cased substrings that mean a request was aborted rather than failing on its own.
+ * `node-fetch` says 'The user aborted a request.', undici says 'This operation was aborted', and
+ * cli-kit's own request timeout says 'The operation was aborted'.
+ */
+const ABORTED_FETCH_MESSAGE_FRAGMENTS = ['the user aborted a request', 'operation was aborted'] as const
+
+/**
+ * Checks if an error is an aborted request: a user cancelling the command, the host process
+ * cancelling it, or one of the CLI's own request timeouts firing.
+ *
+ * Not used by the retry logic, because a user-cancelled request must not be retried.
+ * `isTransientNetworkError` separately matches the CLI's own timeout message, so timeouts do
+ * still retry.
+ *
+ * The `name` check matches the `AbortError` shape that fetch throws, not cli-kit's own
+ * `AbortError`, which leaves `name` as 'Error'.
+ *
+ * @param error - Error to be checked.
+ * @returns A boolean indicating if the request was aborted.
+ */
+export function isAbortedFetchError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false
+  if (error.name === 'AbortError') return true
+  const errorMessage = error.message.toLowerCase()
+  return ABORTED_FETCH_MESSAGE_FRAGMENTS.some((fragment) => errorMessage.includes(fragment))
+}
+
 async function runRequestWithNetworkLevelRetry<T extends {headers: Headers; status: number}>(
   requestOptions: RequestOptions<T>,
 ): Promise<T> {

@@ -1,14 +1,24 @@
 const {commandExceptions} = require('./json-output-command-exceptions')
 
-const exemptCommands = new Set(commandExceptions)
-
 module.exports = {
   meta: {
     type: 'problem',
     docs: {
       description: 'require typed JSON output for new finite commands',
     },
-    schema: [],
+    schema: [
+      {
+        type: 'object',
+        properties: {
+          exceptions: {
+            type: 'array',
+            items: {type: 'string'},
+            uniqueItems: true,
+          },
+        },
+        additionalProperties: false,
+      },
+    ],
     messages: {
       missingJsonFlag:
         'New finite commands must include ...jsonFlag in their static flags. See docs/cli/json-output.md.',
@@ -17,6 +27,7 @@ module.exports = {
     },
   },
   create(context) {
+    const exemptCommands = new Set(context.options[0]?.exceptions ?? commandExceptions)
     const commandPath = repositoryPath(context.filename)
     if (!isCommandPath(commandPath) || exemptCommands.has(commandPath)) return {}
 
@@ -25,6 +36,7 @@ module.exports = {
         if (node.declaration.type !== 'ClassDeclaration') return
 
         const classMembers = node.declaration.body.body
+        if (classMembers.some((member) => isStaticMemberNamed(member, 'hidden') && member.value?.value === true)) return
 
         if (!hasJsonOutputSchema(classMembers)) {
           context.report({node: node.declaration, messageId: 'missingJsonOutputSchema'})

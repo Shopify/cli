@@ -17,12 +17,16 @@ import {
   testAppAccessConfigExtension,
   testAppHomeConfigExtension,
   testAppProxyConfigExtension,
+  testDeveloperPlatformClient,
+  testOrganizationApp,
 } from './app.test-data.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
+import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
+import {fetchSpecifications} from '../../services/generate/fetch-extension-specifications.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -777,6 +781,156 @@ describe('manifest', () => {
           },
         },
       ],
+    })
+  })
+
+  test.each([
+    {mode: 'deploy', devApplicationURLs: undefined, expectedAppUrl: 'https://my-app.example.com'},
+    {
+      mode: 'dev',
+      devApplicationURLs: {applicationUrl: 'https://my-tunnel.example.com', redirectUrlWhitelist: []},
+      expectedAppUrl: 'https://my-tunnel.example.com',
+    },
+  ])('preserves admin links alongside Flow extensions during $mode', async ({devApplicationURLs, expectedAppUrl}) => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const adminLinkRemoteSpec: RemoteSpecification = {
+        name: 'Admin link',
+        externalName: 'Admin link',
+        identifier: 'admin_link',
+        externalIdentifier: 'admin_link',
+        experience: 'extension',
+        managementExperience: 'cli',
+        gated: false,
+        registrationLimit: 1,
+        uidStrategy: 'uuid',
+        validationSchema: {
+          jsonSchema: JSON.stringify({
+            type: 'object',
+            properties: {
+              name: {type: 'string'},
+              targeting: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {target: {type: 'string'}, url: {type: 'string'}},
+                  required: ['target', 'url'],
+                  additionalProperties: false,
+                },
+              },
+              localization: {type: 'object'},
+            },
+            required: ['targeting'],
+            additionalProperties: false,
+          }),
+        },
+      }
+      const lifecycleCallbackRemoteSpec: RemoteSpecification = {
+        name: 'Flow trigger lifecycle callback',
+        externalName: 'Flow trigger lifecycle callback',
+        identifier: 'flow_trigger_lifecycle_callback',
+        externalIdentifier: 'flow_trigger_lifecycle_callback',
+        experience: 'extension',
+        managementExperience: 'cli',
+        gated: false,
+        registrationLimit: 1,
+        uidStrategy: 'uuid',
+        validationSchema: {
+          jsonSchema: JSON.stringify({
+            type: 'object',
+            properties: {
+              name: {type: 'string'},
+              url: {type: 'string', pattern: '^(https://|/[^/])'},
+            },
+            required: ['url'],
+            additionalProperties: false,
+          }),
+        },
+      }
+      const remoteApp = testOrganizationApp()
+      const remoteSpecs = await testDeveloperPlatformClient().specifications(remoteApp)
+      const specifications = await fetchSpecifications({
+        developerPlatformClient: testDeveloperPlatformClient({
+          specifications: async () => [...remoteSpecs, adminLinkRemoteSpec, lifecycleCallbackRemoteSpec],
+        }),
+        app: remoteApp,
+      })
+      const locale = JSON.stringify({title: 'Open app'})
+      await mkdir(joinPath(tmpDir, 'admin_link', 'locales'))
+      await writeFile(joinPath(tmpDir, 'admin_link', 'locales', 'en.default.json'), locale)
+
+      const configurations = [
+        {
+          type: 'admin_link',
+          handle: 'admin-link',
+          name: 'Admin link',
+          targeting: [{target: 'admin.product-details.action.link', url: '/products'}],
+        },
+        {
+          type: 'flow_action',
+          handle: 'flow-action',
+          name: 'Flow action',
+          runtime_url: '/execute',
+          validation_url: 'https://validation.example.com/validate',
+        },
+        {type: 'flow_trigger', handle: 'flow-trigger', name: 'Flow trigger'},
+        {
+          type: 'flow_trigger_lifecycle_callback',
+          handle: 'lifecycle-callback',
+          name: 'Lifecycle callback',
+          url: '/callback',
+        },
+        {type: 'app_home', application_url: 'https://my-app.example.com', embedded: true},
+      ]
+      const extensions = await Promise.all(
+        configurations.map(async (configuration) => {
+          const specification = specifications.find((spec) => spec.identifier === configuration.type)!
+          const parsed = specification.parseConfigurationObject(configuration)
+          if (parsed.state !== 'ok') throw new Error(`Couldn't parse ${configuration.type} configuration`)
+
+          const directory = joinPath(tmpDir, configuration.type)
+          await mkdir(directory)
+          return new ExtensionInstance({
+            configuration: parsed.data,
+            directory,
+            specification,
+            configurationPath: joinPath(directory, 'shopify.extension.toml'),
+            entryPath: '',
+          })
+        }),
+      )
+      const app = testApp({
+        directory: tmpDir,
+        allExtensions: extensions,
+        configuration: {...DEFAULT_CONFIG, application_url: 'https://my-app.example.com'},
+        devApplicationURLs,
+      })
+
+      const manifest = await app.manifest(undefined)
+
+      expect(manifest.modules).toMatchObject([
+        {
+          type: 'admin_link',
+          config: {
+            name: 'Admin link',
+            targeting: [{target: 'admin.product-details.action.link', url: '/products'}],
+            localization: {default_locale: 'en', translations: {en: Buffer.from(locale).toString('base64')}},
+          },
+        },
+        {
+          type: 'flow_action',
+          config: {
+            title: 'Flow action',
+            url: `${expectedAppUrl}/execute`,
+            validation_url: 'https://validation.example.com/validate',
+          },
+        },
+        {type: 'flow_trigger', config: {title: 'Flow trigger', fields: [], schema_patch: ''}},
+        {
+          type: 'flow_trigger_lifecycle_callback',
+          config: {name: 'Lifecycle callback', url: `${expectedAppUrl}/callback`},
+        },
+        {type: 'app_home', config: {app_url: expectedAppUrl, embedded: true}},
+      ])
     })
   })
 })

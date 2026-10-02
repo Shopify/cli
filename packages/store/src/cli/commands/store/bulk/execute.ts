@@ -1,8 +1,11 @@
-import {executeBulkOperation} from '../../../services/store/bulk/execute-bulk-operation.js'
+import {executeBulkOperation, prepareBulkOperation} from '../../../services/store/bulk/execute-bulk-operation.js'
+import {renderExecuteBulkOperationResult} from '../../../services/store/bulk/execute-result.js'
+import {logBulkOperationStart} from '../../../services/store/bulk/progress.js'
+import {executeBulkOperationJsonOutputSchema} from '../../../services/store/bulk/types.js'
 import StoreCommand from '../../../utilities/store-command.js'
 import {bulkOperationFlags, storeFlags} from '../../../flags.js'
 import {resolveBulkOperationQuery} from '@shopify/cli-kit/node/api/bulk-operations'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class StoreBulkExecute extends StoreCommand {
   static summary = 'Execute bulk operations on a store.'
@@ -27,8 +30,13 @@ export default class StoreBulkExecute extends StoreCommand {
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     store: storeFlags.store,
     ...bulkOperationFlags,
+  }
+
+  static get jsonOutputSchema() {
+    return executeBulkOperationJsonOutputSchema
   }
 
   async run(): Promise<void> {
@@ -36,15 +44,22 @@ export default class StoreBulkExecute extends StoreCommand {
 
     const query = await resolveBulkOperationQuery({query: flags.query, queryFile: flags['query-file']})
 
-    await executeBulkOperation({
+    const input = await prepareBulkOperation({
       store: flags.store,
       query,
       variables: flags.variables,
       variableFile: flags['variable-file'],
       watch: flags.watch ?? false,
-      outputFile: flags['output-file'],
       allowMutations: flags['allow-mutations'],
       ...(flags.version && {version: flags.version}),
     })
+    const format = flags.json ? 'json' : 'text'
+    logBulkOperationStart(
+      'Starting bulk operation.',
+      {storeFqdn: input.adminSession.storeFqdn, version: input.version},
+      format,
+    )
+    const result = await executeBulkOperation(input)
+    await renderExecuteBulkOperationResult(result, {format, watch: input.watch, outputFile: flags['output-file']})
   }
 }

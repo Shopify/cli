@@ -6,6 +6,7 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('../extension.js')
 vi.mock('./include-assets/generate-manifest.js')
@@ -108,6 +109,40 @@ describe('executeBundleUIStep', () => {
 
       // Then
       expect(generateManifest.createOrUpdateManifestFile).not.toHaveBeenCalled()
+    })
+  })
+  test('raises a developer-facing error when the build output directory is missing', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionDir = joinPath(tmpDir, 'extension')
+      const localOutputDir = joinPath(extensionDir, 'dist')
+      const bundleOutputDir = joinPath(tmpDir, 'bundle', 'handle')
+
+      // The extension build emitted nothing, so localOutputDir is never created.
+      mockContext.extension.directory = extensionDir
+      mockContext.extension.outputPath = joinPath(bundleOutputDir, 'handle.js')
+      vi.mocked(buildExtension.buildUIExtension).mockResolvedValue(joinPath(localOutputDir, 'handle.js'))
+
+      // When / Then
+      await expect(executeBundleUIStep(step, mockContext)).rejects.toThrowError(AbortError)
+    })
+  })
+
+  test('names the missing build output path in the error', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionDir = joinPath(tmpDir, 'extension')
+      const localOutputDir = joinPath(extensionDir, 'dist')
+      const bundleOutputDir = joinPath(tmpDir, 'bundle', 'handle')
+
+      mockContext.extension.directory = extensionDir
+      mockContext.extension.outputPath = joinPath(bundleOutputDir, 'handle.js')
+      vi.mocked(buildExtension.buildUIExtension).mockResolvedValue(joinPath(localOutputDir, 'handle.js'))
+
+      // When / Then
+      await expect(executeBundleUIStep(step, mockContext)).rejects.toThrow(
+        `Couldn't find the build output at ${localOutputDir}`,
+      )
     })
   })
 })

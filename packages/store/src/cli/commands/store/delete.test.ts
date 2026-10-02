@@ -1,4 +1,5 @@
 import StoreDelete from './delete.js'
+import {deleteDevStoreJsonOutputSchema} from '../../services/store/delete/types.js'
 import {deleteDevStore} from '../../services/store/delete/dev.js'
 import {resolveOrganizationForStore} from '../../utilities/store-lookup/organization.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -35,6 +36,10 @@ beforeEach(() => {
 })
 
 describe('store delete command', () => {
+  test('exposes the output schema', () => {
+    expect(StoreDelete.jsonOutputSchema).toBe(deleteDevStoreJsonOutputSchema)
+  })
+
   test('resolves the organization and passes parsed flags through to the service', async () => {
     await StoreDelete.run(['--store', 'my-store.myshopify.com', '--organization-id', '12345'])
 
@@ -130,6 +135,7 @@ describe('store delete command', () => {
 
     const call = vi.mocked(outputResult).mock.calls[0]![0] as string
     const parsed = JSON.parse(call)
+    expect(deleteDevStoreJsonOutputSchema.validate(parsed)).toEqual(parsed)
     expect(parsed).toEqual({
       error: true,
       message: 'Deleting the dev store my-store.myshopify.com requires confirmation.',
@@ -154,6 +160,7 @@ describe('store delete command', () => {
 
     const call = vi.mocked(outputResult).mock.calls[0]![0] as string
     const parsed = JSON.parse(call)
+    expect(deleteDevStoreJsonOutputSchema.validate(parsed)).toEqual(parsed)
     expect(parsed).toEqual({
       error: true,
       message: 'Something went wrong',
@@ -175,6 +182,7 @@ describe('store delete command', () => {
 
     const call = vi.mocked(outputResult).mock.calls[0]![0] as string
     const parsed = JSON.parse(call)
+    expect(deleteDevStoreJsonOutputSchema.validate(parsed)).toEqual(parsed)
     expect(parsed).toEqual({
       error: true,
       message: 'Could not resolve organization',

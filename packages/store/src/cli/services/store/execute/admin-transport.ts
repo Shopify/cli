@@ -13,6 +13,7 @@ import type {AdminSession} from '@shopify/cli-kit/node/session'
 import type {PreparedStoreExecuteRequest} from './request.js'
 import type {AdminStoreGraphQLContext} from './admin-context.js'
 import type {StoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
+import type {StoreExecuteResult} from './types.js'
 
 export {ABORTED_FETCH_MESSAGE_FRAGMENTS}
 
@@ -58,6 +59,18 @@ export async function fetchPublicApiVersions(input: {
     const classified = classifyAdminApiError(error, input.adminSession.storeFqdn)
     if (classified) throw classified
 
+    // Version discovery takes no user input, so a 5xx here is a Shopify-side failure. Wrapped
+    // rather than rethrown: a raw `ClientError` is filed as an unexpected CLI bug.
+    //
+    // Not in `classifyAdminApiError`, which `runAdminStoreGraphQLOperation` also calls. There a
+    // 5xx can carry GraphQL errors about the user's own query, which must stay visible.
+    if (isGraphQLClientErrorLike(error) && typeof error.response.status === 'number' && error.response.status >= 500) {
+      throw new AbortError(
+        `Couldn't read the supported API versions for ${input.adminSession.storeFqdn}: the Admin API returned a server error (HTTP ${error.response.status}).`,
+        'This is a problem on the Shopify side, not with your command. Wait a moment and run it again.',
+      )
+    }
+
     throw error
   }
 }
@@ -65,12 +78,12 @@ export async function fetchPublicApiVersions(input: {
 export async function runAdminStoreGraphQLOperation(input: {
   context: AdminStoreGraphQLContext
   request: PreparedStoreExecuteRequest
-}): Promise<unknown> {
+}): Promise<StoreExecuteResult> {
   try {
     return await renderSingleTask({
       title: outputContent`Executing GraphQL operation`,
       task: async () => {
-        return graphqlRequest({
+        return graphqlRequest<StoreExecuteResult>({
           query: input.request.query,
           api: 'Admin',
           url: adminUrl(input.context.adminSession.storeFqdn, input.context.version, input.context.adminSession),

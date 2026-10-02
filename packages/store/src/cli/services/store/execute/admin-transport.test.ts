@@ -371,6 +371,26 @@ describe('fetchPublicApiVersions', () => {
     expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
   })
 
+  test('maps an Admin API 5xx to an AbortError instead of letting the raw client error escape', async () => {
+    vi.mocked(graphqlRequest).mockRejectedValue(makeClientErrorLike(500, 'Internal Server Error'))
+
+    let captured: AbortError | undefined
+    await fetchPublicApiVersions({adminSession, session}).catch((error) => {
+      captured = error as AbortError
+    })
+
+    expect(captured).toBeInstanceOf(AbortError)
+    expect(captured).not.toBeInstanceOf(BugError)
+    // A raw `ClientError` reaching the reporter is filed as an unexpected CLI bug; an AbortError is not.
+    expect(captured?.message).toBe(
+      `Couldn't read the supported API versions for ${store}: the Admin API returned a server error (HTTP 500).`,
+    )
+    expect(String((captured as unknown as {tryMessage?: string})?.tryMessage ?? '')).toContain(
+      'This is a problem on the Shopify side',
+    )
+    expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
+  })
+
   test('rethrows unrelated errors', async () => {
     vi.mocked(graphqlRequest).mockRejectedValue(new Error('upstream exploded'))
 

@@ -1,6 +1,7 @@
 import StoreInfo from './info.js'
 import {getStoreInfo} from '../../services/store/info/index.js'
 import {renderStoreInfoResult} from '../../services/store/info/result.js'
+import {storeInfoJsonOutputSchema} from '../../services/store/info/types.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../services/store/info/index.js')
@@ -18,9 +19,7 @@ describe('store info command', () => {
   test('passes the store flag through to the service', async () => {
     await StoreInfo.run(['--store', 'shop.myshopify.com'])
 
-    expect(getStoreInfo).toHaveBeenCalledWith({
-      store: 'shop.myshopify.com',
-    })
+    expect(getStoreInfo).toHaveBeenCalledWith({store: 'shop.myshopify.com'})
     expect(renderStoreInfoResult).toHaveBeenCalledWith(
       expect.objectContaining({subdomain: 'shop.myshopify.com'}),
       'text',
@@ -36,5 +35,9 @@ describe('store info command', () => {
   test('defines the expected flags', () => {
     expect(StoreInfo.flags.store).toBeDefined()
     expect(StoreInfo.flags.json).toBeDefined()
+  })
+
+  test('exposes the JSON output schema', () => {
+    expect(StoreInfo.jsonOutputSchema).toBe(storeInfoJsonOutputSchema)
   })
 })

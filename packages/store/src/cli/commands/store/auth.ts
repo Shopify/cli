@@ -1,3 +1,4 @@
+import {storeAuthJsonOutputSchema} from '../../services/store/auth/types.js'
 import {authenticateStoreWithApp} from '../../services/store/auth/index.js'
 import {createStoreAuthPresenter} from '../../services/store/auth/result.js'
 import StoreCommand from '../../utilities/store-command.js'
@@ -28,6 +29,10 @@ Re-run this command if the stored token is missing, expires, or no longer has th
       env: 'SHOPIFY_FLAG_SCOPES',
       required: true,
     }),
+  }
+
+  static get jsonOutputSchema() {
+    return storeAuthJsonOutputSchema
   }
 
   public async run(): Promise<void> {

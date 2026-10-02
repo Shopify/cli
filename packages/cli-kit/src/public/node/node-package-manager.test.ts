@@ -25,10 +25,11 @@ import {
   lockfilesByManager,
 } from './node-package-manager.js'
 import {captureOutput, exec} from './system.js'
-import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
+import {inTemporaryDirectory, mkdir, mkTmpDir, rmdir, touchFile, writeFile} from './fs.js'
 import {joinPath, dirname, normalizePath} from './path.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
-import {cacheClear} from '../../private/node/conf-store.js'
+import {LocalStorage} from './local-storage.js'
+import * as confStore from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
 import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
 
@@ -39,6 +40,24 @@ vi.mock('./is-global')
 
 const mockedExec = vi.mocked(exec)
 const mockedCaptureOutput = vi.mocked(captureOutput)
+
+async function isolateVersionCache() {
+  const directory = await mkTmpDir()
+  const storage = new LocalStorage<confStore.ConfSchema>({cwd: directory})
+  const {cacheRetrieve, cacheRetrieveOrRepopulate} = confStore
+
+  // Keep the real cache behavior without sharing its on-disk store with other test workers.
+  const retrieveSpy = vi.spyOn(confStore, 'cacheRetrieve').mockImplementation((key) => cacheRetrieve(key, storage))
+  const repopulateSpy = vi
+    .spyOn(confStore, 'cacheRetrieveOrRepopulate')
+    .mockImplementation((key, populate, timeout) => cacheRetrieveOrRepopulate(key, populate, timeout, storage))
+
+  return async () => {
+    retrieveSpy.mockRestore()
+    repopulateSpy.mockRestore()
+    await rmdir(directory)
+  }
+}
 
 describe('installNPMDependenciesRecursively', () => {
   test('runs install in all the directories containing a package.json', async () => {
@@ -539,7 +558,7 @@ describe('addNPMDependenciesIfNeeded', () => {
 })
 
 describe('checkForCachedNewVersion', () => {
-  beforeEach(() => cacheClear())
+  beforeEach(isolateVersionCache)
 
   test('returnes undefined when there is no cached value', () => {
     // Given
@@ -585,7 +604,11 @@ describe('checkForCachedNewVersion', () => {
 })
 
 describe('checkForNewVersion', () => {
-  beforeEach(() => cacheClear())
+  beforeEach(isolateVersionCache)
+  beforeEach(() => {
+    vi.useFakeTimers({toFake: ['Date']})
+    vi.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+  })
   afterEach(() => {
     vi.useRealTimers()
   })
@@ -640,7 +663,7 @@ describe('checkForNewVersion', () => {
 
     // When
     await checkForNewVersion(dependency, currentVersion)
-    vi.setSystemTime(vi.getRealSystemTime() + 999 * 3600 * 1000)
+    vi.setSystemTime(Date.now() + 999 * 3600 * 1000)
     const result = await checkForNewVersion(dependency, currentVersion, {cacheExpiryInHours: 1000})
 
     // Then
@@ -657,7 +680,7 @@ describe('checkForNewVersion', () => {
 
     // When
     await checkForNewVersion(dependency, currentVersion)
-    vi.setSystemTime(vi.getRealSystemTime() + 1001 * 3600 * 1000)
+    vi.setSystemTime(Date.now() + 1001 * 3600 * 1000)
     const result = await checkForNewVersion(dependency, currentVersion, {cacheExpiryInHours: 1000})
 
     // Then

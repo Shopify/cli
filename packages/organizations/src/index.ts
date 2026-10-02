@@ -1,4 +1,4 @@
-export {fetchOrganizations, fetchOrganizationsWithAccessInfo} from './cli/services/fetch.js'
+export {fetchOrganizations, fetchOrganizationsWithAccessInfo, fetchOrganizationById} from './cli/services/fetch.js'
 export {selectOrg} from './cli/services/select.js'
 export {selectOrganizationPrompt} from './cli/prompts/organization.js'
 export type {Organization, OrganizationWithDetails, OrganizationStatus} from './cli/models/organization.js'
@@ -7,3 +7,5 @@ export {businessPlatformTokenRefreshHandler} from './cli/services/business-platf
 export {createDevStore, devStorePlanHandles} from './cli/services/dev/create-dev-store.js'
 export type {CreateDevStoreOptions, DevStorePlan} from './cli/services/dev/create-dev-store.js'
 export {devStoreNamePrompt, devStorePlanPrompt, devStoreDemoDataPrompt} from './cli/prompts/dev.js'
+export {StoreSchema, StoreOrganizationSchema} from './cli/models/store.js'
+export {createDevStoreJsonOutputSchema} from './cli/services/dev/types.js'

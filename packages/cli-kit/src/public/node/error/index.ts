@@ -2,6 +2,7 @@ import {normalizePath} from '../path.js'
 import {flushStdout, OutputMessage, stringifyMessage, TokenizedString} from '../output.js'
 import {tokenItemToString, type InlineToken, type TokenItem} from '../../../private/node/ui/components/token-item.js'
 import {hasRateLimitCode} from '../../../private/node/analytics/graphql-error-codes.js'
+import {isGatewayErrorStatus} from '../../../private/node/api/status-checks.js'
 
 import {Errors} from '@oclif/core'
 
@@ -249,7 +250,7 @@ function isExpectedApiError(error: Error): boolean {
     return false
   }
   const status = candidate.response.status
-  if (status === 401 || status === 429 || status === 502 || status === 503 || status === 504) {
+  if (status === 401 || status === 429 || isGatewayErrorStatus(status)) {
     return true
   }
   return hasRateLimitCode(candidate.response.errors)

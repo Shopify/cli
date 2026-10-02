@@ -1,4 +1,5 @@
 import StoreExecute from './execute.js'
+import {storeExecuteJsonOutputSchema} from '../../services/store/execute/types.js'
 import {executeStoreOperation} from '../../services/store/execute/index.js'
 import {writeOrOutputStoreExecuteResult} from '../../services/store/execute/result.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
@@ -53,6 +54,7 @@ describe('store execute command', () => {
     expect(StoreExecute.flags['variable-file']).toBeDefined()
     expect(StoreExecute.flags['allow-mutations']).toBeDefined()
     expect(StoreExecute.flags.json).toBeDefined()
+    expect(StoreExecute.jsonOutputSchema).toBe(storeExecuteJsonOutputSchema)
   })
 
   test('requires --query or --query-file', async () => {

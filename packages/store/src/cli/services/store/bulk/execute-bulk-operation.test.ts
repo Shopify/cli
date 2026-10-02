@@ -1,4 +1,5 @@
-import {executeBulkOperation} from './execute-bulk-operation.js'
+import {executeBulkOperation, prepareBulkOperation} from './execute-bulk-operation.js'
+import {renderExecuteBulkOperationResult} from './execute-result.js'
 import {prepareBulkAdminContext} from './bulk-admin-context.js'
 import {
   runBulkOperationQuery,
@@ -68,7 +69,9 @@ describe('executeBulkOperation', () => {
   test('runs a query operation', async () => {
     vi.mocked(runBulkOperationQuery).mockResolvedValue({bulkOperation: createdOperation, userErrors: []})
 
-    await executeBulkOperation({store, query: 'query { products { edges { node { id } } } }'})
+    const result = await executeAndPresent({store, query: 'query { products { edges { node { id } } } }'})
+
+    expect(result).toMatchObject({store, apiVersion: BULK_OPERATIONS_MIN_API_VERSION})
 
     expect(prepareBulkAdminContext).toHaveBeenCalledWith(store)
     expect(runBulkOperationQuery).toHaveBeenCalledWith({
@@ -81,7 +84,7 @@ describe('executeBulkOperation', () => {
 
   test('blocks mutations unless --allow-mutations is set', async () => {
     await expect(
-      executeBulkOperation({store, query: 'mutation { productUpdate(input: {}) { product { id } } }'}),
+      executeAndPresent({store, query: 'mutation { productUpdate(input: {}) { product { id } } }'}),
     ).rejects.toThrow(AbortError)
 
     expect(prepareBulkAdminContext).not.toHaveBeenCalled()
@@ -92,7 +95,7 @@ describe('executeBulkOperation', () => {
     vi.mocked(runBulkOperationMutation).mockResolvedValue({bulkOperation: createdOperation, userErrors: []})
     const mutation = 'mutation productUpdate($input: ProductInput!) { productUpdate(input: $input) { product { id } } }'
 
-    await executeBulkOperation({
+    await executeAndPresent({
       store,
       query: mutation,
       variables: ['{"input":{"id":"gid://shopify/Product/1"}}'],
@@ -110,13 +113,65 @@ describe('executeBulkOperation', () => {
   test('points users at the store bulk status command', async () => {
     vi.mocked(runBulkOperationQuery).mockResolvedValue({bulkOperation: createdOperation, userErrors: []})
 
-    await executeBulkOperation({store, query: '{ products { edges { node { id } } } }'})
+    await executeAndPresent({store, query: '{ products { edges { node { id } } } }'})
 
     expect(renderSuccess).toHaveBeenCalledWith(
       expect.objectContaining({
         body: ['Monitor its progress with:\n', {command: 'shopify store bulk status --id=123'}],
       }),
     )
+  })
+
+  test('returns upstream user errors without polling or rendering', async () => {
+    const userErrors = [{field: ['query'], message: 'Invalid query'}]
+    vi.mocked(runBulkOperationQuery).mockResolvedValue({bulkOperation: null, userErrors})
+    const input = await prepareBulkOperation({store, query: '{ products { edges { node { id } } } }'})
+    const result = await executeBulkOperation(input)
+    expect(result).toEqual({
+      store,
+      apiVersion: BULK_OPERATIONS_MIN_API_VERSION,
+      operation: null,
+      userErrors,
+      watchAborted: false,
+    })
+    expect(shortBulkOperationPoll).not.toHaveBeenCalled()
+    expect(renderError).not.toHaveBeenCalled()
+  })
+
+  test('returns a stopped watch without downloading results', async () => {
+    vi.mocked(runBulkOperationQuery).mockResolvedValue({bulkOperation: createdOperation, userErrors: []})
+    vi.mocked(watchBulkOperation).mockImplementation(async (_session, _id, _signal, onAbort) => {
+      onAbort()
+      return {...createdOperation, status: 'RUNNING'}
+    })
+    const input = await prepareBulkOperation({store, query: '{ products { edges { node { id } } } }', watch: true})
+    const result = await executeBulkOperation(input)
+    expect(result.watchAborted).toBe(true)
+    expect(result.operation?.status).toBe('RUNNING')
+    expect(result.results).toBeUndefined()
+    expect(downloadBulkOperationResults).not.toHaveBeenCalled()
+  })
+
+  test('does not download results when a short poll finishes immediately', async () => {
+    vi.mocked(runBulkOperationQuery).mockResolvedValue({bulkOperation: createdOperation, userErrors: []})
+    vi.mocked(shortBulkOperationPoll).mockResolvedValue({
+      ...createdOperation,
+      status: 'COMPLETED',
+      url: 'https://example.com/results.jsonl',
+    })
+    const input = await prepareBulkOperation({store, query: '{ products { edges { node { id } } } }'})
+    const result = await executeBulkOperation(input)
+    expect(result.operation?.status).toBe('COMPLETED')
+    expect(result.results).toBeUndefined()
+    expect(downloadBulkOperationResults).not.toHaveBeenCalled()
+  })
+
+  test('propagates a failed API request without producing a result', async () => {
+    vi.mocked(runBulkOperationQuery).mockRejectedValue(new Error('Network error'))
+    const input = await prepareBulkOperation({store, query: '{ products { edges { node { id } } } }'})
+    await expect(executeBulkOperation(input)).rejects.toThrow('Network error')
+    expect(shortBulkOperationPoll).not.toHaveBeenCalled()
+    expect(renderSuccess).not.toHaveBeenCalled()
   })
 
   describe('--watch result rendering', () => {
@@ -137,7 +192,7 @@ describe('executeBulkOperation', () => {
       vi.mocked(downloadBulkOperationResults).mockResolvedValue('{"data":{"products":{"edges":[]}}}')
       const output = mockAndCaptureOutput()
 
-      await executeBulkOperation({store, query: '{ products { edges { node { id } } } }', watch: true})
+      await executeAndPresent({store, query: '{ products { edges { node { id } } } }', watch: true})
 
       expect(downloadBulkOperationResults).toHaveBeenCalledWith('https://example.com/results.jsonl')
       expect(renderSuccess).toHaveBeenCalledWith(
@@ -151,7 +206,7 @@ describe('executeBulkOperation', () => {
       vi.mocked(downloadBulkOperationResults).mockResolvedValue('')
 
       await expect(
-        executeBulkOperation({store, query: '{ products { edges { node { id } } } }', watch: true}),
+        executeAndPresent({store, query: '{ products { edges { node { id } } } }', watch: true}),
       ).resolves.not.toThrow()
 
       expect(renderSuccess).toHaveBeenCalledWith(
@@ -165,7 +220,7 @@ describe('executeBulkOperation', () => {
         '{"data":{"productUpdate":{"product":null,"userErrors":[{"message":"Invalid"}]}}}',
       )
 
-      await executeBulkOperation({store, query: '{ products { edges { node { id } } } }', watch: true})
+      await executeAndPresent({store, query: '{ products { edges { node { id } } } }', watch: true})
 
       expect(renderWarning).toHaveBeenCalledWith(
         expect.objectContaining({headline: 'Bulk operation completed with errors.'}),
@@ -180,7 +235,7 @@ describe('executeBulkOperation', () => {
         completedAt: '2024-01-01T00:05:00Z',
       })
 
-      await executeBulkOperation({store, query: '{ products { edges { node { id } } } }', watch: true})
+      await executeAndPresent({store, query: '{ products { edges { node { id } } } }', watch: true})
 
       expect(downloadBulkOperationResults).not.toHaveBeenCalled()
       expect(renderError).toHaveBeenCalledWith(
@@ -189,3 +244,10 @@ describe('executeBulkOperation', () => {
     })
   })
 })
+
+async function executeAndPresent(input: Parameters<typeof prepareBulkOperation>[0]) {
+  const prepared = await prepareBulkOperation(input)
+  const result = await executeBulkOperation(prepared)
+  await renderExecuteBulkOperationResult(result, {format: 'text', watch: prepared.watch})
+  return result
+}

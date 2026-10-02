@@ -1,4 +1,4 @@
-import {downloadFile, shopifyFetch, formData, requestMode, fetch} from './http.js'
+import {downloadFile, shopifyFetch, formData, requestMode, fetch, abortSignalFromRequestBehaviour} from './http.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {fileExists, inTemporaryDirectory, readFile} from './fs.js'
 import {joinPath} from './path.js'
@@ -372,5 +372,73 @@ describe('requestMode', () => {
       useAbortSignal: true,
       timeoutMs: 100,
     })
+  })
+})
+
+describe('abortSignalFromRequestBehaviour', () => {
+  // `AbortSignal.timeout` is backed by libuv rather than a JS timer, so faked timers never
+  // fire it. These tests use real timers and wait for the abort event instead of sleeping.
+  const timeoutBehaviour = {
+    useNetworkLevelRetry: false,
+    useAbortSignal: true,
+    timeoutMs: 10,
+  } as const
+
+  const abortOf = async (signal: ReturnType<typeof abortSignalFromRequestBehaviour>) =>
+    new Promise<void>((resolve) => signal?.addEventListener('abort', () => resolve()))
+
+  test('cancels the request once the configured timeout elapses', async () => {
+    vi.useRealTimers()
+
+    const signal = abortSignalFromRequestBehaviour(timeoutBehaviour)
+    expect(signal?.aborted).toBe(false)
+
+    await abortOf(signal)
+
+    expect(signal?.aborted).toBe(true)
+  })
+
+  test('leaves the request uncancelled when no abort signal is wanted', () => {
+    expect(
+      abortSignalFromRequestBehaviour({
+        useNetworkLevelRetry: false,
+        useAbortSignal: false,
+      }),
+    ).toBeUndefined()
+  })
+
+  test('uses the signal a factory function produces', () => {
+    const provided = AbortSignal.timeout(DURATION_UNTIL_ABORT_IS_SEEN)
+
+    const signal = abortSignalFromRequestBehaviour({
+      useNetworkLevelRetry: false,
+      useAbortSignal: () => provided,
+    })
+
+    expect(signal).toBe(provided)
+  })
+
+  test('uses a signal supplied directly', () => {
+    const provided = AbortSignal.timeout(DURATION_UNTIL_ABORT_IS_SEEN)
+
+    const signal = abortSignalFromRequestBehaviour({
+      useNetworkLevelRetry: false,
+      useAbortSignal: provided,
+    })
+
+    expect(signal).toBe(provided)
+  })
+
+  test('returns a fresh signal on each call so a retried request is not born aborted', async () => {
+    vi.useRealTimers()
+
+    const first = abortSignalFromRequestBehaviour(timeoutBehaviour)
+    await abortOf(first)
+    expect(first?.aborted).toBe(true)
+
+    const second = abortSignalFromRequestBehaviour(timeoutBehaviour)
+
+    expect(second).not.toBe(first)
+    expect(second?.aborted).toBe(false)
   })
 })

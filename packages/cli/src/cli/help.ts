@@ -1,4 +1,8 @@
+import {helpService} from './services/commands/help/index.js'
+import {presentHelpResult} from './services/commands/help/result.js'
 import {CommandHelp, Help} from '@oclif/core'
+import {jsonOutputEnabled} from '@shopify/cli-kit/node/environment'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import type {Command} from '@oclif/core'
 
 type HelpSectionBody = Parameters<CommandHelp['section']>[1]
@@ -104,9 +108,32 @@ function wrapDescription(description: string, wrapProse: (prose: string) => stri
 
 /**
  * Custom help class, wired up via `oclif.helpClass` in this package's
- * `package.json`. It only swaps in {@link ShopifyCommandHelp}; everything else
- * uses oclif's default help behaviour.
+ * `package.json`. Uses {@link ShopifyCommandHelp} for text and the help result
+ * contract when oclif handles `--help` in JSON mode before command execution.
  */
 export default class ShopifyHelp extends Help {
   protected CommandHelpClass = ShopifyCommandHelp
+
+  async showCommandHelp(command: Command.Loadable): Promise<void> {
+    if (!terminalSupportsPrompting()) return super.showCommandHelp(command)
+
+    // Keep schemas in cached metadata and formatCommand(), which generates README documentation.
+    // Remove the schema introduction and block, preserving the hint and any command examples.
+    return super.showCommandHelp({
+      ...command,
+      description: command.description?.replace(
+        /(Use `--json-schema` to print the result, error, and event schemas\.)\n\nOutput from `--json` conforms to the `[^`]+` schema\.\n\n```json\n[\s\S]*\n```$/,
+        '$1',
+      ),
+    })
+  }
+
+  async showHelp(argv: string[]): Promise<void> {
+    if (!jsonOutputEnabled(undefined, argv)) return super.showHelp(argv)
+
+    // Oclif stops resolving the subject at the first flag, so remove format flags before resolving it.
+    const helpArguments = argv.filter((argument) => argument !== '--json' && argument !== '-j')
+    const result = await helpService(this.config, helpArguments, this.opts.all)
+    presentHelpResult(result)
+  }
 }

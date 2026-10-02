@@ -215,7 +215,7 @@ function orderFilesToBeDeleted(files: Checksum[]): Checksum[] {
     ...fileSets.otherLiquidFiles,
     ...fileSets.configDataFile,
     ...fileSets.configStylesheetFiles,
-    ...fileSets.agentInstructionFiles,
+    ...fileSets.documentationFiles,
     ...fileSets.configSchemaFile,
     ...fileSets.staticAssetFiles,
   ]
@@ -337,7 +337,7 @@ function selectUploadableFiles(themeFileSystem: ThemeFileSystem, remoteChecksums
  * - The other JSON files (for example, locales)
  * - The static assets
  * - Config stylesheets
- * - Agent instructions
+ * - Root documentation files
  *
  */
 function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
@@ -353,7 +353,7 @@ function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
       fileSets.otherJsonFiles,
       fileSets.staticAssetFiles,
       fileSets.configStylesheetFiles,
-      fileSets.agentInstructionFiles,
+      fileSets.documentationFiles,
     ],
     // Follow order of dependencies:
     dependentFiles: [

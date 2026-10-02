@@ -1,14 +1,7 @@
-import {listCurrentStoredStoreAppSessions, type StoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
+import {type StoreAuthSession} from './types.js'
+import {listCurrentStoredStoreAppSessions} from '@shopify/cli-kit/node/store-auth-session'
 
-export interface StoredStoreAuthSummary {
-  store: string
-  userId: string
-  scopes: string[]
-  acquiredAt: string
-  expiresAt?: string
-  refreshTokenExpiresAt?: string
-  associatedUser?: StoredStoreAppSession['associatedUser']
-}
+export type StoredStoreAuthSummary = StoreAuthSession
 
 type StoreSessionStorage = Parameters<typeof listCurrentStoredStoreAppSessions>[0]
 

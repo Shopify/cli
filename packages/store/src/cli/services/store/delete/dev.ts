@@ -1,3 +1,4 @@
+import {deleteDevStoreJsonOutputSchema} from './types.js'
 import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
 import {fetchOptionalOrganizationShop} from '../../../utilities/store-lookup/organization-shop.js'
 import {DeleteAppDevelopmentStore} from '../../../api/graphql/business-platform-organizations/generated/delete_app_development_store.js'
@@ -154,25 +155,21 @@ function deletionPollStatus(): string {
 
 function deletionResultJson(options: {store: string; organization: Organization; deletionConfirmed: boolean}): string {
   const {store, organization, deletionConfirmed} = options
-  return JSON.stringify(
-    {
-      store: {
-        domain: store,
-        deletionRequested: true,
-        deletionConfirmed,
-      },
-      organization: {
-        id: organization.id,
-        name: organization.businessName,
-      },
-      ...(deletionConfirmed
-        ? {}
-        : {
-            message:
-              'Deletion was requested, but has not been confirmed yet. The store may still finish deleting asynchronously.',
-          }),
+  return deleteDevStoreJsonOutputSchema.encode({
+    store: {
+      domain: store,
+      deletionRequested: true,
+      deletionConfirmed,
     },
-    null,
-    2,
-  )
+    organization: {
+      id: organization.id,
+      name: organization.businessName,
+    },
+    ...(deletionConfirmed
+      ? {}
+      : {
+          message:
+            'Deletion was requested, but has not been confirmed yet. The store may still finish deleting asynchronously.',
+        }),
+  })
 }
