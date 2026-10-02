@@ -1,13 +1,10 @@
-const {RuleTester} = require('eslint')
-const typescriptParser = require('@typescript-eslint/parser')
+const {RuleTester} = require('oxlint/plugins-dev')
 
 const rule = require('./command-json-output')
 
 const ruleTester = new RuleTester({
   languageOptions: {
-    ecmaVersion: 2022,
     sourceType: 'module',
-    parser: typescriptParser,
   },
 })
 

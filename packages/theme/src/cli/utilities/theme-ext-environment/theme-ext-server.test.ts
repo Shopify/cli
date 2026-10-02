@@ -44,7 +44,6 @@ describe('createDevelopmentExtensionServer', () => {
     await server.dispatch(event)
 
     if (!body && '_data' in res) {
-      // eslint-disable-next-line compat/require-atomic-updates
       body = await new Response(res._data as ReadableStream).text()
     }
 

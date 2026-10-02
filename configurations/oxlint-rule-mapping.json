@@ -1,0 +1,1548 @@
+{
+  "@nx/enforce-module-boundaries": {
+    "replacement": "compat/nx-enforce-module-boundaries",
+    "status": "partial",
+    "limitation": "Relative cross-project imports and re-exports are checked. Nx graph cycles, tag constraints, lazy-loading checks and buildability checks are not retained."
+  },
+  "@shopify/cli/banner-headline-format": {
+    "replacement": "@shopify/cli/banner-headline-format",
+    "status": "retained"
+  },
+  "@shopify/cli/command-conventional-flag-env": {
+    "replacement": "@shopify/cli/command-conventional-flag-env",
+    "status": "retained"
+  },
+  "@shopify/cli/command-flags-with-env": {
+    "replacement": "@shopify/cli/command-flags-with-env",
+    "status": "retained"
+  },
+  "@shopify/cli/command-json-output": {
+    "replacement": "@shopify/cli/command-json-output",
+    "status": "retained"
+  },
+  "@shopify/cli/command-reserved-flags": {
+    "replacement": "@shopify/cli/command-reserved-flags",
+    "status": "retained"
+  },
+  "@shopify/cli/no-error-factory-functions": {
+    "replacement": "@shopify/cli/no-error-factory-functions",
+    "status": "retained"
+  },
+  "@shopify/cli/no-inline-graphql": {
+    "replacement": "@shopify/cli/no-inline-graphql",
+    "status": "retained"
+  },
+  "@shopify/cli/no-process-cwd": {
+    "replacement": "@shopify/cli/no-process-cwd",
+    "status": "retained"
+  },
+  "@shopify/cli/no-trailing-js-in-cli-kit-imports": {
+    "replacement": "@shopify/cli/no-trailing-js-in-cli-kit-imports",
+    "status": "retained"
+  },
+  "@shopify/cli/no-vi-manual-mock-clear": {
+    "replacement": "@shopify/cli/no-vi-manual-mock-clear",
+    "status": "retained"
+  },
+  "@shopify/cli/no-vi-mock-in-callbacks": {
+    "replacement": "@shopify/cli/no-vi-mock-in-callbacks",
+    "status": "retained"
+  },
+  "@shopify/cli/prompt-message-format": {
+    "replacement": "@shopify/cli/prompt-message-format",
+    "status": "retained"
+  },
+  "@shopify/cli/required-fields-when-loading-app": {
+    "replacement": "@shopify/cli/required-fields-when-loading-app",
+    "status": "retained"
+  },
+  "@shopify/images-no-direct-imports": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "The specialized Shopify rule is not ported."
+  },
+  "@shopify/no-context-menu": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "The specialized Shopify rule is not ported."
+  },
+  "@shopify/no-debugger": {
+    "replacement": "no-debugger",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@shopify/no-fully-static-classes": {
+    "replacement": "@shopify/cli/no-fully-static-classes",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "@shopify/no-useless-computed-properties": {
+    "replacement": "no-useless-computed-key",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@shopify/prefer-early-return": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "The specialized Shopify rule is not ported."
+  },
+  "@shopify/prefer-module-scope-constants": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "The specialized Shopify rule is not ported."
+  },
+  "@shopify/prefer-twine": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "The specialized Shopify rule is not ported."
+  },
+  "@shopify/strict-component-boundaries": {
+    "replacement": "compat/nx-enforce-module-boundaries",
+    "status": "partial",
+    "limitation": "Relative imports between projects are rejected. Resolver-based component entrypoint checks are not retained."
+  },
+  "@shopify/typescript-prefer-build-client-schema": {
+    "replacement": "@shopify/cli/prefer-build-client-schema",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "@shopify/typescript-prefer-pascal-case-enums": {
+    "replacement": "@shopify/cli/prefer-pascal-case-enums",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "@shopify/typescript-prefer-singular-enums": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "The specialized Shopify rule is not ported."
+  },
+  "@typescript-eslint/adjacent-overload-signatures": {
+    "replacement": "typescript/adjacent-overload-signatures",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/array-type": {
+    "replacement": "typescript/array-type",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/ban-ts-comment": {
+    "replacement": "typescript/ban-ts-comment",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/consistent-type-assertions": {
+    "replacement": "typescript/consistent-type-assertions",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/consistent-type-definitions": {
+    "replacement": "typescript/consistent-type-definitions",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/member-ordering": {
+    "replacement": "@shopify/cli/member-ordering",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "@typescript-eslint/naming-convention": {
+    "replacement": "compat/typescript-eslint-naming-convention",
+    "status": "partial",
+    "limitation": "Configured declaration, parameter, property and type names are checked. Type filters, all upstream selectors and modifier precedence are not implemented. Inferred type parameters keep their existing names; naming enforcement applies to declared type parameters."
+  },
+  "@typescript-eslint/no-array-constructor": {
+    "replacement": "no-array-constructor",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/no-explicit-any": {
+    "replacement": "typescript/no-explicit-any",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/no-extraneous-class": {
+    "replacement": "typescript/no-extraneous-class",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/no-floating-promises": {
+    "replacement": "typescript/no-floating-promises",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/no-inferrable-types": {
+    "replacement": "typescript/no-inferrable-types",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/no-misused-new": {
+    "replacement": "typescript/no-misused-new",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/no-misused-promises": {
+    "replacement": "typescript/no-misused-promises",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/no-this-alias": {
+    "replacement": "typescript/no-this-alias",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/no-unnecessary-template-expression": {
+    "replacement": "typescript/no-unnecessary-template-expression",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/no-unnecessary-type-assertion": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Disabled during migration because the native checker flags assertions accepted by the original ESLint setup, including intentional test fixtures. Existing casts are retained; there is no exact compatibility option."
+  },
+  "@typescript-eslint/no-unnecessary-type-constraint": {
+    "replacement": "typescript/no-unnecessary-type-constraint",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/no-unused-expressions": {
+    "replacement": "no-unused-expressions",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/no-unused-vars": {
+    "replacement": "no-unused-vars",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/no-wrapper-object-types": {
+    "replacement": "typescript/no-wrapper-object-types",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/only-throw-error": {
+    "replacement": "typescript/only-throw-error",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/prefer-for-of": {
+    "replacement": "typescript/prefer-for-of",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/prefer-nullish-coalescing": {
+    "replacement": "typescript/prefer-nullish-coalescing",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/prefer-promise-reject-errors": {
+    "replacement": "typescript/prefer-promise-reject-errors",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/prefer-readonly": {
+    "replacement": "typescript/prefer-readonly",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/prefer-reduce-type-parameter": {
+    "replacement": "typescript/prefer-reduce-type-parameter",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/switch-exhaustiveness-check": {
+    "replacement": "typescript/switch-exhaustiveness-check",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/triple-slash-reference": {
+    "replacement": "typescript/triple-slash-reference",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "@typescript-eslint/unified-signatures": {
+    "replacement": "typescript/unified-signatures",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "array-callback-return": {
+    "replacement": "array-callback-return",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "block-scoped-var": {
+    "replacement": "block-scoped-var",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "camelcase": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "No independent implementation is enabled."
+  },
+  "consistent-return": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "No independent implementation is enabled."
+  },
+  "consistent-this": {
+    "replacement": "@shopify/cli/consistent-this",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "constructor-super": {
+    "replacement": "constructor-super",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "dot-notation": {
+    "replacement": "@shopify/cli/dot-notation",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "eqeqeq": {
+    "replacement": "eqeqeq",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "eslint-comments/disable-enable-pair": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "ESLint directive conventions are removed; Oxlint still checks unused disable directives."
+  },
+  "eslint-comments/no-aggregating-enable": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "ESLint directive conventions are removed; Oxlint still checks unused disable directives."
+  },
+  "eslint-comments/no-duplicate-disable": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "ESLint directive conventions are removed; Oxlint still checks unused disable directives."
+  },
+  "eslint-comments/no-unlimited-disable": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "ESLint directive conventions are removed; Oxlint still checks unused disable directives."
+  },
+  "eslint-comments/no-unused-disable": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "ESLint directive conventions are removed; Oxlint still checks unused disable directives.",
+    "otherToolCoverage": {
+      "tools": ["Oxlint unused-disable reporting"],
+      "scope": "Full pnpm lint and the PR Oxlint job pass --report-unused-disable-directives with --deny-warnings.",
+      "limitation": "This covers unused suppressions for enabled Oxlint rules. Per-project lint targets do not all pass this flag; other ESLint directive conventions remain separate gaps."
+    }
+  },
+  "eslint-comments/no-unused-enable": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "ESLint directive conventions are removed; Oxlint still checks unused disable directives."
+  },
+  "for-direction": {
+    "replacement": "for-direction",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "func-name-matching": {
+    "replacement": "func-name-matching",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "func-style": {
+    "replacement": "func-style",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "getter-return": {
+    "replacement": "getter-return",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "grouped-accessor-pairs": {
+    "replacement": "grouped-accessor-pairs",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "guard-for-in": {
+    "replacement": "guard-for-in",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "id-length": {
+    "replacement": "compat/id-length",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "import-x/default": {
+    "replacement": "import/default",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "import-x/export": {
+    "replacement": "import/export",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "import-x/extensions": {
+    "replacement": "import/extensions",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "import-x/first": {
+    "replacement": "import/first",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "import-x/named": {
+    "replacement": "import/named",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "import-x/namespace": {
+    "replacement": "import/namespace",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "import-x/newline-after-import": {
+    "replacement": "import/newline-after-import",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "import-x/no-absolute-path": {
+    "replacement": "import/no-absolute-path",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "import-x/no-anonymous-default-export": {
+    "replacement": "import/no-anonymous-default-export",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "import-x/no-cycle": {
+    "replacement": "import/no-cycle",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "import-x/no-deprecated": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "The ESLint import resolver and project-wide export analysis are removed."
+  },
+  "import-x/no-duplicates": {
+    "replacement": "import/no-duplicates",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "import-x/no-extraneous-dependencies": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "The ESLint import resolver and project-wide export analysis are removed.",
+    "otherToolCoverage": {
+      "tools": ["Knip unlisted"],
+      "scope": "Analyzed imports must have a declared dependency under Knip resolution.",
+      "limitation": "The original ESLint rule applied only to JavaScript. Knip exclusions and ancestor-workspace dependency lookup prevent identical coverage; default mode also accepts devDependencies."
+    }
+  },
+  "import-x/no-mutable-exports": {
+    "replacement": "import/no-mutable-exports",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "import-x/no-named-as-default": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Disabled during migration because native module analysis flags existing default WebSocket imports accepted by ESLint. Existing imports are retained; this check is currently lost."
+  },
+  "import-x/no-named-as-default-member": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Disabled during migration because native module analysis flags existing Prettier and CommonJS GraphQL-loader access accepted by ESLint. Existing imports are retained; this check is currently lost."
+  },
+  "import-x/no-named-default": {
+    "replacement": "import/no-named-default",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "import-x/no-self-import": {
+    "replacement": "import/no-self-import",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "import-x/no-unresolved": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "The ESLint import resolver and project-wide export analysis are removed.",
+    "otherToolCoverage": {
+      "tools": ["Knip unresolved", "TypeScript module resolution", "esbuild resolution"],
+      "scope": "Knip checks analyzed imports; TypeScript and esbuild check their compilation/bundle inputs.",
+      "limitation": "The original ESLint rule applied only to JavaScript. Knip excludes the plugin and e2e workspaces and selected files; TypeScript does not type-check all JavaScript, and externalized bundle imports need not resolve."
+    }
+  },
+  "import-x/no-unused-modules": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "The ESLint import resolver and project-wide export analysis are removed.",
+    "otherToolCoverage": {
+      "tools": ["Knip exports", "Knip types", "Knip files"],
+      "scope": "Knip reports unused exports, types, and files in its analyzed graph.",
+      "limitation": "Public entry exports are retained by default. Ignored workspaces, generated files, and configured entry points differ from ESLint scopes."
+    }
+  },
+  "import-x/no-useless-path-segments": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "The ESLint import resolver and project-wide export analysis are removed."
+  },
+  "import-x/no-webpack-loader-syntax": {
+    "replacement": "import/no-webpack-loader-syntax",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "import-x/order": {
+    "replacement": "@shopify/cli/import-order",
+    "status": "partial",
+    "limitation": "Configured import groups and blank lines are checked. Resolver-based internal groups, path groups and ordering of imports across intervening statements are not equivalent."
+  },
+  "jsdoc/check-access": {
+    "replacement": "jsdoc/check-access",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "jsdoc/check-alignment": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks.",
+    "otherToolCoverage": {
+      "tools": ["Prettier"],
+      "scope": "Prettier normalizes indentation of JSDoc blocks whose lines start with asterisks.",
+      "limitation": "This is formatting overlap, not complete JSDoc layout validation; missing asterisks and tag-column alignment are not supplied."
+    }
+  },
+  "jsdoc/check-indentation": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks.",
+    "otherToolCoverage": {
+      "tools": ["Prettier"],
+      "scope": "Prettier normalizes indentation of supported JSDoc blocks.",
+      "limitation": "It does not validate all indentation within comment prose and examples or repair arbitrary malformed block comments."
+    }
+  },
+  "jsdoc/check-line-alignment": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks."
+  },
+  "jsdoc/check-param-names": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks."
+  },
+  "jsdoc/check-property-names": {
+    "replacement": "jsdoc/check-property-names",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "jsdoc/check-syntax": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks.",
+    "otherToolCoverage": {
+      "tools": ["TSDoc parser"],
+      "scope": "The enabled tsdoc-syntax rule rejects malformed TSDoc, including invalid typed @param syntax.",
+      "limitation": "TSDoc and JSDoc have different grammars. This does not validate documentation against function signatures or replace the original JSDoc syntax policy."
+    }
+  },
+  "jsdoc/check-tag-names": {
+    "replacement": "jsdoc/check-tag-names",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "jsdoc/check-types": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks."
+  },
+  "jsdoc/check-values": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks."
+  },
+  "jsdoc/empty-tags": {
+    "replacement": "jsdoc/empty-tags",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "jsdoc/implements-on-classes": {
+    "replacement": "jsdoc/implements-on-classes",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "jsdoc/match-description": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks."
+  },
+  "jsdoc/multiline-blocks": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks."
+  },
+  "jsdoc/no-bad-blocks": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks."
+  },
+  "jsdoc/no-defaults": {
+    "replacement": "jsdoc/no-defaults",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "jsdoc/no-multi-asterisks": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks."
+  },
+  "jsdoc/no-types": {
+    "replacement": "@shopify/cli/jsdoc-no-types",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "jsdoc/no-undefined-types": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks."
+  },
+  "jsdoc/require-asterisk-prefix": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks."
+  },
+  "jsdoc/require-description": {
+    "replacement": "@shopify/cli/jsdoc-require-description",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "jsdoc/require-description-complete-sentence": {
+    "replacement": "@shopify/cli/jsdoc-require-description-complete-sentence",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "jsdoc/require-hyphen-before-param-description": {
+    "replacement": "@shopify/cli/jsdoc-require-hyphen-before-param-description",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "jsdoc/require-jsdoc": {
+    "replacement": "@shopify/cli/jsdoc-require-jsdoc",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "jsdoc/require-param": {
+    "replacement": "@shopify/cli/jsdoc-require-param",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "jsdoc/require-param-description": {
+    "replacement": "jsdoc/require-param-description",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "jsdoc/require-param-name": {
+    "replacement": "jsdoc/require-param-name",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "jsdoc/require-property": {
+    "replacement": "jsdoc/require-property",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "jsdoc/require-property-description": {
+    "replacement": "jsdoc/require-property-description",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "jsdoc/require-property-name": {
+    "replacement": "jsdoc/require-property-name",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "jsdoc/require-property-type": {
+    "replacement": "jsdoc/require-property-type",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "jsdoc/require-returns": {
+    "replacement": "@shopify/cli/jsdoc-require-returns",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "jsdoc/require-returns-check": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks."
+  },
+  "jsdoc/require-returns-description": {
+    "replacement": "jsdoc/require-returns-description",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "jsdoc/require-throws": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks."
+  },
+  "jsdoc/require-yields": {
+    "replacement": "jsdoc/require-yields",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "jsdoc/require-yields-check": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks."
+  },
+  "jsdoc/tag-lines": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks."
+  },
+  "jsdoc/valid-types": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Advanced JSDoc validation is not implemented by the enabled native and independent checks."
+  },
+  "line-comment-position": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "No independent implementation is enabled."
+  },
+  "lines-between-class-members": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "No independent implementation is enabled."
+  },
+  "max-params": {
+    "replacement": "max-params",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "n/callback-return": {
+    "replacement": "node/callback-return",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "n/exports-style": {
+    "replacement": "@shopify/cli/exports-style",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "n/handle-callback-err": {
+    "replacement": "node/handle-callback-err",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "n/no-callback-literal": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Node API metadata and callback conventions are not ported."
+  },
+  "n/no-deprecated-api": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Node API metadata and callback conventions are not ported."
+  },
+  "n/no-exports-assign": {
+    "replacement": "node/no-exports-assign",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "n/no-new-require": {
+    "replacement": "node/no-new-require",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "n/no-path-concat": {
+    "replacement": "node/no-path-concat",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "n/no-unpublished-bin": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Node API metadata and callback conventions are not ported."
+  },
+  "n/no-unsupported-features/node-builtins": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Node API metadata and callback conventions are not ported."
+  },
+  "n/prefer-global/buffer": {
+    "replacement": "@shopify/cli/prefer-global-buffer",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "n/prefer-global/console": {
+    "replacement": "compat/n-prefer-global-console",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "n/prefer-global/process": {
+    "replacement": "@shopify/cli/prefer-global-process",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "n/prefer-global/text-decoder": {
+    "replacement": "@shopify/cli/prefer-global-text-decoder",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "n/prefer-global/text-encoder": {
+    "replacement": "@shopify/cli/prefer-global-text-encoder",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "n/prefer-global/url": {
+    "replacement": "compat/n-prefer-global-url",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "n/prefer-global/url-search-params": {
+    "replacement": "@shopify/cli/prefer-global-url-search-params",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "n/prefer-promises/dns": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Node API metadata and callback conventions are not ported."
+  },
+  "n/prefer-promises/fs": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Node API metadata and callback conventions are not ported."
+  },
+  "n/shebang": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "Node API metadata and callback conventions are not ported."
+  },
+  "new-cap": {
+    "replacement": "new-cap",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-alert": {
+    "replacement": "no-alert",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-array-constructor": {
+    "replacement": "no-array-constructor",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-async-promise-executor": {
+    "replacement": "no-async-promise-executor",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-await-in-loop": {
+    "replacement": "no-await-in-loop",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-caller": {
+    "replacement": "no-caller",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-case-declarations": {
+    "replacement": "no-case-declarations",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-catch-all/no-catch-all": {
+    "replacement": "no-catch-all/no-catch-all",
+    "status": "retained"
+  },
+  "no-catch-shadow": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "No independent implementation is enabled.",
+    "otherToolCoverage": {
+      "tools": ["Oxlint no-shadow"],
+      "scope": "The enabled JavaScript no-shadow rule catches a catch binding that shadows an existing outer variable.",
+      "limitation": "General shadowing options and hoisting behavior differ from the legacy IE8-specific rule."
+    }
+  },
+  "no-class-assign": {
+    "replacement": "no-class-assign",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-compare-neg-zero": {
+    "replacement": "no-compare-neg-zero",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-cond-assign": {
+    "replacement": "no-cond-assign",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-console": {
+    "replacement": "no-console",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-const-assign": {
+    "replacement": "no-const-assign",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-constant-condition": {
+    "replacement": "no-constant-condition",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-constructor-return": {
+    "replacement": "no-constructor-return",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-control-regex": {
+    "replacement": "no-control-regex",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-delete-var": {
+    "replacement": "no-delete-var",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-div-regex": {
+    "replacement": "no-div-regex",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-dupe-args": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "No independent implementation is enabled.",
+    "otherToolCoverage": {
+      "tools": ["Oxlint parser", "Independent no-redeclare rule"],
+      "scope": "The ESM parser rejects duplicate parameters; the enabled independent no-redeclare rule also catches duplicate parameters in CommonJS plugin files.",
+      "limitation": "The original rule was enabled only for JavaScript. The CommonJS parser alone accepts duplicates; the independent rule is not a full equivalence proof for all parameter shapes."
+    }
+  },
+  "no-dupe-class-members": {
+    "replacement": "no-dupe-class-members",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-dupe-else-if": {
+    "replacement": "no-dupe-else-if",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-dupe-keys": {
+    "replacement": "no-dupe-keys",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-duplicate-case": {
+    "replacement": "no-duplicate-case",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-empty": {
+    "replacement": "no-empty",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-empty-character-class": {
+    "replacement": "no-empty-character-class",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-empty-function": {
+    "replacement": "no-empty-function",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-empty-pattern": {
+    "replacement": "no-empty-pattern",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-eval": {
+    "replacement": "no-eval",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-ex-assign": {
+    "replacement": "no-ex-assign",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-extend-native": {
+    "replacement": "no-extend-native",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-extra-bind": {
+    "replacement": "no-extra-bind",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-extra-boolean-cast": {
+    "replacement": "no-extra-boolean-cast",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-extra-label": {
+    "replacement": "no-extra-label",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-fallthrough": {
+    "replacement": "no-fallthrough",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-func-assign": {
+    "replacement": "no-func-assign",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-global-assign": {
+    "replacement": "no-global-assign",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-implicit-coercion": {
+    "replacement": "no-implicit-coercion",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-implicit-globals": {
+    "replacement": "@shopify/cli/no-implicit-globals",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "no-implied-eval": {
+    "replacement": "no-implied-eval",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-inner-declarations": {
+    "replacement": "no-inner-declarations",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-invalid-regexp": {
+    "replacement": "no-invalid-regexp",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-irregular-whitespace": {
+    "replacement": "no-irregular-whitespace",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-iterator": {
+    "replacement": "no-iterator",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-label-var": {
+    "replacement": "no-label-var",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-labels": {
+    "replacement": "no-labels",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-lone-blocks": {
+    "replacement": "no-lone-blocks",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-lonely-if": {
+    "replacement": "no-lonely-if",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-loop-func": {
+    "replacement": "no-loop-func",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-misleading-character-class": {
+    "replacement": "no-misleading-character-class",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-multi-assign": {
+    "replacement": "no-multi-assign",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-negated-condition": {
+    "replacement": "no-negated-condition",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-nested-ternary": {
+    "replacement": "no-nested-ternary",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-new": {
+    "replacement": "no-new",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-new-func": {
+    "replacement": "no-new-func",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-new-object": {
+    "replacement": "@shopify/cli/no-new-object",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "no-new-symbol": {
+    "replacement": "no-new-native-nonconstructor",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-new-wrappers": {
+    "replacement": "no-new-wrappers",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-obj-calls": {
+    "replacement": "no-obj-calls",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-octal": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "No independent implementation is enabled.",
+    "otherToolCoverage": {
+      "tools": ["TypeScript", "Prettier TypeScript parser", "Oxlint ESM parser"],
+      "scope": "TypeScript checking and Prettier parsing reject legacy octal literals in TypeScript; Oxlint rejects them in strict ES modules.",
+      "limitation": "CommonJS JavaScript still accepts legacy octal syntax. Prettier does not reject or rewrite it there."
+    }
+  },
+  "no-octal-escape": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "No independent implementation is enabled.",
+    "otherToolCoverage": {
+      "tools": ["TypeScript", "Prettier TypeScript parser", "Oxlint ESM parser"],
+      "scope": "TypeScript checking and Prettier parsing reject legacy octal escapes in TypeScript; Oxlint rejects them in strict ES modules.",
+      "limitation": "CommonJS JavaScript still accepts legacy octal escapes. Prettier does not reject or rewrite them there."
+    }
+  },
+  "no-param-reassign": {
+    "replacement": "no-param-reassign",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-proto": {
+    "replacement": "no-proto",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-prototype-builtins": {
+    "replacement": "no-prototype-builtins",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-redeclare": {
+    "replacement": "@shopify/cli/no-redeclare",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "no-regex-spaces": {
+    "replacement": "no-regex-spaces",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-restricted-globals": {
+    "replacement": "no-restricted-globals",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-restricted-imports": {
+    "replacement": "no-restricted-imports",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-restricted-syntax": {
+    "replacement": "compat/no-restricted-syntax",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "no-return-assign": {
+    "replacement": "no-return-assign",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-return-await": {
+    "replacement": "@shopify/cli/no-return-await",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "no-self-assign": {
+    "replacement": "no-self-assign",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-self-compare": {
+    "replacement": "no-self-compare",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-sequences": {
+    "replacement": "no-sequences",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-setter-return": {
+    "replacement": "no-setter-return",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-shadow": {
+    "replacement": "no-shadow",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-shadow-restricted-names": {
+    "replacement": "no-shadow-restricted-names",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-sparse-arrays": {
+    "replacement": "no-sparse-arrays",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-template-curly-in-string": {
+    "replacement": "no-template-curly-in-string",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-this-before-super": {
+    "replacement": "no-this-before-super",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-throw-literal": {
+    "replacement": "no-throw-literal",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-undef": {
+    "replacement": "no-undef",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-undef-init": {
+    "replacement": "@shopify/cli/no-undef-init",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "no-unmodified-loop-condition": {
+    "replacement": "no-unmodified-loop-condition",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-unneeded-ternary": {
+    "replacement": "no-unneeded-ternary",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-unreachable": {
+    "replacement": "no-unreachable",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-unsafe-finally": {
+    "replacement": "no-unsafe-finally",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-unsafe-negation": {
+    "replacement": "no-unsafe-negation",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-unused-expressions": {
+    "replacement": "no-unused-expressions",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-unused-labels": {
+    "replacement": "no-unused-labels",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-unused-vars": {
+    "replacement": "no-unused-vars",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-use-before-define": {
+    "replacement": "no-use-before-define",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-useless-call": {
+    "replacement": "no-useless-call",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-useless-catch": {
+    "replacement": "no-useless-catch",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-useless-concat": {
+    "replacement": "no-useless-concat",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-useless-constructor": {
+    "replacement": "no-useless-constructor",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-useless-escape": {
+    "replacement": "no-useless-escape",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-useless-rename": {
+    "replacement": "no-useless-rename",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-useless-return": {
+    "replacement": "no-useless-return",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-var": {
+    "replacement": "no-var",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-void": {
+    "replacement": "no-void",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-warning-comments": {
+    "replacement": "no-warning-comments",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "no-with": {
+    "replacement": "no-with",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "object-shorthand": {
+    "replacement": "object-shorthand",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "one-var": {
+    "replacement": "@shopify/cli/one-var",
+    "status": "partial",
+    "limitation": "Independent syntax check covers repository conventions, not the complete upstream rule API."
+  },
+  "operator-assignment": {
+    "replacement": "operator-assignment",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "padding-line-between-statements": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "No independent implementation is enabled."
+  },
+  "prefer-const": {
+    "replacement": "prefer-const",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "prefer-exponentiation-operator": {
+    "replacement": "prefer-exponentiation-operator",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "prefer-numeric-literals": {
+    "replacement": "prefer-numeric-literals",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "prefer-object-spread": {
+    "replacement": "prefer-object-spread",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "prefer-promise-reject-errors": {
+    "replacement": "prefer-promise-reject-errors",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "prefer-rest-params": {
+    "replacement": "prefer-rest-params",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "prefer-spread": {
+    "replacement": "prefer-spread",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "prefer-template": {
+    "replacement": "prefer-template",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "promise/catch-or-return": {
+    "replacement": "promise/catch-or-return",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "promise/no-nesting": {
+    "replacement": "promise/no-nesting",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "promise/no-return-in-finally": {
+    "replacement": "promise/no-return-in-finally",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "promise/no-return-wrap": {
+    "replacement": "promise/no-return-wrap",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "promise/param-names": {
+    "replacement": "promise/param-names",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "promise/valid-params": {
+    "replacement": "promise/valid-params",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "radix": {
+    "replacement": "radix",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "require-atomic-updates": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "No independent implementation is enabled."
+  },
+  "require-await": {
+    "replacement": "require-await",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "require-yield": {
+    "replacement": "require-yield",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "sort-class-members/sort-class-members": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "No independent implementation is enabled."
+  },
+  "spaced-comment": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "No independent implementation is enabled."
+  },
+  "strict": {
+    "replacement": null,
+    "status": "unsupported",
+    "limitation": "No independent implementation is enabled."
+  },
+  "symbol-description": {
+    "replacement": "symbol-description",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "tsdoc/syntax": {
+    "replacement": "tsdoc/syntax",
+    "status": "partial",
+    "limitation": "Uses the same TSDoc parser with its default configuration. Per-directory tsdoc.json loading is not implemented; this repository has no such file."
+  },
+  "unicode-bom": {
+    "replacement": "unicode-bom",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "unused-imports/no-unused-imports": {
+    "replacement": "@shopify/cli/unused-imports",
+    "status": "partial",
+    "limitation": "Independent binding-reference check includes tests, where ordinary unused variables remain allowed. Import-removal fixes are supplied by native no-unused-vars outside tests."
+  },
+  "use-isnan": {
+    "replacement": "use-isnan",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "valid-typeof": {
+    "replacement": "valid-typeof",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "vitest/consistent-test-it": {
+    "replacement": "vitest/consistent-test-it",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "vitest/max-nested-describe": {
+    "replacement": "vitest/max-nested-describe",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "vitest/no-disabled-tests": {
+    "replacement": "vitest/no-disabled-tests",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "vitest/prefer-expect-resolves": {
+    "replacement": "vitest/prefer-expect-resolves",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  },
+  "yoda": {
+    "replacement": "yoda",
+    "status": "native",
+    "limitation": "Native behavior and option support may differ from ESLint."
+  }
+}

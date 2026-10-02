@@ -55,8 +55,6 @@ jobs:
         run: pnpm prettier
       - name: Oxlint
         run: pnpm lint:oxlint
-      - name: ESLint compatibility
-        run: pnpm lint:eslint --output-style=stream
 
   bundle:
     name: 'Bundle'
