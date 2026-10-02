@@ -101,7 +101,7 @@ describe('help command', () => {
       helpLoader.mockRestore()
       handleError.mockRestore()
       // These tests run sequentially and must restore argv even when an assertion fails.
-      // eslint-disable-next-line require-atomic-updates
+      // eslint-disable-next-line compat/require-atomic-updates
       process.argv = originalArgv
     }
   })

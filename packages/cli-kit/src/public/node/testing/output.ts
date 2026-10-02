@@ -1,7 +1,7 @@
 import {collectedLogs, clearCollectedLogs} from '../output.js'
 import {resetMemoizedIsUnitTest} from '../context/local.js'
 import {environmentVariables} from '../../../private/node/constants.js'
-// eslint-disable-next-line n/prefer-global/console
+// eslint-disable-next-line compat/n-prefer-global-console
 import {Console} from 'node:console'
 
 interface OutputMock {
