@@ -1,6 +1,7 @@
 import {
   appSecurityArtifactPaths,
   readFindingsDocument,
+  resultsDirectoryExists,
   type FindingsDocumentFor,
   type ReadArtifactResult,
 } from './app-security-artifacts.js'
@@ -9,6 +10,7 @@ import {
   resolveAppSecurityCommands,
   type AppSecurityCommands,
 } from './app-security-commands.js'
+import {resultsKey, selectedConfigFileName, type AppSecuritySelection} from './app-security-selection.js'
 import {
   combineFindings,
   type AgentFindingsDocument,
@@ -41,13 +43,25 @@ interface LoadedSource<TDocument> {
   result: ReadArtifactResult<TDocument>
 }
 
+/** Aborts unless the selection's results directory exists. The next step is the `check` that creates it. */
+export async function requireResultsDirectory(selection: AppSecuritySelection): Promise<void> {
+  const key = resultsKey(selection)
+  if (await resultsDirectoryExists(selection.appDirectory, key)) return
+
+  const {scan} = resolveAppSecurityCommands(selection.appDirectory, selectedConfigFileName(selection))
+  throw new AbortError(
+    `No App Security results for ${key} in ${selection.appDirectory}.`,
+    `Run \`${formatAppSecurityCommand(scan)}\`.`,
+  )
+}
+
 /**
  * Reads both result files in parallel and combines them. A missing file is a valid state: the agent is
- * optional and `check` may not have run yet. An invalid file aborts with one error that lists every invalid
- * file and how to fix it.
+ * optional. An invalid file aborts with one error that lists every invalid file and how to fix it.
  */
-export async function loadAppSecurityResults(appRoot: string): Promise<AppSecurityResults> {
-  const paths = appSecurityArtifactPaths(appRoot)
+export async function loadAppSecurityResults(selection: AppSecuritySelection): Promise<AppSecurityResults> {
+  await requireResultsDirectory(selection)
+  const paths = appSecurityArtifactPaths(selection.appDirectory, resultsKey(selection))
   const [deterministic, agent] = await Promise.all([
     loadSource(paths.deterministicFindingsPath, 'deterministic'),
     loadSource(paths.agentFindingsPath, 'agent'),
@@ -56,7 +70,11 @@ export async function loadAppSecurityResults(appRoot: string): Promise<AppSecuri
   const invalidFiles = [invalidFile(deterministic, 'deterministic'), invalidFile(agent, 'agent')].filter(
     (file): file is InvalidResultsFile => file !== undefined,
   )
-  if (invalidFiles.length > 0) throw invalidResultsError(invalidFiles, resolveAppSecurityCommands(appRoot))
+  if (invalidFiles.length > 0)
+    throw invalidResultsError(
+      invalidFiles,
+      resolveAppSecurityCommands(selection.appDirectory, selectedConfigFileName(selection)),
+    )
 
   const deterministicSource = presentSource(deterministic)
   const agentSource = presentSource(agent)

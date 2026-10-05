@@ -20,10 +20,6 @@
       "ruleset": "2026.08.28"
     },
     "generated_at": "2026-08-24T00:00:00.000Z",
-    "project": {
-      "commit": null,
-      "dirty": null
-    },
     "detection": {
       "framework": "none",
       "surface": "config_only",

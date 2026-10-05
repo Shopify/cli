@@ -7,7 +7,6 @@ import type {AgentFindingsDocument} from '../types.js'
 
 const options: RecordAgentFindingsOptions = {
   engineVersion: '3.99.0',
-  project: {commit: 'abc123', dirty: false},
   generatedAt: '2026-01-02T03:04:05.000Z',
 }
 
@@ -70,7 +69,6 @@ describe('recordAgentFindings', () => {
       source: 'agent',
       engine: {name: ENGINE_NAME, version: '3.99.0'},
       generated_at: '2026-01-02T03:04:05.000Z',
-      project: {commit: 'abc123', dirty: false},
     })
     expect(document.checks.map((check) => [check.id, check.status, check.findings.length])).toEqual([
       [tenant.id, 'executed', 2],
@@ -109,7 +107,6 @@ describe('recordAgentFindings', () => {
       source: 'agent',
       engine: {name: 'shopify-app-security', version: '3.99.0'},
       generated_at: '2026-01-02T03:04:05.000Z',
-      project: {commit: 'abc123', dirty: false},
       checks: [
         {
           id: 'OPEN_REDIRECT',

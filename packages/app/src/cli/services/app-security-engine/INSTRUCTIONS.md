@@ -129,7 +129,7 @@ It replaces the scan results and agent checks and never touches the recorded age
 
 ## Removing local artifacts
 
-To delete every local App Security artifact, including files left by earlier Shopify CLI versions, run:
+To delete these local App Security results, run:
 
 ```bash
 {{CLEAN_COMMAND}}

@@ -1,5 +1,5 @@
 import {appSecurityBlockingFlag} from './blocking-flag.js'
-import {appFlags} from '../../../flags.js'
+import {appSecuritySelectionFlags} from './selection-flags.js'
 import securityReview from '../../../services/security-review.js'
 import {securityReviewJsonOutputSchema} from '../../../services/security-review-json.js'
 import {Flags} from '@oclif/core'
@@ -11,7 +11,7 @@ export default class SecurityReview extends BaseCommand {
 
   static summary = 'Show the combined App Security results.'
 
-  static descriptionWithMarkdown = `Combines the deterministic results (\`.shopify/app-security/deterministic-findings.json\`, written by \`shopify app security check\`) with the recorded agent results (\`.shopify/app-security/agent-findings.json\`, written by \`shopify app security record\`) and shows one view of every check: its findings, status and source.
+  static descriptionWithMarkdown = `Combines the deterministic results (\`deterministic-findings.json\`, written by \`shopify app security check\`) with the recorded agent results (\`agent-findings.json\`, written by \`shopify app security record\`) and shows one view of every check: its findings, status and source. Both files are in the results directory, \`.shopify/app-security/<results key>/\`.
 
 The agent results are optional. Use \`--check-id\` to narrow the review to specific checks, \`--verbose\` for full reasoning, evidence and suppressed findings, and \`--blocking\` to exit with code 1 when a check with findings is at or above a severity.`
 
@@ -23,7 +23,7 @@ The agent results are optional. Use \`--check-id\` to narrow the review to speci
 
   static flags = {
     ...globalFlags,
-    path: appFlags.path,
+    ...appSecuritySelectionFlags,
     ...jsonFlag,
     'check-id': Flags.string({
       description: 'Show only this check. Repeat the flag to show several checks.',
@@ -38,6 +38,9 @@ The agent results are optional. Use \`--check-id\` to narrow the review to speci
 
     await securityReview({
       directory: flags.path,
+      configName: flags.config,
+      clientId: flags['client-id'],
+      withoutAppConfig: Boolean(flags['without-app-config']),
       json: flags.json,
       verbose: Boolean(flags.verbose),
       checkIds: flags['check-id'] ?? [],

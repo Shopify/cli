@@ -1,7 +1,9 @@
 import {
   clientIdSource,
   effectiveClientId,
+  resolveAppDirectory,
   resolveAppSecuritySelection,
+  resultsKey,
   selectedConfigFileName,
   type AppSecuritySelection,
   type AppSecuritySelectionDependencies,
@@ -409,5 +411,81 @@ describe('selection helpers', () => {
     expect(effectiveClientId(selection)).toBe('toml-id')
     expect(clientIdSource(selection)).toBe('config')
     expect(selectedConfigFileName(selection)).toBe('shopify.app.staging.toml')
+  })
+})
+
+describe('resultsKey', () => {
+  test.each([
+    ['/app/shopify.app.toml', 'shopify.app'],
+    ['/app/shopify.app.production.toml', 'shopify.app.production'],
+  ])('uses the name of %s without .toml', (appConfigFilePath, expectedKey) => {
+    const selection: AppSecuritySelection = {kind: 'config', appDirectory: '/app', appConfigFilePath}
+
+    expect(resultsKey(selection)).toBe(expectedKey)
+  })
+
+  test('never uses the client ID of the TOML', () => {
+    const selection: AppSecuritySelection = {
+      kind: 'config',
+      appDirectory: '/app',
+      appConfigFilePath: '/app/shopify.app.toml',
+      configClientId: 'toml-id',
+    }
+
+    expect(resultsKey(selection)).toBe('shopify.app')
+  })
+
+  test('uses the --client-id override of a selected TOML', () => {
+    const selection: AppSecuritySelection = {
+      kind: 'config',
+      appDirectory: '/app',
+      appConfigFilePath: '/app/shopify.app.production.toml',
+      configClientId: 'toml-id',
+      clientIdOverride: 'override-id',
+    }
+
+    expect(resultsKey(selection)).toBe('override-id')
+  })
+
+  test('uses the client ID without app configuration, whether it came from the flag or the picker', () => {
+    expect(resultsKey({kind: 'no-config', appDirectory: '/app', clientId: 'flag-id', clientIdSource: 'flag'})).toBe(
+      'flag-id',
+    )
+    expect(resultsKey({kind: 'no-config', appDirectory: '/app', clientId: 'picked-id', clientIdSource: 'picker'})).toBe(
+      'picked-id',
+    )
+  })
+})
+
+describe('resolveAppDirectory', () => {
+  test('finds the app directory of the selected TOML without needing a client ID', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeConfiguration(directory, 'client-id-1')
+      const subdirectory = joinPath(directory, 'app')
+      await mkdir(subdirectory)
+
+      await expect(resolveAppDirectory({path: subdirectory})).resolves.toBe(await fileRealPath(directory))
+    })
+  })
+
+  test('is the real path itself with --without-app-config, without needing a client ID', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeConfiguration(directory, 'client-id-1')
+      const subdirectory = joinPath(directory, 'app')
+      await mkdir(subdirectory)
+
+      await expect(resolveAppDirectory({path: subdirectory, withoutAppConfig: true})).resolves.toBe(
+        await fileRealPath(subdirectory),
+      )
+    })
+  })
+
+  test('aborts when no TOML is found, without prompting', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await expect(resolveAppDirectory({path: directory})).rejects.toMatchObject({
+        message: `No app configuration found at or above ${directory}.`,
+      })
+      expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+    })
   })
 })

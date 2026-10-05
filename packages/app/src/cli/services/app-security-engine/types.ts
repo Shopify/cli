@@ -85,16 +85,9 @@ export interface ScanOptions {
   ignorePatterns?: ReadonlyArray<string>
 }
 
-/** Git state of an app root. Display only: nothing compares it with the current source. */
-export interface ProjectState {
-  commit: string | null
-  dirty: boolean | null
-}
-
 export interface ScanResult {
   version: string
   timestamp: string
-  project: ProjectState
   app: {
     name: string
     type: string
@@ -232,7 +225,6 @@ interface FindingsDocumentBase {
   schema_version: typeof FINDINGS_SCHEMA_VERSION
   /** ISO time the file was written. */
   generated_at: string
-  project: ProjectState
   checks: StoredCheck[]
 }
 

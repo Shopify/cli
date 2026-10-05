@@ -19,7 +19,7 @@ import type {AppSecurityBlockingLevel} from './app-security-api.js'
 import type {AgentFindingsDocument, DeterministicFindingsDocument} from './app-security-engine/index.js'
 
 const appRoot = '/tmp/review-app'
-const paths = appSecurityArtifactPaths(appRoot)
+const paths = appSecurityArtifactPaths(appRoot, 'shopify.app')
 const commands = resolveAppSecurityCommands(appRoot)
 const checkCommand = formatAppSecurityCommand(commands.scan)
 // One hour after the agent file, two and a half after the deterministic one.
@@ -31,8 +31,8 @@ function presenterInput(
   sources: Sources,
   options: {checkIds?: string[]; blocking?: AppSecurityBlockingLevel; verbose?: boolean} = {},
 ): SecurityReviewPresenterInput {
-  const result = reviewAppSecurityResults(appSecurityResultsFor(appRoot, sources), {
-    appRoot,
+  const result = reviewAppSecurityResults(appSecurityResultsFor(appRoot, 'shopify.app', sources), {
+    resultsDirectory: paths.resultsDirectory,
     checkIds: options.checkIds ?? [],
     blocking: options.blocking ?? 'none',
   })
@@ -259,14 +259,14 @@ describe('buildSecurityReviewSummary', () => {
   })
 
   describe('results files', () => {
-    test('names the directory once and shows age, commit state and engine version per file', () => {
+    test('names the results directory once and shows age and engine version per file', () => {
       const summary = buildSecurityReviewSummary(presenterInput(both))
 
       expect(summary.resultsFiles).toEqual({
-        directory: paths.artifactDirectory,
+        directory: paths.resultsDirectory,
         rows: [
-          {name: 'deterministic-findings.json', updated: '2 hours ago', commit: 'aaaaaaa', engine: '3.99.0'},
-          {name: 'agent-findings.json', updated: '1 hour ago', commit: 'aaaaaaa (uncommitted)', engine: '3.99.0'},
+          {name: 'deterministic-findings.json', updated: '2 hours ago', engine: '3.99.0'},
+          {name: 'agent-findings.json', updated: '1 hour ago', engine: '3.99.0'},
         ],
       })
     })
@@ -284,17 +284,6 @@ describe('buildSecurityReviewSummary', () => {
         {name: 'deterministic-findings.json', updated: 'not found'},
         {name: 'agent-findings.json', updated: 'not found'},
       ])
-    })
-
-    test('shows an unknown commit', () => {
-      const deterministic: DeterministicFindingsDocument = {
-        ...deterministicFindingsDocument,
-        project: {commit: null, dirty: null},
-      }
-
-      const summary = buildSecurityReviewSummary(presenterInput({deterministic, agent: null}))
-
-      expect(summary.resultsFiles.rows[0]).toMatchObject({commit: 'unknown'})
     })
   })
 
@@ -751,7 +740,7 @@ describe('buildSecurityReviewAlerts', () => {
       undefined,
       'Checks with findings',
       undefined,
-      `Results files in ${paths.artifactDirectory}`,
+      `Results files in ${paths.resultsDirectory}`,
       'Blocking',
     ])
     expect(summary.options.customSections![0]!.body).toEqual({subdued: 'Showing 1 of 6 checks (--check-id).'})
@@ -767,7 +756,7 @@ describe('buildSecurityReviewAlerts', () => {
       'Other checks',
       undefined,
       undefined,
-      `Results files in ${paths.artifactDirectory}`,
+      `Results files in ${paths.resultsDirectory}`,
       'Next steps',
     ])
     expect(sections[2]!.body).toBe(
@@ -793,10 +782,10 @@ describe('renderSecurityReview', () => {
     expect(summaryBox).toContain('Low   EOL_API_VERSION           1 deterministic')
     expect(summaryBox).toContain('1 passed · 1 not applicable · 1 unresolved')
     expect(summaryBox).toContain('Deterministic coverage: 12 files scanned, 1 skipped (1 too large).')
-    expect(summaryBox).toContain(`Results files in ${paths.artifactDirectory}`)
-    expect(summaryBox).toContain('Updated      Commit                 Engine')
-    expect(summaryBox).toContain('deterministic-findings.json  2 hours ago  aaaaaaa                3.99.0')
-    expect(summaryBox).toContain('agent-findings.json          1 hour ago   aaaaaaa (uncommitted)  3.99.0')
+    expect(summaryBox).toContain(`Results files in ${paths.resultsDirectory}`)
+    expect(summaryBox).toContain('Updated      Engine')
+    expect(summaryBox).toContain('deterministic-findings.json  2 hours ago  3.99.0')
+    expect(summaryBox).toContain('agent-findings.json          1 hour ago   3.99.0')
     expect(summaryBox).toContain('Next steps')
     expect(summaryBox).toContain('• Fix the issues, then run `shopify app security check --path')
   })

@@ -34,7 +34,6 @@ import {RULE_CATALOG} from '../rules/catalog.js'
 import {redactIssue} from '../scan-artifact/index.js'
 import {getEngineVersion} from '../version.js'
 import {basename, relativePath} from '@shopify/cli-kit/node/path'
-import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import type {Rule, ScanContext} from '../rules/types.js'
 import type {RunnerImplementationResult, RunnerResult, SourceFile} from './types.js'
 import type {
@@ -44,7 +43,6 @@ import type {
   CheckExecutionStatus,
   CoverageGap,
   Issue,
-  ProjectState,
   ScanInput,
   ScanOptions,
   ScanResult,
@@ -335,24 +333,6 @@ function appSourceFiles(context: ScanContext): SourceFile[] {
 
 function reactRouterFiles(context: ScanContext): SourceFile[] {
   return appSourceFiles(context)
-}
-
-/** Read the git commit and dirty state of an app root. Both are null when git can't answer. */
-export async function readProjectState(appRoot: string): Promise<ProjectState> {
-  const run = async (args: string[]): Promise<{exitCode: number; stdout: string} | undefined> => {
-    try {
-      return await captureOutputWithExitCode('git', args, {cwd: appRoot})
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch {
-      return undefined
-    }
-  }
-  const head = await run(['rev-parse', 'HEAD'])
-  const status = await run(['status', '--porcelain'])
-  return {
-    commit: head?.exitCode === 0 ? head.stdout.trim() : null,
-    dirty: status?.exitCode === 0 ? status.stdout.trim().length > 0 : null,
-  }
 }
 
 function selectedFiles(definition: DeterministicCheckDefinition, context: ScanContext): string[] {
@@ -726,7 +706,6 @@ export async function scan(
   return {
     version: getEngineVersion(),
     timestamp: new Date().toISOString(),
-    project: await readProjectState(appRoot),
     app: {name: redactText(String(appToml?.raw.name ?? 'Unknown')), type: 'public'},
     capabilities,
     detection,
