@@ -11,7 +11,7 @@ import {
   type AppSecuritySelectionDependencies,
 } from './app-security-selection.js'
 import {validAppConfiguration} from './app-security-selection.test-data.js'
-import {getCachedAppInfo} from './local-storage.js'
+import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {appCreationDefaults} from './app/config/link.js'
 import {fetchOrCreateOrganizationApp} from './context.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -25,6 +25,7 @@ import type {OrganizationApp} from '../models/organization.js'
 vi.mock('./local-storage.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./local-storage.js')>()),
   getCachedAppInfo: vi.fn(),
+  setCachedAppInfo: vi.fn(),
 }))
 vi.mock('./context.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./context.js')>()),
@@ -51,6 +52,7 @@ function promptDependencies(overrides: Partial<AppSecuritySelectionDependencies>
   return {
     confirmScanWithoutAppConfig: vi.fn(async (_directory: string) => true),
     pickClientId: vi.fn(async (_appDirectory: string) => 'picked-client-id'),
+    pickConfigFile: vi.fn(async (_appDirectory: string) => 'shopify.app.staging.toml'),
     ...overrides,
   }
 }
@@ -208,6 +210,100 @@ describe('resolveAppSecuritySelection with an app configuration', () => {
 
       expect(error.message).not.toContain('No app configuration found')
       expect(dependencies.confirmScanWithoutAppConfig).not.toHaveBeenCalled()
+    })
+  })
+})
+
+describe('resolveAppSecuritySelection with several TOMLs and none selected', () => {
+  async function writeProductionAndStaging(directory: string): Promise<void> {
+    await writeConfiguration(directory, 'production-client-id', 'shopify.app.production.toml')
+    await writeConfiguration(directory, 'staging-client-id', 'shopify.app.staging.toml')
+  }
+
+  test('asks which TOML to scan, without saving the answer', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeProductionAndStaging(directory)
+      const dependencies = promptDependencies()
+
+      const selection = await resolveAppSecuritySelection({path: directory, allowPrompts: true}, dependencies)
+
+      expect(selection).toMatchObject({
+        kind: 'config',
+        appConfigFilePath: joinPath(await fileRealPath(directory), 'shopify.app.staging.toml'),
+        configClientId: 'staging-client-id',
+        appConfigFilePicked: true,
+      })
+      expect(dependencies.pickConfigFile).toHaveBeenCalledOnce()
+      expect(setCachedAppInfo).not.toHaveBeenCalled()
+    })
+  })
+
+  test('asks when the `app config use` choice no longer exists', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeProductionAndStaging(directory)
+      vi.mocked(getCachedAppInfo).mockReturnValue({directory, configFile: 'shopify.app.deleted.toml'})
+      const dependencies = promptDependencies()
+
+      const selection = await resolveAppSecuritySelection({path: directory, allowPrompts: true}, dependencies)
+
+      expect(selection).toMatchObject({configClientId: 'staging-client-id', appConfigFilePicked: true})
+      expect(setCachedAppInfo).not.toHaveBeenCalled()
+    })
+  })
+
+  test('scans shopify.app.toml without asking when it exists', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeProductionAndStaging(directory)
+      await writeConfiguration(directory, 'default-client-id')
+      const dependencies = promptDependencies()
+
+      const selection = await resolveAppSecuritySelection({path: directory, allowPrompts: true}, dependencies)
+
+      expect(selection).toMatchObject({configClientId: 'default-client-id', appConfigFilePicked: undefined})
+      expect(dependencies.pickConfigFile).not.toHaveBeenCalled()
+    })
+  })
+
+  test('scans the only TOML without asking', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeConfiguration(directory, 'staging-client-id', 'shopify.app.staging.toml')
+      const dependencies = promptDependencies()
+
+      const selection = await resolveAppSecuritySelection({path: directory, allowPrompts: false}, dependencies)
+
+      expect(selection).toMatchObject({configClientId: 'staging-client-id', appConfigFilePicked: false})
+      expect(dependencies.pickConfigFile).not.toHaveBeenCalled()
+    })
+  })
+
+  test('aborts with the TOMLs to choose from when it cannot ask', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeProductionAndStaging(directory)
+      const dependencies = promptDependencies()
+
+      const error = await selectionError(
+        resolveAppSecuritySelection({path: directory, allowPrompts: false}, dependencies),
+      )
+
+      expect(error.message).toBe(`2 app configurations found in ${directory}, and none is selected.`)
+      expect(error.tryMessage).toBe('Pass `--config` with one of: production, staging.')
+      expect(dependencies.pickConfigFile).not.toHaveBeenCalled()
+    })
+  })
+
+  test('aborts instead of asking with --client-id, which --config cannot repeat', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeProductionAndStaging(directory)
+      const dependencies = promptDependencies()
+
+      const error = await selectionError(
+        resolveAppSecuritySelection({path: directory, clientId: 'flag-client-id', allowPrompts: true}, dependencies),
+      )
+
+      expect(error.tryMessage).toBe(
+        "`--client-id` can't be combined with `--config`, so first select one with `shopify app config use <config>`: production, staging.",
+      )
+      expect(dependencies.pickConfigFile).not.toHaveBeenCalled()
     })
   })
 })

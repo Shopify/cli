@@ -1,9 +1,13 @@
 import {localAppContext} from './app-context.js'
 import {appCreationDefaults} from './app/config/link.js'
 import {fetchOrCreateOrganizationApp} from './context.js'
-import {NoAppConfigurationFoundError} from '../models/project/project.js'
+import {getCachedAppInfo} from './local-storage.js'
+import {NoAppConfigurationFoundError, Project} from '../models/project/project.js'
+import {getAppConfigurationShorthand} from '../models/app/config-file-naming.js'
+import {findConfigFiles, selectConfigFile} from '../prompts/config.js'
+import {configurationFileNames} from '../constants.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileRealPath, isDirectory} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, fileRealPath, isDirectory} from '@shopify/cli-kit/node/fs'
 import {basename, cwd, isSubpath, joinPath, normalizePath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 
@@ -18,6 +22,8 @@ export type AppSecuritySelection =
       configClientId?: string
       /** The `--client-id` value, if passed. */
       clientIdOverride?: string
+      /** True when `check` asked which TOML to scan, because nothing else selected one. */
+      appConfigFilePicked?: boolean
     }
   | {
       kind: 'no-config'
@@ -45,6 +51,7 @@ interface AppSecuritySelectionOptions {
 export interface AppSecuritySelectionDependencies {
   confirmScanWithoutAppConfig(directory: string): Promise<boolean>
   pickClientId(appDirectory: string): Promise<string>
+  pickConfigFile(appDirectory: string): Promise<string>
 }
 
 const defaultDependencies: AppSecuritySelectionDependencies = {
@@ -56,6 +63,7 @@ const defaultDependencies: AppSecuritySelectionDependencies = {
       defaultValue: false,
     }),
   pickClientId: async (appDirectory) => (await fetchOrCreateOrganizationApp(appCreationDefaults(appDirectory))).apiKey,
+  pickConfigFile: async (appDirectory) => (await selectConfigFile(appDirectory)).valueOrAbort(),
 }
 
 /** The name of the selected TOML, or undefined when there is none. */
@@ -110,9 +118,10 @@ export async function resolveAppSecuritySelection(
   await realDirectory(options.path)
 
   try {
+    const unselectedConfigFile = options.config ? undefined : await configFileWhenNoneIsSelected(options, dependencies)
     const {app} = await localAppContext({
       directory: options.path,
-      userProvidedConfigName: options.config,
+      userProvidedConfigName: options.config ?? unselectedConfigFile?.fileName,
       skipPrompts: !options.allowPrompts,
     })
     const appDirectory = await fileRealPath(app.directory)
@@ -123,11 +132,32 @@ export async function resolveAppSecuritySelection(
       appConfigFilePath: joinPath(appDirectory, basename(app.configPath)),
       configClientId: app.configuration.client_id || undefined,
       clientIdOverride: options.clientId,
+      appConfigFilePicked: unselectedConfigFile?.picked,
     }
   } catch (error) {
     if (!(error instanceof NoAppConfigurationFoundError)) throw error
     return resolveWithoutAppConfigurationFile(options, dependencies)
   }
+}
+
+/**
+ * The TOML to scan when there's no `--config`, no `app config use` choice whose file exists and no shopify.app.toml.
+ * Other app commands abort then. With several TOMLs, `check` asks which one to scan instead, and doesn't save the
+ * answer: the printed commands carry it as `--config`. Undefined when the usual selection applies.
+ */
+async function configFileWhenNoneIsSelected(
+  options: AppSecuritySelectionOptions,
+  dependencies: AppSecuritySelectionDependencies,
+): Promise<{fileName: string; picked: boolean} | undefined> {
+  const {directory} = await Project.load(options.path)
+  const selectedFileNames = [getCachedAppInfo(directory)?.configFile, configurationFileNames.app]
+  if (selectedFileNames.some((fileName) => fileName && fileExistsSync(joinPath(directory, fileName)))) return undefined
+
+  const fileNames = (await findConfigFiles(directory)).map((path) => basename(path))
+  if (fileNames.length === 1) return {fileName: fileNames[0]!, picked: false}
+  // `--client-id` can't be combined with `--config`, so a picked TOML couldn't be repeated by the printed commands.
+  if (!options.allowPrompts || options.clientId) abortNoAppConfigurationSelected(directory, fileNames, options.clientId)
+  return {fileName: await dependencies.pickConfigFile(directory), picked: true}
 }
 
 async function resolveWithoutAppConfigurationFile(
@@ -205,6 +235,16 @@ function abortNoAppConfigurationFound(directory: string): never {
   throw new AbortError(
     `No app configuration found at or above ${directory}.`,
     'Pass `--path` to your app directory, or scan without app configuration with `--without-app-config --client-id <client-id>`.',
+  )
+}
+
+function abortNoAppConfigurationSelected(directory: string, fileNames: string[], clientId?: string): never {
+  const configNames = fileNames.map((fileName) => getAppConfigurationShorthand(fileName) ?? fileName).join(', ')
+  throw new AbortError(
+    `${fileNames.length} app configurations found in ${directory}, and none is selected.`,
+    clientId
+      ? `\`--client-id\` can't be combined with \`--config\`, so first select one with \`shopify app config use <config>\`: ${configNames}.`
+      : `Pass \`--config\` with one of: ${configNames}.`,
   )
 }
 

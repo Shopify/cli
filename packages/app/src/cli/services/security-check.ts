@@ -198,8 +198,10 @@ export default async function securityCheck(
   }
   const commands = resolveAppSecurityCommands(selection, options.directory, scope)
   const resolution = {selection, resultsKey: resultsKey(selection), commands}
-  // The prompt is only shown when no TOML was found and `--without-app-config` wasn't passed.
-  if (selection.kind === 'no-config' && !options.withoutAppConfig) {
+  // Prompts are shown when no TOML was found and `--without-app-config` wasn't passed, or when `check` asked which TOML
+  // to scan.
+  const prompted = selection.kind === 'no-config' ? !options.withoutAppConfig : selection.appConfigFilePicked === true
+  if (prompted) {
     dependencies.renderInfo({
       headline: 'To skip these prompts next time, run:',
       body: [{command: formatAppSecurityCommand(commands.scan)}],
