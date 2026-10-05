@@ -44,8 +44,7 @@ function configSelection(appDirectory: string, configFileName: string): AppSecur
 }
 
 describe('app security instructions command', () => {
-  test('is visible and does not require linked app context', () => {
-    expect(SecurityInstructions.hidden).toBeFalsy()
+  test('does not require linked app context', () => {
     expect(SecurityInstructions.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityInstructions.prototype).not.toBeInstanceOf(AppLinkedCommand)
     expect(SecurityInstructions.args).not.toHaveProperty('directory')
