@@ -31,12 +31,9 @@ export default function camelcaseKeys<T = any>(input: T, options?: {deep?: boole
   }
 
   if (isPlainObject(input)) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const result: Record<string, any> = {}
-    for (const [key, value] of Object.entries(input)) {
-      result[camelize(key)] = transformValue(value, options)
-    }
-    return result as T
+    return Object.fromEntries(
+      Object.entries(input).map(([key, value]) => [camelize(key), transformValue(value, options)]),
+    ) as T
   }
 
   return input
