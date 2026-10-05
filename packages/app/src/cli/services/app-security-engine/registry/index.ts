@@ -1,6 +1,11 @@
 import {loadChecks, type Check} from '../checks/index.js'
-import {RULE_CATALOG, type RuleCatalogEntry} from '../rules/catalog.js'
-import {DETERMINISTIC_CHECKS, type DeterministicCheckDefinition} from '../scanners/index.js'
+import {
+  defaultCheckSet,
+  deterministicChecks,
+  type AppSecurityCheckSet,
+  type DeterministicCheckDefinition,
+} from '../check-set.js'
+import type {RuleCatalogEntry} from '../rules/catalog.js'
 
 export type ImplementationProvenance = 'deterministic' | 'agent'
 
@@ -71,12 +76,12 @@ export function assertRegistryInvariants(input: RegistryInvariantInput): void {
 }
 
 /** The public registry preserves a shared product ID and explicit provenance. */
-export function getRegistry(): RegistryEntry[] {
-  const checks = [...loadChecks().values()]
-  const deterministicChecks = [...DETERMINISTIC_CHECKS.values()]
-  assertRegistryInvariants({catalog: RULE_CATALOG, deterministic: deterministicChecks, agent: checks})
-  const catalog = new Map(RULE_CATALOG.map((entry) => [entry.id, entry]))
-  const deterministic: RegistryEntry[] = deterministicChecks.map((definition) => {
+export function getRegistry(checkSet: AppSecurityCheckSet = defaultCheckSet): RegistryEntry[] {
+  const checks = [...loadChecks(checkSet.agentSources).values()]
+  const definitions = [...deterministicChecks(checkSet).values()]
+  assertRegistryInvariants({catalog: checkSet.catalog, deterministic: definitions, agent: checks})
+  const catalog = new Map(checkSet.catalog.map((entry) => [entry.id, entry]))
+  const deterministic: RegistryEntry[] = definitions.map((definition) => {
     const entry = catalog.get(definition.id)!
     return registryEntry(entry, {
       version: definition.version,

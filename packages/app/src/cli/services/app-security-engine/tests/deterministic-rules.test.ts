@@ -7,9 +7,9 @@ import {
   scanRequestControlledAdminContext,
   scanUnauthenticatedEndpoints,
   scanUnsafeInnerHTML,
-} from '../rules/js-rules.js'
-import {scanLiquidSecurity} from '../rules/liquid-rules.js'
-import {scanStaticFrameAncestors} from '../rules/csp-rules.js'
+} from '@shopify/app-security-checks/rules/js-rules'
+import {scanLiquidSecurity} from '@shopify/app-security-checks/rules/liquid-rules'
+import {scanStaticFrameAncestors} from '@shopify/app-security-checks/rules/csp-rules'
 import {describe, expect, test} from 'vitest'
 import type {SourceFile} from '../rules/types.js'
 

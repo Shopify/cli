@@ -203,3 +203,6 @@ packages/store/src/cli/api/graphql/*/*_schema.graphql
 
 # Local dev alias scripts
 bin/p
+
+# Local standalone check package for the App Security extraction POC
+.poc/

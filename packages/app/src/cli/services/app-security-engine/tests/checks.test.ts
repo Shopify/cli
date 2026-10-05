@@ -1,7 +1,6 @@
 import {loadChecks, buildAgentChecks, validateFinding, validateAgentChecksExecuted} from '../checks/index.js'
-import {EMBEDDED_CHECK_SOURCES} from '../checks/embedded.js'
+import {defaultCheckSet} from '../check-set.js'
 import {describe, expect, test} from 'vitest'
-import {readFileSync, readdirSync} from 'node:fs'
 
 // These IDs are consumed by agent checks and agent findings; changes must be intentional.
 const EXPECTED_CHECK_IDS = [
@@ -61,14 +60,8 @@ const validFinding = {
 }
 
 describe('check loading', () => {
-  test('keeps the generated prompt sources in exact parity with markdown', () => {
-    const checksDir = new URL('../checks/', import.meta.url)
-    const markdownSources = readdirSync(checksDir)
-      .filter((file) => file.endsWith('.md'))
-      .sort()
-      .map((file) => readFileSync(new URL(file, checksDir), 'utf8'))
-
-    expect(EMBEDDED_CHECK_SOURCES).toEqual(markdownSources)
+  test('loads every prompt supplied by the installed check-set package', () => {
+    expect(loadChecks().size).toBe(defaultCheckSet.agentSources.length)
   })
 
   test('loads every shipped agent check', () => {

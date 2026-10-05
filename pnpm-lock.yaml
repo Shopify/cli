@@ -164,6 +164,9 @@ importers:
 
   packages/app:
     dependencies:
+      '@shopify/app-security-checks':
+        specifier: link:../../.poc/app-security-checks
+        version: link:../../.poc/app-security-checks
       '@graphql-typed-document-node/core':
         specifier: 3.2.0
         version: 3.2.0(graphql@16.14.2)

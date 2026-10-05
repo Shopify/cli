@@ -1,6 +1,6 @@
 import {ENGINE_NAME, FINDINGS_SCHEMA_VERSION} from '../types.js'
 import {redactText} from '../rules/secret-rules.js'
-import {RULE_CATALOG} from '../rules/catalog.js'
+import {defaultCheckSet, type AppSecurityCheckSet} from '../check-set.js'
 import {compareFindingLocations, compareStrings} from '../results/order.js'
 import type {
   CheckExecution,
@@ -69,9 +69,9 @@ function storedStatus(status: CheckExecution['status']): StoredCheckStatus {
 }
 
 /** Check metadata from the catalog right now, so the document can be displayed without it later. */
-function snapshotDeterministicCheck(execution: CheckExecution): CheckSnapshot {
+function snapshotDeterministicCheck(execution: CheckExecution, checkSet: AppSecurityCheckSet): CheckSnapshot {
   // registry/index.ts guarantees every deterministic check has a catalog entry ("Orphan deterministic runner").
-  const entry = RULE_CATALOG.find((catalogEntry) => catalogEntry.id === execution.id)
+  const entry = checkSet.catalog.find((catalogEntry) => catalogEntry.id === execution.id)
   if (!entry) throw new Error(`Deterministic check has no catalog entry: ${execution.id}`)
   return {
     title: entry.title,
@@ -82,14 +82,14 @@ function snapshotDeterministicCheck(execution: CheckExecution): CheckSnapshot {
   }
 }
 
-function storedCheck(execution: CheckExecution, issues: Issue[]): StoredCheck {
+function storedCheck(execution: CheckExecution, issues: Issue[], checkSet: AppSecurityCheckSet): StoredCheck {
   return {
     id: redactText(execution.id),
     version: execution.version,
     status: storedStatus(execution.status),
     ...(execution.reason ? {reason: {...execution.reason, message: redactText(execution.reason.message)}} : {}),
     analysis_mode: execution.analysis_mode,
-    snapshot: snapshotDeterministicCheck(execution),
+    snapshot: snapshotDeterministicCheck(execution, checkSet),
     findings: issues.map(issueToFinding).sort(compareStoredFindings),
   }
 }
@@ -106,6 +106,7 @@ function groupIssuesByCheck(result: ScanResult): Map<string, Issue[]> {
 }
 
 export interface BuildDeterministicFindingsOptions {
+  checkSet?: AppSecurityCheckSet
   engineVersion?: string
   ruleset?: string
   generatedAt?: string
@@ -118,7 +119,9 @@ export function buildDeterministicFindings(
 ): DeterministicFindingsDocument {
   const issuesByCheck = groupIssuesByCheck(result)
   const checks = result.scan.checks_executed
-    .map((execution) => storedCheck(execution, issuesByCheck.get(execution.id) ?? []))
+    .map((execution) =>
+      storedCheck(execution, issuesByCheck.get(execution.id) ?? [], options.checkSet ?? defaultCheckSet),
+    )
     .sort((left, right) => compareStrings(left.id, right.id))
   return {
     schema_version: FINDINGS_SCHEMA_VERSION,

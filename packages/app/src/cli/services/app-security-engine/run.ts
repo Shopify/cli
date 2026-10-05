@@ -1,5 +1,11 @@
+import {defaultCheckSet, type AppSecurityCheckSet} from './check-set.js'
 import {EMBEDDED_APP_SECURITY_INSTRUCTIONS} from './checks/embedded.js'
-import {buildAgentChecks, type AgentChecks} from './checks/index.js'
+import {
+  buildAgentChecks,
+  recordAgentFindings,
+  type AgentChecks,
+  type RecordAgentFindingsOptions,
+} from './checks/index.js'
 import {AppRootDiscoveryError, findAppRoot} from './scanners/discover.js'
 import {readProjectState, scan} from './scanners/index.js'
 import {buildDeterministicFindings} from './scan-artifact/index.js'
@@ -30,16 +36,27 @@ export async function scanApp(
   directory?: string,
   configFileName?: string,
   options?: ScanOptions,
+  checkSet: AppSecurityCheckSet = defaultCheckSet,
 ): Promise<AppSecurityScan> {
   const appRoot = findAppRoot(directory)
-  const result = await scan(appRoot, configFileName, options)
+  const result = await scan(appRoot, configFileName, options, checkSet)
   const engineVersion = getEngineVersion()
-  const deterministicFindings = buildDeterministicFindings(result, {engineVersion})
+  const deterministicFindings = buildDeterministicFindings(result, {engineVersion, checkSet})
   return {
     appRoot,
     scan: result,
     deterministicFindings,
-    agentChecks: buildAgentChecks(engineVersion),
+    agentChecks: buildAgentChecks(engineVersion, checkSet),
     engine: deterministicFindings.engine,
+  }
+}
+
+/** Bind another check package while retaining the local scan/review/record workflow. */
+export function createAppSecurityEngine(checkSet: AppSecurityCheckSet) {
+  return {
+    scanApp: (directory?: string, configFileName?: string, options?: ScanOptions) =>
+      scanApp(directory, configFileName, options, checkSet),
+    recordAgentFindings: (document: unknown, options: Omit<RecordAgentFindingsOptions, 'checkSet'>) =>
+      recordAgentFindings(document, {...options, checkSet}),
   }
 }
