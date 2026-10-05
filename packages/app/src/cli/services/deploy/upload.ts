@@ -351,30 +351,21 @@ function appManagementErrorsSection(
   }, [])
 }
 
-function partnersErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors']) {
-  return errors
-    .reduce<{title: string | undefined; errorCount: number}[]>((sections, error) => {
-      const extensionIdentifier = error.details.find(
-        (detail) => typeof detail.extension_title !== 'undefined',
-      )?.extension_title
+function partnersErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors']): ErrorCustomSection[] {
+  const errorCountsByExtension = new Map<string | undefined, number>()
 
-      const existingSection = sections.find((section) => section.title === extensionIdentifier)
+  for (const error of errors) {
+    const extensionIdentifier = error.details.find(
+      (detail) => typeof detail.extension_title !== 'undefined',
+    )?.extension_title
 
-      if (existingSection) {
-        existingSection.errorCount += 1
-      } else {
-        sections.push({
-          title: extensionIdentifier,
-          errorCount: 1,
-        })
-      }
+    errorCountsByExtension.set(extensionIdentifier, (errorCountsByExtension.get(extensionIdentifier) ?? 0) + 1)
+  }
 
-      return sections
-    }, [])
-    .map((section) => ({
-      title: section.title,
-      body: `\n${section.errorCount} error${
-        section.errorCount > 1 ? 's' : ''
-      } found in your extensions. Fix these issues and try deploying again.`,
-    })) as ErrorCustomSection[]
+  return Array.from(errorCountsByExtension, ([title, errorCount]) => ({
+    title,
+    body: `\n${errorCount} error${
+      errorCount > 1 ? 's' : ''
+    } found in your extensions. Fix these issues and try deploying again.`,
+  }))
 }
