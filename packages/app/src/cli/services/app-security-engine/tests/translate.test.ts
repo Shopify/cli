@@ -43,6 +43,17 @@ describe('translateFindingsDocument', () => {
     })
   })
 
+  test("keeps a check's docs_url", () => {
+    const docsUrl = 'https://shopify.dev/docs/apps/build/security/app-security-checks/eol-api-version'
+    const [first, ...rest] = deterministicFindingsDocument.checks
+    const document = {
+      ...deterministicFindingsDocument,
+      checks: [{...first!, snapshot: {...first!.snapshot, docs_url: docsUrl}}, ...rest],
+    }
+
+    expect(translateFindingsDocument(asJson(document))).toEqual({ok: true, document})
+  })
+
   test('strips unknown keys at every level', () => {
     const document = asJson(agentFindingsDocument) as Record<string, any>
     document.extra = 'ignored'

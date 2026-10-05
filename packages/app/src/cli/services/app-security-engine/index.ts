@@ -45,6 +45,7 @@ export {
   SEVERITY_RANK,
 } from './types.js'
 export {groupIssues, skippedFileCounts} from './output/group-issues.js'
+export {checkDocsUrl} from './rules/catalog.js'
 export type {IssueGroup} from './output/group-issues.js'
 export type {
   AgentFindingsDocument,

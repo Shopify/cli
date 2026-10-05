@@ -171,13 +171,23 @@ describe('buildSecurityAlert', () => {
         items: [
           [
             {bold: 'Request input selects Admin API shop context'},
-            {subdued: 'REQUEST_CONTROLLED_ADMIN_CONTEXT'},
+            {
+              link: {
+                label: 'REQUEST_CONTROLLED_ADMIN_CONTEXT',
+                url: 'https://shopify.dev/docs/apps/build/security/app-security-checks/request-controlled-admin-context',
+              },
+            },
             '1 occurrence across 1 file',
             {filePath: 'app/routes/action.ts:42'},
           ],
           [
             {bold: 'Configured API version is no longer supported'},
-            {subdued: 'EOL_API_VERSION'},
+            {
+              link: {
+                label: 'EOL_API_VERSION',
+                url: 'https://shopify.dev/docs/apps/build/security/app-security-checks/eol-api-version',
+              },
+            },
             '1 occurrence across 1 file',
             {filePath: 'shopify.app.toml'},
           ],
@@ -233,7 +243,12 @@ describe('buildSecurityAlert', () => {
         items: [
           [
             {bold: issues[0]!.title},
-            {subdued: issues[0]!.id},
+            {
+              link: {
+                label: issues[0]!.id,
+                url: 'https://shopify.dev/docs/apps/build/security/app-security-checks/request-controlled-admin-context',
+              },
+            },
             '200 occurrences across 200 files',
             {filePath: 'app/routes/route-000.ts:42'},
             {filePath: 'app/routes/route-001.ts:42'},
@@ -371,6 +386,27 @@ describe('buildSecurityAlert', () => {
     expect(alert.type).toBe('warning')
     expect(alert.options.headline).toBe('1 security issue found.')
     expect(section(input, 'Medium')).toBeDefined()
+  })
+
+  test('links check IDs to their docs pages in every occurrence, apart from the guide, and leaves unknown IDs unlinked', () => {
+    const guide = 'https://shopify.dev/docs/api/usage/versioning'
+    const issues = [
+      {...scanWithIssues.issues[1]!, fix: {automated: false, description: 'Upgrade.', guide}},
+      {...scanWithIssues.issues[1]!, id: 'UNKNOWN_CHECK', title: 'Unknown check'},
+    ]
+    const serialized = JSON.stringify(section(reportInput({verbose: true, scan: {...scanWithIssues, issues}}), 'High'))
+    const eolLink = JSON.stringify({
+      link: {
+        label: 'EOL_API_VERSION',
+        url: 'https://shopify.dev/docs/apps/build/security/app-security-checks/eol-api-version',
+      },
+    })
+
+    // Once in the group and once in its occurrence.
+    expect(serialized.split(eolLink)).toHaveLength(3)
+    expect(serialized).toContain(JSON.stringify({link: {label: 'Guide', url: guide}}))
+    expect(serialized).toContain(JSON.stringify({subdued: 'UNKNOWN_CHECK'}))
+    expect(serialized).not.toContain('"label":"UNKNOWN_CHECK"')
   })
 
   test('renders engine-redacted titles, paths, and verbose evidence unchanged', () => {

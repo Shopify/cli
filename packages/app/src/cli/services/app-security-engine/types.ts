@@ -212,6 +212,8 @@ export interface CheckSnapshot {
   severity: Severity
   description: string
   guide?: string
+  /** The check's page on shopify.dev. Absent in files written before checks had one. */
+  docs_url?: string
   /** Catalog version when the file was written. */
   current_version: number
   /** Agent documents only. Absent means 'union'. */

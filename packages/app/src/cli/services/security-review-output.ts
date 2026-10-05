@@ -432,6 +432,7 @@ function checkWithFindingsAlert(check: CombinedCheck, verbose: boolean, now: Dat
     options: {
       headline: `${SEVERITY_LABEL[check.severity]} · ${check.id} · ${check.title}`,
       ...(counts === '' ? {} : {body: {subdued: counts}}),
+      ...(check.docs_url ? {link: {label: `${check.id} on shopify.dev`, url: check.docs_url}} : {}),
       customSections: [
         ...sourceStatusSections(check, now),
         ...findings.map((finding) => findingSection(finding, verbose)),

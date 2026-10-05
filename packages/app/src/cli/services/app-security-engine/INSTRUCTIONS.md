@@ -29,7 +29,7 @@ Do not substitute one review for the other. If the user asks for both, run and r
 
 ### 2. Read the agent checks
 
-Read {{AGENT_CHECKS_PATH}} completely, including its top-level `instructions` and every check. Each check has an `id`, a `version`, a `severity`, and a `prompt`.
+Read {{AGENT_CHECKS_PATH}} completely, including its top-level `instructions` and every check. Each check has an `id`, a `version`, a `severity`, a `docs_url`, and a `prompt`. The `docs_url` is the check's page on shopify.dev, which explains the issue and shows how to fix it.
 
 Use separate sub-agents or isolated evaluation passes when available so each check is assessed independently and receives enough context. Determine applicability only from the check's prompt and the repository evidence it directs you to inspect. Do not force a check onto an app capability that is absent.
 
@@ -115,7 +115,7 @@ It combines {{DETERMINISTIC_FINDINGS_PATH}} with {{AGENT_FINDINGS_PATH}} into on
 
 - CLI and ruleset versions;
 - finding counts per check, grouped by severity and source;
-- each verified finding's impact and concise file/line evidence;
+- each verified finding's impact and concise file/line evidence, with a link to its check's `docs_url`;
 - skipped or incomplete coverage and unresolved checks;
 - prioritized remediation steps.
 

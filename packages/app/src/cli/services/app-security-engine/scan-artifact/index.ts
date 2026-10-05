@@ -80,6 +80,7 @@ function snapshotDeterministicCheck(execution: CheckExecution): CheckSnapshot {
     severity: entry.severity,
     description: entry.description,
     ...(entry.guide ? {guide: entry.guide} : {}),
+    docs_url: entry.docsUrl,
     current_version: execution.version,
   }
 }

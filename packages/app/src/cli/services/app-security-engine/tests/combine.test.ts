@@ -311,6 +311,7 @@ describe('combineFindings', () => {
         severity: 'low',
         description: 'Deterministic description.',
         guide: 'https://example.com/deterministic',
+        docs_url: 'https://example.com/deterministic-docs',
         current_version: 2,
       },
     })
@@ -323,12 +324,13 @@ describe('combineFindings', () => {
         severity: 'high',
         description: 'Agent description.',
         guide: 'https://example.com/agent',
+        docs_url: 'https://example.com/agent-docs',
         current_version: 3,
       },
     })
 
     test.each<CheckPrecedence>(['union', 'prefer-agent'])(
-      'takes title, severity, description and guide from the agent snapshot under %s',
+      'takes title, severity, description, guide and docs URL from the agent snapshot under %s',
       (precedence) => {
         const combined = combineOne(deterministicCheck, {
           ...agentCheck,
@@ -341,11 +343,12 @@ describe('combineFindings', () => {
           severity: 'high',
           description: 'Agent description.',
           guide: 'https://example.com/agent',
+          docs_url: 'https://example.com/agent-docs',
         })
       },
     )
 
-    test('takes title, severity, description and guide from the deterministic snapshot without an agent check', () => {
+    test('takes title, severity, description, guide and docs URL from the deterministic snapshot without an agent check', () => {
       const combined = combineOne(deterministicCheck, null)
 
       expect(combined).toMatchObject({
@@ -354,13 +357,15 @@ describe('combineFindings', () => {
         severity: 'low',
         description: 'Deterministic description.',
         guide: 'https://example.com/deterministic',
+        docs_url: 'https://example.com/deterministic-docs',
       })
     })
 
-    test('omits guide when the snapshot has none', () => {
+    test('omits guide and docs URL when the snapshot has neither', () => {
       const combined = combineOne(check(), null)
 
       expect('guide' in combined).toBe(false)
+      expect('docs_url' in combined).toBe(false)
     })
 
     test("by_source keeps each source's own result and null for a source that didn't record the check", () => {
