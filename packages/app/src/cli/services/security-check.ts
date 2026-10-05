@@ -76,7 +76,7 @@ interface SecurityDependencies {
     artifacts: {deterministicFindings: DeterministicFindingsDocument; agentChecks: AgentChecks},
   ): Promise<CheckArtifactPaths>
   canPrompt(): boolean
-  selectInstructionsDestination(): Promise<AppSecurityInstructionsDestination>
+  selectInstructionsDestination(agentCheckCount: number): Promise<AppSecurityInstructionsDestination>
   deliverInstructions(options: {
     appDirectory: string
     resultsKey: string
@@ -91,14 +91,18 @@ interface SecurityDependencies {
   setExitCode(exitCode: number): void
 }
 
-export const appSecurityInstructionsPrompt: RenderSelectPromptOptions<AppSecurityInstructionsDestination> = {
-  message: 'How would you like to hand the results to your coding agent?',
-  choices: [
-    {label: 'Copy instructions to the clipboard', value: 'copy'},
-    {label: 'Print instructions to the terminal', value: 'print'},
-    {label: 'Nothing', value: 'nothing'},
-  ],
-  defaultValue: 'copy',
+export function appSecurityInstructionsPrompt(
+  agentCheckCount: number,
+): RenderSelectPromptOptions<AppSecurityInstructionsDestination> {
+  return {
+    message: `${agentCheckCount} recommended agent ${agentCheckCount === 1 ? 'check' : 'checks'} available to complete your scan. How do you want to pass that prompt to your agent?`,
+    choices: [
+      {label: 'Copy instructions to the clipboard', value: 'copy'},
+      {label: 'Print instructions to the terminal', value: 'print'},
+      {label: 'Nothing', value: 'nothing'},
+    ],
+    defaultValue: 'copy',
+  }
 }
 
 const defaultDependencies: SecurityDependencies = {
@@ -107,7 +111,8 @@ const defaultDependencies: SecurityDependencies = {
   listFiles: listAppSecurityFiles,
   writeArtifacts: writeCheckArtifacts,
   canPrompt: terminalSupportsPrompting,
-  selectInstructionsDestination: () => renderSelectPrompt(appSecurityInstructionsPrompt),
+  selectInstructionsDestination: (agentCheckCount) =>
+    renderSelectPrompt(appSecurityInstructionsPrompt(agentCheckCount)),
   deliverInstructions: deliverAppSecurityInstructions,
   output: outputResult,
   renderInfo,
@@ -122,11 +127,12 @@ async function instructionsDestination(
   options: SecurityOptions,
   dependencies: SecurityDependencies,
   canPrompt: boolean,
+  agentCheckCount: number,
 ): Promise<AppSecurityInstructionsDestination> {
   if (options.json || options.skipInstructions) return 'nothing'
   if (options.yes) return 'print'
   if (!canPrompt) return 'nothing'
-  return dependencies.selectInstructionsDestination()
+  return dependencies.selectInstructionsDestination(agentCheckCount)
 }
 
 function securityReportInput(
@@ -237,7 +243,12 @@ export default async function securityCheck(
     )
   }
 
-  const destination = await instructionsDestination(options, dependencies, canPrompt)
+  const destination = await instructionsDestination(
+    options,
+    dependencies,
+    canPrompt,
+    execution.agentChecks.checks.length,
+  )
   if (destination !== 'nothing') {
     await dependencies.deliverInstructions({
       appDirectory,

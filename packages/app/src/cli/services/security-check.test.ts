@@ -522,8 +522,9 @@ describe('securityCheck', () => {
 
     await securityCheck(testOptions(), dependencies)
 
-    expect(appSecurityInstructionsPrompt).toEqual({
-      message: 'How would you like to hand the results to your coding agent?',
+    expect(appSecurityInstructionsPrompt(31)).toEqual({
+      message:
+        '31 recommended agent checks available to complete your scan. How do you want to pass that prompt to your agent?',
       choices: [
         {label: 'Copy instructions to the clipboard', value: 'copy'},
         {label: 'Print instructions to the terminal', value: 'print'},
@@ -532,6 +533,7 @@ describe('securityCheck', () => {
       defaultValue: 'copy',
     })
     expect(dependencies.selectInstructionsDestination).toHaveBeenCalledOnce()
+    expect(dependencies.selectInstructionsDestination).toHaveBeenCalledWith(31)
     expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
       appDirectory,
       resultsKey: 'shopify.app',
@@ -539,6 +541,12 @@ describe('securityCheck', () => {
       scanScope: noScope,
       commands: commandsFor(),
     })
+  })
+
+  test('names a single recommended agent check in the singular', () => {
+    expect(appSecurityInstructionsPrompt(1).message).toBe(
+      '1 recommended agent check available to complete your scan. How do you want to pass that prompt to your agent?',
+    )
   })
 
   test('gives the instructions the exact scope of the run, as typed', async () => {

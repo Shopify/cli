@@ -192,8 +192,8 @@ describe('buildSecurityAlert', () => {
     expect(customSections[artifactsIndex]?.body).toEqual({
       list: {
         items: [
-          ['Deterministic findings:', {filePath: '/tmp/app/.shopify/app-security/deterministic-findings.json'}],
-          ['Agent checks:', {filePath: '/tmp/app/.shopify/app-security/agent-checks.json'}],
+          ['Deterministic findings:', {filePath: '.shopify/app-security/deterministic-findings.json'}],
+          ['Agent security check instructions:', {filePath: '.shopify/app-security/agent-checks.json'}],
         ],
       },
     })
@@ -202,7 +202,7 @@ describe('buildSecurityAlert', () => {
       body: {
         list: {
           items: [
-            ['Have your coding agent read', {filePath: '/tmp/app/.shopify/app-security/agent-checks.json'}],
+            ['Have your coding agent run the agent checks'],
             ['Record the agent results with', {command: formatAppSecurityCommand(commands.record)}],
             ['Review the results with', {command: formatAppSecurityCommand(commands.review)}],
           ],
@@ -302,7 +302,7 @@ describe('buildSecurityAlert', () => {
     expect(section(reportInput({commands}), 'Next steps')?.body).toEqual({
       list: {
         items: [
-          ['Have your coding agent read', {filePath: '/tmp/app/.shopify/app-security/agent-checks.json'}],
+          ['Have your coding agent run the agent checks'],
           ['Record the agent results with', {command: recordCommand}],
           ['Review the results with', {command: formatAppSecurityCommand(commands.review)}],
         ],

@@ -129,7 +129,7 @@ function securityBody(input: SecurityReportInput): TokenItem {
 
 function securityNextSteps(input: SecurityReportInput): TokenItem<InlineToken>[] {
   return [
-    ['Have your coding agent read', {filePath: input.agentChecksPath}],
+    ['Have your coding agent run the agent checks'],
     ['Record the agent results with', {command: formatAppSecurityCommand(input.commands.record)}],
     ['Review the results with', {command: formatAppSecurityCommand(input.commands.review)}],
   ]
@@ -187,13 +187,14 @@ function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]
     sections.push({title: 'Coverage gaps', body: {list: {items}}})
   }
 
+  const {appDirectory} = input.selection
   sections.push({
     title: 'Artifacts',
     body: {
       list: {
         items: [
-          ['Deterministic findings:', {filePath: input.deterministicFindingsPath}],
-          ['Agent checks:', {filePath: input.agentChecksPath}],
+          ['Deterministic findings:', {filePath: relativePath(appDirectory, input.deterministicFindingsPath)}],
+          ['Agent security check instructions:', {filePath: relativePath(appDirectory, input.agentChecksPath)}],
         ],
       },
     },
