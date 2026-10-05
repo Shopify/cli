@@ -36,6 +36,30 @@ describe('asset-checksum', () => {
     })
   })
 
+  describe('calculateChecksum for settings data', () => {
+    const settingsDataFile = 'config/settings_data.json'
+
+    test('ignores whitespace outside of strings', async () => {
+      // Given
+      const pretty = '{\n  "current": {\n    "heading": "Welcome"\n  }\n}'
+      const minified = '{"current":{"heading":"Welcome"}}'
+
+      // When/Then
+      expect(calculateChecksum(settingsDataFile, pretty)).toEqual(calculateChecksum(settingsDataFile, minified))
+    })
+
+    test('preserves whitespace inside strings, including after escaped quotes', async () => {
+      // Given
+      const spacedValue = '{"heading":"a b","quote":"he said \\" and  then"}'
+      const squashedValue = '{"heading":"ab","quote":"he said \\" andthen"}'
+
+      // When/Then
+      expect(calculateChecksum(settingsDataFile, spacedValue)).not.toEqual(
+        calculateChecksum(settingsDataFile, squashedValue),
+      )
+    })
+  })
+
   describe('rejectLiquidChecksums', () => {
     test('filters out generated asset files from a list of theme checksums.', async () => {
       // Given
