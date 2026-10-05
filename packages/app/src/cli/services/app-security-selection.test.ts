@@ -14,6 +14,7 @@ import {validAppConfiguration} from './app-security-selection.test-data.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {appCreationDefaults} from './app/config/link.js'
 import {fetchOrCreateOrganizationApp} from './context.js'
+import use from './app/config/use.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -27,6 +28,7 @@ vi.mock('./local-storage.js', async (importOriginal) => ({
   getCachedAppInfo: vi.fn(),
   setCachedAppInfo: vi.fn(),
 }))
+vi.mock('./app/config/use.js', () => ({default: vi.fn()}))
 vi.mock('./context.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./context.js')>()),
   fetchOrCreateOrganizationApp: vi.fn(),
@@ -247,6 +249,22 @@ describe('resolveAppSecuritySelection with several TOMLs and none selected', () 
       const selection = await resolveAppSecuritySelection({path: directory, allowPrompts: true}, dependencies)
 
       expect(selection).toMatchObject({configClientId: 'staging-client-id', appConfigFilePicked: true})
+      expect(setCachedAppInfo).not.toHaveBeenCalled()
+    })
+  })
+
+  test('scans shopify.app.toml without asking or saving a choice when the `app config use` choice no longer exists', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeProductionAndStaging(directory)
+      await writeConfiguration(directory, 'default-client-id')
+      vi.mocked(getCachedAppInfo).mockReturnValue({directory, configFile: 'shopify.app.deleted.toml'})
+      const dependencies = promptDependencies()
+
+      const selection = await resolveAppSecuritySelection({path: directory, allowPrompts: true}, dependencies)
+
+      expect(selection).toMatchObject({configClientId: 'default-client-id', appConfigFilePicked: false})
+      expect(dependencies.pickConfigFile).not.toHaveBeenCalled()
+      expect(use).not.toHaveBeenCalled()
       expect(setCachedAppInfo).not.toHaveBeenCalled()
     })
   })

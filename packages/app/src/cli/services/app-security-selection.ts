@@ -156,14 +156,20 @@ export async function resolveAppSecuritySelection(
  * The TOML to scan when there's no `--config`, no `app config use` choice whose file exists and no shopify.app.toml.
  * Other app commands abort then. With several TOMLs, `check` asks which one to scan instead, and doesn't save the
  * answer: the printed commands carry it as `--config`. Undefined when the usual selection applies.
+ *
+ * With a stale `app config use` choice, shopify.app.toml is named explicitly: otherwise `localAppContext` would run
+ * `app config use`, which asks for a TOML and saves the answer.
  */
 async function configFileWhenNoneIsSelected(
   options: AppSecuritySelectionOptions,
   dependencies: AppSecuritySelectionDependencies,
 ): Promise<{fileName: string; picked: boolean} | undefined> {
   const {directory} = await Project.load(options.path)
-  const selectedFileNames = [getCachedAppInfo(directory)?.configFile, configurationFileNames.app]
-  if (selectedFileNames.some((fileName) => fileName && fileExistsSync(joinPath(directory, fileName)))) return undefined
+  const cachedFileName = getCachedAppInfo(directory)?.configFile
+  if (cachedFileName && fileExistsSync(joinPath(directory, cachedFileName))) return undefined
+  if (fileExistsSync(joinPath(directory, configurationFileNames.app))) {
+    return cachedFileName ? {fileName: configurationFileNames.app, picked: false} : undefined
+  }
 
   const fileNames = (await findConfigFiles(directory)).map((path) => basename(path))
   if (fileNames.length === 1) return {fileName: fileNames[0]!, picked: false}
