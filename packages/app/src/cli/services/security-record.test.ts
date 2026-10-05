@@ -1,9 +1,16 @@
 import securityRecord, {renderSecurityRecordResult} from './security-record.js'
 import {securityRecordJsonOutputSchema} from './security-record-json.js'
-import {resolveAppSecurityRoot} from './app-security-api.js'
 import {appSecurityArtifactPaths, readFindingsDocument, writeAgentFindings} from './app-security-artifacts.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
-import {fileExists, fileSize, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {
+  fileExists,
+  fileRealPath,
+  fileSize,
+  inTemporaryDirectory,
+  mkdir,
+  readFile,
+  writeFile,
+} from '@shopify/cli-kit/node/fs'
 import {AbortError, handler} from '@shopify/cli-kit/node/error'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -46,7 +53,7 @@ function validDocument(): Record<string, unknown> {
 
 async function createApp(directory: string): Promise<string> {
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'client_id = "test"\n')
-  return resolveAppSecurityRoot(directory)
+  return fileRealPath(directory)
 }
 
 function testDependencies(stdin: string | undefined): SecurityRecordDependencies {

@@ -1,5 +1,11 @@
 import {formatAppSecurityCommand, type AppSecurityCommands} from './app-security-commands.js'
 import {
+  effectiveClientId,
+  selectedConfigFileName,
+  type AppSecurityScanDirectory,
+  type AppSecuritySelection,
+} from './app-security-selection.js'
+import {
   groupIssues,
   type Capabilities,
   type Issue,
@@ -7,6 +13,7 @@ import {
   type ScanResult,
   type Severity,
 } from './app-security-engine/index.js'
+import {relativePath} from '@shopify/cli-kit/node/path'
 import {renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import type {AlertCustomSection, InlineToken, RenderAlertOptions, Token, TokenItem} from '@shopify/cli-kit/node/ui'
 
@@ -18,6 +25,8 @@ interface SecurityEngineMetadata {
 
 export interface SecurityReportInput {
   scan: ScanResult
+  selection: AppSecuritySelection
+  scanDirectories: AppSecurityScanDirectory[]
   engine: SecurityEngineMetadata
   verbose: boolean
   elapsedMilliseconds: number
@@ -126,8 +135,32 @@ function securityNextSteps(input: SecurityReportInput): TokenItem<InlineToken>[]
   ]
 }
 
+function formatClientId(selection: AppSecuritySelection): string {
+  const clientId = effectiveClientId(selection) ?? 'not linked'
+  return selection.kind === 'config' && selection.clientIdOverride ? `${clientId} (from --client-id)` : clientId
+}
+
+function selectionSection(input: SecurityReportInput): AlertCustomSection {
+  const {selection} = input
+  return {
+    title: 'Selection',
+    body: {
+      tabularData: [
+        ['App directory', selection.appDirectory],
+        ['Config file', selectedConfigFileName(selection) ?? 'none'],
+        ['Client ID', formatClientId(selection)],
+        [
+          'Scan directories',
+          input.scanDirectories.map(({directory}) => relativePath(selection.appDirectory, directory) || '.').join(', '),
+        ],
+      ],
+      firstColumnSubdued: true,
+    },
+  }
+}
+
 function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]): AlertCustomSection[] {
-  const sections: AlertCustomSection[] = []
+  const sections: AlertCustomSection[] = [selectionSection(input)]
 
   for (const severity of ['high', 'medium', 'low'] as const) {
     const severityGroups = groups.filter((group) => group.severity === severity)

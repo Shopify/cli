@@ -15,7 +15,7 @@ export default class SecurityCheck extends BaseCommand {
 
   static descriptionWithMarkdown = `Runs Shopify App Security locally and writes \`deterministic-findings.json\` and \`agent-checks.json\` to \`.shopify/app-security/\`. Every run replaces both files, so it's always safe to run the check again.
 
-\`deterministic-findings.json\` holds the deterministic scan results. \`agent-checks.json\` holds the checks for your coding agent to investigate; the agent's results are recorded with \`shopify app security record\`. Use \`--config\` to select a specific app configuration when the project has multiple \`shopify.app*.toml\` files; App Security inspects only that configuration.
+\`deterministic-findings.json\` holds the deterministic scan results. \`agent-checks.json\` holds the checks for your coding agent to investigate; the agent's results are recorded with \`shopify app security record\`. Use \`--config\` to select a specific app configuration when the project has multiple \`shopify.app*.toml\` files; App Security inspects only that configuration. Use \`--client-id\` to replace the configuration's client ID for this run. When no app configuration exists, use \`--without-app-config --client-id <client-id>\` to scan \`--path\` anyway with config checks skipped; in an interactive terminal the command offers to do this.
 
 Use \`--ignore\` to change which files are scanned. Each value is one \`.gitignore\` pattern relative to the app directory; prefix it with \`!\` to include a file again when it is ignored by default or by \`.gitignore\`. Repeat the flag to add patterns; later patterns take precedence. A file can't be included again while its parent folder is ignored, so include the folder again instead, for example \`--ignore '!build/'\`. Quote each value so your shell doesn't expand \`!\` or \`*\` (single quotes in POSIX shells and PowerShell). The coding-agent instructions this check offers repeat the patterns. Other \`app security\` commands don't take \`--ignore\`, so pass the same patterns each time you run the check.
 
@@ -27,6 +27,14 @@ In interactive terminals, the command offers to copy the coding-agent instructio
     ...globalFlags,
     path: appFlags.path,
     config: appFlags.config,
+    'client-id': appFlags['client-id'],
+    'without-app-config': Flags.boolean({
+      description:
+        'Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.',
+      env: 'SHOPIFY_FLAG_WITHOUT_APP_CONFIG',
+      exclusive: ['config'],
+      dependsOn: ['client-id'],
+    }),
     // No environment variable: oclif passes a repeatable flag's variable as one string, so it could hold only one pattern.
     // eslint-disable-next-line @shopify/cli/command-flags-with-env
     ignore: Flags.string({
@@ -61,6 +69,8 @@ In interactive terminals, the command offers to copy the coding-agent instructio
     await securityCheck({
       directory: flags.path,
       configName: flags.config,
+      clientId: flags['client-id'],
+      withoutAppConfig: Boolean(flags['without-app-config']),
       json: flags.json,
       verbose: Boolean(flags.verbose),
       blocking: flags.blocking,

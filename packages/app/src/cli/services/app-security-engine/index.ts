@@ -2,21 +2,14 @@
  * Public App Security engine API.
  *
  * CLI code outside this directory should import only these operations and result
- * types: locate an app, read its git state, scan, record agent findings, translate
+ * types: read the git state, scan, record agent findings, translate
  * a stored findings document (deterministic-findings.json or agent-findings.json, which share the
  * converged FindingsDocument schema), combine the two result files into per-check results, group
  * issues for display, and validate `--ignore` patterns. The stored documents' Zod
  * schemas are exported too, so the public `review --json` schema is composed from them rather than re-declared.
  * Keep scanners, registries, validators, redaction, and the rest of the stored-schema details inside the engine.
  */
-export {
-  AppRootDiscoveryError,
-  findAppRoot,
-  getAgentInstructions,
-  getEngineVersion,
-  readProjectState,
-  scanApp,
-} from './run.js'
+export {getAgentInstructions, getEngineVersion, readProjectState, scanApp} from './run.js'
 export type {AppSecurityEngineMetadata, AppSecurityScan} from './run.js'
 export {translateFindingsDocument} from './results/translate.js'
 export type {TranslateFindingsDocumentResult} from './results/translate.js'
@@ -64,6 +57,7 @@ export type {
   FindingsSource,
   Issue,
   ProjectState,
+  ScanInput,
   ScanResult,
   Severity,
   StoredCheck,

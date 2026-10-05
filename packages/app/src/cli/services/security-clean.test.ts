@@ -1,8 +1,7 @@
 import securityClean, {renderSecurityCleanResult} from './security-clean.js'
 import {securityCleanJsonOutputSchema} from './security-clean-json.js'
-import {resolveAppSecurityRoot} from './app-security-api.js'
 import {appSecurityArtifactPaths, cleanAppSecurityArtifacts} from './app-security-artifacts.js'
-import {fileExists, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -13,7 +12,7 @@ import type {AppSecurityArtifactPaths} from './app-security-artifacts.js'
 
 async function createApp(directory: string): Promise<string> {
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'client_id = "test"\n')
-  return resolveAppSecurityRoot(directory)
+  return fileRealPath(directory)
 }
 
 async function writeEveryArtifact(paths: AppSecurityArtifactPaths): Promise<string[]> {

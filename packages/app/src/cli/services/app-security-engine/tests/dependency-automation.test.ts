@@ -1,11 +1,11 @@
 /* eslint-disable no-restricted-imports -- integration coverage uses real temporary repositories */
 import {git, isolateGitConfig} from './git-test-helpers.js'
+import {scanAppDirectory as scanApp, scanDirectory as scan} from './scan-directory.js'
 import {securityExitCode} from '../../app-security-api.js'
 import {formatJson} from '../output/format.js'
 import {getRegistry} from '../registry/index.js'
-import {DETERMINISTIC_CHECKS, scan} from '../scanners/index.js'
+import {DETERMINISTIC_CHECKS} from '../scanners/index.js'
 import {translateFindingsDocument} from '../results/translate.js'
-import {scanApp} from '../run.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'

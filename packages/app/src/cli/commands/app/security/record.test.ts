@@ -1,20 +1,28 @@
 import SecurityRecord from './record.js'
 import {appFlags} from '../../../flags.js'
-import {resolveAppSecurityRoot} from '../../../services/app-security-api.js'
+import {resolveAppSecuritySelection} from '../../../services/app-security-selection.js'
 import securityRecord, {renderSecurityRecordResult} from '../../../services/security-record.js'
 import {securityRecordJsonOutputSchema} from '../../../services/security-record-json.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {fileRealPath, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/security-record.js')
+vi.mock('../../../services/app-security-selection.js')
 
+/** Creates an app directory and makes the selection resolver find it, as the real resolver would. */
 async function createApp(directory: string): Promise<string> {
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'client_id = "test"\n')
-  return resolveAppSecurityRoot(directory)
+  const appDirectory = await fileRealPath(directory)
+  vi.mocked(resolveAppSecuritySelection).mockResolvedValue({
+    kind: 'config',
+    appDirectory,
+    appConfigFilePath: joinPath(appDirectory, 'shopify.app.toml'),
+  })
+  return appDirectory
 }
 
 function recordedResult(appRoot: string) {
@@ -44,6 +52,7 @@ describe('app security record command', () => {
       try {
         await SecurityRecord.run([], import.meta.url)
 
+        expect(resolveAppSecuritySelection).toHaveBeenCalledWith({path: cwd(), allowPrompts: false})
         expect(securityRecord).toHaveBeenCalledWith({appRoot})
         expect(renderSecurityRecordResult).toHaveBeenCalledWith(result, appRoot)
         expect(output.info()).toBe('')
@@ -64,6 +73,7 @@ describe('app security record command', () => {
       try {
         await SecurityRecord.run(['--path', directory, '--json'], import.meta.url)
 
+        expect(resolveAppSecuritySelection).toHaveBeenCalledWith({path: directory, allowPrompts: false})
         expect(securityRecord).toHaveBeenCalledWith({appRoot})
         expect(output.info()).toBe(
           [

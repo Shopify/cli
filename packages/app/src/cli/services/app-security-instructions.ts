@@ -1,11 +1,8 @@
-import {resolveAppSecurityRoot} from './app-security-api.js'
 import {appSecurityArtifactPaths} from './app-security-artifacts.js'
-import {requireSecurityConfigFileName} from './app-security-config.js'
 import {
   formatAppSecurityCommand,
   formatAppSecurityInlineStdinCommand,
   quoteShellArgument,
-  resolveAppSecurityCommands,
   shellForPlatform,
   type AppSecurityCommand,
   type AppSecurityCommands,
@@ -14,7 +11,6 @@ import {
 import {getAgentInstructions} from './app-security-engine/index.js'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {outputResult} from '@shopify/cli-kit/node/output'
-import {resolvePath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import clipboard from 'clipboardy'
 
@@ -87,22 +83,18 @@ ${fileCommand}${encodingNote}`
 }
 
 function instructionPaths(
-  directory: string,
+  appDirectory: string,
   shell: AppSecurityShell,
-  commands?: AppSecurityCommands,
-  configName?: string,
+  commands: AppSecurityCommands,
 ): AppSecurityInstructionPaths {
-  const appRoot = resolveAppSecurityRoot(resolvePath(directory))
   const {artifactDirectory, deterministicFindingsPath, agentChecksPath, agentFindingsPath} =
-    appSecurityArtifactPaths(appRoot)
-  const resolvedCommands =
-    commands ?? resolveAppSecurityCommands(appRoot, requireSecurityConfigFileName(appRoot, configName))
+    appSecurityArtifactPaths(appDirectory)
   return {
-    commands: resolvedCommands,
-    scanCommand: formatAppSecurityCommand(resolvedCommands.scan, shell),
-    recordInstructions: recordInstructions(resolvedCommands.record, shell),
-    reviewCommand: formatAppSecurityCommand(resolvedCommands.review, shell),
-    cleanCommand: formatAppSecurityCommand(resolvedCommands.clean, shell),
+    commands,
+    scanCommand: formatAppSecurityCommand(commands.scan, shell),
+    recordInstructions: recordInstructions(commands.record, shell),
+    reviewCommand: formatAppSecurityCommand(commands.review, shell),
+    cleanCommand: formatAppSecurityCommand(commands.clean, shell),
     deterministicFindingsPath,
     agentChecksPath,
     agentFindingsPath,
@@ -139,12 +131,11 @@ function fillTemplate(template: string, values: {[placeholder: string]: string})
 }
 
 interface AppSecurityInstructionsOptions {
-  directory: string
+  appDirectory: string
   copy: boolean
   writePath?: string
   scanComplete?: boolean
-  commands?: AppSecurityCommands
-  configName?: string
+  commands: AppSecurityCommands
 }
 
 interface AppSecurityInstructionsDependencies {
@@ -164,14 +155,13 @@ const defaultDependencies: AppSecurityInstructionsDependencies = {
 }
 
 export function appSecurityInstructions(options: {
-  directory: string
+  appDirectory: string
   scanComplete: boolean
-  commands?: AppSecurityCommands
-  configName?: string
+  commands: AppSecurityCommands
   shell?: AppSecurityShell
 }): string {
   const shell = options.shell ?? shellForPlatform()
-  const paths = instructionPaths(options.directory, shell, options.commands, options.configName)
+  const paths = instructionPaths(options.appDirectory, shell, options.commands)
   const scanContext = options.scanComplete ? completedScanInstructions(paths) : initialScanInstructions(paths)
   // Fill the scan context first: it may contain the other placeholders.
   return fillTemplate(getAgentInstructions(), {
@@ -191,10 +181,9 @@ export default async function deliverAppSecurityInstructions(
   dependencies: AppSecurityInstructionsDependencies = defaultDependencies,
 ): Promise<void> {
   const instructions = appSecurityInstructions({
-    directory: options.directory,
+    appDirectory: options.appDirectory,
     scanComplete: options.scanComplete ?? false,
     commands: options.commands,
-    configName: options.configName,
   })
 
   if (options.copy) {
