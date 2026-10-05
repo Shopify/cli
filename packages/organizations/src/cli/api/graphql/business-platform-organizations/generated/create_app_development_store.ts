@@ -15,6 +15,7 @@ export type CreateAppDevelopmentStoreMutation = {
   createAppDevelopmentStore: {
     shopAdminUrl?: string | null
     shopDomain?: string | null
+    shopifyShopId?: string | null
     userErrors?: {code?: string | null; field: string[]; message: string}[] | null
   }
 }
@@ -91,6 +92,7 @@ export const CreateAppDevelopmentStore = {
               selections: [
                 {kind: 'Field', name: {kind: 'Name', value: 'shopAdminUrl'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'shopDomain'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'shopifyShopId'}},
                 {
                   kind: 'Field',
                   name: {kind: 'Name', value: 'userErrors'},

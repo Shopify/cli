@@ -7,7 +7,9 @@ import {
 } from '../../api/graphql/business-platform-organizations/generated/poll_store_creation.js'
 import {Organization} from '../../models/organization.js'
 import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
+import {numericIdFromGid} from '@shopify/cli-kit/common/gid'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
+import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputResult} from '@shopify/cli-kit/node/output'
 import {sleep} from '@shopify/cli-kit/node/system'
@@ -87,6 +89,14 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<st
   const {shopDomain, shopAdminUrl} = createAppDevelopmentStore
   if (!shopDomain) {
     throw new AbortError('Store creation succeeded but no shop domain was returned.')
+  }
+
+  const shopifyShopId: unknown = createAppDevelopmentStore.shopifyShopId
+  const gidShopId = typeof shopifyShopId === 'string' ? numericIdFromGid(shopifyShopId) : undefined
+  const decimalShopId = shopifyShopId === `gid://shopify/Shop/${gidShopId}` ? gidShopId : shopifyShopId
+  const storeId = typeof decimalShopId === 'string' && !/\D/.test(decimalShopId) ? Number(decimalShopId) : decimalShopId
+  if (typeof storeId === 'number' && Number.isSafeInteger(storeId) && storeId > 0) {
+    await addPublicMetadata(() => ({store_id: storeId}))
   }
 
   await renderSingleTask({
