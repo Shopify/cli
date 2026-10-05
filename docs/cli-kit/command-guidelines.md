@@ -34,6 +34,10 @@ Flags should be semantically meaningful. When in doubt, optimize for clarity, no
 | :------------- | :------------- | :------------- | :------------- |
 |  ❌ | Don't: | rsync --owner | Because it’s unnecessarily terse, it’s ambiguous whether this flag means “preserve the current owner” or “assign ownership”.|
 
+For changed dependent or defaulted flags, test omitted, explicit, default, valid, and invalid combinations through actual command parsing. A default value does not prove explicit presence; choose dependency declarations according to the intended behavior, not an “always `dependsOn`” rule.
+
+Command result, error, and output changes follow the existing [JSON contracts](../cli/json-output.md) and [error handling](../cli/error_handling.md).
+
 ## Aliases / shortcuts for flags
 
 As a general rule, don't create shortcuts for flags. Create single-letter short-form flag aliases only if the flag is frequently or repetitively used in day-to-day interactive development work.
