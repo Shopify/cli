@@ -45,6 +45,7 @@ function testDependencies() {
     render: vi.fn(),
     now: () => now,
     setExitCode: vi.fn(),
+    recordMetadata: vi.fn(async () => {}),
   } satisfies SecurityReviewDependencies
   return dependencies
 }
@@ -224,6 +225,39 @@ describe('reviewAppSecurityResults', () => {
 })
 
 describe('securityReview', () => {
+  test('records the number of active findings across every check, whatever --check-id selects', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, both)
+      const unfiltered = testDependencies()
+      const filtered = testDependencies()
+
+      await securityReview({directory: appRoot, json: true, verbose: false, checkIds: [], blocking: 'none'}, unfiltered)
+      await securityReview(
+        {directory: appRoot, json: true, verbose: false, checkIds: ['OPEN_REDIRECT'], blocking: 'none'},
+        filtered,
+      )
+
+      // Six recorded findings: two deterministic ones superseded by a prefer-agent check and one suppressed by the agent.
+      // OPEN_REDIRECT has none, so the filtered run would record zero if it counted only the selected checks.
+      expect(unfiltered.recordMetadata).toHaveBeenCalledWith({num_security_findings: 3})
+      expect(filtered.recordMetadata).toHaveBeenCalledWith({num_security_findings: 3})
+    })
+  })
+
+  test('records nothing when there are no result files', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, {})
+      const dependencies = testDependencies()
+
+      await securityReview(
+        {directory: appRoot, json: true, verbose: false, checkIds: [], blocking: 'none'},
+        dependencies,
+      )
+
+      expect(dependencies.recordMetadata).not.toHaveBeenCalled()
+    })
+  })
+
   test('renders the review to the terminal and exits 0 by default', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, both)
