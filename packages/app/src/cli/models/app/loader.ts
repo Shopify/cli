@@ -787,25 +787,27 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
           const specResult = parseConfigurationObjectAgainstSpecification(specification, configPath, appConfiguration)
           if (specResult.errors) {
             this.errors.addErrors(specResult.errors)
-            return [null, [] as string[]] as const
+            return [[], [] as string[]] as const
           }
           const specConfiguration = specResult.data
 
-          if (Object.keys(specConfiguration).length === 0) return [null, Object.keys(specConfiguration)] as const
+          if (Object.keys(specConfiguration).length === 0) return [[], Object.keys(specConfiguration)] as const
 
-          const instance = await this.createExtensionInstance(
-            specification.identifier,
+          const configurations = specification.expandConfig?.(specConfiguration, {flags: this.remoteFlags}) ?? [
             specConfiguration,
-            configPath,
-            directory,
-          ).then((extensionInstance) =>
-            this.validateConfigurationExtensionInstance(
-              appConfiguration.client_id,
-              appConfiguration,
-              extensionInstance,
-            ),
+          ]
+          const instances = await Promise.all(
+            configurations.map(async (configuration) => {
+              const instance = await this.createExtensionInstance(
+                specification.identifier,
+                configuration,
+                configPath,
+                directory,
+              )
+              return this.validateConfigurationExtensionInstance(appConfiguration.client_id, appConfiguration, instance)
+            }),
           )
-          return [instance, Object.keys(specConfiguration)] as const
+          return [instances, Object.keys(specConfiguration)] as const
         }),
     )
 
@@ -824,9 +826,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
         message: `Unsupported section(s) in app configuration: ${unusedKeys.sort().join(', ')}`,
       })
     }
-    return extensionInstancesWithKeys
-      .filter(([instance]) => instance)
-      .map(([instance]) => instance as ExtensionInstance)
+    return getArrayRejectingUndefined(extensionInstancesWithKeys.flatMap(([instances]) => instances))
   }
 
   private async validateConfigurationExtensionInstance(

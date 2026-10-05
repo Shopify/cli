@@ -172,6 +172,64 @@ describe('transformFromEventsConfig', () => {
       },
     })
   })
+
+  test('keeps the handle field on subscriptions in an array', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', uri: '/webhooks/orders', actions: ['create'], handle: 'order-sub'},
+          {topic: 'products/update', uri: 'https://example.com/products', actions: ['update'], handle: 'product-sub'},
+        ],
+      },
+    }
+    const appConfiguration = {application_url: 'https://tunnel.example.com'}
+
+    const result = transformFromEventsConfig(content, appConfiguration)
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {
+            topic: 'orders/create',
+            uri: 'https://tunnel.example.com/webhooks/orders',
+            actions: ['create'],
+            handle: 'order-sub',
+          },
+          {topic: 'products/update', uri: 'https://example.com/products', actions: ['update'], handle: 'product-sub'},
+        ],
+      },
+    })
+  })
+
+  test('strips the module handle and a legacy nested handle from a single subscription module', () => {
+    const content = {
+      handle: 'order-sub',
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'orders/create',
+          uri: 'https://example.com/orders',
+          actions: ['create'],
+          handle: 'order-sub',
+        },
+      },
+    }
+
+    const result = transformFromEventsConfig(content)
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: {
+          topic: 'orders/create',
+          uri: 'https://example.com/orders',
+          actions: ['create'],
+        },
+      },
+    })
+  })
 })
 
 describe('transformToEventsConfig', () => {
