@@ -19,16 +19,17 @@ export interface AppSecurityCommands {
   clean: AppSecurityCommand
 }
 
-/** `excludePatterns` and `noGitIgnore` are repeated on scan so that rerunning the check gathers the same files. */
+/** `includeDirs`, `excludePatterns` and `noGitIgnore` are repeated on scan so that rerunning the check gathers the same files. */
 export function resolveAppSecurityCommands(
   appRoot: string,
   configFileName?: string,
   excludePatterns: ReadonlyArray<string> = [],
   noGitIgnore = false,
+  includeDirs: ReadonlyArray<string> = [],
 ): AppSecurityCommands {
   const configFlag = configFileName ? getAppConfigurationShorthand(configFileName) : undefined
   const command = 'shopify'
-  // Only check reads the app configuration and discovers files, so it's the only command that takes --config, --exclude or --no-git-ignore.
+  // Only check reads the app configuration and discovers files, so it's the only command that takes --config, --include-dir, --exclude or --no-git-ignore.
   const subcommandArgs = (subcommand: string): AppSecurityArgument[] => [
     'app',
     'security',
@@ -42,6 +43,7 @@ export function resolveAppSecurityCommands(
       args: [
         ...subcommandArgs('check'),
         ...(configFlag ? [{flag: '--config', value: configFlag}] : []),
+        ...includeDirs.map((includeDir) => ({flag: '--include-dir', value: includeDir})),
         ...excludePatterns.map((excludePattern) => ({flag: '--exclude', value: excludePattern})),
         ...(noGitIgnore ? ['--no-git-ignore'] : []),
       ],

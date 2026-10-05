@@ -313,7 +313,7 @@ describe('securityRecord', () => {
       checks_executed: [{check_id: FAKE_SHOPIFY_TOKEN, check_version: 1}],
       findings: [
         finding({check_id: FAKE_SHOPIFY_TOKEN}),
-        finding({file: `../${FAKE_SHOPIFY_TOKEN}`}),
+        finding({file: `/${FAKE_SHOPIFY_TOKEN}`}),
         finding({line: FAKE_SHOPIFY_TOKEN}),
       ],
     })

@@ -548,7 +548,7 @@ function normalizeRunnerResult(value: Issue[] | RunnerResult): RunnerResult {
 }
 
 export async function scan(
-  {appDirectory: appRoot, scanDirectories, appConfigFilePath}: ScanInput,
+  {appDirectory: appRoot, scanDirectories, requestedScanDirectories, appConfigFilePath}: ScanInput,
   options: ScanOptions = {},
 ): Promise<ScanOutput> {
   // The selected app configuration is an explicit input: it's read even when it is a symbolic link
@@ -568,6 +568,7 @@ export async function scan(
   } = await gatherPaths({
     appDirectory: appRoot,
     scanDirectories,
+    requestedScanDirectories,
     selectedAppConfigFilePath: appConfigFilePath,
     rules: createPathRules({excludePatterns: options.excludePatterns ?? [], noGitIgnore: options.noGitIgnore ?? false}),
   })

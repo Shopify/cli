@@ -28,6 +28,7 @@ async function findInputs(root: string, excludePatterns: string[] = []) {
   const {paths} = await gatherPaths({
     appDirectory: root,
     scanDirectories: [root],
+    requestedScanDirectories: [root],
     rules: createPathRules({excludePatterns, noGitIgnore: true}),
   })
   return findDependencyAutomationInputs(root, paths)

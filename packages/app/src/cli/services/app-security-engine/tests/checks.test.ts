@@ -196,11 +196,18 @@ describe('finding validation', () => {
   })
 
   test('rejects unsafe file and evidence paths and lines', () => {
-    expect(validateFinding({...validFinding, file: '../outside.ts'})).toMatch(/unsafe file path/)
+    expect(validateFinding({...validFinding, file: '/etc/passwd'})).toMatch(/unsafe file path/)
     expect(validateFinding({...validFinding, file: 'C:\\app\\a.ts'})).toMatch(/unsafe file path/)
-    expect(validateFinding({...validFinding, evidence: [{file: '../secret', line: 1}]})).toMatch(/unsafe evidence/)
+    expect(validateFinding({...validFinding, file: 'a\0.ts'})).toMatch(/unsafe file path/)
+    expect(validateFinding({...validFinding, file: `${'a/'.repeat(600)}a.ts`})).toMatch(/exceeds 1024/)
+    expect(validateFinding({...validFinding, evidence: [{file: 'a\0.ts', line: 1}]})).toMatch(/unsafe evidence/)
     expect(validateFinding({...validFinding, evidence: [{file: '/etc/passwd', line: 1}]})).toMatch(/unsafe evidence/)
     expect(validateFinding({...validFinding, evidence: [{file: 'app/a.ts', line: 0}]})).toMatch(/evidence line/)
+  })
+
+  test('allows paths that start with ../, for a scan directory outside the app directory', () => {
+    expect(validateFinding({...validFinding, file: '../backend/src/a.ts'})).toBeUndefined()
+    expect(validateFinding({...validFinding, evidence: [{file: '../library/index.ts', line: 1}]})).toBeUndefined()
   })
 
   test('caps agent-supplied text and evidence', () => {

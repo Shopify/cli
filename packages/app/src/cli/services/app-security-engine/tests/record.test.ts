@@ -306,17 +306,29 @@ describe('recordAgentFindings', () => {
     const errors = recordRejected({
       schema_version: 1,
       findings: [
-        finding({file: '../outside.ts'}),
         finding({file: '/etc/passwd'}),
+        finding({file: 'src/a\0.ts'}),
         finding({evidence: [{file: 'C:\\Windows\\system.ini', line: 1}]}),
       ],
     })
 
     expect(errors).toEqual([
-      `findings[0] (${tenant.id}): unsafe file path (must be relative and inside the app): ../outside.ts`,
-      `findings[1] (${tenant.id}): unsafe file path (must be relative and inside the app): /etc/passwd`,
+      `findings[0] (${tenant.id}): unsafe file path (must be relative): /etc/passwd`,
+      `findings[1] (${tenant.id}): unsafe file path (must be relative): src/a\0.ts`,
       `findings[2] (${tenant.id}): unsafe evidence file path: C:\\Windows\\system.ini`,
     ])
+  })
+
+  test('accepts findings in a scan directory outside the app directory, with ../ paths', () => {
+    const document = recordAccepted({
+      schema_version: 1,
+      findings: [finding({file: '../backend/src/server.ts', evidence: [{file: '../library/src/auth.ts', line: 3}]})],
+    })
+
+    expect(document.checks[0]!.findings[0]).toMatchObject({
+      location: {file: '../backend/src/server.ts'},
+      evidence: [{location: {file: '../library/src/auth.ts', line: 3}}],
+    })
   })
 
   test('rejects more findings than the cap without validating each one', () => {
