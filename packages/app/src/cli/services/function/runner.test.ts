@@ -1,8 +1,8 @@
-import {runFunction} from './runner.js'
+import {runFunction, executeFunction} from './runner.js'
 import {functionRunnerBinary, downloadBinary} from './binaries.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
 import {describe, test, vi, expect} from 'vitest'
-import {exec} from '@shopify/cli-kit/node/system'
+import {exec, captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
@@ -180,6 +180,91 @@ describe('runFunction', () => {
       // Then
       expect(exec).toHaveBeenCalled()
       expect(renderWarning).not.toHaveBeenCalled()
+    })
+  })
+})
+
+const nativeRunResult = {
+  name: 'function.wasm',
+  size: 1,
+  memory_usage: 64,
+  instructions: 100,
+  logs: '',
+  input: {},
+  output: {},
+  success: true,
+}
+
+describe('executeFunction', () => {
+  test('captures the native runner protocol as typed data', async () => {
+    const functionExtension = await testFunctionExtension()
+    vi.mocked(captureOutputWithExitCode).mockResolvedValue({
+      stdout: JSON.stringify(nativeRunResult),
+      stderr: 'Runner diagnostic',
+      exitCode: 0,
+    })
+    await expect(executeFunction({functionExtension, input: '{}', export: 'run'})).resolves.toEqual({
+      state: 'completed',
+      result: nativeRunResult,
+      diagnostics: ['Runner diagnostic'],
+      exitCode: 0,
+    })
+    expect(captureOutputWithExitCode).toHaveBeenCalledWith(
+      functionRunnerBinary().path,
+      ['-f', functionExtension.outputPath, '--export', 'run', '--json'],
+      {cwd: functionExtension.directory, stdin: undefined, input: '{}'},
+    )
+  })
+
+  test('returns completed Function failures without throwing a second fatal error', async () => {
+    const functionExtension = await testFunctionExtension()
+    vi.mocked(captureOutputWithExitCode).mockResolvedValue({
+      stdout: JSON.stringify({...nativeRunResult, success: false}),
+      stderr: 'Execution failed',
+      exitCode: 1,
+    })
+    await expect(executeFunction({functionExtension})).resolves.toMatchObject({
+      state: 'completed',
+      result: {success: false},
+      exitCode: 1,
+    })
+  })
+
+  test.each([
+    {stdout: '', exitCode: 1},
+    {stdout: '{invalid', exitCode: 0},
+    {stdout: '{}', exitCode: 0},
+    {stdout: JSON.stringify(nativeRunResult), exitCode: 1},
+  ])('classifies infrastructure or invalid-output failure: %j', async ({stdout, exitCode}) => {
+    const functionExtension = await testFunctionExtension()
+    vi.mocked(captureOutputWithExitCode).mockResolvedValue({stdout, stderr: 'Failure details', exitCode})
+    await expect(executeFunction({functionExtension})).resolves.toMatchObject({
+      state: 'failed',
+      exitCode,
+      stderr: 'Failure details',
+    })
+  })
+
+  test('reports profile warnings as data and preserves the profile flag', async () => {
+    await inTemporaryDirectory(async (tempDir) => {
+      const functionExtension = await testFunctionExtension({dir: tempDir})
+      await mkdir(dirname(functionExtension.outputPath))
+      await writeFile(functionExtension.outputPath, Buffer.from([0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00]))
+      vi.mocked(captureOutputWithExitCode).mockResolvedValue({
+        stdout: JSON.stringify(nativeRunResult),
+        stderr: '',
+        exitCode: 0,
+      })
+      await expect(executeFunction({functionExtension, profile: true})).resolves.toMatchObject({
+        state: 'completed',
+        diagnostics: [expect.stringContaining('profile')],
+      })
+      expect(renderWarning).not.toHaveBeenCalled()
+      expect(captureOutputWithExitCode).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.arrayContaining(['--profile']),
+        expect.any(Object),
+      )
     })
   })
 })

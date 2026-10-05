@@ -1,19 +1,28 @@
 import {chooseFunction, functionFlags, getOrGenerateSchemaPath} from '../../../services/function/common.js'
-import {runFunction} from '../../../services/function/runner.js'
+import {runFunction, executeFunction} from '../../../services/function/runner.js'
+import {functionRunJsonOutputSchema} from '../../../services/function/runner/types.js'
+import {presentFunctionExecution} from '../../../services/function/runner/result.js'
 import {appFlags} from '../../../flags.js'
 import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../../utilities/app-unlinked-command.js'
 import {localAppContext} from '../../../services/app-context.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
-import {renderAutocompletePrompt, isTTY} from '@shopify/cli-kit/node/ui'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 const DEFAULT_FUNCTION_EXPORT = '_start'
 
 export default class FunctionRun extends AppUnlinkedCommand {
+  static get jsonOutputSchema() {
+    return functionRunJsonOutputSchema
+  }
+
   static summary = 'Run a function locally for testing.'
 
-  static descriptionWithMarkdown = `Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).`
+  static descriptionWithMarkdown = `Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).
+
+JSON output preserves the native Function runner 7.x and 9.x format, including \`memory_usage\` and arbitrary input/output fields. Profiling files retain the native Speedscope format.`
 
   static description = this.descriptionForHelp()
 
@@ -58,7 +67,7 @@ export default class FunctionRun extends AppUnlinkedCommand {
     } else if (ourFunction.configuration.targeting !== undefined && ourFunction.configuration.targeting.length > 0) {
       const targeting = ourFunction.configuration.targeting
 
-      if (targeting.length > 1 && isTTY({})) {
+      if (targeting.length > 1 && !flags['no-input'] && isTerminalInteractive()) {
         const targets = targeting.map((target) => ({
           label: target.target,
           value: target.export || DEFAULT_FUNCTION_EXPORT, // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing -- empty export should use default
@@ -90,16 +99,20 @@ export default class FunctionRun extends AppUnlinkedCommand {
       flags.config,
     )
 
-    await runFunction({
+    const options = {
       functionExtension: ourFunction,
-      json: flags.json,
       inputPath: flags.input,
       export: functionExport,
-      stdin: 'inherit',
+      stdin: 'inherit' as const,
       schemaPath,
       queryPath,
       profile: flags.profile,
-    })
+    }
+    if (flags.json) {
+      presentFunctionExecution(await executeFunction(options))
+    } else {
+      await runFunction(options)
+    }
 
     return {app}
   }
