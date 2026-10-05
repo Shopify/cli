@@ -5,9 +5,11 @@ import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts
 import {resolveAppSecurityCommands} from '../../../services/app-security-commands.js'
 import deliverAppSecurityInstructions from '../../../services/app-security-instructions.js'
 import {resolveAppSecuritySelection, type AppSecuritySelection} from '../../../services/app-security-selection.js'
+import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {fileRealPath, inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
@@ -37,6 +39,25 @@ async function createApp(
     appConfigFilePath: joinPath(appDirectory, configFileName),
   })
   return appDirectory
+}
+
+/** Makes the mocked resolver run the real one, with a client ID lookup that fails for every client ID. */
+async function resolveWithFailingLookUp() {
+  const actual = await vi.importActual<typeof import('../../../services/app-security-selection.js')>(
+    '../../../services/app-security-selection.js',
+  )
+  const lookUpApp = vi.fn(async (clientId: string) => {
+    throw new AbortError(`No app with client ID ${clientId} found`)
+  })
+  vi.mocked(resolveAppSecuritySelection).mockImplementation((options) =>
+    actual.resolveAppSecuritySelection(options, {
+      confirmScanWithoutAppConfig: async () => true,
+      pickClientId: async () => 'picked-client-id',
+      pickConfigFile: async () => 'shopify.app.toml',
+      lookUpApp,
+    }),
+  )
+  return lookUpApp
 }
 
 function configSelection(appDirectory: string, configFileName: string): AppSecuritySelection {
@@ -172,5 +193,21 @@ describe('app security instructions command', () => {
   test('keeps --copy and --write mutually exclusive', () => {
     expect(SecurityInstructions.flags.copy.exclusive).toEqual(['write'])
     expect(SecurityInstructions.flags.write.exclusive).toEqual(['copy'])
+  })
+
+  test('does not look up --client-id', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = await fileRealPath(directory)
+      await writeFile(joinPath(appDirectory, 'shopify.app.toml'), validAppConfiguration('toml-client-id'))
+      await mkdir(appSecurityArtifactPaths(appDirectory, 'mistyped-client-id').resultsDirectory)
+      const lookUpApp = await resolveWithFailingLookUp()
+
+      await SecurityInstructions.run(['--path', directory, '--client-id', 'mistyped-client-id'], import.meta.url)
+
+      expect(lookUpApp).not.toHaveBeenCalled()
+      expect(deliverAppSecurityInstructions).toHaveBeenCalledWith(
+        expect.objectContaining({resultsKey: 'mistyped-client-id'}),
+      )
+    })
   })
 })

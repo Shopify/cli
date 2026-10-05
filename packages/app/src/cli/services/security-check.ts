@@ -14,6 +14,7 @@ import {
   resultsKey,
   type AppSecurityScanDirectory,
   type AppSecuritySelection,
+  type AppSecuritySelectionOptions,
 } from './app-security-selection.js'
 import {encodeSecurityJson, toSecurityJson} from './security-json.js'
 import {renderSecurityReport} from './security-output.js'
@@ -62,13 +63,7 @@ interface SecurityCheckResolution {
 export type AppSecurityInstructionsDestination = 'copy' | 'print' | 'nothing'
 
 interface SecurityDependencies {
-  resolveSelection(options: {
-    path: string
-    config?: string
-    clientId?: string
-    withoutAppConfig: boolean
-    allowPrompts: boolean
-  }): Promise<AppSecuritySelection>
+  resolveSelection(options: AppSecuritySelectionOptions): Promise<AppSecuritySelection>
   execute(options: ScanInput & Required<ScanOptions>): Promise<AppSecurityExecution>
   listFiles(options: ScanInput & Required<ScanOptions>): Promise<{paths: string[]; ignoredScanDirectories: string[]}>
   writeArtifacts(
@@ -189,6 +184,7 @@ export default async function securityCheck(
     clientId: options.clientId,
     withoutAppConfig: options.withoutAppConfig,
     allowPrompts: canPrompt,
+    validateClientIdFlag: true,
   })
   const {appDirectory} = selection
   const scope: AppSecurityScope = {

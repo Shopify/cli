@@ -13,7 +13,7 @@ import {
 import {validAppConfiguration} from './app-security-selection.test-data.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {appCreationDefaults} from './app/config/link.js'
-import {fetchOrCreateOrganizationApp} from './context.js'
+import {appFromIdentifiers, fetchOrCreateOrganizationApp} from './context.js'
 import use from './app/config/use.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
@@ -31,6 +31,7 @@ vi.mock('./local-storage.js', async (importOriginal) => ({
 vi.mock('./app/config/use.js', () => ({default: vi.fn()}))
 vi.mock('./context.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./context.js')>()),
+  appFromIdentifiers: vi.fn(),
   fetchOrCreateOrganizationApp: vi.fn(),
 }))
 vi.mock('@shopify/cli-kit/node/ui', async (importOriginal) => ({
@@ -55,6 +56,7 @@ function promptDependencies(overrides: Partial<AppSecuritySelectionDependencies>
     confirmScanWithoutAppConfig: vi.fn(async (_directory: string) => true),
     pickClientId: vi.fn(async (_appDirectory: string) => 'picked-client-id'),
     pickConfigFile: vi.fn(async (_appDirectory: string) => 'shopify.app.staging.toml'),
+    lookUpApp: vi.fn(async (_clientId: string) => {}),
     ...overrides,
   }
 }
@@ -503,6 +505,138 @@ describe('resolveAppSecuritySelection when no TOML is found', () => {
       })
       expect(fetchOrCreateOrganizationApp).toHaveBeenCalledWith(appCreationDefaults(await fileRealPath(directory)))
       expect(selection).toMatchObject({kind: 'no-config', clientId: 'created-client-id', clientIdSource: 'picker'})
+    })
+  })
+})
+
+describe('resolveAppSecuritySelection with validateClientIdFlag', () => {
+  const unknownClientId = new AbortError('No app with client ID unknown-client-id found')
+
+  test('looks up --client-id when it overrides a TOML, not the TOML client ID', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeConfiguration(directory, 'toml-client-id')
+      const dependencies = promptDependencies()
+
+      const selection = await resolveAppSecuritySelection(
+        {path: directory, clientId: 'flag-client-id', allowPrompts: false, validateClientIdFlag: true},
+        dependencies,
+      )
+
+      expect(dependencies.lookUpApp).toHaveBeenCalledOnce()
+      expect(dependencies.lookUpApp).toHaveBeenCalledWith('flag-client-id')
+      expect(selection).toMatchObject({kind: 'config', clientIdOverride: 'flag-client-id'})
+    })
+  })
+
+  test('looks up --client-id with --without-app-config', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const dependencies = promptDependencies({
+        lookUpApp: vi.fn(async () => {
+          throw unknownClientId
+        }),
+      })
+
+      const error = await selectionError(
+        resolveAppSecuritySelection(
+          {
+            path: directory,
+            clientId: 'unknown-client-id',
+            withoutAppConfig: true,
+            allowPrompts: false,
+            validateClientIdFlag: true,
+          },
+          dependencies,
+        ),
+      )
+
+      expect(error).toBe(unknownClientId)
+      expect(dependencies.lookUpApp).toHaveBeenCalledWith('unknown-client-id')
+    })
+  })
+
+  test('looks up --client-id before the no-TOML prompt, which an unknown client ID never reaches', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const dependencies = promptDependencies({
+        lookUpApp: vi.fn(async () => {
+          throw unknownClientId
+        }),
+      })
+
+      const error = await selectionError(
+        resolveAppSecuritySelection(
+          {path: directory, clientId: 'unknown-client-id', allowPrompts: true, validateClientIdFlag: true},
+          dependencies,
+        ),
+      )
+
+      expect(error).toBe(unknownClientId)
+      expect(dependencies.confirmScanWithoutAppConfig).not.toHaveBeenCalled()
+      expect(dependencies.pickClientId).not.toHaveBeenCalled()
+    })
+  })
+
+  test('does not look up the TOML client ID', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeConfiguration(directory, 'toml-client-id')
+      const dependencies = promptDependencies()
+
+      await resolveAppSecuritySelection(
+        {path: directory, allowPrompts: false, validateClientIdFlag: true},
+        dependencies,
+      )
+
+      expect(dependencies.lookUpApp).not.toHaveBeenCalled()
+    })
+  })
+
+  test('does not look up the client ID from the picker', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const dependencies = promptDependencies()
+
+      const selection = await resolveAppSecuritySelection(
+        {path: directory, allowPrompts: true, validateClientIdFlag: true},
+        dependencies,
+      )
+
+      expect(selection).toMatchObject({clientId: 'picked-client-id', clientIdSource: 'picker'})
+      expect(dependencies.lookUpApp).not.toHaveBeenCalled()
+    })
+  })
+
+  test('does not look up --client-id unless asked to', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeConfiguration(directory, 'toml-client-id')
+      const dependencies = promptDependencies()
+
+      await resolveAppSecuritySelection(
+        {path: directory, clientId: 'flag-client-id', allowPrompts: false},
+        dependencies,
+      )
+      await resolveAppSecuritySelection(
+        {path: directory, clientId: 'flag-client-id', withoutAppConfig: true, allowPrompts: false},
+        dependencies,
+      )
+
+      expect(dependencies.lookUpApp).not.toHaveBeenCalled()
+    })
+  })
+
+  test('looks up the app by its client ID in the API by default', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeConfiguration(directory, 'toml-client-id')
+      vi.mocked(appFromIdentifiers).mockRejectedValue(unknownClientId)
+
+      const error = await selectionError(
+        resolveAppSecuritySelection({
+          path: directory,
+          clientId: 'unknown-client-id',
+          allowPrompts: false,
+          validateClientIdFlag: true,
+        }),
+      )
+
+      expect(error).toBe(unknownClientId)
+      expect(appFromIdentifiers).toHaveBeenCalledWith({apiKey: 'unknown-client-id'})
     })
   })
 })

@@ -1,8 +1,10 @@
 import SecurityCheck from './check.js'
 import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts.js'
+import {appFromIdentifiers} from '../../../services/context.js'
 import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
 import {Config} from '@oclif/core'
-import {fileRealPath, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {fileExists, fileRealPath, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
@@ -24,6 +26,11 @@ vi.mock('@shopify/cli-kit/node/analytics', async (importOriginal) => ({
 vi.mock('@shopify/cli-kit/node/session', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@shopify/cli-kit/node/session')>()),
   setCurrentSessionAlias: vi.fn(),
+}))
+// The --client-id lookup needs a login and the network. The mock finds every client ID unless a test rejects it.
+vi.mock('../../../services/context.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../services/context.js')>()),
+  appFromIdentifiers: vi.fn(),
 }))
 
 async function createApp(directory: string): Promise<{nestedDirectory: string}> {
@@ -260,6 +267,37 @@ describe('app security check command boundary', () => {
       expect(message).toContain("Couldn't find shopify.app.shopifyappdev-dashboardjson.toml in")
       expectMentionsPath(message, normalizePath(await fileRealPath(directory)))
       await expect(readFile(paths.deterministicFindingsPath)).rejects.toMatchObject({code: 'ENOENT'})
+    })
+  })
+
+  test.each([[['--skip-instructions']], [['--list-files']]])(
+    'aborts on an unknown --client-id before writing or listing anything (%j)',
+    async (modeFlags) => {
+      await inTemporaryDirectory(async (directory) => {
+        await createApp(directory)
+        const paths = appSecurityArtifactPaths(await fileRealPath(directory), 'unknown-client-id')
+        vi.mocked(appFromIdentifiers).mockRejectedValue(new AbortError('No app with client ID unknown-client-id found'))
+
+        const result = await runCommand(['--path', directory, '--client-id', 'unknown-client-id', ...modeFlags])
+
+        expect(result.exitCode).toBe(1)
+        expect(errorText(result.stderr)).toContain('No app with client ID unknown-client-id found')
+        expect(result.stdout).toBe('')
+        expect(appFromIdentifiers).toHaveBeenCalledWith({apiKey: 'unknown-client-id'})
+        await expect(fileExists(paths.resultsDirectory)).resolves.toBe(false)
+      })
+    },
+  )
+
+  test('looks up --client-id, not the TOML client ID', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+
+      await runCommand(['--path', directory, '--client-id', 'other-client-id', '--json', '--skip-instructions'])
+      await runCommand(['--path', directory, '--json', '--skip-instructions'])
+
+      expect(appFromIdentifiers).toHaveBeenCalledOnce()
+      expect(appFromIdentifiers).toHaveBeenCalledWith({apiKey: 'other-client-id'})
     })
   })
 })
