@@ -1,5 +1,6 @@
 import SecurityCheck from './check.js'
 import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts.js'
+import {deterministicFindingsDocumentSchema} from '../../../services/app-security-engine/results/schema.js'
 import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
 import {Config} from '@oclif/core'
 import {fileRealPath, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -122,6 +123,48 @@ describe('app security check command boundary', () => {
         ]),
       })
       await expect(readFile(paths.agentFindingsPath)).rejects.toMatchObject({code: 'ENOENT'})
+    })
+  })
+
+  test('scans an extension directory that the TOML adds outside the app directory and records it in coverage', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = joinPath(directory, 'app')
+      await createApp(appRoot)
+      await writeFile(
+        joinPath(appRoot, 'shopify.app.toml'),
+        `extension_directories = ["../shared/*"]\n${validAppConfiguration()}`,
+      )
+      await mkdir(joinPath(directory, 'shared', 'theme', 'blocks'), {recursive: true})
+      await writeFile(
+        joinPath(directory, 'shared', 'theme', 'shopify.extension.toml'),
+        'name = "theme"\ntype = "theme"\n',
+      )
+      await writeFile(
+        joinPath(directory, 'shared', 'theme', 'blocks', 'banner.liquid'),
+        '<p>{{ block.settings.text }}</p>\n',
+      )
+      const appDirectory = await fileRealPath(appRoot)
+      const sharedTheme = await fileRealPath(joinPath(directory, 'shared', 'theme'))
+
+      const result = await runCommand(['--path', appRoot, '--json', '--skip-instructions'])
+
+      expect(result.exitCode).toBe(0)
+      const output = JSON.parse(result.stdout)
+      expect(output.selection.scan_directories).toEqual([
+        {directory: appDirectory, origin: 'app_directory'},
+        {directory: sharedTheme, origin: 'app_config_directory'},
+      ])
+      const deterministicFindings = await readJson(
+        appSecurityArtifactPaths(appDirectory, 'shopify.app').deterministicFindingsPath,
+      )
+      // `review` reads the results back through this schema.
+      expect(deterministicFindingsDocumentSchema.parse(deterministicFindings).coverage).toMatchObject({
+        scope: {include_dirs: [], excludes: [], no_git_ignore: false},
+        scan_directories: [
+          {directory: '.', origin: 'app_directory'},
+          {directory: '../shared/theme', origin: 'app_config_directory'},
+        ],
+      })
     })
   })
 

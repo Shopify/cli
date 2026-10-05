@@ -29,12 +29,25 @@ export function getAgentInstructions(): string {
   return EMBEDDED_APP_SECURITY_INSTRUCTIONS
 }
 
-/** A scan directory equal to the app directory is the app directory itself, however it was requested. */
-function coverageScanDirectories({appDirectory, scanDirectories}: ScanInput): CoverageScanDirectory[] {
+function coverageScanDirectories({
+  appDirectory,
+  scanDirectories,
+  appConfigDirectories = [],
+}: ScanInput): CoverageScanDirectory[] {
   return scanDirectories.map((directory) => ({
     directory: normalizePath(relativePath(appDirectory, directory)) || '.',
-    origin: directory === appDirectory ? 'app_directory' : 'include_dir',
+    origin: coverageOrigin(directory, appDirectory, appConfigDirectories),
   }))
+}
+
+/** A scan directory equal to the app directory is the app directory itself, however it was requested. */
+function coverageOrigin(
+  directory: string,
+  appDirectory: string,
+  appConfigDirectories: ReadonlyArray<string>,
+): CoverageScanDirectory['origin'] {
+  if (directory === appDirectory) return 'app_directory'
+  return appConfigDirectories.includes(directory) ? 'app_config_directory' : 'include_dir'
 }
 
 export async function scanApp(input: ScanInput, options: ScanOptions = {}): Promise<AppSecurityScan> {

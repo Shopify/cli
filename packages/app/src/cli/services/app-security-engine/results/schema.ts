@@ -124,7 +124,7 @@ export const coverageSchema = zod.object({
   ),
   scope: createScopeSchema(),
   scan_directories: zod.array(
-    zod.object({directory: zod.string(), origin: zod.enum(['app_directory', 'include_dir'])}),
+    zod.object({directory: zod.string(), origin: zod.enum(['app_directory', 'include_dir', 'app_config_directory'])}),
   ),
 })
 

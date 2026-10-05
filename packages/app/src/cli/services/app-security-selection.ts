@@ -2,14 +2,26 @@ import {localAppContext} from './app-context.js'
 import {appCreationDefaults} from './app/config/link.js'
 import {fetchOrCreateOrganizationApp} from './context.js'
 import {getCachedAppInfo} from './local-storage.js'
+import {extensionFilesForConfig, webFilesForConfig} from '../models/project/config-selection.js'
 import {NoAppConfigurationFoundError, Project} from '../models/project/project.js'
 import {getAppConfigurationShorthand} from '../models/app/config-file-naming.js'
 import {findConfigFiles, selectConfigFile} from '../prompts/config.js'
 import {configurationFileNames} from '../constants.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExistsSync, fileRealPath, isDirectory} from '@shopify/cli-kit/node/fs'
-import {basename, cwd, isSubpath, joinPath, normalizePath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {
+  basename,
+  cwd,
+  dirname,
+  isSubpath,
+  joinPath,
+  normalizePath,
+  relativePath,
+  resolvePath,
+} from '@shopify/cli-kit/node/path'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {lstat} from 'node:fs/promises'
+import type {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 
 export type AppSecuritySelection =
   | {
@@ -18,6 +30,11 @@ export type AppSecuritySelection =
       appDirectory: string
       /** Absolute path of the selected TOML, as found (not the symbolic link's target). */
       appConfigFilePath: string
+      /**
+       * Absolute real paths of the extension and web directories that the TOML's `extension_directories` and
+       * `web_directories` add outside the app directory, if any.
+       */
+      appConfigDirectories?: string[]
       /** The TOML's `client_id`, if any. */
       configClientId?: string
       /** The `--client-id` value, if passed. */
@@ -37,7 +54,7 @@ export type AppSecuritySelection =
 export interface AppSecurityScanDirectory {
   /** Absolute; the real path. */
   directory: string
-  origin: 'app_directory' | 'include_dir'
+  origin: 'app_directory' | 'include_dir' | 'app_config_directory'
 }
 
 interface AppSecuritySelectionOptions {
@@ -131,7 +148,7 @@ export async function resolveAppSecuritySelection(
 
   try {
     const unselectedConfigFile = options.config ? undefined : await configFileWhenNoneIsSelected(options, dependencies)
-    const {app} = await localAppContext({
+    const {app, project, activeConfig} = await localAppContext({
       directory: options.path,
       userProvidedConfigName: options.config ?? unselectedConfigFile?.fileName,
       skipPrompts: !options.allowPrompts,
@@ -142,6 +159,7 @@ export async function resolveAppSecuritySelection(
       appDirectory,
       // Re-rooted on the real app directory so the engine's containment check compares like with like.
       appConfigFilePath: joinPath(appDirectory, basename(app.configPath)),
+      appConfigDirectories: await resolveAppConfigDirectories(project, activeConfig.file),
       configClientId: app.configuration.client_id || undefined,
       clientIdOverride: options.clientId,
       appConfigFilePicked: unselectedConfigFile?.picked,
@@ -215,27 +233,76 @@ export async function resolveIncludeDirectories(includeDirs: ReadonlyArray<strin
 }
 
 /**
- * The app directory, then each include directory, compared by real path. A duplicate is dropped, so an include
- * directory that is the app directory counts as the app directory. A directory inside another one is dropped too,
- * because walking the outer one covers it; that includes the app directory when an include directory contains it.
+ * The directories holding the extension and web TOMLs that the selected TOML's `extension_directories` and
+ * `web_directories` match, as the CLI's loader matches them, when they are outside the app directory. Returns real
+ * paths. Unlike `--include-dir`, these directories are implicit, so one reached through a symbolic link outside the
+ * app directory is left out, the way gathering never follows a symbolic link.
+ */
+async function resolveAppConfigDirectories(project: Project, activeConfigFile: TomlFile): Promise<string[]> {
+  const outsideDirectories = [
+    ...extensionFilesForConfig(project, activeConfigFile),
+    ...webFilesForConfig(project, activeConfigFile),
+  ]
+    .map((file) => dirname(file.path))
+    .filter((directory) => !isSubpath(project.directory, directory))
+
+  const directories: string[] = []
+  for (const directory of new Set(outsideDirectories)) {
+    // eslint-disable-next-line no-await-in-loop
+    if (await isReachedThroughSymbolicLink(project.directory, directory)) continue
+    // eslint-disable-next-line no-await-in-loop
+    directories.push(await fileRealPath(directory))
+  }
+  return directories.sort()
+}
+
+/**
+ * Whether a directory outside the app directory is reached through a symbolic link: checks each path segment below the
+ * ancestor that the two directories share.
+ */
+async function isReachedThroughSymbolicLink(appDirectory: string, directory: string): Promise<boolean> {
+  const segments = relativePath(appDirectory, directory).split('/')
+  let path = joinPath(appDirectory, ...segments.filter((segment) => segment === '..'))
+  for (const segment of segments.filter((segment) => segment !== '..')) {
+    path = joinPath(path, segment)
+    // eslint-disable-next-line no-await-in-loop
+    if ((await lstat(path)).isSymbolicLink()) return true
+  }
+  return false
+}
+
+/**
+ * The app directory, then each include directory, then each app configuration directory, compared by real path. A
+ * duplicate is dropped, so a directory keeps the first origin it has. A directory inside another one is dropped too,
+ * because walking the outer one covers it; that includes the app directory when another directory contains it.
  * `requestedScanDirectories` keeps the directories that were dropped for being nested, since each still gets the
  * ignored-scan-directory warning.
  *
- * Aborts on an include directory on another Windows drive or network share. Gathered files are stored relative to the
- * app directory and read back with `joinPath`, which can't reach those, so their files would be silently left unscanned.
+ * Aborts on a directory on another Windows drive or network share. Gathered files are stored relative to the app
+ * directory and read back with `joinPath`, which can't reach those, so their files would be silently left unscanned.
  */
 export function mergeScanDirectories(
   appDirectory: string,
   includeDirectories: ReadonlyArray<string>,
+  appConfigDirectories: ReadonlyArray<string> = [],
 ): {scanDirectories: AppSecurityScanDirectory[]; requestedScanDirectories: string[]} {
-  const otherDrive = includeDirectories.find(
-    (directory) => joinPath(appDirectory, relativePath(appDirectory, directory)) !== normalizePath(directory),
-  )
-  if (otherDrive) throw new AbortError(`--include-dir ${otherDrive}: must be on the same drive as the app directory.`)
+  const isOnAnotherDrive = (directory: string) =>
+    joinPath(appDirectory, relativePath(appDirectory, directory)) !== normalizePath(directory)
+  const otherDriveIncludeDirectory = includeDirectories.find(isOnAnotherDrive)
+  if (otherDriveIncludeDirectory) {
+    throw new AbortError(`--include-dir ${otherDriveIncludeDirectory}: must be on the same drive as the app directory.`)
+  }
+  const otherDriveAppConfigDirectory = appConfigDirectories.find(isOnAnotherDrive)
+  if (otherDriveAppConfigDirectory) {
+    throw new AbortError(
+      `Extension or web directory ${otherDriveAppConfigDirectory}: must be on the same drive as the app directory.`,
+    )
+  }
 
   const requested = [
     {directory: appDirectory, origin: 'app_directory' as const},
     ...includeDirectories.map((directory) => ({directory, origin: 'include_dir' as const})),
+    ...appConfigDirectories.map((directory) => ({directory, origin: 'app_config_directory' as const})),
   ].filter((candidate, index, all) => all.findIndex(({directory}) => directory === candidate.directory) === index)
 
   return {

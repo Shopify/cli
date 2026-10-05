@@ -254,6 +254,7 @@ describe('securityCheck', () => {
       appDirectory,
       scanDirectories: [appDirectory],
       requestedScanDirectories: [appDirectory],
+      appConfigDirectories: [],
       appConfigFilePath: `${appDirectory}/shopify.app.toml`,
       clientId: 'toml-client-id',
       includeDirs: [],
@@ -372,6 +373,34 @@ describe('securityCheck', () => {
         {directory: appDirectory, origin: 'app_directory'},
         {directory: backend, origin: 'include_dir'},
       ])
+    })
+  })
+
+  test('scans the app configuration directories of the selection after the include directories, without repeating them in generated commands', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await mkdir(joinPath(directory, 'backend'))
+      vi.stubEnv('INIT_CWD', directory)
+      const backend = await fileRealPath(joinPath(directory, 'backend'))
+      const sharedTheme = '/tmp/shared/theme'
+      const dependencies = testDependencies(scanExecution, {...configSelection, appConfigDirectories: [sharedTheme]})
+
+      const resolution = await securityCheck({...testOptions(), json: true, includeDirs: ['backend']}, dependencies)
+
+      expect(dependencies.execute).toHaveBeenCalledWith(
+        expect.objectContaining({
+          scanDirectories: [appDirectory, backend, sharedTheme],
+          requestedScanDirectories: [appDirectory, backend, sharedTheme],
+          appConfigDirectories: [sharedTheme],
+        }),
+      )
+      expect(JSON.parse(dependencies.output.mock.calls[0]![0]).selection.scan_directories).toEqual([
+        {directory: appDirectory, origin: 'app_directory'},
+        {directory: backend, origin: 'include_dir'},
+        {directory: sharedTheme, origin: 'app_config_directory'},
+      ])
+      expect(resolution.commands).toEqual(
+        commandsFor(configSelection, {include_dirs: ['backend'], excludes: [], no_git_ignore: false}),
+      )
     })
   })
 
@@ -558,6 +587,7 @@ describe('securityCheck', () => {
       appDirectory,
       scanDirectories: [appDirectory],
       requestedScanDirectories: [appDirectory],
+      appConfigDirectories: [],
       appConfigFilePath: undefined,
       clientId: 'flag-client-id',
       includeDirs: [],
@@ -928,6 +958,7 @@ describe('securityCheck --list-files', () => {
         appDirectory,
         scanDirectories: [appDirectory, backend],
         requestedScanDirectories: [appDirectory, backend],
+        appConfigDirectories: [],
         appConfigFilePath: `${appDirectory}/shopify.app.toml`,
         clientId: 'toml-client-id',
         includeDirs: ['backend'],

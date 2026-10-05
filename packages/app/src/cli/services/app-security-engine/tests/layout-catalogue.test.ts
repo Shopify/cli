@@ -33,10 +33,11 @@ interface CheckFlags {
   json?: boolean
 }
 
-function toml(path: string, clientId = 'client-app'): FileSpec {
+/** `topLevelKeys` come first, since top-level keys must precede tables. */
+function toml(path: string, clientId = 'client-app', topLevelKeys = ''): FileSpec {
   return [
     path,
-    `name = "test-app"
+    `${topLevelKeys}name = "test-app"
 client_id = "${clientId}"
 application_url = "https://example.com"
 embedded = true
@@ -941,6 +942,45 @@ describe('layout catalogue: check --list-files', () => {
           'shopify.app.toml',
         ],
       })
+    })
+  })
+
+  test('28. extension-and-web-directories-outside-the-app', async () => {
+    const layout: Layout = {
+      repositories: ['monorepo'],
+      files: [
+        toml(
+          'monorepo/app/shopify.app.toml',
+          'client-app',
+          'extension_directories = ["../shared-extensions/*"]\nweb_directories = ["../backend"]\n',
+        ),
+        'monorepo/app/app/routes/index.tsx',
+        ['monorepo/shared-extensions/theme/shopify.extension.toml', 'name = "theme"\ntype = "theme"\n'],
+        'monorepo/shared-extensions/theme/blocks/banner.liquid',
+        'monorepo/shared-extensions/README.md',
+        ['monorepo/backend/shopify.web.toml', 'name = "backend"\nroles = ["backend"]\n\n[commands]\ndev = "dev"\n'],
+        'monorepo/backend/src/server.ts',
+      ],
+    }
+    await inLayout(layout, async (root) => {
+      const {resolution, stdout, stderr} = await checkListFiles(root, 'monorepo/app')
+
+      expectConfigSelection(resolution, {
+        appDirectory: join(root, 'monorepo/app'),
+        tomlFileName: 'shopify.app.toml',
+        resultsKey: 'shopify.app',
+      })
+      // Each matched TOML's directory is scanned, not every directory the glob starts from.
+      expect(listedPaths(stdout)).toEqual([
+        '../backend/shopify.web.toml',
+        '../backend/src/server.ts',
+        '../shared-extensions/theme/blocks/banner.liquid',
+        '../shared-extensions/theme/shopify.extension.toml',
+        'app/routes/index.tsx',
+        'shopify.app.toml',
+      ])
+      expect(warningText(stderr)).not.toContain("another app's configuration")
+      expect(resolution.commands.scan.args).toEqual(checkArgs())
     })
   })
 })

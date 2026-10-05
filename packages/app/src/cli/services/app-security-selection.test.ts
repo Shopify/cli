@@ -17,7 +17,7 @@ import {fetchOrCreateOrganizationApp} from './context.js'
 import use from './app/config/use.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {symlink} from 'node:fs/promises'
@@ -77,6 +77,7 @@ describe('resolveAppSecuritySelection with an app configuration', () => {
         kind: 'config',
         appDirectory,
         appConfigFilePath: joinPath(appDirectory, 'shopify.app.toml'),
+        appConfigDirectories: [],
         configClientId: 'default-client-id',
         clientIdOverride: undefined,
       })
@@ -322,6 +323,124 @@ describe('resolveAppSecuritySelection with several TOMLs and none selected', () 
         "`--client-id` can't be combined with `--config`, so first select one with `shopify app config use <config>`: production, staging.",
       )
       expect(dependencies.pickConfigFile).not.toHaveBeenCalled()
+    })
+  })
+})
+
+/** A TOML whose `extension_directories` and `web_directories` come first, since top-level keys must precede tables. */
+async function writeConfigurationWithDirectories(
+  appDirectory: string,
+  directories: {extension_directories?: string[]; web_directories?: string[]},
+  name = 'shopify.app.toml',
+): Promise<void> {
+  const keys = Object.entries(directories).map(([key, entries]) => `${key} = ${JSON.stringify(entries)}\n`)
+  await mkdir(appDirectory)
+  await writeFile(joinPath(appDirectory, name), `${keys.join('')}${validAppConfiguration()}`)
+}
+
+/** A theme extension named after its directory, since extension handles must be unique. */
+async function writeThemeExtension(directory: string): Promise<void> {
+  await mkdir(directory)
+  await writeFile(joinPath(directory, 'shopify.extension.toml'), `name = "${basename(directory)}"\ntype = "theme"\n`)
+}
+
+async function writeBackendWeb(directory: string): Promise<void> {
+  await mkdir(directory)
+  await writeFile(
+    joinPath(directory, 'shopify.web.toml'),
+    'name = "backend"\nroles = ["backend"]\n\n[commands]\ndev = "dev"\n',
+  )
+}
+
+describe('resolveAppSecuritySelection app configuration directories', () => {
+  test('are the directories of the extension and web TOMLs that relative entries match outside the app directory', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = joinPath(directory, 'app')
+      await writeConfigurationWithDirectories(appDirectory, {
+        extension_directories: ['extensions/*', '../shared/*', '../no-extensions/*'],
+        web_directories: ['../backend'],
+      })
+      await writeThemeExtension(joinPath(appDirectory, 'extensions', 'inside'))
+      await writeThemeExtension(joinPath(directory, 'shared', 'theme'))
+      await writeFile(joinPath(directory, 'shared', 'README.md'), 'Shared extensions\n')
+      await mkdir(joinPath(directory, 'no-extensions', 'empty'))
+      await writeBackendWeb(joinPath(directory, 'backend'))
+
+      const selection = await resolveAppSecuritySelection({path: appDirectory, allowPrompts: false})
+
+      expect(selection).toMatchObject({
+        appConfigDirectories: [
+          await fileRealPath(joinPath(directory, 'backend')),
+          await fileRealPath(joinPath(directory, 'shared', 'theme')),
+        ],
+      })
+    })
+  })
+
+  test('ignore absolute entries, the way the CLI does', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = joinPath(directory, 'app')
+      await writeConfigurationWithDirectories(appDirectory, {
+        extension_directories: [joinPath(directory, 'shared', '*')],
+        web_directories: [joinPath(directory, 'backend')],
+      })
+      await writeThemeExtension(joinPath(directory, 'shared', 'theme'))
+      await writeBackendWeb(joinPath(directory, 'backend'))
+
+      const selection = await resolveAppSecuritySelection({path: appDirectory, allowPrompts: false})
+
+      expect(selection).toMatchObject({appConfigDirectories: []})
+    })
+  })
+
+  test('leave out a directory reached through a symbolic link outside the app directory', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = joinPath(directory, 'app')
+      await writeConfigurationWithDirectories(appDirectory, {extension_directories: ['../linked-shared/*']})
+      await writeThemeExtension(joinPath(directory, 'shared', 'theme'))
+      await symlink(joinPath(directory, 'shared'), joinPath(directory, 'linked-shared'), 'dir')
+
+      const selection = await resolveAppSecuritySelection({path: appDirectory, allowPrompts: false})
+
+      expect(selection).toMatchObject({appConfigDirectories: []})
+    })
+  })
+
+  test('leave out an extension directory inside the app directory that links outside it', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = joinPath(directory, 'app')
+      await writeConfigurationWithDirectories(appDirectory, {extension_directories: ['extensions/*']})
+      await writeThemeExtension(joinPath(directory, 'shared', 'theme'))
+      await mkdir(joinPath(appDirectory, 'extensions'))
+      await symlink(joinPath(directory, 'shared', 'theme'), joinPath(appDirectory, 'extensions', 'theme'), 'dir')
+
+      const selection = await resolveAppSecuritySelection({path: appDirectory, allowPrompts: false})
+
+      expect(selection).toMatchObject({appConfigDirectories: []})
+    })
+  })
+
+  test('come from the selected TOML only', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = joinPath(directory, 'app')
+      await writeConfigurationWithDirectories(appDirectory, {})
+      await writeFile(
+        joinPath(appDirectory, 'shopify.app.staging.toml'),
+        `extension_directories = ["../shared/*"]\n${validAppConfiguration('staging-client-id')}`,
+      )
+      await writeThemeExtension(joinPath(directory, 'shared', 'theme'))
+
+      const defaultSelection = await resolveAppSecuritySelection({path: appDirectory, allowPrompts: false})
+      const stagingSelection = await resolveAppSecuritySelection({
+        path: appDirectory,
+        config: 'staging',
+        allowPrompts: false,
+      })
+
+      expect(defaultSelection).toMatchObject({appConfigDirectories: []})
+      expect(stagingSelection).toMatchObject({
+        appConfigDirectories: [await fileRealPath(joinPath(directory, 'shared', 'theme'))],
+      })
     })
   })
 })
@@ -772,5 +891,36 @@ describe('mergeScanDirectories', () => {
 
   test('accepts an include directory elsewhere on the same Windows drive', () => {
     expect(mergeScanDirectories('C:/work/app', ['C:/backend']).scanDirectories).toHaveLength(2)
+  })
+
+  test('lists each app configuration directory after the include directories', () => {
+    expect(mergeScanDirectories('/work/app', ['/work/backend'], ['/work/shared/theme'])).toEqual({
+      scanDirectories: [
+        {directory: '/work/app', origin: 'app_directory'},
+        {directory: '/work/backend', origin: 'include_dir'},
+        {directory: '/work/shared/theme', origin: 'app_config_directory'},
+      ],
+      requestedScanDirectories: ['/work/app', '/work/backend', '/work/shared/theme'],
+    })
+  })
+
+  test('counts an app configuration directory that is also an include directory as the include directory', () => {
+    expect(mergeScanDirectories('/work/app', ['/work/shared/theme'], ['/work/shared/theme']).scanDirectories).toEqual([
+      {directory: '/work/app', origin: 'app_directory'},
+      {directory: '/work/shared/theme', origin: 'include_dir'},
+    ])
+  })
+
+  test('drops an app configuration directory inside an include directory', () => {
+    expect(mergeScanDirectories('/work/app', ['/work/shared'], ['/work/shared/theme']).scanDirectories).toEqual([
+      {directory: '/work/app', origin: 'app_directory'},
+      {directory: '/work/shared', origin: 'include_dir'},
+    ])
+  })
+
+  test('rejects an app configuration directory on another Windows drive', () => {
+    expect(() => mergeScanDirectories('C:/work/app', [], ['D:/shared/theme'])).toThrowError(
+      new AbortError('Extension or web directory D:/shared/theme: must be on the same drive as the app directory.'),
+    )
   })
 })
