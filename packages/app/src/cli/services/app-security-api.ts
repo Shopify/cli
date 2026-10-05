@@ -4,6 +4,7 @@ import {
   type AppSecurityEngineMetadata,
   type AppSecurityScan,
   type ScanInput,
+  type ScanOptions,
   type Severity,
 } from './app-security-engine/index.js'
 
@@ -20,11 +21,12 @@ export function securityExitCode(execution: AppSecurityExecution, blocking: AppS
 }
 
 export async function executeAppSecurity({
-  ignorePatterns,
+  excludePatterns,
+  noGitIgnore,
   ...scanInput
-}: ScanInput & {ignorePatterns?: ReadonlyArray<string>}): Promise<AppSecurityExecution> {
+}: ScanInput & ScanOptions): Promise<AppSecurityExecution> {
   const startTime = Date.now()
-  const result = await scanApp(scanInput, {ignorePatterns})
+  const result = await scanApp(scanInput, {excludePatterns, noGitIgnore})
   return {
     ...result,
     elapsedMilliseconds: Date.now() - startTime,

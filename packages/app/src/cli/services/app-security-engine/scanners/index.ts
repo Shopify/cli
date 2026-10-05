@@ -4,14 +4,14 @@ import {
   findAppSourceFiles,
   findSensitiveFiles,
   findSourceCandidates,
-  resetSkippedFiles,
+  configureRepositoryReader,
   getSkippedFiles,
   findManifests,
   findManifestPaths,
   findDependencyAutomationInputs,
-  listRepositoryFiles,
+  gatherPaths,
 } from './discover.js'
-import {buildPathRules, hasIncludeOverride, ignorePatternRules, listGitIgnoredPaths} from './path-rules.js'
+import {createPathRules} from './path-rules.js'
 import {detectCapabilities, detectProject} from '../capabilities/detect.js'
 import {computeScanMetadata} from '../scorer/index.js'
 import {deprecatedScriptTagScope, insecureWebhookUrl} from '../rules/config-rules.js'
@@ -45,7 +45,7 @@ import type {
   Issue,
   ScanInput,
   ScanOptions,
-  ScanResult,
+  ScanOutput,
   SkippedFile,
 } from '../types.js'
 
@@ -548,34 +548,37 @@ function normalizeRunnerResult(value: Issue[] | RunnerResult): RunnerResult {
 }
 
 export async function scan(
-  {appDirectory: appRoot, appConfigFilePath}: ScanInput,
+  {appDirectory: appRoot, scanDirectories, appConfigFilePath}: ScanInput,
   options: ScanOptions = {},
-): Promise<ScanResult> {
-  resetSkippedFiles()
+): Promise<ScanOutput> {
+  // The selected app configuration is an explicit input: it's read even when it is a symbolic link
+  // that leaves the app directory.
+  configureRepositoryReader({
+    appDirectory: appRoot,
+    scanDirectories,
+    explicitInputs: new Set(appConfigFilePath ? [appConfigFilePath] : []),
+  })
   const selectedFileName = appConfigFilePath ? basename(appConfigFilePath) : undefined
   const appToml = appConfigFilePath ? loadAppToml(appConfigFilePath, appRoot) : null
   const appTomls = appToml ? [appToml] : []
-  const overrides = ignorePatternRules(options.ignorePatterns ?? [])
-  const gitIgnoreListing = await listGitIgnoredPaths(appRoot, {
-    pruneDefaultDirectories: !hasIncludeOverride(overrides),
+  const {
+    paths: repositoryFiles,
+    ignoredScanDirectories,
+    listingStatus,
+  } = await gatherPaths({
+    appDirectory: appRoot,
+    scanDirectories,
+    selectedAppConfigFilePath: appConfigFilePath,
+    rules: createPathRules({excludePatterns: options.excludePatterns ?? [], noGitIgnore: options.noGitIgnore ?? false}),
   })
-  const pathRules = buildPathRules({
-    gitIgnoredPaths: gitIgnoreListing.status === 'listed' ? gitIgnoreListing.paths : [],
-    overrides,
-  })
-  const repositoryFiles = listRepositoryFiles(appRoot, pathRules)
   const extensions = findExtensions(appRoot, repositoryFiles)
   const sourceCandidates = findSourceCandidates(repositoryFiles)
   const sourceFiles = findAppSourceFiles(appRoot, repositoryFiles)
-  // The selected app configuration is an explicit input, not a discovered path: it's loaded and
-  // scanned for secrets even when path rules exclude it.
-  const sensitivePaths =
-    appToml && selectedFileName ? [...new Set([...repositoryFiles, selectedFileName])].sort() : repositoryFiles
-  const sensitiveFiles = findSensitiveFiles(appRoot, sensitivePaths, selectedFileName)
+  const sensitiveFiles = findSensitiveFiles(appRoot, repositoryFiles, selectedFileName)
   const manifestPaths = findManifestPaths(repositoryFiles)
   const manifests = findManifests(appRoot, manifestPaths)
   const dependencyAutomation = manifests.some(manifestHasDependencies)
-    ? findDependencyAutomationInputs(appRoot, pathRules)
+    ? findDependencyAutomationInputs(appRoot, repositoryFiles)
     : {files: []}
   const capabilities = detectCapabilities(appToml, extensions, sourceFiles, appTomls)
   const detection = detectProject(manifests, extensions, sourceCandidates)
@@ -591,7 +594,7 @@ export async function scan(
     capabilities,
     detection,
     sourceCandidates,
-    gitIgnoreListing: gitIgnoreListing.status,
+    gitIgnoreListing: listingStatus,
   }
 
   let issues: Issue[] = []
@@ -711,5 +714,6 @@ export async function scan(
     detection,
     scan: scanMetadata,
     issues,
+    ignoredScanDirectories,
   }
 }

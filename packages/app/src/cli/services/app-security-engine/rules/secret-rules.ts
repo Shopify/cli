@@ -1,7 +1,6 @@
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
-import type {SourceFile} from './types.js'
-import type {GitIgnoreListing} from '../scanners/path-rules.js'
+import type {ScanContext, SourceFile} from './types.js'
 import type {Issue} from '../types.js'
 
 /**
@@ -147,7 +146,7 @@ function isEnvFile(path: string): boolean {
 }
 
 /** Why a file git reports as untracked and ignored still reached this rule. */
-type IgnoredFileScanReason = 'enclosing-repository' | 'nested-repository' | 'listing-failed' | 'unknown'
+type IgnoredFileScanReason = 'nested-repository' | 'listing-failed' | 'unknown'
 
 // A missing git binary resolves with exit code 0 and empty output.
 async function gitTopLevel(cwd: string): Promise<string | undefined> {
@@ -159,10 +158,9 @@ async function gitTopLevel(cwd: string): Promise<string | undefined> {
 async function ignoredFileScanReason(
   appRoot: string,
   path: string,
-  gitIgnoreListing: GitIgnoreListing['status'],
+  gitIgnoreListing: ScanContext['gitIgnoreListing'],
   appTopLevel: () => Promise<string | undefined>,
 ): Promise<{reason: IgnoredFileScanReason; evidence: string[]}> {
-  if (gitIgnoreListing === 'app-root-ignored') return {reason: 'enclosing-repository', evidence: []}
   if (gitIgnoreListing === 'failed') return {reason: 'listing-failed', evidence: []}
   if (gitIgnoreListing === 'not-a-repository') return {reason: 'unknown', evidence: []}
 
@@ -201,10 +199,6 @@ function committedSecretFileIssue(
     title = `${kind} is not ignored by git`
     message = `${file.path} is untracked but not ignored. If committed, its contents enter repository history.`
     fixDescription = `Add ${file.path} to .gitignore, confirm with 'git check-ignore ${file.path}', and rotate any exposed secrets`
-  } else if (ignoredScanReason === 'enclosing-repository') {
-    title = `${kind} is ignored by a repository that does not own this app`
-    message = `${file.path} is ignored by an enclosing git repository that ignores the whole app folder, so those rules don't protect the app and it was scanned.`
-    fixDescription = `Ignore ${file.path} in the repository that owns the app and rotate any exposed secrets`
   } else if (ignoredScanReason === 'nested-repository') {
     title = `${kind} is inside a nested git repository`
     message = `${file.path} belongs to a nested git repository (its top level differs from the app's), so this app's ignore rules don't protect it and it was scanned.`
@@ -243,7 +237,7 @@ function committedSecretFileIssue(
 export async function scanCommittedSecrets(
   secretEvidenceFiles: SourceFile[],
   appRoot: string,
-  gitIgnoreListing: GitIgnoreListing['status'],
+  gitIgnoreListing: ScanContext['gitIgnoreListing'],
 ): Promise<Issue[]> {
   const issues: Issue[] = []
 
@@ -282,6 +276,8 @@ export async function scanCommittedSecrets(
     let ignoredScanReason: IgnoredFileScanReason = 'unknown'
     let evidence = status.evidence ?? []
     if (status.tracked === false && status.ignored === true) {
+      // With --no-git-ignore the file was scanned only because filtering was off, and Git still protects it.
+      if (gitIgnoreListing === 'git-ignore-off') continue
       // eslint-disable-next-line no-await-in-loop
       const scanReason = await ignoredFileScanReason(appRoot, file.path, gitIgnoreListing, appRootTopLevel)
       ignoredScanReason = scanReason.reason

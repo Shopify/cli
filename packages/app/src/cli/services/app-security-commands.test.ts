@@ -169,8 +169,13 @@ describe('resolveAppSecurityCommands', () => {
     expect(commands.clean.args).toEqual(['app', 'security', 'clean', {flag: '--path', value: '/tmp/app'}])
   })
 
-  test('repeats --ignore patterns in order, after --config, on scan only', () => {
-    const commands = resolveAppSecurityCommands('/tmp/app', 'shopify.app.staging.toml', ['generated/', '!build/'])
+  test('repeats --exclude globs in order, after --config, then --no-git-ignore, on scan only', () => {
+    const commands = resolveAppSecurityCommands(
+      '/tmp/app',
+      'shopify.app.staging.toml',
+      ['generated', '../shared/**'],
+      true,
+    )
 
     expect(commands.scan.args).toEqual([
       'app',
@@ -178,16 +183,17 @@ describe('resolveAppSecurityCommands', () => {
       'check',
       {flag: '--path', value: '/tmp/app'},
       {flag: '--config', value: 'staging'},
-      {flag: '--ignore', value: 'generated/'},
-      {flag: '--ignore', value: '!build/'},
+      {flag: '--exclude', value: 'generated'},
+      {flag: '--exclude', value: '../shared/**'},
+      '--no-git-ignore',
     ])
     expect(commands.record.args).toEqual(['app', 'security', 'record', {flag: '--path', value: '/tmp/app'}])
     expect(commands.review.args).toEqual(['app', 'security', 'review', {flag: '--path', value: '/tmp/app'}])
     expect(commands.clean.args).toEqual(['app', 'security', 'clean', {flag: '--path', value: '/tmp/app'}])
   })
 
-  test('omits --ignore when there are no patterns', () => {
-    expect(resolveAppSecurityCommands('/tmp/app', undefined, []).scan.args).toEqual([
+  test('omits --exclude and --no-git-ignore when they were not passed', () => {
+    expect(resolveAppSecurityCommands('/tmp/app', undefined, [], false).scan.args).toEqual([
       'app',
       'security',
       'check',
@@ -229,9 +235,9 @@ describe('resolveAppSecurityCommands', () => {
 })
 
 describe('formatAppSecurityCommand', () => {
-  test('quotes --ignore patterns so the shell does not expand `!`, `*`, or spaces', () => {
-    const ignorePatterns = ['!build/', '*.log', 'a b/']
-    const commands = resolveAppSecurityCommands('/tmp/app', undefined, ignorePatterns)
+  test('quotes --exclude globs so the shell does not expand `!`, `*`, or spaces', () => {
+    const excludePatterns = ['!build/', '*.log', 'a b/']
+    const commands = resolveAppSecurityCommands('/tmp/app', undefined, excludePatterns)
 
     for (const shell of ['posix', 'cmd', 'powershell'] as const) {
       const formatted = formatAppSecurityCommand(commands.scan, shell)
@@ -242,30 +248,30 @@ describe('formatAppSecurityCommand', () => {
         'check',
         '--path',
         '/tmp/app',
-        '--ignore',
+        '--exclude',
         '!build/',
-        '--ignore',
+        '--exclude',
         '*.log',
-        '--ignore',
+        '--exclude',
         'a b/',
       ])
       expect(formatted).not.toMatch(/ !build\//)
       expect(formatted).not.toMatch(/ \*\.log/)
     }
     expect(formatAppSecurityCommand(commands.scan, 'posix')).toContain(
-      "--ignore '!build/' --ignore '*.log' --ignore 'a b/'",
+      "--exclude '!build/' --exclude '*.log' --exclude 'a b/'",
     )
     expect(formatAppSecurityCommand(commands.scan, 'powershell')).toContain(
-      "--ignore '!build/' --ignore '*.log' --ignore 'a b/'",
+      "--exclude '!build/' --exclude '*.log' --exclude 'a b/'",
     )
     expect(formatAppSecurityCommand(commands.scan, 'cmd')).toContain(
-      '--ignore "!build/" --ignore "*.log" --ignore "a b/"',
+      '--exclude "!build/" --exclude "*.log" --exclude "a b/"',
     )
   })
 
-  test('quotes an --ignore pattern that starts with `-` or repeats a command word', () => {
-    const ignorePatterns = ['-*.log', '-tmp/', 'check']
-    const commands = resolveAppSecurityCommands('/tmp/app', undefined, ignorePatterns)
+  test('quotes an --exclude glob that starts with `-` or repeats a command word', () => {
+    const excludePatterns = ['-*.log', '-tmp/', 'check']
+    const commands = resolveAppSecurityCommands('/tmp/app', undefined, excludePatterns)
 
     for (const shell of ['posix', 'cmd', 'powershell'] as const) {
       const formatted = formatAppSecurityCommand(commands.scan, shell)
@@ -276,33 +282,33 @@ describe('formatAppSecurityCommand', () => {
         'check',
         '--path',
         '/tmp/app',
-        '--ignore',
+        '--exclude',
         '-*.log',
-        '--ignore',
+        '--exclude',
         '-tmp/',
-        '--ignore',
+        '--exclude',
         'check',
       ])
       expect(formatted).not.toMatch(/ -\*\.log/)
       expect(formatted).not.toMatch(/ -tmp\//)
-      expect(formatted).not.toMatch(/--ignore check/)
+      expect(formatted).not.toMatch(/--exclude check/)
     }
     expect(formatAppSecurityCommand(commands.scan, 'posix')).toContain(
-      "--ignore '-*.log' --ignore '-tmp/' --ignore 'check'",
+      "--exclude '-*.log' --exclude '-tmp/' --exclude 'check'",
     )
     expect(formatAppSecurityCommand(commands.scan, 'powershell')).toContain(
-      "--ignore '-*.log' --ignore '-tmp/' --ignore 'check'",
+      "--exclude '-*.log' --exclude '-tmp/' --exclude 'check'",
     )
     expect(formatAppSecurityCommand(commands.scan, 'cmd')).toContain(
-      '--ignore "-*.log" --ignore "-tmp/" --ignore "check"',
+      '--exclude "-*.log" --exclude "-tmp/" --exclude "check"',
     )
   })
 
   test('leaves the command words and every flag name bare and quotes every flag value', () => {
-    const commands = resolveAppSecurityCommands('/tmp/app', 'shopify.app.staging.toml', ['generated/'])
+    const commands = resolveAppSecurityCommands('/tmp/app', 'shopify.app.staging.toml', ['generated'], true)
 
     expect(formatAppSecurityCommand(commands.scan, 'posix')).toBe(
-      "shopify app security check --path '/tmp/app' --config 'staging' --ignore 'generated/'",
+      "shopify app security check --path '/tmp/app' --config 'staging' --exclude 'generated' --no-git-ignore",
     )
     expect(formatAppSecurityCommand(commands.clean, 'posix')).toBe("shopify app security clean --path '/tmp/app'")
   })

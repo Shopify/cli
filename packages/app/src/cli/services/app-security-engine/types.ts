@@ -76,13 +76,18 @@ export interface ProjectDetection {
 /** What to scan, already resolved: the engine doesn't look for an app directory or choose a configuration. */
 export interface ScanInput {
   appDirectory: string
+  /** Absolute real paths of the directories to walk. */
+  scanDirectories: ReadonlyArray<string>
   /** Absolute path of the selected app configuration file. Absent when scanning without app configuration. */
   appConfigFilePath?: string
   clientId?: string
 }
 
 export interface ScanOptions {
-  ignorePatterns?: ReadonlyArray<string>
+  /** `--exclude` globs, as typed. */
+  excludePatterns?: ReadonlyArray<string>
+  /** Turns off Git ignore rules for every scan directory. */
+  noGitIgnore?: boolean
 }
 
 export interface ScanResult {
@@ -96,6 +101,12 @@ export interface ScanResult {
   detection: ProjectDetection
   scan: ScanMetadata
   issues: Issue[]
+}
+
+/** What gathering reports besides the result, for the caller to show. It isn't part of the stored findings. */
+export interface ScanOutput extends ScanResult {
+  /** Absolute paths of the scan directories that their repository ignores, so only the files Git tracks in them were scanned. */
+  ignoredScanDirectories: string[]
 }
 
 export interface SkippedFile {

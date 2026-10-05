@@ -2,31 +2,38 @@
 import {git, isolateGitConfig} from './git-test-helpers.js'
 import {scanDirectory as scan} from './scan-directory.js'
 import {
+  configureRepositoryReader,
   findExtensions,
   findSourceCandidates,
+  gatherPaths,
   getSkippedFiles,
-  listRepositoryFiles,
-  resetSkippedFiles,
 } from '../scanners/discover.js'
-import {buildPathRules, listGitIgnoredPaths} from '../scanners/path-rules.js'
+import {createPathRules} from '../scanners/path-rules.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {afterEach, beforeEach, describe, expect, test} from 'vitest'
-import {chmod, mkdir, mkdtemp, rm, symlink, writeFile} from 'node:fs/promises'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {chmod, mkdir, mkdtemp, realpath, rm, symlink, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import type {PathRules} from '../scanners/path-rules.js'
 import type {ScanResult} from '../types.js'
 
 const temporaryDirectories: string[] = []
 const appConfiguration = 'name = "Discovery safety"\napplication_url = "https://example.com"\n'
-const DEFAULT_RULES = buildPathRules({gitIgnoredPaths: []})
+const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
+
+let restoreGitConfig: (() => void) | undefined
+
+beforeEach(() => {
+  restoreGitConfig = isolateGitConfig()
+})
 
 afterEach(async () => {
+  restoreGitConfig?.()
   await Promise.all(temporaryDirectories.splice(0).map((directory) => rm(directory, {recursive: true, force: true})))
 })
 
+/** The real path, which is what the CLI's resolver gives the engine and what `--exclude` is matched against. */
 async function makeDirectory(prefix = 'app-security-discovery-'): Promise<string> {
-  const directory = await mkdtemp(join(tmpdir(), prefix))
+  const directory = await realpath(await mkdtemp(join(tmpdir(), prefix)))
   temporaryDirectories.push(directory)
   return directory
 }
@@ -70,101 +77,96 @@ function inspectedManifestPaths(result: ScanResult): string[] {
   return execution?.inspected_files.filter((path) => path.endsWith('package.json')) ?? []
 }
 
-async function scanPathRules(appRoot: string): Promise<PathRules> {
-  const listing = await listGitIgnoredPaths(appRoot, {pruneDefaultDirectories: true})
-  return buildPathRules({gitIgnoredPaths: listing.status === 'listed' ? listing.paths : []})
+interface GatherOptions {
+  appDirectory?: string
+  scanDirectories?: string[]
+  selectedAppConfigFilePath?: string
+  excludePatterns?: string[]
+  noGitIgnore?: boolean
 }
 
-describe('repository discovery exclusions', () => {
-  let restoreGitConfig: (() => void) | undefined
-  beforeEach(() => {
-    restoreGitConfig = isolateGitConfig()
+/** Gathers the way a scan does, and leaves the reader configured for the finders. */
+async function gather(root: string, options: GatherOptions = {}) {
+  const appDirectory = options.appDirectory ?? root
+  const scanDirectories = options.scanDirectories ?? [root]
+  configureRepositoryReader({
+    appDirectory,
+    scanDirectories,
+    explicitInputs: new Set(options.selectedAppConfigFilePath ? [options.selectedAppConfigFilePath] : []),
   })
-  afterEach(() => {
-    restoreGitConfig?.()
+  return gatherPaths({
+    appDirectory,
+    scanDirectories,
+    selectedAppConfigFilePath: options.selectedAppConfigFilePath,
+    rules: createPathRules({excludePatterns: options.excludePatterns ?? [], noGitIgnore: options.noGitIgnore ?? false}),
   })
+}
 
-  test('excludes every nested app input from its parent monorepo scan', async () => {
+async function gatheredPaths(root: string, options: GatherOptions = {}): Promise<string[]> {
+  return (await gather(root, options)).paths
+}
+
+async function makeSubmodule(): Promise<string> {
+  const submodule = await makeRepository({'.gitignore': 'generated/\n', 'a.ts': 'export const a = true'})
+  git(submodule, ['add', '-A'])
+  git(submodule, ['commit', '-qm', 'init'])
+  const outer = await makeRepository({'.gitignore': '*.log\n', 'index.ts': 'export const outer = true'})
+  git(outer, ['-c', 'protocol.file.allow=always', 'submodule', 'add', '-q', submodule, 'vendor/sub'])
+  await writeFiles(join(outer, 'vendor', 'sub'), {'generated/b.ts': '', 'x.log': ''})
+  return outer
+}
+
+describe('gathering without a default exclusion list', () => {
+  test('scans a nested app and every other file, since no name is excluded', async () => {
     const root = await makeDirectory()
-    const secret = ['AKIA', 'IOSFODNN7EXAMPLE'].join('')
     await writeFiles(root, {
       'shopify.app.toml': appConfiguration,
       'parent.ts': 'export const parent = true',
       'apps/child/shopify.app.toml': 'name = "Child"\n',
-      'apps/child/package.json': JSON.stringify({dependencies: {'@shopify/shopify-app-react-router': '1.0.0'}}),
-      'apps/child/app/routes/child.ts': `export const leaked = "${secret}"`,
-      'apps/child/extensions/theme/shopify.extension.toml': 'type = "theme"\n',
-      'apps/child/extensions/theme/blocks/app.liquid': '{{ block.settings.value }}',
-      'apps/child/secrets.json': secret,
+      'apps/child/app/routes/child.ts': 'export const child = true',
     })
 
     const result = await scan(root)
-    expect(scannedPaths(result)).toContain('parent.ts')
-    expect(scannedPaths(result).some((path) => path.startsWith('apps/child/'))).toBe(false)
-    expect(result.capabilities.theme_app_extension).toBe(false)
-    expect(result.detection.framework).not.toBe('react_router')
-    expect(JSON.stringify(result)).not.toContain(secret)
-    expect(result.issues.some((issue) => issue.location.file.startsWith('apps/child/'))).toBe(false)
+    expect(scannedPaths(result)).toEqual(expect.arrayContaining(['parent.ts', 'apps/child/app/routes/child.ts']))
+    await expect(gatheredPaths(root)).resolves.toContain('apps/child/shopify.app.toml')
   })
 
-  test('recursively excludes dependency, VCS, coverage, build, and test directories', async () => {
+  test('scans node_modules, build output and test directories outside a repository', async () => {
     const root = await makeDirectory()
-    const ignoredDirectories = [
+    const directories = [
       'node_modules',
       'vendor',
-      '.git',
-      '.next',
       'coverage',
       'dist',
       'build',
       'test',
       'tests',
-      'spec',
-      'specs',
       '__tests__',
-      'fixtures',
-      'x-fixtures',
-      '__fixtures__',
+      '.shopify',
     ]
     await writeFiles(root, {
       'shopify.app.toml': appConfiguration,
-      'src/index.ts': 'export const included = true',
-      'packages/service/lib/index.test.ts': 'export const ignored = true',
-      'packages/service/lib/index.spec.js': 'export const ignored = true',
-      ...Object.fromEntries(
-        ignoredDirectories.map((directory) => [
-          `packages/service/${directory}/ignored.ts`,
-          'export const ignored = true',
-        ]),
-      ),
+      'src/index.test.ts': 'export const test = true',
+      ...Object.fromEntries(directories.map((directory) => [`${directory}/x.ts`, 'export const scanned = true'])),
     })
 
-    const result = await scan(root)
-    const paths = scannedPaths(result)
-    expect(paths).toContain('src/index.ts')
-    for (const directory of ignoredDirectories)
-      expect(paths.some((path) => path.includes(`/${directory}/`))).toBe(false)
-    expect(paths).not.toContain('packages/service/lib/index.test.ts')
-    expect(paths).not.toContain('packages/service/lib/index.spec.js')
+    await expect(gatheredPaths(root)).resolves.toEqual(
+      ['shopify.app.toml', 'src/index.test.ts', ...directories.map((directory) => `${directory}/x.ts`)].sort(),
+    )
   })
 
-  test('scans a selected app configuration file for secrets even when a default exclusion matches it', async () => {
-    const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
-    const root = await makeDirectory()
-    await writeFiles(root, {
+  test('scans node_modules inside a repository when Git does not ignore it', async () => {
+    const root = await makeRepository({
       'shopify.app.toml': appConfiguration,
-      // `*.test.*` is a default exclusion.
-      'shopify.app.test.toml': `name = "Test"\napplication_url = "https://test.example.com/?token=${secret}"\n`,
+      '.gitignore': '*.log\n',
+      'node_modules/pkg/index.js': 'export const dependency = true',
     })
 
-    const result = await scan(root, 'test')
-    expect(result.app.name).toBe('Test')
-    expect(secretFindingFiles(result)).toEqual(['shopify.app.test.toml'])
+    await expect(gatheredPaths(root)).resolves.toContain('node_modules/pkg/index.js')
   })
 
   test('walks dot-folders and dotfiles', async () => {
     const root = await makeDirectory()
-    const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
     await writeFiles(root, {
       'shopify.app.toml': appConfiguration,
       '.github/workflows/deploy.yml': `env:\n  SHOPIFY_TOKEN: ${secret}\n`,
@@ -178,56 +180,28 @@ describe('repository discovery exclusions', () => {
     expect(paths).toContain('.vscode/settings.json')
     expect(paths).toContain('.eslintrc.cjs')
 
-    const candidates = findSourceCandidates(listRepositoryFiles(root, DEFAULT_RULES))
+    const candidates = findSourceCandidates(await gatheredPaths(root))
     expect(candidates).toEqual([
       expect.objectContaining({path: '.eslintrc.cjs', extension: '.cjs', language: 'javascript', supported: true}),
     ])
   })
 
-  test('excludes generated dot-folders and the .git worktree marker file', async () => {
-    const root = await makeDirectory()
-    const generatedDotFolders = [
-      '.yarn/releases',
-      '.react-router',
-      '.cache',
-      '.turbo',
-      '.vercel',
-      '.netlify',
-      '.output',
-      '.nuxt',
-      '.svelte-kit',
-      '.shopify/dev-bundle',
-    ]
-    await writeFiles(root, {
+  test('keeps the results directory out of the scan because .shopify/.gitignore ignores it', async () => {
+    const root = await makeRepository({
       'shopify.app.toml': appConfiguration,
-      '.git': 'gitdir: /somewhere/else/.git/worktrees/app\n',
-      'src/index.ts': 'export const included = true',
-      ...Object.fromEntries(
-        generatedDotFolders.map((directory) => [`${directory}/x.ts`, 'export const ignored = true']),
-      ),
+      'src/index.ts': 'export const stable = true',
+      '.shopify/.gitignore': '*\n',
     })
-
-    const result = await scan(root)
-    const paths = scannedPaths(result)
-    expect(paths).toContain('src/index.ts')
-    for (const directory of generatedDotFolders) expect(paths).not.toContain(`${directory}/x.ts`)
-
-    expect(listRepositoryFiles(root, DEFAULT_RULES)).toEqual(['shopify.app.toml', 'src/index.ts'])
-  })
-
-  test('keeps scanner-owned artifacts and atomic siblings out of stable scan inputs', async () => {
-    const root = await makeDirectory()
-    await writeFiles(root, {'shopify.app.toml': appConfiguration, 'src/index.ts': 'export const stable = true'})
     const before = await scan(root)
     await writeFiles(root, {
-      '.shopify/app-security/deterministic-findings.json': '{"changed":true}',
-      '.shopify/app-security/agent-checks.json': '{"changed":true}',
-      '.shopify/app-security/agent-findings.json': '{"changed":true}',
+      '.shopify/app-security/shopify.app/deterministic-findings.json': '{"changed":true}',
+      '.shopify/app-security/shopify.app/agent-checks.json': '{"changed":true}',
+      '.shopify/app-security/shopify.app/agent-findings.json': '{"changed":true}',
     })
     const after = await scan(root)
 
     expect(scannedPaths(after)).toEqual(scannedPaths(before))
-    expect(scannedPaths(after).some((path) => path.includes('.shopify/app-security'))).toBe(false)
+    await expect(gatheredPaths(root)).resolves.toEqual(['shopify.app.toml', 'src/index.ts'])
   })
 
   test('scans unconfigured extension files outside extension_directories', async () => {
@@ -265,7 +239,7 @@ describe('repository discovery exclusions', () => {
       'extensions/beta/src/index.ts': 'export const noToml = true',
     })
 
-    const extensions = findExtensions(root, listRepositoryFiles(root, DEFAULT_RULES))
+    const extensions = findExtensions(root, await gatheredPaths(root))
 
     expect(extensions.map((extension) => [extension.path, extension.files.map((file) => file.path)])).toEqual([
       ['extensions/alpha-two/shopify.extension.toml', ['extensions/alpha-two/src/index.ts']],
@@ -300,13 +274,60 @@ describe('repository discovery exclusions', () => {
   })
 })
 
-describe('gitignore-driven exclusions', () => {
-  let restoreGitConfig: (() => void) | undefined
-  beforeEach(() => {
-    restoreGitConfig = isolateGitConfig()
+describe('.git entries', () => {
+  test('skips a .git directory at any depth with Git filtering on, and walks it with --no-git-ignore', async () => {
+    const root = await makeRepository({'shopify.app.toml': appConfiguration, 'src/index.ts': ''})
+
+    await expect(gatheredPaths(root)).resolves.toEqual(['shopify.app.toml', 'src/index.ts'])
+    const walked = await gatheredPaths(root, {noGitIgnore: true})
+    expect(walked).toContain('.git/HEAD')
+    expect(walked).toContain('shopify.app.toml')
   })
-  afterEach(() => {
-    restoreGitConfig?.()
+
+  test("skips a worktree's .git file with Git filtering on, and walks it with --no-git-ignore", async () => {
+    const root = await makeDirectory()
+    await writeFiles(root, {
+      'shopify.app.toml': appConfiguration,
+      '.git': 'gitdir: /somewhere/else/.git/worktrees/app\n',
+      'packages/api/.git': 'gitdir: /somewhere/else/.git/worktrees/api\n',
+      'src/index.ts': 'export const included = true',
+    })
+
+    await expect(gatheredPaths(root)).resolves.toEqual(['shopify.app.toml', 'src/index.ts'])
+    await expect(gatheredPaths(root, {noGitIgnore: true})).resolves.toEqual([
+      '.git',
+      'packages/api/.git',
+      'shopify.app.toml',
+      'src/index.ts',
+    ])
+  })
+
+  test('does not run Git for gathering with --no-git-ignore', async () => {
+    const root = await makeRepository({'.gitignore': 'dist/\n', 'shopify.app.toml': appConfiguration, 'dist/a.ts': ''})
+
+    const result = await gather(root, {noGitIgnore: true})
+
+    expect(result.paths).toContain('dist/a.ts')
+    expect(result.ignoredScanDirectories).toEqual([])
+    expect(result.listingStatus).toBe('git-ignore-off')
+  })
+})
+
+describe('repositories', () => {
+  test('skips an ignored, untracked dist/ and keeps a tracked file in it', async () => {
+    const root = await makeRepository({
+      'shopify.app.toml': appConfiguration,
+      '.gitignore': 'dist/\n',
+      'dist/tracked.ts': 'export const tracked = true',
+      'dist/untracked.ts': 'export const untracked = true',
+      'build/untracked.ts': 'export const scanned = true',
+    })
+    git(root, ['add', '-f', 'dist/tracked.ts'])
+
+    const paths = await gatheredPaths(root)
+    expect(paths).toContain('dist/tracked.ts')
+    expect(paths).not.toContain('dist/untracked.ts')
+    expect(paths).toContain('build/untracked.ts')
   })
 
   test('excludes gitignored directories', async () => {
@@ -325,7 +346,6 @@ describe('gitignore-driven exclusions', () => {
   })
 
   test('neither reports nor scans a secret in a gitignored file, but does for its non-ignored twin', async () => {
-    const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
     const root = await makeRepository({
       'shopify.app.toml': appConfiguration,
       '.gitignore': 'notes.txt\n',
@@ -356,7 +376,6 @@ describe('gitignore-driven exclusions', () => {
   })
 
   test('honours negation patterns', async () => {
-    const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
     const root = await makeRepository({
       'shopify.app.toml': appConfiguration,
       '.gitignore': '.env*\n!.env.example\n',
@@ -395,7 +414,7 @@ describe('gitignore-driven exclusions', () => {
       'extensions/foo/index.js': 'export const included = true',
     })
 
-    const extensions = findExtensions(root, listRepositoryFiles(root, await scanPathRules(root)))
+    const extensions = findExtensions(root, await gatheredPaths(root))
     expect(extensions.map((extension) => extension.files.map((file) => file.path))).toEqual([
       ['extensions/foo/index.js'],
     ])
@@ -430,7 +449,7 @@ describe('gitignore-driven exclusions', () => {
     expect(paths).not.toContain('sp ace.ts')
   })
 
-  test('applies the enclosing repository .gitignore to an app in a subfolder', async () => {
+  test('applies the enclosing repository .gitignore to an app in a subdirectory', async () => {
     const repository = await makeRepository({
       '.gitignore': 'scratch/\n',
       'apps/web/shopify.app.toml': appConfiguration,
@@ -456,26 +475,6 @@ describe('gitignore-driven exclusions', () => {
     expect(paths).not.toContain('private/keys.ts')
   })
 
-  test('scans the whole app when the enclosing repository ignores the app folder but force-tracks a file in it', async () => {
-    // A force-tracked file stops git collapsing the app to `./`; it lists each file instead.
-    const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
-    const repository = await makeRepository({
-      '.gitignore': 'apps/web/\n',
-      'apps/web/shopify.app.toml': appConfiguration,
-      'apps/web/README.md': 'docs',
-      'apps/web/.env': `SHOPIFY_TOKEN=${secret}\n`,
-      'apps/web/a.ts': 'export const scanned = true',
-    })
-    git(repository, ['add', '-f', 'apps/web/README.md', '.gitignore'])
-    git(repository, ['commit', '-qm', 'init'])
-
-    const result = await scan(join(repository, 'apps', 'web'))
-    const paths = scannedPaths(result)
-    expect(paths).toContain('.env')
-    expect(paths).toContain('a.ts')
-    expect(secretFindingFiles(result)).toEqual(['.env'])
-  })
-
   test('omits an ignored manifest from manifest inspection but inspects a force-tracked one', async () => {
     const manifest = JSON.stringify({dependencies: {react: '19.0.0'}})
     const root = await makeRepository({
@@ -495,30 +494,6 @@ describe('gitignore-driven exclusions', () => {
     expect(paths).not.toContain('tmp/package.json')
   })
 
-  test.each([
-    ['inner', 'inner/'],
-    ['scratch/deep', 'scratch/'],
-  ])('excludes nested repository %s when the app repository ignores %s', async (nestedRepository, ignoredPath) => {
-    const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
-    const root = await makeRepository({
-      'shopify.app.toml': appConfiguration,
-      '.gitignore': `${ignoredPath}\n`,
-      [`${nestedRepository}/token.ts`]: `export const token = '${secret}'\n`,
-      'plain/token.ts': `export const token = '${secret}'\n`,
-    })
-    for (const repository of [nestedRepository, 'plain']) {
-      const directory = join(root, repository)
-      git(directory, ['init', '-q', '.'])
-      git(directory, ['add', 'token.ts'])
-      git(directory, ['commit', '-qm', 'Add token'])
-    }
-
-    const result = await scan(root)
-    // The unignored nested repository proves the secret is detectable, so the absence is not vacuous.
-    expect(secretFindingFiles(result)).toEqual(['plain/token.ts'])
-    expect(scannedPaths(result)).not.toContain(`${nestedRepository}/token.ts`)
-  })
-
   test('ignores nothing from a .gitignore outside a git repository', async () => {
     const root = await makeDirectory()
     await writeFiles(root, {
@@ -531,7 +506,6 @@ describe('gitignore-driven exclusions', () => {
   })
 
   test('loads and scans a gitignored selected app configuration file for secrets', async () => {
-    const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
     const root = await makeRepository({
       'shopify.app.toml': appConfiguration,
       '.gitignore': 'shopify.app.staging.toml\n',
@@ -543,18 +517,208 @@ describe('gitignore-driven exclusions', () => {
     expect(scannedPaths(result)).toContain('shopify.app.staging.toml')
     expect(secretFindingFiles(result)).toEqual(['shopify.app.staging.toml'])
   })
+
+  describe('nested repositories', () => {
+    async function makeNestedRepository(files: {outer?: Record<string, string>; inner: Record<string, string>}) {
+      const outer = await makeRepository({'shopify.app.toml': appConfiguration, ...files.outer})
+      const inner = join(outer, 'inner')
+      await writeFiles(inner, files.inner)
+      git(inner, ['init', '-q', '.'])
+      return {outer, inner}
+    }
+
+    test("applies a nested repository's own .gitignore inside it, and not the outer repository's", async () => {
+      const {outer} = await makeNestedRepository({
+        outer: {'.gitignore': 'outer-only.ts\n', 'outer-only.ts': ''},
+        inner: {'.gitignore': 'inner-only.ts\n', 'inner-only.ts': '', 'outer-only.ts': '', 'kept.ts': ''},
+      })
+
+      const paths = await gatheredPaths(outer)
+      expect(paths).not.toContain('outer-only.ts')
+      expect(paths).not.toContain('inner/inner-only.ts')
+      expect(paths).toEqual(expect.arrayContaining(['inner/outer-only.ts', 'inner/kept.ts']))
+    })
+
+    test('applies a nested repository rule that the outer listing would otherwise reach, such as a directory', async () => {
+      const {outer} = await makeNestedRepository({
+        inner: {'.gitignore': 'build/\n', 'build/a.ts': '', 'node_modules/b.ts': ''},
+      })
+
+      const paths = await gatheredPaths(outer)
+      expect(paths).not.toContain('inner/build/a.ts')
+      expect(paths).toContain('inner/node_modules/b.ts')
+    })
+
+    test.each([
+      ['inner', 'inner/'],
+      ['scratch/deep', 'scratch/'],
+    ])('prunes nested repository %s when the app repository ignores %s', async (nestedRepository, ignoredPath) => {
+      const root = await makeRepository({
+        'shopify.app.toml': appConfiguration,
+        '.gitignore': `${ignoredPath}\n`,
+        [`${nestedRepository}/token.ts`]: `export const token = '${secret}'\n`,
+        'plain/token.ts': `export const token = '${secret}'\n`,
+      })
+      for (const repository of [nestedRepository, 'plain']) {
+        const directory = join(root, repository)
+        git(directory, ['init', '-q', '.'])
+        git(directory, ['add', 'token.ts'])
+        git(directory, ['commit', '-qm', 'Add token'])
+      }
+
+      const result = await scan(root)
+      // The unignored nested repository proves the secret is detectable, so the absence is not vacuous.
+      expect(secretFindingFiles(result)).toEqual(['plain/token.ts'])
+      expect(scannedPaths(result)).not.toContain(`${nestedRepository}/token.ts`)
+    })
+
+    test("walks a nested repository's ignored directory with --no-git-ignore", async () => {
+      const {outer} = await makeNestedRepository({
+        outer: {'.gitignore': 'inner/\n'},
+        inner: {'.gitignore': 'build/\n', 'build/a.ts': '', 'kept.ts': ''},
+      })
+
+      const paths = await gatheredPaths(outer, {noGitIgnore: true})
+      expect(paths).toEqual(expect.arrayContaining(['inner/build/a.ts', 'inner/kept.ts']))
+    })
+
+    test('treats a symbolic-linked .git as a failed listing: no repository exclusions, but the link itself is skipped', async () => {
+      const outer = await makeRepository({
+        'shopify.app.toml': appConfiguration,
+        '.gitignore': 'inner-link-target-only.ts\n',
+      })
+      const target = await makeRepository({})
+      const inner = join(outer, 'inner')
+      await writeFiles(inner, {'inner-link-target-only.ts': '', 'kept.ts': ''})
+      await symlink(join(target, '.git'), join(inner, '.git'), 'dir')
+
+      const paths = await gatheredPaths(outer)
+      expect(paths).toEqual(expect.arrayContaining(['inner/inner-link-target-only.ts', 'inner/kept.ts']))
+      expect(paths.some((path) => path.startsWith('inner/.git'))).toBe(false)
+    })
+
+    test('applies a submodule’s own rules and not the outer repository’s', async () => {
+      const outer = await makeSubmodule()
+
+      const paths = await gatheredPaths(outer)
+      expect(paths).toEqual(expect.arrayContaining(['index.ts', 'vendor/sub/a.ts', 'vendor/sub/x.log', '.gitmodules']))
+      expect(paths).not.toContain('vendor/sub/generated/b.ts')
+      expect(paths.some((path) => path === 'vendor/sub/.git')).toBe(false)
+    })
+  })
+
+  describe('a scan directory that its repository ignores', () => {
+    test('gathers only the files Git tracks there, and reports it', async () => {
+      const repository = await makeRepository({
+        '.gitignore': 'apps/web/\n',
+        'apps/web/shopify.app.toml': appConfiguration,
+        'apps/web/README.md': 'docs',
+        'apps/web/.env': `SHOPIFY_TOKEN=${secret}\n`,
+        'apps/web/a.ts': 'export const untracked = true',
+      })
+      git(repository, ['add', '-f', 'apps/web/README.md', '.gitignore'])
+      git(repository, ['commit', '-qm', 'init'])
+      const app = join(repository, 'apps', 'web')
+
+      const result = await gather(app)
+      expect(result.paths).toEqual(['README.md'])
+      expect(result.ignoredScanDirectories).toEqual([app])
+    })
+
+    test('aborts instead of walking the directory when Git cannot list the files it tracks', async () => {
+      const repository = await makeRepository({
+        '.gitignore': 'apps/web/\n',
+        'apps/web/shopify.app.toml': appConfiguration,
+        'apps/web/.env': `SHOPIFY_TOKEN=${secret}\n`,
+      })
+      git(repository, ['add', '-f', '.gitignore'])
+      git(repository, ['commit', '-qm', 'init'])
+      // A corrupt index makes `ls-files --cached` fail while `check-ignore --no-index` still answers.
+      await writeFile(join(repository, '.git', 'index'), 'not an index')
+      const app = join(repository, 'apps', 'web')
+
+      vi.stubEnv('INIT_CWD', repository)
+      await expect(gather(app)).rejects.toThrow("Couldn't list the files Git tracks in apps/web.")
+      vi.stubEnv('INIT_CWD', app)
+      await expect(gather(app)).rejects.toThrow("Couldn't list the files Git tracks in ..")
+    })
+
+    test('scans the tracked files and not the untracked ones, and keeps the selected TOML', async () => {
+      const repository = await makeRepository({
+        '.gitignore': 'apps/web/\n',
+        'apps/web/shopify.app.toml': appConfiguration,
+        'apps/web/tracked.ts': 'export const tracked = true',
+        'apps/web/.env': `SHOPIFY_TOKEN=${secret}\n`,
+        'apps/web/untracked.ts': 'export const untracked = true',
+      })
+      git(repository, ['add', '-f', 'apps/web/tracked.ts', '.gitignore'])
+      git(repository, ['commit', '-qm', 'init'])
+
+      const result = await scan(join(repository, 'apps', 'web'))
+      expect(scannedPaths(result)).toContain('tracked.ts')
+      expect(scannedPaths(result)).not.toContain('untracked.ts')
+      expect(secretFindingFiles(result)).toEqual([])
+      expect(result.ignoredScanDirectories).toEqual([join(repository, 'apps', 'web')])
+      expect(result.app.name).toBe('Discovery safety')
+    })
+
+    test('detects an ignored directory whose ancestor the repository ignores', async () => {
+      const repository = await makeRepository({'.gitignore': 'apps/\n', 'apps/web/shopify.app.toml': appConfiguration})
+      const app = join(repository, 'apps', 'web')
+
+      const result = await gather(app)
+      expect(result.paths).toEqual([])
+      expect(result.ignoredScanDirectories).toEqual([app])
+    })
+
+    test("detects a nested repository's top level that the outer repository ignores, and gathers its tracked files", async () => {
+      const outer = await makeRepository({'.gitignore': 'inner/\n', 'shopify.app.toml': appConfiguration})
+      const inner = join(outer, 'inner')
+      await writeFiles(inner, {'tracked.ts': 'export const tracked = true', 'untracked.ts': ''})
+      git(inner, ['init', '-q', '.'])
+      git(inner, ['add', 'tracked.ts'])
+      git(inner, ['commit', '-qm', 'init'])
+
+      const result = await gather(outer, {scanDirectories: [outer, inner]})
+      expect(result.paths).toEqual(['.gitignore', 'inner/tracked.ts', 'shopify.app.toml'])
+      expect(result.ignoredScanDirectories).toEqual([inner])
+    })
+
+    test('still applies --exclude to the tracked files, and is not ignored with --no-git-ignore', async () => {
+      const repository = await makeRepository({
+        '.gitignore': 'app/\n',
+        'app/keep.ts': '',
+        'app/generated/skip.ts': '',
+        'app/untracked.ts': '',
+      })
+      git(repository, ['add', '-f', 'app/keep.ts', 'app/generated/skip.ts', '.gitignore'])
+      git(repository, ['commit', '-qm', 'init'])
+      const app = join(repository, 'app')
+      vi.stubEnv('INIT_CWD', app)
+
+      await expect(gatheredPaths(app, {excludePatterns: ['generated']})).resolves.toEqual(['keep.ts'])
+      const everything = await gather(app, {noGitIgnore: true})
+      expect(everything.paths).toEqual(['generated/skip.ts', 'keep.ts', 'untracked.ts'])
+      expect(everything.ignoredScanDirectories).toEqual([])
+    })
+
+    test('does not treat a directory that a whitelist-style repository re-includes as ignored', async () => {
+      const repository = await makeRepository({
+        '.gitignore': '/*\n!/apps/\n/apps/*\n!/apps/web/\n',
+        'apps/web/shopify.app.toml': appConfiguration,
+        'apps/web/a.ts': '',
+      })
+      const app = join(repository, 'apps', 'web')
+
+      const result = await gather(app)
+      expect(result.ignoredScanDirectories).toEqual([])
+      expect(result.paths).toEqual(['a.ts', 'shopify.app.toml'])
+    })
+  })
 })
 
-describe('--ignore patterns', () => {
-  let restoreGitConfig: () => void
-  beforeEach(() => {
-    restoreGitConfig = isolateGitConfig()
-  })
-  afterEach(() => {
-    restoreGitConfig()
-  })
-
-  test('excludes a folder that neither the defaults nor .gitignore cover', async () => {
+describe('--exclude', () => {
+  async function makeApp(): Promise<string> {
     const root = await makeDirectory()
     await writeFiles(root, {
       'shopify.app.toml': appConfiguration,
@@ -562,142 +726,146 @@ describe('--ignore patterns', () => {
       'generated/client.ts': 'export const excluded = true',
       'web/generated/schema.ts': 'export const excluded = true',
     })
+    vi.stubEnv('INIT_CWD', root)
+    return root
+  }
 
-    const paths = scannedPaths(await scan(root, undefined, {ignorePatterns: ['generated/']}))
+  test('with a bare name matches only at the top of the working directory', async () => {
+    const root = await makeApp()
+
+    const paths = scannedPaths(await scan(root, undefined, {excludePatterns: ['generated']}))
+    expect(paths).toContain('src/index.ts')
+    expect(paths).not.toContain('generated/client.ts')
+    expect(paths).toContain('web/generated/schema.ts')
+  })
+
+  test('with **/ matches at any depth', async () => {
+    const root = await makeApp()
+
+    const paths = scannedPaths(await scan(root, undefined, {excludePatterns: ['**/generated']}))
     expect(paths).toContain('src/index.ts')
     expect(paths).not.toContain('generated/client.ts')
     expect(paths).not.toContain('web/generated/schema.ts')
   })
 
-  test('re-includes a default exclusion at the root only when the pattern is anchored', async () => {
+  test('with ../ matches paths above the working directory', async () => {
+    const parent = await makeDirectory()
+    await writeFiles(parent, {
+      'app/shopify.app.toml': appConfiguration,
+      'app/src/index.ts': 'export const included = true',
+      'backend/src/server.ts': 'export const excluded = true',
+      'backend/keep/server.ts': 'export const included = true',
+    })
+    vi.stubEnv('INIT_CWD', join(parent, 'app'))
+
+    const paths = await gatheredPaths(parent, {
+      appDirectory: join(parent, 'app'),
+      excludePatterns: ['../backend/src/**'],
+    })
+    expect(paths).toEqual(['../backend/keep/server.ts', 'src/index.ts', 'shopify.app.toml'].sort())
+  })
+
+  test('applies with --no-git-ignore', async () => {
+    const root = await makeApp()
+
+    const paths = await gatheredPaths(root, {excludePatterns: ['**/generated'], noGitIgnore: true})
+    expect(paths).toEqual(['shopify.app.toml', 'src/index.ts'])
+  })
+
+  test("can't remove the selected app configuration file", async () => {
+    const root = await makeApp()
+    const selected = join(root, 'shopify.app.toml')
+
+    const withoutSelected = await gatheredPaths(root, {excludePatterns: ['shopify.app.toml']})
+    expect(withoutSelected).not.toContain('shopify.app.toml')
+    const withSelected = await gatheredPaths(root, {
+      excludePatterns: ['shopify.app.toml'],
+      selectedAppConfigFilePath: selected,
+    })
+    expect(withSelected).toContain('shopify.app.toml')
+
+    const result = await scan(root, undefined, {excludePatterns: ['shopify.app.toml', '**/*.toml']})
+    expect(result.app.name).toBe('Discovery safety')
+  })
+
+  test('still scans an excluded selected app configuration file for secrets', async () => {
     const root = await makeDirectory()
     await writeFiles(root, {
       'shopify.app.toml': appConfiguration,
-      'build/x.ts': 'export const rootBuild = true',
-      'packages/a/build/y.ts': 'export const nestedBuild = true',
+      'shopify.app.test.toml': `name = "Test"\napplication_url = "https://test.example.com/?token=${secret}"\n`,
     })
+    vi.stubEnv('INIT_CWD', root)
 
-    // `/build/` is anchored to the app directory; the nested `build/` stays excluded by the default.
-    const anchored = scannedPaths(await scan(root, undefined, {ignorePatterns: ['!/build/']}))
-    expect(anchored).toContain('build/x.ts')
-    expect(anchored).not.toContain('packages/a/build/y.ts')
-
-    // `build/` without a slash prefix matches at any depth, like the default it overrides.
-    const unanchored = scannedPaths(await scan(root, undefined, {ignorePatterns: ['!build/']}))
-    expect(unanchored).toContain('build/x.ts')
-    expect(unanchored).toContain('packages/a/build/y.ts')
+    const result = await scan(root, 'test', {excludePatterns: ['shopify.app.test.toml']})
+    expect(result.app.name).toBe('Test')
+    expect(secretFindingFiles(result)).toEqual(['shopify.app.test.toml'])
   })
 
-  test('re-includes a gitignored folder', async () => {
+  test('adds a gitignored selected app configuration file after filtering', async () => {
     const root = await makeRepository({
       'shopify.app.toml': appConfiguration,
-      '.gitignore': 'tmp/\n',
-      'tmp/scratch.ts': 'export const reincluded = true',
+      '.gitignore': 'shopify.app.toml\n',
     })
 
-    expect(scannedPaths(await scan(root))).not.toContain('tmp/scratch.ts')
-    expect(scannedPaths(await scan(root, undefined, {ignorePatterns: ['!tmp/']}))).toContain('tmp/scratch.ts')
-  })
-
-  test('re-includes a nested repository that the app repository ignores', async () => {
-    const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
-    const root = await makeRepository({
-      'shopify.app.toml': appConfiguration,
-      '.gitignore': 'inner/\n',
-      'inner/token.ts': `export const token = '${secret}'\n`,
-    })
-    const inner = join(root, 'inner')
-    git(inner, ['init', '-q', '.'])
-    git(inner, ['add', 'token.ts'])
-    git(inner, ['commit', '-qm', 'Add token'])
-
-    expect(secretFindingFiles(await scan(root))).toEqual([])
-    expect(secretFindingFiles(await scan(root, undefined, {ignorePatterns: ['!inner/']}))).toEqual(['inner/token.ts'])
-  })
-
-  test('cannot re-include a file inside a gitignored folder without re-including the folder', async () => {
-    const root = await makeRepository({
-      'shopify.app.toml': appConfiguration,
-      '.gitignore': 'tmp/\n',
-      'tmp/keep.ts': 'export const stillExcluded = true',
-      'tmp/scratch.ts': 'export const stillExcluded = true',
-    })
-
-    const paths = scannedPaths(await scan(root, undefined, {ignorePatterns: ['!tmp/keep.ts']}))
-    expect(paths).not.toContain('tmp/keep.ts')
-    expect(paths).not.toContain('tmp/scratch.ts')
-  })
-
-  test('still applies .gitignore inside a re-included default folder', async () => {
-    // Re-including `build/` must turn off git's default-directory pruning, or git never lists this file.
-    const root = await makeRepository({
-      'shopify.app.toml': appConfiguration,
-      '.gitignore': '*.local.json\n',
-      'build/a.ts': 'export const reincluded = true',
-      'build/x.local.json': '{"ignored": true}',
-    })
-
-    const paths = scannedPaths(await scan(root, undefined, {ignorePatterns: ['!build/']}))
-    expect(paths).toContain('build/a.ts')
-    expect(paths).not.toContain('build/x.local.json')
-  })
-
-  test('applies later patterns over earlier ones', async () => {
-    const root = await makeDirectory()
-    await writeFiles(root, {
-      'shopify.app.toml': appConfiguration,
-      'generated/client.ts': 'export const decided = true',
-    })
-
-    const excludeThenInclude = scannedPaths(
-      await scan(root, undefined, {ignorePatterns: ['generated/', '!generated/']}),
-    )
-    expect(excludeThenInclude).toContain('generated/client.ts')
-
-    const includeThenExclude = scannedPaths(
-      await scan(root, undefined, {ignorePatterns: ['!generated/', 'generated/']}),
-    )
-    expect(includeThenExclude).not.toContain('generated/client.ts')
-  })
-
-  test('never stops the selected app configuration from loading or being scanned for secrets', async () => {
-    const secret = ['shp', `at_${'0123456789abcdef'.repeat(2)}`].join('')
-    const root = await makeDirectory()
-    await writeFiles(root, {
-      'shopify.app.toml': appConfiguration,
-      'shopify.app.staging.toml': `name = "Staging"\napplication_url = "https://staging.example.com/?token=${secret}"\n`,
-    })
-
-    const result = await scan(root, 'staging', {ignorePatterns: ['shopify.app*.toml']})
-    expect(result.app.name).toBe('Staging')
-    expect(scannedPaths(result)).toContain('shopify.app.staging.toml')
-    expect(secretFindingFiles(result)).toEqual(['shopify.app.staging.toml'])
+    const paths = await gatheredPaths(root, {selectedAppConfigFilePath: join(root, 'shopify.app.toml')})
+    expect(paths).toEqual(['.gitignore', 'shopify.app.toml'])
   })
 })
 
-describe('listRepositoryFiles', () => {
-  test('lists a symlinked directory as an entry without traversing it', async () => {
+describe('symbolic links', () => {
+  test('reads a symbolic-linked selected app configuration file that points outside the app directory', async () => {
+    const root = await makeDirectory()
+    const outside = await makeDirectory()
+    await writeFiles(outside, {
+      'real.toml': `name = "Linked"\napplication_url = "https://linked.example.com/?token=${secret}"\n`,
+    })
+    await symlink(join(outside, 'real.toml'), join(root, 'shopify.app.toml'))
+
+    const result = await scan(root)
+    expect(result.app.name).toBe('Linked')
+    expect(secretFindingFiles(result)).toEqual(['shopify.app.toml'])
+    expect(result.scan.files_skipped_count).toBe(0)
+  })
+
+  test('refuses another symbolic link that points outside the app directory', async () => {
+    const root = await makeDirectory()
+    const outside = await makeDirectory()
+    await writeFiles(root, {'shopify.app.toml': appConfiguration, 'src/index.ts': 'export const included = true'})
+    await writeFiles(outside, {'leak.ts': 'export const leaked = true'})
+    await symlink(join(outside, 'leak.ts'), join(root, 'src', 'leak.ts'))
+
+    const result = await scan(root)
+    expect(result.scan.files_skipped).toContainEqual(
+      expect.objectContaining({
+        path: 'src/leak.ts',
+        reason: 'unreadable',
+        detail: 'src/leak.ts resolves outside the scan directory',
+      }),
+    )
+    expect(JSON.stringify(result)).not.toContain(outside)
+  })
+
+  test('reads a symbolic link that stays inside the scan directory', async () => {
+    const root = await makeDirectory()
+    await writeFiles(root, {'shopify.app.toml': appConfiguration, 'src/real.ts': 'export const real = true'})
+    await symlink(join(root, 'src', 'real.ts'), join(root, 'src', 'alias.ts'))
+
+    const result = await scan(root)
+    expect(scannedPaths(result)).toEqual(expect.arrayContaining(['src/alias.ts', 'src/real.ts']))
+    expect(result.scan.files_skipped_count).toBe(0)
+  })
+})
+
+describe('gatherPaths', () => {
+  test('lists a symbolic-linked directory as an entry without traversing it', async () => {
     const root = await makeDirectory()
     await writeFiles(root, {'shopify.app.toml': appConfiguration, 'real/inner.ts': 'export const inner = true'})
     await symlink(join(root, 'real'), join(root, 'linked'), 'dir')
 
-    expect(listRepositoryFiles(root, DEFAULT_RULES)).toEqual(['linked', 'real/inner.ts', 'shopify.app.toml'])
+    await expect(gatheredPaths(root)).resolves.toEqual(['linked', 'real/inner.ts', 'shopify.app.toml'])
   })
 
-  test('skips a nested app directory even when its configuration file is excluded by a rule', async () => {
-    const root = await makeDirectory()
-    await writeFiles(root, {
-      'shopify.app.toml': appConfiguration,
-      'index.ts': 'export const parent = true',
-      'apps/child/shopify.app.toml': 'name = "Child"\n',
-      'apps/child/index.ts': 'export const child = true',
-    })
-    const rules = buildPathRules({gitIgnoredPaths: ['apps/child/shopify.app.toml']})
-
-    expect(listRepositoryFiles(root, rules)).toEqual(['index.ts', 'shopify.app.toml'])
-  })
-
-  test('returns sorted app-root-relative POSIX paths', async () => {
+  test('returns sorted, unique, app-directory-relative POSIX paths', async () => {
     const root = await makeDirectory()
     await writeFiles(root, {
       'z.ts': '',
@@ -707,7 +875,7 @@ describe('listRepositoryFiles', () => {
       'b/a/e.ts': '',
     })
 
-    const files = listRepositoryFiles(root, DEFAULT_RULES)
+    const files = await gatheredPaths(root, {selectedAppConfigFilePath: join(root, 'a.ts')})
     expect(files).toEqual(['a.ts', 'b/a/e.ts', 'b/c.ts', 'b/d.ts', 'z.ts'])
     expect(files).toEqual([...files].sort())
   })
@@ -724,8 +892,7 @@ describe('listRepositoryFiles', () => {
       const locked = join(root, 'locked')
       await chmod(locked, 0o000)
       try {
-        resetSkippedFiles()
-        expect(listRepositoryFiles(root, DEFAULT_RULES)).toEqual(['shopify.app.toml', 'src/index.ts'])
+        await expect(gatheredPaths(root)).resolves.toEqual(['shopify.app.toml', 'src/index.ts'])
         expect(getSkippedFiles()).toEqual([
           {path: 'locked', reason: 'unreadable', detail: 'Could not inspect locked (EACCES)'},
         ])
@@ -736,16 +903,15 @@ describe('listRepositoryFiles', () => {
   )
 
   test.skipIf(process.platform === 'win32' || process.getuid?.() === 0)(
-    'names the app root when it cannot be read',
+    'names the scan directory when it cannot be read',
     async () => {
       const root = await makeDirectory()
       await writeFiles(root, {'shopify.app.toml': appConfiguration})
       await chmod(root, 0o000)
       try {
-        resetSkippedFiles()
-        expect(listRepositoryFiles(root, DEFAULT_RULES)).toEqual([])
+        await expect(gatheredPaths(root, {noGitIgnore: true})).resolves.toEqual([])
         expect(getSkippedFiles()).toEqual([
-          {path: root, reason: 'unreadable', detail: 'Could not inspect app root (EACCES)'},
+          {path: root, reason: 'unreadable', detail: 'Could not inspect scan directory (EACCES)'},
         ])
       } finally {
         await chmod(root, 0o755)

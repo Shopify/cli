@@ -267,7 +267,7 @@ describe('git status drives severity, not .gitignore text', () => {
     rmSync(dir, {recursive: true, force: true})
   })
 
-  test('reports a secret ignored only by an enclosing repository that does not own the app', async () => {
+  test('does not scan an untracked secret in an app directory that its repository ignores', async () => {
     const repository = removeAfterTest(mkdtempSync(join(tmpdir(), 'app-security-enclosing-')))
     git(repository, ['init', '-q', '.'])
     writeFileSync(join(repository, '.gitignore'), 'apps/\n')
@@ -277,19 +277,49 @@ describe('git status drives severity, not .gitignore text', () => {
     writeFileSync(join(dir, '.env'), trackedEnvSecret())
 
     const result = await scan(dir)
-    const finding = result.issues.find((i) => i.id === 'COMMITTED_SECRET')
-    expect(finding).toMatchObject({
-      severity: 'high',
-      points: -50,
-      title: 'Environment file with secrets is ignored by a repository that does not own this app',
-      pattern_id: 'environment-file:unconfirmed',
-      rule_version: 3,
+    expect(result.issues.filter((i) => i.id === 'COMMITTED_SECRET')).toEqual([])
+    expect(result.ignoredScanDirectories).toEqual([dir])
+  })
+
+  test('does not report an untracked secret that git ignores when --no-git-ignore scans it', async () => {
+    const repository = removeAfterTest(mkdtempSync(join(tmpdir(), 'app-security-enclosing-')))
+    git(repository, ['init', '-q', '.'])
+    writeFileSync(join(repository, '.gitignore'), 'apps/\n')
+    const dir = join(repository, 'apps', 'web')
+    mkdirSync(dir, {recursive: true})
+    writeFileSync(join(dir, 'shopify.app.toml'), TOML)
+    writeFileSync(join(dir, '.env'), trackedEnvSecret())
+
+    const result = await scan(dir, undefined, {noGitIgnore: true})
+    expect(result.issues.filter((i) => i.id === 'COMMITTED_SECRET')).toEqual([])
+    expect(result.ignoredScanDirectories).toEqual([])
+  })
+
+  test('with --no-git-ignore, skips an untracked ignored .env and reports the same .env once force-added', async () => {
+    const dir = removeAfterTest(makeApp({'.gitignore': '.env\n', '.env': trackedEnvSecret()}))
+    git(dir, ['init', '-q', '.'])
+
+    const untracked = await scan(dir, undefined, {noGitIgnore: true})
+    expect(untracked.issues.filter((i) => i.id === 'COMMITTED_SECRET')).toEqual([])
+
+    git(dir, ['add', '-f', '.env'])
+    const tracked = await scan(dir, undefined, {noGitIgnore: true})
+    expect(tracked.issues.find((i) => i.id === 'COMMITTED_SECRET')).toMatchObject({
+      location: {file: '.env'},
+      title: 'Environment file with secrets is tracked by git',
+      pattern_id: 'environment-file:tracked',
     })
-    const execution = result.scan.checks_executed.find((candidate) => candidate.id === 'COMMITTED_SECRET')
-    expect(execution?.version).toBe(3)
-    expect(finding!.detection_evidence?.join(' ')).toContain('→ ignored')
-    expect(finding!.message).toContain('.env is ignored by an enclosing git repository')
-    expect(finding!.message).not.toContain('could not be confirmed')
+  })
+
+  test('with --no-git-ignore, still reports an untracked .env that git does not ignore', async () => {
+    const dir = removeAfterTest(makeApp({'.env': trackedEnvSecret()}))
+    git(dir, ['init', '-q', '.'])
+
+    const result = await scan(dir, undefined, {noGitIgnore: true})
+    expect(result.issues.find((i) => i.id === 'COMMITTED_SECRET')).toMatchObject({
+      location: {file: '.env'},
+      title: 'Environment file with secrets is not ignored by git',
+    })
   })
 
   test('reports a secret inside a nested repository that the app repository ignores by name', async () => {
@@ -586,12 +616,8 @@ describe('secret evidence coverage', () => {
     rmSync(dir, {recursive: true, force: true})
   })
 
-  test('excludes test, fixture, dependency, build, and binary content', async () => {
+  test('excludes binary content', async () => {
     const dir = makeApp({
-      'tests/example.md': PROBES.shopifyToken,
-      'fixtures/example.yaml': PROBES.shopifyToken,
-      'node_modules/package/example.json': PROBES.shopifyToken,
-      'dist/example.toml': PROBES.shopifyToken,
       'binary.json': `\0${PROBES.shopifyToken}`,
     })
     const result = await scan(dir)

@@ -27,8 +27,9 @@ describe('app security check command', () => {
       'blocking',
       'client-id',
       'config',
-      'ignore',
+      'exclude',
       'json',
+      'no-git-ignore',
       'path',
       'skip-instructions',
       'without-app-config',
@@ -52,43 +53,35 @@ describe('app security check command', () => {
       blocking: 'high',
       yes: false,
       skipInstructions: true,
-      ignorePatterns: [],
+      excludePatterns: [],
+      noGitIgnore: false,
     })
   })
 
-  test('forwards repeated --ignore patterns in command-line order', async () => {
+  test('forwards repeated --exclude globs exactly as typed, in command-line order', async () => {
     await SecurityCheck.run(
-      ['--ignore', 'generated/', '--ignore', '!build/', '--ignore', 'a b/', '--skip-instructions'],
+      ['--exclude', 'generated', '--exclude', '../shared/**', '--exclude', 'a b/', '--skip-instructions'],
       import.meta.url,
     )
 
     expect(securityCheck).toHaveBeenCalledWith(
-      expect.objectContaining({ignorePatterns: ['generated/', '!build/', 'a b/'], skipInstructions: true}),
+      expect.objectContaining({excludePatterns: ['generated', '../shared/**', 'a b/'], skipInstructions: true}),
     )
   })
 
-  test.each([
-    ['#generated/', 'comment'],
-    ['', 'empty'],
-    ['!', 'nothing after'],
-    ['build\\', 'ends with a backslash'],
-    ['build\\\\\\', 'ends with a backslash'],
-    ['src/[id/x.ts', "can't be read as a .gitignore pattern"],
-    ['build/\ngenerated/', 'single line'],
-  ])('rejects the unusable --ignore pattern %j', async (value, expectedMessage) => {
-    const outputMock = mockAndCaptureOutput()
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+  test('forwards --no-git-ignore', async () => {
+    await SecurityCheck.run(['--no-git-ignore', '--skip-instructions'], import.meta.url)
 
-    try {
-      await expect(SecurityCheck.run(['--ignore', value, '--skip-instructions'], import.meta.url)).rejects.toThrow(
-        'process.exit unexpectedly called with "1"',
-      )
-      expect(outputMock.error()).toContain(expectedMessage)
-      expect(securityCheck).not.toHaveBeenCalled()
-    } finally {
-      consoleErrorSpy.mockRestore()
-      outputMock.clear()
-    }
+    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({noGitIgnore: true, skipInstructions: true}))
+  })
+
+  test('does not read --exclude or --no-git-ignore from the environment', () => {
+    expect(SecurityCheck.flags.exclude.env).toBeUndefined()
+    expect(SecurityCheck.flags['no-git-ignore'].env).toBe('SHOPIFY_FLAG_NO_GIT_IGNORE')
+  })
+
+  test('rejects the removed --ignore flag', async () => {
+    await expect(SecurityCheck.run(['--ignore', 'build/', '--skip-instructions'], import.meta.url)).rejects.toThrow()
   })
 
   test('forwards --yes without requiring an app configuration', async () => {
@@ -104,7 +97,8 @@ describe('app security check command', () => {
       blocking: 'none',
       yes: true,
       skipInstructions: false,
-      ignorePatterns: [],
+      excludePatterns: [],
+      noGitIgnore: false,
     })
   })
 
@@ -165,20 +159,27 @@ describe('app security check command', () => {
     expect(SecurityCheck.descriptionWithMarkdown).not.toMatch(/--findings|--clean|compile|trace/)
   })
 
-  test('documents --ignore as ordered .gitignore patterns that the coding-agent instructions repeat', () => {
-    expect(SecurityCheck.flags.ignore.multiple).toBe(true)
-    expect(SecurityCheck.flags.ignore.description).toBe(
-      'Ignore files that match this .gitignore pattern, relative to the app directory. Start the pattern with ! to include matching files again. Repeat the flag to add patterns; later patterns take precedence.',
+  test('documents what is scanned, --exclude and --no-git-ignore', () => {
+    expect(SecurityCheck.flags.exclude.multiple).toBe(true)
+    expect(SecurityCheck.flags.exclude.description).toBe(
+      "Skip paths that match this glob, relative to the working directory. Repeat the flag to add globs. The selected app configuration file can't be excluded.",
     )
-    expect(SecurityCheck.descriptionWithMarkdown).toContain('`--ignore`')
-    expect(SecurityCheck.descriptionWithMarkdown).toContain('relative to the app directory')
-    expect(SecurityCheck.descriptionWithMarkdown).toContain('later patterns take precedence')
-    expect(SecurityCheck.descriptionWithMarkdown).toContain("--ignore '!build/'")
-    expect(SecurityCheck.descriptionWithMarkdown).toContain('single quotes in POSIX shells and PowerShell')
+    expect(SecurityCheck.flags['no-git-ignore'].description).toBe(
+      'Turn off Git ignore rules for every scanned directory, so files that Git ignores are scanned too. Files that Git tracks are always scanned.',
+    )
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('scans the app directory and each `--include-dir`')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('files that Git tracks are always scanned')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('relative to the working directory')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain("--exclude '**/generated'")
     expect(SecurityCheck.descriptionWithMarkdown).toContain(
-      'The coding-agent instructions this check offers repeat the patterns.',
+      "An exclusion can't remove the selected app configuration file.",
     )
-    expect(SecurityCheck.descriptionWithMarkdown).toContain("Other `app security` commands don't take `--ignore`")
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('`--no-git-ignore` to turn Git ignore rules off')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('`.shopify/app-security/<results key>/`')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain(
+      "Other `app security` commands don't take `--exclude` or `--no-git-ignore`",
+    )
+    expect(SecurityCheck.descriptionWithMarkdown).not.toContain('--ignore')
   })
 
   test('allows --yes in JSON mode while preserving non-interactive output behavior', async () => {
