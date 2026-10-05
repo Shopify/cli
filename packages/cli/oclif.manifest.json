@@ -4067,7 +4067,7 @@
         },
         "list-files": {
           "allowNo": false,
-          "description": "Print the files the check would gather, one path per line, and stop. Nothing is scanned, recorded or prompted for.",
+          "description": "Print the files the check would gather, one path per line, and stop. Nothing is scanned, no results are written, and nothing is prompted for.",
           "env": "SHOPIFY_FLAG_LIST_FILES",
           "exclusive": [
             "yes",

@@ -49,7 +49,7 @@ In interactive terminals, the command offers to copy the coding-agent instructio
     }),
     'list-files': Flags.boolean({
       description:
-        'Print the files the check would gather, one path per line, and stop. Nothing is scanned, recorded or prompted for.',
+        'Print the files the check would gather, one path per line, and stop. Nothing is scanned, no results are written, and nothing is prompted for.',
       env: 'SHOPIFY_FLAG_LIST_FILES',
       exclusive: ['yes', 'skip-instructions', 'blocking'],
     }),
