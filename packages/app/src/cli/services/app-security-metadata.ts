@@ -1,6 +1,6 @@
 import metadata from '../metadata.js'
 
-/** The App Security fields on the command's analytics event. Counts only, never finding content. */
+/** The app security check fields on the command's analytics event. Counts only, never finding content. */
 export interface AppSecurityMetadata {
   num_security_findings: number
 }

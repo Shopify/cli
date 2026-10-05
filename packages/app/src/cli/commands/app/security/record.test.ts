@@ -153,7 +153,7 @@ describe('app security record command', () => {
           'process.exit unexpectedly called with "1"',
         )
 
-        expect(output.error()).toContain('No App Security results for shopify.app in')
+        expect(output.error()).toContain('No app security check results for shopify.app in')
         expect(output.error()).toContain('shopify app security check')
         expect(securityRecord).not.toHaveBeenCalled()
       } finally {

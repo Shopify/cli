@@ -9,7 +9,7 @@ import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 export default class SecurityReview extends BaseCommand {
   static hidden = true
 
-  static summary = 'Show the combined App Security results.'
+  static summary = 'Show the combined app security check results.'
 
   static descriptionWithMarkdown = `Combines the deterministic results (\`deterministic-findings.json\`, written by \`shopify app security check\`) with the recorded agent results (\`agent-findings.json\`, written by \`shopify app security record\`) and shows one view of every check: its findings, status and source. Both files are in the results directory, \`.shopify/app-security/<results key>/\`.
 

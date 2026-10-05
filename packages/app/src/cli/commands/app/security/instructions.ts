@@ -11,9 +11,9 @@ import {resolvePath} from '@shopify/cli-kit/node/path'
 export default class SecurityInstructions extends BaseCommand {
   static hidden = true
 
-  static summary = 'Provide App Security instructions to a coding agent.'
+  static summary = 'Provide app security check instructions to a coding agent.'
 
-  static descriptionWithMarkdown = `Prints the complete workflow that a coding agent should follow to review App Security results.
+  static descriptionWithMarkdown = `Prints the complete workflow that a coding agent should follow to review app security check results.
 
 By default, the instructions are printed to stdout. Use \`--copy\` to copy them to the clipboard or \`--write\` to write them to a file. Standalone instructions always start by running \`shopify app security check\`; only that invocation's generated review pack is trusted as workflow input.`
 

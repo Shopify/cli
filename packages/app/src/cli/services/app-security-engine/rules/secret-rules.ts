@@ -215,11 +215,11 @@ function committedSecretFileIssue(
     fixDescription = `Ignore ${file.path} in the nested repository and rotate any exposed secrets`
   } else if (ignoredScanReason === 'listing-failed') {
     title = `${kind} is ignored by git but was scanned`
-    message = `${file.path} is ignored by git, but App Security could not list the ignored files for this app, so it was scanned.`
+    message = `${file.path} is ignored by git, but the app security check could not list the ignored files for this app, so it was scanned.`
     fixDescription = `Confirm the repository is healthy with 'git status' and rotate any exposed secrets`
   } else if (untrackedAndIgnored) {
     title = `${kind} is ignored by git but was scanned`
-    message = `${file.path} is ignored by git but was still scanned; App Security couldn't determine why. Confirm the rule ignoring it belongs to the repository that owns this app before treating this as clean.`
+    message = `${file.path} is ignored by git but was still scanned; the app security check couldn't determine why. Confirm the rule ignoring it belongs to the repository that owns this app before treating this as clean.`
     fixDescription = `Confirm with 'git check-ignore -v ${file.path}' that this app's repository ignores it, and rotate any exposed secrets`
   } else {
     title = `${kind} could not be confirmed as ignored`

@@ -214,10 +214,10 @@ export default async function deliverAppSecurityInstructions(
 
   if (options.copy) {
     await dependencies.copyToClipboard(instructions)
-    dependencies.outputConfirmation('Copied App Security instructions to the clipboard')
+    dependencies.outputConfirmation('Copied app security check instructions to the clipboard')
   } else if (options.writePath) {
     await dependencies.writeToFile(options.writePath, `${instructions}\n`)
-    dependencies.outputConfirmation(`Wrote App Security instructions to ${options.writePath}`)
+    dependencies.outputConfirmation(`Wrote app security check instructions to ${options.writePath}`)
   } else {
     dependencies.output(instructions)
   }

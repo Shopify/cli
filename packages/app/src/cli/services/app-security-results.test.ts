@@ -77,7 +77,7 @@ describe('requireResultsDirectory', () => {
 
       expect(error).toBeInstanceOf(AbortError)
       expect((error as AbortError).message).toBe(
-        `No App Security results for shopify.app in ${selection.appDirectory}.`,
+        `No app security check results for shopify.app in ${selection.appDirectory}.`,
       )
       expect((error as AbortError).tryMessage).toBe(`Run \`${command(selection, 'scan')}\`.`)
     })
@@ -90,7 +90,7 @@ describe('requireResultsDirectory', () => {
       const selection = {...configSelection, clientIdOverride: 'other-client-id'}
 
       await expect(requireResultsDirectory(selection)).rejects.toMatchObject({
-        message: `No App Security results for other-client-id in ${selection.appDirectory}.`,
+        message: `No app security check results for other-client-id in ${selection.appDirectory}.`,
       })
     })
   })
@@ -106,7 +106,7 @@ describe('requireResultsDirectory', () => {
       }
 
       await expect(requireResultsDirectory(selection)).rejects.toMatchObject({
-        message: `No App Security results for client-id-1 in ${appDirectory}.`,
+        message: `No app security check results for client-id-1 in ${appDirectory}.`,
       })
       await writeAgentFindings(appDirectory, 'client-id-1', agentFindingsDocument)
       await expect(requireResultsDirectory(selection)).resolves.toBeUndefined()
@@ -120,7 +120,7 @@ describe('loadAppSecurityResults', () => {
       const selection = await createApp(directory)
 
       await expect(loadAppSecurityResults(selection)).rejects.toMatchObject({
-        message: `No App Security results for shopify.app in ${selection.appDirectory}.`,
+        message: `No app security check results for shopify.app in ${selection.appDirectory}.`,
       })
     })
   })
@@ -235,7 +235,9 @@ describe('loadAppSecurityResults', () => {
                   {command: command(selection, 'record')},
                   'again to regenerate agent-findings.json.',
                 ]
-          expect(error.message).toBe('The App Security results could not be loaded because a results file is invalid.')
+          expect(error.message).toBe(
+            'The app security check results could not be loaded because a results file is invalid.',
+          )
           expect(error.nextSteps).toStrictEqual([
             fix,
             ['Or run', {command: command(selection, 'clean')}, 'to delete both results files and start over.'],
@@ -267,7 +269,7 @@ describe('loadAppSecurityResults', () => {
         const error = await loadError(selection)
 
         expect(error.message).toBe(
-          'The App Security results could not be loaded because both results files are invalid.',
+          'The app security check results could not be loaded because both results files are invalid.',
         )
         expect(error.nextSteps).toStrictEqual([
           ['Run', {command: command(selection, 'scan')}, 'to regenerate deterministic-findings.json.'],
@@ -333,7 +335,7 @@ describe('loadAppSecurityResults', () => {
           expect(JSON.parse(output.info())).toStrictEqual({
             error: {
               type: 'abort',
-              message: 'The App Security results could not be loaded because a results file is invalid.',
+              message: 'The app security check results could not be loaded because a results file is invalid.',
               nextSteps: [
                 `Run ${command(selection, 'scan')} to regenerate deterministic-findings.json.`,
                 `Or run ${command(selection, 'clean')} to delete both results files and start over.`,

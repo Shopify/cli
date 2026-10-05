@@ -29,7 +29,7 @@ function results(sources: {deterministic: boolean; agent: boolean}): AppSecurity
   })
 }
 
-describe('App Security review JSON contract', () => {
+describe('app security review JSON contract', () => {
   test('keeps the engine types and the public schema in sync', () => {
     // `tsc` is the real check: the constants only compile when the types match the schema.
     expect(COMBINED_CHECK_MATCHES_REVIEW_JSON).toBe(true)

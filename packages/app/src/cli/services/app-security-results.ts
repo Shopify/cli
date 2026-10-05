@@ -50,7 +50,7 @@ export async function requireResultsDirectory(selection: AppSecuritySelection, p
 
   const {scan} = resolveAppSecurityCommands(selection, path)
   throw new AbortError(
-    `No App Security results for ${key} in ${selection.appDirectory}.`,
+    `No app security check results for ${key} in ${selection.appDirectory}.`,
     `Run \`${formatAppSecurityCommand(scan)}\`.`,
   )
 }
@@ -110,8 +110,8 @@ function presentSource<TDocument>(loaded: LoadedSource<TDocument>): {path: strin
 function invalidResultsError(invalidFiles: InvalidResultsFile[], commands: AppSecurityCommands): AbortError {
   const message =
     invalidFiles.length === 1
-      ? 'The App Security results could not be loaded because a results file is invalid.'
-      : 'The App Security results could not be loaded because both results files are invalid.'
+      ? 'The app security check results could not be loaded because a results file is invalid.'
+      : 'The app security check results could not be loaded because both results files are invalid.'
   const nextSteps: TokenItem<InlineToken>[] = [
     ...invalidFiles.map((file) => regenerateResultsFileStep(file.source, commands, `${basename(file.path)}.`)),
     ['Or run', {command: formatAppSecurityCommand(commands.clean)}, 'to delete both results files and start over.'],

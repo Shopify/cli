@@ -107,7 +107,7 @@ describe('buildSecurityReviewSummary', () => {
       const summary = buildSecurityReviewSummary(presenterInput(none))
 
       expect(summary.type).toBe('info')
-      expect(summary.headline).toBe('No App Security results to review.')
+      expect(summary.headline).toBe('No app security check results to review.')
     })
   })
 
@@ -912,7 +912,7 @@ describe('renderSecurityReview', () => {
     renderSecurityReview(presenterInput(none))
 
     const rendered = unstyled(output.info())
-    expect(rendered).toContain('No App Security results to review.')
+    expect(rendered).toContain('No app security check results to review.')
     expect(rendered).toContain('deterministic-findings.json  not found')
     expect(rendered).toContain('agent-findings.json          not found')
     expect(rendered).toContain(`• Run \`${checkCommand}\` or have your`)

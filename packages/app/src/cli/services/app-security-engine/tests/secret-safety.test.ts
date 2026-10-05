@@ -389,7 +389,7 @@ describe('git status drives severity, not .gitignore text', () => {
       pattern_id: 'environment-file:unconfirmed',
     })
     expect(issues[0]!.message).toContain(
-      ".env is ignored by git but was still scanned; App Security couldn't determine why",
+      ".env is ignored by git but was still scanned; the app security check couldn't determine why",
     )
     expect(issues[0]!.message).not.toContain('could not be confirmed')
     expect(issues[0]!.detection_evidence?.join(' ')).toContain('git rev-parse --show-toplevel → same')

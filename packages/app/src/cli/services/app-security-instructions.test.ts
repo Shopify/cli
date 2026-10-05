@@ -289,7 +289,7 @@ describe('appSecurityInstructions', () => {
       const appRoot = await createApp(directory)
       const instructions = appSecurityInstructions({directory: appRoot, scanComplete: true, shell: 'posix'})
 
-      expect(instructions).toContain('To delete these local App Security results, run:')
+      expect(instructions).toContain('To delete these local app security check results, run:')
       expect(instructions).toContain(
         codeBlock('bash', `shopify app security clean --path ${quoteShellArgument(renderedPath(appRoot), 'posix')}`),
       )
@@ -329,7 +329,7 @@ describe('appSecurityInstructions', () => {
       expect(instructions).toContain(
         "Upload prompts, source, findings, logs, artifacts, tokens, or vulnerability details only with the user's explicit authorization",
       )
-      expect(instructions).toContain('App Security is distinct from an App Store review')
+      expect(instructions).toContain('An app security check is distinct from an App Store review')
     })
   })
 
@@ -417,7 +417,9 @@ describe('deliverAppSecurityInstructions', () => {
       expect(instructions).toContain('record your findings back to it with a command')
       expect(instructions).not.toMatch(/\{\{[A-Z_]+\}\}/)
       expect(dependencies.output).not.toHaveBeenCalled()
-      expect(dependencies.outputConfirmation).toHaveBeenCalledWith('Copied App Security instructions to the clipboard')
+      expect(dependencies.outputConfirmation).toHaveBeenCalledWith(
+        'Copied app security check instructions to the clipboard',
+      )
     })
   })
 
@@ -442,7 +444,7 @@ describe('deliverAppSecurityInstructions', () => {
       await expect(readFile(instructionsPath)).resolves.toContain('Use the existing scan results')
       expect(dependencies.output).not.toHaveBeenCalled()
       expect(dependencies.outputConfirmation).toHaveBeenCalledWith(
-        `Wrote App Security instructions to ${instructionsPath}`,
+        `Wrote app security check instructions to ${instructionsPath}`,
       )
     })
   })

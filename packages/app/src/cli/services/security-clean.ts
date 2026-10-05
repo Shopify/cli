@@ -16,7 +16,7 @@ const defaultDependencies: SecurityCleanDependencies = {
   cleanAllResults: cleanAllResultsDirectories,
 }
 
-/** Removes App Security results directories without asking. Prints nothing. */
+/** Removes app security check results directories without asking. Prints nothing. */
 export default async function securityClean(
   options: SecurityCleanOptions,
   dependencies: SecurityCleanDependencies = defaultDependencies,
@@ -31,12 +31,12 @@ export default async function securityClean(
 export function renderSecurityCleanResult(result: SecurityCleanResult, appDirectory: string): void {
   if (result.removed.length === 0) {
     renderInfo({
-      headline: 'No App Security results to remove.',
+      headline: 'No app security check results to remove.',
       body: ['Nothing was found in', {filePath: appSecurityDirectory(appDirectory)}],
     })
   } else {
     renderSuccess({
-      headline: 'App Security results removed.',
+      headline: 'App security check results removed.',
       body: {list: {items: result.removed.map((path) => ({filePath: path}))}},
     })
   }

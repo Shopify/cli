@@ -38,7 +38,7 @@ function selectionJson(selection: AppSecuritySelection) {
   return toSecurityJson({engine, deterministicFindings}, agentChecksPath, selection, scanDirectories).selection
 }
 
-describe('App Security JSON contract', () => {
+describe('app security JSON contract', () => {
   test('encodes the engine, the selection, the deterministic findings document, and the agent checks path', async () => {
     const encoded = encodeSecurityJson(
       toSecurityJson(

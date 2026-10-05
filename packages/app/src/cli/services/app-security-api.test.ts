@@ -65,7 +65,7 @@ describe('securityExitCode', () => {
   })
 })
 
-describe('App Security CLI integration', () => {
+describe('app security CLI integration', () => {
   test('runs the in-tree engine and writes the deterministic findings and agent checks', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
@@ -144,7 +144,7 @@ describe('App Security CLI integration', () => {
         await expect(runSecurity({directory, blocking: 'none'})).rejects.toMatchObject({
           constructor: AbortError,
           message: expect.stringMatching(/outside the app/),
-          tryMessage: 'Remove or replace the unsafe App Security artifact path, then run the command again.',
+          tryMessage: 'Remove or replace the unsafe app security check artifact path, then run the command again.',
         })
         await expect(
           readFile(joinPath(externalDirectory, 'app-security', 'deterministic-findings.json')),
@@ -162,7 +162,7 @@ describe('App Security CLI integration', () => {
         await expect(runSecurity({directory, blocking: 'none'})).rejects.toMatchObject({
           constructor: AbortError,
           message: expect.stringMatching(/outside the app/),
-          tryMessage: 'Remove or replace the unsafe App Security artifact path, then run the command again.',
+          tryMessage: 'Remove or replace the unsafe app security check artifact path, then run the command again.',
         })
         await expect(
           readFile(joinPath(externalDirectory, 'app-security', 'deterministic-findings.json')),

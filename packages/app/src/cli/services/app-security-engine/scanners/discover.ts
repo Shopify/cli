@@ -366,7 +366,7 @@ function groupSourcePathsByExtensionDirectory(
  * Find extension-like repository content under the app root.
  *
  * `Project.load()` only considers paths in each app configuration's
- * `extension_directories`. App Security still scans every `shopify.extension.toml`
+ * `extension_directories`. The app security check still scans every `shopify.extension.toml`
  * inside the repository boundary, including unconfigured extensions, because
  * those files can still contain secrets, XSS, and other security evidence.
  * Nested apps, generated output, and test trees remain excluded.

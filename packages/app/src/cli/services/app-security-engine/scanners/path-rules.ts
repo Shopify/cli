@@ -87,7 +87,7 @@ function isExcluded(rules: PathRules, absolutePath: string): boolean {
  */
 export async function listGitIgnoredPaths(directory: string): Promise<GitIgnoreListing> {
   const listing = await runGitIgnoreListing(directory)
-  if (listing.status !== 'listed') outputDebug(`App Security: git ignore listing skipped (${listing.status})`)
+  if (listing.status !== 'listed') outputDebug(`app security check: git ignore listing skipped (${listing.status})`)
   return listing
 }
 
