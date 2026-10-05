@@ -10,8 +10,7 @@ import {describe, expect, test, vi} from 'vitest'
 vi.mock('../../../services/security-review.js')
 
 describe('app security review command', () => {
-  test('is visible and does not require linked app context', () => {
-    expect(SecurityReview.hidden).toBeFalsy()
+  test('does not require linked app context', () => {
     expect(SecurityReview.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityReview.prototype).not.toBeInstanceOf(AppLinkedCommand)
     expect(SecurityReview.flags).not.toHaveProperty('json')

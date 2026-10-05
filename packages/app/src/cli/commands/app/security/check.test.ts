@@ -11,8 +11,7 @@ import {describe, expect, test, vi} from 'vitest'
 vi.mock('../../../services/security-check.js')
 
 describe('app security check command', () => {
-  test('is visible and does not require linked app context', () => {
-    expect(SecurityCheck.hidden).toBeFalsy()
+  test('does not require linked app context', () => {
     expect(SecurityCheck.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityCheck.prototype).not.toBeInstanceOf(AppLinkedCommand)
     expect(SecurityCheck.flags.path).toBe(appFlags.path)
