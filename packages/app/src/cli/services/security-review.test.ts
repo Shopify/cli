@@ -249,6 +249,30 @@ describe('securityReview', () => {
     })
   })
 
+  test('repeats the latest scan scope in the check command', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const scope = {include_dirs: ['../backend'], excludes: ['vendor/**'], no_git_ignore: true}
+      const deterministic = {
+        ...deterministicFindingsDocument,
+        coverage: {...deterministicFindingsDocument.coverage, scope},
+      }
+      const appRoot = await createApp(directory, {deterministic})
+      const dependencies = testDependencies()
+
+      await securityReview(
+        {directory: appRoot, json: false, verbose: false, checkIds: [], blocking: 'none'},
+        dependencies,
+      )
+
+      const input = dependencies.render.mock.calls[0]![0]
+      expect(input.commands.scan.args.slice(-3)).toEqual([
+        {flag: '--include-dir', value: '../backend'},
+        {flag: '--exclude', value: 'vendor/**'},
+        '--no-git-ignore',
+      ])
+    })
+  })
+
   test('prints the encoded JSON to stdout instead of rendering', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, {deterministic: deterministicFindingsDocument})

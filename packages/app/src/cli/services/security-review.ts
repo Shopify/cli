@@ -151,7 +151,12 @@ export default async function securityReview(
       result,
       verbose: options.verbose,
       now: dependencies.now(),
-      commands: resolveAppSecurityCommands(selection, options.directory),
+      // The latest scan's scope, so running `check` again gathers the same files.
+      commands: resolveAppSecurityCommands(
+        selection,
+        options.directory,
+        results.sources.deterministic?.document.coverage.scope,
+      ),
     })
   }
 
