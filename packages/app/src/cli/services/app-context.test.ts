@@ -3,6 +3,7 @@ import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import {addUidToTomlsIfNecessary} from './app/add-uid-to-extension-toml.js'
 import link from './app/config/link.js'
 import {appFromIdentifiers} from './context.js'
+import {handleWatcherEvents} from './dev/app-events/app-event-watcher-handler.js'
 
 import * as localStorage from './local-storage.js'
 import {fetchOrgFromId} from './dev/fetch.js'
@@ -14,6 +15,7 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFile, mkdir, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 
 vi.mock('../models/app/validation/multi-cli-warning.js')
 vi.mock('./generate/fetch-extension-specifications.js')
@@ -205,7 +207,7 @@ type = "function"
         )
         vi.mocked(appFromIdentifiers).mockResolvedValue({...mockRemoteApp, apiKey: 'target-client-id'})
 
-        const {app, remoteApp} = await linkedAppContext({
+        const {app} = await linkedAppContext({
           directory: tmp,
           clientId: 'target-client-id',
           forceRelink: false,
@@ -225,7 +227,7 @@ type = "function"
         )
         expect(app.hiddenConfig.dev_store_url).toBe('target.myshopify.com')
 
-        const reloadedApp = await loader.reloadApp(app, {clientIdOverride: remoteApp.apiKey})
+        const reloadedApp = await loader.reloadApp(app)
 
         expect(reloadedApp.configPath).toBe(app.configPath)
         expect(reloadedApp.configuration).toEqual(app.configuration)
@@ -238,11 +240,56 @@ type = "function"
             }),
           ]),
         )
+        expect(reloadedApp.clientIdOverride).toBe('target-client-id')
         await expect(readFile(sourceConfigPath)).resolves.toBe(sourceConfig)
+        const updatedConfig = sourceConfig.replace('production-app', 'updated-app')
+        await writeFile(sourceConfigPath, updatedConfig)
+        const event = await handleWatcherEvents(
+          [{type: 'extensions_config_updated', path: sourceConfigPath, extensionPath: tmp, startTime: [0, 0]}],
+          reloadedApp,
+          {stdout: process.stdout, stderr: process.stderr, signal: new AbortController().signal},
+        )
+        expect(event?.appWasReloaded).toBe(true)
+        expect(event?.app.configuration.client_id).toBe('target-client-id')
+        expect(event?.app.configuration.name).toBe('updated-app')
+        expect(event?.app.clientIdOverride).toBe('target-client-id')
+        expect(event?.app.hiddenConfig.dev_store_url).toBe('target.myshopify.com')
+        expect((await event!.app.manifest(undefined)).modules).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              handle: 'discount',
+              config: expect.objectContaining({app_key: 'target-client-id'}),
+            }),
+          ]),
+        )
+        await expect(readFile(sourceConfigPath)).resolves.toBe(updatedConfig)
         if (hasMatchingConfig) await expect(readFile(targetConfigPath)).resolves.toBe(targetConfig)
       })
     },
   )
+
+  test.each([
+    {clientId: undefined, expectedClientId: 'updated-client-id'},
+    {clientId: 'source-client-id', expectedClientId: 'source-client-id'},
+  ])('reload uses $expectedClientId when the provided client ID is $clientId', async ({clientId, expectedClientId}) => {
+    await inTemporaryDirectory(async (tmp) => {
+      const content = 'name = "test-app"\nclient_id = "source-client-id"\n'
+      await writeAppConfig(tmp, content)
+      vi.mocked(appFromIdentifiers).mockResolvedValue({...mockRemoteApp, apiKey: 'source-client-id'})
+      const {app} = await linkedAppContext({
+        directory: tmp,
+        clientId,
+        forceRelink: false,
+        userProvidedConfigName: undefined,
+      })
+      await writeAppConfig(tmp, content.replace('source-client-id', 'updated-client-id'))
+
+      const reloadedApp = await loader.reloadApp(app)
+
+      expect(reloadedApp.configuration.client_id).toBe(expectedClientId)
+      expect(reloadedApp.clientIdOverride).toBe(clientId)
+    })
+  })
 
   test('resets app when there is a valid toml but reset option is true', async () => {
     await inTemporaryDirectory(async (tmp) => {

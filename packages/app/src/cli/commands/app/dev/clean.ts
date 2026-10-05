@@ -20,6 +20,12 @@ export default class DevClean extends AppLinkedCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
+    'client-id': Flags.string({
+      hidden: false,
+      description:
+        'The Client ID of your app. Use with --config to clean up the dev preview for a different app than the one it is linked to.',
+      env: 'SHOPIFY_FLAG_CLIENT_ID',
+    }),
     store: Flags.string({
       hidden: false,
       char: 's',

@@ -24,6 +24,13 @@ export default class Dev extends AppLinkedCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
+    // The selected configuration is used with the app identified by --client-id.
+    'client-id': Flags.string({
+      hidden: false,
+      description:
+        'The Client ID of your app. Use with --config to run dev with that configuration for a different app than the one it is linked to.',
+      env: 'SHOPIFY_FLAG_CLIENT_ID',
+    }),
     store: Flags.string({
       char: 's',
       description: 'Store URL. Must be an existing development or Shopify Plus sandbox store.',

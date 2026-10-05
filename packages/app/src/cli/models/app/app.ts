@@ -194,6 +194,8 @@ export interface AppConfigurationInterface<
   directory: string
   configPath: string
   configuration: TConfig
+  /** The client ID provided by the command, preserved when the app reloads. */
+  readonly clientIdOverride?: string
   configSchema: SchemaForConfig<TConfig>
   specifications: TModuleSpec[]
   remoteFlags: Flag[]
@@ -277,6 +279,7 @@ export class App<
   directory: string
   configPath: string
   configuration: TConfig
+  readonly clientIdOverride?: string
   webs: Web[]
   dotenv?: DotEnvFile
   errors: AppErrors
@@ -292,6 +295,7 @@ export class App<
     directory,
     configPath,
     configuration,
+    clientIdOverride,
     webs,
     modules,
     dotenv,
@@ -306,6 +310,7 @@ export class App<
     this.directory = directory
     this.configPath = configPath
     this.configuration = configuration
+    this.clientIdOverride = clientIdOverride
     this.webs = webs
     this.dotenv = dotenv
     this.realExtensions = modules

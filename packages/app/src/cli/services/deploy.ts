@@ -106,8 +106,7 @@ async function handleDashboardExtensions(
       developerPlatformClient,
       extensions,
     })
-    // Keep the deployment target when the selected TOML is linked to another app.
-    return reloadApp(app, {clientIdOverride: remoteApp.apiKey})
+    return reloadApp(app)
   }
 
   throw new AbortSilentError()

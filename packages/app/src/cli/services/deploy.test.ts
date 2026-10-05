@@ -808,7 +808,7 @@ describe('ImportExtensionsIfNeeded', () => {
       developerPlatformClient,
       extensions: mockExtensions,
     })
-    expect(reloadApp).toHaveBeenCalledWith(app, {clientIdOverride: remoteApp.apiKey})
+    expect(reloadApp).toHaveBeenCalledWith(app)
     expect(result).toBe(reloadedApp)
   })
 

@@ -1,4 +1,6 @@
 import Dev from './dev.js'
+import DevClean from './dev/clean.js'
+import {devClean} from '../../services/dev-clean.js'
 import {dev} from '../../services/dev.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
@@ -17,6 +19,7 @@ import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../services/dev.js')
+vi.mock('../../services/dev-clean.js')
 vi.mock('../../services/app-context.js')
 vi.mock('../../services/store-context.js')
 vi.mock('../../services/dev/tunnel-mode.js')
@@ -50,6 +53,42 @@ describe('app dev command', () => {
 
     return {store}
   }
+
+  test.each([
+    ['app dev', Dev, dev],
+    ['app dev clean', DevClean, devClean],
+  ])('%s accepts --config together with --client-id', async (_name, command, service) => {
+    await inTemporaryDirectory(async (tmp) => {
+      const {store} = mockAppAndStore(tmp)
+      vi.mocked(getTunnelMode).mockResolvedValue({mode: 'auto'})
+
+      await command.run(
+        ['--path', tmp, '--store', store.shopDomain, '--config', 'prod', '--client-id', 'a-different-app'],
+        import.meta.url,
+      )
+
+      expect(linkedAppContext).toHaveBeenCalledWith({
+        directory: tmp,
+        clientId: 'a-different-app',
+        forceRelink: false,
+        userProvidedConfigName: 'prod',
+      })
+      expect(service).toHaveBeenCalled()
+    })
+  })
+
+  test.each([
+    ['app dev', Dev],
+    ['app dev clean', DevClean],
+  ])('%s still rejects --reset together with --config', async (_name, command) => {
+    await inTemporaryDirectory(async (tmp) => {
+      await expect(command.run(['--path', tmp, '--config', 'prod', '--reset'], import.meta.url)).rejects.toThrow()
+
+      expect(linkedAppContext).not.toHaveBeenCalled()
+      expect(dev).not.toHaveBeenCalled()
+      expect(devClean).not.toHaveBeenCalled()
+    })
+  })
 
   test('does not require --use-localhost when --install-mkcert is not passed', async () => {
     await inTemporaryDirectory(async (tmp) => {
@@ -113,6 +152,7 @@ describe('app dev command', () => {
       await expect(Dev.run(['--path', tmp, '--install-mkcert'], import.meta.url)).rejects.toThrow()
 
       expect(dev).not.toHaveBeenCalled()
+      expect(devClean).not.toHaveBeenCalled()
     })
   })
 })

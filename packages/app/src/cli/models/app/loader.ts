@@ -340,6 +340,7 @@ export async function loadAppFromContext<TModuleSpec extends ExtensionSpecificat
     configPath: configurationPath,
     configuration,
     configurationLoadResultMetadata,
+    clientIdOverride,
     configSchema,
     specifications,
     remoteFlags,
@@ -444,10 +445,7 @@ export async function loadOpaqueApp(options: {
   }
 }
 
-export async function reloadApp(
-  app: AppLinkedInterface,
-  options?: {clientIdOverride?: string},
-): Promise<AppLinkedInterface> {
+export async function reloadApp(app: AppLinkedInterface): Promise<AppLinkedInterface> {
   const {project, activeConfig} = await getAppConfigurationContext(app.directory, basename(app.configPath))
   const reloadState: ReloadState = {
     extensionDevUUIDs: new Map(app.allExtensions.map((ext) => [ext.handle, ext.devUUID])),
@@ -459,7 +457,7 @@ export async function reloadApp(
     specifications: app.specifications,
     remoteFlags: app.remoteFlags ?? [],
     reloadState,
-    clientIdOverride: options?.clientIdOverride,
+    clientIdOverride: app.clientIdOverride,
   })
   if (!newApp.errors.isEmpty()) {
     const errors = newApp.errors.getErrors()
@@ -533,6 +531,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
       directory,
       configPath,
       configuration,
+      clientIdOverride: this.loadedConfiguration.clientIdOverride,
       webs,
       modules: extensions,
       dotenv,
