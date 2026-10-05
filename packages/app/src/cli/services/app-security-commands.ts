@@ -1,4 +1,8 @@
+import {selectedConfigFileName, type AppSecuritySelection} from './app-security-selection.js'
 import {getAppConfigurationShorthand} from '../models/app/config-file-naming.js'
+import {cwd, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {realpathSync} from 'node:fs'
+import type {AppSecurityScope} from './app-security-engine/index.js'
 
 export type AppSecurityShell = 'posix' | 'cmd' | 'powershell'
 
@@ -19,35 +23,63 @@ export interface AppSecurityCommands {
   clean: AppSecurityCommand
 }
 
-/** `includeDirs`, `excludePatterns` and `noGitIgnore` are repeated on scan so that rerunning the check gathers the same files. */
+const NO_SCOPE: AppSecurityScope = {include_dirs: [], excludes: [], no_git_ignore: false}
+
+/** A path that can't be resolved is compared as written. */
+function realPathOrResolved(path: string): string {
+  try {
+    return realpathSync(path)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return resolvePath(path)
+  }
+}
+
+/** `--path` is left out when it is the working directory, so the commands read the same wherever the app is. */
+function pathArguments(path: string): AppSecurityArgument[] {
+  if (realPathOrResolved(path) === realPathOrResolved(cwd())) return []
+  return [{flag: '--path', value: relativePath(cwd(), path)}]
+}
+
+function selectionArguments(selection: AppSecuritySelection): AppSecurityArgument[] {
+  if (selection.kind === 'no-config') {
+    return [{flag: '--client-id', value: selection.clientId}, '--without-app-config']
+  }
+  // `--client-id` excludes `--config`, and a rerun with `--client-id` alone selects the same configuration.
+  if (selection.clientIdOverride) return [{flag: '--client-id', value: selection.clientIdOverride}]
+  const configFileName = selectedConfigFileName(selection)
+  const configShorthand = configFileName ? getAppConfigurationShorthand(configFileName) : undefined
+  return configShorthand ? [{flag: '--config', value: configShorthand}] : []
+}
+
+function scopeArguments(scope: AppSecurityScope): AppSecurityArgument[] {
+  return [
+    ...scope.include_dirs.map((includeDir) => ({flag: '--include-dir', value: includeDir})),
+    ...scope.excludes.map((excludePattern) => ({flag: '--exclude', value: excludePattern})),
+    ...(scope.no_git_ignore ? ['--no-git-ignore'] : []),
+  ]
+}
+
+/**
+ * The commands that repeat the run, relative to the working directory. `path` is the `--path` that was typed.
+ * Only `check` takes the scope, so it's the only command that repeats it: rerunning it gathers the same files.
+ */
 export function resolveAppSecurityCommands(
-  appRoot: string,
-  configFileName?: string,
-  excludePatterns: ReadonlyArray<string> = [],
-  noGitIgnore = false,
-  includeDirs: ReadonlyArray<string> = [],
+  selection: AppSecuritySelection,
+  path: string,
+  scope: AppSecurityScope = NO_SCOPE,
 ): AppSecurityCommands {
-  const configFlag = configFileName ? getAppConfigurationShorthand(configFileName) : undefined
   const command = 'shopify'
-  // Only check reads the app configuration and discovers files, so it's the only command that takes --config, --include-dir, --exclude or --no-git-ignore.
   const subcommandArgs = (subcommand: string): AppSecurityArgument[] => [
     'app',
     'security',
     subcommand,
-    {flag: '--path', value: appRoot},
+    ...pathArguments(path),
+    ...selectionArguments(selection),
   ]
 
   return {
-    scan: {
-      command,
-      args: [
-        ...subcommandArgs('check'),
-        ...(configFlag ? [{flag: '--config', value: configFlag}] : []),
-        ...includeDirs.map((includeDir) => ({flag: '--include-dir', value: includeDir})),
-        ...excludePatterns.map((excludePattern) => ({flag: '--exclude', value: excludePattern})),
-        ...(noGitIgnore ? ['--no-git-ignore'] : []),
-      ],
-    },
+    scan: {command, args: [...subcommandArgs('check'), ...scopeArguments(scope)]},
     record: {command, args: subcommandArgs('record'), stdinPlaceholder: '<findings.json>'},
     review: {command, args: subcommandArgs('review')},
     clean: {command, args: subcommandArgs('clean')},

@@ -1,13 +1,20 @@
 import securityCheck, {appSecurityInstructionsPrompt} from './security-check.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {appSecurityArtifactPaths, writeCheckArtifacts} from './app-security-artifacts.js'
-import {fileRealPath, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {validAppConfiguration} from './app-security-selection.test-data.js'
+import {fileExists, fileRealPath, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {cwd, joinPath, relativePath} from '@shopify/cli-kit/node/path'
+import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import type {AppSecurityExecution} from './app-security-api.js'
 import type {AppSecuritySelection} from './app-security-selection.js'
 import type {AppSecurityInstructionsDestination} from './security-check.js'
-import type {AgentChecks, DeterministicFindingsDocument, ScanResult} from './app-security-engine/index.js'
+import type {
+  AgentChecks,
+  AppSecurityScope,
+  DeterministicFindingsDocument,
+  ScanResult,
+} from './app-security-engine/index.js'
 
 const scan: ScanResult = {
   version: '0.1.0',
@@ -51,7 +58,13 @@ const deterministicFindings: DeterministicFindingsDocument = {
   engine: {name: 'shopify-app-security', version: '1.2.3', ruleset: '2026.08.28'},
   generated_at: '2026-08-24T00:00:00.000Z',
   detection: scan.detection,
-  coverage: {files_scanned: 1, files_skipped: [], gaps: []},
+  coverage: {
+    files_scanned: 1,
+    files_skipped: [],
+    gaps: [],
+    scope: {include_dirs: [], excludes: [], no_git_ignore: false},
+    scan_directories: [{directory: '.', origin: 'app_directory'}],
+  },
   checks: [],
 }
 
@@ -93,6 +106,22 @@ const configSelection: AppSecuritySelection = {
 
 const scanDirectories = [{directory: appDirectory, origin: 'app_directory' as const}]
 
+const noScope: AppSecurityScope = {include_dirs: [], excludes: [], no_git_ignore: false}
+
+/** The commands `check` generates for `--path` `appDirectory`, run from some other directory. */
+function commandsFor(selection: AppSecuritySelection = configSelection, scope: AppSecurityScope = noScope) {
+  return resolveAppSecurityCommands(selection, appDirectory, scope)
+}
+
+function stagingSelection(): AppSecuritySelection {
+  return {
+    kind: 'config',
+    appDirectory,
+    appConfigFilePath: `${appDirectory}/shopify.app.staging.toml`,
+    configClientId: 'toml-client-id',
+  }
+}
+
 function testDependencies(
   execution: AppSecurityExecution = scanExecution,
   selection: AppSecuritySelection = configSelection,
@@ -100,6 +129,7 @@ function testDependencies(
   return {
     resolveSelection: vi.fn(async () => selection),
     execute: vi.fn(async () => execution),
+    listFiles: vi.fn(async () => ({paths: ['shopify.app.toml'], ignoredScanDirectories: [] as string[]})),
     writeArtifacts: vi.fn(async () => artifacts),
     canPrompt: vi.fn(() => false),
     selectInstructionsDestination: vi.fn(async (): Promise<AppSecurityInstructionsDestination> => 'nothing'),
@@ -124,6 +154,7 @@ function testOptions() {
     includeDirs: [],
     excludePatterns: [],
     noGitIgnore: false,
+    listFiles: false,
   }
 }
 
@@ -150,6 +181,7 @@ describe('securityCheck', () => {
       requestedScanDirectories: [appDirectory],
       appConfigFilePath: `${appDirectory}/shopify.app.toml`,
       clientId: 'toml-client-id',
+      includeDirs: [],
       excludePatterns: [],
       noGitIgnore: false,
     })
@@ -164,7 +196,7 @@ describe('securityCheck', () => {
       engine,
       verbose: true,
       elapsedMilliseconds: 12,
-      commands: resolveAppSecurityCommands(appDirectory, 'shopify.app.toml'),
+      commands: commandsFor(),
       deterministicFindingsPath: artifacts.deterministicFindingsPath,
       agentChecksPath: artifacts.agentChecksPath,
       agentCheckCount: 31,
@@ -173,10 +205,7 @@ describe('securityCheck', () => {
   })
 
   test('forwards the config name and includes --config in generated commands', async () => {
-    const dependencies = testDependencies(scanExecution, {
-      ...configSelection,
-      appConfigFilePath: `${appDirectory}/shopify.app.staging.toml`,
-    })
+    const dependencies = testDependencies(scanExecution, stagingSelection())
 
     await securityCheck({...testOptions(), configName: 'staging'}, dependencies)
 
@@ -185,7 +214,7 @@ describe('securityCheck', () => {
       expect.objectContaining({appConfigFilePath: `${appDirectory}/shopify.app.staging.toml`}),
     )
     expect(dependencies.renderReport).toHaveBeenCalledWith(
-      expect.objectContaining({commands: resolveAppSecurityCommands(appDirectory, 'shopify.app.staging.toml')}),
+      expect.objectContaining({commands: commandsFor(stagingSelection())}),
     )
   })
 
@@ -206,7 +235,7 @@ describe('securityCheck', () => {
 
     await securityCheck({...testOptions(), excludePatterns, noGitIgnore: true}, dependencies)
 
-    const commands = resolveAppSecurityCommands(appDirectory, 'shopify.app.toml', excludePatterns, true)
+    const commands = commandsFor(configSelection, {include_dirs: [], excludes: excludePatterns, no_git_ignore: true})
     expect(commands.scan.args).toContainEqual({flag: '--exclude', value: 'generated'})
     expect(commands.scan.args).toContain('--no-git-ignore')
     expect(dependencies.execute).toHaveBeenCalledWith(expect.objectContaining({excludePatterns, noGitIgnore: true}))
@@ -232,10 +261,11 @@ describe('securityCheck', () => {
           requestedScanDirectories: [appDirectory, backend],
         }),
       )
-      const commands = resolveAppSecurityCommands(appDirectory, 'shopify.app.toml', ['generated'], false, [
-        'backend',
-        './backend',
-      ])
+      const commands = commandsFor(configSelection, {
+        include_dirs: ['backend', './backend'],
+        excludes: ['generated'],
+        no_git_ignore: false,
+      })
       expect(commands.scan.args.slice(-3)).toEqual([
         {flag: '--include-dir', value: 'backend'},
         {flag: '--include-dir', value: './backend'},
@@ -401,14 +431,13 @@ describe('securityCheck', () => {
       requestedScanDirectories: [appDirectory],
       appConfigFilePath: undefined,
       clientId: 'flag-client-id',
+      includeDirs: [],
       excludePatterns: [],
       noGitIgnore: false,
     })
     expect(dependencies.writeArtifacts).toHaveBeenCalledWith(appDirectory, 'flag-client-id', expect.anything())
     expect(dependencies.renderInfo).not.toHaveBeenCalled()
-    expect(dependencies.renderReport).toHaveBeenCalledWith(
-      expect.objectContaining({commands: resolveAppSecurityCommands(appDirectory)}),
-    )
+    expect(dependencies.renderReport).toHaveBeenCalledWith(expect.objectContaining({commands: commandsFor(selection)}))
   })
 
   test('shows the generated check command after the no-TOML prompt flow', async () => {
@@ -423,9 +452,11 @@ describe('securityCheck', () => {
 
     await securityCheck({...testOptions(), skipInstructions: true}, dependencies)
 
+    const {scan} = commandsFor(selection)
+    expect(scan.args.slice(-2)).toEqual([{flag: '--client-id', value: 'picked-client-id'}, '--without-app-config'])
     expect(dependencies.renderInfo).toHaveBeenCalledWith({
       headline: 'To skip these prompts next time, run:',
-      body: [{command: formatAppSecurityCommand(resolveAppSecurityCommands(appDirectory).scan)}],
+      body: [{command: formatAppSecurityCommand(scan)}],
     })
     expect(dependencies.renderInfo.mock.invocationCallOrder[0]).toBeLessThan(
       dependencies.execute.mock.invocationCallOrder[0]!,
@@ -505,8 +536,39 @@ describe('securityCheck', () => {
       appDirectory,
       resultsKey: 'shopify.app',
       copy: true,
-      scanComplete: true,
-      commands: resolveAppSecurityCommands(appDirectory, 'shopify.app.toml'),
+      scanScope: noScope,
+      commands: commandsFor(),
+    })
+  })
+
+  test('gives the instructions the exact scope of the run, as typed', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await mkdir(joinPath(directory, 'backend'))
+      vi.stubEnv('INIT_CWD', directory)
+      const dependencies = testDependencies()
+
+      await securityCheck(
+        {
+          ...testOptions(),
+          yes: true,
+          includeDirs: ['backend', './backend/'],
+          excludePatterns: ['**/generated', '!keep'],
+          noGitIgnore: true,
+        },
+        dependencies,
+      )
+
+      const scope = {
+        include_dirs: ['backend', './backend/'],
+        excludes: ['**/generated', '!keep'],
+        no_git_ignore: true,
+      }
+      expect(dependencies.deliverInstructions).toHaveBeenCalledWith(
+        expect.objectContaining({scanScope: scope, commands: commandsFor(configSelection, scope)}),
+      )
+      expect(dependencies.execute).toHaveBeenCalledWith(
+        expect.objectContaining({includeDirs: ['backend', './backend/']}),
+      )
     })
   })
 
@@ -521,8 +583,8 @@ describe('securityCheck', () => {
       appDirectory,
       resultsKey: 'shopify.app',
       copy: false,
-      scanComplete: true,
-      commands: resolveAppSecurityCommands(appDirectory, 'shopify.app.toml'),
+      scanScope: noScope,
+      commands: commandsFor(),
     })
   })
 
@@ -546,8 +608,8 @@ describe('securityCheck', () => {
       appDirectory,
       resultsKey: 'shopify.app',
       copy: false,
-      scanComplete: true,
-      commands: resolveAppSecurityCommands(appDirectory, 'shopify.app.toml'),
+      scanScope: noScope,
+      commands: commandsFor(),
     })
   })
 
@@ -591,5 +653,177 @@ describe('securityCheck', () => {
     await securityCheck({...testOptions(), blocking: 'low'}, dependencies)
 
     expect(dependencies.setExitCode).not.toHaveBeenCalled()
+  })
+})
+
+describe('securityCheck --list-files', () => {
+  const listFilesOptions = {...testOptions(), listFiles: true}
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test('prints each gathered path on its own line and does nothing else', async () => {
+    const dependencies = testDependencies()
+    dependencies.listFiles.mockResolvedValue({
+      paths: ['../backend/server.ts', 'app/routes/index.ts', 'shopify.app.toml'],
+      ignoredScanDirectories: [],
+    })
+
+    await securityCheck(listFilesOptions, dependencies)
+
+    expect(dependencies.output).toHaveBeenCalledOnce()
+    expect(dependencies.output).toHaveBeenCalledWith('../backend/server.ts\napp/routes/index.ts\nshopify.app.toml')
+    expect(dependencies.execute).not.toHaveBeenCalled()
+    expect(dependencies.writeArtifacts).not.toHaveBeenCalled()
+    expect(dependencies.renderReport).not.toHaveBeenCalled()
+    expect(dependencies.renderInfo).not.toHaveBeenCalled()
+    expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
+    expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
+    expect(dependencies.setExitCode).not.toHaveBeenCalled()
+  })
+
+  test('prints {"files": [...]} with --json', async () => {
+    const dependencies = testDependencies()
+    dependencies.listFiles.mockResolvedValue({
+      paths: ['app/routes/index.ts', 'shopify.app.toml'],
+      ignoredScanDirectories: [],
+    })
+
+    await securityCheck({...listFilesOptions, json: true}, dependencies)
+
+    expect(dependencies.output).toHaveBeenCalledOnce()
+    expect(JSON.parse(dependencies.output.mock.calls[0]![0])).toEqual({
+      files: ['app/routes/index.ts', 'shopify.app.toml'],
+    })
+  })
+
+  test('prints nothing when no path is gathered, and an empty list with --json', async () => {
+    const dependencies = testDependencies()
+    dependencies.listFiles.mockResolvedValue({paths: [], ignoredScanDirectories: []})
+
+    await securityCheck(listFilesOptions, dependencies)
+    expect(dependencies.output).not.toHaveBeenCalled()
+
+    await securityCheck({...listFilesOptions, json: true}, dependencies)
+    expect(JSON.parse(dependencies.output.mock.calls[0]![0])).toEqual({files: []})
+  })
+
+  test('resolves without prompts, even in an interactive terminal', async () => {
+    const dependencies = testDependencies()
+    dependencies.canPrompt.mockReturnValue(true)
+
+    await securityCheck(listFilesOptions, dependencies)
+
+    expect(dependencies.resolveSelection).toHaveBeenCalledWith(expect.objectContaining({allowPrompts: false}))
+  })
+
+  test('gathers with the scan directories and the scope of the run, and ignores --client-id', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await mkdir(joinPath(directory, 'backend'))
+      vi.stubEnv('INIT_CWD', directory)
+      const backend = await fileRealPath(joinPath(directory, 'backend'))
+      const dependencies = testDependencies()
+
+      await securityCheck(
+        {
+          ...listFilesOptions,
+          clientId: 'ignored-client-id',
+          includeDirs: ['backend'],
+          excludePatterns: ['generated'],
+          noGitIgnore: true,
+        },
+        dependencies,
+      )
+
+      expect(dependencies.listFiles).toHaveBeenCalledWith({
+        appDirectory,
+        scanDirectories: [appDirectory, backend],
+        requestedScanDirectories: [appDirectory, backend],
+        appConfigFilePath: `${appDirectory}/shopify.app.toml`,
+        clientId: 'toml-client-id',
+        includeDirs: ['backend'],
+        excludePatterns: ['generated'],
+        noGitIgnore: true,
+      })
+    })
+  })
+
+  test('warns about an ignored scan directory through renderWarning', async () => {
+    const dependencies = testDependencies()
+    dependencies.listFiles.mockResolvedValue({paths: ['shopify.app.toml'], ignoredScanDirectories: [appDirectory]})
+    vi.stubEnv('INIT_CWD', '/tmp')
+
+    await securityCheck(listFilesOptions, dependencies)
+
+    expect(dependencies.renderWarning).toHaveBeenCalledWith({
+      headline: 'unlinked-app is ignored by Git, so only the files Git tracks in it are scanned.',
+      body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
+    })
+    expect(dependencies.output).toHaveBeenCalledWith('shopify.app.toml')
+  })
+
+  test('returns the selection, the results key and the generated check command', async () => {
+    const dependencies = testDependencies()
+
+    const resolution = await securityCheck(
+      {...listFilesOptions, includeDirs: [], excludePatterns: ['generated'], noGitIgnore: true},
+      dependencies,
+    )
+
+    expect(resolution.selection).toBe(configSelection)
+    expect(resolution.resultsKey).toBe('shopify.app')
+    expect(resolution.commands.scan.args).toEqual([
+      'app',
+      'security',
+      'check',
+      {flag: '--path', value: relativePath(cwd(), appDirectory)},
+      {flag: '--exclude', value: 'generated'},
+      '--no-git-ignore',
+    ])
+  })
+
+  test('lists the real files, one path per line, and writes no results', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await fileRealPath(directory)
+      await mkdir(joinPath(appRoot, 'app'))
+      await mkdir(joinPath(appRoot, 'generated'))
+      await writeFile(joinPath(appRoot, 'shopify.app.toml'), validAppConfiguration())
+      await writeFile(joinPath(appRoot, 'app', 'index.ts'), 'export {}\n')
+      await writeFile(joinPath(appRoot, 'generated', 'out.ts'), 'export {}\n')
+      vi.stubEnv('INIT_CWD', appRoot)
+
+      const {stdout, resolution} = await withCapturedStandardStreams(async ({stdout: captured}) => {
+        const result = await securityCheck({
+          ...listFilesOptions,
+          directory: appRoot,
+          excludePatterns: ['**/generated'],
+        })
+        return {stdout: captured(), resolution: result}
+      })
+
+      // Outside a repository, the `.shopify` files that resolving the selection writes are gathered too.
+      expect(stdout).toBe(
+        ['.shopify/.gitignore', '.shopify/project.json', 'app/index.ts', 'shopify.app.toml'].join('\n').concat('\n'),
+      )
+      expect(resolution.resultsKey).toBe('shopify.app')
+      await expect(fileExists(joinPath(appRoot, '.shopify', 'app-security'))).resolves.toBe(false)
+    })
+  })
+
+  test('lists the real files as JSON', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await fileRealPath(directory)
+      await writeFile(joinPath(appRoot, 'shopify.app.toml'), validAppConfiguration(''))
+      await writeFile(joinPath(appRoot, 'index.ts'), 'export {}\n')
+      vi.stubEnv('INIT_CWD', appRoot)
+
+      const stdout = await withCapturedStandardStreams(async ({stdout: captured}) => {
+        await securityCheck({...listFilesOptions, directory: appRoot, json: true})
+        return captured()
+      })
+
+      expect(JSON.parse(stdout)).toEqual({files: ['index.ts', 'shopify.app.toml']})
+    })
   })
 })

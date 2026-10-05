@@ -8,7 +8,7 @@ import {
 } from './app-security-engine/tests/fixtures/findings-documents.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {cwd, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
 import type {AppSecurityBlockingLevel} from './app-security-api.js'
 import type {AgentFindingsDocument, DeterministicFindingsDocument} from './app-security-engine/index.js'
@@ -73,6 +73,35 @@ async function captureError(action: () => unknown): Promise<AbortError> {
 }
 
 describe('reviewAppSecurityResults', () => {
+  describe('scope', () => {
+    const otherScope = {include_dirs: ['../backend'], excludes: [], no_git_ignore: false}
+
+    test('differs when the agent reported another scope than the latest scan used', () => {
+      const differing = {
+        deterministic: deterministicFindingsDocument,
+        agent: {...agentFindingsDocument, scope: otherScope},
+      }
+
+      expect(review(differing).scopeDiffers).toBe(true)
+    })
+
+    test('does not differ when the scopes match, or when either result is missing', () => {
+      expect(review(both).scopeDiffers).toBe(false)
+      expect(review({deterministic: deterministicFindingsDocument}).scopeDiffers).toBe(false)
+      expect(review({agent: {...agentFindingsDocument, scope: otherScope}}).scopeDiffers).toBe(false)
+      expect(review({}).scopeDiffers).toBe(false)
+    })
+
+    test('does not change the blocking outcome', () => {
+      const differing = {
+        deterministic: deterministicFindingsDocument,
+        agent: {...agentFindingsDocument, scope: otherScope},
+      }
+
+      expect(review(differing, {blocking: 'high'}).blocking).toEqual(review(both, {blocking: 'high'}).blocking)
+    })
+  })
+
   describe('--check-id', () => {
     test('keeps every combined check in canonical order without a filter', () => {
       const result = review(both)
@@ -211,12 +240,36 @@ describe('securityReview', () => {
       const input = dependencies.render.mock.calls[0]![0]
       expect(input.verbose).toBe(true)
       expect(input.now).toBe(now)
-      expect(input.commands.scan.args).toContainEqual({flag: '--path', value: appRoot})
+      expect(input.commands.scan.args).toContainEqual({flag: '--path', value: relativePath(cwd(), appRoot)})
       expect(input.result.resultsDirectory).toBe(appSecurityArtifactPaths(appRoot, RESULTS_KEY).resultsDirectory)
       expect(input.result.sources.deterministic?.path).toBe(
         appSecurityArtifactPaths(appRoot, RESULTS_KEY).deterministicFindingsPath,
       )
       expect(input.result.checks).toHaveLength(6)
+    })
+  })
+
+  test('repeats the latest scan scope in the check command', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const scope = {include_dirs: ['../backend'], excludes: ['vendor/**'], no_git_ignore: true}
+      const deterministic = {
+        ...deterministicFindingsDocument,
+        coverage: {...deterministicFindingsDocument.coverage, scope},
+      }
+      const appRoot = await createApp(directory, {deterministic})
+      const dependencies = testDependencies()
+
+      await securityReview(
+        {directory: appRoot, json: false, verbose: false, checkIds: [], blocking: 'none'},
+        dependencies,
+      )
+
+      const input = dependencies.render.mock.calls[0]![0]
+      expect(input.commands.scan.args.slice(-3)).toEqual([
+        {flag: '--include-dir', value: '../backend'},
+        {flag: '--exclude', value: 'vendor/**'},
+        '--no-git-ignore',
+      ])
     })
   })
 

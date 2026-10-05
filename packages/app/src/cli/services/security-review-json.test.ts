@@ -74,8 +74,27 @@ describe('App Security review JSON contract', () => {
     expect(JSON.parse(encoded)).toStrictEqual({
       filter: null,
       sources: {deterministic: null, agent: null},
+      scope_differs: false,
       checks: [],
     })
+  })
+
+  test('reports that the agent findings were recorded for a different scope than the latest scan', () => {
+    const agentScope = {include_dirs: ['../backend'], excludes: [], no_git_ignore: false}
+    const result = reviewAppSecurityResults(
+      appSecurityResultsFor(appRoot, resultsKey, {
+        deterministic: deterministicFindingsDocument,
+        agent: {...agentFindingsDocument, scope: agentScope},
+      }),
+      {resultsDirectory, checkIds: [], blocking: 'none'},
+    )
+
+    const json = JSON.parse(securityReviewJsonOutputSchema.encode(toSecurityReviewJson(result)))
+
+    expect(json.scope_differs).toBe(true)
+    expect(json.sources.agent.scope).toEqual(agentScope)
+    expect(json.sources.deterministic.coverage.scope).toEqual(deterministicFindingsDocument.coverage.scope)
+    expect(json.sources.deterministic.coverage.scan_directories).toEqual([{directory: '.', origin: 'app_directory'}])
   })
 
   test('echoes the requested IDs when no file is present', () => {
@@ -90,6 +109,7 @@ describe('App Security review JSON contract', () => {
     expect(JSON.parse(encoded)).toStrictEqual({
       filter: {check_ids: ['UNKNOWN_CHECK']},
       sources: {deterministic: null, agent: null},
+      scope_differs: false,
       checks: [],
     })
   })

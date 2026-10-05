@@ -1,4 +1,4 @@
-import {securityExitCode, executeAppSecurity} from './app-security-api.js'
+import {securityExitCode, executeAppSecurity, listAppSecurityFiles} from './app-security-api.js'
 import {writeCheckArtifacts} from './app-security-artifacts.js'
 import deliverAppSecurityInstructions from './app-security-instructions.js'
 import {
@@ -12,7 +12,6 @@ import {
   resolveAppSecuritySelection,
   resolveIncludeDirectories,
   resultsKey,
-  selectedConfigFileName,
   type AppSecurityScanDirectory,
   type AppSecuritySelection,
 } from './app-security-selection.js'
@@ -23,7 +22,13 @@ import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {cwd, relativePath} from '@shopify/cli-kit/node/path'
 import {renderInfo, renderSelectPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
 import type {CheckArtifactPaths} from './app-security-artifacts.js'
-import type {AgentChecks, DeterministicFindingsDocument, ScanInput, ScanOptions} from './app-security-engine/index.js'
+import type {
+  AgentChecks,
+  AppSecurityScope,
+  DeterministicFindingsDocument,
+  ScanInput,
+  ScanOptions,
+} from './app-security-engine/index.js'
 import type {AppSecurityBlockingLevel, AppSecurityExecution} from './app-security-api.js'
 import type {SecurityReportInput} from './security-output.js'
 import type {RenderAlertOptions, RenderSelectPromptOptions} from '@shopify/cli-kit/node/ui'
@@ -41,6 +46,16 @@ interface SecurityOptions {
   includeDirs: ReadonlyArray<string>
   excludePatterns: ReadonlyArray<string>
   noGitIgnore: boolean
+  /** Only resolve and gather: print the gathered paths and stop. */
+  listFiles: boolean
+}
+
+/** What a run resolved, whether it scanned or only listed files. */
+interface SecurityCheckResolution {
+  selection: AppSecuritySelection
+  resultsKey: string
+  /** The commands that repeat this run, including its scope. */
+  commands: AppSecurityCommands
 }
 
 export type AppSecurityInstructionsDestination = 'copy' | 'print' | 'nothing'
@@ -54,6 +69,7 @@ interface SecurityDependencies {
     allowPrompts: boolean
   }): Promise<AppSecuritySelection>
   execute(options: ScanInput & Required<ScanOptions>): Promise<AppSecurityExecution>
+  listFiles(options: ScanInput & Required<ScanOptions>): Promise<{paths: string[]; ignoredScanDirectories: string[]}>
   writeArtifacts(
     appDirectory: string,
     resultsKey: string,
@@ -65,7 +81,7 @@ interface SecurityDependencies {
     appDirectory: string
     resultsKey: string
     copy: boolean
-    scanComplete: boolean
+    scanScope: AppSecurityScope
     commands: AppSecurityCommands
   }): Promise<void>
   output(content: string): void
@@ -88,6 +104,7 @@ export const appSecurityInstructionsPrompt: RenderSelectPromptOptions<AppSecurit
 const defaultDependencies: SecurityDependencies = {
   resolveSelection: resolveAppSecuritySelection,
   execute: executeAppSecurity,
+  listFiles: listAppSecurityFiles,
   writeArtifacts: writeCheckArtifacts,
   canPrompt: terminalSupportsPrompting,
   selectInstructionsDestination: () => renderSelectPrompt(appSecurityInstructionsPrompt),
@@ -134,17 +151,29 @@ function securityReportInput(
   }
 }
 
+function renderIgnoredScanDirectoryWarnings(ignoredScanDirectories: string[], dependencies: SecurityDependencies) {
+  for (const directory of ignoredScanDirectories) {
+    dependencies.renderWarning({
+      headline: `${relativePath(cwd(), directory) || '.'} is ignored by Git, so only the files Git tracks in it are scanned.`,
+      body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
+    })
+  }
+}
+
 /**
  * Scans the app and replaces deterministic-findings.json and agent-checks.json. Scanning never reads or
  * changes the agent's recorded findings, so it's always safe to run again.
+ *
+ * With `listFiles`, it only resolves and gathers: it prints the gathered paths and writes nothing.
+ * `directory` is the `--path` value, an absolute path.
  */
 export default async function securityCheck(
   options: SecurityOptions,
   dependencies: SecurityDependencies = defaultDependencies,
-): Promise<void> {
+): Promise<SecurityCheckResolution> {
   // Resolved first so a mistyped directory fails before any prompt.
   const includeDirectories = await resolveIncludeDirectories(options.includeDirs)
-  const canPrompt = !options.json && dependencies.canPrompt()
+  const canPrompt = !options.json && !options.listFiles && dependencies.canPrompt()
   const selection = await dependencies.resolveSelection({
     path: options.directory,
     config: options.configName,
@@ -153,13 +182,13 @@ export default async function securityCheck(
     allowPrompts: canPrompt,
   })
   const {appDirectory} = selection
-  const commands = resolveAppSecurityCommands(
-    appDirectory,
-    selectedConfigFileName(selection),
-    options.excludePatterns,
-    options.noGitIgnore,
-    options.includeDirs,
-  )
+  const scope: AppSecurityScope = {
+    include_dirs: [...options.includeDirs],
+    excludes: [...options.excludePatterns],
+    no_git_ignore: options.noGitIgnore,
+  }
+  const commands = resolveAppSecurityCommands(selection, options.directory, scope)
+  const resolution = {selection, resultsKey: resultsKey(selection), commands}
   // The prompt is only shown when no TOML was found and `--without-app-config` wasn't passed.
   if (selection.kind === 'no-config' && !options.withoutAppConfig) {
     dependencies.renderInfo({
@@ -169,21 +198,30 @@ export default async function securityCheck(
   }
   const {scanDirectories, requestedScanDirectories} = mergeScanDirectories(appDirectory, includeDirectories)
 
-  const execution = await dependencies.execute({
+  const scanOptions = {
     appDirectory,
     scanDirectories: scanDirectories.map(({directory}) => directory),
     requestedScanDirectories,
     appConfigFilePath: selection.kind === 'config' ? selection.appConfigFilePath : undefined,
     clientId: effectiveClientId(selection),
+    includeDirs: options.includeDirs,
     excludePatterns: options.excludePatterns,
     noGitIgnore: options.noGitIgnore,
-  })
-  for (const directory of execution.ignoredScanDirectories) {
-    dependencies.renderWarning({
-      headline: `${relativePath(cwd(), directory) || '.'} is ignored by Git, so only the files Git tracks in it are scanned.`,
-      body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
-    })
   }
+
+  if (options.listFiles) {
+    const {paths, ignoredScanDirectories} = await dependencies.listFiles(scanOptions)
+    renderIgnoredScanDirectoryWarnings(ignoredScanDirectories, dependencies)
+    if (options.json) {
+      dependencies.output(JSON.stringify({files: paths}, null, 2))
+    } else if (paths.length > 0) {
+      dependencies.output(paths.join('\n'))
+    }
+    return resolution
+  }
+
+  const execution = await dependencies.execute(scanOptions)
+  renderIgnoredScanDirectoryWarnings(execution.ignoredScanDirectories, dependencies)
   const artifacts = await dependencies.writeArtifacts(appDirectory, resultsKey(selection), {
     deterministicFindings: execution.deterministicFindings,
     agentChecks: execution.agentChecks,
@@ -205,11 +243,12 @@ export default async function securityCheck(
       appDirectory,
       resultsKey: resultsKey(selection),
       copy: destination === 'copy',
-      scanComplete: true,
+      scanScope: scope,
       commands,
     })
   }
 
   const exitCode = securityExitCode(execution, options.blocking)
   if (exitCode !== 0) dependencies.setExitCode(exitCode)
+  return resolution
 }

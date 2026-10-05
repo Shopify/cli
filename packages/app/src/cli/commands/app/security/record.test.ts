@@ -74,8 +74,8 @@ describe('app security record command', () => {
           allowPrompts: false,
         })
         const selection = await vi.mocked(resolveAppSecuritySelection).mock.results[0]!.value
-        expect(securityRecord).toHaveBeenCalledWith({selection})
-        expect(renderSecurityRecordResult).toHaveBeenCalledWith(result, selection)
+        expect(securityRecord).toHaveBeenCalledWith({selection, path: cwd()})
+        expect(renderSecurityRecordResult).toHaveBeenCalledWith(result, selection, cwd())
         expect(output.info()).toBe('')
       } finally {
         vi.unstubAllEnvs()
@@ -97,6 +97,7 @@ describe('app security record command', () => {
         expect(resolveAppSecuritySelection).toHaveBeenCalledWith(expect.objectContaining({path: directory}))
         expect(securityRecord).toHaveBeenCalledWith({
           selection: await vi.mocked(resolveAppSecuritySelection).mock.results[0]!.value,
+          path: directory,
         })
         expect(output.info()).toBe(
           [

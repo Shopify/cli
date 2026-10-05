@@ -19,6 +19,8 @@ The check scans the app directory and each \`--include-dir\`. Git ignore rules a
 
 Use \`--exclude\` to skip more paths. Each value is a glob that is matched against the path relative to the working directory, so a path above it starts with \`../\`, and a name at any depth needs \`**/\`, for example \`--exclude '**/generated'\`. Repeat the flag to add globs. An exclusion can't remove the selected app configuration file. Quote each value so your shell doesn't expand \`*\`. The coding-agent instructions this check offers repeat the globs. Other \`app security\` commands don't take \`--exclude\` or \`--no-git-ignore\`, so pass the same flags each time you run the check.
 
+Use \`--list-files\` to check the scope before scanning: it prints the files the check would gather, one path per line and relative to the app directory (\`{"files": [...]}\` with \`--json\`), and then stops. It writes no results and never prompts. \`--client-id\` is accepted but has no effect on the list.
+
 In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. JSON output never prompts or prints those instructions. You can also run \`shopify app security instructions\` to print, copy, or write them later.`
 
   static description = this.descriptionWithoutMarkdown()
@@ -44,6 +46,12 @@ In interactive terminals, the command offers to copy the coding-agent instructio
       description:
         'Turn off Git ignore rules for every scanned directory, so files that Git ignores are scanned too. Files that Git tracks are always scanned.',
       env: 'SHOPIFY_FLAG_NO_GIT_IGNORE',
+    }),
+    'list-files': Flags.boolean({
+      description:
+        'Print the files the check would gather, one path per line, and stop. Nothing is scanned, no results are written, and nothing is prompted for.',
+      env: 'SHOPIFY_FLAG_LIST_FILES',
+      exclusive: ['yes', 'skip-instructions', 'blocking'],
     }),
     ...jsonFlag,
     ...appSecurityBlockingFlag,
@@ -77,6 +85,7 @@ In interactive terminals, the command offers to copy the coding-agent instructio
       includeDirs: flags['include-dir'] ?? [],
       excludePatterns: flags.exclude ?? [],
       noGitIgnore: Boolean(flags['no-git-ignore']),
+      listFiles: Boolean(flags['list-files']),
     })
   }
 }

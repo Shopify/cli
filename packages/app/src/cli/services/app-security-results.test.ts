@@ -1,10 +1,13 @@
-import {loadAppSecurityResults, requireResultsDirectory} from './app-security-results.js'
+import {
+  loadAppSecurityResults as loadResults,
+  requireResultsDirectory as requireResults,
+} from './app-security-results.js'
 import {appSecurityArtifactPaths, writeAgentFindings, writeCheckArtifacts} from './app-security-artifacts.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {combineFindings} from './app-security-engine/index.js'
 import {scanAppDirectory} from './app-security-engine/tests/scan-directory.js'
 import {agentFindingsDocument} from './app-security-engine/tests/fixtures/findings-documents.js'
-import {resultsKey, selectedConfigFileName, type AppSecuritySelection} from './app-security-selection.js'
+import {resultsKey, type AppSecuritySelection} from './app-security-selection.js'
 import {AbortError, handler} from '@shopify/cli-kit/node/error'
 import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -19,6 +22,15 @@ async function createApp(directory: string): Promise<AppSecuritySelection> {
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Test"\nclient_id = "test"\n')
   const appDirectory = await fileRealPath(directory)
   return {kind: 'config', appDirectory, appConfigFilePath: joinPath(appDirectory, 'shopify.app.toml')}
+}
+
+/** `--path` is the app directory in these tests, as when `check` is run from somewhere else. */
+function loadAppSecurityResults(selection: AppSecuritySelection) {
+  return loadResults(selection, selection.appDirectory)
+}
+
+function requireResultsDirectory(selection: AppSecuritySelection) {
+  return requireResults(selection, selection.appDirectory)
 }
 
 function artifactPathsFor(selection: AppSecuritySelection) {
@@ -44,9 +56,7 @@ async function loadError(selection: AppSecuritySelection): Promise<AbortError> {
 }
 
 function command(selection: AppSecuritySelection, name: 'scan' | 'record' | 'clean'): string {
-  return formatAppSecurityCommand(
-    resolveAppSecurityCommands(selection.appDirectory, selectedConfigFileName(selection))[name],
-  )
+  return formatAppSecurityCommand(resolveAppSecurityCommands(selection, selection.appDirectory)[name])
 }
 
 describe('requireResultsDirectory', () => {

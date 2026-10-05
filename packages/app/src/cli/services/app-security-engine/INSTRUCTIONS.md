@@ -23,6 +23,8 @@ Do not substitute one review for the other. If the user asks for both, run and r
 
 ## Full review workflow
 
+{{WORKING_DIRECTORY_LINE}}
+
 {{SCAN_CONTEXT}}
 
 ### 2. Read the agent checks
@@ -51,6 +53,7 @@ Write a single JSON document that covers every check you ran:
 ```json
 {
   "schema_version": 1,
+  "scope": {{SCOPE_JSON}},
   "checks_executed": [
     {"check_id": "<id from agent-checks.json>", "check_version": 1, "status": "executed"},
     {
@@ -79,6 +82,7 @@ Write a single JSON document that covers every check you ran:
 }
 ```
 
+- {{SCOPE_GUIDANCE}}
 - `check_version` echoes the check's `version` from {{AGENT_CHECKS_PATH}}.
 - Record every check you ran in `checks_executed`, including checks without findings.
 - `status` is one of:

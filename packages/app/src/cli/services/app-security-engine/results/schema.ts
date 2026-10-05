@@ -92,6 +92,17 @@ export const projectDetectionSchema = zod.object({
   ),
 })
 
+/**
+ * A function, so each document gets its own instance: the public `review --json` schema would render a shared
+ * instance as a `$ref` instead of the inline definition.
+ */
+const createScopeSchema = () =>
+  zod.object({
+    include_dirs: zod.array(zod.string()),
+    excludes: zod.array(zod.string()),
+    no_git_ignore: zod.boolean(),
+  })
+
 export const coverageSchema = zod.object({
   files_scanned: zod.number(),
   files_skipped: zod.array(
@@ -109,6 +120,10 @@ export const coverageSchema = zod.object({
       check_id: zod.string().optional(),
       file: zod.string().optional(),
     }),
+  ),
+  scope: createScopeSchema(),
+  scan_directories: zod.array(
+    zod.object({directory: zod.string(), origin: zod.enum(['app_directory', 'include_dir'])}),
   ),
 })
 
@@ -130,6 +145,7 @@ export const agentFindingsDocumentSchema = zod.object({
   ...documentBase,
   source: zod.literal('agent'),
   engine: zod.object({name: zod.literal(ENGINE_NAME), version: zod.string()}),
+  scope: createScopeSchema(),
 })
 
 export const findingsDocumentSchemaV1 = zod.discriminatedUnion('source', [

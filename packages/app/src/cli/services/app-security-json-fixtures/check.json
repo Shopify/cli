@@ -28,7 +28,18 @@
     "coverage": {
       "files_scanned": 1,
       "files_skipped": [],
-      "gaps": []
+      "gaps": [],
+      "scope": {
+        "include_dirs": [],
+        "excludes": [],
+        "no_git_ignore": false
+      },
+      "scan_directories": [
+        {
+          "directory": ".",
+          "origin": "app_directory"
+        }
+      ]
     },
     "checks": []
   },

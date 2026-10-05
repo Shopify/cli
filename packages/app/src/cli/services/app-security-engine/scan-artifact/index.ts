@@ -1,9 +1,11 @@
 import {ENGINE_NAME, FINDINGS_SCHEMA_VERSION} from '../types.js'
-import {redactText} from '../rules/secret-rules.js'
+import {redactScope, redactText} from '../rules/secret-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {compareFindingLocations, compareStrings} from '../results/order.js'
 import type {
+  AppSecurityScope,
   CheckExecution,
+  CoverageScanDirectory,
   CheckSnapshot,
   DeterministicFindingsDocument,
   FindingEvidence,
@@ -106,6 +108,8 @@ function groupIssuesByCheck(result: ScanResult): Map<string, Issue[]> {
 }
 
 export interface BuildDeterministicFindingsOptions {
+  scope: AppSecurityScope
+  scanDirectories: CoverageScanDirectory[]
   engineVersion?: string
   ruleset?: string
   generatedAt?: string
@@ -114,7 +118,7 @@ export interface BuildDeterministicFindingsOptions {
 /** Build deterministic-findings.json from a deterministic scan. Every free-form value is redacted. */
 export function buildDeterministicFindings(
   result: ScanResult,
-  options: BuildDeterministicFindingsOptions = {},
+  options: BuildDeterministicFindingsOptions,
 ): DeterministicFindingsDocument {
   const issuesByCheck = groupIssuesByCheck(result)
   const checks = result.scan.checks_executed
@@ -147,6 +151,11 @@ export function buildDeterministicFindings(
         ...gap,
         message: redactText(gap.message),
         ...(gap.file ? {file: redactText(gap.file)} : {}),
+      })),
+      scope: redactScope(options.scope),
+      scan_directories: options.scanDirectories.map((scanDirectory) => ({
+        ...scanDirectory,
+        directory: redactText(scanDirectory.directory),
       })),
     },
     checks,

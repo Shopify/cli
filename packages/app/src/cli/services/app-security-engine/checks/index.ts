@@ -1,5 +1,5 @@
 import {EMBEDDED_CHECK_SOURCES} from './embedded.js'
-import {redactText} from '../rules/secret-rules.js'
+import {redactScope, redactText} from '../rules/secret-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {
   AGENT_CHECKS_SCHEMA_VERSION,
@@ -13,6 +13,7 @@ import type {
   AgentCheckStatus,
   AgentFindingEvidence,
   AgentFindingsDocument,
+  AppSecurityScope,
   CheckPrecedence,
   CheckSnapshot,
   Severity,
@@ -123,10 +124,13 @@ Write ONE findings document that covers every check you ran. Copy each check's
 \`version\` from this file into \`check_version\`:
 
   { "schema_version": ${RECORD_INPUT_SCHEMA_VERSION},
+    "scope": { "include_dirs": [], "excludes": [], "no_git_ignore": false },
     "checks_executed": [ { "check_id": "...", "check_version": N, "status": "executed" } ],
     "findings": [ { "check_id": "...", "check_version": N,
       "file": "app/routes/example.ts", "line": 1, "message": "...",
       "evidence": [ { "file": "app/routes/example.ts", "line": 1, "quote": "..." } ] } ] }
+
+"scope" is the flags the check run used: copy it unchanged from the instructions you were given.
 
 Optional finding fields: "snippet", "confidence" (high, medium, or low),
 "reasoning", and "suppression": { "justification": "..." }.
@@ -441,6 +445,18 @@ function snapshotCheck(check: Check): CheckSnapshot {
   }
 }
 
+/** The scope block, rebuilt from only its known keys. A problem is reported as `scope: ...` with the first thing wrong. */
+const readScope = (value: unknown): {scope: AppSecurityScope} | {error: string} => {
+  if (!isRecord(value)) return {error: 'scope is required and must be an object'}
+  const {include_dirs: includeDirs, excludes, no_git_ignore: noGitIgnore} = value
+  const isStringArray = (candidate: unknown): candidate is string[] =>
+    Array.isArray(candidate) && candidate.every((item) => typeof item === 'string')
+  if (!isStringArray(includeDirs)) return {error: 'scope.include_dirs must be an array of strings'}
+  if (!isStringArray(excludes)) return {error: 'scope.excludes must be an array of strings'}
+  if (typeof noGitIgnore !== 'boolean') return {error: 'scope.no_git_ignore must be a boolean'}
+  return {scope: redactScope({include_dirs: includeDirs, excludes, no_git_ignore: noGitIgnore})}
+}
+
 const optionalArray = (document: Record<string, unknown>, key: string, errors: string[]): unknown[] => {
   const value = document[key]
   if (value === undefined) return []
@@ -470,6 +486,8 @@ export function recordAgentFindings(document: unknown, options: RecordAgentFindi
   const errors: string[] = []
   if (document.schema_version !== RECORD_INPUT_SCHEMA_VERSION)
     errors.push(`schema_version must be ${RECORD_INPUT_SCHEMA_VERSION}`)
+  const scope = readScope(document.scope)
+  if ('error' in scope) errors.push(scope.error)
   const claims = optionalArray(document, 'checks_executed', errors)
   const rawFindings = optionalArray(document, 'findings', errors)
 
@@ -499,7 +517,7 @@ export function recordAgentFindings(document: unknown, options: RecordAgentFindi
   errors.push(...grouped.errors)
   // Errors quote agent input (check IDs, paths, line values), which can hold secrets. They're shown in the
   // terminal and in --json output, so they're redacted like everything that's stored.
-  if (errors.length > 0) return {ok: false, errors: errors.map(redactText)}
+  if (errors.length > 0 || 'error' in scope) return {ok: false, errors: errors.map(redactText)}
 
   const storedChecks = grouped.groups
     .map(
@@ -521,6 +539,7 @@ export function recordAgentFindings(document: unknown, options: RecordAgentFindi
       source: 'agent',
       engine: {name: ENGINE_NAME, version: options.engineVersion},
       generated_at: options.generatedAt ?? new Date().toISOString(),
+      scope: scope.scope,
       checks: storedChecks,
     },
   }

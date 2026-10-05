@@ -49,11 +49,23 @@
             "message": "MISSING_TENANT_ISOLATION applies to app source, but the parser was unavailable.",
             "check_id": "MISSING_TENANT_ISOLATION"
           }
+        ],
+        "scope": {
+          "include_dirs": [],
+          "excludes": [],
+          "no_git_ignore": false
+        },
+        "scan_directories": [
+          {
+            "directory": ".",
+            "origin": "app_directory"
+          }
         ]
       }
     },
     "agent": null
   },
+  "scope_differs": false,
   "checks": [
     {
       "id": "CREDENTIAL_LOG_LEAKAGE",

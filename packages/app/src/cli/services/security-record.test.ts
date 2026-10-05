@@ -36,9 +36,12 @@ function finding(overrides: Record<string, unknown> = {}): Record<string, unknow
   }
 }
 
+const NO_SCOPE = {include_dirs: [], excludes: [], no_git_ignore: false}
+
 function validDocument(): Record<string, unknown> {
   return {
     schema_version: 1,
+    scope: NO_SCOPE,
     checks_executed: [
       {check_id: 'MISSING_TENANT_ISOLATION', check_version: 1, status: 'executed'},
       {
@@ -67,7 +70,7 @@ function artifactPaths(appRoot: string) {
 }
 
 async function record(appRoot: string, dependencies: SecurityRecordDependencies) {
-  return securityRecord({selection: selectionFor(appRoot)}, dependencies)
+  return securityRecord({selection: selectionFor(appRoot), path: appRoot}, dependencies)
 }
 
 function testDependencies(stdin: string | undefined): SecurityRecordDependencies {
@@ -79,7 +82,7 @@ function testDependencies(stdin: string | undefined): SecurityRecordDependencies
 }
 
 function recordCommand(appRoot: string): string {
-  return formatAppSecurityCommand(resolveAppSecurityCommands(appRoot).record)
+  return formatAppSecurityCommand(resolveAppSecurityCommands(selectionFor(appRoot), appRoot).record)
 }
 
 async function readRecorded(appRoot: string): Promise<AgentFindingsDocument> {
@@ -150,7 +153,7 @@ describe('securityRecord', () => {
       const appRoot = await createApp(directory)
       const selection = {...selectionFor(appRoot), clientIdOverride: 'other-client-id'}
 
-      const result = await securityRecord({selection}, testDependencies(JSON.stringify(validDocument())))
+      const result = await securityRecord({selection, path: appRoot}, testDependencies(JSON.stringify(validDocument())))
 
       expect(result.path).toBe(appSecurityArtifactPaths(appRoot, 'other-client-id').agentFindingsPath)
       await expect(fileExists(result.path)).resolves.toBe(true)
@@ -188,6 +191,7 @@ describe('securityRecord', () => {
       const dependencies = testDependencies(
         JSON.stringify({
           schema_version: 1,
+          scope: NO_SCOPE,
           checks_executed: [{check_id: 'OPEN_REDIRECT', check_version: 1, status: 'unresolved'}],
           findings: [finding(), finding({line: 0}), finding({evidence: []})],
         }),
@@ -216,7 +220,9 @@ describe('securityRecord', () => {
       const appRoot = await createApp(directory)
       const error = await recordError(
         appRoot,
-        testDependencies(JSON.stringify({schema_version: 1, findings: [finding({line: 0}), finding({evidence: []})]})),
+        testDependencies(
+          JSON.stringify({schema_version: 1, scope: NO_SCOPE, findings: [finding({line: 0}), finding({evidence: []})]}),
+        ),
       )
       const errors = [
         'findings[0] (MISSING_TENANT_ISOLATION): invalid line number: 0',
@@ -249,6 +255,7 @@ describe('securityRecord', () => {
     await expectRejected(
       JSON.stringify({
         schema_version: 1,
+        scope: NO_SCOPE,
         checks_executed: [{check_id: 'NOT_A_CHECK', check_version: 1, status: 'executed'}],
       }),
       ['checks_executed[0] (NOT_A_CHECK): unknown check_id'],
@@ -256,7 +263,35 @@ describe('securityRecord', () => {
   })
 
   test('rejects an unsupported schema version', async () => {
-    await expectRejected(JSON.stringify({schema_version: 2}), ['schema_version must be 1'])
+    await expectRejected(JSON.stringify({schema_version: 2, scope: NO_SCOPE}), ['schema_version must be 1'])
+  })
+
+  test('rejects a document without a scope', async () => {
+    const {scope: _scope, ...withoutScope} = validDocument()
+
+    await expectRejected(JSON.stringify(withoutScope), ['scope is required and must be an object'])
+  })
+
+  test.each([
+    [{excludes: [], no_git_ignore: false}, 'scope.include_dirs must be an array of strings'],
+    [{include_dirs: [], excludes: 'generated', no_git_ignore: false}, 'scope.excludes must be an array of strings'],
+    [{include_dirs: [1], excludes: [], no_git_ignore: false}, 'scope.include_dirs must be an array of strings'],
+    [{include_dirs: [], excludes: []}, 'scope.no_git_ignore must be a boolean'],
+    [{include_dirs: [], excludes: [], no_git_ignore: 'yes'}, 'scope.no_git_ignore must be a boolean'],
+    ['--no-git-ignore', 'scope is required and must be an object'],
+  ])('rejects a malformed scope %j', async (scope, expectedError) => {
+    await expectRejected(JSON.stringify({...validDocument(), scope}), [expectedError])
+  })
+
+  test('writes the scope into agent-findings.json exactly as reported, without unknown keys', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+      const scope = {include_dirs: ['../backend', './lib/'], excludes: ['**/generated'], no_git_ignore: true}
+
+      await record(appRoot, testDependencies(JSON.stringify({...validDocument(), scope: {...scope, extra: 1}})))
+
+      expect((await readRecorded(appRoot)).scope).toEqual(scope)
+    })
   })
 
   test('keeps the claimed check version and populates the check snapshot', async () => {
@@ -264,6 +299,7 @@ describe('securityRecord', () => {
       const appRoot = await createApp(directory)
       const document = {
         schema_version: 1,
+        scope: NO_SCOPE,
         checks_executed: [{check_id: 'MISSING_TENANT_ISOLATION', check_version: 99, status: 'executed'}],
         findings: [finding({check_version: 99})],
       }
@@ -290,6 +326,7 @@ describe('securityRecord', () => {
       const appRoot = await createApp(directory)
       const document = {
         schema_version: 1,
+        scope: NO_SCOPE,
         findings: [
           finding({
             message: `Leaks ${FAKE_SHOPIFY_TOKEN}`,
@@ -310,6 +347,7 @@ describe('securityRecord', () => {
   describe('redacts secrets quoted in validation errors', () => {
     const documentWithSecrets = JSON.stringify({
       schema_version: 1,
+      scope: NO_SCOPE,
       checks_executed: [{check_id: FAKE_SHOPIFY_TOKEN, check_version: 1}],
       findings: [
         finding({check_id: FAKE_SHOPIFY_TOKEN}),
@@ -411,6 +449,7 @@ describe('securityRecord', () => {
     function nearLimitDocument(reasoningLength: number): string {
       return JSON.stringify({
         schema_version: 1,
+        scope: NO_SCOPE,
         findings: Array.from({length: 1_000}, (_, index) =>
           finding({line: index + 1, message: 'm'.repeat(4_000), reasoning: 'r'.repeat(reasoningLength)}),
         ),
@@ -484,7 +523,7 @@ describe('renderSecurityRecordResult', () => {
       const output = mockAndCaptureOutput()
       output.clear()
 
-      renderSecurityRecordResult({path, checks: 1, findings: 2}, selectionFor(appRoot))
+      renderSecurityRecordResult({path, checks: 1, findings: 2}, selectionFor(appRoot), appRoot)
 
       const rendered = output.info()
       expect(rendered).toContain('Agent findings recorded.')
