@@ -142,3 +142,39 @@ jobs:
           method: chat.postMessage
           token: ${{ secrets.SLACK_GARDENER_BOT_TOKEN }}
           payload: ${{ steps.pull-request.outputs.payload }}
+
+  start-pr-checks:
+    name: Start PR checks
+    needs: maintenance
+    if: ${{ !cancelled() && github.repository == 'Shopify/cli' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # A separate job keeps actions: write away from the agent, which could
+    # otherwise dispatch other workflows such as release.yml.
+    permissions:
+      actions: write
+      pull-requests: read
+    steps:
+      - name: Dispatch PR checks
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          # PRs opened with GITHUB_TOKEN don't trigger pull_request workflows.
+          script: |
+            const pullRequests = await github.paginate(github.rest.pulls.list, {
+              ...context.repo,
+              state: 'open',
+              base: context.payload.repository.default_branch,
+            });
+            const branchSuffix = `-maintenance-${context.runId}`;
+            const maintenancePullRequests = pullRequests.filter((pullRequest) =>
+              pullRequest.head.repo?.full_name === `${context.repo.owner}/${context.repo.repo}` &&
+              pullRequest.head.ref.endsWith(branchSuffix));
+
+            for (const pullRequest of maintenancePullRequests) {
+              await github.rest.actions.createWorkflowDispatch({
+                ...context.repo,
+                workflow_id: 'tests-pr.yml',
+                ref: pullRequest.head.ref,
+              });
+              core.info(`Dispatched PR checks for ${pullRequest.html_url}`);
+            }

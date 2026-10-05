@@ -19,14 +19,13 @@ env:
   PNPM_VERSION: '10.11.1'
   SHOPIFY_CLI_ENV: development
   SHOPIFY_CONFIG: debug
+  ISSUE_BRANCH: gardener-backlog-${{ github.run_id }}
 
 jobs:
   gardener:
     if: github.repository == 'Shopify/cli'
     runs-on: ubuntu-latest
     timeout-minutes: 120
-    env:
-      ISSUE_BRANCH: gardener-backlog-${{ github.run_id }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -138,3 +137,35 @@ jobs:
           method: chat.postMessage
           token: ${{ secrets.SLACK_GARDENER_BOT_TOKEN }}
           payload: ${{ steps.pull-request.outputs.payload }}
+
+  start-pr-checks:
+    name: Start PR checks
+    needs: gardener
+    if: ${{ !cancelled() && github.repository == 'Shopify/cli' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    # A separate job keeps actions: write away from the agent, which could
+    # otherwise dispatch other workflows such as release.yml.
+    permissions:
+      actions: write
+      pull-requests: read
+    steps:
+      - name: Dispatch PR checks
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          # PRs opened with GITHUB_TOKEN don't trigger pull_request workflows.
+          script: |
+            const {data: pullRequests} = await github.rest.pulls.list({
+              ...context.repo,
+              state: 'open',
+              head: `${context.repo.owner}:${process.env.ISSUE_BRANCH}`,
+              base: context.payload.repository.default_branch,
+            });
+            if (pullRequests.length === 0) return;
+
+            await github.rest.actions.createWorkflowDispatch({
+              ...context.repo,
+              workflow_id: 'tests-pr.yml',
+              ref: process.env.ISSUE_BRANCH,
+            });
+            core.info(`Dispatched PR checks for ${pullRequests[0].html_url}`);
