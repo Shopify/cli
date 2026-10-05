@@ -6,6 +6,7 @@ import {
   type AppSecuritySelection,
 } from './app-security-selection.js'
 import {
+  checkDocsUrl,
   groupIssues,
   type Capabilities,
   type Issue,
@@ -231,14 +232,14 @@ function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]
 
 function issueListItem(issue: Issue): TokenItem<InlineToken> {
   const location = issue.location.line ? `${issue.location.file}:${issue.location.line}` : issue.location.file
-  const item: InlineToken[] = [{bold: issue.title}, {subdued: issue.id}, {filePath: location}]
+  const item: InlineToken[] = [{bold: issue.title}, checkIdToken(issue.id), {filePath: location}]
 
   item.push({subdued: issue.message}, {subdued: `Fix: ${issue.fix.description}`})
   if (issue.fix.guide) {
     if (issue.fix.guide.startsWith('https://') || issue.fix.guide.startsWith('http://')) {
-      item.push({link: {label: 'Docs', url: issue.fix.guide}})
+      item.push({link: {label: 'Guide', url: issue.fix.guide}})
     } else {
-      item.push({subdued: `Docs: ${issue.fix.guide}`})
+      item.push({subdued: `Guide: ${issue.fix.guide}`})
     }
   }
   if (issue.snippet) item.push({subdued: `Code: ${issue.snippet}`})
@@ -257,11 +258,17 @@ function issueGroupListItem(group: IssueGroup): TokenItem<InlineToken> {
   })
   return [
     {bold: issue.title},
-    {subdued: issue.id},
+    checkIdToken(issue.id),
     `${count} ${count === 1 ? 'occurrence' : 'occurrences'} across ${files} ${files === 1 ? 'file' : 'files'}`,
     ...samples,
     ...(files > SAMPLE_FILE_COUNT ? [{subdued: `+${files - SAMPLE_FILE_COUNT} more files`}] : []),
   ]
+}
+
+/** The check ID, linked to the check's shopify.dev page when the catalog has one. */
+function checkIdToken(checkId: string): InlineToken {
+  const url = checkDocsUrl(checkId)
+  return url ? {link: {label: checkId, url}} : {subdued: checkId}
 }
 
 function formatCapabilities(capabilities: Capabilities): string {

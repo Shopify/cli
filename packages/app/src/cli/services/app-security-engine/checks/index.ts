@@ -1,6 +1,6 @@
 import {EMBEDDED_CHECK_SOURCES} from './embedded.js'
 import {redactScope, redactText} from '../rules/secret-rules.js'
-import {RULE_CATALOG} from '../rules/catalog.js'
+import {RULE_CATALOG, type RuleCatalogEntry} from '../rules/catalog.js'
 import {
   AGENT_CHECKS_SCHEMA_VERSION,
   ENGINE_NAME,
@@ -112,13 +112,14 @@ export interface AgentChecks {
     version: string
   }
   generated_at: string
-  checks: Pick<Check, 'id' | 'version' | 'severity' | 'prompt'>[]
+  checks: (Pick<Check, 'id' | 'version' | 'severity' | 'prompt'> & {docs_url: string})[]
   instructions: string
 }
 
 const INSTRUCTIONS = `Each check below is a prompt for you to run against this
 codebase. For each one, explore the repository, find real instances of what
-it describes, and report them with evidence.
+it describes, and report them with evidence. Each check's docs_url is its
+page on shopify.dev: link it when you explain a finding to the user.
 
 Write ONE findings document that covers every check you ran. Copy each check's
 \`version\` from this file into \`check_version\`:
@@ -152,6 +153,13 @@ Rules:
 - If you can't prove exploitability or affected authority, record the check as unresolved instead of reporting a finding.
 - Don't report things you couldn't confirm — uncertainty is not a finding.`
 
+/** registry/index.ts guarantees every agent check has a catalog entry ("Orphan agent implementation"). */
+const catalogEntry = (checkId: string): RuleCatalogEntry => {
+  const entry = RULE_CATALOG.find((candidate) => candidate.id === checkId)
+  if (!entry) throw new Error(`Agent check has no catalog entry: ${checkId}`)
+  return entry
+}
+
 /**
  * Build agent-checks.json — the prompts for the developer's agent.
  * No candidates, no scan output. The agent explores independently.
@@ -164,6 +172,7 @@ export const buildAgentChecks = (engineVersion: string): AgentChecks => ({
     id: check.id,
     version: check.version,
     severity: check.severity,
+    docs_url: catalogEntry(check.id).docsUrl,
     prompt: check.prompt,
   })),
   instructions: INSTRUCTIONS,
@@ -431,14 +440,13 @@ function groupFindingsByCheck(
 
 /** Check metadata as it stands in the catalog and frontmatter right now. */
 function snapshotCheck(check: Check): CheckSnapshot {
-  // registry/index.ts guarantees every agent check has a catalog entry ("Orphan agent implementation").
-  const entry = RULE_CATALOG.find((catalogEntry) => catalogEntry.id === check.id)
-  if (!entry) throw new Error(`Agent check has no catalog entry: ${check.id}`)
+  const entry = catalogEntry(check.id)
   return {
     title: entry.title,
     severity: check.severity,
     description: entry.description,
     ...(entry.guide ? {guide: entry.guide} : {}),
+    docs_url: entry.docsUrl,
     current_version: check.version,
     // Always written, even for the default, so the stored file describes itself without the current catalog.
     precedence: check.precedence,

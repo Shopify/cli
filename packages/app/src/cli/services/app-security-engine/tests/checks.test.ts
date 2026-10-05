@@ -1,5 +1,6 @@
 import {loadChecks, buildAgentChecks, validateFinding, validateAgentChecksExecuted} from '../checks/index.js'
 import {EMBEDDED_CHECK_SOURCES} from '../checks/embedded.js'
+import {RULE_CATALOG} from '../rules/catalog.js'
 import {describe, expect, test} from 'vitest'
 import {readFileSync, readdirSync} from 'node:fs'
 
@@ -89,7 +90,7 @@ describe('agent checks', () => {
     expect(agentChecks.checks.map((check) => check.id).sort()).toEqual(EXPECTED_CHECK_IDS)
   })
 
-  test('gives each check only its id, version, severity, and prompt', () => {
+  test('gives each check only its id, version, severity, docs URL, and prompt', () => {
     const agentChecks = buildAgentChecks('0.1.0')
     const tenant = loadChecks().get('MISSING_TENANT_ISOLATION')!
 
@@ -105,8 +106,20 @@ describe('agent checks', () => {
       id: tenant.id,
       version: tenant.version,
       severity: tenant.severity,
+      docs_url: 'https://shopify.dev/docs/apps/build/security/app-security-checks/missing-tenant-isolation',
       prompt: tenant.prompt,
     })
+  })
+
+  test("gives each check its catalog entry's docs URL", () => {
+    for (const check of buildAgentChecks('0.1.0').checks) {
+      expect(check.docs_url, check.id).toBe(RULE_CATALOG.find((entry) => entry.id === check.id)!.docsUrl)
+    }
+  })
+
+  test('instructions tell the agent to link docs_url when explaining a finding', () => {
+    const {instructions} = buildAgentChecks('0.1.0')
+    expect(instructions).toContain("Each check's docs_url is its\npage on shopify.dev")
   })
 
   test('instructions tell the agent to explore and find, not adjudicate', () => {

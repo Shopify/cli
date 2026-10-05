@@ -35,6 +35,7 @@ const checkSnapshotSchema = zod.object({
   severity: severitySchema,
   description: zod.string(),
   guide: zod.string().optional(),
+  docs_url: zod.string().optional(),
   current_version: zod.number(),
   precedence: checkPrecedenceSchema.optional(),
 })

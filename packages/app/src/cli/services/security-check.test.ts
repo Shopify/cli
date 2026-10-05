@@ -77,6 +77,7 @@ const agentChecks: AgentChecks = {
     version: 1,
     prompt: 'prompt',
     severity: 'medium' as const,
+    docs_url: `https://shopify.dev/docs/apps/build/security/app-security-checks/check-${index}`,
   })),
   instructions: 'review',
 }

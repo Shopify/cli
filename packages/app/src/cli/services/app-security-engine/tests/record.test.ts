@@ -127,6 +127,7 @@ describe('recordAgentFindings', () => {
             severity: check.severity,
             description: entry.description,
             guide: entry.guide,
+            docs_url: entry.docsUrl,
             current_version: check.version,
             precedence: 'union',
           },
@@ -228,7 +229,7 @@ describe('recordAgentFindings', () => {
     expect(document.checks[0]!.snapshot.current_version).toBe(tenant.version)
   })
 
-  test('snapshots title, description, and guide from the catalog, and severity and version from the check', () => {
+  test('snapshots title, description, guide, and docs URL from the catalog, and severity and version from the check', () => {
     const document = recordAccepted({
       schema_version: 1,
       checks_executed: [{check_id: 'SCOPE_OVER_REQUEST', check_version: 1, status: 'executed'}],
@@ -241,6 +242,7 @@ describe('recordAgentFindings', () => {
       severity: check.severity,
       description: entry.description,
       guide: entry.guide,
+      docs_url: entry.docsUrl,
       current_version: check.version,
       precedence: 'union',
     })

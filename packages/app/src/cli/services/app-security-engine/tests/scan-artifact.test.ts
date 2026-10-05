@@ -119,6 +119,7 @@ describe('buildDeterministicFindings', () => {
             title: 'Credential reaches a log sink',
             severity: 'high',
             description: 'Detects direct credential flows to console and logger sinks.',
+            docs_url: 'https://shopify.dev/docs/apps/build/security/app-security-checks/credential-log-leakage',
             current_version: 1,
           },
           findings: [
@@ -175,6 +176,7 @@ describe('buildDeterministicFindings', () => {
       severity: 'low',
       description: entry.description,
       guide: entry.guide,
+      docs_url: entry.docsUrl,
       current_version: 1,
     })
     expect(document.checks[0]!.findings[0]).not.toHaveProperty('severity')

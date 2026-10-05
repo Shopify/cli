@@ -610,6 +610,27 @@ describe('buildSecurityReviewAlerts', () => {
     ])
   })
 
+  test("links the check's docs page from its box", () => {
+    const docsUrl = 'https://shopify.dev/docs/apps/build/security/app-security-checks/eol-api-version'
+    const deterministic = {
+      ...deterministicFindingsDocument,
+      checks: deterministicFindingsDocument.checks.map((check) =>
+        check.id === 'EOL_API_VERSION' ? {...check, snapshot: {...check.snapshot, docs_url: docsUrl}} : check,
+      ),
+    }
+    const [alert] = buildSecurityReviewAlerts(
+      presenterInput({deterministic, agent: null}, {checkIds: ['EOL_API_VERSION']}),
+    )
+
+    expect(alert!.options.link).toEqual({label: 'EOL_API_VERSION on shopify.dev', url: docsUrl})
+  })
+
+  test('leaves out the docs link when the results file predates check docs pages', () => {
+    const [alert] = buildSecurityReviewAlerts(presenterInput(deterministicOnly, {checkIds: ['EOL_API_VERSION']}))
+
+    expect(alert!.options.link).toBeUndefined()
+  })
+
   test('truncates long reasoning to three lines unless verbose', () => {
     const reasoning = ['first', 'second', 'third', 'fourth'].join('\n')
     const agent: AgentFindingsDocument = {

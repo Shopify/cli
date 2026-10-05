@@ -46,6 +46,7 @@ const combinedCheckSchema = zod.object({
   severity: severitySchema,
   description: zod.string(),
   guide: zod.string().optional(),
+  docs_url: zod.string().optional(),
   precedence: checkPrecedenceSchema,
   applied_precedence: checkPrecedenceSchema,
   status: checkStatusSchema,
