@@ -141,7 +141,7 @@ describe('renderSecurityCleanResult', () => {
       renderSecurityCleanResult({removed: [resultsDirectory]}, appDirectory)
 
       const rendered = output.info()
-      expect(rendered).toContain('App Security results removed.')
+      expect(rendered).toContain('App security check results removed.')
       expect(rendered).toContain('shopify.app.production')
       output.clear()
     })
@@ -156,7 +156,7 @@ describe('renderSecurityCleanResult', () => {
       renderSecurityCleanResult({removed: []}, appDirectory)
 
       const rendered = output.info()
-      expect(rendered).toContain('No App Security results to remove.')
+      expect(rendered).toContain('No app security check results to remove.')
       expect(rendered).toContain('app-security')
       output.clear()
     })

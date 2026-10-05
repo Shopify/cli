@@ -215,7 +215,7 @@ async function removeResultsDirectory(path: string): Promise<void> {
     // A symbolic link inside the directory is removed itself; the recursive removal never follows it.
     await rm(path, {recursive: true, force: true})
   } catch (error) {
-    throw new AbortError(`Could not remove the App Security results at ${path}.`, errorMessage(error))
+    throw new AbortError(`Could not remove the app security check results at ${path}.`, errorMessage(error))
   }
 }
 
@@ -275,8 +275,8 @@ function assertWithinRoot(root: string, candidate: string): void {
 
 function refuseArtifactPath(path: string): never {
   throw new AbortError(
-    `Refusing to write App Security artifacts through a symbolic link or outside the app: ${path}`,
-    'Remove or replace the unsafe App Security artifact path, then run the command again.',
+    `Refusing to write app security check artifacts through a symbolic link or outside the app: ${path}`,
+    'Remove or replace the unsafe app security check artifact path, then run the command again.',
   )
 }
 

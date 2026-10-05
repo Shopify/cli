@@ -405,7 +405,7 @@ describe('securityReview', () => {
 
       await expect(
         securityReview({directory: appRoot, json: true, verbose: false, checkIds: [], blocking: 'none'}, dependencies),
-      ).rejects.toThrow('The App Security results could not be loaded because a results file is invalid.')
+      ).rejects.toThrow('The app security check results could not be loaded because a results file is invalid.')
 
       expect(dependencies.output).not.toHaveBeenCalled()
     })
@@ -418,7 +418,7 @@ describe('securityReview', () => {
 
       await expect(
         securityReview({directory: appRoot, json: false, verbose: false, checkIds: [], blocking: 'none'}, dependencies),
-      ).rejects.toMatchObject({message: `No App Security results for ${RESULTS_KEY} in ${appRoot}.`})
+      ).rejects.toMatchObject({message: `No app security check results for ${RESULTS_KEY} in ${appRoot}.`})
 
       expect(dependencies.render).not.toHaveBeenCalled()
       expect(dependencies.output).not.toHaveBeenCalled()

@@ -1,5 +1,5 @@
 /**
- * Public App Security engine API.
+ * Public app security check engine API.
  *
  * CLI code outside this directory should import only these operations and result
  * types: read the git state, scan, record agent findings, translate

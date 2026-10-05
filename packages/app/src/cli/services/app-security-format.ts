@@ -1,7 +1,7 @@
 import type {CombinedChecksSummary} from './app-security-engine/index.js'
 
 /**
- * Words shared by the App Security commands' terminal output, so `review` and `record` describe checks and
+ * Words shared by the app security commands' terminal output, so `review` and `record` describe checks and
  * counts the same way.
  */
 

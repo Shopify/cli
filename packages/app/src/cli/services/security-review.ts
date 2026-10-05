@@ -131,7 +131,7 @@ function assertKnownCheckIds(checkIds: string[], checks: CombinedCheck[]): void 
 }
 
 /**
- * Shows the combined App Security results (§9). Loads both result files, narrows them with `--check-id`, then
+ * Shows the combined app security check results (§9). Loads both result files, narrows them with `--check-id`, then
  * prints JSON to stdout or renders the review to stderr. A `--blocking` breach sets the exit code after the
  * output; an error exits 1 and everything else, including missing files, exits 0.
  */

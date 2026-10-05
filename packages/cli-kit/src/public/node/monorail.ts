@@ -102,7 +102,7 @@ export interface Schemas {
       cmd_app_validate_issue_count?: Optional<number>
       cmd_app_validate_file_count?: Optional<number>
 
-      // App Security commands
+      // app security commands
       num_security_findings?: Optional<number>
       num_security_findings_resolved?: Optional<number>
 

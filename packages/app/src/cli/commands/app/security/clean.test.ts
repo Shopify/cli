@@ -148,7 +148,7 @@ describe('app security clean command', () => {
 
       const printed = await runRejected(['--path', directory])
 
-      expect(printed).toContain('No App Security results for shopify.app in')
+      expect(printed).toContain('No app security check results for shopify.app in')
       expect(printed).toContain('shopify app security check')
       expect(securityClean).not.toHaveBeenCalled()
     })
