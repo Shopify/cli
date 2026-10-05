@@ -582,6 +582,34 @@ describe('resolveAppDirectory', () => {
     })
   })
 
+  test('finds the app directory when there are several TOMLs and none is selected', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeConfiguration(directory, 'production-client-id', 'shopify.app.production.toml')
+      await writeConfiguration(directory, 'staging-client-id', 'shopify.app.staging.toml')
+
+      await expect(resolveAppDirectory({path: directory})).resolves.toBe(await fileRealPath(directory))
+    })
+  })
+
+  test('finds the app directory without validating its TOML', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = [')
+
+      await expect(resolveAppDirectory({path: directory})).resolves.toBe(await fileRealPath(directory))
+    })
+  })
+
+  test('aborts when --path does not exist instead of walking up to the app above it', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeConfiguration(directory, 'default-client-id')
+      const missing = joinPath(directory, 'missing-app')
+
+      await expect(resolveAppDirectory({path: missing})).rejects.toMatchObject({
+        message: `--path ${missing}: not a directory.`,
+      })
+    })
+  })
+
   test('aborts when no TOML is found, without prompting', async () => {
     await inTemporaryDirectory(async (directory) => {
       await expect(resolveAppDirectory({path: directory})).rejects.toMatchObject({

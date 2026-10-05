@@ -93,11 +93,23 @@ export function clientIdSource(selection: AppSecuritySelection): 'config' | 'fla
 
 /**
  * The app directory alone, for `clean --all`, which needs no client ID and no results key. With
- * `--without-app-config` that's `--path` itself, so no client ID is required to find it.
+ * `--without-app-config` that's `--path` itself, so no client ID is required to find it. Otherwise it's the directory
+ * that holds the TOMLs, found by walking up as for the other commands. No TOML is selected or validated: they all share
+ * that directory, so `clean --all` also works with several TOMLs and none selected, or with a TOML that is invalid.
  */
-export async function resolveAppDirectory(options: Omit<AppSecuritySelectionOptions, 'allowPrompts'>): Promise<string> {
-  if (options.withoutAppConfig) return realDirectory(options.path)
-  return (await resolveAppSecuritySelection({...options, allowPrompts: false})).appDirectory
+export async function resolveAppDirectory(
+  options: Pick<AppSecuritySelectionOptions, 'path' | 'withoutAppConfig'>,
+): Promise<string> {
+  // Checked before walking up: walking up from a missing directory would find, and clean, the app above it.
+  const directory = await realDirectory(options.path)
+  if (options.withoutAppConfig) return directory
+
+  try {
+    return await fileRealPath((await Project.load(options.path)).directory)
+  } catch (error) {
+    if (!(error instanceof NoAppConfigurationFoundError)) throw error
+    abortNoAppConfigurationFound(options.path)
+  }
 }
 
 export async function resolveAppSecuritySelection(
