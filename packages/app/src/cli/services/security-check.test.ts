@@ -85,6 +85,7 @@ const agentChecks: AgentChecks = {
 const scanExecution: AppSecurityExecution = {
   scan,
   ignoredScanDirectories: [],
+  otherAppDirectories: [],
   deterministicFindings,
   agentChecks,
   engine,
@@ -130,7 +131,11 @@ function testDependencies(
   return {
     resolveSelection: vi.fn(async () => selection),
     execute: vi.fn(async () => execution),
-    listFiles: vi.fn(async () => ({paths: ['shopify.app.toml'], ignoredScanDirectories: [] as string[]})),
+    listFiles: vi.fn(async () => ({
+      paths: ['shopify.app.toml'],
+      ignoredScanDirectories: [] as string[],
+      otherAppDirectories: [] as string[],
+    })),
     writeArtifacts: vi.fn(async () => artifacts),
     canPrompt: vi.fn(() => false),
     selectInstructionsDestination: vi.fn(async (): Promise<AppSecurityInstructionsDestination> => 'nothing'),
@@ -348,6 +353,26 @@ describe('securityCheck', () => {
     expect(dependencies.renderWarning).toHaveBeenNthCalledWith(2, {
       headline: '. is ignored by Git, so only the files Git tracks in it are scanned.',
       body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
+    })
+  })
+
+  test('warns once for each directory that holds another app configuration, with the --exclude that leaves it out', async () => {
+    vi.stubEnv('INIT_CWD', appDirectory)
+    const dependencies = testDependencies({
+      ...scanExecution,
+      otherAppDirectories: [`${appDirectory}/apps/child`, '/tmp/backend'],
+    })
+
+    await securityCheck(testOptions(), dependencies)
+
+    expect(dependencies.renderWarning).toHaveBeenCalledTimes(2)
+    expect(dependencies.renderWarning).toHaveBeenNthCalledWith(1, {
+      headline: "apps/child holds another app's configuration, so its files are scanned as part of this app.",
+      body: ['Use', {command: '--exclude apps/child'}, 'to leave it out.'],
+    })
+    expect(dependencies.renderWarning).toHaveBeenNthCalledWith(2, {
+      headline: "../backend holds another app's configuration, so its files are scanned as part of this app.",
+      body: ['Use', {command: '--exclude ../backend'}, 'to leave it out.'],
     })
   })
 
@@ -727,6 +752,7 @@ describe('securityCheck --list-files', () => {
     dependencies.listFiles.mockResolvedValue({
       paths: ['../backend/server.ts', 'app/routes/index.ts', 'shopify.app.toml'],
       ignoredScanDirectories: [],
+      otherAppDirectories: [],
     })
 
     await securityCheck(listFilesOptions, dependencies)
@@ -747,6 +773,7 @@ describe('securityCheck --list-files', () => {
     dependencies.listFiles.mockResolvedValue({
       paths: ['app/routes/index.ts', 'shopify.app.toml'],
       ignoredScanDirectories: [],
+      otherAppDirectories: [],
     })
 
     await securityCheck({...listFilesOptions, json: true}, dependencies)
@@ -759,7 +786,7 @@ describe('securityCheck --list-files', () => {
 
   test('prints nothing when no path is gathered, and an empty list with --json', async () => {
     const dependencies = testDependencies()
-    dependencies.listFiles.mockResolvedValue({paths: [], ignoredScanDirectories: []})
+    dependencies.listFiles.mockResolvedValue({paths: [], ignoredScanDirectories: [], otherAppDirectories: []})
 
     await securityCheck(listFilesOptions, dependencies)
     expect(dependencies.output).not.toHaveBeenCalled()
@@ -810,7 +837,11 @@ describe('securityCheck --list-files', () => {
 
   test('warns about an ignored scan directory through renderWarning', async () => {
     const dependencies = testDependencies()
-    dependencies.listFiles.mockResolvedValue({paths: ['shopify.app.toml'], ignoredScanDirectories: [appDirectory]})
+    dependencies.listFiles.mockResolvedValue({
+      paths: ['shopify.app.toml'],
+      ignoredScanDirectories: [appDirectory],
+      otherAppDirectories: [],
+    })
     vi.stubEnv('INIT_CWD', '/tmp')
 
     await securityCheck(listFilesOptions, dependencies)

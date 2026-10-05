@@ -70,7 +70,9 @@ interface SecurityDependencies {
     allowPrompts: boolean
   }): Promise<AppSecuritySelection>
   execute(options: ScanInput & Required<ScanOptions>): Promise<AppSecurityExecution>
-  listFiles(options: ScanInput & Required<ScanOptions>): Promise<{paths: string[]; ignoredScanDirectories: string[]}>
+  listFiles(
+    options: ScanInput & Required<ScanOptions>,
+  ): Promise<{paths: string[]; ignoredScanDirectories: string[]; otherAppDirectories: string[]}>
   writeArtifacts(
     appDirectory: string,
     resultsKey: string,
@@ -160,11 +162,21 @@ function securityReportInput(
   }
 }
 
-function renderIgnoredScanDirectoryWarnings(ignoredScanDirectories: string[], dependencies: SecurityDependencies) {
-  for (const directory of ignoredScanDirectories) {
+function renderGatheringWarnings(
+  gathered: {ignoredScanDirectories: string[]; otherAppDirectories: string[]},
+  dependencies: SecurityDependencies,
+) {
+  for (const directory of gathered.ignoredScanDirectories) {
     dependencies.renderWarning({
       headline: `${relativePath(cwd(), directory) || '.'} is ignored by Git, so only the files Git tracks in it are scanned.`,
       body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
+    })
+  }
+  for (const directory of gathered.otherAppDirectories) {
+    const displayPath = relativePath(cwd(), directory) || '.'
+    dependencies.renderWarning({
+      headline: `${displayPath} holds another app's configuration, so its files are scanned as part of this app.`,
+      body: ['Use', {command: `--exclude ${displayPath}`}, 'to leave it out.'],
     })
   }
 }
@@ -221,8 +233,8 @@ export default async function securityCheck(
   }
 
   if (options.listFiles) {
-    const {paths, ignoredScanDirectories} = await dependencies.listFiles(scanOptions)
-    renderIgnoredScanDirectoryWarnings(ignoredScanDirectories, dependencies)
+    const {paths, ...gathered} = await dependencies.listFiles(scanOptions)
+    renderGatheringWarnings(gathered, dependencies)
     if (options.json) {
       dependencies.output(JSON.stringify({files: paths}, null, 2))
     } else if (paths.length > 0) {
@@ -232,7 +244,7 @@ export default async function securityCheck(
   }
 
   const execution = await dependencies.execute(scanOptions)
-  renderIgnoredScanDirectoryWarnings(execution.ignoredScanDirectories, dependencies)
+  renderGatheringWarnings(execution, dependencies)
   await dependencies.recordMetadata({num_security_findings: execution.scan.issues.length})
   const artifacts = await dependencies.writeArtifacts(appDirectory, resultsKey(selection), {
     deterministicFindings: execution.deterministicFindings,

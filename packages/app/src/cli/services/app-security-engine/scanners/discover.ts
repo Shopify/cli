@@ -218,6 +218,8 @@ interface GatheredPaths {
   paths: string[]
   /** Requested directories that their repository ignores, so only the files Git tracks in them are gathered. */
   ignoredScanDirectories: string[]
+  /** Absolute paths of directories, other than the app directory, that hold a gathered app configuration file. */
+  otherAppDirectories: string[]
   /** How the first scan directory's ignored paths were found. Secret findings use it to explain why an ignored file was scanned. */
   listingStatus: GatheredListingStatus
 }
@@ -252,11 +254,22 @@ export async function gatherPaths({
     ...gathered.flatMap((scanDirectory) => scanDirectory.absolutePaths),
     ...(selectedAppConfigFilePath ? [selectedAppConfigFilePath] : []),
   ]
+  const paths = [...new Set(absolutePaths.map((path) => normalizeCliPath(relativePath(appDirectory, path))))].sort()
   return {
-    paths: [...new Set(absolutePaths.map((path) => normalizeCliPath(relativePath(appDirectory, path))))].sort(),
+    paths,
     ignoredScanDirectories,
+    otherAppDirectories: findOtherAppDirectories(appDirectory, paths),
     listingStatus: gathered[0]?.listingStatus ?? (rules.gitFiltering ? 'tracked-only' : 'git-ignore-off'),
   }
+}
+
+/** Another app's files are scanned as this app's, so the caller can warn and suggest excluding them. */
+function findOtherAppDirectories(appDirectory: string, paths: ReadonlyArray<string>): string[] {
+  const directories = paths
+    .filter((path) => isValidFormatAppConfigurationFileName(basename(path)))
+    .map((path) => dirname(path))
+    .filter((directory) => directory !== '.')
+  return [...new Set(directories)].map((directory) => joinPath(appDirectory, directory))
 }
 
 async function gatherScanDirectory(
@@ -369,7 +382,7 @@ function groupSourcePathsByExtensionDirectory(
  * `extension_directories`. The app security check still scans every `shopify.extension.toml`
  * inside the repository boundary, including unconfigured extensions, because
  * those files can still contain secrets, XSS, and other security evidence.
- * Nested apps, generated output, and test trees remain excluded.
+ * Extensions in a nested app or an `--include-dir` directory count as this app's.
  */
 export function findExtensions(appRoot: string, repositoryFiles: ReadonlyArray<string>): ExtensionInfo[] {
   const extensionTomls = repositoryFiles.filter((path) => basename(path) === 'shopify.extension.toml')
@@ -761,17 +774,14 @@ function isProbablyBinary(content: Buffer): boolean {
 export function findSensitiveFiles(
   appRoot: string,
   repositoryFiles: ReadonlyArray<string>,
-  selectedAppConfigFileName?: string,
+  selectedAppConfigPath?: string,
 ): SourceFile[] {
   const paths = repositoryFiles
     .filter(isSensitiveFile)
     // Compares the whole relative path, so only the app root's own lockfiles are dropped.
     .filter((path) => !LOCKFILE_MANAGERS.has(path))
-    .filter((path) => {
-      const fileName = basename(path)
-      if (!isValidFormatAppConfigurationFileName(fileName)) return true
-      return fileName === selectedAppConfigFileName
-    })
+    // Only the selected app configuration file is scanned, wherever another one with the same name sits.
+    .filter((path) => !isValidFormatAppConfigurationFileName(basename(path)) || path === selectedAppConfigPath)
 
   return paths.flatMap((path): SourceFile[] => {
     const absolutePath = joinPath(appRoot, path)

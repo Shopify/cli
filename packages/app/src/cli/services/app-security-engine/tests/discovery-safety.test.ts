@@ -134,6 +134,23 @@ describe('gathering without a default exclusion list', () => {
     await expect(gatheredPaths(root)).resolves.toContain('apps/child/shopify.app.toml')
   })
 
+  test('reports each directory other than the app directory that holds an app configuration file', async () => {
+    const root = await makeDirectory()
+    await writeFiles(root, {
+      'shopify.app.toml': appConfiguration,
+      'shopify.app.staging.toml': appConfiguration,
+      'apps/child/shopify.app.toml': 'name = "Child"\n',
+      'apps/child/shopify.app.staging.toml': 'name = "Child staging"\n',
+      'apps/other/shopify.app.production.toml': 'name = "Other"\n',
+      'apps/excluded/shopify.app.toml': 'name = "Excluded"\n',
+    })
+
+    vi.stubEnv('INIT_CWD', root)
+
+    const {otherAppDirectories} = await gather(root, {excludePatterns: ['apps/excluded']})
+    expect(otherAppDirectories).toEqual([joinPath(root, 'apps/child'), joinPath(root, 'apps/other')])
+  })
+
   test('scans node_modules, build output and test directories outside a repository', async () => {
     const root = await makeDirectory()
     const directories = [
@@ -519,6 +536,18 @@ describe('repositories', () => {
     expect(result.app.name).toBe('Staging')
     expect(scannedPaths(result)).toContain('shopify.app.staging.toml')
     expect(secretFindingFiles(result)).toEqual(['shopify.app.staging.toml'])
+  })
+
+  test('scans only the selected app configuration file for secrets, not one with the same name in another app', async () => {
+    const configurationWithSecret = `name = "Leaky"\napplication_url = "https://example.com/?token=${secret}"\n`
+    const root = await makeDirectory()
+    await writeFiles(root, {
+      'shopify.app.toml': configurationWithSecret,
+      'shopify.app.staging.toml': configurationWithSecret,
+      'apps/child/shopify.app.toml': configurationWithSecret,
+    })
+
+    expect(secretFindingFiles(await scan(root))).toEqual(['shopify.app.toml'])
   })
 
   describe('nested repositories', () => {
