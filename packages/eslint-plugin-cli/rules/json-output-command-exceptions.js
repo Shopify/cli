@@ -7,7 +7,6 @@ const commandExceptions = [
   'packages/app/src/cli/commands/app/config/use.ts',
   'packages/app/src/cli/commands/app/config/validate.ts',
   'packages/app/src/cli/commands/app/function/build.ts',
-  'packages/app/src/cli/commands/app/function/info.ts',
   'packages/app/src/cli/commands/app/function/replay.ts',
   'packages/app/src/cli/commands/app/function/run.ts',
   'packages/app/src/cli/commands/app/function/schema.ts',
