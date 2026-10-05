@@ -1,4 +1,8 @@
-import {DELIVERY_METHOD, isAddressAllowedForDeliveryMethod} from '../../services/webhook/trigger-flags.js'
+import {
+  DELIVERY_METHOD,
+  deliveryMethodInstructions,
+  isAddressAllowedForDeliveryMethod,
+} from '../../services/webhook/trigger-flags.js'
 import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {stringifyMessage} from '@shopify/cli-kit/node/output'
 
@@ -46,23 +50,6 @@ export async function addressPrompt(deliveryMethod: string): Promise<string> {
   })
 
   return input.trim()
-}
-
-function deliveryMethodInstructions(method: string): string[] {
-  if (method === DELIVERY_METHOD.HTTP) {
-    return [
-      `For remote HTTP testing, use a URL that starts with https://`,
-      `For local HTTP testing, use http://localhost:{port}/{url-path}`,
-    ]
-  }
-  if (method === DELIVERY_METHOD.PUBSUB) {
-    return [`For Google Pub/Sub, use pubsub://{project-id}:{topic-id}`]
-  }
-  if (method === DELIVERY_METHOD.EVENTBRIDGE) {
-    return [`For Amazon EventBridge, use an Amazon Resource Name (ARN) starting with arn:aws:events:`]
-  }
-
-  return []
 }
 
 export function deliveryMethodInstructionsAsString(method: string): string {
