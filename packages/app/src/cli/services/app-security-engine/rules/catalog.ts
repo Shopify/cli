@@ -108,7 +108,7 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
   {
     id: 'MISSING_EMBEDDED_CSP',
     title: 'Embedded app missing frame-ancestors CSP directive',
-    severity: 'high',
+    severity: 'medium',
     points: -10,
     description: 'Detects embedded apps that set document response headers but omit frame-ancestors.',
     fix: 'Add frame-ancestors to CSP, restricted to the authenticated shop domain and admin.shopify.com.',
