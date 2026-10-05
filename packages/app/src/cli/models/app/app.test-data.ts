@@ -28,6 +28,7 @@ import {WebhooksConfig} from '../extensions/specifications/types/app_config_webh
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
 import {
   AppLogsResponse,
+  ChannelSpecExportResponse,
   AppVersion,
   AppVersionIdentifiers,
   AppVersionWithContext,
@@ -326,6 +327,26 @@ export async function testAppConfigExtensions(emptyConfig = false, directory?: s
   })
 
   return extension
+}
+
+export async function testChannelConfigExtension(
+  directory: string,
+  handle = 'channel-config',
+): Promise<ExtensionInstance> {
+  const allSpecs = await loadLocalExtensionsSpecifications()
+  const specification = allSpecs.find((spec) => spec.identifier === 'channel_config')!
+
+  return new ExtensionInstance({
+    configuration: {
+      name: 'Channel config',
+      type: 'channel_config',
+      handle,
+      metafields: [],
+    } as unknown as BaseConfigType,
+    configurationPath: joinPath(directory, 'shopify.extension.toml'),
+    directory,
+    specification,
+  })
 }
 
 export async function testAppAccessConfigExtension(
@@ -1370,6 +1391,12 @@ export function testDeveloperPlatformClient(
         ],
         cursor: 'cursor',
         status: 200,
+      }),
+    channelSpecExport: (_app: MinimalAppIdentifiers): Promise<ChannelSpecExportResponse> =>
+      Promise.resolve({
+        status: 200,
+        ok: true,
+        body: {success: true, handle: 'example', filename: 'example.toml', toml: 'handle = "example"\n', warnings: []},
       }),
     appDeepLink: (app: MinimalAppIdentifiers) =>
       Promise.resolve(`https://test.shopify.com/${app.organizationId}/apps/${app.id}`),

@@ -11,7 +11,7 @@ import metadata from '../metadata.js'
 import * as loader from '../models/app/loader.js'
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, writeFile, mkdir, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 
@@ -144,6 +144,105 @@ client_id="test-api-key"`
       expect(appFromIdentifiers).toHaveBeenCalledWith(expect.objectContaining({apiKey: newClientId}))
     })
   })
+
+  test.each([true, false])(
+    'keeps the selected configuration and target client ID after reload (matching TOML: %s)',
+    async (hasMatchingConfig) => {
+      await inTemporaryDirectory(async (tmp) => {
+        const sourceConfig = `
+name = "production-app"
+client_id = "source-client-id"
+application_url = "https://production.example.com"
+embedded = true
+
+[access_scopes]
+scopes = "read_products"
+
+[webhooks]
+api_version = "2026-07"
+
+[auth]
+redirect_urls = ["https://production.example.com/auth"]
+`
+        const targetConfig = `
+name = "development-app"
+client_id = "target-client-id"
+application_url = "https://development.example.com"
+embedded = true
+`
+        const sourceConfigPath = joinPath(tmp, 'shopify.app.prod.toml')
+        const targetConfigPath = joinPath(tmp, 'shopify.app.dev.toml')
+        await writeAppConfig(tmp, sourceConfig, 'shopify.app.prod.toml')
+        if (hasMatchingConfig) {
+          await writeFile(targetConfigPath, targetConfig)
+          localStorage.setCachedAppInfo({directory: tmp, configFile: 'shopify.app.dev.toml'})
+        }
+        await mkdir(joinPath(tmp, '.shopify'))
+        await writeFile(
+          joinPath(tmp, '.shopify', 'project.json'),
+          JSON.stringify({
+            'source-client-id': {dev_store_url: 'source.myshopify.com'},
+            'target-client-id': {dev_store_url: 'target.myshopify.com'},
+          }),
+        )
+        const functionDirectory = joinPath(tmp, 'extensions', 'discount')
+        await mkdir(functionDirectory)
+        await writeFile(
+          joinPath(functionDirectory, 'shopify.extension.toml'),
+          `api_version = "2026-07"
+
+[[extensions]]
+name = "Discount"
+handle = "discount"
+type = "function"
+`,
+        )
+        const {loadLocalExtensionsSpecifications: loadSpecifications} = await vi.importActual<
+          typeof import('../models/extensions/load-specifications.js')
+        >('../models/extensions/load-specifications.js')
+        vi.mocked(fetchSpecifications).mockResolvedValue(
+          (await loadSpecifications()).map((specification) => ({...specification, loadedRemoteSpecs: true})),
+        )
+        vi.mocked(appFromIdentifiers).mockResolvedValue({...mockRemoteApp, apiKey: 'target-client-id'})
+
+        const {app, remoteApp} = await linkedAppContext({
+          directory: tmp,
+          clientId: 'target-client-id',
+          forceRelink: false,
+          userProvidedConfigName: 'prod',
+        })
+
+        expect(appFromIdentifiers).toHaveBeenCalledWith({apiKey: 'target-client-id'})
+        expect(link).not.toHaveBeenCalled()
+        expect(app.configPath).toBe(normalizePath(sourceConfigPath))
+        expect(app.configuration).toEqual(
+          expect.objectContaining({
+            client_id: 'target-client-id',
+            name: 'production-app',
+            application_url: 'https://production.example.com',
+            access_scopes: {scopes: 'read_products'},
+          }),
+        )
+        expect(app.hiddenConfig.dev_store_url).toBe('target.myshopify.com')
+
+        const reloadedApp = await loader.reloadApp(app, {clientIdOverride: remoteApp.apiKey})
+
+        expect(reloadedApp.configPath).toBe(app.configPath)
+        expect(reloadedApp.configuration).toEqual(app.configuration)
+        expect(reloadedApp.hiddenConfig.dev_store_url).toBe('target.myshopify.com')
+        expect((await reloadedApp.manifest(undefined)).modules).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              handle: 'discount',
+              config: expect.objectContaining({app_key: 'target-client-id'}),
+            }),
+          ]),
+        )
+        await expect(readFile(sourceConfigPath)).resolves.toBe(sourceConfig)
+        if (hasMatchingConfig) await expect(readFile(targetConfigPath)).resolves.toBe(targetConfig)
+      })
+    },
+  )
 
   test('resets app when there is a valid toml but reset option is true', async () => {
     await inTemporaryDirectory(async (tmp) => {
