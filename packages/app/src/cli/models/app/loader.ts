@@ -140,7 +140,7 @@ export function parseConfigurationObject<TSchema extends zod.ZodType>(
 /**
  * Parses a configuration object using a specification's schema, and returns a result.
  */
-export function parseConfigurationObjectAgainstSpecification<TSchema extends zod.ZodType>(
+function parseConfigurationObjectAgainstSpecification<TSchema extends zod.ZodType>(
   spec: ExtensionSpecification,
   filepath: string,
   configurationObject: object,
