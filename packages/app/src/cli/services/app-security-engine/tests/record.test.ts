@@ -185,6 +185,16 @@ describe('recordAgentFindings', () => {
     expect(document.scope).toEqual(scope)
   })
 
+  test('redacts secrets in the scope', () => {
+    const document = recordAccepted({
+      schema_version: 1,
+      scope: {include_dirs: [`../${FAKE_SHOPIFY_TOKEN}`], excludes: [FAKE_SHOPIFY_TOKEN], no_git_ignore: false},
+    })
+
+    expect(JSON.stringify(document.scope)).not.toContain(FAKE_SHOPIFY_TOKEN)
+    expect(document.scope.include_dirs[0]).toMatch(/^\.\.\/.*\[REDACTED/)
+  })
+
   test('rejects a document that is not an object or has malformed arrays', () => {
     expect(recordRejected([])).toEqual(['The findings document must be a JSON object.'])
     expect(recordRejected({schema_version: 1, checks_executed: {}, findings: 'none'})).toEqual([

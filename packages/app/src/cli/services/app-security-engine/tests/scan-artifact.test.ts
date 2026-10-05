@@ -150,6 +150,17 @@ describe('buildDeterministicFindings', () => {
     expect(translateFindingsDocument(JSON.parse(JSON.stringify(document)))).toEqual({ok: true, document})
   })
 
+  test('redacts secrets in the scope and the scan directories', () => {
+    const secret = `shpat_${'a'.repeat(24)}`
+    const scope = {include_dirs: [`../${secret}`], excludes: [`${secret}/**`], no_git_ignore: false}
+    const scanDirectories = [{directory: `../${secret}`, origin: 'include_dir' as const}]
+
+    const document = buildDeterministicFindings(result(), {scope, scanDirectories})
+
+    expect(JSON.stringify(document.coverage)).not.toContain(secret)
+    expect(document.coverage.scope.include_dirs[0]).toMatch(/^\.\.\/.*\[REDACTED/)
+  })
+
   test('snapshots the catalog, not the per-finding severity and title', () => {
     const document = buildDeterministicFindings(
       result(

@@ -1,5 +1,5 @@
 import {ENGINE_NAME, FINDINGS_SCHEMA_VERSION} from '../types.js'
-import {redactText} from '../rules/secret-rules.js'
+import {redactScope, redactText} from '../rules/secret-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {compareFindingLocations, compareStrings} from '../results/order.js'
 import type {
@@ -152,8 +152,11 @@ export function buildDeterministicFindings(
         message: redactText(gap.message),
         ...(gap.file ? {file: redactText(gap.file)} : {}),
       })),
-      scope: options.scope,
-      scan_directories: options.scanDirectories,
+      scope: redactScope(options.scope),
+      scan_directories: options.scanDirectories.map((scanDirectory) => ({
+        ...scanDirectory,
+        directory: redactText(scanDirectory.directory),
+      })),
     },
     checks,
   }

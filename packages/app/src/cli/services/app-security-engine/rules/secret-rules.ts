@@ -1,7 +1,7 @@
 import {basename, dirname} from '@shopify/cli-kit/node/path'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import type {ScanContext, SourceFile} from './types.js'
-import type {Issue} from '../types.js'
+import type {AppSecurityScope, Issue} from '../types.js'
 
 /**
  * Each secret pattern MUST place the sensitive material in capture group 1
@@ -131,6 +131,17 @@ export function redactText(text: string): string {
     if (pattern.regex.test(redacted)) return '[REDACTED TEXT]'
   }
   return redacted
+}
+
+/**
+ * Redact the scope's typed values. Both result files store the scope this way, so redaction never makes them differ.
+ */
+export function redactScope(scope: AppSecurityScope): AppSecurityScope {
+  return {
+    include_dirs: scope.include_dirs.map(redactText),
+    excludes: scope.excludes.map(redactText),
+    no_git_ignore: scope.no_git_ignore,
+  }
 }
 
 const NAMED_SECRET_FILE_PATTERN = /(^|\/)(?:\.env\.(?:secrets|keys)|(?:secrets|credentials)\.json)$/

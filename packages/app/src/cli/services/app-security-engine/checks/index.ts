@@ -1,5 +1,5 @@
 import {EMBEDDED_CHECK_SOURCES} from './embedded.js'
-import {redactText} from '../rules/secret-rules.js'
+import {redactScope, redactText} from '../rules/secret-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {
   AGENT_CHECKS_SCHEMA_VERSION,
@@ -454,7 +454,7 @@ const readScope = (value: unknown): {scope: AppSecurityScope} | {error: string} 
   if (!isStringArray(includeDirs)) return {error: 'scope.include_dirs must be an array of strings'}
   if (!isStringArray(excludes)) return {error: 'scope.excludes must be an array of strings'}
   if (typeof noGitIgnore !== 'boolean') return {error: 'scope.no_git_ignore must be a boolean'}
-  return {scope: {include_dirs: includeDirs, excludes, no_git_ignore: noGitIgnore}}
+  return {scope: redactScope({include_dirs: includeDirs, excludes, no_git_ignore: noGitIgnore})}
 }
 
 const optionalArray = (document: Record<string, unknown>, key: string, errors: string[]): unknown[] => {
