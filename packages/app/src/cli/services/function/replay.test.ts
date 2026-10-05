@@ -1,6 +1,6 @@
-import {FunctionRunData, replay} from './replay.js'
+import {FunctionRunData, replay, replayFunction} from './replay.js'
 import {renderReplay} from './ui.js'
-import {runFunction} from './runner.js'
+import {runFunction, executeFunction} from './runner.js'
 import {testAppLinked, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
@@ -8,7 +8,7 @@ import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {describe, expect, beforeAll, vi} from 'vitest'
+import {describe, expect, beforeEach, vi} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {testWithTempDir} from '@shopify/cli-kit/node/testing/test-with-temp-dir'
@@ -16,7 +16,10 @@ import {testWithTempDir} from '@shopify/cli-kit/node/testing/test-with-temp-dir'
 vi.mock('../generate-schema.js')
 vi.mock('../../prompts/function/replay.js')
 vi.mock('../dev/extension/bundler.js')
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/output')>()),
+  outputInfo: vi.fn(),
+}))
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('./ui.js')
 vi.mock('./runner.js')
@@ -38,8 +41,56 @@ describe('replay', () => {
 
   let extension: ExtensionInstance<FunctionConfigType>
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     extension = await testFunctionExtension({config: defaultConfig})
+  })
+
+  testWithTempDir('returns a typed finite replay for the specified log', async ({tempDir}) => {
+    const app = testAppLinked({directory: tempDir})
+    const file = createFunctionRunFile({handle: extension.handle})
+    await writeFunctionRunFiles(app.getLogsDir(), [file])
+    const result = {
+      state: 'completed' as const,
+      result: {
+        name: 'function.wasm',
+        size: 1,
+        memory_usage: 64,
+        instructions: 1,
+        logs: '',
+        input: {},
+        output: {},
+        success: true,
+      },
+      exitCode: 0,
+      diagnostics: [],
+    }
+    vi.mocked(executeFunction).mockResolvedValue(result)
+    await expect(replayFunction({app, extension, log: file.run.identifier})).resolves.toEqual(result)
+    expect(executeFunction).toHaveBeenCalledWith({
+      functionExtension: extension,
+      input: JSON.stringify(file.run.payload.input),
+      export: file.run.payload.export,
+    })
+    expect(renderReplay).not.toHaveBeenCalled()
+    expect(runFunction).not.toHaveBeenCalled()
+  })
+
+  testWithTempDir('selects a saved run independently from JSON presentation', async ({tempDir}) => {
+    const app = testAppLinked({directory: tempDir})
+    const file = createFunctionRunFile({handle: extension.handle})
+    await writeFunctionRunFiles(app.getLogsDir(), [file])
+    vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
+    await replayFunction({app, extension})
+    expect(selectFunctionRunPrompt).toHaveBeenCalledWith([file.run])
+    expect(executeFunction).toHaveBeenCalledWith(
+      expect.objectContaining({input: JSON.stringify(file.run.payload.input)}),
+    )
+  })
+
+  testWithTempDir('rejects a missing finite replay log before executing the runner', async ({tempDir}) => {
+    const app = testAppLinked({directory: tempDir})
+    await expect(replayFunction({app, extension, log: 'missing'})).rejects.toThrow('No log found')
+    expect(executeFunction).not.toHaveBeenCalled()
   })
 
   testWithTempDir('runs selected function', async ({tempDir}) => {
