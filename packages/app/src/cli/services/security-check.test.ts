@@ -465,6 +465,27 @@ describe('securityCheck', () => {
     )
   })
 
+  test('shows the generated check command, with --config, after asking which TOML to scan', async () => {
+    const selection: AppSecuritySelection = {
+      kind: 'config',
+      appDirectory,
+      appConfigFilePath: `${appDirectory}/shopify.app.staging.toml`,
+      configClientId: 'toml-client-id',
+      appConfigFilePicked: true,
+    }
+    const dependencies = testDependencies(scanExecution, selection)
+    dependencies.canPrompt.mockReturnValue(true)
+
+    await securityCheck({...testOptions(), skipInstructions: true}, dependencies)
+
+    const {scan} = commandsFor(selection)
+    expect(scan.args).toContainEqual({flag: '--config', value: 'staging'})
+    expect(dependencies.renderInfo).toHaveBeenCalledWith({
+      headline: 'To skip these prompts next time, run:',
+      body: [{command: formatAppSecurityCommand(scan)}],
+    })
+  })
+
   test('does not show the prompt-flow command when a TOML was found', async () => {
     const dependencies = testDependencies()
 
