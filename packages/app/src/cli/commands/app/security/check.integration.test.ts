@@ -109,7 +109,7 @@ describe('app security check command boundary', () => {
       expect(securityCheckJsonOutputSchema.validate(output)).toEqual(output)
       expect(output.instructions).toEqual({
         content: expect.stringContaining('Use the existing scan results'),
-        copied_to_clipboard: false,
+        copiedToClipboard: false,
         path: null,
       })
     })
@@ -127,21 +127,21 @@ describe('app security check command boundary', () => {
       const output = JSON.parse(result.stdout)
       expect(securityCheckJsonOutputSchema.validate(output)).toEqual(output)
       expect(Object.keys(output).sort()).toEqual([
-        'agent_checks_path',
-        'deterministic_findings',
+        'agentChecksPath',
+        'deterministicFindings',
         'instructions',
         'selection',
       ])
-      expect(output.agent_checks_path).toBe(paths.agentChecksPath)
+      expect(output.agentChecksPath).toBe(paths.agentChecksPath)
       expect(output.instructions).toBeNull()
       expect(output.selection).toEqual({
-        app_directory: appDirectory,
-        app_config_file: joinPath(appDirectory, 'shopify.app.toml'),
-        client_id: 'test-client-id',
-        client_id_source: 'config',
-        scan_directories: [{directory: appDirectory, origin: 'app_directory'}],
+        directory: appDirectory,
+        configPath: joinPath(appDirectory, 'shopify.app.toml'),
+        clientId: 'test-client-id',
+        clientIdSource: 'config',
+        scanDirectories: [{directory: appDirectory, origin: 'app-directory'}],
       })
-      await expect(readJson(paths.deterministicFindingsPath)).resolves.toEqual(output.deterministic_findings)
+      await expect(readJson(paths.deterministicFindingsPath)).resolves.toEqual(output.deterministicFindings)
       await expect(readJson(paths.deterministicFindingsPath)).resolves.toMatchObject({
         schema_version: 1,
         source: 'deterministic',
@@ -174,7 +174,7 @@ describe('app security check command boundary', () => {
       ])
 
       expect(result.exitCode).toBe(0)
-      expect(JSON.parse(result.stdout).agent_checks_path).toBe(paths.agentChecksPath)
+      expect(JSON.parse(result.stdout).agentChecksPath).toBe(paths.agentChecksPath)
       await expect(readJson(paths.deterministicFindingsPath)).resolves.toMatchObject({source: 'deterministic'})
       await expect(
         readFile(appSecurityArtifactPaths(appDirectory, 'shopify.app').agentChecksPath),
@@ -203,10 +203,10 @@ describe('app security check command boundary', () => {
 
       expect(result.exitCode).toBe(0)
       expect(JSON.parse(result.stdout).selection).toMatchObject({
-        app_directory: appDirectory,
-        app_config_file: null,
-        client_id: 'configless-client-id',
-        client_id_source: 'flag',
+        directory: appDirectory,
+        configPath: null,
+        clientId: 'configless-client-id',
+        clientIdSource: 'flag',
       })
       const deterministicFindings = await readJson(paths.deterministicFindingsPath)
       expect(deterministicFindings).toMatchObject({
@@ -359,7 +359,7 @@ describe('app security instructions command boundary', () => {
       expect(securityInstructionsJsonOutputSchema.validate(output)).toEqual(output)
       expect(output.instructions).toEqual({
         content: expect.stringContaining('Run the scan'),
-        copied_to_clipboard: false,
+        copiedToClipboard: false,
         path: instructionsPath,
       })
       await expect(readFile(instructionsPath, 'utf8')).resolves.toBe(`${output.instructions.content}\n`)

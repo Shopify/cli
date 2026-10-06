@@ -1,6 +1,6 @@
 import {clientIdSource, effectiveClientId} from './app-security-selection.js'
 import {appSecurityInstructionsSchema, type AppSecurityInstructionsJson} from './security-instructions-json.js'
-import {deterministicFindingsDocumentSchema, type Equals} from './app-security-engine/index.js'
+import {deterministicFindingsDocumentSchema} from './app-security-engine/index.js'
 import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 import type {AppSecurityExecution} from './app-security-api.js'
@@ -8,19 +8,29 @@ import type {AppSecurityScanDirectory, AppSecuritySelection} from './app-securit
 
 const scanDirectorySchema = zod.object({
   directory: zod.string(),
-  origin: zod.enum(['app_directory', 'include_dir']),
+  origin: zod.enum(['app-directory', 'include-dir']),
 })
+
+// The internal origins keep the spelling of the deterministic findings document's `coverage.scan_directories`.
+const SCAN_DIRECTORY_ORIGINS: {
+  [origin in AppSecurityScanDirectory['origin']]: zod.infer<typeof scanDirectorySchema>['origin']
+} = {
+  app_directory: 'app-directory',
+  include_dir: 'include-dir',
+}
 
 const scanResultSchema = zod.object({
   selection: zod.object({
-    app_directory: zod.string(),
-    app_config_file: zod.string().nullable(),
-    client_id: zod.string().nullable(),
-    client_id_source: zod.enum(['config', 'flag', 'picker']).nullable(),
-    scan_directories: zod.array(scanDirectorySchema),
+    directory: zod.string(),
+    configPath: zod.string().nullable(),
+    clientId: zod.string().nullable(),
+    clientIdSource: zod.enum(['config', 'flag', 'picker']).nullable(),
+    scanDirectories: zod.array(scanDirectorySchema),
   }),
-  deterministic_findings: deterministicFindingsDocumentSchema,
-  agent_checks_path: zod.string(),
+  deterministicFindings: deterministicFindingsDocumentSchema.describe(
+    'The deterministic findings document, as written to deterministic-findings.json. It keeps its own field conventions and is versioned by its schema_version, independently of this result.',
+  ),
+  agentChecksPath: zod.string(),
   /** The coding-agent instructions chosen at the prompt or with `--yes`; null when none were. */
   instructions: appSecurityInstructionsSchema.nullable(),
 })
@@ -41,15 +51,6 @@ export const securityCheckJsonOutputSchema = defineJsonOutputSchema({
 
 type SecurityCheckScanJsonResult = zod.infer<typeof scanResultSchema>
 
-/**
- * Scan directories pass straight through, and Zod strips unknown keys: without this pin a field added to them later
- * would silently vanish from `--json`.
- */
-export const SCAN_DIRECTORY_MATCHES_CHECK_JSON: Equals<
-  AppSecurityScanDirectory,
-  zod.infer<typeof scanDirectorySchema>
-> = true
-
 export function toSecurityCheckJson(
   execution: Pick<AppSecurityExecution, 'deterministicFindings'>,
   agentChecksPath: string,
@@ -59,14 +60,17 @@ export function toSecurityCheckJson(
 ): SecurityCheckScanJsonResult {
   return {
     selection: {
-      app_directory: selection.appDirectory,
-      app_config_file: selection.kind === 'config' ? selection.appConfigFilePath : null,
-      client_id: effectiveClientId(selection) ?? null,
-      client_id_source: clientIdSource(selection) ?? null,
-      scan_directories: scanDirectories,
+      directory: selection.appDirectory,
+      configPath: selection.kind === 'config' ? selection.appConfigFilePath : null,
+      clientId: effectiveClientId(selection) ?? null,
+      clientIdSource: clientIdSource(selection) ?? null,
+      scanDirectories: scanDirectories.map(({directory, origin}) => ({
+        directory,
+        origin: SCAN_DIRECTORY_ORIGINS[origin],
+      })),
     },
-    deterministic_findings: execution.deterministicFindings,
-    agent_checks_path: agentChecksPath,
+    deterministicFindings: execution.deterministicFindings,
+    agentChecksPath,
     instructions,
   }
 }

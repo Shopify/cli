@@ -1,12 +1,12 @@
 {
   "selection": {
-    "app_directory": "/tmp/app",
-    "app_config_file": "/tmp/app/shopify.app.toml",
-    "client_id": "test-client-id",
-    "client_id_source": "config",
-    "scan_directories": [{"directory": "/tmp/app", "origin": "app_directory"}]
+    "directory": "/tmp/app",
+    "configPath": "/tmp/app/shopify.app.toml",
+    "clientId": "test-client-id",
+    "clientIdSource": "config",
+    "scanDirectories": [{"directory": "/tmp/app", "origin": "app-directory"}]
   },
-  "deterministic_findings": {
+  "deterministicFindings": {
     "schema_version": 1,
     "source": "deterministic",
     "engine": {
@@ -38,6 +38,6 @@
     },
     "checks": []
   },
-  "agent_checks_path": "/tmp/app/.shopify/app-security/agent-checks.json",
+  "agentChecksPath": "/tmp/app/.shopify/app-security/agent-checks.json",
   "instructions": null
 }

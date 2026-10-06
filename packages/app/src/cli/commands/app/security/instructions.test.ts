@@ -125,7 +125,7 @@ describe('app security instructions command', () => {
           expect.objectContaining({writePath: instructionsPath, json: true}),
         )
         expect(JSON.parse(output.info())).toEqual({
-          instructions: {content: '# Instructions', copied_to_clipboard: false, path: instructionsPath},
+          instructions: {content: '# Instructions', copiedToClipboard: false, path: instructionsPath},
         })
       } finally {
         output.clear()

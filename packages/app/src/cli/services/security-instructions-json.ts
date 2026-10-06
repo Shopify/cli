@@ -5,7 +5,7 @@ import type {AppSecurityInstructionsDelivery} from './app-security-instructions-
 /** Shared by `instructions --json` and `check --json`, so an agent reads the instructions the same way from both. */
 export const appSecurityInstructionsSchema = zod.object({
   content: zod.string(),
-  copied_to_clipboard: zod.boolean(),
+  copiedToClipboard: zod.boolean(),
   /** The file written by `instructions --write`. */
   path: zod.string().nullable(),
 })
@@ -21,7 +21,7 @@ export const securityInstructionsJsonOutputSchema = defineJsonOutputSchema({
 export function toAppSecurityInstructionsJson(delivery: AppSecurityInstructionsDelivery): AppSecurityInstructionsJson {
   return {
     content: delivery.content,
-    copied_to_clipboard: delivery.copiedToClipboard,
+    copiedToClipboard: delivery.copiedToClipboard,
     path: delivery.writePath ?? null,
   }
 }

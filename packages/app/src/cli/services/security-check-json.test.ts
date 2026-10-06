@@ -1,8 +1,4 @@
-import {
-  SCAN_DIRECTORY_MATCHES_CHECK_JSON,
-  securityCheckJsonOutputSchema,
-  toSecurityCheckJson,
-} from './security-check-json.js'
+import {securityCheckJsonOutputSchema, toSecurityCheckJson} from './security-check-json.js'
 import {securityInstructionsJsonOutputSchema, toAppSecurityInstructionsJson} from './security-instructions-json.js'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -51,11 +47,6 @@ const configSelection: AppSecuritySelection = {
 }
 
 describe('app security JSON contract', () => {
-  test('keeps the scan directory type and the public schema in sync', () => {
-    // `tsc` is the real check: the constant only compiles when the type matches the schema.
-    expect(SCAN_DIRECTORY_MATCHES_CHECK_JSON).toBe(true)
-  })
-
   test('encodes the selection, the deterministic findings document, and the agent checks path', async () => {
     const encoded = securityCheckJsonOutputSchema.encode(
       toSecurityCheckJson({deterministicFindings}, agentChecksPath, configSelection, scanDirectories, null),
@@ -74,7 +65,7 @@ describe('app security JSON contract', () => {
     )
     const instructionsResult = JSON.parse(securityInstructionsJsonOutputSchema.encode({instructions}))
 
-    expect(checkResult.instructions).toEqual({content: '# Instructions', copied_to_clipboard: true, path: null})
+    expect(checkResult.instructions).toEqual({content: '# Instructions', copiedToClipboard: true, path: null})
     expect(instructionsResult).toEqual({instructions: checkResult.instructions})
   })
 
@@ -85,7 +76,7 @@ describe('app security JSON contract', () => {
         copiedToClipboard: false,
         writePath: '/tmp/handoff.md',
       }),
-    ).toEqual({content: '# Instructions', copied_to_clipboard: false, path: '/tmp/handoff.md'})
+    ).toEqual({content: '# Instructions', copiedToClipboard: false, path: '/tmp/handoff.md'})
   })
 
   test('encodes the --list-files result as the list of files only', () => {
@@ -96,7 +87,7 @@ describe('app security JSON contract', () => {
 
   test('rejects a check result that is neither a scan nor a file list', () => {
     expect(() => securityCheckJsonOutputSchema.validate({files: 'shopify.app.toml'})).toThrow()
-    expect(() => securityCheckJsonOutputSchema.validate({agent_checks_path: agentChecksPath})).toThrow()
+    expect(() => securityCheckJsonOutputSchema.validate({agentChecksPath})).toThrow()
   })
 
   test('publishes the scan and file list results, and one instructions definition for both commands', () => {
@@ -126,22 +117,51 @@ describe('app security JSON contract', () => {
         configClientId: 'toml-client-id',
         clientIdOverride: 'flag-client-id',
       }),
-    ).toMatchObject({client_id: 'flag-client-id', client_id_source: 'flag'})
+    ).toMatchObject({clientId: 'flag-client-id', clientIdSource: 'flag'})
   })
 
   test('reports an unlinked configuration with no client ID', () => {
     expect(selectionJson({kind: 'config', appDirectory, appConfigFilePath: '/tmp/app/shopify.app.toml'})).toMatchObject(
-      {client_id: null, client_id_source: null},
+      {clientId: null, clientIdSource: null},
     )
   })
 
   test.each(['flag', 'picker'] as const)('reports no configuration file and a %s client ID', (clientIdSource) => {
     expect(selectionJson({kind: 'no-config', appDirectory, clientId: 'chosen-id', clientIdSource})).toEqual({
-      app_directory: appDirectory,
-      app_config_file: null,
-      client_id: 'chosen-id',
-      client_id_source: clientIdSource,
-      scan_directories: scanDirectories,
+      directory: appDirectory,
+      configPath: null,
+      clientId: 'chosen-id',
+      clientIdSource,
+      scanDirectories: [{directory: appDirectory, origin: 'app-directory'}],
     })
+  })
+
+  test('spells each scan directory origin in kebab case', () => {
+    const selection = toSecurityCheckJson(
+      {deterministicFindings},
+      agentChecksPath,
+      configSelection,
+      [
+        {directory: appDirectory, origin: 'app_directory'},
+        {directory: '/tmp/backend', origin: 'include_dir'},
+      ],
+      null,
+    ).selection
+
+    expect(selection.scanDirectories).toEqual([
+      {directory: appDirectory, origin: 'app-directory'},
+      {directory: '/tmp/backend', origin: 'include-dir'},
+    ])
+  })
+
+  test('describes the deterministic findings document as keeping its own conventions and version', () => {
+    const scanResult = (
+      securityCheckJsonOutputSchema.jsonSchema as {
+        definitions: {AppSecurityCheckScanResult: {properties: {deterministicFindings: {description?: string}}}}
+      }
+    ).definitions.AppSecurityCheckScanResult.properties.deterministicFindings
+
+    expect(scanResult.description).toContain('keeps its own field conventions')
+    expect(scanResult.description).toContain('schema_version')
   })
 })

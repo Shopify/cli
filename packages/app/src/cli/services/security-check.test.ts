@@ -306,9 +306,9 @@ describe('securityCheck', () => {
 
       await securityCheck({...testOptions(), json: true, includeDirs: ['backend']}, dependencies)
 
-      expect(JSON.parse(dependencies.output.mock.calls[0]![0]).selection.scan_directories).toEqual([
-        {directory: appDirectory, origin: 'app_directory'},
-        {directory: backend, origin: 'include_dir'},
+      expect(JSON.parse(dependencies.output.mock.calls[0]![0]).selection.scanDirectories).toEqual([
+        {directory: appDirectory, origin: 'app-directory'},
+        {directory: backend, origin: 'include-dir'},
       ])
     })
   })
@@ -553,15 +553,15 @@ describe('securityCheck', () => {
     expect(dependencies.output).toHaveBeenCalledOnce()
     expect(JSON.parse(dependencies.output.mock.calls[0]![0])).toEqual({
       selection: {
-        app_directory: appDirectory,
-        app_config_file: `${appDirectory}/shopify.app.toml`,
-        client_id: 'toml-client-id',
-        client_id_source: 'config',
-        scan_directories: scanDirectories,
+        directory: appDirectory,
+        configPath: `${appDirectory}/shopify.app.toml`,
+        clientId: 'toml-client-id',
+        clientIdSource: 'config',
+        scanDirectories: [{directory: appDirectory, origin: 'app-directory'}],
       },
-      deterministic_findings: deterministicFindings,
-      agent_checks_path: artifacts.agentChecksPath,
-      instructions: {content: 'post-scan instructions', copied_to_clipboard: false, path: null},
+      deterministicFindings,
+      agentChecksPath: artifacts.agentChecksPath,
+      instructions: {content: 'post-scan instructions', copiedToClipboard: false, path: null},
     })
     expect(dependencies.renderReport).not.toHaveBeenCalled()
     expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
@@ -588,7 +588,7 @@ describe('securityCheck', () => {
     expect(dependencies.deliverInstructions).toHaveBeenCalledWith(expect.objectContaining({copy: true, json: true}))
     expect(JSON.parse(dependencies.output.mock.calls[0]![0]).instructions).toEqual({
       content: 'post-scan instructions',
-      copied_to_clipboard: true,
+      copiedToClipboard: true,
       path: null,
     })
   })
