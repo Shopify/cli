@@ -14644,7 +14644,7 @@ DESCRIPTION
           },
           "role": {
             "type": "string",
-            "description": "The upstream theme role; known values include main, unpublished, and development."
+            "description": "The upstream theme role; known values include live, unpublished, and development."
           },
           "storeDomain": {
             "anyOf": [
