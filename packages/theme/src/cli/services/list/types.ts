@@ -1,7 +1,6 @@
-import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {defineThemeJsonOutputSchema, ThemeSchema as PublicThemeSchema, projectTheme} from '../json-output/schema.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-// Keep the field order produced by buildTheme for existing JSON consumers.
 const ThemeListThemeSchema = zod.object({
   id: zod.number(),
   name: zod.string(),
@@ -10,15 +9,21 @@ const ThemeListThemeSchema = zod.object({
   role: zod.string(),
 })
 const ThemeListResultSchema = zod.array(ThemeListThemeSchema)
-const ThemeListEnvironmentSchema = zod.object({
-  environment: zod.string(),
-  result: ThemeListResultSchema,
-})
-
-export const themeListJsonOutputSchema = defineJsonOutputSchema({
+export const themeListJsonOutputSchema = defineThemeJsonOutputSchema({
   name: 'ThemeListResult',
-  schema: zod.union([ThemeListResultSchema, zod.object({environments: zod.array(ThemeListEnvironmentSchema)})]),
-  definitions: {ThemeListTheme: ThemeListThemeSchema, ThemeListEnvironment: ThemeListEnvironmentSchema},
+  schema: zod
+    .object({themes: zod.array(PublicThemeSchema.extend({processing: zod.boolean()}).strict())})
+    .strict()
+    .describe('The complete theme library after applying the requested filters.'),
+  definitions: {Theme: PublicThemeSchema},
+  project(value) {
+    return {
+      themes: ThemeListResultSchema.parse(value).map((theme) => ({
+        ...projectTheme(theme),
+        processing: theme.processing,
+      })),
+    }
+  },
 })
 
 export type ThemeListResult = zod.infer<typeof ThemeListResultSchema>
