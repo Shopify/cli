@@ -4,8 +4,8 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 export function presentAppBuildResult(result: AppBuildResult, json: boolean): void {
   if (json) {
-    outputResult(appBuildJsonOutputSchema.encode(result))
+    outputResult(appBuildJsonOutputSchema.encode({status: result.status}))
   } else {
-    renderSuccess({headline: [{userInput: result.app.name}, 'built!']})
+    renderSuccess({headline: [{userInput: result.appName}, 'built!']})
   }
 }

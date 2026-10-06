@@ -60,9 +60,7 @@ api_version = "2023-04"
     setCachedAppInfo({directory, configFile: 'shopify.app.deleted.toml'})
     vi.mocked(build).mockImplementation(async ({app}) => ({
       status: 'success',
-      app: {name: app.name, directory: app.directory},
-      webs: [],
-      extensions: [],
+      appName: app.name,
     }))
     vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', '1')
     try {
@@ -90,12 +88,7 @@ test.each([false, true])('build recovers a stale sole config with no input: json
       expect(returned.app.configPath).toBe(joinPath(directory, 'shopify.app.toml'))
       expect(getCachedAppInfo(directory)?.configFile).toBe('shopify.app.toml')
       if (json) {
-        expect(JSON.parse(stdout())).toStrictEqual({
-          status: 'success',
-          app: {name: 'Recovery fixture', directory},
-          webs: [],
-          extensions: [],
-        })
+        expect(JSON.parse(stdout())).toStrictEqual({status: 'success'})
         const events = stderr()
           .trim()
           .split('\n')
@@ -130,29 +123,13 @@ test.each([false, true])('build rejects multiple replacement configs without inp
   })
 })
 
-test('actual build getter exposes the rooted directory constraint and honest description', () => {
-  const schema = JSON.parse(JSON.stringify(Build.jsonOutputSchema.jsonSchema))
-  const directory = schema.definitions.BuiltApp.properties.directory
-  expect(directory.description).toContain('not an existence or containment guarantee')
-  const published = new RegExp(directory.pattern)
-  for (const path of ['/fixture', 'C:\\fixture', '\\\\server\\share']) {
-    expect(published.test(path)).toBe(true)
-    expect(() =>
-      Build.jsonOutputSchema.validate({
-        status: 'success',
-        app: {name: 'Fixture', directory: path},
-        webs: [],
-        extensions: [],
-      }),
-    ).not.toThrow()
-  }
-  expect(published.test('relative')).toBe(false)
-  expect(() =>
-    Build.jsonOutputSchema.validate({
-      status: 'success',
-      app: {name: 'Fixture', directory: 'relative'},
-      webs: [],
-      extensions: [],
-    }),
-  ).toThrow()
+test('build exposes only the success status in its result schema', () => {
+  expect(Build.jsonOutputSchema.jsonSchema).toStrictEqual({
+    type: 'object',
+    properties: {status: {type: 'string', const: 'success'}},
+    required: ['status'],
+    additionalProperties: false,
+    title: 'AppBuildResult',
+    $schema: 'http://json-schema.org/draft-07/schema#',
+  })
 })

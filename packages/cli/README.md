@@ -200,95 +200,13 @@ DESCRIPTION
       "status": {
         "type": "string",
         "const": "success"
-      },
-      "app": {
-        "$ref": "#/definitions/BuiltApp"
-      },
-      "webs": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/BuiltWeb"
-        }
-      },
-      "extensions": {
-        "type": "array",
-        "items": {
-          "$ref": "#/definitions/BuiltExtension"
-        }
       }
     },
     "required": [
-      "status",
-      "app",
-      "webs",
-      "extensions"
+      "status"
     ],
     "additionalProperties": false,
     "title": "AppBuildResult",
-    "definitions": {
-      "BuiltApp": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "directory": {
-            "type": "string",
-            "pattern": "^(?:[\\\\/]|[A-Za-z]:[\\\\/])",
-            "description": "An absolute native filesystem directory (rooted, drive-letter or UNC path). This is not an existence or containment guarantee."
-          }
-        },
-        "required": [
-          "name",
-          "directory"
-        ],
-        "additionalProperties": false
-      },
-      "BuiltWeb": {
-        "type": "object",
-        "properties": {
-          "directory": {
-            "$ref": "#/definitions/BuiltApp/properties/directory"
-          },
-          "roles": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "frontend",
-                "backend",
-                "background"
-              ]
-            }
-          }
-        },
-        "required": [
-          "directory",
-          "roles"
-        ],
-        "additionalProperties": false
-      },
-      "BuiltExtension": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          },
-          "directory": {
-            "$ref": "#/definitions/BuiltApp/properties/directory"
-          }
-        },
-        "required": [
-          "name",
-          "type",
-          "directory"
-        ],
-        "additionalProperties": false
-      }
-    },
     "$schema": "http://json-schema.org/draft-07/schema#"
   }
   ```

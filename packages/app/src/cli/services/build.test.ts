@@ -20,11 +20,11 @@ vi.mock('./function/build.js', async (importOriginal) => ({
   installJavy: vi.fn(),
 }))
 
-function emptyResult(directory: string) {
-  return {status: 'success' as const, app: {name: 'Example app', directory}, webs: [], extensions: []}
+function buildResult() {
+  return {status: 'success' as const, appName: 'Example app'}
 }
 
-test('build returns an explicit public projection and the real presenter writes one JSON result', async () => {
+test('build completes webs and the real presenter writes only the JSON success status', async () => {
   await inTemporaryDirectory(async (directory) => {
     const webDirectory = joinPath(directory, 'web')
     const app = testApp({
@@ -44,12 +44,10 @@ test('build returns an explicit public projection and the real presenter writes 
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
       await runWithCommandEventsForCommand(['--json'], async () => {
         const result = await build({app, project: testProject(), skipDependenciesInstallation: true})
+        expect(result).toStrictEqual(buildResult())
         presentAppBuildResult(result, true)
       })
-      expect(JSON.parse(stdout())).toStrictEqual({
-        ...emptyResult(directory),
-        webs: [{directory: webDirectory, roles: ['backend']}],
-      })
+      expect(JSON.parse(stdout())).toStrictEqual({status: 'success'})
       const diagnostics = stderr()
         .trim()
         .split('\n')
@@ -65,7 +63,7 @@ test('build returns an explicit public projection and the real presenter writes 
   })
 })
 
-test('empty apps retain named empty collections and skip dependency installation when requested', async () => {
+test('empty apps report success and skip dependency installation when requested', async () => {
   await inTemporaryDirectory(async (directory) => {
     const app = testApp({name: 'Example app', directory, webs: []})
     vi.mocked(installAppDependencies).mockClear()
@@ -74,7 +72,7 @@ test('empty apps retain named empty collections and skip dependency installation
         const result = await build({app, project: testProject(), skipDependenciesInstallation: true})
         presentAppBuildResult(result, true)
       })
-      expect(JSON.parse(stdout())).toStrictEqual(emptyResult(directory))
+      expect(JSON.parse(stdout())).toStrictEqual({status: 'success'})
       expect(stderr()).toBe('')
       expect(installAppDependencies).not.toHaveBeenCalled()
       expect(installJavy).toHaveBeenCalledWith(app)
@@ -82,7 +80,7 @@ test('empty apps retain named empty collections and skip dependency installation
   })
 })
 
-test('build projects extensions without exposing their configuration or internal IDs', async () => {
+test('build completes extensions and reports only the JSON success status', async () => {
   await inTemporaryDirectory(async (directory) => {
     const extension = await testUIExtension({directory: joinPath(directory, 'extension')})
     vi.spyOn(extension, 'build').mockImplementation(async ({stdout}) => {
@@ -94,10 +92,8 @@ test('build projects extensions without exposing their configuration or internal
         const result = await build({app, project: testProject(), skipDependenciesInstallation: true})
         presentAppBuildResult(result, true)
       })
-      expect(JSON.parse(stdout())).toStrictEqual({
-        ...emptyResult(directory),
-        extensions: [{name: extension.name, type: extension.type, directory: extension.directory}],
-      })
+      expect(JSON.parse(stdout())).toStrictEqual({status: 'success'})
+      expect(extension.build).toHaveBeenCalledOnce()
       expect(stdout()).not.toContain('configuration')
       expect(stdout()).not.toContain('devUUID')
     })
@@ -112,12 +108,10 @@ test.each([false, true])('dependency installation retains workspace policy: %s',
 })
 
 test('real text presenter preserves the build success message', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await runWithCommandEventsForCommand([], () => presentAppBuildResult(emptyResult(directory), false))
-      expect(unstyled(stderr())).toContain('Example app built!')
-      expect(stdout()).toBe('')
-    })
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await runWithCommandEventsForCommand([], () => presentAppBuildResult(buildResult(), false))
+    expect(unstyled(stderr())).toContain('Example app built!')
+    expect(stdout()).toBe('')
   })
 })
 
@@ -143,25 +137,9 @@ test('build failures retain the original error and do not print a successful res
 })
 
 test.each([
-  ['root field', (directory: string) => ({...emptyResult(directory), internal: true})],
-  [
-    'nested field',
-    (directory: string) => ({...emptyResult(directory), app: {name: 'Example app', directory, secret: 'not-public'}}),
-  ],
-  [
-    'relative directory',
-    (directory: string) => ({...emptyResult(directory), app: {name: 'Example app', directory: 'relative'}}),
-  ],
-  ['invalid role', (directory: string) => ({...emptyResult(directory), webs: [{directory, roles: ['invalid']}]})],
-  [
-    'extension extra field',
-    (directory: string) => ({
-      ...emptyResult(directory),
-      extensions: [{name: 'Extension', type: 'theme', directory, internal: true}],
-    }),
-  ],
-])('rejects %s with all other required fields valid', async (_name, invalid) => {
-  await inTemporaryDirectory(async (directory) => {
-    expect(() => appBuildJsonOutputSchema.validate(invalid(directory))).toThrow()
-  })
+  ['missing status', {}],
+  ['invalid status', {status: 'failed'}],
+  ['extra field', {status: 'success', appName: 'Example app'}],
+])('rejects %s', (_name, invalid) => {
+  expect(() => appBuildJsonOutputSchema.validate(invalid)).toThrow()
 })

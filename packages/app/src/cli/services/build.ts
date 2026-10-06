@@ -53,13 +53,7 @@ async function build(options: BuildOptions): Promise<AppBuildResult> {
 
   return {
     status: 'success',
-    app: {name: options.app.name, directory: options.app.directory},
-    webs: options.app.webs.map((web) => ({directory: web.directory, roles: web.configuration.roles})),
-    extensions: options.app.allExtensions.map((extension) => ({
-      name: extension.name,
-      type: extension.type,
-      directory: extension.directory,
-    })),
+    appName: options.app.name,
   }
 }
 

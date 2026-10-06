@@ -2,4 +2,4 @@
 '@shopify/cli': minor
 ---
 
-Add typed JSON output to app build.
+Add JSON status output to app build.

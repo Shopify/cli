@@ -16,7 +16,7 @@ vi.mock('../../services/app-context.js')
 function setup(directory: string) {
   const app = testApp({name: 'Example app', directory, webs: []})
   vi.mocked(localAppContext).mockResolvedValue({app, project: testProject(), activeConfig: {} as never})
-  vi.mocked(build).mockResolvedValue({status: 'success', app: {name: app.name, directory}, webs: [], extensions: []})
+  vi.mocked(build).mockResolvedValue({status: 'success', appName: app.name})
   return app
 }
 
@@ -39,12 +39,7 @@ test.each([{additionalFlags: []}, {additionalFlags: ['--no-input']}])(
           ['--path', directory, '--json', '--skip-dependencies-installation', ...additionalFlags],
           import.meta.url,
         )
-        expect(JSON.parse(stdout())).toStrictEqual({
-          status: 'success',
-          app: {name: 'Example app', directory},
-          webs: [],
-          extensions: [],
-        })
+        expect(JSON.parse(stdout())).toStrictEqual({status: 'success'})
       })
       expect(build).toHaveBeenCalledWith(expect.objectContaining({skipDependenciesInstallation: true}))
     })
