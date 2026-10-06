@@ -1,5 +1,5 @@
 import {themePushJsonOutputSchema} from '../push/types.js'
-import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 
 const outputSchema = defineJsonOutputSchema({
   name: 'ThemeShareResult',
@@ -7,6 +7,7 @@ const outputSchema = defineJsonOutputSchema({
   definitions: themePushJsonOutputSchema.definitions,
 })
 
-export const themeShareJsonOutputSchema = {...outputSchema, encode: themePushJsonOutputSchema.encode}
-
-export type ThemeShareResult = InferJsonOutputSchema<typeof themeShareJsonOutputSchema>
+export const themeShareJsonOutputSchema: Omit<typeof outputSchema, 'encode'> & {encode(value: unknown): string} = {
+  ...outputSchema,
+  encode: themePushJsonOutputSchema.encode,
+}
