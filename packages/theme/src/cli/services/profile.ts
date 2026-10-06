@@ -1,4 +1,4 @@
-import {themeProfileJsonOutputSchema} from './profile/types.js'
+import {themeProfileResultSchema} from './profile/types.js'
 import {render} from '../utilities/theme-environment/storefront-renderer.js'
 import {fetchDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
@@ -42,5 +42,5 @@ export async function profile(
 
   const profileJson = await response.text()
 
-  return {result: themeProfileJsonOutputSchema.validate(JSON.parse(profileJson)), source: profileJson}
+  return {result: themeProfileResultSchema.parse(JSON.parse(profileJson)), source: profileJson}
 }

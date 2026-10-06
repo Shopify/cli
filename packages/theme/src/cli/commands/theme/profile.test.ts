@@ -91,3 +91,13 @@ test.each(['profile', 'empty', 'failure', 'invalid result'])(
     })
   },
 )
+
+test('wraps requested environment results while preserving the native profile payload', () => {
+  const result = {environments: [{environment: 'development', result: profile}]}
+  expect(JSON.parse(themeProfileJsonOutputSchema.encode(result))).toEqual(result)
+  expect(() =>
+    themeProfileJsonOutputSchema.validate({
+      environments: [{environment: 'development', result: profile, unexpected: true}],
+    }),
+  ).toThrow()
+})
