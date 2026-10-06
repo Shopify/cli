@@ -677,6 +677,7 @@ export default abstract class ThemeCommand extends Command {
       await addSensitiveMetadata(() => ({
         store_fqdn: session.storeFqdn,
       }))
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
       // Telemetry must not discard completed work or emit a second final document.
       outputDebug(`Unable to record theme analytics: ${error instanceof Error ? error.message : String(error)}`)
