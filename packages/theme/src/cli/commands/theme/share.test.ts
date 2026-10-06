@@ -21,8 +21,8 @@ function result() {
       name: 'Creative Theme',
       role: 'unpublished',
       shop: session.storeFqdn,
-      editor_url: 'editor',
-      preview_url: 'preview',
+      editor_url: 'https://test.myshopify.com/admin/themes/1/editor',
+      preview_url: 'https://test.myshopify.com?preview_theme_id=1',
     },
     published: false,
     hasErrors: false,
@@ -52,7 +52,7 @@ describe('theme share', () => {
         false,
         undefined,
       )
-      expect(stdout()).toBe(`${themeShareJsonOutputSchema.encode({status: 'success', theme: result().theme})}\n`)
+      expect(stdout()).toBe(`${themeShareJsonOutputSchema.encode(result())}\n`)
       expect(stderr()).toBe('')
     })
   })
@@ -68,15 +68,14 @@ describe('theme share', () => {
     await withCapturedStandardStreams(async ({stdout}) => {
       await command.command({json: true, environment: ['staging']} as never, session, false)
 
-      expect(JSON.parse(stdout())).toEqual({
-        status: 'failed',
-        environment: 'staging',
-        theme: {
-          ...result().theme,
-          warning: "[staging] The theme 'Creative Theme' was pushed with errors",
-          errors: {'assets/theme.css': ['bad CSS']},
-        },
+      expect(JSON.parse(stdout())).toMatchObject({
+        status: 'partial',
+        changed: true,
+        theme: {id: '1'},
+        issues: [{message: 'bad CSS'}],
       })
+      expect(process.exitCode).toBe(1)
+      process.exitCode = 0
     })
   })
 
@@ -95,7 +94,7 @@ describe('theme share', () => {
     await withCapturedStandardStreams(async ({stdout}) => {
       await new Share([], new Config({root: '.'})).command({json: true} as never, session, false)
 
-      expect(stdout()).toBe('')
+      expect(JSON.parse(stdout())).toEqual({status: 'cancelled'})
     })
   })
 

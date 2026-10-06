@@ -1,4 +1,5 @@
-import {themeShareJsonOutputSchema, type ThemeShareResult} from './types.js'
+import {themeShareJsonOutputSchema} from './types.js'
+import {ThemeEnvironmentResult} from '../json-output/schema.js'
 import {themePushJsonResult, renderThemePushResult} from '../push/result.js'
 import {themePushResultSchema, type ThemePushResult} from '../push/types.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
@@ -11,11 +12,11 @@ export function renderThemeShareResult(result: ThemePushResult, format: 'text' |
   }
 }
 
-export function renderThemeShareEnvironmentResults(results: {environment: string; result: unknown}[]): void {
-  const output: ThemeShareResult = results.flatMap(({environment, result}) =>
-    result === undefined
-      ? []
-      : [{...themePushJsonResult({...themePushResultSchema.parse(result), environment}), environment}],
-  )
-  outputResult(themeShareJsonOutputSchema.encode(output))
+export function renderThemeShareEnvironmentResults(results: ThemeEnvironmentResult[]): void {
+  const environments = results.map((entry) => {
+    if ('error' in entry) return entry
+    if (themePushResultSchema.safeParse(entry.result).data?.hasErrors) process.exitCode = 1
+    return {...entry, result: entry.result ?? {status: 'skipped', reason: 'unsafe-directory'}}
+  })
+  outputResult(themeShareJsonOutputSchema.encode({environments}))
 }
