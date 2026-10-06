@@ -172,6 +172,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     // Verify the session was stored with email as alias
     const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
     expect(storedSession[fqdn]![userId]!.identity.alias).toBe('user@example.com')
+    expect(storedSession[fqdn]![userId]!.identity.email).toBe('user@example.com')
 
     // The userID is cached in memory and the secureStore is not accessed again
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
@@ -211,6 +212,7 @@ The CLI is currently unable to prompt for reauthentication.`,
           identity: {
             ...validIdentityToken,
             alias: 'user@example.com',
+            email: 'user@example.com',
           },
           applications: appTokens,
         },
@@ -687,6 +689,8 @@ describe('ensureAuthenticated email fetch functionality', () => {
     // Then
     const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
     expect(storedSession[fqdn]![userId]!.identity.alias).toBe('work@example.com')
+    expect(storedSession[fqdn]![userId]!.identity.email).toBe('work@example.com')
+    expect(businessPlatformRequest).toHaveBeenCalledTimes(1)
     expect(got).toEqual(validTokens)
   })
 
@@ -788,6 +792,48 @@ describe('ensureAuthenticated email fetch functionality', () => {
     // Then
     const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
     expect(storedSession[fqdn]![userId]!.identity.alias).toBe(userId)
+    expect(storedSession[fqdn]![userId]!.identity.email).toBeUndefined()
     expect(got).toEqual(validTokens)
+  })
+})
+
+describe('stored authentication email', () => {
+  test('preserves a separately stored email through refresh without another request', async () => {
+    const sessions: Sessions = {
+      [fqdn]: {
+        [userId]: {
+          identity: {...validIdentityToken, alias: 'Work Account', email: 'work@example.com'},
+          applications: appTokens,
+        },
+      },
+    }
+    vi.mocked(fetchSessions).mockResolvedValue(sessions)
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
+
+    await ensureAuthenticated(defaultApplications)
+
+    const stored = vi.mocked(storeSessions).mock.calls[0]![0]
+    expect(stored[fqdn]![userId]!.identity).toMatchObject({alias: 'Work Account', email: 'work@example.com'})
+    expect(businessPlatformRequest).not.toHaveBeenCalled()
+  })
+
+  test('does not copy a cached email when reauthentication selects a different user', async () => {
+    vi.mocked(fetchSessions).mockResolvedValue({
+      [fqdn]: {
+        [userId]: {
+          identity: {...validIdentityToken, alias: 'Work Account', email: 'previous@example.com'},
+          applications: appTokens,
+        },
+      },
+    })
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
+    vi.mocked(pollForDeviceAuthorization).mockResolvedValue({...validIdentityToken, userId: 'different-user'})
+
+    await ensureAuthenticated(defaultApplications)
+
+    const stored = vi.mocked(storeSessions).mock.calls[0]![0]
+    expect(stored[fqdn]!['different-user']!.identity.alias).toBe('Work Account')
+    expect(stored[fqdn]!['different-user']!.identity.email).toBeUndefined()
+    expect(businessPlatformRequest).not.toHaveBeenCalled()
   })
 })

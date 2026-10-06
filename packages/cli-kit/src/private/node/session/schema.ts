@@ -15,6 +15,7 @@ const IdentityTokenSchema = zod.object({
   scopes: zod.array(zod.string()),
   userId: zod.string(),
   alias: zod.string().optional(),
+  email: zod.string().optional(),
 })
 
 /**

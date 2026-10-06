@@ -1,6 +1,6 @@
 import Login from './login.js'
 import {authLoginJsonOutputSchema} from '../../services/commands/auth/login/types.js'
-import {promptSessionSelect} from '@shopify/cli-kit/node/session-prompt'
+import {promptSessionSelectWithDetails} from '@shopify/cli-kit/node/session-prompt'
 import * as system from '@shopify/cli-kit/node/system'
 import {launchCLI} from '@shopify/cli-kit/node/cli-launcher'
 import {ShopifyConfig} from '@shopify/cli-kit/node/custom-oclif-loader'
@@ -15,7 +15,7 @@ beforeEach(() => {
   vi.stubEnv('CI', '1')
   vi.stubEnv('SHOPIFY_CLI_NO_ANALYTICS', '1')
   vi.spyOn(ShopifyConfig.prototype, 'runHook').mockResolvedValue({successes: [], failures: []})
-  vi.mocked(promptSessionSelect).mockResolvedValue('Work account')
+  vi.mocked(promptSessionSelectWithDetails).mockResolvedValue({userId: 'user-123', alias: 'Work account', email: null})
 })
 
 afterEach(() => {
@@ -31,19 +31,41 @@ test.each(['--json', '-j'])('writes the selected alias through the real launcher
       lazyCommandLoader: async () => Login,
     })
 
-    expect(promptSessionSelect).toHaveBeenCalledExactlyOnceWith('Work account')
-    expect(stdout()).toBe(`${JSON.stringify({status: 'success', alias: 'Work account'}, null, 2)}\n`)
+    expect(promptSessionSelectWithDetails).toHaveBeenCalledExactlyOnceWith('Work account')
+    expect(stdout()).toBe(
+      `${JSON.stringify({status: 'success', userId: 'user-123', alias: 'Work account', email: null}, null, 2)}\n`,
+    )
     expect(stderr()).toBe('')
   })
 })
 
 test('uses the selected alias rather than the requested one', async () => {
-  vi.mocked(promptSessionSelect).mockResolvedValue('Other account')
+  vi.mocked(promptSessionSelectWithDetails).mockResolvedValue({userId: 'user-123', alias: 'Other account', email: null})
 
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await Login.run(['--alias', 'Missing account', '--json'], import.meta.url)
 
-    expect(JSON.parse(stdout())).toEqual({status: 'success', alias: 'Other account'})
+    expect(JSON.parse(stdout())).toEqual({status: 'success', userId: 'user-123', alias: 'Other account', email: null})
+    expect(stderr()).toBe('')
+  })
+})
+
+test('outputs the selected user ID and verified email without inferring either from the alias', async () => {
+  vi.mocked(promptSessionSelectWithDetails).mockResolvedValue({
+    userId: 'selected-user',
+    alias: 'nickname@example.com',
+    email: 'verified@example.com',
+  })
+
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await Login.run(['--alias', 'nickname@example.com', '--json'], import.meta.url)
+
+    expect(JSON.parse(stdout())).toEqual({
+      status: 'success',
+      userId: 'selected-user',
+      alias: 'nickname@example.com',
+      email: 'verified@example.com',
+    })
     expect(stderr()).toBe('')
   })
 })
@@ -55,8 +77,8 @@ test('supports JSON and alias environment flags', async () => {
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await Login.run([], import.meta.url)
 
-    expect(promptSessionSelect).toHaveBeenCalledExactlyOnceWith('Work account')
-    expect(JSON.parse(stdout())).toEqual({status: 'success', alias: 'Work account'})
+    expect(promptSessionSelectWithDetails).toHaveBeenCalledExactlyOnceWith('Work account')
+    expect(JSON.parse(stdout())).toEqual({status: 'success', userId: 'user-123', alias: 'Work account', email: null})
     expect(stderr()).toBe('')
   })
 })
@@ -67,9 +89,9 @@ test.each([false, true])('allows interactive session selection independently of 
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await Login.run(json ? ['--json'] : [], import.meta.url)
 
-    expect(promptSessionSelect).toHaveBeenCalledExactlyOnceWith(undefined)
+    expect(promptSessionSelectWithDetails).toHaveBeenCalledExactlyOnceWith(undefined)
     if (json) {
-      expect(JSON.parse(stdout())).toEqual({status: 'success', alias: 'Work account'})
+      expect(JSON.parse(stdout())).toEqual({status: 'success', userId: 'user-123', alias: 'Work account', email: null})
       expect(stderr()).toBe('')
     } else {
       expect(stdout()).toBe('')
@@ -84,9 +106,9 @@ test.each([false, true])('supports no-input with an explicit alias independently
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await Login.run(['--alias', 'Work account', '--no-input', ...(json ? ['--json'] : [])], import.meta.url)
 
-    expect(promptSessionSelect).toHaveBeenCalledExactlyOnceWith('Work account')
+    expect(promptSessionSelectWithDetails).toHaveBeenCalledExactlyOnceWith('Work account')
     if (json) {
-      expect(JSON.parse(stdout())).toEqual({status: 'success', alias: 'Work account'})
+      expect(JSON.parse(stdout())).toEqual({status: 'success', userId: 'user-123', alias: 'Work account', email: null})
       expect(stderr()).toBe('')
     } else {
       expect(stdout()).toBe('')
@@ -103,7 +125,7 @@ test.each([false, true])('requires an alias before authentication when input is 
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await Login.run(['--no-input', ...(json ? ['--json'] : [])], import.meta.url)
 
-    expect(promptSessionSelect).not.toHaveBeenCalled()
+    expect(promptSessionSelectWithDetails).not.toHaveBeenCalled()
     expect(exit).toHaveBeenCalledExactlyOnceWith(1)
     if (json) {
       expect(JSON.parse(stdout()).error).toMatchObject({type: 'abort', message: expect.stringContaining('--alias')})
@@ -133,27 +155,29 @@ test('discovers the schema without requiring an alias or starting authentication
       type: 'object',
       properties: {
         status: {type: 'string', const: 'success'},
+        userId: {type: 'string'},
         alias: {type: 'string'},
+        email: {anyOf: [{type: 'string', minLength: 1}, {type: 'null'}]},
       },
-      required: ['status', 'alias'],
+      required: ['status', 'userId', 'alias', 'email'],
       additionalProperties: false,
     })
-    expect(promptSessionSelect).not.toHaveBeenCalled()
+    expect(promptSessionSelectWithDetails).not.toHaveBeenCalled()
     expect(stderr()).toBe('')
   })
 })
 
 test('keeps authentication guidance and completion events on stderr', async () => {
-  vi.mocked(promptSessionSelect).mockImplementation(async () => {
+  vi.mocked(promptSessionSelectWithDetails).mockImplementation(async () => {
     outputInfo('To run this command, log in to Shopify.')
     outputCompleted('Logged in.')
-    return 'Work account'
+    return {userId: 'user-123', alias: 'Work account', email: null}
   })
 
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await Login.run(['--alias', 'Work account', '--json'], import.meta.url)
 
-    expect(JSON.parse(stdout())).toEqual({status: 'success', alias: 'Work account'})
+    expect(JSON.parse(stdout())).toEqual({status: 'success', userId: 'user-123', alias: 'Work account', email: null})
     const events = stderr()
       .trim()
       .split('\n')
@@ -168,7 +192,7 @@ test('keeps authentication guidance and completion events on stderr', async () =
 test('writes only the fatal error after authentication fails', async () => {
   vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
   const exit = vi.spyOn(process, 'exit').mockReturnValue(undefined as never)
-  vi.mocked(promptSessionSelect).mockRejectedValue(new AbortError('Authentication failed.'))
+  vi.mocked(promptSessionSelectWithDetails).mockRejectedValue(new AbortError('Authentication failed.'))
 
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await Login.run(['--alias', 'Work account', '--json'], import.meta.url)
@@ -180,10 +204,37 @@ test('writes only the fatal error after authentication fails', async () => {
 })
 
 test.each([
-  {status: 'failed', alias: 'Work account'},
-  {status: 'success', alias: 1},
-  {status: 'success'},
-  {status: 'success', alias: 'Work account', accessToken: 'secret'},
-])('rejects an invalid result %j', (value) => {
+  {status: 'failed', userId: 'user-123', alias: 'Work account', email: null},
+  {status: 'success', userId: 123, alias: 'Work account', email: null},
+  {status: 'success', userId: 'user-123', alias: 1, email: null},
+  {status: 'success', userId: 'user-123', alias: 'Work account', email: 1},
+  {status: 'success', userId: 'user-123', alias: 'Work account', email: ''},
+  {status: 'success', userId: 'user-123', alias: 'Work account'},
+  {status: 'success', userId: 'user-123', alias: 'Work account', email: null, accessToken: 'secret'},
+])('rejects an invalid account result %j', (value) => {
   expect(() => Login.jsonOutputSchema.validate(value)).toThrow()
+})
+
+test('outputs only public account details from the selected session', async () => {
+  const account = {
+    userId: 'user-123',
+    alias: 'Work account',
+    email: 'verified@example.com',
+    accessToken: 'private-access-token',
+    refreshToken: 'private-refresh-token',
+  }
+  vi.mocked(promptSessionSelectWithDetails).mockResolvedValue(account)
+
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await Login.run(['--alias', 'Work account', '--json'], import.meta.url)
+
+    expect(JSON.parse(stdout())).toEqual({
+      status: 'success',
+      userId: 'user-123',
+      alias: 'Work account',
+      email: 'verified@example.com',
+    })
+    expect(stdout()).not.toContain('private-')
+    expect(stderr()).toBe('')
+  })
 })

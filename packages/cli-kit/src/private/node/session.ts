@@ -237,7 +237,7 @@ ${outputToken.json(applications)}
   if (validationResult === 'needs_full_auth') {
     await throwOnNoPrompt(noPrompt)
     outputDebug(outputContent`Initiating the full authentication flow...`)
-    newSession = await executeCompleteFlow(applications, currentSession?.identity.alias)
+    newSession = await executeCompleteFlow(applications, currentSession?.identity)
   } else if (validationResult === 'needs_refresh' || forceRefresh) {
     outputDebug(outputContent`The current session is valid but needs refresh. Refreshing...`)
     try {
@@ -245,7 +245,7 @@ ${outputToken.json(applications)}
     } catch (error) {
       if (error instanceof InvalidGrantError) {
         await throwOnNoPrompt(noPrompt)
-        newSession = await executeCompleteFlow(applications, currentSession?.identity.alias)
+        newSession = await executeCompleteFlow(applications, currentSession?.identity)
       } else if (error instanceof InvalidRequestError) {
         await sessionStore.remove()
         throw new AbortError('\nError validating auth session', "We've cleared the current session, please try again")
@@ -255,8 +255,15 @@ ${outputToken.json(applications)}
     }
   }
 
-  const completeSession = {...currentSession, ...newSession} as Session
-  const newSessionId = completeSession.identity.userId
+  const mergedSession = {...currentSession, ...newSession} as Session
+  const newSessionId = mergedSession.identity.userId
+  const completeSession: Session = {
+    ...mergedSession,
+    identity: {
+      ...mergedSession.identity,
+      email: mergedSession.identity.email ?? sessions[fqdn]?.[newSessionId]?.identity.email,
+    },
+  }
   const updatedSessions: Sessions = {
     ...sessions,
     [fqdn]: {...sessions[fqdn], [newSessionId]: completeSession},
@@ -295,9 +302,12 @@ The CLI is currently unable to prompt for reauthentication.`,
  * Execute the full authentication flow.
  *
  * @param applications - An object containing the applications we need to be authenticated with.
- * @param existingAlias - Optional alias from a previous session to preserve if the email fetch fails.
+ * @param existingIdentity - Optional identity from the previous session.
  */
-async function executeCompleteFlow(applications: OAuthApplications, existingAlias?: string): Promise<Session> {
+async function executeCompleteFlow(
+  applications: OAuthApplications,
+  existingIdentity?: IdentityToken,
+): Promise<Session> {
   const scopes = getFlattenScopes(applications)
   const exchangeScopes = getExchangeScopes(applications)
   const store = applications.adminApi?.storeFqdn
@@ -320,14 +330,19 @@ async function executeCompleteFlow(applications: OAuthApplications, existingAlia
   outputDebug(outputContent`CLI token received. Exchanging it for application tokens...`)
   const result = await exchangeAccessForApplicationTokens(identityToken, exchangeScopes, store)
 
-  // Preserve existing alias if available, otherwise try fetching email
+  // Preserve existing alias if available, otherwise try fetching email.
   const businessPlatformToken = result[applicationId('business-platform')]?.accessToken
-  const alias = existingAlias ?? (await fetchEmail(businessPlatformToken)) ?? identityToken.userId
+  const existingAlias = existingIdentity?.alias
+  // A cached email belongs to its user ID, even when reauthentication selects another account.
+  const existingEmail = existingIdentity?.userId === identityToken.userId ? existingIdentity.email : undefined
+  const email = existingAlias === undefined ? await fetchEmail(businessPlatformToken) : existingEmail
+  const alias = existingAlias ?? email ?? identityToken.userId
 
   const session: Session = {
     identity: {
       ...identityToken,
       alias,
+      email,
     },
     applications: result,
   }
@@ -354,7 +369,11 @@ async function refreshTokens(session: Session, applications: OAuthApplications):
   )
 
   return {
-    identity: {...identityToken, alias: session.identity.alias},
+    identity: {
+      ...identityToken,
+      alias: session.identity.alias,
+      email: identityToken.userId === session.identity.userId ? session.identity.email : undefined,
+    },
     applications: applicationTokens,
   }
 }

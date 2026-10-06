@@ -4102,13 +4102,31 @@ DESCRIPTION
         "type": "string",
         "const": "success"
       },
+      "userId": {
+        "type": "string",
+        "description": "The identity provider user ID of the selected Shopify account."
+      },
       "alias": {
         "type": "string"
+      },
+      "email": {
+        "anyOf": [
+          {
+            "type": "string",
+            "minLength": 1
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "The email returned by authentication, or null when it is not stored."
       }
     },
     "required": [
       "status",
-      "alias"
+      "userId",
+      "alias",
+      "email"
     ],
     "additionalProperties": false,
     "title": "AuthLoginResult",

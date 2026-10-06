@@ -1,4 +1,4 @@
-import {promptSessionSelect} from './session-prompt.js'
+import {promptSessionSelect, promptSessionSelectWithDetails} from './session-prompt.js'
 import {renderSelectPrompt, renderTextPrompt} from './ui.js'
 import {ensureAuthenticatedUser} from './session.js'
 import {identityFqdn} from './context/fqdn.js'
@@ -44,8 +44,8 @@ describe('promptSessionSelect', () => {
   beforeEach(() => {
     vi.mocked(identityFqdn).mockResolvedValue('identity.fqdn.com')
     vi.mocked(ensureAuthenticatedUser).mockResolvedValue({userId: 'new-user-id'})
-    vi.mocked(sessionStore.getSessionAlias).mockResolvedValue('new-alias')
-    vi.mocked(sessionStore.findSessionByAlias).mockResolvedValue(undefined)
+    vi.mocked(sessionStore.getSessionAccount).mockResolvedValue({userId: 'new-user-id', alias: 'new-alias'})
+    vi.mocked(sessionStore.findSessionAccountByAlias).mockResolvedValue(undefined)
   })
 
   test('prompts user to create new session when no existing sessions', async () => {
@@ -58,14 +58,14 @@ describe('promptSessionSelect', () => {
     // Then
     expect(renderSelectPrompt).not.toHaveBeenCalled()
     expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true})
-    expect(sessionStore.getSessionAlias).toHaveBeenCalledWith('new-user-id')
+    expect(sessionStore.getSessionAccount).toHaveBeenCalledWith('new-user-id')
     expect(result).toEqual('new-alias')
   })
 
   test('prompts for alias when no alias is stored', async () => {
     // Given
     vi.mocked(sessionStore.fetch).mockResolvedValue(undefined)
-    vi.mocked(sessionStore.getSessionAlias).mockResolvedValue(undefined)
+    vi.mocked(sessionStore.getSessionAccount).mockResolvedValue(undefined)
     vi.mocked(renderTextPrompt).mockResolvedValue('typed-alias')
 
     // When
@@ -80,7 +80,7 @@ describe('promptSessionSelect', () => {
   test('prompts user to create new session with alias when no existing sessions', async () => {
     // Given
     vi.mocked(sessionStore.fetch).mockResolvedValue(undefined)
-    vi.mocked(sessionStore.getSessionAlias).mockResolvedValue('custom-alias')
+    vi.mocked(sessionStore.getSessionAccount).mockResolvedValue({userId: 'new-user-id', alias: 'custom-alias'})
 
     // When
     const result = await promptSessionSelect('my-alias')
@@ -88,7 +88,7 @@ describe('promptSessionSelect', () => {
     // Then
     expect(renderSelectPrompt).not.toHaveBeenCalled()
     expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true})
-    expect(sessionStore.getSessionAlias).toHaveBeenCalledWith('new-user-id')
+    expect(sessionStore.getSessionAccount).toHaveBeenCalledWith('new-user-id')
     expect(result).toEqual('custom-alias')
   })
 
@@ -160,7 +160,7 @@ describe('promptSessionSelect', () => {
 
     // Then
     expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true})
-    expect(sessionStore.getSessionAlias).toHaveBeenCalledWith('new-user-id')
+    expect(sessionStore.getSessionAccount).toHaveBeenCalledWith('new-user-id')
     expect(result).toEqual('new-alias')
   })
 
@@ -168,14 +168,14 @@ describe('promptSessionSelect', () => {
     // Given
     vi.mocked(sessionStore.fetch).mockResolvedValue(mockSessions)
     vi.mocked(renderSelectPrompt).mockResolvedValue('NEW_LOGIN')
-    vi.mocked(sessionStore.getSessionAlias).mockResolvedValue('custom-alias')
+    vi.mocked(sessionStore.getSessionAccount).mockResolvedValue({userId: 'new-user-id', alias: 'custom-alias'})
 
     // When
     const result = await promptSessionSelect('work-alias')
 
     // Then
     expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true})
-    expect(sessionStore.getSessionAlias).toHaveBeenCalledWith('new-user-id')
+    expect(sessionStore.getSessionAccount).toHaveBeenCalledWith('new-user-id')
     expect(result).toEqual('custom-alias')
   })
 
@@ -183,7 +183,7 @@ describe('promptSessionSelect', () => {
     // Given
     vi.mocked(sessionStore.fetch).mockResolvedValue(mockSessions)
     vi.mocked(renderSelectPrompt).mockResolvedValue('NEW_LOGIN')
-    vi.mocked(sessionStore.getSessionAlias).mockResolvedValue(undefined)
+    vi.mocked(sessionStore.getSessionAccount).mockResolvedValue(undefined)
     vi.mocked(renderTextPrompt).mockResolvedValue('my-work-account')
 
     // When
@@ -214,13 +214,13 @@ describe('promptSessionSelect', () => {
   test('switches to existing session when alias is provided and found', async () => {
     // Given
     vi.mocked(sessionStore.fetch).mockResolvedValue(mockSessions)
-    vi.mocked(sessionStore.findSessionByAlias).mockResolvedValue('user1')
+    vi.mocked(sessionStore.findSessionAccountByAlias).mockResolvedValue({userId: 'user1', alias: 'Work Account'})
 
     // When
     const result = await promptSessionSelect('Work Account')
 
     // Then
-    expect(sessionStore.findSessionByAlias).toHaveBeenCalledWith('Work Account')
+    expect(sessionStore.findSessionAccountByAlias).toHaveBeenCalledWith('Work Account')
     expect(setCurrentSessionId).toHaveBeenCalledWith('user1')
     expect(renderSelectPrompt).not.toHaveBeenCalled()
     expect(ensureAuthenticatedUser).not.toHaveBeenCalled()
@@ -230,16 +230,133 @@ describe('promptSessionSelect', () => {
   test('shows session selection when alias is not found', async () => {
     // Given
     vi.mocked(sessionStore.fetch).mockResolvedValue(mockSessions)
-    vi.mocked(sessionStore.findSessionByAlias).mockResolvedValue(undefined)
+    vi.mocked(sessionStore.findSessionAccountByAlias).mockResolvedValue(undefined)
     vi.mocked(renderSelectPrompt).mockResolvedValue('user2')
 
     // When
     const result = await promptSessionSelect('Non-existent Alias')
 
     // Then
-    expect(sessionStore.findSessionByAlias).toHaveBeenCalledWith('Non-existent Alias')
+    expect(sessionStore.findSessionAccountByAlias).toHaveBeenCalledWith('Non-existent Alias')
     expect(renderSelectPrompt).toHaveBeenCalled()
     expect(setCurrentSessionId).toHaveBeenCalledWith('user2')
     expect(result).toEqual('user2')
+  })
+})
+
+describe('promptSessionSelectWithDetails', () => {
+  beforeEach(() => {
+    vi.mocked(identityFqdn).mockResolvedValue('identity.fqdn.com')
+  })
+
+  test('returns the new account ID and stored email without credentials', async () => {
+    vi.mocked(sessionStore.fetch).mockResolvedValue(undefined)
+    vi.mocked(ensureAuthenticatedUser).mockResolvedValue({userId: 'new-user-id'})
+    vi.mocked(sessionStore.getSessionAccount).mockResolvedValue({
+      userId: 'new-user-id',
+      alias: 'Work Account',
+      email: 'new@example.com',
+    })
+
+    await expect(promptSessionSelectWithDetails()).resolves.toEqual({
+      userId: 'new-user-id',
+      alias: 'Work Account',
+      email: 'new@example.com',
+    })
+    expect(sessionStore.getSessionAccount).toHaveBeenCalledWith('new-user-id')
+  })
+
+  test('returns null for an email-looking legacy alias without a stored email', async () => {
+    vi.mocked(sessionStore.findSessionAccountByAlias).mockResolvedValue({userId: 'user1', alias: 'legacy@example.com'})
+
+    await expect(promptSessionSelectWithDetails('legacy@example.com')).resolves.toEqual({
+      userId: 'user1',
+      alias: 'legacy@example.com',
+      email: null,
+    })
+    expect(ensureAuthenticatedUser).not.toHaveBeenCalled()
+  })
+
+  test('returns null when the stored email is empty', async () => {
+    vi.mocked(sessionStore.findSessionAccountByAlias).mockResolvedValue({
+      userId: 'user1',
+      alias: 'Work Account',
+      email: '',
+    })
+
+    await expect(promptSessionSelectWithDetails('Work Account')).resolves.toEqual({
+      userId: 'user1',
+      alias: 'Work Account',
+      email: null,
+    })
+  })
+
+  test('keeps user-ID selection compatible while returning its verified email', async () => {
+    vi.mocked(sessionStore.findSessionAccountByAlias).mockResolvedValue({
+      userId: 'user1',
+      alias: 'Work Account',
+      email: 'work@example.com',
+    })
+
+    await expect(promptSessionSelectWithDetails('user1')).resolves.toEqual({
+      userId: 'user1',
+      alias: 'user1',
+      email: 'work@example.com',
+    })
+    expect(setCurrentSessionId).toHaveBeenCalledWith('user1')
+  })
+
+  test('returns the selected account when aliases are duplicated', async () => {
+    const sessions: Sessions = {
+      'identity.fqdn.com': {
+        user1: {
+          ...mockSessions['identity.fqdn.com']!.user1!,
+          identity: {
+            ...mockSessions['identity.fqdn.com']!.user1!.identity,
+            alias: 'Shared',
+            email: 'first@example.com',
+          },
+        },
+        user2: {
+          ...mockSessions['identity.fqdn.com']!.user2!,
+          identity: {
+            ...mockSessions['identity.fqdn.com']!.user2!.identity,
+            alias: 'Shared',
+            email: 'second@example.com',
+          },
+        },
+      },
+    }
+    vi.mocked(sessionStore.fetch).mockResolvedValue(sessions)
+    vi.mocked(renderSelectPrompt).mockResolvedValue('user2')
+
+    await expect(promptSessionSelectWithDetails()).resolves.toEqual({
+      userId: 'user2',
+      alias: 'Shared',
+      email: 'second@example.com',
+    })
+    expect(renderSelectPrompt).toHaveBeenCalledWith({
+      message: 'Which account would you like to use?',
+      choices: [
+        {label: 'Shared', value: 'user1'},
+        {label: 'Shared', value: 'user2'},
+        {label: 'Log in with a different account', value: 'NEW_LOGIN'},
+      ],
+    })
+    expect(setCurrentSessionId).toHaveBeenCalledWith('user2')
+  })
+
+  test('returns the typed alias and null email when a new account has no stored details', async () => {
+    vi.mocked(sessionStore.fetch).mockResolvedValue(undefined)
+    vi.mocked(ensureAuthenticatedUser).mockResolvedValue({userId: 'new-user-id'})
+    vi.mocked(sessionStore.getSessionAccount).mockResolvedValue(undefined)
+    vi.mocked(renderTextPrompt).mockResolvedValue('New account')
+
+    await expect(promptSessionSelectWithDetails()).resolves.toEqual({
+      userId: 'new-user-id',
+      alias: 'New account',
+      email: null,
+    })
+    expect(sessionStore.setSessionAlias).toHaveBeenCalledWith('new-user-id', 'New account')
   })
 })

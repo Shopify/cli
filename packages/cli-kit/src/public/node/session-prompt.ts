@@ -10,6 +10,21 @@ const NEW_LOGIN_VALUE = 'NEW_LOGIN'
 interface SessionChoice {
   label: string
   value: string
+  account?: SelectedSession
+}
+
+/** Public account details for a selected Shopify identity session. */
+export interface SelectedSession {
+  /** The identity provider user ID. */
+  userId: string
+  /** The alias or display label used to select the account. */
+  alias: string
+  /** The email returned by authentication, or null when it is not stored. */
+  email: string | null
+}
+
+function emailOrNull(email?: string): string | null {
+  return email === '' ? null : (email ?? null)
 }
 
 /**
@@ -28,6 +43,7 @@ function buildSessionChoices(sessions: Sessions, fqdn: string): SessionChoice[] 
       choices.push({
         label: session.identity.alias ?? userId,
         value: userId,
+        account: {userId, alias: session.identity.alias ?? userId, email: emailOrNull(session.identity.email)},
       })
     }
   }
@@ -39,21 +55,22 @@ function buildSessionChoices(sessions: Sessions, fqdn: string): SessionChoice[] 
  * Handles the new login flow.
  * If no alias is stored (email couldn't be fetched), prompts the user for a friendly alias.
  *
- * @returns The alias of the authenticated user.
+ * @returns The details of the authenticated user.
  */
-async function handleNewLogin(): Promise<string> {
+async function handleNewLogin(): Promise<SelectedSession> {
   const result = await ensureAuthenticatedUser({}, {forceNewSession: true})
-  const alias = await sessionStore.getSessionAlias(result.userId)
+  const account = await sessionStore.getSessionAccount(result.userId)
+  const alias = account?.alias
 
   if (!alias) {
     const userAlias = await renderTextPrompt({
       message: 'Enter an alias for this account (e.g. your email or a nickname)',
     })
     await sessionStore.setSessionAlias(result.userId, userAlias)
-    return userAlias
+    return {userId: result.userId, alias: userAlias, email: emailOrNull(account?.email)}
   }
 
-  return alias
+  return {userId: result.userId, alias, email: emailOrNull(account?.email)}
 }
 
 /**
@@ -90,11 +107,21 @@ async function getAllChoices(): Promise<SessionChoice[]> {
  * @returns Promise with the alias of the chosen session.
  */
 export async function promptSessionSelect(alias?: string): Promise<string> {
+  return (await promptSessionSelectWithDetails(alias)).alias
+}
+
+/**
+ * Selects an existing session or authenticates a new account and returns its public details.
+ *
+ * @param alias - Optional alias or user ID of an account to select.
+ * @returns The selected user ID, display alias, and stored email without credentials.
+ */
+export async function promptSessionSelectWithDetails(alias?: string): Promise<SelectedSession> {
   if (alias) {
-    const userId = await sessionStore.findSessionByAlias(alias)
-    if (userId) {
-      setCurrentSessionId(userId)
-      return alias
+    const account = await sessionStore.findSessionAccountByAlias(alias)
+    if (account) {
+      setCurrentSessionId(account.userId)
+      return {userId: account.userId, alias, email: emailOrNull(account.email)}
     }
   }
 
@@ -103,7 +130,10 @@ export async function promptSessionSelect(alias?: string): Promise<string> {
 
   if (choices.length > 0) {
     const message = 'Which account would you like to use?'
-    selectedValue = await renderSelectPrompt({message, choices})
+    selectedValue = await renderSelectPrompt({
+      message,
+      choices: choices.map(({label, value}) => ({label, value})),
+    })
   }
 
   if (selectedValue === NEW_LOGIN_VALUE) {
@@ -111,5 +141,11 @@ export async function promptSessionSelect(alias?: string): Promise<string> {
   }
 
   setCurrentSessionId(selectedValue)
-  return choices.find((choice) => choice.value === selectedValue)?.label ?? selectedValue
+  return (
+    choices.find((choice) => choice.value === selectedValue)?.account ?? {
+      userId: selectedValue,
+      alias: selectedValue,
+      email: null,
+    }
+  )
 }

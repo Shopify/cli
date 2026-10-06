@@ -1,7 +1,9 @@
 import {SessionsSchema} from './schema.js'
 import {getSessions, removeCurrentSessionId, removeSessions, setSessions} from '../conf-store.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
-import type {Session, Sessions} from './schema.js'
+import type {IdentityToken, Session, Sessions} from './schema.js'
+
+type SessionAccount = Pick<IdentityToken, 'userId' | 'alias' | 'email'>
 
 /**
  * Serializes the session as a JSON and stores it in the system.
@@ -51,18 +53,19 @@ export async function remove() {
 }
 
 /**
- * Gets the session alias for a given user ID.
+ * Gets public account details for a stored user ID.
  *
- * @param userId - The user ID of the session to get the alias for.
- * @returns The alias for the session if it exists, otherwise undefined.
+ * @param userId - The stored user ID whose account details are requested.
+ * @returns The account details if the session exists, otherwise undefined.
  */
-export async function getSessionAlias(userId: string): Promise<string | undefined> {
+export async function getSessionAccount(userId: string): Promise<SessionAccount | undefined> {
   const sessions = await fetch()
   if (!sessions) return undefined
 
   const fqdn = await identityFqdn()
-  if (!sessions[fqdn] || !sessions[fqdn][userId]) return undefined
-  return sessions[fqdn][userId].identity.alias
+  const session = sessions[fqdn]?.[userId]
+  if (!session) return undefined
+  return {userId, alias: session.identity.alias, email: session.identity.email}
 }
 
 /**
@@ -90,6 +93,10 @@ export async function setSessionAlias(userId: string, alias: string): Promise<vo
  * @returns The user ID if found, otherwise undefined
  */
 export async function findSessionByAlias(alias: string): Promise<string | undefined> {
+  return (await findSessionAccountByAlias(alias))?.userId
+}
+
+export async function findSessionAccountByAlias(alias: string): Promise<SessionAccount | undefined> {
   const sessions = await fetch()
   if (!sessions) return undefined
 
@@ -99,7 +106,7 @@ export async function findSessionByAlias(alias: string): Promise<string | undefi
 
   for (const [userId, session] of Object.entries(fqdnSessions)) {
     if (session.identity.alias === alias || userId === alias) {
-      return userId
+      return {userId, alias: session.identity.alias, email: session.identity.email}
     }
   }
 

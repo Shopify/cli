@@ -1,6 +1,6 @@
 import {authLoginJsonOutputSchema} from '../../services/commands/auth/login/types.js'
 import Command from '@shopify/cli-kit/node/base-command'
-import {promptSessionSelect} from '@shopify/cli-kit/node/session-prompt'
+import {promptSessionSelectWithDetails} from '@shopify/cli-kit/node/session-prompt'
 import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {outputCompleted, outputResult} from '@shopify/cli-kit/node/output'
@@ -27,11 +27,18 @@ export default class Login extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Login)
-    const result = await promptSessionSelect(flags.alias)
+    const result = await promptSessionSelectWithDetails(flags.alias)
     if (flags.json) {
-      outputResult(authLoginJsonOutputSchema.encode({status: 'success', alias: result}))
+      outputResult(
+        authLoginJsonOutputSchema.encode({
+          status: 'success',
+          userId: result.userId,
+          alias: result.alias,
+          email: result.email,
+        }),
+      )
     } else {
-      outputCompleted(`Current account: ${result}.`)
+      outputCompleted(`Current account: ${result.alias}.`)
     }
   }
 }

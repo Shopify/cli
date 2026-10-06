@@ -1,6 +1,6 @@
 import Login from './login.js'
 import {describe, expect, vi, test} from 'vitest'
-import {promptSessionSelect} from '@shopify/cli-kit/node/session-prompt'
+import {promptSessionSelectWithDetails} from '@shopify/cli-kit/node/session-prompt'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 
@@ -12,13 +12,17 @@ describe('Login command', () => {
     // Given
     const outputMock = mockAndCaptureOutput()
     vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
-    vi.mocked(promptSessionSelect).mockResolvedValue('test-account')
+    vi.mocked(promptSessionSelectWithDetails).mockResolvedValue({
+      userId: 'user-123',
+      alias: 'test-account',
+      email: null,
+    })
 
     // When
     await Login.run([])
 
     // Then
-    expect(promptSessionSelect).toHaveBeenCalledWith(undefined)
+    expect(promptSessionSelectWithDetails).toHaveBeenCalledWith(undefined)
     expect(outputMock.output()).toMatch('Current account: test-account.')
   })
 
@@ -26,13 +30,17 @@ describe('Login command', () => {
     // Given
     const outputMock = mockAndCaptureOutput()
     vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
-    vi.mocked(promptSessionSelect).mockResolvedValue('test-account')
+    vi.mocked(promptSessionSelectWithDetails).mockResolvedValue({
+      userId: 'user-123',
+      alias: 'test-account',
+      email: null,
+    })
 
     // When
     await Login.run(['--alias', 'my-work-account'])
 
     // Then
-    expect(promptSessionSelect).toHaveBeenCalledWith('my-work-account')
+    expect(promptSessionSelectWithDetails).toHaveBeenCalledWith('my-work-account')
     expect(outputMock.output()).toMatch('Current account: test-account.')
   })
 
