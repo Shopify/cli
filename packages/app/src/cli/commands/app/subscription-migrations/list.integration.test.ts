@@ -1,4 +1,5 @@
 import List from './list.js'
+import {projectMigratableSubscription} from '../../../services/subscription-migrations/result-codec.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {MigrationListProtocolError} from '../../../services/subscription-migrations/list-migratable-subscriptions.js'
@@ -273,8 +274,10 @@ describe('subscription migration list command output integration', () => {
     expect(jsonWrite).toBeGreaterThan(lastPageRequest)
 
     const output = stdoutWrites()[0]!
-    expect(output).toBe(JSON.stringify({subscriptions: [...pageOne, ...pageTwo]}, null, 2))
-    expect(JSON.parse(output)).toEqual({subscriptions: [...pageOne, ...pageTwo]})
+    expect(output).toBe(
+      JSON.stringify({subscriptions: [...pageOne, ...pageTwo].map(projectMigratableSubscription)}, null, 2),
+    )
+    expect(JSON.parse(output)).toEqual({subscriptions: [...pageOne, ...pageTwo].map(projectMigratableSubscription)})
   })
 
   test('writes an empty JSON document when there are no subscriptions', async () => {

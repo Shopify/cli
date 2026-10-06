@@ -1,5 +1,5 @@
 import {JsonAbortErrorSchema, JsonErrorSchema} from '@shopify/cli-kit/node/error/schema'
-import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 import type {MigrationOperation} from '../../models/subscription-migrations.js'
 import type {MigrationUserError} from './partners-api.js'
@@ -81,38 +81,53 @@ export type MigrationCancellationOutcome =
   | {status: 'failed'; operationId: string; operation: MigrationOperation | null; userErrors: MigrationUserError[]}
   | {status: 'failed'; operationId: string; operation: null; error: unknown}
 
-const MigratableSubscriptionPriceSchema = zod.object({
-  amount: zod.string(),
-  currencyCode: zod.string(),
-})
+const UtcInstantSchema = zod
+  .string()
+  .datetime()
+  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/)
+const CalendarDateSchema = zod.string().date()
 
-const MigratableSubscriptionNotificationSchema = zod.object({
-  kind: zod.string().describe('Known values: NONE, OPT_OUT, WHEN_REQUIRED.'),
-  optOutDeadline: zod.string().nullable(),
-  sentAt: zod.string().nullable(),
-})
+const MigratableSubscriptionPriceSchema = zod
+  .object({
+    amount: zod.string().regex(/^-?\d+(?:\.\d+)?$/),
+    currencyCode: zod.string().regex(/^[A-Z]{3}$/),
+  })
+  .strict()
 
-// Server-provided values are typed as strings (with the known values documented) instead of enums, so a new
-// server-side value never makes `--json` output fail validation. Compatibility with the `MigratableSubscription`
-// model is enforced where `serializeMigrationListJson` passes the model into this schema's `encode`.
-const MigratableSubscriptionSchema = zod.object({
-  shopId: zod.string(),
-  status: zod.string().describe('Known values: UNSCHEDULED, SCHEDULED, MIGRATED.'),
-  manualSubscriptionName: zod.string().nullable(),
-  manualSubscriptionPrice: MigratableSubscriptionPriceSchema.nullable(),
-  manualSubscriptionInterval: zod.string().describe('Known values: EVERY_30_DAYS, ANNUAL.'),
-  targetPlanHandle: zod.string().nullable(),
-  notification: MigratableSubscriptionNotificationSchema.nullable(),
-  priceBehavior: zod.string().nullable().describe('Known values: HONOR_BILLING_PRICE, PLAN_PRICE.'),
-  effectiveDate: zod.string().nullable(),
-  lastFailureReason: zod.string().nullable().describe('Known values: SUPERSEDED, SCHEDULING_FAILED.'),
-})
+const MigratableSubscriptionNotificationSchema = zod
+  .object({
+    kind: zod.string().describe('Known values: NONE, OPT_OUT, WHEN_REQUIRED.'),
+    optOutDeadline: UtcInstantSchema.nullable(),
+    sentAt: UtcInstantSchema.nullable(),
+  })
+  .strict()
+
+const MigratableSubscriptionSchema = zod
+  .object({
+    shopGid: ShopGidSchema,
+    status: zod.string().describe('Known values: UNSCHEDULED, SCHEDULED, MIGRATED.'),
+    manualSubscriptionName: zod.string().nullable(),
+    manualSubscriptionPrice: MigratableSubscriptionPriceSchema.nullable(),
+    manualSubscriptionInterval: zod.string().describe('Known values: EVERY_30_DAYS, ANNUAL.'),
+    targetPlanHandle: zod.string().nullable(),
+    notification: MigratableSubscriptionNotificationSchema.nullable(),
+    priceBehavior: zod.string().nullable().describe('Known values: HONOR_BILLING_PRICE, PLAN_PRICE.'),
+    effectiveDate: zod
+      .union([CalendarDateSchema, UtcInstantSchema])
+      .nullable()
+      .describe('The upstream calendar date or whole-second UTC instant; date-only values retain their format.'),
+    lastFailureReason: zod.string().nullable().describe('Known values: SUPERSEDED, SCHEDULING_FAILED.'),
+  })
+  .strict()
+  .describe('All subscription projection fields are present; unavailable values are null.')
 
 export const migrationListJsonOutputSchema = defineJsonOutputSchema({
   name: 'MigrationListResult',
-  schema: zod.object({
-    subscriptions: zod.array(MigratableSubscriptionSchema),
-  }),
+  schema: zod
+    .object({
+      subscriptions: zod.array(MigratableSubscriptionSchema).describe('The complete list across every fetched page.'),
+    })
+    .strict(),
   definitions: {
     MigratableSubscription: MigratableSubscriptionSchema,
     MigratableSubscriptionPrice: MigratableSubscriptionPriceSchema,

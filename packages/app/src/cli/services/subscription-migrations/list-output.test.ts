@@ -1,3 +1,4 @@
+import {projectMigratableSubscription} from './result-codec.js'
 import {migrationListJsonOutputSchema} from './types.js'
 import {outputMigrationList, serializeMigrationListCsv, serializeMigrationListJson} from './list-output.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
@@ -22,7 +23,7 @@ const CSV_HEADER =
   'shop_id,status,manual_subscription_name,manual_subscription_price_amount,manual_subscription_price_currency_code,manual_subscription_interval,target_plan_handle,notification_kind,notification_opt_out_deadline,notification_sent_at,price_behavior,effective_date,last_failure_reason'
 
 const CSV_ROW =
-  'gid://shopify/Shop/1,SCHEDULED,Legacy plan,19.99,USD,EVERY_30_DAYS,standard,NONE,2026-04-01T00:00:00Z,2026-03-01T00:00:00Z,HONOR_BILLING_PRICE,2026-05-01T00:00:00Z,SCHEDULING_FAILED'
+  'gid://shopify/Shop/1,SCHEDULED,Legacy plan,19.99,USD,EVERY_30_DAYS,standard,NONE,2026-04-01T00:00:00Z,2026-03-01T00:00:00Z,HONOR_BILLING_PRICE,2026-05-01,SCHEDULING_FAILED'
 
 function subscription(overrides: Partial<MigratableSubscription> = {}): MigratableSubscription {
   return {
@@ -38,7 +39,7 @@ function subscription(overrides: Partial<MigratableSubscription> = {}): Migratab
       sentAt: '2026-03-01T00:00:00Z',
     },
     priceBehavior: 'HONOR_BILLING_PRICE',
-    effectiveDate: '2026-05-01T00:00:00Z',
+    effectiveDate: '2026-05-01',
     lastFailureReason: 'SCHEDULING_FAILED',
     ...overrides,
   }
@@ -84,7 +85,7 @@ describe('migration list serialization', () => {
     const expected = `{
   "subscriptions": [
     {
-      "shopId": "gid://shopify/Shop/1",
+      "shopGid": "gid://shopify/Shop/1",
       "status": "SCHEDULED",
       "manualSubscriptionName": "Legacy plan",
       "manualSubscriptionPrice": {
@@ -99,7 +100,7 @@ describe('migration list serialization', () => {
         "sentAt": "2026-03-01T00:00:00Z"
       },
       "priceBehavior": "HONOR_BILLING_PRICE",
-      "effectiveDate": "2026-05-01T00:00:00Z",
+      "effectiveDate": "2026-05-01",
       "lastFailureReason": "SCHEDULING_FAILED"
     }
   ]
@@ -107,6 +108,27 @@ describe('migration list serialization', () => {
 
     expect(serializeMigrationListJson(subscriptions)).toBe(expected)
     expect(serializeMigrationListJson(subscriptions)).not.toMatch(/\n$/)
+  })
+
+  test('normalizes fractional instants and offsets while preserving calendar dates', () => {
+    const value = subscription({
+      notification: {kind: 'NONE', sentAt: '2026-03-01T01:00:00.999+01:00', optOutDeadline: null},
+      effectiveDate: '2026-05-01',
+    })
+    expect(JSON.parse(serializeMigrationListJson([value])).subscriptions[0]).toMatchObject({
+      effectiveDate: '2026-05-01',
+      notification: {sentAt: '2026-03-01T00:00:00Z', optOutDeadline: null},
+    })
+    expect(() =>
+      migrationListJsonOutputSchema.validate({
+        subscriptions: [
+          {
+            ...projectMigratableSubscription(value),
+            notification: {kind: 'NONE', sentAt: '2026-03-01T00:00:00.999Z', optOutDeadline: null},
+          },
+        ],
+      }),
+    ).toThrow()
   })
 
   test('serializes CSV fields in the fixed header order without a trailing newline', () => {
@@ -247,7 +269,7 @@ describe('outputMigrationList JSON', () => {
     expect(outputResult).toHaveBeenCalledOnce()
     const output = vi.mocked(outputResult).mock.calls[0]![0] as string
     expect(output).toBe(serializeMigrationListJson([...pageOne, ...pageTwo]))
-    expect(JSON.parse(output)).toEqual({subscriptions: [...pageOne, ...pageTwo]})
+    expect(JSON.parse(output)).toEqual({subscriptions: [...pageOne, ...pageTwo].map(projectMigratableSubscription)})
   })
 
   test('writes an empty JSON document for an empty result', async () => {
@@ -279,7 +301,9 @@ describe('migration list JSON contract', () => {
       lastFailureReason: null,
     })
 
-    expect(serializeMigrationListJson([value])).toBe(JSON.stringify({subscriptions: [value]}, null, 2))
+    expect(serializeMigrationListJson([value])).toBe(
+      JSON.stringify({subscriptions: [value].map(projectMigratableSubscription)}, null, 2),
+    )
   })
 
   test.each([
@@ -288,7 +312,7 @@ describe('migration list JSON contract', () => {
   ])('rejects invalid subscription fields: %j', (fields) => {
     expect(() =>
       migrationListJsonOutputSchema.validate({
-        subscriptions: [{...subscription(), ...fields}],
+        subscriptions: [{...projectMigratableSubscription(subscription()), ...fields}],
       }),
     ).toThrow()
   })
@@ -299,7 +323,7 @@ describe('migration list JSON contract', () => {
     {manualSubscriptionInterval: 'MONTHLY'},
     {lastFailureReason: 'UNKNOWN'},
   ])('accepts unknown server-provided values for pass-through fields: %j', (fields) => {
-    const value = {...subscription(), ...fields}
+    const value = {...projectMigratableSubscription(subscription()), ...fields}
 
     const encoded = migrationListJsonOutputSchema.encode({subscriptions: [value]})
 

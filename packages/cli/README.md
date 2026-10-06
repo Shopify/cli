@@ -4497,6 +4497,185 @@ DESCRIPTION
   to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app
   within the project. Use `--reset` to relink the app.
 
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `MigrationListResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "subscriptions": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/MigratableSubscription"
+        },
+        "description": "The complete list across every fetched page."
+      }
+    },
+    "required": [
+      "subscriptions"
+    ],
+    "additionalProperties": false,
+    "title": "MigrationListResult",
+    "definitions": {
+      "MigratableSubscription": {
+        "type": "object",
+        "properties": {
+          "shopGid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/Shop\\/\\d+$",
+            "description": "The Shopify Shop GID."
+          },
+          "status": {
+            "type": "string",
+            "description": "Known values: UNSCHEDULED, SCHEDULED, MIGRATED."
+          },
+          "manualSubscriptionName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "manualSubscriptionPrice": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/MigratableSubscriptionPrice"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "manualSubscriptionInterval": {
+            "type": "string",
+            "description": "Known values: EVERY_30_DAYS, ANNUAL."
+          },
+          "targetPlanHandle": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notification": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/MigratableSubscriptionNotification"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "priceBehavior": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Known values: HONOR_BILLING_PRICE, PLAN_PRICE."
+          },
+          "effectiveDate": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The upstream calendar date or whole-second UTC instant; date-only values retain their format."
+          },
+          "lastFailureReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Known values: SUPERSEDED, SCHEDULING_FAILED."
+          }
+        },
+        "required": [
+          "shopGid",
+          "status",
+          "manualSubscriptionName",
+          "manualSubscriptionPrice",
+          "manualSubscriptionInterval",
+          "targetPlanHandle",
+          "notification",
+          "priceBehavior",
+          "effectiveDate",
+          "lastFailureReason"
+        ],
+        "additionalProperties": false,
+        "description": "All subscription projection fields are present; unavailable values are null."
+      },
+      "MigratableSubscriptionPrice": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string",
+            "pattern": "^-?\\d+(?:\\.\\d+)?$"
+          },
+          "currencyCode": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          }
+        },
+        "required": [
+          "amount",
+          "currencyCode"
+        ],
+        "additionalProperties": false
+      },
+      "MigratableSubscriptionNotification": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "Known values: NONE, OPT_OUT, WHEN_REQUIRED."
+          },
+          "optOutDeadline": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/MigratableSubscription/properties/effectiveDate/anyOf/0/anyOf/1"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sentAt": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/MigratableSubscription/properties/effectiveDate/anyOf/0/anyOf/1"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "optOutDeadline",
+          "sentAt"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify app subscription-migrations list
 
