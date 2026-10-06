@@ -1,7 +1,6 @@
 import {presentMigrationCancellationResult, presentMigrationSubmissionResult} from './result-presenter.js'
 import {cancelMigrationOperations} from '../../../services/subscription-migrations/cancel-operations.js'
-import {projectMigrationSubmissionResult} from '../../../services/subscription-migrations/result-codec.js'
-import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
+import {projectMigrationOperation, projectMigrationSubmissionResult} from '../../../services/subscription-migrations/result-codec.js'
 import {outputOperations} from '../../../services/subscription-migrations/command-output.js'
 import {watchMigrationOperations} from '../../../services/subscription-migrations/watch-operations.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -9,6 +8,7 @@ import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-even
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 // eslint-disable-next-line n/prefer-global/console
 import {Console} from 'node:console'
+import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
 
 const isUnitTest = vi.hoisted(() => vi.fn(() => false))
 
@@ -193,7 +193,12 @@ describe('migration status JSON output', () => {
     const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
     // Use Node's console so Vitest's console capture does not bypass stderr.
     const warn = vi.spyOn(console, 'warn').mockImplementation(new Console(process.stdout, process.stderr).warn)
-    const running = {id: 'operation-one', status: 'RUNNING' as const, total: 1, results: {edges: []}}
+    const running = {
+      id: 'gid://shopify/AppSubscriptionMigrationOperation/operation-one',
+      status: 'RUNNING' as const,
+      total: 1,
+      results: {edges: []},
+    }
     const completed = {...running, status: 'COMPLETED' as const}
 
     try {
@@ -212,7 +217,9 @@ describe('migration status JSON output', () => {
       })
 
       expect(stdout).toHaveBeenCalledOnce()
-      expect(stdout.mock.calls[0]?.[0]).toBe(`${JSON.stringify({operations: [completed]}, null, 2)}\n`)
+      expect(stdout.mock.calls[0]?.[0]).toBe(
+        `${JSON.stringify({operations: [projectMigrationOperation(completed)]}, null, 2)}\n`,
+      )
       const events = stderr.mock.calls.map(([content]) => JSON.parse(content as string))
       expect(events).toEqual([
         expect.objectContaining({
@@ -220,11 +227,15 @@ describe('migration status JSON output', () => {
           status: 'started',
           message: 'Polling subscription migration operations',
         }),
-        expect.objectContaining({type: 'progress', status: 'updated', message: 'operation-one: RUNNING (0/1 settled)'}),
         expect.objectContaining({
           type: 'progress',
           status: 'updated',
-          message: 'operation-one: COMPLETED (0/1 settled)',
+          message: 'gid://shopify/AppSubscriptionMigrationOperation/operation-one: RUNNING (0/1 settled)',
+        }),
+        expect.objectContaining({
+          type: 'progress',
+          status: 'updated',
+          message: 'gid://shopify/AppSubscriptionMigrationOperation/operation-one: COMPLETED (0/1 settled)',
         }),
         expect.objectContaining({type: 'progress', status: 'completed'}),
       ])
