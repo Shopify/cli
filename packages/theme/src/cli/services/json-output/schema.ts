@@ -22,7 +22,7 @@ export const ThemeLinksSchema = ThemeSchema.extend({
   previewUrl: zod.string().url().nullable(),
   editorUrl: zod.string().url().nullable(),
 }).strict()
-export const CancelledSchema = zod.object({status: zod.literal('cancelled')}).strict()
+const CancelledSchema = zod.object({status: zod.literal('cancelled')}).strict()
 
 export type ThemeEnvironmentResult =
   | {environment: string; result: unknown}
@@ -46,7 +46,7 @@ export function defineThemeJsonOutputSchema<TSchema extends zod.ZodTypeAny>(opti
     definitions: {...options.definitions, ThemeEnvironment: environmentSchema},
   })
   const projectResult = (value: unknown) => (CancelledSchema.safeParse(value).success ? value : options.project(value))
-  return {
+  const projectedOutput: Omit<typeof output, 'encode'> & {encode(value: unknown): string} = {
     ...output,
     encode(value: unknown): string {
       const batch = zod
@@ -66,6 +66,7 @@ export function defineThemeJsonOutputSchema<TSchema extends zod.ZodTypeAny>(opti
       return JSON.stringify(output.validate({environments}), null, 2)
     },
   }
+  return projectedOutput
 }
 
 export function themeId(value: number | string): string {
