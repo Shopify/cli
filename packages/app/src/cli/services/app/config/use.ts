@@ -1,12 +1,12 @@
 import {type AppConfigUseResult} from './use/types.js'
 import {renderAppConfigUseResult} from './use/result.js'
 import {getAppConfigurationFileName, getAppConfigurationContext} from '../../../models/app/loader.js'
-import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
+import {clearCurrentConfigFile, getCachedAppInfo, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
-import {basename, joinPath} from '@shopify/cli-kit/node/path'
+import {basename, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {RenderAlertOptions, renderWarning} from '@shopify/cli-kit/node/ui'
 import {Result, err, ok} from '@shopify/cli-kit/node/result'
 
@@ -30,7 +30,7 @@ export default async function use({
   if (warningContent && !reset) renderWarning(warningContent)
   const result = await useAppConfiguration({directory, configName, reset})
   if (reset || shouldRenderSuccess) await renderAppConfigUseResult(result, directory, 'text')
-  return result.configFile === null ? undefined : basename(result.configFile)
+  return result.path === null ? undefined : basename(result.path)
 }
 
 export async function useAppConfiguration({
@@ -38,14 +38,20 @@ export async function useAppConfiguration({
   configName,
   reset = false,
 }: Pick<UseOptions, 'directory' | 'configName' | 'reset'>): Promise<AppConfigUseResult> {
+  const previousConfigFile = getCachedAppInfo(directory)?.configFile
   if (reset) {
     clearCurrentConfigFile(directory)
-    return {configFile: null, clientId: null}
+    return {status: 'success', changed: previousConfigFile !== undefined, path: null, clientId: null}
   }
   const configFileName = (await getConfigFileName(directory, configName)).valueOrAbort()
   const {activeConfig} = await getAppConfigurationContext(directory, configFileName)
   setCurrentConfigPreference(activeConfig.file.content, {configFileName, directory})
-  return {configFile: joinPath(directory, configFileName), clientId: activeConfig.file.content.client_id as string}
+  return {
+    status: 'success',
+    changed: previousConfigFile !== configFileName,
+    path: resolvePath(directory, configFileName),
+    clientId: activeConfig.file.content.client_id as string,
+  }
 }
 
 /**

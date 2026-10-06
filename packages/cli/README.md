@@ -1692,29 +1692,50 @@ DESCRIPTION
   Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll
   be prompted to choose from the configuration files in your project.
 
-  Output from `--json` conforms to the `AppConfigUseResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppConfigUseResult` schema.
 
   ```json
   {
     "type": "object",
     "properties": {
-      "configFile": {
-        "type": [
-          "string",
-          "null"
-        ]
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "changed": {
+        "type": "boolean",
+        "description": "Whether the preferred configuration changed."
+      },
+      "path": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "The preferred configuration file, or null after clearing the preference."
       },
       "clientId": {
-        "type": [
-          "string",
-          "null"
-        ]
+        "anyOf": [
+          {
+            "type": "string",
+            "minLength": 1
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "The public OAuth client identifier, or null after clearing the preference."
       }
     },
     "required": [
-      "configFile",
+      "status",
+      "changed",
+      "path",
       "clientId"
     ],
     "additionalProperties": false,

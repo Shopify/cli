@@ -13,7 +13,7 @@ export async function renderAppConfigUseResult(
     outputResult(appConfigUseJsonOutputSchema.encode(result))
     return
   }
-  if (result.configFile === null) {
+  if (result.path === null) {
     const packageManager = await getPackageManager(directory)
     renderSuccess({
       headline: 'Cleared current configuration.',
@@ -24,6 +24,6 @@ export async function renderAppConfigUseResult(
       ],
     })
   } else {
-    renderSuccess({headline: `Using configuration file ${basename(result.configFile)}`})
+    renderSuccess({headline: `Using configuration file ${basename(result.path)}`})
   }
 }
