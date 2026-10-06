@@ -292,9 +292,9 @@ function nextSteps(
     steps.push([
       'Fix the issues, then run',
       checkCommand,
-      'again. Your coding agent can run it too, which also updates',
+      'again. To refresh',
       {filePath: FILE_NAMES.agent},
-      {char: '.'},
+      'too, have your coding agent run it and record its findings again.',
     ])
   }
   // A stale check needs agent-findings.json, so this step never meets the deeper-review one.
@@ -302,7 +302,7 @@ function nextSteps(
     steps.push([
       'Agent results are older than the deterministic results. Have your coding agent run',
       checkCommand,
-      'to refresh them.',
+      'and record its findings again to refresh them.',
     ])
   } else if (summary.withFindings === 0 && result.sources.agent === null) {
     steps.push(['For a deeper review, have your coding agent run', checkCommand, {char: '.'}])

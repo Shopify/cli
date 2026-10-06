@@ -387,9 +387,9 @@ describe('buildSecurityReviewSummary', () => {
         [
           'Fix the issues, then run',
           {command: checkCommand},
-          'again. Your coding agent can run it too, which also updates',
+          'again. To refresh',
           {filePath: 'agent-findings.json'},
-          {char: '.'},
+          'too, have your coding agent run it and record its findings again.',
         ],
       ])
     })
@@ -411,14 +411,14 @@ describe('buildSecurityReviewSummary', () => {
         [
           'Fix the issues, then run',
           {command: checkCommand},
-          'again. Your coding agent can run it too, which also updates',
+          'again. To refresh',
           {filePath: 'agent-findings.json'},
-          {char: '.'},
+          'too, have your coding agent run it and record its findings again.',
         ],
         [
           'Agent results are older than the deterministic results. Have your coding agent run',
           {command: checkCommand},
-          'to refresh them.',
+          'and record its findings again to refresh them.',
         ],
       ])
     })
