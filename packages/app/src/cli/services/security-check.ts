@@ -23,7 +23,7 @@ import {securityCheckJsonOutputSchema, toSecurityCheckJson} from './security-che
 import {toAppSecurityInstructionsJson} from './security-instructions-json.js'
 import {renderSecurityReport} from './security-output.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
-import {outputResult} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputResult, outputWarn} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {cwd, relativePath} from '@shopify/cli-kit/node/path'
 import {renderInfo, renderSelectPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
@@ -88,6 +88,9 @@ interface SecurityDependencies {
   output(content: string): void
   renderInfo(options: RenderAlertOptions): void
   renderWarning(options: RenderAlertOptions): void
+  /** In JSON mode these emit diagnostic events on stderr instead of the banners. */
+  outputInfo(message: string): void
+  outputWarn(message: string): void
   renderReport(input: SecurityReportInput): void
   setExitCode(exitCode: number): void
   recordMetadata(fields: AppSecurityMetadata): Promise<void>
@@ -119,6 +122,8 @@ const defaultDependencies: SecurityDependencies = {
   output: outputResult,
   renderInfo,
   renderWarning,
+  outputInfo,
+  outputWarn,
   renderReport: renderSecurityReport,
   setExitCode: (exitCode) => {
     process.exitCode = exitCode
@@ -160,12 +165,18 @@ function securityReportInput(
   }
 }
 
-function renderIgnoredScanDirectoryWarnings(ignoredScanDirectories: string[], dependencies: SecurityDependencies) {
+function warnAboutIgnoredScanDirectories(
+  ignoredScanDirectories: string[],
+  json: boolean,
+  dependencies: SecurityDependencies,
+) {
   for (const directory of ignoredScanDirectories) {
-    dependencies.renderWarning({
-      headline: `${relativePath(cwd(), directory) || '.'} is ignored by Git, so only the files Git tracks in it are scanned.`,
-      body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
-    })
+    const headline = `${relativePath(cwd(), directory) || '.'} is ignored by Git, so only the files Git tracks in it are scanned.`
+    if (json) {
+      dependencies.outputWarn(`${headline} Use --no-git-ignore to scan everything in it.`)
+    } else {
+      dependencies.renderWarning({headline, body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.']})
+    }
   }
 }
 
@@ -203,10 +214,12 @@ export default async function securityCheck(
   // to scan.
   const prompted = selection.kind === 'no-config' ? !options.withoutAppConfig : selection.appConfigFilePicked === true
   if (prompted) {
-    dependencies.renderInfo({
-      headline: 'To skip these prompts next time, run:',
-      body: [{command: formatAppSecurityCommand(commands.scan)}],
-    })
+    const scanCommand = formatAppSecurityCommand(commands.scan)
+    if (options.json) {
+      dependencies.outputInfo(`To skip these prompts next time, run: ${scanCommand}`)
+    } else {
+      dependencies.renderInfo({headline: 'To skip these prompts next time, run:', body: [{command: scanCommand}]})
+    }
   }
   const {scanDirectories, requestedScanDirectories} = mergeScanDirectories(appDirectory, includeDirectories)
 
@@ -223,7 +236,7 @@ export default async function securityCheck(
 
   if (options.listFiles) {
     const {paths, ignoredScanDirectories} = await dependencies.listFiles(scanOptions)
-    renderIgnoredScanDirectoryWarnings(ignoredScanDirectories, dependencies)
+    warnAboutIgnoredScanDirectories(ignoredScanDirectories, options.json, dependencies)
     if (options.json) {
       dependencies.output(securityCheckJsonOutputSchema.encode({files: paths}))
     } else if (paths.length > 0) {
@@ -233,7 +246,7 @@ export default async function securityCheck(
   }
 
   const execution = await dependencies.execute(scanOptions)
-  renderIgnoredScanDirectoryWarnings(execution.ignoredScanDirectories, dependencies)
+  warnAboutIgnoredScanDirectories(execution.ignoredScanDirectories, options.json, dependencies)
   await dependencies.recordMetadata({num_security_findings: execution.scan.issues.length})
   const artifacts = await dependencies.writeArtifacts(appDirectory, resultsKey(selection), {
     deterministicFindings: execution.deterministicFindings,

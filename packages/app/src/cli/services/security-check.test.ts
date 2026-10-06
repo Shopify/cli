@@ -146,6 +146,8 @@ function testDependencies(
     output: vi.fn(),
     renderInfo: vi.fn(),
     renderWarning: vi.fn(),
+    outputInfo: vi.fn(),
+    outputWarn: vi.fn(),
     renderReport: vi.fn(),
     setExitCode: vi.fn(),
     recordMetadata: vi.fn(async () => {}),
@@ -360,6 +362,18 @@ describe('securityCheck', () => {
     })
   })
 
+  test('warns about each ignored scan directory as a diagnostic, not a banner, with --json', async () => {
+    vi.stubEnv('INIT_CWD', '/tmp')
+    const dependencies = testDependencies({...scanExecution, ignoredScanDirectories: [appDirectory]})
+
+    await securityCheck({...testOptions(), json: true}, dependencies)
+
+    expect(dependencies.renderWarning).not.toHaveBeenCalled()
+    expect(dependencies.outputWarn).toHaveBeenCalledWith(
+      'unlinked-app is ignored by Git, so only the files Git tracks in it are scanned. Use --no-git-ignore to scan everything in it.',
+    )
+  })
+
   test('does not warn when no scan directory is ignored', async () => {
     const dependencies = testDependencies()
 
@@ -471,6 +485,25 @@ describe('securityCheck', () => {
     })
     expect(dependencies.renderInfo.mock.invocationCallOrder[0]).toBeLessThan(
       dependencies.execute.mock.invocationCallOrder[0]!,
+    )
+    expect(dependencies.outputInfo).not.toHaveBeenCalled()
+  })
+
+  test('shows the generated check command as a diagnostic, not a banner, after prompts with --json', async () => {
+    const selection: AppSecuritySelection = {
+      kind: 'no-config',
+      appDirectory,
+      clientId: 'picked-client-id',
+      clientIdSource: 'picker',
+    }
+    const dependencies = testDependencies(scanExecution, selection)
+    dependencies.canPrompt.mockReturnValue(true)
+
+    await securityCheck({...testOptions(), json: true, skipInstructions: true}, dependencies)
+
+    expect(dependencies.renderInfo).not.toHaveBeenCalled()
+    expect(dependencies.outputInfo).toHaveBeenCalledWith(
+      `To skip these prompts next time, run: ${formatAppSecurityCommand(commandsFor(selection).scan)}`,
     )
   })
 
