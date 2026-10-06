@@ -14,7 +14,7 @@ export const ThemeSchema = zod
   .object({
     id: ThemeIdSchema,
     name: zod.string(),
-    role: zod.string().describe('The upstream theme role; known values include main, unpublished, and development.'),
+    role: zod.string().describe('The upstream theme role; known values include live, unpublished, and development.'),
   })
   .strict()
 export const ThemeLinksSchema = ThemeSchema.extend({

@@ -2,6 +2,7 @@ import {
   defineThemeJsonOutputSchema,
   ThemeLinksSchema,
   ThemeIdSchema,
+  themeId,
   StoreDomainSchema,
   storeDomain,
   projectTheme,
@@ -60,7 +61,7 @@ export const themeInfoJsonOutputSchema = defineThemeJsonOutputSchema({
     }
     return {
       storeDomain: storeDomain(result.store),
-      developmentThemeId: result.development_theme_id === null ? null : String(result.development_theme_id),
+      developmentThemeId: result.development_theme_id === null ? null : themeId(result.development_theme_id),
       cliVersion: result.cli_version,
       os: result.os,
       shell: result.shell === 'unknown' ? null : result.shell,
