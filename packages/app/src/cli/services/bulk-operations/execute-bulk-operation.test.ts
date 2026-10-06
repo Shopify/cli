@@ -8,28 +8,20 @@ import {
   runBulkOperationMutation,
   watchBulkOperation,
   shortBulkOperationPoll,
-  downloadBulkOperationResults,
   BULK_OPERATIONS_MIN_API_VERSION,
   type BulkOperation,
 } from '@shopify/cli-kit/node/api/bulk-operations'
-import {renderSuccess, renderWarning, renderError, renderInfo} from '@shopify/cli-kit/node/ui'
-import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
+import {renderSingleTask, renderSuccess, renderWarning, renderError, renderInfo} from '@shopify/cli-kit/node/ui'
+import {fetch} from '@shopify/cli-kit/node/http'
 import {inTemporaryDirectory, writeFile, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/api/bulk-operations', async () => {
-  const actual = await vi.importActual('@shopify/cli-kit/node/api/bulk-operations')
-  return {
-    ...actual,
-    runBulkOperationQuery: vi.fn(),
-    runBulkOperationMutation: vi.fn(),
-    watchBulkOperation: vi.fn(),
-    shortBulkOperationPoll: vi.fn(),
-    downloadBulkOperationResults: vi.fn(),
-  }
-})
+vi.mock('@shopify/cli-kit/node/api/bulk-operations/run-query')
+vi.mock('@shopify/cli-kit/node/api/bulk-operations/run-mutation')
+vi.mock('@shopify/cli-kit/node/api/bulk-operations/watch-bulk-operation')
+vi.mock('@shopify/cli-kit/node/http')
 vi.mock('../graphql/common.js', async () => {
   const actual = await vi.importActual('../graphql/common.js')
   return {
@@ -39,24 +31,14 @@ vi.mock('../graphql/common.js', async () => {
     validateMutationStore: vi.fn(),
   }
 })
-vi.mock('@shopify/cli-kit/node/ui', async () => {
-  const actual = await vi.importActual('@shopify/cli-kit/node/ui')
-  return {
-    ...actual,
-    renderSingleTask: vi.fn(async ({task}) => task()),
-    renderSuccess: vi.fn(),
-    renderWarning: vi.fn(),
-    renderError: vi.fn(),
-    renderInfo: vi.fn(),
-  }
-})
-vi.mock('@shopify/cli-kit/node/session', async () => {
-  const actual = await vi.importActual('@shopify/cli-kit/node/session')
-  return {
-    ...actual,
-    ensureAuthenticatedAdminAsApp: vi.fn(),
-  }
-})
+vi.mock('@shopify/cli-kit/node/ui')
+
+function mockDownloadResults(results: string): void {
+  vi.mocked(fetch).mockResolvedValue({
+    ok: true,
+    text: async () => results,
+  } as Awaited<ReturnType<typeof fetch>>)
+}
 
 describe('executeBulkOperation', () => {
   const mockOrganization = {
@@ -97,7 +79,7 @@ describe('executeBulkOperation', () => {
 
   beforeEach(() => {
     vi.mocked(createAdminSessionAsApp).mockResolvedValue(mockAdminSession)
-    vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue(mockAdminSession)
+    vi.mocked(renderSingleTask).mockImplementation(async ({task}) => task(vi.fn()))
     vi.mocked(shortBulkOperationPoll).mockResolvedValue(createdBulkOperation)
     vi.mocked(resolveApiVersion).mockResolvedValue(BULK_OPERATIONS_MIN_API_VERSION)
   })
@@ -111,7 +93,7 @@ describe('executeBulkOperation', () => {
     const results = '{"id":"1"}\n'
     vi.mocked(runBulkOperationQuery).mockResolvedValue({bulkOperation: operation, userErrors: []})
     vi.mocked(watchBulkOperation).mockResolvedValue(operation)
-    vi.mocked(downloadBulkOperationResults).mockResolvedValue(results)
+    mockDownloadResults(results)
     const output = mockAndCaptureOutput()
 
     await expect(
@@ -410,7 +392,7 @@ describe('executeBulkOperation', () => {
 
     vi.mocked(runBulkOperationQuery).mockResolvedValue(initialResponse)
     vi.mocked(watchBulkOperation).mockResolvedValue(completedOperation)
-    vi.mocked(downloadBulkOperationResults).mockResolvedValue(
+    mockDownloadResults(
       '{"data":{"products":{"edges":[{"node":{"id":"gid://shopify/Product/123"}}],"userErrors":[]}},"__lineNumber":0}',
     )
 
@@ -466,7 +448,7 @@ describe('executeBulkOperation', () => {
       headline: `Bulk operation ${createdBulkOperation.id} is still running in the background.`,
       body: ['Monitor its progress with:\n', {command: expect.stringContaining('shopify app bulk status')}],
     })
-    expect(downloadBulkOperationResults).not.toHaveBeenCalled()
+    expect(fetch).not.toHaveBeenCalled()
   })
 
   test('uses quickWatchBulkOperation (not watchBulkOperation) when watch flag is false', async () => {
@@ -552,7 +534,7 @@ describe('executeBulkOperation', () => {
         body: ['Monitor its progress with:\n', {command: expect.stringContaining('shopify app bulk status')}],
       }),
     )
-    expect(downloadBulkOperationResults).not.toHaveBeenCalled()
+    expect(fetch).not.toHaveBeenCalled()
   })
 
   test.each(['FAILED', 'CANCELED', 'EXPIRED'] as const)(
@@ -609,7 +591,7 @@ describe('executeBulkOperation', () => {
 
       vi.mocked(runBulkOperationQuery).mockResolvedValue(initialResponse)
       vi.mocked(watchBulkOperation).mockResolvedValue(completedOperation)
-      vi.mocked(downloadBulkOperationResults).mockResolvedValue(resultsContent)
+      mockDownloadResults(resultsContent)
 
       await executeAndPresentBulkOperation({
         organization: mockOrganization,
@@ -645,7 +627,7 @@ describe('executeBulkOperation', () => {
 
     vi.mocked(runBulkOperationQuery).mockResolvedValue(initialResponse)
     vi.mocked(watchBulkOperation).mockResolvedValue(completedOperation)
-    vi.mocked(downloadBulkOperationResults).mockResolvedValue(resultsContent)
+    mockDownloadResults(resultsContent)
 
     await executeAndPresentBulkOperation({
       organization: mockOrganization,
@@ -733,7 +715,7 @@ describe('executeBulkOperation', () => {
 
     vi.mocked(runBulkOperationQuery).mockResolvedValue(initialResponse)
     vi.mocked(watchBulkOperation).mockResolvedValue(completedOperation)
-    vi.mocked(downloadBulkOperationResults).mockResolvedValue(resultsWithErrors)
+    mockDownloadResults(resultsWithErrors)
 
     await executeAndPresentBulkOperation({
       organization: mockOrganization,
@@ -769,7 +751,7 @@ describe('executeBulkOperation', () => {
 
     vi.mocked(runBulkOperationQuery).mockResolvedValue(initialResponse)
     vi.mocked(watchBulkOperation).mockResolvedValue(completedOperation)
-    vi.mocked(downloadBulkOperationResults).mockResolvedValue(resultsWithoutErrors)
+    mockDownloadResults(resultsWithoutErrors)
 
     await executeAndPresentBulkOperation({
       organization: mockOrganization,
@@ -807,7 +789,7 @@ describe('executeBulkOperation', () => {
 
       vi.mocked(runBulkOperationQuery).mockResolvedValue(initialResponse)
       vi.mocked(watchBulkOperation).mockResolvedValue(completedOperation)
-      vi.mocked(downloadBulkOperationResults).mockResolvedValue(resultsWithErrors)
+      mockDownloadResults(resultsWithErrors)
 
       await executeAndPresentBulkOperation({
         organization: mockOrganization,

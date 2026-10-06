@@ -6,7 +6,6 @@ import {
   testBulkOperationContext,
 } from '../../../services/bulk-operations/bulk-operation.test-data.js'
 import {prepareAppStoreContext, prepareExecuteContext} from '../../../utilities/execute-command-helpers.js'
-import {createAdminSessionAsApp, resolveApiVersion} from '../../../services/graphql/common.js'
 import {
   bulkOperationStatusJsonOutputSchema,
   cancelBulkOperationJsonOutputSchema,
@@ -20,8 +19,9 @@ import {
   runBulkOperationQuery,
   shortBulkOperationPoll,
   watchBulkOperation,
-  downloadBulkOperationResults,
 } from '@shopify/cli-kit/node/api/bulk-operations'
+import {fetchApiVersions} from '@shopify/cli-kit/node/api/admin'
+import {fetch} from '@shopify/cli-kit/node/http'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
@@ -34,27 +34,13 @@ import type {BulkOperation} from '@shopify/cli-kit/node/api/bulk-operations'
 
 vi.mock('../../../utilities/execute-command-helpers.js')
 
-vi.mock('../../../services/graphql/common.js', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../../services/graphql/common.js')>()),
-  createAdminSessionAsApp: vi.fn(),
-  resolveApiVersion: vi.fn(),
-}))
-
-vi.mock('@shopify/cli-kit/node/session', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@shopify/cli-kit/node/session')>()),
-  ensureAuthenticatedAdminAsApp: vi.fn(),
-}))
-
-vi.mock('@shopify/cli-kit/node/api/bulk-operations', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@shopify/cli-kit/node/api/bulk-operations')>()),
-  fetchBulkOperationById: vi.fn(),
-  fetchRecentBulkOperations: vi.fn(),
-  cancelBulkOperationRequest: vi.fn(),
-  runBulkOperationQuery: vi.fn(),
-  shortBulkOperationPoll: vi.fn(),
-  watchBulkOperation: vi.fn(),
-  downloadBulkOperationResults: vi.fn(),
-}))
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/node/api/admin')
+vi.mock('@shopify/cli-kit/node/http')
+vi.mock('@shopify/cli-kit/node/api/bulk-operations/fetch')
+vi.mock('@shopify/cli-kit/node/api/bulk-operations/cancel')
+vi.mock('@shopify/cli-kit/node/api/bulk-operations/run-query')
+vi.mock('@shopify/cli-kit/node/api/bulk-operations/watch-bulk-operation')
 
 const originalExitCode = process.exitCode
 
@@ -69,6 +55,13 @@ function bulkOperation(overrides: Partial<BulkOperation> = {}): BulkOperation {
     createdAt: '2026-09-01T02:00:00.789+02:00',
     ...overrides,
   })
+}
+
+function mockDownloadResults(results: string): void {
+  vi.mocked(fetch).mockResolvedValue({
+    ok: true,
+    text: async () => results,
+  } as Awaited<ReturnType<typeof fetch>>)
 }
 
 function expectedOperation() {
@@ -90,9 +83,8 @@ async function runCommand(Command: typeof BulkStatus | typeof BulkCancel | typeo
   vi.mocked(prepareAppStoreContext).mockResolvedValue({appContextResult, store})
   vi.mocked(prepareExecuteContext).mockResolvedValue({appContextResult, store, query: 'query { shop { name } }'})
   const session = {storeFqdn: store.shopDomain, token: 'token'}
-  vi.mocked(createAdminSessionAsApp).mockResolvedValue(session)
   vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue(session)
-  vi.mocked(resolveApiVersion).mockResolvedValue('2026-01')
+  vi.mocked(fetchApiVersions).mockResolvedValue([{handle: '2026-01', supported: true}])
   const config = await Config.load()
   return runWithCommandEventsForCommand(argv, () => new Command(argv, config).run())
 }
@@ -180,7 +172,7 @@ test('unwatched execution reports the operation without downloading results', as
       status: 'success',
       operation: expectedOperation(),
     })
-    expect(downloadBulkOperationResults).not.toHaveBeenCalled()
+    expect(fetch).not.toHaveBeenCalled()
     assertDiagnosticEvents(stderr(), 'Starting bulk operation.')
     const events = stderr()
       .trim()
@@ -199,7 +191,7 @@ test.each(['', '{"id":"1"}\n{"id":"2"}\n'])('watched execution keeps native inli
   const operation = bulkOperation({status: 'COMPLETED', url: 'https://example.com/results.jsonl'})
   vi.mocked(runBulkOperationQuery).mockResolvedValue({bulkOperation: operation, userErrors: []})
   vi.mocked(watchBulkOperation).mockResolvedValue(operation)
-  vi.mocked(downloadBulkOperationResults).mockResolvedValue(results)
+  mockDownloadResults(results)
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await runCommand(BulkExecute, ['--query', 'query { shop { name } }', '--watch', '--json'])
     expect(JSON.parse(stdout())).toEqual({
@@ -218,7 +210,7 @@ test('file output keeps the exact JSONL bytes and prints only an absolute receip
   const results = '{"id":"1"}\r\n{"id":"2"}\n'
   vi.mocked(runBulkOperationQuery).mockResolvedValue({bulkOperation: operation, userErrors: []})
   vi.mocked(watchBulkOperation).mockResolvedValue(operation)
-  vi.mocked(downloadBulkOperationResults).mockResolvedValue(results)
+  mockDownloadResults(results)
   await inTemporaryDirectory(async (directory) => {
     const path = joinPath(directory, 'results.jsonl')
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
@@ -255,7 +247,7 @@ test('a completed query with no matches writes an empty JSONL file and a success
       ])
       expect(JSON.parse(stdout())).toEqual({path, format: 'jsonl'})
       await expect(readFile(path)).resolves.toBe('')
-      expect(downloadBulkOperationResults).not.toHaveBeenCalled()
+      expect(fetch).not.toHaveBeenCalled()
       expect(process.exitCode).toBe(originalExitCode)
       assertDiagnosticEvents(stderr(), 'Starting bulk operation.')
     })
@@ -268,7 +260,7 @@ test('without JSON mode, watched execution preserves the exact native stdout byt
   const results = '{"id":"1"}\n{"id":"2"}\n'
   vi.mocked(runBulkOperationQuery).mockResolvedValue({bulkOperation: operation, userErrors: []})
   vi.mocked(watchBulkOperation).mockResolvedValue(operation)
-  vi.mocked(downloadBulkOperationResults).mockResolvedValue(results)
+  mockDownloadResults(results)
   try {
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
       await runCommand(BulkExecute, ['--query', 'query { shop { name } }', '--watch'])
