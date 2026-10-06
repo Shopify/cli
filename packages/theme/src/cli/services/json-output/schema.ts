@@ -10,7 +10,7 @@ export const StoreDomainSchema = zod
   .string()
   .regex(/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/)
   .nullable()
-export const ThemeSchema = zod
+const ThemeSchema = zod
   .object({
     id: ThemeIdSchema,
     name: zod.string(),
