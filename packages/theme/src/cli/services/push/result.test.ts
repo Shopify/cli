@@ -11,6 +11,9 @@ import {describe, expect, test, vi} from 'vitest'
 import {runWithCommandEvents, renderCommandEventAsJson} from '@shopify/cli-kit/node/command-events'
 import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {Severity, SourceCodeType} from '@shopify/theme-check-node'
+// Native JSON paths must preserve Windows separators instead of pathe normalization.
+// eslint-disable-next-line no-restricted-imports
+import {resolve as nativePath} from 'node:path'
 
 vi.mock('../../commands/theme/check.js')
 
@@ -47,10 +50,12 @@ describe('push result', () => {
       },
     })
     expect(
-      themePushJsonResult(pushResult({hasErrors: true, directory: '/theme', errors: {'assets/z.css': ['bad CSS']}})),
+      themePushJsonResult(
+        pushResult({hasErrors: true, directory: nativePath('/theme'), errors: {'assets/z.css': ['bad CSS']}}),
+      ),
     ).toMatchObject({
       status: 'partial',
-      issues: [{filePath: '/theme/assets/z.css', message: 'bad CSS'}],
+      issues: [{filePath: nativePath('/theme/assets/z.css'), message: 'bad CSS'}],
     })
   })
 
