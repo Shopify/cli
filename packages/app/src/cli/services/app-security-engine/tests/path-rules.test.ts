@@ -425,6 +425,31 @@ describe('path rules', () => {
       ).toBe(false)
     })
 
+    test.each([
+      ['./src', 'src'],
+      ['src/', 'src'],
+      ['../app/src', 'src'],
+      ['./src/**', 'src/**'],
+      ['.', ''],
+      ['../app', ''],
+      ['../backend/**', '../backend/**'],
+      ['**/generated', '**/generated'],
+      ['!src', '!src'],
+      ['apps/\\[child\\]', 'apps/\\[child\\]'],
+    ])('resolves the literal start of %j against the working directory, giving %j', (pattern, expected) => {
+      const working = join(makeDirectory(), 'app')
+      mkdirSync(working)
+
+      expect(rulesFor(working, [pattern]).excludePatterns).toEqual([expected])
+    })
+
+    test('resolves an absolute pattern against the working directory and drops an empty one', () => {
+      const working = join(makeDirectory(), 'app')
+      mkdirSync(working)
+
+      expect(rulesFor(working, [join(working, 'src', '*.ts'), '']).excludePatterns).toEqual(['src/*.ts'])
+    })
+
     test('applies with --no-git-ignore too', () => {
       const working = makeDirectory()
       const rules = rulesFor(working, ['generated'], false)

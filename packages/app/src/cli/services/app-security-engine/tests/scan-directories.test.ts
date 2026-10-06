@@ -253,6 +253,17 @@ describe('an excluded scan directory', () => {
     expect(result.paths).toEqual(['../backend/server.ts', '../backend/shopify.app.toml'])
   })
 
+  test('includes the app directory when the working directory is the app directory and --exclude names it', async () => {
+    const {app, directory} = await makeAppAndDirectory('backend')
+    vi.stubEnv('INIT_CWD', app)
+
+    const fromDot = await gather({appDirectory: app, scanDirectories: [app, directory], excludePatterns: ['.']})
+    const fromParent = await gather({appDirectory: app, scanDirectories: [app, directory], excludePatterns: ['../app']})
+
+    expect(fromDot.paths).toEqual(['../backend/server.ts', '../backend/shopify.app.toml'])
+    expect(fromParent.paths).toEqual(fromDot.paths)
+  })
+
   test('gathers none of its tracked files and gets no ignored-scan-directory warning', async () => {
     const repository = await makeRepository({
       '.gitignore': 'app/\n',
