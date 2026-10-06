@@ -1,5 +1,5 @@
 import {Sessions} from './schema.js'
-import {store, fetch, remove, getSessionAlias, setSessionAlias, findSessionByAlias} from './store.js'
+import {store, fetch, remove, getSessionAccount, setSessionAlias, findSessionByAlias} from './store.js'
 import {getSessions, removeSessions, setSessions, removeCurrentSessionId} from '../conf-store.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 
@@ -129,16 +129,16 @@ describe('session store', () => {
     })
   })
 
-  describe('getSessionAlias', () => {
+  describe('getSessionAccount', () => {
     test('returns alias for existing user', async () => {
       // Given
       vi.mocked(getSessions).mockReturnValue(JSON.stringify(mockSessions))
 
       // When
-      const result = await getSessionAlias('user1')
+      const result = await getSessionAccount('user1')
 
       // Then
-      expect(result).toBe('Work Account')
+      expect(result).toEqual({userId: 'user1', alias: 'Work Account', email: undefined})
     })
 
     test('returns undefined for non-existent user', async () => {
@@ -146,7 +146,7 @@ describe('session store', () => {
       vi.mocked(getSessions).mockReturnValue(JSON.stringify(mockSessions))
 
       // When
-      const result = await getSessionAlias('nonexistent')
+      const result = await getSessionAccount('nonexistent')
 
       // Then
       expect(result).toBeUndefined()
@@ -157,7 +157,7 @@ describe('session store', () => {
       vi.mocked(getSessions).mockReturnValue(undefined)
 
       // When
-      const result = await getSessionAlias('user1')
+      const result = await getSessionAccount('user1')
 
       // Then
       expect(result).toBeUndefined()
@@ -169,7 +169,7 @@ describe('session store', () => {
       vi.mocked(identityFqdn).mockResolvedValue('different.fqdn.com')
 
       // When
-      const result = await getSessionAlias('user1')
+      const result = await getSessionAccount('user1')
 
       // Then
       expect(result).toBeUndefined()
