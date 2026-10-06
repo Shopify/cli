@@ -2,14 +2,11 @@ import {
   listGatheredPaths,
   scanApp,
   SEVERITY_RANK,
-  type AppSecurityEngineMetadata,
   type AppSecurityScan,
   type ScanInput,
   type ScanOptions,
   type Severity,
 } from './app-security-engine/index.js'
-
-export type {AppSecurityEngineMetadata}
 
 export type AppSecurityBlockingLevel = Severity | 'none'
 

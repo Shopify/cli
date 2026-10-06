@@ -1,4 +1,4 @@
-import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 import type {AppSecurityInstructionsDelivery} from './app-security-instructions.js'
 
@@ -17,8 +17,6 @@ export const securityInstructionsJsonOutputSchema = defineJsonOutputSchema({
   schema: zod.object({instructions: appSecurityInstructionsSchema}),
   definitions: {AppSecurityInstructions: appSecurityInstructionsSchema},
 })
-
-export type SecurityInstructionsJsonResult = InferJsonOutputSchema<typeof securityInstructionsJsonOutputSchema>
 
 export function toAppSecurityInstructionsJson(delivery: AppSecurityInstructionsDelivery): AppSecurityInstructionsJson {
   return {

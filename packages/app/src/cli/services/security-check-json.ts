@@ -1,7 +1,7 @@
 import {clientIdSource, effectiveClientId} from './app-security-selection.js'
 import {appSecurityInstructionsSchema, type AppSecurityInstructionsJson} from './security-instructions-json.js'
 import {deterministicFindingsDocumentSchema, type Equals} from './app-security-engine/index.js'
-import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 import type {AppSecurityExecution} from './app-security-api.js'
 import type {AppSecurityScanDirectory, AppSecuritySelection} from './app-security-selection.js'
@@ -40,8 +40,6 @@ export const securityCheckJsonOutputSchema = defineJsonOutputSchema({
 })
 
 type SecurityCheckScanJsonResult = zod.infer<typeof scanResultSchema>
-
-export type SecurityCheckJsonResult = InferJsonOutputSchema<typeof securityCheckJsonOutputSchema>
 
 /**
  * Scan directories pass straight through, and Zod strips unknown keys: without this pin a field added to them later

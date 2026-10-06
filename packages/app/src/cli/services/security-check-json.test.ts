@@ -1,4 +1,8 @@
-import {securityCheckJsonOutputSchema, toSecurityCheckJson} from './security-check-json.js'
+import {
+  SCAN_DIRECTORY_MATCHES_CHECK_JSON,
+  securityCheckJsonOutputSchema,
+  toSecurityCheckJson,
+} from './security-check-json.js'
 import {securityInstructionsJsonOutputSchema, toAppSecurityInstructionsJson} from './security-instructions-json.js'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -47,6 +51,11 @@ const configSelection: AppSecuritySelection = {
 }
 
 describe('app security JSON contract', () => {
+  test('keeps the scan directory type and the public schema in sync', () => {
+    // `tsc` is the real check: the constant only compiles when the type matches the schema.
+    expect(SCAN_DIRECTORY_MATCHES_CHECK_JSON).toBe(true)
+  })
+
   test('encodes the selection, the deterministic findings document, and the agent checks path', async () => {
     const encoded = securityCheckJsonOutputSchema.encode(
       toSecurityCheckJson({deterministicFindings}, agentChecksPath, configSelection, scanDirectories, null),
