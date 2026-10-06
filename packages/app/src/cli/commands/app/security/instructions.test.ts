@@ -11,7 +11,6 @@ import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/app-security-instructions.js')
@@ -152,7 +151,6 @@ describe('app security instructions command', () => {
   test('forwards --client-id and --without-app-config to the resolver and uses the client ID as the results key', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appDirectory = await fileRealPath(directory)
-      await mkdir(appSecurityArtifactPaths(appDirectory, 'abc123').resultsDirectory)
       vi.mocked(resolveAppSecuritySelection).mockResolvedValue({
         kind: 'no-config',
         appDirectory,
@@ -169,24 +167,15 @@ describe('app security instructions command', () => {
     })
   })
 
-  test('aborts with "No results found" and delivers nothing when the results directory does not exist', async () => {
+  test('delivers instructions when the results directory does not exist', async () => {
     await inTemporaryDirectory(async (directory) => {
-      await createApp(directory, {resultsKey: null})
-      const output = mockAndCaptureOutput()
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const appDirectory = await createApp(directory, {resultsKey: null})
 
-      try {
-        await expect(SecurityInstructions.run([], import.meta.url)).rejects.toThrow(
-          'process.exit unexpectedly called with "1"',
-        )
+      await SecurityInstructions.run([], import.meta.url)
 
-        expect(output.error()).toContain('No app security check results for shopify.app in')
-        expect(output.error()).toContain('shopify app security check')
-        expect(deliverAppSecurityInstructions).not.toHaveBeenCalled()
-      } finally {
-        consoleErrorSpy.mockRestore()
-        output.clear()
-      }
+      expect(deliverAppSecurityInstructions).toHaveBeenCalledWith(
+        expect.objectContaining({appDirectory, resultsKey: 'shopify.app'}),
+      )
     })
   })
 
@@ -199,7 +188,6 @@ describe('app security instructions command', () => {
     await inTemporaryDirectory(async (directory) => {
       const appDirectory = await fileRealPath(directory)
       await writeFile(joinPath(appDirectory, 'shopify.app.toml'), validAppConfiguration('toml-client-id'))
-      await mkdir(appSecurityArtifactPaths(appDirectory, 'mistyped-client-id').resultsDirectory)
       const lookUpApp = await resolveWithFailingLookUp()
 
       await SecurityInstructions.run(['--path', directory, '--client-id', 'mistyped-client-id'], import.meta.url)
