@@ -52,7 +52,10 @@ If you want to publish your local theme, then you need to run \`shopify theme pu
 
   async command(flags: PublishFlags, adminSession: AdminSession, multiEnvironment?: boolean) {
     const result = await publish(adminSession, flags, multiEnvironment)
-    if (!result) return
+    if (!result) {
+      if (flags.json && !multiEnvironment) outputResult(themePublishJsonOutputSchema.encode({status: 'cancelled'}))
+      return
+    }
     if (flags.json && multiEnvironment) return result.data
     renderThemePublishResult(result, flags.json ? 'json' : 'text', flags.environment)
   }
@@ -61,7 +64,9 @@ If you want to publish your local theme, then you need to run \`shopify theme pu
     return Boolean(flags.json)
   }
 
-  protected renderEnvironmentResults(environments: {environment: string; result: unknown}[]): void {
-    outputResult(themePublishJsonOutputSchema.encode(themePublishJsonOutputSchema.validate({environments})))
+  protected renderEnvironmentResults(
+    environments: import('../../services/json-output/schema.js').ThemeEnvironmentResult[],
+  ): void {
+    outputResult(themePublishJsonOutputSchema.encode({environments}))
   }
 }
