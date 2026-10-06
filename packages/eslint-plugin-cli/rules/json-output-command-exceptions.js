@@ -34,7 +34,6 @@ const commandExceptions = [
   'packages/app/src/cli/commands/app/webhook/trigger.ts',
   'packages/cli/src/cli/commands/auth/login.ts',
   'packages/cli/src/cli/commands/auth/logout.ts',
-  'packages/cli/src/cli/commands/config/autoupgrade/off.ts',
   'packages/cli/src/cli/commands/doc/fetch.ts',
   'packages/cli/src/cli/commands/doc/search.ts',
   'packages/cli/src/cli/commands/upgrade.ts',
