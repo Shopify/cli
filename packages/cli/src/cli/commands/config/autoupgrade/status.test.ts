@@ -1,6 +1,5 @@
 import AutoupgradeStatus from './status.js'
 import {getAutoUpgradeEnabled} from '@shopify/cli-kit/node/upgrade'
-import {Config} from '@oclif/core'
 import {describe, expect, vi, test} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
@@ -10,12 +9,11 @@ describe('AutoupgradeStatus', () => {
   test('displays auto-upgrade on message when enabled', async () => {
     // Given
     vi.mocked(getAutoUpgradeEnabled).mockReturnValue(true)
-    const config = new Config({root: __dirname})
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
 
     // When
-    await new AutoupgradeStatus([], config).run()
+    await AutoupgradeStatus.run([], import.meta.url)
 
     // Then
     expect(outputMock.info()).toMatchInlineSnapshot(`
@@ -31,12 +29,11 @@ describe('AutoupgradeStatus', () => {
   test('displays auto-upgrade off message when disabled', async () => {
     // Given
     vi.mocked(getAutoUpgradeEnabled).mockReturnValue(false)
-    const config = new Config({root: __dirname})
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
 
     // When
-    await new AutoupgradeStatus([], config).run()
+    await AutoupgradeStatus.run([], import.meta.url)
 
     // Then
     expect(outputMock.info()).toMatchInlineSnapshot(`
@@ -52,12 +49,11 @@ describe('AutoupgradeStatus', () => {
   test('displays auto-upgrade on message when never explicitly set (default enabled)', async () => {
     // Given
     vi.mocked(getAutoUpgradeEnabled).mockReturnValue(true)
-    const config = new Config({root: __dirname})
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
 
     // When
-    await new AutoupgradeStatus([], config).run()
+    await AutoupgradeStatus.run([], import.meta.url)
 
     // Then
     expect(outputMock.info()).toMatchInlineSnapshot(`

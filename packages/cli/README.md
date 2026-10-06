@@ -3902,12 +3902,28 @@ Check whether auto-upgrade is enabled, disabled, or not yet configured.
 
 ```
 USAGE
-  $ shopify config autoupgrade status [--json-schema]
+  $ shopify config autoupgrade status [-j] [--json-schema] [--no-color] [--no-input] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
   Check whether auto-upgrade is enabled, disabled, or not yet configured.
@@ -3917,6 +3933,28 @@ DESCRIPTION
   When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.
 
   Run `shopify config autoupgrade on` or `shopify config autoupgrade off` to configure it.
+
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AutoUpgradeResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "enabled"
+    ],
+    "additionalProperties": false,
+    "title": "AutoUpgradeResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify doc fetch`
