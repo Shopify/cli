@@ -1,7 +1,7 @@
 import {BulkOperationGidSchema, BulkOperationSchema, BulkOperationContextSchema} from './common.js'
-import type {BulkOperationContext} from './common.js'
 import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
+import type {BulkOperationContext} from './common.js'
 import type {BulkOperation} from '@shopify/cli-kit/node/api/bulk-operations'
 
 const ListedBulkOperationSchema = BulkOperationSchema.omit({type: true})

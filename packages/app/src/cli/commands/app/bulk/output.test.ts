@@ -1,14 +1,20 @@
-import {testBulkOperation, testBulkOperationContext} from '../../../services/bulk-operations/bulk-operation.test-data.js'
 import BulkStatus from './status.js'
 import BulkCancel from './cancel.js'
+import {
+  testBulkOperation,
+  testBulkOperationContext,
+} from '../../../services/bulk-operations/bulk-operation.test-data.js'
 import {prepareAppStoreContext} from '../../../utilities/execute-command-helpers.js'
 import {createAdminSessionAsApp, resolveApiVersion} from '../../../services/graphql/common.js'
 import {
   bulkOperationStatusJsonOutputSchema,
   cancelBulkOperationJsonOutputSchema,
-
 } from '../../../services/bulk-operations/types.js'
-import {fetchBulkOperationById, fetchRecentBulkOperations, cancelBulkOperationRequest} from '@shopify/cli-kit/node/api/bulk-operations'
+import {
+  fetchBulkOperationById,
+  fetchRecentBulkOperations,
+  cancelBulkOperationRequest,
+} from '@shopify/cli-kit/node/api/bulk-operations'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
@@ -45,7 +51,11 @@ afterEach(() => {
 })
 
 function bulkOperation(overrides: Partial<BulkOperation> = {}): BulkOperation {
-return testBulkOperation({objectCount: '900719925474099312345', createdAt: '2026-09-01T02:00:00.789+02:00', ...overrides})
+  return testBulkOperation({
+    objectCount: '900719925474099312345',
+    createdAt: '2026-09-01T02:00:00.789+02:00',
+    ...overrides,
+  })
 }
 
 function expectedOperation() {
@@ -146,47 +156,57 @@ test('cancellation emits one result through the real service, codec, presenter, 
   })
 })
 
-test.each([
-  {name: 'cancel', Command: BulkCancel},
-  ])('$name user errors reach the fatal envelope without a success document', async ({Command}) => {
-  const userErrors = [{field: ['id'], message: 'Operation rejected'}]
-  vi.mocked(cancelBulkOperationRequest).mockResolvedValue({bulkOperation: null, userErrors})
+test.each([{name: 'cancel', Command: BulkCancel}])(
+  '$name user errors reach the fatal envelope without a success document',
+  async ({Command}) => {
+    const userErrors = [{field: ['id'], message: 'Operation rejected'}]
+    vi.mocked(cancelBulkOperationRequest).mockResolvedValue({bulkOperation: null, userErrors})
 
-  vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-  await withCapturedStandardStreams(async ({stdout, stderr}) => {
-    const argv = ['--id', '123']
-    try {
-      await runCommand(Command, [...argv, '--json'])
-      expect.fail('The command must reject the operation.')
-    } catch (error) {
-      if (!(error instanceof AbortError)) throw error
-      expect(error).toMatchObject({details: {userErrors}})
-      expect(stdout()).toBe('')
-      await handler(error)
-    }
-    expect(JSON.parse(stdout())).toMatchObject({error: {type: 'abort', details: {userErrors}}})
-    assertDiagnosticEvents(stderr(), 'Canceling bulk operation.')
-  })
-})
+    vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      const argv = ['--id', '123']
+      try {
+        await runCommand(Command, [...argv, '--json'])
+        expect.fail('The command must reject the operation.')
+      } catch (error) {
+        if (!(error instanceof AbortError)) throw error
+        expect(error).toMatchObject({details: {userErrors}})
+        expect(stdout()).toBe('')
+        await handler(error)
+      }
+      expect(JSON.parse(stdout())).toMatchObject({error: {type: 'abort', details: {userErrors}}})
+      assertDiagnosticEvents(stderr(), 'Canceling bulk operation.')
+    })
+  },
+)
 
 test.each([
   {name: 'status', Command: BulkStatus, schema: bulkOperationStatusJsonOutputSchema},
   {name: 'cancel', Command: BulkCancel, schema: cancelBulkOperationJsonOutputSchema},
-
 ] as const)('exposes the schema, JSON flag, and help for $name', ({Command, schema}) => {
   expect(Command.jsonOutputSchema).toBe(schema)
   expect(Command.flags.json).toBeDefined()
   expect(Command.baseFlags).toHaveProperty('json-schema')
   expect(Command.descriptionForHelp()).toContain(schema.name)
 })
-test.each([{json: true, noInput: false}, {json: true, noInput: true}, {json: false, noInput: false}, {json: false, noInput: true}])('status keeps output mode $json independent from input policy $noInput', async ({json, noInput}) => {
+test.each([
+  {json: true, noInput: false},
+  {json: true, noInput: true},
+  {json: false, noInput: false},
+  {json: false, noInput: true},
+])('status keeps output mode $json independent from input policy $noInput', async ({json, noInput}) => {
   vi.mocked(fetchBulkOperationById).mockResolvedValue(bulkOperation())
   const argv = ['--id', '123', ...(json ? ['--json'] : []), ...(noInput ? ['--no-input'] : [])]
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     const result = await runCommand(BulkStatus, argv)
     expect(result.app).toBeDefined()
     if (json) {
-      expect(JSON.parse(stdout())).toEqual({storeDomain: 'shop.myshopify.com', apiVersion: '2026-01', operationGid: 'gid://shopify/BulkOperation/123', operation: expectedOperation()})
+      expect(JSON.parse(stdout())).toEqual({
+        storeDomain: 'shop.myshopify.com',
+        apiVersion: '2026-01',
+        operationGid: 'gid://shopify/BulkOperation/123',
+        operation: expectedOperation(),
+      })
       assertDiagnosticEvents(stderr(), 'Checking bulk operation status.')
     } else {
       expect(stdout()).toBe('')
