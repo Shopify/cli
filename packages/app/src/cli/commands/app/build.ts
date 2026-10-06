@@ -1,9 +1,12 @@
 import {appFlags} from '../../flags.js'
 import build from '../../services/build.js'
+import {appBuildJsonOutputSchema} from '../../services/build/types.js'
+import {presentAppBuildResult} from '../../services/build/presenter.js'
 import {localAppContext} from '../../services/app-context.js'
 import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../utilities/app-unlinked-command.js'
+import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Build extends AppUnlinkedCommand {
@@ -13,11 +16,16 @@ export default class Build extends AppUnlinkedCommand {
 
   If you're building a [theme app extension](https://shopify.dev/docs/apps/online-store/theme-app-extensions), then running the \`build\` command runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) against your extension to ensure that it's valid.`
 
+  static get jsonOutputSchema() {
+    return appBuildJsonOutputSchema
+  }
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
     ...appFlags,
+    ...jsonFlag,
     'skip-dependencies-installation': Flags.boolean({
       hidden: false,
       description: 'Skips the installation of dependencies. Deprecated, use workspaces instead.',
@@ -39,7 +47,20 @@ export default class Build extends AppUnlinkedCommand {
       userProvidedConfigName: flags.config,
     })
 
-    await build({app, project, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey: clientId})
+    try {
+      const result = await build({
+        app,
+        project,
+        skipDependenciesInstallation: flags['skip-dependencies-installation'],
+        apiKey: clientId,
+      })
+      presentAppBuildResult(result, flags.json)
+    } catch (error) {
+      if (flags.json && error instanceof AbortSilentError) {
+        throw new AbortError('The app build did not complete. See the build diagnostics for details.')
+      }
+      throw error
+    }
 
     return {app}
   }

@@ -130,13 +130,17 @@ Build the app, including extensions.
 
 ```
 USAGE
-  $ shopify app build [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--path <value>] [--reset | ] [--skip-dependencies-installation] [--verbose]
+  $ shopify app build [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--skip-dependencies-installation] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -184,6 +188,108 @@ DESCRIPTION
   If you're building a "theme app extension" (https://shopify.dev/docs/apps/online-store/theme-app-extensions), then
   running the `build` command runs "Theme Check" (https://shopify.dev/docs/themes/tools/theme-check) against your
   extension to ensure that it's valid.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppBuildResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "app": {
+        "$ref": "#/definitions/BuiltApp"
+      },
+      "webs": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/BuiltWeb"
+        }
+      },
+      "extensions": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/BuiltExtension"
+        }
+      }
+    },
+    "required": [
+      "status",
+      "app",
+      "webs",
+      "extensions"
+    ],
+    "additionalProperties": false,
+    "title": "AppBuildResult",
+    "definitions": {
+      "BuiltApp": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "directory": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "directory"
+        ],
+        "additionalProperties": false
+      },
+      "BuiltWeb": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "$ref": "#/definitions/BuiltApp/properties/directory"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "frontend",
+                "backend",
+                "background"
+              ]
+            }
+          }
+        },
+        "required": [
+          "directory",
+          "roles"
+        ],
+        "additionalProperties": false
+      },
+      "BuiltExtension": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "directory": {
+            "$ref": "#/definitions/BuiltApp/properties/directory"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "directory"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app bulk cancel`
