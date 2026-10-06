@@ -1,6 +1,7 @@
 import SecurityCheck from './check.js'
 import {appFlags} from '../../../flags.js'
 import securityCheck from '../../../services/security-check.js'
+import {securityCheckJsonOutputSchema} from '../../../services/security-check-json.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -179,7 +180,9 @@ describe('app security check command', () => {
   })
 
   test('describes the artifacts it writes and how agent results are recorded', () => {
-    expect(SecurityCheck.flags.yes.description).toBe('Print coding-agent instructions without prompting.')
+    expect(SecurityCheck.flags.yes.description).toBe(
+      "Print coding-agent instructions without prompting. With --json, they're in the result instead.",
+    )
     expect(SecurityCheck.flags['skip-instructions'].description).toBe("Don't offer to show coding-agent instructions.")
     expect(SecurityCheck.flags.yes.exclusive).toEqual(['skip-instructions'])
     expect(SecurityCheck.flags['skip-instructions'].exclusive).toEqual(['yes'])
@@ -217,9 +220,15 @@ describe('app security check command', () => {
     expect(SecurityCheck.descriptionWithMarkdown).not.toContain('--ignore')
   })
 
-  test('allows --yes in JSON mode while preserving non-interactive output behavior', async () => {
+  test('allows --yes in JSON mode', async () => {
     await SecurityCheck.run(['--json', '--yes'], import.meta.url)
 
     expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({json: true, yes: true}))
+  })
+
+  test('exposes its JSON result schema and documents the instructions in it', () => {
+    expect(SecurityCheck.jsonOutputSchema).toBe(securityCheckJsonOutputSchema)
+    expect(SecurityCheck.description).toContain('AppSecurityCheckResult')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain("in the result's `instructions` field")
   })
 })

@@ -1,6 +1,7 @@
 import {appSecurityBlockingFlag} from './blocking-flag.js'
 import {appSecuritySelectionFlags} from './selection-flags.js'
 import securityCheck from '../../../services/security-check.js'
+import {securityCheckJsonOutputSchema} from '../../../services/security-check-json.js'
 import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
@@ -21,9 +22,13 @@ Use \`--exclude\` to skip more paths. Each value is a glob that is matched again
 
 Use \`--list-files\` to check the scope before scanning: it prints the files the check would gather, one path per line and relative to the app directory (\`{"files": [...]}\` with \`--json\`), and then stops. It writes no results and never prompts. \`--client-id\` is still checked, but doesn't change the list.
 
-In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. JSON output never prompts or prints those instructions. You can also run \`shopify app security instructions\` to print, copy, or write them later.`
+In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. With \`--json\`, the command prompts the same way, before it prints the result, and the instructions you choose or pass \`--yes\` for are in the result's \`instructions\` field instead of printed. You can also run \`shopify app security instructions\` to print, copy, or write them later.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static get jsonOutputSchema() {
+    return securityCheckJsonOutputSchema
+  }
+
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
@@ -56,7 +61,7 @@ In interactive terminals, the command offers to copy the coding-agent instructio
     ...jsonFlag,
     ...appSecurityBlockingFlag,
     yes: Flags.boolean({
-      description: 'Print coding-agent instructions without prompting.',
+      description: "Print coding-agent instructions without prompting. With --json, they're in the result instead.",
       default: false,
       exclusive: ['skip-instructions'],
       env: 'SHOPIFY_FLAG_YES',

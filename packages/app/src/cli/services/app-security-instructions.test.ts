@@ -362,18 +362,46 @@ describe('appSecurityInstructions', () => {
 })
 
 describe('deliverAppSecurityInstructions', () => {
-  test('prints instructions to stdout by default', async () => {
+  test('prints instructions to stdout by default and returns them', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
       const dependencies = testDependencies()
 
-      await deliverAppSecurityInstructions(
-        {appDirectory: directory, resultsKey: 'shopify.app', commands: commandsFor(directory), copy: false},
+      const delivery = await deliverAppSecurityInstructions(
+        {
+          appDirectory: directory,
+          resultsKey: 'shopify.app',
+          commands: commandsFor(directory),
+          copy: false,
+          json: false,
+        },
         dependencies,
       )
 
       expect(dependencies.output).toHaveBeenCalledWith(expect.stringContaining('Run the scan'))
       expect(dependencies.copyToClipboard).not.toHaveBeenCalled()
+      expect(dependencies.outputConfirmation).not.toHaveBeenCalled()
+      expect(delivery).toEqual({
+        content: dependencies.output.mock.calls[0]![0],
+        copiedToClipboard: false,
+        writePath: undefined,
+      })
+    })
+  })
+
+  test('returns the instructions without printing them in JSON mode', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const dependencies = testDependencies()
+
+      const delivery = await deliverAppSecurityInstructions(
+        {appDirectory: directory, resultsKey: 'shopify.app', commands: commandsFor(directory), copy: false, json: true},
+        dependencies,
+      )
+
+      expect(delivery.content).toContain('Run the scan')
+      expect(delivery.copiedToClipboard).toBe(false)
+      expect(dependencies.output).not.toHaveBeenCalled()
       expect(dependencies.outputConfirmation).not.toHaveBeenCalled()
     })
   })
@@ -386,7 +414,13 @@ describe('deliverAppSecurityInstructions', () => {
       const dependencies = testDependencies()
 
       await deliverAppSecurityInstructions(
-        {appDirectory: directory, resultsKey: 'shopify.app', commands: commandsFor(directory), copy: false},
+        {
+          appDirectory: directory,
+          resultsKey: 'shopify.app',
+          commands: commandsFor(directory),
+          copy: false,
+          json: false,
+        },
         dependencies,
       )
 
@@ -395,17 +429,18 @@ describe('deliverAppSecurityInstructions', () => {
     })
   })
 
-  test('copies instructions without printing them', async () => {
+  test.each([false, true])('copies instructions without printing them, with json %s', async (json) => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
       const dependencies = testDependencies()
 
-      await deliverAppSecurityInstructions(
+      const delivery = await deliverAppSecurityInstructions(
         {
           appDirectory: directory,
           resultsKey: 'shopify.app',
           commands: commandsFor(directory),
           copy: true,
+          json,
           scanScope: noScope,
         },
         dependencies,
@@ -420,6 +455,7 @@ describe('deliverAppSecurityInstructions', () => {
       expect(dependencies.outputConfirmation).toHaveBeenCalledWith(
         'Copied app security check instructions to the clipboard',
       )
+      expect(delivery).toEqual({content: instructions, copiedToClipboard: true, writePath: undefined})
     })
   })
 
@@ -429,13 +465,14 @@ describe('deliverAppSecurityInstructions', () => {
       const dependencies = testDependencies()
       const instructionsPath = joinPath(directory, 'handoff.md')
 
-      await deliverAppSecurityInstructions(
+      const delivery = await deliverAppSecurityInstructions(
         {
           appDirectory: directory,
           resultsKey: 'shopify.app',
           commands: commandsFor(directory),
           copy: false,
           writePath: instructionsPath,
+          json: false,
           scanScope: noScope,
         },
         dependencies,
@@ -446,6 +483,8 @@ describe('deliverAppSecurityInstructions', () => {
       expect(dependencies.outputConfirmation).toHaveBeenCalledWith(
         `Wrote app security check instructions to ${instructionsPath}`,
       )
+      await expect(readFile(instructionsPath)).resolves.toBe(`${delivery.content}\n`)
+      expect(delivery).toMatchObject({copiedToClipboard: false, writePath: instructionsPath})
     })
   })
 })

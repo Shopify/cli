@@ -43,5 +43,6 @@
     },
     "checks": []
   },
-  "agent_checks_path": "/tmp/app/.shopify/app-security/agent-checks.json"
+  "agent_checks_path": "/tmp/app/.shopify/app-security/agent-checks.json",
+  "instructions": null
 }

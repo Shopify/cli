@@ -1,6 +1,6 @@
 import {securityExitCode, executeAppSecurity, listAppSecurityFiles} from './app-security-api.js'
 import {writeCheckArtifacts} from './app-security-artifacts.js'
-import deliverAppSecurityInstructions from './app-security-instructions.js'
+import deliverAppSecurityInstructions, {type AppSecurityInstructionsDelivery} from './app-security-instructions.js'
 import {
   formatAppSecurityCommand,
   resolveAppSecurityCommands,
@@ -16,7 +16,8 @@ import {
   type AppSecuritySelection,
   type AppSecuritySelectionOptions,
 } from './app-security-selection.js'
-import {encodeSecurityJson, toSecurityJson} from './security-json.js'
+import {securityCheckJsonOutputSchema, toSecurityCheckJson} from './security-check-json.js'
+import {toAppSecurityInstructionsJson} from './security-instructions-json.js'
 import {renderSecurityReport} from './security-output.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
@@ -77,9 +78,10 @@ interface SecurityDependencies {
     appDirectory: string
     resultsKey: string
     copy: boolean
+    json: boolean
     scanScope: AppSecurityScope
     commands: AppSecurityCommands
-  }): Promise<void>
+  }): Promise<AppSecurityInstructionsDelivery>
   output(content: string): void
   renderInfo(options: RenderAlertOptions): void
   renderWarning(options: RenderAlertOptions): void
@@ -127,7 +129,7 @@ async function instructionsDestination(
   canPrompt: boolean,
   agentCheckCount: number,
 ): Promise<AppSecurityInstructionsDestination> {
-  if (options.json || options.skipInstructions) return 'nothing'
+  if (options.skipInstructions) return 'nothing'
   if (options.yes) return 'print'
   if (!canPrompt) return 'nothing'
   return dependencies.selectInstructionsDestination(agentCheckCount)
@@ -177,7 +179,7 @@ export default async function securityCheck(
 ): Promise<SecurityCheckResolution> {
   // Resolved first so a mistyped directory fails before any prompt.
   const includeDirectories = await resolveIncludeDirectories(options.includeDirs)
-  const canPrompt = !options.json && !options.listFiles && dependencies.canPrompt()
+  const canPrompt = !options.listFiles && dependencies.canPrompt()
   const selection = await dependencies.resolveSelection({
     path: options.directory,
     config: options.configName,
@@ -220,7 +222,7 @@ export default async function securityCheck(
     const {paths, ignoredScanDirectories} = await dependencies.listFiles(scanOptions)
     renderIgnoredScanDirectoryWarnings(ignoredScanDirectories, dependencies)
     if (options.json) {
-      dependencies.output(JSON.stringify({files: paths}, null, 2))
+      dependencies.output(securityCheckJsonOutputSchema.encode({files: paths}))
     } else if (paths.length > 0) {
       dependencies.output(paths.join('\n'))
     }
@@ -235,30 +237,39 @@ export default async function securityCheck(
     agentChecks: execution.agentChecks,
   })
 
+  const deliverChosenInstructions = async () => {
+    const agentCheckCount = execution.agentChecks.checks.length
+    const destination = await instructionsDestination(options, dependencies, canPrompt, agentCheckCount)
+    if (destination === 'nothing') return null
+    return dependencies.deliverInstructions({
+      appDirectory,
+      resultsKey: resultsKey(selection),
+      copy: destination === 'copy',
+      json: options.json,
+      scanScope: scope,
+      commands,
+    })
+  }
+
   if (options.json) {
+    // The instructions are part of the JSON result, so they're chosen before it's printed.
+    const instructions = await deliverChosenInstructions()
     dependencies.output(
-      encodeSecurityJson(toSecurityJson(execution, artifacts.agentChecksPath, selection, scanDirectories)),
+      securityCheckJsonOutputSchema.encode(
+        toSecurityCheckJson(
+          execution,
+          artifacts.agentChecksPath,
+          selection,
+          scanDirectories,
+          instructions ? toAppSecurityInstructionsJson(instructions) : null,
+        ),
+      ),
     )
   } else {
     dependencies.renderReport(
       securityReportInput(execution, artifacts, options.verbose, commands, selection, scanDirectories),
     )
-  }
-
-  const destination = await instructionsDestination(
-    options,
-    dependencies,
-    canPrompt,
-    execution.agentChecks.checks.length,
-  )
-  if (destination !== 'nothing') {
-    await dependencies.deliverInstructions({
-      appDirectory,
-      resultsKey: resultsKey(selection),
-      copy: destination === 'copy',
-      scanScope: scope,
-      commands,
-    })
+    await deliverChosenInstructions()
   }
 
   const exitCode = securityExitCode(execution, options.blocking)

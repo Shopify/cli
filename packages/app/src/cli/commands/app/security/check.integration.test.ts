@@ -2,6 +2,7 @@ import SecurityCheck from './check.js'
 import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts.js'
 import {appFromIdentifiers} from '../../../services/context.js'
 import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
+import {securityCheckJsonOutputSchema} from '../../../services/security-check-json.js'
 import {Config} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, fileRealPath, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -95,6 +96,23 @@ async function runCommand(argv: string[]) {
 }
 
 describe('app security check command boundary', () => {
+  test('puts the post-scan instructions in the JSON result with --yes, and prints nothing else to stdout', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+
+      const result = await runCommand(['--path', directory, '--json', '--yes'])
+
+      expect(result.exitCode).toBe(0)
+      const output = JSON.parse(result.stdout)
+      expect(securityCheckJsonOutputSchema.validate(output)).toEqual(output)
+      expect(output.instructions).toEqual({
+        content: expect.stringContaining('Use the existing scan results'),
+        copied_to_clipboard: false,
+        path: null,
+      })
+    })
+  })
+
   test('scans an app from a nested directory and writes deterministic-findings.json and agent-checks.json', async () => {
     await inTemporaryDirectory(async (directory) => {
       const {nestedDirectory} = await createApp(directory)
@@ -105,8 +123,16 @@ describe('app security check command boundary', () => {
 
       expect(result.exitCode).toBe(0)
       const output = JSON.parse(result.stdout)
-      expect(Object.keys(output).sort()).toEqual(['agent_checks_path', 'deterministic_findings', 'engine', 'selection'])
+      expect(securityCheckJsonOutputSchema.validate(output)).toEqual(output)
+      expect(Object.keys(output).sort()).toEqual([
+        'agent_checks_path',
+        'deterministic_findings',
+        'engine',
+        'instructions',
+        'selection',
+      ])
       expect(output.agent_checks_path).toBe(paths.agentChecksPath)
+      expect(output.instructions).toBeNull()
       expect(output.selection).toEqual({
         app_directory: appDirectory,
         app_config_file: joinPath(appDirectory, 'shopify.app.toml'),

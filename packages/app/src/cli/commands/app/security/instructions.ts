@@ -3,9 +3,14 @@ import {resolveAppSecurityCommands} from '../../../services/app-security-command
 import deliverAppSecurityInstructions from '../../../services/app-security-instructions.js'
 import {requireResultsDirectory} from '../../../services/app-security-results.js'
 import {resolveAppSecuritySelection, resultsKey} from '../../../services/app-security-selection.js'
+import {
+  securityInstructionsJsonOutputSchema,
+  toAppSecurityInstructionsJson,
+} from '../../../services/security-instructions-json.js'
 import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class SecurityInstructions extends BaseCommand {
@@ -15,9 +20,13 @@ export default class SecurityInstructions extends BaseCommand {
 
   static descriptionWithMarkdown = `Prints the complete workflow that a coding agent should follow to review app security check results.
 
-By default, the instructions are printed to stdout. Use \`--copy\` to copy them to the clipboard or \`--write\` to write them to a file. Standalone instructions always start by running \`shopify app security check\`; only that invocation's generated review pack is trusted as workflow input.`
+By default, the instructions are printed to stdout. Use \`--copy\` to copy them to the clipboard or \`--write\` to write them to a file. With \`--json\`, the instructions are in the result's \`instructions\` field instead of printed, also when you copy or write them. Standalone instructions always start by running \`shopify app security check\`; only that invocation's generated review pack is trusted as workflow input.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static get jsonOutputSchema() {
+    return securityInstructionsJsonOutputSchema
+  }
+
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
@@ -34,6 +43,7 @@ By default, the instructions are printed to stdout. Use \`--copy\` to copy them 
       parse: async (input) => resolvePath(input),
       env: 'SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_WRITE',
     }),
+    ...jsonFlag,
   }
 
   public async run(): Promise<void> {
@@ -48,12 +58,17 @@ By default, the instructions are printed to stdout. Use \`--copy\` to copy them 
     })
     await requireResultsDirectory(selection, flags.path)
 
-    await deliverAppSecurityInstructions({
+    const delivery = await deliverAppSecurityInstructions({
       appDirectory: selection.appDirectory,
       resultsKey: resultsKey(selection),
       commands: resolveAppSecurityCommands(selection, flags.path),
       copy: flags.copy,
       writePath: flags.write,
+      json: flags.json,
     })
+
+    if (flags.json) {
+      outputResult(securityInstructionsJsonOutputSchema.encode({instructions: toAppSecurityInstructionsJson(delivery)}))
+    }
   }
 }

@@ -6,6 +6,7 @@ import {resolveAppSecurityCommands} from '../../../services/app-security-command
 import deliverAppSecurityInstructions from '../../../services/app-security-instructions.js'
 import {resolveAppSecuritySelection, type AppSecuritySelection} from '../../../services/app-security-selection.js'
 import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
+import {securityInstructionsJsonOutputSchema} from '../../../services/security-instructions-json.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -70,6 +71,8 @@ describe('app security instructions command', () => {
     expect(SecurityInstructions.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityInstructions.prototype).not.toBeInstanceOf(AppLinkedCommand)
     expect(SecurityInstructions.args).not.toHaveProperty('directory')
+    expect(SecurityInstructions.flags).toHaveProperty('json')
+    expect(SecurityInstructions.jsonOutputSchema).toBe(securityInstructionsJsonOutputSchema)
   })
 
   test('defines the selection flags as check does', () => {
@@ -98,7 +101,52 @@ describe('app security instructions command', () => {
         commands: resolveAppSecurityCommands(configSelection(appDirectory, 'shopify.app.toml'), cwd()),
         copy: false,
         writePath: undefined,
+        json: false,
       })
+    })
+  })
+
+  test('prints the delivered instructions as the JSON result with --json', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const instructionsPath = resolvePath('./instructions.md')
+      vi.mocked(deliverAppSecurityInstructions).mockResolvedValue({
+        content: '# Instructions',
+        copiedToClipboard: false,
+        writePath: instructionsPath,
+      })
+      const output = mockAndCaptureOutput()
+      output.clear()
+
+      try {
+        await SecurityInstructions.run(['--write', './instructions.md', '--json'], import.meta.url)
+
+        expect(deliverAppSecurityInstructions).toHaveBeenCalledWith(
+          expect.objectContaining({writePath: instructionsPath, json: true}),
+        )
+        expect(JSON.parse(output.info())).toEqual({
+          instructions: {content: '# Instructions', copied_to_clipboard: false, path: instructionsPath},
+        })
+      } finally {
+        output.clear()
+      }
+    })
+  })
+
+  test('prints no JSON result without --json', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      vi.mocked(deliverAppSecurityInstructions).mockResolvedValue({content: '# Instructions', copiedToClipboard: true})
+      const output = mockAndCaptureOutput()
+      output.clear()
+
+      try {
+        await SecurityInstructions.run(['--copy'], import.meta.url)
+
+        expect(output.info()).toBe('')
+      } finally {
+        output.clear()
+      }
     })
   })
 

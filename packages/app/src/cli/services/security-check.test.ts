@@ -9,6 +9,7 @@ import {cwd, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import type {AppSecurityExecution} from './app-security-api.js'
+import type {AppSecurityInstructionsDelivery} from './app-security-instructions.js'
 import type {AppSecuritySelection, AppSecuritySelectionOptions} from './app-security-selection.js'
 import type {AppSecurityInstructionsDestination} from './security-check.js'
 import type {
@@ -136,7 +137,12 @@ function testDependencies(
     writeArtifacts: vi.fn(async () => artifacts),
     canPrompt: vi.fn(() => false),
     selectInstructionsDestination: vi.fn(async (): Promise<AppSecurityInstructionsDestination> => 'nothing'),
-    deliverInstructions: vi.fn(async () => {}),
+    deliverInstructions: vi.fn(
+      async (options: {copy: boolean}): Promise<AppSecurityInstructionsDelivery> => ({
+        content: 'post-scan instructions',
+        copiedToClipboard: options.copy,
+      }),
+    ),
     output: vi.fn(),
     renderInfo: vi.fn(),
     renderWarning: vi.fn(),
@@ -401,14 +407,14 @@ describe('securityCheck', () => {
     })
   })
 
-  test('allows prompts only in an interactive terminal without --json', async () => {
+  test.each([false, true])('allows prompts only in an interactive terminal, with json %s', async (json) => {
     const interactive = testDependencies()
     interactive.canPrompt.mockReturnValue(true)
-    await securityCheck({...testOptions(), skipInstructions: true}, interactive)
+    await securityCheck({...testOptions(), json, skipInstructions: true}, interactive)
     expect(interactive.resolveSelection).toHaveBeenCalledWith(expect.objectContaining({allowPrompts: true}))
 
     const nonInteractive = testDependencies()
-    await securityCheck({...testOptions(), skipInstructions: true}, nonInteractive)
+    await securityCheck({...testOptions(), json, skipInstructions: true}, nonInteractive)
     expect(nonInteractive.resolveSelection).toHaveBeenCalledWith(expect.objectContaining({allowPrompts: false}))
   })
 
@@ -506,12 +512,12 @@ describe('securityCheck', () => {
     expect(dependencies.writeArtifacts).not.toHaveBeenCalled()
   })
 
-  test('prints the engine, selection, deterministic findings, and agent checks path as JSON', async () => {
+  test('prints the engine, selection, deterministic findings, agent checks path and instructions as JSON', async () => {
     const dependencies = testDependencies()
-    dependencies.canPrompt.mockReturnValue(true)
 
     await securityCheck({...testOptions(), json: true, yes: true}, dependencies)
 
+    expect(dependencies.output).toHaveBeenCalledOnce()
     expect(JSON.parse(dependencies.output.mock.calls[0]![0])).toEqual({
       engine,
       selection: {
@@ -523,12 +529,50 @@ describe('securityCheck', () => {
       },
       deterministic_findings: deterministicFindings,
       agent_checks_path: artifacts.agentChecksPath,
+      instructions: {content: 'post-scan instructions', copied_to_clipboard: false, path: null},
     })
     expect(dependencies.renderReport).not.toHaveBeenCalled()
-    expect(dependencies.resolveSelection).toHaveBeenCalledWith(expect.objectContaining({allowPrompts: false}))
-    expect(dependencies.canPrompt).not.toHaveBeenCalled()
     expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
+    expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
+      appDirectory,
+      resultsKey: 'shopify.app',
+      copy: false,
+      json: true,
+      scanScope: noScope,
+      commands: commandsFor(),
+    })
+  })
+
+  test('asks for the instructions before printing the JSON result in an interactive terminal', async () => {
+    const dependencies = testDependencies()
+    dependencies.canPrompt.mockReturnValue(true)
+    dependencies.selectInstructionsDestination.mockResolvedValue('copy')
+
+    await securityCheck({...testOptions(), json: true}, dependencies)
+
+    expect(dependencies.selectInstructionsDestination.mock.invocationCallOrder[0]).toBeLessThan(
+      dependencies.output.mock.invocationCallOrder[0]!,
+    )
+    expect(dependencies.deliverInstructions).toHaveBeenCalledWith(expect.objectContaining({copy: true, json: true}))
+    expect(JSON.parse(dependencies.output.mock.calls[0]![0]).instructions).toEqual({
+      content: 'post-scan instructions',
+      copied_to_clipboard: true,
+      path: null,
+    })
+  })
+
+  test.each([
+    ['no instructions are chosen', {canPrompt: true, skipInstructions: false}],
+    ['--skip-instructions is passed', {canPrompt: true, skipInstructions: true}],
+    ['the terminal is not interactive', {canPrompt: false, skipInstructions: false}],
+  ])('prints null instructions in the JSON result when %s', async (_, {canPrompt, skipInstructions}) => {
+    const dependencies = testDependencies()
+    dependencies.canPrompt.mockReturnValue(canPrompt)
+
+    await securityCheck({...testOptions(), json: true, skipInstructions}, dependencies)
+
     expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
+    expect(JSON.parse(dependencies.output.mock.calls[0]![0]).instructions).toBeNull()
   })
 
   test('does not offer coding-agent instructions in CI or another non-interactive environment', async () => {
@@ -564,6 +608,7 @@ describe('securityCheck', () => {
       appDirectory,
       resultsKey: 'shopify.app',
       copy: true,
+      json: false,
       scanScope: noScope,
       commands: commandsFor(),
     })
@@ -617,6 +662,7 @@ describe('securityCheck', () => {
       appDirectory,
       resultsKey: 'shopify.app',
       copy: false,
+      json: false,
       scanScope: noScope,
       commands: commandsFor(),
     })
@@ -642,6 +688,7 @@ describe('securityCheck', () => {
       appDirectory,
       resultsKey: 'shopify.app',
       copy: false,
+      json: false,
       scanScope: noScope,
       commands: commandsFor(),
     })

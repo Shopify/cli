@@ -152,9 +152,17 @@ interface AppSecurityInstructionsOptions {
   resultsKey: string
   copy: boolean
   writePath?: string
+  /** The caller puts the instructions in its JSON result, so they aren't printed. */
+  json: boolean
   commands: AppSecurityCommands
   /** Present when `check` has just run in this process. */
   scanScope?: AppSecurityScope
+}
+
+export interface AppSecurityInstructionsDelivery {
+  content: string
+  copiedToClipboard: boolean
+  writePath?: string
 }
 
 interface AppSecurityInstructionsDependencies {
@@ -204,7 +212,7 @@ export function appSecurityInstructions(options: {
 export default async function deliverAppSecurityInstructions(
   options: AppSecurityInstructionsOptions,
   dependencies: AppSecurityInstructionsDependencies = defaultDependencies,
-): Promise<void> {
+): Promise<AppSecurityInstructionsDelivery> {
   const instructions = appSecurityInstructions({
     appDirectory: options.appDirectory,
     resultsKey: options.resultsKey,
@@ -218,7 +226,9 @@ export default async function deliverAppSecurityInstructions(
   } else if (options.writePath) {
     await dependencies.writeToFile(options.writePath, `${instructions}\n`)
     dependencies.outputConfirmation(`Wrote app security check instructions to ${options.writePath}`)
-  } else {
+  } else if (!options.json) {
     dependencies.output(instructions)
   }
+
+  return {content: instructions, copiedToClipboard: options.copy, writePath: options.writePath}
 }
