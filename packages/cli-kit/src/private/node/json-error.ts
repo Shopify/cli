@@ -20,6 +20,7 @@ interface FatalErrorLike {
   command?: unknown
   args?: unknown
   details?: unknown
+  code?: unknown
 }
 
 interface ExternalCommand {
@@ -134,6 +135,7 @@ function jsonErrorDocument(error: FatalErrorLike): JsonErrorDocument | undefined
 
   const commonFields = {
     message,
+    ...(typeof error.code === 'string' && error.code.length > 0 ? {code: error.code} : {}),
     ...(tryMessage === undefined ? {} : {tryMessage}),
     ...(nextSteps === undefined ? {} : {nextSteps}),
     ...(customSections === undefined ? {} : {customSections}),

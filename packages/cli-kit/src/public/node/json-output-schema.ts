@@ -1,13 +1,7 @@
-import {zod} from './schema.js'
 import {zodToJsonSchema} from 'zod-to-json-schema'
 import type {ZodTypeAny, z} from 'zod'
 
-/** UTC instants in CLI-owned results use whole seconds and the Z timezone marker. */
-export const jsonOutputTimestampSchema = zod
-  .string()
-  .datetime({precision: 0})
-  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/)
-  .describe('A UTC ISO 8601 instant with whole seconds and the Z timezone marker.')
+export {formatJsonOutputTimestamp, jsonOutputTimestampSchema} from '../common/json-output-schema.js'
 
 interface JsonOutputSchemaDefinition<TSchema extends ZodTypeAny = ZodTypeAny> {
   readonly name: string
