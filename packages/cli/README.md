@@ -4059,6 +4059,202 @@ DESCRIPTION
   to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app
   within the project. Use `--reset` to relink the app.
 
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `MigrationCancellationResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success",
+          "partial"
+        ]
+      },
+      "operations": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/MigrationCancellationOutcome"
+        }
+      }
+    },
+    "required": [
+      "status",
+      "operations"
+    ],
+    "additionalProperties": false,
+    "title": "MigrationCancellationResult",
+    "definitions": {
+      "MigrationCancellationOutcome": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "const": "success"
+              },
+              "operationGid": {
+                "type": "string",
+                "pattern": "^gid:\\/\\/shopify\\/AppSubscriptionMigrationOperation\\/[^/]+$",
+                "description": "The Shopify AppSubscriptionMigrationOperation GID."
+              },
+              "operation": {
+                "$ref": "#/definitions/MigrationOperation"
+              }
+            },
+            "required": [
+              "status",
+              "operationGid",
+              "operation"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "const": "failed"
+              },
+              "operationGid": {
+                "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/0/properties/operationGid"
+              },
+              "operation": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/MigrationOperation"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "error": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "abort"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "details": {
+                    "type": "object",
+                    "properties": {
+                      "userErrors": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/definitions/MigrationUserError"
+                        }
+                      }
+                    },
+                    "required": [
+                      "userErrors"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "type",
+                  "message",
+                  "details"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "status",
+              "operationGid",
+              "operation",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "MigrationOperation": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/0/properties/operationGid"
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Upstream status: RUNNING, COMPLETED, FAILED, or CANCELED."
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "shopGid": {
+                  "type": "string",
+                  "pattern": "^gid:\\/\\/shopify\\/Shop\\/\\d+$",
+                  "description": "The Shopify Shop GID."
+                },
+                "code": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The upstream per-shop migration result code."
+                }
+              },
+              "required": [
+                "shopGid",
+                "code"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "gid",
+          "status",
+          "total",
+          "results"
+        ],
+        "additionalProperties": false
+      },
+      "MigrationUserError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "fieldPath": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "message",
+          "fieldPath"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify app subscription-migrations cancel --id <operation-id>
 
@@ -4128,9 +4324,9 @@ DESCRIPTION
   Lists every app subscription eligible for migration.
 
   By default, the command writes CSV to stdout, streaming each page of results as it arrives. If a later page fails, the
-  rows already written remain valid CSV. Use `--json` to fetch all pages first and then write a single versioned JSON
-  envelope to stdout. Use shell redirection to save either format, for example `shopify app subscription-migrations list
-  > subscriptions.csv` or `shopify app subscription-migrations list --json > subscriptions.json`.
+  rows already written remain valid CSV. Use `--json` to fetch all pages first and then write a single JSON envelope to
+  stdout. Use shell redirection to save either format, for example `shopify app subscription-migrations list >
+  subscriptions.csv` or `shopify app subscription-migrations list --json > subscriptions.json`.
 
   Use `--status` to filter subscriptions by migration status. Supported values are `UNSCHEDULED`, `SCHEDULED`, and
   `MIGRATED`.

@@ -328,7 +328,29 @@ describe('subscription migration operation commands', () => {
     })
     expect(outputResult).toHaveBeenCalledOnce()
     expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
-      outcomes: result.outcomes,
+      status: 'partial',
+      operations: result.outcomes.map((outcome) => ({
+        status: outcome.status,
+        operationGid: outcome.operationId,
+        operation:
+          outcome.operation === null
+            ? null
+            : {
+                gid: outcome.operation.id,
+                status: outcome.operation.status,
+                total: outcome.operation.total,
+                results: outcome.operation.results.edges.map(({node}) => ({shopGid: node.shopId, code: node.code})),
+              },
+        ...(outcome.status === 'failed'
+          ? {
+              error: {
+                type: 'abort',
+                message: outcome.userErrors.map(({message}) => message).join('; '),
+                details: {userErrors: outcome.userErrors.map(({message, field}) => ({message, fieldPath: field}))},
+              },
+            }
+          : {}),
+      })),
     })
     expect(process.exitCode).toBe(1)
   })
