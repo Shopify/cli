@@ -9,6 +9,8 @@ import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {InferredFlags} from '@oclif/core/interfaces'
+import {outputResult} from '@shopify/cli-kit/node/output'
+import type {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 
 type PreviewFlags = InferredFlags<typeof Preview.flags>
 
@@ -59,7 +61,7 @@ export default class Preview extends ThemeCommand {
 
   static multiEnvironmentsFlags: RequiredFlags = null
 
-  async command(flags: PreviewFlags, adminSession: AdminSession) {
+  async command(flags: PreviewFlags, adminSession: AdminSession, multiEnvironment = false) {
     const theme = await findOrSelectTheme(adminSession, {filter: {theme: flags.theme}})
     const result = await devWithOverrideFile({
       adminSession,
@@ -69,9 +71,18 @@ export default class Preview extends ThemeCommand {
       password: flags.password,
     })
     const format = flags.json ? 'json' : 'text'
-    renderThemePreviewResult(result, format, Boolean(flags['preview-id']))
     if (flags.open) {
-      openURL(result.url).catch((error: Error) => renderThemePreviewOpenError(error, format))
+      await openURL(result.url).catch((error: Error) => renderThemePreviewOpenError(error, format))
     }
+    if (!multiEnvironment || !flags.json) renderThemePreviewResult(result, format, Boolean(flags['preview-id']))
+    return result
+  }
+
+  protected collectsEnvironmentResults(flags: Partial<PreviewFlags>): boolean {
+    return Boolean(flags.json)
+  }
+
+  protected renderEnvironmentResults(environments: ThemeEnvironmentResult[]): void {
+    outputResult(themePreviewJsonOutputSchema.encode({environments}))
   }
 }

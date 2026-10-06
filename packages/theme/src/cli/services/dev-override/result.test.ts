@@ -45,11 +45,11 @@ test('sends browser failures as diagnostic events to stderr', async () => {
   expect(renderWarning).not.toHaveBeenCalled()
 })
 
-test('writes compact JSON to stdout outside the command event context', async () => {
+test('writes one JSON object to stdout outside the command event context', async () => {
   await withCapturedStandardStreams(({stdout, stderr}) => {
     renderThemePreviewResult(result, 'json', false)
 
-    expect(stdout()).toBe('{"url":"https://abc123.shopifypreview.com","preview_identifier":"abc123"}\n')
+    expect(JSON.parse(stdout())).toEqual({status: 'success', preview: {id: 'abc123', url: result.url}})
     expect(stderr()).toBe('')
   })
   expect(renderSuccess).not.toHaveBeenCalled()
@@ -59,7 +59,7 @@ test('writes the JSON result to stdout without a diagnostic wrapper during the c
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await runWithCommandEventsForCommand(['--json'], () => renderThemePreviewResult(result, 'json', false))
 
-    expect(stdout()).toBe('{"url":"https://abc123.shopifypreview.com","preview_identifier":"abc123"}\n')
+    expect(JSON.parse(stdout())).toEqual({status: 'success', preview: {id: 'abc123', url: result.url}})
     expect(stderr()).toBe('')
   })
   expect(renderSuccess).not.toHaveBeenCalled()
