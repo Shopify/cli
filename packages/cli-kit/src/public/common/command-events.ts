@@ -1,13 +1,14 @@
+import {jsonOutputTimestampSchema} from './json-output-schema.js'
 import {z} from 'zod'
 
 /** Schema for a diagnostic emitted while a command executes. */
 export const commandDiagnosticEventSchema = z
   .object({
     type: z.literal('diagnostic'),
-    timestamp: z.string().datetime({offset: true}),
+    timestamp: jsonOutputTimestampSchema,
     level: z.enum(['debug', 'info', 'warning', 'error']),
     message: z.string(),
-    code: z.string().optional(),
+    code: z.string().min(1).optional().describe('A stable diagnostic code, included only when known.'),
   })
   .strict()
 
@@ -15,12 +16,12 @@ export const commandDiagnosticEventSchema = z
 export const commandProgressEventSchema = z
   .object({
     type: z.literal('progress'),
-    timestamp: z.string().datetime({offset: true}),
+    timestamp: jsonOutputTimestampSchema,
     status: z.enum(['started', 'updated', 'retrying', 'completed', 'failed']),
     operation: z.string(),
     message: z.string().optional(),
-    current: z.number().nonnegative().optional(),
-    total: z.number().nonnegative().optional(),
+    current: z.number().int().nonnegative().optional(),
+    total: z.number().int().nonnegative().optional(),
   })
   .strict()
 
@@ -75,7 +76,7 @@ export interface CommandEventChannelOptions<TEvent extends CommandEvent> {
  * Adapters validate events at their output boundary; the channel preserves domain-specific event fields.
  *
  * @param options - The event sink and clock used by the channel.
- * @returns A channel that adds an ISO timestamp before synchronously delivering each event.
+ * @returns A channel that adds a whole-second UTC timestamp before synchronously delivering each event.
  */
 export function createCommandEventChannel<TEvent extends CommandEvent = CommandEvent>(
   options: CommandEventChannelOptions<TEvent> = {},
@@ -85,8 +86,11 @@ export function createCommandEventChannel<TEvent extends CommandEvent = CommandE
 
   return {
     emit(event, emissionOptions) {
+      const timestamp = clock()
+        .toISOString()
+        .replace(/\.\d{3}Z$/, 'Z')
       // TypeScript cannot reconstruct the generic event from its distributive Omit.
-      const timestampedEvent = {...event, timestamp: clock().toISOString()} as unknown as TEvent
+      const timestampedEvent = {...event, timestamp} as unknown as TEvent
       if (emissionOptions === undefined) {
         sink(timestampedEvent)
       } else {

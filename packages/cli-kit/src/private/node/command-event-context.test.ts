@@ -15,14 +15,14 @@ describe('command event context', () => {
   test('makes the channel available to nested asynchronous work', async () => {
     const sink = vi.fn()
 
-    await runWithCommandEvents({sink, clock: () => new Date('2026-08-26T12:00:00.000Z')}, async () => {
+    await runWithCommandEvents({sink, clock: () => new Date('2026-08-26T12:00:00Z')}, async () => {
       await Promise.resolve()
       emitCommandEvent({type: 'diagnostic', level: 'debug', message: 'Resolving store'})
     })
 
     expect(sink).toHaveBeenCalledWith({
       type: 'diagnostic',
-      timestamp: '2026-08-26T12:00:00.000Z',
+      timestamp: '2026-08-26T12:00:00Z',
       level: 'debug',
       message: 'Resolving store',
     })

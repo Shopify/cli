@@ -86,6 +86,9 @@ envelope. Keep domain details under `details`, and add stable error codes when c
 retain `details.errors`, `details.extensions`, and partial `details.data` when available. Do not print a result followed
 by a second fatal document.
 
+Fatal errors and diagnostic events may include a nonempty string `code` when a stable code is known. Omit unknown
+codes rather than using `null` or an empty string. Keep upstream error codes inside their native `details` payload.
+
 A completed validation is a result with `valid` and consistent issues, even if it finds problems. Use a nonzero exit
 when the selected blocking policy fails. Infrastructure failures remain fatal errors. Preserve completed work in batch
 or partial results rather than discarding successful items.
@@ -190,6 +193,10 @@ on terminal rendering (including React/Ink), Oclif, filesystem output, or CLI er
 
 Events are separate from finite results. Progress events can drive spinners or status messages while the command is
 running, but they aren't fields in the final JSON result. Fatal errors continue through the standard CLI error path.
+
+Diagnostic and progress event timestamps follow the instant convention: UTC whole seconds ending in `Z`, with
+fractional seconds truncated rather than rounded. Optional progress `current` and `total` counts are nonnegative
+integers; omit counts that aren't known.
 Completed validation reports and partial or batch outcomes remain results with the exit policy described above.
 
 ### Task progress events

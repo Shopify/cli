@@ -148,6 +148,9 @@ When `--json` or `-j` is active, a fatal error writes one document to stdout:
 
 `type` is one of `abort`, `bug`, or `external`. `type` and `message` are always included. The regular error output's optional `tryMessage`, `nextSteps`, and `customSections` content is included as unstyled strings. Link URLs remain visible. Bug errors include `stack`; external errors include `command` and `args`. Other error properties are excluded.
 
+Set `error.code` to a stable nonempty string when consumers need to identify the failure without parsing its message.
+Unknown codes are omitted. Upstream API codes stay inside their native `details` payload.
+
 Callers can explicitly attach selected, JSON-serializable data to `error.details`. The renderer includes this field as
 data, so consumers do not need to parse display strings. Do not attach a raw error, request, credentials, or other private
 properties. For example, `store execute` exposes GraphQL errors at `error.details.errors`, including their error codes.
