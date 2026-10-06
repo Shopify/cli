@@ -3,11 +3,11 @@ import {isMissingFilesystemEntry} from './filesystem-errors.js'
 import {matchGlob} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
-import {basename, cwd, dirname, joinPath, relativePath} from '@shopify/cli-kit/node/path'
+import {basename, cwd, dirname, joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {lstatSync, realpathSync} from 'node:fs'
 
 export interface PathRules {
-  /** `--exclude` globs, as typed. */
+  /** `--exclude` globs, with their literal start resolved against the working directory. */
   excludePatterns: ReadonlyArray<string>
   /** Off with `--no-git-ignore`: Git isn't run for gathering and `.git` isn't skipped. */
   gitFiltering: boolean
@@ -16,11 +16,36 @@ export interface PathRules {
 }
 
 export function createPathRules(options: {excludePatterns: ReadonlyArray<string>; noGitIgnore: boolean}): PathRules {
+  const workingDirectory = realpathSync(cwd())
   return {
-    excludePatterns: options.excludePatterns,
+    // An empty pattern names nothing, but it would match the working directory, whose relative path is empty.
+    excludePatterns: options.excludePatterns
+      .filter((pattern) => pattern !== '')
+      .map((pattern) => normalizeExcludePattern(pattern, workingDirectory)),
     gitFiltering: !options.noGitIgnore,
-    workingDirectory: realpathSync(cwd()),
+    workingDirectory,
   }
+}
+
+/** A segment with glob syntax, or an escape, ends the literal start of a pattern. */
+const GLOB_SYNTAX = /[*?[\]{}()!#\\]/
+
+/**
+ * Paths are matched in their shortest form relative to the working directory, so a pattern's literal start is
+ * resolved the same way: `./src`, `src/` and, from inside `app`, `../app/src` all become `src`, and `.` becomes the
+ * working directory itself. The rest of the pattern is kept as typed.
+ */
+function normalizeExcludePattern(pattern: string, workingDirectory: string): string {
+  const segments = pattern.split('/')
+  const firstGlobSegment = segments.findIndex((segment) => GLOB_SYNTAX.test(segment))
+  const literalSegments = firstGlobSegment === -1 ? segments : segments.slice(0, firstGlobSegment)
+  const literalStart = literalSegments.join('/') || (pattern.startsWith('/') ? '/' : '')
+  if (literalStart === '') return pattern
+
+  const resolvedStart = relativePath(workingDirectory, resolvePath(workingDirectory, literalStart))
+  const rest = segments.slice(literalSegments.length).join('/')
+  if (rest === '') return resolvedStart
+  return resolvedStart === '' ? rest : `${resolvedStart}/${rest}`
 }
 
 export type GitIgnoreListing = {status: 'listed'; paths: string[]} | {status: 'not-a-repository'} | {status: 'failed'}
@@ -65,6 +90,18 @@ export function isDroppedTrackedPath(rules: PathRules, scanDirectory: string, tr
     const absolutePath = joinPath(scanDirectory, ...segments.slice(0, index + 1))
     return (rules.gitFiltering && segment === '.git') || isExcluded(rules, absolutePath)
   })
+}
+
+/**
+ * Whether `--exclude` removes a whole scan directory. The walker only tests the entries inside a scan directory, so the
+ * directory itself and its ancestors up to the working directory are tested here: adding a directory can't undo an
+ * exclusion.
+ */
+export function isExcludedScanDirectory(rules: PathRules, scanDirectory: string): boolean {
+  const segments = relativePath(rules.workingDirectory, scanDirectory).split('/')
+  return segments.some((_segment, index) =>
+    isExcluded(rules, joinPath(rules.workingDirectory, ...segments.slice(0, index + 1))),
+  )
 }
 
 function isListedAsIgnored(

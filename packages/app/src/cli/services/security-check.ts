@@ -3,7 +3,9 @@ import {writeCheckArtifacts} from './app-security-artifacts.js'
 import deliverAppSecurityInstructions from './app-security-instructions.js'
 import {
   formatAppSecurityCommand,
+  quoteShellArgument,
   resolveAppSecurityCommands,
+  shellForPlatform,
   type AppSecurityCommands,
 } from './app-security-commands.js'
 import {
@@ -18,6 +20,7 @@ import {
 import {encodeSecurityJson, toSecurityJson} from './security-json.js'
 import {renderSecurityReport} from './security-output.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
+import {fileRealPath} from '@shopify/cli-kit/node/fs'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {cwd, relativePath} from '@shopify/cli-kit/node/path'
@@ -70,7 +73,9 @@ interface SecurityDependencies {
     allowPrompts: boolean
   }): Promise<AppSecuritySelection>
   execute(options: ScanInput & Required<ScanOptions>): Promise<AppSecurityExecution>
-  listFiles(options: ScanInput & Required<ScanOptions>): Promise<{paths: string[]; ignoredScanDirectories: string[]}>
+  listFiles(
+    options: ScanInput & Required<ScanOptions>,
+  ): Promise<{paths: string[]; ignoredScanDirectories: string[]; otherAppDirectories: string[]}>
   writeArtifacts(
     appDirectory: string,
     resultsKey: string,
@@ -160,11 +165,35 @@ function securityReportInput(
   }
 }
 
-function renderIgnoredScanDirectoryWarnings(ignoredScanDirectories: string[], dependencies: SecurityDependencies) {
-  for (const directory of ignoredScanDirectories) {
+/** `--exclude` takes globs, so a directory name is escaped to match only that directory. */
+export function literalGlobPattern(path: string): string {
+  return path.replace(/[?*()[\]{}!#\\]/g, '\\$&')
+}
+
+async function renderGatheringWarnings(
+  gathered: {ignoredScanDirectories: string[]; otherAppDirectories: string[]},
+  dependencies: SecurityDependencies,
+) {
+  if (gathered.ignoredScanDirectories.length === 0 && gathered.otherAppDirectories.length === 0) return
+  // `--exclude` globs are matched from the real working directory, so paths are shown relative to it too.
+  const workingDirectory = await fileRealPath(cwd())
+  const displayPath = (directory: string) => relativePath(workingDirectory, directory) || '.'
+  for (const directory of gathered.ignoredScanDirectories) {
     dependencies.renderWarning({
-      headline: `${relativePath(cwd(), directory) || '.'} is ignored by Git, so only the files Git tracks in it are scanned.`,
+      headline: `${displayPath(directory)} is ignored by Git, so only the files Git tracks in it are scanned.`,
       body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
+    })
+  }
+  for (const directory of gathered.otherAppDirectories) {
+    const path = displayPath(directory)
+    dependencies.renderWarning({
+      headline: `${path} holds another app's configuration, so its files are scanned as part of this app.`,
+      // The directory name comes from the repository, so it's quoted before the user can paste it into a shell.
+      body: [
+        'Use',
+        {command: `--exclude ${quoteShellArgument(literalGlobPattern(path), shellForPlatform())}`},
+        'to leave it out.',
+      ],
     })
   }
 }
@@ -221,8 +250,8 @@ export default async function securityCheck(
   }
 
   if (options.listFiles) {
-    const {paths, ignoredScanDirectories} = await dependencies.listFiles(scanOptions)
-    renderIgnoredScanDirectoryWarnings(ignoredScanDirectories, dependencies)
+    const {paths, ...gathered} = await dependencies.listFiles(scanOptions)
+    await renderGatheringWarnings(gathered, dependencies)
     if (options.json) {
       dependencies.output(JSON.stringify({files: paths}, null, 2))
     } else if (paths.length > 0) {
@@ -232,7 +261,7 @@ export default async function securityCheck(
   }
 
   const execution = await dependencies.execute(scanOptions)
-  renderIgnoredScanDirectoryWarnings(execution.ignoredScanDirectories, dependencies)
+  await renderGatheringWarnings(execution, dependencies)
   await dependencies.recordMetadata({num_security_findings: execution.scan.issues.length})
   const artifacts = await dependencies.writeArtifacts(appDirectory, resultsKey(selection), {
     deterministicFindings: execution.deterministicFindings,

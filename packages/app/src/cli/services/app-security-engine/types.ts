@@ -124,6 +124,8 @@ export interface ScanResult {
 export interface ScanOutput extends ScanResult {
   /** Absolute paths of the requested scan directories that their repository ignores, so only the files Git tracks in them were scanned. */
   ignoredScanDirectories: string[]
+  /** Absolute paths of directories, other than the app directory, that hold an app configuration file, so another app's files were scanned as this app's. */
+  otherAppDirectories: string[]
 }
 
 export interface SkippedFile {

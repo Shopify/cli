@@ -33,7 +33,7 @@ import {scanDependencyAutomation} from '../rules/dependency-automation-rules.js'
 import {RULE_CATALOG} from '../rules/catalog.js'
 import {redactIssue} from '../scan-artifact/index.js'
 import {getEngineVersion} from '../version.js'
-import {basename, relativePath} from '@shopify/cli-kit/node/path'
+import {normalizePath, relativePath} from '@shopify/cli-kit/node/path'
 import type {Rule, ScanContext} from '../rules/types.js'
 import type {RunnerImplementationResult, RunnerResult, SourceFile} from './types.js'
 import type {
@@ -570,8 +570,8 @@ export async function listGatheredPaths(input: ScanInput, options: ScanOptions =
     scanDirectories: input.scanDirectories,
     explicitInputs: new Set(),
   })
-  const {paths, ignoredScanDirectories} = await gatherScanPaths(input, options)
-  return {paths, ignoredScanDirectories}
+  const {paths, ignoredScanDirectories, otherAppDirectories} = await gatherScanPaths(input, options)
+  return {paths, ignoredScanDirectories, otherAppDirectories}
 }
 
 export async function scan(input: ScanInput, options: ScanOptions = {}): Promise<ScanOutput> {
@@ -583,14 +583,19 @@ export async function scan(input: ScanInput, options: ScanOptions = {}): Promise
     scanDirectories,
     explicitInputs: new Set(appConfigFilePath ? [appConfigFilePath] : []),
   })
-  const selectedFileName = appConfigFilePath ? basename(appConfigFilePath) : undefined
+  const selectedAppConfigPath = appConfigFilePath ? normalizePath(relativePath(appRoot, appConfigFilePath)) : undefined
   const appToml = appConfigFilePath ? loadAppToml(appConfigFilePath, appRoot) : null
   const appTomls = appToml ? [appToml] : []
-  const {paths: repositoryFiles, ignoredScanDirectories, listingStatus} = await gatherScanPaths(input, options)
+  const {
+    paths: repositoryFiles,
+    ignoredScanDirectories,
+    otherAppDirectories,
+    listingStatus,
+  } = await gatherScanPaths(input, options)
   const extensions = findExtensions(appRoot, repositoryFiles)
   const sourceCandidates = findSourceCandidates(repositoryFiles)
   const sourceFiles = findAppSourceFiles(appRoot, repositoryFiles)
-  const sensitiveFiles = findSensitiveFiles(appRoot, repositoryFiles, selectedFileName)
+  const sensitiveFiles = findSensitiveFiles(appRoot, repositoryFiles, selectedAppConfigPath)
   const manifestPaths = findManifestPaths(repositoryFiles)
   const manifests = findManifests(appRoot, manifestPaths)
   const dependencyAutomation = manifests.some(manifestHasDependencies)
@@ -731,5 +736,6 @@ export async function scan(input: ScanInput, options: ScanOptions = {}): Promise
     scan: scanMetadata,
     issues,
     ignoredScanDirectories,
+    otherAppDirectories,
   }
 }

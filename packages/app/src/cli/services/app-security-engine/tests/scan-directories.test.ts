@@ -210,6 +210,81 @@ describe('a scan directory inside another one', () => {
   })
 })
 
+describe('an excluded scan directory', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  async function makeAppAndDirectory(directory: string) {
+    const root = await makeDirectory({
+      'app/shopify.app.toml': appConfiguration,
+      'app/src/a.ts': 'export const a = true',
+      [`${directory}/shopify.app.toml`]: 'name = "Other"\n',
+      [`${directory}/server.ts`]: 'export const server = true',
+    })
+    return {root, app: join(root, 'app'), directory: join(root, directory)}
+  }
+
+  test('gathers nothing from a scan directory that --exclude matches', async () => {
+    const {app, directory} = await makeAppAndDirectory('backend')
+    vi.stubEnv('INIT_CWD', app)
+
+    const result = await gather({appDirectory: app, scanDirectories: [app, directory], excludePatterns: ['../backend']})
+
+    expect(result.paths).toEqual(['shopify.app.toml', 'src/a.ts'])
+    expect(result.otherAppDirectories).toEqual([])
+  })
+
+  test('gathers nothing from a scan directory inside an excluded directory', async () => {
+    const {app, directory} = await makeAppAndDirectory('shared/sdk')
+    vi.stubEnv('INIT_CWD', app)
+
+    const result = await gather({appDirectory: app, scanDirectories: [app, directory], excludePatterns: ['../shared']})
+
+    expect(result.paths).toEqual(['shopify.app.toml', 'src/a.ts'])
+  })
+
+  test('includes the app directory, which --exclude can match when the working directory is above it', async () => {
+    const {root, app, directory} = await makeAppAndDirectory('backend')
+    vi.stubEnv('INIT_CWD', root)
+
+    const result = await gather({appDirectory: app, scanDirectories: [app, directory], excludePatterns: ['app']})
+
+    expect(result.paths).toEqual(['../backend/server.ts', '../backend/shopify.app.toml'])
+  })
+
+  test('includes the app directory when the working directory is the app directory and --exclude names it', async () => {
+    const {app, directory} = await makeAppAndDirectory('backend')
+    vi.stubEnv('INIT_CWD', app)
+
+    const fromDot = await gather({appDirectory: app, scanDirectories: [app, directory], excludePatterns: ['.']})
+    const fromParent = await gather({appDirectory: app, scanDirectories: [app, directory], excludePatterns: ['../app']})
+
+    expect(fromDot.paths).toEqual(['../backend/server.ts', '../backend/shopify.app.toml'])
+    expect(fromParent.paths).toEqual(fromDot.paths)
+  })
+
+  test('gathers none of its tracked files and gets no ignored-scan-directory warning', async () => {
+    const repository = await makeRepository({
+      '.gitignore': 'app/\n',
+      'app/shopify.app.toml': appConfiguration,
+      'app/src/a.ts': 'export const a = true',
+    })
+    git(repository, ['add', '-f', '.gitignore', 'app/shopify.app.toml', 'app/src/a.ts'])
+    git(repository, ['commit', '-qm', 'init'])
+    const app = join(repository, 'app')
+    vi.stubEnv('INIT_CWD', repository)
+
+    const excluded = await gather({appDirectory: app, scanDirectories: [app], excludePatterns: ['app']})
+    const included = await gather({appDirectory: app, scanDirectories: [app]})
+
+    expect(excluded.paths).toEqual([])
+    expect(excluded.ignoredScanDirectories).toEqual([])
+    expect(included.paths).toEqual(['shopify.app.toml', 'src/a.ts'])
+    expect(included.ignoredScanDirectories).toEqual([app])
+  })
+})
+
 describe('reading across scan directories', () => {
   test('reads a file in an include directory and reports its path relative to the app directory', async () => {
     const app = await makeRepository({'shopify.app.toml': appConfiguration})
