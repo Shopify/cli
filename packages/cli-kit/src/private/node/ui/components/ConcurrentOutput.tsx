@@ -1,4 +1,4 @@
-import {OutputProcess} from '../../../../public/node/output.js'
+import {outputInfo, type OutputProcess} from '../../../../public/node/output.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import {useComplete} from '../../ui.js'
 import React, {FunctionComponent, useCallback, useEffect, useMemo, useState} from 'react'
@@ -49,6 +49,27 @@ const outputContextStore = new AsyncLocalStorage<ConcurrentOutputContext>()
 
 function useConcurrentOutputContext<T>(context: ConcurrentOutputContext, callback: () => T): T {
   return outputContextStore.run(context, callback)
+}
+
+/** Runs finite processes concurrently and routes their output through the shared diagnostic context. */
+export async function runConcurrentProcessesForJson({
+  processes,
+  abortSignal,
+}: Pick<ConcurrentOutputProps, 'processes' | 'abortSignal'>): Promise<void> {
+  await Promise.all(
+    processes.map(async (process) => {
+      const createStream = () =>
+        new Writable({
+          write(chunk, _encoding, next) {
+            const prefix = outputContextStore.getStore()?.outputPrefix ?? process.prefix
+            const message = stripAnsi(chunk.toString('utf8')).replace(/\n$/, '')
+            if (message.trim().length > 0) outputInfo(`${prefix}: ${message}`)
+            next()
+          },
+        })
+      await process.action(createStream(), createStream(), abortSignal)
+    }),
+  )
 }
 
 /**
