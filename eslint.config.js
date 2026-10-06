@@ -274,7 +274,6 @@ export const eslintBaseConfig = [
 
 const config = [
   ...eslintBaseConfig,
-  // ESLint remains as a compatibility layer for rules that Oxlint does not support yet.
   // A directive can target an Oxlint-owned rule, so ESLint alone cannot determine whether it is unused.
   {
     linterOptions: {
