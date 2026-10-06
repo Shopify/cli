@@ -1220,27 +1220,53 @@ DESCRIPTION
       "ValidationIssue": {
         "type": "object",
         "properties": {
-          "file": {
-            "type": "string"
+          "filePath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "message": {
             "type": "string"
           },
-          "path": {
-            "type": "array",
-            "items": {
-              "type": [
-                "string",
-                "number"
-              ]
-            }
+          "fieldPath": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "code": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The upstream validation code, or null when unavailable."
           }
         },
         "required": [
-          "message"
+          "filePath",
+          "message",
+          "fieldPath",
+          "code"
         ],
         "additionalProperties": false
       }

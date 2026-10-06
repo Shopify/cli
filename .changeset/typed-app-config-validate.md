@@ -1,4 +1,4 @@
 ---
-'@shopify/cli': minor
+'@shopify/cli': major
 ---
-Expose the JSON output schema for app config validate.
+Rename app config validate JSON diagnostics to filePath and fieldPath, use null for unavailable fields, and report setup failures as fatal errors.

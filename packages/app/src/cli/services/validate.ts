@@ -1,6 +1,7 @@
 import {type AppConfigValidateResult} from './validate/types.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import metadata from '../metadata.js'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 
 async function recordValidationMetadata(valid: boolean, errors: {file: string}[]) {
   const fileCount = new Set(errors.map((error) => error.file)).size
@@ -17,6 +18,11 @@ export async function validateApp(app: AppLinkedInterface): Promise<AppConfigVal
   await recordValidationMetadata(errors.length === 0, errors)
   return {
     valid: errors.length === 0,
-    issues: errors.map(({file, message, path, code}) => ({file, message, path, code})),
+    issues: errors.map(({file, message, path, code}) => ({
+      filePath: resolvePath(file),
+      message,
+      fieldPath: path ?? null,
+      code: code ?? null,
+    })),
   }
 }

@@ -10,12 +10,22 @@ vi.mock('@shopify/cli-kit/node/ui')
 
 const cases = [
   {valid: true, issues: []},
-  {valid: false, issues: [{message: 'No config found'}]},
-  {valid: false, issues: [{file: '/app/shopify.app.toml', message: 'Invalid TOML'}]},
-  {valid: false, issues: [{file: '/app/shopify.app.toml', message: 'Required', path: ['name'], code: 'invalid_type'}]},
+  {valid: false, issues: [{filePath: null, message: 'No config found', fieldPath: null, code: null}]},
+  {valid: false, issues: [{filePath: '/app/shopify.app.toml', message: 'Invalid TOML', fieldPath: null, code: null}]},
+  {
+    valid: false,
+    issues: [{filePath: '/app/shopify.app.toml', message: 'Required', fieldPath: ['name'], code: 'invalid_type'}],
+  },
 ]
 
 describe('validation contract', () => {
+  test.each([
+    {valid: true, issues: [], extra: true},
+    {valid: false, issues: [{filePath: '/app/config', message: 'Error', fieldPath: null, code: null, extra: true}]},
+  ])('rejects unknown fields %j', (result) => {
+    expect(() => appConfigValidateJsonOutputSchema.validate(result)).toThrow()
+  })
+
   test.each(cases)('preserves exact JSON for %j', (result) => {
     expect(appConfigValidateJsonOutputSchema.encode(result)).toBe(JSON.stringify(result, null, 2))
   })
@@ -23,7 +33,7 @@ describe('validation contract', () => {
   test.each([
     {valid: 'true', issues: []},
     {valid: true, issues: [{message: 123}]},
-    {valid: false, issues: [{message: 'Required', path: [false]}]},
+    {valid: false, issues: [{message: 'Required', fieldPath: [false]}]},
     {valid: false, issues: [{message: 'Required', code: null}]},
   ])('rejects malformed data %j', (result) => {
     expect(() => appConfigValidateJsonOutputSchema.validate(result)).toThrow()
@@ -54,8 +64,8 @@ describe('renderAppConfigValidateResult in text mode', () => {
     const result = {
       valid: false,
       issues: [
-        {file: '/app/shopify.app.toml', message: 'client_id is required'},
-        {file: '/app/shopify.app.toml', path: ['name'], message: 'Required', code: 'invalid_type'},
+        {filePath: '/app/shopify.app.toml', message: 'client_id is required', fieldPath: null, code: null},
+        {filePath: '/app/shopify.app.toml', fieldPath: ['name'], message: 'Required', code: 'invalid_type'},
       ],
     }
 
@@ -71,7 +81,9 @@ describe('renderAppConfigValidateResult in text mode', () => {
   test('falls back to the validated config path when an issue has no file', () => {
     const result = {
       valid: false,
-      issues: [{path: ['events', '1', 'metrics'], message: 'Expected object, received array'}],
+      issues: [
+        {filePath: null, fieldPath: ['events', '1', 'metrics'], message: 'Expected object, received array', code: null},
+      ],
     }
 
     renderAppConfigValidateResult(result, '/app/shopify.app.toml', 'text')
