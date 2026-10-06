@@ -1192,9 +1192,9 @@ DESCRIPTION
   Validates the selected app configuration file and all extension configurations against their schemas and reports any
   errors found.
 
-  Output from `--json` conforms to the `AppConfigValidateResult` schema.
-
   Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppConfigValidateResult` schema.
 
   ```json
   {
