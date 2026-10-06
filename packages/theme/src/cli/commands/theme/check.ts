@@ -6,6 +6,7 @@ import {
   outputActiveConfig,
   performAutoFixes,
   handleExit,
+  themeCheckHasBlockingIssues,
   type FailLevel,
 } from '../../services/check.js'
 import {renderThemeCheckResult, encodeThemeCheckResult} from '../../services/check/result.js'
@@ -20,6 +21,7 @@ import {moduleDirectory, joinPath} from '@shopify/cli-kit/node/path'
 import {getPackageVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {InferredFlags} from '@oclif/core/interfaces'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+import type {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 
 type CheckFlags = InferredFlags<typeof Check.flags>
 export default class Check extends ThemeCommand {
@@ -144,18 +146,35 @@ export default class Check extends ThemeCommand {
     const output = await checkTheme(path, config, environment)
     const {offenses, theme} = output
     const json = flags.json || flags.output === 'json'
+    const valid = !themeCheckHasBlockingIssues(offenses, flags['fail-level'] as FailLevel)
     if (!multiEnvironment || !json) {
-      renderThemeCheckResult(output, json ? 'json' : flags.output, path, environment)
+      renderThemeCheckResult({...output, valid}, json ? 'json' : flags.output, path, environment)
     }
 
     if (flags['auto-correct']) {
       await performAutoFixes(theme, offenses)
     }
 
-    if (!multiEnvironment) {
-      return handleExit(offenses, flags['fail-level'] as FailLevel)
+    if (json) {
+      if (!valid) process.exitCode = 1
+      return {files: output.result, valid}
     }
-    if (json) return output.result
+    if (!multiEnvironment) return handleExit(offenses, flags['fail-level'] as FailLevel)
+  }
+
+  protected async _run<T>(): Promise<T> {
+    const separatorIndex = this.argv.indexOf('--')
+    const argv = separatorIndex < 0 ? this.argv : this.argv.slice(0, separatorIndex)
+    const outputIndex = argv.findLastIndex((arg) => /^(?:--output(?:=|$)|-o)/.test(arg))
+    const output =
+      outputIndex < 0 ? process.env.SHOPIFY_FLAG_OUTPUT : argv[outputIndex]!.replace(/^(?:--output=|-o=?)/, '')
+    const legacyJson =
+      output === 'json' || ((output === '--output' || output === '') && argv[outputIndex + 1] === 'json')
+    if (legacyJson && !argv.includes('--json')) {
+      // The legacy format flag must also select CLI Kit's JSON error and side-event context.
+      this.argv = [...argv, '--json', ...(separatorIndex < 0 ? [] : this.argv.slice(separatorIndex))]
+    }
+    return super._run<T>()
   }
 
   protected collectsEnvironmentResults(flags: Partial<CheckFlags>): boolean {
@@ -164,8 +183,8 @@ export default class Check extends ThemeCommand {
     )
   }
 
-  protected renderEnvironmentResults(environments: {environment: string; result: unknown}[]): void {
-    outputResult(encodeThemeCheckResult(themeCheckJsonOutputSchema.validate({environments})))
+  protected renderEnvironmentResults(environments: ThemeEnvironmentResult[]): void {
+    outputResult(encodeThemeCheckResult({environments}))
   }
 }
 
