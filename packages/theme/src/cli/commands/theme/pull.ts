@@ -89,7 +89,7 @@ If no theme is specified, then you're prompted to select the theme to pull from 
       else if (flags.json) outputResult(themePullJsonOutputSchema.encode({status: 'cancelled'}))
     }
     recordTiming('theme-command:pull')
-    return result
+    return result ?? (flags.json && multiEnvironment ? {status: 'skipped', reason: 'unsafe-directory'} : undefined)
   }
 
   protected collectsEnvironmentResults(flags: {json?: boolean}): boolean {
