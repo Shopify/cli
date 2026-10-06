@@ -1,11 +1,6 @@
 import Build from './build.js'
 import build from '../../services/build.js'
-import {
-  getCachedAppInfo,
-  setCachedAppInfo,
-  type CachedAppInfo,
-  type AppLocalStorageSchema,
-} from '../../services/local-storage.js'
+import * as localStorage from '../../services/local-storage.js'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
@@ -16,26 +11,7 @@ import {Config} from '@oclif/core'
 import {expect, test, vi} from 'vitest'
 import {fileURLToPath} from 'node:url'
 
-const scope = vi.hoisted(() => ({storage: undefined as LocalStorage<AppLocalStorageSchema> | undefined}))
-vi.mock('../../services/local-storage.js', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../services/local-storage.js')>()
-  const cache = () => {
-    if (!scope.storage) throw new Error('Fixture cache not initialized.')
-    return scope.storage
-  }
-  return {
-    ...actual,
-    getCachedAppInfo: (directory: string) => actual.getCachedAppInfo(directory, cache()),
-    setCachedAppInfo: (options: CachedAppInfo) => actual.setCachedAppInfo(options, cache()),
-    clearCurrentConfigFile: (directory: string) => actual.clearCurrentConfigFile(directory, cache()),
-  }
-})
 vi.mock('../../services/build.js')
-vi.mock('@shopify/cli-kit/node/metadata', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@shopify/cli-kit/node/metadata')>()),
-  addPublicMetadata: vi.fn(),
-  addSensitiveMetadata: vi.fn(),
-}))
 
 async function withBuildFixture(
   options: {json: boolean; multipleConfigurations?: boolean},
@@ -44,7 +20,7 @@ async function withBuildFixture(
   await inTemporaryDirectory(async (root) => {
     const directory = joinPath(root, 'app')
     await mkdir(directory)
-    scope.storage = new LocalStorage<AppLocalStorageSchema>({cwd: joinPath(root, 'isolated-cache')})
+    const storage = new LocalStorage<localStorage.AppLocalStorageSchema>({cwd: joinPath(root, 'isolated-cache')})
     await writeFile(joinPath(directory, 'package.json'), '{"name":"recovery-fixture"}')
     const configuration = `name = "Recovery fixture"
 client_id = "public-fixture-id"
@@ -57,13 +33,21 @@ api_version = "2023-04"
 `
     await writeFile(joinPath(directory, 'shopify.app.toml'), configuration)
     if (options.multipleConfigurations) await writeFile(joinPath(directory, 'shopify.app.other.toml'), configuration)
-    setCachedAppInfo({directory, configFile: 'shopify.app.deleted.toml'})
+    const readCache = localStorage.getCachedAppInfo
+    const writeCache = localStorage.setCachedAppInfo
+    const readCacheSpy = vi
+      .spyOn(localStorage, 'getCachedAppInfo')
+      .mockImplementation((directory) => readCache(directory, storage))
+    const writeCacheSpy = vi
+      .spyOn(localStorage, 'setCachedAppInfo')
+      .mockImplementation((options) => writeCache(options, storage))
     vi.mocked(build).mockImplementation(async ({app}) => ({
       status: 'success',
       appName: app.name,
     }))
     vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', '1')
     try {
+      localStorage.setCachedAppInfo({directory, configFile: 'shopify.app.deleted.toml'})
       const config = await Config.load({root: joinPath(dirname(fileURLToPath(import.meta.url)), '../../../..')})
       const argv = [
         '--path',
@@ -75,7 +59,8 @@ api_version = "2023-04"
       const command = new Build(argv, config)
       await run({command, argv, directory})
     } finally {
-      scope.storage = undefined
+      readCacheSpy.mockRestore()
+      writeCacheSpy.mockRestore()
       vi.unstubAllEnvs()
     }
   })
@@ -86,7 +71,7 @@ test.each([false, true])('build recovers a stale sole config with no input: json
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
       const returned = await runWithCommandEventsForCommand(argv, () => command.run())
       expect(returned.app.configPath).toBe(joinPath(directory, 'shopify.app.toml'))
-      expect(getCachedAppInfo(directory)?.configFile).toBe('shopify.app.toml')
+      expect(localStorage.getCachedAppInfo(directory)?.configFile).toBe('shopify.app.toml')
       if (json) {
         expect(JSON.parse(stdout())).toStrictEqual({status: 'success'})
         const events = stderr()
@@ -117,7 +102,7 @@ test.each([false, true])('build rejects multiple replacement configs without inp
     await withCapturedStandardStreams(async ({stdout}) => {
       await expect(runWithCommandEventsForCommand(argv, () => command.run())).rejects.toThrow('Failed to prompt')
       expect(stdout()).toBe('')
-      expect(getCachedAppInfo(directory)?.configFile).toBe('shopify.app.deleted.toml')
+      expect(localStorage.getCachedAppInfo(directory)?.configFile).toBe('shopify.app.deleted.toml')
       expect(build).not.toHaveBeenCalled()
     })
   })

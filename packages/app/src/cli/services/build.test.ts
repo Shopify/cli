@@ -15,10 +15,7 @@ import {unstyled} from '@shopify/cli-kit/node/output'
 
 vi.mock('./web.js')
 vi.mock('./dependencies.js')
-vi.mock('./function/build.js', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./function/build.js')>()),
-  installJavy: vi.fn(),
-}))
+vi.mock('./function/build.js')
 
 function buildResult() {
   return {status: 'success' as const, appName: 'Example app'}
