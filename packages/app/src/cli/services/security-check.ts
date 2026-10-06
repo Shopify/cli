@@ -3,7 +3,9 @@ import {writeCheckArtifacts} from './app-security-artifacts.js'
 import deliverAppSecurityInstructions from './app-security-instructions.js'
 import {
   formatAppSecurityCommand,
+  quoteShellArgument,
   resolveAppSecurityCommands,
+  shellForPlatform,
   type AppSecurityCommands,
 } from './app-security-commands.js'
 import {
@@ -176,7 +178,8 @@ function renderGatheringWarnings(
     const displayPath = relativePath(cwd(), directory) || '.'
     dependencies.renderWarning({
       headline: `${displayPath} holds another app's configuration, so its files are scanned as part of this app.`,
-      body: ['Use', {command: `--exclude ${displayPath}`}, 'to leave it out.'],
+      // The directory name comes from the repository, so it's quoted before the user can paste it into a shell.
+      body: ['Use', {command: `--exclude ${quoteShellArgument(displayPath, shellForPlatform())}`}, 'to leave it out.'],
     })
   }
 }

@@ -1,5 +1,10 @@
 import securityCheck, {appSecurityInstructionsPrompt} from './security-check.js'
-import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
+import {
+  formatAppSecurityCommand,
+  quoteShellArgument,
+  resolveAppSecurityCommands,
+  shellForPlatform,
+} from './app-security-commands.js'
 import {appSecurityArtifactPaths, writeCheckArtifacts} from './app-security-artifacts.js'
 import {validAppConfiguration} from './app-security-selection.test-data.js'
 import {fileExists, fileRealPath, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
@@ -368,11 +373,11 @@ describe('securityCheck', () => {
     expect(dependencies.renderWarning).toHaveBeenCalledTimes(2)
     expect(dependencies.renderWarning).toHaveBeenNthCalledWith(1, {
       headline: "apps/child holds another app's configuration, so its files are scanned as part of this app.",
-      body: ['Use', {command: '--exclude apps/child'}, 'to leave it out.'],
+      body: ['Use', {command: `--exclude ${quoteShellArgument('apps/child', shellForPlatform())}`}, 'to leave it out.'],
     })
     expect(dependencies.renderWarning).toHaveBeenNthCalledWith(2, {
       headline: "../backend holds another app's configuration, so its files are scanned as part of this app.",
-      body: ['Use', {command: '--exclude ../backend'}, 'to leave it out.'],
+      body: ['Use', {command: `--exclude ${quoteShellArgument('../backend', shellForPlatform())}`}, 'to leave it out.'],
     })
   })
 
