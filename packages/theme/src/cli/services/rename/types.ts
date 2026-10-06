@@ -1,6 +1,10 @@
 import {ThemeMutationSuccessSchema} from '../theme-mutation/status.js'
-import {ThemeMutationThemeSchema} from '../theme-mutation/types.js'
-import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {
+  ThemeMutationThemeSchema,
+  ThemeMutationJsonThemeSchema,
+  projectThemeMutationTheme,
+} from '../theme-mutation/types.js'
+import {defineThemeJsonOutputSchema} from '../json-output/schema.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 
@@ -8,12 +12,26 @@ const ThemeRenameResultSchema = ThemeMutationSuccessSchema.extend({
   originalName: zod.string(),
   theme: ThemeMutationThemeSchema,
 })
-const ThemeRenameEnvironmentSchema = zod.object({environment: zod.string(), result: ThemeRenameResultSchema})
-
-export const themeRenameJsonOutputSchema = defineJsonOutputSchema({
+export const themeRenameJsonOutputSchema = defineThemeJsonOutputSchema({
   name: 'ThemeRenameResult',
-  schema: zod.union([ThemeRenameResultSchema, zod.object({environments: zod.array(ThemeRenameEnvironmentSchema)})]),
-  definitions: {RenamedTheme: ThemeMutationThemeSchema, ThemeRenameEnvironment: ThemeRenameEnvironmentSchema},
+  schema: zod
+    .object({
+      status: zod.literal('success'),
+      changed: zod.boolean(),
+      originalName: zod.string(),
+      theme: ThemeMutationJsonThemeSchema,
+    })
+    .strict(),
+  definitions: {Theme: ThemeMutationJsonThemeSchema},
+  project(value) {
+    const result = ThemeRenameResultSchema.parse(value)
+    return {
+      status: result.status,
+      changed: result.originalName !== result.theme.name,
+      originalName: result.originalName,
+      theme: projectThemeMutationTheme(result.theme),
+    }
+  },
 })
 
 export type ThemeRenameData = zod.infer<typeof ThemeRenameResultSchema>
