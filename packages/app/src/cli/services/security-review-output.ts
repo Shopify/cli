@@ -289,13 +289,15 @@ function nextSteps(
   const steps: TokenItem<InlineToken>[] = []
   // `check` rewrites deterministic-findings.json but never touches agent-findings.json; only the agent does.
   if (summary.withFindings > 0) {
-    steps.push([
-      'Fix the issues, then run',
-      checkCommand,
-      'again. To refresh',
-      {filePath: FILE_NAMES.agent},
-      'too, have your coding agent run it and record its findings again.',
-    ])
+    const fixStep: InlineToken[] = ['Fix the issues, then run', checkCommand, 'again.']
+    if (result.sources.agent === null) {
+      steps.push(fixStep, 'For a deeper review, have your agent run the same command and record its findings.')
+    } else if (staleChecks > 0) {
+      // The stale step below says how to refresh the agent findings.
+      steps.push(fixStep)
+    } else {
+      steps.push([...fixStep, 'To refresh agent findings, have your agent run the command and record its findings.'])
+    }
   }
   // A stale check needs agent-findings.json, so this step never meets the deeper-review one.
   if (staleChecks > 0) {
