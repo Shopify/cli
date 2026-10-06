@@ -15,6 +15,8 @@ import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {appCreationDefaults} from './app/config/link.js'
 import {appFromIdentifiers, fetchOrCreateOrganizationApp} from './context.js'
 import use from './app/config/use.js'
+import {defaultDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {testDeveloperPlatformClient} from '../models/app/app.test-data.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -29,6 +31,10 @@ vi.mock('./local-storage.js', async (importOriginal) => ({
   setCachedAppInfo: vi.fn(),
 }))
 vi.mock('./app/config/use.js', () => ({default: vi.fn()}))
+vi.mock('../utilities/developer-platform-client.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../utilities/developer-platform-client.js')>()),
+  defaultDeveloperPlatformClient: vi.fn(),
+}))
 vi.mock('./context.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./context.js')>()),
   appFromIdentifiers: vi.fn(),
@@ -642,10 +648,17 @@ describe('resolveAppSecuritySelection with validateClientIdFlag', () => {
     })
   })
 
-  test('looks up the app by its client ID in the API by default', async () => {
+  test('looks up the app by its client ID in the API by default, without suggesting --reset', async () => {
     await inTemporaryDirectory(async (directory) => {
       await writeConfiguration(directory, 'toml-client-id')
-      vi.mocked(appFromIdentifiers).mockRejectedValue(unknownClientId)
+      const context = await vi.importActual<typeof import('./context.js')>('./context.js')
+      vi.mocked(appFromIdentifiers).mockImplementation(context.appFromIdentifiers)
+      vi.mocked(defaultDeveloperPlatformClient).mockReturnValue(
+        testDeveloperPlatformClient({
+          appFromIdentifiers: () => Promise.resolve(undefined),
+          accountInfo: () => Promise.resolve({type: 'UserAccount', email: 'user@example.com'}),
+        }),
+      )
 
       const error = await selectionError(
         resolveAppSecuritySelection({
@@ -656,8 +669,11 @@ describe('resolveAppSecuritySelection with validateClientIdFlag', () => {
         }),
       )
 
-      expect(error).toBe(unknownClientId)
-      expect(appFromIdentifiers).toHaveBeenCalledWith({apiKey: 'unknown-client-id'})
+      expect(appFromIdentifiers).toHaveBeenCalledWith({apiKey: 'unknown-client-id', offerReset: false})
+      expect(error.message).toBe('No app with client ID unknown-client-id found')
+      const nextSteps = JSON.stringify(error.tryMessage)
+      expect(nextSteps).toContain('shopify auth login')
+      expect(nextSteps).not.toContain('--reset')
     })
   })
 })

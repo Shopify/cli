@@ -69,7 +69,8 @@ const defaultDependencies: AppSecuritySelectionDependencies = {
   pickClientId: async (appDirectory) => (await fetchOrCreateOrganizationApp(appCreationDefaults(appDirectory))).apiKey,
   pickConfigFile: async (appDirectory) => (await selectConfigFile(appDirectory)).valueOrAbort(),
   lookUpApp: async (clientId) => {
-    await appFromIdentifiers({apiKey: clientId})
+    // The app security commands don't take `--reset`.
+    await appFromIdentifiers({apiKey: clientId, offerReset: false})
   },
 }
 
