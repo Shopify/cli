@@ -14,6 +14,19 @@ const result: ThemeOpenResult = {
   editor_url: 'https://my-shop.myshopify.com/admin/themes/1/editor',
 }
 
+const publicResult = {
+  theme: {
+    id: '1',
+    name: 'my theme',
+    role: 'unpublished',
+    storeDomain: 'my-shop.myshopify.com',
+    previewUrl: 'https://my-shop.myshopify.com?preview_theme_id=1',
+    editorUrl: 'https://my-shop.myshopify.com/admin/themes/1/editor',
+    processing: false,
+    sourceUrl: null,
+  },
+}
+
 test('writes one JSON document to stdout and diagnostics to stderr', async () => {
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await runWithCommandEventsForCommand(['--json'], () => {
@@ -22,29 +35,31 @@ test('writes one JSON document to stdout and diagnostics to stderr', async () =>
     })
 
     expect(stdout()).toBe(`${themeOpenJsonOutputSchema.encode(result)}\n`)
-    expect(JSON.parse(stdout())).toEqual(result)
+    expect(JSON.parse(stdout())).toEqual(publicResult)
     expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', level: 'warning', message: 'A diagnostic'})
   })
   expect(renderInfo).not.toHaveBeenCalled()
 })
 
-test('preserves false values and omits an absent theme source', () => {
-  expect(JSON.parse(themeOpenJsonOutputSchema.encode(result))).toEqual(result)
-  expect(JSON.parse(themeOpenJsonOutputSchema.encode(result)).theme).not.toHaveProperty('src')
+test('preserves false values and reports an unavailable theme source as null', () => {
+  expect(JSON.parse(themeOpenJsonOutputSchema.encode(result))).toEqual(publicResult)
+  expect(JSON.parse(themeOpenJsonOutputSchema.encode(result)).theme.sourceUrl).toBeNull()
 })
 
 test('includes an available theme source', () => {
   const withSource = {...result, theme: {...result.theme, src: 'https://example.com/theme.zip'}}
-  expect(JSON.parse(themeOpenJsonOutputSchema.encode(withSource))).toEqual(withSource)
+  expect(JSON.parse(themeOpenJsonOutputSchema.encode(withSource))).toEqual({
+    theme: {...publicResult.theme, sourceUrl: 'https://example.com/theme.zip'},
+  })
 })
 
 test.each([
-  {theme: {...result.theme, id: '1'}},
-  {theme: {...result.theme, processing: null}},
-  {preview_url: null},
-  {editor_url: 1},
+  {theme: {...publicResult.theme, id: 1}},
+  {theme: {...publicResult.theme, processing: null}},
+  {theme: {...publicResult.theme, previewUrl: null}},
+  {theme: {...publicResult.theme, editorUrl: 1}},
 ])('rejects invalid result fields %j', (invalid) => {
-  expect(() => themeOpenJsonOutputSchema.validate({...result, ...invalid})).toThrow()
+  expect(() => themeOpenJsonOutputSchema.validate({...publicResult, ...invalid})).toThrow()
 })
 
 test('renders the theme links', () => {
