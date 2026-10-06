@@ -104,10 +104,17 @@ describe('theme init', () => {
     expect(cloneRepo).toHaveBeenCalledWith('https://github.com/Shopify/dawn.git', expect.any(String))
   })
 
-  test('uses the latest tag for a custom repository when stdin is not a TTY', async () => {
+  test('keeps the default branch for a custom repository when stdin is not a TTY', async () => {
     Object.defineProperty(process.stdin, 'isTTY', {configurable: true, value: false})
 
     await run(['--clone-url=https://github.com/Shopify/dawn.git'])
+
+    expect(cloneRepo).toHaveBeenCalledWith('https://github.com/Shopify/dawn.git', expect.any(String))
+    expect(cloneRepoAndCheckoutLatestTag).not.toHaveBeenCalled()
+  })
+
+  test('uses the latest tag for a custom repository with --latest', async () => {
+    await run(['--clone-url=https://github.com/Shopify/dawn.git', '--latest'])
 
     expect(cloneRepoAndCheckoutLatestTag).toHaveBeenCalledWith(
       'https://github.com/Shopify/dawn.git',

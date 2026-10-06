@@ -65,10 +65,11 @@ export default class Init extends ThemeCommand {
     const name = args.name ?? (await this.promptName(flags.path, inputDisabled))
     const repoUrl = flags['clone-url']
     const destination = joinPath(flags.path, name)
-    let latestRelease = flags.latest || inputDisabled
+    let latestRelease = flags.latest
 
     if (!latestRelease && repoUrl === SKELETON_THEME_URL) {
       latestRelease =
+        inputDisabled ||
         !terminalSupportsPrompting() ||
         (await renderSelectPrompt({
           message: 'Which version of Skeleton theme would you like to use?',
