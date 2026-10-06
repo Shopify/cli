@@ -5,9 +5,11 @@ import {encodeThemeCheckResult} from '../../services/check/result.js'
 import {expect, test, vi} from 'vitest'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {themeCheckRun, Severity, SourceCodeType, path as pathUtils} from '@shopify/theme-check-node'
-import {resolvePath} from '@shopify/cli-kit/node/path'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
+// Native JSON paths must preserve Windows separators instead of pathe normalization.
+// eslint-disable-next-line no-restricted-imports
+import {resolve as resolvePath} from 'node:path'
 
 vi.mock('@shopify/theme-check-node', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@shopify/theme-check-node')>()),
