@@ -46,7 +46,7 @@ describe('pull execution', () => {
 
         await expect(readFile(joinPath(path, 'assets/theme.css'))).resolves.toBe('body {}')
         await expect(fileExists(joinPath(path, 'assets/old.css'))).resolves.toBe(nodelete)
-        expect(JSON.parse(stdout())).toMatchObject({path, theme: {id: 1}})
+        expect(JSON.parse(stdout())).toMatchObject({status: 'success', directory: path, theme: {id: '1'}})
         const events = stderr()
           .trim()
           .split('\n')
