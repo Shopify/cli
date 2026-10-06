@@ -2,7 +2,13 @@ import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-k
 import {isAbsolutePath} from '@shopify/cli-kit/node/path'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const directorySchema = zod.string().refine(isAbsolutePath, 'Expected an absolute directory path.')
+const directorySchema = zod
+  .string()
+  .regex(/^(?:[\\/]|[A-Za-z]:[\\/])/, 'Expected a rooted filesystem directory.')
+  .refine(isAbsolutePath, 'Expected an absolute directory path.')
+  .describe(
+    'An absolute native filesystem directory (rooted, drive-letter or UNC path). This is not an existence or containment guarantee.',
+  )
 const appSchema = zod.object({name: zod.string(), directory: directorySchema}).strict()
 const webSchema = zod
   .object({directory: directorySchema, roles: zod.array(zod.enum(['frontend', 'backend', 'background']))})
