@@ -54,6 +54,10 @@ describe('push result', () => {
     })
   })
 
+  test('preserves successful no-ops', () => {
+    expect(themePushJsonResult(pushResult({changed: false}))).toMatchObject({status: 'success', changed: false})
+  })
+
   test('retains every environment, including failures and skips', async () => {
     process.exitCode = 0
     await withCapturedStandardStreams(async ({stdout}) => {

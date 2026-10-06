@@ -14,6 +14,7 @@ const ThemePushThemeSchema = zod.object({
 export const themePushResultSchema = zod.object({
   environment: zod.string().optional(),
   directory: zod.string().optional(),
+  changed: zod.boolean().optional(),
   theme: ThemePushThemeSchema,
   published: zod.boolean(),
   hasErrors: zod.boolean(),
@@ -41,7 +42,7 @@ export function themePushJsonResult(result: ThemePushResult): ThemePushJsonResul
   const {theme, hasErrors, errors} = result
   return {
     status: hasErrors ? 'partial' : 'success',
-    changed: true,
+    changed: result.changed ?? true,
     theme: {
       ...projectTheme(theme),
       storeDomain: storeDomain(theme.shop),

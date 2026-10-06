@@ -43,6 +43,7 @@ describe('push execution', () => {
       expect(result).toEqual({
         environment: 'staging',
         directory: path,
+        changed: true,
         theme: {
           id: 1,
           name: 'Theme',
