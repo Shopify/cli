@@ -53,6 +53,10 @@ async function getThemePackageName(inputDirectory: string) {
 
   const themeNameVersion = [themeInfo.theme_name, themeInfo.theme_version].filter(Boolean).join('-')
 
+  if (/[/\\]/.test(themeNameVersion) || /^[a-z]:/i.test(themeNameVersion)) {
+    throw new AbortError('Theme name and version must not contain paths.')
+  }
+
   return `${themeNameVersion}.zip`
 }
 

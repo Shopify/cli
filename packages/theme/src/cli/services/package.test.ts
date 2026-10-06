@@ -9,6 +9,33 @@ const StreamZip = require('node-stream-zip')
 vi.mock('@shopify/cli-kit/node/ui')
 
 describe('packageTheme', () => {
+  test.each([
+    {name: '../outside', version: ''},
+    {name: 'absolute', version: ''},
+    {name: 'C:\\outside', version: ''},
+    {name: 'C:outside', version: ''},
+    {name: 'Dawn', version: '../outside'},
+    {name: 'Dawn', version: '..\\outside'},
+  ])('rejects paths in the package filename: %j', async ({name, version}) => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const inputDirectory = joinPath(tmpDir, 'theme')
+      await mkdir(joinPath(inputDirectory, 'config'))
+      await createSettingsSchema(
+        JSON.stringify([
+          {
+            name: 'theme_info',
+            theme_name: name === 'absolute' ? joinPath(tmpDir, 'outside') : name,
+            theme_version: version,
+          },
+        ]),
+        inputDirectory,
+      )
+
+      await expect(packageTheme(inputDirectory)).rejects.toThrow('Theme name and version must not contain paths.')
+      await expect(fileExists(joinPath(tmpDir, 'outside.zip'))).resolves.toBe(false)
+    })
+  })
+
   test('creates zip file from theme', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
