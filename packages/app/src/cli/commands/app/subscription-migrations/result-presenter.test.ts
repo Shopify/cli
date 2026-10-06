@@ -217,6 +217,22 @@ describe('migration submission result presenter', () => {
 })
 
 describe('migration cancellation result presenter', () => {
+  test.each([false, true])('throws a fatal error for one failed cancellation with json=%s', (json) => {
+    const result: MigrationCancellationResult = {
+      outcomes: [
+        {
+          status: 'failed',
+          operationId: 'gid://shopify/AppSubscriptionMigrationOperation/one',
+          operation: null,
+          userErrors: [{message: 'Operation not found', field: ['id']}],
+        },
+      ],
+    }
+    expect(() => presentMigrationCancellationResult(result, {json})).toThrow('Operation not found')
+    expect(outputResult).not.toHaveBeenCalled()
+    expect(renderWarning).not.toHaveBeenCalled()
+  })
+
   test('outputs exactly one JSON document and reports failure', () => {
     const result: MigrationCancellationResult = {
       outcomes: [

@@ -1,6 +1,6 @@
 import {presentMigrationCancellationResult} from './result-presenter.js'
-import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
+import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
 
 const isUnitTest = vi.hoisted(() => vi.fn(() => false))
 
@@ -24,6 +24,12 @@ describe('migration cancellation JSON output', () => {
           operationId: 'gid://shopify/AppSubscriptionMigrationOperation/operation-one',
           operation: null,
           userErrors: [{message: 'Already completed', field: ['id']}],
+        },
+        {
+          status: 'failed',
+          operationId: 'gid://shopify/AppSubscriptionMigrationOperation/operation-two',
+          operation: null,
+          userErrors: [{message: 'Operation not found', field: null}],
         },
       ],
     }
