@@ -1,6 +1,6 @@
-import {ThemeMutationSuccessSchema} from '../theme-mutation/status.js'
-import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {defineThemeJsonOutputSchema, ThemeLinksSchema, projectTheme, storeDomain} from '../json-output/schema.js'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {cwd, resolvePath, isAbsolutePath} from '@shopify/cli-kit/node/path'
 
 const ThemePushThemeSchema = zod.object({
   id: zod.number(),
@@ -11,38 +11,57 @@ const ThemePushThemeSchema = zod.object({
   preview_url: zod.string(),
 })
 
-const ThemePushJsonThemeSchema = ThemePushThemeSchema.extend({
-  warning: zod.string().optional(),
-  errors: zod.record(zod.array(zod.string())).optional(),
-})
-
-const ThemePushJsonResultSchema = zod.object({
-  status: zod.union([ThemeMutationSuccessSchema.shape.status, zod.literal('failed')]),
-  environment: zod.string().optional(),
-  theme: ThemePushJsonThemeSchema,
-})
-
-const outputSchema = defineJsonOutputSchema({
-  name: 'ThemePushJsonResult',
-  schema: zod.union([
-    ThemePushJsonResultSchema,
-    zod.array(ThemePushJsonResultSchema.extend({environment: zod.string()})),
-  ]),
-  definitions: {ThemePushTheme: ThemePushJsonThemeSchema},
-})
-
-export const themePushJsonOutputSchema: typeof outputSchema = {
-  ...outputSchema,
-  // Preserve the compact JSON emitted by theme push.
-  encode: (result: InferJsonOutputSchema<typeof outputSchema>) => JSON.stringify(outputSchema.validate(result)),
-}
-
 export const themePushResultSchema = zod.object({
   environment: zod.string().optional(),
+  directory: zod.string().optional(),
   theme: ThemePushThemeSchema,
   published: zod.boolean(),
   hasErrors: zod.boolean(),
   errors: zod.record(zod.array(zod.string())),
+})
+
+const ThemePushJsonResultSchema = zod
+  .object({
+    status: zod.enum(['success', 'partial']),
+    changed: zod.boolean(),
+    theme: ThemeLinksSchema,
+    issues: zod.array(
+      zod
+        .object({
+          filePath: zod.string().refine(isAbsolutePath, 'Expected an absolute filesystem path.'),
+          message: zod.string(),
+        })
+        .strict(),
+    ),
+  })
+  .strict()
+const SkippedSchema = zod.object({status: zod.literal('skipped'), reason: zod.literal('unsafe-directory')}).strict()
+
+export function themePushJsonResult(result: ThemePushResult): ThemePushJsonResult {
+  const {theme, hasErrors, errors} = result
+  return {
+    status: hasErrors ? 'partial' : 'success',
+    changed: true,
+    theme: {
+      ...projectTheme(theme),
+      storeDomain: storeDomain(theme.shop),
+      editorUrl: theme.editor_url || null,
+      previewUrl: theme.preview_url || null,
+    },
+    issues: Object.entries(errors).flatMap(([file, messages]) =>
+      messages.map((message) => ({filePath: resolvePath(result.directory ?? cwd(), file), message})),
+    ),
+  }
+}
+
+export const themePushJsonOutputSchema = defineThemeJsonOutputSchema({
+  name: 'ThemePushJsonResult',
+  schema: zod.union([ThemePushJsonResultSchema, SkippedSchema]),
+  definitions: {ThemePushTheme: ThemeLinksSchema},
+  project: (value) => {
+    if (SkippedSchema.safeParse(value).success || ThemePushJsonResultSchema.safeParse(value).success) return value
+    return themePushJsonResult(themePushResultSchema.parse(value))
+  },
 })
 
 export type ThemePushResult = zod.infer<typeof themePushResultSchema>

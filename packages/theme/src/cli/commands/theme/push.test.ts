@@ -30,8 +30,8 @@ describe('theme push JSON', () => {
         name: 'Theme',
         role: 'unpublished',
         shop: session.storeFqdn,
-        editor_url: 'editor',
-        preview_url: 'preview',
+        editor_url: 'https://test.myshopify.com/admin/themes/1/editor',
+        preview_url: 'https://test.myshopify.com?preview_theme_id=1',
       },
       published: false,
       hasErrors: false,
@@ -41,16 +41,11 @@ describe('theme push JSON', () => {
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
       await command.command({json: true} as never, session, false)
 
-      expect(JSON.parse(stdout())).toEqual({
+      expect(JSON.parse(stdout())).toMatchObject({
         status: 'success',
-        theme: {
-          id: 1,
-          name: 'Theme',
-          role: 'unpublished',
-          shop: session.storeFqdn,
-          editor_url: 'editor',
-          preview_url: 'preview',
-        },
+        changed: true,
+        issues: [],
+        theme: {id: '1', storeDomain: session.storeFqdn},
       })
       expect(stderr()).toBe('')
     })
@@ -62,7 +57,7 @@ describe('theme push JSON', () => {
     await withCapturedStandardStreams(async ({stdout}) => {
       await command.command({json: true} as never, session, false)
 
-      expect(stdout()).toBe('')
+      expect(JSON.parse(stdout())).toEqual({status: 'cancelled'})
     })
   })
 

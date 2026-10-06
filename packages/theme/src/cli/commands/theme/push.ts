@@ -1,3 +1,4 @@
+import {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 import {globFlags, themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {executeThemePush} from '../../services/push.js'
@@ -7,6 +8,7 @@ import {
   renderThemePushResult,
   renderThemePushEnvironmentResults,
 } from '../../services/push/result.js'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
@@ -44,13 +46,16 @@ export default class Push extends ThemeCommand {
 
   \`\`\`json
   {
+    "status": "success",
+    "changed": true,
+    "issues": [],
     "theme": {
-      "id": 108267175958,
+      "id": "108267175958",
       "name": "MyTheme",
       "role": "unpublished",
-      "shop": "mystore.myshopify.com",
-      "editor_url": "https://mystore.myshopify.com/admin/themes/108267175958/editor",
-      "preview_url": "https://mystore.myshopify.com/?preview_theme_id=108267175958"
+      "storeDomain": "mystore.myshopify.com",
+      "editorUrl": "https://mystore.myshopify.com/admin/themes/108267175958/editor",
+      "previewUrl": "https://mystore.myshopify.com/?preview_theme_id=108267175958"
     }
   }
   \`\`\`
@@ -159,7 +164,11 @@ export default class Push extends ThemeCommand {
       multiEnvironment,
       context,
     )
-    if (result && !(flags.json && multiEnvironment)) renderThemePushResult(result, flags.json ? 'json' : 'text')
+    if (result?.hasErrors) process.exitCode = 1
+    if (!(flags.json && multiEnvironment)) {
+      if (result) renderThemePushResult(result, flags.json ? 'json' : 'text')
+      else if (flags.json) outputResult(themePushJsonOutputSchema.encode({status: 'cancelled'}))
+    }
     recordTiming('theme-command:push')
     return result
   }
@@ -168,7 +177,7 @@ export default class Push extends ThemeCommand {
     return Boolean(flags.json)
   }
 
-  protected renderEnvironmentResults(results: {environment: string; result: unknown}[]): void {
+  protected renderEnvironmentResults(results: ThemeEnvironmentResult[]): void {
     renderThemePushEnvironmentResults(results)
   }
 

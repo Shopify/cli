@@ -12,7 +12,7 @@ import {ensureListingExists} from '../utilities/theme-listing.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {themeCreate, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {renderConfirmationPrompt, RenderConfirmationPromptOptions, renderError} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, RenderConfirmationPromptOptions} from '@shopify/cli-kit/node/ui'
 import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {
@@ -21,9 +21,9 @@ import {
   promptThemeName,
   UNPUBLISHED_THEME_ROLE,
 } from '@shopify/cli-kit/node/themes/utils'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
 
-import {commandEventOutputMode, emitCommandEvent} from '@shopify/cli-kit/node/command-events'
 import {Writable} from 'stream'
 
 interface PushOptions {
@@ -211,6 +211,7 @@ async function executePush(
 
   return themePushResultSchema.parse({
     environment: options.environment,
+    directory: options.path,
     theme: {
       id: theme.id,
       name: theme.name,
@@ -269,7 +270,7 @@ async function confirmPushToTheme(
   themeRole: Role,
   allowLive: boolean | undefined,
   storeFqdn: string,
-  environment?: string[],
+  _environment?: string[],
   multiEnvironment?: boolean,
 ) {
   if (themeRole === LIVE_THEME_ROLE) {
@@ -278,20 +279,7 @@ async function confirmPushToTheme(
     }
 
     if (multiEnvironment) {
-      const body = [
-        `Can't push theme files to the live theme on ${storeFqdn}`,
-        'Use the --allow-live flag to push to a live theme.',
-      ]
-      if (commandEventOutputMode() === 'json') {
-        emitCommandEvent({
-          type: 'diagnostic',
-          level: 'error',
-          message: `Environment: ${environment}\n${body.join('\n')}`,
-        })
-      } else {
-        renderError({headline: `Environment: ${environment}`, body})
-      }
-      return false
+      throw new AbortError(`Can't push theme files to the live theme on ${storeFqdn}. Use the --allow-live flag.`)
     }
 
     const options: RenderConfirmationPromptOptions = {

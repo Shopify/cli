@@ -32,65 +32,52 @@ function pushResult(overrides: Partial<ThemePushResult> = {}): ThemePushResult {
 }
 
 describe('push result', () => {
-  test('writes compact JSON with a success status and omits absent environment and error fields', () => {
-    expect(themePushJsonOutputSchema.encode(themePushJsonResult(pushResult()))).toBe(
-      '{"status":"success","theme":{"id":1,"name":"Theme","role":"unpublished","shop":"test.myshopify.com","editor_url":"https://test.myshopify.com/admin/themes/1/editor","preview_url":"https://test.myshopify.com?preview_theme_id=1"}}',
-    )
-  })
-
-  test('preserves environment, warning, asset errors and their order', () => {
-    const result = pushResult({
-      environment: 'staging',
-      hasErrors: true,
-      errors: {'assets/z.css': ['bad CSS'], 'layout/a.liquid': []},
+  test('projects string IDs, camelCase URLs and upload outcomes', () => {
+    expect(themePushJsonResult(pushResult())).toEqual({
+      status: 'success',
+      changed: true,
+      issues: [],
+      theme: {
+        id: '1',
+        name: 'Theme',
+        role: 'unpublished',
+        storeDomain: 'test.myshopify.com',
+        editorUrl: 'https://test.myshopify.com/admin/themes/1/editor',
+        previewUrl: 'https://test.myshopify.com?preview_theme_id=1',
+      },
     })
-    expect(themePushJsonOutputSchema.encode(themePushJsonResult(result))).toBe(
-      '{"status":"failed","environment":"staging","theme":{"id":1,"name":"Theme","role":"unpublished","shop":"test.myshopify.com","editor_url":"https://test.myshopify.com/admin/themes/1/editor","preview_url":"https://test.myshopify.com?preview_theme_id=1","warning":"[staging] The theme \'Theme\' was pushed with errors","errors":{"assets/z.css":["bad CSS"],"layout/a.liquid":[]}}}',
-    )
+    expect(
+      themePushJsonResult(pushResult({hasErrors: true, directory: '/theme', errors: {'assets/z.css': ['bad CSS']}})),
+    ).toMatchObject({
+      status: 'partial',
+      issues: [{filePath: '/theme/assets/z.css', message: 'bad CSS'}],
+    })
   })
 
-  test('warns without an errors field for failed uploads without asset errors', () => {
-    const encoded = JSON.parse(themePushJsonOutputSchema.encode(themePushJsonResult(pushResult({hasErrors: true}))))
-    expect(encoded.status).toBe('failed')
-    expect(encoded.theme.warning).toBe("The theme 'Theme' was pushed with errors")
-    expect(encoded.theme).not.toHaveProperty('errors')
-  })
-
-  test('reports each environment independently without an overall success status', async () => {
+  test('retains every environment, including failures and skips', async () => {
+    process.exitCode = 0
     await withCapturedStandardStreams(async ({stdout}) => {
       renderThemePushEnvironmentResults([
         {environment: 'production', result: pushResult()},
         {environment: 'staging', result: pushResult({hasErrors: true})},
-        {environment: 'cancelled', result: undefined},
+        {environment: 'skipped', result: undefined},
+        {environment: 'failed', error: {type: 'abort', message: 'Authentication failed'}},
       ])
-      expect(
-        JSON.parse(stdout()).map(({environment, status}: {environment: string; status: string}) => ({
-          environment,
-          status,
-        })),
-      ).toEqual([
-        {environment: 'production', status: 'success'},
-        {environment: 'staging', status: 'failed'},
+      expect(JSON.parse(stdout()).environments).toMatchObject([
+        {environment: 'production', result: {status: 'success'}},
+        {environment: 'staging', result: {status: 'partial'}},
+        {environment: 'skipped', result: {status: 'skipped'}},
+        {environment: 'failed', error: {type: 'abort'}},
       ])
+      expect(process.exitCode).toBe(1)
     })
+    process.exitCode = 0
   })
 
-  test('requires environment identity for array entries', () => {
-    expect(() => themePushJsonOutputSchema.validate([themePushJsonResult(pushResult())])).toThrow()
-    expect(themePushJsonOutputSchema.encode([])).toBe('[]')
-  })
-
-  test.each([{id: '1'}, {name: null}, {role: false}, {errors: {file: 'error'}}])(
-    'rejects malformed theme fields %j',
-    (fields) => {
-      expect(() =>
-        themePushJsonOutputSchema.validate({status: 'success', theme: {...pushResult().theme, ...fields}}),
-      ).toThrow()
-    },
-  )
-
-  test.each([false, true])('keeps JSON unchanged when publish is %s', (published) => {
-    expect(themePushJsonResult(pushResult({published}))).toEqual(themePushJsonResult(pushResult()))
+  test('requires object roots and strict public resources', () => {
+    expect(() => themePushJsonOutputSchema.validate([])).toThrow()
+    expect(JSON.parse(themePushJsonOutputSchema.encode({environments: []}))).toEqual({environments: []})
+    expect(() => themePushJsonOutputSchema.validate({...themePushJsonResult(pushResult()), accidental: true})).toThrow()
   })
 
   test.each([

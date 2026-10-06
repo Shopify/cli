@@ -13516,13 +13516,16 @@ DESCRIPTION
 
     ```json
     {
+      "status": "success",
+      "changed": true,
+      "issues": [],
       "theme": {
-        "id": 108267175958,
+        "id": "108267175958",
         "name": "MyTheme",
         "role": "unpublished",
-        "shop": "mystore.myshopify.com",
-        "editor_url": "https://mystore.myshopify.com/admin/themes/108267175958/editor",
-        "preview_url": "https://mystore.myshopify.com/?preview_theme_id=108267175958"
+        "storeDomain": "mystore.myshopify.com",
+        "editorUrl": "https://mystore.myshopify.com/admin/themes/108267175958/editor",
+        "previewUrl": "https://mystore.myshopify.com/?preview_theme_id=108267175958"
       }
     }
     ```
@@ -13531,188 +13534,6 @@ DESCRIPTION
   Use `--json-schema` to print the result, error, and event schemas.
 
   Output from `--json` conforms to the `ThemePushJsonResult` schema.
-
-  ```json
-  {
-    "anyOf": [
-      {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "success",
-              "failed"
-            ]
-          },
-          "environment": {
-            "type": "string"
-          },
-          "theme": {
-            "$ref": "#/definitions/ThemePushTheme"
-          }
-        },
-        "required": [
-          "status",
-          "theme"
-        ],
-        "additionalProperties": false
-      },
-      {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "status": {
-              "$ref": "#/definitions/ThemePushJsonResult/anyOf/0/properties/status"
-            },
-            "environment": {
-              "type": "string"
-            },
-            "theme": {
-              "$ref": "#/definitions/ThemePushTheme"
-            }
-          },
-          "required": [
-            "status",
-            "environment",
-            "theme"
-          ],
-          "additionalProperties": false
-        }
-      }
-    ],
-    "title": "ThemePushJsonResult",
-    "definitions": {
-      "ThemePushTheme": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number"
-          },
-          "name": {
-            "type": "string"
-          },
-          "role": {
-            "type": "string"
-          },
-          "shop": {
-            "type": "string"
-          },
-          "editor_url": {
-            "type": "string"
-          },
-          "preview_url": {
-            "type": "string"
-          },
-          "warning": {
-            "type": "string"
-          },
-          "errors": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "role",
-          "shop",
-          "editor_url",
-          "preview_url"
-        ],
-        "additionalProperties": false
-      }
-    },
-    "$schema": "http://json-schema.org/draft-07/schema#"
-  }
-  ```
-```
-
-## `shopify theme rename`
-
-Renames an existing theme.
-
-```
-USAGE
-  $ shopify theme rename [--auth-alias <value>] [-d] [-e <value>...] [-j] [--json-schema] [-l] [-n <value>]
-    [--no-color] [--no-input] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
-
-FLAGS
-  -d, --development
-      Rename your development theme. Use --development, --live, or --theme in non-interactive environments.
-      [env: SHOPIFY_FLAG_DEVELOPMENT]
-
-  -e, --environment=<value>...
-      The environment to apply to the current command.
-      [env: SHOPIFY_FLAG_ENVIRONMENT]
-
-  -j, --json
-      Output the result as JSON. Automatically disables color output.
-      [env: SHOPIFY_FLAG_JSON]
-
-  -l, --live
-      Rename your remote live theme. Use --development, --live, or --theme in non-interactive environments.
-      [env: SHOPIFY_FLAG_LIVE]
-
-  -n, --name=<value>
-      The new name for the theme. Required if non interactive.
-      [env: SHOPIFY_FLAG_NEW_NAME]
-
-  -s, --store=<value>
-      Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
-      https://example.myshopify.com).
-      [env: SHOPIFY_FLAG_STORE]
-
-  -t, --theme=<value>
-      Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.
-      [env: SHOPIFY_FLAG_THEME_ID]
-
-  --auth-alias=<value>
-      Alias of the Shopify account to use for authentication.
-      [env: SHOPIFY_FLAG_AUTH_ALIAS]
-
-  --json-schema
-      Print the command's JSON schemas.
-      [env: SHOPIFY_FLAG_JSON_SCHEMA]
-
-  --no-color
-      Disable color output.
-      [env: SHOPIFY_FLAG_NO_COLOR]
-
-  --no-input
-      Disable interactive prompts and browser authentication.
-      [env: SHOPIFY_FLAG_NO_INPUT]
-
-  --password=<value>
-      Password generated from the Theme Access app or an Admin API token.
-      [env: SHOPIFY_CLI_THEME_TOKEN]
-
-  --path=<value>
-      The path where you want to run the command. Defaults to the current working directory.
-      [env: SHOPIFY_FLAG_PATH]
-
-  --verbose
-      Increase the verbosity of the output. May include sensitive data.
-      [env: SHOPIFY_FLAG_VERBOSE]
-
-DESCRIPTION
-  Renames an existing theme.
-
-  Renames a theme in your store.
-
-  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in
-  your store.
-
-
-  Use `--json-schema` to print the result, error, and event schemas.
-
-  Output from `--json` conforms to the `ThemeRenameResult` schema.
 
   ```json
   {
@@ -13736,9 +13557,9 @@ DESCRIPTION
         "additionalProperties": false
       }
     ],
-    "title": "ThemeRenameResult",
+    "title": "ThemePushJsonResult",
     "definitions": {
-      "Theme": {
+      "ThemePushTheme": {
         "type": "object",
         "properties": {
           "id": {
@@ -13764,10 +13585,18 @@ DESCRIPTION
               }
             ]
           },
-          "processing": {
-            "type": "boolean"
+          "previewUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
-          "sourceUrl": {
+          "editorUrl": {
             "anyOf": [
               {
                 "type": "string",
@@ -13784,11 +13613,10 @@ DESCRIPTION
           "name",
           "role",
           "storeDomain",
-          "processing",
-          "sourceUrl"
+          "previewUrl",
+          "editorUrl"
         ],
-        "additionalProperties": false,
-        "description": "The selected theme projection; sourceUrl is null when the upstream source URL is unavailable."
+        "additionalProperties": false
       },
       "ThemeEnvironment": {
         "anyOf": [
@@ -13801,29 +13629,70 @@ DESCRIPTION
               "result": {
                 "anyOf": [
                   {
-                    "type": "object",
-                    "properties": {
-                      "status": {
-                        "type": "string",
-                        "const": "success"
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "success",
+                              "partial"
+                            ]
+                          },
+                          "changed": {
+                            "type": "boolean"
+                          },
+                          "theme": {
+                            "$ref": "#/definitions/ThemePushTheme"
+                          },
+                          "issues": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "filePath": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "filePath",
+                                "message"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "changed",
+                          "theme",
+                          "issues"
+                        ],
+                        "additionalProperties": false
                       },
-                      "changed": {
-                        "type": "boolean"
-                      },
-                      "originalName": {
-                        "type": "string"
-                      },
-                      "theme": {
-                        "$ref": "#/definitions/Theme"
+                      {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "const": "skipped"
+                          },
+                          "reason": {
+                            "type": "string",
+                            "const": "unsafe-directory"
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "additionalProperties": false
                       }
-                    },
-                    "required": [
-                      "status",
-                      "changed",
-                      "originalName",
-                      "theme"
-                    ],
-                    "additionalProperties": false
+                    ]
                   },
                   {
                     "type": "object",
@@ -14008,6 +13877,185 @@ DESCRIPTION
             "additionalProperties": false
           }
         ]
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+```
+
+## `shopify theme rename`
+
+Renames an existing theme.
+
+```
+USAGE
+  $ shopify theme rename [--auth-alias <value>] [-d] [-e <value>...] [-j] [--json-schema] [-l] [-n <value>]
+    [--no-color] [--no-input] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
+
+FLAGS
+  -d, --development
+      Rename your development theme. Use --development, --live, or --theme in non-interactive environments.
+      [env: SHOPIFY_FLAG_DEVELOPMENT]
+
+  -e, --environment=<value>...
+      The environment to apply to the current command.
+      [env: SHOPIFY_FLAG_ENVIRONMENT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  -l, --live
+      Rename your remote live theme. Use --development, --live, or --theme in non-interactive environments.
+      [env: SHOPIFY_FLAG_LIVE]
+
+  -n, --name=<value>
+      The new name for the theme. Required if non interactive.
+      [env: SHOPIFY_FLAG_NEW_NAME]
+
+  -s, --store=<value>
+      Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
+      https://example.myshopify.com).
+      [env: SHOPIFY_FLAG_STORE]
+
+  -t, --theme=<value>
+      Theme ID or name of the remote theme. Use --development, --live, or --theme in non-interactive environments.
+      [env: SHOPIFY_FLAG_THEME_ID]
+
+  --auth-alias=<value>
+      Alias of the Shopify account to use for authentication.
+      [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
+  --password=<value>
+      Password generated from the Theme Access app or an Admin API token.
+      [env: SHOPIFY_CLI_THEME_TOKEN]
+
+  --path=<value>
+      The path where you want to run the command. Defaults to the current working directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  Renames an existing theme.
+
+  Renames a theme in your store.
+
+  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in
+  your store.
+
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeRenameResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeRenameEnvironment/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeRenameEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeRenameResult",
+    "definitions": {
+      "RenamedTheme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "processing": {
+            "type": "boolean"
+          },
+          "createdAtRuntime": {
+            "type": "boolean"
+          },
+          "src": {
+            "type": "string"
+          },
+          "shop": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "processing",
+          "createdAtRuntime",
+          "shop"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeRenameEnvironment": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "type": "string"
+          },
+          "result": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "const": "success"
+              },
+              "originalName": {
+                "type": "string"
+              },
+              "theme": {
+                "$ref": "#/definitions/RenamedTheme"
+              }
+            },
+            "required": [
+              "status",
+              "originalName",
+              "theme"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "environment",
+          "result"
+        ],
+        "additionalProperties": false
       }
     },
     "$schema": "http://json-schema.org/draft-07/schema#"
