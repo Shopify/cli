@@ -63,4 +63,6 @@ test('exposes the schema and rejects invalid package paths', () => {
   expect(Package.flags.json).toBeDefined()
   expect(Package.description).toContain('--json-schema')
   expect(() => themePackageJsonOutputSchema.validate({path: 42})).toThrow()
+  expect(() => themePackageJsonOutputSchema.validate({path: 'Dawn.zip'})).toThrow()
+  expect(() => themePackageJsonOutputSchema.validate({path: joinPath(cwd(), 'Dawn.zip'), extra: true})).toThrow()
 })
