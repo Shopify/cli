@@ -8,6 +8,9 @@ import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {err, ok} from '@shopify/cli-kit/node/result'
+// Match the platform-native public artifact path.
+// eslint-disable-next-line no-restricted-imports
+import {resolve} from 'node:path'
 
 vi.mock('../../../prompts/config.js')
 vi.mock('../../local-storage.js')
@@ -23,7 +26,7 @@ function mockContext(directory: string, configuration: Record<string, unknown>) 
     project: {} as any,
     activeConfig: {
       file: {
-        path: joinPath(directory, 'shopify.app.toml'),
+        path: resolve(directory, 'shopify.app.toml'),
         content: configuration,
       },
       source: 'flag',
@@ -306,7 +309,7 @@ test('returns selected configuration facts without presentation', async () => {
     await expect(useAppConfiguration({directory, configName: 'shopify.app.toml'})).resolves.toEqual({
       status: 'success',
       changed: true,
-      path: joinPath(directory, 'shopify.app.toml'),
+      path: resolve(directory, 'shopify.app.toml'),
       clientId: 'key',
     })
     expect(renderSuccess).not.toHaveBeenCalled()
