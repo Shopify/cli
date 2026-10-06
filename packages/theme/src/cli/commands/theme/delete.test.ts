@@ -85,7 +85,7 @@ describe('theme delete JSON output', () => {
           name: theme.name,
           role: theme.role,
           processing: theme.processing,
-          sourceUrl: theme.src ?? null,
+          sourceUrl: ('src' in theme ? theme.src : undefined) ?? null,
           storeDomain: store,
         })),
       })
