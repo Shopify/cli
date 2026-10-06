@@ -143,7 +143,7 @@ test('checks module boundaries, deprecated imports, assertions, and unused direc
     const graph = spawnSync(process.execPath, [require.resolve('nx/bin/nx.js'), 'graph', '--file', 'graph.json'], {
       cwd: workspace,
       encoding: 'utf8',
-      env: {...process.env, NX_DAEMON: 'false'},
+      env: {...process.env, NX_DAEMON: 'false', NX_ISOLATE_PLUGINS: 'false'},
     })
     expect(graph.status, graph.stdout + graph.stderr).toBe(0)
     const lint = spawnSync(
@@ -157,7 +157,11 @@ test('checks module boundaries, deprecated imports, assertions, and unused direc
         '--report-unused-disable-directives',
         'packages/app/src/index.ts',
       ],
-      {cwd: workspace, encoding: 'utf8', env: {...process.env, NX_DAEMON: 'false'}},
+      {
+        cwd: workspace,
+        encoding: 'utf8',
+        env: {...process.env, NX_DAEMON: 'false', NX_ISOLATE_PLUGINS: 'false'},
+      },
     )
     expect(lint.status).toBe(1)
     const diagnostics = JSON.parse(lint.stdout).diagnostics
