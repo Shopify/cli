@@ -78,7 +78,11 @@ export default class Delete extends ThemeCommand {
       },
       multiEnvironment,
     )
-    if (!result) return
+    if (!result) {
+      if (flags.json && !multiEnvironment) outputResult(themeDeleteJsonOutputSchema.encode({status: 'cancelled'}))
+      return
+    }
+    if (result.status === 'partial') process.exitCode = 1
     if (flags.json && multiEnvironment) return result
     renderThemeDeleteResult(result, flags.json ? 'json' : 'text', {store: adminSession.storeFqdn, environment})
   }
@@ -87,7 +91,9 @@ export default class Delete extends ThemeCommand {
     return Boolean(flags.json)
   }
 
-  protected renderEnvironmentResults(environments: {environment: string; result: unknown}[]): void {
-    outputResult(themeDeleteJsonOutputSchema.encode(themeDeleteJsonOutputSchema.validate({environments})))
+  protected renderEnvironmentResults(
+    environments: import('../../services/json-output/schema.js').ThemeEnvironmentResult[],
+  ): void {
+    outputResult(themeDeleteJsonOutputSchema.encode({environments}))
   }
 }

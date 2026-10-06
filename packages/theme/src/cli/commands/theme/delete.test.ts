@@ -58,6 +58,10 @@ store = "invalid.myshopify.com"
   })
 }
 
+function restoreExitCode(value: typeof process.exitCode): void {
+  process.exitCode = value
+}
+
 describe('theme delete JSON output', () => {
   test('exposes its schema and JSON flag in help', () => {
     expect(Delete.jsonOutputSchema).toBe(themeDeleteJsonOutputSchema)
@@ -75,7 +79,15 @@ describe('theme delete JSON output', () => {
       await run(['--store', store, '--theme', '1', '--force', '--json'])
       expect(JSON.parse(stdout())).toEqual({
         status: 'success',
-        themes: themes.map((theme) => ({...theme, shop: store})),
+        changed: themes.length > 0,
+        themes: themes.map((theme) => ({
+          id: String(theme.id),
+          name: theme.name,
+          role: theme.role,
+          processing: theme.processing,
+          sourceUrl: theme.src ?? null,
+          storeDomain: store,
+        })),
       })
       expect(stderr()).toBe('')
     })
@@ -94,17 +106,35 @@ describe('theme delete JSON output', () => {
     })
   })
 
-  test.each([false, true])('does not emit success when any deletion fails (partial: %s)', async (partial) => {
-    vi.mocked(findThemes).mockResolvedValue([theme])
+  test.each([false, true])('preserves partial deletions and rejects total failure (partial: %s)', async (partial) => {
+    const originalExitCode = process.exitCode
     vi.mocked(findThemes).mockResolvedValue(partial ? [theme, {...theme, id: 2}] : [theme])
     vi.mocked(themeDelete).mockImplementation(async (id) => {
       if (id === 1) throw new Error('Deletion failed')
       return true
     })
-    await withCapturedStandardStreams(async ({stdout}) => {
-      await expect(run(['--store', store, '--theme', '1', '--force', '--json'])).rejects.toThrow('Deletion failed')
-      expect(stdout()).toBe('')
-    })
+    try {
+      await withCapturedStandardStreams(async ({stdout}) => {
+        const argv = ['--store', store, '--theme', '1', '--force', '--json']
+        if (!partial) {
+          await expect(run(argv)).rejects.toThrow('Deletion failed')
+          expect(stdout()).toBe('')
+          return
+        }
+        await run(argv)
+        expect(JSON.parse(stdout())).toEqual({
+          status: 'partial',
+          changed: true,
+          themes: [
+            {id: '2', name: theme.name, role: theme.role, storeDomain: store, processing: false, sourceUrl: null},
+          ],
+          errors: [{themeId: '1', error: {type: 'abort', message: 'Deletion failed'}}],
+        })
+        expect(process.exitCode).toBe(1)
+      })
+    } finally {
+      restoreExitCode(originalExitCode)
+    }
   })
 
   test('collects results in configured order and sequences mutations for the same store', async () => {
@@ -138,8 +168,8 @@ describe('theme delete JSON output', () => {
           'third',
           'second',
         ])
-        expect(result.environments.map(({result}: {result: {themes: {id: number}[]}}) => result.themes[0]?.id)).toEqual(
-          [1, 3, 2],
+        expect(result.environments.map(({result}: {result: {themes: {id: string}[]}}) => result.themes[0]?.id)).toEqual(
+          ['1', '3', '2'],
         )
         expect(deleted).toEqual([2, 1, 3])
         expect(stderr()).toBe('')
@@ -148,7 +178,7 @@ describe('theme delete JSON output', () => {
     })
   })
 
-  test.each([false, true])('omits failed environments and preserves exit behavior (all fail: %s)', async (allFail) => {
+  test.each([false, true])('preserves failed environments and exits nonzero (all fail: %s)', async (allFail) => {
     vi.mocked(findThemes).mockImplementation(async (_session, options) => [{...theme, id: Number(options.themes?.[0])}])
     vi.mocked(themeDelete).mockImplementation(async (id) => {
       if (allFail || id === 1) throw new Error('Deletion failed')
@@ -158,28 +188,32 @@ describe('theme delete JSON output', () => {
     await inEnvironments(async () => {
       await withCapturedStandardStreams(async ({stdout, stderr}) => {
         await run(['--show-all', '--environment', 'first', '--environment', 'second', '--force', '--json'])
-        expect(JSON.parse(stdout()).environments.map(({environment}: {environment: string}) => environment)).toEqual(
-          allFail ? [] : ['second'],
-        )
+        expect(JSON.parse(stdout()).environments.map(({environment}: {environment: string}) => environment)).toEqual([
+          'first',
+          'second',
+        ])
         const events = stderr()
           .trim()
           .split('\n')
           .map((line) => JSON.parse(line))
         expect(events).toHaveLength(allFail ? 2 : 1)
         expect(events[0]).toMatchObject({type: 'diagnostic', level: 'error', code: 'theme-environment-failed'})
-        expect(process.exitCode).toBe(exitCode)
+        expect(process.exitCode).toBe(1)
+        restoreExitCode(exitCode)
       })
     })
   })
 
-  test('omits invalid environments and emits a typed warning', async () => {
+  test('preserves invalid environments and emits a typed warning', async () => {
     vi.mocked(findThemes).mockResolvedValue([theme])
     await inEnvironments(async () => {
       await withCapturedStandardStreams(async ({stdout, stderr}) => {
         await run(['--show-all', '--environment', 'invalid', '--environment', 'first', '--force', '--json'])
         expect(JSON.parse(stdout()).environments.map(({environment}: {environment: string}) => environment)).toEqual([
+          'invalid',
           'first',
         ])
+        restoreExitCode(undefined)
         expect(JSON.parse(stderr())).toMatchObject({
           type: 'diagnostic',
           level: 'warning',
