@@ -939,12 +939,13 @@ describe('layout catalogue: check --list-files', () => {
     await inLayout(twoRepositories, async (root) => {
       const {stdout} = await checkListFiles(root, 'app', {includeDirs: ['../backend'], json: true})
 
+      // JSON lists absolute paths, while the text output lists them relative to the app directory.
       expect(JSON.parse(stdout)).toEqual({
         files: [
-          '../backend/src/admin/index.ts',
-          '../backend/src/server.ts',
-          'extensions/checkout-ui/src/Checkout.tsx',
-          'shopify.app.toml',
+          joinPath(root, 'backend/src/admin/index.ts'),
+          joinPath(root, 'backend/src/server.ts'),
+          joinPath(root, 'app/extensions/checkout-ui/src/Checkout.tsx'),
+          joinPath(root, 'app/shopify.app.toml'),
         ],
       })
     })
