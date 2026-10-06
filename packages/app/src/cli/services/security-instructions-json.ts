@@ -2,18 +2,20 @@ import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 /** Shared by `instructions --json` and `check --json`, so an agent reads the instructions the same way from both. */
-export const appSecurityInstructionsSchema = zod.object({
-  content: zod.string(),
-  copiedToClipboard: zod.boolean(),
-  /** The file written by `instructions --write`. */
-  path: zod.string().nullable(),
-})
+export const appSecurityInstructionsSchema = zod
+  .object({
+    content: zod.string(),
+    copiedToClipboard: zod.boolean(),
+    /** The file written by `instructions --write`. */
+    path: zod.string().nullable(),
+  })
+  .strict()
 
 export type AppSecurityInstructionsJson = zod.infer<typeof appSecurityInstructionsSchema>
 
 export const securityInstructionsJsonOutputSchema = defineJsonOutputSchema({
   name: 'AppSecurityInstructionsResult',
-  schema: zod.object({instructions: appSecurityInstructionsSchema}),
+  schema: zod.object({instructions: appSecurityInstructionsSchema}).strict(),
   definitions: {AppSecurityInstructions: appSecurityInstructionsSchema},
 })
 

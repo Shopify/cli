@@ -88,6 +88,47 @@ describe('app security JSON contract', () => {
     expect(() => securityCheckJsonOutputSchema.validate({agentChecksPath})).toThrow()
   })
 
+  describe('rejects a key the contract does not define', () => {
+    const instructions = toAppSecurityInstructionsJson('# Instructions', {copy: false})
+    const scanResult = toSecurityCheckJson(
+      {deterministicFindings},
+      agentChecksPath,
+      configSelection,
+      scanDirectories,
+      instructions,
+    )
+
+    test('accepts the scan result as built', () => {
+      expect(securityCheckJsonOutputSchema.validate(scanResult)).toEqual(scanResult)
+    })
+
+    test.each([
+      ['the scan result', {...scanResult, engine: deterministicFindings.engine}],
+      ['the selection', {...scanResult, selection: {...scanResult.selection, kind: 'config'}}],
+      [
+        'a scan directory',
+        {
+          ...scanResult,
+          selection: {
+            ...scanResult.selection,
+            scanDirectories: [{directory: appDirectory, origin: 'app-directory', requested: true}],
+          },
+        },
+      ],
+      ['the instructions', {...scanResult, instructions: {...instructions, writePath: '/tmp/handoff.md'}}],
+      ['the --list-files result', {files: ['shopify.app.toml'], directory: appDirectory}],
+    ])('in %s of check', (_, result) => {
+      expect(() => securityCheckJsonOutputSchema.validate(result)).toThrow(/Unrecognized key/)
+    })
+
+    test.each([
+      ['the instructions result', {instructions, path: '/tmp/handoff.md'}],
+      ['the instructions', {instructions: {...instructions, writePath: '/tmp/handoff.md'}}],
+    ])('in %s of instructions', (_, result) => {
+      expect(() => securityInstructionsJsonOutputSchema.validate(result)).toThrow(/Unrecognized key/)
+    })
+  })
+
   test('publishes the scan and file list results, and one instructions definition for both commands', () => {
     const checkSchema = securityCheckJsonOutputSchema.jsonSchema as {
       anyOf: unknown[]

@@ -6,10 +6,12 @@ import {zod} from '@shopify/cli-kit/node/schema'
 import type {AppSecurityExecution} from './app-security-api.js'
 import type {AppSecurityScanDirectory, AppSecuritySelection} from './app-security-selection.js'
 
-const scanDirectorySchema = zod.object({
-  directory: zod.string(),
-  origin: zod.enum(['app-directory', 'include-dir']),
-})
+const scanDirectorySchema = zod
+  .object({
+    directory: zod.string(),
+    origin: zod.enum(['app-directory', 'include-dir']),
+  })
+  .strict()
 
 // The internal origins keep the spelling of the deterministic findings document's `coverage.scan_directories`.
 const SCAN_DIRECTORY_ORIGINS: {
@@ -19,23 +21,27 @@ const SCAN_DIRECTORY_ORIGINS: {
   include_dir: 'include-dir',
 }
 
-const scanResultSchema = zod.object({
-  selection: zod.object({
-    directory: zod.string(),
-    configPath: zod.string().nullable(),
-    clientId: zod.string().nullable(),
-    clientIdSource: zod.enum(['config', 'flag', 'picker']).nullable(),
-    scanDirectories: zod.array(scanDirectorySchema),
-  }),
-  deterministicFindings: deterministicFindingsDocumentSchema.describe(
-    'The deterministic findings document, as written to deterministic-findings.json. It keeps its own field conventions and is versioned by its schema_version, independently of this result.',
-  ),
-  agentChecksPath: zod.string(),
-  /** The coding-agent instructions chosen at the prompt or with `--yes`; null when none were. */
-  instructions: appSecurityInstructionsSchema.nullable(),
-})
+const scanResultSchema = zod
+  .object({
+    selection: zod
+      .object({
+        directory: zod.string(),
+        configPath: zod.string().nullable(),
+        clientId: zod.string().nullable(),
+        clientIdSource: zod.enum(['config', 'flag', 'picker']).nullable(),
+        scanDirectories: zod.array(scanDirectorySchema),
+      })
+      .strict(),
+    deterministicFindings: deterministicFindingsDocumentSchema.describe(
+      'The deterministic findings document, as written to deterministic-findings.json. It keeps its own field conventions and is versioned by its schema_version, independently of this result.',
+    ),
+    agentChecksPath: zod.string(),
+    /** The coding-agent instructions chosen at the prompt or with `--yes`; null when none were. */
+    instructions: appSecurityInstructionsSchema.nullable(),
+  })
+  .strict()
 
-const fileListResultSchema = zod.object({files: zod.array(zod.string())})
+const fileListResultSchema = zod.object({files: zod.array(zod.string())}).strict()
 
 // `--list-files` stops before scanning, so its result shares no field with a scan's. Consumers know which they asked
 // for, and the two shapes have no key in common.
