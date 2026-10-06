@@ -122,6 +122,7 @@ function environment(root: string, json: boolean, failure: boolean): NodeJS.Proc
     SHOPIFY_FLAG_JSON: json ? '1' : '0',
     SHOPIFY_FLAG_NO_INPUT: '1',
     FORCE_COLOR: '0',
+    NO_COLOR: undefined,
     FIXTURE_COMPILER_FAIL: failure ? '1' : '0',
   }
 }

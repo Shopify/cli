@@ -15,7 +15,7 @@ vi.mock('../../services/app-context.js')
 
 function setup(directory: string) {
   const app = testApp({name: 'Example app', directory, webs: []})
-  vi.mocked(localAppContext).mockResolvedValue({app, project: testProject()})
+  vi.mocked(localAppContext).mockResolvedValue({app, project: testProject(), activeConfig: {} as never})
   vi.mocked(build).mockResolvedValue({status: 'success', app: {name: app.name, directory}, webs: [], extensions: []})
   return app
 }
