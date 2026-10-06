@@ -95,7 +95,7 @@ module.exports = {
         check(node.id, 'enum')
       },
       TSTypeParameter(node) {
-        // Preserve existing infer bindings accepted by the previous lint setup.
+        // Inferred type bindings are exempt from type-parameter naming requirements.
         if (node.parent.type === 'TSInferType') return
         check(node.name, 'typeParameter')
       },

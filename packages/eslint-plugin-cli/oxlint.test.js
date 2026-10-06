@@ -179,7 +179,7 @@ tester.run('commonjs-redeclarations', rules['no-redeclare'], {
   ],
 })
 
-test('runs independent rules and legacy suppressions without ESLint', () => {
+test('runs custom rules and named suppressions without ESLint', () => {
   const {mkdtempSync, mkdirSync, writeFileSync, rmSync} = require('node:fs')
   const {tmpdir} = require('node:os')
   const {join, resolve, dirname} = require('node:path')
@@ -213,13 +213,13 @@ test('runs independent rules and legacy suppressions without ESLint', () => {
           : 'export function read() { return 1 }',
       )
     }
-    const legacyFile = join(workspace, 'packages', 'app', 'src', 'legacy.ts')
-    const legacySource = `/** @param value Description. */
+    const suppressedFile = join(workspace, 'packages', 'app', 'src', 'suppressed.ts')
+    const source = `/** @param value Description. */
 function read(value) { try { run() } catch (error) { log(error) } }
 interface widget {}`
     writeFileSync(
-      legacyFile,
-      `/* eslint-disable compat/typescript-eslint-naming-convention, no-catch-all/no-catch-all, tsdoc/syntax */\n${legacySource}`,
+      suppressedFile,
+      `/* eslint-disable compat/typescript-eslint-naming-convention, no-catch-all/no-catch-all, tsdoc/syntax */\n${source}`,
     )
     writeFileSync(
       join(workspace, 'oxlint.json'),
@@ -262,7 +262,7 @@ interface widget {}`
     expect(JSON.parse(result.stdout).diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
       'cli(module-boundaries)',
     ])
-    writeFileSync(legacyFile, legacySource)
+    writeFileSync(suppressedFile, source)
     const unsuppressed = spawnSync(
       process.execPath,
       [

@@ -199,7 +199,7 @@
   "@typescript-eslint/no-unnecessary-type-assertion": {
     "replacement": null,
     "status": "unsupported",
-    "limitation": "Disabled during migration because the native checker flags assertions accepted by the original ESLint setup, including intentional test fixtures. Existing casts are retained; there is no exact compatibility option."
+    "limitation": "Redundant type assertions are not checked."
   },
   "@typescript-eslint/no-unnecessary-type-constraint": {
     "replacement": "typescript/no-unnecessary-type-constraint",
@@ -454,12 +454,12 @@
   "import-x/no-named-as-default": {
     "replacement": null,
     "status": "unsupported",
-    "limitation": "Disabled during migration because native module analysis flags existing default WebSocket imports accepted by ESLint. Existing imports are retained; this check is currently lost."
+    "limitation": "Default imports that share a name with a named export are not checked."
   },
   "import-x/no-named-as-default-member": {
     "replacement": null,
     "status": "unsupported",
-    "limitation": "Disabled during migration because native module analysis flags existing Prettier and CommonJS GraphQL-loader access accepted by ESLint. Existing imports are retained; this check is currently lost."
+    "limitation": "Access to named exports through default imports is not checked."
   },
   "import-x/no-named-default": {
     "replacement": "import/no-named-default",
