@@ -1,7 +1,7 @@
 import {zodToJsonSchema} from 'zod-to-json-schema'
 import type {ZodTypeAny, z} from 'zod'
 
-export {jsonOutputTimestampSchema} from '../common/json-output-schema.js'
+export {formatJsonOutputTimestamp, jsonOutputTimestampSchema} from '../common/json-output-schema.js'
 
 interface JsonOutputSchemaDefinition<TSchema extends ZodTypeAny = ZodTypeAny> {
   readonly name: string

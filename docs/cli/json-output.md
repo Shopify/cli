@@ -149,6 +149,10 @@ Use open records or `.passthrough()` only at documented native boundaries such a
 Validate URLs, ID formats, counts, and timestamps according to their meaning. A schema alone does not ensure every
 execution path emits the right result or exit code.
 
+For CLI-owned instants, use `jsonOutputTimestampSchema` to validate public fields and
+`formatJsonOutputTimestamp(date)` to format them. Both are exported from
+`@shopify/cli-kit/common/json-output-schema` and `@shopify/cli-kit/node/json-output-schema`.
+
 ## Connect the command and encoder
 
 Expose the contract from the command and encode through it. Encoding validates the value before serialization.

@@ -1,4 +1,4 @@
-import {jsonOutputTimestampSchema} from './json-output-schema.js'
+import {formatJsonOutputTimestamp, jsonOutputTimestampSchema} from './json-output-schema.js'
 import {z} from 'zod'
 
 /** Schema for a diagnostic emitted while a command executes. */
@@ -86,9 +86,7 @@ export function createCommandEventChannel<TEvent extends CommandEvent = CommandE
 
   return {
     emit(event, emissionOptions) {
-      const timestamp = clock()
-        .toISOString()
-        .replace(/\.\d{3}Z$/, 'Z')
+      const timestamp = formatJsonOutputTimestamp(clock())
       // TypeScript cannot reconstruct the generic event from its distributive Omit.
       const timestampedEvent = {...event, timestamp} as unknown as TEvent
       if (emissionOptions === undefined) {
