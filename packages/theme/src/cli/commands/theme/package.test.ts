@@ -8,6 +8,9 @@ import {joinPath, relativizePath, cwd} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {expect, test, vi} from 'vitest'
+// Native JSON paths must preserve Windows separators instead of pathe normalization.
+// eslint-disable-next-line no-restricted-imports
+import {resolve as nativePath} from 'node:path'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/analytics')
@@ -31,7 +34,7 @@ test.each([true, false])('writes the package receipt to stdout with version=%s',
 
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
       await runWithCommandEventsForCommand(['--json'], () => run(['--path', directory, '--json']))
-      expect(stdout()).toBe(`${themePackageJsonOutputSchema.encode({path})}\n`)
+      expect(stdout()).toBe(`${themePackageJsonOutputSchema.encode({path: nativePath(path)})}\n`)
       expect(stderr()).toBe('')
     })
     await expect(fileExists(path)).resolves.toBe(true)
