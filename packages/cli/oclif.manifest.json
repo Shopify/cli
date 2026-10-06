@@ -536,11 +536,8 @@
           "type": "option"
         },
         "client-id": {
-          "description": "The Client ID of your app. Required if non interactive.",
+          "description": "The Client ID of the remote app to link. Use --file-name to specify the destination configuration file. Required if non interactive.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
-          "exclusive": [
-            "config"
-          ],
           "hasDynamicHelp": false,
           "hidden": false,
           "multiple": false,
@@ -549,7 +546,7 @@
         },
         "config": {
           "char": "c",
-          "description": "The name of the app configuration.",
+          "description": "The name of the local app configuration to read and overwrite. Use --file-name instead when specifying --client-id.",
           "env": "SHOPIFY_FLAG_APP_CONFIG",
           "hasDynamicHelp": false,
           "hidden": false,
@@ -558,7 +555,7 @@
           "type": "option"
         },
         "file-name": {
-          "description": "The name of the app configuration file to create or overwrite.",
+          "description": "The name of the app configuration file to create or overwrite. Requires --force to overwrite an existing file.",
           "env": "SHOPIFY_FLAG_APP_CONFIG_FILE_NAME",
           "exclusive": [
             "config"
