@@ -263,13 +263,12 @@ export function formatOffensesJson(offensesByFile: OffenseMap, environment?: str
  * Handles the process exit based on the offenses and fail level.
  */
 export function handleExit(offenses: Offense[], failLevel: FailLevel) {
-  // If there is no fail level set, exit with 0
-  if (!failLevel) process.exit(0)
+  process.exit(themeCheckHasBlockingIssues(offenses, failLevel) ? 1 : 0)
+}
 
-  const failSeverity = failLevelToSeverity(failLevel)
-  const shouldFail = failSeverity !== undefined && offenses.some((offense) => offense.severity <= failSeverity)
-
-  process.exit(shouldFail ? 1 : 0)
+export function themeCheckHasBlockingIssues(offenses: Offense[], failLevel: FailLevel): boolean {
+  const failSeverity = failLevel ? failLevelToSeverity(failLevel) : undefined
+  return failSeverity !== undefined && offenses.some((offense) => offense.severity <= failSeverity)
 }
 
 /**
