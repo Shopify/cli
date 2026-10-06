@@ -129,6 +129,14 @@ function stagingSelection(): AppSecuritySelection {
   }
 }
 
+/** The warning for a directory that holds another app configuration, quoted for the shell the tests run in. */
+function otherAppWarning(displayPath: string) {
+  return {
+    headline: `${displayPath} holds another app's configuration, so its files are scanned as part of this app.`,
+    body: ['Use', {command: `--exclude ${quoteShellArgument(displayPath, shellForPlatform())}`}, 'to leave it out.'],
+  }
+}
+
 function testDependencies(
   execution: AppSecurityExecution = scanExecution,
   selection: AppSecuritySelection = configSelection,
@@ -345,39 +353,42 @@ describe('securityCheck', () => {
   })
 
   test('warns once for each scan directory that Git ignores, relative to the working directory', async () => {
-    vi.stubEnv('INIT_CWD', '/tmp')
-    const dependencies = testDependencies({...scanExecution, ignoredScanDirectories: [appDirectory, '/tmp']})
+    await inTemporaryDirectory(async (directory) => {
+      const realDirectory = await fileRealPath(directory)
+      vi.stubEnv('INIT_CWD', directory)
+      const dependencies = testDependencies({
+        ...scanExecution,
+        ignoredScanDirectories: [joinPath(realDirectory, 'unlinked-app'), realDirectory],
+      })
 
-    await securityCheck(testOptions(), dependencies)
+      await securityCheck(testOptions(), dependencies)
 
-    expect(dependencies.renderWarning).toHaveBeenCalledTimes(2)
-    expect(dependencies.renderWarning).toHaveBeenNthCalledWith(1, {
-      headline: 'unlinked-app is ignored by Git, so only the files Git tracks in it are scanned.',
-      body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
-    })
-    expect(dependencies.renderWarning).toHaveBeenNthCalledWith(2, {
-      headline: '. is ignored by Git, so only the files Git tracks in it are scanned.',
-      body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
+      expect(dependencies.renderWarning).toHaveBeenCalledTimes(2)
+      expect(dependencies.renderWarning).toHaveBeenNthCalledWith(1, {
+        headline: 'unlinked-app is ignored by Git, so only the files Git tracks in it are scanned.',
+        body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
+      })
+      expect(dependencies.renderWarning).toHaveBeenNthCalledWith(2, {
+        headline: '. is ignored by Git, so only the files Git tracks in it are scanned.',
+        body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
+      })
     })
   })
 
   test('warns once for each directory that holds another app configuration, with the --exclude that leaves it out', async () => {
-    vi.stubEnv('INIT_CWD', appDirectory)
-    const dependencies = testDependencies({
-      ...scanExecution,
-      otherAppDirectories: [`${appDirectory}/apps/child`, '/tmp/backend'],
-    })
+    await inTemporaryDirectory(async (directory) => {
+      const realDirectory = await fileRealPath(directory)
+      vi.stubEnv('INIT_CWD', directory)
+      const dependencies = testDependencies({
+        ...scanExecution,
+        otherAppDirectories: [joinPath(realDirectory, 'apps', 'child'), joinPath(realDirectory, '..', 'backend')],
+      })
 
-    await securityCheck(testOptions(), dependencies)
+      await securityCheck(testOptions(), dependencies)
 
-    expect(dependencies.renderWarning).toHaveBeenCalledTimes(2)
-    expect(dependencies.renderWarning).toHaveBeenNthCalledWith(1, {
-      headline: "apps/child holds another app's configuration, so its files are scanned as part of this app.",
-      body: ['Use', {command: `--exclude ${quoteShellArgument('apps/child', shellForPlatform())}`}, 'to leave it out.'],
-    })
-    expect(dependencies.renderWarning).toHaveBeenNthCalledWith(2, {
-      headline: "../backend holds another app's configuration, so its files are scanned as part of this app.",
-      body: ['Use', {command: `--exclude ${quoteShellArgument('../backend', shellForPlatform())}`}, 'to leave it out.'],
+      expect(dependencies.renderWarning).toHaveBeenCalledTimes(2)
+      expect(dependencies.renderWarning).toHaveBeenNthCalledWith(1, otherAppWarning('apps/child'))
+      expect(dependencies.renderWarning).toHaveBeenNthCalledWith(2, otherAppWarning('../backend'))
     })
   })
 
@@ -841,21 +852,23 @@ describe('securityCheck --list-files', () => {
   })
 
   test('warns about an ignored scan directory through renderWarning', async () => {
-    const dependencies = testDependencies()
-    dependencies.listFiles.mockResolvedValue({
-      paths: ['shopify.app.toml'],
-      ignoredScanDirectories: [appDirectory],
-      otherAppDirectories: [],
-    })
-    vi.stubEnv('INIT_CWD', '/tmp')
+    await inTemporaryDirectory(async (directory) => {
+      const dependencies = testDependencies()
+      dependencies.listFiles.mockResolvedValue({
+        paths: ['shopify.app.toml'],
+        ignoredScanDirectories: [joinPath(await fileRealPath(directory), 'unlinked-app')],
+        otherAppDirectories: [],
+      })
+      vi.stubEnv('INIT_CWD', directory)
 
-    await securityCheck(listFilesOptions, dependencies)
+      await securityCheck(listFilesOptions, dependencies)
 
-    expect(dependencies.renderWarning).toHaveBeenCalledWith({
-      headline: 'unlinked-app is ignored by Git, so only the files Git tracks in it are scanned.',
-      body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
+      expect(dependencies.renderWarning).toHaveBeenCalledWith({
+        headline: 'unlinked-app is ignored by Git, so only the files Git tracks in it are scanned.',
+        body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
+      })
+      expect(dependencies.output).toHaveBeenCalledWith('shopify.app.toml')
     })
-    expect(dependencies.output).toHaveBeenCalledWith('shopify.app.toml')
   })
 
   test('returns the selection, the results key and the generated check command', async () => {
