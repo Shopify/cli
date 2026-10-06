@@ -160,3 +160,18 @@ test('uses the standard JSON error envelope for incompatible legacy JSON output 
   expect(process.exit).toHaveBeenCalledWith(2)
   expect(themeCheckRun).not.toHaveBeenCalled()
 })
+
+test('does not write a validation result before a requested correction fails', async () => {
+  const checkService = await import('../../services/check.js')
+  vi.spyOn(checkService, 'performAutoFixes').mockRejectedValue(new Error('Unable to write corrected file'))
+  vi.mocked(themeCheckRun).mockResolvedValue({offenses: [offense], theme: [], config: {} as never})
+  await inTemporaryDirectory(async (directory) => {
+    const config = await configuration()
+    await withCapturedStandardStreams(async ({stdout}) => {
+      await expect(new Check([`--path=${directory}`, '--json', '--auto-correct'], config).run()).rejects.toThrow(
+        'Unable to write corrected file',
+      )
+      expect(stdout()).toBe('')
+    })
+  })
+})
