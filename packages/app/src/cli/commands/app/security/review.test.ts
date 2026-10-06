@@ -2,7 +2,6 @@ import SecurityReview from './review.js'
 import SecurityCheck from './check.js'
 import {appFlags} from '../../../flags.js'
 import securityReview from '../../../services/security-review.js'
-import {securityReviewJsonOutputSchema} from '../../../services/security-review-json.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
@@ -15,8 +14,8 @@ describe('app security review command', () => {
     expect(SecurityReview.hidden).toBe(true)
     expect(SecurityReview.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityReview.prototype).not.toBeInstanceOf(AppLinkedCommand)
-    expect(SecurityReview.flags).toHaveProperty('json')
-    expect(SecurityReview.jsonOutputSchema).toBe(securityReviewJsonOutputSchema)
+    expect(SecurityReview.flags).not.toHaveProperty('json')
+    expect(SecurityReview.jsonOutputSchema).toBeUndefined()
   })
 
   test('defines the selection flags as check does', () => {
@@ -45,7 +44,6 @@ describe('app security review command', () => {
       configName: undefined,
       clientId: undefined,
       withoutAppConfig: false,
-      json: false,
       verbose: false,
       checkIds: [],
       blocking: 'none',
@@ -71,12 +69,11 @@ describe('app security review command', () => {
     expect(securityReview).toHaveBeenLastCalledWith(expect.objectContaining({configName: 'staging'}))
   })
 
-  test('forwards --path, --json, --verbose, every --check-id and --blocking', async () => {
+  test('forwards --path, --verbose, every --check-id and --blocking', async () => {
     await SecurityReview.run(
       [
         '--path',
         './fixtures/app',
-        '--json',
         '--verbose',
         '--check-id',
         'OPEN_REDIRECT',
@@ -93,7 +90,6 @@ describe('app security review command', () => {
       configName: undefined,
       clientId: undefined,
       withoutAppConfig: false,
-      json: true,
       verbose: true,
       checkIds: ['OPEN_REDIRECT', 'EOL_API_VERSION'],
       blocking: 'medium',

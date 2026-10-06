@@ -31,7 +31,7 @@ export interface AppSecurityResults {
   checks: CombinedCheck[]
 }
 
-/** One result file the reader rejected. Exposed as `error.details.invalidFiles` in JSON mode. */
+/** One result file the reader rejected. */
 interface InvalidResultsFile {
   source: FindingsSource
   path: string
@@ -73,7 +73,7 @@ export async function loadAppSecurityResults(
   const invalidFiles = [invalidFile(deterministic, 'deterministic'), invalidFile(agent, 'agent')].filter(
     (file): file is InvalidResultsFile => file !== undefined,
   )
-  if (invalidFiles.length > 0) throw invalidResultsError(invalidFiles, resolveAppSecurityCommands(selection, path))
+  if (invalidFiles.length > 0) abortInvalidResults(invalidFiles, resolveAppSecurityCommands(selection, path))
 
   const deterministicSource = presentSource(deterministic)
   const agentSource = presentSource(agent)
@@ -104,10 +104,10 @@ function presentSource<TDocument>(loaded: LoadedSource<TDocument>): {path: strin
 }
 
 /**
- * One error for every invalid file: a next step per file with the command that regenerates it, `clean` as
+ * Aborts with one error for every invalid file: a next step per file with the command that regenerates it, `clean` as
  * the way to start over, and a section per file listing the reader's messages under the file's path.
  */
-function invalidResultsError(invalidFiles: InvalidResultsFile[], commands: AppSecurityCommands): AbortError {
+function abortInvalidResults(invalidFiles: InvalidResultsFile[], commands: AppSecurityCommands): never {
   const message =
     invalidFiles.length === 1
       ? 'The app security check results could not be loaded because a results file is invalid.'
@@ -116,9 +116,7 @@ function invalidResultsError(invalidFiles: InvalidResultsFile[], commands: AppSe
     ...invalidFiles.map((file) => regenerateResultsFileStep(file.source, commands, `${basename(file.path)}.`)),
     ['Or run', {command: formatAppSecurityCommand(commands.clean)}, 'to delete both results files and start over.'],
   ]
-  const error = new AbortError(message, null, nextSteps, invalidFiles.map(invalidFileSection))
-  error.details = {invalidFiles}
-  return error
+  throw new AbortError(message, null, nextSteps, invalidFiles.map(invalidFileSection))
 }
 
 /**

@@ -57,6 +57,13 @@ const commandExceptions = [
   'packages/theme/src/cli/commands/theme/rename.ts',
   'packages/theme/src/cli/commands/theme/share.ts',
 
+  // App Security commands, launched before adopting typed JSON output. Remove entries as they adopt it.
+  'packages/app/src/cli/commands/app/security/check.ts',
+  'packages/app/src/cli/commands/app/security/clean.ts',
+  'packages/app/src/cli/commands/app/security/instructions.ts',
+  'packages/app/src/cli/commands/app/security/record.ts',
+  'packages/app/src/cli/commands/app/security/review.ts',
+
   // Streaming commands without a single finite result.
   'packages/app/src/cli/commands/app/dev.ts',
   'packages/app/src/cli/commands/app/graphiql.ts',

@@ -1,5 +1,4 @@
 import securityRecord, {renderSecurityRecordResult} from './security-record.js'
-import {securityRecordJsonOutputSchema} from './security-record-json.js'
 import {appSecurityArtifactPaths, readFindingsDocument, writeAgentFindings} from './app-security-artifacts.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
 import {
@@ -90,6 +89,11 @@ async function readRecorded(appRoot: string): Promise<AgentFindingsDocument> {
   return JSON.parse(await readFile(artifactPaths(appRoot).agentFindingsPath)) as AgentFindingsDocument
 }
 
+/** The custom section of a rejection error, which lists every validation error. */
+function errorsSection(errors: unknown[]) {
+  return [{title: 'Errors', body: {list: {items: errors}}}]
+}
+
 async function recordError(appRoot: string, dependencies: SecurityRecordDependencies): Promise<AbortError> {
   const error: unknown = await record(appRoot, dependencies).catch((error: unknown) => error)
   expect(error).toBeInstanceOf(AbortError)
@@ -105,7 +109,7 @@ async function expectRejected(stdin: string | undefined, expectedErrors: unknown
     const error = await recordError(appRoot, dependencies)
 
     expect(error.message).toBe(REJECTED_MESSAGE)
-    expect(error.details).toEqual({errors: expectedErrors})
+    expect(error.customSections).toEqual(errorsSection(expectedErrors))
     expect(dependencies.writeAgentFindings).not.toHaveBeenCalled()
     expect(dependencies.recordMetadata).not.toHaveBeenCalled()
     await expect(fileExists(artifactPaths(appRoot).agentFindingsPath)).resolves.toBe(false)
@@ -218,49 +222,12 @@ describe('securityRecord', () => {
         'findings[2] (MISSING_TENANT_ISOLATION): finding requires at least one evidence citation',
       ]
       expect(error.message).toBe(REJECTED_MESSAGE)
-      expect(error.details).toStrictEqual({errors})
-      expect(error.customSections).toStrictEqual([{title: 'Errors', body: {list: {items: errors}}}])
+      expect(error.customSections).toStrictEqual(errorsSection(errors))
       expect(error.nextSteps).toStrictEqual([
         ['Fix every error, then run', {command: recordCommand(appRoot)}, 'again.'],
       ])
       expect(dependencies.writeAgentFindings).not.toHaveBeenCalled()
       await expect(readFile(paths.agentFindingsPath)).resolves.toBe(previousFindings)
-    })
-  })
-
-  test('writes the rejection as a JSON fatal error document in JSON mode', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const appRoot = await createApp(directory)
-      const error = await recordError(
-        appRoot,
-        testDependencies(
-          JSON.stringify({schema_version: 1, scope: NO_SCOPE, findings: [finding({line: 0}), finding({evidence: []})]}),
-        ),
-      )
-      const errors = [
-        'findings[0] (MISSING_TENANT_ISOLATION): invalid line number: 0',
-        'findings[1] (MISSING_TENANT_ISOLATION): finding requires at least one evidence citation',
-      ]
-
-      const output = mockAndCaptureOutput()
-      output.clear()
-      vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-      try {
-        await handler(error)
-
-        expect(JSON.parse(output.info())).toStrictEqual({
-          error: {
-            type: 'abort',
-            message: REJECTED_MESSAGE,
-            nextSteps: [`Fix every error, then run ${recordCommand(appRoot)} again.`],
-            customSections: [{title: 'Errors', body: errors.join('; ')}],
-            details: {errors},
-          },
-        })
-      } finally {
-        vi.unstubAllEnvs()
-        output.clear()
-      }
     })
   })
 
@@ -379,7 +346,7 @@ describe('securityRecord', () => {
       await inTemporaryDirectory(async (directory) => {
         const appRoot = await createApp(directory)
         const error = await recordError(appRoot, testDependencies(documentWithSecrets))
-        expect(error.details).toStrictEqual({errors: redactedErrors})
+        expect(error.customSections).toStrictEqual(errorsSection(redactedErrors))
 
         const output = mockAndCaptureOutput()
         output.clear()
@@ -390,26 +357,6 @@ describe('securityRecord', () => {
           expect(output.error()).toContain('REDACTED')
           expect(output.error()).not.toContain(FAKE_SHOPIFY_TOKEN)
         } finally {
-          output.clear()
-        }
-      })
-    })
-
-    test('in JSON mode', async () => {
-      await inTemporaryDirectory(async (directory) => {
-        const appRoot = await createApp(directory)
-        const error = await recordError(appRoot, testDependencies(documentWithSecrets))
-
-        const output = mockAndCaptureOutput()
-        output.clear()
-        vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-        try {
-          await handler(error)
-
-          expect(JSON.parse(output.info()).error.details).toStrictEqual({errors: redactedErrors})
-          expect(output.info()).not.toContain(FAKE_SHOPIFY_TOKEN)
-        } finally {
-          vi.unstubAllEnvs()
           output.clear()
         }
       })
@@ -428,7 +375,7 @@ describe('securityRecord', () => {
         ['Pipe the findings document on stdin:', {command: recordCommand(appRoot)}],
       ])
       expect(recordCommand(appRoot)).toContain('shopify app security record --path')
-      expect(error.details).toBeUndefined()
+      expect(error.customSections).toBeUndefined()
       await expect(fileExists(artifactPaths(appRoot).agentFindingsPath)).resolves.toBe(false)
     })
   })
@@ -444,7 +391,7 @@ describe('securityRecord', () => {
       const error = await recordError(appRoot, dependencies)
 
       expect(error.message).toBe(REJECTED_MESSAGE)
-      expect(error.details).toStrictEqual({errors: ['Stdin input exceeded the maximum allowed size.']})
+      expect(error.customSections).toStrictEqual(errorsSection(['Stdin input exceeded the maximum allowed size.']))
       await expect(fileExists(artifactPaths(appRoot).agentFindingsPath)).resolves.toBe(false)
     })
   })
@@ -493,38 +440,6 @@ describe('securityRecord', () => {
 
   test('rejects invalid JSON', async () => {
     await expectRejected('{"schema_version": 1,', [expect.stringContaining('The findings document is not valid JSON')])
-  })
-})
-
-describe('securityRecordJsonOutputSchema', () => {
-  test('encodes exactly the recorded path and counts', () => {
-    const encoded = securityRecordJsonOutputSchema.encode({
-      path: '/app/.shopify/app-security/agent-findings.json',
-      checks: 2,
-      findings: 0,
-    })
-
-    expect(encoded).toBe(
-      [
-        '{',
-        '  "path": "/app/.shopify/app-security/agent-findings.json",',
-        '  "checks": 2,',
-        '  "findings": 0',
-        '}',
-      ].join('\n'),
-    )
-  })
-
-  test('rejects results that are not whole counts', () => {
-    expect(() =>
-      securityRecordJsonOutputSchema.encode({path: 'agent-findings.json', checks: 1.5, findings: 0}),
-    ).toThrow()
-  })
-
-  test('describes only the success result', () => {
-    const result = {path: 'agent-findings.json', checks: 1, findings: 0}
-    expect(securityRecordJsonOutputSchema.validate(result)).toStrictEqual(result)
-    expect(() => securityRecordJsonOutputSchema.validate({errors: ['schema_version must be 1']})).toThrow()
   })
 })
 

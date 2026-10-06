@@ -51,8 +51,9 @@ async function readJson(path: string): Promise<unknown> {
   return JSON.parse(await readFile(path, 'utf8'))
 }
 
-function errorText(stderr: string): string {
-  return unstyled(stderr).replaceAll('│', '').replace(/\s+/g, ' ')
+// Boxes wrap text across lines and draw borders, so compare their text with the borders and line breaks removed.
+function boxText(output: string): string {
+  return unstyled(output).replaceAll('│', '').replace(/\s+/g, ' ')
 }
 
 // The error box wraps long paths across lines, so compare them with whitespace removed.
@@ -102,25 +103,17 @@ describe('app security check command boundary', () => {
       const appDirectory = await fileRealPath(directory)
       const paths = appSecurityArtifactPaths(appDirectory, 'shopify.app')
 
-      const result = await runCommand(['--path', nestedDirectory, '--json', '--skip-instructions'])
+      const result = await runCommand(['--path', nestedDirectory, '--skip-instructions'])
 
       expect(result.exitCode).toBe(0)
-      const output = JSON.parse(result.stdout)
-      expect(Object.keys(output).sort()).toEqual(['agent_checks_path', 'deterministic_findings', 'engine', 'selection'])
-      expect(output.agent_checks_path).toBe(paths.agentChecksPath)
-      expect(output.selection).toEqual({
-        app_directory: appDirectory,
-        app_config_file: joinPath(appDirectory, 'shopify.app.toml'),
-        client_id: 'test-client-id',
-        client_id_source: 'config',
-        scan_directories: [{directory: appDirectory, origin: 'app_directory'}],
-      })
-      expect(output.engine).toMatchObject({name: 'shopify-app-security'})
-      await expect(readJson(paths.deterministicFindingsPath)).resolves.toEqual(output.deterministic_findings)
+      const report = boxText(result.stderr)
+      expect(report).toContain('Config file shopify.app.toml')
+      expect(report).toContain('Client ID test-client-id')
       await expect(readJson(paths.deterministicFindingsPath)).resolves.toMatchObject({
         schema_version: 1,
         source: 'deterministic',
         engine: {name: 'shopify-app-security'},
+        coverage: {scan_directories: [{directory: '.', origin: 'app_directory'}]},
         checks: expect.any(Array),
       })
       await expect(readJson(paths.agentChecksPath)).resolves.toMatchObject({
@@ -151,16 +144,10 @@ describe('app security check command boundary', () => {
         '<p>{{ block.settings.text }}</p>\n',
       )
       const appDirectory = await fileRealPath(appRoot)
-      const sharedTheme = await fileRealPath(joinPath(directory, 'shared', 'theme'))
 
-      const result = await runCommand(['--path', appRoot, '--json', '--skip-instructions'])
+      const result = await runCommand(['--path', appRoot, '--skip-instructions'])
 
       expect(result.exitCode).toBe(0)
-      const output = JSON.parse(result.stdout)
-      expect(output.selection.scan_directories).toEqual([
-        {directory: appDirectory, origin: 'app_directory'},
-        {directory: sharedTheme, origin: 'app_config_directory'},
-      ])
       const deterministicFindings = await readJson(
         appSecurityArtifactPaths(appDirectory, 'shopify.app').deterministicFindingsPath,
       )
@@ -181,17 +168,10 @@ describe('app security check command boundary', () => {
       const appDirectory = await fileRealPath(directory)
       const paths = appSecurityArtifactPaths(appDirectory, 'other-client-id')
 
-      const result = await runCommand([
-        '--path',
-        directory,
-        '--client-id',
-        'other-client-id',
-        '--json',
-        '--skip-instructions',
-      ])
+      const result = await runCommand(['--path', directory, '--client-id', 'other-client-id', '--skip-instructions'])
 
       expect(result.exitCode).toBe(0)
-      expect(JSON.parse(result.stdout).agent_checks_path).toBe(paths.agentChecksPath)
+      await expect(readJson(paths.agentChecksPath)).resolves.toMatchObject({checks: expect.any(Array)})
       await expect(readJson(paths.deterministicFindingsPath)).resolves.toMatchObject({source: 'deterministic'})
       await expect(
         readFile(appSecurityArtifactPaths(appDirectory, 'shopify.app').agentChecksPath),
@@ -214,17 +194,13 @@ describe('app security check command boundary', () => {
         '--without-app-config',
         '--exclude',
         'vendor',
-        '--json',
         '--skip-instructions',
       ])
 
       expect(result.exitCode).toBe(0)
-      expect(JSON.parse(result.stdout).selection).toMatchObject({
-        app_directory: appDirectory,
-        app_config_file: null,
-        client_id: 'configless-client-id',
-        client_id_source: 'flag',
-      })
+      const report = boxText(result.stderr)
+      expect(report).toContain('Config file none')
+      expect(report).toContain('Client ID configless-client-id')
       const deterministicFindings = await readJson(paths.deterministicFindingsPath)
       expect(deterministicFindings).toMatchObject({
         source: 'deterministic',
@@ -249,7 +225,7 @@ describe('app security check command boundary', () => {
       await writeFile(joinPath(directory, 'shopify.app.staging.toml'), validAppConfiguration('staging-client-id'))
       const appDirectory = await fileRealPath(directory)
 
-      const result = await runCommand(['--path', directory, '--config', 'staging', '--json', '--skip-instructions'])
+      const result = await runCommand(['--path', directory, '--config', 'staging', '--skip-instructions'])
 
       expect(result.exitCode).toBe(0)
       const stagingPaths = appSecurityArtifactPaths(appDirectory, 'shopify.app.staging')
@@ -265,7 +241,7 @@ describe('app security check command boundary', () => {
       const {nestedDirectory} = await createApp(directory)
       const paths = appSecurityArtifactPaths(directory, 'shopify.app')
 
-      const firstScan = await runCommand(['--path', directory, '--json', '--skip-instructions'])
+      const firstScan = await runCommand(['--path', directory, '--skip-instructions'])
       expect(firstScan.exitCode).toBe(0)
 
       // Check must not read, validate, or rewrite the agent's findings, so any bytes survive a re-scan.
@@ -306,7 +282,7 @@ describe('app security check command boundary', () => {
       ])
 
       expect(result.exitCode).toBe(1)
-      const message = errorText(result.stderr)
+      const message = boxText(result.stderr)
       expect(message).toContain("Couldn't find shopify.app.shopifyappdev-dashboardjson.toml in")
       expectMentionsPath(message, normalizePath(await fileRealPath(directory)))
       await expect(readFile(paths.deterministicFindingsPath)).rejects.toMatchObject({code: 'ENOENT'})
@@ -324,7 +300,7 @@ describe('app security check command boundary', () => {
         const result = await runCommand(['--path', directory, '--client-id', 'unknown-client-id', ...modeFlags])
 
         expect(result.exitCode).toBe(1)
-        expect(errorText(result.stderr)).toContain('No app with client ID unknown-client-id found')
+        expect(boxText(result.stderr)).toContain('No app with client ID unknown-client-id found')
         expect(result.stdout).toBe('')
         expect(appFromIdentifiers).toHaveBeenCalledWith({apiKey: 'unknown-client-id', offerReset: false})
         await expect(fileExists(paths.resultsDirectory)).resolves.toBe(false)
@@ -349,8 +325,8 @@ describe('app security check command boundary', () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
 
-      await runCommand(['--path', directory, '--client-id', 'other-client-id', '--json', '--skip-instructions'])
-      await runCommand(['--path', directory, '--json', '--skip-instructions'])
+      await runCommand(['--path', directory, '--client-id', 'other-client-id', '--skip-instructions'])
+      await runCommand(['--path', directory, '--skip-instructions'])
 
       expect(appFromIdentifiers).toHaveBeenCalledOnce()
       expect(appFromIdentifiers).toHaveBeenCalledWith({apiKey: 'other-client-id', offerReset: false})

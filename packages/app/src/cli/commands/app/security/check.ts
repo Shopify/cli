@@ -3,7 +3,7 @@ import {appSecuritySelectionFlags} from './selection-flags.js'
 import securityCheck from '../../../services/security-check.js'
 import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class SecurityCheck extends BaseCommand {
   static hidden = true
@@ -53,7 +53,6 @@ In interactive terminals, the command offers to copy the coding-agent instructio
       env: 'SHOPIFY_FLAG_LIST_FILES',
       exclusive: ['yes', 'skip-instructions', 'blocking'],
     }),
-    ...jsonFlag,
     ...appSecurityBlockingFlag,
     yes: Flags.boolean({
       description: 'Print coding-agent instructions without prompting.',
@@ -77,7 +76,6 @@ In interactive terminals, the command offers to copy the coding-agent instructio
       configName: flags.config,
       clientId: flags['client-id'],
       withoutAppConfig: Boolean(flags['without-app-config']),
-      json: flags.json,
       verbose: Boolean(flags.verbose),
       blocking: flags.blocking,
       yes: flags.yes,

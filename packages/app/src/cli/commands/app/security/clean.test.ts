@@ -5,7 +5,6 @@ import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts
 import {resolveAppDirectory, resolveAppSecuritySelection} from '../../../services/app-security-selection.js'
 import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
 import securityClean, {renderSecurityCleanResult} from '../../../services/security-clean.js'
-import {securityCleanJsonOutputSchema} from '../../../services/security-clean-json.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -13,7 +12,7 @@ import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli
 import {cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
-import type {SecurityCleanResult} from '../../../services/security-clean-json.js'
+import type {SecurityCleanResult} from '../../../services/security-clean.js'
 
 vi.mock('../../../services/security-clean.js')
 vi.mock('../../../services/app-security-selection.js', async (importOriginal) => ({
@@ -80,8 +79,8 @@ describe('app security clean command', () => {
     expect(SecurityClean.hidden).toBe(true)
     expect(SecurityClean.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityClean.prototype).not.toBeInstanceOf(AppLinkedCommand)
-    expect(SecurityClean.flags).toHaveProperty('json')
-    expect(SecurityClean.jsonOutputSchema).toBe(securityCleanJsonOutputSchema)
+    expect(SecurityClean.flags).not.toHaveProperty('json')
+    expect(SecurityClean.jsonOutputSchema).toBeUndefined()
   })
 
   test('defines the selection flags as check does, except --without-app-config', () => {
@@ -134,7 +133,7 @@ describe('app security clean command', () => {
     })
   })
 
-  test('forwards --path, --config and --client-id without prompting, and prints exactly the encoded result with --json', async () => {
+  test('forwards --path and --client-id without prompting', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appDirectory = await createApp(directory)
       await mkdir(appSecurityArtifactPaths(appDirectory, 'other-client-id').resultsDirectory)
@@ -144,7 +143,7 @@ describe('app security clean command', () => {
       output.clear()
 
       try {
-        await SecurityClean.run(['--path', directory, '--client-id', 'other-client-id', '--json'], import.meta.url)
+        await SecurityClean.run(['--path', directory, '--client-id', 'other-client-id'], import.meta.url)
 
         expect(resolveAppSecuritySelection).toHaveBeenCalledWith({
           path: directory,
@@ -153,10 +152,7 @@ describe('app security clean command', () => {
           withoutAppConfig: undefined,
           allowPrompts: false,
         })
-        expect(output.info()).toBe(
-          ['{', '  "removed": [', `    ${JSON.stringify(result.removed[0])}`, '  ]', '}'].join('\n'),
-        )
-        expect(renderSecurityCleanResult).not.toHaveBeenCalled()
+        expect(renderSecurityCleanResult).toHaveBeenCalledWith(result, appDirectory)
       } finally {
         output.clear()
       }
@@ -254,7 +250,7 @@ describe('app security clean command', () => {
       const output = mockAndCaptureOutput()
 
       try {
-        await SecurityClean.run(['--path', directory, '--client-id', 'mistyped-client-id', '--json'], import.meta.url)
+        await SecurityClean.run(['--path', directory, '--client-id', 'mistyped-client-id'], import.meta.url)
 
         expect(lookUpApp).not.toHaveBeenCalled()
         expect(securityClean).toHaveBeenCalledWith({

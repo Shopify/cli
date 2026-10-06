@@ -1,5 +1,4 @@
 import securityClean, {renderSecurityCleanResult} from './security-clean.js'
-import {securityCleanJsonOutputSchema} from './security-clean-json.js'
 import {appSecurityArtifactPaths, cleanAllResultsDirectories, cleanResultsDirectory} from './app-security-artifacts.js'
 import {fileExists, fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -107,26 +106,6 @@ describe('securityClean', () => {
         })
       })
     })
-  })
-})
-
-describe('securityCleanJsonOutputSchema', () => {
-  test('encodes exactly the removed paths', () => {
-    const encoded = securityCleanJsonOutputSchema.encode({removed: ['a', 'b']})
-
-    expect(encoded).toBe(['{', '  "removed": [', '    "a",', '    "b"', '  ]', '}'].join('\n'))
-  })
-
-  test('encodes an empty list', () => {
-    const encoded = securityCleanJsonOutputSchema.encode({removed: []})
-
-    expect(encoded).toBe(['{', '  "removed": []', '}'].join('\n'))
-  })
-
-  test('validates a well-formed result and rejects a malformed one', () => {
-    const result = {removed: ['a']}
-    expect(securityCleanJsonOutputSchema.validate(result)).toStrictEqual(result)
-    expect(() => securityCleanJsonOutputSchema.validate({removed: 'a'})).toThrow()
   })
 })
 
