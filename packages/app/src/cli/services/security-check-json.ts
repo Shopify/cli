@@ -3,12 +3,8 @@ import {appSecurityInstructionsSchema, type AppSecurityInstructionsJson} from '.
 import {deterministicFindingsDocumentSchema, type Equals} from './app-security-engine/index.js'
 import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
-import type {AppSecurityEngineMetadata, AppSecurityExecution} from './app-security-api.js'
+import type {AppSecurityExecution} from './app-security-api.js'
 import type {AppSecurityScanDirectory, AppSecuritySelection} from './app-security-selection.js'
-
-// Declared here rather than taken from the deterministic findings document schema: the JSON Schema published in the
-// oclif manifest would render an instance shared with the nested document as a `$ref` instead of inline.
-const engineSchema = zod.object({name: zod.string(), version: zod.string(), ruleset: zod.string()})
 
 const scanDirectorySchema = zod.object({
   directory: zod.string(),
@@ -16,7 +12,6 @@ const scanDirectorySchema = zod.object({
 })
 
 const scanResultSchema = zod.object({
-  engine: engineSchema,
   selection: zod.object({
     app_directory: zod.string(),
     app_config_file: zod.string().nullable(),
@@ -49,21 +44,22 @@ type SecurityCheckScanJsonResult = zod.infer<typeof scanResultSchema>
 export type SecurityCheckJsonResult = InferJsonOutputSchema<typeof securityCheckJsonOutputSchema>
 
 /**
- * The engine and scan directories pass straight through, and Zod strips unknown keys: without these pins a field
- * added to either later would silently vanish from `--json`.
+ * Scan directories pass straight through, and Zod strips unknown keys: without this pin a field added to them later
+ * would silently vanish from `--json`.
  */
-export const PASSTHROUGH_TYPES_MATCH_CHECK_JSON: Equals<AppSecurityEngineMetadata, zod.infer<typeof engineSchema>> &
-  Equals<AppSecurityScanDirectory, zod.infer<typeof scanDirectorySchema>> = true
+export const SCAN_DIRECTORY_MATCHES_CHECK_JSON: Equals<
+  AppSecurityScanDirectory,
+  zod.infer<typeof scanDirectorySchema>
+> = true
 
 export function toSecurityCheckJson(
-  execution: Pick<AppSecurityExecution, 'engine' | 'deterministicFindings'>,
+  execution: Pick<AppSecurityExecution, 'deterministicFindings'>,
   agentChecksPath: string,
   selection: AppSecuritySelection,
   scanDirectories: AppSecurityScanDirectory[],
   instructions: AppSecurityInstructionsJson | null,
 ): SecurityCheckScanJsonResult {
   return {
-    engine: execution.engine,
     selection: {
       app_directory: selection.appDirectory,
       app_config_file: selection.kind === 'config' ? selection.appConfigFilePath : null,

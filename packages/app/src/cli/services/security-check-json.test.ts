@@ -36,8 +36,7 @@ const agentChecksPath = '/tmp/app/.shopify/app-security/agent-checks.json'
 const scanDirectories = [{directory: appDirectory, origin: 'app_directory' as const}]
 
 function selectionJson(selection: AppSecuritySelection) {
-  return toSecurityCheckJson({engine, deterministicFindings}, agentChecksPath, selection, scanDirectories, null)
-    .selection
+  return toSecurityCheckJson({deterministicFindings}, agentChecksPath, selection, scanDirectories, null).selection
 }
 
 const configSelection: AppSecuritySelection = {
@@ -48,9 +47,9 @@ const configSelection: AppSecuritySelection = {
 }
 
 describe('app security JSON contract', () => {
-  test('encodes the engine, the selection, the deterministic findings document, and the agent checks path', async () => {
+  test('encodes the selection, the deterministic findings document, and the agent checks path', async () => {
     const encoded = securityCheckJsonOutputSchema.encode(
-      toSecurityCheckJson({engine, deterministicFindings}, agentChecksPath, configSelection, scanDirectories, null),
+      toSecurityCheckJson({deterministicFindings}, agentChecksPath, configSelection, scanDirectories, null),
     )
     const fixture = await readFile(joinPath(fixtureDirectory, 'check.json'))
     expect(JSON.parse(encoded)).toEqual(JSON.parse(fixture))
@@ -61,13 +60,7 @@ describe('app security JSON contract', () => {
 
     const checkResult = JSON.parse(
       securityCheckJsonOutputSchema.encode(
-        toSecurityCheckJson(
-          {engine, deterministicFindings},
-          agentChecksPath,
-          configSelection,
-          scanDirectories,
-          instructions,
-        ),
+        toSecurityCheckJson({deterministicFindings}, agentChecksPath, configSelection, scanDirectories, instructions),
       ),
     )
     const instructionsResult = JSON.parse(securityInstructionsJsonOutputSchema.encode({instructions}))

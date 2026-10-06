@@ -127,7 +127,6 @@ describe('app security check command boundary', () => {
       expect(Object.keys(output).sort()).toEqual([
         'agent_checks_path',
         'deterministic_findings',
-        'engine',
         'instructions',
         'selection',
       ])
@@ -140,7 +139,6 @@ describe('app security check command boundary', () => {
         client_id_source: 'config',
         scan_directories: [{directory: appDirectory, origin: 'app_directory'}],
       })
-      expect(output.engine).toMatchObject({name: 'shopify-app-security'})
       await expect(readJson(paths.deterministicFindingsPath)).resolves.toEqual(output.deterministic_findings)
       await expect(readJson(paths.deterministicFindingsPath)).resolves.toMatchObject({
         schema_version: 1,

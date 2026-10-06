@@ -512,14 +512,13 @@ describe('securityCheck', () => {
     expect(dependencies.writeArtifacts).not.toHaveBeenCalled()
   })
 
-  test('prints the engine, selection, deterministic findings, agent checks path and instructions as JSON', async () => {
+  test('prints the selection, deterministic findings, agent checks path and instructions as JSON', async () => {
     const dependencies = testDependencies()
 
     await securityCheck({...testOptions(), json: true, yes: true}, dependencies)
 
     expect(dependencies.output).toHaveBeenCalledOnce()
     expect(JSON.parse(dependencies.output.mock.calls[0]![0])).toEqual({
-      engine,
       selection: {
         app_directory: appDirectory,
         app_config_file: `${appDirectory}/shopify.app.toml`,
