@@ -1,4 +1,4 @@
-import securityCheck, {appSecurityInstructionsPrompt} from './security-check.js'
+import securityCheck, {appSecurityInstructionsPrompt, literalGlobPattern} from './security-check.js'
 import {
   formatAppSecurityCommand,
   quoteShellArgument,
@@ -7,10 +7,20 @@ import {
 } from './app-security-commands.js'
 import {appSecurityArtifactPaths, writeCheckArtifacts} from './app-security-artifacts.js'
 import {validAppConfiguration} from './app-security-selection.test-data.js'
-import {fileExists, fileRealPath, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {listAppSecurityFiles} from './app-security-api.js'
+import {
+  fileExists,
+  fileRealPath,
+  inTemporaryDirectory,
+  matchGlob,
+  mkdir,
+  readFile,
+  writeFile,
+} from '@shopify/cli-kit/node/fs'
 import {cwd, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {afterEach, describe, expect, test, vi} from 'vitest'
+import {symlink} from 'node:fs/promises'
 import type {AppSecurityExecution} from './app-security-api.js'
 import type {AppSecuritySelection} from './app-security-selection.js'
 import type {AppSecurityInstructionsDestination} from './security-check.js'
@@ -129,11 +139,56 @@ function stagingSelection(): AppSecuritySelection {
   }
 }
 
+describe('literalGlobPattern', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test.each([
+    ['apps/[child]', 'apps/c'],
+    ['apps/{a,b}', 'apps/a'],
+    ['apps/a*b', 'apps/aXb'],
+    ['apps/x?y', 'apps/xzy'],
+    ['#child', 'child'],
+    ['!child', 'src'],
+  ])('gives a glob that matches %s and not %s', (directory, sibling) => {
+    const pattern = literalGlobPattern(directory)
+
+    expect(matchGlob(directory, pattern)).toBe(true)
+    expect(matchGlob(sibling, pattern)).toBe(false)
+  })
+
+  test('gives an --exclude that removes only that directory from the gathered files', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const root = await fileRealPath(directory)
+      await Promise.all(['!child', '[child]', 'c', 'src'].map((name) => mkdir(joinPath(root, name))))
+      await Promise.all([
+        writeFile(joinPath(root, 'shopify.app.toml'), validAppConfiguration()),
+        writeFile(joinPath(root, '!child', 'shopify.app.toml'), 'name = "Negated"\n'),
+        writeFile(joinPath(root, '[child]', 'shopify.app.toml'), 'name = "Bracketed"\n'),
+        writeFile(joinPath(root, 'c', 'index.ts'), 'export const c = true\n'),
+        writeFile(joinPath(root, 'src', 'index.ts'), 'export const src = true\n'),
+      ])
+      vi.stubEnv('INIT_CWD', root)
+
+      const gathered = await listAppSecurityFiles({
+        appDirectory: root,
+        scanDirectories: [root],
+        requestedScanDirectories: [root],
+        excludePatterns: ['!child', '[child]'].map(literalGlobPattern),
+      })
+
+      expect(gathered.paths).toEqual(['c/index.ts', 'shopify.app.toml', 'src/index.ts'])
+      expect(gathered.otherAppDirectories).toEqual([])
+    })
+  })
+})
+
 /** The warning for a directory that holds another app configuration, quoted for the shell the tests run in. */
-function otherAppWarning(displayPath: string) {
+function otherAppWarning(displayPath: string, excludePattern = displayPath) {
   return {
     headline: `${displayPath} holds another app's configuration, so its files are scanned as part of this app.`,
-    body: ['Use', {command: `--exclude ${quoteShellArgument(displayPath, shellForPlatform())}`}, 'to leave it out.'],
+    body: ['Use', {command: `--exclude ${quoteShellArgument(excludePattern, shellForPlatform())}`}, 'to leave it out.'],
   }
 }
 
@@ -389,6 +444,37 @@ describe('securityCheck', () => {
       expect(dependencies.renderWarning).toHaveBeenCalledTimes(2)
       expect(dependencies.renderWarning).toHaveBeenNthCalledWith(1, otherAppWarning('apps/child'))
       expect(dependencies.renderWarning).toHaveBeenNthCalledWith(2, otherAppWarning('../backend'))
+    })
+  })
+
+  test('escapes and quotes a directory name that is glob and shell syntax', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      vi.stubEnv('INIT_CWD', directory)
+      const dependencies = testDependencies({
+        ...scanExecution,
+        otherAppDirectories: [joinPath(await fileRealPath(directory), 'apps', '$(touch PWNED)')],
+      })
+
+      await securityCheck(testOptions(), dependencies)
+
+      expect(dependencies.renderWarning).toHaveBeenCalledWith(
+        otherAppWarning('apps/$(touch PWNED)', 'apps/$\\(touch PWNED\\)'),
+      )
+    })
+  })
+
+  test('shows warnings relative to the real working directory when it is reached through a symbolic link', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const app = joinPath(await fileRealPath(directory), 'app')
+      await mkdir(app)
+      const link = joinPath(directory, 'linked-app')
+      await symlink(app, link, 'dir')
+      vi.stubEnv('INIT_CWD', link)
+      const dependencies = testDependencies({...scanExecution, otherAppDirectories: [joinPath(app, 'apps', 'child')]})
+
+      await securityCheck(testOptions(), dependencies)
+
+      expect(dependencies.renderWarning).toHaveBeenCalledWith(otherAppWarning('apps/child'))
     })
   })
 
@@ -868,6 +954,23 @@ describe('securityCheck --list-files', () => {
         body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
       })
       expect(dependencies.output).toHaveBeenCalledWith('shopify.app.toml')
+    })
+  })
+
+  test('warns about a directory that holds another app configuration through renderWarning', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const dependencies = testDependencies()
+      dependencies.listFiles.mockResolvedValue({
+        paths: ['apps/child/shopify.app.toml', 'shopify.app.toml'],
+        ignoredScanDirectories: [],
+        otherAppDirectories: [joinPath(await fileRealPath(directory), 'apps', 'child')],
+      })
+      vi.stubEnv('INIT_CWD', directory)
+
+      await securityCheck(listFilesOptions, dependencies)
+
+      expect(dependencies.renderWarning).toHaveBeenCalledWith(otherAppWarning('apps/child'))
+      expect(dependencies.output).toHaveBeenCalledWith('apps/child/shopify.app.toml\nshopify.app.toml')
     })
   })
 

@@ -151,6 +151,19 @@ describe('gathering without a default exclusion list', () => {
     expect(otherAppDirectories).toEqual([joinPath(root, 'apps/child'), joinPath(root, 'apps/other')])
   })
 
+  test('does not report a directory whose app configuration file Git ignores, though its other files are gathered', async () => {
+    const root = await makeRepository({
+      'shopify.app.toml': appConfiguration,
+      '.gitignore': 'apps/child/shopify.app.toml\n',
+      'apps/child/shopify.app.toml': 'name = "Child"\n',
+      'apps/child/index.ts': 'export const child = true',
+    })
+
+    const {paths, otherAppDirectories} = await gather(root)
+    expect(paths).toContain('apps/child/index.ts')
+    expect(otherAppDirectories).toEqual([])
+  })
+
   test('scans node_modules, build output and test directories outside a repository', async () => {
     const root = await makeDirectory()
     const directories = [

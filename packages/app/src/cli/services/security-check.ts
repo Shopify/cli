@@ -166,7 +166,7 @@ function securityReportInput(
 }
 
 /** `--exclude` takes globs, so a directory name is escaped to match only that directory. */
-function literalGlobPattern(path: string): string {
+export function literalGlobPattern(path: string): string {
   return path.replace(/[?*()[\]{}!#\\]/g, '\\$&')
 }
 
