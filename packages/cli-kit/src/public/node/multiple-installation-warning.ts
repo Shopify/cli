@@ -1,4 +1,3 @@
-import {jsonOutputEnabled} from './environment.js'
 import {currentProcessIsGlobal} from './is-global.js'
 import {renderInfo} from './ui.js'
 import {globalCLIVersion, localCLIVersion} from './version.js'
@@ -7,7 +6,7 @@ import {runAtMinimumInterval} from '../../private/node/conf-store.js'
 
 /**
  * Shows a warning if there are two Shopify CLI installations found (global and local).
- * Won't show anything if the user included the --json flag.
+ * Emits a diagnostic on stderr in JSON mode.
  *
  * @param directory - The directory of the project.
  * @param dependencies - The dependencies of the project.
@@ -18,7 +17,7 @@ export async function showMultipleCLIWarningIfNeeded(
 ): Promise<void> {
   // Show the warning only once per day
   await runAtMinimumInterval('warn-on-multiple-versions', {days: 1}, async () => {
-    if (!dependencies['@shopify/cli'] || jsonOutputEnabled()) return
+    if (!dependencies['@shopify/cli']) return
 
     const isGlobal = currentProcessIsGlobal()
 

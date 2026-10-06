@@ -38,11 +38,9 @@ export default class StoreBulkStatus extends StoreCommand {
     const {flags} = await this.parse(StoreBulkStatus)
     const format = flags.json ? 'json' : 'text'
     const adminSession = await prepareBulkAdminContext(flags.store)
-    logBulkOperationStart(
-      flags.id ? 'Checking bulk operation status.' : 'Listing bulk operations.',
-      {storeFqdn: adminSession.storeFqdn},
-      format,
-    )
+    logBulkOperationStart(flags.id ? 'Checking bulk operation status.' : 'Listing bulk operations.', {
+      storeFqdn: adminSession.storeFqdn,
+    })
     const result = flags.id
       ? await getBulkOperationStatus({adminSession, operationId: flags.id})
       : await listBulkOperations({adminSession})

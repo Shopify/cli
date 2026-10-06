@@ -33,11 +33,7 @@ export default class StoreBulkCancel extends StoreCommand {
     const {flags} = await this.parse(StoreBulkCancel)
     const format = flags.json ? 'json' : 'text'
     const adminSession = await prepareBulkAdminContext(flags.store)
-    logBulkOperationStart(
-      'Canceling bulk operation.',
-      {storeFqdn: adminSession.storeFqdn, operationId: flags.id},
-      format,
-    )
+    logBulkOperationStart('Canceling bulk operation.', {storeFqdn: adminSession.storeFqdn, operationId: flags.id})
     const result = await cancelBulkOperation({
       adminSession,
       operationId: flags.id,

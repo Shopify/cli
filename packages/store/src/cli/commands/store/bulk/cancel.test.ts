@@ -24,7 +24,7 @@ describe('store bulk cancel command', () => {
       'gid://shopify/BulkOperation/123',
       'json',
     )
-    expect(logBulkOperationStart).toHaveBeenCalledWith(expect.any(String), expect.any(Object), 'json')
+    expect(logBulkOperationStart).toHaveBeenCalledWith(expect.any(String), expect.any(Object))
     expect(StoreBulkCancel.jsonOutputSchema).toBeDefined()
     expect(StoreBulkCancel.flags.json).toBeDefined()
   })
