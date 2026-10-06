@@ -20,9 +20,11 @@ The check scans the app directory and each \`--include-dir\`. Git ignore rules a
 
 Use \`--exclude\` to skip more paths. Each value is a glob that is matched against the path relative to the working directory, so a path above it starts with \`../\`, and a name at any depth needs \`**/\`, for example \`--exclude '**/generated'\`. Repeat the flag to add globs. An exclusion can't remove the selected app configuration file. Quote each value so your shell doesn't expand \`*\`. The coding-agent instructions this check offers repeat the globs. Other \`app security\` commands don't take \`--exclude\` or \`--no-git-ignore\`, so pass the same flags each time you run the check.
 
-Use \`--list-files\` to check the scope before scanning: it prints the files the check would gather, one path per line and relative to the app directory (\`{"files": [...]}\` with \`--json\`), and then stops. It writes no results and shows no prompts. \`--client-id\` is still checked, which can require you to log in, but doesn't change the list.
+Use \`--list-files\` to check the scope before scanning: it prints the files the check would gather, one path per line and relative to the app directory, and then stops. It writes no results and shows no prompts. \`--client-id\` is still checked, which can require you to log in, but doesn't change the list.
 
-In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. With \`--json\`, the command prompts the same way before it prints the result: it can ask which app configuration to scan, offer to scan without one and then ask you to pick or create the app, and offer the instructions. The instructions you choose, or pass \`--yes\` for, are in the result's \`instructions\` field instead of printed. In automation, pass \`--no-input\` to turn every prompt off. A choice the command would have asked for then becomes an error, so pass \`--config\`, or \`--without-app-config --client-id <client-id>\`, instead; a \`--client-id\` that needs a login fails instead of opening the browser. You can also run \`shopify app security instructions\` to print, copy, or write them later.`
+In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. You can also run \`shopify app security instructions\` to print, copy, or write them later.
+
+The command can also ask which app configuration to scan, or offer to scan without one and then ask you to pick or create the app. In automation, pass \`--no-input\` to turn every prompt off. A choice the command would have asked for then becomes an error, so pass \`--config\`, or \`--without-app-config --client-id <client-id>\`, instead; a \`--client-id\` that needs a login fails instead of opening the browser.`
 
   static get jsonOutputSchema() {
     return securityCheckJsonOutputSchema
@@ -61,7 +63,7 @@ In interactive terminals, the command offers to copy the coding-agent instructio
     ...jsonFlag,
     ...appSecurityBlockingFlag,
     yes: Flags.boolean({
-      description: "Print coding-agent instructions without prompting. With --json, they're in the result instead.",
+      description: 'Print coding-agent instructions without prompting.',
       default: false,
       exclusive: ['skip-instructions'],
       env: 'SHOPIFY_FLAG_YES',

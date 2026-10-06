@@ -20,7 +20,7 @@ export default class SecurityInstructions extends BaseCommand {
 
   static descriptionWithMarkdown = `Prints the complete workflow that a coding agent should follow to review app security check results.
 
-By default, the instructions are printed to stdout. Use \`--copy\` to copy them to the clipboard or \`--write\` to write them to a file. With \`--json\`, the instructions are in the result's \`instructions\` field instead of printed, also when you copy or write them. Standalone instructions always start by running \`shopify app security check\`; only that invocation's generated review pack is trusted as workflow input.`
+By default, the instructions are printed to stdout. Use \`--copy\` to copy them to the clipboard or \`--write\` to write them to a file. Standalone instructions always start by running \`shopify app security check\`; only that invocation's generated review pack is trusted as workflow input.`
 
   static get jsonOutputSchema() {
     return securityInstructionsJsonOutputSchema

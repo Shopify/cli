@@ -180,9 +180,7 @@ describe('app security check command', () => {
   })
 
   test('describes the artifacts it writes and how agent results are recorded', () => {
-    expect(SecurityCheck.flags.yes.description).toBe(
-      "Print coding-agent instructions without prompting. With --json, they're in the result instead.",
-    )
+    expect(SecurityCheck.flags.yes.description).toBe('Print coding-agent instructions without prompting.')
     expect(SecurityCheck.flags['skip-instructions'].description).toBe("Don't offer to show coding-agent instructions.")
     expect(SecurityCheck.flags.yes.exclusive).toEqual(['skip-instructions'])
     expect(SecurityCheck.flags['skip-instructions'].exclusive).toEqual(['yes'])
@@ -226,14 +224,13 @@ describe('app security check command', () => {
     expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({json: true, yes: true}))
   })
 
-  test('exposes its JSON result schema and documents the instructions in it', () => {
+  test('exposes its JSON result schema', () => {
     expect(SecurityCheck.jsonOutputSchema).toBe(securityCheckJsonOutputSchema)
     expect(SecurityCheck.description).toContain('AppSecurityCheckResult')
-    expect(SecurityCheck.descriptionWithMarkdown).toContain("in the result's `instructions` field")
   })
 
-  test('documents that --json still prompts, that --no-input turns prompts off, and that --client-id can need a login', () => {
-    expect(SecurityCheck.descriptionWithMarkdown).toContain('it can ask which app configuration to scan')
+  test('documents its prompts, that --no-input turns them off, and that --client-id can need a login', () => {
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('can also ask which app configuration to scan')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('pick or create the app')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('pass `--no-input` to turn every prompt off')
     expect(SecurityCheck.descriptionWithMarkdown).toContain(
