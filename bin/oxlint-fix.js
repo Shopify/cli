@@ -9,8 +9,7 @@ const oxlint = join(dirname(require.resolve('oxlint/package.json')), 'bin/oxlint
 const directories = process.argv.slice(2)
 if (directories.length === 0) throw new Error('Provide at least one generated-code directory.')
 
-// Keep the generated schema and scalar imports together, matching existing output.
-// The near-operation-file preset inserts a blank line before the scalar import.
+// Group schema and scalar imports separately from the document-node import.
 for (const directory of directories) {
   for (const file of globSync('**/*.ts', {cwd: directory})) {
     const filename = join(directory, file)
@@ -37,8 +36,7 @@ function currentFingerprint() {
   return hash.digest('hex')
 }
 
-// Import removal and ordering can produce overlapping fixes. Repeat only while
-// files change, as ESLint's fixer did, and surface any remaining diagnostics.
+// Import removal and ordering can produce overlapping fixes that need separate passes.
 for (let attempt = 0; attempt < 10; attempt++) {
   const before = currentFingerprint()
   const result = spawnSync(process.execPath, [oxlint, '--config', '../../oxlint.json', '--fix', '--fix-suggestions', ...directories], {
