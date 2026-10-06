@@ -2,6 +2,8 @@ import {presentUpgradeResult} from './result.js'
 import {upgradeJsonOutputSchema, type UpgradeResult} from './types.js'
 import {mockAndCaptureOutput} from '../testing/output.js'
 import {afterEach, describe, expect, test} from 'vitest'
+// eslint-disable-next-line no-restricted-imports -- Verify native filesystem paths in JSON output.
+import {resolve} from 'node:path'
 
 afterEach(() => mockAndCaptureOutput().clear())
 
@@ -18,13 +20,18 @@ const localResult: UpgradeResult = {
   status: 'success',
   changed: null,
   scope: 'local',
-  directory: '/project',
+  directory: resolve('/project'),
   previousVersion: '4.8.0',
   availableVersion: null,
   packages: ['@shopify/cli'],
 }
 
 describe('upgrade result contract', () => {
+  test('encodes local project directories with native filesystem separators', () => {
+    presentUpgradeResult({...localResult, directory: '/project/nested/..'}, 'json')
+    expect(JSON.parse(mockAndCaptureOutput().output()).directory).toBe(resolve('/project'))
+  })
+
   test.each<UpgradeResult>([
     globalResult,
     localResult,
