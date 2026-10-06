@@ -289,6 +289,19 @@ describe('app security check command boundary', () => {
     },
   )
 
+  test('looks up an empty --client-id= before listing anything', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      vi.mocked(appFromIdentifiers).mockRejectedValue(new AbortError('No app with client ID found'))
+
+      const result = await runCommand(['--path', directory, '--client-id=', '--list-files'])
+
+      expect(result.exitCode).toBe(1)
+      expect(appFromIdentifiers).toHaveBeenCalledWith({apiKey: ''})
+      expect(result.stdout).toBe('')
+    })
+  })
+
   test('looks up --client-id, not the TOML client ID', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)

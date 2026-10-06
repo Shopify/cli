@@ -575,6 +575,27 @@ describe('resolveAppSecuritySelection with validateClientIdFlag', () => {
     })
   })
 
+  test('looks up an empty --client-id, because it was passed', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeConfiguration(directory, 'toml-client-id')
+      const dependencies = promptDependencies({
+        lookUpApp: vi.fn(async () => {
+          throw unknownClientId
+        }),
+      })
+
+      const error = await selectionError(
+        resolveAppSecuritySelection(
+          {path: directory, clientId: '', allowPrompts: false, validateClientIdFlag: true},
+          dependencies,
+        ),
+      )
+
+      expect(error).toBe(unknownClientId)
+      expect(dependencies.lookUpApp).toHaveBeenCalledWith('')
+    })
+  })
+
   test('does not look up the TOML client ID', async () => {
     await inTemporaryDirectory(async (directory) => {
       await writeConfiguration(directory, 'toml-client-id')
