@@ -10,6 +10,9 @@ import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {metafieldDefinitionsByOwnerType} from '@shopify/cli-kit/node/themes/api'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {expect, test, vi, beforeEach} from 'vitest'
+// Native JSON paths must preserve Windows separators instead of pathe normalization.
+// eslint-disable-next-line no-restricted-imports
+import {resolve as nativePath} from 'node:path'
 
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/themes/api')
@@ -72,7 +75,7 @@ test.each([undefined, null, 'Definition description'])(
         const result = JSON.parse(stdout())
         expect(result).toMatchObject({
           status: 'success',
-          path: joinPath(directory, '.shopify/metafields.json'),
+          path: nativePath(directory, '.shopify/metafields.json'),
           failedOwnerTypes: [],
         })
         expect(result.definitions).toEqual([{...definition, description: description ?? null, ownerType: 'PRODUCT'}])
@@ -202,7 +205,7 @@ test.each(['success', 'total failure'])('returns an explicit single environment 
                   result: {
                     status: 'success',
                     changed: true,
-                    path: joinPath(directory, '.shopify/metafields.json'),
+                    path: nativePath(directory, '.shopify/metafields.json'),
                     definitions: [],
                     failedOwnerTypes: [],
                   },
