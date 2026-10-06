@@ -8,6 +8,9 @@ import {joinPath, relativizePath, cwd} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {expect, test, vi} from 'vitest'
+// Native JSON paths must preserve Windows separators instead of pathe normalization.
+// eslint-disable-next-line no-restricted-imports
+import {resolve as nativePath} from 'node:path'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/analytics')
@@ -31,7 +34,7 @@ test.each([true, false])('writes the package receipt to stdout with version=%s',
 
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
       await runWithCommandEventsForCommand(['--json'], () => run(['--path', directory, '--json']))
-      expect(stdout()).toBe(`${themePackageJsonOutputSchema.encode({path})}\n`)
+      expect(stdout()).toBe(`${themePackageJsonOutputSchema.encode({path: nativePath(path)})}\n`)
       expect(stderr()).toBe('')
     })
     await expect(fileExists(path)).resolves.toBe(true)
@@ -44,6 +47,37 @@ test('preserves the text success banner', () => {
   renderThemePackageResult({path}, 'text')
   expect(renderSuccess).toHaveBeenCalledWith({
     body: ['Your local theme was packaged in', {filePath: relativizePath(path)}],
+  })
+})
+
+test('emits a fatal JSON error when the archive destination is a directory', async () => {
+  await inTemporaryDirectory(async (directory) => {
+    await mkdir(joinPath(directory, 'config'))
+    await writeFile(
+      joinPath(directory, 'config/settings_schema.json'),
+      JSON.stringify([{name: 'theme_info', theme_name: 'Dawn'}]),
+    )
+    const destination = joinPath(directory, 'Dawn.zip')
+    await mkdir(destination)
+    await writeFile(joinPath(destination, 'keep.txt'), 'Existing content')
+    const config = new Config({root: __dirname})
+    await config.load()
+    class LifecyclePackage extends Package {
+      execute(): Promise<void> {
+        return this._run<void>()
+      }
+    }
+    vi.spyOn(Package.prototype as unknown as {init(): Promise<unknown>}, 'init').mockResolvedValue(undefined)
+    vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
+    const argv = ['--path', directory, '--json']
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runWithCommandEventsForCommand(argv, () => new LifecyclePackage(argv, config).execute())
+      expect(JSON.parse(stdout())).toEqual({error: expect.objectContaining({message: expect.any(String)})})
+      expect(stderr()).toBe('')
+    })
+    expect(process.exit).toHaveBeenCalledWith(1)
+    await expect(fileExists(joinPath(destination, 'keep.txt'))).resolves.toBe(true)
+    expect(renderSuccess).not.toHaveBeenCalled()
   })
 })
 
