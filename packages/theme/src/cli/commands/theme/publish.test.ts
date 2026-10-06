@@ -20,6 +20,11 @@ vi.mock('../../utilities/theme-store.js', () => ({ensureThemeStore: ({store}: {s
 const originalTheme = {id: 1, name: 'Original', role: 'unpublished', processing: false, createdAtRuntime: false}
 const publishedTheme = {...originalTheme, role: 'live'}
 const store = 'test.myshopify.com'
+const publicTheme = {id: '1', name: 'Original', role: 'live', processing: false, storeDomain: store, sourceUrl: null}
+
+function restoreExitCode(value: typeof process.exitCode): void {
+  process.exitCode = value
+}
 
 async function run(argv: string[]) {
   const config = new Config({root: __dirname})
@@ -58,7 +63,7 @@ describe('theme publish JSON output', () => {
   })
 
   test.each([undefined, '', 'https://example.com/theme.zip'])(
-    'returns the updated theme and omits missing src (%s)',
+    'returns the updated theme and nullable source URL (%s)',
     async (src) => {
       vi.mocked(findOrSelectTheme).mockResolvedValue(originalTheme)
       vi.mocked(themePublish).mockResolvedValue({...publishedTheme, src})
@@ -66,7 +71,8 @@ describe('theme publish JSON output', () => {
         await run(['--store', store, '--theme', '1', '--force', '--json'])
         expect(JSON.parse(stdout())).toEqual({
           status: 'success',
-          theme: {...publishedTheme, ...(src === undefined ? {} : {src}), shop: store},
+          changed: true,
+          theme: {...publicTheme, sourceUrl: src === '' ? null : (src ?? null)},
         })
         expect(stderr()).toBe('')
       })
@@ -111,10 +117,18 @@ describe('theme publish JSON output', () => {
         if (failures === 'none') environments.push('first')
         if (failures !== 'all') environments.push('second')
         expect(JSON.parse(stdout())).toEqual({
-          environments: environments.map((environment) => ({
-            environment,
-            result: {status: 'success', theme: {...publishedTheme, shop: `${environment}.myshopify.com`}},
-          })),
+          environments: ['first', 'second'].map((environment) =>
+            environments.includes(environment)
+              ? {
+                  environment,
+                  result: {
+                    status: 'success',
+                    changed: true,
+                    theme: {...publicTheme, storeDomain: `${environment}.myshopify.com`},
+                  },
+                }
+              : {environment, error: {type: 'abort', message: 'Publishing failed'}},
+          ),
         })
         if (failures === 'none') {
           expect(stderr()).toBe('')
@@ -126,7 +140,8 @@ describe('theme publish JSON output', () => {
           expect(errors).toHaveLength(failures === 'all' ? 2 : 1)
           expect(errors[0]).toMatchObject({type: 'diagnostic', level: 'error', code: 'theme-environment-failed'})
         }
-        expect(process.exitCode).toBe(exitCode)
+        expect(process.exitCode).toBe(failures === 'none' ? exitCode : 1)
+        restoreExitCode(exitCode)
       })
     })
   })

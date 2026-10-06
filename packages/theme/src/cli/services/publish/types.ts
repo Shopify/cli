@@ -1,16 +1,26 @@
 import {ThemeMutationSuccessSchema} from '../theme-mutation/status.js'
-import {ThemeMutationThemeSchema} from '../theme-mutation/types.js'
-import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {
+  ThemeMutationThemeSchema,
+  ThemeMutationJsonThemeSchema,
+  projectThemeMutationTheme,
+} from '../theme-mutation/types.js'
+import {defineThemeJsonOutputSchema} from '../json-output/schema.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 
-const ThemePublishResultSchema = ThemeMutationSuccessSchema.extend({theme: ThemeMutationThemeSchema})
-const ThemePublishEnvironmentSchema = zod.object({environment: zod.string(), result: ThemePublishResultSchema})
-
-export const themePublishJsonOutputSchema = defineJsonOutputSchema({
+const ThemePublishResultSchema = ThemeMutationSuccessSchema.extend({
+  theme: ThemeMutationThemeSchema,
+})
+export const themePublishJsonOutputSchema = defineThemeJsonOutputSchema({
   name: 'ThemePublishResult',
-  schema: zod.union([ThemePublishResultSchema, zod.object({environments: zod.array(ThemePublishEnvironmentSchema)})]),
-  definitions: {PublishedTheme: ThemeMutationThemeSchema, ThemePublishEnvironment: ThemePublishEnvironmentSchema},
+  schema: zod
+    .object({status: zod.literal('success'), changed: zod.boolean(), theme: ThemeMutationJsonThemeSchema})
+    .strict(),
+  definitions: {Theme: ThemeMutationJsonThemeSchema},
+  project(value) {
+    const result = ThemePublishResultSchema.parse(value)
+    return {status: result.status, changed: true, theme: projectThemeMutationTheme(result.theme)}
+  },
 })
 
 export type ThemePublishData = zod.infer<typeof ThemePublishResultSchema>
