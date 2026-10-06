@@ -13,7 +13,6 @@ plugins['@nx'] = require('@nx/eslint-plugin')
 plugins.jsdoc = require('eslint-plugin-jsdoc')
 plugins.react = require('eslint-plugin-react')
 
-// Keep the upstream implementations and options while Oxlint owns parsing and traversal.
 const ruleNames = Object.fromEntries([...builtinRules.keys()].map((name) => [name, name]))
 const rules = Object.fromEntries(builtinRules)
 for (const [pluginName, plugin] of Object.entries(plugins)) {
