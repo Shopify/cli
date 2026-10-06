@@ -13516,44 +13516,26 @@ DESCRIPTION
 
   ```json
   {
-    "type": "object",
-    "properties": {
-      "$schema": {
-        "type": "string",
-        "const": "https://www.speedscope.app/file-format-schema.json"
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
       },
-      "shared": {
-        "$ref": "#/definitions/ProfileShared"
-      },
-      "profiles": {
-        "type": "array",
-        "items": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/EventedProfile"
-            },
-            {
-              "$ref": "#/definitions/SampledProfile"
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
             }
-          ]
-        }
-      },
-      "name": {
-        "type": "string"
-      },
-      "exporter": {
-        "type": "string"
-      },
-      "activeProfileIndex": {
-        "type": "number"
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
       }
-    },
-    "required": [
-      "$schema",
-      "shared",
-      "profiles"
     ],
-    "additionalProperties": true,
     "title": "ThemeProfileResult",
     "definitions": {
       "ProfileFrame": {
@@ -13566,10 +13548,12 @@ DESCRIPTION
             "type": "string"
           },
           "line": {
-            "type": "number"
+            "type": "integer",
+            "minimum": 0
           },
           "col": {
-            "type": "number"
+            "type": "integer",
+            "minimum": 0
           }
         },
         "required": [
@@ -13591,7 +13575,8 @@ DESCRIPTION
             "type": "number"
           },
           "frame": {
-            "type": "number"
+            "type": "integer",
+            "minimum": 0
           }
         },
         "required": [
@@ -13684,7 +13669,8 @@ DESCRIPTION
             "items": {
               "type": "array",
               "items": {
-                "type": "number"
+                "type": "integer",
+                "minimum": 0
               }
             }
           },
@@ -13705,6 +13691,229 @@ DESCRIPTION
           "weights"
         ],
         "additionalProperties": true
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$schema": {
+                        "type": "string",
+                        "const": "https://www.speedscope.app/file-format-schema.json"
+                      },
+                      "shared": {
+                        "$ref": "#/definitions/ProfileShared"
+                      },
+                      "profiles": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/EventedProfile"
+                            },
+                            {
+                              "$ref": "#/definitions/SampledProfile"
+                            }
+                          ]
+                        }
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "exporter": {
+                        "type": "string"
+                      },
+                      "activeProfileIndex": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "$schema",
+                      "shared",
+                      "profiles"
+                    ],
+                    "additionalProperties": true,
+                    "description": "The native Speedscope file format, defined by its $schema URL. Original keys and extension fields are preserved."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {}
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
       }
     },
     "$schema": "http://json-schema.org/draft-07/schema#"
