@@ -1,6 +1,7 @@
 import {renderSelectPrompt, renderTextPrompt} from './ui.js'
 import {ensureAuthenticatedUser} from './session.js'
 import {identityFqdn} from './context/fqdn.js'
+import {commandEventOutputMode} from './command-events.js'
 import * as sessionStore from '../../private/node/session/store.js'
 import {setCurrentSessionId} from '../../private/node/conf-store.js'
 import type {Sessions} from '../../private/node/session/schema.js'
@@ -48,6 +49,7 @@ async function handleNewLogin(): Promise<string> {
   if (!alias) {
     const userAlias = await renderTextPrompt({
       message: 'Enter an alias for this account (e.g. your email or a nickname)',
+      ...(commandEventOutputMode() === 'json' ? {renderOptions: {stdout: process.stderr}} : {}),
     })
     await sessionStore.setSessionAlias(result.userId, userAlias)
     return userAlias
@@ -103,7 +105,11 @@ export async function promptSessionSelect(alias?: string): Promise<string> {
 
   if (choices.length > 0) {
     const message = 'Which account would you like to use?'
-    selectedValue = await renderSelectPrompt({message, choices})
+    selectedValue = await renderSelectPrompt({
+      message,
+      choices,
+      ...(commandEventOutputMode() === 'json' ? {renderOptions: {stdout: process.stderr}} : {}),
+    })
   }
 
   if (selectedValue === NEW_LOGIN_VALUE) {

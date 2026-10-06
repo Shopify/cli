@@ -3704,9 +3704,13 @@ Logs you in to your Shopify account.
 
 ```
 USAGE
-  $ shopify auth login [--alias <value>] [--json-schema]
+  $ shopify auth login [--alias <value>] [-j] [--json-schema] [--no-color] [--no-input] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --alias=<value>
       Alias of an existing session you want to use. Required if non interactive.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
@@ -3715,8 +3719,46 @@ FLAGS
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
   Logs you in to your Shopify account.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AuthLoginResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "alias": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "status",
+      "alias"
+    ],
+    "additionalProperties": false,
+    "title": "AuthLoginResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify auth logout`
