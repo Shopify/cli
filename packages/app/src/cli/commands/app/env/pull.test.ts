@@ -16,7 +16,11 @@ import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-even
 vi.mock('../../../services/app-context.js')
 vi.mock('../../../services/context.js')
 
-const variables = {SHOPIFY_API_KEY: 'api-key', SHOPIFY_API_SECRET: 'api-secret', SCOPES: 'read_products'}
+const variables = [
+  {name: 'SHOPIFY_API_KEY', value: 'api-key', isSecret: false},
+  {name: 'SHOPIFY_API_SECRET', value: 'api-secret', isSecret: true},
+  {name: 'SCOPES', value: 'read_products', isSecret: false},
+]
 const content = 'SHOPIFY_API_KEY=api-key\nSHOPIFY_API_SECRET=api-secret\nSCOPES=read_products'
 
 function setup(directory: string, secret: string | undefined = 'api-secret') {
@@ -52,7 +56,9 @@ test.each([
       const streams = mockAndCaptureStandardStreams()
       try {
         await expect(runWithCommandEventsForCommand(['--json'], () => command.run())).resolves.toEqual({app})
-        expect(streams.stdout()).toBe(`${JSON.stringify({path, status, variables, content: expected}, null, 2)}\n`)
+        expect(streams.stdout()).toBe(
+          `${JSON.stringify({path, status: 'success', changed: status !== 'unchanged', variables, content: expected}, null, 2)}\n`,
+        )
         expect(streams.stderr()).toBe('')
         expect(logMetadataForLoadedContext).toHaveBeenCalledExactlyOnceWith(remoteApp, organization.source)
       } finally {
@@ -86,10 +92,12 @@ test('exposes the schema, JSON flag and existing file selection flag', () => {
 })
 
 test.each([
-  {path: 1, status: 'created', variables, content},
-  {path: '/app/.env', status: 'failed', variables, content},
-  {path: '/app/.env', status: 'updated', variables: {...variables, SCOPES: null}, content},
-  {path: '/app/.env', status: 'unchanged', variables, content: null},
+  {path: 1, status: 'success', changed: true, variables, content},
+  {path: '/app/.env', status: 'failed', changed: true, variables, content},
+  {path: '.env', status: 'success', changed: false, variables, content},
+  {path: '/app/.env', status: 'success', changed: false, variables, content, internal: true},
+  {path: '/app/.env', status: 'success', changed: true, variables: [{name: 'SCOPES', value: null}], content},
+  {path: '/app/.env', status: 'success', changed: false, variables, content: null},
 ])('rejects malformed data %j', (value) => {
   expect(() => appEnvPullJsonOutputSchema.validate(value)).toThrow()
 })
@@ -98,9 +106,10 @@ test('uses Windows absolute --env-file paths as-is', async () => {
   const directory = joinPath('F:', 'Project', 'cherhomeliving.shopify', 'shopify-app')
   const {app, remoteApp, organization} = setup(directory)
   const envFile = joinPath(directory, '.env')
-  const pull = vi
-    .spyOn(envPullService, 'pullEnv')
-    .mockResolvedValue({result: {path: envFile, status: 'created', variables, content}, previousContent: null})
+  const pull = vi.spyOn(envPullService, 'pullEnv').mockResolvedValue({
+    result: {path: envFile, status: 'success', changed: true, variables, content},
+    previousContent: null,
+  })
   await new EnvPull(['--path', directory, '--env-file', envFile], await Config.load()).run()
   expect(pull).toHaveBeenCalledWith({app, remoteApp, organization, envFile})
 })
@@ -109,10 +118,34 @@ test('resolves nested relative --env-file paths from the app directory', async (
   await inTemporaryDirectory(async (directory) => {
     const {app, remoteApp, organization} = setup(directory)
     const envFile = resolvePath(directory, 'config/.env')
-    const pull = vi
-      .spyOn(envPullService, 'pullEnv')
-      .mockResolvedValue({result: {path: envFile, status: 'created', variables, content}, previousContent: null})
+    const pull = vi.spyOn(envPullService, 'pullEnv').mockResolvedValue({
+      result: {path: envFile, status: 'success', changed: true, variables, content},
+      previousContent: null,
+    })
     await new EnvPull(['--path', directory, '--env-file', 'config/.env'], await Config.load()).run()
     expect(pull).toHaveBeenCalledWith({app, remoteApp, organization, envFile})
   })
 })
+
+test.each([[], ['--no-input'], ['--json'], ['--json', '--no-input']].map((argv) => ({argv})))(
+  'keeps JSON formatting independent from non-interactivity for %j',
+  async ({argv}) => {
+    await inTemporaryDirectory(async (directory) => {
+      setup(directory)
+      const command = new EnvPull(['--path', directory, ...argv], await Config.load())
+      vi.spyOn(context, 'isUnitTest').mockReturnValue(false)
+      const streams = mockAndCaptureStandardStreams()
+      try {
+        await runWithCommandEventsForCommand(argv, () => command.run())
+        if (argv.includes('--json')) {
+          expect(JSON.parse(streams.stdout())).toMatchObject({status: 'success', changed: true, variables})
+        } else {
+          expect(streams.stdout()).toContain('Created')
+        }
+      } finally {
+        streams.restore()
+      }
+      await expect(readFile(joinPath(directory, '.env'))).resolves.toBe(content)
+    })
+  },
+)

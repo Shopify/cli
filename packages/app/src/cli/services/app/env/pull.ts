@@ -4,6 +4,7 @@ import {AppLinkedInterface} from '../../../models/app/app.js'
 import {Organization, OrganizationApp} from '../../../models/organization.js'
 import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 
 interface PullEnvOptions {
   app: AppLinkedInterface
@@ -18,12 +19,11 @@ export interface PullEnvOutput {
 }
 
 export async function pullEnv({app, remoteApp, organization, envFile}: PullEnvOptions): Promise<PullEnvOutput> {
-  const variables = await getAppEnv(app, remoteApp, organization)
-  const previousContent = (await fileExists(envFile)) ? await readFile(envFile) : null
-  const content = patchEnvFile(previousContent, variables)
-  let status: AppEnvPullResult['status'] = 'unchanged'
-  if (previousContent === null) status = 'created'
-  else if (content !== previousContent) status = 'updated'
-  if (status !== 'unchanged') await writeFile(envFile, content)
-  return {result: {path: envFile, status, variables, content}, previousContent}
+  const {variables} = await getAppEnv(app, remoteApp, organization)
+  const path = resolvePath(envFile)
+  const previousContent = (await fileExists(path)) ? await readFile(path) : null
+  const content = patchEnvFile(previousContent, Object.fromEntries(variables.map(({name, value}) => [name, value])))
+  const changed = content !== previousContent
+  if (changed) await writeFile(path, content)
+  return {result: {path, status: 'success', changed, variables, content}, previousContent}
 }
