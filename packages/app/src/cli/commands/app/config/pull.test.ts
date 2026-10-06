@@ -1,6 +1,7 @@
 import ConfigPull from './pull.js'
 import pull from '../../../services/app/config/pull.js'
 import {appConfigPullJsonOutputSchema} from '../../../services/app/config/pull/types.js'
+import {projectAppConfigResult} from '../../../services/app/config/link/types.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {Config} from '@oclif/core'
@@ -15,8 +16,8 @@ vi.mock('../../../services/app-context.js')
 function setup() {
   const app = testAppLinked()
   const remoteApp = testOrganizationApp()
-  const result = appConfigPullJsonOutputSchema.validate({
-    configFile: app.configPath,
+  const result = projectAppConfigResult({
+    path: app.configPath,
     configuration: app.configuration,
     app: remoteApp,
   })
@@ -78,7 +79,7 @@ test('propagates failures without writing a success document', async () => {
 })
 
 test('rejects an invalid file path while all other fields are valid', () => {
-  expect(() => appConfigPullJsonOutputSchema.validate({...setup().result, configFile: null})).toThrow()
+  expect(() => appConfigPullJsonOutputSchema.validate({...setup().result, path: null})).toThrow()
 })
 
 test('preserves all available public remote fields without exposing credentials', () => {
@@ -98,12 +99,29 @@ test('preserves all available public remote fields without exposing credentials'
     appProxy: {subPath: 'example', subPathPrefix: 'apps', url: 'https://example.com/proxy'},
     configuration: testAppLinked().configuration,
   })
-  const publicApp = Object.fromEntries(
-    Object.entries(remoteApp).filter(
-      ([key]) => !['apiSecretKeys', 'flags', 'disabledFlags', 'developerPlatformClient'].includes(key),
-    ),
-  )
-  const result = appConfigPullJsonOutputSchema.validate({...setup().result, app: remoteApp})
+  const result = projectAppConfigResult({
+    path: setup().result.path,
+    configuration: testAppLinked().configuration,
+    app: remoteApp,
+  })
   const encoded = JSON.parse(appConfigPullJsonOutputSchema.encode(result))
-  expect(encoded.app).toEqual(publicApp)
+  expect(encoded.app).toMatchObject({
+    name: remoteApp.title,
+    clientId: remoteApp.apiKey,
+    appType: 'custom',
+    newApp: false,
+    grantedScopes: ['read_products'],
+    developmentStorePreviewEnabled: false,
+    applicationUrl: 'https://example.com',
+    redirectUrls: [],
+    requestedAccessScopes: [],
+    webhookApiVersion: '2026-07',
+    embedded: false,
+    posEmbedded: false,
+    preferencesUrl: null,
+    privacyWebhooks: {customerDeletionUrl: null, customerDataRequestUrl: null, shopDeletionUrl: null},
+    appProxy: {subPath: 'example', subPathPrefix: 'apps', url: 'https://example.com/proxy'},
+  })
+  expect(encoded.app).not.toHaveProperty('apiSecretKeys')
+  expect(encoded.app).not.toHaveProperty('configuration')
 })

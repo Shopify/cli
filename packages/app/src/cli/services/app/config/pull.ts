@@ -1,4 +1,5 @@
-import {appConfigPullJsonOutputSchema, type AppConfigPullResult} from './pull/types.js'
+import {type AppConfigPullResult} from './pull/types.js'
+import {projectAppConfigResult} from './link/types.js'
 import {LinkOptions, loadLocalAppOptions, overwriteLocalConfigFileWithRemoteAppConfiguration} from './link.js'
 import {CurrentAppConfiguration} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
@@ -7,7 +8,7 @@ import {fetchSpecifications} from '../../generate/fetch-extension-specifications
 import {RemoteAwareExtensionSpecification} from '../../../models/extensions/specification.js'
 import {Flag} from '../../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {basename} from '@shopify/cli-kit/node/path'
+import {basename, resolvePath} from '@shopify/cli-kit/node/path'
 
 interface PullOptions {
   directory: string
@@ -61,8 +62,8 @@ export default async function pull(options: PullOptions): Promise<AppConfigPullR
     localAppOptions,
   })
 
-  return appConfigPullJsonOutputSchema.validate({
-    configFile: configPath,
+  return projectAppConfigResult({
+    path: resolvePath(localAppOptions.appDirectory ?? directory, configFileName),
     configuration: mergedConfiguration,
     app: remoteApp,
   })

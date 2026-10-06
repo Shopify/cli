@@ -1313,13 +1313,17 @@ Refresh an already-linked app configuration without prompts.
 
 ```
 USAGE
-  $ shopify app config pull [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--path <value>] [--reset | ] [--verbose]
+  $ shopify app config pull [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -1360,6 +1364,278 @@ DESCRIPTION
 
   This command reuses the existing linked app and organization and skips all interactive prompts. Use `--config` to
   target a specific configuration file, or omit it to use the default one.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppConfigPullResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string"
+      },
+      "configuration": {
+        "$ref": "#/definitions/AppConfiguration"
+      },
+      "app": {
+        "$ref": "#/definitions/LinkedApp"
+      }
+    },
+    "required": [
+      "path",
+      "configuration",
+      "app"
+    ],
+    "additionalProperties": false,
+    "title": "AppConfigPullResult",
+    "definitions": {
+      "AppConfiguration": {
+        "type": "object",
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "client_id"
+        ],
+        "additionalProperties": true
+      },
+      "LinkedApp": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The upstream non-GID app identifier, or null when the platform supplies a GID."
+          },
+          "gid": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^gid:\\/\\/shopify\\/App\\/[^\\s/]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Shopify App GID, or null when the platform supplies another identifier."
+          },
+          "name": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The public OAuth client identifier."
+          },
+          "organizationId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The upstream non-GID organization identifier, or null when unavailable."
+          },
+          "organizationGid": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^gid:\\/\\/shopify\\/Organization\\/[^\\s/]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Shopify Organization GID, or null when unavailable."
+          },
+          "appType": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The upstream app type; known values vary by platform."
+          },
+          "newApp": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "grantedScopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "developmentStorePreviewEnabled": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "applicationUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "redirectUrls": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requestedAccessScopes": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "webhookApiVersion": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "embedded": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "posEmbedded": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "preferencesUrl": {
+            "$ref": "#/definitions/LinkedApp/properties/applicationUrl"
+          },
+          "privacyWebhooks": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/PrivacyWebhooks"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "appProxy": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/AppProxy"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "gid",
+          "name",
+          "clientId",
+          "organizationId",
+          "organizationGid",
+          "appType",
+          "newApp",
+          "grantedScopes",
+          "developmentStorePreviewEnabled",
+          "applicationUrl",
+          "redirectUrls",
+          "requestedAccessScopes",
+          "webhookApiVersion",
+          "embedded",
+          "posEmbedded",
+          "preferencesUrl",
+          "privacyWebhooks",
+          "appProxy"
+        ],
+        "additionalProperties": false,
+        "description": "The linked app projection. Unavailable selected fields are null; secrets and runtime state are excluded."
+      },
+      "PrivacyWebhooks": {
+        "type": "object",
+        "properties": {
+          "customerDeletionUrl": {
+            "$ref": "#/definitions/LinkedApp/properties/applicationUrl"
+          },
+          "customerDataRequestUrl": {
+            "$ref": "#/definitions/LinkedApp/properties/applicationUrl"
+          },
+          "shopDeletionUrl": {
+            "$ref": "#/definitions/LinkedApp/properties/applicationUrl"
+          }
+        },
+        "required": [
+          "customerDeletionUrl",
+          "customerDataRequestUrl",
+          "shopDeletionUrl"
+        ],
+        "additionalProperties": false
+      },
+      "AppProxy": {
+        "type": "object",
+        "properties": {
+          "subPath": {
+            "type": "string"
+          },
+          "subPathPrefix": {
+            "type": "string"
+          },
+          "url": {
+            "$ref": "#/definitions/LinkedApp/properties/applicationUrl"
+          }
+        },
+        "required": [
+          "subPath",
+          "subPathPrefix",
+          "url"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app config use [config] [flags]`
