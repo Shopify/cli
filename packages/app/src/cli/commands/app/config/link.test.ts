@@ -1,6 +1,6 @@
 import ConfigLink from './link.js'
 import {linkAppConfiguration as link} from '../../../services/app/config/link.js'
-import {appConfigLinkJsonOutputSchema} from '../../../services/app/config/link/types.js'
+import {projectAppConfigResult} from '../../../services/app/config/link/types.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {mockAndCaptureStandardStreams} from '@shopify/cli-kit/node/testing/output'
@@ -60,8 +60,8 @@ describe('app config link command', () => {
           configFileName: 'shopify.app.staging.toml',
           configuration: app.configuration,
           packageManager: 'npm',
-          result: appConfigLinkJsonOutputSchema.validate({
-            configFile: '/app/shopify.app.toml',
+          result: projectAppConfigResult({
+            path: '/app/shopify.app.toml',
             configuration: app.configuration,
             app: testOrganizationApp(),
           }),
@@ -98,8 +98,8 @@ describe('app config link command', () => {
         configFileName: 'shopify.app.secondary.toml',
         configuration: app.configuration,
         packageManager: 'npm',
-        result: appConfigLinkJsonOutputSchema.validate({
-          configFile: '/app/shopify.app.toml',
+        result: projectAppConfigResult({
+          path: '/app/shopify.app.toml',
           configuration: app.configuration,
           app: testOrganizationApp(),
         }),
@@ -140,8 +140,8 @@ test('does not write a JSON result if final app loading fails after linking', as
     configuration: app.configuration,
     configFileName: 'shopify.app.toml',
     packageManager: 'npm',
-    result: appConfigLinkJsonOutputSchema.validate({
-      configFile: app.configPath,
+    result: projectAppConfigResult({
+      path: app.configPath,
       configuration: app.configuration,
       app: testOrganizationApp(),
     }),

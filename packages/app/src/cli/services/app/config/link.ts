@@ -1,4 +1,4 @@
-import {appConfigLinkJsonOutputSchema, type AppConfigLinkResult} from './link/types.js'
+import {projectAppConfigResult, type AppConfigLinkResult} from './link/types.js'
 import {renderAppConfigLinkResult} from './link/result.js'
 import {setCurrentConfigPreference} from './use.js'
 import {AppConfiguration, CurrentAppConfiguration, CliBuildPreferences, getAppScopes} from '../../../models/app/app.js'
@@ -100,8 +100,8 @@ export async function linkAppConfiguration(
     configFileName,
     configuration: mergedAppConfiguration,
     packageManager: localAppOptions.packageManager,
-    result: appConfigLinkJsonOutputSchema.validate({
-      configFile: joinPath(appDirectory, configFileName),
+    result: projectAppConfigResult({
+      path: joinPath(appDirectory, configFileName),
       configuration: mergedAppConfiguration,
       app: remoteApp,
     }),

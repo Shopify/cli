@@ -1,4 +1,4 @@
-import {appConfigLinkJsonOutputSchema} from './types.js'
+import {appConfigLinkJsonOutputSchema, projectAppConfigResult} from './types.js'
 import {renderAppConfigLinkResult} from './result.js'
 import ConfigLink from '../../../../commands/app/config/link.js'
 import {testOrganizationApp} from '../../../../models/app/app.test-data.js'
@@ -9,8 +9,8 @@ import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-even
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
 function result() {
-  return appConfigLinkJsonOutputSchema.validate({
-    configFile: '/app/shopify.app.toml',
+  return projectAppConfigResult({
+    path: '/app/shopify.app.toml',
     configuration: {client_id: 'key', name: 'Example', embedded: false, custom_module: {enabled: true}},
     app: testOrganizationApp({apiKey: 'key', developmentStorePreviewEnabled: false}),
   })
@@ -26,11 +26,36 @@ describe('config link result', () => {
       embedded: false,
       custom_module: {enabled: true},
     })
-    expect(encoded.app).toMatchObject({apiKey: 'key', developmentStorePreviewEnabled: false, grantedScopes: []})
+    expect(encoded.app).toMatchObject({clientId: 'key', developmentStorePreviewEnabled: false, grantedScopes: []})
     expect(encoded.app).not.toHaveProperty('apiSecretKeys')
     expect(encoded.app).not.toHaveProperty('developerPlatformClient')
     expect(encoded.app).not.toHaveProperty('flags')
-    expect(encoded.app).not.toHaveProperty('appType')
+    expect(encoded.app.appType).toBeNull()
+  })
+
+  test('separates actual GIDs from other app and organization identifiers', () => {
+    const value = projectAppConfigResult({
+      path: '/app/shopify.app.toml',
+      configuration: {client_id: 'key'},
+      app: testOrganizationApp({id: 'gid://shopify/App/123', organizationId: 'gid://shopify/Organization/456'}),
+    })
+    expect(value.app).toMatchObject({
+      id: null,
+      gid: 'gid://shopify/App/123',
+      organizationId: null,
+      organizationGid: 'gid://shopify/Organization/456',
+    })
+    expect(result().app).toMatchObject({id: '1', gid: null, organizationId: '1', organizationGid: null})
+  })
+
+  test.each([
+    {path: 'relative.toml'},
+    {extra: true},
+    {app: {...result().app, extra: true}},
+    {app: {...result().app, applicationUrl: 'invalid-url'}},
+    {app: {...result().app, gid: 'gid://shopify/Shop/123'}},
+  ])('rejects malformed public projections %j', (fields) => {
+    expect(() => appConfigLinkJsonOutputSchema.validate({...result(), ...fields})).toThrow()
   })
 
   test('rejects a missing configuration client ID', () => {
