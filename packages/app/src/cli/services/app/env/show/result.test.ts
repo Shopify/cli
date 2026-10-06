@@ -8,7 +8,13 @@ afterEach(() => {
 })
 
 test('formats the text template with the secret when present', () => {
-  const result = {SHOPIFY_API_KEY: 'key', SHOPIFY_API_SECRET: 'secret', SCOPES: 'read_products'}
+  const result = {
+    variables: [
+      {name: 'SHOPIFY_API_KEY', value: 'key'},
+      {name: 'SHOPIFY_API_SECRET', value: 'secret'},
+      {name: 'SCOPES', value: 'read_products'},
+    ],
+  }
 
   expect(unstyled(stringifyMessage(formatAppEnvShowText(result)))).toBe(
     '\n    SHOPIFY_API_KEY=key\n    SHOPIFY_API_SECRET=secret\n    SCOPES=read_products\n  ',
@@ -16,14 +22,34 @@ test('formats the text template with the secret when present', () => {
 })
 
 test('formats the text template with an empty value for an absent secret', () => {
-  expect(unstyled(stringifyMessage(formatAppEnvShowText({SHOPIFY_API_KEY: 'key', SCOPES: ''})))).toBe(
-    '\n    SHOPIFY_API_KEY=key\n    SHOPIFY_API_SECRET=\n    SCOPES=\n  ',
-  )
+  expect(
+    unstyled(
+      stringifyMessage(
+        formatAppEnvShowText({
+          variables: [
+            {name: 'SHOPIFY_API_KEY', value: 'key'},
+            {name: 'SCOPES', value: ''},
+          ],
+        }),
+      ),
+    ),
+  ).toBe('\n    SHOPIFY_API_KEY=key\n    SHOPIFY_API_SECRET=\n    SCOPES=\n  ')
 })
 
 test.each([
-  {SHOPIFY_API_KEY: 'key', SHOPIFY_API_SECRET: 'secret', SCOPES: 'read_products'},
-  {SHOPIFY_API_KEY: 'key', SCOPES: ''},
+  {
+    variables: [
+      {name: 'SHOPIFY_API_KEY', value: 'key'},
+      {name: 'SHOPIFY_API_SECRET', value: 'secret'},
+      {name: 'SCOPES', value: 'read_products'},
+    ],
+  },
+  {
+    variables: [
+      {name: 'SHOPIFY_API_KEY', value: 'key'},
+      {name: 'SCOPES', value: ''},
+    ],
+  },
 ])('renders plain JSON omitting absent fields for %j', (result) => {
   const output = mockAndCaptureOutput()
 
@@ -35,7 +61,25 @@ test.each([
 test('renders the text template through the result output', () => {
   const output = mockAndCaptureOutput()
 
-  renderAppEnvShowResult({SHOPIFY_API_KEY: 'key', SCOPES: 'read_products'}, 'text')
+  renderAppEnvShowResult(
+    {
+      variables: [
+        {name: 'SHOPIFY_API_KEY', value: 'key'},
+        {name: 'SCOPES', value: 'read_products'},
+      ],
+    },
+    'text',
+  )
 
   expect(output.output()).toBe('\n    SHOPIFY_API_KEY=key\n    SHOPIFY_API_SECRET=\n    SCOPES=read_products\n  ')
+})
+
+test('accepts empty collections and names-only records without adding unknown metadata', () => {
+  const output = mockAndCaptureOutput()
+  const result = {variables: [{name: 'Mixed_Case'}]}
+  renderAppEnvShowResult(result, 'json')
+  expect(JSON.parse(output.output())).toEqual(result)
+  output.clear()
+  renderAppEnvShowResult({variables: []}, 'json')
+  expect(JSON.parse(output.output())).toEqual({variables: []})
 })

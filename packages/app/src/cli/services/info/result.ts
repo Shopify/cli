@@ -38,7 +38,9 @@ export async function renderAppInfo(context: InfoContext): Promise<void> {
 export function formatAppInfoResult(result: AppInfoResult, format: 'json' | 'text'): OutputMessage {
   if (format === 'json') return appInfoJsonOutputSchema.encode(result)
   // The web environment variables are the same facts app env show renders, so reuse its text template.
-  if (!('name' in result)) return formatAppEnvShowText(result)
+  if (!('name' in result)) {
+    return formatAppEnvShowText({variables: Object.entries(result).map(([name, value]) => ({name, value}))})
+  }
   throw new Error('App information text output requires the loaded app context.')
 }
 

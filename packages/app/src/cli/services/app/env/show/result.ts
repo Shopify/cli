@@ -2,10 +2,11 @@ import {appEnvShowJsonOutputSchema, type AppEnvShowResult} from './types.js'
 import {OutputMessage, outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
 
 export function formatAppEnvShowText(result: AppEnvShowResult): OutputMessage {
+  const values = Object.fromEntries(result.variables.map(({name, value}) => [name, value]))
   return outputContent`
-    ${outputToken.green('SHOPIFY_API_KEY')}=${result.SHOPIFY_API_KEY}
-    ${outputToken.green('SHOPIFY_API_SECRET')}=${result.SHOPIFY_API_SECRET ?? ''}
-    ${outputToken.green('SCOPES')}=${result.SCOPES}
+    ${outputToken.green('SHOPIFY_API_KEY')}=${values.SHOPIFY_API_KEY ?? ''}
+    ${outputToken.green('SHOPIFY_API_SECRET')}=${values.SHOPIFY_API_SECRET ?? ''}
+    ${outputToken.green('SCOPES')}=${values.SCOPES ?? ''}
   `
 }
 
