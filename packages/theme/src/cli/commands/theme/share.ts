@@ -1,8 +1,10 @@
+import {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 import {themeShareJsonOutputSchema} from '../../services/share/types.js'
 import {renderThemeShareResult, renderThemeShareEnvironmentResults} from '../../services/share/result.js'
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {executeThemePush, PushFlags} from '../../services/push.js'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {getRandomName} from '@shopify/cli-kit/common/string'
@@ -67,16 +69,20 @@ export default class Share extends ThemeCommand {
 
     recordTiming('theme-command:share')
     const result = await executeThemePush(pushFlags, adminSession, multiEnvironment, context)
-    if (result && !(flags.json && multiEnvironment)) renderThemeShareResult(result, flags.json ? 'json' : 'text')
+    if (result?.hasErrors) process.exitCode = 1
+    if (!(flags.json && multiEnvironment)) {
+      if (result) renderThemeShareResult(result, flags.json ? 'json' : 'text')
+      else if (flags.json) outputResult(themeShareJsonOutputSchema.encode({status: 'cancelled'}))
+    }
     recordTiming('theme-command:share')
-    return result
+    return result ?? (flags.json && multiEnvironment ? {status: 'skipped', reason: 'unsafe-directory'} : undefined)
   }
 
   protected collectsEnvironmentResults(flags: {json?: boolean}): boolean {
     return Boolean(flags.json)
   }
 
-  protected renderEnvironmentResults(results: {environment: string; result: unknown}[]): void {
+  protected renderEnvironmentResults(results: ThemeEnvironmentResult[]): void {
     renderThemeShareEnvironmentResults(results)
   }
 }
