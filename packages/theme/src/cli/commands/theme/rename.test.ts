@@ -20,6 +20,18 @@ vi.mock('../../utilities/theme-store.js', () => ({ensureThemeStore: ({store}: {s
 const originalTheme = {id: 1, name: 'Original', role: 'unpublished', processing: false, createdAtRuntime: false}
 const renamedTheme = {...originalTheme, name: 'Renamed Theme'}
 const store = 'test.myshopify.com'
+const publicTheme = {
+  id: '1',
+  name: 'Renamed Theme',
+  role: 'unpublished',
+  processing: false,
+  storeDomain: store,
+  sourceUrl: null,
+}
+
+function restoreExitCode(value: typeof process.exitCode): void {
+  process.exitCode = value
+}
 
 async function run(argv: string[]) {
   const config = new Config({root: __dirname})
@@ -58,7 +70,7 @@ describe('theme rename JSON output', () => {
   })
 
   test.each([undefined, '', 'https://example.com/theme.zip'])(
-    'returns the updated theme and omits missing src (%s)',
+    'returns the updated theme and nullable source URL (%s)',
     async (src) => {
       vi.mocked(findOrSelectTheme).mockResolvedValue(originalTheme)
       vi.mocked(themeUpdate).mockResolvedValue({...renamedTheme, src})
@@ -66,8 +78,9 @@ describe('theme rename JSON output', () => {
         await run(['--store', store, '--theme', '1', '--name', 'Renamed Theme', '--json'])
         expect(JSON.parse(stdout())).toEqual({
           status: 'success',
+          changed: true,
           originalName: 'Original',
-          theme: {...renamedTheme, ...(src === undefined ? {} : {src}), shop: store},
+          theme: {...publicTheme, sourceUrl: src === '' ? null : (src ?? null)},
         })
         expect(stderr()).toBe('')
       })
@@ -124,14 +137,19 @@ describe('theme rename JSON output', () => {
         if (failures === 'none') environments.push('first')
         if (failures !== 'all') environments.push('second')
         expect(JSON.parse(stdout())).toEqual({
-          environments: environments.map((environment) => ({
-            environment,
-            result: {
-              status: 'success',
-              originalName: 'Original',
-              theme: {...renamedTheme, shop: `${environment}.myshopify.com`},
-            },
-          })),
+          environments: ['first', 'second'].map((environment) =>
+            environments.includes(environment)
+              ? {
+                  environment,
+                  result: {
+                    status: 'success',
+                    changed: true,
+                    originalName: 'Original',
+                    theme: {...publicTheme, storeDomain: `${environment}.myshopify.com`},
+                  },
+                }
+              : {environment, error: {type: 'abort', message: 'Renameing failed'}},
+          ),
         })
         if (failures === 'none') {
           expect(stderr()).toBe('')
@@ -143,7 +161,8 @@ describe('theme rename JSON output', () => {
           expect(errors).toHaveLength(failures === 'all' ? 2 : 1)
           expect(errors[0]).toMatchObject({type: 'diagnostic', level: 'error', code: 'theme-environment-failed'})
         }
-        expect(process.exitCode).toBe(exitCode)
+        expect(process.exitCode).toBe(failures === 'none' ? exitCode : 1)
+        restoreExitCode(exitCode)
       })
     })
   })

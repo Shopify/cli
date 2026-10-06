@@ -72,7 +72,9 @@ export default class Rename extends ThemeCommand {
     return Boolean(flags.json)
   }
 
-  protected renderEnvironmentResults(environments: {environment: string; result: unknown}[]): void {
-    outputResult(themeRenameJsonOutputSchema.encode(themeRenameJsonOutputSchema.validate({environments})))
+  protected renderEnvironmentResults(
+    environments: import('../../services/json-output/schema.js').ThemeEnvironmentResult[],
+  ): void {
+    outputResult(themeRenameJsonOutputSchema.encode({environments}))
   }
 }
