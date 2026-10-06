@@ -8,9 +8,9 @@ export function formatAppEnvPullResult(
   format: 'json' | 'text',
 ): OutputMessage {
   if (format === 'json') return appEnvPullJsonOutputSchema.encode(result)
-  const {path, status, content} = result
-  if (status === 'unchanged') return outputContent`No changes to ${outputToken.path(path)}`
-  if (status === 'created') {
+  const {path, changed, content} = result
+  if (!changed) return outputContent`No changes to ${outputToken.path(path)}`
+  if (previousContent === null) {
     return outputContent`Created ${outputToken.path(path)}:
 
 ${content}

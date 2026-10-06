@@ -127,17 +127,17 @@ test('returns file facts while preserving custom variables, comments, and a miss
     await file.writeFile(path, '# Local settings\nCUSTOM=value\nSHOPIFY_API_SECRET=existing-secret')
     const remoteApp = testOrganizationApp({apiSecretKeys: []})
     const output = await pullEnv({app: mockApp() as AppLinkedInterface, remoteApp, organization: ORG1, envFile: path})
-    expect(output.result.status).toBe('updated')
-    expect(output.result.variables).toEqual({
-      SHOPIFY_API_KEY: 'api-key',
-      SHOPIFY_API_SECRET: undefined,
-      SCOPES: 'my-scope',
-    })
+    expect(output.result.status).toBe('success')
+    expect(output.result.changed).toBe(true)
+    expect(output.result.variables).toEqual([
+      {name: 'SHOPIFY_API_KEY', value: 'api-key', isSecret: false},
+      {name: 'SCOPES', value: 'my-scope', isSecret: false},
+    ])
     expect(output.result.content).toContain('# Local settings\nCUSTOM=value\nSHOPIFY_API_SECRET=existing-secret')
     await expect(file.readFile(path)).resolves.toBe(output.result.content)
     expect(output.previousContent).toBe('# Local settings\nCUSTOM=value\nSHOPIFY_API_SECRET=existing-secret')
     const encoded = JSON.parse(stringifyMessage(formatAppEnvPullResult(output, 'json')))
-    expect(encoded.variables).not.toHaveProperty('SHOPIFY_API_SECRET')
+    expect(encoded.variables.map(({name}: {name: string}) => name)).not.toContain('SHOPIFY_API_SECRET')
     expect(encoded).not.toHaveProperty('previousContent')
   })
 })
