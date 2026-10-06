@@ -1,14 +1,14 @@
 import {themeDuplicateJsonOutputSchema} from '../../services/duplicate/types.js'
-import {renderThemeDuplicateResult} from '../../services/duplicate/result.js'
+import {renderThemeDuplicateResult, themeDuplicateJsonResult} from '../../services/duplicate/result.js'
 import {configureCLIEnvironment} from '../../utilities/cli-config.js'
-import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {duplicate} from '../../services/duplicate.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 import {isCI} from '@shopify/cli-kit/node/system'
+import type {OutputFlags} from '@oclif/core/interfaces'
 import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 export default class Duplicate extends ThemeCommand {
@@ -30,26 +30,7 @@ You can optionally name the duplicated theme using the \`--name\` flag.
 
 If you use the \`--json\` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.
 
-Sample JSON output:
-
-\`\`\`json
-{
-  "theme": {
-    "id": 108267175958,
-    "name": "A Duplicated Theme",
-    "role": "unpublished",
-    "shop": "mystore.myshopify.com"
-  }
-}
-\`\`\`
-
-\`\`\`json
-{
-  "message": "The theme 'Summer Edition' could not be duplicated due to errors",
-  "errors": ["Maximum number of themes reached"],
-  "requestId": "12345-abcde-67890"
-}
-\`\`\``
+Successful JSON results include \`status\`, \`changed\`, and explicit \`originalTheme\` and \`theme\` resources with decimal string IDs. Failures use the shared \`{error}\` document.`
 
   static description = this.descriptionForHelp()
 
@@ -79,17 +60,16 @@ Sample JSON output:
     }),
   }
 
+  static multiEnvironmentsFlags = ['store', 'password', 'theme']
+
   static nonTTYFlagRequirements(): NonTTYFlagRequirement[] {
     return [{flags: ['force'], when: () => !isCI()}]
   }
 
-  async run(): Promise<void> {
-    const {flags} = await this.parse(Duplicate)
-    const store = ensureThemeStore(flags)
-    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
-
+  async command(flags: OutputFlags<typeof Duplicate.flags>, adminSession: AdminSession, multiEnvironment = false) {
     configureCLIEnvironment(flags)
     const result = await duplicate(adminSession, flags.theme, flags)
+    if (flags.json && multiEnvironment) return themeDuplicateJsonResult(result)
     renderThemeDuplicateResult(result, flags.json ? 'json' : 'text')
   }
 }
