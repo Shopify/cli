@@ -114,7 +114,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Cancels a running bulk operation by ID.",
+      "description": "Cancels a running bulk operation by ID.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `CancelBulkOperationResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"storeDomain\": {\n      \"anyOf\": [\n        {\n          \"type\": \"string\",\n          \"pattern\": \"^[^.]+\\\\.myshopify\\\\.com$\"\n        },\n        {\n          \"type\": \"null\"\n        }\n      ]\n    },\n    \"apiVersion\": {\n      \"type\": [\n        \"string\",\n        \"null\"\n      ],\n      \"description\": \"The API version selected for the request.\"\n    },\n    \"status\": {\n      \"type\": \"string\",\n      \"const\": \"success\"\n    },\n    \"operation\": {\n      \"$ref\": \"#/definitions/BulkOperation\"\n    }\n  },\n  \"required\": [\n    \"storeDomain\",\n    \"apiVersion\",\n    \"status\",\n    \"operation\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"CancelBulkOperationResult\",\n  \"definitions\": {\n    \"BulkOperation\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"gid\": {\n          \"type\": \"string\",\n          \"pattern\": \"^gid:\\\\/\\\\/shopify\\\\/BulkOperation\\\\/[^/]+$\",\n          \"description\": \"The Shopify global ID of a bulk operation.\"\n        },\n        \"type\": {\n          \"type\": \"string\"\n        },\n        \"status\": {\n          \"type\": \"string\"\n        },\n        \"errorCode\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"pattern\": \"^\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2}Z$\",\n          \"description\": \"A UTC ISO 8601 instant with whole seconds and the Z timezone marker.\"\n        },\n        \"completedAt\": {\n          \"anyOf\": [\n            {\n              \"$ref\": \"#/definitions/BulkOperation/properties/createdAt\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"A UTC ISO 8601 instant with whole seconds and the Z timezone marker.\"\n        },\n        \"objectCount\": {\n          \"type\": \"string\",\n          \"pattern\": \"^\\\\d+$\",\n          \"description\": \"A nonnegative decimal count, without loss of integer precision.\"\n        },\n        \"url\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"format\": \"uri\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        },\n        \"partialDataUrl\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"format\": \"uri\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        }\n      },\n      \"required\": [\n        \"gid\",\n        \"type\",\n        \"status\",\n        \"errorCode\",\n        \"createdAt\",\n        \"completedAt\",\n        \"objectCount\",\n        \"url\",\n        \"partialDataUrl\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Cancels a running bulk operation by ID.",
       "flags": {
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
@@ -154,6 +155,15 @@
           "name": "id",
           "required": true,
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,
