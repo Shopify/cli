@@ -1,3 +1,4 @@
+import {compilerProcessFixtureSource} from './compiler-process.fixture.js'
 import {build as bundle, type Plugin} from 'esbuild'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import {inTemporaryDirectory, mkdir, writeFile, readFile, fileExists} from '@shopify/cli-kit/node/fs'
@@ -95,7 +96,7 @@ async function fixture(root: string) {
   const executable = joinPath(workspace, 'app/node_modules/.cache', `compiler-proof-${root.split(/[\\/]/).at(-1)}.mjs`)
   await mkdir(dirname(executable))
   await bundle({
-    entryPoints: [joinPath(here, 'compiler-process.fixture.ts')],
+    stdin: {contents: compilerProcessFixtureSource, resolveDir: here, loader: 'ts'},
     outfile: executable,
     bundle: true,
     platform: 'node',

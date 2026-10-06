@@ -1,3 +1,5 @@
+// Source for the harmless outer subprocess. The test imports this entry explicitly.
+export const compilerProcessFixtureSource = String.raw`
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import functionSpec, {type FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
@@ -55,3 +57,5 @@ void runWithCommandEventsForCommand(json ? ['--json'] : [], async () => {
     process.exitCode = 1
   }
 })
+
+`
