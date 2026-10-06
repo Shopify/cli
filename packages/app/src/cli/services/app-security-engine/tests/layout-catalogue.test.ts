@@ -11,6 +11,12 @@ import {mkdir, mkdtemp, realpath, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {dirname, join, resolve} from 'node:path'
 
+// The --client-id lookup needs a login and the network. The mock finds every client ID.
+vi.mock('../../context.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../context.js')>()),
+  appFromIdentifiers: vi.fn(),
+}))
+
 type FileSpec = string | readonly [path: string, content: string]
 
 interface Layout {

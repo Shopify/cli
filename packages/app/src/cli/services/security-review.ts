@@ -1,6 +1,11 @@
 import {appSecurityArtifactPaths} from './app-security-artifacts.js'
 import {resolveAppSecurityCommands} from './app-security-commands.js'
-import {resolveAppSecuritySelection, resultsKey, type AppSecuritySelection} from './app-security-selection.js'
+import {
+  resolveAppSecuritySelection,
+  resultsKey,
+  type AppSecuritySelection,
+  type AppSecuritySelectionOptions,
+} from './app-security-selection.js'
 import {loadAppSecurityResults, type AppSecurityResults} from './app-security-results.js'
 import {securityReviewJsonOutputSchema, toSecurityReviewJson} from './security-review-json.js'
 import {renderSecurityReview, type SecurityReviewPresenterInput} from './security-review-output.js'
@@ -41,7 +46,7 @@ export interface SecurityReviewResult {
 }
 
 export interface SecurityReviewDependencies {
-  resolveSelection(options: SecurityReviewOptions): Promise<AppSecuritySelection>
+  resolveSelection(options: AppSecuritySelectionOptions): Promise<AppSecuritySelection>
   loadResults(selection: AppSecuritySelection, path: string): Promise<AppSecurityResults>
   output(content: string): void
   render(input: SecurityReviewPresenterInput): void
@@ -51,14 +56,7 @@ export interface SecurityReviewDependencies {
 }
 
 const defaultDependencies: SecurityReviewDependencies = {
-  resolveSelection: (options) =>
-    resolveAppSecuritySelection({
-      path: options.directory,
-      config: options.configName,
-      clientId: options.clientId,
-      withoutAppConfig: options.withoutAppConfig,
-      allowPrompts: false,
-    }),
+  resolveSelection: resolveAppSecuritySelection,
   loadResults: loadAppSecurityResults,
   output: outputResult,
   render: renderSecurityReview,
@@ -139,7 +137,14 @@ export default async function securityReview(
   options: SecurityReviewOptions,
   dependencies: SecurityReviewDependencies = defaultDependencies,
 ): Promise<void> {
-  const selection = await dependencies.resolveSelection(options)
+  const selection = await dependencies.resolveSelection({
+    path: options.directory,
+    config: options.configName,
+    clientId: options.clientId,
+    withoutAppConfig: options.withoutAppConfig,
+    allowPrompts: false,
+    validateClientIdFlag: true,
+  })
   const results = await dependencies.loadResults(selection, options.directory)
   const result = reviewAppSecurityResults(results, {
     resultsDirectory: appSecurityArtifactPaths(selection.appDirectory, resultsKey(selection)).resultsDirectory,

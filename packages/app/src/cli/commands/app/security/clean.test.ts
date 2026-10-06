@@ -3,10 +3,12 @@ import SecurityCheck from './check.js'
 import {appFlags} from '../../../flags.js'
 import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts.js'
 import {resolveAppDirectory, resolveAppSecuritySelection} from '../../../services/app-security-selection.js'
+import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
 import securityClean, {renderSecurityCleanResult} from '../../../services/security-clean.js'
 import {securityCleanJsonOutputSchema} from '../../../services/security-clean-json.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -35,6 +37,25 @@ async function createApp(directory: string, {withResults = true} = {}): Promise<
   })
   vi.mocked(resolveAppDirectory).mockResolvedValue(appDirectory)
   return appDirectory
+}
+
+/** Makes the mocked resolver run the real one, with a client ID lookup that fails for every client ID. */
+async function resolveWithFailingLookUp() {
+  const actual = await vi.importActual<typeof import('../../../services/app-security-selection.js')>(
+    '../../../services/app-security-selection.js',
+  )
+  const lookUpApp = vi.fn(async (clientId: string) => {
+    throw new AbortError(`No app with client ID ${clientId} found`)
+  })
+  vi.mocked(resolveAppSecuritySelection).mockImplementation((options) =>
+    actual.resolveAppSecuritySelection(options, {
+      confirmScanWithoutAppConfig: async () => true,
+      pickClientId: async () => 'picked-client-id',
+      pickConfigFile: async () => 'shopify.app.toml',
+      lookUpApp,
+    }),
+  )
+  return lookUpApp
 }
 
 /** Runs the command expecting it to fail, and returns what it printed to stderr. */
@@ -220,6 +241,29 @@ describe('app security clean command', () => {
 
       expect(printed).toContain('cannot also be provided')
       expect(securityClean).not.toHaveBeenCalled()
+    })
+  })
+
+  test('does not look up --client-id, so results saved under a mistyped client ID can be cleaned', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = await fileRealPath(directory)
+      await writeFile(joinPath(appDirectory, 'shopify.app.toml'), validAppConfiguration('toml-client-id'))
+      await mkdir(appSecurityArtifactPaths(appDirectory, 'mistyped-client-id').resultsDirectory)
+      const lookUpApp = await resolveWithFailingLookUp()
+      vi.mocked(securityClean).mockResolvedValue(cleanedResult(appDirectory))
+      const output = mockAndCaptureOutput()
+
+      try {
+        await SecurityClean.run(['--path', directory, '--client-id', 'mistyped-client-id', '--json'], import.meta.url)
+
+        expect(lookUpApp).not.toHaveBeenCalled()
+        expect(securityClean).toHaveBeenCalledWith({
+          all: false,
+          selection: expect.objectContaining({clientIdOverride: 'mistyped-client-id'}),
+        })
+      } finally {
+        output.clear()
+      }
     })
   })
 })

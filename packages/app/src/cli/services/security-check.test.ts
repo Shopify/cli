@@ -6,8 +6,10 @@ import {
   shellForPlatform,
 } from './app-security-commands.js'
 import {appSecurityArtifactPaths, writeCheckArtifacts} from './app-security-artifacts.js'
+import {resolveAppSecuritySelection} from './app-security-selection.js'
 import {validAppConfiguration} from './app-security-selection.test-data.js'
 import {listAppSecurityFiles} from './app-security-api.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {
   fileExists,
   fileRealPath,
@@ -22,7 +24,7 @@ import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {symlink} from 'node:fs/promises'
 import type {AppSecurityExecution} from './app-security-api.js'
-import type {AppSecuritySelection} from './app-security-selection.js'
+import type {AppSecuritySelection, AppSecuritySelectionOptions} from './app-security-selection.js'
 import type {AppSecurityInstructionsDestination} from './security-check.js'
 import type {
   AgentChecks,
@@ -249,6 +251,7 @@ describe('securityCheck', () => {
       clientId: undefined,
       withoutAppConfig: false,
       allowPrompts: false,
+      validateClientIdFlag: true,
     })
     expect(dependencies.execute).toHaveBeenCalledWith({
       appDirectory,
@@ -1066,6 +1069,88 @@ describe('securityCheck --list-files', () => {
       })
 
       expect(JSON.parse(stdout)).toEqual({files: ['index.ts', 'shopify.app.toml']})
+    })
+  })
+})
+
+describe('securityCheck --client-id lookup', () => {
+  const unknownClientId = new AbortError('No app with client ID unknown-client-id found')
+
+  /** The real selection resolver, with the client ID lookup replaced. */
+  function resolveSelectionWith(lookUpApp: (clientId: string) => Promise<void>) {
+    return (options: AppSecuritySelectionOptions) =>
+      resolveAppSecuritySelection(options, {
+        confirmScanWithoutAppConfig: async () => true,
+        pickClientId: async () => 'picked-client-id',
+        pickConfigFile: async () => 'shopify.app.toml',
+        lookUpApp,
+      })
+  }
+
+  async function createApp(directory: string): Promise<string> {
+    const appRoot = await fileRealPath(directory)
+    await writeFile(joinPath(appRoot, 'shopify.app.toml'), validAppConfiguration('toml-client-id'))
+    vi.stubEnv('INIT_CWD', appRoot)
+    return appRoot
+  }
+
+  test.each([false, true])(
+    'looks up --client-id and proceeds when it is found (--list-files: %s)',
+    async (listFiles) => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        const lookUpApp = vi.fn(async (_clientId: string) => {})
+        const dependencies = {...testDependencies(), resolveSelection: resolveSelectionWith(lookUpApp)}
+
+        await securityCheck({...testOptions(), directory: appRoot, clientId: 'flag-client-id', listFiles}, dependencies)
+
+        expect(lookUpApp).toHaveBeenCalledWith('flag-client-id')
+        if (listFiles) {
+          expect(dependencies.listFiles).toHaveBeenCalledWith(expect.objectContaining({clientId: 'flag-client-id'}))
+        } else {
+          expect(dependencies.writeArtifacts).toHaveBeenCalledWith(appRoot, 'flag-client-id', expect.anything())
+        }
+      })
+    },
+  )
+
+  test.each([false, true])(
+    'aborts on an unknown --client-id before gathering files or writing results (--list-files: %s)',
+    async (listFiles) => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        const dependencies = {
+          ...testDependencies(),
+          writeArtifacts: writeCheckArtifacts,
+          resolveSelection: resolveSelectionWith(async () => {
+            throw unknownClientId
+          }),
+        }
+
+        await expect(
+          securityCheck({...testOptions(), directory: appRoot, clientId: 'unknown-client-id', listFiles}, dependencies),
+        ).rejects.toBe(unknownClientId)
+
+        expect(dependencies.listFiles).not.toHaveBeenCalled()
+        expect(dependencies.execute).not.toHaveBeenCalled()
+        expect(dependencies.recordMetadata).not.toHaveBeenCalled()
+        expect(dependencies.output).not.toHaveBeenCalled()
+        await expect(fileExists(joinPath(appRoot, '.shopify', 'app-security'))).resolves.toBe(false)
+      })
+    },
+  )
+
+  test('does not look up the TOML client ID', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+      const lookUpApp = vi.fn(async (_clientId: string) => {})
+
+      await securityCheck(
+        {...testOptions(), directory: appRoot},
+        {...testDependencies(), resolveSelection: resolveSelectionWith(lookUpApp)},
+      )
+
+      expect(lookUpApp).not.toHaveBeenCalled()
     })
   })
 })

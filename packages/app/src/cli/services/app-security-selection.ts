@@ -1,6 +1,6 @@
 import {localAppContext} from './app-context.js'
 import {appCreationDefaults} from './app/config/link.js'
-import {fetchOrCreateOrganizationApp} from './context.js'
+import {appFromIdentifiers, fetchOrCreateOrganizationApp} from './context.js'
 import {getCachedAppInfo} from './local-storage.js'
 import {extensionFilesForConfig, webFilesForConfig} from '../models/project/config-selection.js'
 import {NoAppConfigurationFoundError, Project} from '../models/project/project.js'
@@ -57,18 +57,22 @@ export interface AppSecurityScanDirectory {
   origin: 'app_directory' | 'include_dir' | 'app_config_directory'
 }
 
-interface AppSecuritySelectionOptions {
+export interface AppSecuritySelectionOptions {
   path: string
   config?: string
   clientId?: string
   withoutAppConfig?: boolean
   allowPrompts: boolean
+  /** Look up the `--client-id` value in the user's account, which needs a login. Off by default. */
+  validateClientIdFlag?: boolean
 }
 
 export interface AppSecuritySelectionDependencies {
   confirmScanWithoutAppConfig(directory: string): Promise<boolean>
   pickClientId(appDirectory: string): Promise<string>
   pickConfigFile(appDirectory: string): Promise<string>
+  /** Aborts when the user's account has no app with this client ID. */
+  lookUpApp(clientId: string): Promise<void>
 }
 
 const defaultDependencies: AppSecuritySelectionDependencies = {
@@ -81,6 +85,10 @@ const defaultDependencies: AppSecuritySelectionDependencies = {
     }),
   pickClientId: async (appDirectory) => (await fetchOrCreateOrganizationApp(appCreationDefaults(appDirectory))).apiKey,
   pickConfigFile: async (appDirectory) => (await selectConfigFile(appDirectory)).valueOrAbort(),
+  lookUpApp: async (clientId) => {
+    // The app security commands don't take `--reset`.
+    await appFromIdentifiers({apiKey: clientId, offerReset: false})
+  },
 }
 
 /** The name of the selected TOML, or undefined when there is none. */
@@ -135,9 +143,11 @@ export async function resolveAppSecuritySelection(
 ): Promise<AppSecuritySelection> {
   if (options.withoutAppConfig) {
     if (!options.clientId) throw new AbortError('--without-app-config requires --client-id.')
+    const appDirectory = await realDirectory(options.path)
+    await lookUpClientIdFlag(options, dependencies)
     return {
       kind: 'no-config',
-      appDirectory: await realDirectory(options.path),
+      appDirectory,
       clientId: options.clientId,
       clientIdSource: 'flag',
     }
@@ -153,6 +163,7 @@ export async function resolveAppSecuritySelection(
       userProvidedConfigName: options.config ?? unselectedConfigFile?.fileName,
       skipPrompts: !options.allowPrompts,
     })
+    await lookUpClientIdFlag(options, dependencies)
     const appDirectory = await fileRealPath(app.directory)
     return {
       kind: 'config',
@@ -203,6 +214,8 @@ async function resolveWithoutAppConfigurationFile(
   if (!options.allowPrompts) abortNoAppConfigurationFound(options.path)
 
   const appDirectory = await realDirectory(options.path)
+  // Before the prompt, so a mistyped client ID fails without asking anything first.
+  await lookUpClientIdFlag(options, dependencies)
   if (!(await dependencies.confirmScanWithoutAppConfig(options.path))) abortNoAppConfigurationFound(options.path)
 
   if (options.clientId) return {kind: 'no-config', appDirectory, clientId: options.clientId, clientIdSource: 'flag'}
@@ -212,6 +225,17 @@ async function resolveWithoutAppConfigurationFile(
     clientId: await dependencies.pickClientId(appDirectory),
     clientIdSource: 'picker',
   }
+}
+
+/**
+ * Only the `--client-id` value is looked up: the TOML's own `client_id` is never validated, and the picker's
+ * client ID already comes from the API. An empty value is looked up too, because it was passed.
+ */
+async function lookUpClientIdFlag(
+  options: AppSecuritySelectionOptions,
+  dependencies: AppSecuritySelectionDependencies,
+): Promise<void> {
+  if (options.validateClientIdFlag && options.clientId !== undefined) await dependencies.lookUpApp(options.clientId)
 }
 
 /**

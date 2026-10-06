@@ -1,5 +1,7 @@
 import securityReview, {reviewAppSecurityResults, type SecurityReviewDependencies} from './security-review.js'
 import {appSecurityArtifactPaths} from './app-security-artifacts.js'
+import {resolveAppSecuritySelection, type AppSecuritySelectionOptions} from './app-security-selection.js'
+import {validAppConfiguration} from './app-security-selection.test-data.js'
 import {loadAppSecurityResults} from './app-security-results.js'
 import {appSecurityResultsFor} from './app-security-results.test-data.js'
 import {
@@ -34,11 +36,11 @@ async function createApp(directory: string, files: Files): Promise<string> {
 
 function testDependencies() {
   const dependencies = {
-    resolveSelection: async ({directory}) =>
+    resolveSelection: async ({path}) =>
       ({
         kind: 'config',
-        appDirectory: directory,
-        appConfigFilePath: joinPath(directory, 'shopify.app.toml'),
+        appDirectory: path,
+        appConfigFilePath: joinPath(path, 'shopify.app.toml'),
       }) as const,
     loadResults: loadAppSecurityResults,
     output: vi.fn(),
@@ -422,6 +424,80 @@ describe('securityReview', () => {
 
       expect(dependencies.render).not.toHaveBeenCalled()
       expect(dependencies.output).not.toHaveBeenCalled()
+    })
+  })
+})
+
+describe('securityReview --client-id lookup', () => {
+  const unknownClientId = new AbortError('No app with client ID unknown-client-id found')
+  const reviewOptions = {json: true, verbose: false, checkIds: [], blocking: 'none' as const}
+
+  /** The real selection resolver, with the client ID lookup replaced, and a spy on the results loader. */
+  function lookUpDependencies(lookUpApp: (clientId: string) => Promise<void>) {
+    return {
+      ...testDependencies(),
+      resolveSelection: (options: AppSecuritySelectionOptions) =>
+        resolveAppSecuritySelection(options, {
+          confirmScanWithoutAppConfig: async () => true,
+          pickClientId: async () => 'picked-client-id',
+          pickConfigFile: async () => 'shopify.app.toml',
+          lookUpApp,
+        }),
+      loadResults: vi.fn(loadAppSecurityResults),
+    }
+  }
+
+  /** An app that the real resolver loads, with an empty results directory for `resultsKey`. */
+  async function createLinkedApp(directory: string, resultsKey: string): Promise<string> {
+    const appRoot = await fileRealPath(directory)
+    await writeFile(joinPath(appRoot, 'shopify.app.toml'), validAppConfiguration('toml-client-id'))
+    await mkdir(appSecurityArtifactPaths(appRoot, resultsKey).resultsDirectory)
+    return appRoot
+  }
+
+  test('looks up --client-id and reads its results when it is found', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createLinkedApp(directory, 'flag-client-id')
+      const lookUpApp = vi.fn(async (_clientId: string) => {})
+      const dependencies = lookUpDependencies(lookUpApp)
+
+      await securityReview({...reviewOptions, directory: appRoot, clientId: 'flag-client-id'}, dependencies)
+
+      expect(lookUpApp).toHaveBeenCalledWith('flag-client-id')
+      expect(dependencies.loadResults).toHaveBeenCalledWith(
+        expect.objectContaining({clientIdOverride: 'flag-client-id'}),
+        appRoot,
+      )
+      expect(dependencies.output).toHaveBeenCalled()
+    })
+  })
+
+  test('aborts on an unknown --client-id before reading any results', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createLinkedApp(directory, 'unknown-client-id')
+      const dependencies = lookUpDependencies(async () => {
+        throw unknownClientId
+      })
+
+      await expect(
+        securityReview({...reviewOptions, directory: appRoot, clientId: 'unknown-client-id'}, dependencies),
+      ).rejects.toBe(unknownClientId)
+
+      expect(dependencies.loadResults).not.toHaveBeenCalled()
+      expect(dependencies.output).not.toHaveBeenCalled()
+      expect(dependencies.render).not.toHaveBeenCalled()
+      expect(dependencies.recordMetadata).not.toHaveBeenCalled()
+    })
+  })
+
+  test('does not look up the TOML client ID', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createLinkedApp(directory, RESULTS_KEY)
+      const lookUpApp = vi.fn(async (_clientId: string) => {})
+
+      await securityReview({...reviewOptions, directory: appRoot}, lookUpDependencies(lookUpApp))
+
+      expect(lookUpApp).not.toHaveBeenCalled()
     })
   })
 })
