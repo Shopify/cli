@@ -16,9 +16,11 @@ test('returns the environment facts and records analytics metadata', async () =>
   const result = await getAppEnv(app, remoteApp, organization)
 
   expect(result).toEqual({
-    SHOPIFY_API_KEY: remoteApp.apiKey,
-    SHOPIFY_API_SECRET: 'api-secret',
-    SCOPES: 'my-scope',
+    variables: [
+      {name: 'SHOPIFY_API_KEY', value: remoteApp.apiKey, isSecret: false},
+      {name: 'SHOPIFY_API_SECRET', value: 'api-secret', isSecret: true},
+      {name: 'SCOPES', value: 'my-scope', isSecret: false},
+    ],
   })
   expect(logMetadataForLoadedContext).toHaveBeenCalledWith(remoteApp, organization.source)
 })
@@ -29,8 +31,13 @@ test('omits SHOPIFY_API_SECRET when the app has no secret', async () => {
 
   const result = await getAppEnv(app, remoteApp, organization)
 
-  expect(result).toEqual({SHOPIFY_API_KEY: remoteApp.apiKey, SCOPES: 'my-scope'})
-  expect(result).not.toHaveProperty('SHOPIFY_API_SECRET')
+  expect(result).toEqual({
+    variables: [
+      {name: 'SHOPIFY_API_KEY', value: remoteApp.apiKey, isSecret: false},
+      {name: 'SCOPES', value: 'my-scope', isSecret: false},
+    ],
+  })
+  expect(result.variables.map(({name}) => name)).not.toContain('SHOPIFY_API_SECRET')
 })
 
 function mockApp(): AppInterface {

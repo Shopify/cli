@@ -39,9 +39,11 @@ test.each([
     expect(stdout()).toBe(
       `${JSON.stringify(
         {
-          SHOPIFY_API_KEY: remoteApp.apiKey,
-          ...(secret === undefined ? {} : {SHOPIFY_API_SECRET: secret}),
-          SCOPES: scopes,
+          variables: [
+            {name: 'SHOPIFY_API_KEY', value: remoteApp.apiKey, isSecret: false},
+            ...(secret === undefined ? [] : [{name: 'SHOPIFY_API_SECRET', value: secret, isSecret: true}]),
+            {name: 'SCOPES', value: scopes, isSecret: false},
+          ],
         },
         null,
         2,
@@ -85,9 +87,26 @@ test('propagates failures before writing any result', async () => {
 })
 
 test.each([
-  {SHOPIFY_API_KEY: 1, SCOPES: ''},
-  {SHOPIFY_API_KEY: 'key', SHOPIFY_API_SECRET: null, SCOPES: ''},
-  {SHOPIFY_API_KEY: 'key', SCOPES: []},
+  {variables: [{name: 'KEY', value: 1}]},
+  {variables: [{name: 'KEY', value: null}]},
+  {variables: [{name: 'KEY', unknown: true}]},
+  {variables: [], unknown: true},
 ])('rejects malformed data %j', (value) => {
   expect(() => appEnvShowJsonOutputSchema.validate(value)).toThrow()
 })
+
+test.each([[], ['--no-input'], ['--json'], ['--json', '--no-input']].map((argv) => ({argv})))(
+  'keeps JSON formatting independent from non-interactivity for %j',
+  async ({argv}) => {
+    mockLinkedAppContext({secret: undefined, scopes: 'read_products'})
+    const command = new EnvShow(argv, await Config.load())
+    await withCapturedStandardStreams(async ({stdout}) => {
+      await runWithCommandEventsForCommand(argv, () => command.run())
+      if (argv.includes('--json')) {
+        expect(JSON.parse(stdout())).toHaveProperty('variables')
+      } else {
+        expect(unstyled(stdout())).toContain('SHOPIFY_API_KEY=api-key')
+      }
+    })
+  },
+)

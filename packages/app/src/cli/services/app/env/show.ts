@@ -11,8 +11,12 @@ export async function getAppEnv(
   // Deliberate side effect: records analytics metadata for the loaded app.
   await logMetadataForLoadedContext(remoteApp, organization.source)
   return {
-    SHOPIFY_API_KEY: remoteApp.apiKey,
-    ...(remoteApp.apiSecretKeys[0] ? {SHOPIFY_API_SECRET: remoteApp.apiSecretKeys[0].secret} : {}),
-    SCOPES: getAppScopes(app.configuration),
+    variables: [
+      {name: 'SHOPIFY_API_KEY', value: remoteApp.apiKey, isSecret: false},
+      ...(remoteApp.apiSecretKeys[0]
+        ? [{name: 'SHOPIFY_API_SECRET', value: remoteApp.apiSecretKeys[0].secret, isSecret: true}]
+        : []),
+      {name: 'SCOPES', value: getAppScopes(app.configuration), isSecret: false},
+    ],
   }
 }
