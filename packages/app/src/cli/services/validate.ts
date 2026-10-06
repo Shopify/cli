@@ -1,7 +1,9 @@
 import {type AppConfigValidateResult} from './validate/types.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import metadata from '../metadata.js'
-import {resolvePath} from '@shopify/cli-kit/node/path'
+// CLI Kit normalizes separators; public JSON paths must use the native filesystem format.
+// eslint-disable-next-line no-restricted-imports
+import {resolve} from 'node:path'
 
 async function recordValidationMetadata(valid: boolean, errors: {file: string}[]) {
   const fileCount = new Set(errors.map((error) => error.file)).size
@@ -19,7 +21,7 @@ export async function validateApp(app: AppLinkedInterface): Promise<AppConfigVal
   return {
     valid: errors.length === 0,
     issues: errors.map(({file, message, path, code}) => ({
-      filePath: resolvePath(file),
+      filePath: resolve(file),
       message,
       fieldPath: path ?? null,
       code: code ?? null,

@@ -4,6 +4,9 @@ import {AppErrors, formatConfigurationError} from '../models/app/loader.js'
 import metadata from '../metadata.js'
 import {describe, expect, test, vi} from 'vitest'
 import {jsonSchemaValidate} from '@shopify/cli-kit/node/json-schema'
+// Match the platform-native public path projection.
+// eslint-disable-next-line no-restricted-imports
+import {resolve} from 'node:path'
 
 vi.mock('../metadata.js', () => ({default: {addPublicMetadata: vi.fn()}}))
 
@@ -139,9 +142,9 @@ describe('validateApp', () => {
     await expect(validateApp(app)).resolves.toEqual({
       valid: false,
       issues: [
-        {filePath: '/path/to/shopify.app.toml', message: 'client_id is required', fieldPath: null, code: null},
+        {filePath: resolve('/path/to/shopify.app.toml'), message: 'client_id is required', fieldPath: null, code: null},
         {
-          filePath: '/path/to/extensions/my-ext/shopify.extension.toml',
+          filePath: resolve('/path/to/extensions/my-ext/shopify.extension.toml'),
           message: 'invalid type "unknown"',
           fieldPath: null,
           code: null,
@@ -164,7 +167,14 @@ describe('validateApp', () => {
 
     await expect(validateApp(app)).resolves.toEqual({
       valid: false,
-      issues: [{filePath: '/path/to/shopify.app.toml', message: 'Required', fieldPath: ['name'], code: 'invalid_type'}],
+      issues: [
+        {
+          filePath: resolve('/path/to/shopify.app.toml'),
+          message: 'Required',
+          fieldPath: ['name'],
+          code: 'invalid_type',
+        },
+      ],
     })
 
     await expectLastValidationMetadata({

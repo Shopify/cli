@@ -11,8 +11,11 @@ import metadata from '../../../metadata.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputResult, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
-import {basename, resolvePath} from '@shopify/cli-kit/node/path'
+import {basename} from '@shopify/cli-kit/node/path'
 import {renderError} from '@shopify/cli-kit/node/ui'
+// CLI Kit normalizes separators; public JSON paths must use the native filesystem format.
+// eslint-disable-next-line no-restricted-imports
+import {resolve} from 'node:path'
 
 async function recordValidationFailure(issueCount: number, fileCount: number) {
   await metadata.addPublicMetadata(() => ({
@@ -62,7 +65,7 @@ export default class Validate extends AppLinkedCommand {
     const configErrors = errorsForConfig(project, activeConfig.file)
     if (configErrors.length > 0) {
       const issues = configErrors.map((err) => ({
-        filePath: resolvePath(err.path),
+        filePath: resolve(err.path),
         message: err.message,
         fieldPath: null,
         code: null,
@@ -96,9 +99,7 @@ export default class Validate extends AppLinkedCommand {
       const message = err instanceof AbortError ? unstyled(stringifyMessage(err.message)).trim() : ''
       const isValidationError = message.startsWith('Validation errors in ')
       if (isValidationError && flags.json) {
-        await failJsonValidation([
-          {filePath: resolvePath(activeConfig.file.path), message, fieldPath: null, code: null},
-        ])
+        await failJsonValidation([{filePath: resolve(activeConfig.file.path), message, fieldPath: null, code: null}])
       }
       throw err
     }
