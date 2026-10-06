@@ -1,5 +1,6 @@
 import {
   cloneRepoAndCheckoutLatestTag,
+  cloneLatestStableSkeletonTheme,
   cloneRepo,
   createAIInstructions,
   SKELETON_THEME_URL,
@@ -10,7 +11,7 @@ import {themeFlags} from '../../flags.js'
 import {Args, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
-import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {InferredArgs, InferredFlags} from '@oclif/core/interfaces'
@@ -60,17 +61,33 @@ export default class Init extends ThemeCommand {
   static multiEnvironmentsFlags: RequiredFlags = null
 
   async command(flags: InitFlags, _adminSession: AdminSession, _multiEnvironment: boolean, args: InitArgs) {
-    const name = args.name ?? (await this.promptName(flags.path))
+    const name = args.name ?? (await this.promptName(flags.path, flags['no-input']))
     const repoUrl = flags['clone-url']
     const destination = joinPath(flags.path, name)
+    let latestRelease = flags.latest || flags['no-input']
 
-    if (flags.latest) {
+    if (!latestRelease && repoUrl === SKELETON_THEME_URL) {
+      latestRelease =
+        !terminalSupportsPrompting() ||
+        (await renderSelectPrompt({
+          message: 'Which version of Skeleton theme would you like to use?',
+          choices: [
+            {label: 'Latest stable release', value: 'stable'},
+            {label: 'Upstream (new features may not be available on your store)', value: 'upstream'},
+          ],
+          defaultValue: 'stable',
+        })) === 'stable'
+    }
+
+    if (latestRelease && repoUrl === SKELETON_THEME_URL) {
+      await cloneLatestStableSkeletonTheme(destination)
+    } else if (latestRelease) {
       await cloneRepoAndCheckoutLatestTag(repoUrl, destination)
     } else {
       await cloneRepo(repoUrl, destination)
     }
 
-    if (!terminalSupportsPrompting()) return
+    if (flags['no-input'] || !terminalSupportsPrompting()) return
 
     const aiInstruction = await promptAIInstruction()
 
@@ -81,8 +98,10 @@ export default class Init extends ThemeCommand {
     await createAIInstructions(destination, aiInstruction)
   }
 
-  async promptName(directory: string) {
+  async promptName(directory: string, inputDisabled = false) {
     const defaultName = await generateRandomNameForSubdirectory({suffix: 'theme', directory, family: 'creative'})
+
+    if (inputDisabled || !terminalSupportsPrompting()) return defaultName
 
     return renderTextPrompt({message: 'Name of the new theme', defaultValue: defaultName})
   }
