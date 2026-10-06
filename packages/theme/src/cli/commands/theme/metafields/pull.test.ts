@@ -17,6 +17,7 @@ vi.mock('../../../utilities/theme-store.js')
 vi.mock('../../../utilities/theme-ui.js')
 vi.mock('@shopify/cli-kit/node/analytics', () => ({
   recordEvent: vi.fn(),
+  reportAnalyticsEvent: vi.fn(),
   compileData: vi.fn().mockReturnValue({timings: {}, errors: {}, retries: {}, events: {}}),
 }))
 vi.mock('@shopify/cli-kit/node/metadata')
@@ -28,12 +29,27 @@ beforeEach(() => {
   vi.mocked(ensureDirectoryConfirmed).mockResolvedValue(true)
 })
 
-async function run(path: string) {
+async function run(path: string, environment?: string) {
   const config = new Config({root: __dirname})
   await config.load()
-  await runWithCommandEventsForCommand(['--json'], () =>
-    new MetafieldsPull(['--path', path, '--store', 'example.myshopify.com', '--json'], config).run(),
-  )
+  const previousExitCode = process.exitCode
+  process.exitCode = 0
+  const argv = [
+    '--path',
+    path,
+    '--store',
+    'example.myshopify.com',
+    '--json',
+    ...(environment ? ['--environment', environment, '--force'] : []),
+  ]
+  try {
+    await runWithCommandEventsForCommand(argv, () => new MetafieldsPull(argv, config).run())
+    return process.exitCode
+  } finally {
+    // Restore the process state after the command completes.
+
+    process.exitCode = previousExitCode
+  }
 }
 
 test.each([undefined, null, 'Definition description'])(
@@ -55,20 +71,19 @@ test.each([undefined, null, 'Definition description'])(
         await run(directory)
         const result = JSON.parse(stdout())
         expect(result).toMatchObject({
-          status: 'downloaded',
+          status: 'success',
           path: joinPath(directory, '.shopify/metafields.json'),
           failedOwnerTypes: [],
         })
-        expect(result.definitions.product).toEqual([JSON.parse(JSON.stringify(definition))])
-        expect(Object.keys(result.definitions)).toHaveLength(12)
-        expect(result.definitions.shop).toEqual([])
-        expect(JSON.parse(await readFile(result.path))).toEqual(result.definitions)
+        expect(result.definitions).toEqual([{...definition, description: description ?? null, ownerType: 'PRODUCT'}])
+        const artifact = JSON.parse(await readFile(result.path))
+        expect(artifact.product).toEqual([JSON.parse(JSON.stringify(definition))])
+        expect(Object.keys(artifact)).toHaveLength(12)
+        expect(artifact.company_location).toEqual([])
+        expect(artifact.shop).toEqual([])
         expect(themeMetafieldsPullJsonOutputSchema.validate(result)).toEqual(result)
-        // The output must include every supported owner, even when it has no definitions.
-        const {variant: _variant, ...incompleteDefinitions} = result.definitions
-        expect(() =>
-          themeMetafieldsPullJsonOutputSchema.validate({...result, definitions: incompleteDefinitions}),
-        ).toThrow()
+        expect(() => themeMetafieldsPullJsonOutputSchema.validate({...result, unknown: true})).toThrow()
+        expect(() => themeMetafieldsPullJsonOutputSchema.validate({...result, path: 'metafields.json'})).toThrow()
         expect(stderr()).toBe('')
       })
     })
@@ -80,42 +95,38 @@ test('distinguishes an empty successful download from total fetch failure', asyn
   await inTemporaryDirectory(async (directory) => {
     await withCapturedStandardStreams(async ({stdout}) => {
       await run(directory)
-      expect(JSON.parse(stdout())).toMatchObject({status: 'downloaded', failedOwnerTypes: []})
+      expect(JSON.parse(stdout())).toMatchObject({status: 'success', failedOwnerTypes: []})
       await expect(fileExists(joinPath(directory, '.shopify/metafields.json'))).resolves.toBe(true)
     })
   })
 })
 
-test('reports partial results without showing debug diagnostics by default', async () => {
+test('retains the native artifact and reports partial failure with a nonzero exit', async () => {
   vi.mocked(metafieldDefinitionsByOwnerType).mockImplementation(async (owner) => {
     if (owner === 'PRODUCT') throw new Error('Unavailable')
     return []
   })
   await inTemporaryDirectory(async (directory) => {
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await run(directory)
+      await expect(run(directory)).resolves.toBe(1)
       const result = JSON.parse(stdout())
-      expect(result).toMatchObject({status: 'downloaded', failedOwnerTypes: ['PRODUCT'], definitions: {product: []}})
-      expect(JSON.parse(await readFile(result.path))).toEqual(result.definitions)
-      expect(stderr()).toBe('')
+      expect(result).toMatchObject({status: 'partial', changed: true, failedOwnerTypes: ['PRODUCT'], definitions: []})
+      expect(JSON.parse(await readFile(result.path)).product).toEqual([])
+      expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', level: 'error'})
     })
   })
 })
 
-test('reports total failure without writing a file or changing the existing nonfatal behavior', async () => {
+test('throws a fatal error with failed owner types without writing an artifact', async () => {
   vi.mocked(metafieldDefinitionsByOwnerType).mockRejectedValue(new Error('Unavailable'))
   await inTemporaryDirectory(async (directory) => {
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await expect(run(directory)).resolves.toBeUndefined()
-      const result = JSON.parse(stdout())
-      expect(result.status).toBe('failed')
-      expect(result.failedOwnerTypes).toHaveLength(12)
-      expect(result).not.toHaveProperty('path')
-      expect(JSON.parse(stderr())).toMatchObject({
-        type: 'diagnostic',
-        level: 'error',
+      await expect(run(directory)).rejects.toMatchObject({
         message: 'Failed to fetch metafield definitions.',
+        details: {failedOwnerTypes: expect.arrayContaining(['PRODUCT', 'SHOP'])},
       })
+      expect(stdout()).toBe('')
+      expect(stderr()).toBe('')
       await expect(fileExists(joinPath(directory, '.shopify/metafields.json'))).resolves.toBe(false)
     })
   })
@@ -126,7 +137,7 @@ test('reports cancellation without fetching or writing definitions', async () =>
   await inTemporaryDirectory(async (directory) => {
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
       await run(directory)
-      expect(JSON.parse(stdout())).toEqual({status: 'skipped', reason: 'cancelled'})
+      expect(JSON.parse(stdout())).toEqual({status: 'cancelled'})
       expect(stderr()).toBe('')
       expect(metafieldDefinitionsByOwnerType).not.toHaveBeenCalled()
     })
@@ -149,9 +160,7 @@ test('exposes the schema and rejects incomplete definitions and unknown outcomes
   expect(MetafieldsPull.flags.json).toBeDefined()
   expect(MetafieldsPull.description).toContain('--json-schema')
   expect(() => themeMetafieldsPullJsonOutputSchema.validate({status: 'skipped', reason: 'unknown'})).toThrow()
-  expect(() =>
-    themeMetafieldsPullJsonOutputSchema.validate({status: 'failed', failedOwnerTypes: ['UNKNOWN']}),
-  ).toThrow()
+  expect(() => themeMetafieldsPullJsonOutputSchema.validate({status: 'failed', failedOwnerTypes: []})).toThrow()
 })
 
 test('exports a JSON Schema with resolvable local references', () => {
@@ -166,4 +175,73 @@ test('exports a JSON Schema with resolvable local references', () => {
     }
     expect(target, reference).toBeDefined()
   }
+})
+
+test.each(['success', 'total failure'])('returns an explicit single environment wrapper on %s', async (mode) => {
+  vi.mocked(metafieldDefinitionsByOwnerType).mockImplementation(async () => {
+    if (mode === 'total failure') throw new Error('Unavailable')
+    return []
+  })
+  const {loadEnvironment} = await import('@shopify/cli-kit/node/environments')
+  await inTemporaryDirectory(async (directory) => {
+    vi.mocked(loadEnvironment).mockResolvedValue({path: directory})
+    await withCapturedStandardStreams(async ({stdout}) => {
+      await expect(run(directory, 'staging')).resolves.toBe(mode === 'total failure' ? 1 : 0)
+      expect(JSON.parse(stdout())).toEqual({
+        environments: [
+          {
+            environment: 'staging',
+            ...(mode === 'total failure'
+              ? {
+                  error: expect.objectContaining({
+                    type: 'abort',
+                    details: {failedOwnerTypes: expect.arrayContaining(['PRODUCT'])},
+                  }),
+                }
+              : {
+                  result: {
+                    status: 'success',
+                    changed: true,
+                    path: joinPath(directory, '.shopify/metafields.json'),
+                    definitions: [],
+                    failedOwnerTypes: [],
+                  },
+                }),
+          },
+        ],
+      })
+    })
+  })
+})
+
+class LifecycleMetafieldsPull extends MetafieldsPull {
+  execute(): Promise<void> {
+    return this._run<void>()
+  }
+}
+
+test('renders a single fatal JSON envelope for a failed download', async () => {
+  vi.mocked(metafieldDefinitionsByOwnerType).mockRejectedValue(new Error('Unavailable'))
+  vi.spyOn(MetafieldsPull.prototype as unknown as {init(): Promise<unknown>}, 'init').mockResolvedValue(undefined)
+  vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
+  const config = new Config({root: __dirname})
+  await config.load()
+  await inTemporaryDirectory(async (directory) => {
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await new LifecycleMetafieldsPull(
+        ['--path', directory, '--store', 'example.myshopify.com', '--json'],
+        config,
+      ).execute()
+      expect(JSON.parse(stdout())).toEqual({
+        error: {
+          type: 'abort',
+          message: 'Failed to fetch metafield definitions.',
+          tryMessage: expect.any(String),
+          details: {failedOwnerTypes: expect.arrayContaining(['PRODUCT', 'SHOP'])},
+        },
+      })
+      expect(stderr()).toBe('')
+    })
+  })
+  expect(process.exit).toHaveBeenCalledWith(1)
 })
