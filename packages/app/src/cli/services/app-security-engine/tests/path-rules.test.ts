@@ -10,6 +10,7 @@ import {
   listTrackedFiles,
   repositoryIgnoredPaths,
 } from '../scanners/path-rules.js'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
@@ -447,7 +448,8 @@ describe('path rules', () => {
       const working = join(makeDirectory(), 'app')
       mkdirSync(working)
 
-      expect(rulesFor(working, [join(working, 'src', '*.ts'), '']).excludePatterns).toEqual(['src/*.ts'])
+      // Patterns separate segments with `/` on every platform, since `\` is a glob escape.
+      expect(rulesFor(working, [joinPath(working, 'src', '*.ts'), '']).excludePatterns).toEqual(['src/*.ts'])
     })
 
     test('applies with --no-git-ignore too', () => {
