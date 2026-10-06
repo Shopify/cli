@@ -26,7 +26,7 @@ const themeFilesPattern = [
 export async function packageTheme(inputDirectory: string): Promise<ThemePackageResult> {
   const packageName = await getThemePackageName(inputDirectory)
 
-  const outputZipPath = `${inputDirectory}/${packageName}`
+  const outputZipPath = resolvePath(inputDirectory, packageName)
   const matchFilePattern = `${inputDirectory}/(${themeFilesPattern})`
 
   await zip({
