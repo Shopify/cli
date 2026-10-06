@@ -538,9 +538,6 @@
         "client-id": {
           "description": "The Client ID of your app. Required if non interactive.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
-          "exclusive": [
-            "config"
-          ],
           "hasDynamicHelp": false,
           "hidden": false,
           "multiple": false,

@@ -410,8 +410,8 @@ Fetch your app configuration from the Developer Dashboard.
 
 ```
 USAGE
-  $ shopify app config link [--auth-alias <value>] [--client-id <value> | -c <value>] [--force [--file-name <value> |
-    ]] [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
+  $ shopify app config link [--auth-alias <value>] [--client-id <value>] [--force [--file-name <value> | -c <value>]]
+    [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>

@@ -4,6 +4,7 @@ import link, {LinkOptions} from '../../../services/app/config/link.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export default class ConfigLink extends AppLinkedCommand {
   static summary = 'Fetch your app configuration from the Developer Dashboard.'
@@ -23,7 +24,14 @@ export default class ConfigLink extends AppLinkedCommand {
       env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
       exclusive: ['client-id'],
     }),
-    'client-id': requiredIfNonInteractive(appFlags['client-id']),
+    // Validate this conflict in run() so we can recommend --file-name.
+    'client-id': requiredIfNonInteractive(
+      Flags.string({
+        hidden: false,
+        description: 'The Client ID of your app.',
+        env: 'SHOPIFY_FLAG_CLIENT_ID',
+      }),
+    ),
     'file-name': Flags.string({
       hidden: false,
       description: 'The name of the app configuration file to create or overwrite.',
@@ -40,6 +48,13 @@ export default class ConfigLink extends AppLinkedCommand {
 
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(ConfigLink)
+
+    if (flags.config !== undefined && flags['client-id'] !== undefined) {
+      throw new AbortError(
+        "The --config and --client-id flags can't be used together.",
+        'Use --file-name instead of --config to choose the configuration file to create or overwrite.',
+      )
+    }
 
     const options: LinkOptions = {
       directory: flags.path,
