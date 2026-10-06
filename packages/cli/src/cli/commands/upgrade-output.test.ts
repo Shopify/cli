@@ -1,46 +1,34 @@
 import Upgrade from './upgrade.js'
-import {isDevelopment} from '@shopify/cli-kit/node/context/local'
+import * as localContext from '@shopify/cli-kit/node/context/local'
 import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI, getProjectDir} from '@shopify/cli-kit/node/is-global'
-import {exec} from '@shopify/cli-kit/node/system'
-import {globalCLIVersion} from '@shopify/cli-kit/node/version'
-import {
-  checkForCachedNewVersion,
-  checkForNewVersion,
-  addNPMDependencies,
-  getPackageManager,
-} from '@shopify/cli-kit/node/node-package-manager'
+import * as system from '@shopify/cli-kit/node/system'
+import * as version from '@shopify/cli-kit/node/version'
+import * as nodePackageManager from '@shopify/cli-kit/node/node-package-manager'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {ExternalError} from '@shopify/cli-kit/node/error'
 import {upgradeJsonOutputSchema} from '@shopify/cli-kit/node/upgrade/types'
 import {commandEventOutputSchema} from '@shopify/cli-kit/node/command-events'
-import {afterEach, expect, onTestFinished, test, vi} from 'vitest'
+import {beforeEach, afterEach, expect, onTestFinished, test, vi} from 'vitest'
 // Vitest intercepts console.warn; exercise the real stderr writer.
 // eslint-disable-next-line n/prefer-global/console
 import {Console} from 'node:console'
+// eslint-disable-next-line no-restricted-imports -- Verify native filesystem paths in JSON output.
+import {resolve} from 'node:path'
 import type {Writable} from 'node:stream'
 
-vi.mock('@shopify/cli-kit/node/context/local', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@shopify/cli-kit/node/context/local')>()),
-  isDevelopment: vi.fn(() => false),
-}))
 vi.mock('@shopify/cli-kit/node/is-global')
-vi.mock('@shopify/cli-kit/node/system', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@shopify/cli-kit/node/system')>()),
-  exec: vi.fn(),
-}))
-vi.mock('@shopify/cli-kit/node/version', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@shopify/cli-kit/node/version')>()),
-  globalCLIVersion: vi.fn(),
-}))
-vi.mock('@shopify/cli-kit/node/node-package-manager', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@shopify/cli-kit/node/node-package-manager')>()),
-  checkForCachedNewVersion: vi.fn(),
-  checkForNewVersion: vi.fn(),
-  addNPMDependencies: vi.fn(),
-  getPackageManager: vi.fn(),
-}))
+
+beforeEach(() => {
+  vi.spyOn(localContext, 'isDevelopment').mockReturnValue(false)
+  vi.spyOn(system, 'exec').mockResolvedValue(undefined)
+  vi.spyOn(version, 'globalCLIVersion').mockResolvedValue(undefined)
+  vi.spyOn(nodePackageManager, 'checkForCachedNewVersion').mockReturnValue(undefined)
+  vi.spyOn(nodePackageManager, 'checkForNewVersion').mockResolvedValue(undefined)
+  vi.spyOn(nodePackageManager, 'addNPMDependencies').mockResolvedValue(undefined)
+  vi.spyOn(nodePackageManager, 'getPackageManager').mockResolvedValue('npm')
+})
 
 function captureStreams() {
   const stdout: string[] = []
@@ -94,8 +82,8 @@ test.each([{argv: ['--json']}, {argv: ['--json', '--no-input']}])(
     const streams = captureStreams()
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
-    vi.mocked(globalCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
-    vi.mocked(exec).mockImplementation(async (_command, _args, options) => {
+    vi.mocked(version.globalCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
+    vi.mocked(system.exec).mockImplementation(async (_command, _args, options) => {
       expect(options?.stdin).toBe('inherit')
       ;(options?.stdout as Writable).write('installed packages\n')
       ;(options?.stderr as Writable).write('package manager warning\n')
@@ -137,11 +125,13 @@ test('writes one local JSON result and routes dependency installation output thr
     const streams = captureStreams()
     vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
     vi.mocked(getProjectDir).mockReturnValue(directory)
-    vi.mocked(checkForNewVersion).mockResolvedValue('4.9.0')
-    vi.mocked(getPackageManager).mockResolvedValue('npm')
-    vi.mocked(addNPMDependencies).mockImplementation(async (_dependencies, options) => {
+    vi.mocked(nodePackageManager.checkForNewVersion).mockResolvedValue('4.9.0')
+    vi.mocked(nodePackageManager.getPackageManager).mockResolvedValue('npm')
+    vi.mocked(nodePackageManager.addNPMDependencies).mockImplementation(async (_dependencies, options) => {
       options.stdout?.write('updated dependency\n')
       options.stderr?.write('dependency warning\n')
+      options.stdout?.write(Buffer.from([0xc3]))
+      options.stderr?.write(Buffer.from([0xf0, 0x9f]))
     })
 
     await Upgrade.run(['--json'], import.meta.url)
@@ -150,12 +140,12 @@ test('writes one local JSON result and routes dependency installation output thr
       status: 'success',
       changed: null,
       scope: 'local',
-      directory,
+      directory: resolve(directory),
       previousVersion: '4.0.0',
       availableVersion: '4.9.0',
       packages: ['@shopify/cli-kit'],
     })
-    expect(addNPMDependencies).toHaveBeenCalledWith(
+    expect(nodePackageManager.addNPMDependencies).toHaveBeenCalledWith(
       [{name: '@shopify/cli-kit', version: 'latest'}],
       expect.objectContaining({type: 'dev', directory}),
     )
@@ -170,12 +160,13 @@ test('writes one local JSON result and routes dependency installation output thr
         expect.objectContaining({type: 'diagnostic', message: 'dependency warning\n'}),
       ]),
     )
+    expect(events.filter((event) => event.type === 'diagnostic' && event.message === '�')).toHaveLength(2)
   })
 })
 
 test('keeps development skip guidance on stderr and returns its reason on stdout', async () => {
   const streams = captureStreams()
-  vi.mocked(isDevelopment).mockReturnValue(true)
+  vi.mocked(localContext.isDevelopment).mockReturnValue(true)
   vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
 
   await Upgrade.run(['--json'], import.meta.url)
@@ -185,7 +176,7 @@ test('keeps development skip guidance on stderr and returns its reason on stdout
     type: 'diagnostic',
     message: 'Skipping upgrade in development mode.',
   })
-  expect(exec).not.toHaveBeenCalled()
+  expect(system.exec).not.toHaveBeenCalled()
 })
 
 test.each(['install', 'verification'] as const)('preserves fatal JSON errors for %s failures', async (failure) => {
@@ -198,10 +189,10 @@ test.each(['install', 'verification'] as const)('preserves fatal JSON errors for
   onTestFinished(() => exitSpy.mockRestore())
   vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
   vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
-  vi.mocked(checkForCachedNewVersion).mockReturnValue(CLI_KIT_VERSION)
-  vi.mocked(globalCLIVersion).mockResolvedValue(undefined)
+  vi.mocked(nodePackageManager.checkForCachedNewVersion).mockReturnValue(CLI_KIT_VERSION)
+  vi.mocked(version.globalCLIVersion).mockResolvedValue(undefined)
   if (failure === 'install') {
-    vi.mocked(exec).mockRejectedValue(new ExternalError('install failed', 'npm', ['install']))
+    vi.mocked(system.exec).mockRejectedValue(new ExternalError('install failed', 'npm', ['install']))
   }
 
   await expect(Upgrade.run(['--json'], import.meta.url)).rejects.toThrow()

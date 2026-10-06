@@ -307,13 +307,20 @@ async function installJsonDependencies(
   const appUsesWorkspaces = await usesWorkspaces(directory)
 
   if (packagesToUpdate.length > 0) {
-    await addNPMDependencies(packagesToUpdate, {
-      packageManager: await getPackageManager(directory),
-      type: depsEnv,
-      directory,
-      ...upgradeOutputStreams(),
-      addToRootDirectory: appUsesWorkspaces,
-    })
+    const packageManager = await getPackageManager(directory)
+    const streams = upgradeOutputStreams()
+    try {
+      await addNPMDependencies(packagesToUpdate, {
+        packageManager,
+        type: depsEnv,
+        directory,
+        ...streams,
+        addToRootDirectory: appUsesWorkspaces,
+      })
+    } finally {
+      if (streams.stdout !== process.stdout) streams.stdout.end()
+      if (streams.stderr !== process.stderr) streams.stderr.end()
+    }
   }
   return packagesToUpdate.map(({name}) => name)
 }

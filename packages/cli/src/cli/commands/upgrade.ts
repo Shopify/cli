@@ -9,13 +9,13 @@ export default class Upgrade extends Command {
 
   static descriptionWithMarkdown = 'Upgrades Shopify CLI using your package manager.'
 
-  static description = this.descriptionForHelp()
-
-  static flags = {...globalFlags, ...jsonFlag}
-
   static get jsonOutputSchema() {
     return upgradeJsonOutputSchema
   }
+
+  static description = this.descriptionForHelp()
+
+  static flags = {...globalFlags, ...jsonFlag}
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Upgrade)
