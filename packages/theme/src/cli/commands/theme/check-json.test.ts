@@ -149,17 +149,23 @@ class LifecycleCheck extends Check {
   }
 }
 
-test('uses the standard JSON error envelope for incompatible legacy JSON output flags', async () => {
-  const config = await configuration()
-  vi.spyOn(Check.prototype as unknown as {init(): Promise<unknown>}, 'init').mockResolvedValue(undefined)
-  vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
-  await withCapturedStandardStreams(async ({stdout}) => {
-    await new LifecycleCheck(['--output=json', '--version'], config).execute()
-    expect(JSON.parse(stdout())).toEqual({error: expect.objectContaining({type: 'abort', message: expect.any(String)})})
-  })
-  expect(process.exit).toHaveBeenCalledWith(2)
-  expect(themeCheckRun).not.toHaveBeenCalled()
-})
+test.each([['--output=json'], ['-o', 'json']])(
+  'uses the standard JSON error envelope with an outer text context for %j',
+  async (...flags) => {
+    const config = await configuration()
+    vi.spyOn(Check.prototype as unknown as {init(): Promise<unknown>}, 'init').mockResolvedValue(undefined)
+    vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
+    await withCapturedStandardStreams(async ({stdout}) => {
+      const argv = [...flags, '--version']
+      await runWithCommandEventsForCommand(argv, () => new LifecycleCheck(argv, config).execute())
+      expect(JSON.parse(stdout())).toEqual({
+        error: expect.objectContaining({type: 'abort', message: expect.any(String)}),
+      })
+    })
+    expect(process.exit).toHaveBeenCalledWith(2)
+    expect(themeCheckRun).not.toHaveBeenCalled()
+  },
+)
 
 test('does not write a validation result before a requested correction fails', async () => {
   const checkService = await import('../../services/check.js')
