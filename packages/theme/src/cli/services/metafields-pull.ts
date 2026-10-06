@@ -5,7 +5,7 @@ import {ensureThemeStore} from '../utilities/theme-store.js'
 import {ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {hasRequiredThemeDirectories} from '../utilities/theme-fs.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {cwd, joinPath} from '@shopify/cli-kit/node/path'
+import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {metafieldDefinitionsByOwnerType} from '@shopify/cli-kit/node/themes/api'
 import {writeFileSync} from '@shopify/cli-kit/node/fs'
 import {getOrCreateHiddenShopifyFolder} from '@shopify/cli-kit/node/hidden-folder'
@@ -70,7 +70,7 @@ export async function downloadMetafieldDefinitions(flags: MetafieldsPullFlags): 
   const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
   return executeMetafieldsPull(adminSession, {
-    path: flags.path ?? cwd(),
+    path: resolvePath(flags.path ?? cwd()),
     force: flags.force ?? false,
   })
 }
