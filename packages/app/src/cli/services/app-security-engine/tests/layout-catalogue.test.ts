@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-imports -- layouts are real temporary repositories and directories */
 import {git, isolateGitConfig} from './git-test-helpers.js'
-import securityCheck from '../../security-check.js'
+import securityCheck, {resolveSecurityCheckSelection} from '../../security-check.js'
+import {renderSecurityCheckResult} from '../../security-output.js'
 import {mergeScanDirectories, resolveIncludeDirectories} from '../../app-security-selection.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {unstyled} from '@shopify/cli-kit/node/output'
@@ -93,14 +94,14 @@ async function inLayout(layout: Layout, run: (temporaryDirectory: string) => Pro
   }
 }
 
-/** Runs `check --list-files` from `workingDirectory` (relative to `T`), the way the command calls the service. */
+/** Runs `check --list-files` from `workingDirectory` (relative to `T`), the way the command calls the services. */
 async function checkListFiles(temporaryDirectory: string, workingDirectory: string, flags: CheckFlags = {}) {
   const absoluteWorkingDirectory = resolve(temporaryDirectory, workingDirectory)
   vi.stubEnv('INIT_CWD', absoluteWorkingDirectory)
   const directory = resolve(absoluteWorkingDirectory, flags.path ?? '.')
 
   return withCapturedStandardStreams(async ({stdout, stderr}) => {
-    const resolution = await securityCheck({
+    const resolution = await resolveSecurityCheckSelection({
       directory,
       configName: flags.config,
       clientId: flags.clientId,
@@ -108,12 +109,16 @@ async function checkListFiles(temporaryDirectory: string, workingDirectory: stri
       includeDirs: flags.includeDirs ?? [],
       excludePatterns: flags.excludes ?? [],
       noGitIgnore: flags.noGitIgnore ?? false,
-      listFiles: true,
-      json: flags.json ?? false,
+      allowPrompts: false,
+    })
+    const result = await securityCheck(resolution, {listFiles: true})
+    await renderSecurityCheckResult(result, {
+      format: flags.json ? 'json' : 'text',
       verbose: false,
       blocking: 'none',
       yes: false,
       skipInstructions: false,
+      canPrompt: false,
     })
     return {resolution, stdout: stdout(), stderr: stderr()}
   })

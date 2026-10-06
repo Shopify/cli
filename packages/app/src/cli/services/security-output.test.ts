@@ -1,10 +1,26 @@
-import {buildSecurityAlert} from './security-output.js'
+import {
+  appSecurityInstructionsPrompt,
+  buildSecurityAlert,
+  renderSecurityCheckPromptsNotice,
+  renderSecurityCheckResult,
+} from './security-output.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
+import {appSecurityInstructions} from './app-security-instructions.js'
+import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
+import {unstyled} from '@shopify/cli-kit/node/output'
 import {cwd, joinPath} from '@shopify/cli-kit/node/path'
-import {describe, expect, test} from 'vitest'
-import type {SecurityReportInput} from './security-output.js'
+import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {afterEach, describe, expect, test, vi} from 'vitest'
+import type {AppSecurityInstructionsDestination, SecurityReportInput} from './security-output.js'
+import type {AppSecurityExecution} from './app-security-api.js'
+import type {SecurityCheckResolution, SecurityCheckResult} from './security-check.js'
 import type {AppSecuritySelection} from './app-security-selection.js'
-import type {ScanResult} from './app-security-engine/index.js'
+import type {
+  AgentChecks,
+  AppSecurityScope,
+  DeterministicFindingsDocument,
+  ScanResult,
+} from './app-security-engine/index.js'
 
 const appSelection: AppSecuritySelection = {
   kind: 'config',
@@ -437,5 +453,432 @@ describe('buildSecurityAlert', () => {
 
     expect(serialized).toContain('[REDACTED: Shopify token]')
     expect(serialized).not.toContain('shpat_')
+  })
+})
+
+const deterministicFindings: DeterministicFindingsDocument = {
+  schema_version: 1,
+  source: 'deterministic',
+  engine: {name: 'shopify-app-security', version: '1.2.3', ruleset: '2026.08.28'},
+  generated_at: '2026-08-24T00:00:00.000Z',
+  detection: scanWithIssues.detection,
+  coverage: {
+    files_scanned: 12,
+    files_skipped: [],
+    gaps: [],
+    scope: {include_dirs: [], excludes: [], no_git_ignore: false},
+    scan_directories: [{directory: '.', origin: 'app_directory'}],
+  },
+  checks: [],
+}
+
+const agentChecks: AgentChecks = {
+  schema_version: 1,
+  engine: {name: 'shopify-app-security', version: '1.2.3'},
+  generated_at: '2026-08-24T00:00:00.000Z',
+  checks: Array.from({length: 31}, (_, index) => ({
+    id: `CHECK_${index}`,
+    version: 1,
+    prompt: 'prompt',
+    severity: 'medium' as const,
+    docs_url: `https://shopify.dev/docs/apps/build/security/app-security-checks/check-${index}`,
+  })),
+  instructions: 'review',
+}
+
+const cleanExecution: AppSecurityExecution = {
+  scan: {...scanWithIssues, issues: []},
+  ignoredScanDirectories: [],
+  deterministicFindings,
+  agentChecks,
+  engine,
+  elapsedMilliseconds: 125,
+}
+
+const checkArtifacts = {
+  deterministicFindingsPath: '/tmp/app/.shopify/app-security/shopify.app/deterministic-findings.json',
+  agentChecksPath: '/tmp/app/.shopify/app-security/shopify.app/agent-checks.json',
+}
+
+const noScope: AppSecurityScope = {include_dirs: [], excludes: [], no_git_ignore: false}
+
+function checkResolution(scope: AppSecurityScope = noScope): SecurityCheckResolution {
+  return {
+    selection: appSelection,
+    resultsKey: 'shopify.app',
+    commands: resolveAppSecurityCommands(appSelection, cwd(), scope),
+    scope,
+    includeDirectories: [],
+    prompted: false,
+  }
+}
+
+function scanResult(
+  overrides: {execution?: AppSecurityExecution; resolution?: SecurityCheckResolution} = {},
+): SecurityCheckResult {
+  return {
+    kind: 'scan',
+    resolution: overrides.resolution ?? checkResolution(),
+    scanDirectories: [{directory: '/tmp/app', origin: 'app_directory'}],
+    execution: overrides.execution ?? cleanExecution,
+    artifacts: checkArtifacts,
+  }
+}
+
+function fileListResult(paths: string[], ignoredScanDirectories: string[] = []): SecurityCheckResult {
+  return {kind: 'file-list', resolution: checkResolution(), paths, ignoredScanDirectories}
+}
+
+/** The instructions `check` offers after a scan of `checkResolution(scope)`. */
+function postScanInstructions(scope: AppSecurityScope = noScope): string {
+  const {selection, resultsKey, commands} = checkResolution(scope)
+  return appSecurityInstructions({appDirectory: selection.appDirectory, resultsKey, commands, scanScope: scope})
+}
+
+function renderOptions(overrides: Partial<Parameters<typeof renderSecurityCheckResult>[1]> = {}) {
+  return {
+    format: 'text' as const,
+    verbose: false,
+    blocking: 'none' as const,
+    yes: false,
+    skipInstructions: false,
+    canPrompt: false,
+    ...overrides,
+  }
+}
+
+function renderDependencies(destination: AppSecurityInstructionsDestination = 'nothing') {
+  return {
+    selectInstructionsDestination: vi.fn(async (_agentCheckCount: number) => destination),
+    deliverInstructions: vi.fn(async (_content: string, _delivery: {copy: boolean}) => {}),
+    setExitCode: vi.fn(),
+  }
+}
+
+interface CapturedStreams {
+  stdout(): string
+  stderr(): string
+}
+
+/** Runs `render` as a command in `format` would, with the real output writers, and captures both streams. */
+async function captureOutput(format: 'json' | 'text', render: (streams: CapturedStreams) => Promise<void> | void) {
+  return withCapturedStandardStreams(async (streams) => {
+    await runWithCommandEventsForCommand(format === 'json' ? ['--json'] : [], () => render(streams))
+    return {stdout: streams.stdout(), stderr: streams.stderr()}
+  })
+}
+
+function renderCheck(
+  result: SecurityCheckResult,
+  options: ReturnType<typeof renderOptions>,
+  dependencies: ReturnType<typeof renderDependencies>,
+) {
+  return captureOutput(options.format, () => renderSecurityCheckResult(result, options, dependencies))
+}
+
+/** Every line on stderr parsed as a side event: in JSON mode nothing else may be written there. */
+function sideEvents(stderr: string): unknown[] {
+  return stderr
+    .split('\n')
+    .filter((line) => line !== '')
+    .map((line) => JSON.parse(line))
+}
+
+/** Banner text with its styling and frame removed, so a wrapped line reads as one sentence. */
+function bannerText(stderr: string): string {
+  return unstyled(stderr)
+    .replaceAll(/[│╭╮╰╯─]/g, ' ')
+    .replaceAll(/\s+/g, ' ')
+}
+
+describe('renderSecurityCheckResult', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test('prints one JSON document on stdout with the instructions --yes chose, and nothing on stderr', async () => {
+    const dependencies = renderDependencies()
+
+    const {stdout, stderr} = await renderCheck(scanResult(), renderOptions({format: 'json', yes: true}), dependencies)
+
+    expect(JSON.parse(stdout)).toEqual({
+      selection: {
+        directory: '/tmp/app',
+        configPath: '/tmp/app/shopify.app.toml',
+        clientId: 'toml-client-id',
+        clientIdSource: 'config',
+        scanDirectories: [{directory: '/tmp/app', origin: 'app-directory'}],
+      },
+      deterministicFindings,
+      agentChecksPath: checkArtifacts.agentChecksPath,
+      instructions: {content: postScanInstructions(), copiedToClipboard: false, path: null},
+    })
+    expect(stderr).toBe('')
+    expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
+    expect(dependencies.deliverInstructions).toHaveBeenCalledWith(postScanInstructions(), {copy: false})
+  })
+
+  test('asks for the instructions before printing the JSON result, and puts the copied instructions in it', async () => {
+    const dependencies = renderDependencies()
+    let stdoutWhenAsked: string | undefined
+
+    const {stdout} = await captureOutput('json', async (streams) => {
+      dependencies.selectInstructionsDestination.mockImplementation(async () => {
+        stdoutWhenAsked = streams.stdout()
+        return 'copy'
+      })
+      await renderSecurityCheckResult(scanResult(), renderOptions({format: 'json', canPrompt: true}), dependencies)
+    })
+
+    expect(stdoutWhenAsked).toBe('')
+    expect(dependencies.selectInstructionsDestination).toHaveBeenCalledWith(31)
+    expect(dependencies.deliverInstructions).toHaveBeenCalledWith(postScanInstructions(), {copy: true})
+    expect(JSON.parse(stdout).instructions).toEqual({
+      content: postScanInstructions(),
+      copiedToClipboard: true,
+      path: null,
+    })
+  })
+
+  test.each([
+    ['no instructions are chosen', {canPrompt: true, skipInstructions: false}],
+    ['--skip-instructions is passed', {canPrompt: true, skipInstructions: true}],
+    ['the terminal is not interactive', {canPrompt: false, skipInstructions: false}],
+  ])('puts null instructions in the JSON result when %s', async (_, {canPrompt, skipInstructions}) => {
+    const dependencies = renderDependencies('nothing')
+
+    const {stdout} = await renderCheck(
+      scanResult(),
+      renderOptions({format: 'json', canPrompt, skipInstructions}),
+      dependencies,
+    )
+
+    expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
+    expect(JSON.parse(stdout).instructions).toBeNull()
+  })
+
+  test('renders the report on stderr, then offers the instructions and prints the chosen ones on stdout', async () => {
+    const dependencies = renderDependencies()
+    let stderrWhenAsked: string | undefined
+
+    const {stdout, stderr} = await captureOutput('text', async (streams) => {
+      dependencies.selectInstructionsDestination.mockImplementation(async () => {
+        stderrWhenAsked = streams.stderr()
+        return 'print'
+      })
+      await renderSecurityCheckResult(scanResult(), renderOptions({canPrompt: true}), dependencies)
+    })
+
+    expect(bannerText(stderrWhenAsked ?? '')).toContain('No security issues found.')
+    expect(bannerText(stderr)).toContain(
+      'Agent security check instructions: .shopify/app-security/shopify.app/agent-checks.json',
+    )
+    expect(dependencies.deliverInstructions).toHaveBeenCalledWith(postScanInstructions(), {copy: false})
+    expect(stdout).toBe(`${postScanInstructions()}\n`)
+  })
+
+  test('confirms copied instructions without printing them', async () => {
+    const dependencies = renderDependencies('copy')
+
+    const {stdout, stderr} = await renderCheck(scanResult(), renderOptions({canPrompt: true}), dependencies)
+
+    expect(dependencies.deliverInstructions).toHaveBeenCalledWith(postScanInstructions(), {copy: true})
+    expect(bannerText(stderr)).toContain('Copied app security check instructions to the clipboard')
+    expect(stdout).toBe('')
+  })
+
+  test('--yes prints the instructions without prompting, including in CI', async () => {
+    const dependencies = renderDependencies()
+
+    const {stdout} = await renderCheck(scanResult(), renderOptions({yes: true}), dependencies)
+
+    expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
+    expect(stdout).toBe(`${postScanInstructions()}\n`)
+  })
+
+  test.each([
+    ['in CI or another non-interactive environment', {canPrompt: false, skipInstructions: false}],
+    ['with --skip-instructions', {canPrompt: true, skipInstructions: true}],
+  ])('does not offer the instructions %s', async (_, {canPrompt, skipInstructions}) => {
+    const dependencies = renderDependencies('print')
+
+    const {stdout} = await renderCheck(scanResult(), renderOptions({canPrompt, skipInstructions}), dependencies)
+
+    expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
+    expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
+    expect(stdout).toBe('')
+  })
+
+  test('builds the instructions from the exact scope and the commands of the run', async () => {
+    const scope = {include_dirs: ['backend', './backend/'], excludes: ['**/generated', '!keep'], no_git_ignore: true}
+
+    const {stdout} = await renderCheck(
+      scanResult({resolution: checkResolution(scope)}),
+      renderOptions({format: 'json', yes: true}),
+      renderDependencies(),
+    )
+
+    const {content} = JSON.parse(stdout).instructions
+    expect(content).toBe(postScanInstructions(scope))
+    expect(content).toContain(JSON.stringify(scope))
+  })
+
+  test('warns once for each scan directory that Git ignores, relative to the working directory', async () => {
+    vi.stubEnv('INIT_CWD', '/tmp')
+
+    const {stderr} = await renderCheck(
+      scanResult({execution: {...cleanExecution, ignoredScanDirectories: ['/tmp/app', '/tmp']}}),
+      renderOptions(),
+      renderDependencies(),
+    )
+
+    const text = bannerText(stderr)
+    expect(text.match(/is ignored by Git/g)).toHaveLength(2)
+    expect(text).toContain('app is ignored by Git, so only the files Git tracks in it are scanned.')
+    expect(text).toContain('. is ignored by Git, so only the files Git tracks in it are scanned.')
+  })
+
+  test('warns about an ignored scan directory as a diagnostic event with --json, keeping stdout one document', async () => {
+    vi.stubEnv('INIT_CWD', '/tmp')
+
+    const {stdout, stderr} = await renderCheck(
+      scanResult({execution: {...cleanExecution, ignoredScanDirectories: ['/tmp/app']}}),
+      renderOptions({format: 'json'}),
+      renderDependencies(),
+    )
+
+    expect(sideEvents(stderr)).toEqual([
+      expect.objectContaining({
+        type: 'diagnostic',
+        level: 'warning',
+        message:
+          'app is ignored by Git, so only the files Git tracks in it are scanned. Use --no-git-ignore to scan everything in it.',
+      }),
+    ])
+    expect(JSON.parse(stdout)).toHaveProperty('agentChecksPath')
+  })
+
+  test.each(['text', 'json'] as const)('sets a blocking exit code from the findings (%s)', async (format) => {
+    const dependencies = renderDependencies()
+
+    await renderCheck(
+      scanResult({execution: {...cleanExecution, scan: scanWithIssues}}),
+      renderOptions({format, blocking: 'high'}),
+      dependencies,
+    )
+
+    expect(dependencies.setExitCode).toHaveBeenCalledWith(1)
+  })
+
+  test('keeps the default exit code when no finding reaches the blocking level', async () => {
+    const dependencies = renderDependencies()
+
+    await renderCheck(scanResult(), renderOptions({blocking: 'low'}), dependencies)
+
+    expect(dependencies.setExitCode).not.toHaveBeenCalled()
+  })
+})
+
+describe('renderSecurityCheckResult --list-files', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test('prints each gathered path on its own line, relative to the app directory, and nothing else', async () => {
+    const dependencies = renderDependencies('print')
+
+    const {stdout, stderr} = await renderCheck(
+      fileListResult(['../backend/server.ts', 'app/routes/index.ts', 'shopify.app.toml']),
+      renderOptions({canPrompt: true}),
+      dependencies,
+    )
+
+    expect(stdout).toBe('../backend/server.ts\napp/routes/index.ts\nshopify.app.toml\n')
+    expect(stderr).toBe('')
+    expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
+    expect(dependencies.setExitCode).not.toHaveBeenCalled()
+  })
+
+  test('prints the absolute paths as one JSON document with --json', async () => {
+    const {stdout, stderr} = await renderCheck(
+      fileListResult(['../backend/server.ts', 'shopify.app.toml']),
+      renderOptions({format: 'json'}),
+      renderDependencies(),
+    )
+
+    expect(JSON.parse(stdout)).toEqual({files: ['/tmp/backend/server.ts', joinPath('/tmp/app', 'shopify.app.toml')]})
+    expect(stderr).toBe('')
+  })
+
+  test.each([
+    ['text', ''],
+    ['json', '{\n  "files": []\n}\n'],
+  ] as const)('prints nothing for no gathered file, and an empty list with --json (%s)', async (format, expected) => {
+    const {stdout} = await renderCheck(fileListResult([]), renderOptions({format}), renderDependencies())
+
+    expect(stdout).toBe(expected)
+  })
+
+  test.each(['text', 'json'] as const)('warns about an ignored scan directory (%s)', async (format) => {
+    vi.stubEnv('INIT_CWD', '/tmp')
+
+    const {stderr} = await renderCheck(
+      fileListResult(['shopify.app.toml'], ['/tmp/app']),
+      renderOptions({format}),
+      renderDependencies(),
+    )
+
+    if (format === 'json') {
+      expect(sideEvents(stderr)).toEqual([expect.objectContaining({type: 'diagnostic', level: 'warning'})])
+    } else {
+      expect(bannerText(stderr)).toContain('app is ignored by Git, so only the files Git tracks in it are scanned.')
+    }
+  })
+})
+
+describe('renderSecurityCheckPromptsNotice', () => {
+  const commands = checkResolution().commands
+
+  test('shows the command that skips the prompts in a banner', async () => {
+    const {stdout, stderr} = await captureOutput('text', () => renderSecurityCheckPromptsNotice(commands, 'text'))
+
+    expect(bannerText(stderr)).toContain(
+      `To skip these prompts next time, run: \`${formatAppSecurityCommand(commands.scan)}\``,
+    )
+    expect(stdout).toBe('')
+  })
+
+  test('shows the command that skips the prompts as a diagnostic event with --json', async () => {
+    const {stdout, stderr} = await captureOutput('json', () => renderSecurityCheckPromptsNotice(commands, 'json'))
+
+    expect(sideEvents(stderr)).toEqual([
+      expect.objectContaining({
+        type: 'diagnostic',
+        level: 'info',
+        message: `To skip these prompts next time, run: ${formatAppSecurityCommand(commands.scan)}`,
+      }),
+    ])
+    expect(stdout).toBe('')
+  })
+})
+
+describe('appSecurityInstructionsPrompt', () => {
+  test('prioritizes copying instructions for the recommended agent checks', () => {
+    expect(appSecurityInstructionsPrompt(31)).toEqual({
+      message:
+        '31 recommended agent checks available to complete your scan. How do you want to pass that prompt to your agent?',
+      choices: [
+        {label: 'Copy instructions to the clipboard', value: 'copy'},
+        {label: 'Print instructions to the terminal', value: 'print'},
+        {label: 'Nothing', value: 'nothing'},
+      ],
+      defaultValue: 'copy',
+    })
+  })
+
+  test('names a single recommended agent check in the singular', () => {
+    expect(appSecurityInstructionsPrompt(1).message).toBe(
+      '1 recommended agent check available to complete your scan. How do you want to pass that prompt to your agent?',
+    )
   })
 })

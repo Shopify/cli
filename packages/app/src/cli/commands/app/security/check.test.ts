@@ -1,15 +1,38 @@
 import SecurityCheck from './check.js'
 import {appFlags} from '../../../flags.js'
-import securityCheck from '../../../services/security-check.js'
+import securityCheck, {resolveSecurityCheckSelection} from '../../../services/security-check.js'
 import {securityCheckJsonOutputSchema} from '../../../services/security-check-json.js'
+import {renderSecurityCheckPromptsNotice, renderSecurityCheckResult} from '../../../services/security-output.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {resolvePath} from '@shopify/cli-kit/node/path'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 
-vi.mock('../../../services/security-check.js')
+vi.mock('../../../services/security-check.js', () => ({
+  resolveSecurityCheckSelection: vi.fn(async () => ({prompted: false, commands: {}})),
+  default: vi.fn(async (resolution: unknown) => ({
+    kind: 'file-list',
+    resolution,
+    paths: [],
+    ignoredScanDirectories: [],
+  })),
+}))
+vi.mock('../../../services/security-output.js')
+vi.mock('@shopify/cli-kit/node/system', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/system')>()),
+  terminalSupportsPrompting: vi.fn(() => false),
+}))
+
+function selectionOptions() {
+  return vi.mocked(resolveSecurityCheckSelection).mock.calls[0]![0]
+}
+
+function renderOptions() {
+  return vi.mocked(renderSecurityCheckResult).mock.calls[0]![1]
+}
 
 describe('app security check command', () => {
   test('is hidden and does not require linked app context', () => {
@@ -46,20 +69,26 @@ describe('app security check command', () => {
       import.meta.url,
     )
 
-    expect(securityCheck).toHaveBeenCalledWith({
+    expect(selectionOptions()).toEqual({
       directory: resolvePath('./fixtures/unlinked-app'),
       configName: undefined,
       clientId: undefined,
       withoutAppConfig: false,
-      json: true,
+      includeDirs: [],
+      excludePatterns: [],
+      noGitIgnore: false,
+      allowPrompts: false,
+    })
+    const resolution = await vi.mocked(resolveSecurityCheckSelection).mock.results[0]!.value
+    expect(securityCheck).toHaveBeenCalledWith(resolution, {listFiles: false})
+    const result = await vi.mocked(securityCheck).mock.results[0]!.value
+    expect(renderSecurityCheckResult).toHaveBeenCalledWith(result, {
+      format: 'json',
       verbose: true,
       blocking: 'high',
       yes: false,
       skipInstructions: true,
-      includeDirs: [],
-      excludePatterns: [],
-      noGitIgnore: false,
-      listFiles: false,
+      canPrompt: false,
     })
   })
 
@@ -69,9 +98,8 @@ describe('app security check command', () => {
       import.meta.url,
     )
 
-    expect(securityCheck).toHaveBeenCalledWith(
-      expect.objectContaining({excludePatterns: ['generated', '../shared/**', 'a b/'], skipInstructions: true}),
-    )
+    expect(selectionOptions()).toMatchObject({excludePatterns: ['generated', '../shared/**', 'a b/']})
+    expect(renderOptions()).toMatchObject({skipInstructions: true})
   })
 
   test('forwards repeated --include-dir values exactly as typed, without resolving them', async () => {
@@ -80,15 +108,13 @@ describe('app security check command', () => {
       import.meta.url,
     )
 
-    expect(securityCheck).toHaveBeenCalledWith(
-      expect.objectContaining({includeDirs: ['../backend', './lib/', 'a b'], skipInstructions: true}),
-    )
+    expect(selectionOptions()).toMatchObject({includeDirs: ['../backend', './lib/', 'a b']})
   })
 
   test('forwards --no-git-ignore', async () => {
     await SecurityCheck.run(['--no-git-ignore', '--skip-instructions'], import.meta.url)
 
-    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({noGitIgnore: true, skipInstructions: true}))
+    expect(selectionOptions()).toMatchObject({noGitIgnore: true})
   })
 
   test('reads --include-dir and --exclude only from the command line', () => {
@@ -101,7 +127,8 @@ describe('app security check command', () => {
   test('forwards --list-files, which is also set by its environment variable', async () => {
     await SecurityCheck.run(['--list-files', '--json'], import.meta.url)
 
-    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({listFiles: true, json: true}))
+    expect(securityCheck).toHaveBeenCalledWith(expect.anything(), {listFiles: true})
+    expect(renderOptions()).toMatchObject({format: 'json'})
     expect(SecurityCheck.flags['list-files'].env).toBe('SHOPIFY_FLAG_LIST_FILES')
   })
 
@@ -121,29 +148,30 @@ describe('app security check command', () => {
   test('forwards --yes without requiring an app configuration', async () => {
     await SecurityCheck.run(['--path', '/tmp/directory-without-shopify-toml', '--yes'], import.meta.url)
 
-    expect(securityCheck).toHaveBeenCalledWith({
+    expect(selectionOptions()).toEqual({
       directory: '/tmp/directory-without-shopify-toml',
       configName: undefined,
       clientId: undefined,
       withoutAppConfig: false,
-      json: false,
+      includeDirs: [],
+      excludePatterns: [],
+      noGitIgnore: false,
+      allowPrompts: false,
+    })
+    expect(renderOptions()).toEqual({
+      format: 'text',
       verbose: false,
       blocking: 'none',
       yes: true,
       skipInstructions: false,
-      includeDirs: [],
-      excludePatterns: [],
-      noGitIgnore: false,
-      listFiles: false,
+      canPrompt: false,
     })
   })
 
   test('forwards --client-id and --without-app-config', async () => {
     await SecurityCheck.run(['--without-app-config', '--client-id', 'abc123', '--skip-instructions'], import.meta.url)
 
-    expect(securityCheck).toHaveBeenCalledWith(
-      expect.objectContaining({clientId: 'abc123', withoutAppConfig: true, skipInstructions: true}),
-    )
+    expect(selectionOptions()).toMatchObject({clientId: 'abc123', withoutAppConfig: true})
   })
 
   test.each([
@@ -159,7 +187,7 @@ describe('app security check command', () => {
         'process.exit unexpectedly called with "1"',
       )
       expect(outputMock.error()).toContain(expectedFlag)
-      expect(securityCheck).not.toHaveBeenCalled()
+      expect(resolveSecurityCheckSelection).not.toHaveBeenCalled()
     } finally {
       consoleErrorSpy.mockRestore()
       outputMock.clear()
@@ -172,7 +200,7 @@ describe('app security check command', () => {
       import.meta.url,
     )
 
-    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({configName: 'staging', skipInstructions: true}))
+    expect(selectionOptions()).toMatchObject({configName: 'staging'})
   })
 
   test.each(['--findings', '--clean'])('rejects the removed %s flag', async (removedFlag) => {
@@ -221,7 +249,51 @@ describe('app security check command', () => {
   test('allows --yes in JSON mode', async () => {
     await SecurityCheck.run(['--json', '--yes'], import.meta.url)
 
-    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({json: true, yes: true}))
+    expect(renderOptions()).toMatchObject({format: 'json', yes: true})
+  })
+
+  test.each([[[]], [['--json']]])(
+    'lets the selection and the instructions prompt in an interactive terminal (%j)',
+    async (flags) => {
+      vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+
+      await SecurityCheck.run(flags, import.meta.url)
+
+      expect(selectionOptions()).toMatchObject({allowPrompts: true})
+      expect(renderOptions()).toMatchObject({canPrompt: true})
+    },
+  )
+
+  test('never prompts with --list-files, even in an interactive terminal', async () => {
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+
+    await SecurityCheck.run(['--list-files'], import.meta.url)
+
+    expect(selectionOptions()).toMatchObject({allowPrompts: false})
+    expect(renderOptions()).toMatchObject({canPrompt: false})
+  })
+
+  test.each([
+    ['text', []],
+    ['json', ['--json']],
+  ])('shows how to skip the prompts after a selection that prompted, before scanning (%s)', async (format, flags) => {
+    const commands = {scan: {args: ['app', 'security', 'check']}}
+    vi.mocked(resolveSecurityCheckSelection).mockResolvedValueOnce({prompted: true, commands} as unknown as Awaited<
+      ReturnType<typeof resolveSecurityCheckSelection>
+    >)
+
+    await SecurityCheck.run(flags, import.meta.url)
+
+    expect(renderSecurityCheckPromptsNotice).toHaveBeenCalledWith(commands, format)
+    expect(vi.mocked(renderSecurityCheckPromptsNotice).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(securityCheck).mock.invocationCallOrder[0]!,
+    )
+  })
+
+  test('does not show how to skip prompts that were not shown', async () => {
+    await SecurityCheck.run([], import.meta.url)
+
+    expect(renderSecurityCheckPromptsNotice).not.toHaveBeenCalled()
   })
 
   test('exposes its JSON result schema', () => {

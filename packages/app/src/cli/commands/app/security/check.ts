@@ -1,10 +1,12 @@
 import {appSecurityBlockingFlag} from './blocking-flag.js'
 import {appSecuritySelectionFlags} from './selection-flags.js'
-import securityCheck from '../../../services/security-check.js'
+import securityCheck, {resolveSecurityCheckSelection} from '../../../services/security-check.js'
 import {securityCheckJsonOutputSchema} from '../../../services/security-check-json.js'
+import {renderSecurityCheckPromptsNotice, renderSecurityCheckResult} from '../../../services/security-output.js'
 import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 
 export default class SecurityCheck extends BaseCommand {
   static hidden = true
@@ -78,21 +80,30 @@ The command can also ask which app configuration to scan, or offer to scan witho
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(SecurityCheck)
+    const format = flags.json ? 'json' : 'text'
+    const listFiles = Boolean(flags['list-files'])
+    const canPrompt = !listFiles && terminalSupportsPrompting()
 
-    await securityCheck({
+    const resolution = await resolveSecurityCheckSelection({
       directory: flags.path,
       configName: flags.config,
       clientId: flags['client-id'],
       withoutAppConfig: Boolean(flags['without-app-config']),
-      json: flags.json,
+      includeDirs: flags['include-dir'] ?? [],
+      excludePatterns: flags.exclude ?? [],
+      noGitIgnore: Boolean(flags['no-git-ignore']),
+      allowPrompts: canPrompt,
+    })
+    if (resolution.prompted) renderSecurityCheckPromptsNotice(resolution.commands, format)
+
+    const result = await securityCheck(resolution, {listFiles})
+    await renderSecurityCheckResult(result, {
+      format,
       verbose: Boolean(flags.verbose),
       blocking: flags.blocking,
       yes: flags.yes,
       skipInstructions: flags['skip-instructions'],
-      includeDirs: flags['include-dir'] ?? [],
-      excludePatterns: flags.exclude ?? [],
-      noGitIgnore: Boolean(flags['no-git-ignore']),
-      listFiles: Boolean(flags['list-files']),
+      canPrompt,
     })
   }
 }
