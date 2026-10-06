@@ -62,9 +62,11 @@ export default class Open extends ThemeCommand {
     return [{flags: ['theme', 'development', 'live']}]
   }
 
-  async command(flags: OpenFlags, adminSession: AdminSession) {
+  async command(flags: OpenFlags, adminSession: AdminSession, multiEnvironment = false) {
     const result = await open(adminSession, flags)
-    renderThemeOpenResult(result, flags.json ? 'json' : 'text')
+    if (!flags.json) renderThemeOpenResult(result, 'text')
     await openURL(flags.editor ? result.editor_url : result.preview_url)
+    if (flags.json && !multiEnvironment) renderThemeOpenResult(result, 'json')
+    return result
   }
 }
