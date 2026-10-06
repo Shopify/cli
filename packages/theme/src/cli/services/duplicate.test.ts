@@ -13,7 +13,10 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/output')>()),
+  outputResult: vi.fn(),
+}))
 vi.mock('../utilities/theme-selector.js')
 vi.mock('../utilities/theme-ui.js')
 
@@ -258,17 +261,10 @@ describe('duplicate', () => {
     })
 
     // When
-    await duplicate(session, '1', {...options, json: true})
-
-    // Then
-    expect(outputResult).toHaveBeenCalledWith(
-      JSON.stringify({
-        status: 'failed',
-        message: `The theme '${theme.name}' unexpectedly could not be duplicated `,
-        errors: [],
-        requestId: '12345-abcde-67890',
-      }),
+    await expect(duplicate(session, '1', {...options, json: true})).rejects.toThrow(
+      `The theme '${theme.name}' unexpectedly could not be duplicated`,
     )
+    expect(outputResult).not.toHaveBeenCalled()
   })
 })
 

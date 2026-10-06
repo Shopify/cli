@@ -2,18 +2,28 @@ import {themeDuplicateJsonOutputSchema, type ThemeDuplicateResult, type ThemeDup
 import {themeComponent} from '../../utilities/theme-ui.js'
 import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {outputResult} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
+
+export function themeDuplicateJsonResult(result: ThemeDuplicateResult) {
+  if (result.status === 'cancelled') return {status: 'cancelled' as const}
+  const json = toJsonResult(result)
+  if (json.status === 'failed') {
+    const error = new AbortError(json.message.trim())
+    error.details = {errors: json.errors, ...(json.requestId ? {requestId: json.requestId} : {})}
+    throw error
+  }
+  return json
+}
 
 export function renderThemeDuplicateResult(result: ThemeDuplicateResult, format: 'text' | 'json'): void {
+  if (format === 'json') {
+    outputResult(themeDuplicateJsonOutputSchema.encode(themeDuplicateJsonResult(result)))
+    return
+  }
   if (result.status === 'cancelled') return
   const json = toJsonResult(result)
-  if (format === 'json') {
-    // Keep compact JSON output; the shared encoder indents its output.
-    outputResult(JSON.stringify(themeDuplicateJsonOutputSchema.validate(json)))
-  } else if (result.status === 'completed') {
-    renderTextResult(result)
-  } else if ('message' in json) {
-    renderError({body: [json.message]})
-  }
+  if (result.status === 'completed') renderTextResult(result)
+  else if ('message' in json) renderError({body: [json.message]})
 }
 
 function toJsonResult(result: Exclude<ThemeDuplicateResult, {status: 'cancelled'}>): ThemeDuplicateJsonResult {
