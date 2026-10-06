@@ -2,6 +2,9 @@ import {themePullJsonOutputSchema, type ThemePullResult} from './types.js'
 import {renderThemePullResult, renderThemePullEnvironmentResults} from './result.js'
 import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test} from 'vitest'
+// Native JSON paths must preserve Windows separators instead of pathe normalization.
+// eslint-disable-next-line no-restricted-imports
+import {resolve as nativePath} from 'node:path'
 
 function result(): ThemePullResult {
   return {
@@ -24,7 +27,7 @@ describe('pull result', () => {
     expect(value).toMatchObject({
       status: 'success',
       changed: true,
-      directory: '/theme',
+      directory: nativePath('/theme'),
       theme: {id: '1', sourceUrl: null, storeDomain: 'test.myshopify.com'},
     })
     expect(value).not.toHaveProperty('environment')
@@ -52,7 +55,9 @@ describe('pull result', () => {
   test('retains explicit single environments, skips and errors', async () => {
     await withCapturedStandardStreams(({stdout}) => {
       renderThemePullEnvironmentResults([{environment: 'staging', result: result()}])
-      expect(JSON.parse(stdout()).environments).toMatchObject([{environment: 'staging', result: {directory: '/theme'}}])
+      expect(JSON.parse(stdout()).environments).toMatchObject([
+        {environment: 'staging', result: {directory: nativePath('/theme')}},
+      ])
     })
     await withCapturedStandardStreams(({stdout}) => {
       renderThemePullEnvironmentResults([
