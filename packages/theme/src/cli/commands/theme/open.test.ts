@@ -36,11 +36,24 @@ async function run(argv: string[]) {
   await new Open(['--store=store.myshopify.com', ...argv], config).run()
 }
 
+const publicResult = {
+  theme: {
+    id: '1',
+    name: 'my theme',
+    role: 'live',
+    storeDomain: 'store.myshopify.com',
+    previewUrl: 'https://store.myshopify.com?preview_theme_id=1',
+    editorUrl: 'https://store.myshopify.com/admin/themes/1/editor',
+    processing: false,
+    sourceUrl: null,
+  },
+}
+
 test('exposes the result schema and JSON flag in help', () => {
   expect(Open.jsonOutputSchema).toBe(themeOpenJsonOutputSchema)
   expect(Open.flags.json).toBeDefined()
   expect(Open.description).toContain('ThemeOpenResult')
-  expect(Open.description).toContain('preview_url')
+  expect(Open.description).toContain('previewUrl')
 })
 
 test.each([false, true])('preserves browser selection with editor=%s', async (editor) => {
@@ -58,7 +71,7 @@ test('writes one JSON result', async () => {
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await run(['--theme=1', '--json'])
 
-    expect(JSON.parse(stdout())).toEqual(result)
+    expect(JSON.parse(stdout())).toEqual(publicResult)
     expect(stderr()).toBe('')
   })
   expect(renderInfo).not.toHaveBeenCalled()
@@ -76,7 +89,7 @@ test('propagates selection errors without opening the browser or rendering a res
   expect(renderInfo).not.toHaveBeenCalled()
 })
 
-test('preserves browser failures after writing the result', async () => {
+test('propagates browser failures before emitting the JSON result', async () => {
   vi.mocked(open).mockResolvedValue(result)
   const error = new Error('Browser unavailable')
   vi.mocked(openURL).mockRejectedValue(error)
@@ -84,6 +97,6 @@ test('preserves browser failures after writing the result', async () => {
   await withCapturedStandardStreams(async ({stdout}) => {
     await expect(run(['--theme=1', '--json'])).rejects.toBe(error)
 
-    expect(JSON.parse(stdout())).toEqual(result)
+    expect(stdout()).toBe('')
   })
 })
