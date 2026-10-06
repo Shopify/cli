@@ -127,7 +127,10 @@ describe('Preview', () => {
         run(['--overrides=/path/to/overrides.json', '--theme=2', '--json']),
       )
 
-      expect(JSON.parse(stdout())).toEqual(result)
+      expect(JSON.parse(stdout())).toEqual({
+        status: 'success',
+        preview: {id: result.preview_identifier, url: result.url},
+      })
       expect(stderr()).toBe('')
     })
     expect(renderSuccess).not.toHaveBeenCalled()
@@ -144,7 +147,7 @@ describe('Preview', () => {
   test('exposes its result schema in help', () => {
     expect(Preview.jsonOutputSchema).toBe(themePreviewJsonOutputSchema)
     expect(Preview.description).toContain('ThemePreviewResult')
-    expect(Preview.description).toContain('preview_identifier')
+    expect(Preview.description).toContain('ThemePreview')
     expect(Preview.flags.json.env).toBe('SHOPIFY_FLAG_JSON')
   })
 
@@ -163,6 +166,30 @@ describe('Preview', () => {
     expect(openURL).not.toHaveBeenCalled()
   })
 
+  test('waits for a slow browser failure before writing the final result', async () => {
+    let rejectBrowser: ((error: Error) => void) | undefined
+    vi.mocked(openURL).mockImplementation(
+      () =>
+        new Promise<boolean>((_resolve, reject) => {
+          rejectBrowser = reject
+        }),
+    )
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      const execution = runWithCommandEventsForCommand(['--json'], () =>
+        run(['--overrides=/path/to/overrides.json', '--theme=2', '--json', '--open']),
+      )
+      await vi.waitFor(() => expect(openURL).toHaveBeenCalled())
+      expect(stdout()).toBe('')
+      rejectBrowser?.(new Error('Browser unavailable'))
+      await execution
+      expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', level: 'warning'})
+      expect(JSON.parse(stdout())).toEqual({
+        status: 'success',
+        preview: {id: result.preview_identifier, url: result.url},
+      })
+    })
+  })
+
   test('keeps browser failures nonfatal and sends a typed warning to stderr', async () => {
     const error = new Error('Browser unavailable')
     vi.mocked(openURL).mockRejectedValue(error)
@@ -179,7 +206,40 @@ describe('Preview', () => {
       expect(events).toMatchObject([
         {type: 'diagnostic', level: 'warning', message: `Failed to open theme preview.\n${error.stack}`},
       ])
-      expect(JSON.parse(stdout())).toEqual(result)
+      expect(JSON.parse(stdout())).toEqual({
+        status: 'success',
+        preview: {id: result.preview_identifier, url: result.url},
+      })
     })
+  })
+})
+
+test('returns one explicit environment result', async () => {
+  const {loadEnvironment} = await import('@shopify/cli-kit/node/environments')
+  vi.mocked(loadEnvironment).mockResolvedValue({
+    store: adminSession.storeFqdn,
+    theme: '2',
+    overrides: '/path/to/overrides.json',
+  })
+  vi.mocked(ensureThemeStore).mockReturnValue(adminSession.storeFqdn)
+  vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(adminSession)
+  vi.mocked(findOrSelectTheme).mockResolvedValue(namedTheme)
+  vi.mocked(devWithOverrideFile).mockResolvedValue(result)
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await runWithCommandEventsForCommand(['--json'], () =>
+      run(['--environment=staging', '--overrides=/path/to/overrides.json', '--theme=2', '--json']),
+    )
+    expect(JSON.parse(stdout())).toEqual({
+      environments: [
+        {
+          environment: 'staging',
+          result: {
+            status: 'success',
+            preview: {id: result.preview_identifier, url: result.url},
+          },
+        },
+      ],
+    })
+    expect(stderr()).toBe('')
   })
 })
