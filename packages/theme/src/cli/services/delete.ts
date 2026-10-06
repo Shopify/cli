@@ -14,6 +14,7 @@ import {
 import {pluralize} from '@shopify/cli-kit/common/string'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {isDevelopmentTheme} from '@shopify/cli-kit/node/themes/utils'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 interface DeleteOptions {
   selectTheme: boolean
@@ -40,16 +41,29 @@ export async function themesDelete(
     return
   }
 
-  await Promise.all(
-    themes.map((theme) => {
-      if (isDevelopmentTheme(theme)) {
-        removeDevelopmentTheme()
-      }
-      return themeDelete(theme.id, adminSession)
+  const deletions = await Promise.allSettled(
+    themes.map(async (theme) => {
+      await themeDelete(theme.id, adminSession)
+      if (isDevelopmentTheme(theme)) removeDevelopmentTheme()
+      return {...theme, shop: store}
     }),
   )
-
-  return {status: 'success', themes: themes.map((theme) => ({...theme, shop: store}))}
+  const deletedThemes = deletions.flatMap((deletion) => (deletion.status === 'fulfilled' ? [deletion.value] : []))
+  const errors = deletions.flatMap((deletion, index) => {
+    if (deletion.status === 'fulfilled') return []
+    const error: unknown = deletion.reason
+    return [{themeId: themes[index]!.id, message: error instanceof Error ? error.message : String(error)}]
+  })
+  if (errors.length > 0 && deletedThemes.length === 0) {
+    const error = new AbortError(errors[0]!.message)
+    error.details = {errors: errors.map(({themeId, message}) => ({themeId: String(themeId), message}))}
+    throw error
+  }
+  return {
+    status: errors.length > 0 ? 'partial' : 'success',
+    themes: deletedThemes,
+    ...(errors.length > 0 ? {errors} : {}),
+  }
 }
 
 async function findThemesByDeleteOptions(adminSession: AdminSession, options: DeleteOptions) {
