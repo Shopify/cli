@@ -3,6 +3,9 @@ import {loadLocalAppOptions, overwriteLocalConfigFileWithRemoteAppConfiguration}
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {expect, test, vi} from 'vitest'
+// Match the platform-native public artifact path.
+// eslint-disable-next-line no-restricted-imports
+import {resolve} from 'node:path'
 
 vi.mock('./link.js')
 vi.mock('../../generate/fetch-extension-specifications.js')
@@ -27,7 +30,7 @@ test('returns the written configuration and public app metadata', async () => {
     configuration: app.configuration,
     remoteApp,
   })
-  expect(result.path).toBe(app.configPath)
+  expect(result.path).toBe(resolve(app.configPath))
   expect(result.configuration).toEqual(app.configuration)
   expect(result.app.clientId).toBe(remoteApp.apiKey)
   expect(result.app).not.toHaveProperty('apiSecretKeys')
