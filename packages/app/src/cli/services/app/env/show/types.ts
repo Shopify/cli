@@ -1,7 +1,7 @@
 import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-export const appEnvironmentVariableSchema = zod
+const appEnvironmentVariableSchema = zod
   .object({
     name: zod.string().min(1).describe('The environment variable name with its original spelling.'),
     value: zod.string().optional().describe('The value, included only when known.'),
