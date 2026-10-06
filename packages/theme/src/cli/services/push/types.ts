@@ -66,4 +66,4 @@ export const themePushJsonOutputSchema = defineThemeJsonOutputSchema({
 })
 
 export type ThemePushResult = zod.infer<typeof themePushResultSchema>
-export type ThemePushJsonResult = zod.infer<typeof ThemePushJsonResultSchema>
+type ThemePushJsonResult = zod.infer<typeof ThemePushJsonResultSchema>
