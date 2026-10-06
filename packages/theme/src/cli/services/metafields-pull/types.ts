@@ -1,6 +1,9 @@
 import {defineThemeJsonOutputSchema} from '../json-output/schema.js'
 import {isAbsolutePath} from '@shopify/cli-kit/node/path'
 import {zod} from '@shopify/cli-kit/node/schema'
+// Native JSON paths must preserve Windows separators instead of pathe normalization.
+// eslint-disable-next-line no-restricted-imports
+import {resolve as resolvePath} from 'node:path'
 
 const MetafieldTypeSchema = zod.object({name: zod.string(), category: zod.string()})
 const MetafieldDefinitionSchema = zod.object({
@@ -87,7 +90,7 @@ export const themeMetafieldsPullJsonOutputSchema = defineThemeJsonOutputSchema({
     return {
       status: result.failedOwnerTypes.length ? 'partial' : 'success',
       changed: true,
-      path: result.path,
+      path: resolvePath(result.path),
       definitions: Object.entries(result.definitions).flatMap(([handle, definitions]) =>
         definitions.map((definition) => ({
           ownerType: handleToOwnerType[handle as keyof typeof handleToOwnerType],
