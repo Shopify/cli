@@ -146,7 +146,7 @@ export default abstract class ThemeCommand extends Command {
 
     const commandAllowsForceFlag = 'force' in klass.flags
 
-    if (commandAllowsForceFlag && !flags.force) {
+    if (environments.length > 1 && commandAllowsForceFlag && !flags.force) {
       const confirmed = await this.showConfirmation(
         (this.id ?? 'theme').replaceAll(':', ' '),
         requiredFlags ?? [],
