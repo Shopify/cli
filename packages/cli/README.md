@@ -12697,13 +12697,17 @@ Download metafields definitions from your shop into a local file.
 
 ```
 USAGE
-  $ shopify theme metafields pull [--auth-alias <value>] [-e <value>...] [--json-schema] [--no-color] [--no-input]
+  $ shopify theme metafields pull [--auth-alias <value>] [-e <value>...] [-j] [--json-schema] [--no-color] [--no-input]
     [--password <value>] [--path <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
       The environment to apply to the current command.
       [env: SHOPIFY_FLAG_ENVIRONMENT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
@@ -12744,6 +12748,335 @@ DESCRIPTION
   Retrieves metafields from Shopify Admin.
 
   If the metafields file already exists, it will be overwritten.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeMetafieldsPullResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeMetafieldsPullResult",
+    "definitions": {
+      "MetafieldDefinition": {
+        "type": "object",
+        "properties": {
+          "ownerType": {
+            "type": "string",
+            "description": "The upstream owner type, such as PRODUCT or COMPANY_LOCATION."
+          },
+          "key": {
+            "type": "string"
+          },
+          "namespace": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The upstream metafield type, such as single_line_text_field."
+              },
+              "category": {
+                "type": "string",
+                "description": "The upstream metafield category."
+              }
+            },
+            "required": [
+              "name",
+              "category"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "ownerType",
+          "key",
+          "namespace",
+          "name",
+          "description",
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "success",
+                              "partial"
+                            ]
+                          },
+                          "changed": {
+                            "type": "boolean",
+                            "const": true
+                          },
+                          "path": {
+                            "type": "string",
+                            "description": "The absolute path of the native language-server metafields JSON artifact."
+                          },
+                          "definitions": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/definitions/MetafieldDefinition"
+                            },
+                            "description": "All fetched definitions, flattened across owner types."
+                          },
+                          "failedOwnerTypes": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Upstream owner types whose fetch failed."
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "changed",
+                          "path",
+                          "definitions",
+                          "failedOwnerTypes"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "const": "skipped"
+                          },
+                          "reason": {
+                            "type": "string",
+                            "const": "not-a-theme"
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {}
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme open`
