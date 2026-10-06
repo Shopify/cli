@@ -14252,11 +14252,25 @@ DESCRIPTION
   {
     "type": "object",
     "properties": {
-      "path": {
-        "type": "string"
+      "status": {
+        "type": "string",
+        "enum": [
+          "success",
+          "partial"
+        ]
+      },
+      "changed": {
+        "type": "boolean",
+        "const": true
+      },
+      "directory": {
+        "type": "string",
+        "description": "An absolute native filesystem path."
       },
       "repoUrl": {
-        "type": "string"
+        "type": "string",
+        "minLength": 1,
+        "description": "The source Git remote (including HTTPS, SSH, or SCP-style Git URLs)."
       },
       "latest": {
         "type": "boolean"
@@ -14277,19 +14291,37 @@ DESCRIPTION
           }
         ]
       },
-      "instructionFiles": {
-        "type": "array",
-        "items": {
-          "type": "string"
-        }
+      "instructionFilePaths": {
+        "anyOf": [
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeInitResult/properties/directory"
+            }
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Created instruction files, or null when setup failed before their completion could be established."
+      },
+      "reason": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "The reason for incomplete setup, or null when setup completed."
       }
     },
     "required": [
-      "path",
+      "status",
+      "changed",
+      "directory",
       "repoUrl",
       "latest",
       "aiInstructions",
-      "instructionFiles"
+      "instructionFilePaths",
+      "reason"
     ],
     "additionalProperties": false,
     "title": "ThemeInitResult",
