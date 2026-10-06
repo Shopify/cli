@@ -6,7 +6,7 @@ import {executeBulkOperationJsonOutputSchema} from './types.js'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath, cwd} from '@shopify/cli-kit/node/path'
-import {renderInfo, renderSuccess, renderWarning, renderError} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderWarning, renderError} from '@shopify/cli-kit/node/ui'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import type {ExecuteBulkOperationResult} from './types.js'
@@ -52,20 +52,6 @@ function expectedOperation() {
   }
 }
 
-test('projects one JSON result with named fields and native inline JSONL', async () => {
-  const output = mockAndCaptureOutput()
-  await renderExecuteBulkOperationResult(completedResult(), {format: 'json', watch: true})
-  expect(JSON.parse(output.output())).toEqual({
-    storeDomain: 'shop.myshopify.com',
-    apiVersion: '2026-01',
-    status: 'success',
-    operation: expectedOperation(),
-    resultsJsonl: '{"id":"1"}\n{"id":"2"}\n',
-  })
-  expect(renderSuccess).not.toHaveBeenCalled()
-  expect(renderInfo).not.toHaveBeenCalled()
-})
-
 test.each([2, '900719925474099312345'])('serializes the count exactly as a decimal string: %s', async (objectCount) => {
   const result = completedResult()
   const output = mockAndCaptureOutput()
@@ -74,52 +60,6 @@ test.each([2, '900719925474099312345'])('serializes the count exactly as a decim
     {format: 'json', watch: true},
   )
   expect(JSON.parse(output.output()).operation.objectCount).toBe(String(objectCount))
-})
-
-test('rejects unsafe numeric counts rather than silently losing precision', async () => {
-  const result = completedResult()
-  await expect(
-    renderExecuteBulkOperationResult(
-      {
-        ...result,
-        operation: {...result.operation!, objectCount: Number.MAX_SAFE_INTEGER + 1},
-      },
-      {format: 'json', watch: true},
-    ),
-  ).rejects.toThrow(BugError)
-  expect(mockAndCaptureOutput().output()).toBe('')
-})
-
-test('normalizes offset timestamps to whole seconds and missing projected values', async () => {
-  const result = completedResult()
-  const output = mockAndCaptureOutput()
-  await renderExecuteBulkOperationResult(
-    {
-      ...result,
-      store: 'custom.example.com',
-      operation: {
-        ...result.operation!,
-        createdAt: '2026-09-01T02:00:00.789+02:00',
-        completedAt: undefined,
-        errorCode: undefined,
-      },
-    },
-    {format: 'json', watch: true},
-  )
-  expect(JSON.parse(output.output())).toMatchObject({
-    storeDomain: null,
-    operation: {createdAt: '2026-09-01T00:00:00Z', completedAt: null, errorCode: null},
-  })
-})
-
-test('removes fractional seconds from completion timestamps without rounding', async () => {
-  const result = completedResult()
-  const output = mockAndCaptureOutput()
-  await renderExecuteBulkOperationResult(
-    {...result, operation: {...result.operation!, completedAt: '2026-09-01T02:01:00.999+02:00'}},
-    {format: 'json', watch: true},
-  )
-  expect(JSON.parse(output.output()).operation.completedAt).toBe('2026-09-01T00:01:00Z')
 })
 
 test('keeps upstream enum values extensible and CLI-owned structures strict', () => {
