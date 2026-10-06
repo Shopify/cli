@@ -9,7 +9,7 @@ import {cwd, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import type {AppSecurityExecution} from './app-security-api.js'
-import type {AppSecurityInstructionsDelivery} from './app-security-instructions.js'
+import type {AppSecurityInstructionsDelivery} from './app-security-instructions-output.js'
 import type {AppSecuritySelection, AppSecuritySelectionOptions} from './app-security-selection.js'
 import type {AppSecurityInstructionsDestination} from './security-check.js'
 import type {

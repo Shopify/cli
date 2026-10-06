@@ -3,7 +3,7 @@ import SecurityCheck from './check.js'
 import {appFlags} from '../../../flags.js'
 import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts.js'
 import {resolveAppSecurityCommands} from '../../../services/app-security-commands.js'
-import deliverAppSecurityInstructions from '../../../services/app-security-instructions.js'
+import {deliverAppSecurityInstructions} from '../../../services/app-security-instructions-output.js'
 import {resolveAppSecuritySelection, type AppSecuritySelection} from '../../../services/app-security-selection.js'
 import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
 import {securityInstructionsJsonOutputSchema} from '../../../services/security-instructions-json.js'
@@ -15,7 +15,7 @@ import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 
-vi.mock('../../../services/app-security-instructions.js')
+vi.mock('../../../services/app-security-instructions-output.js')
 vi.mock('../../../services/app-security-selection.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../services/app-security-selection.js')>()),
   resolveAppSecuritySelection: vi.fn(),

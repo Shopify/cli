@@ -1,6 +1,6 @@
 import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
-import type {AppSecurityInstructionsDelivery} from './app-security-instructions.js'
+import type {AppSecurityInstructionsDelivery} from './app-security-instructions-output.js'
 
 /** Shared by `instructions --json` and `check --json`, so an agent reads the instructions the same way from both. */
 export const appSecurityInstructionsSchema = zod.object({

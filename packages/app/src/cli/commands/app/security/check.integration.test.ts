@@ -1,8 +1,10 @@
 import SecurityCheck from './check.js'
+import SecurityInstructions from './instructions.js'
 import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts.js'
 import {appFromIdentifiers} from '../../../services/context.js'
 import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
 import {securityCheckJsonOutputSchema} from '../../../services/security-check-json.js'
+import {securityInstructionsJsonOutputSchema} from '../../../services/security-instructions-json.js'
 import {Config} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, fileRealPath, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -60,7 +62,7 @@ function expectMentionsPath(message: string, path: string): void {
   expect(message.replaceAll(' ', '')).toContain(path)
 }
 
-async function runCommand(argv: string[]) {
+async function runCommand(argv: string[], command: typeof SecurityCheck | typeof SecurityInstructions = SecurityCheck) {
   let stdout = ''
   let stderr = ''
   const previousExitCode = process.exitCode
@@ -84,7 +86,7 @@ async function runCommand(argv: string[]) {
     const config = await Config.load(import.meta.url)
     // This test invokes the app command directly, not as a separately installed CLI plugin.
     config.plugins.clear()
-    await SecurityCheck.run(argv, config)
+    await command.run(argv, config)
     return {stdout, stderr, exitCode: process.exitCode}
   } finally {
     warn.mockRestore()
@@ -335,6 +337,33 @@ describe('app security check command boundary', () => {
 
       expect(appFromIdentifiers).toHaveBeenCalledOnce()
       expect(appFromIdentifiers).toHaveBeenCalledWith({apiKey: 'other-client-id', offerReset: false})
+    })
+  })
+})
+
+describe('app security instructions command boundary', () => {
+  test('prints only the JSON result with --json --write, and writes the same instructions to the file', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      // instructions needs the results directory that check creates.
+      await runCommand(['--path', directory, '--json', '--skip-instructions'])
+      const instructionsPath = joinPath(directory, 'handoff.md')
+
+      const result = await runCommand(
+        ['--path', directory, '--json', '--write', instructionsPath],
+        SecurityInstructions,
+      )
+
+      expect(result.exitCode).toBe(0)
+      const output = JSON.parse(result.stdout)
+      expect(securityInstructionsJsonOutputSchema.validate(output)).toEqual(output)
+      expect(output.instructions).toEqual({
+        content: expect.stringContaining('Run the scan'),
+        copied_to_clipboard: false,
+        path: instructionsPath,
+      })
+      await expect(readFile(instructionsPath, 'utf8')).resolves.toBe(`${output.instructions.content}\n`)
+      expect(result.stderr).not.toContain('Wrote app security check instructions')
     })
   })
 })

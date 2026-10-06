@@ -1,6 +1,6 @@
 import {appSecuritySelectionFlags} from './selection-flags.js'
 import {resolveAppSecurityCommands} from '../../../services/app-security-commands.js'
-import deliverAppSecurityInstructions from '../../../services/app-security-instructions.js'
+import {deliverAppSecurityInstructions} from '../../../services/app-security-instructions-output.js'
 import {requireResultsDirectory} from '../../../services/app-security-results.js'
 import {resolveAppSecuritySelection, resultsKey} from '../../../services/app-security-selection.js'
 import {

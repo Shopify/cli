@@ -9,11 +9,7 @@ import {
   type AppSecurityShell,
 } from './app-security-commands.js'
 import {getAgentInstructions, type AppSecurityScope} from './app-security-engine/index.js'
-import {writeFile} from '@shopify/cli-kit/node/fs'
-import {outputResult} from '@shopify/cli-kit/node/output'
 import {cwd} from '@shopify/cli-kit/node/path'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import clipboard from 'clipboardy'
 
 const SCAN_CONTEXT_PLACEHOLDER = '{{SCAN_CONTEXT}}'
 const RECORD_DOCUMENT_PLACEHOLDER = '<the findings document from step 4>'
@@ -147,40 +143,6 @@ function fillTemplate(template: string, values: {[placeholder: string]: string})
   )
 }
 
-interface AppSecurityInstructionsOptions {
-  appDirectory: string
-  resultsKey: string
-  copy: boolean
-  writePath?: string
-  /** The caller puts the instructions in its JSON result, so they aren't printed. */
-  json: boolean
-  commands: AppSecurityCommands
-  /** Present when `check` has just run in this process. */
-  scanScope?: AppSecurityScope
-}
-
-export interface AppSecurityInstructionsDelivery {
-  content: string
-  copiedToClipboard: boolean
-  writePath?: string
-}
-
-interface AppSecurityInstructionsDependencies {
-  copyToClipboard(content: string): Promise<void>
-  writeToFile(path: string, content: string): Promise<void>
-  output(content: string): void
-  outputConfirmation(content: string): void
-}
-
-const defaultDependencies: AppSecurityInstructionsDependencies = {
-  copyToClipboard: (content) => clipboard.write(content),
-  writeToFile: writeFile,
-  output: outputResult,
-  outputConfirmation: (content) => {
-    renderSuccess({headline: content})
-  },
-}
-
 export function appSecurityInstructions(options: {
   appDirectory: string
   resultsKey: string
@@ -207,28 +169,4 @@ export function appSecurityInstructions(options: {
     '{{AGENT_CHECKS_PATH}}': markdownPath(paths.agentChecksPath),
     '{{AGENT_FINDINGS_PATH}}': markdownPath(paths.agentFindingsPath),
   }).trimEnd()
-}
-
-export default async function deliverAppSecurityInstructions(
-  options: AppSecurityInstructionsOptions,
-  dependencies: AppSecurityInstructionsDependencies = defaultDependencies,
-): Promise<AppSecurityInstructionsDelivery> {
-  const instructions = appSecurityInstructions({
-    appDirectory: options.appDirectory,
-    resultsKey: options.resultsKey,
-    commands: options.commands,
-    scanScope: options.scanScope,
-  })
-
-  if (options.copy) {
-    await dependencies.copyToClipboard(instructions)
-    dependencies.outputConfirmation('Copied app security check instructions to the clipboard')
-  } else if (options.writePath) {
-    await dependencies.writeToFile(options.writePath, `${instructions}\n`)
-    dependencies.outputConfirmation(`Wrote app security check instructions to ${options.writePath}`)
-  } else if (!options.json) {
-    dependencies.output(instructions)
-  }
-
-  return {content: instructions, copiedToClipboard: options.copy, writePath: options.writePath}
 }

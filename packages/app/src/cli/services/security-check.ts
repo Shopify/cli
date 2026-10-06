@@ -1,6 +1,9 @@
 import {securityExitCode, executeAppSecurity, listAppSecurityFiles} from './app-security-api.js'
 import {writeCheckArtifacts} from './app-security-artifacts.js'
-import deliverAppSecurityInstructions, {type AppSecurityInstructionsDelivery} from './app-security-instructions.js'
+import {
+  deliverAppSecurityInstructions,
+  type AppSecurityInstructionsDelivery,
+} from './app-security-instructions-output.js'
 import {
   formatAppSecurityCommand,
   resolveAppSecurityCommands,
