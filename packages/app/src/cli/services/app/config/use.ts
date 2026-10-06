@@ -8,7 +8,8 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {RenderAlertOptions, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {Result, err, ok} from '@shopify/cli-kit/node/result'
 import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {formatPackageManagerCommand, itemToString, outputWarn} from '@shopify/cli-kit/node/output'
+import {commandEventOutputMode} from '@shopify/cli-kit/node/command-events'
 
 export interface UseOptions {
   directory: string
@@ -41,7 +42,15 @@ export default async function use({
   }
 
   if (warningContent) {
-    renderWarning(warningContent)
+    if (commandEventOutputMode() === 'json') {
+      const message = [warningContent.headline, warningContent.body]
+        .filter((item) => item !== undefined)
+        .map((item) => itemToString(item))
+        .join('\n')
+      outputWarn(message)
+    } else {
+      renderWarning(warningContent)
+    }
   }
 
   const configFileName = (await getConfigFileName(directory, configName)).valueOrAbort()
