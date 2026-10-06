@@ -84,6 +84,29 @@ describe('cancelMigrationOperations', () => {
     )
   })
 
+  test('retains successful cancellations and every requested operation when another request fails', async () => {
+    const cancelOperation = vi
+      .fn()
+      .mockResolvedValueOnce(payload('one'))
+      .mockRejectedValueOnce(new Error('Network unavailable'))
+    const result = await cancelMigrationOperations({
+      clientId: 'client-id',
+      operationIds: ['one', 'two'],
+      cancelOperation,
+    })
+    expect(result).toEqual({
+      outcomes: [
+        {status: 'success', operationId: 'one', operation: operation('one')},
+        {
+          status: 'failed',
+          operationId: 'two',
+          operation: null,
+          userErrors: [{message: 'Network unavailable', field: null}],
+        },
+      ],
+    })
+  })
+
   test('preserves transport errors', async () => {
     const transportError = new Error('Network unavailable')
     const cancelOperation = vi.fn().mockRejectedValue(transportError)

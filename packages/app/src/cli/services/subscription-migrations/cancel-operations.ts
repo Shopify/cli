@@ -24,17 +24,30 @@ export async function cancelMigrationOperations({
 }: CancelMigrationOperationsOptions): Promise<MigrationCancellationResult> {
   const outcomes = await Promise.all(
     operationIds.map(async (operationId): Promise<MigrationCancellationOutcome> => {
-      const payload = await cancelOperation({clientId, operationId})
-      if (payload.userErrors.length > 0) {
+      try {
+        const payload = await cancelOperation({clientId, operationId})
+        if (payload.userErrors.length > 0) {
+          return {
+            status: 'failed',
+            operationId,
+            operation: payload.operation,
+            userErrors: payload.userErrors,
+          }
+        }
+        if (!payload.operation) throw new MigrationCancellationProtocolError(operationId)
+        return {status: 'success', operationId, operation: payload.operation}
+      } catch (error) {
+        if (operationIds.length === 1) throw error
+        // Preserve every batch outcome even if one request fails after another cancellation succeeds.
         return {
           status: 'failed',
           operationId,
-          operation: payload.operation,
-          userErrors: payload.userErrors,
+          operation: null,
+          userErrors: [
+            {message: error instanceof Error ? error.message : 'Migration cancellation failed.', field: null},
+          ],
         }
       }
-      if (!payload.operation) throw new MigrationCancellationProtocolError(operationId)
-      return {status: 'success', operationId, operation: payload.operation}
     }),
   )
   return {outcomes}
