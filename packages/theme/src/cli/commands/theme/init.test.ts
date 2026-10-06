@@ -47,11 +47,14 @@ test.each([true, false])('emits the cloned theme after skipped AI setup, interac
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
       await runWithCommandEventsForCommand(['--json'], () => run(['example', '--path', directory, '--json']))
       expect(JSON.parse(stdout())).toEqual({
-        path: joinPath(directory, 'example'),
+        status: 'success',
+        changed: true,
+        directory: joinPath(directory, 'example'),
         repoUrl: SKELETON_THEME_URL,
         latest: false,
         aiInstructions: null,
-        instructionFiles: [],
+        instructionFilePaths: [],
+        reason: null,
       })
       expect(
         stderr()
@@ -81,11 +84,14 @@ test('preserves the name prompt in JSON mode and waits for AI instructions', asy
         run(['--path', directory, '--latest', '--clone-url', 'https://example.com/theme.git', '--json']),
       )
       expect(JSON.parse(stdout())).toEqual({
-        path,
+        status: 'success',
+        changed: true,
+        directory: path,
         repoUrl: 'https://example.com/theme.git',
         latest: true,
         aiInstructions: 'claude',
-        instructionFiles,
+        instructionFilePaths: instructionFiles,
+        reason: null,
       })
       expect(
         stderr()
@@ -101,16 +107,30 @@ test('preserves the name prompt in JSON mode and waits for AI instructions', asy
   })
 })
 
-test('does not emit a success result when AI setup fails', async () => {
+test('preserves the cloned project when AI setup fails', async () => {
   vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
   vi.mocked(promptAIInstruction).mockResolvedValue('cursor')
   vi.mocked(createAIInstructions).mockRejectedValue(new Error('Failed to create AI instructions'))
   await inTemporaryDirectory(async (directory) => {
-    await withCapturedStandardStreams(async ({stdout}) => {
-      await expect(
-        runWithCommandEventsForCommand(['--json'], () => run(['example', '--path', directory, '--json'])),
-      ).rejects.toThrow('Failed to create AI instructions')
-      expect(stdout()).toBe('')
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      const previousExitCode = process.exitCode
+      try {
+        await runWithCommandEventsForCommand(['--json'], () => run(['example', '--path', directory, '--json']))
+        expect(JSON.parse(stdout())).toEqual({
+          status: 'partial',
+          changed: true,
+          directory: joinPath(directory, 'example'),
+          repoUrl: SKELETON_THEME_URL,
+          latest: false,
+          aiInstructions: 'cursor',
+          instructionFilePaths: null,
+          reason: 'Failed to create AI instructions',
+        })
+        expect(stderr()).toContain('Failed to create AI instructions')
+        expect(process.exitCode).toBe(1)
+      } finally {
+        process.exitCode = previousExitCode
+      }
     })
   })
 })
@@ -141,11 +161,28 @@ test('exposes the schema and rejects invalid instruction choices', () => {
   expect(Init.description).toContain('--json-schema')
   expect(() =>
     themeInitJsonOutputSchema.validate({
-      path: '/theme',
+      status: 'success',
+      changed: true,
+      directory: '/theme',
+      reason: null,
       repoUrl: SKELETON_THEME_URL,
       latest: false,
       aiInstructions: 'invalid',
-      instructionFiles: [],
+      instructionFilePaths: [],
     }),
   ).toThrow()
+})
+
+test('requires a name without prompting in non-interactive JSON mode', async () => {
+  vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+  await inTemporaryDirectory(async (directory) => {
+    await withCapturedStandardStreams(async ({stdout}) => {
+      await expect(run(['--path', directory, '--json'])).rejects.toThrow(
+        'A theme name is required in non-interactive mode.',
+      )
+      expect(stdout()).toBe('')
+    })
+    expect(renderTextPrompt).not.toHaveBeenCalled()
+    expect(downloadGitRepository).not.toHaveBeenCalled()
+  })
 })
