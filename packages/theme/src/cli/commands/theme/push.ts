@@ -170,7 +170,7 @@ export default class Push extends ThemeCommand {
       else if (flags.json) outputResult(themePushJsonOutputSchema.encode({status: 'cancelled'}))
     }
     recordTiming('theme-command:push')
-    return result
+    return result ?? (flags.json && multiEnvironment ? {status: 'skipped', reason: 'unsafe-directory'} : undefined)
   }
 
   protected collectsEnvironmentResults(flags: {json?: boolean}): boolean {
