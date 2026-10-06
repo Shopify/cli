@@ -1,9 +1,5 @@
-import {
-  themePushJsonOutputSchema,
-  themePushResultSchema,
-  type ThemePushResult,
-  type ThemePushJsonResult,
-} from './types.js'
+import {themePushJsonOutputSchema, themePushResultSchema, type ThemePushResult, themePushJsonResult} from './types.js'
+import {ThemeEnvironmentResult} from '../json-output/schema.js'
 import {themeComponent} from '../../utilities/theme-ui.js'
 import {PushFlags} from '../push.js'
 import {runThemeCheck} from '../../commands/theme/check.js'
@@ -15,20 +11,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {recordError} from '@shopify/cli-kit/node/analytics'
 import {Severity} from '@shopify/theme-check-node'
 
-export function themePushJsonResult(result: ThemePushResult): ThemePushJsonResult {
-  const {environment, theme, hasErrors, errors} = result
-  return {
-    status: hasErrors ? 'failed' : 'success',
-    environment,
-    theme: {
-      ...theme,
-      ...(hasErrors
-        ? {warning: `${environment ? `[${environment}] ` : ''}The theme '${theme.name}' was pushed with errors`}
-        : {}),
-      ...(Object.keys(errors).length > 0 ? {errors} : {}),
-    },
-  }
-}
+export {themePushJsonResult} from './types.js'
 
 export function renderThemePushResult(result: ThemePushResult, format: 'text' | 'json'): void {
   if (format === 'json') {
@@ -92,11 +75,12 @@ export async function checkThemeBeforePush(flags: PushFlags, legacyOutput = fals
   }
 }
 
-export function renderThemePushEnvironmentResults(results: {environment: string; result: unknown}[]): void {
-  const output = results.flatMap(({environment, result}) =>
-    result === undefined
-      ? []
-      : [{...themePushJsonResult({...themePushResultSchema.parse(result), environment}), environment}],
-  )
-  outputResult(themePushJsonOutputSchema.encode(output))
+export function renderThemePushEnvironmentResults(results: ThemeEnvironmentResult[]): void {
+  const environments = results.map((entry) => {
+    if ('error' in entry) return entry
+    const result = entry.result ?? {status: 'skipped', reason: 'unsafe-directory'}
+    if (themePushResultSchema.safeParse(result).data?.hasErrors) process.exitCode = 1
+    return {...entry, result}
+  })
+  outputResult(themePushJsonOutputSchema.encode({environments}))
 }
