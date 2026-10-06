@@ -227,6 +227,6 @@ test('blocks project imports while ESLint and upstream plugins are forbidden', (
       'cli(module-boundaries)',
     ])
   } finally {
-    rmSync(workspace, {recursive: true, force: true})
+    rmSync(workspace, {recursive: true, force: true, maxRetries: 2})
   }
 })
