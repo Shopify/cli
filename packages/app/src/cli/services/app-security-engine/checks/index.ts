@@ -524,7 +524,7 @@ export function recordAgentFindings(document: unknown, options: RecordAgentFindi
   const grouped = groupFindingsByCheck(executed.reports, findings)
   errors.push(...grouped.errors)
   // Errors quote agent input (check IDs, paths, line values), which can hold secrets. They're shown in the
-  // terminal and in --json output, so they're redacted like everything that's stored.
+  // terminal, so they're redacted like everything that's stored.
   if (errors.length > 0 || 'error' in scope) return {ok: false, errors: errors.map(redactText)}
 
   const storedChecks = grouped.groups

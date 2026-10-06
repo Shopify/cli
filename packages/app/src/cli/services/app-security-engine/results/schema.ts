@@ -10,8 +10,7 @@ import type {AgentFindingsDocument, DeterministicFindingsDocument, FindingsDocum
  * stay the internal representation; the assertions at the bottom fail to compile the day the two diverge,
  * which is the signal that a new schema version needs an explicit mapping.
  *
- * The component schemas are exported so the public `review --json` schema is composed from them and
- * every closed enum is declared once.
+ * The component schemas are exported so other schemas compose them and every closed enum is declared once.
  */
 
 export const severitySchema = zod.enum(['high', 'medium', 'low'])
@@ -94,8 +93,8 @@ export const projectDetectionSchema = zod.object({
 })
 
 /**
- * A function, so each document gets its own instance: the public `review --json` schema would render a shared
- * instance as a `$ref` instead of the inline definition.
+ * A function, so each document gets its own instance: a JSON Schema generated from a schema that composes both
+ * documents would render a shared instance as a `$ref` instead of the inline definition.
  */
 const createScopeSchema = () =>
   zod.object({

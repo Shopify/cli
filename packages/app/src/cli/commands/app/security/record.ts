@@ -14,7 +14,7 @@ export default class SecurityRecord extends BaseCommand {
 
 The document must include a \`scope\` with the \`include_dirs\`, \`excludes\` and \`no_git_ignore\` values of the \`check\` run it describes, exactly as typed. It's recorded as reported and never compared with the scan's files.
 
-The document is recorded all or nothing: if anything is invalid, the command fails with every error, writes nothing, and exits with a non-zero code. With \`--json\`, the errors are listed in the error document's \`details.errors\`. It needs the results directory that \`shopify app security check\` creates.`
+The document is recorded all or nothing: if anything is invalid, the command fails with every error, writes nothing, and exits with a non-zero code. It needs the results directory that \`shopify app security check\` creates.`
 
   static description = this.descriptionForHelp()
 
