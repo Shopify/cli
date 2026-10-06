@@ -16,6 +16,7 @@ const ThemePullThemeSchema = zod.object({
 export const themePullResultSchema = zod.object({
   environment: zod.string().optional(),
   path: zod.string(),
+  changed: zod.boolean().optional(),
   theme: ThemePullThemeSchema,
 })
 
@@ -39,10 +40,10 @@ export const themePullJsonOutputSchema = defineThemeJsonOutputSchema({
   definitions: {ThemePullTheme: ThemePullJsonThemeSchema},
   project: (value) => {
     if (SkippedSchema.safeParse(value).success) return value
-    const {theme, path} = themePullResultSchema.parse(value)
+    const {theme, path, changed} = themePullResultSchema.parse(value)
     return {
       status: 'success',
-      changed: true,
+      changed: changed ?? true,
       directory: resolvePath(path),
       theme: {
         ...projectTheme(theme),
