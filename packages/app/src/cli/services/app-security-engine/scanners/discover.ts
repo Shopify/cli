@@ -2,6 +2,7 @@ import {inspectErrorReason, isMissingFilesystemEntry} from './filesystem-errors.
 import {
   isDroppedEntry,
   isDroppedTrackedPath,
+  isExcludedScanDirectory,
   isIgnoredByParentRepository,
   listGitIgnoredPaths,
   listNestedRepository,
@@ -239,6 +240,8 @@ export async function gatherPaths({
   const ignoredScanDirectories: string[] = []
   if (rules.gitFiltering) {
     for (const requestedDirectory of requestedScanDirectories) {
+      // An excluded directory gathers nothing, so warning that only its tracked files are gathered would be wrong.
+      if (isExcludedScanDirectory(rules, requestedDirectory)) continue
       // eslint-disable-next-line no-await-in-loop
       if (await isIgnoredByParentRepository(requestedDirectory)) ignoredScanDirectories.push(requestedDirectory)
     }
@@ -285,6 +288,7 @@ async function gatherScanDirectory(
   }
 
   if (ignoredByRepository) {
+    if (isExcludedScanDirectory(rules, scanDirectory)) return {absolutePaths: [], listingStatus: 'tracked-only'}
     const trackedPaths = await listTrackedFiles(scanDirectory)
     // A normal walk would scan the untracked files that Git was told to ignore.
     if (trackedPaths === undefined) {
@@ -325,6 +329,7 @@ async function walkDirectory(
   rules: PathRules,
   scanDirectoryRepository: RepositoryIgnoredPaths | undefined,
 ): Promise<string[]> {
+  if (isExcludedScanDirectory(rules, scanDirectory)) return []
   const files: string[] = []
   // Appended to while iterating.
   const pendingDirectories = [{directory: scanDirectory, repository: scanDirectoryRepository}]

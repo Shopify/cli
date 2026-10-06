@@ -67,6 +67,18 @@ export function isDroppedTrackedPath(rules: PathRules, scanDirectory: string, tr
   })
 }
 
+/**
+ * Whether `--exclude` removes a whole scan directory. The walker only tests the entries inside a scan directory, so the
+ * directory itself and its ancestors up to the working directory are tested here: adding a directory can't undo an
+ * exclusion.
+ */
+export function isExcludedScanDirectory(rules: PathRules, scanDirectory: string): boolean {
+  const segments = relativePath(rules.workingDirectory, scanDirectory).split('/')
+  return segments.some((_segment, index) =>
+    isExcluded(rules, joinPath(rules.workingDirectory, ...segments.slice(0, index + 1))),
+  )
+}
+
 function isListedAsIgnored(
   repository: RepositoryIgnoredPaths,
   entry: {absolutePath: string; isDirectory: boolean},
