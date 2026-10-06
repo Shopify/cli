@@ -22,13 +22,15 @@ import {
   renderError,
 } from '@shopify/cli-kit/node/ui'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, BugError, ExternalError, FatalError} from '@shopify/cli-kit/node/error'
 import {recordEvent, compileData} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
+import {commandEventOutputMode, emitCommandEvent} from '@shopify/cli-kit/node/command-events'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import type {ThemeEnvironmentResult} from '../services/json-output/schema.js'
 
 import type {Writable} from 'stream'
 
@@ -69,7 +71,9 @@ export default abstract class ThemeCommand extends Command {
     _multiEnvironment = false,
     _args?: ArgOutput,
     _context?: {stdout?: Writable; stderr?: Writable},
-  ): Promise<void> {}
+  ): Promise<unknown> {
+    return undefined
+  }
 
   async run<
     TFlags extends FlagOutput & {path?: string; verbose?: boolean},
@@ -94,7 +98,7 @@ export default abstract class ThemeCommand extends Command {
       requiredFlags.some((flag) => (Array.isArray(flag) ? flag.includes('store') : flag === 'store'))
 
     // Single environment or no environment
-    if (environments.length <= 1) {
+    if (environments.length <= 1 && !(environments.length > 0 && this.collectsEnvironmentResults(flags))) {
       if (environments[0] && !flags.store && storeIsRequired) {
         throw new AbortError(`Please provide a valid environment.`)
       }
@@ -122,12 +126,18 @@ export default abstract class ThemeCommand extends Command {
     }
 
     const {flags: flagsWithoutDefaults} = await this.parse(noDefaultsOptions(klass), this.argv)
-    if ('path' in flagsWithoutDefaults) {
+    if (environments.length > 1 && 'path' in flagsWithoutDefaults) {
       this.errorOnGlobalPath()
     }
 
     const environmentsMap = await this.loadEnvironments(environments, flags, flagsWithoutDefaults)
-    const validationResults = await this.validateEnvironments(environmentsMap, requiredFlags, commandRequiresAuth)
+    const collectResults = this.collectsEnvironmentResults(flags)
+    const validationResults = await this.validateEnvironments(
+      environmentsMap,
+      requiredFlags,
+      commandRequiresAuth,
+      collectResults,
+    )
 
     const commandAllowsForceFlag = 'force' in klass.flags
 
@@ -137,11 +147,36 @@ export default abstract class ThemeCommand extends Command {
         requiredFlags,
         validationResults,
       )
-      if (!confirmed) return
+      if (!confirmed) {
+        if (collectResults)
+          this.renderEnvironmentResults(
+            environments.map((environment) => ({environment, result: {status: 'cancelled'}})),
+          )
+        return
+      }
     }
 
-    await this.runConcurrent(validationResults.valid)
+    const results = await this.runConcurrent(validationResults.valid, collectResults)
+    if (collectResults) {
+      const entries: ThemeEnvironmentResult[] = environments.map((environment) => {
+        const invalid = validationResults.invalid.find((entry) => entry.environment === environment)
+        return (
+          results.get(environment) ?? {
+            environment,
+            error: {type: 'abort', message: invalid?.reason ?? 'The environment did not return a result.'},
+          }
+        )
+      })
+      this.renderEnvironmentResults(entries)
+      if (entries.some((entry) => 'error' in entry)) process.exitCode = 1
+    }
   }
+
+  protected collectsEnvironmentResults(_flags: FlagValues): boolean {
+    return false
+  }
+
+  protected renderEnvironmentResults(_results: ThemeEnvironmentResult[]): void {}
 
   protected validateNonTTYFlags(flags: FlagOutput): void {
     // Multiple environments must be validated after their configured flags are loaded.
@@ -216,6 +251,7 @@ export default abstract class ThemeCommand extends Command {
     environmentMap: Map<EnvironmentName, {flags: FlagValues; validationFlags: FlagValues}>,
     requiredFlags: Exclude<RequiredFlags, null>,
     requiresAuth: boolean,
+    collectResults = false,
   ) {
     const valid: ValidEnvironment[] = []
     const invalid: {environment: EnvironmentName; reason: string}[] = []
@@ -234,7 +270,13 @@ export default abstract class ThemeCommand extends Command {
     )
 
     for (const {environmentName, flags, validationFlags, storeAuthSession} of entriesWithStoreAuthSessions) {
-      const validationResult = this.validConfig(validationFlags, requiredFlags, environmentName, storeAuthSession)
+      const validationResult = this.validConfig(
+        validationFlags,
+        requiredFlags,
+        environmentName,
+        storeAuthSession,
+        collectResults,
+      )
       if (validationResult !== true) {
         const missingFlagsText = validationResult.join(', ')
         invalid.push({environment: environmentName, reason: `Missing flags: ${missingFlagsText}`})
@@ -306,7 +348,8 @@ export default abstract class ThemeCommand extends Command {
    * Run the command in each valid environment concurrently
    * @param validEnvironments - The valid environments to run the command in
    */
-  private async runConcurrent(validEnvironments: ValidEnvironment[]) {
+  private async runConcurrent(validEnvironments: ValidEnvironment[], collectResults = false) {
+    const results = new Map<string, ThemeEnvironmentResult>()
     const abortController = new AbortController()
 
     const stores = validEnvironments.map((env) => env.flags.store as string)
@@ -315,40 +358,77 @@ export default abstract class ThemeCommand extends Command {
       stores.length === uniqueStores.size ? [validEnvironments] : this.createSequentialGroups(validEnvironments)
 
     for (const runGroup of runGroups) {
-      // eslint-disable-next-line no-await-in-loop
-      await renderConcurrent({
-        processes: runGroup.map(({environment, flags, requiresAuth, storeAuthSession}) => ({
-          prefix: environment,
-          action: async (stdout: Writable, stderr: Writable, _signal) => {
-            try {
-              const store = flags.store as string
-              await useThemeStoreContext(store, async () => {
-                const session = requiresAuth ? await this.createSession(flags, storeAuthSession) : undefined
+      const processes = runGroup.map(({environment, flags, requiresAuth, storeAuthSession}) => ({
+        prefix: environment,
+        action: async (stdout: Writable, stderr: Writable, _signal: AbortSignal) => {
+          try {
+            const store = flags.store as string
+            const result = await useThemeStoreContext(store, async () => {
+              const session = requiresAuth ? await this.createSession(flags, storeAuthSession) : undefined
 
-                const commandName = this.constructor.name.toLowerCase()
-                recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
+              const commandName = this.constructor.name.toLowerCase()
+              recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
 
-                try {
-                  await this.command(flags, session, true, {}, {stdout, stderr})
-                } finally {
-                  await this.logAnalyticsData(session)
-                }
-              })
+              try {
+                return await this.command(
+                  collectResults ? {...flags, json: true} : flags,
+                  session,
+                  true,
+                  {},
+                  {stdout, stderr},
+                )
+              } finally {
+                await this.logAnalyticsData(session)
+              }
+            })
 
-              // eslint-disable-next-line no-catch-all/no-catch-all
-            } catch (error) {
-              if (error instanceof Error) {
-                error.message = `Environment ${environment} failed: \n\n${error.message}`
+            results.set(environment, {environment, result: result ?? {status: 'cancelled'}})
+
+            // eslint-disable-next-line no-catch-all/no-catch-all
+          } catch (error) {
+            if (collectResults) {
+              const message = error instanceof Error ? error.message : String(error)
+              const common = {
+                message,
+                ...(error instanceof FatalError && error.details !== undefined ? {details: error.details} : {}),
+              }
+              const jsonError =
+                error instanceof ExternalError
+                  ? {type: 'external' as const, ...common, command: error.command, args: error.args}
+                  : {type: error instanceof BugError ? ('bug' as const) : ('abort' as const), ...common}
+              results.set(environment, {environment, error: jsonError})
+            }
+            if (error instanceof Error) {
+              error.message = `Environment ${environment} failed: \n\n${error.message}`
+              if (collectResults || commandEventOutputMode() === 'json') {
+                emitCommandEvent({
+                  type: 'diagnostic',
+                  level: 'error',
+                  code: 'theme-environment-failed',
+                  message: error.message,
+                })
+              } else {
                 renderError({body: [error.message]})
               }
             }
-          },
-        })),
-        abortSignal: abortController.signal,
-        showTimestamps: true,
-        renderOptions: {stdout: process.stderr},
-      })
+          }
+        },
+      }))
+      if (collectResults) {
+        // JSON results and events already have their own writers; Ink would decorate their output.
+        // eslint-disable-next-line no-await-in-loop
+        await Promise.all(processes.map(({action}) => action(process.stdout, process.stderr, abortController.signal)))
+      } else {
+        // eslint-disable-next-line no-await-in-loop
+        await renderConcurrent({
+          processes,
+          abortSignal: abortController.signal,
+          showTimestamps: true,
+          renderOptions: {stdout: process.stderr},
+        })
+      }
     }
+    return results
   }
 
   /**
@@ -496,6 +576,7 @@ export default abstract class ThemeCommand extends Command {
     requiredFlags: Exclude<RequiredFlags, null>,
     environmentName: string,
     storeAuthSession?: AdminSession,
+    collectResults = false,
   ): string[] | true {
     const missingFlags = requiredFlags
       .filter((flag) =>
@@ -506,12 +587,21 @@ export default abstract class ThemeCommand extends Command {
       .map((flag) => (Array.isArray(flag) ? flag.join(' or ') : flag))
 
     if (missingFlags.length > 0) {
-      renderWarning({
-        body: [
-          `Missing required flags in environment configuration${environmentName ? ` for ${environmentName}` : ''}:`,
-          {list: {items: missingFlags}},
-        ],
-      })
+      if (collectResults || commandEventOutputMode() === 'json') {
+        emitCommandEvent({
+          type: 'diagnostic',
+          level: 'warning',
+          code: 'theme-environment-invalid',
+          message: `Missing required flags in environment configuration for ${environmentName}: ${missingFlags.join(', ')}`,
+        })
+      } else {
+        renderWarning({
+          body: [
+            `Missing required flags in environment configuration${environmentName ? ` for ${environmentName}` : ''}:`,
+            {list: {items: missingFlags}},
+          ],
+        })
+      }
       return missingFlags
     }
 

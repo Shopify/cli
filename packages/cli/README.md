@@ -10843,92 +10843,327 @@ DESCRIPTION
   {
     "anyOf": [
       {
-        "$ref": "#/definitions/ThemeInfoThemeResult"
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
       },
       {
-        "$ref": "#/definitions/ThemeEnvironmentInfo"
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
       }
     ],
     "title": "ThemeInfoResult",
     "definitions": {
-      "ThemeInfoTheme": {
+      "Theme": {
         "type": "object",
         "properties": {
           "id": {
-            "type": "number"
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "The decimal Online Store theme ID, not a Shopify GID."
           },
           "name": {
             "type": "string"
           },
           "role": {
-            "type": "string"
+            "type": "string",
+            "description": "The upstream theme role; known values include main, unpublished, and development."
           },
-          "shop": {
-            "type": "string"
+          "storeDomain": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
-          "preview_url": {
-            "type": "string"
+          "previewUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
-          "editor_url": {
-            "type": "string"
+          "editorUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
           "id",
           "name",
           "role",
-          "shop",
-          "preview_url",
-          "editor_url"
-        ],
-        "additionalProperties": false
-      },
-      "ThemeInfoThemeResult": {
-        "type": "object",
-        "properties": {
-          "theme": {
-            "$ref": "#/definitions/ThemeInfoTheme"
-          }
-        },
-        "required": [
-          "theme"
+          "storeDomain",
+          "previewUrl",
+          "editorUrl"
         ],
         "additionalProperties": false
       },
       "ThemeEnvironmentInfo": {
         "type": "object",
         "properties": {
-          "store": {
-            "type": "string"
+          "storeDomain": {
+            "$ref": "#/definitions/Theme/properties/storeDomain"
           },
-          "development_theme_id": {
-            "type": [
-              "number",
-              "null"
-            ]
+          "developmentThemeId": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/Theme/properties/id"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The decimal Online Store theme ID, not a Shopify GID."
           },
-          "cli_version": {
+          "cliVersion": {
             "type": "string"
           },
           "os": {
             "type": "string"
           },
           "shell": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
-          "node_version": {
+          "nodeVersion": {
             "type": "string"
           }
         },
         "required": [
-          "store",
-          "development_theme_id",
-          "cli_version",
+          "storeDomain",
+          "developmentThemeId",
+          "cliVersion",
           "os",
           "shell",
-          "node_version"
+          "nodeVersion"
         ],
         "additionalProperties": false
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "theme": {
+                            "$ref": "#/definitions/Theme"
+                          }
+                        },
+                        "required": [
+                          "theme"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "$ref": "#/definitions/ThemeEnvironmentInfo"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {}
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
       }
     },
     "$schema": "http://json-schema.org/draft-07/schema#"

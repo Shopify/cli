@@ -48,7 +48,9 @@ describe('info', () => {
     expect(output).toHaveProperty('theme.shop', session.storeFqdn)
     expect(output).toHaveProperty('theme.preview_url', expect.stringContaining(session.storeFqdn))
     expect(output).toHaveProperty('theme.editor_url', expect.stringContaining(session.storeFqdn))
-    expect(themeInfoJsonOutputSchema.validate(output)).toEqual(output)
+    expect(JSON.parse(themeInfoJsonOutputSchema.encode(output))).toMatchObject({
+      theme: {id: String(theme.id), storeDomain: session.storeFqdn},
+    })
   })
 
   describe('themeEnvironmentInfoJSON', () => {
@@ -67,7 +69,11 @@ describe('info', () => {
       expect(output).toHaveProperty('os', expect.stringContaining('-'))
       expect(output).toHaveProperty('shell', process.env.SHELL ?? 'unknown')
       expect(output).toHaveProperty('node_version', process.version)
-      expect(themeInfoJsonOutputSchema.validate(output)).toEqual(output)
+      expect(JSON.parse(themeInfoJsonOutputSchema.encode(output))).toMatchObject({
+        storeDomain: 'my-shop.myshopify.com',
+        developmentThemeId: null,
+        cliVersion: '3.91.0',
+      })
     })
   })
 

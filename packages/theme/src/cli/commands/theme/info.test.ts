@@ -65,6 +65,25 @@ const environmentResult = {
   node_version: 'v24.15.0',
 }
 
+const publicThemeResult = {
+  theme: {
+    id: '123',
+    name: 'my theme',
+    role: 'live',
+    storeDomain: 'my-shop.myshopify.com',
+    previewUrl: 'https://my-shop.myshopify.com/preview',
+    editorUrl: 'https://my-shop.myshopify.com/editor',
+  },
+}
+const publicEnvironmentResult = {
+  storeDomain: 'my-shop.myshopify.com',
+  developmentThemeId: null,
+  cliVersion: '3.91.0',
+  os: 'darwin-arm64',
+  shell: '/bin/zsh',
+  nodeVersion: 'v24.15.0',
+}
+
 function restoreUnitTestEnvironment(value: string | undefined): void {
   process.env.SHOPIFY_UNIT_TEST = value
 }
@@ -130,7 +149,7 @@ describe('Info', () => {
       await run(['--theme', '123', '--json'])
 
       expect(fetchThemeInfo).toHaveBeenCalled()
-      expect(JSON.parse(mockAndCaptureOutput().output())).toEqual(themeResult)
+      expect(JSON.parse(mockAndCaptureOutput().output())).toEqual(publicThemeResult)
       expect(renderInfo).not.toHaveBeenCalled()
     })
 
@@ -160,7 +179,7 @@ describe('Info', () => {
       await run(['--json'])
 
       expect(getThemeEnvironmentInfo).toHaveBeenCalledWith({cliVersion: expect.any(String)})
-      expect(JSON.parse(mockAndCaptureOutput().output())).toEqual(environmentResult)
+      expect(JSON.parse(mockAndCaptureOutput().output())).toEqual(publicEnvironmentResult)
       expect(renderInfo).not.toHaveBeenCalled()
     })
 
@@ -218,19 +237,10 @@ describe('Info', () => {
       restoreUnitTestEnvironment(originalUnitTestEnv)
     }
 
-    const expectedStdout = `{
-  "theme": {
-    "id": 123,
-    "name": "my theme",
-    "role": "live",
-    "shop": "my-shop.myshopify.com",
-    "preview_url": "https://my-shop.myshopify.com/preview",
-    "editor_url": "https://my-shop.myshopify.com/editor"
-  }
-}\n`
+    const expectedStdout = `${JSON.stringify(publicThemeResult, null, 2)}\n`
 
     expect(streams.stdout()).toBe(expectedStdout)
-    expect(JSON.parse(streams.stdout())).toEqual(themeResult)
+    expect(JSON.parse(streams.stdout())).toEqual(publicThemeResult)
     expect(streams.stderr()).toBe('')
   })
 
@@ -256,22 +266,15 @@ describe('Info', () => {
       restoreUnitTestEnvironment(originalUnitTestEnv)
     }
 
-    const expectedStdout = `{
-  "store": "my-shop.myshopify.com",
-  "development_theme_id": null,
-  "cli_version": "3.91.0",
-  "os": "darwin-arm64",
-  "shell": "/bin/zsh",
-  "node_version": "v24.15.0"
-}\n`
+    const expectedStdout = `${JSON.stringify(publicEnvironmentResult, null, 2)}\n`
 
     expect(streams.stdout()).toBe(expectedStdout)
-    expect(JSON.parse(streams.stdout())).toEqual(environmentResult)
+    expect(JSON.parse(streams.stdout())).toEqual(publicEnvironmentResult)
     expect(streams.stderr()).toBe('')
   })
 
   describe('multi-environment JSON output', () => {
-    test('emits each environment result as its own existing JSON document', async () => {
+    test('emits one ordered object for every requested environment', async () => {
       vi.mocked(loadEnvironment)
         .mockResolvedValueOnce({store: 'store1.myshopify.com', theme: '123'})
         .mockResolvedValueOnce({store: 'store2.myshopify.com', theme: '456'})
@@ -284,10 +287,19 @@ describe('Info', () => {
 
       await runMultiEnvironment(['--environment', 'first', '--environment', 'second', '--json'])
 
-      const expectedOutput = `${JSON.stringify(themeResult, null, 2)}\n${JSON.stringify(secondThemeResult, null, 2)}`
+      const expectedOutput = JSON.stringify(
+        {
+          environments: [
+            {environment: 'first', result: publicThemeResult},
+            {environment: 'second', result: {theme: {...publicThemeResult.theme, id: '456', name: 'second theme'}}},
+          ],
+        },
+        null,
+        2,
+      )
 
       expect(output.output()).toBe(expectedOutput)
-      expect(output.output()).not.toContain('environments')
+      expect(JSON.parse(output.output()).environments).toHaveLength(2)
       expect(renderInfo).not.toHaveBeenCalled()
     })
 
@@ -305,6 +317,38 @@ describe('Info', () => {
       expect(output.output()).toBe('')
       expect(renderInfo).toHaveBeenCalledTimes(2)
     })
+  })
+
+  test('wraps a single explicitly requested environment', async () => {
+    vi.mocked(loadEnvironment).mockResolvedValue({store: 'store1.myshopify.com', theme: '123'})
+    vi.mocked(fetchThemeInfo).mockResolvedValue(themeResult)
+    await runMultiEnvironment(['--environment', 'first', '--json'])
+    expect(JSON.parse(mockAndCaptureOutput().output())).toEqual({
+      environments: [{environment: 'first', result: publicThemeResult}],
+    })
+  })
+
+  test('retains a failed environment beside a successful result and exits nonzero', async () => {
+    const originalExitCode = process.exitCode
+    try {
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', theme: '123'})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com', theme: '456'})
+      vi.mocked(fetchThemeInfo).mockImplementation(async (_session, options) => {
+        if (options.theme === '456') throw new Error('Transport failed')
+        return themeResult
+      })
+      await runMultiEnvironment(['--environment', 'first', '--environment', 'second', '--json'])
+      expect(JSON.parse(mockAndCaptureOutput().output())).toEqual({
+        environments: [
+          {environment: 'first', result: publicThemeResult},
+          {environment: 'second', error: {type: 'abort', message: 'Transport failed'}},
+        ],
+      })
+      expect(process.exitCode).toBe(1)
+    } finally {
+      process.exitCode = originalExitCode
+    }
   })
 
   describe('analytics timing', () => {

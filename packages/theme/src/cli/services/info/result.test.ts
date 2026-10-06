@@ -25,14 +25,36 @@ const environmentResult = {
   node_version: 'v24.15.0',
 }
 
+const publicThemeResult = {
+  theme: {
+    id: '123',
+    name: 'My theme',
+    role: 'live',
+    storeDomain: 'my-shop.myshopify.com',
+    previewUrl: 'https://my-shop.myshopify.com/preview',
+    editorUrl: 'https://my-shop.myshopify.com/editor',
+  },
+}
+const publicEnvironmentResult = {
+  storeDomain: 'my-shop.myshopify.com',
+  developmentThemeId: null,
+  cliVersion: '3.91.0',
+  os: 'darwin-arm64',
+  shell: '/bin/zsh',
+  nodeVersion: 'v24.15.0',
+}
+
 describe('renderThemeInfoResult', () => {
-  test.each([themeResult, environmentResult])('encodes the JSON result shape', (result) => {
+  test.each([
+    [themeResult, publicThemeResult],
+    [environmentResult, publicEnvironmentResult],
+  ])('encodes the public JSON result', (result, expected) => {
     const output = mockAndCaptureOutput()
     output.clear()
 
     renderThemeInfoResult(result, 'json')
 
-    expect(JSON.parse(output.output())).toEqual(result)
+    expect(JSON.parse(output.output())).toEqual(expected)
     expect(renderInfo).not.toHaveBeenCalled()
   })
 

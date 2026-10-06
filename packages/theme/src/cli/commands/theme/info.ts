@@ -8,7 +8,9 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {OutputFlags} from '@oclif/core/interfaces'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
+import type {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 
 type InfoFlags = OutputFlags<typeof Info.flags>
 
@@ -40,7 +42,7 @@ export default class Info extends ThemeCommand {
 
   static multiEnvironmentsFlags = ['store', 'password']
 
-  async command(flags: InfoFlags, adminSession: AdminSession): Promise<void> {
+  async command(flags: InfoFlags, adminSession: AdminSession, multiEnvironment = false) {
     recordTiming('theme-command:info')
     if (flags.theme || flags.development) {
       const output = await fetchThemeInfo(adminSession, flags)
@@ -48,11 +50,27 @@ export default class Info extends ThemeCommand {
         throw new AbortError('Theme not found!')
       }
 
+      if (flags.json && multiEnvironment) {
+        recordTiming('theme-command:info')
+        return output
+      }
       renderThemeInfoResult(output, flags.json ? 'json' : 'text', flags)
     } else {
       const {result, developmentTheme} = getThemeEnvironmentInfo({cliVersion: this.config.version})
+      if (flags.json && multiEnvironment) {
+        recordTiming('theme-command:info')
+        return result
+      }
       renderThemeInfoResult(result, flags.json ? 'json' : 'text', {developmentTheme})
     }
     recordTiming('theme-command:info')
+  }
+
+  protected collectsEnvironmentResults(flags: {json?: boolean}): boolean {
+    return Boolean(flags.json)
+  }
+
+  protected renderEnvironmentResults(environments: ThemeEnvironmentResult[]): void {
+    outputResult(themeInfoJsonOutputSchema.encode({environments}))
   }
 }
