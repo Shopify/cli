@@ -351,7 +351,9 @@ describe('outputMigrationList stream boundary', () => {
       await outputMigrationList({pages: pages(), json: true})
 
       expect(stdout).toHaveBeenCalledOnce()
-      expect(stdout.mock.calls[0]?.[0]).toBe(`${JSON.stringify({subscriptions: [value]}, null, 2)}\n`)
+      expect(stdout.mock.calls[0]?.[0]).toBe(
+        `${JSON.stringify({subscriptions: [projectMigratableSubscription(value)]}, null, 2)}\n`,
+      )
       expect(stderr).not.toHaveBeenCalled()
     } finally {
       stdout.mockRestore()
