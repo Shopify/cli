@@ -4,8 +4,6 @@ import {execFileSync} from 'node:child_process'
 
 const root = execFileSync('git', ['rev-parse', '--show-toplevel'], {encoding: 'utf8'}).trim()
 const read = (file) => JSON.parse(readFileSync(resolve(root, file), 'utf8'))
-// Frozen effective configurations were captured from the original revision
-// before removing ESLint. Auditing the migration must not reinstall its engine.
 const baseline = read('configurations/oxlint-baseline.json')
 const mapping = read('configurations/oxlint-rule-mapping.json')
 const config = read('oxlint.json')
@@ -79,8 +77,7 @@ for (const group of baseline.configurations) {
   }
 }
 
-// This supplementary inventory records verified tool overlap. It does not turn
-// a missing dedicated rule into a claim of equivalent behavior or file scope.
+// Other tools can cover only part of a rule or its file scope.
 const otherToolCoverage = Object.fromEntries(
   [...unsupported]
     .filter((name) => mapping[name].otherToolCoverage)
@@ -113,6 +110,4 @@ const findings = {
 const output = process.argv[2] ?? '/tmp/cli-oxlint-coverage-audit.json'
 writeFileSync(output, JSON.stringify({summary, findings}, null, 2) + '\n')
 console.log(JSON.stringify(summary, null, 2))
-// Partial and unsupported replacements are deliberate and recorded in the
-// mapping. Missing file scopes or formatting must be fixed or documented there.
 if (missing.size || missingFormatting.length || severities.size) process.exitCode = 1
