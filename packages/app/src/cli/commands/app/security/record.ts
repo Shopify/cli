@@ -6,8 +6,6 @@ import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class SecurityRecord extends BaseCommand {
-  static hidden = true
-
   static summary = 'Record agent findings from an app security check.'
 
   static descriptionWithMarkdown = `Reads a coding agent's complete findings document from stdin, validates it, and replaces \`agent-findings.json\` in the results directory, \`.shopify/app-security/<results key>/\`. The results key is \`--client-id\` when you pass it, and otherwise the name of the app configuration file without \`.toml\`. \`--client-id\` is checked against your Shopify account before anything is read, so it needs you to be logged in.
