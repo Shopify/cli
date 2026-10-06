@@ -1,4 +1,4 @@
-import {securityCheckJsonOutputSchema, toSecurityCheckJson} from './security-check-json.js'
+import {securityCheckJsonOutputSchema, toSecurityCheckFileListJson, toSecurityCheckJson} from './security-check-json.js'
 import {securityInstructionsJsonOutputSchema, toAppSecurityInstructionsJson} from './security-instructions-json.js'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -77,10 +77,26 @@ describe('app security JSON contract', () => {
     })
   })
 
-  test('encodes the --list-files result as the list of files only', () => {
-    expect(JSON.parse(securityCheckJsonOutputSchema.encode({files: ['shopify.app.toml']}))).toEqual({
-      files: ['shopify.app.toml'],
+  test('encodes the --list-files result as the absolute path of each file only', () => {
+    const fileList = toSecurityCheckFileListJson(appDirectory, [
+      'shopify.app.toml',
+      'app/index.ts',
+      '../backend/index.ts',
+    ])
+
+    expect(JSON.parse(securityCheckJsonOutputSchema.encode(fileList))).toEqual({
+      files: ['/tmp/app/shopify.app.toml', '/tmp/app/app/index.ts', '/tmp/backend/index.ts'],
     })
+  })
+
+  test('describes the --list-files paths as absolute', () => {
+    const fileList = (
+      securityCheckJsonOutputSchema.jsonSchema as {
+        definitions: {AppSecurityCheckFileListResult: {properties: {files: {description?: string}}}}
+      }
+    ).definitions.AppSecurityCheckFileListResult.properties.files
+
+    expect(fileList.description).toBe('The absolute path of each file the check would gather.')
   })
 
   test('rejects a check result that is neither a scan nor a file list', () => {

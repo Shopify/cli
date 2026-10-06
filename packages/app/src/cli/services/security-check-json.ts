@@ -2,6 +2,7 @@ import {clientIdSource, effectiveClientId} from './app-security-selection.js'
 import {appSecurityInstructionsSchema, type AppSecurityInstructionsJson} from './security-instructions-json.js'
 import {deterministicFindingsDocumentSchema} from './app-security-engine/index.js'
 import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 import {zod} from '@shopify/cli-kit/node/schema'
 import type {AppSecurityExecution} from './app-security-api.js'
 import type {AppSecurityScanDirectory, AppSecuritySelection} from './app-security-selection.js'
@@ -41,7 +42,9 @@ const scanResultSchema = zod
   })
   .strict()
 
-const fileListResultSchema = zod.object({files: zod.array(zod.string())}).strict()
+const fileListResultSchema = zod
+  .object({files: zod.array(zod.string()).describe('The absolute path of each file the check would gather.')})
+  .strict()
 
 // `--list-files` stops before scanning, so its result shares no field with a scan's. Consumers know which they asked
 // for, and the two shapes have no key in common.
@@ -56,6 +59,14 @@ export const securityCheckJsonOutputSchema = defineJsonOutputSchema({
 })
 
 type SecurityCheckScanJsonResult = zod.infer<typeof scanResultSchema>
+
+/** `paths` are relative to the app directory, as the text output prints them. */
+export function toSecurityCheckFileListJson(
+  appDirectory: string,
+  paths: string[],
+): zod.infer<typeof fileListResultSchema> {
+  return {files: paths.map((path) => resolvePath(appDirectory, path))}
+}
 
 export function toSecurityCheckJson(
   execution: Pick<AppSecurityExecution, 'deterministicFindings'>,

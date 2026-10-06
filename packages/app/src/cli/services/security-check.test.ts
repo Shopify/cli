@@ -833,7 +833,7 @@ describe('securityCheck --list-files', () => {
     expect(dependencies.setExitCode).not.toHaveBeenCalled()
   })
 
-  test('prints {"files": [...]} with --json', async () => {
+  test('prints the absolute paths as {"files": [...]} with --json', async () => {
     const dependencies = testDependencies()
     dependencies.listFiles.mockResolvedValue({
       paths: ['app/routes/index.ts', 'shopify.app.toml'],
@@ -844,7 +844,7 @@ describe('securityCheck --list-files', () => {
 
     expect(dependencies.output).toHaveBeenCalledOnce()
     expect(JSON.parse(dependencies.output.mock.calls[0]![0])).toEqual({
-      files: ['app/routes/index.ts', 'shopify.app.toml'],
+      files: [joinPath(appDirectory, 'app/routes/index.ts'), joinPath(appDirectory, 'shopify.app.toml')],
     })
   })
 
@@ -973,7 +973,9 @@ describe('securityCheck --list-files', () => {
         return captured()
       })
 
-      expect(JSON.parse(stdout)).toEqual({files: ['index.ts', 'shopify.app.toml']})
+      expect(JSON.parse(stdout)).toEqual({
+        files: [joinPath(appRoot, 'index.ts'), joinPath(appRoot, 'shopify.app.toml')],
+      })
     })
   })
 })

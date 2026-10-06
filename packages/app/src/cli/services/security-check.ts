@@ -17,7 +17,7 @@ import {
   type AppSecuritySelection,
   type AppSecuritySelectionOptions,
 } from './app-security-selection.js'
-import {securityCheckJsonOutputSchema, toSecurityCheckJson} from './security-check-json.js'
+import {securityCheckJsonOutputSchema, toSecurityCheckFileListJson, toSecurityCheckJson} from './security-check-json.js'
 import {toAppSecurityInstructionsJson, type AppSecurityInstructionsJson} from './security-instructions-json.js'
 import {renderSecurityReport} from './security-output.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
@@ -238,7 +238,7 @@ export default async function securityCheck(
     const {paths, ignoredScanDirectories} = await dependencies.listFiles(scanOptions)
     warnAboutIgnoredScanDirectories(ignoredScanDirectories, options.json, dependencies)
     if (options.json) {
-      dependencies.output(securityCheckJsonOutputSchema.encode({files: paths}))
+      dependencies.output(securityCheckJsonOutputSchema.encode(toSecurityCheckFileListJson(appDirectory, paths)))
     } else if (paths.length > 0) {
       dependencies.output(paths.join('\n'))
     }
