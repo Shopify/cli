@@ -56,6 +56,6 @@ export default class List extends ThemeCommand {
   }
 
   protected renderEnvironmentResults(environments: {environment: string; result: unknown}[]): void {
-    outputResult(themeListJsonOutputSchema.encode(themeListJsonOutputSchema.validate({environments})))
+    outputResult(themeListJsonOutputSchema.encode({environments}))
   }
 }

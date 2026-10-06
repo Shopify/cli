@@ -91,22 +91,22 @@ describe('list', () => {
     renderThemeListResult(await list({}, session), 'json', {store: session.storeFqdn})
 
     expect(mockOutput.info()).toMatchInlineSnapshot(`
-      "[
-        {
-          "id": 1,
-          "name": "Theme 1",
-          "processing": false,
-          "createdAtRuntime": false,
-          "role": "live"
-        },
-        {
-          "id": 2,
-          "name": "Theme 2",
-          "processing": false,
-          "createdAtRuntime": false,
-          "role": ""
-        }
-      ]"
+      "{
+        "themes": [
+          {
+            "id": "1",
+            "name": "Theme 1",
+            "role": "live",
+            "processing": false
+          },
+          {
+            "id": "2",
+            "name": "Theme 2",
+            "role": "",
+            "processing": false
+          }
+        ]
+      }"
     `)
   })
 })
