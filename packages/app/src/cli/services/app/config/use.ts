@@ -6,9 +6,12 @@ import {selectConfigFile} from '../../../prompts/config.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
-import {basename, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
+import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {RenderAlertOptions, renderWarning} from '@shopify/cli-kit/node/ui'
 import {Result, err, ok} from '@shopify/cli-kit/node/result'
+// CLI Kit normalizes separators; public JSON paths must use the native filesystem format.
+// eslint-disable-next-line no-restricted-imports
+import {resolve} from 'node:path'
 
 export interface UseOptions {
   directory: string
@@ -49,7 +52,7 @@ export async function useAppConfiguration({
   return {
     status: 'success',
     changed: previousConfigFile !== configFileName,
-    path: resolvePath(directory, configFileName),
+    path: resolve(directory, configFileName),
     clientId: activeConfig.file.content.client_id as string,
   }
 }
