@@ -9,6 +9,9 @@ import {fetchChecksums, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {runWithCommandEvents, renderCommandEventAsJson} from '@shopify/cli-kit/node/command-events'
 import {describe, expect, test, vi} from 'vitest'
+// Native JSON paths must preserve Windows separators instead of pathe normalization.
+// eslint-disable-next-line no-restricted-imports
+import {resolve as nativePath} from 'node:path'
 
 vi.mock('../../utilities/theme-selector.js')
 vi.mock('@shopify/cli-kit/node/themes/api')
@@ -47,7 +50,7 @@ describe('pull execution', () => {
 
         await expect(readFile(joinPath(path, 'assets/theme.css'))).resolves.toBe('body {}')
         await expect(fileExists(joinPath(path, 'assets/old.css'))).resolves.toBe(nodelete)
-        expect(JSON.parse(stdout())).toMatchObject({status: 'success', directory: path, theme: {id: '1'}})
+        expect(JSON.parse(stdout())).toMatchObject({status: 'success', directory: nativePath(path), theme: {id: '1'}})
         const events = stderr()
           .trim()
           .split('\n')

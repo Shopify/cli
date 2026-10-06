@@ -5,6 +5,9 @@ import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'
+// Native JSON paths must preserve Windows separators instead of pathe normalization.
+// eslint-disable-next-line no-restricted-imports
+import {resolve as nativePath} from 'node:path'
 
 vi.mock('../../services/pull.js')
 const session = {storeFqdn: 'test.myshopify.com', token: 'token'}
@@ -37,7 +40,7 @@ describe('theme pull JSON', () => {
       expect(JSON.parse(stdout())).toMatchObject({
         status: 'success',
         changed: true,
-        directory: '/theme',
+        directory: nativePath('/theme'),
         theme: {id: '1', storeDomain: session.storeFqdn, sourceUrl: null},
       })
       expect(stderr()).toBe('')

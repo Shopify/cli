@@ -1,6 +1,9 @@
 import {defineThemeJsonOutputSchema, ThemeLinksSchema, projectTheme, storeDomain} from '../json-output/schema.js'
-import {isAbsolutePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {isAbsolutePath} from '@shopify/cli-kit/node/path'
 import {zod} from '@shopify/cli-kit/node/schema'
+// Native JSON paths must preserve Windows separators instead of pathe normalization.
+// eslint-disable-next-line no-restricted-imports
+import {resolve as resolvePath} from 'node:path'
 
 const ThemePullThemeSchema = zod.object({
   id: zod.number(),
