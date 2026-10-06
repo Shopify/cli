@@ -3,15 +3,14 @@ import {formatSummary, renderOffensesText, sortOffenses, isExtendedWriteStream} 
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {type Offense, type Theme} from '@shopify/theme-check-node'
-import {type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 
-export function encodeThemeCheckResult(result: InferJsonOutputSchema<typeof themeCheckJsonOutputSchema>): string {
-  // Theme Check's established JSON format is compact, unlike the shared encoder.
+export function encodeThemeCheckResult(result: unknown): string {
+  // Keep the legacy output option compact while encoding the agreed object contract.
   return JSON.stringify(JSON.parse(themeCheckJsonOutputSchema.encode(result)))
 }
 
 export function renderThemeCheckResult(
-  {result, offenses, theme}: {result: ThemeCheckResult; offenses: Offense[]; theme: Theme},
+  {result, offenses, theme, valid}: {result: ThemeCheckResult; offenses: Offense[]; theme: Theme; valid?: boolean},
   outputFormat: string,
   path: string,
   environment?: string,
@@ -46,6 +45,6 @@ export function renderThemeCheckResult(
       stdout._handle.setBlocking(true)
     }
 
-    outputResult(encodeThemeCheckResult(result))
+    outputResult(encodeThemeCheckResult(valid === undefined ? result : {files: result, valid}))
   }
 }
