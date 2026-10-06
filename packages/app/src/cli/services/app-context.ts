@@ -136,7 +136,7 @@ export async function linkedAppContext({
     activeConfig,
     specifications,
     remoteFlags: remoteApp.flags,
-    clientIdOverride: clientId && clientId !== configClientId ? clientId : undefined,
+    clientIdOverride: clientId,
   })
 
   if (!unsafeTolerateErrors && !localApp.errors.isEmpty()) {

@@ -808,6 +808,7 @@ describe('ImportExtensionsIfNeeded', () => {
       developerPlatformClient,
       extensions: mockExtensions,
     })
+    expect(reloadApp).toHaveBeenCalledWith(app)
     expect(result).toBe(reloadedApp)
   })
 

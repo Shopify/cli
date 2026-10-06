@@ -990,11 +990,8 @@
           "type": "option"
         },
         "client-id": {
-          "description": "The Client ID of your app.",
+          "description": "The Client ID of your app. Use with --config to deploy that configuration to a different app than the one it is linked to.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
-          "exclusive": [
-            "config"
-          ],
           "hasDynamicHelp": false,
           "hidden": false,
           "multiple": false,
@@ -1144,11 +1141,8 @@
           "type": "option"
         },
         "client-id": {
-          "description": "The Client ID of your app.",
+          "description": "The Client ID of your app. Use with --config to run dev with that configuration for a different app than the one it is linked to.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
-          "exclusive": [
-            "config"
-          ],
           "hasDynamicHelp": false,
           "hidden": false,
           "multiple": false,
@@ -1372,11 +1366,8 @@
           "type": "option"
         },
         "client-id": {
-          "description": "The Client ID of your app.",
+          "description": "The Client ID of your app. Use with --config to clean up the dev preview for a different app than the one it is linked to.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
-          "exclusive": [
-            "config"
-          ],
           "hasDynamicHelp": false,
           "hidden": false,
           "multiple": false,

@@ -637,9 +637,9 @@ Deploy your Shopify app.
 
 ```
 USAGE
-  $ shopify app deploy [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--message
-    <value>] [--no-build] [--no-color] [--no-input] [--no-release | --allow-updates | --allow-deletes] [--path <value>]
-    [--reset | ] [--source-control-url <value>] [--verbose] [--version <value>]
+  $ shopify app deploy [--auth-alias <value>] [--client-id <value>] [--json-schema] [--message <value>]
+    [--no-build] [--no-color] [--no-input] [--no-release | --allow-updates | --allow-deletes] [--path <value>] [--reset
+    | -c <value>] [--source-control-url <value>] [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>
@@ -662,7 +662,8 @@ FLAGS
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
 
   --client-id=<value>
-      The Client ID of your app.
+      The Client ID of your app. Use with --config to deploy that configuration to a different app than the one it is
+      linked to.
       [env: SHOPIFY_FLAG_CLIENT_ID]
 
   --json-schema
@@ -732,11 +733,11 @@ Run the app.
 
 ```
 USAGE
-  $ shopify app dev [--auth-alias <value>] [--checkout-cart-url <value>] [--client-id <value> | -c <value>]
+  $ shopify app dev [--auth-alias <value>] [--checkout-cart-url <value>] [--client-id <value>]
     [--install-mkcert --use-localhost] [--json-schema] [--localhost-port <value>] [--no-color] [--no-input]
-    [--no-update] [--notify <value>] [--path <value>] [--reset | ] [--skip-dependencies-installation] [-s <value>]
-    [--store-password <value>] [--subscription-product-url <value>] [-t <value>] [--theme-app-extension-port <value>]
-    [--tunnel-url <value> | ] [--unsafe-validation] [--verbose]
+    [--no-update] [--notify <value>] [--path <value>] [--reset | -c <value>] [--skip-dependencies-installation] [-s
+    <value>] [--store-password <value>] [--subscription-product-url <value>] [-t <value>] [--theme-app-extension-port
+    <value>] [--tunnel-url <value> | ] [--unsafe-validation] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -760,7 +761,8 @@ FLAGS
       [env: SHOPIFY_FLAG_CHECKOUT_CART_URL]
 
   --client-id=<value>
-      The Client ID of your app.
+      The Client ID of your app. Use with --config to run dev with that configuration for a different app than the one it
+      is linked to.
       [env: SHOPIFY_FLAG_CLIENT_ID]
 
   --install-mkcert
@@ -846,8 +848,8 @@ Cleans up the dev preview from the selected store.
 
 ```
 USAGE
-  $ shopify app dev clean [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--path <value>] [--reset | ] [-s <value>] [--verbose]
+  $ shopify app dev clean [--auth-alias <value>] [--client-id <value>] [--json-schema] [--no-color] [--no-input]
+    [--path <value>] [--reset | -c <value>] [-s <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -863,7 +865,8 @@ FLAGS
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
 
   --client-id=<value>
-      The Client ID of your app.
+      The Client ID of your app. Use with --config to clean up the dev preview for a different app than the one it is
+      linked to.
       [env: SHOPIFY_FLAG_CLIENT_ID]
 
   --json-schema

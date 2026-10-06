@@ -140,7 +140,7 @@ export function parseConfigurationObject<TSchema extends zod.ZodType>(
 /**
  * Parses a configuration object using a specification's schema, and returns a result.
  */
-export function parseConfigurationObjectAgainstSpecification<TSchema extends zod.ZodType>(
+function parseConfigurationObjectAgainstSpecification<TSchema extends zod.ZodType>(
   spec: ExtensionSpecification,
   filepath: string,
   configurationObject: object,
@@ -340,6 +340,7 @@ export async function loadAppFromContext<TModuleSpec extends ExtensionSpecificat
     configPath: configurationPath,
     configuration,
     configurationLoadResultMetadata,
+    clientIdOverride,
     configSchema,
     specifications,
     remoteFlags,
@@ -456,6 +457,7 @@ export async function reloadApp(app: AppLinkedInterface): Promise<AppLinkedInter
     specifications: app.specifications,
     remoteFlags: app.remoteFlags ?? [],
     reloadState,
+    clientIdOverride: app.clientIdOverride,
   })
   if (!newApp.errors.isEmpty()) {
     const errors = newApp.errors.getErrors()
@@ -529,6 +531,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
       directory,
       configPath,
       configuration,
+      clientIdOverride: this.loadedConfiguration.clientIdOverride,
       webs,
       modules: extensions,
       dotenv,
