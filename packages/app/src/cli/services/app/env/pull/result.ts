@@ -2,12 +2,14 @@ import {appEnvPullJsonOutputSchema} from './types.js'
 import {type PullEnvOutput} from '../pull.js'
 import {diffLines} from 'diff'
 import {OutputMessage, outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
+// eslint-disable-next-line no-restricted-imports -- JSON file paths use native platform separators.
+import {resolve} from 'node:path'
 
 export function formatAppEnvPullResult(
   {result, previousContent}: PullEnvOutput,
   format: 'json' | 'text',
 ): OutputMessage {
-  if (format === 'json') return appEnvPullJsonOutputSchema.encode(result)
+  if (format === 'json') return appEnvPullJsonOutputSchema.encode({...result, path: resolve(result.path)})
   const {path, changed, content} = result
   if (!changed) return outputContent`No changes to ${outputToken.path(path)}`
   if (previousContent === null) {

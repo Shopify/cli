@@ -7,6 +7,8 @@ import {describe, expect, vi, beforeEach, test} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 import {unstyled, stringifyMessage} from '@shopify/cli-kit/node/output'
+// eslint-disable-next-line no-restricted-imports -- Verify native filesystem paths in JSON output.
+import {resolve} from 'node:path'
 
 const ORG1: Organization = {
   id: '1',
@@ -137,6 +139,7 @@ test('returns file facts while preserving custom variables, comments, and a miss
     await expect(file.readFile(path)).resolves.toBe(output.result.content)
     expect(output.previousContent).toBe('# Local settings\nCUSTOM=value\nSHOPIFY_API_SECRET=existing-secret')
     const encoded = JSON.parse(stringifyMessage(formatAppEnvPullResult(output, 'json')))
+    expect(encoded.path).toBe(resolve(path))
     expect(encoded.variables.map(({name}: {name: string}) => name)).not.toContain('SHOPIFY_API_SECRET')
     expect(encoded).not.toHaveProperty('previousContent')
   })
