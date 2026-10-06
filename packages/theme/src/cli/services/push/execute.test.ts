@@ -1,7 +1,6 @@
 import {executeThemePush} from '../push.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {uploadTheme} from '../../utilities/theme-uploader.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
 import {Operation} from '@shopify/cli-kit/node/themes/types'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
@@ -9,6 +8,9 @@ import {fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
+// Native JSON paths must preserve Windows separators instead of pathe normalization.
+// eslint-disable-next-line no-restricted-imports
+import {resolve as nativePath} from 'node:path'
 
 vi.mock('../../utilities/theme-selector.js')
 vi.mock('../../utilities/theme-uploader.js')
@@ -43,7 +45,7 @@ describe('push execution', () => {
       const result = await executeThemePush({path, force: true, publish: true, environment: ['staging']}, session)
       expect(result).toEqual({
         environment: 'staging',
-        directory: path,
+        directory: nativePath(path),
         changed: true,
         theme: {
           id: 1,
@@ -80,7 +82,7 @@ describe('push execution', () => {
         },
       }))
       await expect(executeThemePush({path, force: true}, session)).rejects.toMatchObject({
-        details: {themeId: '1', issues: [{filePath: joinPath(path, 'assets/theme.css'), message: 'bad CSS'}]},
+        details: {themeId: '1', issues: [{filePath: nativePath(path, 'assets/theme.css'), message: 'bad CSS'}]},
       })
     })
   })
