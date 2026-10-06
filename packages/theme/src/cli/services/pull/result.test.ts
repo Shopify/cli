@@ -1,5 +1,5 @@
 import {themePullJsonOutputSchema, type ThemePullResult} from './types.js'
-import {renderThemePullResult} from './result.js'
+import {renderThemePullResult, renderThemePullEnvironmentResults} from './result.js'
 import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test} from 'vitest'
 
@@ -12,8 +12,8 @@ function result(): ThemePullResult {
       role: 'unpublished',
       processing: false,
       shop: 'test.myshopify.com',
-      editor_url: 'editor',
-      preview_url: 'preview',
+      editor_url: 'https://test.myshopify.com/admin/themes/1/editor',
+      preview_url: 'https://test.myshopify.com?preview_theme_id=1',
     },
   }
 }
@@ -21,7 +21,12 @@ function result(): ThemePullResult {
 describe('pull result', () => {
   test('encodes false and omits optional source and environment', () => {
     const value = JSON.parse(themePullJsonOutputSchema.encode(result()))
-    expect(value).toEqual(result())
+    expect(value).toMatchObject({
+      status: 'success',
+      changed: true,
+      directory: '/theme',
+      theme: {id: '1', sourceUrl: null, storeDomain: 'test.myshopify.com'},
+    })
     expect(value).not.toHaveProperty('environment')
     expect(value.theme).not.toHaveProperty('src')
     expect(value.theme.processing).toBe(false)
@@ -41,6 +46,23 @@ describe('pull result', () => {
 
       expect(stdout()).toBe(`${themePullJsonOutputSchema.encode(result())}\n`)
       expect(stderr()).toBe('')
+    })
+  })
+
+  test('retains explicit single environments, skips and errors', async () => {
+    await withCapturedStandardStreams(({stdout}) => {
+      renderThemePullEnvironmentResults([{environment: 'staging', result: result()}])
+      expect(JSON.parse(stdout()).environments).toMatchObject([{environment: 'staging', result: {directory: '/theme'}}])
+    })
+    await withCapturedStandardStreams(({stdout}) => {
+      renderThemePullEnvironmentResults([
+        {environment: 'skipped', result: undefined},
+        {environment: 'failed', error: {type: 'abort', message: 'Download failed'}},
+      ])
+      expect(JSON.parse(stdout()).environments).toEqual([
+        {environment: 'skipped', result: {status: 'skipped', reason: 'unsafe-directory'}},
+        {environment: 'failed', error: {type: 'abort', message: 'Download failed'}},
+      ])
     })
   })
 

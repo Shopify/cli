@@ -1,8 +1,10 @@
+import {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 import {globFlags, themeFlags} from '../../flags.js'
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {executeThemePull} from '../../services/pull.js'
 import {renderThemePullResult, renderThemePullEnvironmentResults} from '../../services/pull/result.js'
 import {themePullJsonOutputSchema} from '../../services/pull/types.js'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
@@ -82,7 +84,10 @@ If no theme is specified, then you're prompted to select the theme to pull from 
       multiEnvironment,
       context,
     )
-    if (result && !(flags.json && multiEnvironment)) renderThemePullResult(result, flags.json ? 'json' : 'text')
+    if (!(flags.json && multiEnvironment)) {
+      if (result) renderThemePullResult(result, flags.json ? 'json' : 'text')
+      else if (flags.json) outputResult(themePullJsonOutputSchema.encode({status: 'cancelled'}))
+    }
     recordTiming('theme-command:pull')
     return result
   }
@@ -91,7 +96,7 @@ If no theme is specified, then you're prompted to select the theme to pull from 
     return Boolean(flags.json)
   }
 
-  protected renderEnvironmentResults(results: {environment: string; result: unknown}[]): void {
+  protected renderEnvironmentResults(results: ThemeEnvironmentResult[]): void {
     renderThemePullEnvironmentResults(results)
   }
 
