@@ -165,6 +165,11 @@ function securityReportInput(
   }
 }
 
+/** `--exclude` takes globs, so a directory name is escaped to match only that directory. */
+function literalGlobPattern(path: string): string {
+  return path.replace(/[?*()[\]{}!#\\]/g, '\\$&')
+}
+
 async function renderGatheringWarnings(
   gathered: {ignoredScanDirectories: string[]; otherAppDirectories: string[]},
   dependencies: SecurityDependencies,
@@ -184,7 +189,11 @@ async function renderGatheringWarnings(
     dependencies.renderWarning({
       headline: `${path} holds another app's configuration, so its files are scanned as part of this app.`,
       // The directory name comes from the repository, so it's quoted before the user can paste it into a shell.
-      body: ['Use', {command: `--exclude ${quoteShellArgument(path, shellForPlatform())}`}, 'to leave it out.'],
+      body: [
+        'Use',
+        {command: `--exclude ${quoteShellArgument(literalGlobPattern(path), shellForPlatform())}`},
+        'to leave it out.',
+      ],
     })
   }
 }
