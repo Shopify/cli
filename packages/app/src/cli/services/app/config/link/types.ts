@@ -1,7 +1,10 @@
 import {OrganizationApp} from '../../../../models/organization.js'
 import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
-import {isAbsolutePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {isAbsolutePath} from '@shopify/cli-kit/node/path'
+// CLI Kit normalizes separators; public JSON paths must use the native filesystem format.
+// eslint-disable-next-line no-restricted-imports
+import {resolve} from 'node:path'
 
 const urlSchema = zod.string().url().nullable()
 const appProxySchema = zod.object({subPath: zod.string(), subPathPrefix: zod.string(), url: urlSchema}).strict()
@@ -81,7 +84,7 @@ export function projectAppConfigResult(input: {
   const {app} = input
   const webhooks = app.gdprWebhooks
   return appConfigLinkJsonOutputSchema.validate({
-    path: resolvePath(input.path),
+    path: resolve(input.path),
     configuration: input.configuration,
     app: {
       id: app.id.startsWith('gid://') ? null : app.id,
