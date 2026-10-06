@@ -4,7 +4,7 @@ import {renderCancelBulkOperationResult} from './cancel-result.js'
 import {renderBulkOperationStatusResult} from './status-result.js'
 import {executeBulkOperationJsonOutputSchema} from './types.js'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
-import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath, cwd} from '@shopify/cli-kit/node/path'
 import {renderSuccess, renderWarning, renderError} from '@shopify/cli-kit/node/ui'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -108,7 +108,11 @@ test.each([
   '{"errors":[{"message":"Variable input has an unrecognizable field"}]}\n',
 ])('reports downloaded mutation errors as a partial result with a nonzero exit: %s', async (results) => {
   const output = mockAndCaptureOutput()
-  await renderExecuteBulkOperationResult({...completedResult(), results}, {format: 'json', watch: true})
+  const result = completedResult()
+  await renderExecuteBulkOperationResult(
+    {...result, operation: {...result.operation!, type: 'MUTATION'}, results},
+    {format: 'json', watch: true},
+  )
   expect(JSON.parse(output.output())).toMatchObject({status: 'partial', resultsJsonl: results})
   expect(process.exitCode).toBe(1)
 })
@@ -118,15 +122,35 @@ test.each([
   '{"errors":[{"message":"Variable input has an unrecognizable field"}]}\n',
 ])('writes downloaded mutation errors to a file and exits nonzero: %s', async (results) => {
   const output = mockAndCaptureOutput()
+  const result = completedResult()
   await inTemporaryDirectory(async (directory) => {
     const path = joinPath(directory, 'results.jsonl')
     await renderExecuteBulkOperationResult(
-      {...completedResult(), results},
+      {...result, operation: {...result.operation!, type: 'MUTATION'}, results},
       {format: 'json', watch: true, outputFile: path},
     )
     await expect(readFile(path)).resolves.toBe(results)
     expect(JSON.parse(output.info())).toEqual({path, format: 'jsonl'})
     expect(process.exitCode).toBe(1)
+  })
+})
+
+test.each([
+  '{"id":"gid://shopify/Product/1","errors":["summer"]}\n',
+  '{"id":"gid://shopify/Product/1","data":{"preview":{"userErrors":null}}}\n',
+])('does not interpret query aliases as mutation errors: %s', async (results) => {
+  const output = mockAndCaptureOutput()
+  const result = {...completedResult(), results}
+  await renderExecuteBulkOperationResult(result, {format: 'json', watch: true})
+  expect(JSON.parse(output.output())).toMatchObject({status: 'success', resultsJsonl: results})
+  expect(process.exitCode).toBe(originalExitCode)
+  output.clear()
+  await inTemporaryDirectory(async (directory) => {
+    const path = joinPath(directory, 'results.jsonl')
+    await renderExecuteBulkOperationResult(result, {format: 'json', watch: true, outputFile: path})
+    await expect(readFile(path)).resolves.toBe(results)
+    expect(JSON.parse(output.info())).toEqual({path, format: 'jsonl'})
+    expect(process.exitCode).toBe(originalExitCode)
   })
 })
 
@@ -222,6 +246,22 @@ test('outputs native JSONL in text mode', async () => {
   await renderExecuteBulkOperationResult(result, {format: 'text', watch: true})
   expect(output.output()).toBe(result.results)
   expect(renderSuccess).toHaveBeenCalledWith(expect.objectContaining({headline: expect.stringContaining('succeeded')}))
+})
+
+test('preserves an existing text-mode output file when result scanning fails', async () => {
+  const results = '{"id":"gid://shopify/Product/1","data":{"preview":{"userErrors":null}}}\n'
+  await inTemporaryDirectory(async (directory) => {
+    const path = joinPath(directory, 'results.jsonl')
+    await writeFile(path, 'previous export\n')
+    await expect(
+      renderExecuteBulkOperationResult(
+        {...completedResult(), results},
+        {format: 'text', watch: true, outputFile: path},
+      ),
+    ).rejects.toThrow(TypeError)
+    await expect(readFile(path)).resolves.toBe('previous export\n')
+    expect(mockAndCaptureOutput().info()).toBe('')
+  })
 })
 
 test('preserves text-mode creation user errors', async () => {

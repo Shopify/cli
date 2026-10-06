@@ -40,16 +40,24 @@ export async function renderExecuteBulkOperationResult(
     }
     if (!operation) throw new BugError('Bulk operation response returned no operation.')
 
-    const partial = results !== undefined && resultsContainUserErrors(results)
+    const partial = operation.type === 'MUTATION' && results !== undefined && resultsContainUserErrors(results)
     let status: 'success' | 'partial' | 'cancelled' = partial ? 'partial' : 'success'
     if (watchAborted) status = 'cancelled'
     if (partial) process.exitCode = 1
-    if (outputFile && results === undefined && !watchAborted) {
+    const hasEmptyQueryResult =
+      watch &&
+      !watchAborted &&
+      operation.type === 'QUERY' &&
+      operation.status === 'COMPLETED' &&
+      String(operation.objectCount) === '0' &&
+      !operation.url
+    const fileResults = results ?? (hasEmptyQueryResult ? '' : undefined)
+    if (outputFile && fileResults === undefined && !watchAborted) {
       throw new AbortError('No results are available to write to the output file.')
     }
-    if (outputFile && results !== undefined) {
+    if (outputFile && fileResults !== undefined) {
       const path = resolvePath(outputFile)
-      await writeFile(path, results)
+      await writeFile(path, fileResults)
       outputResult(executeBulkOperationJsonOutputSchema.encode({path, format: 'jsonl'}))
     } else {
       outputResult(
@@ -64,8 +72,6 @@ export async function renderExecuteBulkOperationResult(
     }
     return
   }
-
-  if (outputFile && results !== undefined) await writeFile(outputFile, results)
 
   if (userErrors.length) {
     renderError({
@@ -88,7 +94,7 @@ export async function renderExecuteBulkOperationResult(
       body: statusCommandHelpMessage(operation.id),
     })
   } else if (watch || ['FAILED', 'CANCELED', 'EXPIRED'].includes(operation.status)) {
-    renderBulkOperationResult(operation, results, outputFile)
+    await renderBulkOperationResult(operation, results, outputFile)
   } else {
     renderSuccess({
       headline: 'Bulk operation is running.',
@@ -98,7 +104,11 @@ export async function renderExecuteBulkOperationResult(
   }
 }
 
-function renderBulkOperationResult(operation: BulkOperation, results?: string, outputFile?: string): void {
+async function renderBulkOperationResult(
+  operation: BulkOperation,
+  results?: string,
+  outputFile?: string,
+): Promise<void> {
   const headline = formatBulkOperationStatus(operation).value
   const items = [
     outputContent`ID: ${outputToken.cyan(operation.id)}`.value,
@@ -132,7 +142,8 @@ function renderBulkOperationResult(operation: BulkOperation, results?: string, o
       } else {
         const hasUserErrors = resultsContainUserErrors(results)
 
-        if (!outputFile) outputResult(results)
+        if (outputFile) await writeFile(outputFile, results)
+        else outputResult(results)
 
         if (hasUserErrors) {
           renderWarning({

@@ -25,7 +25,7 @@ import {
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, cwd, relativePath} from '@shopify/cli-kit/node/path'
 import {AbortError, handler} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
@@ -232,6 +232,31 @@ test('file output keeps the exact JSONL bytes and prints only an absolute receip
       ])
       expect(JSON.parse(stdout())).toEqual({path, format: 'jsonl'})
       await expect(readFile(path)).resolves.toBe(results)
+      assertDiagnosticEvents(stderr(), 'Starting bulk operation.')
+    })
+  })
+})
+
+test('a completed query with no matches writes an empty JSONL file and a success receipt', async () => {
+  const operation = bulkOperation({status: 'COMPLETED', objectCount: '0', url: null})
+  vi.mocked(runBulkOperationQuery).mockResolvedValue({bulkOperation: operation, userErrors: []})
+  vi.mocked(watchBulkOperation).mockResolvedValue(operation)
+  await inTemporaryDirectory(async (directory) => {
+    const path = joinPath(directory, 'results.jsonl')
+    await writeFile(path, 'previous export\n')
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runCommand(BulkExecute, [
+        '--query',
+        'query { products { edges { node { id } } } }',
+        '--watch',
+        '--json',
+        '--output-file',
+        path,
+      ])
+      expect(JSON.parse(stdout())).toEqual({path, format: 'jsonl'})
+      await expect(readFile(path)).resolves.toBe('')
+      expect(downloadBulkOperationResults).not.toHaveBeenCalled()
+      expect(process.exitCode).toBe(originalExitCode)
       assertDiagnosticEvents(stderr(), 'Starting bulk operation.')
     })
   })
