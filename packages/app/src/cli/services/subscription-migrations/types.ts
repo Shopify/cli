@@ -3,17 +3,17 @@ import {zod} from '@shopify/cli-kit/node/schema'
 import type {MigrationOperation} from '../../models/subscription-migrations.js'
 import type {MigrationUserError} from './partners-api.js'
 
-export const MigrationOperationGidSchema = zod
+const MigrationOperationGidSchema = zod
   .string()
   .regex(/^gid:\/\/shopify\/AppSubscriptionMigrationOperation\/[^/]+$/)
   .describe('The Shopify AppSubscriptionMigrationOperation GID.')
 
-export const ShopGidSchema = zod
+const ShopGidSchema = zod
   .string()
   .regex(/^gid:\/\/shopify\/Shop\/\d+$/)
   .describe('The Shopify Shop GID.')
 
-export const MigrationOperationSchema = zod
+const MigrationOperationSchema = zod
   .object({
     gid: MigrationOperationGidSchema,
     status: zod.string().min(1).describe('Upstream status: RUNNING, COMPLETED, FAILED, or CANCELED.'),
@@ -29,7 +29,7 @@ export const MigrationOperationSchema = zod
   })
   .strict()
 
-export const MigrationUserErrorSchema = zod
+const MigrationUserErrorSchema = zod
   .object({message: zod.string(), fieldPath: zod.array(zod.string()).nullable()})
   .strict()
 
