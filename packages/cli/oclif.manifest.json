@@ -6239,10 +6239,12 @@
       ],
       "args": {
       },
-      "description": "Query the shopify.dev vector store and print the most relevant documentation chunks as JSON. Best for programmatic discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.",
+      "description": "Query the shopify.dev vector store and print the most relevant documentation chunks as JSON. Best for programmatic discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `DocSearchResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"results\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/DocumentationSearchEntry\"\n      },\n      \"description\": \"The top matching chunks from one search request.\"\n    },\n    \"pageInfo\": {\n      \"$ref\": \"#/definitions/PageInfo\"\n    }\n  },\n  \"required\": [\n    \"results\",\n    \"pageInfo\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"DocSearchResult\",\n  \"definitions\": {\n    \"DocumentationSearchEntry\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"score\": {\n          \"type\": \"number\",\n          \"description\": \"The relevance score returned by shopify.dev.\"\n        },\n        \"content\": {\n          \"type\": \"string\",\n          \"description\": \"The matching documentation chunk.\"\n        },\n        \"url\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"description\": \"The URL of the matching document.\"\n        },\n        \"title\": {\n          \"type\": \"string\",\n          \"description\": \"The title of the matching document.\"\n        },\n        \"domain\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"description\": \"The documentation domain, or null when unavailable.\"\n        }\n      },\n      \"required\": [\n        \"score\",\n        \"content\",\n        \"url\",\n        \"title\",\n        \"domain\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"PageInfo\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"hasNextPage\": {\n          \"type\": \"null\",\n          \"description\": \"The search endpoint does not provide pagination or completeness metadata.\"\n        }\n      },\n      \"required\": [\n        \"hasNextPage\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Query the shopify.dev vector store and print the most relevant documentation chunks as JSON. Best for programmatic discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.",
       "enableJsonFlag": false,
       "examples": [
-        "# search shopify.dev for a topic\n    shopify doc search --query \"subscribe to webhooks\"\n\n    # narrow the search to a specific API and version\n    shopify doc search --query \"create a product\" --api-name admin --api-version latest\n    "
+        "# search shopify.dev for a topic\n    shopify doc search --query \"subscribe to webhooks\"\n\n    # narrow the search to a specific API and version\n    shopify doc search --query \"create a product\" --api-name admin --api-version latest",
+        "# return typed documentation results as a JSON object\nshopify doc search --query \"subscribe to webhooks\" --json"
       ],
       "flags": {
         "api-name": {
@@ -6260,6 +6262,15 @@
           "multiple": false,
           "name": "api-version",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,

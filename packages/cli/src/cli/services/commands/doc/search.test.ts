@@ -1,23 +1,16 @@
 import {docSearchService} from './search.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
-import {shopifyFetch} from '@shopify/cli-kit/node/http'
-import {outputResult} from '@shopify/cli-kit/node/output'
+import {shopifyFetch, Response} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-vi.mock('@shopify/cli-kit/node/http')
-// Only stub `outputResult`; keep the rest of the module real. Blanket-mocking it
-// would also mock `stringifyMessage`, which `AbortError`'s constructor relies on —
-// that would silently empty out every thrown error message.
-vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@shopify/cli-kit/node/output')>()),
-  outputResult: vi.fn(),
+vi.mock('@shopify/cli-kit/node/http', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/http')>()),
+  shopifyFetch: vi.fn(),
 }))
 
-const okResponse = (body: string) =>
-  ({ok: true, status: 200, statusText: 'OK', text: () => Promise.resolve(body)}) as any
+const okResponse = (body: string) => new Response(body)
 
-const errorResponse = (status: number, statusText: string, body: string) =>
-  ({ok: false, status, statusText, text: () => Promise.resolve(body)}) as any
+const errorResponse = (status: number, statusText: string, body: string) => new Response(body, {status, statusText})
 
 const resultsBody =
   '[{"score":0.99,"content":"About webhooks","url":"https://shopify.dev/x","title":"Webhooks","domain":null}]'
@@ -27,13 +20,20 @@ beforeEach(() => {
 })
 
 describe('docSearchService', () => {
-  test('requests the search endpoint with the query and prints the raw JSON body', async () => {
-    await docSearchService('webhooks')
+  test('requests the search endpoint and returns typed chunks and the original body', async () => {
+    const result = await docSearchService('webhooks')
 
     expect(shopifyFetch).toHaveBeenCalledWith('https://shopify.dev/assistant/search?query=webhooks', {
       headers: {Accept: 'application/json', 'X-Shopify-Surface': 'cli'},
     })
-    expect(outputResult).toHaveBeenCalledWith(resultsBody)
+    expect(result).toEqual({
+      status: 'success',
+      results: [
+        {score: 0.99, content: 'About webhooks', url: 'https://shopify.dev/x', title: 'Webhooks', domain: null},
+      ],
+      pageInfo: {hasNextPage: null},
+      body: resultsBody,
+    })
   })
 
   test('includes api_name and api_version params when provided', async () => {
@@ -65,15 +65,14 @@ describe('docSearchService', () => {
     await expect(docSearchService('products', 'admin', '2025-01')).rejects.toThrowError(
       /Invalid api_version '2025-01' for api_name 'admin'\. Available versions: 2026-07/,
     )
-    expect(outputResult).not.toHaveBeenCalled()
   })
 
   test('falls back to the status line when a non-ok response is not JSON', async () => {
     vi.mocked(shopifyFetch).mockResolvedValue(errorResponse(500, 'Internal Server Error', '<html>nope</html>'))
 
-    await expect(docSearchService('products')).rejects.toThrowError(AbortError)
-    await expect(docSearchService('products')).rejects.toThrowError(/500 Internal Server Error/)
-    expect(outputResult).not.toHaveBeenCalled()
+    const result = docSearchService('products')
+    await expect(result).rejects.toThrowError(AbortError)
+    await expect(result).rejects.toThrowError(/500 Internal Server Error/)
   })
 
   test('reports a friendly error when the request cannot reach shopify.dev', async () => {
@@ -81,6 +80,34 @@ describe('docSearchService', () => {
 
     await expect(docSearchService('products')).rejects.toThrowError(AbortError)
     await expect(docSearchService('products')).rejects.toThrowError(/Could not reach shopify\.dev/)
-    expect(outputResult).not.toHaveBeenCalled()
   })
+
+  test('returns an empty collection', async () => {
+    vi.mocked(shopifyFetch).mockResolvedValue(okResponse('[]'))
+    await expect(docSearchService('nothing')).resolves.toEqual({
+      status: 'success',
+      results: [],
+      pageInfo: {hasNextPage: null},
+      body: '[]',
+    })
+  })
+
+  test('projects public fields and normalizes missing domain metadata', async () => {
+    const body = '[{"score":0,"content":"","url":"https://shopify.dev/x","title":"Example","internal":"hidden"}]'
+    vi.mocked(shopifyFetch).mockResolvedValue(okResponse(body))
+    await expect(docSearchService('example')).resolves.toEqual({
+      status: 'success',
+      results: [{score: 0, content: '', url: 'https://shopify.dev/x', title: 'Example', domain: null}],
+      pageInfo: {hasNextPage: null},
+      body,
+    })
+  })
+
+  test.each(['not JSON', 'null', '{}', '[{"url":"https://shopify.dev/x"}]'])(
+    'returns an invalid response condition with the original body: %s',
+    async (body) => {
+      vi.mocked(shopifyFetch).mockResolvedValue(okResponse(body))
+      await expect(docSearchService('example')).resolves.toEqual({status: 'invalid-response', body})
+    },
+  )
 })

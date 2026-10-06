@@ -1,7 +1,8 @@
-import {docFetchJsonOutputSchema} from './types.js'
+import {docFetchJsonOutputSchema, docSearchJsonOutputSchema} from './types.js'
 import {describe, expect, test} from 'vitest'
 
 const document = {url: 'https://shopify.dev/docs', content: ''}
+const entry = {score: 0, content: '', url: 'https://shopify.dev/docs', title: 'Docs', domain: null}
 
 describe('documentation JSON schemas', () => {
   test('encodes a document, including empty Markdown', () => {
@@ -28,5 +29,40 @@ describe('documentation JSON schemas', () => {
     {path: '/tmp/doc.md', format: 'markdown', document},
   ])('rejects an invalid fetch result: %j', (result) => {
     expect(() => docFetchJsonOutputSchema.validate(result)).toThrow()
+  })
+
+  test('encodes public search data, nullable domain, and unknown completeness', () => {
+    const result = {results: [entry, {...entry, score: 0.99, domain: 'admin'}], pageInfo: {hasNextPage: null}}
+    expect(JSON.parse(docSearchJsonOutputSchema.encode(result))).toEqual(result)
+    expect(JSON.parse(docSearchJsonOutputSchema.encode({results: [], pageInfo: {hasNextPage: null}}))).toEqual({
+      results: [],
+      pageInfo: {hasNextPage: null},
+    })
+  })
+
+  test('rejects a bare collection result', () => {
+    expect(() => docSearchJsonOutputSchema.validate([])).toThrow()
+  })
+
+  test.each([
+    {...entry, score: '0'},
+    {...entry, score: Infinity},
+    {...entry, url: 'invalid'},
+    {...entry, content: null},
+    {...entry, title: false},
+    {...entry, domain: undefined},
+    {...entry, internal: true},
+  ])('rejects an invalid search entry: %j', (result) => {
+    expect(() => docSearchJsonOutputSchema.validate({results: [result], pageInfo: {hasNextPage: null}})).toThrow()
+  })
+
+  test.each([
+    {results: [], pageInfo: {hasNextPage: false}},
+    {results: [], pageInfo: {hasNextPage: null, cursor: 'invented'}},
+    {results: [], pageInfo: {hasNextPage: null}, body: '[]'},
+    {invalidArray: []},
+    null,
+  ])('rejects an invalid search wrapper: %j', (result) => {
+    expect(() => docSearchJsonOutputSchema.validate(result)).toThrow()
   })
 })

@@ -26,3 +26,32 @@ export const docFetchJsonOutputSchema = defineJsonOutputSchema({
 
 export type DocFetchResult = InferJsonOutputSchema<typeof docFetchJsonOutputSchema>
 export type DocFetchDocument = Extract<DocFetchResult, {document: unknown}>
+
+export const documentationSearchEntrySchema = zod
+  .object({
+    score: zod.number().finite().describe('The relevance score returned by shopify.dev.'),
+    content: zod.string().describe('The matching documentation chunk.'),
+    url: zod.string().url().describe('The URL of the matching document.'),
+    title: zod.string().describe('The title of the matching document.'),
+    domain: zod.string().nullable().describe('The documentation domain, or null when unavailable.'),
+  })
+  .strict()
+
+const PageInfoSchema = zod
+  .object({
+    hasNextPage: zod.null().describe('The search endpoint does not provide pagination or completeness metadata.'),
+  })
+  .strict()
+
+export const docSearchJsonOutputSchema = defineJsonOutputSchema({
+  name: 'DocSearchResult',
+  schema: zod
+    .object({
+      results: zod.array(documentationSearchEntrySchema).describe('The top matching chunks from one search request.'),
+      pageInfo: PageInfoSchema,
+    })
+    .strict(),
+  definitions: {DocumentationSearchEntry: documentationSearchEntrySchema, PageInfo: PageInfoSchema},
+})
+
+export type DocSearchResult = InferJsonOutputSchema<typeof docSearchJsonOutputSchema>
