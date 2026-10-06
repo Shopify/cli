@@ -504,6 +504,7 @@ const noScope: AppSecurityScope = {include_dirs: [], excludes: [], no_git_ignore
 
 function checkResolution(scope: AppSecurityScope = noScope): SecurityCheckResolution {
   return {
+    kind: 'resolved',
     selection: appSelection,
     resultsKey: 'shopify.app',
     commands: resolveAppSecurityCommands(appSelection, cwd(), scope),
@@ -602,6 +603,7 @@ describe('renderSecurityCheckResult', () => {
     const {stdout, stderr} = await renderCheck(scanResult(), renderOptions({format: 'json', yes: true}), dependencies)
 
     expect(JSON.parse(stdout)).toEqual({
+      status: 'success',
       selection: {
         directory: '/tmp/app',
         configPath: '/tmp/app/shopify.app.toml',
@@ -806,13 +808,16 @@ describe('renderSecurityCheckResult --list-files', () => {
       renderDependencies(),
     )
 
-    expect(JSON.parse(stdout)).toEqual({files: ['/tmp/backend/server.ts', joinPath('/tmp/app', 'shopify.app.toml')]})
+    expect(JSON.parse(stdout)).toEqual({
+      status: 'success',
+      files: ['/tmp/backend/server.ts', joinPath('/tmp/app', 'shopify.app.toml')],
+    })
     expect(stderr).toBe('')
   })
 
   test.each([
     ['text', ''],
-    ['json', '{\n  "files": []\n}\n'],
+    ['json', '{\n  "status": "success",\n  "files": []\n}\n'],
   ] as const)('prints nothing for no gathered file, and an empty list with --json (%s)', async (format, expected) => {
     const {stdout} = await renderCheck(fileListResult([]), renderOptions({format}), renderDependencies())
 
@@ -834,6 +839,29 @@ describe('renderSecurityCheckResult --list-files', () => {
       expect(bannerText(stderr)).toContain('app is ignored by Git, so only the files Git tracks in it are scanned.')
     }
   })
+})
+
+describe('renderSecurityCheckResult cancelled', () => {
+  test.each([
+    ['json', '{\n  "status": "cancelled"\n}\n'],
+    ['text', ''],
+  ] as const)(
+    'prints only the cancelled status with --json, and keeps the default exit code (%s)',
+    async (format, expected) => {
+      const dependencies = renderDependencies('print')
+
+      const {stdout, stderr} = await renderCheck(
+        {kind: 'cancelled'},
+        renderOptions({format, canPrompt: true}),
+        dependencies,
+      )
+
+      expect(stdout).toBe(expected)
+      expect(stderr).toBe('')
+      expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
+      expect(dependencies.setExitCode).not.toHaveBeenCalled()
+    },
+  )
 })
 
 describe('renderSecurityCheckPromptsNotice', () => {

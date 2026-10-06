@@ -1,4 +1,9 @@
-import {securityCheckJsonOutputSchema, toSecurityCheckFileListJson, toSecurityCheckJson} from './security-check-json.js'
+import {
+  securityCheckJsonOutputSchema,
+  toSecurityCheckCancelledJson,
+  toSecurityCheckFileListJson,
+  toSecurityCheckJson,
+} from './security-check-json.js'
 import {securityInstructionsJsonOutputSchema, toAppSecurityInstructionsJson} from './security-instructions-json.js'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -77,7 +82,7 @@ describe('app security JSON contract', () => {
     })
   })
 
-  test('encodes the --list-files result as the absolute path of each file only', () => {
+  test('encodes the --list-files result as a success with the absolute path of each file', () => {
     const fileList = toSecurityCheckFileListJson(appDirectory, [
       'shopify.app.toml',
       'app/index.ts',
@@ -85,7 +90,14 @@ describe('app security JSON contract', () => {
     ])
 
     expect(JSON.parse(securityCheckJsonOutputSchema.encode(fileList))).toEqual({
+      status: 'success',
       files: ['/tmp/app/shopify.app.toml', '/tmp/app/app/index.ts', '/tmp/backend/index.ts'],
+    })
+  })
+
+  test('encodes a cancelled run as its status only', () => {
+    expect(JSON.parse(securityCheckJsonOutputSchema.encode(toSecurityCheckCancelledJson()))).toEqual({
+      status: 'cancelled',
     })
   })
 
@@ -99,9 +111,10 @@ describe('app security JSON contract', () => {
     expect(fileList.description).toBe('The absolute path of each file the check would gather.')
   })
 
-  test('rejects a check result that is neither a scan nor a file list', () => {
-    expect(() => securityCheckJsonOutputSchema.validate({files: 'shopify.app.toml'})).toThrow()
-    expect(() => securityCheckJsonOutputSchema.validate({agentChecksPath})).toThrow()
+  test('rejects a check result that is not a scan, a file list or a cancelled run', () => {
+    expect(() => securityCheckJsonOutputSchema.validate({status: 'success', files: 'shopify.app.toml'})).toThrow()
+    expect(() => securityCheckJsonOutputSchema.validate({status: 'success', agentChecksPath})).toThrow()
+    expect(() => securityCheckJsonOutputSchema.validate({status: 'skipped'})).toThrow()
   })
 
   describe('rejects a key the contract does not define', () => {
@@ -132,7 +145,8 @@ describe('app security JSON contract', () => {
         },
       ],
       ['the instructions', {...scanResult, instructions: {...instructions, writePath: '/tmp/handoff.md'}}],
-      ['the --list-files result', {files: ['shopify.app.toml'], directory: appDirectory}],
+      ['the --list-files result', {status: 'success', files: ['shopify.app.toml'], directory: appDirectory}],
+      ['the cancelled result', {status: 'cancelled', files: []}],
     ])('in %s of check', (_, result) => {
       expect(() => securityCheckJsonOutputSchema.validate(result)).toThrow(/Unrecognized key/)
     })
@@ -145,7 +159,7 @@ describe('app security JSON contract', () => {
     })
   })
 
-  test('publishes the scan and file list results, and one instructions definition for both commands', () => {
+  test('publishes the scan, file list and cancelled results, and one instructions definition for both commands', () => {
     const checkSchema = securityCheckJsonOutputSchema.jsonSchema as {
       anyOf: unknown[]
       definitions: Record<string, unknown>
@@ -157,6 +171,7 @@ describe('app security JSON contract', () => {
     expect(checkSchema.anyOf).toEqual([
       {$ref: '#/definitions/AppSecurityCheckScanResult'},
       {$ref: '#/definitions/AppSecurityCheckFileListResult'},
+      {$ref: '#/definitions/AppSecurityCheckCancelledResult'},
     ])
     expect(checkSchema.definitions.AppSecurityInstructions).toEqual(
       instructionsSchema.definitions.AppSecurityInstructions,

@@ -2,7 +2,12 @@ import {securityExitCode, type AppSecurityBlockingLevel} from './app-security-ap
 import {formatAppSecurityCommand, type AppSecurityCommands} from './app-security-commands.js'
 import {appSecurityInstructions} from './app-security-instructions.js'
 import {deliverAppSecurityInstructions, renderAppSecurityInstructions} from './app-security-instructions-output.js'
-import {securityCheckJsonOutputSchema, toSecurityCheckFileListJson, toSecurityCheckJson} from './security-check-json.js'
+import {
+  securityCheckJsonOutputSchema,
+  toSecurityCheckCancelledJson,
+  toSecurityCheckFileListJson,
+  toSecurityCheckJson,
+} from './security-check-json.js'
 import {toAppSecurityInstructionsJson, type AppSecurityInstructionsJson} from './security-instructions-json.js'
 import {
   effectiveClientId,
@@ -107,7 +112,7 @@ type SecurityCheckScan = Extract<SecurityCheckResult, {kind: 'scan'}>
 
 export type AppSecurityInstructionsDestination = 'copy' | 'print' | 'nothing'
 
-interface SecurityCheckRenderOptions {
+export interface SecurityCheckRenderOptions {
   format: SecurityCheckOutputFormat
   verbose: boolean
   blocking: AppSecurityBlockingLevel
@@ -161,13 +166,19 @@ export function renderSecurityCheckPromptsNotice(
 /**
  * Presents a check result: the gathered files, or the scan report or JSON result with the coding-agent instructions
  * chosen for it. In JSON mode the instructions are chosen and delivered before the result is printed, since they're
- * part of it. A finding at the `blocking` level sets the exit code.
+ * part of it. A finding at the `blocking` level sets the exit code. A cancelled run prints nothing in text mode, since
+ * the user just declined the prompt.
  */
 export async function renderSecurityCheckResult(
   result: SecurityCheckResult,
   options: SecurityCheckRenderOptions,
   dependencies: SecurityCheckRenderDependencies = defaultCheckRenderDependencies,
 ): Promise<void> {
+  if (result.kind === 'cancelled') {
+    if (options.format === 'json') outputResult(securityCheckJsonOutputSchema.encode(toSecurityCheckCancelledJson()))
+    return
+  }
+
   if (result.kind === 'file-list') {
     warnAboutIgnoredScanDirectories(result.ignoredScanDirectories, options.format)
     if (options.format === 'json') {

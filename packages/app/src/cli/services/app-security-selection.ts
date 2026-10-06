@@ -6,7 +6,7 @@ import {NoAppConfigurationFoundError, Project} from '../models/project/project.j
 import {getAppConfigurationShorthand} from '../models/app/config-file-naming.js'
 import {findConfigFiles, selectConfigFile} from '../prompts/config.js'
 import {configurationFileNames} from '../constants.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, CancelExecution} from '@shopify/cli-kit/node/error'
 import {fileExistsSync, fileRealPath, isDirectory} from '@shopify/cli-kit/node/fs'
 import {basename, cwd, isSubpath, joinPath, normalizePath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
@@ -198,7 +198,8 @@ async function resolveWithoutAppConfigurationFile(
   const appDirectory = await realDirectory(options.path)
   // Before the prompt, so a mistyped client ID fails without asking anything first.
   await lookUpClientIdFlag(options, dependencies)
-  if (!(await dependencies.confirmScanWithoutAppConfig(options.path))) abortNoAppConfigurationFound(options.path)
+  // Declining is the user's choice, not a failure: a caller that allows prompts reports the run as cancelled.
+  if (!(await dependencies.confirmScanWithoutAppConfig(options.path))) throw new CancelExecution()
 
   if (options.clientId) return {kind: 'no-config', appDirectory, clientId: options.clientId, clientIdSource: 'flag'}
   return {

@@ -111,6 +111,7 @@ async function checkListFiles(temporaryDirectory: string, workingDirectory: stri
       noGitIgnore: flags.noGitIgnore ?? false,
       allowPrompts: false,
     })
+    if (resolution.kind === 'cancelled') throw new Error('Without prompts, nothing can be declined.')
     const result = await securityCheck(resolution, {listFiles: true})
     await renderSecurityCheckResult(result, {
       format: flags.json ? 'json' : 'text',
@@ -946,6 +947,7 @@ describe('layout catalogue: check --list-files', () => {
 
       // JSON lists absolute paths, while the text output lists them relative to the app directory.
       expect(JSON.parse(stdout)).toEqual({
+        status: 'success',
         files: [
           joinPath(root, 'backend/src/admin/index.ts'),
           joinPath(root, 'backend/src/server.ts'),

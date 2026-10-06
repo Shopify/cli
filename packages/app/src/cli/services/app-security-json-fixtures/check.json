@@ -1,4 +1,5 @@
 {
+  "status": "success",
   "selection": {
     "directory": "/tmp/app",
     "configPath": "/tmp/app/shopify.app.toml",

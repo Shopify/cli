@@ -12,7 +12,7 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/security-check.js', () => ({
-  resolveSecurityCheckSelection: vi.fn(async () => ({prompted: false, commands: {}})),
+  resolveSecurityCheckSelection: vi.fn(async () => ({kind: 'resolved', prompted: false, commands: {}})),
   default: vi.fn(async (resolution: unknown) => ({
     kind: 'file-list',
     resolution,
@@ -278,9 +278,11 @@ describe('app security check command', () => {
     ['json', ['--json']],
   ])('shows how to skip the prompts after a selection that prompted, before scanning (%s)', async (format, flags) => {
     const commands = {scan: {args: ['app', 'security', 'check']}}
-    vi.mocked(resolveSecurityCheckSelection).mockResolvedValueOnce({prompted: true, commands} as unknown as Awaited<
-      ReturnType<typeof resolveSecurityCheckSelection>
-    >)
+    vi.mocked(resolveSecurityCheckSelection).mockResolvedValueOnce({
+      kind: 'resolved',
+      prompted: true,
+      commands,
+    } as unknown as Awaited<ReturnType<typeof resolveSecurityCheckSelection>>)
 
     await SecurityCheck.run(flags, import.meta.url)
 
@@ -288,6 +290,19 @@ describe('app security check command', () => {
     expect(vi.mocked(renderSecurityCheckPromptsNotice).mock.invocationCallOrder[0]).toBeLessThan(
       vi.mocked(securityCheck).mock.invocationCallOrder[0]!,
     )
+  })
+
+  test.each([
+    ['text', []],
+    ['json', ['--json']],
+  ])('presents a cancelled run without scanning or showing how to skip the prompts (%s)', async (format, flags) => {
+    vi.mocked(resolveSecurityCheckSelection).mockResolvedValueOnce({kind: 'cancelled'})
+
+    await SecurityCheck.run(flags, import.meta.url)
+
+    expect(securityCheck).not.toHaveBeenCalled()
+    expect(renderSecurityCheckPromptsNotice).not.toHaveBeenCalled()
+    expect(renderSecurityCheckResult).toHaveBeenCalledWith({kind: 'cancelled'}, expect.objectContaining({format}))
   })
 
   test('does not show how to skip prompts that were not shown', async () => {

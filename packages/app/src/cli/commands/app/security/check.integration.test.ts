@@ -131,7 +131,9 @@ describe('app security check command boundary', () => {
         'deterministicFindings',
         'instructions',
         'selection',
+        'status',
       ])
+      expect(output.status).toBe('success')
       expect(output.agentChecksPath).toBe(paths.agentChecksPath)
       expect(output.instructions).toBeNull()
       expect(output.selection).toEqual({

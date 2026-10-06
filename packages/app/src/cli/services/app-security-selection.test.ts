@@ -17,7 +17,7 @@ import {appFromIdentifiers, fetchOrCreateOrganizationApp} from './context.js'
 import use from './app/config/use.js'
 import {defaultDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {testDeveloperPlatformClient} from '../models/app/app.test-data.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, CancelExecution} from '@shopify/cli-kit/node/error'
 import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
@@ -447,15 +447,14 @@ describe('resolveAppSecuritySelection when no TOML is found', () => {
     })
   })
 
-  test('aborts with the same error when the prompt is answered no', async () => {
+  test('cancels the run when the prompt is answered no', async () => {
     await inTemporaryDirectory(async (directory) => {
       const dependencies = promptDependencies({confirmScanWithoutAppConfig: vi.fn(async () => false)})
 
-      const error = await selectionError(
-        resolveAppSecuritySelection({path: directory, clientId: 'abc', allowPrompts: true}, dependencies),
-      )
+      await expect(
+        resolveAppSecuritySelection({path: directory, allowPrompts: true}, dependencies),
+      ).rejects.toBeInstanceOf(CancelExecution)
 
-      expect(error.message).toBe(`No app configuration found at or above ${directory}.`)
       expect(dependencies.confirmScanWithoutAppConfig).toHaveBeenCalledWith(directory)
       expect(dependencies.pickClientId).not.toHaveBeenCalled()
     })

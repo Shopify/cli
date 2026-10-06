@@ -122,6 +122,7 @@ function resolutionFor(
   overrides: Partial<SecurityCheckResolution> = {},
 ): SecurityCheckResolution {
   return {
+    kind: 'resolved',
     selection,
     resultsKey: 'shopify.app',
     commands: commandsFor(selection),
@@ -130,6 +131,15 @@ function resolutionFor(
     prompted: false,
     ...overrides,
   }
+}
+
+/** `resolveSecurityCheckSelection`, for a run that isn't cancelled. */
+async function resolveUncancelledSelection(
+  ...args: Parameters<typeof resolveSecurityCheckSelection>
+): Promise<SecurityCheckResolution> {
+  const resolution = await resolveSecurityCheckSelection(...args)
+  if (resolution.kind === 'cancelled') throw new Error('Expected the selection to resolve, but the run was cancelled.')
+  return resolution
 }
 
 function testDependencies(execution: AppSecurityExecution = scanExecution) {
@@ -149,7 +159,7 @@ describe('resolveSecurityCheckSelection', () => {
   test('resolves the selection, validating --client-id, and returns its results key, commands and scope', async () => {
     const dependencies = selectionDependencies()
 
-    const resolution = await resolveSecurityCheckSelection(
+    const resolution = await resolveUncancelledSelection(
       {...selectionOptions(), excludePatterns: ['generated'], noGitIgnore: true},
       dependencies,
     )
@@ -163,6 +173,7 @@ describe('resolveSecurityCheckSelection', () => {
       validateClientIdFlag: true,
     })
     expect(resolution).toEqual({
+      kind: 'resolved',
       selection: configSelection,
       resultsKey: 'shopify.app',
       commands: commandsFor(configSelection, {include_dirs: [], excludes: ['generated'], no_git_ignore: true}),
@@ -195,7 +206,7 @@ describe('resolveSecurityCheckSelection', () => {
     }
     const dependencies = selectionDependencies(staging)
 
-    const resolution = await resolveSecurityCheckSelection({...selectionOptions(), configName: 'staging'}, dependencies)
+    const resolution = await resolveUncancelledSelection({...selectionOptions(), configName: 'staging'}, dependencies)
 
     expect(dependencies.resolveSelection).toHaveBeenCalledWith(expect.objectContaining({config: 'staging'}))
     expect(resolution.resultsKey).toBe('shopify.app.staging')
@@ -211,7 +222,7 @@ describe('resolveSecurityCheckSelection', () => {
     }
     const dependencies = selectionDependencies(selection)
 
-    const resolution = await resolveSecurityCheckSelection(
+    const resolution = await resolveUncancelledSelection(
       {...selectionOptions(), withoutAppConfig: true, clientId: 'flag-client-id'},
       dependencies,
     )
@@ -230,7 +241,7 @@ describe('resolveSecurityCheckSelection', () => {
       const backend = await fileRealPath(joinPath(directory, 'backend'))
       const scope = {include_dirs: ['backend', './backend/'], excludes: ['**/generated', '!keep'], no_git_ignore: true}
 
-      const resolution = await resolveSecurityCheckSelection(
+      const resolution = await resolveUncancelledSelection(
         {
           ...selectionOptions(),
           includeDirs: scope.include_dirs,
@@ -274,7 +285,7 @@ describe('resolveSecurityCheckSelection', () => {
       clientIdSource: 'picker',
     }
 
-    const resolution = await resolveSecurityCheckSelection(
+    const resolution = await resolveUncancelledSelection(
       {...selectionOptions(), allowPrompts: true},
       selectionDependencies(selection),
     )
@@ -295,7 +306,7 @@ describe('resolveSecurityCheckSelection', () => {
       appConfigFilePicked: true,
     }
 
-    const resolution = await resolveSecurityCheckSelection(
+    const resolution = await resolveUncancelledSelection(
       {...selectionOptions(), allowPrompts: true},
       selectionDependencies(selection),
     )
@@ -304,8 +315,29 @@ describe('resolveSecurityCheckSelection', () => {
     expect(resolution.commands.scan.args).toContainEqual({flag: '--config', value: 'staging'})
   })
 
+  test('is cancelled when the user declines to scan without app configuration', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      vi.stubEnv('INIT_CWD', directory)
+
+      const resolution = await resolveSecurityCheckSelection(
+        {...selectionOptions(), directory, allowPrompts: true},
+        {
+          resolveSelection: (options) =>
+            resolveAppSecuritySelection(options, {
+              confirmScanWithoutAppConfig: async () => false,
+              pickClientId: async () => 'picked-client-id',
+              pickConfigFile: async () => 'shopify.app.toml',
+              lookUpApp: async () => {},
+            }),
+        },
+      )
+
+      expect(resolution).toEqual({kind: 'cancelled'})
+    })
+  })
+
   test('reports no prompts when a TOML was found', async () => {
-    const resolution = await resolveSecurityCheckSelection(
+    const resolution = await resolveUncancelledSelection(
       {...selectionOptions(), allowPrompts: true},
       selectionDependencies(),
     )
@@ -558,7 +590,7 @@ describe('securityCheck --list-files', () => {
       await writeFile(joinPath(appRoot, 'generated', 'out.ts'), 'export {}\n')
       vi.stubEnv('INIT_CWD', appRoot)
 
-      const resolution = await resolveSecurityCheckSelection({
+      const resolution = await resolveUncancelledSelection({
         ...selectionOptions(),
         directory: appRoot,
         excludePatterns: ['**/generated'],
@@ -608,7 +640,7 @@ describe('securityCheck --client-id lookup', () => {
         const lookUpApp = vi.fn(async (_clientId: string) => {})
         const dependencies = testDependencies()
 
-        const resolution = await resolveSecurityCheckSelection(
+        const resolution = await resolveUncancelledSelection(
           {...selectionOptions(), directory: appRoot, clientId: 'flag-client-id'},
           {resolveSelection: resolveSelectionWith(lookUpApp)},
         )

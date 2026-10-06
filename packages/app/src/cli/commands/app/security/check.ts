@@ -2,7 +2,11 @@ import {appSecurityBlockingFlag} from './blocking-flag.js'
 import {appSecuritySelectionFlags} from './selection-flags.js'
 import securityCheck, {resolveSecurityCheckSelection} from '../../../services/security-check.js'
 import {securityCheckJsonOutputSchema} from '../../../services/security-check-json.js'
-import {renderSecurityCheckPromptsNotice, renderSecurityCheckResult} from '../../../services/security-output.js'
+import {
+  renderSecurityCheckPromptsNotice,
+  renderSecurityCheckResult,
+  type SecurityCheckRenderOptions,
+} from '../../../services/security-output.js'
 import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
@@ -83,6 +87,14 @@ The command can also ask which app configuration to scan, or offer to scan witho
     const format = flags.json ? 'json' : 'text'
     const listFiles = Boolean(flags['list-files'])
     const canPrompt = !listFiles && terminalSupportsPrompting()
+    const renderOptions: SecurityCheckRenderOptions = {
+      format,
+      verbose: Boolean(flags.verbose),
+      blocking: flags.blocking,
+      yes: flags.yes,
+      skipInstructions: flags['skip-instructions'],
+      canPrompt,
+    }
 
     const resolution = await resolveSecurityCheckSelection({
       directory: flags.path,
@@ -94,16 +106,13 @@ The command can also ask which app configuration to scan, or offer to scan witho
       noGitIgnore: Boolean(flags['no-git-ignore']),
       allowPrompts: canPrompt,
     })
+    if (resolution.kind === 'cancelled') {
+      await renderSecurityCheckResult(resolution, renderOptions)
+      return
+    }
     if (resolution.prompted) renderSecurityCheckPromptsNotice(resolution.commands, format)
 
     const result = await securityCheck(resolution, {listFiles})
-    await renderSecurityCheckResult(result, {
-      format,
-      verbose: Boolean(flags.verbose),
-      blocking: flags.blocking,
-      yes: flags.yes,
-      skipInstructions: flags['skip-instructions'],
-      canPrompt,
-    })
+    await renderSecurityCheckResult(result, renderOptions)
   }
 }

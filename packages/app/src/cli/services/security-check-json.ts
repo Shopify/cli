@@ -24,6 +24,7 @@ const SCAN_DIRECTORY_ORIGINS: {
 
 const scanResultSchema = zod
   .object({
+    status: zod.literal('success'),
     selection: zod
       .object({
         directory: zod.string(),
@@ -43,17 +44,23 @@ const scanResultSchema = zod
   .strict()
 
 const fileListResultSchema = zod
-  .object({files: zod.array(zod.string()).describe('The absolute path of each file the check would gather.')})
+  .object({
+    status: zod.literal('success'),
+    files: zod.array(zod.string()).describe('The absolute path of each file the check would gather.'),
+  })
   .strict()
 
-// `--list-files` stops before scanning, so its result shares no field with a scan's. Consumers know which they asked
-// for, and the two shapes have no key in common.
+const cancelledResultSchema = zod.object({status: zod.literal('cancelled')}).strict()
+
+// `--list-files` stops before scanning, so its result shares only `status` with a scan's; consumers know which they
+// asked for. The file list has `status` although it can't be cancelled, so a prompt added there later keeps its shape.
 export const securityCheckJsonOutputSchema = defineJsonOutputSchema({
   name: 'AppSecurityCheckResult',
-  schema: zod.union([scanResultSchema, fileListResultSchema]),
+  schema: zod.union([scanResultSchema, fileListResultSchema, cancelledResultSchema]),
   definitions: {
     AppSecurityCheckScanResult: scanResultSchema,
     AppSecurityCheckFileListResult: fileListResultSchema,
+    AppSecurityCheckCancelledResult: cancelledResultSchema,
     AppSecurityInstructions: appSecurityInstructionsSchema,
   },
 })
@@ -65,7 +72,12 @@ export function toSecurityCheckFileListJson(
   appDirectory: string,
   paths: string[],
 ): zod.infer<typeof fileListResultSchema> {
-  return {files: paths.map((path) => resolvePath(appDirectory, path))}
+  return {status: 'success', files: paths.map((path) => resolvePath(appDirectory, path))}
+}
+
+/** The user declined to scan without app configuration. */
+export function toSecurityCheckCancelledJson(): zod.infer<typeof cancelledResultSchema> {
+  return {status: 'cancelled'}
 }
 
 export function toSecurityCheckJson(
@@ -76,6 +88,7 @@ export function toSecurityCheckJson(
   instructions: AppSecurityInstructionsJson | null,
 ): SecurityCheckScanJsonResult {
   return {
+    status: 'success',
     selection: {
       directory: selection.appDirectory,
       configPath: selection.kind === 'config' ? selection.appConfigFilePath : null,

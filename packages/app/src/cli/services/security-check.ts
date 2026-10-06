@@ -12,6 +12,7 @@ import {
   type AppSecuritySelectionOptions,
 } from './app-security-selection.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
+import {CancelExecution} from '@shopify/cli-kit/node/error'
 import type {CheckArtifactPaths} from './app-security-artifacts.js'
 import type {
   AgentChecks,
@@ -35,6 +36,7 @@ interface SecurityCheckSelectionOptions {
 
 /** What a run resolved before it scans or lists files. */
 export interface SecurityCheckResolution {
+  kind: 'resolved'
   selection: AppSecuritySelection
   resultsKey: string
   /** The commands that repeat this run, including its scope. */
@@ -44,6 +46,11 @@ export interface SecurityCheckResolution {
   includeDirectories: string[]
   /** Whether choosing the selection showed prompts, which `commands.scan` skips next time. */
   prompted: boolean
+}
+
+/** The run stopped before scanning because the user declined to scan without app configuration. */
+export interface SecurityCheckCancelled {
+  kind: 'cancelled'
 }
 
 export type SecurityCheckResult =
@@ -61,6 +68,7 @@ export type SecurityCheckResult =
       execution: AppSecurityExecution
       artifacts: CheckArtifactPaths
     }
+  | SecurityCheckCancelled
 
 interface SecurityCheckSelectionDependencies {
   resolveSelection(options: AppSecuritySelectionOptions): Promise<AppSecuritySelection>
@@ -91,27 +99,35 @@ const defaultDependencies: SecurityCheckDependencies = {
 /**
  * Resolves what `check` scans: the `--include-dir` directories, then the selection, which prompts when
  * `allowPrompts` is set and the selection needs a choice. `directory` is the `--path` value, an absolute path.
+ * Cancelled when the user declines to scan without app configuration.
  */
 export async function resolveSecurityCheckSelection(
   options: SecurityCheckSelectionOptions,
   dependencies: SecurityCheckSelectionDependencies = defaultSelectionDependencies,
-): Promise<SecurityCheckResolution> {
+): Promise<SecurityCheckResolution | SecurityCheckCancelled> {
   // Resolved first so a mistyped directory fails before any prompt.
   const includeDirectories = await resolveIncludeDirectories(options.includeDirs)
-  const selection = await dependencies.resolveSelection({
-    path: options.directory,
-    config: options.configName,
-    clientId: options.clientId,
-    withoutAppConfig: options.withoutAppConfig,
-    allowPrompts: options.allowPrompts,
-    validateClientIdFlag: true,
-  })
+  let selection: AppSecuritySelection
+  try {
+    selection = await dependencies.resolveSelection({
+      path: options.directory,
+      config: options.configName,
+      clientId: options.clientId,
+      withoutAppConfig: options.withoutAppConfig,
+      allowPrompts: options.allowPrompts,
+      validateClientIdFlag: true,
+    })
+  } catch (error) {
+    if (!(error instanceof CancelExecution)) throw error
+    return {kind: 'cancelled'}
+  }
   const scope: AppSecurityScope = {
     include_dirs: [...options.includeDirs],
     excludes: [...options.excludePatterns],
     no_git_ignore: options.noGitIgnore,
   }
   return {
+    kind: 'resolved',
     selection,
     resultsKey: resultsKey(selection),
     commands: resolveAppSecurityCommands(selection, options.directory, scope),
