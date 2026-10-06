@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 4.8.5
+
+### Patch Changes
+
+- 5777388: Prompt for the Skeleton theme version and use the latest stable release when input is not interactive.
+  - @shopify/cli-kit@4.8.5
+
 ## 4.8.4
 
 ### Patch Changes
