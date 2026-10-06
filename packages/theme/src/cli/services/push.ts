@@ -1,4 +1,4 @@
-import {themePushResultSchema} from './push/types.js'
+import {themePushResultSchema, themePushJsonResult} from './push/types.js'
 import {checkThemeBeforePush, renderThemePushResult} from './push/result.js'
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {uploadTheme} from '../utilities/theme-uploader.js'
@@ -209,10 +209,13 @@ async function executePush(
     if (!result.success && result.errors?.asset) errors[key] = result.errors.asset
   }
 
-  return themePushResultSchema.parse({
+  const result = themePushResultSchema.parse({
     environment: options.environment,
     directory: options.path,
-    changed: theme.createdAtRuntime || options.publish || [...uploadResults.values()].some((result) => result.success),
+    changed:
+      theme.createdAtRuntime === true ||
+      options.publish === true ||
+      [...uploadResults.values()].some((result) => result.success),
     theme: {
       id: theme.id,
       name: theme.name,
@@ -225,6 +228,12 @@ async function executePush(
     hasErrors: [...uploadResults.values()].some((result) => !result.success),
     errors,
   })
+  if (result.hasErrors && !result.changed) {
+    const error = new AbortError(`The theme '${theme.name}' could not be pushed.`)
+    error.details = {themeId: String(theme.id), issues: themePushJsonResult(result).issues}
+    throw error
+  }
+  return result
 }
 
 export async function createOrSelectTheme(

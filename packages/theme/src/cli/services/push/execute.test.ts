@@ -1,6 +1,7 @@
 import {executeThemePush} from '../push.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {uploadTheme} from '../../utilities/theme-uploader.js'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {Operation} from '@shopify/cli-kit/node/themes/types'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
@@ -59,6 +60,46 @@ describe('push execution', () => {
       expect(themePublish).toHaveBeenCalledWith(1, session)
       expect(output.output()).toBe('')
       expect(output.info()).not.toContain('was pushed')
+    })
+  })
+
+  test('fails without a result when every upload fails and no work completed', async () => {
+    await inTemporaryDirectory(async (path) => {
+      vi.mocked(findOrSelectTheme).mockResolvedValue(buildTheme({id: 1, name: 'Theme', role: 'unpublished'})!)
+      vi.mocked(fetchChecksums).mockResolvedValue([])
+      vi.mocked(uploadTheme).mockImplementation((_theme, _session, _checksums, fileSystem) => ({
+        workPromise: Promise.resolve(),
+        uploadResults: new Map([
+          [
+            'assets/theme.css',
+            {key: 'assets/theme.css', operation: Operation.Upload, success: false, errors: {asset: ['bad CSS']}},
+          ],
+        ]),
+        renderThemeSyncProgress: async () => {
+          await fileSystem.ready()
+        },
+      }))
+      await expect(executeThemePush({path, force: true}, session)).rejects.toMatchObject({
+        details: {themeId: '1', issues: [{filePath: joinPath(path, 'assets/theme.css'), message: 'bad CSS'}]},
+      })
+    })
+  })
+
+  test('reports unchanged when no upload, deletion or publication was needed', async () => {
+    await inTemporaryDirectory(async (path) => {
+      vi.mocked(findOrSelectTheme).mockResolvedValue(buildTheme({id: 1, name: 'Theme', role: 'unpublished'})!)
+      vi.mocked(fetchChecksums).mockResolvedValue([])
+      vi.mocked(uploadTheme).mockImplementation((_theme, _session, _checksums, fileSystem) => ({
+        workPromise: Promise.resolve(),
+        uploadResults: new Map(),
+        renderThemeSyncProgress: async () => {
+          await fileSystem.ready()
+        },
+      }))
+      await expect(executeThemePush({path, force: true}, session)).resolves.toMatchObject({
+        changed: false,
+        hasErrors: false,
+      })
     })
   })
 
