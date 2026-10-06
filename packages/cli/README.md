@@ -233,7 +233,9 @@ DESCRIPTION
             "type": "string"
           },
           "directory": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^(?:[\\\\/]|[A-Za-z]:[\\\\/])",
+            "description": "An absolute native filesystem directory (rooted, drive-letter or UNC path). This is not an existence or containment guarantee."
           }
         },
         "required": [
