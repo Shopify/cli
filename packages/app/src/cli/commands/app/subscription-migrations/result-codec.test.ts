@@ -277,8 +277,28 @@ describe('unschedule JSON compatibility', () => {
     const value = {...submission(), action: 'unschedule' as const}
     const encoded = encodeMigrationSubmissionResult({status: 'success', submission: value})
 
-    expect(encoded).toBe(JSON.stringify(value, null, 2))
-    expect(migrationSubmissionJsonOutputSchema.validate(JSON.parse(encoded))).toEqual(value)
+    const expected = {
+      status: 'success',
+      changed: true,
+      clientId: 'client-id',
+      action: 'unschedule',
+      inputDigest: 'input-digest',
+      total: 1,
+      operations: [
+        {
+          batchIndex: 0,
+          batchPayloadDigest: 'batch-digest',
+          operation: {
+            gid: 'gid://shopify/AppSubscriptionMigrationOperation/operation-one',
+            status: 'RUNNING',
+            total: 1,
+            results: [],
+          },
+        },
+      ],
+    }
+    expect(encoded).toBe(JSON.stringify(expected, null, 2))
+    expect(migrationSubmissionJsonOutputSchema.validate(JSON.parse(encoded))).toEqual(expected)
     expect(JSON.parse(encoded)).not.toHaveProperty('failure')
   })
 })
