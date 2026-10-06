@@ -136,9 +136,11 @@ Write ONE findings document that covers every check you ran. Copy each check's
 Optional finding fields: "snippet", "confidence" (high, medium, or low),
 "reasoning", and "suppression": { "justification": "..." }.
 
-Pipe the whole document on stdin to: shopify app security record
-Each run replaces the previously recorded findings. If record rejects the
-document, fix every reported error and pipe the full document again.
+Pipe the whole document on stdin to \`shopify app security record\`, using the
+exact command from the instructions you were given: its flags select where the
+findings are recorded. Each run replaces the previously recorded findings. If
+record rejects the document, fix every reported error and pipe the full
+document again.
 
 Rules:
 - Only report a finding when you can prove a concrete trust-boundary violation by reading the code.
