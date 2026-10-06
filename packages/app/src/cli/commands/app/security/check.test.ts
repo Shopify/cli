@@ -231,4 +231,15 @@ describe('app security check command', () => {
     expect(SecurityCheck.description).toContain('AppSecurityCheckResult')
     expect(SecurityCheck.descriptionWithMarkdown).toContain("in the result's `instructions` field")
   })
+
+  test('documents that --json still prompts, that --no-input turns prompts off, and that --client-id can need a login', () => {
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('it can ask which app configuration to scan')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('pick or create the app')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('pass `--no-input` to turn every prompt off')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain(
+      'A choice the command would have asked for then becomes an error',
+    )
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('which can require you to log in')
+    expect(SecurityCheck.descriptionWithMarkdown).not.toMatch(/never prompts/)
+  })
 })
