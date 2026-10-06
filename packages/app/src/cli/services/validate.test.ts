@@ -139,8 +139,13 @@ describe('validateApp', () => {
     await expect(validateApp(app)).resolves.toEqual({
       valid: false,
       issues: [
-        {file: '/path/to/shopify.app.toml', message: 'client_id is required'},
-        {file: '/path/to/extensions/my-ext/shopify.extension.toml', message: 'invalid type "unknown"'},
+        {filePath: '/path/to/shopify.app.toml', message: 'client_id is required', fieldPath: null, code: null},
+        {
+          filePath: '/path/to/extensions/my-ext/shopify.extension.toml',
+          message: 'invalid type "unknown"',
+          fieldPath: null,
+          code: null,
+        },
       ],
     })
 
@@ -159,7 +164,7 @@ describe('validateApp', () => {
 
     await expect(validateApp(app)).resolves.toEqual({
       valid: false,
-      issues: [{file: '/path/to/shopify.app.toml', message: 'Required', path: ['name'], code: 'invalid_type'}],
+      issues: [{filePath: '/path/to/shopify.app.toml', message: 'Required', fieldPath: ['name'], code: 'invalid_type'}],
     })
 
     await expectLastValidationMetadata({

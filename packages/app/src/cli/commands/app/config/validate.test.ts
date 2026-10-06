@@ -74,7 +74,7 @@ describe('app config validate command', () => {
     const app = testAppLinked()
     mockHealthyProject()
     vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
-    const issues = [{file: '/app/shopify.app.toml', message: 'Required', path: ['name'], code: 'invalid_type'}]
+    const issues = [{filePath: '/app/shopify.app.toml', message: 'Required', fieldPath: ['name'], code: 'invalid_type'}]
     vi.mocked(validateApp).mockResolvedValue({valid: false, issues})
 
     await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow()
@@ -89,7 +89,7 @@ describe('app config validate command', () => {
     vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
     vi.mocked(validateApp).mockResolvedValue({
       valid: false,
-      issues: [{file: '/app/shopify.app.toml', message: 'client_id is required'}],
+      issues: [{filePath: '/app/shopify.app.toml', message: 'client_id is required', fieldPath: null, code: null}],
     })
 
     await expect(Validate.run([], import.meta.url)).rejects.toThrow()
@@ -197,39 +197,25 @@ describe('app config validate command', () => {
     )
   })
 
-  test('records failure metadata when Project.load fails with --json', async () => {
+  test('keeps project setup failures fatal with --json', async () => {
     vi.mocked(Project.load).mockRejectedValue(new AbortError('Could not find app configuration'))
 
     await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow()
 
-    expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"valid": false'))
+    expect(outputResult).not.toHaveBeenCalled()
     expect(selectActiveConfig).not.toHaveBeenCalled()
-    await expectValidationMetadataCalls(
-      {cmd_app_validate_json: true},
-      {
-        cmd_app_validate_valid: false,
-        cmd_app_validate_issue_count: 1,
-        cmd_app_validate_file_count: 1,
-      },
-    )
+    await expectValidationMetadataCalls({cmd_app_validate_json: true})
   })
 
-  test('records failure metadata when selectActiveConfig fails with --json', async () => {
+  test('keeps config selection failures fatal with --json', async () => {
     vi.mocked(Project.load).mockResolvedValue({errors: []} as unknown as Project)
     vi.mocked(selectActiveConfig).mockRejectedValue(new AbortError('No config found'))
 
     await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow()
 
-    expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"valid": false'))
+    expect(outputResult).not.toHaveBeenCalled()
     expect(linkedAppContext).not.toHaveBeenCalled()
-    await expectValidationMetadataCalls(
-      {cmd_app_validate_json: true},
-      {
-        cmd_app_validate_valid: false,
-        cmd_app_validate_issue_count: 1,
-        cmd_app_validate_file_count: 1,
-      },
-    )
+    await expectValidationMetadataCalls({cmd_app_validate_json: true})
   })
 
   test('records failure metadata when linkedAppContext throws a validation error with --json', async () => {

@@ -18,7 +18,15 @@ export function renderAppConfigValidateResult(
       headline: 'Validation errors found.',
       // Issues produced by early command failure paths carry no file; fall back to the validated config path.
       body: result.issues
-        .map((issue) => `• ${formatConfigurationError({...issue, file: issue.file ?? configPath})}`)
+        .map(
+          (issue) =>
+            `• ${formatConfigurationError({
+              file: issue.filePath ?? configPath,
+              path: issue.fieldPath ?? undefined,
+              code: issue.code ?? undefined,
+              message: issue.message,
+            })}`,
+        )
         .join('\n'),
     })
   }

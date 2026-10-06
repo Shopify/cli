@@ -11,7 +11,7 @@ import metadata from '../../../metadata.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputResult, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
-import {basename} from '@shopify/cli-kit/node/path'
+import {basename, resolvePath} from '@shopify/cli-kit/node/path'
 import {renderError} from '@shopify/cli-kit/node/ui'
 
 async function recordValidationFailure(issueCount: number, fileCount: number) {
@@ -23,7 +23,7 @@ async function recordValidationFailure(issueCount: number, fileCount: number) {
 }
 
 async function failJsonValidation(issues: AppConfigValidateResult['issues']): Promise<never> {
-  const fileCount = new Set(issues.map((issue) => issue.file)).size
+  const fileCount = new Set(issues.map((issue) => issue.filePath)).size
   await recordValidationFailure(issues.length, fileCount)
   outputResult(appConfigValidateJsonOutputSchema.encode({valid: false, issues}))
   throw new AbortSilentError()
@@ -53,34 +53,20 @@ export default class Validate extends AppLinkedCommand {
       cmd_app_validate_json: flags.json,
     }))
 
-    // Stage 1: Load project
-    let project: Project
-    try {
-      project = await Project.load(flags.path)
-    } catch (err) {
-      if (err instanceof AbortError && flags.json) {
-        await failJsonValidation([{message: unstyled(stringifyMessage(err.message)).trim()}])
-      }
-      throw err
-    }
-
-    // Stage 2: Select active config and check for TOML parse errors scoped to it
-    let activeConfig
-    try {
-      activeConfig = await selectActiveConfig(project, flags.config, {
-        clientId: flags['client-id'],
-        skipPrompts: Boolean(flags['client-id']),
-      })
-    } catch (err) {
-      if (err instanceof AbortError && flags.json) {
-        await failJsonValidation([{message: unstyled(stringifyMessage(err.message)).trim()}])
-      }
-      throw err
-    }
+    const project = await Project.load(flags.path)
+    const activeConfig = await selectActiveConfig(project, flags.config, {
+      clientId: flags['client-id'],
+      skipPrompts: Boolean(flags['client-id']),
+    })
 
     const configErrors = errorsForConfig(project, activeConfig.file)
     if (configErrors.length > 0) {
-      const issues = configErrors.map((err) => ({file: err.path, message: err.message}))
+      const issues = configErrors.map((err) => ({
+        filePath: resolvePath(err.path),
+        message: err.message,
+        fieldPath: null,
+        code: null,
+      }))
       if (flags.json) {
         await failJsonValidation(issues)
       }
@@ -110,7 +96,9 @@ export default class Validate extends AppLinkedCommand {
       const message = err instanceof AbortError ? unstyled(stringifyMessage(err.message)).trim() : ''
       const isValidationError = message.startsWith('Validation errors in ')
       if (isValidationError && flags.json) {
-        await failJsonValidation([{message}])
+        await failJsonValidation([
+          {filePath: resolvePath(activeConfig.file.path), message, fieldPath: null, code: null},
+        ])
       }
       throw err
     }
