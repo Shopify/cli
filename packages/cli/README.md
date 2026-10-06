@@ -4475,11 +4475,15 @@ Download a complete document from shopify.dev. Every page on shopify.dev has a M
 
 ```
 USAGE
-  $ shopify doc fetch --url <value> [--json-schema] [--language
+  $ shopify doc fetch --url <value> [-j] [--json-schema] [--language
     javascript|typescript|python|ruby|php|rust|curl|liquid|graphql|html] [--no-color] [--no-input] [--output <value>]
     [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
@@ -4500,7 +4504,8 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_INPUT]
 
   --output=<value>
-      Write the document to this file path instead of printing it to stdout.
+      Write the document to this file path instead of printing it to stdout. With --json, stdout contains the absolute
+      path and Markdown format of the written file.
       [env: SHOPIFY_FLAG_OUTPUT]
 
   --url=<value>
@@ -4517,6 +4522,75 @@ DESCRIPTION
   a centrally-served skill. Pass `--language` for the language of the app you are building so code examples match your
   stack. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.
 
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `DocFetchResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/definitions/Document"
+          }
+        },
+        "required": [
+          "document"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "$ref": "#/definitions/DocumentFile"
+      }
+    ],
+    "title": "DocFetchResult",
+    "definitions": {
+      "Document": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The requested shopify.dev document URL."
+          },
+          "content": {
+            "type": "string",
+            "description": "The document in Markdown, with the requested language filter applied."
+          }
+        },
+        "required": [
+          "url",
+          "content"
+        ],
+        "additionalProperties": false
+      },
+      "DocumentFile": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^(?:\\/|[A-Za-z]:[\\\\/]|\\\\\\\\)",
+            "description": "The absolute native path of the written file."
+          },
+          "format": {
+            "type": "string",
+            "const": "markdown",
+            "description": "The file contains the original Markdown document, not a JSON wrapper."
+          }
+        },
+        "required": [
+          "path",
+          "format"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   # fetch the Markdown version of a Shopify.dev page
 
@@ -4529,6 +4603,10 @@ EXAMPLES
   # save the document to a file instead of printing it
 
     $ shopify doc fetch --url https://shopify.dev/docs/api/shopify-cli --output docs/shopify-cli.md
+
+  # return a typed document as JSON
+
+    $ shopify doc fetch --url https://shopify.dev/docs/api/shopify-cli --json
 ```
 
 ## `shopify doc search`

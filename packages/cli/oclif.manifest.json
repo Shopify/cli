@@ -6138,14 +6138,25 @@
       ],
       "args": {
       },
-      "description": "Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. Pass `--language` for the language of the app you are building so code examples match your stack. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.",
+      "description": "Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. Pass `--language` for the language of the app you are building so code examples match your stack. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `DocFetchResult` schema.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"document\": {\n          \"$ref\": \"#/definitions/Document\"\n        }\n      },\n      \"required\": [\n        \"document\"\n      ],\n      \"additionalProperties\": false\n    },\n    {\n      \"$ref\": \"#/definitions/DocumentFile\"\n    }\n  ],\n  \"title\": \"DocFetchResult\",\n  \"definitions\": {\n    \"Document\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"url\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"description\": \"The requested shopify.dev document URL.\"\n        },\n        \"content\": {\n          \"type\": \"string\",\n          \"description\": \"The document in Markdown, with the requested language filter applied.\"\n        }\n      },\n      \"required\": [\n        \"url\",\n        \"content\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"DocumentFile\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"path\": {\n          \"type\": \"string\",\n          \"pattern\": \"^(?:\\\\/|[A-Za-z]:[\\\\\\\\/]|\\\\\\\\\\\\\\\\)\",\n          \"description\": \"The absolute native path of the written file.\"\n        },\n        \"format\": {\n          \"type\": \"string\",\n          \"const\": \"markdown\",\n          \"description\": \"The file contains the original Markdown document, not a JSON wrapper.\"\n        }\n      },\n      \"required\": [\n        \"path\",\n        \"format\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. Pass `--language` for the language of the app you are building so code examples match your stack. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.",
       "enableJsonFlag": false,
       "examples": [
         "# fetch the Markdown version of a Shopify.dev page\nshopify doc fetch --url https://shopify.dev/docs/api/shopify-cli",
         "# filter code examples to the language of the app you are building\nshopify doc fetch --url https://shopify.dev/docs/api/shopify-cli --language ruby",
-        "# save the document to a file instead of printing it\nshopify doc fetch --url https://shopify.dev/docs/api/shopify-cli --output docs/shopify-cli.md"
+        "# save the document to a file instead of printing it\nshopify doc fetch --url https://shopify.dev/docs/api/shopify-cli --output docs/shopify-cli.md",
+        "# return a typed document as JSON\nshopify doc fetch --url https://shopify.dev/docs/api/shopify-cli --json"
       ],
       "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
         "json-schema": {
           "allowNo": false,
           "description": "Print the command's JSON schemas.",
@@ -6189,7 +6200,7 @@
           "type": "boolean"
         },
         "output": {
-          "description": "Write the document to this file path instead of printing it to stdout.",
+          "description": "Write the document to this file path instead of printing it to stdout. With --json, stdout contains the absolute path and Markdown format of the written file.",
           "env": "SHOPIFY_FLAG_OUTPUT",
           "hasDynamicHelp": false,
           "multiple": false,
