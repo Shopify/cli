@@ -1,3 +1,4 @@
+import AutoupgradeOn from './on.js'
 import AutoupgradeStatus from './status.js'
 import {autoUpgradeJsonOutputSchema} from '../../../services/commands/config/autoupgrade/types.js'
 import {getAutoUpgradeEnabled, setAutoUpgradeEnabled} from '@shopify/cli-kit/node/upgrade'
@@ -21,7 +22,10 @@ afterEach(() => {
   mockAndCaptureOutput().clear()
 })
 
-const commands = [{name: 'status', command: AutoupgradeStatus, enabled: false}]
+const commands = [
+  {name: 'status', command: AutoupgradeStatus, enabled: false},
+  {name: 'on', command: AutoupgradeOn, enabled: true},
+]
 
 test.each(commands)('$name exposes the result schema and JSON flags in help', ({command}) => {
   expect(command.jsonOutputSchema).toBe(autoUpgradeJsonOutputSchema)
