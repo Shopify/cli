@@ -20,6 +20,7 @@ import {getMigrationOperations} from '../../../services/subscription-migrations/
 import {runSubmissionCommand} from '../../../services/subscription-migrations/run-submission-command.js'
 import {watchMigrationOperations} from '../../../services/subscription-migrations/watch-operations.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
+import * as system from '@shopify/cli-kit/node/system'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
@@ -141,6 +142,49 @@ describe('subscription migration submission commands', () => {
     )
   })
 
+  test.each([
+    {json: false, noInput: false},
+    {json: true, noInput: false},
+    {json: false, noInput: true},
+    {json: true, noInput: true},
+  ])('unschedule keeps format independent of no-input: %j', async ({json, noInput}) => {
+    const submission = {...successfulSubmissionResult.submission, action: 'unschedule' as const}
+    vi.mocked(runSubmissionCommand).mockResolvedValue({status: 'success', submission})
+    await Unschedule.run(['--input', '-', '--force', ...(json ? ['--json'] : []), ...(noInput ? ['--no-input'] : [])])
+    expect(runSubmissionCommand).toHaveBeenCalledWith(
+      expect.objectContaining({action: 'unschedule', skipConfirmation: true}),
+    )
+    if (json) {
+      expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toMatchObject({
+        status: 'success',
+        changed: true,
+        action: 'unschedule',
+      })
+    } else {
+      expect(outputResult).not.toHaveBeenCalled()
+      expect(renderSuccess).toHaveBeenCalledOnce()
+    }
+  })
+
+  test('unschedule emits cancellation and exits zero after declined confirmation', async () => {
+    const result = {
+      status: 'cancelled' as const,
+      changed: false as const,
+      action: 'unschedule' as const,
+      reason: 'Confirmation declined.',
+    }
+    vi.mocked(runSubmissionCommand).mockResolvedValue(result)
+    const supportsPrompting = vi.spyOn(system, 'terminalSupportsPrompting').mockReturnValue(true)
+    try {
+      await Unschedule.run(['--input', '-', '--json'])
+      expect(runSubmissionCommand).toHaveBeenCalledWith(expect.objectContaining({skipConfirmation: false}))
+      expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(result)
+      expect(process.exitCode).toBeUndefined()
+    } finally {
+      supportsPrompting.mockRestore()
+    }
+  })
+
   test('unschedule delegates without idempotency controls', async () => {
     const result = await Unschedule.run(['--input', '-', '--client-id', 'unschedule-client-id', '--force'])
 
@@ -245,7 +289,9 @@ describe('subscription migration submission commands', () => {
       watch,
     })
     expect(outputResult).toHaveBeenCalledOnce()
-    expect(outputResult).toHaveBeenCalledWith(JSON.stringify({...submission, failure}, null, 2))
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(
+      projectMigrationSubmissionResult({status: 'failed', submission, failure}),
+    )
     expect(process.exitCode).toBe(1)
     expect(renderWarning).not.toHaveBeenCalled()
   })
