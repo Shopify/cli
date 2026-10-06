@@ -10,10 +10,12 @@ import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
 import {themeInitJsonOutputSchema} from '../../services/init/types.js'
 import {renderThemeInitResult, renderAIInstructionsWarning} from '../../services/init/result.js'
+import {AbortSilentError, CancelExecution} from '@shopify/cli-kit/node/error'
+import {emitCommandEvent} from '@shopify/cli-kit/node/command-events'
 import {Args, Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
-import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderError, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {InferredArgs, InferredFlags} from '@oclif/core/interfaces'
@@ -97,10 +99,19 @@ export default class Init extends ThemeCommand {
     if (!flags['no-input'] && terminalSupportsPrompting()) {
       const aiInstruction = await promptAIInstruction()
       if (aiInstruction) {
-        const instructions = await createAIInstructions(destination, aiInstruction)
         result.aiInstructions = aiInstruction
-        result.instructionFiles = instructions.files
-        renderAIInstructionsWarning(instructions.copiedFiles, format)
+        try {
+          const instructions = await createAIInstructions(destination, aiInstruction)
+          result.instructionFiles = instructions.files
+          renderAIInstructionsWarning(instructions.copiedFiles, format)
+        } catch (error) {
+          if (error instanceof AbortSilentError || error instanceof CancelExecution) throw error
+          result.status = 'partial'
+          result.reason = error instanceof Error ? error.message : String(error)
+          process.exitCode = 1
+          if (flags.json) emitCommandEvent({type: 'diagnostic', level: 'error', message: result.reason})
+          else renderError({body: result.reason})
+        }
       }
     }
 
