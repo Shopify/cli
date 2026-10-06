@@ -1,4 +1,5 @@
-import {themePullJsonOutputSchema, themePullResultSchema, type ThemePullResult} from './types.js'
+import {themePullJsonOutputSchema, type ThemePullResult} from './types.js'
+import {ThemeEnvironmentResult} from '../json-output/schema.js'
 import {themeComponent} from '../../utilities/theme-ui.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -19,9 +20,14 @@ export function renderThemePullResult(result: ThemePullResult, format: 'text' | 
   })
 }
 
-export function renderThemePullEnvironmentResults(results: {environment: string; result: unknown}[]): void {
-  const output = results.flatMap(({environment, result}) =>
-    result === undefined ? [] : [{...themePullResultSchema.parse(result), environment}],
+export function renderThemePullEnvironmentResults(results: ThemeEnvironmentResult[]): void {
+  const environments = results.map((entry) =>
+    'error' in entry
+      ? entry
+      : {
+          ...entry,
+          result: entry.result ?? {status: 'skipped', reason: 'unsafe-directory'},
+        },
   )
-  outputResult(themePullJsonOutputSchema.encode(output))
+  outputResult(themePullJsonOutputSchema.encode({environments}))
 }
