@@ -27,9 +27,9 @@ test('returns the written configuration and public app metadata', async () => {
     configuration: app.configuration,
     remoteApp,
   })
-  expect(result.configFile).toBe(app.configPath)
+  expect(result.path).toBe(app.configPath)
   expect(result.configuration).toEqual(app.configuration)
-  expect(result.app.apiKey).toBe(remoteApp.apiKey)
+  expect(result.app.clientId).toBe(remoteApp.apiKey)
   expect(result.app).not.toHaveProperty('apiSecretKeys')
   expect(overwriteLocalConfigFileWithRemoteAppConfiguration).toHaveBeenCalledWith(
     expect.objectContaining({configFileName: 'shopify.app.toml', remoteApp, appDirectory: app.directory}),

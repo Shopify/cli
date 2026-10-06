@@ -10,6 +10,6 @@ export function renderAppConfigPullResult(result: AppConfigPullResult, format: '
   }
   renderSuccess({
     headline: `Pulled latest configuration for "${result.configuration.name}"`,
-    body: `Updated ${basename(result.configFile)} with the remote data.`,
+    body: `Updated ${basename(result.path)} with the remote data.`,
   })
 }
