@@ -14,8 +14,11 @@ vi.mock('../../../services/app-context.js')
 vi.mock('../../../models/app/loader.js')
 
 test.each([
-  {args: ['staging', '--json'], result: {configFile: '/app/shopify.app.staging.toml', clientId: 'key'}},
-  {args: ['--reset', '--json'], result: {configFile: null, clientId: null}},
+  {
+    args: ['staging', '--json'],
+    result: {status: 'success' as const, changed: true, path: '/app/shopify.app.staging.toml', clientId: 'key'},
+  },
+  {args: ['--reset', '--json'], result: {status: 'success' as const, changed: false, path: null, clientId: null}},
 ])('writes exactly one result for $args', async ({args, result}) => {
   const app = testApp()
   vi.mocked(localAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof localAppContext>>)
@@ -30,8 +33,8 @@ test.each([
     expect(checkFolderIsValidApp).toHaveBeenCalled()
     expect(useAppConfiguration).toHaveBeenCalledWith({
       directory: expect.any(String),
-      configName: result.configFile ? 'staging' : undefined,
-      reset: result.configFile === null,
+      configName: result.path ? 'staging' : undefined,
+      reset: result.path === null,
     })
   } finally {
     streams.restore()
@@ -46,8 +49,23 @@ test('exposes the schema without reintroducing the config flag', () => {
 })
 
 test.each([
-  {configFile: 1, clientId: 'key'},
-  {configFile: '/app/shopify.app.toml', clientId: false},
+  {path: 1, clientId: 'key'},
+  {path: '/app/shopify.app.toml', clientId: false},
 ])('rejects invalid results %j', (result) => {
   expect(() => appConfigUseJsonOutputSchema.validate(result)).toThrow()
 })
+
+test.each([{path: 'relative.toml'}, {extra: true}, {clientId: ''}, {status: 'failed'}])(
+  'rejects malformed public fields %j',
+  (fields) => {
+    expect(() =>
+      appConfigUseJsonOutputSchema.validate({
+        status: 'success',
+        changed: true,
+        path: '/app/shopify.app.toml',
+        clientId: 'key',
+        ...fields,
+      }),
+    ).toThrow()
+  },
+)

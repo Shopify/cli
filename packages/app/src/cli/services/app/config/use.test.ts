@@ -1,7 +1,7 @@
 import use, {UseOptions, useAppConfiguration} from './use.js'
 import {testApp, testAppWithConfig, testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
 import {getAppConfigurationFileName, getAppConfigurationContext} from '../../../models/app/loader.js'
-import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
+import {clearCurrentConfigFile, getCachedAppInfo, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
@@ -304,7 +304,9 @@ test('returns selected configuration facts without presentation', async () => {
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
     mockContext(directory, {client_id: 'key'})
     await expect(useAppConfiguration({directory, configName: 'shopify.app.toml'})).resolves.toEqual({
-      configFile: joinPath(directory, 'shopify.app.toml'),
+      status: 'success',
+      changed: true,
+      path: joinPath(directory, 'shopify.app.toml'),
       clientId: 'key',
     })
     expect(renderSuccess).not.toHaveBeenCalled()
@@ -314,8 +316,42 @@ test('returns selected configuration facts without presentation', async () => {
 
 test('returns explicit nulls after resetting the preference without presentation', async () => {
   await inTemporaryDirectory(async (directory) => {
-    await expect(useAppConfiguration({directory, reset: true})).resolves.toEqual({configFile: null, clientId: null})
+    await expect(useAppConfiguration({directory, reset: true})).resolves.toEqual({
+      status: 'success',
+      changed: false,
+      path: null,
+      clientId: null,
+    })
     expect(clearCurrentConfigFile).toHaveBeenCalledWith(directory)
     expect(renderSuccess).not.toHaveBeenCalled()
+  })
+})
+
+test.each([
+  {previous: undefined, changed: true},
+  {previous: 'shopify.app.toml', changed: false},
+  {previous: 'shopify.app.staging.toml', changed: true},
+])('reports whether selection changes the preferred configuration: %j', async ({previous, changed}) => {
+  await inTemporaryDirectory(async (directory) => {
+    createConfigFile(directory, 'shopify.app.toml')
+    vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
+    vi.mocked(getCachedAppInfo).mockReturnValue({directory, configFile: previous})
+    mockContext(directory, {client_id: 'key'})
+    await expect(useAppConfiguration({directory, configName: 'shopify.app.toml'})).resolves.toMatchObject({
+      status: 'success',
+      changed,
+    })
+  })
+})
+
+test('reports a change when resetting an existing preferred configuration', async () => {
+  await inTemporaryDirectory(async (directory) => {
+    vi.mocked(getCachedAppInfo).mockReturnValue({directory, configFile: 'shopify.app.toml'})
+    await expect(useAppConfiguration({directory, reset: true})).resolves.toEqual({
+      status: 'success',
+      changed: true,
+      path: null,
+      clientId: null,
+    })
   })
 })
