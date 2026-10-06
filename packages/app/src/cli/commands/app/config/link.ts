@@ -19,6 +19,13 @@ export default class ConfigLink extends AppLinkedCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
+    config: Flags.string({
+      hidden: false,
+      char: 'c',
+      description:
+        'The name of the local app configuration to read and overwrite. Use --file-name instead when specifying --client-id.',
+      env: 'SHOPIFY_FLAG_APP_CONFIG',
+    }),
     'organization-id': Flags.string({
       hidden: true,
       env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
@@ -28,13 +35,15 @@ export default class ConfigLink extends AppLinkedCommand {
     'client-id': requiredIfNonInteractive(
       Flags.string({
         hidden: false,
-        description: 'The Client ID of your app.',
+        description:
+          'The Client ID of the remote app to link. Use --file-name to specify the destination configuration file.',
         env: 'SHOPIFY_FLAG_CLIENT_ID',
       }),
     ),
     'file-name': Flags.string({
       hidden: false,
-      description: 'The name of the app configuration file to create or overwrite.',
+      description:
+        'The name of the app configuration file to create or overwrite. Requires --force to overwrite an existing file.',
       env: 'SHOPIFY_FLAG_APP_CONFIG_FILE_NAME',
       exclusive: ['config'],
     }),

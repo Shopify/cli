@@ -415,7 +415,7 @@ USAGE
 
 FLAGS
   -c, --config=<value>
-      The name of the app configuration.
+      The name of the local app configuration to read and overwrite. Use --file-name instead when specifying --client-id.
       [env: SHOPIFY_FLAG_APP_CONFIG]
 
   --auth-alias=<value>
@@ -423,11 +423,12 @@ FLAGS
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
 
   --client-id=<value>
-      The Client ID of your app. Required if non interactive.
+      The Client ID of the remote app to link. Use --file-name to specify the destination configuration file. Required if
+      non interactive.
       [env: SHOPIFY_FLAG_CLIENT_ID]
 
   --file-name=<value>
-      The name of the app configuration file to create or overwrite.
+      The name of the app configuration file to create or overwrite. Requires --force to overwrite an existing file.
       [env: SHOPIFY_FLAG_APP_CONFIG_FILE_NAME]
 
   --force
