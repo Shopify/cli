@@ -326,7 +326,7 @@ describe('app security check command boundary', () => {
         expect(result.exitCode).toBe(1)
         expect(errorText(result.stderr)).toContain('No app with client ID unknown-client-id found')
         expect(result.stdout).toBe('')
-        expect(appFromIdentifiers).toHaveBeenCalledWith({apiKey: 'unknown-client-id'})
+        expect(appFromIdentifiers).toHaveBeenCalledWith({apiKey: 'unknown-client-id', offerReset: false})
         await expect(fileExists(paths.resultsDirectory)).resolves.toBe(false)
       })
     },
@@ -340,7 +340,7 @@ describe('app security check command boundary', () => {
       const result = await runCommand(['--path', directory, '--client-id=', '--list-files'])
 
       expect(result.exitCode).toBe(1)
-      expect(appFromIdentifiers).toHaveBeenCalledWith({apiKey: ''})
+      expect(appFromIdentifiers).toHaveBeenCalledWith({apiKey: '', offerReset: false})
       expect(result.stdout).toBe('')
     })
   })
@@ -353,7 +353,7 @@ describe('app security check command boundary', () => {
       await runCommand(['--path', directory, '--json', '--skip-instructions'])
 
       expect(appFromIdentifiers).toHaveBeenCalledOnce()
-      expect(appFromIdentifiers).toHaveBeenCalledWith({apiKey: 'other-client-id'})
+      expect(appFromIdentifiers).toHaveBeenCalledWith({apiKey: 'other-client-id', offerReset: false})
     })
   })
 })
