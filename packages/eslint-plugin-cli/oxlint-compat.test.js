@@ -97,7 +97,6 @@ ruleTester.run('public-jsdoc', rules['jsdoc-require-param'], {
   ],
 })
 
-// Exercise project resolution and real TypeScript services in a separate workspace.
 test('checks module boundaries, deprecated imports, assertions, and unused directives with Oxlint', () => {
   const {mkdtempSync, mkdirSync, writeFileSync, rmSync, symlinkSync} = require('node:fs')
   const {tmpdir} = require('node:os')
