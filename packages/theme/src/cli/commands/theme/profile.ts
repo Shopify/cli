@@ -6,9 +6,11 @@ import {themeProfileJsonOutputSchema} from '../../services/profile/types.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {renderTasksToStdErr} from '../../utilities/theme-ui.js'
 import {Flags} from '@oclif/core'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {InferredFlags} from '@oclif/core/interfaces'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+import type {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 
 type ProfileFlags = InferredFlags<typeof Profile.flags>
 export default class Profile extends ThemeCommand {
@@ -48,7 +50,7 @@ export default class Profile extends ThemeCommand {
 
   static multiEnvironmentsFlags: RequiredFlags = null
 
-  async command(flags: ProfileFlags, adminSession: AdminSession) {
+  async command(flags: ProfileFlags, adminSession: AdminSession, multiEnvironment = false) {
     const {password: themeAccessPassword} = flags
 
     let filter
@@ -60,16 +62,20 @@ export default class Profile extends ThemeCommand {
     const theme = await findOrSelectTheme(adminSession, filter)
 
     const title = `Generating Liquid profile for ${adminSession.storeFqdn} ${flags.url}`
+    let result: Awaited<ReturnType<typeof profile>> | undefined
     const task = async () => {
-      const result = await profile(
-        adminSession,
-        theme.id.toString(),
-        flags.url,
-        themeAccessPassword,
-        flags['store-password'],
-      )
-      await renderThemeProfileResult(result, flags.json ? 'json' : 'text')
+      result = await profile(adminSession, theme.id.toString(), flags.url, themeAccessPassword, flags['store-password'])
+      if (!multiEnvironment || !flags.json) await renderThemeProfileResult(result, flags.json ? 'json' : 'text')
     }
     await renderTasksToStdErr([{title, task}])
+    return result?.result
+  }
+
+  protected collectsEnvironmentResults(flags: Partial<ProfileFlags>): boolean {
+    return Boolean(flags.json)
+  }
+
+  protected renderEnvironmentResults(environments: ThemeEnvironmentResult[]): void {
+    outputResult(themeProfileJsonOutputSchema.encode({environments}))
   }
 }
