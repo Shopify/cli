@@ -31,6 +31,7 @@ export async function downloadTheme(
       noProgressBar: options.multiEnvironment,
     })
   }
+  return deleteTasks.length > 0 || downloadTasks.length > 0
 }
 
 function buildDeleteTasks(remoteChecksums: Checksum[], themeFileSystem: ThemeFileSystem, options: DownloadOptions) {

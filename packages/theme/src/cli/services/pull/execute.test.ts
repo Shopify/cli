@@ -31,6 +31,7 @@ describe('pull execution', () => {
           const result = await executeThemePull({path, force: true, nodelete}, session)
           expect(result).toEqual({
             path,
+            changed: true,
             theme: {
               id: 1,
               name: 'Theme',
@@ -72,6 +73,7 @@ describe('pull execution', () => {
         executeThemePull({path, force: true}, session),
       )
       expect(result?.theme).toMatchObject({role: 'live', src: 'https://example.com/theme.zip'})
+      expect(result?.changed).toBe(false)
       expect(fetchThemeAssets).not.toHaveBeenCalled()
     })
   })

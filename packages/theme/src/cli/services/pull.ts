@@ -167,11 +167,12 @@ async function executePull(
   const themeChecksums = rejectGeneratedStaticAssets(remoteChecksums)
   recordTiming('theme-service:pull:file-system')
 
-  await downloadTheme(theme, session, themeChecksums, themeFileSystem, options, context)
+  const changed = await downloadTheme(theme, session, themeChecksums, themeFileSystem, options, context)
 
   return themePullResultSchema.parse({
     environment: options.environment,
     path: options.path,
+    changed,
     theme: {
       id: theme.id,
       name: theme.name,
