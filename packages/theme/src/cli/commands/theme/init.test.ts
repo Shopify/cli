@@ -11,6 +11,9 @@ import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {renderTextPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
 import {expect, test, vi} from 'vitest'
+// Native JSON paths must preserve Windows separators instead of pathe normalization.
+// eslint-disable-next-line no-restricted-imports
+import {resolve as nativePath} from 'node:path'
 
 vi.mock('@shopify/cli-kit/node/git')
 vi.mock('@shopify/cli-kit/node/ui', async (importOriginal) => ({
@@ -49,7 +52,7 @@ test.each([true, false])('emits the cloned theme after skipped AI setup, interac
       expect(JSON.parse(stdout())).toEqual({
         status: 'success',
         changed: true,
-        directory: joinPath(directory, 'example'),
+        directory: nativePath(directory, 'example'),
         repoUrl: SKELETON_THEME_URL,
         latest: false,
         aiInstructions: null,
@@ -86,11 +89,11 @@ test('preserves the name prompt in JSON mode and waits for AI instructions', asy
       expect(JSON.parse(stdout())).toEqual({
         status: 'success',
         changed: true,
-        directory: path,
+        directory: nativePath(path),
         repoUrl: 'https://example.com/theme.git',
         latest: true,
         aiInstructions: 'claude',
-        instructionFilePaths: instructionFiles,
+        instructionFilePaths: instructionFiles.map((path) => nativePath(path)),
         reason: null,
       })
       expect(
@@ -119,7 +122,7 @@ test('preserves the cloned project when AI setup fails', async () => {
         expect(JSON.parse(stdout())).toEqual({
           status: 'partial',
           changed: true,
-          directory: joinPath(directory, 'example'),
+          directory: nativePath(directory, 'example'),
           repoUrl: SKELETON_THEME_URL,
           latest: false,
           aiInstructions: 'cursor',
@@ -163,7 +166,7 @@ test('exposes the schema and rejects invalid instruction choices', () => {
     themeInitJsonOutputSchema.validate({
       status: 'success',
       changed: true,
-      directory: '/theme',
+      directory: nativePath('/theme'),
       reason: null,
       repoUrl: SKELETON_THEME_URL,
       latest: false,

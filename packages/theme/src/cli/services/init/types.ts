@@ -1,6 +1,9 @@
 import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
-import {isAbsolutePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {isAbsolutePath} from '@shopify/cli-kit/node/path'
+// Native JSON paths must preserve Windows separators instead of pathe normalization.
+// eslint-disable-next-line no-restricted-imports
+import {resolve as resolvePath} from 'node:path'
 
 const AIInstructionsSchema = zod.enum(['all', 'github', 'cursor', 'claude']).nullable()
 const AbsolutePathSchema = zod.string().refine(isAbsolutePath).describe('An absolute native filesystem path.')
