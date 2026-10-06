@@ -721,6 +721,42 @@ describe('resolveAppSecuritySelection with validateClientIdFlag', () => {
     })
   })
 
+  test.each([
+    {
+      failure: 'a missing --path',
+      prepare: async (directory: string) => joinPath(directory, 'missing'),
+    },
+    {
+      failure: 'a TOML that does not parse',
+      prepare: async (directory: string) => {
+        await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = [')
+        return directory
+      },
+    },
+    {
+      failure: 'several TOMLs with none selected',
+      prepare: async (directory: string) => {
+        await writeConfiguration(directory, 'staging-client-id', 'shopify.app.staging.toml')
+        await writeConfiguration(directory, 'production-client-id', 'shopify.app.production.toml')
+        return directory
+      },
+    },
+  ])('aborts on $failure before looking up --client-id', async ({prepare}) => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = await prepare(directory)
+      const dependencies = promptDependencies()
+
+      await selectionError(
+        resolveAppSecuritySelection(
+          {path, clientId: 'flag-client-id', allowPrompts: true, validateClientIdFlag: true},
+          dependencies,
+        ),
+      )
+
+      expect(dependencies.lookUpApp).not.toHaveBeenCalled()
+    })
+  })
+
   test('does not look up the TOML client ID', async () => {
     await inTemporaryDirectory(async (directory) => {
       await writeConfiguration(directory, 'toml-client-id')
