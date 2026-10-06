@@ -212,6 +212,7 @@ async function executePush(
   return themePushResultSchema.parse({
     environment: options.environment,
     directory: options.path,
+    changed: theme.createdAtRuntime || options.publish || [...uploadResults.values()].some((result) => result.success),
     theme: {
       id: theme.id,
       name: theme.name,
