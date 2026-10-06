@@ -7,12 +7,10 @@ import {
   type AppSecuritySelectionOptions,
 } from './app-security-selection.js'
 import {loadAppSecurityResults, type AppSecurityResults} from './app-security-results.js'
-import {securityReviewJsonOutputSchema, toSecurityReviewJson} from './security-review-json.js'
 import {renderSecurityReview, type SecurityReviewPresenterInput} from './security-review-output.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
 import {activeFindings, SEVERITY_RANK, type CombinedCheck} from './app-security-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputResult} from '@shopify/cli-kit/node/output'
 import type {AppSecurityBlockingLevel} from './app-security-api.js'
 
 interface SecurityReviewOptions {
@@ -20,7 +18,6 @@ interface SecurityReviewOptions {
   configName?: string
   clientId?: string
   withoutAppConfig?: boolean
-  json: boolean
   verbose: boolean
   /** Exact check IDs from `--check-id`; empty means every check. */
   checkIds: string[]
@@ -48,7 +45,6 @@ export interface SecurityReviewResult {
 export interface SecurityReviewDependencies {
   resolveSelection(options: AppSecuritySelectionOptions): Promise<AppSecuritySelection>
   loadResults(selection: AppSecuritySelection, path: string): Promise<AppSecurityResults>
-  output(content: string): void
   render(input: SecurityReviewPresenterInput): void
   now(): Date
   setExitCode(exitCode: number): void
@@ -58,7 +54,6 @@ export interface SecurityReviewDependencies {
 const defaultDependencies: SecurityReviewDependencies = {
   resolveSelection: resolveAppSecuritySelection,
   loadResults: loadAppSecurityResults,
-  output: outputResult,
   render: renderSecurityReview,
   now: () => new Date(),
   setExitCode: (exitCode) => {
@@ -130,7 +125,7 @@ function assertKnownCheckIds(checkIds: string[], checks: CombinedCheck[]): void 
 
 /**
  * Shows the combined app security check results (§9). Loads both result files, narrows them with `--check-id`, then
- * prints JSON to stdout or renders the review to stderr. A `--blocking` breach sets the exit code after the
+ * renders the review to stderr. A `--blocking` breach sets the exit code after the
  * output; an error exits 1 and everything else, including missing files, exits 0.
  */
 export default async function securityReview(
@@ -159,21 +154,17 @@ export default async function securityReview(
     await dependencies.recordMetadata({num_security_findings: findings})
   }
 
-  if (options.json) {
-    dependencies.output(securityReviewJsonOutputSchema.encode(toSecurityReviewJson(result)))
-  } else {
-    dependencies.render({
-      result,
-      verbose: options.verbose,
-      now: dependencies.now(),
-      // The latest scan's scope, so running `check` again gathers the same files.
-      commands: resolveAppSecurityCommands(
-        selection,
-        options.directory,
-        results.sources.deterministic?.document.coverage.scope,
-      ),
-    })
-  }
+  dependencies.render({
+    result,
+    verbose: options.verbose,
+    now: dependencies.now(),
+    // The latest scan's scope, so running `check` again gathers the same files.
+    commands: resolveAppSecurityCommands(
+      selection,
+      options.directory,
+      results.sources.deterministic?.document.coverage.scope,
+    ),
+  })
 
   if (isBlockingBreached(result)) dependencies.setExitCode(1)
 }

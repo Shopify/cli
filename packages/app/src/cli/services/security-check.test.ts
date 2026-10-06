@@ -223,7 +223,6 @@ function testOptions() {
   return {
     directory: appDirectory,
     withoutAppConfig: false,
-    json: false,
     verbose: false,
     blocking: 'none' as const,
     yes: false,
@@ -363,22 +362,6 @@ describe('securityCheck', () => {
     })
   })
 
-  test('lists absolute scan directories with their origins in the JSON selection', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await mkdir(joinPath(directory, 'backend'))
-      vi.stubEnv('INIT_CWD', directory)
-      const backend = await fileRealPath(joinPath(directory, 'backend'))
-      const dependencies = testDependencies()
-
-      await securityCheck({...testOptions(), json: true, includeDirs: ['backend']}, dependencies)
-
-      expect(JSON.parse(dependencies.output.mock.calls[0]![0]).selection.scan_directories).toEqual([
-        {directory: appDirectory, origin: 'app_directory'},
-        {directory: backend, origin: 'include_dir'},
-      ])
-    })
-  })
-
   test('scans the app configuration directories of the selection after the include directories, without repeating them in generated commands', async () => {
     await inTemporaryDirectory(async (directory) => {
       await mkdir(joinPath(directory, 'backend'))
@@ -387,7 +370,7 @@ describe('securityCheck', () => {
       const sharedTheme = '/tmp/shared/theme'
       const dependencies = testDependencies(scanExecution, {...configSelection, appConfigDirectories: [sharedTheme]})
 
-      const resolution = await securityCheck({...testOptions(), json: true, includeDirs: ['backend']}, dependencies)
+      const resolution = await securityCheck({...testOptions(), includeDirs: ['backend']}, dependencies)
 
       expect(dependencies.execute).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -396,11 +379,15 @@ describe('securityCheck', () => {
           appConfigDirectories: [sharedTheme],
         }),
       )
-      expect(JSON.parse(dependencies.output.mock.calls[0]![0]).selection.scan_directories).toEqual([
-        {directory: appDirectory, origin: 'app_directory'},
-        {directory: backend, origin: 'include_dir'},
-        {directory: sharedTheme, origin: 'app_config_directory'},
-      ])
+      expect(dependencies.renderReport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          scanDirectories: [
+            {directory: appDirectory, origin: 'app_directory'},
+            {directory: backend, origin: 'include_dir'},
+            {directory: sharedTheme, origin: 'app_config_directory'},
+          ],
+        }),
+      )
       expect(resolution.commands).toEqual(
         commandsFor(configSelection, {include_dirs: ['backend'], excludes: [], no_git_ignore: false}),
       )
@@ -557,7 +544,7 @@ describe('securityCheck', () => {
     })
   })
 
-  test('allows prompts only in an interactive terminal without --json', async () => {
+  test('allows prompts only in an interactive terminal', async () => {
     const interactive = testDependencies()
     interactive.canPrompt.mockReturnValue(true)
     await securityCheck({...testOptions(), skipInstructions: true}, interactive)
@@ -661,31 +648,6 @@ describe('securityCheck', () => {
     await expect(securityCheck(testOptions(), dependencies)).rejects.toThrow('scan failed')
 
     expect(dependencies.writeArtifacts).not.toHaveBeenCalled()
-  })
-
-  test('prints the engine, selection, deterministic findings, and agent checks path as JSON', async () => {
-    const dependencies = testDependencies()
-    dependencies.canPrompt.mockReturnValue(true)
-
-    await securityCheck({...testOptions(), json: true, yes: true}, dependencies)
-
-    expect(JSON.parse(dependencies.output.mock.calls[0]![0])).toEqual({
-      engine,
-      selection: {
-        app_directory: appDirectory,
-        app_config_file: `${appDirectory}/shopify.app.toml`,
-        client_id: 'toml-client-id',
-        client_id_source: 'config',
-        scan_directories: scanDirectories,
-      },
-      deterministic_findings: deterministicFindings,
-      agent_checks_path: artifacts.agentChecksPath,
-    })
-    expect(dependencies.renderReport).not.toHaveBeenCalled()
-    expect(dependencies.resolveSelection).toHaveBeenCalledWith(expect.objectContaining({allowPrompts: false}))
-    expect(dependencies.canPrompt).not.toHaveBeenCalled()
-    expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
-    expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
   })
 
   test('does not offer coding-agent instructions in CI or another non-interactive environment', async () => {
@@ -853,7 +815,7 @@ describe('securityCheck', () => {
       scan: {...scan, issues: [issue, {...issue, location: {file: 'app/routes/other.ts'}}]},
     })
 
-    await securityCheck({...testOptions(), json: true}, dependencies)
+    await securityCheck(testOptions(), dependencies)
 
     expect(dependencies.recordMetadata).toHaveBeenCalledWith({num_security_findings: 2})
   })
@@ -903,31 +865,13 @@ describe('securityCheck --list-files', () => {
     expect(dependencies.setExitCode).not.toHaveBeenCalled()
   })
 
-  test('prints {"files": [...]} with --json', async () => {
-    const dependencies = testDependencies()
-    dependencies.listFiles.mockResolvedValue({
-      paths: ['app/routes/index.ts', 'shopify.app.toml'],
-      ignoredScanDirectories: [],
-      otherAppDirectories: [],
-    })
-
-    await securityCheck({...listFilesOptions, json: true}, dependencies)
-
-    expect(dependencies.output).toHaveBeenCalledOnce()
-    expect(JSON.parse(dependencies.output.mock.calls[0]![0])).toEqual({
-      files: ['app/routes/index.ts', 'shopify.app.toml'],
-    })
-  })
-
-  test('prints nothing when no path is gathered, and an empty list with --json', async () => {
+  test('prints nothing when no path is gathered', async () => {
     const dependencies = testDependencies()
     dependencies.listFiles.mockResolvedValue({paths: [], ignoredScanDirectories: [], otherAppDirectories: []})
 
     await securityCheck(listFilesOptions, dependencies)
-    expect(dependencies.output).not.toHaveBeenCalled()
 
-    await securityCheck({...listFilesOptions, json: true}, dependencies)
-    expect(JSON.parse(dependencies.output.mock.calls[0]![0])).toEqual({files: []})
+    expect(dependencies.output).not.toHaveBeenCalled()
   })
 
   test('resolves without prompts, even in an interactive terminal', async () => {
@@ -1053,22 +997,6 @@ describe('securityCheck --list-files', () => {
       )
       expect(resolution.resultsKey).toBe('shopify.app')
       await expect(fileExists(joinPath(appRoot, '.shopify', 'app-security'))).resolves.toBe(false)
-    })
-  })
-
-  test('lists the real files as JSON', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const appRoot = await fileRealPath(directory)
-      await writeFile(joinPath(appRoot, 'shopify.app.toml'), validAppConfiguration(''))
-      await writeFile(joinPath(appRoot, 'index.ts'), 'export {}\n')
-      vi.stubEnv('INIT_CWD', appRoot)
-
-      const stdout = await withCapturedStandardStreams(async ({stdout: captured}) => {
-        await securityCheck({...listFilesOptions, directory: appRoot, json: true})
-        return captured()
-      })
-
-      expect(JSON.parse(stdout)).toEqual({files: ['index.ts', 'shopify.app.toml']})
     })
   })
 })

@@ -6,7 +6,7 @@
  * a stored findings document (deterministic-findings.json or agent-findings.json, which share the
  * converged FindingsDocument schema), combine the two result files into per-check results, group
  * issues for display. The stored documents' Zod
- * schemas are exported too, so the public `review --json` schema is composed from them rather than re-declared.
+ * schemas are exported too, so other schemas compose them rather than re-declare them.
  * Keep scanners, registries, validators, redaction, and the rest of the stored-schema details inside the engine.
  */
 export {getAgentInstructions, getEngineVersion, scanApp} from './run.js'

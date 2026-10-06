@@ -43,7 +43,6 @@ function testDependencies() {
         appConfigFilePath: joinPath(path, 'shopify.app.toml'),
       }) as const,
     loadResults: loadAppSecurityResults,
-    output: vi.fn(),
     render: vi.fn(),
     now: () => now,
     setExitCode: vi.fn(),
@@ -233,9 +232,9 @@ describe('securityReview', () => {
       const unfiltered = testDependencies()
       const filtered = testDependencies()
 
-      await securityReview({directory: appRoot, json: true, verbose: false, checkIds: [], blocking: 'none'}, unfiltered)
+      await securityReview({directory: appRoot, verbose: false, checkIds: [], blocking: 'none'}, unfiltered)
       await securityReview(
-        {directory: appRoot, json: true, verbose: false, checkIds: ['OPEN_REDIRECT'], blocking: 'none'},
+        {directory: appRoot, verbose: false, checkIds: ['OPEN_REDIRECT'], blocking: 'none'},
         filtered,
       )
 
@@ -251,10 +250,7 @@ describe('securityReview', () => {
       const appRoot = await createApp(directory, {})
       const dependencies = testDependencies()
 
-      await securityReview(
-        {directory: appRoot, json: true, verbose: false, checkIds: [], blocking: 'none'},
-        dependencies,
-      )
+      await securityReview({directory: appRoot, verbose: false, checkIds: [], blocking: 'none'}, dependencies)
 
       expect(dependencies.recordMetadata).not.toHaveBeenCalled()
     })
@@ -265,12 +261,8 @@ describe('securityReview', () => {
       const appRoot = await createApp(directory, both)
       const dependencies = testDependencies()
 
-      await securityReview(
-        {directory: appRoot, json: false, verbose: true, checkIds: [], blocking: 'none'},
-        dependencies,
-      )
+      await securityReview({directory: appRoot, verbose: true, checkIds: [], blocking: 'none'}, dependencies)
 
-      expect(dependencies.output).not.toHaveBeenCalled()
       expect(dependencies.setExitCode).not.toHaveBeenCalled()
       expect(dependencies.render).toHaveBeenCalledTimes(1)
       const input = dependencies.render.mock.calls[0]![0]
@@ -295,10 +287,7 @@ describe('securityReview', () => {
       const appRoot = await createApp(directory, {deterministic})
       const dependencies = testDependencies()
 
-      await securityReview(
-        {directory: appRoot, json: false, verbose: false, checkIds: [], blocking: 'none'},
-        dependencies,
-      )
+      await securityReview({directory: appRoot, verbose: false, checkIds: [], blocking: 'none'}, dependencies)
 
       const input = dependencies.render.mock.calls[0]![0]
       expect(input.commands.scan.args.slice(-3)).toEqual([
@@ -306,28 +295,6 @@ describe('securityReview', () => {
         {flag: '--exclude', value: 'vendor/**'},
         '--no-git-ignore',
       ])
-    })
-  })
-
-  test('prints the encoded JSON to stdout instead of rendering', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const appRoot = await createApp(directory, {deterministic: deterministicFindingsDocument})
-      const dependencies = testDependencies()
-
-      await securityReview(
-        {directory: appRoot, json: true, verbose: false, checkIds: ['OPEN_REDIRECT'], blocking: 'none'},
-        dependencies,
-      )
-
-      expect(dependencies.render).not.toHaveBeenCalled()
-      expect(dependencies.output).toHaveBeenCalledTimes(1)
-      const json = JSON.parse(dependencies.output.mock.calls[0]![0])
-      expect(json.filter).toEqual({check_ids: ['OPEN_REDIRECT']})
-      expect(json.sources.agent).toBeNull()
-      expect(json.sources.deterministic.path).toBe(
-        appSecurityArtifactPaths(appRoot, RESULTS_KEY).deterministicFindingsPath,
-      )
-      expect(json.checks.map((check: {id: string}) => check.id)).toEqual(['OPEN_REDIRECT'])
     })
   })
 
@@ -339,27 +306,9 @@ describe('securityReview', () => {
       dependencies.render.mockImplementation(() => order.push('render'))
       dependencies.setExitCode.mockImplementation((code) => order.push(`exit ${code}`))
 
-      await securityReview(
-        {directory: appRoot, json: false, verbose: false, checkIds: [], blocking: 'high'},
-        dependencies,
-      )
+      await securityReview({directory: appRoot, verbose: false, checkIds: [], blocking: 'high'}, dependencies)
 
       expect(order).toEqual(['render', 'exit 1'])
-    })
-  })
-
-  test('sets exit code 1 in JSON mode too', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const appRoot = await createApp(directory, both)
-      const dependencies = testDependencies()
-
-      await securityReview(
-        {directory: appRoot, json: true, verbose: false, checkIds: [], blocking: 'low'},
-        dependencies,
-      )
-
-      expect(dependencies.output).toHaveBeenCalledTimes(1)
-      expect(dependencies.setExitCode).toHaveBeenCalledWith(1)
     })
   })
 
@@ -369,7 +318,7 @@ describe('securityReview', () => {
       const dependencies = testDependencies()
 
       await securityReview(
-        {directory: appRoot, json: false, verbose: false, checkIds: ['NOT_A_CHECK'], blocking: 'high'},
+        {directory: appRoot, verbose: false, checkIds: ['NOT_A_CHECK'], blocking: 'high'},
         dependencies,
       )
 
@@ -387,14 +336,10 @@ describe('securityReview', () => {
       const dependencies = testDependencies()
 
       await expect(
-        securityReview(
-          {directory: appRoot, json: false, verbose: false, checkIds: ['NOT_A_CHECK'], blocking: 'none'},
-          dependencies,
-        ),
+        securityReview({directory: appRoot, verbose: false, checkIds: ['NOT_A_CHECK'], blocking: 'none'}, dependencies),
       ).rejects.toThrow('Unknown check ID: NOT_A_CHECK.')
 
       expect(dependencies.render).not.toHaveBeenCalled()
-      expect(dependencies.output).not.toHaveBeenCalled()
       expect(dependencies.setExitCode).not.toHaveBeenCalled()
     })
   })
@@ -406,10 +351,10 @@ describe('securityReview', () => {
       const dependencies = testDependencies()
 
       await expect(
-        securityReview({directory: appRoot, json: true, verbose: false, checkIds: [], blocking: 'none'}, dependencies),
+        securityReview({directory: appRoot, verbose: false, checkIds: [], blocking: 'none'}, dependencies),
       ).rejects.toThrow('The app security check results could not be loaded because a results file is invalid.')
 
-      expect(dependencies.output).not.toHaveBeenCalled()
+      expect(dependencies.render).not.toHaveBeenCalled()
     })
   })
 
@@ -419,18 +364,17 @@ describe('securityReview', () => {
       const dependencies = testDependencies()
 
       await expect(
-        securityReview({directory: appRoot, json: false, verbose: false, checkIds: [], blocking: 'none'}, dependencies),
+        securityReview({directory: appRoot, verbose: false, checkIds: [], blocking: 'none'}, dependencies),
       ).rejects.toMatchObject({message: `No app security check results for ${RESULTS_KEY} in ${appRoot}.`})
 
       expect(dependencies.render).not.toHaveBeenCalled()
-      expect(dependencies.output).not.toHaveBeenCalled()
     })
   })
 })
 
 describe('securityReview --client-id lookup', () => {
   const unknownClientId = new AbortError('No app with client ID unknown-client-id found')
-  const reviewOptions = {json: true, verbose: false, checkIds: [], blocking: 'none' as const}
+  const reviewOptions = {verbose: false, checkIds: [], blocking: 'none' as const}
 
   /** The real selection resolver, with the client ID lookup replaced, and a spy on the results loader. */
   function lookUpDependencies(lookUpApp: (clientId: string) => Promise<void>) {
@@ -468,7 +412,7 @@ describe('securityReview --client-id lookup', () => {
         expect.objectContaining({clientIdOverride: 'flag-client-id'}),
         appRoot,
       )
-      expect(dependencies.output).toHaveBeenCalled()
+      expect(dependencies.render).toHaveBeenCalled()
     })
   })
 
@@ -484,7 +428,6 @@ describe('securityReview --client-id lookup', () => {
       ).rejects.toBe(unknownClientId)
 
       expect(dependencies.loadResults).not.toHaveBeenCalled()
-      expect(dependencies.output).not.toHaveBeenCalled()
       expect(dependencies.render).not.toHaveBeenCalled()
       expect(dependencies.recordMetadata).not.toHaveBeenCalled()
     })

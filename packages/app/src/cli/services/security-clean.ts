@@ -1,7 +1,11 @@
 import {appSecurityDirectory, cleanAllResultsDirectories, cleanResultsDirectory} from './app-security-artifacts.js'
 import {resultsKey, type AppSecuritySelection} from './app-security-selection.js'
 import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
-import type {SecurityCleanResult} from './security-clean-json.js'
+
+/** The results directories that were removed. */
+export interface SecurityCleanResult {
+  removed: string[]
+}
 
 /** `all` removes every results directory under the app directory; otherwise only the selection's. */
 type SecurityCleanOptions = {all: true; appDirectory: string} | {all: false; selection: AppSecuritySelection}

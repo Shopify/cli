@@ -132,6 +132,8 @@ describe('agent checks', () => {
     const {instructions} = buildAgentChecks('0.1.0')
     expect(instructions).toContain('ONE findings document')
     expect(instructions).toContain('shopify app security record')
+    // A bare `record` would write to the default configuration's results, not those of the `check` run.
+    expect(instructions).toContain('using the\nexact command from the instructions you were given')
     expect(instructions).toContain('check_version')
     expect(instructions).not.toMatch(/source_scan_id|prompt_hash|inspected_files|--findings/)
   })

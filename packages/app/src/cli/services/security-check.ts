@@ -18,7 +18,6 @@ import {
   type AppSecuritySelection,
   type AppSecuritySelectionOptions,
 } from './app-security-selection.js'
-import {encodeSecurityJson, toSecurityJson} from './security-json.js'
 import {renderSecurityReport} from './security-output.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
 import {fileRealPath} from '@shopify/cli-kit/node/fs'
@@ -43,7 +42,6 @@ interface SecurityOptions {
   configName?: string
   clientId?: string
   withoutAppConfig: boolean
-  json: boolean
   verbose: boolean
   blocking: AppSecurityBlockingLevel
   yes: boolean
@@ -132,7 +130,7 @@ async function instructionsDestination(
   canPrompt: boolean,
   agentCheckCount: number,
 ): Promise<AppSecurityInstructionsDestination> {
-  if (options.json || options.skipInstructions) return 'nothing'
+  if (options.skipInstructions) return 'nothing'
   if (options.yes) return 'print'
   if (!canPrompt) return 'nothing'
   return dependencies.selectInstructionsDestination(agentCheckCount)
@@ -206,7 +204,7 @@ export default async function securityCheck(
 ): Promise<SecurityCheckResolution> {
   // Resolved first so a mistyped directory fails before any prompt.
   const includeDirectories = await resolveIncludeDirectories(options.includeDirs)
-  const canPrompt = !options.json && !options.listFiles && dependencies.canPrompt()
+  const canPrompt = !options.listFiles && dependencies.canPrompt()
   const selection = await dependencies.resolveSelection({
     path: options.directory,
     config: options.configName,
@@ -256,11 +254,7 @@ export default async function securityCheck(
   if (options.listFiles) {
     const {paths, ...gathered} = await dependencies.listFiles(scanOptions)
     await renderGatheringWarnings(gathered, dependencies)
-    if (options.json) {
-      dependencies.output(JSON.stringify({files: paths}, null, 2))
-    } else if (paths.length > 0) {
-      dependencies.output(paths.join('\n'))
-    }
+    if (paths.length > 0) dependencies.output(paths.join('\n'))
     return resolution
   }
 
@@ -272,15 +266,9 @@ export default async function securityCheck(
     agentChecks: execution.agentChecks,
   })
 
-  if (options.json) {
-    dependencies.output(
-      encodeSecurityJson(toSecurityJson(execution, artifacts.agentChecksPath, selection, scanDirectories)),
-    )
-  } else {
-    dependencies.renderReport(
-      securityReportInput(execution, artifacts, options.verbose, commands, selection, scanDirectories),
-    )
-  }
+  dependencies.renderReport(
+    securityReportInput(execution, artifacts, options.verbose, commands, selection, scanDirectories),
+  )
 
   const destination = await instructionsDestination(
     options,

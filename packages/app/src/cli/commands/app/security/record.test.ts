@@ -5,7 +5,6 @@ import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts
 import {resolveAppSecuritySelection} from '../../../services/app-security-selection.js'
 import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
 import securityRecord, {renderSecurityRecordResult} from '../../../services/security-record.js'
-import {securityRecordJsonOutputSchema} from '../../../services/security-record-json.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -71,8 +70,8 @@ describe('app security record command', () => {
     expect(SecurityRecord.hidden).toBe(true)
     expect(SecurityRecord.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityRecord.prototype).not.toBeInstanceOf(AppLinkedCommand)
-    expect(SecurityRecord.flags).toHaveProperty('json')
-    expect(SecurityRecord.jsonOutputSchema).toBe(securityRecordJsonOutputSchema)
+    expect(SecurityRecord.flags).not.toHaveProperty('json')
+    expect(SecurityRecord.jsonOutputSchema).toBeUndefined()
   })
 
   test('defines the selection flags as check does', () => {
@@ -113,37 +112,6 @@ describe('app security record command', () => {
     })
   })
 
-  test('prints exactly the encoded result with --json', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const appRoot = await createApp(directory)
-      vi.mocked(securityRecord).mockResolvedValue(recordedResult(appRoot))
-      const output = mockAndCaptureOutput()
-      output.clear()
-
-      try {
-        await SecurityRecord.run(['--path', directory, '--json'], import.meta.url)
-
-        expect(resolveAppSecuritySelection).toHaveBeenCalledWith(expect.objectContaining({path: directory}))
-        expect(securityRecord).toHaveBeenCalledWith({
-          selection: await vi.mocked(resolveAppSecuritySelection).mock.results[0]!.value,
-          path: directory,
-        })
-        expect(output.info()).toBe(
-          [
-            '{',
-            `  "path": ${JSON.stringify(recordedResult(appRoot).path)},`,
-            '  "checks": 2,',
-            '  "findings": 3',
-            '}',
-          ].join('\n'),
-        )
-        expect(renderSecurityRecordResult).not.toHaveBeenCalled()
-      } finally {
-        output.clear()
-      }
-    })
-  })
-
   test('forwards --config, --client-id and --without-app-config to the resolver without prompting', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
@@ -154,7 +122,7 @@ describe('app security record command', () => {
 
       try {
         await SecurityRecord.run(
-          ['--path', directory, '--without-app-config', '--client-id', 'abc123', '--json'],
+          ['--path', directory, '--without-app-config', '--client-id', 'abc123'],
           import.meta.url,
         )
 
@@ -201,7 +169,7 @@ describe('app security record command', () => {
       const output = mockAndCaptureOutput()
 
       try {
-        await SecurityRecord.run(['--path', directory, '--client-id', 'flag-client-id', '--json'], import.meta.url)
+        await SecurityRecord.run(['--path', directory, '--client-id', 'flag-client-id'], import.meta.url)
 
         expect(lookUpApp).toHaveBeenCalledWith('flag-client-id')
         expect(securityRecord).toHaveBeenCalledWith({
@@ -247,7 +215,7 @@ describe('app security record command', () => {
       const output = mockAndCaptureOutput()
 
       try {
-        await SecurityRecord.run(['--path', directory, '--json'], import.meta.url)
+        await SecurityRecord.run(['--path', directory], import.meta.url)
 
         expect(lookUpApp).not.toHaveBeenCalled()
         expect(securityRecord).toHaveBeenCalled()

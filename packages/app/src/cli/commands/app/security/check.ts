@@ -3,7 +3,7 @@ import {appSecuritySelectionFlags} from './selection-flags.js'
 import securityCheck from '../../../services/security-check.js'
 import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class SecurityCheck extends BaseCommand {
   static hidden = true
@@ -19,9 +19,9 @@ The check scans the app directory and each \`--include-dir\`. Git ignore rules a
 
 Use \`--exclude\` to skip more paths. Each value is a glob that is matched against the path relative to the working directory, so a path above it starts with \`../\`, and a name at any depth needs \`**/\`, for example \`--exclude '**/generated'\`. Repeat the flag to add globs. An exclusion can't remove the selected app configuration file. Quote each value so your shell doesn't expand \`*\`. The coding-agent instructions this check offers repeat the globs. Other \`app security\` commands don't take \`--exclude\` or \`--no-git-ignore\`, so pass the same flags each time you run the check.
 
-Use \`--list-files\` to check the scope before scanning: it prints the files the check would gather, one path per line and relative to the app directory (\`{"files": [...]}\` with \`--json\`), and then stops. It writes no results and never prompts. \`--client-id\` is still checked, but doesn't change the list.
+Use \`--list-files\` to check the scope before scanning: it prints the files the check would gather, one path per line and relative to the app directory, and then stops. It writes no results and never prompts. \`--client-id\` is still checked, but doesn't change the list.
 
-In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. JSON output never prompts or prints those instructions. You can also run \`shopify app security instructions\` to print, copy, or write them later.`
+In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. You can also run \`shopify app security instructions\` to print, copy, or write them later.`
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -53,7 +53,6 @@ In interactive terminals, the command offers to copy the coding-agent instructio
       env: 'SHOPIFY_FLAG_LIST_FILES',
       exclusive: ['yes', 'skip-instructions', 'blocking'],
     }),
-    ...jsonFlag,
     ...appSecurityBlockingFlag,
     yes: Flags.boolean({
       description: 'Print coding-agent instructions without prompting.',
@@ -77,7 +76,6 @@ In interactive terminals, the command offers to copy the coding-agent instructio
       configName: flags.config,
       clientId: flags['client-id'],
       withoutAppConfig: Boolean(flags['without-app-config']),
-      json: flags.json,
       verbose: Boolean(flags.verbose),
       blocking: flags.blocking,
       yes: flags.yes,

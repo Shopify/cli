@@ -8,11 +8,10 @@ import {combineFindings} from './app-security-engine/index.js'
 import {scanAppDirectory} from './app-security-engine/tests/scan-directory.js'
 import {agentFindingsDocument} from './app-security-engine/tests/fixtures/findings-documents.js'
 import {resultsKey, type AppSecuritySelection} from './app-security-selection.js'
-import {AbortError, handler} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import type {DeterministicFindingsDocument} from './app-security-engine/index.js'
 
 type FileState = 'present' | 'missing' | 'invalid'
@@ -245,15 +244,6 @@ describe('loadAppSecurityResults', () => {
           expect(error.customSections).toStrictEqual([
             {title: invalidPath, body: {list: {items: [expect.stringContaining('Could not parse JSON')]}}},
           ])
-          expect(error.details).toStrictEqual({
-            invalidFiles: [
-              {
-                source: deterministicState === 'invalid' ? 'deterministic' : 'agent',
-                path: invalidPath,
-                errors: [expect.stringContaining('Could not parse JSON')],
-              },
-            ],
-          })
           expect(JSON.stringify(error.customSections)).not.toContain(validPath)
         })
       },
@@ -287,16 +277,6 @@ describe('loadAppSecurityResults', () => {
           },
           {title: paths.agentFindingsPath, body: {list: {items: [expect.stringContaining('Could not parse JSON')]}}},
         ])
-        expect(error.details).toStrictEqual({
-          invalidFiles: [
-            {
-              source: 'deterministic',
-              path: paths.deterministicFindingsPath,
-              errors: ['source is "agent", but this file must hold "deterministic" findings.'],
-            },
-            {source: 'agent', path: paths.agentFindingsPath, errors: [expect.stringContaining('Could not parse JSON')]},
-          ],
-        })
       })
     })
 
@@ -316,48 +296,6 @@ describe('loadAppSecurityResults', () => {
         expect(items.length).toBeGreaterThan(1)
         expect(items).toEqual(expect.arrayContaining([expect.stringMatching(/^engine\.name: /)]))
         for (const item of items) expect(item).not.toContain(paths.agentFindingsPath)
-      })
-    })
-
-    test('renders as a JSON error document in JSON mode', async () => {
-      await inTemporaryDirectory(async (directory) => {
-        const selection = await createApp(directory)
-        const paths = artifactPathsFor(selection)
-        await writeInvalidFile(paths.deterministicFindingsPath, '{"schema_version":3}')
-        const error = await loadError(selection)
-
-        const output = mockAndCaptureOutput()
-        output.clear()
-        vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-        try {
-          await handler(error)
-
-          expect(JSON.parse(output.info())).toStrictEqual({
-            error: {
-              type: 'abort',
-              message: 'The app security check results could not be loaded because a results file is invalid.',
-              nextSteps: [
-                `Run ${command(selection, 'scan')} to regenerate deterministic-findings.json.`,
-                `Or run ${command(selection, 'clean')} to delete both results files and start over.`,
-              ],
-              customSections: [
-                {title: paths.deterministicFindingsPath, body: 'unsupported schema_version: 3 (expected 1)'},
-              ],
-              details: {
-                invalidFiles: [
-                  {
-                    source: 'deterministic',
-                    path: paths.deterministicFindingsPath,
-                    errors: ['unsupported schema_version: 3 (expected 1)'],
-                  },
-                ],
-              },
-            },
-          })
-        } finally {
-          vi.unstubAllEnvs()
-          output.clear()
-        }
       })
     })
   })

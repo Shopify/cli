@@ -36,7 +36,6 @@ interface CheckFlags {
   includeDirs?: string[]
   excludes?: string[]
   noGitIgnore?: boolean
-  json?: boolean
 }
 
 /** `topLevelKeys` come first, since top-level keys must precede tables. */
@@ -110,7 +109,6 @@ async function checkListFiles(temporaryDirectory: string, workingDirectory: stri
       excludePatterns: flags.excludes ?? [],
       noGitIgnore: flags.noGitIgnore ?? false,
       listFiles: true,
-      json: flags.json ?? false,
       verbose: false,
       blocking: 'none',
       yes: false,
@@ -936,22 +934,7 @@ describe('layout catalogue: check --list-files', () => {
     })
   })
 
-  test('27. list-files-json', async () => {
-    await inLayout(twoRepositories, async (root) => {
-      const {stdout} = await checkListFiles(root, 'app', {includeDirs: ['../backend'], json: true})
-
-      expect(JSON.parse(stdout)).toEqual({
-        files: [
-          '../backend/src/admin/index.ts',
-          '../backend/src/server.ts',
-          'extensions/checkout-ui/src/Checkout.tsx',
-          'shopify.app.toml',
-        ],
-      })
-    })
-  })
-
-  test('28. extension-and-web-directories-outside-the-app', async () => {
+  test('27. extension-and-web-directories-outside-the-app', async () => {
     const layout: Layout = {
       repositories: ['monorepo'],
       files: [

@@ -1,10 +1,9 @@
 import {appSecurityBlockingFlag} from './blocking-flag.js'
 import {appSecuritySelectionFlags} from './selection-flags.js'
 import securityReview from '../../../services/security-review.js'
-import {securityReviewJsonOutputSchema} from '../../../services/security-review-json.js'
 import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class SecurityReview extends BaseCommand {
   static hidden = true
@@ -17,16 +16,11 @@ The summary shows the scan directories and the scope of the latest scan, and the
 
 The agent results are optional. Use \`--check-id\` to narrow the review to specific checks, \`--verbose\` for full reasoning, evidence and suppressed findings, and \`--blocking\` to exit with code 1 when a check with findings is at or above a severity.`
 
-  static get jsonOutputSchema() {
-    return securityReviewJsonOutputSchema
-  }
-
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
     ...appSecuritySelectionFlags,
-    ...jsonFlag,
     'check-id': Flags.string({
       description: 'Show only this check. Repeat the flag to show several checks.',
       env: 'SHOPIFY_FLAG_CHECK_ID',
@@ -43,7 +37,6 @@ The agent results are optional. Use \`--check-id\` to narrow the review to speci
       configName: flags.config,
       clientId: flags['client-id'],
       withoutAppConfig: Boolean(flags['without-app-config']),
-      json: flags.json,
       verbose: Boolean(flags.verbose),
       checkIds: flags['check-id'] ?? [],
       blocking: flags.blocking,

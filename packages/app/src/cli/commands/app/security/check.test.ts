@@ -29,7 +29,6 @@ describe('app security check command', () => {
       'config',
       'exclude',
       'include-dir',
-      'json',
       'list-files',
       'no-git-ignore',
       'path',
@@ -41,7 +40,7 @@ describe('app security check command', () => {
 
   test('forwards --path and flags to the service', async () => {
     await SecurityCheck.run(
-      ['--path', './fixtures/unlinked-app', '--json', '--verbose', '--blocking', 'high', '--skip-instructions'],
+      ['--path', './fixtures/unlinked-app', '--verbose', '--blocking', 'high', '--skip-instructions'],
       import.meta.url,
     )
 
@@ -50,7 +49,6 @@ describe('app security check command', () => {
       configName: undefined,
       clientId: undefined,
       withoutAppConfig: false,
-      json: true,
       verbose: true,
       blocking: 'high',
       yes: false,
@@ -98,9 +96,9 @@ describe('app security check command', () => {
   })
 
   test('forwards --list-files, which is also set by its environment variable', async () => {
-    await SecurityCheck.run(['--list-files', '--json'], import.meta.url)
+    await SecurityCheck.run(['--list-files'], import.meta.url)
 
-    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({listFiles: true, json: true}))
+    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({listFiles: true}))
     expect(SecurityCheck.flags['list-files'].env).toBe('SHOPIFY_FLAG_LIST_FILES')
   })
 
@@ -125,7 +123,6 @@ describe('app security check command', () => {
       configName: undefined,
       clientId: undefined,
       withoutAppConfig: false,
-      json: false,
       verbose: false,
       blocking: 'none',
       yes: true,
@@ -215,11 +212,5 @@ describe('app security check command', () => {
       "Other `app security` commands don't take `--exclude` or `--no-git-ignore`",
     )
     expect(SecurityCheck.descriptionWithMarkdown).not.toContain('--ignore')
-  })
-
-  test('allows --yes in JSON mode while preserving non-interactive output behavior', async () => {
-    await SecurityCheck.run(['--json', '--yes'], import.meta.url)
-
-    expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({json: true, yes: true}))
   })
 })

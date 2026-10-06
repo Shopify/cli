@@ -387,9 +387,8 @@ describe('buildSecurityReviewSummary', () => {
         [
           'Fix the issues, then run',
           {command: checkCommand},
-          'again. Your coding agent can run it too, which also updates',
-          {filePath: 'agent-findings.json'},
-          {char: '.'},
+          'again.',
+          'To refresh agent findings, have your agent run the command and record its findings.',
         ],
       ])
     })
@@ -408,17 +407,11 @@ describe('buildSecurityReviewSummary', () => {
       const summary = buildSecurityReviewSummary(presenterInput(staleAgent))
 
       expect(summary.nextSteps).toEqual([
-        [
-          'Fix the issues, then run',
-          {command: checkCommand},
-          'again. Your coding agent can run it too, which also updates',
-          {filePath: 'agent-findings.json'},
-          {char: '.'},
-        ],
+        ['Fix the issues, then run', {command: checkCommand}, 'again.'],
         [
           'Agent results are older than the deterministic results. Have your coding agent run',
           {command: checkCommand},
-          'to refresh them.',
+          'and record its findings again to refresh them.',
         ],
       ])
     })
@@ -429,11 +422,12 @@ describe('buildSecurityReviewSummary', () => {
       expect(summary.nextSteps).toEqual([expect.arrayContaining(['Fix the issues, then run'])])
     })
 
-    test('offers fixing without a deeper review when the deterministic file alone has findings', () => {
+    test('offers fixing and a deeper review when the deterministic file alone has findings', () => {
       const summary = buildSecurityReviewSummary(presenterInput(deterministicOnly))
 
-      expect(summary.nextSteps?.map((step) => (Array.isArray(step) ? step[0] : step))).toEqual([
-        'Fix the issues, then run',
+      expect(summary.nextSteps).toEqual([
+        ['Fix the issues, then run', {command: checkCommand}, 'again.'],
+        'For a deeper review, have your agent run the same command and record its findings.',
       ])
     })
 
