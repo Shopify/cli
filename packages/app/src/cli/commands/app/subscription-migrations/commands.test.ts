@@ -3,6 +3,7 @@ import List from './list.js'
 import Schedule from './schedule.js'
 import Status from './status.js'
 import Unschedule from './unschedule.js'
+import {projectMigrationSubmissionResult} from '../../../services/subscription-migrations/result-codec.js'
 import {appFlags} from '../../../flags.js'
 import {commands} from '../../../index.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
@@ -120,7 +121,7 @@ describe('subscription migration submission commands', () => {
     })
     expect(outputResult).toHaveBeenCalledOnce()
     expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(
-      successfulSubmissionResult.submission,
+      projectMigrationSubmissionResult(successfulSubmissionResult),
     )
     expect(result).toEqual({app})
   })
@@ -200,10 +201,9 @@ describe('subscription migration submission commands', () => {
 
     expect(process.exitCode).toBe(1)
     expect(outputResult).toHaveBeenCalledOnce()
-    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
-      ...failedResult.submission,
-      failure: failedResult.failure,
-    })
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(
+      projectMigrationSubmissionResult(failedResult),
+    )
     expect(renderWarning).not.toHaveBeenCalled()
   })
 

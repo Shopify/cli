@@ -1,6 +1,7 @@
 import {presentMigrationCancellationResult, presentMigrationSubmissionResult} from './result-presenter.js'
 import {cancelMigrationOperations} from '../../../services/subscription-migrations/cancel-operations.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {projectMigrationSubmissionResult} from '../../../services/subscription-migrations/result-codec.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
 
@@ -155,7 +156,12 @@ describe('migration submission JSON output', () => {
         {
           batchIndex: 0,
           batchPayloadDigest: 'batch-digest',
-          operation: {id: 'operation-one', status: 'RUNNING' as const, total: 1, results: {edges: []}},
+          operation: {
+            id: 'gid://shopify/AppSubscriptionMigrationOperation/operation-one',
+            status: 'RUNNING' as const,
+            total: 1,
+            results: {edges: []},
+          },
         },
       ],
     }
@@ -165,7 +171,9 @@ describe('migration submission JSON output', () => {
       expect(presentMigrationSubmissionResult({status: 'failed', submission, failure}, {json: true, watch})).toBe(1)
 
       expect(stdout).toHaveBeenCalledOnce()
-      expect(stdout.mock.calls[0]?.[0]).toBe(`${JSON.stringify({...submission, failure}, null, 2)}\n`)
+      expect(stdout.mock.calls[0]?.[0]).toBe(
+        `${JSON.stringify(projectMigrationSubmissionResult({status: 'failed', submission, failure}), null, 2)}\n`,
+      )
       expect(stderr).not.toHaveBeenCalled()
     } finally {
       stdout.mockRestore()

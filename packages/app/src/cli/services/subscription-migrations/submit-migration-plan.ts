@@ -25,7 +25,7 @@ export async function submitMigrationPlan({
   plan,
   invocationId = generateInvocationId(),
   createOperation = createMigrationOperation,
-}: SubmitMigrationPlanOptions): Promise<MigrationSubmissionResult> {
+}: SubmitMigrationPlanOptions): Promise<Exclude<MigrationSubmissionResult, {status: 'cancelled'}>> {
   const submission: MigrationSubmission = {
     clientId,
     action: plan.action,
@@ -41,13 +41,27 @@ export async function submitMigrationPlan({
       invocationId,
       canonicalBatchPayload: batch.canonicalPayload,
     })
-    // Each accepted batch must be recorded before the next request can fail.
-    // eslint-disable-next-line no-await-in-loop
-    const payload = await createOperation({
-      clientId,
-      idempotencyKey,
-      migrations: batch.rows.map(toMigrationApiInput),
-    })
+    // Keep accepted work when a later request fails so callers can still inspect and cancel it.
+    let payload: Awaited<ReturnType<typeof createOperation>>
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      payload = await createOperation({
+        clientId,
+        idempotencyKey,
+        migrations: batch.rows.map(toMigrationApiInput),
+      })
+    } catch (error) {
+      if (submission.operations.length === 0) throw error
+      return {
+        status: 'failed',
+        submission,
+        failure: {
+          type: 'submission',
+          batchIndex: batch.index,
+          userErrors: [{message: error instanceof Error ? error.message : 'Migration request failed.', field: null}],
+        },
+      }
+    }
 
     if (payload.operation) {
       submission.operations.push({

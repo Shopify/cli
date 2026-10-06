@@ -2,7 +2,7 @@ import {planMigrationInput} from './plan/plan-migration-input.js'
 import {runSubmissionCommand} from './run-submission-command.js'
 import {submitMigrationPlan} from './submit-migration-plan.js'
 import {watchMigrationOperations} from './watch-operations.js'
-import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import type {MigrationOperation} from '../../models/subscription-migrations.js'
@@ -57,7 +57,7 @@ function submission(): MigrationSubmission {
   }
 }
 
-function successfulResult(): MigrationSubmissionResult {
+function successfulResult(): Extract<MigrationSubmissionResult, {status: 'success'}> {
   return {status: 'success', submission: submission()}
 }
 
@@ -96,13 +96,16 @@ describe('runSubmissionCommand', () => {
     expect(submitMigrationPlan).not.toHaveBeenCalled()
   })
 
-  test('silently aborts when confirmation is refused', async () => {
+  test('returns a successful cancellation when confirmation is refused', async () => {
     vi.mocked(planMigrationInput).mockResolvedValue({ok: true, plan})
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
 
-    await expect(runSubmissionCommand({...baseOptions, skipConfirmation: false})).rejects.toBeInstanceOf(
-      AbortSilentError,
-    )
+    await expect(runSubmissionCommand({...baseOptions, skipConfirmation: false})).resolves.toEqual({
+      status: 'cancelled',
+      changed: false,
+      action: 'schedule',
+      reason: 'Confirmation declined.',
+    })
     expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
     expect(submitMigrationPlan).not.toHaveBeenCalled()
   })

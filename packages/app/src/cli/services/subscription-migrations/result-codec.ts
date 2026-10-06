@@ -1,3 +1,4 @@
+import type {MigrationSubmissionResult, MigrationSubmissionJsonOutput} from './types.js'
 import type {MigratableSubscription, MigrationOperation} from '../../models/subscription-migrations.js'
 import type {MigrationUserError} from './partners-api.js'
 
@@ -48,4 +49,33 @@ export function projectMigratableSubscription(subscription: MigratableSubscripti
 function normalizeInstant(value: string | null): string | null {
   if (value === null) return null
   return new Date(value).toISOString().replace(/\.\d{3}Z$/, 'Z')
+}
+
+export function projectMigrationSubmissionResult(result: MigrationSubmissionResult): MigrationSubmissionJsonOutput {
+  if (result.status === 'cancelled') return result
+  const submission = {
+    changed: result.submission.operations.length > 0,
+    clientId: result.submission.clientId,
+    action: result.submission.action,
+    inputDigest: result.submission.inputDigest,
+    total: result.submission.total,
+    operations: result.submission.operations.map(({batchIndex, batchPayloadDigest, operation}) => ({
+      batchIndex,
+      batchPayloadDigest,
+      operation: projectMigrationOperation(operation),
+    })),
+  }
+  if (result.status === 'success') return {status: 'success', ...submission}
+  return {
+    status: 'partial',
+    ...submission,
+    failure:
+      result.failure.type === 'submission'
+        ? {
+            type: result.failure.type,
+            batchIndex: result.failure.batchIndex,
+            userErrors: projectMigrationUserErrors(result.failure.userErrors),
+          }
+        : {type: result.failure.type, operationGids: result.failure.operationIds},
+  }
 }
