@@ -170,6 +170,6 @@ test('checks module boundaries, deprecated imports, assertions, and unused direc
     )
     expect(diagnostics.some((diagnostic) => diagnostic.message.includes('Unused eslint-disable directive'))).toBe(true)
   } finally {
-    rmSync(workspace, {recursive: true, force: true})
+    rmSync(workspace, {recursive: true, force: true, maxRetries: 2})
   }
 }, 30000)
