@@ -147,13 +147,13 @@ export default class Check extends ThemeCommand {
     const {offenses, theme} = output
     const json = flags.json || flags.output === 'json'
     const valid = !themeCheckHasBlockingIssues(offenses, flags['fail-level'] as FailLevel)
-    if (!multiEnvironment || !json) {
-      renderThemeCheckResult({...output, valid}, json ? 'json' : flags.output, path, environment)
-    }
+    if (!json) renderThemeCheckResult({...output, valid}, flags.output, path, environment)
 
     if (flags['auto-correct']) {
       await performAutoFixes(theme, offenses)
     }
+
+    if (json && !multiEnvironment) renderThemeCheckResult({...output, valid}, 'json', path, environment)
 
     if (json) {
       if (!valid) process.exitCode = 1
