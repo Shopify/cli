@@ -1,8 +1,8 @@
-import type {MigrationSubmissionResult, MigrationSubmissionJsonOutput} from './types.js'
+import type {MigrationSubmissionResult, MigrationSubmissionJsonOutput, MigrationStatusResult} from './types.js'
 import type {MigratableSubscription, MigrationOperation} from '../../models/subscription-migrations.js'
 import type {MigrationUserError} from './partners-api.js'
 
-export function projectMigrationOperation(operation: MigrationOperation) {
+export function projectMigrationOperation(operation: MigrationOperation): MigrationStatusResult['operations'][number] {
   return {
     gid: operation.id,
     status: operation.status,

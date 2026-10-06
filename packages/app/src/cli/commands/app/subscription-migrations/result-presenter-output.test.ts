@@ -1,6 +1,9 @@
 import {presentMigrationCancellationResult, presentMigrationSubmissionResult} from './result-presenter.js'
 import {cancelMigrationOperations} from '../../../services/subscription-migrations/cancel-operations.js'
-import {projectMigrationOperation, projectMigrationSubmissionResult} from '../../../services/subscription-migrations/result-codec.js'
+import {
+  projectMigrationOperation,
+  projectMigrationSubmissionResult,
+} from '../../../services/subscription-migrations/result-codec.js'
 import {outputOperations} from '../../../services/subscription-migrations/command-output.js'
 import {watchMigrationOperations} from '../../../services/subscription-migrations/watch-operations.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
