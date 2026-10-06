@@ -111,7 +111,7 @@ Show the combined results:
 {{REVIEW_COMMAND}}
 ```
 
-It combines {{DETERMINISTIC_FINDINGS_PATH}} with {{AGENT_FINDINGS_PATH}} into one result per check. Each check with findings gets its own box, most severe first, listing every finding with its file, line and source (deterministic or agent). A summary box follows with the checks with findings, the other checks (passed, not applicable or unresolved), deterministic coverage, the results files with their ages and versions, and next steps. Add `--check-id <ID>` (repeatable) to narrow the review to specific checks, and `--verbose` for full reasoning, evidence and suppressed findings. Report:
+It combines {{DETERMINISTIC_FINDINGS_PATH}} with {{AGENT_FINDINGS_PATH}} into one result per check. Each check with findings gets its own box, most severe first, listing every finding with its file, line and source (deterministic or agent). A summary box follows with the checks with findings, the other checks (passed, not applicable or unresolved), deterministic coverage, the results files with their ages and versions, and next steps. Add `--check-id <ID>` (repeatable) to narrow the review to specific checks, and `--verbose` for full reasoning, evidence and suppressed findings. `review` is the only combined view: it applies check precedence, suppressions and result ages. Report from its output; don't combine the results files yourself. Its boxes wrap long paths and commands across lines, so rejoin them before using them. Report:
 
 - CLI and ruleset versions;
 - finding counts per check, grouped by severity and source;
@@ -149,6 +149,6 @@ When the user explicitly wants a fast local or CI scan without semantic investig
 {{SCAN_COMMAND}}
 ```
 
-Honor the installed CLI's documented blocking flag when requested. Do not describe a deterministic-only scan as the full app security check.
+For a pass/fail gate, add `--blocking <severity>`: the command exits 1 when a check with findings is at or above that severity. Do not describe a deterministic-only scan as the full app security check.
 
 Route authentication retains a template-oriented heuristic. Calls using `context.shopify.authenticate.admin(...)` are deferred to the `UNAUTHENTICATED_ENDPOINT` agent review, with unresolved coverage rather than a missing-auth finding or a pass. The heuristic does not establish binding provenance, control-flow safety, or tenant/object authorization.
