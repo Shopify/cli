@@ -1,6 +1,13 @@
 import {sleepWithBackoffUntil} from './sleep-with-backoff.js'
 import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 
+// `sleep` awaits `timers/promises`, which fake timers do not intercept. Mocking it keeps the
+// backoff sequence driven entirely by the faked clock instead of real waits.
+vi.mock('../../public/node/system.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../public/node/system.js')>()),
+  sleep: vi.fn(),
+}))
+
 describe('sleepWithBackoffUntil', () => {
   beforeEach(() => {
     vi.useFakeTimers()
