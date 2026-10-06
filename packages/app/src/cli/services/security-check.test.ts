@@ -9,7 +9,6 @@ import {cwd, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import type {AppSecurityExecution} from './app-security-api.js'
-import type {AppSecurityInstructionsDelivery} from './app-security-instructions-output.js'
 import type {AppSecuritySelection, AppSecuritySelectionOptions} from './app-security-selection.js'
 import type {AppSecurityInstructionsDestination} from './security-check.js'
 import type {
@@ -137,12 +136,9 @@ function testDependencies(
     writeArtifacts: vi.fn(async () => artifacts),
     canPrompt: vi.fn(() => false),
     selectInstructionsDestination: vi.fn(async (): Promise<AppSecurityInstructionsDestination> => 'nothing'),
-    deliverInstructions: vi.fn(
-      async (options: {copy: boolean}): Promise<AppSecurityInstructionsDelivery> => ({
-        content: 'post-scan instructions',
-        copiedToClipboard: options.copy,
-      }),
-    ),
+    buildInstructions: vi.fn((_options: object) => 'post-scan instructions'),
+    deliverInstructions: vi.fn(async (_content: string, _delivery: {copy: boolean}) => {}),
+    renderInstructions: vi.fn(),
     output: vi.fn(),
     renderInfo: vi.fn(),
     renderWarning: vi.fn(),
@@ -253,7 +249,7 @@ describe('securityCheck', () => {
     expect(commands.scan.args).toContain('--no-git-ignore')
     expect(dependencies.execute).toHaveBeenCalledWith(expect.objectContaining({excludePatterns, noGitIgnore: true}))
     expect(dependencies.renderReport).toHaveBeenCalledWith(expect.objectContaining({commands}))
-    expect(dependencies.deliverInstructions).toHaveBeenCalledWith(expect.objectContaining({commands}))
+    expect(dependencies.buildInstructions).toHaveBeenCalledWith(expect.objectContaining({commands}))
   })
 
   test('scans each --include-dir after the app directory, reports it, and repeats it before --exclude', async () => {
@@ -293,7 +289,7 @@ describe('securityCheck', () => {
           ],
         }),
       )
-      expect(dependencies.deliverInstructions).toHaveBeenCalledWith(expect.objectContaining({commands}))
+      expect(dependencies.buildInstructions).toHaveBeenCalledWith(expect.objectContaining({commands}))
     })
   })
 
@@ -565,14 +561,14 @@ describe('securityCheck', () => {
     })
     expect(dependencies.renderReport).not.toHaveBeenCalled()
     expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
-    expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
+    expect(dependencies.buildInstructions).toHaveBeenCalledWith({
       appDirectory,
       resultsKey: 'shopify.app',
-      copy: false,
-      json: true,
-      scanScope: noScope,
       commands: commandsFor(),
+      scanScope: noScope,
     })
+    expect(dependencies.deliverInstructions).toHaveBeenCalledWith('post-scan instructions', {copy: false})
+    expect(dependencies.renderInstructions).not.toHaveBeenCalled()
   })
 
   test('asks for the instructions before printing the JSON result in an interactive terminal', async () => {
@@ -585,7 +581,8 @@ describe('securityCheck', () => {
     expect(dependencies.selectInstructionsDestination.mock.invocationCallOrder[0]).toBeLessThan(
       dependencies.output.mock.invocationCallOrder[0]!,
     )
-    expect(dependencies.deliverInstructions).toHaveBeenCalledWith(expect.objectContaining({copy: true, json: true}))
+    expect(dependencies.deliverInstructions).toHaveBeenCalledWith('post-scan instructions', {copy: true})
+    expect(dependencies.renderInstructions).not.toHaveBeenCalled()
     expect(JSON.parse(dependencies.output.mock.calls[0]![0]).instructions).toEqual({
       content: 'post-scan instructions',
       copiedToClipboard: true,
@@ -636,13 +633,17 @@ describe('securityCheck', () => {
     })
     expect(dependencies.selectInstructionsDestination).toHaveBeenCalledOnce()
     expect(dependencies.selectInstructionsDestination).toHaveBeenCalledWith(31)
-    expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
+    expect(dependencies.buildInstructions).toHaveBeenCalledWith({
       appDirectory,
       resultsKey: 'shopify.app',
-      copy: true,
-      json: false,
-      scanScope: noScope,
       commands: commandsFor(),
+      scanScope: noScope,
+    })
+    expect(dependencies.deliverInstructions).toHaveBeenCalledWith('post-scan instructions', {copy: true})
+    expect(dependencies.renderInstructions).toHaveBeenCalledWith({
+      content: 'post-scan instructions',
+      copiedToClipboard: true,
+      path: null,
     })
   })
 
@@ -674,7 +675,7 @@ describe('securityCheck', () => {
         excludes: ['**/generated', '!keep'],
         no_git_ignore: true,
       }
-      expect(dependencies.deliverInstructions).toHaveBeenCalledWith(
+      expect(dependencies.buildInstructions).toHaveBeenCalledWith(
         expect.objectContaining({scanScope: scope, commands: commandsFor(configSelection, scope)}),
       )
       expect(dependencies.execute).toHaveBeenCalledWith(
@@ -690,13 +691,17 @@ describe('securityCheck', () => {
 
     await securityCheck(testOptions(), dependencies)
 
-    expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
+    expect(dependencies.buildInstructions).toHaveBeenCalledWith({
       appDirectory,
       resultsKey: 'shopify.app',
-      copy: false,
-      json: false,
-      scanScope: noScope,
       commands: commandsFor(),
+      scanScope: noScope,
+    })
+    expect(dependencies.deliverInstructions).toHaveBeenCalledWith('post-scan instructions', {copy: false})
+    expect(dependencies.renderInstructions).toHaveBeenCalledWith({
+      content: 'post-scan instructions',
+      copiedToClipboard: false,
+      path: null,
     })
   })
 
@@ -716,13 +721,17 @@ describe('securityCheck', () => {
     await securityCheck({...testOptions(), yes: true}, dependencies)
 
     expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
-    expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
+    expect(dependencies.buildInstructions).toHaveBeenCalledWith({
       appDirectory,
       resultsKey: 'shopify.app',
-      copy: false,
-      json: false,
-      scanScope: noScope,
       commands: commandsFor(),
+      scanScope: noScope,
+    })
+    expect(dependencies.deliverInstructions).toHaveBeenCalledWith('post-scan instructions', {copy: false})
+    expect(dependencies.renderInstructions).toHaveBeenCalledWith({
+      content: 'post-scan instructions',
+      copiedToClipboard: false,
+      path: null,
     })
   })
 

@@ -56,7 +56,7 @@ describe('app security JSON contract', () => {
   })
 
   test('encodes the chosen instructions in the scan result as instructions --json does', () => {
-    const instructions = toAppSecurityInstructionsJson({content: '# Instructions', copiedToClipboard: true})
+    const instructions = toAppSecurityInstructionsJson('# Instructions', {copy: true})
 
     const checkResult = JSON.parse(
       securityCheckJsonOutputSchema.encode(
@@ -70,13 +70,11 @@ describe('app security JSON contract', () => {
   })
 
   test('encodes the written file of instructions --write as its path', () => {
-    expect(
-      toAppSecurityInstructionsJson({
-        content: '# Instructions',
-        copiedToClipboard: false,
-        writePath: '/tmp/handoff.md',
-      }),
-    ).toEqual({content: '# Instructions', copiedToClipboard: false, path: '/tmp/handoff.md'})
+    expect(toAppSecurityInstructionsJson('# Instructions', {copy: false, writePath: '/tmp/handoff.md'})).toEqual({
+      content: '# Instructions',
+      copiedToClipboard: false,
+      path: '/tmp/handoff.md',
+    })
   })
 
   test('encodes the --list-files result as the list of files only', () => {

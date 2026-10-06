@@ -1,6 +1,10 @@
 import {appSecuritySelectionFlags} from './selection-flags.js'
 import {resolveAppSecurityCommands} from '../../../services/app-security-commands.js'
-import {deliverAppSecurityInstructions} from '../../../services/app-security-instructions-output.js'
+import {appSecurityInstructions} from '../../../services/app-security-instructions.js'
+import {
+  deliverAppSecurityInstructions,
+  renderAppSecurityInstructions,
+} from '../../../services/app-security-instructions-output.js'
 import {requireResultsDirectory} from '../../../services/app-security-results.js'
 import {resolveAppSecuritySelection, resultsKey} from '../../../services/app-security-selection.js'
 import {
@@ -58,17 +62,19 @@ By default, the instructions are printed to stdout. Use \`--copy\` to copy them 
     })
     await requireResultsDirectory(selection, flags.path)
 
-    const delivery = await deliverAppSecurityInstructions({
+    const content = appSecurityInstructions({
       appDirectory: selection.appDirectory,
       resultsKey: resultsKey(selection),
       commands: resolveAppSecurityCommands(selection, flags.path),
-      copy: flags.copy,
-      writePath: flags.write,
-      json: flags.json,
     })
+    const delivery = {copy: flags.copy, writePath: flags.write}
+    await deliverAppSecurityInstructions(content, delivery)
+    const instructions = toAppSecurityInstructionsJson(content, delivery)
 
     if (flags.json) {
-      outputResult(securityInstructionsJsonOutputSchema.encode({instructions: toAppSecurityInstructionsJson(delivery)}))
+      outputResult(securityInstructionsJsonOutputSchema.encode({instructions}))
+    } else {
+      renderAppSecurityInstructions(instructions)
     }
   }
 }

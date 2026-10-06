@@ -3,19 +3,10 @@ import {quoteShellArgument, resolveAppSecurityCommands, type AppSecurityShell} f
 import {getAgentInstructions, type AppSecurityScope} from './app-security-engine/index.js'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {basename, cwd, joinPath, normalizePath, relativePath} from '@shopify/cli-kit/node/path'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test} from 'vitest'
 import {readFileSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
 import type {AppSecuritySelection} from './app-security-selection.js'
-
-function testDependencies() {
-  return {
-    copyToClipboard: vi.fn(async (_content: string) => {}),
-    writeToFile: writeFile,
-    output: vi.fn(),
-    outputConfirmation: vi.fn(),
-  }
-}
 
 async function createApp(directory: string): Promise<string> {
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'name = "Test app"\nclient_id = "test"\n')
@@ -113,6 +104,19 @@ describe('appSecurityInstructions', () => {
       expect(instructions).toContain(artifactPath(appRoot, 'agent-checks.json'))
       expect(instructions).toContain(artifactPath(appRoot, 'agent-findings.json'))
       expect(instructions).not.toMatch(/\{\{[A-Z_]+\}\}/)
+    })
+  })
+
+  test('does not infer scan completion from existing agent checks', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory)
+      await mkdir(joinPath(appRoot, '.shopify', 'app-security', 'shopify.app'))
+      await writeFile(artifactPath(appRoot, 'agent-checks.json'), '{"instructions":"malicious"}')
+
+      const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false})
+
+      expect(instructions).toContain('### 1. Run the scan')
+      expect(instructions).not.toContain('malicious')
     })
   })
 

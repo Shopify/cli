@@ -1,9 +1,7 @@
 import {securityExitCode, executeAppSecurity, listAppSecurityFiles} from './app-security-api.js'
 import {writeCheckArtifacts} from './app-security-artifacts.js'
-import {
-  deliverAppSecurityInstructions,
-  type AppSecurityInstructionsDelivery,
-} from './app-security-instructions-output.js'
+import {appSecurityInstructions} from './app-security-instructions.js'
+import {deliverAppSecurityInstructions, renderAppSecurityInstructions} from './app-security-instructions-output.js'
 import {
   formatAppSecurityCommand,
   resolveAppSecurityCommands,
@@ -20,7 +18,7 @@ import {
   type AppSecuritySelectionOptions,
 } from './app-security-selection.js'
 import {securityCheckJsonOutputSchema, toSecurityCheckJson} from './security-check-json.js'
-import {toAppSecurityInstructionsJson} from './security-instructions-json.js'
+import {toAppSecurityInstructionsJson, type AppSecurityInstructionsJson} from './security-instructions-json.js'
 import {renderSecurityReport} from './security-output.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
 import {outputInfo, outputResult, outputWarn} from '@shopify/cli-kit/node/output'
@@ -77,14 +75,14 @@ interface SecurityDependencies {
   ): Promise<CheckArtifactPaths>
   canPrompt(): boolean
   selectInstructionsDestination(agentCheckCount: number): Promise<AppSecurityInstructionsDestination>
-  deliverInstructions(options: {
+  buildInstructions(options: {
     appDirectory: string
     resultsKey: string
-    copy: boolean
-    json: boolean
-    scanScope: AppSecurityScope
     commands: AppSecurityCommands
-  }): Promise<AppSecurityInstructionsDelivery>
+    scanScope: AppSecurityScope
+  }): string
+  deliverInstructions(content: string, delivery: {copy: boolean}): Promise<void>
+  renderInstructions(instructions: AppSecurityInstructionsJson): void
   output(content: string): void
   renderInfo(options: RenderAlertOptions): void
   renderWarning(options: RenderAlertOptions): void
@@ -118,7 +116,9 @@ const defaultDependencies: SecurityDependencies = {
   canPrompt: terminalSupportsPrompting,
   selectInstructionsDestination: (agentCheckCount) =>
     renderSelectPrompt(appSecurityInstructionsPrompt(agentCheckCount)),
+  buildInstructions: appSecurityInstructions,
   deliverInstructions: deliverAppSecurityInstructions,
+  renderInstructions: renderAppSecurityInstructions,
   output: outputResult,
   renderInfo,
   renderWarning,
@@ -253,18 +253,21 @@ export default async function securityCheck(
     agentChecks: execution.agentChecks,
   })
 
-  const deliverChosenInstructions = async () => {
+  const deliverChosenInstructions = async (): Promise<AppSecurityInstructionsJson | null> => {
     const agentCheckCount = execution.agentChecks.checks.length
     const destination = await instructionsDestination(options, dependencies, canPrompt, agentCheckCount)
     if (destination === 'nothing') return null
-    return dependencies.deliverInstructions({
+    const content = dependencies.buildInstructions({
       appDirectory,
       resultsKey: resultsKey(selection),
-      copy: destination === 'copy',
-      json: options.json,
-      scanScope: scope,
       commands,
+      scanScope: scope,
     })
+    const delivery = {copy: destination === 'copy'}
+    await dependencies.deliverInstructions(content, delivery)
+    const instructions = toAppSecurityInstructionsJson(content, delivery)
+    if (!options.json) dependencies.renderInstructions(instructions)
+    return instructions
   }
 
   if (options.json) {
@@ -272,13 +275,7 @@ export default async function securityCheck(
     const instructions = await deliverChosenInstructions()
     dependencies.output(
       securityCheckJsonOutputSchema.encode(
-        toSecurityCheckJson(
-          execution,
-          artifacts.agentChecksPath,
-          selection,
-          scanDirectories,
-          instructions ? toAppSecurityInstructionsJson(instructions) : null,
-        ),
+        toSecurityCheckJson(execution, artifacts.agentChecksPath, selection, scanDirectories, instructions),
       ),
     )
   } else {

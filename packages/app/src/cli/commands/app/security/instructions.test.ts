@@ -3,7 +3,11 @@ import SecurityCheck from './check.js'
 import {appFlags} from '../../../flags.js'
 import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts.js'
 import {resolveAppSecurityCommands} from '../../../services/app-security-commands.js'
-import {deliverAppSecurityInstructions} from '../../../services/app-security-instructions-output.js'
+import {appSecurityInstructions} from '../../../services/app-security-instructions.js'
+import {
+  deliverAppSecurityInstructions,
+  renderAppSecurityInstructions,
+} from '../../../services/app-security-instructions-output.js'
 import {resolveAppSecuritySelection, type AppSecuritySelection} from '../../../services/app-security-selection.js'
 import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
 import {securityInstructionsJsonOutputSchema} from '../../../services/security-instructions-json.js'
@@ -15,6 +19,9 @@ import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 
+vi.mock('../../../services/app-security-instructions.js', () => ({
+  appSecurityInstructions: vi.fn(() => '# Instructions'),
+}))
 vi.mock('../../../services/app-security-instructions-output.js')
 vi.mock('../../../services/app-security-selection.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../services/app-security-selection.js')>()),
@@ -95,35 +102,35 @@ describe('app security instructions command', () => {
         withoutAppConfig: undefined,
         allowPrompts: false,
       })
-      expect(deliverAppSecurityInstructions).toHaveBeenCalledWith({
+      expect(appSecurityInstructions).toHaveBeenCalledWith({
         appDirectory,
         resultsKey: 'shopify.app',
         commands: resolveAppSecurityCommands(configSelection(appDirectory, 'shopify.app.toml'), cwd()),
-        copy: false,
-        writePath: undefined,
-        json: false,
+      })
+      expect(deliverAppSecurityInstructions).toHaveBeenCalledWith('# Instructions', {copy: false, writePath: undefined})
+      expect(renderAppSecurityInstructions).toHaveBeenCalledWith({
+        content: '# Instructions',
+        copiedToClipboard: false,
+        path: null,
       })
     })
   })
 
-  test('prints the delivered instructions as the JSON result with --json', async () => {
+  test('prints the delivered instructions as the JSON result with --json, after delivering them', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
       const instructionsPath = resolvePath('./instructions.md')
-      vi.mocked(deliverAppSecurityInstructions).mockResolvedValue({
-        content: '# Instructions',
-        copiedToClipboard: false,
-        writePath: instructionsPath,
-      })
       const output = mockAndCaptureOutput()
       output.clear()
 
       try {
         await SecurityInstructions.run(['--write', './instructions.md', '--json'], import.meta.url)
 
-        expect(deliverAppSecurityInstructions).toHaveBeenCalledWith(
-          expect.objectContaining({writePath: instructionsPath, json: true}),
-        )
+        expect(deliverAppSecurityInstructions).toHaveBeenCalledWith('# Instructions', {
+          copy: false,
+          writePath: instructionsPath,
+        })
+        expect(renderAppSecurityInstructions).not.toHaveBeenCalled()
         expect(JSON.parse(output.info())).toEqual({
           instructions: {content: '# Instructions', copiedToClipboard: false, path: instructionsPath},
         })
@@ -133,16 +140,42 @@ describe('app security instructions command', () => {
     })
   })
 
-  test('prints no JSON result without --json', async () => {
+  test('prints no JSON result when the delivery fails', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
-      vi.mocked(deliverAppSecurityInstructions).mockResolvedValue({content: '# Instructions', copiedToClipboard: true})
+      vi.mocked(deliverAppSecurityInstructions).mockRejectedValue(new AbortError('Clipboard unavailable'))
+      const output = mockAndCaptureOutput()
+      output.clear()
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+      try {
+        await expect(SecurityInstructions.run(['--copy', '--json'], import.meta.url)).rejects.toThrow(
+          'process.exit unexpectedly called with "1"',
+        )
+
+        expect(output.error()).toContain('Clipboard unavailable')
+        expect(output.info()).not.toContain('"instructions"')
+      } finally {
+        consoleErrorSpy.mockRestore()
+        output.clear()
+      }
+    })
+  })
+
+  test('renders the instructions instead of a JSON result without --json', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
       const output = mockAndCaptureOutput()
       output.clear()
 
       try {
         await SecurityInstructions.run(['--copy'], import.meta.url)
 
+        expect(renderAppSecurityInstructions).toHaveBeenCalledWith({
+          content: '# Instructions',
+          copiedToClipboard: true,
+          path: null,
+        })
         expect(output.info()).toBe('')
       } finally {
         output.clear()
@@ -159,7 +192,10 @@ describe('app security instructions command', () => {
       expect(resolveAppSecuritySelection).toHaveBeenCalledWith(
         expect.objectContaining({path: resolvePath('./fixtures/unlinked-app')}),
       )
-      expect(deliverAppSecurityInstructions).toHaveBeenCalledWith(expect.objectContaining({copy: true}))
+      expect(deliverAppSecurityInstructions).toHaveBeenCalledWith(
+        '# Instructions',
+        expect.objectContaining({copy: true}),
+      )
     })
   })
 
@@ -169,9 +205,10 @@ describe('app security instructions command', () => {
 
       await SecurityInstructions.run(['--write', './instructions.md'], import.meta.url)
 
-      expect(deliverAppSecurityInstructions).toHaveBeenCalledWith(
-        expect.objectContaining({copy: false, writePath: resolvePath('./instructions.md')}),
-      )
+      expect(deliverAppSecurityInstructions).toHaveBeenCalledWith('# Instructions', {
+        copy: false,
+        writePath: resolvePath('./instructions.md'),
+      })
     })
   })
 
@@ -185,7 +222,7 @@ describe('app security instructions command', () => {
       await SecurityInstructions.run(['--path', './fixtures/unlinked-app', '--config', 'staging'], import.meta.url)
 
       expect(resolveAppSecuritySelection).toHaveBeenCalledWith(expect.objectContaining({config: 'staging'}))
-      expect(deliverAppSecurityInstructions).toHaveBeenCalledWith(
+      expect(appSecurityInstructions).toHaveBeenCalledWith(
         expect.objectContaining({
           resultsKey: 'shopify.app.staging',
           commands: resolveAppSecurityCommands(
@@ -213,7 +250,7 @@ describe('app security instructions command', () => {
       expect(resolveAppSecuritySelection).toHaveBeenCalledWith(
         expect.objectContaining({clientId: 'abc123', withoutAppConfig: true, allowPrompts: false}),
       )
-      expect(deliverAppSecurityInstructions).toHaveBeenCalledWith(expect.objectContaining({resultsKey: 'abc123'}))
+      expect(appSecurityInstructions).toHaveBeenCalledWith(expect.objectContaining({resultsKey: 'abc123'}))
     })
   })
 
@@ -253,9 +290,7 @@ describe('app security instructions command', () => {
       await SecurityInstructions.run(['--path', directory, '--client-id', 'mistyped-client-id'], import.meta.url)
 
       expect(lookUpApp).not.toHaveBeenCalled()
-      expect(deliverAppSecurityInstructions).toHaveBeenCalledWith(
-        expect.objectContaining({resultsKey: 'mistyped-client-id'}),
-      )
+      expect(appSecurityInstructions).toHaveBeenCalledWith(expect.objectContaining({resultsKey: 'mistyped-client-id'}))
     })
   })
 })

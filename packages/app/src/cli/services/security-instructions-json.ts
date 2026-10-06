@@ -1,6 +1,5 @@
 import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
-import type {AppSecurityInstructionsDelivery} from './app-security-instructions-output.js'
 
 /** Shared by `instructions --json` and `check --json`, so an agent reads the instructions the same way from both. */
 export const appSecurityInstructionsSchema = zod.object({
@@ -18,10 +17,13 @@ export const securityInstructionsJsonOutputSchema = defineJsonOutputSchema({
   definitions: {AppSecurityInstructions: appSecurityInstructionsSchema},
 })
 
-export function toAppSecurityInstructionsJson(delivery: AppSecurityInstructionsDelivery): AppSecurityInstructionsJson {
-  return {
-    content: delivery.content,
-    copiedToClipboard: delivery.copiedToClipboard,
-    path: delivery.writePath ?? null,
-  }
+/**
+ * The instructions as delivered: copied, written to `writePath`, or neither. Build it after the delivery succeeds,
+ * so the result never reports a copy or a file that failed.
+ */
+export function toAppSecurityInstructionsJson(
+  content: string,
+  delivery: {copy: boolean; writePath?: string},
+): AppSecurityInstructionsJson {
+  return {content, copiedToClipboard: delivery.copy, path: delivery.writePath ?? null}
 }
