@@ -2,4 +2,4 @@
 '@shopify/cli': minor
 ---
 
-Add json flag and output schema for all theme commands
+Add structured JSON output to finite theme operations, including metafield downloads.
