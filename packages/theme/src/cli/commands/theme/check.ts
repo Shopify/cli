@@ -12,6 +12,7 @@ import {
 import {renderThemeCheckResult, encodeThemeCheckResult} from '../../services/check/result.js'
 import {themeCheckJsonOutputSchema} from '../../services/check/types.js'
 import {themeFlags} from '../../flags.js'
+import {runWithCommandEvents, renderCommandEventAsJson} from '@shopify/cli-kit/node/command-events'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {outputResult} from '@shopify/cli-kit/node/output'
@@ -173,6 +174,10 @@ export default class Check extends ThemeCommand {
     if (legacyJson && !argv.includes('--json')) {
       // The legacy format flag must also select CLI Kit's JSON error and side-event context.
       this.argv = [...argv, '--json', ...(separatorIndex < 0 ? [] : this.argv.slice(separatorIndex))]
+    }
+    if (legacyJson) {
+      // The CLI launcher may have selected text events before the legacy flag was normalized.
+      return runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, () => super._run<T>())
     }
     return super._run<T>()
   }
