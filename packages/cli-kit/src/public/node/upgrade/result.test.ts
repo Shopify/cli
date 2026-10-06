@@ -6,7 +6,8 @@ import {afterEach, describe, expect, test} from 'vitest'
 afterEach(() => mockAndCaptureOutput().clear())
 
 const globalResult: UpgradeResult = {
-  status: 'upgraded',
+  status: 'success',
+  changed: true,
   scope: 'global',
   previousVersion: '4.8.0',
   version: '4.9.0',
@@ -14,10 +15,12 @@ const globalResult: UpgradeResult = {
 }
 
 const localResult: UpgradeResult = {
-  status: 'dependencies_updated',
+  status: 'success',
+  changed: null,
   scope: 'local',
   directory: '/project',
   previousVersion: '4.8.0',
+  availableVersion: null,
   packages: ['@shopify/cli'],
 }
 
@@ -27,8 +30,8 @@ describe('upgrade result contract', () => {
     localResult,
     {...localResult, availableVersion: '4.9.0'},
     {status: 'skipped', scope: 'global', reason: 'development'},
-    {status: 'skipped', scope: 'local', reason: 'local_autoupgrade'},
-    {status: 'skipped', scope: 'local', reason: 'dependency_not_found'},
+    {status: 'skipped', scope: 'local', reason: 'local-autoupgrade'},
+    {status: 'skipped', scope: 'local', reason: 'dependency-not-found'},
   ])('encodes $status', (result) => {
     presentUpgradeResult(result, 'json')
     expect(JSON.parse(mockAndCaptureOutput().output())).toEqual(result)
@@ -40,6 +43,13 @@ describe('upgrade result contract', () => {
     {...globalResult, scope: 'local'},
     {...localResult, packages: [42]},
     {...localResult, availableVersion: false},
+    {...localResult, availableVersion: undefined},
+    {...localResult, directory: 'relative/project'},
+    {...localResult, changed: false},
+    {...globalResult, internalValue: true},
+    {...globalResult, packageManager: 'unknown'},
+    {...globalResult, version: ''},
+    {...globalResult, changed: undefined},
     {status: 'skipped', scope: 'local', reason: 'unknown'},
   ])('rejects invalid result %j', (result) => {
     expect(() => upgradeJsonOutputSchema.validate(result)).toThrow()

@@ -431,7 +431,8 @@ describe('upgradeCLI result', () => {
     mockAndCaptureOutput().clear()
 
     await expect(upgradeCLI()).resolves.toEqual({
-      status: 'upgraded',
+      status: 'success',
+      changed: false,
       scope: 'global',
       previousVersion: CLI_KIT_VERSION,
       version: CLI_KIT_VERSION,
@@ -453,7 +454,7 @@ describe('upgradeCLI result', () => {
 
     await expect(upgradeCLI({autoupgrade: true})).resolves.toEqual({
       status: 'skipped',
-      reason: 'local_autoupgrade',
+      reason: 'local-autoupgrade',
       scope: 'local',
     })
     expect(addNPMDependencies).not.toHaveBeenCalled()
@@ -477,11 +478,12 @@ describe('upgradeCLI result', () => {
         vi.mocked(usesWorkspaces).mockResolvedValue(false)
 
         await expect(upgradeCLI()).resolves.toEqual({
-          status: 'dependencies_updated',
+          status: 'success',
+          changed: null,
           scope: 'local',
           directory,
           previousVersion: CLI_KIT_VERSION,
-          availableVersion,
+          availableVersion: availableVersion ?? null,
           packages: ['@shopify/cli-kit'],
         })
         expect(addNPMDependencies).toHaveBeenCalledExactlyOnceWith([{name: '@shopify/cli-kit', version: 'latest'}], {
@@ -503,7 +505,7 @@ describe('upgradeCLI result', () => {
       vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
       vi.mocked(getProjectDir).mockReturnValue(directory)
 
-      await expect(upgradeCLI()).resolves.toEqual({status: 'skipped', reason: 'dependency_not_found', scope: 'local'})
+      await expect(upgradeCLI()).resolves.toEqual({status: 'skipped', reason: 'dependency-not-found', scope: 'local'})
       expect(addNPMDependencies).not.toHaveBeenCalled()
     })
   })

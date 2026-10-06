@@ -88,41 +88,45 @@ afterEach(() => {
   process.exitCode = 0
 })
 
-test('writes one global JSON result and package-manager diagnostics as stderr events', async () => {
-  const streams = captureStreams()
-  vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
-  vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
-  vi.mocked(globalCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
-  vi.mocked(exec).mockImplementation(async (_command, _args, options) => {
-    expect(options?.stdin).toBe('inherit')
-    ;(options?.stdout as Writable).write('installed packages\n')
-    ;(options?.stderr as Writable).write('package manager warning\n')
-  })
+test.each([{argv: ['--json']}, {argv: ['--json', '--no-input']}])(
+  'writes one global JSON result and package-manager diagnostics as stderr events for %j',
+  async ({argv}) => {
+    const streams = captureStreams()
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
+    vi.mocked(globalCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
+    vi.mocked(exec).mockImplementation(async (_command, _args, options) => {
+      expect(options?.stdin).toBe('inherit')
+      ;(options?.stdout as Writable).write('installed packages\n')
+      ;(options?.stderr as Writable).write('package manager warning\n')
+    })
 
-  await Upgrade.run(['--json'], import.meta.url)
+    await Upgrade.run(argv, import.meta.url)
 
-  const expected = {
-    status: 'upgraded',
-    scope: 'global',
-    previousVersion: CLI_KIT_VERSION,
-    version: CLI_KIT_VERSION,
-    packageManager: 'npm',
-  }
-  expect(streams.stdout()).toBe(`${JSON.stringify(expected, null, 2)}\n`)
-  expect(upgradeJsonOutputSchema.validate(JSON.parse(streams.stdout()))).toEqual(expected)
-  const events = streams
-    .stderr()
-    .trim()
-    .split('\n')
-    .map((line) => commandEventOutputSchema.validate(JSON.parse(line)))
-  expect(events).toEqual(
-    expect.arrayContaining([
-      expect.objectContaining({type: 'diagnostic', message: 'installed packages\n'}),
-      expect.objectContaining({type: 'diagnostic', message: 'package manager warning\n'}),
-    ]),
-  )
-  expect(streams.stderr()).not.toContain('Shopify CLI upgraded.')
-})
+    const expected = {
+      status: 'success',
+      changed: false,
+      scope: 'global',
+      previousVersion: CLI_KIT_VERSION,
+      version: CLI_KIT_VERSION,
+      packageManager: 'npm',
+    }
+    expect(streams.stdout()).toBe(`${JSON.stringify(expected, null, 2)}\n`)
+    expect(upgradeJsonOutputSchema.validate(JSON.parse(streams.stdout()))).toEqual(expected)
+    const events = streams
+      .stderr()
+      .trim()
+      .split('\n')
+      .map((line) => commandEventOutputSchema.validate(JSON.parse(line)))
+    expect(events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({type: 'diagnostic', message: 'installed packages\n'}),
+        expect.objectContaining({type: 'diagnostic', message: 'package manager warning\n'}),
+      ]),
+    )
+    expect(streams.stderr()).not.toContain('Shopify CLI upgraded.')
+  },
+)
 
 test('writes one local JSON result and routes dependency installation output through events', async () => {
   await inTemporaryDirectory(async (directory) => {
@@ -143,7 +147,8 @@ test('writes one local JSON result and routes dependency installation output thr
     await Upgrade.run(['--json'], import.meta.url)
 
     expect(JSON.parse(streams.stdout())).toEqual({
-      status: 'dependencies_updated',
+      status: 'success',
+      changed: null,
       scope: 'local',
       directory,
       previousVersion: '4.0.0',

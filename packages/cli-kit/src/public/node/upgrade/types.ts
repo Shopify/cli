@@ -1,29 +1,42 @@
 import {defineJsonOutputSchema, type InferJsonOutputSchema} from '../json-output-schema.js'
+import {isAbsolutePath} from '../path.js'
 import {zod} from '../schema.js'
 
 export const upgradeJsonOutputSchema = defineJsonOutputSchema({
   name: 'UpgradeResult',
-  schema: zod.discriminatedUnion('status', [
-    zod.object({
-      status: zod.literal('upgraded'),
-      scope: zod.literal('global'),
-      previousVersion: zod.string(),
-      version: zod.string(),
-      packageManager: zod.string(),
-    }),
-    zod.object({
-      status: zod.literal('dependencies_updated'),
-      scope: zod.literal('local'),
-      directory: zod.string(),
-      previousVersion: zod.string(),
-      availableVersion: zod.string().optional(),
-      packages: zod.array(zod.string()),
-    }),
-    zod.object({
-      status: zod.literal('skipped'),
-      reason: zod.enum(['development', 'local_autoupgrade', 'dependency_not_found']),
-      scope: zod.enum(['global', 'local']),
-    }),
+  schema: zod.union([
+    zod
+      .object({
+        status: zod.literal('success'),
+        changed: zod.boolean().describe('Whether the verified installed version differs from previousVersion.'),
+        scope: zod.literal('global'),
+        previousVersion: zod.string().min(1),
+        version: zod.string().min(1),
+        packageManager: zod.enum(['npm', 'pnpm', 'yarn', 'bun', 'homebrew']),
+      })
+      .strict(),
+    zod
+      .object({
+        status: zod.literal('success'),
+        changed: zod.null().describe('Null because local dependency changes and installed versions are not verified.'),
+        scope: zod.literal('local'),
+        directory: zod.string().refine(isAbsolutePath, 'Must be an absolute filesystem path.'),
+        previousVersion: zod.string().min(1),
+        availableVersion: zod
+          .string()
+          .min(1)
+          .nullable()
+          .describe('The available registry version, or null when unknown.'),
+        packages: zod.array(zod.string().min(1)),
+      })
+      .strict(),
+    zod
+      .object({
+        status: zod.literal('skipped'),
+        reason: zod.enum(['development', 'local-autoupgrade', 'dependency-not-found']),
+        scope: zod.enum(['global', 'local']),
+      })
+      .strict(),
   ]),
 })
 

@@ -17,7 +17,8 @@ describe('upgrade command', () => {
 
   test('encodes the result when JSON is requested', async () => {
     const result = {
-      status: 'upgraded',
+      status: 'success',
+      changed: true,
       scope: 'global',
       previousVersion: '4.8.0',
       version: '4.9.0',

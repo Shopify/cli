@@ -94,13 +94,14 @@ export async function upgradeCLI(options: RunCLIUpgradeOptions = {}): Promise<Up
   // and produce noisy diffs; explicit `shopify upgrade` invocations still upgrade the
   // local project.
   if (options.autoupgrade && !isGlobal) {
-    return {status: 'skipped', reason: 'local_autoupgrade', scope: 'local'}
+    return {status: 'skipped', reason: 'local-autoupgrade', scope: 'local'}
   }
 
   // Generate the install command for the global CLI and execute it
   if (isGlobal) {
+    const packageManager = inferPackageManagerForGlobalCLI()
     const installCommand = cliInstallCommand()
-    if (!installCommand) {
+    if (!installCommand || packageManager === 'unknown') {
       throw new Error('Could not determine the package manager')
     }
     const [command, ...args] = installCommand.split(' ')
@@ -139,11 +140,12 @@ export async function upgradeCLI(options: RunCLIUpgradeOptions = {}): Promise<Up
       )
     }
     return {
-      status: 'upgraded',
+      status: 'success',
+      changed: installedVersion !== CLI_KIT_VERSION,
       scope: 'global',
       previousVersion: CLI_KIT_VERSION,
       version: installedVersion,
-      packageManager: command === 'brew' ? 'homebrew' : command,
+      packageManager,
     }
   } else if (projectDir) {
     return upgradeLocalShopify(projectDir, CLI_KIT_VERSION)
@@ -262,7 +264,7 @@ async function upgradeLocalShopify(projectDir: string, currentVersion: string): 
   let resolvedCLIVersion = allDependencies[await cliDependency()]
   if (!resolvedCLIVersion) {
     outputDebug('Auto-upgrade: CLI dependency not found in project dependencies, skipping local upgrade.')
-    return {status: 'skipped', reason: 'dependency_not_found', scope: 'local'}
+    return {status: 'skipped', reason: 'dependency-not-found', scope: 'local'}
   }
 
   if (resolvedCLIVersion.slice(0, 1).match(/[\^~]/)) resolvedCLIVersion = currentVersion
@@ -278,11 +280,12 @@ async function upgradeLocalShopify(projectDir: string, currentVersion: string): 
   const devDependencies = await installJsonDependencies('dev', packageJsonDevDependencies, projectDir)
   // Local installs are not verified, so the registry version is not an installed-version claim.
   return {
-    status: 'dependencies_updated',
+    status: 'success',
+    changed: null,
     scope: 'local',
     directory: projectDir,
     previousVersion: resolvedCLIVersion,
-    availableVersion: newestCLIVersion,
+    availableVersion: newestCLIVersion ?? null,
     packages: [...new Set([...dependencies, ...devDependencies])],
   }
 }

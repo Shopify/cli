@@ -11,7 +11,7 @@ import {renderSuccess} from '../ui.js'
 export function presentUpgradeResult(result: UpgradeResult, format: 'json' | 'text'): void {
   if (format === 'json') {
     outputResult(upgradeJsonOutputSchema.encode(result))
-  } else if (result.status === 'upgraded') {
+  } else if (result.status === 'success' && result.scope === 'global') {
     renderSuccess({
       headline: 'Shopify CLI upgraded.',
       body: `You're now on version ${result.version}.`,
