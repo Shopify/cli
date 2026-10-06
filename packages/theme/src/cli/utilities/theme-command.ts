@@ -149,7 +149,7 @@ export default abstract class ThemeCommand extends Command {
     if (commandAllowsForceFlag && !flags.force) {
       const confirmed = await this.showConfirmation(
         (this.id ?? 'theme').replaceAll(':', ' '),
-        requiredFlags,
+        requiredFlags ?? [],
         validationResults,
       )
       if (!confirmed) {
@@ -178,7 +178,8 @@ export default abstract class ThemeCommand extends Command {
   }
 
   protected collectsEnvironmentResults(flags: FlagValues): boolean {
-    return Boolean(flags.json && 'jsonOutputSchema' in this.constructor)
+    const command = this.constructor as unknown as {jsonOutputSchema?: unknown}
+    return Boolean(flags.json && command.jsonOutputSchema)
   }
 
   protected renderEnvironmentResults(environments: ThemeEnvironmentResult[]): void {
