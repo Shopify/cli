@@ -179,13 +179,14 @@ async function logMetadata(app: {apiKey: string}, organization: Organization, re
 interface LocalAppContextOutput {
   app: AppInterface
   project: Project
+  activeConfig: ActiveConfig
 }
 
 /**
  * This function loads an app locally without making any network calls.
  * It uses local specifications and doesn't require the app to be linked.
  *
- * @returns The local app and project instances.
+ * @returns The local app and project instances, and the selected app configuration.
  */
 export async function localAppContext({
   directory,
@@ -205,5 +206,5 @@ export async function localAppContext({
     throw new AbortError(styledConfigurationError(app.errors.getErrors()[0]!))
   }
 
-  return {app, project}
+  return {app, project, activeConfig}
 }

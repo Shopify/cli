@@ -387,7 +387,8 @@ function groupSourcePathsByExtensionDirectory(
  * `extension_directories`. The app security check still scans every `shopify.extension.toml`
  * inside the repository boundary, including unconfigured extensions, because
  * those files can still contain secrets, XSS, and other security evidence.
- * Extensions in a nested app or an `--include-dir` directory count as this app's.
+ * Extensions in a nested app, an `--include-dir` directory, or a directory that the selected app configuration
+ * file's `extension_directories` or `web_directories` add count as this app's.
  */
 export function findExtensions(appRoot: string, repositoryFiles: ReadonlyArray<string>): ExtensionInfo[] {
   const extensionTomls = repositoryFiles.filter((path) => basename(path) === 'shopify.extension.toml')

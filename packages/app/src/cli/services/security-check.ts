@@ -236,12 +236,20 @@ export default async function securityCheck(
       body: [{command: formatAppSecurityCommand(commands.scan)}],
     })
   }
-  const {scanDirectories, requestedScanDirectories} = mergeScanDirectories(appDirectory, includeDirectories)
+  const appConfigDirectories = selection.kind === 'config' ? (selection.appConfigDirectories ?? []) : []
+  const {scanDirectories, requestedScanDirectories} = mergeScanDirectories(
+    appDirectory,
+    includeDirectories,
+    appConfigDirectories,
+  )
 
   const scanOptions = {
     appDirectory,
     scanDirectories: scanDirectories.map(({directory}) => directory),
     requestedScanDirectories,
+    appConfigDirectories: scanDirectories
+      .filter(({origin}) => origin === 'app_config_directory')
+      .map(({directory}) => directory),
     appConfigFilePath: selection.kind === 'config' ? selection.appConfigFilePath : undefined,
     clientId: effectiveClientId(selection),
     includeDirs: options.includeDirs,

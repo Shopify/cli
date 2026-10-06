@@ -82,6 +82,8 @@ export interface ScanInput {
   requestedScanDirectories: ReadonlyArray<string>
   /** Absolute path of the selected app configuration file. Absent when scanning without app configuration. */
   appConfigFilePath?: string
+  /** The scan directories that the selected app configuration file's `extension_directories` and `web_directories` add. */
+  appConfigDirectories?: ReadonlyArray<string>
   clientId?: string
 }
 
@@ -95,7 +97,7 @@ export interface AppSecurityScope {
 /** A scan directory as recorded in coverage: relative to the app directory, `.` for the app directory itself. */
 export interface CoverageScanDirectory {
   directory: string
-  origin: 'app_directory' | 'include_dir'
+  origin: 'app_directory' | 'include_dir' | 'app_config_directory'
 }
 
 export interface ScanOptions {
