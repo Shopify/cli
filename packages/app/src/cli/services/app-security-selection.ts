@@ -228,13 +228,13 @@ async function resolveWithoutAppConfigurationFile(
 
 /**
  * Only the `--client-id` value is looked up: the TOML's own `client_id` is never validated, and the picker's
- * client ID already comes from the API.
+ * client ID already comes from the API. An empty value is looked up too, because it was passed.
  */
 async function lookUpClientIdFlag(
   options: AppSecuritySelectionOptions,
   dependencies: AppSecuritySelectionDependencies,
 ): Promise<void> {
-  if (options.validateClientIdFlag && options.clientId) await dependencies.lookUpApp(options.clientId)
+  if (options.validateClientIdFlag && options.clientId !== undefined) await dependencies.lookUpApp(options.clientId)
 }
 
 /**
