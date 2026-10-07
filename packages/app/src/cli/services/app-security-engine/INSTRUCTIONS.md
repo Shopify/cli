@@ -44,7 +44,10 @@ For each check:
 5. Keep the check `id` and `version` exactly as they appear in {{AGENT_CHECKS_PATH}}.
 6. Include concise evidence citations. Never include a detected secret value or unnecessary personal data.
 
-A check with no verified issue must not produce a fabricated finding. If you cannot establish exploitability or affected authority, record the check as `unresolved` with a reason instead.
+A check with no verified issue must not produce a fabricated finding. Choose the status from what you were able to investigate, not from whether you can prove a negative:
+
+- `executed`: you traced the paths the check directs you to and found no concrete issue. This includes code that follows the safe pattern the check or its `docs_url` describes. A candidate is ruled out when the code establishes the boundary the check asks about, even if you can't rule out hypothetical policies or requirements that the repository doesn't define.
+- `unresolved`: you couldn't complete the investigation, for example because required code was unreadable, out of scope, or outside the repository and you couldn't inspect it, or you found a specific candidate whose boundary you could neither establish nor show to be missing. Name the candidate's file and line, or the missing input, in the reason.
 
 ### 4. Write one findings document
 
