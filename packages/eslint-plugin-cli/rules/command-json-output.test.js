@@ -32,14 +32,12 @@ ruleTester.run('command-json-output', rule, {
       `,
     },
     {
-      name: 'finite operation command',
+      name: 'finite operation command with a static schema field',
       filename: '/repo/packages/app/src/cli/commands/app/widgets/delete.ts',
       code: `
         export default class WidgetDelete extends Command {
           static flags = {...globalFlags, ...jsonFlag}
-          static get jsonOutputSchema() {
-            return widgetDeleteJsonOutputSchema
-          }
+          static jsonOutputSchema = widgetDeleteJsonOutputSchema
         }
       `,
     },

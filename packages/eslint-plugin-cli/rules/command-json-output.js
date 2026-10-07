@@ -62,7 +62,8 @@ function repositoryPath(filename) {
 function hasJsonOutputSchema(classMembers) {
   return classMembers.some(
     (member) =>
-      member.type === 'MethodDefinition' && member.kind === 'get' && isStaticMemberNamed(member, 'jsonOutputSchema'),
+      isStaticMemberNamed(member, 'jsonOutputSchema') &&
+      (member.type === 'PropertyDefinition' || (member.type === 'MethodDefinition' && member.kind === 'get')),
   )
 }
 
