@@ -225,7 +225,7 @@ test('returns successful empty results without asserting completeness', async ()
 
 test('renders limit warnings and escapes terminal controls in log data', async () => {
   const result = await retrieveLogs(scope)
-  result.logs[0]!.store = 'example\n\u001b[31munsafe\u202ename'
+  result.logs[0]!.storeDomain = 'example\n\u001b[31munsafe\u202ename'
   result.pageInfo.limitReached = true
   renderHistoricalLogs(result, false)
   const output = mockAndCaptureOutput().output()

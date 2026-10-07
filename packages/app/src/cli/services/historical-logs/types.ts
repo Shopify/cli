@@ -4,7 +4,7 @@ import {zod} from '@shopify/cli-kit/node/schema'
 const timestamp = zod
   .string()
   .datetime({offset: true})
-  .describe('Producer/service RFC 3339 timestamp; fractional seconds are preserved.')
+  .describe('RFC 3339 log timestamp or exact query bound; offsets and up to nine fractional digits are preserved.')
 export const webhookSchema = zod
   .object({
     topic: zod.string().nullable(),
@@ -28,7 +28,7 @@ const event = zod
     gid: zod.string().startsWith('gid://shopify/AppLogRecord/'),
     timestamp,
     type: zod.string(),
-    store: zod.string().nullable(),
+    storeDomain: zod.string().nullable(),
     outcome: zod.enum(['success', 'failure']).nullable(),
     webhook: webhookSchema.nullable(),
     function: functionSchema.nullable(),

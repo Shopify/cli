@@ -96,7 +96,7 @@ export async function retrieveLogs(options: LogScopeOptions & LogInput) {
         gid: event.id,
         timestamp: event.timestamp,
         type,
-        store: event.shopDomain,
+        storeDomain: event.shopDomain,
         outcome: status ? (outcomes[status] ?? null) : null,
         webhook: event.webhookDelivery,
         function: event.functionRun,

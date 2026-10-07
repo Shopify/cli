@@ -16,7 +16,7 @@ export function renderHistoricalLogs(result: LogsResult, json: boolean): void {
         event.timestamp,
         event.type,
         event.outcome ?? 'unknown',
-        event.store ?? 'unknown',
+        event.storeDomain ?? 'unknown',
         event.webhook?.topic ?? event.function?.functionHandle ?? event.gid,
       ]
         .map(terminalValue)
