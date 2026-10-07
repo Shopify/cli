@@ -175,6 +175,13 @@ describe('agent checks', () => {
     expect(frameAncestors.prompt).toContain('built from variables')
   })
 
+  test('METAFIELD_OFFLINE_TOKEN catalog text flags unverified writes, not offline tokens from authenticate.admin', () => {
+    const entry = RULE_CATALOG.find((candidate) => candidate.id === 'METAFIELD_OFFLINE_TOKEN')!
+    expect(entry.description).toContain('no verified request for the same shop authorizes')
+    expect(entry.description).not.toContain('offline-token contexts')
+    expect(entry.fix).toContain('authenticate.admin(request)')
+  })
+
   test('review prompts cover tenant provenance, authorization drift, proxy nuance, and data sensitivity', () => {
     const checks = loadChecks()
     expect(checks.get('REQUEST_DERIVED_SHOP_SCOPE')!.prompt).toContain('cache keys')
