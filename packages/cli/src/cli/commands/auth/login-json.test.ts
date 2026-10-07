@@ -1,4 +1,5 @@
 import Login from './login.js'
+import {authLoginJsonOutputSchema} from '../../services/commands/auth/login/types.js'
 import {promptSessionSelect} from '@shopify/cli-kit/node/session-prompt'
 import * as system from '@shopify/cli-kit/node/system'
 import {launchCLI} from '@shopify/cli-kit/node/cli-launcher'
@@ -115,6 +116,7 @@ test.each([false, true])('requires an alias before authentication when input is 
 })
 
 test('exposes the result schema and keeps the alias requirement in help', () => {
+  expect(Login.jsonOutputSchema).toBe(authLoginJsonOutputSchema)
   expect(Login.description).toContain('Output from `--json` conforms to the `AuthLoginResult` schema.')
   expect(Login.flags.alias).toMatchObject({requiredIfNonInteractive: true})
 })
