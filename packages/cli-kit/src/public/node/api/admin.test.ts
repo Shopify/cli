@@ -310,4 +310,22 @@ describe('fetchApiVersions error classification', () => {
     expect(unauthorized).toBeInstanceOf(AbortError)
     expect((unauthorized as AbortError).message).toContain('Error connecting to your store')
   })
+
+  test('explains a rejected Theme Access password, including how to find the permanent domain', async () => {
+    // Given
+    const themeAccessSession: AdminSession = {token: 'shptka_password', storeFqdn: 'alias.myshopify.com'}
+    vi.mocked(graphqlRequestDoc).mockRejectedValue(clientError(401, 'Unauthorized'))
+
+    // When
+    const error = await admin.fetchApiVersions(themeAccessSession).catch((err: unknown) => err)
+
+    // Then
+    expect(error).toBeInstanceOf(AbortError)
+    expect(shouldReportErrorAsUnexpected(error)).toBe(false)
+    expect((error as AbortError).message).toBe(
+      'The Theme Access password was rejected for the store alias.myshopify.com.',
+    )
+    expect(String((error as AbortError).tryMessage)).toContain('permanent .myshopify.com domain')
+    expect(JSON.stringify((error as AbortError).nextSteps)).toContain('https://alias.myshopify.com/meta.json')
+  })
 })

@@ -29,6 +29,7 @@ import {
   exchangeAppAutomationTokenForAppManagementAccessToken,
   exchangeAppAutomationTokenForBusinessPlatformAccessToken,
 } from '../../private/node/session/exchange.js'
+import {resolvePermanentStoreFqdn} from '../../private/node/session/permanent-store-domain.js'
 
 import {vi, describe, expect, test} from 'vitest'
 
@@ -44,6 +45,7 @@ vi.mock('../../private/node/session.js')
 vi.mock('../../private/node/session/exchange.js')
 vi.mock('../../private/node/session/store.js')
 vi.mock('../../private/node/session/automation-token.js')
+vi.mock('../../private/node/session/permanent-store-domain.js')
 vi.mock('./environment.js')
 vi.mock('./http.js')
 
@@ -284,9 +286,13 @@ describe('ensureAuthenticatedTheme', () => {
     expect(got).toEqual({token: 'password', storeFqdn: 'mystore.myshopify.com'})
     expect(setLastSeenAuthMethod).toBeCalledWith('custom_app_token')
     expect(setLastSeenUserIdAfterAuth).toBeCalledWith(nonRandomUUID('password'))
+    expect(resolvePermanentStoreFqdn).not.toHaveBeenCalled()
   })
 
   test('returns the password when is provided and theme_access_token', async () => {
+    // Given
+    vi.mocked(resolvePermanentStoreFqdn).mockImplementation(async (store) => store)
+
     // When
     const got = await ensureAuthenticatedThemes('mystore.myshopify.com', 'shptka_password')
 
@@ -294,6 +300,18 @@ describe('ensureAuthenticatedTheme', () => {
     expect(got).toEqual({token: 'shptka_password', storeFqdn: 'mystore.myshopify.com'})
     expect(setLastSeenAuthMethod).toBeCalledWith('theme_access_token')
     expect(setLastSeenUserIdAfterAuth).toBeCalledWith(nonRandomUUID('shptka_password'))
+  })
+
+  test("uses the store's permanent domain with a theme_access_token", async () => {
+    // Given
+    vi.mocked(resolvePermanentStoreFqdn).mockResolvedValueOnce('abc123-xy.myshopify.com')
+
+    // When
+    const got = await ensureAuthenticatedThemes('renamed-store.myshopify.com', 'shptka_password')
+
+    // Then
+    expect(resolvePermanentStoreFqdn).toHaveBeenCalledWith('renamed-store.myshopify.com')
+    expect(got).toEqual({token: 'shptka_password', storeFqdn: 'abc123-xy.myshopify.com'})
   })
 })
 
