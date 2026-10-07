@@ -153,6 +153,8 @@ when you want to display it to the terminal, for example in your exception handl
 
 Prompts interrupt the flow of commands to ask the user for some information. There are two main types of prompts: selects and textual prompts. They all take a `message` property which will be displayed as the title of the prompt to the user and is usually in the form of a question. If you forget to use punctuation at the end of `message` we'll add `?` for you.
 
+Prompts read input from stdin and write to stderr by default, so stdout can contain command results. To use a different output stream, pass it as `renderOptions.stdout`.
+
 For select prompts, if the terminal is not tall enough to render all the options the prompt will resize to fit the terminal window and a message will appear warning the user that only a fraction of the items is being displayed. The user can then cycle through the items, including the hidden ones, by using the arrow keys.
 
 #### `renderSelectPrompt`

@@ -342,15 +342,15 @@ export function terminalSupportsHyperlinks(): boolean {
 }
 
 /**
- * Check if the standard input and output streams support prompting.
+ * Check if standard input and at least one output stream are terminals that support prompting.
  *
- * @returns True if the standard input and output streams support prompting.
+ * @returns True if standard input and at least one output stream support prompting.
  */
 export function terminalSupportsPrompting(): boolean {
   if (isInputDisabled() || isTruthy(process.env.CI)) {
     return false
   }
-  return Boolean(process.stdin.isTTY && process.stdout.isTTY)
+  return Boolean(process.stdin.isTTY && (process.stderr.isTTY || process.stdout.isTTY))
 }
 
 /**

@@ -1,11 +1,43 @@
 import {PromptLayout} from './PromptLayout.js'
 import {PromptState} from '../../hooks/use-prompt.js'
 import {render} from '../../../testing/ui.js'
-import {describe, expect, test} from 'vitest'
+import {Stdout} from '../../../ui.js'
+import {SelectInput} from '../SelectInput.js'
+import {describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {Box, Text} from 'ink'
 
 describe('PromptLayout', async () => {
+  test('renders choices when the output stream has no terminal row count', async () => {
+    const stdout = new Stdout({columns: 80})
+    Reflect.deleteProperty(stdout, 'rows')
+    const renderInstance = render(
+      <PromptLayout
+        message="Which option?"
+        state={PromptState.Idle}
+        input={
+          <SelectInput
+            items={[
+              {label: 'First option', value: 'first'},
+              {label: 'Second option', value: 'second'},
+            ]}
+            onSubmit={() => {}}
+          />
+        }
+      />,
+      {stdout},
+    )
+
+    try {
+      await vi.waitFor(() => expect(stdout.lastFrame()).toContain('Second option'))
+      stdout.emit('resize')
+      await vi.waitFor(() => expect(stdout.lastFrame()).toContain('First option'))
+    } finally {
+      renderInstance.unmount()
+      renderInstance.cleanup()
+    }
+  })
+
   test("doesn't add unnecessary margins when infoTable is an empty array", async () => {
     const items = [
       {label: 'first', value: 'first'},

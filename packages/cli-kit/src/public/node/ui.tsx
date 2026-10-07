@@ -292,6 +292,7 @@ export async function renderSelectPrompt<T>(
         }}
       />,
       {
+        stdout: process.stderr as unknown as NodeJS.WriteStream,
         ...renderOptions,
         exitOnCtrlC: false,
       },
@@ -444,6 +445,7 @@ export async function renderAutocompletePrompt<T>(
         }}
       />,
       {
+        stdout: process.stderr as unknown as NodeJS.WriteStream,
         ...renderOptions,
         exitOnCtrlC: false,
       },
@@ -662,6 +664,7 @@ export async function renderTextPrompt(
         }}
       />,
       {
+        stdout: process.stderr as unknown as NodeJS.WriteStream,
         ...renderOptions,
         exitOnCtrlC: false,
       },
@@ -714,6 +717,7 @@ export async function renderDangerousConfirmationPrompt(
         }}
       />,
       {
+        stdout: process.stderr as unknown as NodeJS.WriteStream,
         ...renderOptions,
         exitOnCtrlC: false,
       },
