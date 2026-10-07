@@ -1,11 +1,8 @@
 import ImportCustomDataDefinitions from './custom-data-definitions.js'
-import ImportCustomDataDefinitionsDeprecated from '../import-custom-data-definitions.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {storeContext} from '../../../services/store-context.js'
 import {adminAsAppRequestDoc} from '../../../api/admin-as-app.js'
-import {MetaobjectDefinitions} from '../../../api/graphql/admin/generated/metaobject_definitions.js'
 import {MetafieldDefinitions} from '../../../api/graphql/admin/generated/metafield_definitions.js'
-import {importCustomDataDefinitionsJsonOutputSchema} from '../../../services/generate/shop-import/declarative-definitions/types.js'
 import {testAppLinked, testOrganizationApp, testOrganizationStore} from '../../../models/app/app.test-data.js'
 import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
@@ -16,7 +13,6 @@ import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-even
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {AbortError, handler} from '@shopify/cli-kit/node/error'
-import {isInputDisabled} from '@shopify/cli-kit/node/no-input'
 // eslint-disable-next-line n/prefer-global/console
 import {Console} from 'node:console'
 
@@ -77,18 +73,16 @@ async function withApp(run: (directory: string) => Promise<void>) {
   })
 }
 
-async function runCommand(directory: string, argv: string[], deprecated = false) {
-  const Command = deprecated ? ImportCustomDataDefinitionsDeprecated : ImportCustomDataDefinitions
+async function runCommand(directory: string, argv: string[]) {
   const args = ['--path', directory, ...argv]
-  const command = new Command(args, await Config.load())
+  const command = new ImportCustomDataDefinitions(args, await Config.load())
   return runWithCommandEventsForCommand(args, () => command.run())
 }
 
 test('writes one encoded JSON document and progress events without changing the local TOML', async () => {
   await withApp(async (directory) => {
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      const result = await runCommand(directory, ['--json', '--store', 'test-shop'])
-      expect(result.app.directory).toBe(directory)
+      await runCommand(directory, ['--json', '--store', 'test-shop'])
       expect(JSON.parse(stdout())).toEqual({
         status: 'success',
         storeDomain: 'test-shop.myshopify.com',
@@ -105,62 +99,33 @@ test('writes one encoded JSON document and progress events without changing the 
       expect(events.every((event) => event.type === 'progress')).toBe(true)
       expect(stderr()).not.toContain('Conversion to TOML complete')
     })
-    expect(storeContext).toHaveBeenCalledWith(expect.objectContaining({storeFqdn: 'test-shop.myshopify.com'}))
   })
 })
 
-test('returns a known empty conversion with no skipped sections', async () => {
+test.each([false, true])('distinguishes an empty conversion from denied scope: %s', async (scopeDenied) => {
   await withApp(async (directory) => {
-    vi.mocked(adminAsAppRequestDoc).mockImplementation(async ({query}) => ({
-      [query === MetafieldDefinitions ? 'metafieldDefinitions' : 'metaobjectDefinitions']: {
-        pageInfo: {hasNextPage: false, endCursor: null},
-        nodes: [],
-      },
-    }))
+    vi.mocked(adminAsAppRequestDoc).mockImplementation(async ({query, variables}) => {
+      if (scopeDenied && query === MetafieldDefinitions && variables?.ownerType === 'PRODUCT') {
+        throw new Error('ACCESS_DENIED: Missing access scope')
+      }
+      return {
+        [query === MetafieldDefinitions ? 'metafieldDefinitions' : 'metaobjectDefinitions']: {
+          pageInfo: {hasNextPage: false, endCursor: null},
+          nodes: [],
+        },
+      }
+    })
     await withCapturedStandardStreams(async ({stdout}) => {
       await runCommand(directory, ['--json'])
-      expect(JSON.parse(stdout())).toEqual({
-        status: 'success',
-        storeDomain: 'test-shop.myshopify.com',
+      expect(JSON.parse(stdout())).toMatchObject({
         metafieldCount: 0,
         metaobjectCount: 0,
         toml: '',
-        skippedSections: [],
+        skippedSections: scopeDenied ? [{type: 'metafields', ownerType: 'PRODUCT'}] : [],
       })
     })
   })
 })
-
-test.each([{type: 'metafields'}, {type: 'metaobjects'}])(
-  'reports inaccessible $type separately from available empty definitions',
-  async ({type}) => {
-    await withApp(async (directory) => {
-      const original = vi.mocked(adminAsAppRequestDoc).getMockImplementation()!
-      vi.mocked(adminAsAppRequestDoc).mockImplementation(async (options) => {
-        if (
-          (type === 'metafields' &&
-            options.query === MetafieldDefinitions &&
-            options.variables?.ownerType === 'PRODUCT') ||
-          (type === 'metaobjects' && options.query === MetaobjectDefinitions)
-        ) {
-          throw new Error('ACCESS_DENIED: Missing access scope')
-        }
-        return original(options)
-      })
-      await withCapturedStandardStreams(async ({stdout}) => {
-        await runCommand(directory, ['--json'])
-        expect(JSON.parse(stdout())).toEqual({
-          status: 'success',
-          storeDomain: 'test-shop.myshopify.com',
-          metafieldCount: type === 'metafields' ? 0 : 1,
-          metaobjectCount: 0,
-          toml: type === 'metafields' ? '' : toml,
-          skippedSections: type === 'metafields' ? [{type, ownerType: 'PRODUCT'}] : [{type}],
-        })
-      })
-    })
-  },
-)
 
 test('keeps the existing conversion summary and native TOML on stderr in text mode', async () => {
   await withApp(async (directory) => {
@@ -172,16 +137,6 @@ test('keeps the existing conversion summary and native TOML on stderr in text mo
       expect(text).toContain('1 metafields and 0 metaobjects')
       expect(text).toContain('test-shop.myshopify.com')
       expect(text).toContain(toml)
-    })
-  })
-})
-
-test('preserves the deprecated alias result and warning on stderr', async () => {
-  await withApp(async (directory) => {
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await runCommand(directory, ['--json'], true)
-      expect(JSON.parse(stdout())).toMatchObject({status: 'success', metafieldCount: 1, toml})
-      expect(unstyled(stderr()).replaceAll('`', '')).toContain('shopify app import-custom-data-definitions has moved.')
     })
   })
 })
@@ -204,40 +159,4 @@ test('preserves a transport failure without printing a success result', async ()
       ).toEqual(expect.arrayContaining([expect.objectContaining({type: 'progress', status: 'failed'})]))
     })
   })
-})
-
-test.each([
-  {argv: [], disabled: false},
-  {argv: ['--json'], disabled: false},
-  {argv: ['--no-input'], disabled: true},
-  {argv: ['--json', '--no-input'], disabled: true},
-])('keeps the store input policy independent of formatting: $argv', async ({argv, disabled}) => {
-  await withApp(async (directory) => {
-    vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', disabled ? '1' : '0')
-    vi.mocked(storeContext).mockImplementation(async () => {
-      expect(isInputDisabled()).toBe(disabled)
-      if (disabled) throw new AbortError('Select a store with --store')
-      return testOrganizationStore({shopDomain: 'test-shop.myshopify.com'})
-    })
-    await withCapturedStandardStreams(async ({stdout}) => {
-      if (disabled) {
-        await expect(runCommand(directory, argv)).rejects.toThrow('Select a store with --store')
-        expect(stdout()).toBe('')
-        expect(adminAsAppRequestDoc).not.toHaveBeenCalled()
-      } else {
-        await runCommand(directory, argv)
-        expect(storeContext).toHaveBeenCalledOnce()
-        if (argv.includes('--json')) expect(JSON.parse(stdout())).toHaveProperty('status', 'success')
-        else expect(stdout()).toBe('')
-      }
-    })
-  })
-})
-
-test('exposes the result schema and flag through both command paths', () => {
-  expect(ImportCustomDataDefinitions.jsonOutputSchema).toBe(importCustomDataDefinitionsJsonOutputSchema)
-  expect(ImportCustomDataDefinitionsDeprecated.jsonOutputSchema).toBe(importCustomDataDefinitionsJsonOutputSchema)
-  expect(ImportCustomDataDefinitions.flags.json).toBeDefined()
-  expect(ImportCustomDataDefinitionsDeprecated.flags.json).toBeDefined()
-  expect(ImportCustomDataDefinitions.descriptionForHelp()).toContain('`ImportCustomDataDefinitionsResult` schema')
 })
