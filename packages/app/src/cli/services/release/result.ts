@@ -17,6 +17,7 @@ export function renderAppReleaseResult(
       throw error
     }
     outputResult(appReleaseJsonOutputSchema.encode(appReleaseResult(result, remoteApp)))
+    if (result.status === 'cancelled') throw Object.assign(new AbortSilentError(), {oclif: {exit: 0}})
     return
   }
 

@@ -77,7 +77,7 @@ describe('app release command', () => {
     vi.mocked(release).mockResolvedValue({status: 'cancelled'})
     await inTemporaryDirectory(async (tmp) => {
       await withCapturedStandardStreams(async ({stdout, stderr}) => {
-        await runRelease(['--path', tmp, '--version', 'v1', '--json', '--allow-updates'])
+        await expect(runRelease(['--path', tmp, '--version', 'v1', '--json', '--allow-updates'])).rejects.toThrow()
         expect(JSON.parse(stdout())).toEqual({status: 'cancelled'})
         expect(stderr()).toBe('')
       })
@@ -121,6 +121,56 @@ describe('app release command', () => {
       })
     })
   })
+
+  test.each(['success', 'cancelled'] as const)(
+    'runs success hooks only for a completed command: %s',
+    async (status) => {
+      class ControlledRelease extends Release {
+        async catch(error: Error): Promise<never> {
+          throw error
+        }
+
+        protected async init(): Promise<void> {}
+      }
+
+      vi.mocked(release).mockResolvedValue(
+        status === 'cancelled' ? {status: 'cancelled'} : {status: 'success', version},
+      )
+      await inTemporaryDirectory(async (directory) => {
+        const config = await Config.load({root: joinPath(dirname(fileURLToPath(import.meta.url)), '../../../..')})
+        const runHook = vi.spyOn(config, 'runHook').mockResolvedValue({successes: [], failures: []})
+        const cachedCommand = {
+          id: 'app:release',
+          aliases: [],
+          hiddenAliases: [],
+          hidden: false,
+          args: {},
+          flags: {},
+          load: async () => ControlledRelease,
+        }
+        try {
+          await withCapturedStandardStreams(async ({stdout, stderr}) => {
+            const execution = config.runCommand(
+              'app:release',
+              ['--path', directory, '--version', 'v1', '--json', '--allow-updates'],
+              cachedCommand,
+            )
+            if (status === 'cancelled') {
+              await expect(execution).rejects.toMatchObject({oclif: {exit: 0}})
+              expect(runHook).not.toHaveBeenCalledWith('postrun', expect.anything())
+            } else {
+              await execution
+              expect(runHook).toHaveBeenCalledWith('postrun', expect.anything())
+            }
+            expect(JSON.parse(stdout())).toMatchObject({status})
+            expect(stderr()).toBe('')
+          })
+        } finally {
+          runHook.mockRestore()
+        }
+      })
+    },
+  )
 
   test('retains silent cancellation in text mode', async () => {
     vi.mocked(release).mockResolvedValue({status: 'cancelled'})

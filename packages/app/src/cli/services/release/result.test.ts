@@ -4,7 +4,9 @@ import {testOrganizationApp} from '../../models/app/app.test-data.js'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
-import {expect, test} from 'vitest'
+import {errorHandler} from '@shopify/cli-kit/node/error-handler'
+import {Errors} from '@oclif/core'
+import {expect, test, vi} from 'vitest'
 import type {ReleaseResult} from './types.js'
 
 const version = {
@@ -87,7 +89,9 @@ test('JSON failure throws an abort with native user errors and no result', async
 
 test('declined confirmation is a JSON result and retains silent text cancellation', async () => {
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
-    renderAppReleaseResult({status: 'cancelled'}, testOrganizationApp(), 'json')
+    expect(() => renderAppReleaseResult({status: 'cancelled'}, testOrganizationApp(), 'json')).toThrow(
+      expect.objectContaining({oclif: {exit: 0}}),
+    )
     expect(JSON.parse(stdout())).toEqual({status: 'cancelled'})
     expect(() => renderAppReleaseResult({status: 'cancelled'}, testOrganizationApp(), 'text')).toThrow(AbortSilentError)
     expect(stderr()).toBe('')
@@ -109,4 +113,28 @@ test('does not turn unrelated failures into cancellation', () => {
   const cause = new AbortSilentError()
   expect(() => renderAppReleaseError(cause, 'json')).toThrow(AbortError)
   expect(() => renderAppReleaseError(cause, 'text')).toThrow(cause)
+})
+
+test('cancelled JSON uses the standard silent handler and exits zero without another document', async () => {
+  const exit = vi.spyOn(process, 'exit').mockReturnValue(undefined as never)
+  try {
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      let cancellation: unknown
+      try {
+        renderAppReleaseResult({status: 'cancelled'}, testOrganizationApp(), 'json')
+      } catch (error) {
+        if (!(error instanceof AbortSilentError)) throw error
+        cancellation = error
+      }
+      expect(cancellation).toBeInstanceOf(AbortSilentError)
+      expect(cancellation).toMatchObject({oclif: {exit: 0}})
+      await errorHandler(cancellation as Error)
+      await Errors.handle(cancellation as Error)
+      expect(exit).toHaveBeenCalledExactlyOnceWith(0)
+      expect(JSON.parse(stdout())).toEqual({status: 'cancelled'})
+      expect(stderr()).toBe('')
+    })
+  } finally {
+    exit.mockRestore()
+  }
 })
