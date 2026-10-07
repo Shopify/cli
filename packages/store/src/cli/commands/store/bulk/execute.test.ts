@@ -74,7 +74,7 @@ describe('store bulk execute command', () => {
       watch: false,
       outputFile: undefined,
     })
-    expect(logBulkOperationStart).toHaveBeenCalledWith('Starting bulk operation.', expect.any(Object), 'json')
+    expect(logBulkOperationStart).toHaveBeenCalledWith('Starting bulk operation.', expect.any(Object))
   })
 
   test('rejects an empty query', async () => {

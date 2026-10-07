@@ -300,9 +300,9 @@ mode. Inheriting `--json-schema` or enabling `SHOPIFY_FLAG_JSON=1` doesn't conve
   bypasses the JSON fatal error path and can leave stdout empty. Put command validation in the command lifecycle and
   throw an `AbortError` so CLI Kit can encode the failure.
 - In the command event context, `outputInfo`, `outputWarn`, and `outputDebug` use diagnostic events in JSON mode when
-  using their default logger. Banners such as `renderSuccess` and `renderWarning` still render terminal text to stderr;
-  they aren't automatically converted to events. Use `emitCommandEvent` from `@shopify/cli-kit/node/command-events`
-  for diagnostics, and keep human-only banners in the text presenter.
+  using their default logger. `renderInfo` and `renderWarning` also emit diagnostic events on stderr in JSON mode,
+  retaining their banners in text mode. Their messages include the alert's body, next steps, references, links, and
+  custom sections. `renderSuccess` and `renderError` still render terminal text; keep these banners in text presenters.
 - Third-party loggers and child processes aren't automatically converted or silenced. Use `jsonOutputEnabled()` from
   `@shopify/cli-kit/node/environment` to silence or capture their output in JSON mode. Reserve stdout for the encoded
   result or fatal error document, and send diagnostics through the event helpers to stderr.
