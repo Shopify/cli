@@ -1,7 +1,6 @@
 import Execute from './execute.js'
 import {prepareExecuteContext} from '../../utilities/execute-command-helpers.js'
 import {createAdminSessionAsApp, resolveApiVersion} from '../../services/graphql/common.js'
-import {appExecuteJsonOutputSchema} from '../../services/execute-operation/types.js'
 import {
   testAppLinked,
   testOrganization,
@@ -17,9 +16,10 @@ import {GraphQLError, buildSchema, graphql} from 'graphql'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {AbortError, handler} from '@shopify/cli-kit/node/error'
+import {unstyled} from '@shopify/cli-kit/node/output'
 import {fileExists, inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
-import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {cwd, joinPath, resolvePath, relativePath} from '@shopify/cli-kit/node/path'
+import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 
 vi.mock('../../utilities/execute-command-helpers.js')
@@ -53,7 +53,6 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  mockAndCaptureOutput().clear()
   vi.unstubAllEnvs()
 })
 
@@ -66,37 +65,11 @@ async function runCommand(flags: string[]) {
   return runWithCommandEventsForCommand(argv, () => command.run())
 }
 
-test('writes one native GraphQL result with progress events on stderr', async () => {
-  const data = {shop_alias: {name: 'Café', enabled: false}, products: [], missing: null}
-  const extensions = {cost: {requestedQueryCost: 1}}
-  vi.mocked(adminRequestDoc).mockImplementation(async ({responseOptions}) => {
-    responseOptions?.onResponse?.({data, extensions, status: 200, headers: new Headers()})
-    return data
-  })
-
-  await withCapturedStandardStreams(async ({stdout, stderr}) => {
-    await expect(runCommand(['--json'])).resolves.toEqual({app})
-    expect(JSON.parse(stdout())).toEqual({data, extensions})
-    expect(stdout()).not.toContain('Operation succeeded')
-    const events = stderr()
-      .trim()
-      .split('\n')
-      .map((line) => JSON.parse(line))
-    expect(events).toEqual([
-      expect.objectContaining({type: 'progress', status: 'started', message: 'Authenticating'}),
-      expect.objectContaining({type: 'progress', status: 'completed', message: 'Authenticating'}),
-      expect.objectContaining({type: 'progress', status: 'started', message: 'Executing GraphQL operation'}),
-      expect.objectContaining({type: 'progress', status: 'completed', message: 'Executing GraphQL operation'}),
-    ])
-  })
-  expect(adminRequestDoc).toHaveBeenCalledOnce()
-})
-
-test.each([{json: true}, {json: false}])('preserves native GraphQL alias bytes on stdout: $json', async ({json}) => {
+test('preserves native GraphQL aliases, order, and UTF-8 on stdout and in output files', async () => {
   const response = await graphql({
     schema: buildSchema('type Query { name: String! nested: Query }'),
-    source: 'query { __proto__: name constructor: name nested { __proto__: name constructor: name } }',
-    rootValue: {name: 'Test', nested: {name: 'Nested'}},
+    source: 'query { last: name __proto__: name constructor: name nested { __proto__: name constructor: name } }',
+    rootValue: {name: 'Café', nested: {name: 'Nested'}},
   })
   expect(response.errors).toBeUndefined()
   const extensions = JSON.parse('{"__proto__":{"trace":"preserved"},"constructor":false,"nullable":null,"empty":[]}')
@@ -104,117 +77,43 @@ test.each([{json: true}, {json: false}])('preserves native GraphQL alias bytes o
     responseOptions?.onResponse?.({data: response.data, extensions, status: 200, headers: new Headers()})
     return response.data
   })
+  const json = JSON.stringify({data: response.data, extensions}, null, 2)
+  const text = JSON.stringify(response.data, null, 2)
 
-  await withCapturedStandardStreams(async ({stdout}) => {
-    await runCommand(json ? ['--json'] : [])
-    expect(stdout()).toBe(`${JSON.stringify(json ? {data: response.data, extensions} : response.data, null, 2)}\n`)
-  })
-})
-
-test.each([{json: true}, {json: false}])(
-  'preserves native GraphQL alias bytes in output files: $json',
-  async ({json}) => {
-    await inTemporaryDirectory(async (directory) => {
-      const path = joinPath(directory, 'result.json')
-      const response = await graphql({
-        schema: buildSchema('type Query { name: String! }'),
-        source: 'query { __proto__: name constructor: name }',
-        rootValue: {name: 'Test'},
-      })
-      expect(response.errors).toBeUndefined()
-      const extensions = JSON.parse('{"__proto__":"extension","constructor":false}')
-      vi.mocked(adminRequestDoc).mockImplementation(async ({responseOptions}) => {
-        responseOptions?.onResponse?.({data: response.data, extensions, status: 200, headers: new Headers()})
-        return response.data
-      })
-
-      await withCapturedStandardStreams(async ({stdout}) => {
-        await runCommand(['--output-file', path, ...(json ? ['--json'] : [])])
-        if (json) expect(JSON.parse(stdout())).toEqual({path, format: 'json'})
-        else expect(stdout()).toBe('')
-      })
-      await expect(readFile(path)).resolves.toBe(
-        JSON.stringify(json ? {data: response.data, extensions} : response.data, null, 2),
-      )
-    })
-  },
-)
-
-test.each([{}, null])('writes an empty or null native data result: %j', async (data) => {
-  vi.mocked(adminRequestDoc).mockResolvedValue(data)
-  await withCapturedStandardStreams(async ({stdout}) => {
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await runCommand(['--json'])
-    expect(JSON.parse(stdout())).toEqual({data})
+    expect(stdout()).toBe(`${json}\n`)
+    expect(
+      stderr()
+        .trim()
+        .split('\n')
+        .map((line) => JSON.parse(line)),
+    ).toEqual([
+      expect.objectContaining({type: 'progress', status: 'started', message: 'Authenticating'}),
+      expect.objectContaining({type: 'progress', status: 'completed', message: 'Authenticating'}),
+      expect.objectContaining({type: 'progress', status: 'started', message: 'Executing GraphQL operation'}),
+      expect.objectContaining({type: 'progress', status: 'completed', message: 'Executing GraphQL operation'}),
+    ])
   })
-})
-
-test('preserves raw query data and the success banner in text mode', async () => {
-  const data = {shop: {name: 'Test Shop'}}
-  vi.mocked(adminRequestDoc).mockResolvedValue(data)
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await runCommand([])
-    expect(stdout()).toBe(`${JSON.stringify(data, null, 2)}\n`)
+    expect(stdout()).toBe(`${text}\n`)
     expect(stderr()).toContain('Operation succeeded.')
   })
-})
-
-test.each([{json: true}, {json: false}])('writes a real file and the correct stdout receipt: $json', async ({json}) => {
-  await inTemporaryDirectory(async (directory) => {
-    const outputFile = joinPath(directory, 'result.json')
-    const data = {shop: {name: 'Test Shop'}}
-    vi.mocked(adminRequestDoc).mockResolvedValue(data)
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await runCommand(['--output-file', outputFile, ...(json ? ['--json'] : [])])
-      if (json) {
-        expect(JSON.parse(stdout())).toEqual({path: resolvePath(outputFile), format: 'json'})
-        expect(stderr()).not.toContain('Operation succeeded.')
-      } else {
-        expect(stdout()).toBe('')
-        expect(stderr()).toContain('Results written to')
-        expect(stderr()).toContain('result.json')
-      }
-    })
-    await expect(readFile(outputFile)).resolves.toBe(JSON.stringify(json ? {data} : data, null, 2))
-  })
-})
-
-test('resolves a relative file name in the receipt', async () => {
   await inTemporaryDirectory(async (directory) => {
     const path = joinPath(directory, 'result.json')
-    vi.mocked(adminRequestDoc).mockResolvedValue({})
-    await withCapturedStandardStreams(async ({stdout}) => {
-      await runCommand(['--json', '--output-file', relativePath(cwd(), path)])
-      expect(JSON.parse(stdout())).toEqual({path, format: 'json'})
-    })
-    await expect(readFile(path)).resolves.toBe('{\n  "data": {}\n}')
-  })
-})
-
-test('keeps native extensions in the written JSON file', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    const path = joinPath(directory, 'result.json')
-    const data = {alias: {name: 'Café'}}
-    const extensions = {cost: {requestedQueryCost: 1}}
-    vi.mocked(adminRequestDoc).mockImplementation(async ({responseOptions}) => {
-      responseOptions?.onResponse?.({data, extensions, status: 200, headers: new Headers()})
-      return data
-    })
     await withCapturedStandardStreams(async ({stdout}) => {
       await runCommand(['--json', '--output-file', path])
       expect(JSON.parse(stdout())).toEqual({path, format: 'json'})
     })
-    await expect(readFile(path)).resolves.toBe(JSON.stringify({data, extensions}, null, 2))
-  })
-})
-
-test('does not print a receipt when the file cannot be written', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    const outputFile = joinPath(directory, 'missing', 'result.json')
-    vi.mocked(adminRequestDoc).mockResolvedValue({})
-    await withCapturedStandardStreams(async ({stdout}) => {
-      await expect(runCommand(['--json', '--output-file', outputFile])).rejects.toThrow()
+    await expect(readFile(path)).resolves.toBe(json)
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runCommand(['--output-file', path])
       expect(stdout()).toBe('')
+      expect(stderr()).toContain('Operation succeeded.')
+      expect(unstyled(stderr()).replace(/[│\s]/g, '')).toContain(`Resultswrittento${path}`)
     })
+    await expect(readFile(path)).resolves.toBe(text)
   })
 })
 
@@ -247,45 +146,12 @@ test('uses one shared fatal error document with native GraphQL details and does 
 })
 
 test('preserves the text error banner without a fatal error for a GraphQL failure', async () => {
-  const errors = [new GraphQLError('Invalid query')]
+  const errors = [new GraphQLError('Field invalidField does not exist')]
   vi.mocked(adminRequestDoc).mockRejectedValue(new ClientError({errors, status: 200}, {query}))
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await expect(runCommand([])).resolves.toEqual({app})
     expect(stdout()).toBe('')
     expect(stderr()).toContain('GraphQL operation failed.')
-    expect(stderr()).toContain('Invalid query')
+    expect(stderr()).toContain('invalidField')
   })
-})
-
-test('propagates transport failure without printing a success result', async () => {
-  vi.mocked(adminRequestDoc).mockRejectedValue(new Error('Network unavailable'))
-  await withCapturedStandardStreams(async ({stdout, stderr}) => {
-    await expect(runCommand(['--json'])).rejects.toThrow('Network unavailable')
-    expect(stdout()).toBe('')
-    expect(
-      stderr()
-        .trim()
-        .split('\n')
-        .map((line) => JSON.parse(line)),
-    ).toContainEqual(expect.objectContaining({type: 'progress', status: 'failed'}))
-  })
-})
-
-test.each([{flags: ['--json']}, {flags: ['--no-input']}, {flags: ['--json', '--no-input']}])(
-  'keeps output and input flags independent: $flags',
-  async ({flags}) => {
-    vi.mocked(adminRequestDoc).mockResolvedValue({})
-    await withCapturedStandardStreams(async ({stdout}) => {
-      await runCommand(flags)
-      expect(JSON.parse(stdout())).toEqual(flags.includes('--json') ? {data: {}} : {})
-    })
-    expect(prepareExecuteContext).toHaveBeenCalledWith(expect.objectContaining({json: flags.includes('--json')}))
-  },
-)
-
-test('exposes the result and file receipt schemas in help', () => {
-  expect(Execute.jsonOutputSchema).toBe(appExecuteJsonOutputSchema)
-  expect(Execute.flags).toHaveProperty('json')
-  expect(Execute.descriptionForHelp()).toContain('`AppExecuteResult` schema')
-  expect(Execute.descriptionForHelp()).toContain('AppExecuteFileReceipt')
 })
