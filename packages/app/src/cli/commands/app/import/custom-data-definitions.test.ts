@@ -181,7 +181,7 @@ test('preserves the deprecated alias result and warning on stderr', async () => 
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
       await runCommand(directory, ['--json'], true)
       expect(JSON.parse(stdout())).toMatchObject({status: 'success', metafieldCount: 1, toml})
-      expect(unstyled(stderr())).toContain('`shopify app import-custom-data-definitions` has moved.')
+      expect(unstyled(stderr()).replaceAll('`', '')).toContain('shopify app import-custom-data-definitions has moved.')
     })
   })
 })
