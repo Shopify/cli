@@ -80,8 +80,9 @@ export function isReactRouterServerPath(root: string, path: string): boolean {
  * Whether `path` is input for React Router source analysis: inside one of `reactRouterRoots` and outside other
  * apps' code. The `.` root covers every gathered path.
  *
- * A detected root's own `app` directory stays this app's source even when an app configuration file inside it
- * marks part of it as another app's, so that file can't hide the routes and server from the checks.
+ * Only other apps' code outside the detected roots is left out. An app configuration file anywhere inside a root,
+ * such as in the app directory's `app` or `lib`, marks part of this app's own source, so it can't hide that source
+ * from the checks.
  */
 export function isReactRouterSourcePath(
   path: string,
@@ -89,7 +90,7 @@ export function isReactRouterSourcePath(
   otherAppDirectories: string[],
 ): boolean {
   const otherAppCode = otherAppCodeDirectories(otherAppDirectories).filter(
-    (directory) => !overlapsReactRouterSource(directory, reactRouterRoots),
+    (directory) => !isInsideReactRouterRoot(directory, reactRouterRoots),
   )
   return (
     reactRouterRoots.some((root) => pathWithinRoot(root, path) !== undefined) &&
@@ -97,16 +98,17 @@ export function isReactRouterSourcePath(
   )
 }
 
-/** Whether `directory` is, contains, or is inside the `app` directory of one of `reactRouterRoots`. */
-function overlapsReactRouterSource(directory: string, reactRouterRoots: string[]): boolean {
-  return reactRouterRoots.some((root) => {
-    const source = root === '.' ? 'app' : `${root}/app`
-    return (
-      directory === source ||
-      pathWithinRoot(source, directory) !== undefined ||
-      pathWithinRoot(directory, source) !== undefined
-    )
-  })
+/** Whether `directory` is or is inside one of `reactRouterRoots`. For the `.` root, that's the app directory. */
+function isInsideReactRouterRoot(directory: string, reactRouterRoots: string[]): boolean {
+  return reactRouterRoots.some((root) =>
+    root === '.'
+      ? !isOutsideAppDirectory(directory)
+      : directory === root || pathWithinRoot(root, directory) !== undefined,
+  )
+}
+
+function isOutsideAppDirectory(path: string): boolean {
+  return path === '..' || path.startsWith('../')
 }
 
 /** `path` relative to `root`, or undefined when it is outside. Both use forward slashes, as gathering does. */

@@ -333,4 +333,41 @@ describe('React Router detection', () => {
       expect(gatedChecksRejectingInput(result, 'app/routes/app.huge.tsx')).toContain('UNAUTHENTICATED_ENDPOINT')
     })
   })
+
+  test("checks a flat app's source in a subdirectory that holds an app configuration file", async () => {
+    await inTemporaryDirectory(async (temporaryDirectory) => {
+      const app = await fileRealPath(temporaryDirectory)
+      await writeFiles(app, {
+        'shopify.app.toml': appConfiguration,
+        ...reactRouterServer('.'),
+        'lib/shopify.app.toml': appConfiguration,
+        'lib/preview.ts': 'export function preview(element, payload) {\n  element.innerHTML = payload\n}\n',
+      })
+
+      const result = await scanWithIncludeDirectories(app)
+
+      expect(result.otherAppDirectories).toEqual([joinPath(app, 'lib')])
+      expect(result.detection.framework).toBe('react_router')
+      expect(
+        result.issues.filter((issue) => issue.id === 'UNSAFE_INNERHTML').map((issue) => issue.location.file),
+      ).toEqual(['lib/preview.ts'])
+    })
+  })
+
+  test('leaves React Router checks unresolved for a skipped file in a subdirectory that holds an app configuration file', async () => {
+    await inTemporaryDirectory(async (temporaryDirectory) => {
+      const app = await fileRealPath(temporaryDirectory)
+      await writeFiles(app, {
+        'shopify.app.toml': appConfiguration,
+        ...reactRouterServer('.'),
+        'lib/shopify.app.toml': appConfiguration,
+        'lib/huge.ts': tooLargeRoute,
+      })
+
+      const result = await scanWithIncludeDirectories(app)
+
+      expect(result.detection.framework).toBe('react_router')
+      expect(gatedChecksRejectingInput(result, 'lib/huge.ts')).toContain('UNAUTHENTICATED_ENDPOINT')
+    })
+  })
 })
