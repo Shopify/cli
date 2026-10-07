@@ -9,6 +9,7 @@ import {
 import {DEPENDENCY_AUTOMATION_CONFIG_PATHS} from '../rules/dependency-automation-rules.js'
 import {createPathRules} from '../scanners/path-rules.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {execFileSync} from 'node:child_process'
 import {mkdir, symlink, writeFile} from 'node:fs/promises'
@@ -168,7 +169,8 @@ describe('dependency automation discovery', () => {
           expect(result.files).toEqual([
             expect.objectContaining({
               path: '../../.github/dependabot.yml',
-              absolutePath: join(repository, '.github/dependabot.yml'),
+              absolutePath: joinPath(repository, '.github/dependabot.yml'),
+              ext: '.yml',
               content,
             }),
           ])
