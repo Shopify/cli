@@ -39,7 +39,7 @@ export const documentationSearchEntrySchema = zod
 
 const PageInfoSchema = zod
   .object({
-    hasNextPage: zod.null().describe('The search endpoint does not provide pagination or completeness metadata.'),
+    hasNextPage: zod.boolean().nullable().describe('Whether more results are available, or null when unknown.'),
   })
   .strict()
 

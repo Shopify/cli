@@ -4724,8 +4724,11 @@ DESCRIPTION
         "type": "object",
         "properties": {
           "hasNextPage": {
-            "type": "null",
-            "description": "The search endpoint does not provide pagination or completeness metadata."
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether more results are available, or null when unknown."
           }
         },
         "required": [

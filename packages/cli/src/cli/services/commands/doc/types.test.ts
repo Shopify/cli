@@ -31,12 +31,12 @@ describe('documentation JSON schemas', () => {
     expect(() => docFetchJsonOutputSchema.validate(result)).toThrow()
   })
 
-  test('encodes public search data, nullable domain, and unknown completeness', () => {
-    const result = {results: [entry, {...entry, score: 0.99, domain: 'admin'}], pageInfo: {hasNextPage: null}}
+  test.each([true, false, null])('encodes public search data with hasNextPage=%s', (hasNextPage) => {
+    const result = {results: [entry, {...entry, score: 0.99, domain: 'admin'}], pageInfo: {hasNextPage}}
     expect(JSON.parse(docSearchJsonOutputSchema.encode(result))).toEqual(result)
-    expect(JSON.parse(docSearchJsonOutputSchema.encode({results: [], pageInfo: {hasNextPage: null}}))).toEqual({
+    expect(JSON.parse(docSearchJsonOutputSchema.encode({results: [], pageInfo: {hasNextPage}}))).toEqual({
       results: [],
-      pageInfo: {hasNextPage: null},
+      pageInfo: {hasNextPage},
     })
   })
 
@@ -57,7 +57,7 @@ describe('documentation JSON schemas', () => {
   })
 
   test.each([
-    {results: [], pageInfo: {hasNextPage: false}},
+    {results: [], pageInfo: {hasNextPage: 'unknown'}},
     {results: [], pageInfo: {hasNextPage: null, cursor: 'invented'}},
     {results: [], pageInfo: {hasNextPage: null}, body: '[]'},
     {invalidArray: []},
