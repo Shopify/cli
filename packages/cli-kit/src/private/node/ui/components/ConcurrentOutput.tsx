@@ -8,12 +8,17 @@ import stripAnsi from 'strip-ansi'
 
 import {Writable} from 'stream'
 import {AsyncLocalStorage} from 'node:async_hooks'
+import {StringDecoder} from 'node:string_decoder'
 
 export interface ConcurrentOutputProps {
   processes: OutputProcess[]
   prefixColumnSize?: number
   abortSignal: AbortSignal
   showTimestamps?: boolean
+  /**
+   * Keeps terminal UI running after all processes finish. Defaults to false.
+   * In JSON mode, false uses finite progress/diagnostic events; true retains streaming terminal UI.
+   */
   keepRunningAfterProcessesResolve?: boolean
   useAlternativeColorPalette?: boolean
 }
@@ -42,6 +47,7 @@ function currentTime() {
 
 interface ConcurrentOutputContext {
   outputPrefix?: string
+  /** Controls ANSI stripping for terminal output. JSON diagnostics are always unstyled. */
   stripAnsi?: boolean
 }
 
@@ -58,16 +64,50 @@ export async function runConcurrentProcessesForJson({
 }: Pick<ConcurrentOutputProps, 'processes' | 'abortSignal'>): Promise<void> {
   await Promise.all(
     processes.map(async (process) => {
-      const createStream = () =>
-        new Writable({
+      const createStream = () => {
+        const decoder = new StringDecoder('utf8')
+        let pending = ''
+        let hasPendingLine = false
+        let prefix = process.prefix
+        const emitLine = (line: string) => {
+          const message = stripAnsi(line)
+          if (message.trim().length > 0) outputInfo(`${prefix}: ${message}`)
+        }
+        const stream = new Writable({
           write(chunk, _encoding, next) {
-            const prefix = outputContextStore.getStore()?.outputPrefix ?? process.prefix
-            const message = stripAnsi(chunk.toString('utf8')).replace(/\n$/, '')
-            if (message.trim().length > 0) outputInfo(`${prefix}: ${message}`)
+            if (chunk.length === 0) {
+              next()
+              return
+            }
+            const currentPrefix = outputContextStore.getStore()?.outputPrefix ?? process.prefix
+            if (!hasPendingLine) prefix = currentPrefix
+            const lines = (pending + decoder.write(chunk)).split(/\r?\n/)
+            pending = lines.pop() ?? ''
+            for (const line of lines) {
+              emitLine(line)
+              prefix = currentPrefix
+            }
+            hasPendingLine = chunk[chunk.length - 1] !== 10
             next()
           },
         })
-      await process.action(createStream(), createStream(), abortSignal)
+        return {
+          stream,
+          flush: () => {
+            emitLine((pending + decoder.end()).replace(/\r$/, ''))
+            pending = ''
+            hasPendingLine = false
+          },
+        }
+      }
+      const stdout = createStream()
+      const stderr = createStream()
+      try {
+        await process.action(stdout.stream, stderr.stream, abortSignal)
+      } finally {
+        stdout.flush()
+        stderr.flush()
+      }
     }),
   )
 }

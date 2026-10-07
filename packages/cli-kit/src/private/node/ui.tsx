@@ -1,5 +1,5 @@
 import {output} from './output.js'
-import {commandEventOutputMode} from './command-event-context.js'
+import {getUIOutputStream} from './ui/output-stream.js'
 import {Logger, LogLevel} from '../../public/node/output.js'
 import {isUnitTest} from '../../public/node/context/local.js'
 import {treeKill} from '../../public/node/tree-kill.js'
@@ -69,8 +69,7 @@ export async function render(element: JSX.Element, options?: RenderOptions) {
   const {waitUntilExit} = inkRender(<InkLifecycleRoot>{element}</InkLifecycleRoot>, {
     patchConsole: !isUnitTest(),
     ...options,
-    // Interactive UI is not a result document or a diagnostic event.
-    stdout: options?.stdout ?? (commandEventOutputMode() === 'json' ? process.stderr : process.stdout),
+    stdout: getUIOutputStream(options?.stdout),
   })
   await waitUntilExit()
 }

@@ -21,15 +21,23 @@ test('finite concurrent JSON output uses typed stderr events and leaves stdout f
           {
             prefix: 'web-backend',
             action: async (childStdout, childStderr) => {
-              childStdout.write('build output\n')
-              childStderr.write('build diagnostic\n')
-              useConcurrentOutputContext({outputPrefix: 'nested'}, () =>
-                childStdout.write('\u001b[31mnested output\u001b[0m\n'),
-              )
+              childStdout.write('build output\r\nsecond line\n\n')
+              childStderr.write('build ')
+              childStderr.write('diagnostic\r')
+              childStderr.write('\n')
+              const utf8 = Buffer.from('éclair\r\n')
+              useConcurrentOutputContext({outputPrefix: 'unicode'}, () => childStderr.write(utf8.subarray(0, 1)))
+              childStderr.write(utf8.subarray(1))
+              useConcurrentOutputContext({outputPrefix: 'nested', stripAnsi: false}, () => {
+                childStdout.write('\u001b[')
+                childStdout.write('31mnested output\u001b[0m\n')
+              })
+              childStdout.write('final line')
             },
           },
         ],
         showTimestamps: false,
+        renderOptions: {stdout: process.stdout},
       })
       outputResult('{"status":"success"}')
     })
@@ -37,8 +45,11 @@ test('finite concurrent JSON output uses typed stderr events and leaves stdout f
     const sideEvents = events(stderr())
     expect(sideEvents.filter((event) => event.type === 'diagnostic').map((event) => event.message)).toStrictEqual([
       'web-backend: build output',
+      'web-backend: second line',
       'web-backend: build diagnostic',
+      'unicode: éclair',
       'nested: nested output',
+      'web-backend: final line',
     ])
     expect(sideEvents.filter((event) => event.type === 'progress').map((event) => event.status)).toStrictEqual([
       'started',
@@ -84,7 +95,8 @@ test('concurrent JSON rejects with the original failure and does not emit comple
           processes: [
             {
               prefix: 'extension',
-              action: async () => {
+              action: async (_stdout, stderr) => {
+                stderr.write('failure diagnostic')
                 throw failure
               },
             },
@@ -93,6 +105,9 @@ test('concurrent JSON rejects with the original failure and does not emit comple
       ),
     ).rejects.toBe(failure)
     expect(stdout()).toBe('')
+    expect(events(stderr())).toContainEqual(
+      expect.objectContaining({type: 'diagnostic', message: 'extension: failure diagnostic'}),
+    )
     expect(
       events(stderr())
         .filter((event) => event.type === 'progress')

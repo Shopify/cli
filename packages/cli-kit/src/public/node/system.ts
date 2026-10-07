@@ -8,6 +8,7 @@ import {platformAndArch} from './os.js'
 import {shouldDisplayColors, outputDebug} from './output.js'
 import {isCloudEnvironment} from './context/local.js'
 import {isInputDisabled} from './no-input.js'
+import {getUIOutputStream} from '../../private/node/ui/output-stream.js'
 import {execa, ExecaChildProcess} from 'execa'
 import supportsHyperlinks from 'supports-hyperlinks'
 import which from 'which'
@@ -341,12 +342,16 @@ export function terminalSupportsHyperlinks(): boolean {
   return supportsHyperlinks.stdout
 }
 
+interface TerminalPromptingOptions {
+  stdout?: NodeJS.WriteStream
+}
+
 /**
  * Check if standard input and standard error are terminals that support prompting.
  *
  * @returns True if standard input and standard error support prompting.
  */
-export function terminalSupportsPrompting(): boolean {
+export function terminalSupportsPrompting(options: TerminalPromptingOptions = {}): boolean {
   if (isInputDisabled() || isTruthy(process.env.CI)) {
     return false
   }

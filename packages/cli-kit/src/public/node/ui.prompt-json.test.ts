@@ -19,20 +19,23 @@ const resultSchema = defineJsonOutputSchema({
 })
 
 // Keep the real stream writers. Only terminal attributes and the controlled input are fixtures.
-async function withTerminal<T>(run: () => Promise<T>): Promise<T> {
-  const objects = [process.stdout, process.stderr, process.stdin]
+async function withTerminal<T>(run: (input: Stdin) => Promise<T>, stdoutIsTTY = true): Promise<T> {
+  const input = new Stdin()
+  const stdinDescriptor = Object.getOwnPropertyDescriptor(process, 'stdin')
+  Object.defineProperty(process, 'stdin', {configurable: true, value: input})
+  const objects = [process.stdout, process.stderr, input]
   const descriptors = objects.map(
     (object) => new Map(['isTTY', 'columns', 'rows'].map((key) => [key, Object.getOwnPropertyDescriptor(object, key)])),
   )
   objects.forEach((object) => {
-    Object.defineProperty(object, 'isTTY', {configurable: true, value: true})
+    Object.defineProperty(object, 'isTTY', {configurable: true, value: object === process.stdout ? stdoutIsTTY : true})
     Object.defineProperty(object, 'columns', {configurable: true, value: 80})
     Object.defineProperty(object, 'rows', {configurable: true, value: 40})
   })
   vi.stubEnv('CI', '0')
   vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', '0')
   try {
-    return await run()
+    return await run(input)
   } finally {
     objects.forEach((object, index) => {
       for (const [key, descriptor] of descriptors[index]!) {
@@ -40,6 +43,8 @@ async function withTerminal<T>(run: () => Promise<T>): Promise<T> {
         else Reflect.deleteProperty(object, key)
       }
     })
+    if (stdinDescriptor) Object.defineProperty(process, 'stdin', stdinDescriptor)
+    else Reflect.deleteProperty(process, 'stdin')
     vi.unstubAllEnvs()
   }
 }
@@ -55,46 +60,48 @@ async function waitForPrompt(input: Stdin, text: () => string): Promise<void> {
   await new Promise<void>((resolve) => setImmediate(resolve))
 }
 
-test.each([false, true])('actual autocomplete keeps input enabled and routes default UI: json=%s', async (json) => {
-  await withTerminal(async () => {
-    const input = new Stdin()
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await runWithCommandEventsForCommand(json ? ['--json'] : [], async () => {
-        const pending = renderAutocompletePrompt({
-          message: 'Which store?',
-          choices,
-          renderOptions: {stdin: input as unknown as NodeJS.ReadStream, debug: true, patchConsole: false},
+test.each([false, true])(
+  'autocomplete uses the terminal UI stream with redirected JSON stdout: json=%s',
+  async (json) => {
+    await withTerminal(async (input) => {
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await runWithCommandEventsForCommand(json ? ['--json'] : [], async () => {
+          expect(process.stdout.isTTY).toBe(!json)
+          expect(terminalSupportsPrompting()).toBe(true)
+          const pending = renderAutocompletePrompt({
+            message: 'Which store?',
+            choices,
+            renderOptions: {debug: true, patchConsole: false},
+          })
+          await waitForPrompt(input, () => stdout() + stderr())
+          input.write('\r')
+          const selected = await pending
+          expect(selected).toBe('store-a')
+          outputInfo('Selection complete')
+          outputResult(resultSchema.encode({selected}))
         })
-        await waitForPrompt(input, () => stdout() + stderr())
-        input.write('\r')
-        const selected = await pending
-        expect(selected).toBe('store-a')
-        outputInfo('Selection complete')
-        outputResult(resultSchema.encode({selected}))
+        if (json) {
+          expect(JSON.parse(stdout())).toStrictEqual({selected: 'store-a'})
+          expect(unstyled(stderr())).toContain('Which store?')
+          expect(stderr()).toContain('"type":"diagnostic"')
+          // Interactive UI is human text on stderr; this is deliberately not a pure-event assertion.
+        } else {
+          expect(unstyled(stdout())).toContain('Which store?')
+          expect(stderr()).not.toContain('Which store?')
+        }
       })
-      if (json) {
-        expect(JSON.parse(stdout())).toStrictEqual({selected: 'store-a'})
-        expect(unstyled(stderr())).toContain('Which store?')
-        expect(stderr()).toContain('"type":"diagnostic"')
-        // Interactive UI is human text on stderr; this is deliberately not a pure-event assertion.
-      } else {
-        expect(unstyled(stdout())).toContain('Which store?')
-        expect(stderr()).not.toContain('Which store?')
-      }
-    })
-  })
-})
+    }, !json)
+  },
+)
 
 test('appropriate explicit text rendering options still select stderr', async () => {
-  await withTerminal(async () => {
-    const input = new Stdin()
+  await withTerminal(async (input) => {
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
       await runWithCommandEventsForCommand([], async () => {
         const pending = renderAutocompletePrompt({
           message: 'Which store?',
           choices,
           renderOptions: {
-            stdin: input as unknown as NodeJS.ReadStream,
             stdout: process.stderr,
             debug: true,
             patchConsole: false,
@@ -107,7 +114,7 @@ test('appropriate explicit text rendering options still select stderr', async ()
       expect(stdout()).toBe('')
       expect(unstyled(stderr())).toContain('Which store?')
     })
-  })
+  }, false)
 })
 
 test.each([false, true])('no-input rejects before rendering even with JSON: json=%s', async (json) => {
