@@ -48,8 +48,8 @@ export function detectCapabilities(
  * --include-dir or web directory, is recognised. The app directory accepts the package from any gathered
  * manifest, such as a workspace root's.
  *
- * Roots inside another app's directory belong to that app. An app directory above this one holds this app
- * too, so only its own root is left out.
+ * Roots in another app's directory belong to that app. An app directory above this one also holds this app and
+ * the packages it shares, so only that app's own root and its `app` and `web` directories are left out.
  */
 export function detectReactRouterRoots(
   manifests: ManifestFile[],
@@ -76,6 +76,21 @@ export function isReactRouterServerPath(root: string, path: string): boolean {
   return pathInRoot !== undefined && /^app\/shopify\.server\.[cm]?[jt]sx?$/.test(pathInRoot)
 }
 
+/**
+ * Whether `path` is input for React Router source analysis: inside one of `reactRouterRoots` and outside other
+ * apps' code. The `.` root covers every gathered path.
+ */
+export function isReactRouterSourcePath(
+  path: string,
+  reactRouterRoots: string[],
+  otherAppDirectories: string[],
+): boolean {
+  return (
+    reactRouterRoots.some((root) => pathWithinRoot(root, path) !== undefined) &&
+    !otherAppCodeDirectories(otherAppDirectories).some((directory) => pathWithinRoot(directory, path) !== undefined)
+  )
+}
+
 /** `path` relative to `root`, or undefined when it is outside. Both use forward slashes, as gathering does. */
 function pathWithinRoot(root: string, path: string): string | undefined {
   if (root === '.') return path
@@ -90,9 +105,22 @@ function hasReactRouterStructure(root: string, paths: string[]): boolean {
 }
 
 function belongsToOtherApp(root: string, otherAppDirectories: string[]): boolean {
-  return otherAppDirectories.some(
-    (directory) =>
-      root === directory || (!isAncestorOfAppDirectory(directory) && pathWithinRoot(directory, root) !== undefined),
+  if (root === '.') return false
+  return (
+    otherAppDirectories.includes(root) ||
+    otherAppCodeDirectories(otherAppDirectories).some(
+      (directory) => root === directory || pathWithinRoot(directory, root) !== undefined,
+    )
+  )
+}
+
+/**
+ * Directories that hold another app's code. An app directory above this one also holds this app and the
+ * packages it shares, so only that app's conventional `app` and `web` directories count as its code.
+ */
+function otherAppCodeDirectories(otherAppDirectories: string[]): string[] {
+  return otherAppDirectories.flatMap((directory) =>
+    isAncestorOfAppDirectory(directory) ? [`${directory}/app`, `${directory}/web`] : [directory],
   )
 }
 

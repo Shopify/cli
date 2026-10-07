@@ -12,7 +12,12 @@ import {
   gatherPaths,
 } from './discover.js'
 import {createPathRules} from './path-rules.js'
-import {detectCapabilities, detectProject, detectReactRouterRoots} from '../capabilities/detect.js'
+import {
+  detectCapabilities,
+  detectProject,
+  detectReactRouterRoots,
+  isReactRouterSourcePath,
+} from '../capabilities/detect.js'
 import {computeScanMetadata} from '../scorer/index.js'
 import {deprecatedScriptTagScope, insecureWebhookUrl} from '../rules/config-rules.js'
 import {
@@ -332,7 +337,11 @@ function appSourceFiles(context: ScanContext): SourceFile[] {
 }
 
 function reactRouterFiles(context: ScanContext): SourceFile[] {
-  return appSourceFiles(context)
+  const files = appSourceFiles(context)
+  if (context.detection.framework !== 'react_router') return files
+  return files.filter((file) =>
+    isReactRouterSourcePath(file.path, context.reactRouterRoots, context.otherAppDirectories),
+  )
 }
 
 function selectedFiles(definition: DeterministicCheckDefinition, context: ScanContext): string[] {
@@ -602,11 +611,10 @@ export async function scan(input: ScanInput, options: ScanOptions = {}): Promise
     ? findDependencyAutomationInputs(appRoot, repositoryFiles)
     : {files: []}
   const capabilities = detectCapabilities(appToml, extensions, sourceFiles, appTomls)
-  const reactRouterRoots = detectReactRouterRoots(
-    manifests,
-    sourceCandidates,
-    otherAppDirectories.map((directory) => normalizePath(relativePath(appRoot, directory))),
+  const relativeOtherAppDirectories = otherAppDirectories.map((directory) =>
+    normalizePath(relativePath(appRoot, directory)),
   )
+  const reactRouterRoots = detectReactRouterRoots(manifests, sourceCandidates, relativeOtherAppDirectories)
   const detection = detectProject(extensions, sourceCandidates, reactRouterRoots)
   const context: ScanContext = {
     appRoot,
@@ -620,6 +628,7 @@ export async function scan(input: ScanInput, options: ScanOptions = {}): Promise
     capabilities,
     detection,
     reactRouterRoots,
+    otherAppDirectories: relativeOtherAppDirectories,
     sourceCandidates,
     gitIgnoreListing: listingStatus,
   }

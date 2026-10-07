@@ -52,6 +52,7 @@ function context(
     },
     detection: {framework, surface: 'react_router', languages: []},
     reactRouterRoots: framework === 'react_router' ? ['.'] : [],
+    otherAppDirectories: [],
     sourceCandidates: [],
     gitIgnoreListing: 'listed',
   }

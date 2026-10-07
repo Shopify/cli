@@ -174,4 +174,68 @@ describe('React Router detection', () => {
       expect(eolSourceFindings(result)).toEqual(['../../packages/server/app/shopify.server.ts'])
     })
   })
+
+  test("checks only source under this app's React Router roots when a sibling app is also in scope", async () => {
+    await inTemporaryDirectory(async (temporaryDirectory) => {
+      const repository = await fileRealPath(temporaryDirectory)
+      const unsafeRoute = 'export function preview(element, payload) {\n  element.innerHTML = payload\n}\n'
+      await writeFiles(repository, {
+        'package.json': JSON.stringify({private: true, workspaces: ['apps/*', 'packages/*']}),
+        'apps/foo/shopify.app.toml': appConfiguration,
+        ...reactRouterServer('packages/server'),
+        'packages/server/app/routes/app.preview.tsx': unsafeRoute,
+        'apps/bar/shopify.app.toml': appConfiguration,
+        'apps/bar/app/routes/app.preview.tsx': unsafeRoute,
+      })
+
+      const result = await scanWithIncludeDirectories(joinPath(repository, 'apps/foo'), [repository])
+
+      expect(result.detection.framework).toBe('react_router')
+      expect(
+        result.issues.filter((issue) => issue.id === 'UNSAFE_INNERHTML').map((issue) => issue.location.file),
+      ).toEqual(['../../packages/server/app/routes/app.preview.tsx'])
+      const gatedInspectedFiles = result.scan.checks_executed
+        .filter((execution) => REACT_ROUTER_GATED_CHECKS.includes(execution.id))
+        .flatMap((execution) => execution.inspected_files)
+      expect(gatedInspectedFiles).toContain('../../packages/server/app/routes/app.preview.tsx')
+      expect(gatedInspectedFiles.filter((file) => file.startsWith('../bar/'))).toEqual([])
+    })
+  })
+
+  test("doesn't count a parent app's React Router web directory as a nested app's", async () => {
+    await inTemporaryDirectory(async (temporaryDirectory) => {
+      const repository = await fileRealPath(temporaryDirectory)
+      await writeFiles(repository, {
+        'shopify.app.toml': appConfiguration,
+        'package.json': JSON.stringify({private: true, workspaces: ['web', 'apps/*']}),
+        ...reactRouterServer('web'),
+        'apps/foo/shopify.app.toml': appConfiguration,
+        'apps/foo/src/index.ts': 'export const foo = true\n',
+      })
+
+      const result = await scanWithIncludeDirectories(joinPath(repository, 'apps/foo'), [repository])
+
+      expect(result.otherAppDirectories).toEqual([repository])
+      expect(result.detection.framework).toBe('unknown')
+      expect(eolSourceFindings(result)).toEqual([])
+    })
+  })
+
+  test('detects a React Router server in a shared package under a parent app directory', async () => {
+    await inTemporaryDirectory(async (temporaryDirectory) => {
+      const repository = await fileRealPath(temporaryDirectory)
+      await writeFiles(repository, {
+        'shopify.app.toml': appConfiguration,
+        'package.json': JSON.stringify({private: true, workspaces: ['apps/*', 'packages/*']}),
+        'apps/foo/shopify.app.toml': appConfiguration,
+        ...reactRouterServer('packages/server'),
+      })
+
+      const result = await scanWithIncludeDirectories(joinPath(repository, 'apps/foo'), [repository])
+
+      expect(result.otherAppDirectories).toEqual([repository])
+      expect(result.detection.framework).toBe('react_router')
+      expect(eolSourceFindings(result)).toEqual(['../../packages/server/app/shopify.server.ts'])
+    })
+  })
 })
