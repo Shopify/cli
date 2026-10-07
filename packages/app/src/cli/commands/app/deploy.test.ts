@@ -123,12 +123,62 @@ describe('app deploy command', () => {
     vi.mocked(deploy).mockResolvedValue({status: 'cancelled', app: testAppLinked()})
     await inTemporaryDirectory(async (tmp) => {
       await withCapturedStandardStreams(async (streams) => {
-        await Deploy.run(['--path', tmp, '--json', '--allow-updates'], import.meta.url)
+        await expect(Deploy.run(['--path', tmp, '--json', '--allow-updates'], import.meta.url)).rejects.toThrow()
         expect(JSON.parse(streams.stdout())).toEqual({status: 'cancelled'})
         expect(process.exitCode).toBeUndefined()
       })
     })
   })
+
+  test.each(['success', 'cancelled'] as const)(
+    'runs success hooks only for a completed command: %s',
+    async (status) => {
+      class ControlledDeploy extends Deploy {
+        async catch(error: Error): Promise<never> {
+          throw error
+        }
+
+        protected async init(): Promise<void> {}
+      }
+
+      vi.mocked(deploy).mockResolvedValue(
+        status === 'cancelled' ? {status: 'cancelled', app: testAppLinked()} : completedDeployResult(testAppLinked()),
+      )
+      await inTemporaryDirectory(async (directory) => {
+        const config = await Config.load({root: joinPath(dirname(fileURLToPath(import.meta.url)), '../../../..')})
+        const runHook = vi.spyOn(config, 'runHook').mockResolvedValue({successes: [], failures: []})
+        const cachedCommand = {
+          id: 'app:deploy',
+          aliases: [],
+          hiddenAliases: [],
+          hidden: false,
+          args: {},
+          flags: {},
+          load: async () => ControlledDeploy,
+        }
+        try {
+          await withCapturedStandardStreams(async ({stdout, stderr}) => {
+            const execution = config.runCommand(
+              'app:deploy',
+              ['--path', directory, '--json', '--allow-updates'],
+              cachedCommand,
+            )
+            if (status === 'cancelled') {
+              await expect(execution).rejects.toMatchObject({oclif: {exit: 0}})
+              expect(runHook).not.toHaveBeenCalledWith('postrun', expect.anything())
+            } else {
+              await execution
+              expect(runHook).toHaveBeenCalledWith('postrun', expect.anything())
+            }
+            expect(JSON.parse(stdout())).toMatchObject({status})
+            expect(stderr()).toBe('')
+          })
+        } finally {
+          runHook.mockRestore()
+        }
+      })
+    },
+  )
 
   test('does not catch cancellation in text mode', async () => {
     vi.mocked(deploy).mockResolvedValue({status: 'cancelled', app: testAppLinked()})

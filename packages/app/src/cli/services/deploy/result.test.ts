@@ -1,7 +1,10 @@
 import {renderAppDeployResult} from './result.js'
 import {testAppLinked, testOrganizationApp, testProject} from '../../models/app/app.test-data.js'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {afterEach, expect, test} from 'vitest'
+import {afterEach, expect, test, vi} from 'vitest'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {errorHandler} from '@shopify/cli-kit/node/error-handler'
+import {Errors} from '@oclif/core'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import type {DeployResult} from './types.js'
 
@@ -115,4 +118,33 @@ test('text preserves the no-release message and next command', async () => {
     expect(unstyled(stderr())).toContain('New version created.')
     expect(unstyled(stderr())).toContain('shopify app release --version=v1')
   })
+})
+
+test('cancelled JSON uses the standard silent handler and exits zero without another document', async () => {
+  const exit = vi.spyOn(process, 'exit').mockReturnValue(undefined as never)
+  try {
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      let cancellation: unknown
+      try {
+        await renderAppDeployResult(
+          {status: 'cancelled', app: testAppLinked()},
+          testOrganizationApp(),
+          testProject(),
+          'json',
+        )
+      } catch (error) {
+        if (!(error instanceof AbortSilentError)) throw error
+        cancellation = error
+      }
+      expect(cancellation).toBeInstanceOf(AbortSilentError)
+      expect(cancellation).toMatchObject({oclif: {exit: 0}})
+      await errorHandler(cancellation as Error)
+      await Errors.handle(cancellation as Error)
+      expect(exit).toHaveBeenCalledExactlyOnceWith(0)
+      expect(JSON.parse(stdout())).toEqual({status: 'cancelled'})
+      expect(stderr()).toBe('')
+    })
+  } finally {
+    exit.mockRestore()
+  }
 })

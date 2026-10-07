@@ -17,6 +17,7 @@ export async function renderAppDeployResult(
   if (format === 'json') {
     const publicResult = appDeployResult(result, remoteApp)
     outputResult(appDeployJsonOutputSchema.encode(publicResult))
+    if (publicResult.status === 'cancelled') throw Object.assign(new AbortSilentError(), {oclif: {exit: 0}})
     if (publicResult.status === 'partial') process.exitCode = 1
     return
   }
