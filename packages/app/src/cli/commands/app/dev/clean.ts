@@ -17,9 +17,7 @@ export default class DevClean extends AppLinkedCommand {
   It restores the app's active version to the selected development store.
   `
 
-  static get jsonOutputSchema() {
-    return appDevCleanJsonOutputSchema
-  }
+  static jsonOutputSchema = appDevCleanJsonOutputSchema
 
   static description = this.descriptionForHelp()
 
