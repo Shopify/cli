@@ -182,6 +182,11 @@ describe('agent checks', () => {
     expect(entry.fix).toContain('authenticate.admin(request)')
   })
 
+  test('STATIC_FRAME_ANCESTORS catalog text covers literal and constructed policies', () => {
+    const entry = RULE_CATALOG.find((candidate) => candidate.id === 'STATIC_FRAME_ANCESTORS')!
+    expect(entry.description).toContain('whether written literally or built from variables')
+  })
+
   test('review prompts cover tenant provenance, authorization drift, proxy nuance, and data sensitivity', () => {
     const checks = loadChecks()
     expect(checks.get('REQUEST_DERIVED_SHOP_SCOPE')!.prompt).toContain('cache keys')

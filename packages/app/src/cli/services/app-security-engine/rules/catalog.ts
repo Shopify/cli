@@ -266,7 +266,8 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     title: 'Embedded app frame-ancestors uses a wildcard',
     severity: 'high',
     points: -12,
-    description: 'Detects literal wildcard or clearly permissive frame-ancestors policies in embedded app code.',
+    description:
+      'Detects wildcard or static cross-shop frame-ancestors policies in embedded app code, whether written literally or built from variables.',
     fix: 'Restrict frame-ancestors to Shopify Admin and the authenticated shop origin.',
     guide: 'https://shopify.dev/docs/apps/build/security/set-up-iframe-protection',
     requires: 'embedded_app',
