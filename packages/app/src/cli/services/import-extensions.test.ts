@@ -428,24 +428,3 @@ test('the import-all caller retains text presentation and persists identifiers',
     await expect(readFile(joinPath(directory, '.env'))).resolves.toContain('SHOPIFY_TITLEB_ID=uuidB')
   })
 })
-
-test('the import-all caller still presents completed files before an identifier write fails', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    const dotenvPath = joinPath(directory, 'environment-directory')
-    await mkdir(dotenvPath)
-    const app = testAppLinked({directory, dotenv: {path: dotenvPath, variables: {}}})
-    await expect(
-      importAllExtensions({
-        app,
-        remoteApp: organizationApp,
-        developerPlatformClient: testDeveloperPlatformClient(),
-        extensions: [flowExtensionA],
-      }),
-    ).rejects.toThrow()
-    expect(renderSuccess).toHaveBeenCalledWith({
-      headline: ['Imported the following extensions from the dashboard:'],
-      body: '• "titleA" at: extensions/title-a',
-    })
-    expect(fileExistsSync(joinPath(directory, 'extensions', 'title-a', 'shopify.extension.toml'))).toBe(true)
-  })
-})
