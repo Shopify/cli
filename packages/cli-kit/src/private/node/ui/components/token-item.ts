@@ -103,3 +103,33 @@ export function tokenItemToString(token: TokenItem): string {
 export function appendToTokenItem(token: TokenItem, suffix: string): TokenItem {
   return Array.isArray(token) ? [...token, {char: suffix}] : [token, {char: suffix}]
 }
+
+/** Converts tokens to JSON message text, retaining link URLs and list titles. */
+export function tokenItemToJsonString(token: TokenItem): string {
+  if (!Array.isArray(token)) return tokenToJsonString(token)
+
+  return token
+    .map((item, index) => {
+      const value = tokenToJsonString(item)
+      const needsLeadingSpace = index !== 0 && !(typeof item !== 'string' && 'char' in item)
+      return needsLeadingSpace ? ` ${value}` : value
+    })
+    .join('')
+}
+
+function tokenToJsonString(token: Token): string {
+  if (typeof token === 'string') return token
+
+  if ('link' in token) {
+    const {label, url} = token.link
+    return label && label !== url ? `${label} (${url})` : url
+  }
+
+  if ('list' in token) {
+    const title = token.list.title ? tokenItemToJsonString(token.list.title).trim() : undefined
+    const items = token.list.items.map(tokenItemToJsonString).join('; ')
+    return title ? `${title}${items ? `: ${items}` : ''}` : items
+  }
+
+  return tokenItemToString(token)
+}

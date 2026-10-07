@@ -8,7 +8,8 @@ import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath, cwd} from '@shopify/cli-kit/node/path'
 import {renderInfo, renderSuccess, renderWarning, renderError, renderTable} from '@shopify/cli-kit/node/ui'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import type {ExecuteBulkOperationResult} from './types.js'
 
 vi.mock('@shopify/cli-kit/node/ui')
@@ -319,18 +320,29 @@ test('does not invent a list operation type or claim completeness for a capped l
 })
 
 test('keeps the original starting banner in text mode', () => {
-  logBulkOperationStart('Starting bulk operation.', {storeFqdn: 'shop.myshopify.com', version: '2026-01'}, 'text')
+  logBulkOperationStart('Starting bulk operation.', {storeFqdn: 'shop.myshopify.com', version: '2026-01'})
   expect(renderInfo).toHaveBeenCalledWith({
     headline: 'Starting bulk operation.',
     body: [{list: {items: ['Store: shop.myshopify.com', 'API version: 2026-01']}}],
   })
 })
 
-test('outputs starting information without a terminal banner in JSON mode', () => {
-  const output = mockAndCaptureOutput()
-  logBulkOperationStart('Starting bulk operation.', {storeFqdn: 'shop.myshopify.com'}, 'json')
-  expect(output.info()).toBe('Starting bulk operation.\nStore: shop.myshopify.com')
-  expect(renderInfo).not.toHaveBeenCalled()
+test('outputs starting information as a JSON diagnostic only on stderr', async () => {
+  const actualUi = await vi.importActual<typeof import('@shopify/cli-kit/node/ui')>('@shopify/cli-kit/node/ui')
+  vi.mocked(renderInfo).mockImplementation(actualUi.renderInfo)
+
+  await withCapturedStandardStreams(({stdout, stderr}) => {
+    runWithCommandEventsForCommand(['--json'], () =>
+      logBulkOperationStart('Starting bulk operation.', {storeFqdn: 'shop.myshopify.com'}),
+    )
+
+    expect(stdout()).toBe('')
+    expect(JSON.parse(stderr())).toMatchObject({
+      type: 'diagnostic',
+      level: 'info',
+      message: 'Starting bulk operation.\n\nStore: shop.myshopify.com',
+    })
+  })
 })
 
 test('outputs native JSONL in text mode', async () => {
@@ -374,4 +386,27 @@ test('keeps missing status and cancellation results nonfatal in text mode', () =
     expect.objectContaining({headline: 'Bulk operation not found or could not be canceled.'}),
   )
   expect(process.exitCode).toBe(originalExitCode)
+})
+
+test('emits a JSON warning on stderr before the missing-operation bug failure', async () => {
+  const actualUi = await vi.importActual<typeof import('@shopify/cli-kit/node/ui')>('@shopify/cli-kit/node/ui')
+  vi.mocked(renderWarning).mockImplementation(actualUi.renderWarning)
+
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await expect(
+      runWithCommandEventsForCommand(['--json'], () =>
+        renderExecuteBulkOperationResult(
+          {operation: null, userErrors: [], watchAborted: false},
+          {format: 'json', watch: false},
+        ),
+      ),
+    ).rejects.toThrow(BugError)
+
+    expect(stdout()).toBe('')
+    expect(JSON.parse(stderr())).toMatchObject({
+      type: 'diagnostic',
+      level: 'warning',
+      message: 'Bulk operation not created successfully.\n\nThis is an unexpected error. Please try again later.',
+    })
+  })
 })

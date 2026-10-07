@@ -67,28 +67,18 @@ export async function logs(commandOptions: LogsOptions) {
 
   if (commandOptions.format === 'json') {
     outputResult(JSON.stringify({subscribedToStores: commandOptions.storeFqdns}))
-    outputInfo(JSON.stringify({message: 'Waiting for app logs...'}))
-    await renderJsonLogs({
-      options: {
-        variables,
-        developerPlatformClient,
-      },
-      pollOptions,
-      storeNameById: logsConfig.storeNameById,
-      organizationId: commandOptions.organization.id,
-    })
-  } else {
-    outputInfo('Waiting for app logs...\n')
-    await renderLogs({
-      options: {
-        variables,
-        developerPlatformClient,
-      },
-      pollOptions,
-      storeNameById: logsConfig.storeNameById,
-      organizationId: commandOptions.organization.id,
-    })
   }
+  outputInfo('Waiting for app logs...\n')
+  const render = commandOptions.format === 'json' ? renderJsonLogs : renderLogs
+  await render({
+    options: {
+      variables,
+      developerPlatformClient,
+    },
+    pollOptions,
+    storeNameById: logsConfig.storeNameById,
+    organizationId: commandOptions.organization.id,
+  })
 }
 
 async function prepareForLogs(commandOptions: LogsOptions): Promise<{
@@ -98,15 +88,13 @@ async function prepareForLogs(commandOptions: LogsOptions): Promise<{
   const {app, remoteApp, developerPlatformClient, primaryStore, organization} = commandOptions
 
   const configFile = basename(app.configPath)
-  if (commandOptions.format === 'text') {
-    renderAppLogsConfigInfo(
-      remoteApp.title,
-      primaryStore.shopDomain,
-      commandOptions.storeFqdns,
-      configFile,
-      organization.businessName,
-    )
-  }
+  renderAppLogsConfigInfo(
+    remoteApp.title,
+    primaryStore.shopDomain,
+    commandOptions.storeFqdns,
+    configFile,
+    organization.businessName,
+  )
   const storeNameById = new Map<string, string>()
   storeNameById.set(primaryStore.shopId, primaryStore.shopDomain)
   if (commandOptions.storeFqdns && commandOptions.storeFqdns.length > 1) {
