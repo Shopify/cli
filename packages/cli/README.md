@@ -2216,13 +2216,17 @@ Import dashboard-managed extensions into your app.
 
 ```
 USAGE
-  $ shopify app import dashboard-extensions [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--path <value>] [--reset | ] [--verbose]
+  $ shopify app import dashboard-extensions [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -2258,6 +2262,301 @@ FLAGS
 
 DESCRIPTION
   Import dashboard-managed extensions into your app.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ImportDashboardExtensionsResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success",
+          "partial",
+          "skipped",
+          "cancelled"
+        ]
+      },
+      "reason": {
+        "anyOf": [
+          {
+            "type": "string",
+            "enum": [
+              "no-extensions",
+              "directory-selection-cancelled"
+            ]
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "extensions": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ImportedDashboardExtension"
+        },
+        "description": "Completed extension imports and kept local directories, in selection order."
+      },
+      "errors": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ExtensionImportFailure"
+        },
+        "description": "Failed selected imports or identifier persistence."
+      },
+      "identifiersUpdated": {
+        "type": "boolean",
+        "description": "Whether extension identifiers were persisted to the app environment file."
+      }
+    },
+    "required": [
+      "status",
+      "reason",
+      "extensions",
+      "errors",
+      "identifiersUpdated"
+    ],
+    "additionalProperties": false,
+    "title": "ImportDashboardExtensionsResult",
+    "definitions": {
+      "ImportedDashboardExtension": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The dashboard extension registration UUID, not a Shopify GID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The upstream dashboard extension type."
+          },
+          "directory": {
+            "type": "string",
+            "description": "The absolute local extension directory."
+          },
+          "configurationPath": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/ImportedDashboardExtension/properties/directory"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The absolute local TOML path, or null when no TOML file exists in a kept directory."
+          },
+          "changed": {
+            "type": "boolean",
+            "description": "Whether this import wrote the local extension TOML."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "directory",
+          "configurationPath",
+          "changed"
+        ],
+        "additionalProperties": false
+      },
+      "ExtensionImportFailure": {
+        "type": "object",
+        "properties": {
+          "extensionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The registration UUID, or null for identifier persistence."
+          },
+          "error": {
+            "$ref": "#/definitions/JsonError"
+          }
+        },
+        "required": [
+          "extensionId",
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "JsonError": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/JsonAbortError"
+          },
+          {
+            "$ref": "#/definitions/JsonBugError"
+          },
+          {
+            "$ref": "#/definitions/JsonExternalError"
+          }
+        ]
+      },
+      "JsonErrorCustomSection": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "additionalProperties": false
+      },
+      "JsonAbortError": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "abort"
+          },
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A stable error code, included only when known."
+          },
+          "tryMessage": {
+            "type": "string"
+          },
+          "nextSteps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "customSections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/JsonErrorCustomSection"
+            }
+          },
+          "details": {
+            "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+          }
+        },
+        "required": [
+          "type",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "JsonBugError": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "bug"
+          },
+          "message": {
+            "$ref": "#/definitions/JsonAbortError/properties/message"
+          },
+          "code": {
+            "$ref": "#/definitions/JsonAbortError/properties/code"
+          },
+          "tryMessage": {
+            "$ref": "#/definitions/JsonAbortError/properties/tryMessage"
+          },
+          "nextSteps": {
+            "$ref": "#/definitions/JsonAbortError/properties/nextSteps"
+          },
+          "customSections": {
+            "$ref": "#/definitions/JsonAbortError/properties/customSections"
+          },
+          "details": {
+            "$ref": "#/definitions/JsonAbortError/properties/details"
+          },
+          "stack": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "JsonExternalError": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "external"
+          },
+          "message": {
+            "$ref": "#/definitions/JsonAbortError/properties/message"
+          },
+          "code": {
+            "$ref": "#/definitions/JsonAbortError/properties/code"
+          },
+          "tryMessage": {
+            "$ref": "#/definitions/JsonAbortError/properties/tryMessage"
+          },
+          "nextSteps": {
+            "$ref": "#/definitions/JsonAbortError/properties/nextSteps"
+          },
+          "customSections": {
+            "$ref": "#/definitions/JsonAbortError/properties/customSections"
+          },
+          "details": {
+            "$ref": "#/definitions/JsonAbortError/properties/details"
+          },
+          "command": {
+            "type": "string"
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "message",
+          "command",
+          "args"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app info`
