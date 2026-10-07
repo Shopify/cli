@@ -79,6 +79,7 @@ export async function executeBulkOperation(
     return {
       store: adminSession.storeFqdn,
       apiVersion: version,
+      query,
       operation: response?.bulkOperation ?? null,
       userErrors: response?.userErrors ?? [],
       watchAborted: false,
@@ -100,6 +101,7 @@ export async function executeBulkOperation(
   return {
     store: adminSession.storeFqdn,
     apiVersion: version,
+    query,
     operation,
     userErrors: [],
     watchAborted: abortController.signal.aborted,

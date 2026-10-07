@@ -107,6 +107,7 @@ describe('executeBulkOperation', () => {
     ).resolves.toEqual({
       store: storeFqdn,
       apiVersion: '2026-01',
+      query: 'query { shop { name } }',
       operation,
       userErrors: [],
       watchAborted: false,

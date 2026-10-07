@@ -17,6 +17,7 @@ import {
   fetchRecentBulkOperations,
   cancelBulkOperationRequest,
   runBulkOperationQuery,
+  runBulkOperationMutation,
   shortBulkOperationPoll,
   watchBulkOperation,
 } from '@shopify/cli-kit/node/api/bulk-operations'
@@ -30,6 +31,7 @@ import {joinPath, cwd, relativePath} from '@shopify/cli-kit/node/path'
 import {AbortError, handler} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
+import {fileURLToPath} from 'node:url'
 import type {BulkOperation} from '@shopify/cli-kit/node/api/bulk-operations'
 
 vi.mock('../../../utilities/execute-command-helpers.js')
@@ -40,6 +42,7 @@ vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/api/bulk-operations/fetch')
 vi.mock('@shopify/cli-kit/node/api/bulk-operations/cancel')
 vi.mock('@shopify/cli-kit/node/api/bulk-operations/run-query')
+vi.mock('@shopify/cli-kit/node/api/bulk-operations/run-mutation')
 vi.mock('@shopify/cli-kit/node/api/bulk-operations/watch-bulk-operation')
 
 const originalExitCode = process.exitCode
@@ -78,10 +81,15 @@ function expectedOperation() {
   }
 }
 
-async function runCommand(Command: typeof BulkStatus | typeof BulkCancel | typeof BulkExecute, argv: string[]) {
-  const {appContextResult, store} = testBulkOperationContext()
+async function runCommand(
+  Command: typeof BulkStatus | typeof BulkCancel | typeof BulkExecute,
+  argv: string[],
+  query = 'query { shop { name } }',
+) {
+  const {appContextResult, store: defaultStore} = testBulkOperationContext()
+  const store = {...defaultStore, storeType: 'APP_DEVELOPMENT' as const}
   vi.mocked(prepareAppStoreContext).mockResolvedValue({appContextResult, store})
-  vi.mocked(prepareExecuteContext).mockResolvedValue({appContextResult, store, query: 'query { shop { name } }'})
+  vi.mocked(prepareExecuteContext).mockResolvedValue({appContextResult, store, query})
   const session = {storeFqdn: store.shopDomain, token: 'token'}
   vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue(session)
   vi.mocked(fetchApiVersions).mockResolvedValue([{handle: '2026-01', supported: true}])
@@ -224,6 +232,62 @@ test('file output keeps the exact JSONL bytes and prints only an absolute receip
       ])
       expect(JSON.parse(stdout())).toEqual({path, format: 'jsonl'})
       await expect(readFile(path)).resolves.toBe(results)
+      assertDiagnosticEvents(stderr(), 'Starting bulk operation.')
+    })
+  })
+})
+
+test.each([
+  {file: false, fragment: false},
+  {file: true, fragment: false},
+  {file: false, fragment: true},
+  {file: true, fragment: true},
+])('aliased mutation errors fail with file=$file and fragment=$fragment', async ({file, fragment}) => {
+  const query = fragment
+    ? await readFile(
+        fileURLToPath(new URL('../../../services/bulk-operations/fixtures/aliased-mutation.graphql', import.meta.url)),
+      )
+    : 'mutation Update($input: ProductInput!) { update: productUpdate(input: $input) { errors: userErrors { message } } }'
+  const operation = bulkOperation({type: 'MUTATION', status: 'COMPLETED', url: 'https://example.com/results.jsonl'})
+  const results = fragment
+    ? '{"data":{"__typename":"Mutation","update":{"errors":[{"message":"Rejected"}]}}}\r\n'
+    : '{"data":{"update":{"errors":[{"message":"Rejected"}]}}}\r\n'
+  vi.mocked(runBulkOperationMutation).mockResolvedValue({
+    bulkOperation: operation,
+    userErrors: [],
+  })
+  vi.mocked(watchBulkOperation).mockResolvedValue(operation)
+  mockDownloadResults(results)
+
+  await inTemporaryDirectory(async (directory) => {
+    const path = joinPath(directory, 'results.jsonl')
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runCommand(
+        BulkExecute,
+        [
+          '--query',
+          query,
+          '--variables',
+          '{"input":{"id":"gid://shopify/Product/1"}}',
+          '--watch',
+          '--json',
+          ...(file ? ['--output-file', path] : []),
+        ],
+        query,
+      )
+      if (file) {
+        expect(JSON.parse(stdout())).toEqual({path, format: 'jsonl'})
+        await expect(readFile(path)).resolves.toBe(results)
+      } else {
+        expect(JSON.parse(stdout())).toEqual({
+          storeDomain: 'shop.myshopify.com',
+          apiVersion: '2026-01',
+          status: 'partial',
+          operation: {...expectedOperation(), type: 'MUTATION', status: 'COMPLETED', url: operation.url},
+          resultsJsonl: results,
+        })
+      }
+      expect(process.exitCode).toBe(1)
       assertDiagnosticEvents(stderr(), 'Starting bulk operation.')
     })
   })

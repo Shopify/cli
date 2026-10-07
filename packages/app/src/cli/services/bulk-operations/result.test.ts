@@ -23,8 +23,9 @@ afterEach(() => {
   process.exitCode = originalExitCode
 })
 
-function completedResult(): ExecuteBulkOperationResult {
+function completedResult(query = 'query { products { edges { node { id } } } }'): ExecuteBulkOperationResult {
   return {
+    query,
     store: 'shop.myshopify.com',
     apiVersion: '2026-01',
     operation: testBulkOperation({
@@ -108,7 +109,7 @@ test.each([
   '{"errors":[{"message":"Variable input has an unrecognizable field"}]}\n',
 ])('reports downloaded mutation errors as a partial result with a nonzero exit: %s', async (results) => {
   const output = mockAndCaptureOutput()
-  const result = completedResult()
+  const result = completedResult('mutation { productUpdate { userErrors { message } } }')
   await renderExecuteBulkOperationResult(
     {...result, operation: {...result.operation!, type: 'MUTATION'}, results},
     {format: 'json', watch: true},
@@ -122,7 +123,7 @@ test.each([
   '{"errors":[{"message":"Variable input has an unrecognizable field"}]}\n',
 ])('writes downloaded mutation errors to a file and exits nonzero: %s', async (results) => {
   const output = mockAndCaptureOutput()
-  const result = completedResult()
+  const result = completedResult('mutation { productUpdate { userErrors { message } } }')
   await inTemporaryDirectory(async (directory) => {
     const path = joinPath(directory, 'results.jsonl')
     await renderExecuteBulkOperationResult(
@@ -192,7 +193,7 @@ test('routes creation user errors through the global fatal-error path', async ()
   const userErrors = [{message: 'Invalid query', field: ['query']}]
   await expect(
     renderExecuteBulkOperationResult(
-      {operation: null, userErrors, watchAborted: false},
+      {query: 'query { shop { name } }', operation: null, userErrors, watchAborted: false},
       {
         format: 'json',
         watch: false,
@@ -266,7 +267,7 @@ test('preserves an existing text-mode output file when result scanning fails', a
 
 test('preserves text-mode creation user errors', async () => {
   await renderExecuteBulkOperationResult(
-    {operation: null, userErrors: [{message: 'Invalid query'}], watchAborted: false},
+    {query: 'query { shop { name } }', operation: null, userErrors: [{message: 'Invalid query'}], watchAborted: false},
     {format: 'text', watch: false},
   )
   expect(renderError).toHaveBeenCalledWith({
@@ -279,7 +280,7 @@ test('preserves text-mode creation user errors', async () => {
 test('preserves the warning and bug failure when creation returns neither an operation nor errors', async () => {
   await expect(
     renderExecuteBulkOperationResult(
-      {operation: null, userErrors: [], watchAborted: false},
+      {query: 'query { shop { name } }', operation: null, userErrors: [], watchAborted: false},
       {format: 'text', watch: false},
     ),
   ).rejects.toThrow(BugError)

@@ -43,7 +43,12 @@ describe('app bulk execute command', () => {
       variablesJsonl: undefined,
       watch: false,
     })
-    vi.mocked(executeBulkOperation).mockResolvedValue({operation: null, userErrors: [], watchAborted: false})
+    vi.mocked(executeBulkOperation).mockResolvedValue({
+      query: 'query { shop { name } }',
+      operation: null,
+      userErrors: [],
+      watchAborted: false,
+    })
   })
 
   test('prepares execution context and calls executeBulkOperation', async () => {
@@ -84,7 +89,7 @@ describe('app bulk execute command', () => {
 
     // Then
     expect(renderExecuteBulkOperationResult).toHaveBeenCalledWith(
-      {operation: null, userErrors: [], watchAborted: false},
+      {query: 'query { shop { name } }', operation: null, userErrors: [], watchAborted: false},
       {format: 'text', watch: true, outputFile: 'output.json'},
     )
     expect(prepareBulkOperation).toHaveBeenCalledWith({

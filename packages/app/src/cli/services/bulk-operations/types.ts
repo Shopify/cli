@@ -70,6 +70,7 @@ export const executeBulkOperationJsonOutputSchema = defineJsonOutputSchema({
 })
 
 export interface ExecuteBulkOperationResult extends CancelBulkOperationResult {
+  query: string
   watchAborted: boolean
   results?: string
 }

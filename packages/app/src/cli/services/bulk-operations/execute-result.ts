@@ -1,5 +1,6 @@
 import {executeBulkOperationJsonOutputSchema, type ExecuteBulkOperationResult} from './types.js'
 import {bulkOperationJsonContext, toBulkOperationJson} from './json.js'
+import {resultsContainMutationErrors} from './mutation-errors.js'
 import {
   formatBulkOperationStatus,
   resultsContainUserErrors,
@@ -40,7 +41,8 @@ export async function renderExecuteBulkOperationResult(
     }
     if (!operation) throw new BugError('Bulk operation response returned no operation.')
 
-    const partial = operation.type === 'MUTATION' && results !== undefined && resultsContainUserErrors(results)
+    const partial =
+      operation.type === 'MUTATION' && results !== undefined && resultsContainMutationErrors(results, result.query)
     let status: 'success' | 'partial' | 'cancelled' = partial ? 'partial' : 'success'
     if (watchAborted) status = 'cancelled'
     if (partial) process.exitCode = 1
