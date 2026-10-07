@@ -158,7 +158,7 @@ describe('prepareVariablesErrors', () => {
 
   test('rejects a missing prepare export', async () => {
     await expect(check({'index.js': 'export function other() {}'})).resolves.toEqual([
-      expect.stringMatching(/index\.js has no `cartValidationsGeneratePrepare` function to check$/),
+      'src/index.js has no `cartValidationsGeneratePrepare` function to check',
     ])
   })
 })

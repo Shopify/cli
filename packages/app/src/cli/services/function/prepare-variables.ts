@@ -80,7 +80,7 @@ export async function prepareVariablesErrors(fun: ExtensionInstance<FunctionConf
   const report = (node: ts.Node, message: string) => {
     const file = node.getSourceFile()
     const {line, character} = file.getLineAndCharacterOfPosition(node.getStart())
-    errors.add(`${relativizePath(file.fileName)}:${line + 1}:${character + 1} ${message}`)
+    errors.add(`${relativizePath(file.fileName, fun.directory)}:${line + 1}:${character + 1} ${message}`)
   }
   const join = (path: string, key: string) => (path ? `${path}.${key}` : key)
   const subject = (path: string) => (path ? `\`${path}\`` : 'The result')
@@ -346,7 +346,7 @@ export async function prepareVariablesErrors(fun: ExtensionInstance<FunctionConf
     const resolved = exported && (exported.flags & ts.SymbolFlags.Alias ? checker.getAliasedSymbol(exported) : exported)
     const fn = functionOf(resolved?.valueDeclaration)
     if (!fn) {
-      errors.add(`${relativizePath(fun.entrySourceFilePath)} has no \`${name}\` function to check`)
+      errors.add(`${relativizePath(fun.entrySourceFilePath, fun.directory)} has no \`${name}\` function to check`)
       continue
     }
     returns(fn, new GraphQLNonNull(result), '', false)
