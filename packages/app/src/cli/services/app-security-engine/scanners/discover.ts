@@ -823,7 +823,7 @@ function dependencyAutomationRoot(appRoot: string): {directory: string} | {unres
  * when it was gathered, through the reader, so path rules apply and a gathered
  * symbolic link that leaves its scan directory is reported as unresolved. The root
  * of a repository that holds the app below its top level may be outside every scan
- * directory, so its allowlisted paths are read directly, contained by that root.
+ * directory, so an allowlisted path outside them is read directly, contained by that root.
  */
 export function findDependencyAutomationInputs(
   appRoot: string,
@@ -843,9 +843,9 @@ export function findDependencyAutomationInputs(
   const configurationRoot = dependencyAutomationRoot(canonicalRoot)
   if ('unresolvedReason' in configurationRoot) return {files: [], unresolvedReason: configurationRoot.unresolvedReason}
   const repositoryRoot = configurationRoot.directory
-  const isGatheredRoot =
-    repositoryRoot === canonicalRoot ||
-    configuredReader().scanDirectories.some((directory) => isSubpath(directory, repositoryRoot))
+  const {scanDirectories} = configuredReader()
+  const isScanned = (absolutePath: string) =>
+    repositoryRoot === canonicalRoot || scanDirectories.some((directory) => isSubpath(directory, absolutePath))
 
   const gathered = new Set(gatheredPaths)
   const files: SourceFile[] = []
@@ -853,10 +853,9 @@ export function findDependencyAutomationInputs(
   for (const configurationPath of DEPENDENCY_AUTOMATION_CONFIG_PATHS) {
     const absolutePath = joinPath(repositoryRoot, configurationPath)
     const relative = normalizeCliPath(relativePath(canonicalRoot, absolutePath))
-    if (isGatheredRoot && !gathered.has(relative)) continue
-    const result = isGatheredRoot
-      ? readRepositoryFile(absolutePath)
-      : readFileContainedBy(repositoryRoot, configurationPath)
+    const scanned = isScanned(absolutePath)
+    if (scanned && !gathered.has(relative)) continue
+    const result = scanned ? readRepositoryFile(absolutePath) : readFileContainedBy(repositoryRoot, configurationPath)
     if (result === undefined) continue
     if (!result.ok) {
       unresolvedReason ??=
