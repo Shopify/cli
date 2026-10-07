@@ -1,4 +1,4 @@
-import {selectStore} from './select-store.js'
+import {selectStore, StoreCreationMode} from './select-store.js'
 import {devStoreCapReached} from './cap.js'
 import {fetchStore, StoreNotFoundError} from './fetch.js'
 import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
@@ -12,7 +12,11 @@ import {
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {ClientName} from '../../utilities/developer-platform-client.js'
 import {sleep} from '@shopify/cli-kit/node/system'
-import {isTTY, renderInfo, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {isTTY, renderInfo, renderSuccess, renderSingleTask, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
+import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {addPublicMetadata, getAllPublicMetadata, getAllSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError, CancelExecution} from '@shopify/cli-kit/node/error'
 import {createDevStore} from '@shopify/organizations'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
@@ -26,6 +30,16 @@ vi.mock('./fetch', async (importOriginal) => ({
 vi.mock('@shopify/organizations')
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/api/business-platform')
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/output')>()),
+  outputResult: vi.fn(),
+}))
+
+beforeEach(async () => {
+  await addPublicMetadata(() => ({store_id: undefined}))
+})
 
 const ORG1: Organization = {
   id: '1',
@@ -63,6 +77,173 @@ const STORE3: OrganizationStore = {
 }
 
 const defaultShowDomainOnPrompt = false
+
+describe('inline creation identity with the real Organizations creator', () => {
+  const createdStore: OrganizationStore = {
+    ...STORE1,
+    shopId: '987654321',
+    shopName: 'created-store',
+    shopDomain: 'created-store.myshopify.com',
+  }
+
+  beforeEach(async () => {
+    const actual = await vi.importActual<typeof import('@shopify/organizations')>('@shopify/organizations')
+    vi.mocked(createDevStore).mockImplementation(actual.createDevStore)
+    vi.mocked(ensureAuthenticatedBusinessPlatform).mockResolvedValue('test-token')
+    vi.mocked(isTTY).mockReturnValue(true)
+    vi.mocked(devStoreCapReached).mockResolvedValue(false)
+    vi.mocked(devStoreNamePrompt).mockResolvedValue('created-store')
+    vi.mocked(devStorePlanPrompt).mockResolvedValue('grow')
+    vi.mocked(devStoreDemoDataPrompt).mockResolvedValue(false)
+    vi.mocked(sleep).mockResolvedValue(undefined)
+    vi.mocked(renderSingleTask).mockImplementation(async ({task}) => task(() => {}))
+    vi.mocked(renderTasks).mockImplementation(async (tasks: Task[]) => {
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task({}, task)
+      }
+      return {}
+    })
+    vi.mocked(selectStorePrompt).mockImplementation(async ({onCreateStoreWhenEmpty, onCreateStore}) => {
+      return (onCreateStoreWhenEmpty ?? onCreateStore)!()
+    })
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce({
+        createAppDevelopmentStore: {
+          shopDomain: createdStore.shopDomain,
+          shopAdminUrl: null,
+          shopifyShopId: 'gid://shopify/Shop/987654321',
+          userErrors: [],
+        },
+      })
+      .mockImplementationOnce(async () => {
+        expect(getAllPublicMetadata().store_id).toBe(987654321)
+        return {organization: {storeCreation: {status: 'COMPLETE'}}}
+      })
+    vi.mocked(fetchStore).mockResolvedValue(createdStore)
+  })
+
+  test.each<StoreCreationMode>(['when-empty', 'selection-option'])(
+    'records the shop identity through the real %s creation route',
+    async (mode) => {
+      const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.AppManagement})
+      const stores = mode === 'when-empty' ? [] : [STORE1]
+
+      await expect(selectStore({stores, hasMorePages: false}, ORG1, developerPlatformClient, mode)).resolves.toEqual(
+        createdStore,
+      )
+
+      expect(createDevStore).toHaveBeenCalledExactlyOnceWith({
+        name: 'created-store',
+        plan: 'grow',
+        withDemoData: false,
+        organization: ORG1,
+        json: false,
+        summary: false,
+      })
+      expect(getAllPublicMetadata().store_id).toBe(987654321)
+      expect(getAllPublicMetadata()).not.toHaveProperty('store_creation')
+      expect(getAllSensitiveMetadata()).not.toHaveProperty('store_creation')
+      expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledTimes(2)
+      expect(fetchStore).toHaveBeenCalledExactlyOnceWith(ORG1, createdStore.shopDomain, developerPlatformClient)
+      expect(renderSuccess).toHaveBeenCalledExactlyOnceWith({
+        headline: 'Dev store "created-store" created successfully.',
+      })
+      if (mode === 'when-empty') {
+        expect(renderInfo).toHaveBeenCalledExactlyOnceWith({
+          body: "You don't have any dev stores associated with org1's Dev Dashboard. Let's create one.",
+        })
+      } else {
+        expect(renderInfo).not.toHaveBeenCalled()
+      }
+      expect(outputResult).not.toHaveBeenCalled()
+    },
+  )
+
+  test.each([
+    ['when-empty', new StoreNotFoundError('Still provisioning'), 10],
+    ['selection-option', new StoreNotFoundError('Still provisioning'), 10],
+    ['when-empty', new AbortError('Refetch failed'), 1],
+    ['selection-option', new AbortError('Refetch failed'), 1],
+  ] as const)('retains identity after a %s refetch error %s', async (mode, error, expectedFetches) => {
+    vi.mocked(fetchStore).mockRejectedValue(error)
+    const stores = mode === 'when-empty' ? [] : [STORE1]
+    const expectedMessage =
+      expectedFetches === 10
+        ? 'The newly created development store (created-store.myshopify.com) is not available yet.'
+        : 'Refetch failed'
+
+    await expect(
+      selectStore(
+        {stores, hasMorePages: false},
+        ORG1,
+        testDeveloperPlatformClient({clientName: ClientName.AppManagement}),
+        mode,
+      ),
+    ).rejects.toThrow(expectedMessage)
+
+    expect(getAllPublicMetadata().store_id).toBe(987654321)
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledTimes(2)
+    expect(fetchStore).toHaveBeenCalledTimes(expectedFetches)
+    expect(renderSuccess).not.toHaveBeenCalled()
+    expect(outputResult).not.toHaveBeenCalled()
+  })
+
+  test.each<StoreCreationMode>(['disabled', 'when-empty', 'selection-option'])(
+    'does not record a creation identity when an existing store is selected in %s mode',
+    async (mode) => {
+      vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE1)
+
+      await expect(
+        selectStore(
+          {stores: [STORE1], hasMorePages: false},
+          ORG1,
+          testDeveloperPlatformClient({clientName: ClientName.AppManagement}),
+          mode,
+        ),
+      ).resolves.toEqual(STORE1)
+
+      expect(getAllPublicMetadata().store_id).toBeUndefined()
+      expect(getAllPublicMetadata()).not.toHaveProperty('store_creation')
+      expect(getAllSensitiveMetadata()).not.toHaveProperty('store_creation')
+      expect(createDevStore).not.toHaveBeenCalled()
+      expect(businessPlatformOrganizationsRequestDoc).not.toHaveBeenCalled()
+      expect(fetchStore).not.toHaveBeenCalled()
+    },
+  )
+
+  test('does not record identity when inline creation is cancelled', async () => {
+    vi.mocked(selectStorePrompt).mockResolvedValueOnce(undefined)
+
+    await expect(
+      selectStore(
+        {stores: [], hasMorePages: false},
+        ORG1,
+        testDeveloperPlatformClient({clientName: ClientName.AppManagement}),
+        'when-empty',
+      ),
+    ).rejects.toBeInstanceOf(CancelExecution)
+    expect(getAllPublicMetadata().store_id).toBeUndefined()
+    expect(createDevStore).not.toHaveBeenCalled()
+    expect(businessPlatformOrganizationsRequestDoc).not.toHaveBeenCalled()
+  })
+
+  test('does not record identity when the store cap stops inline creation', async () => {
+    vi.mocked(devStoreCapReached).mockResolvedValueOnce(true)
+
+    await expect(
+      selectStore(
+        {stores: [], hasMorePages: false},
+        ORG1,
+        testDeveloperPlatformClient({clientName: ClientName.AppManagement}),
+        'when-empty',
+      ),
+    ).rejects.toThrow('Your organization has reached its development store limit.')
+    expect(getAllPublicMetadata().store_id).toBeUndefined()
+    expect(createDevStore).not.toHaveBeenCalled()
+    expect(businessPlatformOrganizationsRequestDoc).not.toHaveBeenCalled()
+  })
+})
 
 describe('selectStore', async () => {
   beforeEach(() => {

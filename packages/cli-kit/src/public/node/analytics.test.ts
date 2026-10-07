@@ -55,7 +55,7 @@ describe('event tracking', () => {
   let publishEventMock: MockedFunction<typeof publishMonorailEvent>
   let execMock: MockedFunction<typeof exec>
 
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.setSystemTime(currentDate)
     vi.mocked(isShopify).mockResolvedValue(false)
     vi.mocked(isDevelopment).mockReturnValue(false)
@@ -69,6 +69,7 @@ describe('event tracking', () => {
     vi.mocked(isInsideContainer).mockReturnValue(false)
     publishEventMock = vi.mocked(publishMonorailEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
     execMock = vi.mocked(exec).mockResolvedValue(undefined)
+    await addPublicMetadata(() => ({store_id: undefined}))
   })
 
   afterEach(() => {
@@ -303,6 +304,37 @@ describe('event tracking', () => {
       expect(publishEventMock).toHaveBeenCalledOnce()
       expect(publishEventMock.mock.calls[0]![1]).toMatchObject(expectedPayloadPublic)
       expect(publishEventMock.mock.calls[0]![2]).toMatchObject(expectedPayloadSensitive)
+    })
+  })
+
+  test.each([
+    ['store create dev', 'store', 123456789],
+    ['app dev', 'app', 123456789],
+    ['store create dev', 'store', undefined],
+    ['app dev', 'app', undefined],
+  ])('serializes native store_id %s %s %s on the existing command event', async (command, topic, storeId) => {
+    await inProjectWithFile('package.json', async (args) => {
+      await startAnalytics({commandContent: {command, topic}, args, currentTime: currentDate.getTime() - 100})
+      await addPublicMetadata(() => ({store_id: storeId}))
+      const config = {runHook: vi.fn().mockResolvedValue({successes: [], failures: []}), plugins: []} as any
+
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+      await sendReportedAnalyticsPayload()
+
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      const [, publicPayload, sensitivePayload] = publishEventMock.mock.calls[0]!
+      expect(publicPayload).toMatchObject({command, cmd_all_topic: topic})
+      if (storeId === undefined) {
+        expect(publicPayload).not.toHaveProperty('store_id')
+      } else {
+        expect(publicPayload.store_id).toBe(storeId)
+        expect(typeof publicPayload.store_id).toBe('number')
+      }
+      expect(publicPayload).not.toHaveProperty('store_creation')
+      expect(sensitivePayload).not.toHaveProperty('store_creation')
+      expect(sensitivePayload).not.toHaveProperty('store_id')
+      if (typeof sensitivePayload.metadata !== 'string') throw new Error('Expected serialized sensitive metadata')
+      expect(JSON.parse(sensitivePayload.metadata)).not.toHaveProperty('store_creation')
     })
   })
 
