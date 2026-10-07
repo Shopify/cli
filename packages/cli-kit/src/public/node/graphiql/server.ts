@@ -16,6 +16,7 @@ import {
   getQuery,
   getRequestHeader,
   getRequestHeaders,
+  H3Event,
   readBody,
   setResponseHeader,
   setResponseStatus,
@@ -162,7 +163,16 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
 
   app.use(
     defineEventHandler((event) => {
-      setResponseHeader(event, 'Access-Control-Allow-Origin', '*')
+      // Responses vary per Origin now, so caches must not reuse one origin's response for another.
+      setResponseHeader(event, 'Vary', 'Origin')
+
+      const origin = getRequestHeader(event, 'origin')
+      // This server proxies authenticated Admin API calls, so any origin allowed here can read
+      // store data from the developer's machine. The GraphiQL UI only ever calls itself, so
+      // cross-origin reads are never legitimate and are left to be blocked by the browser.
+      if (!origin || origin !== requestOrigin(event)) return
+
+      setResponseHeader(event, 'Access-Control-Allow-Origin', origin)
       setResponseHeader(event, 'Access-Control-Allow-Methods', 'GET, OPTIONS')
       setResponseHeader(
         event,
@@ -218,10 +228,7 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
         return `Invalid path ${event.path}`
       }
 
-      const forwardedProto = getRequestHeader(event, 'x-forwarded-proto')
-      const usesHttps = forwardedProto === 'https'
-      const host = getRequestHeader(event, 'host')
-      const url = `http${usesHttps ? 's' : ''}://${host}`
+      const url = requestOrigin(event)
 
       let apiVersions: string[]
       try {
@@ -349,6 +356,13 @@ function resolveGraphiQLServerKey(
   if (trimmed) return trimmed
   if (appContext) return deriveGraphiQLKey(appContext.apiSecret, storeFqdn)
   return randomBytes(32).toString('hex')
+}
+
+// The origin the browser used to reach this server, which is also the origin the served
+// GraphiQL page makes its own requests from.
+function requestOrigin(event: H3Event): string {
+  const usesHttps = getRequestHeader(event, 'x-forwarded-proto') === 'https'
+  return `http${usesHttps ? 's' : ''}://${getRequestHeader(event, 'host')}`
 }
 
 function isMutationRequestBody(body: unknown): boolean {
