@@ -122,6 +122,23 @@ test('leaves a failed import on the fatal path without printing a result', async
   })
 })
 
+test('reports completed imports as partial when saving identifiers fails', async () => {
+  await withApp(async (app) => {
+    const path = joinPath(app.directory, 'environment-directory')
+    app.dotenv = {path, variables: {}}
+    await mkdir(path)
+    await withCapturedStandardStreams(async ({stdout}) => {
+      await expect(runCommand(app.directory)).rejects.toBeInstanceOf(AbortSilentError)
+      expect(JSON.parse(stdout())).toMatchObject({
+        status: 'partial',
+        extensions: [publicExtension(app.directory)],
+        errors: [{extensionId: null, error: {type: 'bug'}}],
+        identifiersUpdated: false,
+      })
+    })
+  })
+})
+
 test.each(['cancelled', 'partial'])(
   'waits for a pending import before writing %s JSON and exits once without postrun',
   async (status) => {
