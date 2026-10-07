@@ -1,15 +1,9 @@
+import {authLoginJsonOutputSchema} from '../../services/commands/auth/login/types.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {promptSessionSelect} from '@shopify/cli-kit/node/session-prompt'
 import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {outputCompleted, outputResult} from '@shopify/cli-kit/node/output'
-import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
-import {zod} from '@shopify/cli-kit/node/schema'
-
-const authLoginJsonOutputSchema = defineJsonOutputSchema({
-  name: 'AuthLoginResult',
-  schema: zod.object({status: zod.literal('success'), alias: zod.string()}).strict(),
-})
 
 export default class Login extends Command {
   static descriptionWithMarkdown = 'Logs you in to your Shopify account.'
