@@ -94,6 +94,8 @@ describe('resolvePermanentStoreFqdn', () => {
     ['is missing', {}],
     ['is not a string', {myshopify_domain: 42}],
     ['is not a store domain', {myshopify_domain: 'evil.example.com'}],
+    ['is not a .myshopify.com domain', {myshopify_domain: 'my-store.myshopify.io'}],
+    ['has more than one label before .myshopify.com', {myshopify_domain: 'evil.my-store.myshopify.com'}],
     ['contains a path', {myshopify_domain: 'my-store.myshopify.com/admin'}],
   ])('returns the domain unchanged when myshopify_domain %s', async (_description, body) => {
     // Given

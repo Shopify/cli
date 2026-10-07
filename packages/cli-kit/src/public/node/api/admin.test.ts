@@ -326,6 +326,9 @@ describe('fetchApiVersions error classification', () => {
       'The Theme Access password was rejected for the store alias.myshopify.com.',
     )
     expect(String((error as AbortError).tryMessage)).toContain('permanent .myshopify.com domain')
-    expect(JSON.stringify((error as AbortError).nextSteps)).toContain('https://alias.myshopify.com/meta.json')
+    const nextSteps = JSON.stringify((error as AbortError).nextSteps)
+    expect(nextSteps).toContain('Settings > Domains')
+    // The domain the user passed may not be a real store, so the error must not send them to a URL built from it.
+    expect(nextSteps).not.toContain('alias.myshopify.com')
   })
 })

@@ -196,8 +196,9 @@ export async function fetchApiVersions(
             'Pass the permanent domain to',
             {command: '--store'},
             {char: '.'},
-            'It is the myshopify_domain value at',
-            {link: {url: `https://${session.storeFqdn}/meta.json`}},
+            'It is the .myshopify.com domain listed in the Shopify admin under',
+            {subdued: 'Settings > Domains'},
+            {char: '.'},
           ],
         ],
       )

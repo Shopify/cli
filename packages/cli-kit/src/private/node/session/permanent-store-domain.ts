@@ -1,4 +1,5 @@
 import {serviceEnvironment} from '../context/service.js'
+import {extractMyshopifyHandle} from '../../../public/common/url.js'
 import {fetch} from '../../../public/node/http.js'
 import {outputContent, outputDebug, outputInfo, outputToken} from '../../../public/node/output.js'
 
@@ -6,11 +7,6 @@ import {outputContent, outputDebug, outputInfo, outputToken} from '../../../publ
  * How long to wait for a store's public `/meta.json` before giving up and using the domain as given.
  */
 const PERMANENT_DOMAIN_LOOKUP_TIMEOUT_MS = 5000
-
-/**
- * A Shopify store domain: one or more DNS labels followed by one of the suffixes Shopify uses for store domains.
- */
-const STORE_DOMAIN_REGEX = /^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:myshopify\.com|myshopify\.io|shop\.dev)$/
 
 const resolvedStoreFqdns = new Map<string, Promise<string>>()
 
@@ -73,7 +69,10 @@ async function fetchPermanentStoreFqdn(storeFqdn: string): Promise<string> {
 
     const body = (await response.json()) as {myshopify_domain?: unknown} | null
     const permanentStoreFqdn = typeof body?.myshopify_domain === 'string' ? body.myshopify_domain.toLowerCase() : ''
-    if (!STORE_DOMAIN_REGEX.test(permanentStoreFqdn)) {
+    // Accept only a bare `<handle>.myshopify.com`: `extractMyshopifyHandle` also accepts a URL with a path, so
+    // compare the round trip to reject anything but the domain itself.
+    const handle = extractMyshopifyHandle(permanentStoreFqdn)
+    if (!handle || `${handle}.myshopify.com` !== permanentStoreFqdn) {
       outputDebug(`Could not look up the permanent domain of ${storeFqdn}: ${url} has no valid myshopify_domain`)
       return storeFqdn
     }
