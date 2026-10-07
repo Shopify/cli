@@ -4496,13 +4496,17 @@ Trigger delivery of a sample webhook topic payload to a designated address.
 ```
 USAGE
   $ shopify app webhook trigger [--address <value>] [--api-version <value>] [--auth-alias <value>] [--client-id <value> |
-    -c <value>] [--client-secret <value>] [--delivery-method http|google-pub-sub|event-bridge] [--help] [--json-schema]
-    [--path <value>] [--reset | ] [--topic <value>]
+    -c <value>] [--client-secret <value>] [--delivery-method http|google-pub-sub|event-bridge] [--help] [-j]
+    [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [--topic <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --address=<value>
       The URL where the webhook payload should be sent.
@@ -4545,6 +4549,14 @@ FLAGS
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to your app directory.
       [env: SHOPIFY_FLAG_PATH]
@@ -4556,6 +4568,10 @@ FLAGS
   --topic=<value>
       The requested webhook topic. Required if non interactive.
       [env: SHOPIFY_FLAG_TOPIC]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
   Trigger delivery of a sample webhook topic payload to a designated address.
@@ -4582,6 +4598,74 @@ DESCRIPTION
   - Trigger requests are rate-limited using the "Partner API rate limit"
   (https://shopify.dev/docs/api/partner#rate_limits).
   - You can't use this method to validate your API webhook subscriptions.
+
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppWebhookTriggerResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "delivery": {
+        "$ref": "#/definitions/AppWebhookDelivery"
+      }
+    },
+    "required": [
+      "status",
+      "delivery"
+    ],
+    "additionalProperties": false,
+    "title": "AppWebhookTriggerResult",
+    "definitions": {
+      "AppWebhookDelivery": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "apiVersion": {
+            "type": "string"
+          },
+          "deliveryMethod": {
+            "type": "string",
+            "enum": [
+              "localhost",
+              "http",
+              "google-pub-sub",
+              "event-bridge"
+            ]
+          },
+          "address": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "delivered",
+              "enqueued"
+            ],
+            "description": "Remote delivery is enqueued, not confirmed received."
+          }
+        },
+        "required": [
+          "topic",
+          "apiVersion",
+          "deliveryMethod",
+          "address",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify auth login`

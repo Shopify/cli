@@ -10,7 +10,6 @@ import {
   testOrganizationApp,
 } from '../../models/app/app.test-data.js'
 import {loadApp} from '../../models/app/loader.js'
-import {outputSuccess, outputWarn} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 
 const samplePayload = '{ "sampleField": "SampleValue" }'
@@ -79,11 +78,11 @@ describe('webhookTriggerService', () => {
     vi.mocked(getWebhookSample).mockResolvedValue(response)
 
     // When
-    await webhookTriggerService(sampleFlags())
+    const result = await webhookTriggerService(sampleFlags())
 
     // Then
     expectCalls(aVersion, anOrganizationId)
-    expect(outputWarn).toHaveBeenCalledWith(`Request errors:\n  · Some error\n  · Another error`)
+    expect(result).toEqual({status: 'failed', reason: 'sample-request', userErrors: response.userErrors})
   })
 
   test('Safe notification in case of unexpected request errors', async () => {
@@ -102,11 +101,11 @@ describe('webhookTriggerService', () => {
     vi.mocked(getWebhookSample).mockResolvedValue(response)
 
     // When
-    await webhookTriggerService(sampleFlags())
+    const result = await webhookTriggerService(sampleFlags())
 
     // Then
     expectCalls(aVersion, anOrganizationId)
-    expect(outputWarn).toHaveBeenCalledWith(`Request errors:\n${JSON.stringify(response.userErrors)}`)
+    expect(result).toEqual({status: 'failed', reason: 'sample-request', userErrors: response.userErrors})
   })
 
   test('notifies about real delivery being sent', async () => {
@@ -123,7 +122,7 @@ describe('webhookTriggerService', () => {
     }
 
     // When
-    await webhookTriggerService(sampleFlags())
+    const result = await webhookTriggerService(sampleFlags())
 
     // Then
     expectCalls(aVersion, anOrganizationId)
@@ -133,7 +132,20 @@ describe('webhookTriggerService', () => {
       anOrganizationId,
     )
     expect(triggerLocalWebhook).toHaveBeenCalledTimes(0)
-    expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
+    expect(result).toEqual({
+      status: 'success',
+      result: {
+        status: 'success',
+        delivery: {
+          topic: aTopic,
+          apiVersion: aVersion,
+          deliveryMethod: expectedSampleWebhookVariables.delivery_method,
+          address: expectedSampleWebhookVariables.address,
+          status: 'enqueued',
+        },
+      },
+      samplePayloadIsEmpty: true,
+    })
   })
 
   test('retrieves the api-key when missing for event-bridge', async () => {
@@ -155,7 +167,8 @@ describe('webhookTriggerService', () => {
     }
 
     // When
-    await webhookTriggerService(flags)
+    const result = await webhookTriggerService(flags)
+    expect(result.status).toBe('success')
   })
 
   test('notifies about real event-bridge delivery being sent', async () => {
@@ -176,7 +189,7 @@ describe('webhookTriggerService', () => {
     }
 
     // When
-    await webhookTriggerService(flags)
+    const result = await webhookTriggerService(flags)
 
     // Then
     expectCalls(aVersion, anOrganizationId)
@@ -185,7 +198,20 @@ describe('webhookTriggerService', () => {
       expectedSampleWebhookVariables,
       anOrganizationId,
     )
-    expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
+    expect(result).toEqual({
+      status: 'success',
+      result: {
+        status: 'success',
+        delivery: {
+          topic: aTopic,
+          apiVersion: aVersion,
+          deliveryMethod: expectedSampleWebhookVariables.delivery_method,
+          address: expectedSampleWebhookVariables.address,
+          status: 'enqueued',
+        },
+      },
+      samplePayloadIsEmpty: true,
+    })
   })
 
   describe('Localhost delivery', () => {
@@ -203,7 +229,7 @@ describe('webhookTriggerService', () => {
       }
 
       // When
-      await webhookTriggerService(sampleLocalhostFlags())
+      const result = await webhookTriggerService(sampleLocalhostFlags())
 
       // Then
       expectCalls(aVersion, anOrganizationId)
@@ -213,7 +239,20 @@ describe('webhookTriggerService', () => {
         anOrganizationId,
       )
       expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
-      expect(outputSuccess).toHaveBeenCalledWith('Localhost delivery sucessful')
+      expect(result).toEqual({
+        status: 'success',
+        result: {
+          status: 'success',
+          delivery: {
+            topic: aTopic,
+            apiVersion: aVersion,
+            deliveryMethod: 'localhost',
+            address: aFullLocalAddress,
+            status: 'delivered',
+          },
+        },
+        samplePayloadIsEmpty: false,
+      })
     })
 
     test('shows an error if localhost is not ready', async () => {
@@ -230,7 +269,7 @@ describe('webhookTriggerService', () => {
       }
 
       // When
-      await webhookTriggerService(sampleLocalhostFlags())
+      const result = await webhookTriggerService(sampleLocalhostFlags())
 
       // Then
       expectCalls(aVersion, anOrganizationId)
@@ -240,7 +279,7 @@ describe('webhookTriggerService', () => {
         anOrganizationId,
       )
       expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
-      expect(outputWarn).toHaveBeenCalledWith('Localhost delivery failed')
+      expect(result).toEqual({status: 'failed', reason: 'localhost-delivery'})
     })
   })
 

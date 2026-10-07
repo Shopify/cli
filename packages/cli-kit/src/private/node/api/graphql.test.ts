@@ -1,8 +1,51 @@
-import {extractGraphQLErrorMessages, errorHandler} from './graphql.js'
+import {debugLogRequestInfo, extractGraphQLErrorMessages, errorHandler, sanitizeVariables} from './graphql.js'
 import {GraphQLClientError} from './headers.js'
 import {AbortError} from '../../../public/node/error.js'
+import {runWithCommandEventsForCommand} from '../../../public/node/command-events.js'
+import {withCapturedStandardStreams} from '../../../public/node/testing/output.js'
+import * as localContext from '../../../public/node/context/local.js'
 import {ClientError} from 'graphql-request'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
+
+test('masks webhook secrets in the diagnostic copy without changing request variables', async () => {
+  const verbose = vi.spyOn(localContext, 'isVerbose').mockReturnValue(true)
+  const variables = {
+    sharedSecret: 'PRIVATE_CURRENT_SECRET',
+    shared_secret: 'PRIVATE_LEGACY_SECRET',
+    topic: 'orders/create',
+  }
+  expect(JSON.parse(sanitizeVariables(variables))).toEqual({
+    sharedSecret: '*****',
+    shared_secret: '*****',
+    topic: 'orders/create',
+  })
+  try {
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runWithCommandEventsForCommand(['--json', '--verbose'], async () => {
+        debugLogRequestInfo(
+          'Webhooks',
+          'mutation CliTesting { cliTesting { success } }',
+          'https://example.com/graphql',
+          variables,
+        )
+      })
+      expect(stdout()).toBe('')
+      const event = JSON.parse(stderr())
+      expect(event).toMatchObject({type: 'diagnostic', level: 'debug'})
+      expect(event.message).toContain('"sharedSecret": "*****"')
+      expect(event.message).toContain('"shared_secret": "*****"')
+      expect(stderr()).not.toContain('PRIVATE_CURRENT_SECRET')
+      expect(stderr()).not.toContain('PRIVATE_LEGACY_SECRET')
+    })
+  } finally {
+    verbose.mockRestore()
+  }
+  expect(variables).toEqual({
+    sharedSecret: 'PRIVATE_CURRENT_SECRET',
+    shared_secret: 'PRIVATE_LEGACY_SECRET',
+    topic: 'orders/create',
+  })
+})
 
 describe('extractGraphQLErrorMessages', () => {
   test('returns undefined for undefined errors', () => {
