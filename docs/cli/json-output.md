@@ -323,6 +323,16 @@ separately or use a subprocess; mocking the output helper does not prove stream 
 object and side events on stderr. Cover applicable empty, null, cancelled, skipped, partial, batch, and file outcomes;
 check file receipts against real files in temporary directories and verify error/exit behavior.
 
+Use `describeJsonCommand` from `@shopify/cli-kit/node/testing/json-command` for the shared command checks. Supply the
+command ID, valid arguments, independent expected result and schema, text output, and callbacks to set up and check
+service calls. The suite runs the real launcher with `--json`, `-j`, the JSON environment flag, and both `--no-input`
+output modes. It checks help and schema discovery without required inputs, command hooks, or service calls. Optional
+diagnostic and failure fixtures check stderr routing and fatal error output with its exit code.
+
+Keep command-specific input, strict schema validation, prompts, cancellations, partial results, and real file tests
+beside the command. See `packages/cli/src/cli/commands/auth/logout-json.test.ts` for an example. The suite replaces process
+globals and runs sequentially; do not put it in a concurrent test group.
+
 Non-interactive command help and generated README documentation include the result's JSON Schema automatically through
 `jsonOutputSchema`. Interactive help keeps the `--json-schema` hint and omits the schema introduction and inline schema.
 `--json-schema` prints one JSON Schema (draft-07) accepting a result, a fatal error document, or a side event. The `Result`,
