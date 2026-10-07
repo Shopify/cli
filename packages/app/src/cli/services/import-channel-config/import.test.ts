@@ -31,13 +31,12 @@ function successResult(warnings: {code: string; message: string}[] = []) {
   }
 }
 
-function testOptions(app: AppLinkedInterface, {force = false, json = false} = {}) {
+function testOptions(app: AppLinkedInterface, {force = false} = {}) {
   return {
     app,
     remoteApp: testOrganizationApp(),
     developerPlatformClient: testDeveloperPlatformClient(),
     force,
-    json,
   }
 }
 
@@ -47,18 +46,24 @@ describe('importChannelConfig', () => {
       // Given
       vi.mocked(fetchChannelSpecExport).mockResolvedValue(successResult())
       const app = testAppLinked({directory: tmpDir})
-      const outputMock = mockAndCaptureOutput()
 
       // When
-      await importChannelConfig(testOptions(app))
+      const result = await importChannelConfig(testOptions(app))
 
       // Then
       const outputPath = joinPath(tmpDir, CHANNEL_SPEC_DIRECTORY, 'example.toml')
       await expect(fileExists(outputPath)).resolves.toBe(true)
       await expect(readFile(outputPath)).resolves.toEqual(TOML)
-      expect(outputMock.info()).toContain('Imported the channel spec')
-      expect(outputMock.info()).toContain('shopify app dev')
-      expect(outputMock.info()).toContain('shopify app deploy')
+      expect(result).toEqual({
+        status: 'success',
+        handle: 'example',
+        filename: 'example.toml',
+        path: outputPath,
+        toml: TOML,
+        warnings: [],
+        extensionConfigurationPath: joinPath(tmpDir, CHANNEL_SPEC_EXTENSION_DIRECTORY, 'shopify.extension.toml'),
+      })
+      expect(mockAndCaptureOutput().info()).toBe('')
     })
   })
 
@@ -94,7 +99,7 @@ describe('importChannelConfig', () => {
     })
   })
 
-  test('renders backend warnings when writing the file', async () => {
+  test('returns backend warnings when writing the file', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const warning = {
@@ -104,13 +109,13 @@ describe('importChannelConfig', () => {
       }
       vi.mocked(fetchChannelSpecExport).mockResolvedValue(successResult([warning]))
       const app = testAppLinked({directory: tmpDir})
-      const outputMock = mockAndCaptureOutput()
 
       // When
-      await importChannelConfig(testOptions(app))
+      const result = await importChannelConfig(testOptions(app))
 
       // Then
-      expect(outputMock.warn()).toContain('This generated spec enables automatic product feed management.')
+      expect(result.warnings).toEqual([warning])
+      expect(mockAndCaptureOutput().warn()).toBe('')
       await expect(readFile(joinPath(tmpDir, CHANNEL_SPEC_DIRECTORY, 'example.toml'))).resolves.not.toContain(
         'product feed management',
       )
@@ -141,28 +146,17 @@ describe('importChannelConfig', () => {
     })
   })
 
-  test('emits the encoded JSON result and still writes the file in --json mode', async () => {
+  test('a file write failure preserves existing content and returns no success data', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const warning = {code: 'missing_countries', message: 'Add a countries section.'}
-      vi.mocked(fetchChannelSpecExport).mockResolvedValue(successResult([warning]))
+      vi.mocked(fetchChannelSpecExport).mockResolvedValue(successResult())
       const app = testAppLinked({directory: tmpDir})
-      const outputMock = mockAndCaptureOutput()
+      const extensionDirectory = joinPath(tmpDir, CHANNEL_SPEC_EXTENSION_DIRECTORY)
+      await mkdir(dirname(extensionDirectory))
+      await writeFile(extensionDirectory, 'existing content\n')
 
-      // When
-      await importChannelConfig(testOptions(app, {json: true}))
-
-      // Then
-      const outputPath = joinPath(tmpDir, CHANNEL_SPEC_DIRECTORY, 'example.toml')
-      await expect(fileExists(outputPath)).resolves.toBe(true)
-      const parsed = JSON.parse(outputMock.info())
-      expect(parsed).toEqual({
-        handle: 'example',
-        filename: 'example.toml',
-        path: joinPath(CHANNEL_SPEC_DIRECTORY, 'example.toml'),
-        toml: TOML,
-        warnings: [warning],
-      })
+      await expect(importChannelConfig(testOptions(app))).rejects.toThrow()
+      await expect(readFile(extensionDirectory)).resolves.toBe('existing content\n')
+      expect(mockAndCaptureOutput().info()).toBe('')
     })
   })
 
@@ -187,7 +181,6 @@ describe('importChannelConfig', () => {
       // Given
       vi.mocked(fetchChannelSpecExport).mockResolvedValue(successResult())
       const app = testAppLinked({directory: tmpDir})
-      const outputMock = mockAndCaptureOutput()
 
       // When
       await importChannelConfig(testOptions(app))
@@ -195,7 +188,6 @@ describe('importChannelConfig', () => {
       // Then
       const extensionConfigPath = joinPath(tmpDir, CHANNEL_SPEC_EXTENSION_DIRECTORY, 'shopify.extension.toml')
       await expect(readFile(extensionConfigPath)).resolves.toContain('type = "channel_config"')
-      expect(outputMock.info()).toContain('shopify.extension.toml')
     })
   })
 
@@ -212,16 +204,15 @@ describe('importChannelConfig', () => {
         directory: tmpDir,
         allExtensions: [await testChannelConfigExtension(extensionDirectory, 'my-channel')],
       })
-      const outputMock = mockAndCaptureOutput()
 
       // When
-      await importChannelConfig(testOptions(app))
+      const result = await importChannelConfig(testOptions(app))
 
       // Then
       await expect(readFile(joinPath(extensionDirectory, 'specifications', 'example.toml'))).resolves.toEqual(TOML)
       await expect(readFile(extensionConfigPath)).resolves.toEqual(existingContent)
       await expect(fileExists(joinPath(tmpDir, CHANNEL_SPEC_EXTENSION_DIRECTORY))).resolves.toBe(false)
-      expect(outputMock.info()).not.toContain('Also created')
+      expect(result.extensionConfigurationPath).toBeNull()
     })
   })
 
