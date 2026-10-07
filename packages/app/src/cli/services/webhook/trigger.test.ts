@@ -138,15 +138,12 @@ describe('webhookTriggerService', () => {
     expect(triggerLocalWebhook).toHaveBeenCalledTimes(0)
     expect(result).toEqual({
       status: 'success',
-      result: {
-        status: 'success',
-        delivery: {
-          topic: aTopic,
-          apiVersion: aVersion,
-          deliveryMethod: expectedSampleWebhookVariables.delivery_method,
-          address: expectedSampleWebhookVariables.address,
-          status: 'enqueued',
-        },
+      delivery: {
+        topic: aTopic,
+        apiVersion: aVersion,
+        deliveryMethod: expectedSampleWebhookVariables.delivery_method,
+        address: expectedSampleWebhookVariables.address,
+        status: 'enqueued',
       },
       samplePayloadIsEmpty: true,
     })
@@ -232,7 +229,7 @@ describe('webhookTriggerService', () => {
         anOrganizationId,
       )
       expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
-      expect(result).toMatchObject({status: 'success', result: {delivery: {status: 'delivered'}}})
+      expect(result).toMatchObject({status: 'success', delivery: {status: 'delivered'}})
       renderWebhookTriggerResult(result, 'text')
       expect(outputSuccess).toHaveBeenCalledWith('Localhost delivery sucessful')
     })

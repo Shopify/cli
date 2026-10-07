@@ -22,15 +22,12 @@ vi.mock('../../../services/webhook/trigger.js')
 const app = testAppLinked()
 const result: WebhookTriggerResult = {
   status: 'success',
-  result: {
-    status: 'success',
-    delivery: {
-      topic: 'orders/create',
-      apiVersion: '2026-10',
-      deliveryMethod: 'http',
-      address: 'https://example.com/webhooks',
-      status: 'enqueued',
-    },
+  delivery: {
+    topic: 'orders/create',
+    apiVersion: '2026-10',
+    deliveryMethod: 'http',
+    address: 'https://example.com/webhooks',
+    status: 'enqueued',
   },
   samplePayloadIsEmpty: true,
 }

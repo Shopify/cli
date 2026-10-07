@@ -21,6 +21,6 @@ export const appWebhookTriggerJsonOutputSchema = defineJsonOutputSchema({
 export type AppWebhookTriggerResult = InferJsonOutputSchema<typeof appWebhookTriggerJsonOutputSchema>
 
 export type WebhookTriggerResult =
-  | {status: 'success'; result: AppWebhookTriggerResult; samplePayloadIsEmpty: boolean}
+  | (AppWebhookTriggerResult & {samplePayloadIsEmpty: boolean})
   | {status: 'failed'; reason: 'sample-request'; userErrors: UserErrors[]}
   | {status: 'failed'; reason: 'localhost-delivery'}

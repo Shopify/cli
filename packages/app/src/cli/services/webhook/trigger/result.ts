@@ -23,8 +23,8 @@ export function renderWebhookTriggerResult(result: WebhookTriggerResult, format:
   }
 
   if (format === 'json') {
-    outputResult(appWebhookTriggerJsonOutputSchema.encode(result.result))
-  } else if (result.result.delivery.status === 'delivered') {
+    outputResult(appWebhookTriggerJsonOutputSchema.encode({status: result.status, delivery: result.delivery}))
+  } else if (result.delivery.status === 'delivered') {
     outputSuccess('Localhost delivery sucessful')
   } else if (result.samplePayloadIsEmpty) {
     outputSuccess('Webhook has been enqueued for delivery')

@@ -92,7 +92,7 @@ async function sendSample(options: WebhookTriggerOptions): Promise<WebhookTrigge
     if (result) {
       return {
         status: 'success',
-        result: {status: 'success', delivery: {...delivery, status: 'delivered'}},
+        delivery: {...delivery, status: 'delivered'},
         samplePayloadIsEmpty: sample.samplePayload === JSON.stringify({}),
       }
     }
@@ -102,7 +102,7 @@ async function sendSample(options: WebhookTriggerOptions): Promise<WebhookTrigge
 
   return {
     status: 'success',
-    result: {status: 'success', delivery},
+    delivery,
     samplePayloadIsEmpty: sample.samplePayload === JSON.stringify({}),
   }
 }
