@@ -18,9 +18,7 @@ export default class Release extends AppLinkedCommand {
 
   static descriptionWithMarkdown = `Releases an existing app version. Pass the name of the version that you want to release using the \`--version\` flag.`
 
-  static get jsonOutputSchema() {
-    return appReleaseJsonOutputSchema
-  }
+  static jsonOutputSchema = appReleaseJsonOutputSchema
 
   static description = this.descriptionForHelp()
 
