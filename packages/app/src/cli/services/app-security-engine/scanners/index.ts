@@ -12,7 +12,7 @@ import {
   gatherPaths,
 } from './discover.js'
 import {createPathRules} from './path-rules.js'
-import {detectCapabilities, detectProject} from '../capabilities/detect.js'
+import {detectCapabilities, detectProject, detectReactRouterRoots} from '../capabilities/detect.js'
 import {computeScanMetadata} from '../scorer/index.js'
 import {deprecatedScriptTagScope, insecureWebhookUrl} from '../rules/config-rules.js'
 import {
@@ -602,7 +602,12 @@ export async function scan(input: ScanInput, options: ScanOptions = {}): Promise
     ? findDependencyAutomationInputs(appRoot, repositoryFiles)
     : {files: []}
   const capabilities = detectCapabilities(appToml, extensions, sourceFiles, appTomls)
-  const detection = detectProject(manifests, extensions, sourceCandidates)
+  const reactRouterRoots = detectReactRouterRoots(
+    manifests,
+    sourceCandidates,
+    otherAppDirectories.map((directory) => normalizePath(relativePath(appRoot, directory))),
+  )
+  const detection = detectProject(extensions, sourceCandidates, reactRouterRoots)
   const context: ScanContext = {
     appRoot,
     appToml,
@@ -614,6 +619,7 @@ export async function scan(input: ScanInput, options: ScanOptions = {}): Promise
     sensitiveFiles,
     capabilities,
     detection,
+    reactRouterRoots,
     sourceCandidates,
     gitIgnoreListing: listingStatus,
   }

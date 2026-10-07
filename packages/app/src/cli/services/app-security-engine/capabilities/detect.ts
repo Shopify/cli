@@ -1,5 +1,8 @@
+import {dirname} from '@shopify/cli-kit/node/path'
 import type {AppTomlContent, ExtensionInfo, ManifestFile, SourceFile} from '../scanners/types.js'
 import type {Capabilities, DetectedLanguage, ProjectDetection, SourceCandidate} from '../types.js'
+
+const REACT_ROUTER_PACKAGE = '@shopify/shopify-app-react-router'
 
 /** Capabilities describe observed behavior. They do not imply framework support. */
 export function detectCapabilities(
@@ -39,28 +42,75 @@ export function detectCapabilities(
 }
 
 /**
+ * Find the React Router app roots, relative to the app directory, with `.` for the app directory itself.
+ * A root needs a package.json that declares `@shopify/shopify-app-react-router` plus the conventional
+ * app/routes + app/shopify.server structure, so code gathered from outside the app directory, such as an
+ * --include-dir or web directory, is recognised. The app directory accepts the package from any gathered
+ * manifest, such as a workspace root's.
+ *
+ * Roots inside another app's directory belong to that app. An app directory above this one holds this app
+ * too, so only its own root is left out.
+ */
+export function detectReactRouterRoots(
+  manifests: ManifestFile[],
+  candidates: SourceCandidate[],
+  otherAppDirectories: string[] = [],
+): string[] {
+  const declaringManifests = manifests.filter(
+    (manifest) =>
+      manifest.dependencies[REACT_ROUTER_PACKAGE] !== undefined ||
+      manifest.devDependencies?.[REACT_ROUTER_PACKAGE] !== undefined,
+  )
+  if (declaringManifests.length === 0) return []
+  const candidatePaths = candidates.map((candidate) => candidate.path)
+  const roots = new Set(['.', ...declaringManifests.map((manifest) => dirname(manifest.path))])
+  return [...roots]
+    .filter((root) => hasReactRouterStructure(root, candidatePaths))
+    .filter((root) => !belongsToOtherApp(root, otherAppDirectories))
+    .sort()
+}
+
+/** Whether `path` is the app/shopify.server module of the React Router app at `root`. */
+export function isReactRouterServerPath(root: string, path: string): boolean {
+  const pathInRoot = pathWithinRoot(root, path)
+  return pathInRoot !== undefined && /^app\/shopify\.server\.[cm]?[jt]sx?$/.test(pathInRoot)
+}
+
+/** `path` relative to `root`, or undefined when it is outside. Both use forward slashes, as gathering does. */
+function pathWithinRoot(root: string, path: string): string | undefined {
+  if (root === '.') return path
+  return path.startsWith(`${root}/`) ? path.slice(root.length + 1) : undefined
+}
+
+function hasReactRouterStructure(root: string, paths: string[]): boolean {
+  return (
+    paths.some((path) => pathWithinRoot(root, path)?.startsWith('app/routes/')) &&
+    paths.some((path) => isReactRouterServerPath(root, path))
+  )
+}
+
+function belongsToOtherApp(root: string, otherAppDirectories: string[]): boolean {
+  return otherAppDirectories.some(
+    (directory) =>
+      root === directory || (!isAncestorOfAppDirectory(directory) && pathWithinRoot(directory, root) !== undefined),
+  )
+}
+
+function isAncestorOfAppDirectory(directory: string): boolean {
+  return directory.split('/').every((segment) => segment === '..')
+}
+
+/**
  * Detect the framework and product surface independently from capabilities.
- * React Router support requires both its manifest package and the conventional
- * app/routes + app/shopify.server structure; a coincidental route export is
- * not enough to claim deterministic coverage.
+ * React Router support requires at least one root from `detectReactRouterRoots`;
+ * a coincidental route export is not enough to claim deterministic coverage.
  */
 export function detectProject(
-  manifests: ManifestFile[],
   extensions: ExtensionInfo[],
   candidates: SourceCandidate[],
+  reactRouterRoots: string[],
 ): ProjectDetection {
-  const dependencyNames = new Set(
-    manifests.flatMap((manifest) => [
-      ...Object.keys(manifest.dependencies),
-      ...Object.keys(manifest.devDependencies ?? {}),
-    ]),
-  )
-  const candidatePaths = new Set(candidates.map((candidate) => candidate.path))
-  const hasReactRouterPackage = dependencyNames.has('@shopify/shopify-app-react-router')
-  const hasReactRouterStructure =
-    [...candidatePaths].some((path) => path.startsWith('app/routes/')) &&
-    [...candidatePaths].some((path) => /^app\/shopify\.server\.[cm]?[jt]sx?$/.test(path))
-  const reactRouter = hasReactRouterPackage && hasReactRouterStructure
+  const reactRouter = reactRouterRoots.length > 0
   const themeExtensions = extensions.filter((extension) => extension.type === 'theme')
   const themeExtension = themeExtensions.length > 0
   const themePaths = new Set(themeExtensions.flatMap((extension) => extension.files.map((file) => file.path)))

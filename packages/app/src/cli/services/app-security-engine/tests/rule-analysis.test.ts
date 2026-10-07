@@ -28,6 +28,7 @@ function context(
   } = {},
 ): ScanContext {
   const appTomls = input.appTomls ?? []
+  const framework = input.framework ?? 'react_router'
   return {
     appRoot: '/app',
     appToml: appTomls[0] ?? null,
@@ -49,7 +50,8 @@ function context(
       declared_ip_allowlist: false,
       checkout_extension: false,
     },
-    detection: {framework: input.framework ?? 'react_router', surface: 'react_router', languages: []},
+    detection: {framework, surface: 'react_router', languages: []},
+    reactRouterRoots: framework === 'react_router' ? ['.'] : [],
     sourceCandidates: [],
     gitIgnoreListing: 'listed',
   }
