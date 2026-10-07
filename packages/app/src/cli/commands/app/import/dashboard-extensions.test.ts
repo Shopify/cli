@@ -11,21 +11,13 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import * as ui from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
-import {errorHandler, sendErrorToBugsnag} from '@shopify/cli-kit/node/error-handler'
+import * as errorHandlers from '@shopify/cli-kit/node/error-handler'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 vi.mock('../../../services/app-context.js')
 vi.mock('@shopify/cli-kit/node/analytics')
-vi.mock('@shopify/cli-kit/node/error-handler', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@shopify/cli-kit/node/error-handler')>()),
-  sendErrorToBugsnag: vi.fn(),
-}))
-vi.mock('@shopify/cli-kit/node/ui', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@shopify/cli-kit/node/ui')>()),
-  renderSelectPrompt: vi.fn(),
-}))
 
 const extension: ExtensionRegistration = {
   id: 'gid://shopify/AppExtensionRegistration/1',
@@ -56,7 +48,12 @@ async function withApp(run: (app: ReturnType<typeof testAppLinked>) => Promise<v
       remoteApp: testOrganizationApp({apiKey: 'test-client-id'}),
       developerPlatformClient,
     } as unknown as Awaited<ReturnType<typeof linkedAppContext>>)
-    vi.mocked(renderSelectPrompt).mockReset().mockResolvedValue(extension.uuid)
+    vi.spyOn(ui, 'renderSelectPrompt').mockResolvedValue(extension.uuid)
+    vi.spyOn(errorHandlers, 'sendErrorToBugsnag').mockResolvedValue({
+      reported: false,
+      error: undefined,
+      unhandled: undefined,
+    })
     await run(app)
   })
 }
@@ -114,7 +111,7 @@ test('leaves a failed import on the fatal path without printing a result', async
     const record = publicExtension(app.directory)
     await mkdir(record.directory)
     await mkdir(record.configurationPath)
-    vi.mocked(renderSelectPrompt).mockResolvedValueOnce(extension.uuid).mockResolvedValueOnce('write')
+    vi.mocked(ui.renderSelectPrompt).mockResolvedValueOnce(extension.uuid).mockResolvedValueOnce('write')
     await withCapturedStandardStreams(async ({stdout}) => {
       await expect(runCommand(app.directory)).rejects.toThrow()
       expect(stdout()).toBe('')
@@ -166,14 +163,14 @@ test.each(['cancelled', 'partial'])(
             throw error
           }
         })
-        vi.mocked(renderSelectPrompt).mockImplementation(async ({message}) => {
+        vi.mocked(ui.renderSelectPrompt).mockImplementation(async ({message}) => {
           if (message === 'Extensions to migrate') return 'All'
           if (typeof message === 'string' && message.includes('example-action')) return pendingWrite
           return status === 'cancelled' ? 'cancel' : 'write'
         })
         class LifecycleImportCommand extends ImportDashboardExtensions {
           async catch(error: Error): Promise<never> {
-            await errorHandler(error)
+            await errorHandlers.errorHandler(error)
             await Errors.handle(error)
             throw error
           }
@@ -206,7 +203,7 @@ test.each(['cancelled', 'partial'])(
           expect(exit).toHaveBeenCalledExactlyOnceWith(1)
           expect(hooks.mock.calls.map(([event]) => event)).not.toContain('postrun')
           expect(reportAnalyticsEvent).toHaveBeenCalledTimes(status === 'partial' ? 1 : 0)
-          expect(sendErrorToBugsnag).toHaveBeenCalledTimes(status === 'partial' ? 1 : 0)
+          expect(errorHandlers.sendErrorToBugsnag).toHaveBeenCalledTimes(status === 'partial' ? 1 : 0)
         } finally {
           exit.mockRestore()
           importSpy.mockRestore()

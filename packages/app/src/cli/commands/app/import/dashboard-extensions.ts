@@ -34,11 +34,9 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 export default class ImportDashboardExtensions extends AppLinkedCommand {
   static descriptionWithMarkdown = 'Import dashboard-managed extensions into your app.'
 
-  static description = this.descriptionForHelp()
+  static jsonOutputSchema = importDashboardExtensionsJsonOutputSchema
 
-  static get jsonOutputSchema() {
-    return importDashboardExtensionsJsonOutputSchema
-  }
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
