@@ -10,6 +10,7 @@ vi.mock('@shopify/cli-kit/node/ui')
 beforeEach(() => vi.stubEnv('CI', ''))
 
 afterEach(() => {
+  vi.unstubAllGlobals()
   vi.unstubAllEnvs()
 })
 
@@ -42,7 +43,7 @@ describe('ensureDirectoryConfirmed', () => {
     vi.stubGlobal('process', {
       ...process,
       stdin: {...process.stdin, isTTY: true},
-      stdout: {...process.stdout, isTTY: true},
+      stderr: {...process.stderr, isTTY: true},
     })
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
 
@@ -61,7 +62,7 @@ describe('ensureDirectoryConfirmed', () => {
     vi.stubGlobal('process', {
       ...process,
       stdin: {...process.stdin, isTTY: false},
-      stdout: {...process.stdout, isTTY: true},
+      stderr: {...process.stderr, isTTY: true},
     })
 
     const confirmed = await ensureDirectoryConfirmed(false)
@@ -103,7 +104,7 @@ describe('ensureLiveThemeConfirmed', () => {
     vi.stubGlobal('process', {
       ...process,
       stdin: {...process.stdin, isTTY: true},
-      stdout: {...process.stdout, isTTY: true},
+      stderr: {...process.stderr, isTTY: true},
     })
   })
 
@@ -154,7 +155,7 @@ describe('ensureLiveThemeConfirmed', () => {
     vi.stubGlobal('process', {
       ...process,
       stdin: {...process.stdin, isTTY: false},
-      stdout: {...process.stdout, isTTY: true},
+      stderr: {...process.stderr, isTTY: true},
     })
 
     const result = await ensureLiveThemeConfirmed(liveTheme, 'start development mode', false)
