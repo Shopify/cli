@@ -1,57 +1,60 @@
 import {devClean} from './dev-clean.js'
 import {LoadedAppContextOutput} from './app-context.js'
-import {testDeveloperPlatformClient, testOrganizationStore} from '../models/app/app.test-data.js'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {describe, expect, test, vi} from 'vitest'
+import {testDeveloperPlatformClient, testOrganizationApp, testOrganizationStore} from '../models/app/app.test-data.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {expect, test, vi} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/ui')
-
-const shopDomain = 'test-store.myshopify.com'
-const mockStore = testOrganizationStore({shopDomain})
-
-const mockOptions = {
-  appContextResult: {
-    developerPlatformClient: testDeveloperPlatformClient(),
-    remoteApp: {id: 'app-id-1', title: 'Test App', apiKey: 'api-key-1'},
-  } as unknown as LoadedAppContextOutput,
-  store: mockStore,
+function options(response: unknown = {devSessionDelete: {userErrors: []}}) {
+  const devSessionDelete = vi.fn().mockResolvedValue(response)
+  return {
+    appContextResult: {
+      developerPlatformClient: testDeveloperPlatformClient({devSessionDelete}),
+      remoteApp: testOrganizationApp({id: 'app-id-1', title: 'Test App', apiKey: 'public-client-id'}),
+    } as unknown as LoadedAppContextOutput,
+    store: testOrganizationStore({shopDomain: 'test-store.myshopify.com'}),
+  }
 }
 
-describe('devClean', () => {
-  test('successfully stops dev preview and renders success message', async () => {
-    // Given
-    mockOptions.appContextResult.developerPlatformClient = customDevPlatformClient()
-
-    // When
-    await devClean(mockOptions)
-
-    // Then
-    expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Dev preview stopped.',
-      body: [
-        `The dev preview has been stopped on ${mockStore.shopDomain} and the app's active version has been restored.`,
-        'You can start it again with',
-        {command: 'shopify app dev'},
-      ],
-    })
+test('returns public app and store data after stopping the dev preview', async () => {
+  const input = options()
+  await expect(devClean(input)).resolves.toEqual({
+    status: 'success',
+    app: {name: 'Test App', clientId: 'public-client-id'},
+    storeDomain: 'test-store.myshopify.com',
   })
-
-  test('throws AbortError when devSessionDelete returns user errors', async () => {
-    // Given
-    const errorMessage = 'Failed to stop dev preview'
-    mockOptions.appContextResult.developerPlatformClient = customDevPlatformClient(errorMessage)
-
-    // When/Then
-    await expect(devClean(mockOptions)).rejects.toThrow(`Failed to stop the dev preview: ${errorMessage}`)
+  expect(input.appContextResult.developerPlatformClient.devSessionDelete).toHaveBeenCalledExactlyOnceWith({
+    shopFqdn: 'test-store.myshopify.com',
+    appId: 'app-id-1',
   })
 })
 
-function customDevPlatformClient(devSessionDeleteError?: string) {
-  return testDeveloperPlatformClient({
-    devSessionDelete: vi.fn().mockResolvedValue({
-      devSessionDelete: {
-        userErrors: devSessionDeleteError ? [{message: devSessionDeleteError}] : [],
-      },
-    }),
+test('retains user error text and native details', async () => {
+  const userErrors = [{message: 'First error'}, {message: 'Second error', code: 'UPSTREAM_ERROR'}]
+  await expect(devClean(options({devSessionDelete: {userErrors}}))).rejects.toMatchObject({
+    message: 'Failed to stop the dev preview: First error\nSecond error',
+    details: {userErrors},
   })
-}
+})
+
+test.each([
+  null,
+  {},
+  {devSessionDelete: null},
+  {devSessionDelete: {}},
+  {devSessionDelete: {userErrors: null}},
+  {devSessionDelete: {userErrors: 'not an array'}},
+  {devSessionDelete: {userErrors: [null]}},
+  {devSessionDelete: {userErrors: [{message: null}]}},
+])('rejects a missing or malformed deletion response: %j', async (response) => {
+  await expect(devClean(options(response))).rejects.toMatchObject({
+    message: 'Failed to stop the dev preview: the server returned an invalid response.',
+    details: {data: response},
+  })
+})
+
+test('propagates the original API failure', async () => {
+  const error = new AbortError('API unavailable')
+  const input = options()
+  vi.mocked(input.appContextResult.developerPlatformClient.devSessionDelete).mockRejectedValue(error)
+  await expect(devClean(input)).rejects.toBe(error)
+})

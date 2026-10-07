@@ -3,7 +3,9 @@ import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-l
 import {appFlags} from '../../../flags.js'
 import {storeContext} from '../../../services/store-context.js'
 import {devClean} from '../../../services/dev-clean.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {appDevCleanJsonOutputSchema} from '../../../services/dev-clean/types.js'
+import {renderDevCleanResult} from '../../../services/dev-clean/result.js'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
@@ -15,11 +17,16 @@ export default class DevClean extends AppLinkedCommand {
   It restores the app's active version to the selected development store.
   `
 
+  static get jsonOutputSchema() {
+    return appDevCleanJsonOutputSchema
+  }
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
     ...appFlags,
+    ...jsonFlag,
     'client-id': Flags.string({
       hidden: false,
       description:
@@ -51,7 +58,8 @@ export default class DevClean extends AppLinkedCommand {
       forceReselectStore: flags.reset,
     })
 
-    await devClean({appContextResult, store})
+    const result = await devClean({appContextResult, store})
+    renderDevCleanResult(result, flags.json ? 'json' : 'text')
 
     return {app: appContextResult.app}
   }

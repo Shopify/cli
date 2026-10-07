@@ -11,7 +11,6 @@ const commandExceptions = [
   'packages/app/src/cli/commands/app/config/use.ts',
   'packages/app/src/cli/commands/app/config/validate.ts',
   'packages/app/src/cli/commands/app/deploy.ts',
-  'packages/app/src/cli/commands/app/dev/clean.ts',
   'packages/app/src/cli/commands/app/env/pull.ts',
   'packages/app/src/cli/commands/app/env/show.ts',
   'packages/app/src/cli/commands/app/execute.ts',

@@ -1,6 +1,6 @@
 import {LoadedAppContextOutput} from './app-context.js'
+import {AppDevCleanResult} from './dev-clean/types.js'
 import {OrganizationStore} from '../models/organization.js'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 interface DevCleanOptions {
@@ -8,23 +8,29 @@ interface DevCleanOptions {
   store: OrganizationStore
 }
 
-export async function devClean(options: DevCleanOptions) {
+export async function devClean(options: DevCleanOptions): Promise<AppDevCleanResult> {
   const client = options.appContextResult.developerPlatformClient
   const remoteApp = options.appContextResult.remoteApp
 
   const result = await client.devSessionDelete({shopFqdn: options.store.shopDomain, appId: remoteApp.id})
 
-  if (result.devSessionDelete?.userErrors.length) {
-    const errors = result.devSessionDelete.userErrors.map((error) => error.message).join('\n')
-    throw new AbortError(`Failed to stop the dev preview: ${errors}`)
+  const userErrors = result?.devSessionDelete?.userErrors
+  if (!Array.isArray(userErrors) || userErrors.some((error) => typeof error?.message !== 'string')) {
+    const error = new AbortError('Failed to stop the dev preview: the server returned an invalid response.')
+    error.details = {data: result}
+    throw error
   }
 
-  renderSuccess({
-    headline: 'Dev preview stopped.',
-    body: [
-      `The dev preview has been stopped on ${options.store.shopDomain} and the app's active version has been restored.`,
-      'You can start it again with',
-      {command: 'shopify app dev'},
-    ],
-  })
+  if (userErrors.length) {
+    const errors = userErrors.map((error) => error.message).join('\n')
+    const error = new AbortError(`Failed to stop the dev preview: ${errors}`)
+    error.details = {userErrors}
+    throw error
+  }
+
+  return {
+    status: 'success',
+    app: {name: remoteApp.title, clientId: remoteApp.apiKey},
+    storeDomain: options.store.shopDomain,
+  }
 }

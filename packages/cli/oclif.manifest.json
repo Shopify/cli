@@ -1351,7 +1351,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Stop the dev preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n  ",
+      "description": "Stop the dev preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n  \n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppDevCleanResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\",\n      \"const\": \"success\"\n    },\n    \"app\": {\n      \"$ref\": \"#/definitions/AppDevCleanApp\"\n    },\n    \"storeDomain\": {\n      \"type\": \"string\",\n      \"pattern\": \"^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$\",\n      \"description\": \"The canonical store hostname, without a scheme or path.\"\n    }\n  },\n  \"required\": [\n    \"status\",\n    \"app\",\n    \"storeDomain\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppDevCleanResult\",\n  \"definitions\": {\n    \"AppDevCleanApp\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"clientId\": {\n          \"type\": \"string\",\n          \"minLength\": 1\n        }\n      },\n      \"required\": [\n        \"name\",\n        \"clientId\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Stop the dev preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n  ",
       "flags": {
         "auth-alias": {
@@ -1380,6 +1380,15 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,
