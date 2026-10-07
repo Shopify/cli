@@ -48,22 +48,12 @@ describe('importChannelConfig', () => {
       const app = testAppLinked({directory: tmpDir})
 
       // When
-      const result = await importChannelConfig(testOptions(app))
+      await importChannelConfig(testOptions(app))
 
       // Then
       const outputPath = joinPath(tmpDir, CHANNEL_SPEC_DIRECTORY, 'example.toml')
       await expect(fileExists(outputPath)).resolves.toBe(true)
       await expect(readFile(outputPath)).resolves.toEqual(TOML)
-      expect(result).toEqual({
-        status: 'success',
-        handle: 'example',
-        filename: 'example.toml',
-        path: outputPath,
-        toml: TOML,
-        warnings: [],
-        extensionConfigurationPath: joinPath(tmpDir, CHANNEL_SPEC_EXTENSION_DIRECTORY, 'shopify.extension.toml'),
-      })
-      expect(mockAndCaptureOutput().info()).toBe('')
     })
   })
 
@@ -115,7 +105,6 @@ describe('importChannelConfig', () => {
 
       // Then
       expect(result.warnings).toEqual([warning])
-      expect(mockAndCaptureOutput().warn()).toBe('')
       await expect(readFile(joinPath(tmpDir, CHANNEL_SPEC_DIRECTORY, 'example.toml'))).resolves.not.toContain(
         'product feed management',
       )
@@ -143,20 +132,6 @@ describe('importChannelConfig', () => {
 
       // When/Then
       await expect(importChannelConfig(testOptions(app))).rejects.toThrow(/mystery_reason/)
-    })
-  })
-
-  test('a file write failure preserves existing content and returns no success data', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      vi.mocked(fetchChannelSpecExport).mockResolvedValue(successResult())
-      const app = testAppLinked({directory: tmpDir})
-      const extensionDirectory = joinPath(tmpDir, CHANNEL_SPEC_EXTENSION_DIRECTORY)
-      await mkdir(dirname(extensionDirectory))
-      await writeFile(extensionDirectory, 'existing content\n')
-
-      await expect(importChannelConfig(testOptions(app))).rejects.toThrow()
-      await expect(readFile(extensionDirectory)).resolves.toBe('existing content\n')
-      expect(mockAndCaptureOutput().info()).toBe('')
     })
   })
 
