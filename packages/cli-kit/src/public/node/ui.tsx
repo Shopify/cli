@@ -294,7 +294,7 @@ export async function renderSelectPrompt<T>(
   {renderOptions, isConfirmationPrompt, ...props}: RenderSelectPromptOptions<T>,
   uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
 ): Promise<T> {
-  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin, stdout: renderOptions?.stdout}, uiDebugOptions)
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
 
   return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
     let selectedValue: T
@@ -429,7 +429,7 @@ export async function renderAutocompletePrompt<T>(
   {renderOptions, ...props}: RenderAutocompleteOptions<T>,
   uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
 ): Promise<T> {
-  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin, stdout: renderOptions?.stdout}, uiDebugOptions)
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
 
   // The default search filters in-memory choices synchronously, so it doesn't need
   // throttling. Skipping the throttle makes the keystroke-to-result latency feel
@@ -666,7 +666,7 @@ export async function renderTextPrompt(
   {renderOptions, ...props}: RenderTextPromptOptions,
   uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
 ): Promise<string> {
-  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin, stdout: renderOptions?.stdout}, uiDebugOptions)
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
 
   return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
     let enteredText = ''
@@ -719,7 +719,7 @@ export async function renderDangerousConfirmationPrompt(
   {renderOptions, ...props}: RenderDangerousConfirmationPromptOptions,
   uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
 ): Promise<boolean> {
-  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin, stdout: renderOptions?.stdout}, uiDebugOptions)
+  throwInNonTTY({message: props.message, stdin: renderOptions?.stdin}, uiDebugOptions)
 
   return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
     let confirmed: boolean
@@ -772,23 +772,21 @@ export const keypress = async (stdin = process.stdin, uiDebugOptions: UIDebugOpt
 
 interface IsTTYOptions {
   stdin?: NodeJS.ReadStream
-  stdout?: NodeJS.WriteStream
   uiDebugOptions?: UIDebugOptions
 }
 
-export function isTTY({stdin = undefined, stdout, uiDebugOptions = defaultUIDebugOptions}: IsTTYOptions = {}) {
+export function isTTY({stdin = undefined, uiDebugOptions = defaultUIDebugOptions}: IsTTYOptions = {}) {
   // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- false should fall through to stdin/terminalSupportsPrompting
-  return Boolean(uiDebugOptions.skipTTYCheck || stdin || terminalSupportsPrompting({stdout}))
+  return Boolean(uiDebugOptions.skipTTYCheck || stdin || terminalSupportsPrompting())
 }
 
 interface ThrowInNonTTYOptions {
   message: TokenItem
   stdin?: NodeJS.ReadStream
-  stdout?: NodeJS.WriteStream
 }
 
-function throwInNonTTY({message, stdin = undefined, stdout}: ThrowInNonTTYOptions, uiDebugOptions: UIDebugOptions) {
-  if (isTTY({stdin, stdout, uiDebugOptions})) return
+function throwInNonTTY({message, stdin = undefined}: ThrowInNonTTYOptions, uiDebugOptions: UIDebugOptions) {
+  if (isTTY({stdin, uiDebugOptions})) return
 
   const promptText = tokenItemToString(message)
   const errorMessage = `Failed to prompt:

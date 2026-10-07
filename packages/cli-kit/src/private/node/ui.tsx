@@ -1,5 +1,4 @@
 import {output} from './output.js'
-import {getUIOutputStream} from './ui/output-stream.js'
 import {Logger, LogLevel} from '../../public/node/output.js'
 import {isUnitTest} from '../../public/node/context/local.js'
 import {treeKill} from '../../public/node/tree-kill.js'
@@ -69,7 +68,6 @@ export async function render(element: JSX.Element, options?: RenderOptions) {
   const {waitUntilExit} = inkRender(<InkLifecycleRoot>{element}</InkLifecycleRoot>, {
     patchConsole: !isUnitTest(),
     ...options,
-    stdout: getUIOutputStream(options?.stdout),
   })
   await waitUntilExit()
 }
