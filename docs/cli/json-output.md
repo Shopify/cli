@@ -234,6 +234,10 @@ breaking changes so consumers can migrate. Keep independently versioned native a
 silently disable prompts, and non-interactive execution must not silently select JSON. A command that can prompt should
 support and test the relevant combinations explicitly.
 
+When a JSON command prompts, stderr also contains human-readable UI and terminal control sequences. In this
+interactive mode, stderr is not a pure JSONL stream. For automation, use `--json --no-input` to capture JSON side
+events from stderr; missing required input then produces a fatal error instead of a prompt.
+
 ## Exempt only streaming commands
 
 Long-lived commands that produce an open-ended event stream don't have one finite result. Track these exemptions in
