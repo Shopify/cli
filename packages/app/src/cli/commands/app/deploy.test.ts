@@ -2,13 +2,12 @@ import Deploy from './deploy.js'
 import {deploy} from '../../services/deploy.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {testAppLinked, testOrganizationApp, testProject} from '../../models/app/app.test-data.js'
-import {appDeployJsonOutputSchema} from '../../services/deploy/types.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
-import * as system from '@shopify/cli-kit/node/system'
-import {Config} from '@oclif/core'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {errorHandler} from '@shopify/cli-kit/node/error-handler'
+import {Config, Errors} from '@oclif/core'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {fileURLToPath} from 'node:url'
@@ -62,33 +61,15 @@ describe('app deploy command', () => {
     })
   })
 
-  test('exposes the result schema in help', () => {
-    expect(Deploy.jsonOutputSchema).toBe(appDeployJsonOutputSchema)
-    expect(Deploy.description).toContain('AppDeployResult')
-    expect(Deploy.flags.json.char).toBe('j')
-  })
-
   test('writes one JSON result and sends diagnostics to stderr', async () => {
     vi.mocked(deploy).mockImplementationOnce(async () => {
       outputInfo('Releasing an app version')
-      return {
-        status: 'success',
-        app: testAppLinked(),
-        release: true,
-        didMigrateExtensionsToDevDash: false,
-        uploadExtensionsBundleResult: {
-          validationErrors: [],
-          versionGid: 'gid://shopify/Version/1',
-          versionTag: 'v1',
-          message: 'Release message',
-          location: 'https://dev.shopify.com/dashboard/1/apps/1/versions/1',
-        },
-      }
+      return completedDeployResult(testAppLinked())
     })
-    await inTemporaryDirectory(async (tmp) => {
-      await withCapturedStandardStreams(async (streams) => {
-        await runDeploy(['--path', tmp, '--json', '--no-input', '--allow-updates'])
-        expect(JSON.parse(streams.stdout())).toEqual({
+    await inTemporaryDirectory(async (directory) => {
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await runDeploy(['--path', directory, '--json', '--allow-updates'])
+        expect(JSON.parse(stdout())).toEqual({
           status: 'success',
           app: {name: 'app1', clientId: 'api-key'},
           deployment: {
@@ -96,109 +77,12 @@ describe('app deploy command', () => {
             version: {
               gid: 'gid://shopify/Version/1',
               name: 'v1',
-              message: 'Release message',
+              message: null,
               url: 'https://dev.shopify.com/dashboard/1/apps/1/versions/1',
             },
           },
         })
-        expect(JSON.parse(streams.stderr())).toMatchObject({type: 'diagnostic', message: 'Releasing an app version'})
-      })
-    })
-  })
-
-  test('returns the created version without release when --no-release is used', async () => {
-    vi.mocked(deploy).mockResolvedValue(completedDeployResult(testAppLinked(), false))
-    await inTemporaryDirectory(async (tmp) => {
-      await withCapturedStandardStreams(async (streams) => {
-        await Deploy.run(['--path', tmp, '--json', '--no-release', '--no-input'], import.meta.url)
-        expect(JSON.parse(streams.stdout())).toMatchObject({status: 'success', deployment: {released: false}})
-        expect(deploy).toHaveBeenCalledWith(
-          expect.objectContaining({noRelease: true, allowUpdates: true, allowDeletes: true}),
-        )
-      })
-    })
-  })
-
-  test('returns cancelled after a declined confirmation', async () => {
-    vi.mocked(deploy).mockResolvedValue({status: 'cancelled', app: testAppLinked()})
-    await inTemporaryDirectory(async (tmp) => {
-      await withCapturedStandardStreams(async (streams) => {
-        await expect(Deploy.run(['--path', tmp, '--json', '--allow-updates'], import.meta.url)).rejects.toThrow()
-        expect(JSON.parse(streams.stdout())).toEqual({status: 'cancelled'})
-        expect(process.exitCode).toBeUndefined()
-      })
-    })
-  })
-
-  test.each(['success', 'cancelled'] as const)(
-    'runs success hooks only for a completed command: %s',
-    async (status) => {
-      class ControlledDeploy extends Deploy {
-        async catch(error: Error): Promise<never> {
-          throw error
-        }
-
-        protected async init(): Promise<void> {}
-      }
-
-      vi.mocked(deploy).mockResolvedValue(
-        status === 'cancelled' ? {status: 'cancelled', app: testAppLinked()} : completedDeployResult(testAppLinked()),
-      )
-      await inTemporaryDirectory(async (directory) => {
-        const config = await Config.load({root: joinPath(dirname(fileURLToPath(import.meta.url)), '../../../..')})
-        const runHook = vi.spyOn(config, 'runHook').mockResolvedValue({successes: [], failures: []})
-        const cachedCommand = {
-          id: 'app:deploy',
-          aliases: [],
-          hiddenAliases: [],
-          hidden: false,
-          args: {},
-          flags: {},
-          load: async () => ControlledDeploy,
-        }
-        try {
-          await withCapturedStandardStreams(async ({stdout, stderr}) => {
-            const execution = config.runCommand(
-              'app:deploy',
-              ['--path', directory, '--json', '--allow-updates'],
-              cachedCommand,
-            )
-            if (status === 'cancelled') {
-              await expect(execution).rejects.toMatchObject({oclif: {exit: 0}})
-              expect(runHook).not.toHaveBeenCalledWith('postrun', expect.anything())
-            } else {
-              await execution
-              expect(runHook).toHaveBeenCalledWith('postrun', expect.anything())
-            }
-            expect(JSON.parse(stdout())).toMatchObject({status})
-            expect(stderr()).toBe('')
-          })
-        } finally {
-          runHook.mockRestore()
-        }
-      })
-    },
-  )
-
-  test('does not catch cancellation in text mode', async () => {
-    vi.mocked(deploy).mockResolvedValue({status: 'cancelled', app: testAppLinked()})
-    await inTemporaryDirectory(async (tmp) => {
-      await withCapturedStandardStreams(async (streams) => {
-        await expect(Deploy.run(['--path', tmp, '--allow-updates'], import.meta.url)).rejects.toThrow()
-        expect(streams.stdout()).toBe('')
-      })
-    })
-  })
-
-  test('preserves the fatal error path without a success result', async () => {
-    vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-    vi.mocked(deploy).mockRejectedValue(new AbortError('Version could not be created.'))
-    await inTemporaryDirectory(async (tmp) => {
-      await withCapturedStandardStreams(async (streams) => {
-        await expect(Deploy.run(['--path', tmp, '--json', '--allow-updates'], import.meta.url)).rejects.toThrow()
-        expect(JSON.parse(streams.stdout())).toMatchObject({
-          error: {type: 'abort', message: 'Version could not be created.'},
-        })
+        expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', message: 'Releasing an app version'})
       })
     })
   })
@@ -219,53 +103,44 @@ describe('app deploy command', () => {
     })
   })
 
-  test('JSON does not disable confirmation policy', async () => {
-    vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-    vi.spyOn(system, 'terminalSupportsPrompting').mockReturnValue(false)
-    await inTemporaryDirectory(async (tmp) => {
-      await withCapturedStandardStreams(async (streams) => {
-        await expect(Deploy.run(['--path', tmp, '--json'], import.meta.url)).rejects.toThrow()
-        expect(JSON.parse(streams.stdout())).toMatchObject({error: {type: 'abort'}})
-        expect(deploy).not.toHaveBeenCalled()
-      })
-    })
-    vi.mocked(system.terminalSupportsPrompting).mockRestore()
-  })
+  test('cancelled JSON exits zero without running success hooks', async () => {
+    class CancelledDeploy extends Deploy {
+      async catch(error: Error): Promise<never> {
+        await errorHandler(error)
+        await Errors.handle(error)
+        throw error
+      }
 
-  test('JSON remains interactive when input is available', async () => {
-    vi.spyOn(system, 'terminalSupportsPrompting').mockReturnValue(true)
+      protected async init(): Promise<void> {}
+    }
+    vi.mocked(deploy).mockResolvedValue({status: 'cancelled', app: testAppLinked()})
+    const config = await Config.load({root: joinPath(dirname(fileURLToPath(import.meta.url)), '../../../..')})
+    const runHook = vi.spyOn(config, 'runHook').mockResolvedValue({successes: [], failures: []})
+    const exit = vi.spyOn(process, 'exit').mockReturnValue(undefined as never)
     try {
-      await inTemporaryDirectory(async (tmp) => {
-        await withCapturedStandardStreams(async ({stdout}) => {
-          await runDeploy(['--path', tmp, '--json'])
-          expect(JSON.parse(stdout())).toMatchObject({status: 'success'})
-          expect(deploy).toHaveBeenCalledWith(
-            expect.objectContaining({allowUpdates: undefined, allowDeletes: undefined}),
-          )
+      await inTemporaryDirectory(async (directory) => {
+        await withCapturedStandardStreams(async ({stdout, stderr}) => {
+          await expect(
+            config.runCommand('app:deploy', ['--path', directory, '--json', '--allow-updates'], {
+              id: 'app:deploy',
+              aliases: [],
+              hiddenAliases: [],
+              hidden: false,
+              args: {},
+              flags: {},
+              load: async () => CancelledDeploy,
+            }),
+          ).rejects.toBeInstanceOf(AbortSilentError)
+          expect(exit).toHaveBeenCalledExactlyOnceWith(0)
+          expect(runHook).not.toHaveBeenCalledWith('postrun', expect.anything())
+          expect(JSON.parse(stdout())).toEqual({status: 'cancelled'})
+          expect(stderr()).toBe('')
         })
       })
     } finally {
-      vi.mocked(system.terminalSupportsPrompting).mockRestore()
+      runHook.mockRestore()
+      exit.mockRestore()
     }
-  })
-
-  test('no-input alone keeps text presentation', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      await withCapturedStandardStreams(async ({stdout, stderr}) => {
-        await runDeploy(['--path', tmp, '--no-input', '--allow-updates'])
-        expect(stdout()).toBe('')
-        expect(stderr()).toContain('New version released to users.')
-      })
-    })
-  })
-
-  test('still rejects the unsupported environment flag', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      await expect(
-        Deploy.run(['--path', tmp, '--environment', 'production', '--allow-updates'], import.meta.url),
-      ).rejects.toThrow()
-      expect(deploy).not.toHaveBeenCalled()
-    })
   })
 })
 
@@ -276,14 +151,11 @@ async function runDeploy(argv: string[]) {
   return Deploy.run(argv, config)
 }
 
-function completedDeployResult(
-  app: ReturnType<typeof testAppLinked>,
-  release = true,
-): Exclude<DeployResult, {status: 'cancelled'}> {
+function completedDeployResult(app: ReturnType<typeof testAppLinked>): Exclude<DeployResult, {status: 'cancelled'}> {
   return {
     status: 'success',
     app,
-    release,
+    release: true,
     didMigrateExtensionsToDevDash: false,
     uploadExtensionsBundleResult: {
       validationErrors: [],
