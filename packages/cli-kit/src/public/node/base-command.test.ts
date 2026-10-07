@@ -14,21 +14,21 @@ import {Flags} from '@oclif/core'
 import {Ajv} from 'ajv'
 
 let originalStdinIsTTY: boolean | undefined
-let originalStdoutIsTTY: boolean | undefined
+let originalStderrIsTTY: boolean | undefined
 
 beforeEach(() => {
   originalStdinIsTTY = process.stdin.isTTY
-  originalStdoutIsTTY = process.stdout.isTTY
+  originalStderrIsTTY = process.stderr.isTTY
   vi.unstubAllEnvs()
   // Default: simulate interactive TTY environment
   Object.defineProperty(process.stdin, 'isTTY', {value: true, configurable: true, writable: true})
-  Object.defineProperty(process.stdout, 'isTTY', {value: true, configurable: true, writable: true})
+  Object.defineProperty(process.stderr, 'isTTY', {value: true, configurable: true, writable: true})
   vi.stubEnv('CI', '')
 })
 
 afterEach(() => {
   Object.defineProperty(process.stdin, 'isTTY', {value: originalStdinIsTTY, configurable: true, writable: true})
-  Object.defineProperty(process.stdout, 'isTTY', {value: originalStdoutIsTTY, configurable: true, writable: true})
+  Object.defineProperty(process.stderr, 'isTTY', {value: originalStderrIsTTY, configurable: true, writable: true})
   mockAndCaptureOutput().clear()
 })
 
@@ -631,7 +631,7 @@ describe('applying environments', async () => {
   runTestInTmpDir('does not throw in TTY mode when a non-TTY required argument is missing', async (tmpDir: string) => {
     // Given — simulate interactive terminal
     Object.defineProperty(process.stdin, 'isTTY', {value: true, configurable: true, writable: true})
-    Object.defineProperty(process.stdout, 'isTTY', {value: true, configurable: true, writable: true})
+    Object.defineProperty(process.stderr, 'isTTY', {value: true, configurable: true, writable: true})
     vi.stubEnv('CI', '')
 
     // When

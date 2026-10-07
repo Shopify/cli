@@ -65,14 +65,12 @@ export async function ensureLiveThemeConfirmed(theme: Theme, action: string, all
     return true
   }
 
-  if (isInputDisabled()) {
+  if (!terminalSupportsPrompting()) {
     throw new AbortError(
       `Can't ${action} on the live theme when user input is unavailable.`,
       'Use `--allow-live` to confirm that you want to continue.',
     )
   }
-
-  if (!terminalSupportsPrompting()) return true
 
   const message =
     `You're about to ${action} on your live theme "${theme.name}". ` +
