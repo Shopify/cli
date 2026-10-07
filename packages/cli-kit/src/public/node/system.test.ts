@@ -21,7 +21,7 @@ vi.mock('fs', async (importOriginal) => {
 test.each([
   {name: 'all streams are terminals', stdin: true, stdout: true, stderr: true, expected: true},
   {name: 'stdout is redirected', stdin: true, stdout: false, stderr: true, expected: true},
-  {name: 'stderr is redirected', stdin: true, stdout: true, stderr: false, expected: true},
+  {name: 'stderr is redirected', stdin: true, stdout: true, stderr: false, expected: false},
   {name: 'both output streams are redirected', stdin: true, stdout: false, stderr: false, expected: false},
   {name: 'stdin is redirected', stdin: false, stdout: true, stderr: true, expected: false},
   {name: 'CI is enabled', stdin: true, stdout: true, stderr: true, ci: 'true', expected: false},

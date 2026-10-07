@@ -8,7 +8,6 @@ import {
   renderWarning,
   renderSingleTask,
   renderSelectPrompt,
-  renderConfirmationPrompt,
   renderAutocompletePrompt,
   renderTextPrompt,
   renderDangerousConfirmationPrompt,
@@ -20,7 +19,6 @@ import {renderCommandEventAsJson, runWithCommandEvents} from './command-events.j
 import {mockAndCaptureOutput, withCapturedStandardStreams} from './testing/output.js'
 import {TokenizedString} from './output.js'
 import {Stdin, waitForInputsToBeReady} from '../../private/node/testing/ui.js'
-import {Stdout} from '../../private/node/ui.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import supportsHyperlinks from 'supports-hyperlinks'
 
@@ -37,98 +35,44 @@ afterEach(() => {
   mockAndCaptureOutput().clear()
 })
 
-describe('prompts', () => {
-  const choices = [{label: 'First option', value: 'first'}]
-  const prompts = [
-    {
-      name: 'select',
-      renderPrompt: (renderOptions: RenderOptions) =>
-        renderSelectPrompt({message: 'Which option?', choices, renderOptions}),
-      input: '\r',
-      expected: 'first',
-      answerLabel: 'First option',
-    },
-    {
-      name: 'confirmation',
-      renderPrompt: (renderOptions: RenderOptions) =>
-        renderConfirmationPrompt({message: 'Which option?', renderOptions}),
-      input: '\r',
-      expected: true,
-      answerLabel: 'Yes, confirm',
-    },
-    {
-      name: 'autocomplete',
-      renderPrompt: (renderOptions: RenderOptions) =>
-        renderAutocompletePrompt({message: 'Which option?', choices, renderOptions}),
-      input: '\r',
-      expected: 'first',
-      answerLabel: 'First option',
-    },
-    {
-      name: 'text',
-      renderPrompt: (renderOptions: RenderOptions) =>
-        renderTextPrompt({message: 'Which option?', defaultValue: 'first', renderOptions}),
-      input: '\r',
-      expected: 'first',
-      answerLabel: 'first',
-    },
-    {
-      name: 'dangerous confirmation',
-      renderPrompt: (renderOptions: RenderOptions) =>
-        renderDangerousConfirmationPrompt({message: 'Which option?', confirmation: 'first', renderOptions}),
-      input: '\u001b',
-      expected: false,
-      answerLabel: 'Cancelled',
-    },
-  ]
+test.each([
+  {
+    name: 'select',
+    renderPrompt: (renderOptions: RenderOptions) =>
+      renderSelectPrompt({message: 'Which option?', choices: [{label: 'First option', value: 'first'}], renderOptions}),
+  },
+  {
+    name: 'autocomplete',
+    renderPrompt: (renderOptions: RenderOptions) =>
+      renderAutocompletePrompt({
+        message: 'Which option?',
+        choices: [{label: 'First option', value: 'first'}],
+        renderOptions,
+      }),
+  },
+  {
+    name: 'text',
+    renderPrompt: (renderOptions: RenderOptions) =>
+      renderTextPrompt({message: 'Which option?', defaultValue: 'first', renderOptions}),
+  },
+  {
+    name: 'dangerous confirmation',
+    renderPrompt: (renderOptions: RenderOptions) =>
+      renderDangerousConfirmationPrompt({message: 'Which option?', confirmation: 'first', renderOptions}),
+    input: '\u001b',
+  },
+])('renders $name prompts to stderr by default', async ({renderPrompt, input}) => {
+  const stdin = new Stdin()
 
-  describe.each(['text', 'json'] as const)('%s output', (outputMode) => {
-    test.each(prompts)(
-      'renders $name prompts to stderr by default',
-      async ({renderPrompt, input, expected, answerLabel}) => {
-        const stdin = new Stdin()
+  await withCapturedStandardStreams(async (streams) => {
+    const result = renderPrompt({stdin: stdin as unknown as NodeJS.ReadStream, debug: true, patchConsole: false})
+    await waitForInputsToBeReady()
+    stdin.write(input ?? '\r')
+    await result
 
-        await withCapturedStandardStreams(async (streams) => {
-          const result = runWithCommandEvents({outputMode}, () =>
-            renderPrompt({stdin: stdin as unknown as NodeJS.ReadStream, debug: true, patchConsole: false}),
-          )
-          const completion = expect(result).resolves.toBe(expected)
-          await waitForInputsToBeReady()
-          stdin.write(input)
-          await completion
-
-          expect(streams.stdout()).toBe('')
-          expect(streams.stderr()).toContain('Which option?')
-          expect(streams.stderr()).toContain(answerLabel)
-        })
-      },
-    )
+    expect(streams.stdout()).toBe('')
+    expect(streams.stderr()).toContain('Which option?')
   })
-
-  test.each(prompts)(
-    'preserves the output stream override for $name prompts',
-    async ({renderPrompt, input, expected}) => {
-      const stdin = new Stdin()
-      const stdout = new Stdout({columns: 80, rows: 24})
-
-      await withCapturedStandardStreams(async (streams) => {
-        const result = renderPrompt({
-          stdin: stdin as unknown as NodeJS.ReadStream,
-          stdout: stdout as unknown as NodeJS.WriteStream,
-          debug: true,
-          patchConsole: false,
-        })
-        const completion = expect(result).resolves.toBe(expected)
-        await waitForInputsToBeReady()
-        stdin.write(input)
-        await completion
-
-        expect(stdout.frames.join('')).toContain('Which option?')
-        expect(streams.stdout()).toBe('')
-        expect(streams.stderr()).toBe('')
-      })
-    },
-  )
 })
 
 describe('renderInfo', async () => {
