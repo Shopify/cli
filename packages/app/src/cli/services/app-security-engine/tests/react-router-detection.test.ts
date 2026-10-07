@@ -1,7 +1,7 @@
 import {mergeScanDirectories} from '../../app-security-selection.js'
 import {scan} from '../scanners/index.js'
 import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import type {ScanResult} from '../types.js'
 
@@ -215,7 +215,7 @@ describe('React Router detection', () => {
 
       const result = await scanWithIncludeDirectories(joinPath(repository, 'apps/foo'), [repository])
 
-      expect(result.otherAppDirectories).toEqual([repository])
+      expect(result.otherAppDirectories).toEqual([normalizePath(repository)])
       expect(result.detection.framework).toBe('unknown')
       expect(eolSourceFindings(result)).toEqual([])
     })
@@ -233,7 +233,7 @@ describe('React Router detection', () => {
 
       const result = await scanWithIncludeDirectories(joinPath(repository, 'apps/foo'), [repository])
 
-      expect(result.otherAppDirectories).toEqual([repository])
+      expect(result.otherAppDirectories).toEqual([normalizePath(repository)])
       expect(result.detection.framework).toBe('react_router')
       expect(eolSourceFindings(result)).toEqual(['../../packages/server/app/shopify.server.ts'])
     })
