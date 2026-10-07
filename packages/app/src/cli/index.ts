@@ -13,6 +13,7 @@ import SecurityInstructions from './commands/app/security/instructions.js'
 import SecurityRecord from './commands/app/security/record.js'
 import SecurityReview from './commands/app/security/review.js'
 import Logs from './commands/app/logs.js'
+import LogsNext from './commands/app/logs-next.js'
 import Sources from './commands/app/app-logs/sources.js'
 import EnvPull from './commands/app/env/pull.js'
 import EnvShow from './commands/app/env/show.js'
@@ -67,6 +68,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:security:record': SecurityRecord,
   'app:security:review': SecurityReview,
   'app:logs': Logs,
+  'app:logs-next': LogsNext,
   'app:logs:sources': Sources,
   'app:import:channel-config': ImportChannelConfig,
   'app:import:custom-data-definitions': ImportCustomDataDefinitions,
