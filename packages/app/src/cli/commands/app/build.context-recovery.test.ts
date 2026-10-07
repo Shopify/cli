@@ -12,6 +12,7 @@ import {expect, test, vi} from 'vitest'
 import {fileURLToPath} from 'node:url'
 
 vi.mock('../../services/build.js')
+vi.mock('@shopify/cli-kit/node/multiple-installation-warning')
 
 async function withBuildFixture(
   options: {json: boolean; multipleConfigurations?: boolean},

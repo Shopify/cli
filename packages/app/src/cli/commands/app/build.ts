@@ -16,9 +16,7 @@ export default class Build extends AppUnlinkedCommand {
 
   If you're building a [theme app extension](https://shopify.dev/docs/apps/online-store/theme-app-extensions), then running the \`build\` command runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) against your extension to ensure that it's valid.`
 
-  static get jsonOutputSchema() {
-    return appBuildJsonOutputSchema
-  }
+  static jsonOutputSchema = appBuildJsonOutputSchema
 
   static description = this.descriptionForHelp()
 
@@ -57,6 +55,7 @@ export default class Build extends AppUnlinkedCommand {
       presentAppBuildResult(result, flags.json)
     } catch (error) {
       if (flags.json && error instanceof AbortSilentError) {
+        // Builders can stop after reporting diagnostics; JSON still needs a fatal result document.
         throw new AbortError('The app build did not complete. See the build diagnostics for details.')
       }
       throw error

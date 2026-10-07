@@ -50,14 +50,14 @@ ruleTester.run('command-json-output', rule, {
     },
     {
       name: 'legacy command baseline',
-      filename: '/repo/packages/app/src/cli/commands/app/build.ts',
-      code: 'export default class Build extends Command {}',
+      filename: '/repo/packages/app/src/cli/commands/app/deploy.ts',
+      code: 'export default class Deploy extends Command {}',
     },
     {
       name: 'omitted exceptions preserve the default baseline',
-      filename: '/repo/packages/app/src/cli/commands/app/build.ts',
+      filename: '/repo/packages/app/src/cli/commands/app/deploy.ts',
       options: [{}],
-      code: 'export default class Build extends Command {}',
+      code: 'export default class Deploy extends Command {}',
     },
     {
       name: 'custom exception in another repository',
@@ -99,16 +99,16 @@ ruleTester.run('command-json-output', rule, {
     },
     {
       name: 'custom exceptions replace the default baseline',
-      filename: '/repo/packages/app/src/cli/commands/app/build.ts',
+      filename: '/repo/packages/app/src/cli/commands/app/deploy.ts',
       options: [{exceptions: ['packages/cli/src/commands/hydrogen/dev.ts']}],
-      code: 'export default class Build extends Command {}',
+      code: 'export default class Deploy extends Command {}',
       errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
     },
     {
       name: 'empty exceptions enforce the rule for legacy commands',
-      filename: '/repo/packages/app/src/cli/commands/app/build.ts',
+      filename: '/repo/packages/app/src/cli/commands/app/deploy.ts',
       options: [{exceptions: []}],
-      code: 'export default class Build extends Command {}',
+      code: 'export default class Deploy extends Command {}',
       errors: [{messageId: 'missingJsonOutputSchema'}, {messageId: 'missingJsonFlag'}],
     },
     {
