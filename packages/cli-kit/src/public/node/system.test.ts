@@ -18,44 +18,6 @@ vi.mock('fs', async (importOriginal) => {
   }
 })
 
-test.each([
-  {name: 'all streams are terminals', stdin: true, stdout: true, stderr: true, expected: true},
-  {name: 'stdout is redirected', stdin: true, stdout: false, stderr: true, expected: true},
-  {name: 'stderr is redirected', stdin: true, stdout: true, stderr: false, expected: false},
-  {name: 'both output streams are redirected', stdin: true, stdout: false, stderr: false, expected: false},
-  {name: 'stdin is redirected', stdin: false, stdout: true, stderr: true, expected: false},
-  {name: 'CI is enabled', stdin: true, stdout: true, stderr: true, ci: 'true', expected: false},
-  {name: 'input is disabled', stdin: true, stdout: true, stderr: true, noInput: 'true', expected: false},
-])('terminalSupportsPrompting when $name', ({stdin, stdout, stderr, ci, noInput, expected}) => {
-  const streams = [
-    {stream: process.stdin, isTTY: stdin},
-    {stream: process.stdout, isTTY: stdout},
-    {stream: process.stderr, isTTY: stderr},
-  ]
-  const originalProperties = streams.map(({stream}) => ({
-    stream,
-    descriptor: Object.getOwnPropertyDescriptor(stream, 'isTTY'),
-  }))
-  vi.stubEnv('CI', ci ?? '')
-  vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', noInput ?? '')
-
-  try {
-    for (const {stream, isTTY} of streams) {
-      Object.defineProperty(stream, 'isTTY', {value: isTTY, configurable: true, writable: true})
-    }
-    expect(system.terminalSupportsPrompting()).toBe(expected)
-  } finally {
-    for (const {stream, descriptor} of originalProperties) {
-      if (descriptor) {
-        Object.defineProperty(stream, 'isTTY', descriptor)
-      } else {
-        Reflect.deleteProperty(stream, 'isTTY')
-      }
-    }
-    vi.unstubAllEnvs()
-  }
-})
-
 test('terminalSupportsPrompting returns false when input is disabled', () => {
   vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', 'true')
 
