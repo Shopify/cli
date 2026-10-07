@@ -12,7 +12,8 @@ import {
 import {Config} from '@oclif/core'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {ClientError} from 'graphql-request'
-import {GraphQLError} from 'graphql'
+// eslint-disable-next-line @shopify/typescript-prefer-build-client-schema -- Local execution fixture without an introspection response.
+import {GraphQLError, buildSchema, graphql} from 'graphql'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {AbortError, handler} from '@shopify/cli-kit/node/error'
@@ -90,6 +91,54 @@ test('writes one native GraphQL result with progress events on stderr', async ()
   })
   expect(adminRequestDoc).toHaveBeenCalledOnce()
 })
+
+test.each([{json: true}, {json: false}])('preserves native GraphQL alias bytes on stdout: $json', async ({json}) => {
+  const response = await graphql({
+    schema: buildSchema('type Query { name: String! nested: Query }'),
+    source: 'query { __proto__: name constructor: name nested { __proto__: name constructor: name } }',
+    rootValue: {name: 'Test', nested: {name: 'Nested'}},
+  })
+  expect(response.errors).toBeUndefined()
+  const extensions = JSON.parse('{"__proto__":{"trace":"preserved"},"constructor":false,"nullable":null,"empty":[]}')
+  vi.mocked(adminRequestDoc).mockImplementation(async ({responseOptions}) => {
+    responseOptions?.onResponse?.({data: response.data, extensions, status: 200, headers: new Headers()})
+    return response.data
+  })
+
+  await withCapturedStandardStreams(async ({stdout}) => {
+    await runCommand(json ? ['--json'] : [])
+    expect(stdout()).toBe(`${JSON.stringify(json ? {data: response.data, extensions} : response.data, null, 2)}\n`)
+  })
+})
+
+test.each([{json: true}, {json: false}])(
+  'preserves native GraphQL alias bytes in output files: $json',
+  async ({json}) => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = joinPath(directory, 'result.json')
+      const response = await graphql({
+        schema: buildSchema('type Query { name: String! }'),
+        source: 'query { __proto__: name constructor: name }',
+        rootValue: {name: 'Test'},
+      })
+      expect(response.errors).toBeUndefined()
+      const extensions = JSON.parse('{"__proto__":"extension","constructor":false}')
+      vi.mocked(adminRequestDoc).mockImplementation(async ({responseOptions}) => {
+        responseOptions?.onResponse?.({data: response.data, extensions, status: 200, headers: new Headers()})
+        return response.data
+      })
+
+      await withCapturedStandardStreams(async ({stdout}) => {
+        await runCommand(['--output-file', path, ...(json ? ['--json'] : [])])
+        if (json) expect(JSON.parse(stdout())).toEqual({path, format: 'json'})
+        else expect(stdout()).toBe('')
+      })
+      await expect(readFile(path)).resolves.toBe(
+        JSON.stringify(json ? {data: response.data, extensions} : response.data, null, 2),
+      )
+    })
+  },
+)
 
 test.each([{}, null])('writes an empty or null native data result: %j', async (data) => {
   vi.mocked(adminRequestDoc).mockResolvedValue(data)

@@ -1658,8 +1658,13 @@ DESCRIPTION
           "data": {
             "anyOf": [
               {
-                "type": "object",
-                "additionalProperties": {}
+                "allOf": [
+                  {},
+                  {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                ]
               },
               {
                 "type": "null"
@@ -1668,8 +1673,7 @@ DESCRIPTION
             "description": "Native GraphQL query data, preserving fields and aliases."
           },
           "extensions": {
-            "type": "object",
-            "additionalProperties": {},
+            "$ref": "#/definitions/AppExecuteGraphQLResult/properties/data/anyOf/0",
             "description": "Native GraphQL response extensions, when supplied."
           }
         },

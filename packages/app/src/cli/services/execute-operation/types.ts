@@ -2,10 +2,14 @@ import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-k
 import {isAbsolutePath} from '@shopify/cli-kit/node/path'
 import {zod} from '@shopify/cli-kit/node/schema'
 
+// Keep native keys and order, including "__proto__" omitted by Zod record parsing,
+// while the record schema validates that each payload is an object.
+const nativeGraphQLObjectSchema = zod.unknown().and(zod.record(zod.unknown()))
+
 const graphQLResultSchema = zod
   .object({
-    data: zod.record(zod.unknown()).nullable().describe('Native GraphQL query data, preserving fields and aliases.'),
-    extensions: zod.record(zod.unknown()).optional().describe('Native GraphQL response extensions, when supplied.'),
+    data: nativeGraphQLObjectSchema.nullable().describe('Native GraphQL query data, preserving fields and aliases.'),
+    extensions: nativeGraphQLObjectSchema.optional().describe('Native GraphQL response extensions, when supplied.'),
   })
   .strict()
 
