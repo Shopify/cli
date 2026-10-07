@@ -74,6 +74,21 @@ function eolSourceFindings(result: ScanResult) {
     .map((issue) => issue.location.file)
 }
 
+/** A route over the repository reader's size limit, so discovery skips it as too large. */
+const tooLargeRoute = `export const loader = async () => null\n// ${'x'.repeat(500_001)}\n`
+
+/** React Router gated checks left unresolved because they could not inspect `path`. */
+function gatedChecksRejectingInput(result: ScanResult, path: string) {
+  return result.scan.checks_executed
+    .filter(
+      (execution) =>
+        REACT_ROUTER_GATED_CHECKS.includes(execution.id) &&
+        execution.status === 'unresolved' &&
+        execution.reason?.message.includes(path),
+    )
+    .map((execution) => execution.id)
+}
+
 describe('React Router detection', () => {
   test('detects a flat app whose React Router code is in the app directory', async () => {
     await inTemporaryDirectory(async (temporaryDirectory) => {
@@ -236,6 +251,46 @@ describe('React Router detection', () => {
       expect(result.otherAppDirectories).toEqual([normalizePath(repository)])
       expect(result.detection.framework).toBe('react_router')
       expect(eolSourceFindings(result)).toEqual(['../../packages/server/app/shopify.server.ts'])
+    })
+  })
+
+  test("doesn't leave this app's React Router checks unresolved for a sibling app's skipped file", async () => {
+    await inTemporaryDirectory(async (temporaryDirectory) => {
+      const repository = await fileRealPath(temporaryDirectory)
+      await writeFiles(repository, {
+        'package.json': JSON.stringify({private: true, workspaces: ['apps/*', 'packages/*']}),
+        'apps/foo/shopify.app.toml': appConfiguration,
+        ...reactRouterServer('packages/server'),
+        'apps/bar/shopify.app.toml': appConfiguration,
+        'apps/bar/app/routes/app.huge.tsx': tooLargeRoute,
+      })
+
+      const result = await scanWithIncludeDirectories(joinPath(repository, 'apps/foo'), [repository])
+
+      expect(result.detection.framework).toBe('react_router')
+      expect(result.scan.files_skipped?.map((file) => file.path)).toContain('../bar/app/routes/app.huge.tsx')
+      expect(gatedChecksRejectingInput(result, '../bar/app/routes/app.huge.tsx')).toEqual([])
+      expect(frameworkGatedChecks(result)).toEqual([])
+    })
+  })
+
+  test("leaves React Router checks unresolved for a skipped file under this app's React Router root", async () => {
+    await inTemporaryDirectory(async (temporaryDirectory) => {
+      const repository = await fileRealPath(temporaryDirectory)
+      await writeFiles(repository, {
+        'package.json': JSON.stringify({private: true, workspaces: ['apps/*', 'packages/*']}),
+        'apps/foo/shopify.app.toml': appConfiguration,
+        ...reactRouterServer('packages/server'),
+        'packages/server/app/routes/app.huge.tsx': tooLargeRoute,
+        'apps/bar/shopify.app.toml': appConfiguration,
+      })
+
+      const result = await scanWithIncludeDirectories(joinPath(repository, 'apps/foo'), [repository])
+
+      expect(result.detection.framework).toBe('react_router')
+      expect(gatedChecksRejectingInput(result, '../../packages/server/app/routes/app.huge.tsx')).toContain(
+        'UNAUTHENTICATED_ENDPOINT',
+      )
     })
   })
 })

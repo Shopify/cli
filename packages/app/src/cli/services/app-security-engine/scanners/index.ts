@@ -336,12 +336,16 @@ function appSourceFiles(context: ScanContext): SourceFile[] {
   return context.sourceFiles.filter((file) => !themePaths.has(file.path))
 }
 
-function reactRouterFiles(context: ScanContext): SourceFile[] {
-  const files = appSourceFiles(context)
-  if (context.detection.framework !== 'react_router') return files
-  return files.filter((file) =>
-    isReactRouterSourcePath(file.path, context.reactRouterRoots, context.otherAppDirectories),
+/** Every source path when the app isn't React Router; otherwise only paths under this app's React Router roots. */
+function isReactRouterFilePath(path: string, context: ScanContext): boolean {
+  return (
+    context.detection.framework !== 'react_router' ||
+    isReactRouterSourcePath(path, context.reactRouterRoots, context.otherAppDirectories)
   )
+}
+
+function reactRouterFiles(context: ScanContext): SourceFile[] {
+  return appSourceFiles(context).filter((file) => isReactRouterFilePath(file.path, context))
 }
 
 function selectedFiles(definition: DeterministicCheckDefinition, context: ScanContext): string[] {
@@ -510,6 +514,7 @@ function skippedInputsForCheck(
     themeDirectories.some((directory) => path.startsWith(directory)) || path.endsWith('shopify.extension.toml')
   const isSourcePath = (path: string) =>
     !isThemePath(path) && Boolean(definition.extensions?.some((extension) => path.endsWith(extension)))
+  const isReactRouterInput = (path: string) => isSourcePath(path) && isReactRouterFilePath(path, context)
   const isConfig = (path: string) => /^shopify\.app(?:\.[^/]+)?\.toml$/.test(path)
   const isDependencyAutomationInput = (path: string) =>
     /(^|\/)package\.json$/.test(path) || context.dependencyAutomation.files.some((file) => file.path === path)
@@ -522,10 +527,11 @@ function skippedInputsForCheck(
   return skippedFiles.filter((file) => {
     if (definition.target === 'config') return isConfig(file.path)
     if (definition.target === 'dependency_automation') return isDependencyAutomationInput(file.path)
-    if (definition.target === 'config_and_source') return isConfig(file.path) || isSourcePath(file.path)
-    if (definition.target === 'source' || definition.target === 'app_source') return isSourcePath(file.path)
+    if (definition.target === 'config_and_source') return isConfig(file.path) || isReactRouterInput(file.path)
+    if (definition.target === 'source') return isReactRouterInput(file.path)
+    if (definition.target === 'app_source') return isSourcePath(file.path)
     if (definition.target === 'theme') return isThemePath(file.path)
-    if (definition.target === 'source_and_theme') return isSourcePath(file.path) || isThemePath(file.path)
+    if (definition.target === 'source_and_theme') return isReactRouterInput(file.path) || isThemePath(file.path)
     return isSecretInput(file)
   })
 }
