@@ -3529,6 +3529,10 @@ FLAGS
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
 
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --allow-deletes
       Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the
       recommended flag is --allow-updates. Required in non-interactive environments unless --allow-updates is provided.
@@ -3579,6 +3583,131 @@ DESCRIPTION
   Release an app version.
 
   Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppReleaseResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "app": {
+            "$ref": "#/definitions/App"
+          },
+          "release": {
+            "$ref": "#/definitions/AppRelease"
+          }
+        },
+        "required": [
+          "status",
+          "app",
+          "release"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "cancelled"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "AppReleaseResult",
+    "definitions": {
+      "App": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The client ID of the app receiving the release."
+          }
+        },
+        "required": [
+          "name",
+          "clientId"
+        ],
+        "additionalProperties": false
+      },
+      "AppRelease": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "$ref": "#/definitions/AppReleaseVersion"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "additionalProperties": false
+      },
+      "AppReleaseVersion": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/Version\\/\\d+$",
+            "description": "The Shopify app version GID."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version tag, or null when no tag is available."
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version message, or null when no message is available."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The Developer Dashboard URL for this version."
+          }
+        },
+        "required": [
+          "gid",
+          "name",
+          "message",
+          "url"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app security check`

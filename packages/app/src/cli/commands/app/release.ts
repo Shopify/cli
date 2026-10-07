@@ -1,10 +1,14 @@
 import {appFlags} from '../../flags.js'
 import {release} from '../../services/release.js'
+import {appReleaseJsonOutputSchema} from '../../services/release/types.js'
+import {renderAppReleaseError, renderAppReleaseResult} from '../../services/release/result.js'
+import {ReleaseVersionLookupError} from '../../services/release/version-diff.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 export default class Release extends AppLinkedCommand {
@@ -14,11 +18,16 @@ export default class Release extends AppLinkedCommand {
 
   static descriptionWithMarkdown = `Releases an existing app version. Pass the name of the version that you want to release using the \`--version\` flag.`
 
+  static get jsonOutputSchema() {
+    return appReleaseJsonOutputSchema
+  }
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
     ...appFlags,
+    ...jsonFlag,
     'allow-updates': Flags.boolean({
       hidden: false,
       description:
@@ -64,16 +73,24 @@ export default class Release extends AppLinkedCommand {
       userProvidedConfigName: flags.config,
     })
 
-    await release({
-      app,
-      remoteApp,
-      developerPlatformClient,
-      force,
-      allowUpdates,
-      allowDeletes,
-      version: flags.version,
-    })
-
+    let result
+    try {
+      result = await release({
+        app,
+        remoteApp,
+        developerPlatformClient,
+        force,
+        allowUpdates,
+        allowDeletes,
+        version: flags.version,
+      })
+    } catch (error) {
+      if (error instanceof ReleaseVersionLookupError || error instanceof AbortSilentError) {
+        renderAppReleaseError(error, flags.json ? 'json' : 'text')
+      }
+      throw error
+    }
+    renderAppReleaseResult(result, remoteApp, flags.json ? 'json' : 'text')
     return {app}
   }
 }
