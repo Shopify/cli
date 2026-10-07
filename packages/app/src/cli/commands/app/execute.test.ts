@@ -20,15 +20,11 @@ import {unstyled} from '@shopify/cli-kit/node/output'
 import {fileExists, inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {renderSingleTask} from '@shopify/cli-kit/node/ui'
+import * as ui from '@shopify/cli-kit/node/ui'
 
 vi.mock('../../utilities/execute-command-helpers.js')
 vi.mock('../../services/graphql/common.js')
 vi.mock('@shopify/cli-kit/node/api/admin')
-vi.mock('@shopify/cli-kit/node/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@shopify/cli-kit/node/ui')>()
-  return {...actual, renderSingleTask: vi.fn(actual.renderSingleTask)}
-})
 
 const query = 'query { shop { name } }'
 const app = testAppLinked()
@@ -58,11 +54,15 @@ afterEach(() => {
 
 async function runCommand(flags: string[]) {
   const argv = ['--query', query, '--store', 'shop.myshopify.com', ...flags]
-  if (!flags.includes('--json')) {
-    vi.mocked(renderSingleTask).mockImplementation(async ({task}) => task(() => {}))
-  }
   const command = new Execute(argv, await Config.load())
-  return runWithCommandEventsForCommand(argv, () => command.run())
+  const textTask = flags.includes('--json')
+    ? undefined
+    : vi.spyOn(ui, 'renderSingleTask').mockImplementation(async ({task}) => task(() => {}))
+  try {
+    return await runWithCommandEventsForCommand(argv, () => command.run())
+  } finally {
+    textTask?.mockRestore()
+  }
 }
 
 test('preserves native GraphQL aliases, order, and UTF-8 on stdout and in output files', async () => {
