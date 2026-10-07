@@ -360,6 +360,7 @@ describe('uploadExtensionsBundle', () => {
       // Then
       expect(result).toEqual({
         validationErrors: [],
+        versionGid: 'appVersion-uuid',
         versionTag: 'versionTag',
         deployError: 'No release error message.',
         location: 'location',

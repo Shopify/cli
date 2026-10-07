@@ -57,6 +57,7 @@ interface UploadExtensionValidationError {
 
 export interface UploadExtensionsBundleOutput {
   validationErrors: UploadExtensionValidationError[]
+  versionGid: string
   versionTag?: string | null
   message?: string | null
   location: string
@@ -134,6 +135,7 @@ export async function uploadExtensionsBundle(
 
   return {
     validationErrors,
+    versionGid: result.appDeploy.appVersion.uuid,
     versionTag: result.appDeploy.appVersion.versionTag,
     location: result.appDeploy.appVersion.location,
     message: result.appDeploy.appVersion.message,
