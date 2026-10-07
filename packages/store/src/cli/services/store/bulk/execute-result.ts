@@ -6,7 +6,7 @@ import {
   extractBulkOperationId,
 } from '@shopify/cli-kit/node/api/bulk-operations'
 import {renderSuccess, renderInfo, renderError, renderWarning, type TokenItem} from '@shopify/cli-kit/node/ui'
-import {outputContent, outputToken, outputResult, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {resolvePath} from '@shopify/cli-kit/node/path'
@@ -19,12 +19,10 @@ export async function renderExecuteBulkOperationResult(
   const {format, watch, outputFile} = options
   const {operation, userErrors, watchAborted, results} = result
   if (!operation && userErrors.length === 0) {
-    const warning = {
+    renderWarning({
       headline: 'Bulk operation not created successfully.',
       body: 'This is an unexpected error. Please try again later.',
-    }
-    if (format === 'json') outputWarn(`${warning.headline} ${warning.body}`)
-    else renderWarning(warning)
+    })
     throw new BugError('Bulk operation response returned null with no error message.')
   }
 

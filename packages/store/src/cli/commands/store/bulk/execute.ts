@@ -54,11 +54,7 @@ export default class StoreBulkExecute extends StoreCommand {
       ...(flags.version && {version: flags.version}),
     })
     const format = flags.json ? 'json' : 'text'
-    logBulkOperationStart(
-      'Starting bulk operation.',
-      {storeFqdn: input.adminSession.storeFqdn, version: input.version},
-      format,
-    )
+    logBulkOperationStart('Starting bulk operation.', {storeFqdn: input.adminSession.storeFqdn, version: input.version})
     const result = await executeBulkOperation(input)
     await renderExecuteBulkOperationResult(result, {format, watch: input.watch, outputFile: flags['output-file']})
   }

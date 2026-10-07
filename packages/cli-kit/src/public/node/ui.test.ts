@@ -15,9 +15,9 @@ import {
 } from './ui.js'
 import {AbortSignal} from './abort.js'
 import {BugError, FatalError, AbortError, FatalErrorType} from './error.js'
-import {renderCommandEventAsJson, runWithCommandEvents} from './command-events.js'
+import {renderCommandEventAsJson, runWithCommandEvents, runWithCommandEventsForCommand} from './command-events.js'
 import {mockAndCaptureOutput, withCapturedStandardStreams} from './testing/output.js'
-import {TokenizedString} from './output.js'
+import {outputResult, TokenizedString, unstyled} from './output.js'
 import {Stdin, waitForInputsToBeReady} from '../../private/node/testing/ui.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import supportsHyperlinks from 'supports-hyperlinks'
@@ -244,6 +244,99 @@ describe('renderWarning', async () => {
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
     `)
+  })
+})
+
+describe('info and warning diagnostics', () => {
+  test.each([
+    {renderAlert: renderInfo, level: 'info'},
+    {renderAlert: renderWarning, level: 'warning'},
+  ] as const)('writes $level alerts as JSON on stderr with --json', async ({renderAlert, level}) => {
+    await withCapturedStandardStreams(({stdout, stderr}) => {
+      runWithCommandEventsForCommand(['--json'], () => {
+        renderAlert({headline: 'Scan directory ignored', body: ['Use', {command: '--no-git-ignore'}]})
+        outputResult('{"files":[]}')
+      })
+
+      expect(stdout()).toBe('{"files":[]}\n')
+      expect(JSON.parse(stderr())).toEqual({
+        type: 'diagnostic',
+        level,
+        timestamp: expect.any(String),
+        message: 'Scan directory ignored\n\nUse --no-git-ignore',
+      })
+      expect(stderr()).not.toContain('╭')
+    })
+  })
+
+  test('uses JSON diagnostics when SHOPIFY_FLAG_JSON enables JSON mode', async () => {
+    vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
+    try {
+      await withCapturedStandardStreams(({stdout, stderr}) => {
+        runWithCommandEventsForCommand([], () => renderInfo({headline: 'Loading app.'}))
+
+        expect(stdout()).toBe('')
+        expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', level: 'info', message: 'Loading app.'})
+      })
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
+
+  test('retains alert details, URLs, token punctuation and tables without terminal styling', async () => {
+    await withCapturedStandardStreams(({stdout, stderr}) => {
+      runWithCommandEventsForCommand(['--json'], () =>
+        renderWarning({
+          headline: '\u001B[33mReview configuration\u001B[0m.',
+          body: [{list: {title: 'Files', items: [{filePath: '/tmp/app.toml'}, 'package.json']}}],
+          nextSteps: [['Run', {command: 'shopify app config validate'}, {char: '.'}]],
+          reference: [{link: {label: 'Documentation', url: 'https://shopify.dev'}}],
+          link: {label: 'Support', url: 'https://help.shopify.com'},
+          customSections: [
+            {title: 'Details', body: ['Client ID:', {userInput: 'abc123'}]},
+            {
+              body: {
+                tabularData: [
+                  ['File', 'Status'],
+                  [{filePath: '/tmp/app.toml'}, {warn: 'invalid'}],
+                ],
+              },
+            },
+          ],
+        }),
+      )
+
+      expect(stdout()).toBe('')
+      expect(JSON.parse(stderr()).message).toBe(
+        'Review configuration.\n\nFiles: /tmp/app.toml; package.json\n\n' +
+          'Next steps:\nRun shopify app config validate.\n\n' +
+          'Reference:\nDocumentation (https://shopify.dev)\n\nSupport (https://help.shopify.com)\n\n' +
+          'Details:\nClient ID: abc123\n\nFile\tStatus\n/tmp/app.toml\tinvalid',
+      )
+      expect(stderr()).not.toContain('\u001B')
+    })
+  })
+
+  test.each([renderInfo, renderWarning])('does not emit a diagnostic for an empty alert', (renderAlert) => {
+    const sink = vi.fn()
+
+    runWithCommandEvents({outputMode: 'json', sink}, () => renderAlert({}))
+
+    expect(sink).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    {renderAlert: renderInfo, banner: 'info'},
+    {renderAlert: renderWarning, banner: 'warning'},
+  ])('keeps the $banner banner on stderr in text mode', async ({renderAlert, banner}) => {
+    await withCapturedStandardStreams(({stdout, stderr}) => {
+      runWithCommandEvents({outputMode: 'text'}, () => renderAlert({headline: 'Title', body: 'Body'}))
+
+      expect(stdout()).toBe('')
+      expect(unstyled(stderr())).toContain(`╭─ ${banner}`)
+      expect(unstyled(stderr())).toContain('Title')
+      expect(unstyled(stderr())).toContain('Body')
+    })
   })
 })
 

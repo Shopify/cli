@@ -1,4 +1,4 @@
-import {tokenItemToString, type Token, type TokenItem} from './ui/components/token-item.js'
+import {tokenItemToJsonString, type TokenItem} from './ui/components/token-item.js'
 import {FatalErrorType} from '../../public/node/error.js'
 import {jsonErrorOutputSchema} from '../../public/node/error/schema.js'
 import {outputResult, unstyled} from '../../public/node/output.js'
@@ -40,35 +40,6 @@ function jsonErrorType(error: FatalErrorLike, external: ExternalCommand | undefi
     return external ? 'external' : 'abort'
   }
   return 'bug'
-}
-
-function tokenToJsonString(token: Token): string {
-  if (typeof token === 'string') return token
-
-  if ('link' in token) {
-    const {label, url} = token.link
-    return label && label !== url ? `${label} (${url})` : url
-  }
-
-  if ('list' in token) {
-    const title = token.list.title ? tokenItemToJsonString(token.list.title).trim() : undefined
-    const items = token.list.items.map(tokenItemToJsonString).join('; ')
-    return title ? `${title}${items ? `: ${items}` : ''}` : items
-  }
-
-  return tokenItemToString(token)
-}
-
-function tokenItemToJsonString(token: TokenItem): string {
-  if (!Array.isArray(token)) return tokenToJsonString(token)
-
-  return token
-    .map((item, index) => {
-      const value = tokenToJsonString(item)
-      const needsLeadingSpace = index !== 0 && !(typeof item !== 'string' && 'char' in item)
-      return needsLeadingSpace ? ` ${value}` : value
-    })
-    .join('')
 }
 
 function jsonTokenItem(token: unknown): string | undefined {
