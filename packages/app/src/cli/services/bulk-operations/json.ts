@@ -1,5 +1,6 @@
 import {extractMyshopifyHandle} from '@shopify/cli-kit/common/url'
 import {BugError} from '@shopify/cli-kit/node/error'
+import {formatJsonOutputTimestamp} from '@shopify/cli-kit/node/json-output-schema'
 import type {BulkOperation} from '@shopify/cli-kit/node/api/bulk-operations'
 import type {BulkOperationContext, BulkOperationJson, ListedBulkOperationJson} from './common.js'
 
@@ -22,10 +23,8 @@ export function toBulkOperationJson(
     ...('type' in operation ? {type: operation.type} : {}),
     status: operation.status,
     errorCode: operation.errorCode ?? null,
-    createdAt: new Date(String(operation.createdAt)).toISOString().replace(/\.\d{3}Z$/, 'Z'),
-    completedAt: operation.completedAt
-      ? new Date(String(operation.completedAt)).toISOString().replace(/\.\d{3}Z$/, 'Z')
-      : null,
+    createdAt: formatJsonOutputTimestamp(new Date(String(operation.createdAt))),
+    completedAt: operation.completedAt ? formatJsonOutputTimestamp(new Date(String(operation.completedAt))) : null,
     objectCount: String(operation.objectCount),
     url: operation.url ?? null,
     partialDataUrl: operation.partialDataUrl ?? null,
