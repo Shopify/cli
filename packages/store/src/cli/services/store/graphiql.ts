@@ -3,6 +3,7 @@ import {TokenProvider} from '@shopify/cli-kit/node/graphiql/server'
 import {generateRandomGraphiQLKey, runGraphiQLSession} from '@shopify/cli-kit/node/graphiql/session'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {ensureNoOrganizationAutomationToken} from '@shopify/cli-kit/node/session'
 
 interface OpenStoreGraphiQLOptions {
   store: string
@@ -24,6 +25,7 @@ interface OpenStoreGraphiQLOptions {
  * process to be aborted (Ctrl+C) before shutting down.
  */
 export async function openStoreGraphiQL(options: OpenStoreGraphiQLOptions): Promise<void> {
+  ensureNoOrganizationAutomationToken()
   const tokenProvider = createStoredSessionTokenProvider(options.store)
 
   const key = generateRandomGraphiQLKey()

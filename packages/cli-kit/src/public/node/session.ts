@@ -4,6 +4,8 @@ import {getAppAutomationToken} from './environment.js'
 import {AbortError, BugError} from './error.js'
 import {outputContent, outputToken, outputDebug} from './output.js'
 import * as sessionStore from '../../private/node/session/store.js'
+import {automationTokenVariable} from '../../private/node/session/automation-token.js'
+import {environmentVariables} from '../../private/node/constants.js'
 import {
   exchangeCustomPartnerToken,
   exchangeAppAutomationTokenForAppManagementAccessToken,
@@ -339,6 +341,22 @@ ${outputToken.json(scopes)}
     throw new BugError('No business-platform token found after ensuring authenticated')
   }
   return tokens.businessPlatform
+}
+
+/**
+ * Fails when SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN is set, for commands that can't run with that token.
+ *
+ * Organization automation tokens can't log in as a user or call a store's Admin API, so commands that need either
+ * refuse to run instead of quietly using the person's own login. `ensureAuthenticated` runs this check before any
+ * login. Commands that run on a login saved by `shopify store auth` call it before loading that login.
+ *
+ * @throws AbortError when SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN is set.
+ */
+export function ensureNoOrganizationAutomationToken(): void {
+  const variable = environmentVariables.organizationAutomationToken
+  if (automationTokenVariable() !== variable) return
+
+  throw new AbortError(`This command can't use ${variable}.`, `Unset ${variable} to run it with your Shopify account.`)
 }
 
 /**

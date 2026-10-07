@@ -12,17 +12,16 @@ import {
 import {IdentityToken, Session, Sessions} from './session/schema.js'
 import * as sessionStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
-import {automationTokenVariable, automationTokenVariablesProblem} from './session/automation-token.js'
+import {automationTokenVariablesProblem} from './session/automation-token.js'
 import {isThemeAccessSession} from './api/rest.js'
 import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
-import {environmentVariables} from './constants.js'
 import {UserEmailQueryString, UserEmailQuery} from './api/graphql/business-platform-destinations/user-email.js'
 import {outputContent, outputToken, outputDebug, outputCompleted} from '../../public/node/output.js'
 import {themeToken} from '../../public/node/context/local.js'
 import {AbortError} from '../../public/node/error.js'
 import {normalizeStoreFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
 import {getIdentityTokenInformation, getAppAutomationToken} from '../../public/node/environment.js'
-import {AdminSession, logout} from '../../public/node/session.js'
+import {AdminSession, ensureNoOrganizationAutomationToken, logout} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
 import {businessPlatformRequest} from '../../public/node/api/business-platform.js'
@@ -210,12 +209,7 @@ export async function ensureAuthenticated(
   // login starts.
   const variablesProblem = automationTokenVariablesProblem()
   if (variablesProblem) throw new AbortError(variablesProblem.message, variablesProblem.tryMessage)
-  if (automationTokenVariable() === environmentVariables.organizationAutomationToken) {
-    throw new AbortError(
-      `This command can't use ${environmentVariables.organizationAutomationToken}.`,
-      `Unset ${environmentVariables.organizationAutomationToken} to run it with your Shopify account.`,
-    )
-  }
+  ensureNoOrganizationAutomationToken()
 
   const fqdn = await identityFqdn()
 
