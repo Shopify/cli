@@ -1,7 +1,6 @@
 import {importChannelConfigJsonOutputSchema, type ImportedChannelConfig} from './types.js'
 import {relativePath} from '@shopify/cli-kit/node/path'
 import {outputResult} from '@shopify/cli-kit/node/output'
-import {emitCommandEvent} from '@shopify/cli-kit/node/command-events'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 
 export function renderImportChannelConfigResult(
@@ -9,10 +8,8 @@ export function renderImportChannelConfigResult(
   app: {directory: string; name: string},
   format: 'json' | 'text',
 ): void {
+  result.warnings.forEach((warning) => renderWarning({body: warning.message}))
   if (format === 'json') {
-    result.warnings.forEach(({code, message}) =>
-      emitCommandEvent({type: 'diagnostic', level: 'warning', message, ...(code ? {code} : {})}),
-    )
     outputResult(
       importChannelConfigJsonOutputSchema.encode({
         status: result.status,
@@ -26,7 +23,6 @@ export function renderImportChannelConfigResult(
     return
   }
 
-  result.warnings.forEach((warning) => renderWarning({body: warning.message}))
   renderSuccess({
     headline: ['Imported the channel spec for', {userInput: app.name}, {char: '.'}],
     body: [

@@ -74,7 +74,7 @@ export async function importChannelConfig(options: ImportChannelConfigOptions): 
     filename: basename(result.filename),
     path: outputPath,
     toml: result.toml,
-    warnings: result.warnings.map(({code, message}) => ({code, message})),
+    warnings: result.warnings,
     extensionConfigurationPath: createExtension ? resolvePath(extensionDirectory, EXTENSION_CONFIG_FILENAME) : null,
   }
 }

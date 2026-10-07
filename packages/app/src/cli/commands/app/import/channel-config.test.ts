@@ -1,5 +1,6 @@
 import ImportChannelConfig from './channel-config.js'
 import {linkedAppContext} from '../../../services/app-context.js'
+import {importChannelConfigJsonOutputSchema} from '../../../services/import-channel-config/types.js'
 import {
   CHANNEL_SPEC_DIRECTORY,
   CHANNEL_SPEC_EXTENSION_DIRECTORY,
@@ -35,7 +36,8 @@ test('imports real files and writes one JSON document with warning events on std
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
       await runCommand(['--path', tmp, '--json'])
       const path = joinPath(tmp, CHANNEL_SPEC_DIRECTORY, 'example.toml')
-      expect(JSON.parse(stdout())).toEqual({
+      const result = JSON.parse(stdout())
+      expect(result).toEqual({
         status: 'success',
         handle: 'example',
         filename: 'example.toml',
@@ -43,7 +45,10 @@ test('imports real files and writes one JSON document with warning events on std
         toml: TOML,
         warnings: [warning],
       })
-      expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', level: 'warning', ...warning})
+      expect(() =>
+        importChannelConfigJsonOutputSchema.encode({...result, path: joinPath(CHANNEL_SPEC_DIRECTORY, 'example.toml')}),
+      ).toThrow()
+      expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', level: 'warning', message: warning.message})
       await expect(readFile(path)).resolves.toBe(TOML)
       await expect(readFile(joinPath(tmp, CHANNEL_SPEC_EXTENSION_DIRECTORY, 'shopify.extension.toml'))).resolves.toBe(
         'name = "Channel config"\ntype = "channel_config"\nhandle = "channel-config"\n',
