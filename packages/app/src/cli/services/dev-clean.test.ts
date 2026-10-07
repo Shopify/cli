@@ -19,7 +19,7 @@ test('returns public app and store data after stopping the dev preview', async (
   await expect(devClean(input)).resolves.toEqual({
     status: 'success',
     app: {name: 'Test App', clientId: 'public-client-id'},
-    storeDomain: 'test-store.myshopify.com',
+    storeHostname: 'test-store.myshopify.com',
   })
 })
 

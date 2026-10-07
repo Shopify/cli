@@ -11,11 +11,14 @@ export const appDevCleanJsonOutputSchema = defineJsonOutputSchema({
       app: appSchema,
       storeDomain: zod
         .string()
-        .regex(/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/)
-        .describe('The canonical store hostname, without a scheme or path.'),
+        .regex(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.myshopify\.com$/)
+        .nullable()
+        .describe('The canonical *.myshopify.com hostname, or null when unknown.'),
     })
     .strict(),
   definitions: {AppDevCleanApp: appSchema},
 })
 
 export type AppDevCleanResult = InferJsonOutputSchema<typeof appDevCleanJsonOutputSchema>
+
+export type DevCleanResult = Omit<AppDevCleanResult, 'storeDomain'> & {storeHostname: string}

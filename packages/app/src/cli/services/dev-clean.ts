@@ -1,5 +1,5 @@
 import {LoadedAppContextOutput} from './app-context.js'
-import {AppDevCleanResult} from './dev-clean/types.js'
+import {DevCleanResult} from './dev-clean/types.js'
 import {OrganizationStore} from '../models/organization.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -8,7 +8,7 @@ interface DevCleanOptions {
   store: OrganizationStore
 }
 
-export async function devClean(options: DevCleanOptions): Promise<AppDevCleanResult> {
+export async function devClean(options: DevCleanOptions): Promise<DevCleanResult> {
   const client = options.appContextResult.developerPlatformClient
   const remoteApp = options.appContextResult.remoteApp
 
@@ -31,6 +31,6 @@ export async function devClean(options: DevCleanOptions): Promise<AppDevCleanRes
   return {
     status: 'success',
     app: {name: remoteApp.title, clientId: remoteApp.apiKey},
-    storeDomain: options.store.shopDomain,
+    storeHostname: options.store.shopDomain,
   }
 }
