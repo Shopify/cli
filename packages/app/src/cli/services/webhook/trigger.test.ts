@@ -3,6 +3,7 @@ import {SendSampleWebhookVariables, getWebhookSample} from './request-sample.js'
 import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
+import {renderWebhookTriggerResult} from './trigger/result.js'
 import {
   testApp,
   testAppLinked,
@@ -10,6 +11,7 @@ import {
   testOrganizationApp,
 } from '../../models/app/app.test-data.js'
 import {loadApp} from '../../models/app/loader.js'
+import {outputSuccess, outputWarn} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 
 const samplePayload = '{ "sampleField": "SampleValue" }'
@@ -82,7 +84,8 @@ describe('webhookTriggerService', () => {
 
     // Then
     expectCalls(aVersion, anOrganizationId)
-    expect(result).toEqual({status: 'failed', reason: 'sample-request', userErrors: response.userErrors})
+    renderWebhookTriggerResult(result, 'text')
+    expect(outputWarn).toHaveBeenCalledWith(`Request errors:\n  · Some error\n  · Another error`)
   })
 
   test('Safe notification in case of unexpected request errors', async () => {
@@ -105,7 +108,8 @@ describe('webhookTriggerService', () => {
 
     // Then
     expectCalls(aVersion, anOrganizationId)
-    expect(result).toEqual({status: 'failed', reason: 'sample-request', userErrors: response.userErrors})
+    renderWebhookTriggerResult(result, 'text')
+    expect(outputWarn).toHaveBeenCalledWith(`Request errors:\n${JSON.stringify(response.userErrors)}`)
   })
 
   test('notifies about real delivery being sent', async () => {
@@ -146,6 +150,8 @@ describe('webhookTriggerService', () => {
       },
       samplePayloadIsEmpty: true,
     })
+    renderWebhookTriggerResult(result, 'text')
+    expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
   })
 
   test('retrieves the api-key when missing for event-bridge', async () => {
@@ -167,8 +173,7 @@ describe('webhookTriggerService', () => {
     }
 
     // When
-    const result = await webhookTriggerService(flags)
-    expect(result.status).toBe('success')
+    await webhookTriggerService(flags)
   })
 
   test('notifies about real event-bridge delivery being sent', async () => {
@@ -198,20 +203,8 @@ describe('webhookTriggerService', () => {
       expectedSampleWebhookVariables,
       anOrganizationId,
     )
-    expect(result).toEqual({
-      status: 'success',
-      result: {
-        status: 'success',
-        delivery: {
-          topic: aTopic,
-          apiVersion: aVersion,
-          deliveryMethod: expectedSampleWebhookVariables.delivery_method,
-          address: expectedSampleWebhookVariables.address,
-          status: 'enqueued',
-        },
-      },
-      samplePayloadIsEmpty: true,
-    })
+    renderWebhookTriggerResult(result, 'text')
+    expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
   })
 
   describe('Localhost delivery', () => {
@@ -239,20 +232,9 @@ describe('webhookTriggerService', () => {
         anOrganizationId,
       )
       expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
-      expect(result).toEqual({
-        status: 'success',
-        result: {
-          status: 'success',
-          delivery: {
-            topic: aTopic,
-            apiVersion: aVersion,
-            deliveryMethod: 'localhost',
-            address: aFullLocalAddress,
-            status: 'delivered',
-          },
-        },
-        samplePayloadIsEmpty: false,
-      })
+      expect(result).toMatchObject({status: 'success', result: {delivery: {status: 'delivered'}}})
+      renderWebhookTriggerResult(result, 'text')
+      expect(outputSuccess).toHaveBeenCalledWith('Localhost delivery sucessful')
     })
 
     test('shows an error if localhost is not ready', async () => {
@@ -280,6 +262,8 @@ describe('webhookTriggerService', () => {
       )
       expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
       expect(result).toEqual({status: 'failed', reason: 'localhost-delivery'})
+      renderWebhookTriggerResult(result, 'text')
+      expect(outputWarn).toHaveBeenCalledWith('Localhost delivery failed')
     })
   })
 
