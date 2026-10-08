@@ -68,7 +68,7 @@ function dependencyFindings(result: ScanResult) {
 describe('dependency automation scanner integration', () => {
   test('registers one framework-independent low-severity structured-config check', () => {
     expect(DETERMINISTIC_CHECKS.get(checkId)).toMatchObject({
-      version: 1,
+      version: 2,
       lifecycle: 'active',
       analysisMode: 'structured_config',
       target: 'dependency_automation',
