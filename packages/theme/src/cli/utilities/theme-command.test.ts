@@ -1,6 +1,6 @@
 import ThemeCommand, {RequiredFlags} from './theme-command.js'
 import {ensureThemeStore} from './theme-store.js'
-import {describe, vi, expect, test, beforeEach} from 'vitest'
+import {describe, vi, expect, test, beforeEach, afterEach} from 'vitest'
 import {Config, Flags} from '@oclif/core'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {
@@ -36,6 +36,11 @@ vi.mock('./theme-store.js')
 vi.mock('@shopify/cli-kit/node/fs')
 
 const CommandConfig = new Config({root: __dirname})
+const previousExitCode = process.exitCode
+
+afterEach(() => {
+  process.exitCode = previousExitCode
+})
 
 class TestThemeCommand extends ThemeCommand {
   static id = 'theme:test'
@@ -929,6 +934,8 @@ describe('ThemeCommand', () => {
         'development',
         'production',
       ])
+      expect(command.commandCalls).toHaveLength(3)
+      expect(process.exitCode).toBe(1)
     })
 
     test('error messages contain the environment name', async () => {

@@ -443,6 +443,7 @@ export default abstract class ThemeCommand extends Command {
 
             // eslint-disable-next-line no-catch-all/no-catch-all
           } catch (error) {
+            process.exitCode = 1
             if (collectResults) {
               const message = error instanceof Error ? error.message : String(error)
               const common = {
