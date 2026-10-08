@@ -1,7 +1,13 @@
 import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
-import {commandEventOutputMode, emitCommandEvent, runWithCommandEventsForCommand} from './command-events.js'
+import {
+  commandEventOutputMode,
+  emitCommandEvent,
+  renderCommandEventAsJson,
+  runWithCommandEvents,
+  runWithCommandEventsForCommand,
+} from './command-events.js'
 import {outputContent, outputResult, outputToken} from './output.js'
 import {setCurrentSessionAlias} from './session.js'
 import {terminalSupportsPrompting} from './system.js'
@@ -76,11 +82,19 @@ abstract class BaseCommand extends Command {
     return undefined
   }
 
+  private jsonOutputFromFlags = false
+
   async catch(error: Error & {skipOclifErrorHandling: boolean}): Promise<void> {
-    error.skipOclifErrorHandling = true
-    const {errorHandler} = await import('./error-handler.js')
-    await errorHandler(error, this.config)
-    return Errors.handle(error)
+    const handleError = async () => {
+      error.skipOclifErrorHandling = true
+      const {errorHandler} = await import('./error-handler.js')
+      await errorHandler(error, this.config)
+      return Errors.handle(error)
+    }
+    if (this.jsonOutputFromFlags && commandEventOutputMode() !== 'json') {
+      return runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, handleError)
+    }
+    return handleError()
   }
 
   protected async _run<T>(): Promise<T> {
@@ -161,12 +175,26 @@ abstract class BaseCommand extends Command {
     options?: Input<TFlags, TGlobalFlags, TArgs>,
     argv?: string[],
   ): Promise<ParserOutput<TFlags, TGlobalFlags, TArgs> & {argv: string[]}> {
-    let result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
-    result = await this.resultWithEnvironment<TFlags, TGlobalFlags, TArgs>(result, options, argv)
-    await setCurrentSessionAlias(result.flags['auth-alias'])
-    await addFromParsedFlags(result.flags)
-    this.validateNonTTYFlags(result.flags)
-    return {...result, ...{argv: result.argv as string[]}}
+    const parsed = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
+    const result = await this.resultWithEnvironment<TFlags, TGlobalFlags, TArgs>(parsed, options, argv)
+    return this.runWithParsedOutput(result.flags, async () => {
+      await setCurrentSessionAlias(result.flags['auth-alias'])
+      await addFromParsedFlags(result.flags)
+      this.validateNonTTYFlags(result.flags)
+      return {...result, ...{argv: result.argv as string[]}}
+    })
+  }
+
+  protected runWithParsedOutput<T>(flags: FlagOutput, execute: () => T): T {
+    const command = this.constructor as typeof BaseCommand
+    const json =
+      commandSupportsFlag(command.flags, 'json') &&
+      (flags.json === true || (commandSupportsJsonOutputFormat(command.flags) && flags.output === 'json'))
+    this.jsonOutputFromFlags ||= json
+    if (json && commandEventOutputMode() !== 'json') {
+      return runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, execute)
+    }
+    return execute()
   }
 
   protected environmentsFilename(): string | undefined {
@@ -288,23 +316,37 @@ ${explanation} in non-interactive terminal environments, such as a CI environmen
     // command-line arguments.
     const noDefaultsResult = await super.parse<TFlags, TGlobalFlags, TArgs>(noDefaultsOptions(options), argv)
 
+    // Remember the requested format before environment flag validation can fail.
+    const effectiveFlags = {...environment, ...noDefaultsResult.flags}
+    this.jsonOutputFromFlags =
+      (commandSupportsFlag(options?.flags, 'json') && effectiveFlags.json === true) ||
+      (commandSupportsJsonOutputFormat(options?.flags) && effectiveFlags.output === 'json')
+    const normalizedEnvironment =
+      commandSupportsFlag(options?.flags, 'json') &&
+      commandSupportsJsonOutputFormat(options?.flags) &&
+      effectiveFlags.output === 'json'
+        ? {json: true, ...environment}
+        : environment
+
     // Add the environment's settings to argv and pass them to `super.parse`. This
     // invokes oclif's validation system without breaking the oclif black box.
     // Replace the original result with this one.
     const result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, [
       // Need to specify argv default because we're merging with argsFromEnvironment.
       ...(argv ?? this.argv),
-      ...argsFromEnvironment<TFlags, TGlobalFlags, TArgs>(environment, options, noDefaultsResult.flags),
+      ...argsFromEnvironment<TFlags, TGlobalFlags, TArgs>(normalizedEnvironment, options, noDefaultsResult.flags),
       ...(isDefaultEnvironment ? ['--environment', 'default'] : []),
     ])
 
     // Report successful application of the environment.
-    reportEnvironmentApplication<TFlags, TGlobalFlags, TArgs>(
-      noDefaultsResult.flags,
-      result.flags,
-      isDefaultEnvironment ? 'default' : (environments[0] as string),
-      environment,
-    )
+    const report = () =>
+      reportEnvironmentApplication<TFlags, TGlobalFlags, TArgs>(
+        noDefaultsResult.flags,
+        result.flags,
+        isDefaultEnvironment ? 'default' : (environments[0] as string),
+        environment,
+      )
+    this.runWithParsedOutput(result.flags, report)
 
     return result
   }
@@ -439,6 +481,9 @@ function argsFromEnvironment<TFlags extends FlagOutput, TGlobalFlags extends Fla
     const flagIsRelevantToCommand = commandSupportsFlag(options?.flags, label)
     const userSpecifiedThisFlag = Object.prototype.hasOwnProperty.call(explicitFlags, label)
     if (flagIsRelevantToCommand && !userSpecifiedThisFlag) {
+      if (options?.flags?.[label]?.type === 'boolean' && typeof value !== 'boolean') {
+        throw new AbortError(outputContent`Environment flag ${outputToken.yellow(label)} must be a boolean.`)
+      }
       if (typeof value === 'boolean') {
         if (value) {
           args.push(`--${label}`)
@@ -461,6 +506,11 @@ function argsFromEnvironment<TFlags extends FlagOutput, TGlobalFlags extends Fla
 
 function commandSupportsFlag(flags: FlagInput | undefined, flagName: string): boolean {
   return Boolean(flags) && Object.prototype.hasOwnProperty.call(flags, flagName)
+}
+
+function commandSupportsJsonOutputFormat(flags: FlagInput | undefined): boolean {
+  const output = flags?.output
+  return output?.type === 'option' && output.options?.includes('json') === true
 }
 
 function appendJsonOutputSchema(description: string, outputSchema: JsonOutputSchema | undefined): string {

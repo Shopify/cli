@@ -246,7 +246,9 @@ describe('app config validate command', () => {
 
     await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow()
 
-    expect(outputResult).not.toHaveBeenCalled()
+    expect(outputResult).toHaveBeenCalledExactlyOnceWith(
+      JSON.stringify({error: {type: 'abort', message: 'Could not find app configuration'}}),
+    )
     expect(selectActiveConfig).not.toHaveBeenCalled()
     await expectValidationMetadataCalls({cmd_app_validate_json: true})
   })
@@ -257,7 +259,9 @@ describe('app config validate command', () => {
 
     await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow()
 
-    expect(outputResult).not.toHaveBeenCalled()
+    expect(outputResult).toHaveBeenCalledExactlyOnceWith(
+      JSON.stringify({error: {type: 'abort', message: 'No config found'}}),
+    )
     expect(linkedAppContext).not.toHaveBeenCalled()
     await expectValidationMetadataCalls({cmd_app_validate_json: true})
   })
@@ -358,6 +362,8 @@ test('does not convert authentication failures into validation results', async (
   mockHealthyProject()
   vi.mocked(linkedAppContext).mockRejectedValue(new AbortError('Authentication failed'))
   await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow()
-  expect(outputResult).not.toHaveBeenCalled()
+  expect(outputResult).toHaveBeenCalledExactlyOnceWith(
+    JSON.stringify({error: {type: 'abort', message: 'Authentication failed'}}),
+  )
   await expectValidationMetadataCalls({cmd_app_validate_json: true})
 })

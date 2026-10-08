@@ -1,4 +1,5 @@
 import {ThemeCheckResult} from './check/types.js'
+import {withThemeCheckDiagnostics} from './check/diagnostics.js'
 import {fileExists, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputResult, outputInfo, outputSuccess, outputDebug} from '@shopify/cli-kit/node/output'
 import {joinPath, resolvePath} from '@shopify/cli-kit/node/path'
@@ -402,9 +403,11 @@ export function isExtendedWriteStream(stream: NodeJS.WriteStream): stream is Ext
 
 export async function checkTheme(path: string, config?: string, environment?: string) {
   const {offenses, theme} = await withThemeCheckConfigErrorHandling(config, () =>
-    themeCheckRun(path, config, (message) => {
-      if (process.env.SHOPIFY_TMP_FLAG_DEBUG) outputDebug(message)
-    }),
+    withThemeCheckDiagnostics(() =>
+      themeCheckRun(path, config, (message) => {
+        if (process.env.SHOPIFY_TMP_FLAG_DEBUG) outputDebug(message)
+      }),
+    ),
   )
   const result = formatOffensesJson(sortOffenses(offenses), environment)
   return {result, offenses, theme}
