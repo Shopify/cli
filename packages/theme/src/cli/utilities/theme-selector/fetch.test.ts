@@ -30,6 +30,12 @@ describe('publicFetchStoreThemes', () => {
 })
 
 describe('fetchStoreThemes', () => {
+  test('returns an empty collection when empty results are allowed', async () => {
+    vi.mocked(fetchThemes).mockResolvedValue([])
+
+    await expect(fetchStoreThemes(session, {allowEmpty: true})).resolves.toEqual([])
+  })
+
   test('returns only allowed themes', async () => {
     // Given
     vi.mocked(fetchThemes).mockResolvedValue([

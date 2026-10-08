@@ -4,6 +4,7 @@ import {ALLOWED_ROLES, fetchStoreThemes, Role} from '../utilities/theme-selector
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
 interface Options {
+  json?: boolean
   role?: Role
   name?: string
   id?: number
@@ -19,9 +20,10 @@ export async function list(options: Options, adminSession: AdminSession): Promis
     theme: options.id?.toString() ?? options.name,
   })
 
-  let storeThemes = await fetchStoreThemes(adminSession)
+  const allowEmpty = Boolean(options.json)
+  let storeThemes = await fetchStoreThemes(adminSession, {allowEmpty})
   if (filter.any()) {
-    storeThemes = filterThemes(store, storeThemes, filter)
+    storeThemes = filterThemes(store, storeThemes, filter, {allowEmpty})
   }
 
   return storeThemes

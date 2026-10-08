@@ -51,10 +51,6 @@ export default class List extends ThemeCommand {
     })
   }
 
-  protected collectsEnvironmentResults(flags: {json?: boolean}): boolean {
-    return Boolean(flags.json)
-  }
-
   protected renderEnvironmentResults(environments: {environment: string; result: unknown}[]): void {
     outputResult(themeListJsonOutputSchema.encode({environments}))
   }

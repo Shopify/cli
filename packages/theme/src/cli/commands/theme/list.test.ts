@@ -1,11 +1,10 @@
 import List from './list.js'
 import {list} from '../../services/list.js'
 import {themeListJsonOutputSchema} from '../../services/list/types.js'
-import {captureStandardStreams} from '../../utilities/testing/streams.js'
 import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput, mockAndCaptureStandardStreams} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('../../services/list.js')
 vi.mock('@shopify/cli-kit/node/session')
@@ -55,7 +54,7 @@ test.each(['single', 'named single', 'multiple', 'partial failure', 'total failu
       if (session.storeFqdn.startsWith('first')) await new Promise((resolve) => setTimeout(resolve, 10))
       return [theme]
     })
-    const streams = captureStandardStreams()
+    const streams = mockAndCaptureStandardStreams()
     const originalExitCode = process.exitCode
     try {
       const namedEnvironments = mode === 'named single' ? ['first'] : ['first', 'second']
@@ -80,10 +79,10 @@ test.each(['single', 'named single', 'multiple', 'partial failure', 'total failu
             environments: (mode === 'named single' ? ['first'] : ['first', 'second']).map((environment) =>
               successfulEnvironments.includes(environment)
                 ? {environment, result: {themes: [publicTheme]}}
-                : {environment, error: {type: 'abort', message: 'Fetch failed'}},
+                : {environment, error: {type: 'bug', message: 'Fetch failed', stack: expect.any(String)}},
             ),
           }
-    expect(streams.stdout()).toBe(`${JSON.stringify(expected, null, 2)}\n`)
+    expect(streams.stdout()).toBe(`${JSON.stringify(JSON.parse(streams.stdout()), null, 2)}\n`)
     expect(JSON.parse(streams.stdout())).toEqual(expected)
     if (mode.includes('failure')) {
       expect(streams.stderr()).toContain('Fetch failed')
