@@ -412,7 +412,7 @@ describe('lockfiles in a monorepo', () => {
     const result = await scanAll({appDirectory: join(monorepo, 'apps', 'foo'), scanDirectories: [monorepo]})
 
     expect(result.scan.files_skipped_count).toBe(0)
-    expect(secretCheck(result)).toMatchObject({status: 'executed'})
+    expect(secretCheck(result)).toMatchObject({status: 'executed', version: 4})
   })
 
   test('skips the lockfile of an include directory outside the app directory', async () => {
@@ -442,6 +442,7 @@ describe('lockfiles in a monorepo', () => {
 
     const issue = result.issues.find((candidate) => candidate.id === 'COMMITTED_SECRET')
     expect(issue?.location.file).toBe('../../packages/server/config.json')
+    expect(issue?.rule_version).toBe(4)
     expect(secretCheck(result)).toMatchObject({status: 'executed'})
   })
 })
