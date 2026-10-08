@@ -1,7 +1,10 @@
 import Profile from './profile.js'
 import {themeProfileJsonOutputSchema, type ThemeProfileResult} from '../../services/profile/types.js'
+import * as themeStorage from '../../services/local-storage.js'
 import {expect, test, vi} from 'vitest'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
 vi.mock('../../utilities/theme-selector.js')
 vi.mock('../../utilities/theme-environment/storefront-renderer.js')
@@ -46,7 +49,7 @@ test('exposes Speedscope evented and sampled profiles while retaining extension 
   ).toThrow()
 })
 
-test.each(['profile', 'empty', 'failure', 'invalid result'])(
+test.each(['profile', 'empty', 'unknown location', 'fractional location', 'failure', 'invalid result'])(
   'keeps %s JSON on stdout and progress events on stderr',
   async (mode) => {
     const {default: StreamProfile} = await import('./profile.js')
@@ -66,28 +69,47 @@ test.each(['profile', 'empty', 'failure', 'invalid result'])(
       processing: false,
       createdAtRuntime: false,
     })
-    const result = mode === 'empty' ? {...profile, profiles: [], shared: {frames: []}} : profile
+    let result = profile
+    if (mode === 'empty') result = {...profile, profiles: [], shared: {frames: []}}
+    if (mode === 'unknown location' || mode === 'fractional location') {
+      const position = mode === 'unknown location' ? -1 : 0.5
+      result = {...profile, shared: {frames: [{name: 'layout', line: position, col: position}]}}
+    }
     // Keep unusual whitespace and upstream field order to catch accidental reserialization.
     const source = mode === 'invalid result' ? '{"profiles":false}' : ` ${JSON.stringify(result, null, 4)}\n`
     vi.mocked(render).mockResolvedValue(new Response(source, {status: 200}))
     if (mode === 'failure') vi.mocked(render).mockRejectedValue(new Error('Network error'))
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      const operation = runWithCommandEventsForCommand(['--json'], () =>
-        new StreamProfile(['--store=shop.myshopify.com', '--json'], config).run(),
-      )
-      if (mode === 'failure') await expect(operation).rejects.toThrow('Network error')
-      else if (mode === 'invalid result') await expect(operation).rejects.toThrow()
-      else await operation
-      expect(openURL).not.toHaveBeenCalled()
-      const failed = mode === 'failure' || mode === 'invalid result'
-      expect(stdout()).toBe(failed ? '' : `${source}\n`)
-      if (!failed) expect(JSON.parse(stdout())).toEqual(result)
-      const events = stderr()
-        .trim()
-        .split('\n')
-        .map((line) => JSON.parse(line))
-      expect(events.map((event) => event.status)).toEqual(failed ? ['started', 'failed'] : ['started', 'completed'])
-      expect(events.every((event) => event.type === 'progress')).toBe(true)
+    await inTemporaryDirectory(async (directory) => {
+      const storage = new LocalStorage<themeStorage.ThemeLocalStorageSchema>({cwd: directory})
+      const {getThemeStore, setThemeStore} = themeStorage
+      const getStore = vi.spyOn(themeStorage, 'getThemeStore').mockImplementation(() => getThemeStore(storage))
+      const setStore = vi
+        .spyOn(themeStorage, 'setThemeStore')
+        .mockImplementation((store) => setThemeStore(store, storage))
+      try {
+        await withCapturedStandardStreams(async ({stdout, stderr}) => {
+          const operation = runWithCommandEventsForCommand(['--json'], () =>
+            new StreamProfile(['--store=shop.myshopify.com', '--json'], config).run(),
+          )
+          if (mode === 'failure') await expect(operation).rejects.toThrow('Network error')
+          else if (mode === 'invalid result') await expect(operation).rejects.toThrow()
+          else await operation
+          expect(openURL).not.toHaveBeenCalled()
+          const failed = mode === 'failure' || mode === 'invalid result'
+          expect(stdout()).toBe(failed ? '' : `${source}\n`)
+          if (!failed) expect(JSON.parse(stdout())).toEqual(result)
+          const events = stderr()
+            .trim()
+            .split('\n')
+            .map((line) => JSON.parse(line))
+          expect(events.map((event) => event.status)).toEqual(failed ? ['started', 'failed'] : ['started', 'completed'])
+          expect(events.every((event) => event.type === 'progress')).toBe(true)
+        })
+        expect(storage.get('themeStore')).toBe('shop.myshopify.com')
+      } finally {
+        getStore.mockRestore()
+        setStore.mockRestore()
+      }
     })
   },
 )

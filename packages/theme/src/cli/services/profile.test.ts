@@ -90,6 +90,17 @@ describe('profile', () => {
     expect(htmlContent).toContain('speedscope')
   })
 
+  test.each([-1, 0.5])('opens native profiles with source position %s', async (position) => {
+    const data = {...mockProfileData, shared: {frames: [{name: 'layout', line: position, col: position}]}}
+    vi.mocked(render).mockResolvedValue(new Response(JSON.stringify(data), {status: 200}))
+
+    const result = await profile(mockAdminSession, themeId, urlPath)
+    expect(result.result).toEqual(data)
+    await renderThemeProfileResult(result, 'text')
+
+    expect(openURL).toHaveBeenCalledWith(expect.stringMatching(/^file:\/\/.*\.html$/))
+  })
+
   test('throws error when fetch fails', async () => {
     // Given
     vi.mocked(render).mockRejectedValue(new Error('Network error'))
