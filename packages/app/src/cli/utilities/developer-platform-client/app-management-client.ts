@@ -840,7 +840,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       variables: releaseVariables,
     })
 
-    if (releaseResult.appReleaseCreate.release) {
+    if (releaseResult.appReleaseCreate.release && !releaseResult.appReleaseCreate.userErrors?.length) {
       return {
         appRelease: {
           appVersion: {
@@ -855,6 +855,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
         },
       }
     } else {
+      if (!releaseResult.appReleaseCreate.userErrors?.length) {
+        throw new AbortError('The Developer Dashboard did not confirm the app version release.')
+      }
       return {
         appRelease: {
           userErrors:

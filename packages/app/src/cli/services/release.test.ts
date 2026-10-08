@@ -69,7 +69,9 @@ describe('release', () => {
 
       return {
         appRelease: {
-          appRelease: {},
+          appRelease: {
+            appVersion: {versionTag: '1.0.0', message: 'message', location: 'https://example.com'},
+          },
         },
       }
     })

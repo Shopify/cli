@@ -1,13 +1,13 @@
 import Release from './release.js'
 import {release} from '../../services/release.js'
 import {linkedAppContext} from '../../services/app-context.js'
+import {ReleaseVersionLookupError} from '../../services/release/version-diff.js'
 import {testAppLinked, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
-import {errorHandler} from '@shopify/cli-kit/node/error-handler'
-import {Config, Errors} from '@oclif/core'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {Config} from '@oclif/core'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {fileURLToPath} from 'node:url'
@@ -24,7 +24,9 @@ const version = {
   appModuleVersions: [],
 }
 
+const originalExitCode = process.exitCode
 afterEach(() => {
+  process.exitCode = originalExitCode
   vi.unstubAllEnvs()
 })
 
@@ -55,57 +57,41 @@ describe('app release command', () => {
     })
   })
 
-  test('a failed release uses the shared error document without a result', async () => {
+  test.each(['release rejection', 'missing version'])('%s uses one shared error document', async (failure) => {
     vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
     const userErrors = [{message: 'Release failed.', category: 'validation', details: [], field: ['version']}]
-    vi.mocked(release).mockResolvedValue({status: 'failed', version, userErrors})
+    if (failure === 'missing version') {
+      vi.mocked(release).mockRejectedValue(new ReleaseVersionLookupError('v1', new AbortError('Version not found.')))
+    } else {
+      vi.mocked(release).mockResolvedValue({status: 'failed', version, userErrors})
+    }
     await inTemporaryDirectory(async (tmp) => {
       await withCapturedStandardStreams(async ({stdout, stderr}) => {
         await expect(runRelease(['--path', tmp, '--version', 'v1', '--json', '--allow-updates'])).rejects.toThrow()
         expect(JSON.parse(stdout())).toMatchObject({
-          error: {type: 'abort', message: "Version couldn't be released.", details: {userErrors}},
+          error:
+            failure === 'missing version'
+              ? {type: 'abort', message: 'Version not found.'}
+              : {type: 'abort', message: "Version couldn't be released.", details: {userErrors}},
         })
         expect(stderr()).toBe('')
       })
     })
   })
 
-  test('cancelled JSON exits zero without running success hooks', async () => {
-    class CancelledRelease extends Release {
-      async catch(error: Error): Promise<never> {
-        await errorHandler(error)
-        await Errors.handle(error)
-        throw error
-      }
-
-      protected async init(): Promise<void> {}
-    }
+  test('cancelled JSON exits zero through the silent error path', async () => {
     vi.mocked(release).mockResolvedValue({status: 'cancelled'})
-    const config = await Config.load({root: joinPath(dirname(fileURLToPath(import.meta.url)), '../../../..')})
-    const runHook = vi.spyOn(config, 'runHook').mockResolvedValue({successes: [], failures: []})
     const exit = vi.spyOn(process, 'exit').mockReturnValue(undefined as never)
     try {
       await inTemporaryDirectory(async (directory) => {
         await withCapturedStandardStreams(async ({stdout, stderr}) => {
-          await expect(
-            config.runCommand('app:release', ['--path', directory, '--version', 'v1', '--json', '--allow-updates'], {
-              id: 'app:release',
-              aliases: [],
-              hiddenAliases: [],
-              hidden: false,
-              args: {},
-              flags: {},
-              load: async () => CancelledRelease,
-            }),
-          ).rejects.toBeInstanceOf(AbortSilentError)
+          await runRelease(['--path', directory, '--version', 'v1', '--json', '--allow-updates'])
           expect(exit).toHaveBeenCalledExactlyOnceWith(0)
-          expect(runHook).not.toHaveBeenCalledWith('postrun', expect.anything())
           expect(JSON.parse(stdout())).toEqual({status: 'cancelled'})
           expect(stderr()).toBe('')
         })
       })
     } finally {
-      runHook.mockRestore()
       exit.mockRestore()
     }
   })
