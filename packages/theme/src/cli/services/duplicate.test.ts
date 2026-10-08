@@ -108,6 +108,17 @@ describe('duplicate', () => {
     expect(renderSuccess).toHaveBeenCalled()
   })
 
+  test('does not prompt again after environment batch confirmation', async () => {
+    vi.mocked(isCI).mockReturnValue(false)
+    vi.mocked(findThemeById).mockResolvedValue(theme)
+    vi.mocked(themeDuplicate).mockResolvedValue({theme: duplicatedTheme, userErrors: []})
+
+    await executeDuplicate(session, '1', {}, true)
+
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+    expect(themeDuplicate).toHaveBeenCalledWith(1, undefined, session)
+  })
+
   test('does not prompt for confirmation in CI environment', async () => {
     // Given
     vi.mocked(isCI).mockReturnValue(true)

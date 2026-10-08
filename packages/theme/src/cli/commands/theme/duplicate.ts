@@ -9,7 +9,7 @@ import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {isCI} from '@shopify/cli-kit/node/system'
 import type {OutputFlags} from '@oclif/core/interfaces'
-import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
+import type {FlagOutput, NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 export default class Duplicate extends ThemeCommand {
   static get jsonOutputSchema() {
@@ -68,8 +68,12 @@ Successful JSON results include \`status\`, \`changed\`, and explicit \`original
 
   async command(flags: OutputFlags<typeof Duplicate.flags>, adminSession: AdminSession, multiEnvironment = false) {
     configureCLIEnvironment(flags)
-    const result = await duplicate(adminSession, flags.theme, flags)
+    const result = await duplicate(adminSession, flags.theme, flags, multiEnvironment)
     if (flags.json && multiEnvironment) return themeDuplicateJsonResult(result)
     renderThemeDuplicateResult(result, flags.json ? 'json' : 'text')
+  }
+
+  protected requiresEnvironmentConfirmation(flags: FlagOutput): boolean {
+    return !isCI() && super.requiresEnvironmentConfirmation(flags)
   }
 }
