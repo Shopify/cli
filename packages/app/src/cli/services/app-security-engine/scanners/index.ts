@@ -145,7 +145,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
   configRule(insecureWebhookUrl, 2),
   {
     id: 'COMMITTED_SECRET',
-    version: 3,
+    version: 4,
     lifecycle: 'active',
     analysisMode: 'regex',
     target: 'secrets',
