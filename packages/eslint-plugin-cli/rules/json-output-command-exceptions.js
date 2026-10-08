@@ -3,9 +3,6 @@ const commandExceptions = [
   // Existing finite commands awaiting migration. Remove entries as they adopt typed JSON output.
   // Do not add new finite commands to this section.
   'packages/app/src/cli/commands/app/build.ts',
-  'packages/app/src/cli/commands/app/bulk/cancel.ts',
-  'packages/app/src/cli/commands/app/bulk/execute.ts',
-  'packages/app/src/cli/commands/app/bulk/status.ts',
   'packages/app/src/cli/commands/app/config/link.ts',
   'packages/app/src/cli/commands/app/config/pull.ts',
   'packages/app/src/cli/commands/app/config/use.ts',
@@ -32,9 +29,6 @@ const commandExceptions = [
   'packages/app/src/cli/commands/app/subscription-migrations/status.ts',
   'packages/app/src/cli/commands/app/subscription-migrations/unschedule.ts',
   'packages/app/src/cli/commands/app/webhook/trigger.ts',
-  'packages/cli/src/cli/commands/auth/login.ts',
-  'packages/cli/src/cli/commands/doc/fetch.ts',
-  'packages/cli/src/cli/commands/doc/search.ts',
   'packages/cli/src/cli/commands/upgrade.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/off.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/on.ts',

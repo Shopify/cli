@@ -7,6 +7,10 @@ import {
   renderTasks,
   renderWarning,
   renderSingleTask,
+  renderSelectPrompt,
+  renderAutocompletePrompt,
+  renderTextPrompt,
+  renderDangerousConfirmationPrompt,
   Task,
 } from './ui.js'
 import {AbortSignal} from './abort.js'
@@ -14,11 +18,12 @@ import {BugError, FatalError, AbortError, FatalErrorType} from './error.js'
 import {renderCommandEventAsJson, runWithCommandEvents, runWithCommandEventsForCommand} from './command-events.js'
 import {mockAndCaptureOutput, withCapturedStandardStreams} from './testing/output.js'
 import {outputResult, TokenizedString, unstyled} from './output.js'
-import {Stdin} from '../../private/node/testing/ui.js'
+import {Stdin, waitForInputsToBeReady} from '../../private/node/testing/ui.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import supportsHyperlinks from 'supports-hyperlinks'
 
 import {Writable} from 'stream'
+import type {RenderOptions} from 'ink'
 
 vi.mock('supports-hyperlinks')
 
@@ -28,6 +33,46 @@ beforeEach(() => {
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
+})
+
+test.each([
+  {
+    name: 'select',
+    renderPrompt: (renderOptions: RenderOptions) =>
+      renderSelectPrompt({message: 'Which option?', choices: [{label: 'First option', value: 'first'}], renderOptions}),
+  },
+  {
+    name: 'autocomplete',
+    renderPrompt: (renderOptions: RenderOptions) =>
+      renderAutocompletePrompt({
+        message: 'Which option?',
+        choices: [{label: 'First option', value: 'first'}],
+        renderOptions,
+      }),
+  },
+  {
+    name: 'text',
+    renderPrompt: (renderOptions: RenderOptions) =>
+      renderTextPrompt({message: 'Which option?', defaultValue: 'first', renderOptions}),
+  },
+  {
+    name: 'dangerous confirmation',
+    renderPrompt: (renderOptions: RenderOptions) =>
+      renderDangerousConfirmationPrompt({message: 'Which option?', confirmation: 'first', renderOptions}),
+    input: '\u001b',
+  },
+])('renders $name prompts to stderr by default', async ({renderPrompt, input}) => {
+  const stdin = new Stdin()
+
+  await withCapturedStandardStreams(async (streams) => {
+    const result = renderPrompt({stdin: stdin as unknown as NodeJS.ReadStream, debug: true, patchConsole: false})
+    await waitForInputsToBeReady()
+    stdin.write(input ?? '\r')
+    await result
+
+    expect(streams.stdout()).toBe('')
+    expect(streams.stderr()).toContain('Which option?')
+  })
 })
 
 describe('renderInfo', async () => {

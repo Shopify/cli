@@ -1,4 +1,6 @@
-import {getBulkOperationStatus, listBulkOperations} from './bulk-operation-status.js'
+import {renderBulkOperationStatusResult} from './status-result.js'
+import {logBulkOperationStart} from './progress.js'
+import {getBulkOperationStatus as getStatus, listBulkOperations as listOperations} from './bulk-operation-status.js'
 import {OrganizationApp, Organization, OrganizationSource} from '../../models/organization.js'
 import {resolveApiVersion} from '../graphql/common.js'
 import {BULK_OPERATIONS_MIN_API_VERSION, type BulkOperation} from '@shopify/cli-kit/node/api/bulk-operations'
@@ -16,6 +18,8 @@ vi.mock('../graphql/common.js', async () => {
     resolveApiVersion: vi.fn(),
   }
 })
+
+const originalExitCode = process.exitCode
 
 const storeFqdn = 'test-store.myshopify.com'
 const operationId = 'gid://shopify/BulkOperation/123'
@@ -62,6 +66,20 @@ describe('getBulkOperationStatus', () => {
     }
   }
 
+  test('returns domain data without rendering terminal output', async () => {
+    const response = mockBulkOperation()
+    vi.mocked(adminRequestDoc).mockResolvedValue(response)
+    const output = mockAndCaptureOutput()
+
+    await expect(getStatus({storeFqdn, operationId, remoteApp})).resolves.toEqual({
+      store: storeFqdn,
+      apiVersion: '2026-01',
+      operationId,
+      operation: response.bulkOperation,
+    })
+    expect(output.output()).toBe('')
+  })
+
   test('renders success banner for completed operation', async () => {
     vi.mocked(adminRequestDoc).mockResolvedValue(
       mockBulkOperation({
@@ -72,7 +90,7 @@ describe('getBulkOperationStatus', () => {
     )
 
     const output = mockAndCaptureOutput()
-    await getBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
+    await getAndPresentBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
 
     expect(output.output()).toContain('Bulk operation succeeded:')
     expect(output.output()).toContain('100 objects')
@@ -85,7 +103,7 @@ describe('getBulkOperationStatus', () => {
     vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperation({status: 'RUNNING', objectCount: 500}))
 
     const output = mockAndCaptureOutput()
-    await getBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
+    await getAndPresentBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
 
     expect(output.info()).toContain('Checking bulk operation status.')
     expect(output.info()).toContain('Bulk operation in progress')
@@ -104,7 +122,7 @@ describe('getBulkOperationStatus', () => {
     )
 
     const output = mockAndCaptureOutput()
-    await getBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
+    await getAndPresentBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
 
     expect(output.error()).toContain('Error: ACCESS_DENIED')
     expect(output.error()).toContain('Finished')
@@ -115,8 +133,9 @@ describe('getBulkOperationStatus', () => {
     vi.mocked(adminRequestDoc).mockResolvedValue({bulkOperation: null})
 
     const output = mockAndCaptureOutput()
-    await getBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
+    await getAndPresentBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
 
+    expect(process.exitCode).toBe(originalExitCode)
     expect(output.error()).toContain('Bulk operation not found.')
     expect(output.error()).toContain(operationId)
   })
@@ -125,7 +144,7 @@ describe('getBulkOperationStatus', () => {
     vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperation({status: 'CREATED', objectCount: 0}))
 
     const output = mockAndCaptureOutput()
-    await getBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
+    await getAndPresentBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
 
     expect(output.info()).toContain('Starting')
   })
@@ -134,7 +153,7 @@ describe('getBulkOperationStatus', () => {
     vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperation({status: 'CANCELED'}))
 
     const output = mockAndCaptureOutput()
-    await getBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
+    await getAndPresentBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
 
     expect(output.info()).toContain('Bulk operation canceled.')
   })
@@ -142,7 +161,7 @@ describe('getBulkOperationStatus', () => {
   test('calls resolveApiVersion with minimum API version constant', async () => {
     vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperation({status: 'RUNNING'}))
 
-    await getBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
+    await getAndPresentBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
 
     expect(resolveApiVersion).toHaveBeenCalledWith({
       adminSession: {token: 'test-token', storeFqdn},
@@ -154,7 +173,7 @@ describe('getBulkOperationStatus', () => {
     vi.mocked(resolveApiVersion).mockResolvedValue('test-api-version')
     vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperation({status: 'RUNNING'}))
 
-    await getBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
+    await getAndPresentBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
 
     expect(adminRequestDoc).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -167,7 +186,7 @@ describe('getBulkOperationStatus', () => {
     vi.mocked(resolveApiVersion).mockResolvedValue('test-api-version')
     vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperation({status: 'RUNNING'}))
 
-    await getBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
+    await getAndPresentBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
 
     expect(adminRequestDoc).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -181,7 +200,7 @@ describe('getBulkOperationStatus', () => {
       vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperation({status: 'RUNNING'}))
 
       const output = mockAndCaptureOutput()
-      await getBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
+      await getAndPresentBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
 
       expect(output.output()).toContain('Started')
     })
@@ -195,7 +214,7 @@ describe('getBulkOperationStatus', () => {
       )
 
       const output = mockAndCaptureOutput()
-      await getBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
+      await getAndPresentBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
 
       expect(output.output()).toContain('Finished')
     })
@@ -243,7 +262,7 @@ describe('listBulkOperations', () => {
     )
 
     const output = mockAndCaptureOutput()
-    await listBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
+    await listAndPresentBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
 
     const outputLinesWithoutTrailingWhitespace = output
       .output()
@@ -281,7 +300,7 @@ describe('listBulkOperations', () => {
     )
 
     const output = mockAndCaptureOutput()
-    await listBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
+    await listAndPresentBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
 
     expect(output.output()).toContain('1.2M')
     expect(output.output()).toContain('5.5K')
@@ -301,7 +320,7 @@ describe('listBulkOperations', () => {
     )
 
     const output = mockAndCaptureOutput()
-    await listBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
+    await listAndPresentBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
 
     expect(output.output()).toContain('download')
     expect(output.output()).toContain('partial.jsonl')
@@ -318,7 +337,7 @@ describe('listBulkOperations', () => {
     )
 
     const output = mockAndCaptureOutput()
-    await listBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
+    await listAndPresentBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
 
     expect(output.output()).toContain('download')
     expect(output.output()).toContain('results.jsonl')
@@ -328,7 +347,7 @@ describe('listBulkOperations', () => {
     vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperationsList([]))
 
     const output = mockAndCaptureOutput()
-    await listBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
+    await listAndPresentBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
 
     expect(output.info()).toContain('Listing bulk operations.')
     expect(output.info()).toContain('No bulk operations found in the last 7 days.')
@@ -337,7 +356,7 @@ describe('listBulkOperations', () => {
   test('calls resolveApiVersion with minimum API version constant', async () => {
     vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperationsList([]))
 
-    await listBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
+    await listAndPresentBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
 
     expect(resolveApiVersion).toHaveBeenCalledWith({
       adminSession: {token: 'test-token', storeFqdn},
@@ -349,7 +368,7 @@ describe('listBulkOperations', () => {
     vi.mocked(resolveApiVersion).mockResolvedValue('test-api-version')
     vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperationsList([]))
 
-    await listBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
+    await listAndPresentBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
 
     expect(adminRequestDoc).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -362,7 +381,7 @@ describe('listBulkOperations', () => {
     vi.mocked(resolveApiVersion).mockResolvedValue('test-api-version')
     vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperationsList([]))
 
-    await listBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
+    await listAndPresentBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
 
     expect(adminRequestDoc).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -370,4 +389,31 @@ describe('listBulkOperations', () => {
       }),
     )
   })
+})
+
+async function getAndPresentBulkOperationStatus(input: Parameters<typeof getStatus>[0] & {organization: Organization}) {
+  logBulkOperationStart('Checking bulk operation status.', input, 'text')
+  const result = await getStatus(input)
+  renderBulkOperationStatusResult(result, 'text')
+  return result
+}
+
+async function listAndPresentBulkOperations(
+  input: Parameters<typeof listOperations>[0] & {organization: Organization},
+) {
+  logBulkOperationStart('Listing bulk operations.', input, 'text')
+  const result = await listOperations(input)
+  renderBulkOperationStatusResult(result, 'text')
+  return result
+}
+
+test('the list service returns an empty collection without printing it', async () => {
+  vi.mocked(adminRequestDoc).mockResolvedValue({bulkOperations: {nodes: []}})
+  const output = mockAndCaptureOutput()
+  await expect(listOperations({storeFqdn, remoteApp})).resolves.toEqual({
+    store: storeFqdn,
+    apiVersion: '2026-01',
+    operations: [],
+  })
+  expect(output.output()).toBe('')
 })

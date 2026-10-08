@@ -199,6 +199,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-cancel.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-cancel.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-s, --store <value>",
           "value": "string",
           "description": "The store domain. Must be an existing dev store.",
@@ -206,7 +215,7 @@
           "environmentValue": "SHOPIFY_FLAG_STORE"
         }
       ],
-      "value": "export interface appbulkcancel {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The bulk operation ID to cancel (numeric ID or full GID).\n   * @environment SHOPIFY_FLAG_ID\n   */\n  '--id <value>': string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * The store domain. Must be an existing dev store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface appbulkcancel {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The bulk operation ID to cancel (numeric ID or full GID).\n   * @environment SHOPIFY_FLAG_ID\n   */\n  '--id <value>': string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * The store domain. Must be an existing dev store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "appbulkexecute": {
@@ -345,6 +354,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-execute.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-execute.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-q, --query <value>",
           "value": "string",
           "description": "The GraphQL query or mutation to run as a bulk operation.",
@@ -370,7 +388,7 @@
           "environmentValue": "SHOPIFY_FLAG_VARIABLES"
         }
       ],
-      "value": "export interface appbulkexecute {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The file path where results should be written if --watch is specified. If not specified, results will be written to STDOUT.\n   * @environment SHOPIFY_FLAG_OUTPUT_FILE\n   */\n  '--output-file <value>'?: string\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * The GraphQL query or mutation to run as a bulk operation.\n   * @environment SHOPIFY_FLAG_QUERY\n   */\n  '-q, --query <value>'?: string\n\n  /**\n   * Path to a file containing the GraphQL query or mutation. Can't be used with --query.\n   * @environment SHOPIFY_FLAG_QUERY_FILE\n   */\n  '--query-file <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * The store domain. Must be an existing dev store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Path to a file containing GraphQL variables in JSONL format (one JSON object per line). Can't be used with --variables.\n   * @environment SHOPIFY_FLAG_VARIABLE_FILE\n   */\n  '--variable-file <value>'?: string\n\n  /**\n   * The values for any GraphQL variables in your mutation, in JSON format. Can be specified multiple times.\n   * @environment SHOPIFY_FLAG_VARIABLES\n   */\n  '-v, --variables <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * The API version to use for the bulk operation. If not specified, uses the latest stable version.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>'?: string\n\n  /**\n   * Wait for bulk operation results before exiting. Defaults to false.\n   * @environment SHOPIFY_FLAG_WATCH\n   */\n  '--watch'?: ''\n}"
+      "value": "export interface appbulkexecute {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The file path where results should be written if --watch is specified. If not specified, results will be written to STDOUT.\n   * @environment SHOPIFY_FLAG_OUTPUT_FILE\n   */\n  '--output-file <value>'?: string\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * The GraphQL query or mutation to run as a bulk operation.\n   * @environment SHOPIFY_FLAG_QUERY\n   */\n  '-q, --query <value>'?: string\n\n  /**\n   * Path to a file containing the GraphQL query or mutation. Can't be used with --query.\n   * @environment SHOPIFY_FLAG_QUERY_FILE\n   */\n  '--query-file <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * The store domain. Must be an existing dev store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Path to a file containing GraphQL variables in JSONL format (one JSON object per line). Can't be used with --variables.\n   * @environment SHOPIFY_FLAG_VARIABLE_FILE\n   */\n  '--variable-file <value>'?: string\n\n  /**\n   * The values for any GraphQL variables in your mutation, in JSON format. Can be specified multiple times.\n   * @environment SHOPIFY_FLAG_VARIABLES\n   */\n  '-v, --variables <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * The API version to use for the bulk operation. If not specified, uses the latest stable version.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>'?: string\n\n  /**\n   * Wait for bulk operation results before exiting. Defaults to false.\n   * @environment SHOPIFY_FLAG_WATCH\n   */\n  '--watch'?: ''\n}"
     }
   },
   "appbulkstatus": {
@@ -473,6 +491,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-status.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-status.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-s, --store <value>",
           "value": "string",
           "description": "The store domain. Must be an existing dev store.",
@@ -480,7 +507,7 @@
           "environmentValue": "SHOPIFY_FLAG_STORE"
         }
       ],
-      "value": "export interface appbulkstatus {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The bulk operation ID (numeric ID or full GID). If not provided, lists all bulk operations belonging to this app on this store in the last 7 days.\n   * @environment SHOPIFY_FLAG_ID\n   */\n  '--id <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * The store domain. Must be an existing dev store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface appbulkstatus {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The bulk operation ID (numeric ID or full GID). If not provided, lists all bulk operations belonging to this app on this store in the last 7 days.\n   * @environment SHOPIFY_FLAG_ID\n   */\n  '--id <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * The store domain. Must be an existing dev store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "appconfiglink": {
@@ -4706,9 +4733,45 @@
           "description": "Print the command's JSON schemas.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_JSON_SCHEMA"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/auth-login.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/auth-login.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/auth-login.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/auth-login.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface authlogin {\n  /**\n   * Alias of an existing session you want to use. Required if non interactive.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--alias <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n}"
+      "value": "export interface authlogin {\n  /**\n   * Alias of an existing session you want to use. Required if non interactive.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--alias <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "authlogout": {
@@ -5118,7 +5181,7 @@
           "syntaxKind": "PropertySignature",
           "name": "--output <value>",
           "value": "string",
-          "description": "Write the document to this file path instead of printing it to stdout.",
+          "description": "Write the document to this file path instead of printing it to stdout. With --json, stdout contains the absolute path and Markdown format of the written file.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_OUTPUT"
         },
@@ -5138,9 +5201,18 @@
           "description": "Increase the verbosity of the output. May include sensitive data.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/doc-fetch.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface docfetch {\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Filter code examples in the returned Markdown to this language. Supply the language of the app you are building so examples match your stack. Optional — if omitted, or if shopify.dev does not recognize the language for a given page, the document includes examples in every language.\n   * @environment SHOPIFY_FLAG_LANGUAGE\n   */\n  '--language <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Write the document to this file path instead of printing it to stdout.\n   * @environment SHOPIFY_FLAG_OUTPUT\n   */\n  '--output <value>'?: string\n\n  /**\n   * The shopify.dev URL to fetch.\n   * @environment SHOPIFY_FLAG_URL\n   */\n  '--url <value>': string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface docfetch {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Filter code examples in the returned Markdown to this language. Supply the language of the app you are building so examples match your stack. Optional — if omitted, or if shopify.dev does not recognize the language for a given page, the document includes examples in every language.\n   * @environment SHOPIFY_FLAG_LANGUAGE\n   */\n  '--language <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Write the document to this file path instead of printing it to stdout. With --json, stdout contains the absolute path and Markdown format of the written file.\n   * @environment SHOPIFY_FLAG_OUTPUT\n   */\n  '--output <value>'?: string\n\n  /**\n   * The shopify.dev URL to fetch.\n   * @environment SHOPIFY_FLAG_URL\n   */\n  '--url <value>': string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "docsearch": {
@@ -5211,9 +5283,18 @@
           "description": "Increase the verbosity of the output. May include sensitive data.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/doc-search.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface docsearch {\n  /**\n   * Limit results to a specific API (for example: admin, storefront, hydrogen, functions). Unrecognized values are ignored.\n   * @environment SHOPIFY_FLAG_API_NAME\n   */\n  '--api-name <value>'?: string\n\n  /**\n   * Limit results to a specific API version (for example: 2025-10, latest, current).\n   * @environment SHOPIFY_FLAG_API_VERSION\n   */\n  '--api-version <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The search query.\n   * @environment SHOPIFY_FLAG_QUERY\n   */\n  '--query <value>': string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface docsearch {\n  /**\n   * Limit results to a specific API (for example: admin, storefront, hydrogen, functions). Unrecognized values are ignored.\n   * @environment SHOPIFY_FLAG_API_NAME\n   */\n  '--api-name <value>'?: string\n\n  /**\n   * Limit results to a specific API version (for example: 2025-10, latest, current).\n   * @environment SHOPIFY_FLAG_API_VERSION\n   */\n  '--api-version <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The search query.\n   * @environment SHOPIFY_FLAG_QUERY\n   */\n  '--query <value>': string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "help": {

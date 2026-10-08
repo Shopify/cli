@@ -6,7 +6,11 @@ import {outputContent, outputDebug, outputToken, TokenizedString, unstyled} from
 import {terminalSupportsPrompting} from './system.js'
 import {AbortController} from './abort.js'
 import {runWithTimer} from './metadata.js'
-import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
+import {
+  ConcurrentOutput,
+  ConcurrentOutputProps,
+  runConcurrentProcessesForJson,
+} from '../../private/node/ui/components/ConcurrentOutput.js'
 import {handleCtrlC, render, renderOnce} from '../../private/node/ui.js'
 import {alert, AlertOptions} from '../../private/node/ui/alert.js'
 import {CustomSection} from '../../private/node/ui/components/Alert.js'
@@ -48,6 +52,7 @@ const defaultUIDebugOptions: UIDebugOptions = {
 }
 
 export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps, 'abortSignal'> {
+  /** Ink options for terminal UI. Finite JSON output uses the command event channel on stderr instead. */
   renderOptions?: RenderOptions
 }
 
@@ -64,6 +69,15 @@ export interface RenderConcurrentOptions extends PartialBy<ConcurrentOutputProps
  */
 export async function renderConcurrent({renderOptions, ...props}: RenderConcurrentOptions) {
   const abortSignal = props.abortSignal ?? new AbortController().signal
+
+  // Streaming callers retain their existing Ink lifecycle; finite JSON results must keep stdout clear.
+  if (commandEventOutputMode() === 'json' && !props.keepRunningAfterProcessesResolve) {
+    if (props.processes.length === 0) return
+    return renderSingleTask({
+      title: outputContent`Running concurrent processes`,
+      task: async () => runConcurrentProcessesForJson({...props, abortSignal}),
+    })
+  }
 
   return render(<ConcurrentOutput {...props} abortSignal={abortSignal} />, renderOptions)
 }
@@ -292,6 +306,7 @@ export async function renderSelectPrompt<T>(
         }}
       />,
       {
+        stdout: process.stderr as unknown as NodeJS.WriteStream,
         ...renderOptions,
         exitOnCtrlC: false,
       },
@@ -444,6 +459,7 @@ export async function renderAutocompletePrompt<T>(
         }}
       />,
       {
+        stdout: process.stderr as unknown as NodeJS.WriteStream,
         ...renderOptions,
         exitOnCtrlC: false,
       },
@@ -662,6 +678,7 @@ export async function renderTextPrompt(
         }}
       />,
       {
+        stdout: process.stderr as unknown as NodeJS.WriteStream,
         ...renderOptions,
         exitOnCtrlC: false,
       },
@@ -714,6 +731,7 @@ export async function renderDangerousConfirmationPrompt(
         }}
       />,
       {
+        stdout: process.stderr as unknown as NodeJS.WriteStream,
         ...renderOptions,
         exitOnCtrlC: false,
       },

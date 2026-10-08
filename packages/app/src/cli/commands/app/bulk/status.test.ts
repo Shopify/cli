@@ -12,6 +12,8 @@ import {describe, expect, test, vi, beforeEach} from 'vitest'
 
 vi.mock('../../../services/bulk-operations/bulk-operation-status.js')
 vi.mock('../../../utilities/execute-command-helpers.js')
+vi.mock('../../../services/bulk-operations/status-result.js')
+vi.mock('../../../services/bulk-operations/progress.js')
 
 describe('app bulk status command', () => {
   const app = testAppLinked()
@@ -32,8 +34,11 @@ describe('app bulk status command', () => {
       },
       store,
     })
-    vi.mocked(getBulkOperationStatus).mockResolvedValue()
-    vi.mocked(listBulkOperations).mockResolvedValue()
+    vi.mocked(getBulkOperationStatus).mockResolvedValue({
+      operationId: 'gid://shopify/BulkOperation/123',
+      operation: null,
+    })
+    vi.mocked(listBulkOperations).mockResolvedValue({operations: []})
   })
 
   test('calls getBulkOperationStatus when id is provided', async () => {
@@ -48,7 +53,6 @@ describe('app bulk status command', () => {
       }),
     )
     expect(getBulkOperationStatus).toHaveBeenCalledWith({
-      organization,
       storeFqdn: 'shop.myshopify.com',
       operationId: 'gid://shopify/BulkOperation/123',
       remoteApp,
@@ -67,7 +71,6 @@ describe('app bulk status command', () => {
       }),
     )
     expect(listBulkOperations).toHaveBeenCalledWith({
-      organization,
       storeFqdn: 'shop.myshopify.com',
       remoteApp,
     })

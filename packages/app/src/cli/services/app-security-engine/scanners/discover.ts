@@ -784,8 +784,8 @@ export function findSensitiveFiles(
 ): SourceFile[] {
   const paths = repositoryFiles
     .filter(isSensitiveFile)
-    // Compares the whole relative path, so only the app root's own lockfiles are dropped.
-    .filter((path) => !LOCKFILE_MANAGERS.has(path))
+    // Matches by file name, so lockfiles in every scan directory are dropped, not only the app root's.
+    .filter((path) => !LOCKFILE_MANAGERS.has(basename(path)))
     // Only the selected app configuration file is scanned, wherever another one with the same name sits.
     .filter((path) => !isValidFormatAppConfigurationFileName(basename(path)) || path === selectedAppConfigPath)
 

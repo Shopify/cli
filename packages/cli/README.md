@@ -192,13 +192,17 @@ Cancel a bulk operation.
 
 ```
 USAGE
-  $ shopify app bulk cancel --id <value> [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema]
-    [--no-color] [--no-input] [--path <value>] [--reset | ] [-s <value>] [--verbose]
+  $ shopify app bulk cancel --id <value> [--auth-alias <value>] [--client-id <value> | -c <value>] [-j]
+    [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [-s <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       The store domain. Must be an existing dev store.
@@ -244,6 +248,132 @@ DESCRIPTION
   Cancel a bulk operation.
 
   Cancels a running bulk operation by ID.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `CancelBulkOperationResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "storeDomain": {
+        "anyOf": [
+          {
+            "type": "string",
+            "pattern": "^[^.]+\\.myshopify\\.com$"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "apiVersion": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "The API version selected for the request."
+      },
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "operation": {
+        "$ref": "#/definitions/BulkOperation"
+      }
+    },
+    "required": [
+      "storeDomain",
+      "apiVersion",
+      "status",
+      "operation"
+    ],
+    "additionalProperties": false,
+    "title": "CancelBulkOperationResult",
+    "definitions": {
+      "BulkOperation": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/BulkOperation\\/[^/]+$",
+            "description": "The Shopify global ID of a bulk operation."
+          },
+          "type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "errorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          },
+          "completedAt": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/BulkOperation/properties/createdAt"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          },
+          "objectCount": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "A nonnegative decimal count, without loss of integer precision."
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "partialDataUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "gid",
+          "type",
+          "status",
+          "errorCode",
+          "createdAt",
+          "completedAt",
+          "objectCount",
+          "url",
+          "partialDataUrl"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app bulk execute`
@@ -252,14 +382,18 @@ Execute bulk operations.
 
 ```
 USAGE
-  $ shopify app bulk execute [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--output-file <value> --watch] [--path <value>] [-q <value>] [--query-file <value>] [--reset | ] [-s
-    <value>] [--variable-file <value> | -v <value>...] [--verbose] [--version <value>]
+  $ shopify app bulk execute [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--output-file <value> --watch] [--path <value>] [-q <value>] [--query-file <value>]
+    [--reset | ] [-s <value>] [--variable-file <value> | -v <value>...] [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -q, --query=<value>
       The GraphQL query or mutation to run as a bulk operation.
@@ -339,6 +473,176 @@ DESCRIPTION
 
   Use "`bulk status`" (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-status) to check the status of your bulk
   operations.
+
+  With `--watch`, completed results are written as JSONL to stdout or `--output-file`. With `--json`, stdout contains
+  one result object with operation details and downloaded JSONL in `resultsJsonl`. With `--json --output-file`, stdout
+  contains only an absolute file receipt with `path` and `format`.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ExecuteBulkOperationResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ExecuteBulkOperationResult"
+      },
+      {
+        "$ref": "#/definitions/BulkOperationFile"
+      }
+    ],
+    "title": "ExecuteBulkOperationResult",
+    "definitions": {
+      "BulkOperation": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/BulkOperation\\/[^/]+$",
+            "description": "The Shopify global ID of a bulk operation."
+          },
+          "type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "errorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          },
+          "completedAt": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/BulkOperation/properties/createdAt"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          },
+          "objectCount": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "A nonnegative decimal count, without loss of integer precision."
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "partialDataUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "gid",
+          "type",
+          "status",
+          "errorCode",
+          "createdAt",
+          "completedAt",
+          "objectCount",
+          "url",
+          "partialDataUrl"
+        ],
+        "additionalProperties": false
+      },
+      "ExecuteBulkOperationResult": {
+        "type": "object",
+        "properties": {
+          "storeDomain": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[^.]+\\.myshopify\\.com$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "apiVersion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The API version selected for the request."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success",
+              "partial",
+              "cancelled"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "const": "watch-aborted"
+          },
+          "operation": {
+            "$ref": "#/definitions/BulkOperation"
+          },
+          "resultsJsonl": {
+            "type": "string",
+            "description": "Downloaded results in their native JSONL format."
+          }
+        },
+        "required": [
+          "storeDomain",
+          "apiVersion",
+          "status",
+          "operation"
+        ],
+        "additionalProperties": false
+      },
+      "BulkOperationFile": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The absolute path of the downloaded results file."
+          },
+          "format": {
+            "type": "string",
+            "const": "jsonl"
+          }
+        },
+        "required": [
+          "path",
+          "format"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app bulk status`
@@ -347,13 +651,17 @@ Check the status of bulk operations.
 
 ```
 USAGE
-  $ shopify app bulk status [--auth-alias <value>] [--client-id <value> | -c <value>] [--id <value>] [--json-schema]
-    [--no-color] [--no-input] [--path <value>] [--reset | ] [-s <value>] [--verbose]
+  $ shopify app bulk status [--auth-alias <value>] [--client-id <value> | -c <value>] [--id <value>] [-j]
+    [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [-s <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       The store domain. Must be an existing dev store.
@@ -407,6 +715,228 @@ DESCRIPTION
   (https://shopify.dev/docs/api/usage/bulk-operations/imports).
 
   Use "`bulk execute`" (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) to start a new bulk operation.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `BulkOperationStatusResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/GetBulkOperationStatusResult"
+      },
+      {
+        "$ref": "#/definitions/ListBulkOperationsResult"
+      }
+    ],
+    "title": "BulkOperationStatusResult",
+    "definitions": {
+      "GetBulkOperationStatusResult": {
+        "type": "object",
+        "properties": {
+          "storeDomain": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[^.]+\\.myshopify\\.com$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "apiVersion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The API version selected for the request."
+          },
+          "operationGid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/BulkOperation\\/[^/]+$",
+            "description": "The Shopify global ID of a bulk operation."
+          },
+          "operation": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/BulkOperation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "storeDomain",
+          "apiVersion",
+          "operationGid",
+          "operation"
+        ],
+        "additionalProperties": false
+      },
+      "ListBulkOperationsResult": {
+        "type": "object",
+        "properties": {
+          "storeDomain": {
+            "$ref": "#/definitions/GetBulkOperationStatusResult/properties/storeDomain"
+          },
+          "apiVersion": {
+            "$ref": "#/definitions/GetBulkOperationStatusResult/properties/apiVersion"
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListedBulkOperation"
+            }
+          },
+          "pageInfo": {
+            "type": "object",
+            "properties": {
+              "hasNextPage": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "Unknown when the API result reaches the fetch limit."
+              }
+            },
+            "required": [
+              "hasNextPage"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "storeDomain",
+          "apiVersion",
+          "operations",
+          "pageInfo"
+        ],
+        "additionalProperties": false
+      },
+      "BulkOperation": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "$ref": "#/definitions/GetBulkOperationStatusResult/properties/operationGid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "errorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          },
+          "completedAt": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/BulkOperation/properties/createdAt"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          },
+          "objectCount": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "A nonnegative decimal count, without loss of integer precision."
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "partialDataUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "gid",
+          "type",
+          "status",
+          "errorCode",
+          "createdAt",
+          "completedAt",
+          "objectCount",
+          "url",
+          "partialDataUrl"
+        ],
+        "additionalProperties": false
+      },
+      "ListedBulkOperation": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "$ref": "#/definitions/GetBulkOperationStatusResult/properties/operationGid"
+          },
+          "status": {
+            "$ref": "#/definitions/BulkOperation/properties/status"
+          },
+          "errorCode": {
+            "$ref": "#/definitions/BulkOperation/properties/errorCode"
+          },
+          "createdAt": {
+            "$ref": "#/definitions/BulkOperation/properties/createdAt"
+          },
+          "completedAt": {
+            "$ref": "#/definitions/BulkOperation/properties/completedAt"
+          },
+          "objectCount": {
+            "$ref": "#/definitions/BulkOperation/properties/objectCount"
+          },
+          "url": {
+            "$ref": "#/definitions/BulkOperation/properties/url"
+          },
+          "partialDataUrl": {
+            "$ref": "#/definitions/BulkOperation/properties/partialDataUrl"
+          }
+        },
+        "required": [
+          "gid",
+          "status",
+          "errorCode",
+          "createdAt",
+          "completedAt",
+          "objectCount",
+          "url",
+          "partialDataUrl"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app config link`
@@ -4060,9 +4590,13 @@ Logs you in to your Shopify account.
 
 ```
 USAGE
-  $ shopify auth login [--alias <value>] [--json-schema]
+  $ shopify auth login [--alias <value>] [-j] [--json-schema] [--no-color] [--no-input] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --alias=<value>
       Alias of an existing session you want to use. Required if non interactive.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
@@ -4071,8 +4605,46 @@ FLAGS
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
 DESCRIPTION
   Logs you in to your Shopify account.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AuthLoginResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "alias": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "status",
+      "alias"
+    ],
+    "additionalProperties": false,
+    "title": "AuthLoginResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify auth logout`
@@ -4433,11 +5005,15 @@ Download a complete document from shopify.dev. Every page on shopify.dev has a M
 
 ```
 USAGE
-  $ shopify doc fetch --url <value> [--json-schema] [--language
+  $ shopify doc fetch --url <value> [-j] [--json-schema] [--language
     javascript|typescript|python|ruby|php|rust|curl|liquid|graphql|html] [--no-color] [--no-input] [--output <value>]
     [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
@@ -4458,7 +5034,8 @@ FLAGS
       [env: SHOPIFY_FLAG_NO_INPUT]
 
   --output=<value>
-      Write the document to this file path instead of printing it to stdout.
+      Write the document to this file path instead of printing it to stdout. With --json, stdout contains the absolute
+      path and Markdown format of the written file.
       [env: SHOPIFY_FLAG_OUTPUT]
 
   --url=<value>
@@ -4475,6 +5052,75 @@ DESCRIPTION
   a centrally-served skill. Pass `--language` for the language of the app you are building so code examples match your
   stack. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.
 
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `DocFetchResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "document": {
+            "$ref": "#/definitions/Document"
+          }
+        },
+        "required": [
+          "document"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "$ref": "#/definitions/DocumentFile"
+      }
+    ],
+    "title": "DocFetchResult",
+    "definitions": {
+      "Document": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The requested shopify.dev document URL."
+          },
+          "content": {
+            "type": "string",
+            "description": "The document in Markdown, with the requested language filter applied."
+          }
+        },
+        "required": [
+          "url",
+          "content"
+        ],
+        "additionalProperties": false
+      },
+      "DocumentFile": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^(?:\\/|[A-Za-z]:[\\\\/]|\\\\\\\\)",
+            "description": "The absolute native path of the written file."
+          },
+          "format": {
+            "type": "string",
+            "const": "markdown",
+            "description": "The file contains the original Markdown document, not a JSON wrapper."
+          }
+        },
+        "required": [
+          "path",
+          "format"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   # fetch the Markdown version of a Shopify.dev page
 
@@ -4487,6 +5133,10 @@ EXAMPLES
   # save the document to a file instead of printing it
 
     $ shopify doc fetch --url https://shopify.dev/docs/api/shopify-cli --output docs/shopify-cli.md
+
+  # return a typed document as JSON
+
+    $ shopify doc fetch --url https://shopify.dev/docs/api/shopify-cli --json
 ```
 
 ## `shopify doc search`
@@ -4495,10 +5145,14 @@ Query the shopify.dev vector store and print the most relevant documentation chu
 
 ```
 USAGE
-  $ shopify doc search --query <value> [--api-name <value>] [--api-version <value>] [--json-schema] [--no-color]
-    [--no-input] [--verbose]
+  $ shopify doc search --query <value> [--api-name <value>] [--api-version <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --api-name=<value>
       Limit results to a specific API (for example: admin, storefront, hydrogen, functions). Unrecognized values are
       ignored.
@@ -4533,11 +5187,99 @@ DESCRIPTION
   discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To
   download a full document verbatim, use `doc fetch`.
 
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `DocSearchResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "results": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/DocumentationSearchEntry"
+        },
+        "description": "The top matching chunks from one search request."
+      },
+      "pageInfo": {
+        "$ref": "#/definitions/PageInfo"
+      }
+    },
+    "required": [
+      "results",
+      "pageInfo"
+    ],
+    "additionalProperties": false,
+    "title": "DocSearchResult",
+    "definitions": {
+      "DocumentationSearchEntry": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "number",
+            "description": "The relevance score returned by shopify.dev."
+          },
+          "content": {
+            "type": "string",
+            "description": "The matching documentation chunk."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL of the matching document."
+          },
+          "title": {
+            "type": "string",
+            "description": "The title of the matching document."
+          },
+          "domain": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The documentation domain, or null when unavailable."
+          }
+        },
+        "required": [
+          "score",
+          "content",
+          "url",
+          "title",
+          "domain"
+        ],
+        "additionalProperties": false
+      },
+      "PageInfo": {
+        "type": "object",
+        "properties": {
+          "hasNextPage": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether more results are available, or null when unknown."
+          }
+        },
+        "required": [
+          "hasNextPage"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   # search shopify.dev for a topic
       shopify doc search --query "subscribe to webhooks"
       # narrow the search to a specific API and version
       shopify doc search --query "create a product" --api-name admin --api-version latest
+
+  # return typed documentation results as a JSON object
+
+    $ shopify doc search --query "subscribe to webhooks" --json
 ```
 
 ## `shopify help [command] [flags]`
