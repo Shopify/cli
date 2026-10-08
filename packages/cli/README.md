@@ -927,14 +927,9 @@ DESCRIPTION
         "$ref": "#/definitions/AppDevCleanApp"
       },
       "storeDomain": {
-        "anyOf": [
-          {
-            "type": "string",
-            "pattern": "^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.myshopify\\.com$"
-          },
-          {
-            "type": "null"
-          }
+        "type": [
+          "string",
+          "null"
         ],
         "description": "The canonical *.myshopify.com hostname, or null when unknown."
       }

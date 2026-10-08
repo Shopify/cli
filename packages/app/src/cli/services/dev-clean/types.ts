@@ -9,11 +9,7 @@ export const appDevCleanJsonOutputSchema = defineJsonOutputSchema({
     .object({
       status: zod.literal('success'),
       app: appSchema,
-      storeDomain: zod
-        .string()
-        .regex(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.myshopify\.com$/)
-        .nullable()
-        .describe('The canonical *.myshopify.com hostname, or null when unknown.'),
+      storeDomain: zod.string().nullable().describe('The canonical *.myshopify.com hostname, or null when unknown.'),
     })
     .strict(),
   definitions: {AppDevCleanApp: appSchema},
