@@ -6,9 +6,12 @@ import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {describe, expect, vi, test} from 'vitest'
 import {getHostTheme} from '@shopify/cli-kit/node/themes/conf'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 
-vi.mock('../utilities/theme-selector/fetch.js')
+vi.mock('../utilities/theme-selector/fetch.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../utilities/theme-selector/fetch.js')>()),
+  fetchStoreThemes: vi.fn(),
+}))
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/themes/conf')
 vi.mock('./local-storage.js')
@@ -19,6 +22,23 @@ const session = {
 }
 
 describe('list', () => {
+  test.each([{role: 'development' as const}, {name: 'missing'}, {name: '*missing*'}, {id: 999}])(
+    'returns an empty JSON collection when no themes match %j',
+    async (options) => {
+      vi.mocked(fetchStoreThemes).mockResolvedValue([
+        {id: 1, name: 'Dawn', processing: false, createdAtRuntime: false, role: 'live'},
+      ])
+
+      const result = await list(options, session)
+      expect(result).toEqual([])
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        renderThemeListResult(result, 'json', {store: session.storeFqdn})
+        expect(JSON.parse(stdout())).toEqual({themes: []})
+        expect(stderr()).toBe('')
+      })
+    },
+  )
+
   test('should call the renderInfo function, with correctly formatted data', async () => {
     const developmentThemeId = 5
     const hostThemeId = 6

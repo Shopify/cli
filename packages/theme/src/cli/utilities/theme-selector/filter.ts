@@ -2,11 +2,16 @@ import {ALLOWED_ROLES} from './fetch.js'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-export function filterThemes(store: string, themes: Theme[], filter: Filter): Theme[] {
-  return filterByRole(store, themes, filter) ?? filterByTheme(store, themes, filter)
+export function filterThemes(
+  store: string,
+  themes: Theme[],
+  filter: Filter,
+  {allowEmpty = false}: {allowEmpty?: boolean} = {},
+): Theme[] {
+  return filterByRole(store, themes, filter, allowEmpty) ?? filterByTheme(store, themes, filter, allowEmpty)
 }
 
-function filterByRole(store: string, themes: Theme[], filter: Filter) {
+function filterByRole(store: string, themes: Theme[], filter: Filter, allowEmpty: boolean) {
   const role = filter.role
 
   if (!role) {
@@ -17,10 +22,10 @@ function filterByRole(store: string, themes: Theme[], filter: Filter) {
 
   return filterArray(themes, (theme) => {
     return theme.role === role
-  }).orThrow(error)
+  }).orThrow(error, allowEmpty)
 }
 
-function filterByTheme(store: string, themes: Theme[], filter: Filter) {
+function filterByTheme(store: string, themes: Theme[], filter: Filter, allowEmpty: boolean) {
   const identifiers = filter.themeIdentifiers
 
   return identifiers.flatMap((identifier) => {
@@ -36,14 +41,14 @@ function filterByTheme(store: string, themes: Theme[], filter: Filter) {
       }
 
       return isPartialMatch(theme.name.toLowerCase(), identifier.toLowerCase())
-    }).orThrow(error)
+    }).orThrow(error, allowEmpty)
   })
 }
 
 function filterArray(
   themes: Theme[],
   predicate: (theme: Theme) => boolean,
-): {orThrow: (error: string) => Theme[] | never} {
+): {orThrow: (error: string, allowEmpty: boolean) => Theme[]} {
   const filteredThemes = themes.filter(predicate)
 
   if (filteredThemes.length > 0) {
@@ -51,7 +56,8 @@ function filterArray(
   }
 
   return {
-    orThrow: (errorMessage: string) => {
+    orThrow: (errorMessage: string, allowEmpty: boolean) => {
+      if (allowEmpty) return []
       throw new AbortError(errorMessage)
     },
   }

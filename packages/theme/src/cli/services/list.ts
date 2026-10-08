@@ -19,9 +19,9 @@ export async function list(options: Options, adminSession: AdminSession): Promis
     theme: options.id?.toString() ?? options.name,
   })
 
-  let storeThemes = await fetchStoreThemes(adminSession)
+  let storeThemes = await fetchStoreThemes(adminSession, {allowEmpty: true})
   if (filter.any()) {
-    storeThemes = filterThemes(store, storeThemes, filter)
+    storeThemes = filterThemes(store, storeThemes, filter, {allowEmpty: true})
   }
 
   return storeThemes
