@@ -37,7 +37,9 @@ ruleTester.run('command-json-output', rule, {
       code: `
         export default class WidgetDelete extends Command {
           static flags = {...globalFlags, ...jsonFlag}
-          static jsonOutputSchema = widgetDeleteJsonOutputSchema
+          static get jsonOutputSchema() {
+            return widgetDeleteJsonOutputSchema
+          }
         }
       `,
     },

@@ -1,4 +1,5 @@
 import ImportCustomDataDefinitions from './custom-data-definitions.js'
+import {importCustomDataDefinitionsJsonOutputSchema} from '../../../services/generate/shop-import/declarative-definitions/types.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {storeContext} from '../../../services/store-context.js'
 import {adminAsAppRequestDoc} from '../../../api/admin-as-app.js'
@@ -28,6 +29,23 @@ afterEach(() => {
 
 const toml =
   '# namespace: $app key: color owner_type: PRODUCT\n[product.metafields.app.color]\ntype = "single_line_text_field"\n'
+
+test.each([{metafieldCount: -1}, {storeDomain: 'custom.example.com'}, {skippedSections: [{type: 'unknown'}]}])(
+  'rejects invalid public fields: %j',
+  (fields) => {
+    expect(() =>
+      importCustomDataDefinitionsJsonOutputSchema.encode({
+        status: 'success',
+        storeDomain: 'test-shop.myshopify.com',
+        metafieldCount: 0,
+        metaobjectCount: 0,
+        toml: '',
+        skippedSections: [],
+        ...fields,
+      }),
+    ).toThrow()
+  },
+)
 
 async function withApp(run: (directory: string) => Promise<void>) {
   // Ink uses the Console constructor, which Vitest's console replacement does not provide.

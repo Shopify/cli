@@ -17,7 +17,9 @@ export default class ImportCustomDataDefinitions extends AppLinkedCommand {
 
   static descriptionWithMarkdown = `Import metafield and metaobject definitions from your development store. [Read more about declarative custom data definitions](https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).`
 
-  static jsonOutputSchema = importCustomDataDefinitionsJsonOutputSchema
+  static get jsonOutputSchema() {
+    return importCustomDataDefinitionsJsonOutputSchema
+  }
 
   static description = this.descriptionForHelp()
 
