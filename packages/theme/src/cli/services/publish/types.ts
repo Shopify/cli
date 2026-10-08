@@ -9,6 +9,7 @@ import {zod} from '@shopify/cli-kit/node/schema'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 
 const ThemePublishResultSchema = ThemeMutationSuccessSchema.extend({
+  changed: zod.boolean(),
   theme: ThemeMutationThemeSchema,
 })
 export const themePublishJsonOutputSchema = defineThemeJsonOutputSchema({
@@ -19,7 +20,7 @@ export const themePublishJsonOutputSchema = defineThemeJsonOutputSchema({
   definitions: {Theme: ThemeMutationJsonThemeSchema},
   project(value) {
     const result = ThemePublishResultSchema.parse(value)
-    return {status: result.status, changed: true, theme: projectThemeMutationTheme(result.theme)}
+    return {status: result.status, changed: result.changed, theme: projectThemeMutationTheme(result.theme)}
   },
 })
 

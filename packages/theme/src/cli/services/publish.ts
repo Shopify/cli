@@ -27,6 +27,14 @@ export async function publish(
 
   const previewUrl = themePreviewUrl({...themeToPublish, role: 'live'} as Theme, adminSession)
 
+  if (themeToPublish.role === 'live') {
+    return {
+      data: {status: 'success', changed: false, theme: {...themeToPublish, shop: adminSession.storeFqdn}},
+      originalTheme: themeToPublish,
+      previewUrl,
+    }
+  }
+
   if (!options.force && !multiEnvironment) {
     const accept = await renderConfirmationPrompt({
       message: `Do you want to make '${themeToPublish.name}' the new live theme on ${adminSession.storeFqdn}?`,
@@ -39,7 +47,7 @@ export async function publish(
   // The API helper rejects missing themes and user errors before returning.
   const publishedTheme = (await themePublish(themeToPublish.id, adminSession))!
   return {
-    data: {status: 'success', theme: {...publishedTheme, shop: adminSession.storeFqdn}},
+    data: {status: 'success', changed: true, theme: {...publishedTheme, shop: adminSession.storeFqdn}},
     originalTheme: themeToPublish,
     previewUrl,
   }
