@@ -2226,9 +2226,16 @@ DESCRIPTION
         "const": "success"
       },
       "storeDomain": {
-        "type": "string",
-        "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$",
-        "description": "The full myshopify.com domain of the development store."
+        "anyOf": [
+          {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "The full myshopify.com domain of the development store, or null when unavailable."
       },
       "metafieldCount": {
         "type": "integer",

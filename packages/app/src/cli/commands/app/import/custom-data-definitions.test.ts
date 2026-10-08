@@ -34,7 +34,7 @@ test.each([{metafieldCount: -1}, {storeDomain: 'custom.example.com'}, {skippedSe
   'rejects invalid public fields: %j',
   (fields) => {
     expect(() =>
-      importCustomDataDefinitionsJsonOutputSchema.encode({
+      importCustomDataDefinitionsJsonOutputSchema.validate({
         status: 'success',
         storeDomain: 'test-shop.myshopify.com',
         metafieldCount: 0,
@@ -97,13 +97,17 @@ async function runCommand(directory: string, argv: string[]) {
   return runWithCommandEventsForCommand(args, () => command.run())
 }
 
-test('writes one encoded JSON document and progress events without changing the local TOML', async () => {
+test.each([
+  {storeFqdn: 'test-shop.myshopify.com', storeDomain: 'test-shop.myshopify.com'},
+  {storeFqdn: 'test-shop.myshopify.io', storeDomain: null},
+])('writes one JSON document for $storeFqdn without changing the local TOML', async ({storeFqdn, storeDomain}) => {
   await withApp(async (directory) => {
+    vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue({storeFqdn, token: 'test-token'})
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
       await runCommand(directory, ['--json', '--store', 'test-shop'])
       expect(JSON.parse(stdout())).toEqual({
         status: 'success',
-        storeDomain: 'test-shop.myshopify.com',
+        storeDomain,
         metafieldCount: 1,
         metaobjectCount: 0,
         toml,
@@ -147,13 +151,17 @@ test.each([false, true])('distinguishes an empty conversion from denied scope: %
 
 test('keeps the existing conversion summary and native TOML on stderr in text mode', async () => {
   await withApp(async (directory) => {
+    vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue({
+      storeFqdn: 'test-shop.myshopify.io',
+      token: 'test-token',
+    })
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
       await runCommand(directory, [])
       expect(stdout()).toBe('')
       const text = unstyled(stderr())
       expect(text).toContain('Conversion to TOML complete.')
       expect(text).toContain('1 metafields and 0 metaobjects')
-      expect(text).toContain('test-shop.myshopify.com')
+      expect(text).toContain('test-shop.myshopify.io')
       expect(text).toContain(toml)
     })
   })

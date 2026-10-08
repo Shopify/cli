@@ -18,7 +18,8 @@ export const importCustomDataDefinitionsJsonOutputSchema = defineJsonOutputSchem
       storeDomain: zod
         .string()
         .regex(/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/)
-        .describe('The full myshopify.com domain of the development store.'),
+        .nullable()
+        .describe('The full myshopify.com domain of the development store, or null when unavailable.'),
       metafieldCount: zod
         .number()
         .int()
@@ -47,4 +48,7 @@ export type ImportCustomDataDefinitionsResult = InferJsonOutputSchema<
   typeof importCustomDataDefinitionsJsonOutputSchema
 >
 
-export type ImportDeclarativeDefinitionsResult = Omit<ImportCustomDataDefinitionsResult, 'toml'> & {tomlContent: string}
+export type ImportDeclarativeDefinitionsResult = Omit<ImportCustomDataDefinitionsResult, 'toml' | 'storeDomain'> & {
+  tomlContent: string
+  storeDomain: string
+}

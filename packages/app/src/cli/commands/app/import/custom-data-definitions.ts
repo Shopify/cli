@@ -8,6 +8,7 @@ import {importCustomDataDefinitionsJsonOutputSchema} from '../../../services/gen
 import {renderImportDeclarativeDefinitionsResult} from '../../../services/generate/shop-import/declarative-definitions/result.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {extractMyshopifyHandle} from '@shopify/cli-kit/common/url'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputResult} from '@shopify/cli-kit/node/output'
@@ -72,10 +73,11 @@ export default class ImportCustomDataDefinitions extends AppLinkedCommand {
     })
     const result = await importDeclarativeDefinitions(options)
     if (json) {
+      const storeHandle = extractMyshopifyHandle(result.storeDomain)
       outputResult(
         importCustomDataDefinitionsJsonOutputSchema.encode({
           status: result.status,
-          storeDomain: result.storeDomain,
+          storeDomain: storeHandle ? `${storeHandle}.myshopify.com` : null,
           metafieldCount: result.metafieldCount,
           metaobjectCount: result.metaobjectCount,
           toml: result.tomlContent,
