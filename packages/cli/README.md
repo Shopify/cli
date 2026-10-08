@@ -1384,13 +1384,17 @@ Cleans up the dev preview from the selected store.
 
 ```
 USAGE
-  $ shopify app dev clean [--auth-alias <value>] [--client-id <value>] [--json-schema] [--no-color] [--no-input]
-    [--path <value>] [--reset | -c <value>] [-s <value>] [--verbose]
+  $ shopify app dev clean [--auth-alias <value>] [--client-id <value>] [-j] [--json-schema] [--no-color]
+    [--no-input] [--path <value>] [--reset | -c <value>] [-s <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       Store URL. Must be an existing development store.
@@ -1435,6 +1439,60 @@ DESCRIPTION
   Stop the dev preview that was started with `shopify app dev`.
 
   It restores the app's active version to the selected development store.
+
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppDevCleanResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "app": {
+        "$ref": "#/definitions/AppDevCleanApp"
+      },
+      "storeDomain": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "The canonical *.myshopify.com hostname, or null when unknown."
+      }
+    },
+    "required": [
+      "status",
+      "app",
+      "storeDomain"
+    ],
+    "additionalProperties": false,
+    "title": "AppDevCleanResult",
+    "definitions": {
+      "AppDevCleanApp": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "name",
+          "clientId"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app env pull`
