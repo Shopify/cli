@@ -87,10 +87,6 @@ export default class Delete extends ThemeCommand {
     renderThemeDeleteResult(result, flags.json ? 'json' : 'text', {store: adminSession.storeFqdn, environment})
   }
 
-  protected collectsEnvironmentResults(flags: {json?: boolean}): boolean {
-    return Boolean(flags.json)
-  }
-
   protected renderEnvironmentResults(
     environments: import('../../services/json-output/schema.js').ThemeEnvironmentResult[],
   ): void {
