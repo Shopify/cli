@@ -15,9 +15,9 @@ import {ClientError} from 'graphql-request'
 import {GraphQLError, buildSchema, graphql} from 'graphql'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
-import {AbortError, handler} from '@shopify/cli-kit/node/error'
+import {handler} from '@shopify/cli-kit/node/error'
 import {unstyled} from '@shopify/cli-kit/node/output'
-import {fileExists, inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import * as ui from '@shopify/cli-kit/node/ui'
@@ -117,9 +117,10 @@ test('preserves native GraphQL aliases, order, and UTF-8 on stdout and in output
   })
 })
 
-test('uses one shared fatal error document with native GraphQL details and does not create a file', async () => {
+test('uses one shared fatal error document and preserves an existing output file', async () => {
   await inTemporaryDirectory(async (directory) => {
     const outputFile = joinPath(directory, 'result.json')
+    await writeFile(outputFile, 'existing result')
     const details = {
       errors: [new GraphQLError('Denied', {extensions: {code: 'ACCESS_DENIED'}})],
       data: {shop: null},
@@ -128,20 +129,13 @@ test('uses one shared fatal error document with native GraphQL details and does 
     vi.mocked(adminRequestDoc).mockRejectedValue(new ClientError({...details, status: 200}, {query}))
     vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      try {
-        await runCommand(['--json', '--output-file', outputFile])
-        throw new Error('Expected the command to fail')
-      } catch (error) {
-        if (!(error instanceof AbortError)) throw error
-        expect(error).toBeInstanceOf(AbortError)
-        await handler(error)
-      }
+      await runCommand(['--json', '--output-file', outputFile]).catch(handler)
       expect(JSON.parse(stdout())).toEqual({
         error: {type: 'abort', message: 'GraphQL operation failed.', details: JSON.parse(JSON.stringify(details))},
       })
       expect(stderr()).not.toContain('GraphQL operation failed.')
     })
-    await expect(fileExists(outputFile)).resolves.toBe(false)
+    await expect(readFile(outputFile)).resolves.toBe('existing result')
   })
 })
 
