@@ -148,7 +148,7 @@ describe('theme rename JSON output', () => {
                     theme: {...publicTheme, storeDomain: `${environment}.myshopify.com`},
                   },
                 }
-              : {environment, error: {type: 'abort', message: 'Renameing failed'}},
+              : {environment, error: {type: 'bug', message: 'Renameing failed', stack: expect.any(String)}},
           ),
         })
         if (failures === 'none') {

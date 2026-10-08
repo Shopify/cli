@@ -26,7 +26,11 @@ export async function renameTheme(options: RenameOptions, adminSession: AdminSes
   // The API helper rejects missing themes and user errors before returning.
   const renamedTheme = (await themeUpdate(theme.id, {name: newName}, adminSession))!
   return {
-    data: {status: 'success', originalName: theme.name, theme: {...renamedTheme, shop: adminSession.storeFqdn}},
+    data: {
+      status: 'success',
+      originalName: theme.name,
+      theme: {...renamedTheme, processing: theme.processing, shop: adminSession.storeFqdn},
+    },
     originalTheme: theme,
     requestedName: newName,
   }
