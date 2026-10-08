@@ -70,7 +70,10 @@ describe.each([TestPush])('%s', (Command) => {
         }
         vi.mocked(executeThemePush).mockImplementation(execute)
 
-        const command = new Command([], new Config({root: path}))
+        const command = new Command(
+          ['--environment', 'first', '--environment', 'second', '--environment', 'third'],
+          new Config({root: path}),
+        )
         vi.spyOn(command, 'parse').mockResolvedValue({
           flags: {json: true, force: true, environment: ['first', 'second', 'third']},
           args: {},
@@ -118,7 +121,7 @@ describe.each([TestPush])('%s', (Command) => {
 
   test('retains validation errors when every environment is invalid', async () => {
     vi.mocked(loadEnvironment).mockResolvedValue({})
-    const command = new Command([], new Config({root: '.'}))
+    const command = new Command(['--environment', 'first', '--environment', 'second'], new Config({root: '.'}))
     vi.spyOn(command, 'parse').mockResolvedValue({
       flags: {json: true, force: true, environment: ['first', 'second']},
       args: {},
