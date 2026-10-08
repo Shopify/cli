@@ -1,23 +1,33 @@
 import BulkStatus from './status.js'
+import BulkCancel from './cancel.js'
 import {
   testBulkOperation,
   testBulkOperationContext,
 } from '../../../services/bulk-operations/bulk-operation.test-data.js'
 import {prepareAppStoreContext} from '../../../utilities/execute-command-helpers.js'
-import {resolveApiVersion} from '../../../services/graphql/common.js'
-import {bulkOperationStatusJsonOutputSchema} from '../../../services/bulk-operations/types.js'
-import {fetchBulkOperationById, fetchRecentBulkOperations} from '@shopify/cli-kit/node/api/bulk-operations'
+import {createAdminSessionAsApp, resolveApiVersion} from '../../../services/graphql/common.js'
+import {
+  bulkOperationStatusJsonOutputSchema,
+  cancelBulkOperationJsonOutputSchema,
+} from '../../../services/bulk-operations/types.js'
+import {
+  fetchBulkOperationById,
+  fetchRecentBulkOperations,
+  cancelBulkOperationRequest,
+} from '@shopify/cli-kit/node/api/bulk-operations'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {AbortError, handler} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
-import {expect, test, vi} from 'vitest'
+import {afterEach, expect, test, vi} from 'vitest'
 import type {BulkOperation} from '@shopify/cli-kit/node/api/bulk-operations'
 
 vi.mock('../../../utilities/execute-command-helpers.js')
 
 vi.mock('../../../services/graphql/common.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../services/graphql/common.js')>()),
+  createAdminSessionAsApp: vi.fn(),
   resolveApiVersion: vi.fn(),
 }))
 
@@ -30,7 +40,15 @@ vi.mock('@shopify/cli-kit/node/api/bulk-operations', async (importOriginal) => (
   ...(await importOriginal<typeof import('@shopify/cli-kit/node/api/bulk-operations')>()),
   fetchBulkOperationById: vi.fn(),
   fetchRecentBulkOperations: vi.fn(),
+  cancelBulkOperationRequest: vi.fn(),
 }))
+
+const originalExitCode = process.exitCode
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+  process.exitCode = originalExitCode
+})
 
 function bulkOperation(overrides: Partial<BulkOperation> = {}): BulkOperation {
   return testBulkOperation({
@@ -54,13 +72,12 @@ function expectedOperation() {
   }
 }
 
-async function runCommand(Command: typeof BulkStatus, argv: string[]) {
+async function runCommand(Command: typeof BulkStatus | typeof BulkCancel, argv: string[]) {
   const {appContextResult, store} = testBulkOperationContext()
-  const remoteApp = appContextResult.remoteApp
   vi.mocked(prepareAppStoreContext).mockResolvedValue({appContextResult, store})
 
   const session = {storeFqdn: store.shopDomain, token: 'token'}
-
+  vi.mocked(createAdminSessionAsApp).mockResolvedValue(session)
   vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue(session)
   vi.mocked(resolveApiVersion).mockResolvedValue('2026-01')
   const config = await Config.load()
@@ -118,14 +135,59 @@ test('a missing requested operation is distinct from an empty list', async () =>
       operationGid: 'gid://shopify/BulkOperation/123',
       operation: null,
     })
+    expect(process.exitCode).toBe(originalExitCode)
   })
 })
 
-test('exposes the status schema, JSON flag, and help', () => {
-  expect(BulkStatus.jsonOutputSchema).toBe(bulkOperationStatusJsonOutputSchema)
-  expect(BulkStatus.flags.json).toBeDefined()
-  expect(BulkStatus.baseFlags).toHaveProperty('json-schema')
-  expect(BulkStatus.descriptionForHelp()).toContain(bulkOperationStatusJsonOutputSchema.name)
+test('cancellation emits one result through the real service, codec, presenter, and writer', async () => {
+  vi.mocked(cancelBulkOperationRequest).mockResolvedValue({
+    bulkOperation: {...bulkOperation(), query: 'query { shop { name } }', rootObjectCount: '2'},
+    userErrors: [],
+  })
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await runCommand(BulkCancel, ['--id', '123', '--json'])
+    expect(JSON.parse(stdout())).toEqual({
+      storeDomain: 'shop.myshopify.com',
+      apiVersion: '2026-01',
+      status: 'success',
+      operation: expectedOperation(),
+    })
+    assertDiagnosticEvents(stderr(), 'Canceling bulk operation.')
+  })
+})
+
+test.each([{name: 'cancel', Command: BulkCancel}])(
+  '$name user errors reach the fatal envelope without a success document',
+  async ({Command}) => {
+    const userErrors = [{field: ['id'], message: 'Operation rejected'}]
+    vi.mocked(cancelBulkOperationRequest).mockResolvedValue({bulkOperation: null, userErrors})
+
+    vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      const argv = ['--id', '123']
+      try {
+        await runCommand(Command, [...argv, '--json'])
+        expect.fail('The command must reject the operation.')
+      } catch (error) {
+        if (!(error instanceof AbortError)) throw error
+        expect(error).toMatchObject({details: {userErrors}})
+        expect(stdout()).toBe('')
+        await handler(error)
+      }
+      expect(JSON.parse(stdout())).toMatchObject({error: {type: 'abort', details: {userErrors}}})
+      assertDiagnosticEvents(stderr(), 'Canceling bulk operation.')
+    })
+  },
+)
+
+test.each([
+  {name: 'status', Command: BulkStatus, schema: bulkOperationStatusJsonOutputSchema},
+  {name: 'cancel', Command: BulkCancel, schema: cancelBulkOperationJsonOutputSchema},
+] as const)('exposes the schema, JSON flag, and help for $name', ({Command, schema}) => {
+  expect(Command.jsonOutputSchema).toBe(schema)
+  expect(Command.flags.json).toBeDefined()
+  expect(Command.baseFlags).toHaveProperty('json-schema')
+  expect(Command.descriptionForHelp()).toContain(schema.name)
 })
 test.each([
   {json: true, noInput: false},

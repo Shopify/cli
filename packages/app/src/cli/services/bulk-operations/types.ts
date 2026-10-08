@@ -33,3 +33,14 @@ export const bulkOperationStatusJsonOutputSchema = defineJsonOutputSchema({
 
 export type BulkOperationStatusResult = BulkOperationContext &
   ({operationId: string; operation: BulkOperation | null} | {operations: Omit<BulkOperation, 'type'>[]})
+
+export const cancelBulkOperationJsonOutputSchema = defineJsonOutputSchema({
+  name: 'CancelBulkOperationResult',
+  schema: BulkOperationContextSchema.extend({status: zod.literal('success'), operation: BulkOperationSchema}),
+  definitions: {BulkOperation: BulkOperationSchema},
+})
+
+export interface CancelBulkOperationResult extends BulkOperationContext {
+  operation: BulkOperation | null
+  userErrors: {field?: string[] | null; message: string}[]
+}

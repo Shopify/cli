@@ -1,4 +1,4 @@
-import {bulkOperationStatusJsonOutputSchema} from './types.js'
+import {bulkOperationStatusJsonOutputSchema, cancelBulkOperationJsonOutputSchema} from './types.js'
 import {toBulkOperationJson} from './json.js'
 import {testBulkOperation} from './bulk-operation.test-data.js'
 import {expect, test} from 'vitest'
@@ -14,3 +14,16 @@ test('status result rejects unselected fields and lists without pagination metad
   expect(() => bulkOperationStatusJsonOutputSchema.validate({...context, operations: []})).toThrow()
   expect(bulkOperationStatusJsonOutputSchema.jsonSchema.definitions?.BulkOperation).toBeDefined()
 })
+
+test.each([{name: 'cancel', schema: cancelBulkOperationJsonOutputSchema}])(
+  '$name uses the common operation projection',
+  ({schema}) => {
+    const value = {
+      storeDomain: 'shop.myshopify.com',
+      apiVersion: '2026-01',
+      status: 'success' as const,
+      operation: toBulkOperationJson(testBulkOperation()),
+    }
+    expect(JSON.parse(schema.encode(value))).toEqual(value)
+  },
+)
