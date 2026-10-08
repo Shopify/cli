@@ -71,10 +71,6 @@ export default class Profile extends ThemeCommand {
     return result?.result
   }
 
-  protected collectsEnvironmentResults(flags: Partial<ProfileFlags>): boolean {
-    return Boolean(flags.json)
-  }
-
   protected renderEnvironmentResults(environments: ThemeEnvironmentResult[]): void {
     outputResult(themeProfileJsonOutputSchema.encode({environments}))
   }

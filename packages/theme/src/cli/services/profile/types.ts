@@ -7,15 +7,15 @@ const ProfileFrameSchema = zod
   .object({
     name: zod.string(),
     file: zod.string().optional(),
-    line: zod.number().int().nonnegative().optional(),
-    col: zod.number().int().nonnegative().optional(),
+    line: zod.number().optional(),
+    col: zod.number().optional(),
   })
   .passthrough()
 const ProfileEventSchema = zod
   .object({
     type: zod.enum(['O', 'C']),
     at: zod.number(),
-    frame: zod.number().int().nonnegative(),
+    frame: zod.number(),
   })
   .passthrough()
 const ProfileBaseSchema = zod.object({
@@ -30,7 +30,7 @@ const EventedProfileSchema = ProfileBaseSchema.extend({
 }).passthrough()
 const SampledProfileSchema = ProfileBaseSchema.extend({
   type: zod.literal('sampled'),
-  samples: zod.array(zod.array(zod.number().int().nonnegative())),
+  samples: zod.array(zod.array(zod.number())),
   weights: zod.array(zod.number()),
 }).passthrough()
 const ProfileSharedSchema = zod.object({frames: zod.array(ProfileFrameSchema)}).passthrough()
@@ -42,7 +42,7 @@ export const themeProfileResultSchema = zod
     profiles: zod.array(zod.discriminatedUnion('type', [EventedProfileSchema, SampledProfileSchema])),
     name: zod.string().optional(),
     exporter: zod.string().optional(),
-    activeProfileIndex: zod.number().int().nonnegative().optional(),
+    activeProfileIndex: zod.number().optional(),
   })
   .passthrough()
   .describe(
