@@ -48,6 +48,10 @@ test('imports real files and writes one JSON document with warning events on std
       expect(() =>
         importChannelConfigJsonOutputSchema.encode({...result, path: joinPath(CHANNEL_SPEC_DIRECTORY, 'example.toml')}),
       ).toThrow()
+      expect(() => importChannelConfigJsonOutputSchema.encode({...result, internal: 'private'})).toThrow()
+      expect(() =>
+        importChannelConfigJsonOutputSchema.encode({...result, warnings: [{...warning, internal: 'private'}]}),
+      ).toThrow()
       expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', level: 'warning', message: warning.message})
       await expect(readFile(path)).resolves.toBe(TOML)
       await expect(readFile(joinPath(tmp, CHANNEL_SPEC_EXTENSION_DIRECTORY, 'shopify.extension.toml'))).resolves.toBe(

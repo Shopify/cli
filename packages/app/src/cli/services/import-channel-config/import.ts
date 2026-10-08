@@ -1,5 +1,5 @@
 import {fetchChannelSpecExport} from './fetch.js'
-import {ImportedChannelConfig} from './types.js'
+import {importChannelConfigJsonOutputSchema, type ImportedChannelConfig} from './types.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {
   CHANNEL_CONFIG_IDENTIFIER,
@@ -62,19 +62,23 @@ export async function importChannelConfig(options: ImportChannelConfigOptions): 
     )
   }
 
-  await mkdir(dirname(outputPath))
-  if (createExtension) {
-    await writeFile(joinPath(extensionDirectory, EXTENSION_CONFIG_FILENAME), EXTENSION_CONFIG_CONTENT)
-  }
-  await writeFile(outputPath, result.toml)
-
-  return {
+  const imported = importChannelConfigJsonOutputSchema.validate({
     status: 'success',
     handle: result.handle,
     filename: basename(result.filename),
     path: outputPath,
     toml: result.toml,
-    warnings: result.warnings,
+    warnings: result.warnings.map(({code, message}) => ({code, message})),
+  })
+
+  await mkdir(dirname(outputPath))
+  if (createExtension) {
+    await writeFile(joinPath(extensionDirectory, EXTENSION_CONFIG_FILENAME), EXTENSION_CONFIG_CONTENT)
+  }
+  await writeFile(outputPath, imported.toml)
+
+  return {
+    ...imported,
     extensionConfigurationPath: createExtension ? resolvePath(extensionDirectory, EXTENSION_CONFIG_FILENAME) : null,
   }
 }

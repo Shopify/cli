@@ -13,8 +13,8 @@ export const importChannelConfigJsonOutputSchema = defineJsonOutputSchema({
   schema: zod
     .object({
       status: zod.literal('success'),
-      handle: zod.string(),
-      filename: zod.string(),
+      handle: zod.string().min(1),
+      filename: zod.string().min(1),
       path: zod
         .string()
         .regex(/^(?:\/|[a-zA-Z]:[\\/]|\\\\)/, 'The path must be absolute.')

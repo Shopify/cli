@@ -13,11 +13,6 @@ const manifestFiles = glob.sync(`packages/*/oclif.manifest.json`)
 for (const file of manifestFiles) {
   console.log(`Prettifying ${file}...`)
   const content = fs.readFileSync(file)
-  const manifest = JSON.parse(content)
-  for (const command of Object.values(manifest.commands)) {
-    // Runtime schemas belong to command classes, not cached metadata.
-    delete command.jsonOutputSchema
-  }
-  const prettyContent = stringify(manifest, {space: '  '}).replaceAll(root, '.')
+  const prettyContent = stringify(JSON.parse(content), {space: '  '}).replaceAll(root, '.')
   fs.writeFileSync(file, prettyContent)
 }

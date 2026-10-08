@@ -8,16 +8,11 @@ import {
   testOrganizationApp,
   testUIExtension,
 } from '../../models/app/app.test-data.js'
-import {afterEach, describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {fileExists, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('./fetch.js')
-
-afterEach(() => {
-  mockAndCaptureOutput().clear()
-})
 
 const TOML = 'handle = "example"\nlabel = "Example Channel"\n'
 
@@ -89,6 +84,23 @@ describe('importChannelConfig', () => {
     })
   })
 
+  test('validates the export before replacing an existing spec with --force', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      vi.mocked(fetchChannelSpecExport).mockResolvedValue({...successResult(), handle: ''})
+      const app = testAppLinked({directory: tmpDir})
+      const outputPath = joinPath(tmpDir, CHANNEL_SPEC_DIRECTORY, 'example.toml')
+      await mkdir(dirname(outputPath))
+      await writeFile(outputPath, 'existing = true\n')
+
+      await expect(importChannelConfig(testOptions(app, {force: true}))).rejects.toThrow()
+
+      await expect(readFile(outputPath)).resolves.toEqual('existing = true\n')
+      await expect(
+        fileExists(joinPath(tmpDir, CHANNEL_SPEC_EXTENSION_DIRECTORY, 'shopify.extension.toml')),
+      ).resolves.toBe(false)
+    })
+  })
+
   test('returns backend warnings when writing the file', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
@@ -140,7 +152,6 @@ describe('importChannelConfig', () => {
       // Given
       vi.mocked(fetchChannelSpecExport).mockResolvedValue({...successResult(), filename: '../../evil.toml'})
       const app = testAppLinked({directory: tmpDir})
-      mockAndCaptureOutput()
 
       // When
       await importChannelConfig(testOptions(app))
