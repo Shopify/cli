@@ -3,6 +3,7 @@ import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config} from '@oclif/core'
 import {themeCheckRun, Theme, Config as ThemeConfig, Offense} from '@shopify/theme-check-node'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
 vi.mock('@shopify/theme-check-node')
 const CommandConfig = new Config({root: __dirname})
@@ -20,9 +21,10 @@ describe('Check', () => {
 
     async function run(argv: string[]) {
       await CommandConfig.load()
-      const check = new Check([`--path=${path}`, ...argv], CommandConfig)
-
-      await check.run()
+      await inTemporaryDirectory(async (directory) => {
+        const check = new Check([`--path=${directory}`, ...argv], CommandConfig)
+        await check.run()
+      })
     }
 
     test('should change config to "theme-check:recommended" when ":default" is inputted', async () => {

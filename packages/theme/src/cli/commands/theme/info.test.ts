@@ -5,7 +5,12 @@ import * as infoResult from '../../services/info/result.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {
+  mockAndCaptureOutput,
+  mockAndCaptureStandardStreams,
+  withCapturedStandardStreams,
+} from '@shopify/cli-kit/node/testing/output'
+import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {renderConcurrent, renderInfo} from '@shopify/cli-kit/node/ui'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
@@ -86,29 +91,6 @@ const publicEnvironmentResult = {
 
 function restoreUnitTestEnvironment(value: string | undefined): void {
   process.env.SHOPIFY_UNIT_TEST = value
-}
-
-function captureStandardStreams() {
-  const stdout: string[] = []
-  const stderr: string[] = []
-
-  const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation(((chunk: string | Uint8Array) => {
-    stdout.push(typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'))
-    return true
-  }) as typeof process.stdout.write)
-  const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(((chunk: string | Uint8Array) => {
-    stderr.push(typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString('utf8'))
-    return true
-  }) as typeof process.stderr.write)
-
-  return {
-    stdout: () => stdout.join(''),
-    stderr: () => stderr.join(''),
-    restore: () => {
-      stdoutSpy.mockRestore()
-      stderrSpy.mockRestore()
-    },
-  }
 }
 
 async function run(argv: string[]) {
@@ -216,7 +198,7 @@ describe('Info', () => {
     const originalUnitTestEnv = process.env.SHOPIFY_UNIT_TEST
     process.env.SHOPIFY_UNIT_TEST = 'false'
     vi.resetModules()
-    const streams = captureStandardStreams()
+    const streams = mockAndCaptureStandardStreams()
 
     try {
       const {default: StreamInfo} = await import('./info.js')
@@ -248,7 +230,7 @@ describe('Info', () => {
     const originalUnitTestEnv = process.env.SHOPIFY_UNIT_TEST
     process.env.SHOPIFY_UNIT_TEST = 'false'
     vi.resetModules()
-    const streams = captureStandardStreams()
+    const streams = mockAndCaptureStandardStreams()
 
     try {
       const {default: StreamInfo} = await import('./info.js')
@@ -338,12 +320,20 @@ describe('Info', () => {
         if (options.theme === '456') throw new Error('Transport failed')
         return themeResult
       })
-      await runMultiEnvironment(['--environment', 'first', '--environment', 'second', '--json'])
-      expect(JSON.parse(mockAndCaptureOutput().output())).toEqual({
-        environments: [
-          {environment: 'first', result: publicThemeResult},
-          {environment: 'second', error: {type: 'abort', message: 'Transport failed'}},
-        ],
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        const argv = ['--environment', 'first', '--environment', 'second', '--json']
+        await runWithCommandEventsForCommand(argv, () => runMultiEnvironment(argv))
+        expect(JSON.parse(stdout())).toEqual({
+          environments: [
+            {environment: 'first', result: publicThemeResult},
+            {environment: 'second', error: {type: 'abort', message: 'Transport failed'}},
+          ],
+        })
+        expect(JSON.parse(stderr())).toMatchObject({
+          type: 'diagnostic',
+          level: 'error',
+          code: 'theme-environment-failed',
+        })
       })
       expect(process.exitCode).toBe(1)
     } finally {
