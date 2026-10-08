@@ -466,6 +466,7 @@ export default abstract class ThemeCommand extends Command {
 
             // eslint-disable-next-line no-catch-all/no-catch-all
           } catch (error) {
+            process.exitCode = 1
             if (collectResults) {
               results.set(environment, {environment, error: errorToJson(error)})
             }
