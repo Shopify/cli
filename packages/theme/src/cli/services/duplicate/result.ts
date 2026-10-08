@@ -22,6 +22,7 @@ export function renderThemeDuplicateResult(result: ThemeDuplicateResult, format:
   }
   if (result.status === 'cancelled') return
   const json = toJsonResult(result)
+  if (json.status === 'failed') process.exitCode = 1
   if (result.status === 'completed') renderTextResult(result)
   else if ('message' in json) renderError({body: [json.message]})
 }

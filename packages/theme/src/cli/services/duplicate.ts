@@ -15,9 +15,10 @@ export async function duplicate(
   adminSession: AdminSession,
   themeId: string | undefined,
   flags: DuplicateOptions,
+  multiEnvironment = false,
 ): Promise<ThemeDuplicateResult> {
   const {name, force} = flags
-  const noPrompts = isCI() || force
+  const noPrompts = isCI() || Boolean(force) || multiEnvironment
 
   if (noPrompts && !themeId) {
     return {status: 'missing-theme-id'}
