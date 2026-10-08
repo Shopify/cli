@@ -615,7 +615,7 @@ describe('ThemeCommand', () => {
       expect(fileExistsSync).toHaveBeenCalledWith('current/working/directory')
     })
 
-    test('multiple environments provided - fails if not allowed', async () => {
+    test('multiple environments provided - warns and returns if not allowed', async () => {
       // Given
       const environmentConfig = {store: 'store.myshopify.com'}
       vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
@@ -629,7 +629,9 @@ describe('ThemeCommand', () => {
         CommandConfig,
       )
 
-      await expect(command.run()).rejects.toThrow('This command does not support multiple environments.')
+      await expect(command.run()).resolves.toBeUndefined()
+      expect(renderWarning).toHaveBeenCalledWith({body: 'This command does not support multiple environments.'})
+      expect(command.commandCalls).toEqual([])
     })
   })
 
@@ -761,7 +763,7 @@ describe('ThemeCommand', () => {
       expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
       expect(renderConfirmationPrompt).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: ['Run theme test in the following environments?'],
+          message: ['Run testthemecommandwithpathflag in the following environments?'],
           infoTable: {
             Environment: [
               ['development', {subdued: 'store: store1.myshopify.com, password, path: /home/.../theme1'}],

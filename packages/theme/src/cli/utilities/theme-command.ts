@@ -22,7 +22,8 @@ import {
   renderError,
 } from '@shopify/cli-kit/node/ui'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {AbortError, BugError, ExternalError, FatalError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {errorToJson} from '@shopify/cli-kit/node/error/serialization'
 import {recordEvent, compileData} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {commandEventOutputMode, emitCommandEvent} from '@shopify/cli-kit/node/command-events'
@@ -30,6 +31,7 @@ import {outputDebug, outputResult} from '@shopify/cli-kit/node/output'
 import {jsonOutputEnabled} from '@shopify/cli-kit/node/environment'
 import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import type {ThemeEnvironmentResult} from '../services/json-output/schema.js'
 
@@ -64,10 +66,10 @@ export default abstract class ThemeCommand extends Command {
 
   environmentsFilename(): string | undefined {
     // JSON batches load every environment below so loading failures remain batch items.
-    const hasNamedEnvironment =
-      this.argv.some((arg) => arg === '--environment' || arg.startsWith('--environment=')) ||
-      Boolean(process.env.SHOPIFY_FLAG_ENVIRONMENT)
-    return hasNamedEnvironment && jsonOutputEnabled(process.env, this.argv) ? undefined : configurationFileName
+    return this.hasExplicitEnvironment() &&
+      this.collectsEnvironmentResults({json: jsonOutputEnabled(process.env, this.argv)})
+      ? undefined
+      : configurationFileName
   }
 
   async command(
@@ -92,10 +94,12 @@ export default abstract class ThemeCommand extends Command {
       args: ArgOutput
     }
     const requiredFlags = klass.multiEnvironmentsFlags
+    const hasExplicitEnvironment = this.hasExplicitEnvironment()
     const {args, flags} = await this.parse(klass)
     const commandRequiresAuth = 'password' in klass.flags
 
     const environments = (Array.isArray(flags.environment) ? flags.environment : [flags.environment]).filter(Boolean)
+    const collectResults = hasExplicitEnvironment && this.collectsEnvironmentResults(flags)
 
     // Check if store flag is required by the command
     const storeIsRequired =
@@ -103,7 +107,7 @@ export default abstract class ThemeCommand extends Command {
       requiredFlags.some((flag) => (Array.isArray(flag) ? flag.includes('store') : flag === 'store'))
 
     // Single environment or no environment
-    if (environments.length <= 1 && !(environments.length > 0 && this.collectsEnvironmentResults(flags))) {
+    if (environments.length <= 1 && !(environments.length > 0 && collectResults)) {
       if (environments[0] && !flags.store && storeIsRequired) {
         throw new AbortError(`Please provide a valid environment.`)
       }
@@ -127,31 +131,30 @@ export default abstract class ThemeCommand extends Command {
 
     // Multiple environments
     if (requiredFlags === null && environments.length > 1) {
-      throw new AbortError('This command does not support multiple environments.')
+      if (flags.json) throw new AbortError('This command does not support multiple environments.')
+      renderWarning({body: 'This command does not support multiple environments.'})
+      return
     }
 
     const {flags: flagsWithoutDefaults} = await this.parse(noDefaultsOptions(klass), this.argv)
     if (environments.length > 1 && 'path' in flagsWithoutDefaults) {
-      this.errorOnGlobalPath()
+      this.errorOnGlobalPath(Boolean(flags.json))
+      return
     }
 
     const environmentsMap = await this.loadEnvironments(environments, flags, flagsWithoutDefaults)
-    const collectResults = this.collectsEnvironmentResults(flags)
     const validationResults = await this.validateEnvironments(
       environmentsMap,
-      requiredFlags ?? [],
+      environments.length === 1 ? (requiredFlags ?? []).filter((flag) => flag !== 'password') : (requiredFlags ?? []),
       commandRequiresAuth,
       collectResults,
     )
 
-    const commandAllowsForceFlag = 'force' in klass.flags
-
-    if (environments.length > 1 && commandAllowsForceFlag && !flags.force) {
-      const confirmed = await this.showConfirmation(
-        (this.id ?? 'theme').replaceAll(':', ' '),
-        requiredFlags ?? [],
-        validationResults,
-      )
+    const requiresConfirmation = collectResults
+      ? validationResults.valid.some(({flags}) => this.requiresEnvironmentConfirmation(flags))
+      : this.requiresEnvironmentConfirmation(flags)
+    if (requiresConfirmation) {
+      const confirmed = await this.showConfirmation(this.constructor.name, requiredFlags ?? [], validationResults)
       if (!confirmed) {
         if (collectResults)
           this.renderEnvironmentResults(
@@ -182,6 +185,15 @@ export default abstract class ThemeCommand extends Command {
     return Boolean(flags.json && command.jsonOutputSchema)
   }
 
+  protected requiresEnvironmentConfirmation(flags: FlagValues): boolean {
+    const command = this.constructor as typeof ThemeCommand & {flags: FlagOutput}
+    return (
+      'force' in command.flags &&
+      !flags.force &&
+      (!this.collectsEnvironmentResults(flags) || terminalSupportsPrompting())
+    )
+  }
+
   protected renderEnvironmentResults(environments: ThemeEnvironmentResult[]): void {
     const command = this.constructor as unknown as {jsonOutputSchema: {encode(value: unknown): string}}
     outputResult(command.jsonOutputSchema.encode({environments}))
@@ -194,7 +206,8 @@ export default abstract class ThemeCommand extends Command {
       'multiEnvironmentsFlags' in command &&
       command.multiEnvironmentsFlags !== undefined &&
       Array.isArray(flags.environment) &&
-      flags.environment.length > 0
+      (flags.environment.length > 1 ||
+        (flags.environment.length === 1 && this.hasExplicitEnvironment() && this.collectsEnvironmentResults(flags)))
     ) {
       return
     }
@@ -208,6 +221,13 @@ export default abstract class ThemeCommand extends Command {
    */
   protected storeAuthScopes(): string[] | undefined {
     return undefined
+  }
+
+  private hasExplicitEnvironment(): boolean {
+    return (
+      this.argv.some((arg) => arg === '--environment' || arg.startsWith('--environment=') || arg.startsWith('-e')) ||
+      Boolean(process.env.SHOPIFY_FLAG_ENVIRONMENT)
+    )
   }
 
   /**
@@ -242,18 +262,47 @@ export default abstract class ThemeCommand extends Command {
         environmentFlags.store = normalizeStoreFqdn(environmentFlags.store)
       }
 
+      if (typeof environmentFlags?.theme === 'number') {
+        environmentFlags.theme = String(environmentFlags.theme)
+      } else if (Array.isArray(environmentFlags?.theme)) {
+        environmentFlags.theme = environmentFlags.theme.map(String)
+      }
+
       if (environmentFlags?.path && typeof environmentFlags.path === 'string') {
         environmentFlags.path = resolvePath(environmentFlags.path)
       }
 
+      let effectiveFlags = {...flags, ...environmentFlags, ...flagsWithoutDefaults} as FlagValues
+      if (this.collectsEnvironmentResults(effectiveFlags)) {
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          const parsedFlags = await this.parseEnvironmentFlags(
+            environmentFlags ?? {},
+            this.constructor as unknown as Input<FlagOutput, FlagOutput, ArgOutput>,
+            flagsWithoutDefaults,
+          )
+          effectiveFlags = {...flags, ...parsedFlags, ...flagsWithoutDefaults}
+          // eslint-disable-next-line no-catch-all/no-catch-all
+        } catch (error) {
+          environmentMap.set(environmentName, {
+            flags: effectiveFlags,
+            validationFlags: {},
+            error: error instanceof Error ? error.message : String(error),
+          })
+          continue
+        }
+      }
+
       environmentMap.set(environmentName, {
         flags: {
-          ...flags,
-          ...environmentFlags,
-          ...flagsWithoutDefaults,
+          ...effectiveFlags,
           environment: [environmentName],
         },
-        validationFlags: {...environmentFlags, ...flagsWithoutDefaults} as FlagValues,
+        validationFlags: {
+          ...(environments.length === 1 ? flags : {}),
+          ...environmentFlags,
+          ...flagsWithoutDefaults,
+        } as FlagValues,
       })
     }
 
@@ -418,16 +467,7 @@ export default abstract class ThemeCommand extends Command {
             // eslint-disable-next-line no-catch-all/no-catch-all
           } catch (error) {
             if (collectResults) {
-              const message = error instanceof Error ? error.message : String(error)
-              const common = {
-                message,
-                ...(error instanceof FatalError && error.details !== undefined ? {details: error.details} : {}),
-              }
-              const jsonError =
-                error instanceof ExternalError
-                  ? {type: 'external' as const, ...common, command: error.command, args: error.args}
-                  : {type: error instanceof BugError ? ('bug' as const) : ('abort' as const), ...common}
-              results.set(environment, {environment, error: jsonError})
+              results.set(environment, {environment, error: errorToJson(error)})
             }
             if (error instanceof Error) {
               error.message = `Environment ${environment} failed: \n\n${error.message}`
@@ -648,16 +688,19 @@ export default abstract class ThemeCommand extends Command {
    * Error if the --path flag is provided via CLI when running a multi environment command
    * Commands that act on local files require each environment to specify its own path in the shopify.theme.toml
    */
-  private errorOnGlobalPath() {
+  private errorOnGlobalPath(json: boolean) {
     const tomlPath = joinPath(cwd(), 'shopify.theme.toml')
     const tomlInCwd = fileExistsSync(tomlPath)
 
-    throw new AbortError(
-      "Can't use `--path` flag with multiple environments.",
-      tomlInCwd
-        ? "Configure each environment's theme path in your shopify.theme.toml file instead."
-        : 'Run this command from the directory containing shopify.theme.toml. No shopify.theme.toml found in current directory.',
-    )
+    const message = "Can't use `--path` flag with multiple environments."
+    const advice = tomlInCwd
+      ? ["Configure each environment's theme path in your shopify.theme.toml file instead."]
+      : [
+          'Run this command from the directory containing shopify.theme.toml.',
+          'No shopify.theme.toml found in current directory.',
+        ]
+    if (json) throw new AbortError(message, advice.join(' '))
+    renderError({body: [message, ...advice]})
   }
 
   private async logAnalyticsData(session?: AdminSession): Promise<void> {

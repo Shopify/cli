@@ -66,10 +66,6 @@ export default class Info extends ThemeCommand {
     recordTiming('theme-command:info')
   }
 
-  protected collectsEnvironmentResults(flags: {json?: boolean}): boolean {
-    return Boolean(flags.json)
-  }
-
   protected renderEnvironmentResults(environments: ThemeEnvironmentResult[]): void {
     outputResult(themeInfoJsonOutputSchema.encode({environments}))
   }

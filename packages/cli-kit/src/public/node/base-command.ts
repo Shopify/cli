@@ -154,6 +154,24 @@ abstract class BaseCommand extends Command {
     return undefined
   }
 
+  protected async parseEnvironmentFlags<
+    TFlags extends FlagOutput,
+    TGlobalFlags extends FlagOutput,
+    TArgs extends ArgOutput,
+  >(environment: JsonMap, options: Input<TFlags, TGlobalFlags, TArgs>, explicitFlags: FlagOutput): Promise<FlagOutput> {
+    const originalArgv = this.argv
+    try {
+      const result = await super.parse(options, [
+        ...originalArgv,
+        ...argsFromEnvironment(environment, options, explicitFlags),
+      ])
+      return result.flags
+    } finally {
+      // Oclif replaces argv when parsing; the next environment needs the original arguments.
+      this.argv = originalArgv
+    }
+  }
+
   protected validateNonTTYFlags(flags: FlagOutput): void {
     this.failMissingNonTTYFlagRequirements(flags, this.applicableNonTTYFlagRequirements(flags))
   }
@@ -256,7 +274,7 @@ ${explanation} in non-interactive terminal environments, such as a CI environmen
     const result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, [
       // Need to specify argv default because we're merging with argsFromEnvironment.
       ...(argv ?? this.argv),
-      ...argsFromEnvironment<TFlags, TGlobalFlags, TArgs>(environment, options, noDefaultsResult),
+      ...argsFromEnvironment<TFlags, TGlobalFlags, TArgs>(environment, options, noDefaultsResult.flags),
       ...(isDefaultEnvironment ? ['--environment', 'default'] : []),
     ])
 
@@ -394,13 +412,12 @@ export function noDefaultsOptions<TFlags extends FlagOutput, TGlobalFlags extend
 function argsFromEnvironment<TFlags extends FlagOutput, TGlobalFlags extends FlagOutput, TArgs extends ArgOutput>(
   environment: JsonMap,
   options: Input<TFlags, TGlobalFlags, TArgs> | undefined,
-  noDefaultsResult: ParserOutput<TFlags, TArgs>,
+  explicitFlags: FlagOutput,
 ): string[] {
   const args: string[] = []
   for (const [label, value] of Object.entries(environment)) {
     const flagIsRelevantToCommand = commandSupportsFlag(options?.flags, label)
-    const userSpecifiedThisFlag =
-      noDefaultsResult.flags && Object.prototype.hasOwnProperty.call(noDefaultsResult.flags, label)
+    const userSpecifiedThisFlag = Object.prototype.hasOwnProperty.call(explicitFlags, label)
     if (flagIsRelevantToCommand && !userSpecifiedThisFlag) {
       if (typeof value === 'boolean') {
         if (value) {
