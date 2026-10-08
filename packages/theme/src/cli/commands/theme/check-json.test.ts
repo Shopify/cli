@@ -5,7 +5,7 @@ import {encodeThemeCheckResult} from '../../services/check/result.js'
 import {expect, test, vi} from 'vitest'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {themeCheckRun, Severity, SourceCodeType, path as pathUtils} from '@shopify/theme-check-node'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 // Native JSON paths must preserve Windows separators instead of pathe normalization.
 // eslint-disable-next-line no-restricted-imports
@@ -146,11 +146,190 @@ test.each(['success', 'single environment', 'partial failure', 'total failure', 
   },
 )
 
+test.each(
+  ['json = true', 'output = "json"'].flatMap((setting) =>
+    [false, true].flatMap((mixed) =>
+      ['success', 'validation failure', 'execution failure'].map((outcome) => ({setting, mixed, outcome})),
+    ),
+  ),
+)(
+  'collects JSON selected in environment configuration: $setting, mixed=$mixed, outcome=$outcome',
+  async ({setting, mixed, outcome}) => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeFile(
+        resolvePath(directory, 'shopify.theme.toml'),
+        [
+          '[environments.first]',
+          outcome === 'validation failure' ? '' : `path = ${JSON.stringify(directory)}`,
+          mixed ? '' : setting,
+          '[environments.second]',
+          `path = ${JSON.stringify(directory)}`,
+          setting,
+        ].join('\n'),
+      )
+      const {loadEnvironment} = await import('@shopify/cli-kit/node/environments')
+      const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/environments')>(
+        '@shopify/cli-kit/node/environments',
+      )
+      vi.mocked(loadEnvironment).mockImplementation((environment, filename, options) =>
+        actual.loadEnvironment(environment, filename, {...options, from: directory}),
+      )
+      vi.mocked(themeCheckRun).mockResolvedValue({offenses: [], theme: [], config: {} as never})
+      if (outcome === 'execution failure') vi.mocked(themeCheckRun).mockRejectedValueOnce(new Error('Check failed'))
+      const config = await configuration()
+      const previousExitCode = process.exitCode
+      process.exitCode = 0
+      try {
+        await withCapturedStandardStreams(async ({stdout, stderr}) => {
+          const argv = ['-e', 'first', '-e', 'second']
+          await runWithCommandEventsForCommand(argv, () => new Check(argv, config).run())
+
+          expect(JSON.parse(stdout())).toEqual({
+            environments: [
+              outcome === 'success'
+                ? {environment: 'first', result: emptyResult}
+                : {
+                    environment: 'first',
+                    error: expect.objectContaining({
+                      message: outcome === 'validation failure' ? 'Missing flags: path' : 'Check failed',
+                    }),
+                  },
+              {environment: 'second', result: emptyResult},
+            ],
+          })
+          if (outcome === 'success') {
+            expect(stderr()).toBe('')
+          } else {
+            expect(JSON.parse(stderr())).toMatchObject({
+              type: 'diagnostic',
+              level: outcome === 'validation failure' ? 'warning' : 'error',
+              code: outcome === 'validation failure' ? 'theme-environment-invalid' : 'theme-environment-failed',
+              message: expect.stringContaining('first'),
+            })
+          }
+        })
+        expect(process.exitCode).toBe(outcome === 'success' ? 0 : 1)
+        expect(themeCheckRun).toHaveBeenCalledTimes(outcome === 'validation failure' ? 1 : 2)
+      } finally {
+        process.exitCode = previousExitCode
+      }
+    })
+  },
+)
+
+test.each(
+  ['json = true', 'output = "json"'].flatMap((setting) => [false, true].map((failure) => ({setting, failure}))),
+)(
+  'uses JSON diagnostics for a single configured environment: $setting, failure=$failure',
+  async ({setting, failure}) => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeFile(
+        resolvePath(directory, 'shopify.theme.toml'),
+        `[environments.first]\npath = ${JSON.stringify(directory)}\n${setting}\n`,
+      )
+      const {loadEnvironment} = await import('@shopify/cli-kit/node/environments')
+      const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/environments')>(
+        '@shopify/cli-kit/node/environments',
+      )
+      vi.mocked(loadEnvironment).mockImplementation((environment, filename, options) =>
+        actual.loadEnvironment(environment, filename, {...options, from: directory}),
+      )
+      vi.mocked(themeCheckRun).mockResolvedValue({offenses: [], theme: [], config: {} as never})
+      if (failure) vi.mocked(themeCheckRun).mockRejectedValueOnce(new Error('Check failed'))
+      const config = await configuration()
+      const previousExitCode = process.exitCode
+      process.exitCode = 0
+      try {
+        await withCapturedStandardStreams(async ({stdout, stderr}) => {
+          const argv = ['-e', 'first']
+          await runWithCommandEventsForCommand(argv, () => new Check(argv, config).run())
+
+          expect(JSON.parse(stdout())).toEqual({
+            environments: [
+              failure
+                ? {environment: 'first', error: {type: 'abort', message: 'Check failed'}}
+                : {environment: 'first', result: emptyResult},
+            ],
+          })
+          await vi.waitFor(() => expect(stderr()).not.toBe(''))
+          const events = stderr()
+            .trim()
+            .split('\n')
+            .map((line) => JSON.parse(line))
+          expect(events).toContainEqual(
+            expect.objectContaining({
+              type: 'diagnostic',
+              level: 'info',
+              message: expect.stringContaining('Using applicable flags from first environment:'),
+            }),
+          )
+          if (failure) {
+            expect(events).toContainEqual(
+              expect.objectContaining({type: 'diagnostic', level: 'error', code: 'theme-environment-failed'}),
+            )
+          }
+        })
+        expect(process.exitCode).toBe(failure ? 1 : 0)
+      } finally {
+        process.exitCode = previousExitCode
+      }
+    })
+  },
+)
+
 class LifecycleCheck extends Check {
   execute(): Promise<void> {
     return this._run<void>()
   }
 }
+
+test.each(
+  [
+    {setting: 'json = true', invalidFlag: 'fail-level = "bogus"', message: '--fail-level', textOverride: false},
+    {setting: 'output = "json"', invalidFlag: 'fail-level = "bogus"', message: '--fail-level', textOverride: false},
+    {setting: 'json = true', invalidFlag: 'init = true', message: '--init', textOverride: false},
+    {setting: 'output = "json"', invalidFlag: 'fail-level = "bogus"', message: '--fail-level', textOverride: true},
+  ].flatMap((flags) => ['first', 'default'].map((environment) => ({...flags, environment}))),
+)(
+  'uses the requested format for environment parsing errors: $environment, $setting, $invalidFlag, textOverride=$textOverride',
+  async ({setting, invalidFlag, message, environment, textOverride}) => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeFile(
+        resolvePath(directory, 'shopify.theme.toml'),
+        `[environments.${environment}]\n${setting}\n${invalidFlag}\n`,
+      )
+      const environments = await import('@shopify/cli-kit/node/environments')
+      const actual = await vi.importActual<typeof environments>('@shopify/cli-kit/node/environments')
+      vi.mocked(environments.loadEnvironment).mockImplementation(actual.loadEnvironment)
+      vi.mocked(environments.environmentFilePath).mockImplementation(actual.environmentFilePath)
+      vi.spyOn(Check.prototype as unknown as {init(): Promise<unknown>}, 'init').mockResolvedValue(undefined)
+      vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
+      const config = await configuration()
+      const argv = [
+        '--path',
+        directory,
+        ...(environment === 'default' ? [] : ['--environment', environment]),
+        ...(textOverride ? ['--output=text'] : []),
+      ]
+
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await runWithCommandEventsForCommand(argv, () => new LifecycleCheck(argv, config).execute())
+
+        if (textOverride) {
+          expect(stdout()).toBe('')
+          expect(stderr()).toContain(message)
+        } else {
+          expect(JSON.parse(stdout())).toEqual({
+            error: expect.objectContaining({type: 'abort', message: expect.stringContaining(message)}),
+          })
+          expect(stderr()).toBe('')
+        }
+      })
+      expect(process.exit).toHaveBeenCalledWith(2)
+      expect(themeCheckRun).not.toHaveBeenCalled()
+    })
+  },
+)
 
 test.each([['--output=json'], ['-o', 'json']])(
   'uses the standard JSON error envelope with an outer text context for %j',

@@ -1,7 +1,13 @@
 import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
-import {commandEventOutputMode, emitCommandEvent, runWithCommandEventsForCommand} from './command-events.js'
+import {
+  commandEventOutputMode,
+  emitCommandEvent,
+  renderCommandEventAsJson,
+  runWithCommandEvents,
+  runWithCommandEventsForCommand,
+} from './command-events.js'
 import {outputContent, outputResult, outputToken} from './output.js'
 import {setCurrentSessionAlias} from './session.js'
 import {terminalSupportsPrompting} from './system.js'
@@ -73,11 +79,19 @@ abstract class BaseCommand extends Command {
     return undefined
   }
 
+  private jsonOutputFromEnvironment = false
+
   async catch(error: Error & {skipOclifErrorHandling: boolean}): Promise<void> {
-    error.skipOclifErrorHandling = true
-    const {errorHandler} = await import('./error-handler.js')
-    await errorHandler(error, this.config)
-    return Errors.handle(error)
+    const handleError = async () => {
+      error.skipOclifErrorHandling = true
+      const {errorHandler} = await import('./error-handler.js')
+      await errorHandler(error, this.config)
+      return Errors.handle(error)
+    }
+    if (this.jsonOutputFromEnvironment && commandEventOutputMode() !== 'json') {
+      return runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, handleError)
+    }
+    return handleError()
   }
 
   protected async _run<T>(): Promise<T> {
@@ -250,6 +264,12 @@ ${explanation} in non-interactive terminal environments, such as a CI environmen
     // command-line arguments.
     const noDefaultsResult = await super.parse<TFlags, TGlobalFlags, TArgs>(noDefaultsOptions(options), argv)
 
+    // Remember the requested format before environment flag validation can fail.
+    const effectiveFlags = {...environment, ...noDefaultsResult.flags}
+    this.jsonOutputFromEnvironment =
+      (commandSupportsFlag(options?.flags, 'json') && effectiveFlags.json === true) ||
+      (commandSupportsFlag(options?.flags, 'output') && effectiveFlags.output === 'json')
+
     // Add the environment's settings to argv and pass them to `super.parse`. This
     // invokes oclif's validation system without breaking the oclif black box.
     // Replace the original result with this one.
@@ -261,12 +281,18 @@ ${explanation} in non-interactive terminal environments, such as a CI environmen
     ])
 
     // Report successful application of the environment.
-    reportEnvironmentApplication<TFlags, TGlobalFlags, TArgs>(
-      noDefaultsResult.flags,
-      result.flags,
-      isDefaultEnvironment ? 'default' : (environments[0] as string),
-      environment,
-    )
+    const report = () =>
+      reportEnvironmentApplication<TFlags, TGlobalFlags, TArgs>(
+        noDefaultsResult.flags,
+        result.flags,
+        isDefaultEnvironment ? 'default' : (environments[0] as string),
+        environment,
+      )
+    if ((result.flags.json || result.flags.output === 'json') && commandEventOutputMode() !== 'json') {
+      runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, report)
+    } else {
+      report()
+    }
 
     return result
   }

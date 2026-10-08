@@ -25,7 +25,12 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import {AbortError, BugError, ExternalError, FatalError} from '@shopify/cli-kit/node/error'
 import {recordEvent, compileData} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
-import {commandEventOutputMode, emitCommandEvent} from '@shopify/cli-kit/node/command-events'
+import {
+  commandEventOutputMode,
+  emitCommandEvent,
+  renderCommandEventAsJson,
+  runWithCommandEvents,
+} from '@shopify/cli-kit/node/command-events'
 import {outputDebug, outputResult} from '@shopify/cli-kit/node/output'
 import {jsonOutputEnabled} from '@shopify/cli-kit/node/environment'
 import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
@@ -98,7 +103,7 @@ export default abstract class ThemeCommand extends Command {
     const commandRequiresAuth = 'password' in klass.flags
 
     const environments = (Array.isArray(flags.environment) ? flags.environment : [flags.environment]).filter(Boolean)
-    const collectResults = hasExplicitEnvironment && this.collectsEnvironmentResults(flags)
+    let collectResults = hasExplicitEnvironment && this.collectsEnvironmentResults(flags)
 
     // Check if store flag is required by the command
     const storeIsRequired =
@@ -142,38 +147,46 @@ export default abstract class ThemeCommand extends Command {
     }
 
     const environmentsMap = await this.loadEnvironments(environments, flags, flagsWithoutDefaults)
-    const validationResults = await this.validateEnvironments(
-      environmentsMap,
-      requiredFlags ?? [],
-      commandRequiresAuth,
-      collectResults,
-    )
+    collectResults ||= Array.from(environmentsMap.values()).some(({flags}) => this.collectsEnvironmentResults(flags))
+    const runEnvironments = async () => {
+      const validationResults = await this.validateEnvironments(
+        environmentsMap,
+        requiredFlags ?? [],
+        commandRequiresAuth,
+        collectResults,
+      )
 
-    if (this.requiresEnvironmentConfirmation(flags)) {
-      const confirmed = await this.showConfirmation(this.constructor.name, requiredFlags ?? [], validationResults)
-      if (!confirmed) {
-        if (collectResults)
-          this.renderEnvironmentResults(
-            environments.map((environment) => ({environment, result: {status: 'cancelled'}})),
+      if (this.requiresEnvironmentConfirmation(flags)) {
+        const confirmed = await this.showConfirmation(this.constructor.name, requiredFlags ?? [], validationResults)
+        if (!confirmed) {
+          if (collectResults)
+            this.renderEnvironmentResults(
+              environments.map((environment) => ({environment, result: {status: 'cancelled'}})),
+            )
+          return
+        }
+      }
+
+      const results = await this.runConcurrent(validationResults.valid, collectResults)
+      if (collectResults) {
+        const entries: ThemeEnvironmentResult[] = environments.map((environment) => {
+          const invalid = validationResults.invalid.find((entry) => entry.environment === environment)
+          return (
+            results.get(environment) ?? {
+              environment,
+              error: {type: 'abort', message: invalid?.reason ?? 'The environment did not return a result.'},
+            }
           )
-        return
+        })
+        this.renderEnvironmentResults(entries)
+        if (entries.some((entry) => 'error' in entry)) process.exitCode = 1
       }
     }
 
-    const results = await this.runConcurrent(validationResults.valid, collectResults)
-    if (collectResults) {
-      const entries: ThemeEnvironmentResult[] = environments.map((environment) => {
-        const invalid = validationResults.invalid.find((entry) => entry.environment === environment)
-        return (
-          results.get(environment) ?? {
-            environment,
-            error: {type: 'abort', message: invalid?.reason ?? 'The environment did not return a result.'},
-          }
-        )
-      })
-      this.renderEnvironmentResults(entries)
-      if (entries.some((entry) => 'error' in entry)) process.exitCode = 1
+    if (collectResults && commandEventOutputMode() !== 'json') {
+      return runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, runEnvironments)
     }
+    return runEnvironments()
   }
 
   protected collectsEnvironmentResults(flags: FlagValues): boolean {
