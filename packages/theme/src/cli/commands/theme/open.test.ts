@@ -8,13 +8,14 @@ import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 
 vi.mock('../../services/open.js')
 vi.mock('../../utilities/theme-store.js')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/system', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@shopify/cli-kit/node/system')>()),
-  openURL: vi.fn(),
+  openURL: vi.fn(async () => true),
 }))
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/environments')
@@ -79,6 +80,36 @@ test('writes one JSON result', async () => {
   expect(open).toHaveBeenCalledWith(session, expect.objectContaining({theme: '1', json: true}))
 })
 
+test.each([false, true])('collects ordered environment results with browser failure=%s', async (browserFailure) => {
+  const previousExitCode = process.exitCode
+  try {
+    vi.mocked(loadEnvironment).mockResolvedValue({store: session.storeFqdn, password: 'token', theme: '1'})
+    vi.mocked(open).mockResolvedValue(result)
+    vi.mocked(openURL).mockResolvedValueOnce(true).mockResolvedValueOnce(!browserFailure)
+
+    await withCapturedStandardStreams(async ({stdout}) => {
+      await run(['--json', '-e', 'staging', '-e', 'production'])
+
+      const output = JSON.parse(stdout())
+      expect(output).toEqual({
+        environments: [
+          {environment: 'staging', result: publicResult},
+          browserFailure
+            ? {environment: 'production', error: expect.objectContaining({message: 'Could not open the browser.'})}
+            : {environment: 'production', result: publicResult},
+        ],
+      })
+      expect(() => themeOpenJsonOutputSchema.validate(output)).not.toThrow()
+    })
+    expect(openURL).toHaveBeenCalledTimes(2)
+    expect(open).toHaveBeenCalledTimes(2)
+    if (browserFailure) expect(process.exitCode).toBe(1)
+  } finally {
+    // eslint-disable-next-line require-atomic-updates
+    process.exitCode = previousExitCode
+  }
+})
+
 test('propagates selection errors without opening the browser or rendering a result', async () => {
   const error = new Error('Theme not found')
   vi.mocked(open).mockRejectedValue(error)
@@ -97,6 +128,16 @@ test('propagates browser failures before emitting the JSON result', async () => 
   await withCapturedStandardStreams(async ({stdout}) => {
     await expect(run(['--theme=1', '--json'])).rejects.toBe(error)
 
+    expect(stdout()).toBe('')
+  })
+})
+
+test('rejects an unsuccessful browser launch without emitting a JSON result', async () => {
+  vi.mocked(open).mockResolvedValue(result)
+  vi.mocked(openURL).mockResolvedValue(false)
+
+  await withCapturedStandardStreams(async ({stdout}) => {
+    await expect(run(['--theme=1', '--json'])).rejects.toThrow('Could not open the browser.')
     expect(stdout()).toBe('')
   })
 })

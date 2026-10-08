@@ -6,6 +6,7 @@ import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {openURL} from '@shopify/cli-kit/node/system'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {InferredFlags} from '@oclif/core/interfaces'
 import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
@@ -56,7 +57,7 @@ export default class Open extends ThemeCommand {
     }),
   }
 
-  static multiEnvironmentsFlags: RequiredFlags = null
+  static multiEnvironmentsFlags: RequiredFlags = ['store', 'password', ['theme', 'live', 'development']]
 
   static nonTTYFlagRequirements(): NonTTYFlagRequirement[] {
     return [{flags: ['theme', 'development', 'live']}]
@@ -65,7 +66,10 @@ export default class Open extends ThemeCommand {
   async command(flags: OpenFlags, adminSession: AdminSession, multiEnvironment = false) {
     const result = await open(adminSession, flags)
     if (!flags.json) renderThemeOpenResult(result, 'text')
-    await openURL(flags.editor ? result.editor_url : result.preview_url)
+    const url = flags.editor ? result.editor_url : result.preview_url
+    if (!(await openURL(url))) {
+      throw new AbortError('Could not open the browser.', `Open this URL manually: ${url}`)
+    }
     if (flags.json && !multiEnvironment) renderThemeOpenResult(result, 'json')
     return result
   }
