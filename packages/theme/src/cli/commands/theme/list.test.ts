@@ -1,11 +1,10 @@
 import List from './list.js'
 import {list} from '../../services/list.js'
 import {themeListJsonOutputSchema} from '../../services/list/types.js'
-import {captureStandardStreams} from '../../utilities/testing/streams.js'
 import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput, mockAndCaptureStandardStreams} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('../../services/list.js')
 vi.mock('@shopify/cli-kit/node/session')
@@ -55,7 +54,7 @@ test.each(['single', 'named single', 'multiple', 'partial failure', 'total failu
       if (session.storeFqdn.startsWith('first')) await new Promise((resolve) => setTimeout(resolve, 10))
       return [theme]
     })
-    const streams = captureStandardStreams()
+    const streams = mockAndCaptureStandardStreams()
     const originalExitCode = process.exitCode
     try {
       const namedEnvironments = mode === 'named single' ? ['first'] : ['first', 'second']
