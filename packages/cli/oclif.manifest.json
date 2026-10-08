@@ -111,46 +111,6 @@
       "hiddenAliases": [
       ],
       "id": "app:build",
-      "jsonOutputSchema": {
-        "definitions": {
-        },
-        "jsonSchema": {
-          "$schema": "http://json-schema.org/draft-07/schema#",
-          "additionalProperties": false,
-          "properties": {
-            "status": {
-              "const": "success",
-              "type": "string"
-            }
-          },
-          "required": [
-            "status"
-          ],
-          "title": "AppBuildResult",
-          "type": "object"
-        },
-        "name": "AppBuildResult",
-        "schema": {
-          "_cached": null,
-          "_def": {
-            "catchall": {
-              "_def": {
-                "typeName": "ZodNever"
-              },
-              "~standard": {
-                "vendor": "zod",
-                "version": 1
-              }
-            },
-            "typeName": "ZodObject",
-            "unknownKeys": "strict"
-          },
-          "~standard": {
-            "vendor": "zod",
-            "version": 1
-          }
-        }
-      },
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",

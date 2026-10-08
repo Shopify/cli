@@ -29,33 +29,24 @@ test('declares JSON/schema/help and retains app and inherited flags', () => {
   expect(Build.descriptionForHelp()).toContain('AppBuildResult')
 })
 
-test.each([{additionalFlags: []}, {additionalFlags: ['--no-input']}])(
-  'JSON and no-input remain independent with $additionalFlags',
-  async ({additionalFlags}) => {
+test.each([['--json'], ['--json', '--no-input'], ['--no-input']])(
+  'JSON and no-input remain independent: %j',
+  async (...flags) => {
     await inTemporaryDirectory(async (directory) => {
       setup(directory)
-      await withCapturedStandardStreams(async ({stdout}) => {
-        await Build.run(
-          ['--path', directory, '--json', '--skip-dependencies-installation', ...additionalFlags],
-          import.meta.url,
-        )
-        expect(JSON.parse(stdout())).toStrictEqual({status: 'success'})
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await Build.run(['--path', directory, '--skip-dependencies-installation', ...flags], import.meta.url)
+        if (flags.includes('--json')) {
+          expect(JSON.parse(stdout())).toStrictEqual({status: 'success'})
+        } else {
+          expect(stdout()).toBe('')
+          expect(unstyled(stderr())).toContain('Example app built!')
+        }
       })
       expect(build).toHaveBeenCalledWith(expect.objectContaining({skipDependenciesInstallation: true}))
     })
   },
 )
-
-test('no-input alone keeps the text result', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    setup(directory)
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await Build.run(['--path', directory, '--no-input'], import.meta.url)
-      expect(stdout()).toBe('')
-      expect(unstyled(stderr())).toContain('Example app built!')
-    })
-  })
-})
 
 test('silent build failure becomes one fatal JSON document, not an empty stdout', async () => {
   await inTemporaryDirectory(async (directory) => {
