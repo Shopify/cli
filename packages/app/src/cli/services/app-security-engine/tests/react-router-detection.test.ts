@@ -1,9 +1,11 @@
 import {mergeScanDirectories} from '../../app-security-selection.js'
 import {scan} from '../scanners/index.js'
+import {detectReactRouterRoots, isReactRouterSourcePath} from '../capabilities/detect.js'
 import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
-import type {ScanResult} from '../types.js'
+import type {ManifestFile} from '../scanners/types.js'
+import type {ScanResult, SourceCandidate} from '../types.js'
 
 /** Every deterministic check that React Router detection gates, fully or for its app-source part. */
 const REACT_ROUTER_GATED_CHECKS = [
@@ -399,5 +401,33 @@ describe('React Router detection', () => {
       expect(result.detection.framework).toBe('react_router')
       expect(gatedChecksRejectingInput(result, 'lib/huge.ts')).toContain('UNAUTHENTICATED_ENDPOINT')
     })
+  })
+})
+
+describe('React Router roots above the app directory', () => {
+  function reactRouterManifest(path: string): ManifestFile {
+    return {path, absolutePath: path, type: 'npm', dependencies: {'@shopify/shopify-app-react-router': '^1.0.0'}}
+  }
+
+  function sourceCandidates(paths: string[]): SourceCandidate[] {
+    return paths.map((path) => ({path, extension: '.tsx', language: 'typescript', supported: true}))
+  }
+
+  test("doesn't count a path that climbs past the root as inside it", () => {
+    const otherAppRoute = '../../../other-app/app/routes/app._index.tsx'
+
+    expect(isReactRouterSourcePath(otherAppRoute, ['../..'], [])).toBe(false)
+    expect(isReactRouterSourcePath(otherAppRoute, ['.', '../..'], ['../../../other-app'])).toBe(false)
+  })
+
+  test('counts a descendant of the root as inside it', () => {
+    const route = '../../app/routes/app._index.tsx'
+    const candidates = sourceCandidates([route, '../../app/shopify.server.ts'])
+
+    expect(detectReactRouterRoots([reactRouterManifest('../../package.json')], candidates)).toEqual(['../..'])
+    expect(isReactRouterSourcePath(route, ['../..'], [])).toBe(true)
+    expect(isReactRouterSourcePath('../../packages/server/app/routes/app.tsx', ['../..'], ['../../apps/bar'])).toBe(
+      true,
+    )
   })
 })

@@ -102,19 +102,26 @@ export function isReactRouterSourcePath(
 function isInsideReactRouterRoot(directory: string, reactRouterRoots: string[]): boolean {
   return reactRouterRoots.some((root) =>
     root === '.'
-      ? !isOutsideAppDirectory(directory)
+      ? !climbsOutOfDirectory(directory)
       : directory === root || pathWithinRoot(root, directory) !== undefined,
   )
 }
 
-function isOutsideAppDirectory(path: string): boolean {
+/** Whether `path`, relative to a directory, climbs out of that directory. */
+function climbsOutOfDirectory(path: string): boolean {
   return path === '..' || path.startsWith('../')
 }
 
-/** `path` relative to `root`, or undefined when it is outside. Both use forward slashes, as gathering does. */
+/**
+ * `path` relative to `root`, or undefined when it is outside. Both use forward slashes, as gathering does.
+ * A root above the app directory, such as `../..`, prefixes paths that climb past it, such as
+ * `../../../other-app/...`, so the part after the root must not climb out of it.
+ */
 function pathWithinRoot(root: string, path: string): string | undefined {
   if (root === '.') return path
-  return path.startsWith(`${root}/`) ? path.slice(root.length + 1) : undefined
+  if (!path.startsWith(`${root}/`)) return undefined
+  const pathInRoot = path.slice(root.length + 1)
+  return climbsOutOfDirectory(pathInRoot) ? undefined : pathInRoot
 }
 
 function hasReactRouterStructure(root: string, paths: string[]): boolean {
