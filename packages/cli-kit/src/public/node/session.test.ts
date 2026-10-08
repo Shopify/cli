@@ -6,6 +6,7 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
   ensureAuthenticatedThemes,
+  ensureNoOrganizationAutomationToken,
   findSessionIdByAlias,
   setCurrentSessionAlias,
   setLastSeenUserId,
@@ -21,6 +22,7 @@ import {
   setLastSeenUserIdAfterAuth,
 } from '../../private/node/session.js'
 import * as sessionStore from '../../private/node/session/store.js'
+import {automationTokenVariable} from '../../private/node/session/automation-token.js'
 import {ApplicationToken} from '../../private/node/session/schema.js'
 import {
   exchangeCustomPartnerToken,
@@ -41,6 +43,7 @@ const partnersToken: ApplicationToken = {
 vi.mock('../../private/node/session.js')
 vi.mock('../../private/node/session/exchange.js')
 vi.mock('../../private/node/session/store.js')
+vi.mock('../../private/node/session/automation-token.js')
 vi.mock('./environment.js')
 vi.mock('./http.js')
 
@@ -50,6 +53,25 @@ describe('store command analytics session helpers', () => {
 
     expect(setLastSeenUserIdAfterAuth).toHaveBeenCalledWith('store-user-id')
   })
+})
+
+describe('ensureNoOrganizationAutomationToken', () => {
+  test('fails while SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN is set', () => {
+    vi.mocked(automationTokenVariable).mockReturnValue('SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN')
+
+    expect(() => ensureNoOrganizationAutomationToken()).toThrow(
+      "This command can't use SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN.",
+    )
+  })
+
+  test.each([undefined, 'SHOPIFY_APP_AUTOMATION_TOKEN', 'SHOPIFY_CLI_PARTNERS_TOKEN'])(
+    'does nothing when the automation token variable is %s',
+    (variable) => {
+      vi.mocked(automationTokenVariable).mockReturnValue(variable)
+
+      expect(() => ensureNoOrganizationAutomationToken()).not.toThrow()
+    },
+  )
 })
 
 describe('findSessionIdByAlias', () => {

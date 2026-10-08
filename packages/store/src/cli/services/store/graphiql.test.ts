@@ -1,10 +1,13 @@
 import {openStoreGraphiQL} from './graphiql.js'
 import {loadStoredStoreSession} from './auth/session-lifecycle.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {generateRandomGraphiQLKey, runGraphiQLSession} from '@shopify/cli-kit/node/graphiql/session'
+import {ensureNoOrganizationAutomationToken} from '@shopify/cli-kit/node/session'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/graphiql/session')
+vi.mock('@shopify/cli-kit/node/session')
 vi.mock('./auth/session-lifecycle.js')
 
 const mockedRunGraphiQLSession = vi.mocked(runGraphiQLSession)
@@ -53,6 +56,17 @@ describe('openStoreGraphiQL', () => {
         protectMutations: false,
       }),
     )
+  })
+
+  test('refuses to start while the organization automation token is set', async () => {
+    vi.mocked(ensureNoOrganizationAutomationToken).mockImplementation(() => {
+      throw new AbortError("This command can't use SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN.")
+    })
+
+    await expect(openStoreGraphiQL({store: 'shop.myshopify.com'})).rejects.toThrow(
+      "This command can't use SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN.",
+    )
+    expect(mockedRunGraphiQLSession).not.toHaveBeenCalled()
   })
 
   test('uses a TokenProvider backed by loadStoredStoreSession', async () => {
