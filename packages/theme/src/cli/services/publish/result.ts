@@ -17,7 +17,7 @@ export function renderThemePublishResult(
     body: [
       'The theme',
       ...themeComponent(result.originalTheme),
-      'is now live at',
+      result.data.changed ? 'is now live at' : 'is already live at',
       {link: {label: result.previewUrl, url: result.previewUrl}},
       {char: '.'},
     ],

@@ -60,10 +60,6 @@ If you want to publish your local theme, then you need to run \`shopify theme pu
     renderThemePublishResult(result, flags.json ? 'json' : 'text', flags.environment)
   }
 
-  protected collectsEnvironmentResults(flags: {json?: boolean}): boolean {
-    return Boolean(flags.json)
-  }
-
   protected renderEnvironmentResults(
     environments: import('../../services/json-output/schema.js').ThemeEnvironmentResult[],
   ): void {

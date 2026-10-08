@@ -79,6 +79,16 @@ describe('theme publish JSON output', () => {
     },
   )
 
+  test('returns changed false for an already-live theme', async () => {
+    vi.mocked(findOrSelectTheme).mockResolvedValue(publishedTheme)
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await run(['--store', store, '--theme', '1', '--json', '--no-input', '--force'])
+      expect(JSON.parse(stdout())).toEqual({status: 'success', changed: false, theme: publicTheme})
+      expect(stderr()).toBe('')
+    })
+    expect(themePublish).not.toHaveBeenCalled()
+  })
+
   test('routes diagnostics to stderr', async () => {
     vi.mocked(findOrSelectTheme).mockResolvedValue(originalTheme)
     vi.mocked(themePublish).mockImplementation(async () => {
@@ -147,12 +157,15 @@ describe('theme publish JSON output', () => {
   })
 
   test.each([
-    {status: 'success', theme: {...publishedTheme, id: '1', shop: store}},
-    {status: 'success', theme: {...publishedTheme, shop: null}},
-    {status: 'success', theme: {...publishedTheme, src: false, shop: store}},
+    {status: 'success', changed: true, theme: {...publishedTheme, id: '1', shop: store}},
+    {status: 'success', changed: true, theme: {...publishedTheme, shop: null}},
+    {status: 'success', changed: true, theme: {...publishedTheme, src: false, shop: store}},
     {
       environments: [
-        {environment: 'first', result: {status: 'success', theme: {...publishedTheme, role: null, shop: store}}},
+        {
+          environment: 'first',
+          result: {status: 'success', changed: true, theme: {...publishedTheme, role: null, shop: store}},
+        },
       ],
     },
   ])('rejects malformed results %#', (result) => {
