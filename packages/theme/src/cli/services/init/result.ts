@@ -1,6 +1,5 @@
 import {themeInitJsonOutputSchema, projectThemeInitResult, type ThemeInitResult} from './types.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
-import {emitCommandEvent} from '@shopify/cli-kit/node/command-events'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 export function renderThemeInitResult(result: ThemeInitResult, format: 'text' | 'json'): void {
@@ -8,7 +7,7 @@ export function renderThemeInitResult(result: ThemeInitResult, format: 'text' | 
   if (format === 'json') outputResult(themeInitJsonOutputSchema.encode(projectThemeInitResult(result)))
 }
 
-export function renderAIInstructionsWarning(copiedFiles: string[], format: 'text' | 'json'): void {
+export function renderAIInstructionsWarning(copiedFiles: string[]): void {
   if (copiedFiles.length === 0) return
 
   const headline = 'Files created instead of symlinks.'
@@ -16,9 +15,5 @@ export function renderAIInstructionsWarning(copiedFiles: string[], format: 'text
     ', ',
   )}, but your system doesn't have Developer Mode enabled or symlinks are disabled. Separate files were created instead.`
 
-  if (format === 'json') {
-    emitCommandEvent({type: 'diagnostic', level: 'warning', message: `${headline}\n${body}`})
-  } else {
-    renderWarning({headline, body})
-  }
+  renderWarning({headline, body})
 }
