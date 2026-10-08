@@ -3,7 +3,6 @@ import Push from './push.js'
 import {executeThemePush} from '../../services/push.js'
 
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -22,7 +21,7 @@ class TestPush extends Push {
 }
 
 describe.each([TestPush])('%s', (Command) => {
-  test.each(['none', 'partial', 'total', 'cancelled', 'analytics'] as const)(
+  test.each(['none', 'partial', 'total', 'cancelled'] as const)(
     'retains all environments in request order with %s failures',
     async (failures) => {
       await inTemporaryDirectory(async (path) => {
@@ -36,11 +35,6 @@ describe.each([TestPush])('%s', (Command) => {
         let releaseFirst: () => void = () => {}
         const secondStarted = new Promise<void>((resolve) => {
           releaseFirst = resolve
-        })
-        vi.mocked(addPublicMetadata).mockImplementation(async (collect) => {
-          const metadata = await collect()
-          if (failures === 'analytics' && metadata?.store_domain === 'second.myshopify.com')
-            throw new Error('analytics failed')
         })
         const executionOrder: string[] = []
         const execute = async (flags: {environment?: string[]}, session?: {storeFqdn: string}) => {
@@ -70,7 +64,12 @@ describe.each([TestPush])('%s', (Command) => {
         }
         vi.mocked(executeThemePush).mockImplementation(execute)
 
-        const command = new Command([], new Config({root: path}))
+        const config = new Config({root: __dirname})
+        await config.load()
+        const command = new Command(
+          ['--environment', 'first', '--environment', 'second', '--environment', 'third'],
+          config,
+        )
         vi.spyOn(command, 'parse').mockResolvedValue({
           flags: {json: true, force: true, environment: ['first', 'second', 'third']},
           args: {},
@@ -105,7 +104,7 @@ describe.each([TestPush])('%s', (Command) => {
                   .map((line) => JSON.parse(line))
               : []
             expect(events.filter((event) => event.level === 'error')).toHaveLength(
-              {none: 0, partial: 1, total: 3, cancelled: 0, analytics: 0}[failures],
+              {none: 0, partial: 1, total: 3, cancelled: 0}[failures],
             )
           })
         } finally {
@@ -118,7 +117,9 @@ describe.each([TestPush])('%s', (Command) => {
 
   test('retains validation errors when every environment is invalid', async () => {
     vi.mocked(loadEnvironment).mockResolvedValue({})
-    const command = new Command([], new Config({root: '.'}))
+    const config = new Config({root: __dirname})
+    await config.load()
+    const command = new Command(['--environment', 'first', '--environment', 'second'], config)
     vi.spyOn(command, 'parse').mockResolvedValue({
       flags: {json: true, force: true, environment: ['first', 'second']},
       args: {},

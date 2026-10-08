@@ -47,18 +47,25 @@ export function uploadTheme(
 ) {
   const remoteChecksums = rejectGeneratedStaticAssets(checksums)
   const uploadResults = new Map<string, Result>()
+  let hasChanges = false
+  const recordResult = (result: Result) => {
+    hasChanges ||= result.success
+    uploadResults.set(result.key, result)
+  }
   const getProgress = (params: {current: number; total: number}) =>
     params.total === 0 ? `[100%]` : `[${Math.round((params.current / params.total) * 100)}%]`
 
-  const themeCreationPromise = ensureThemeCreation(theme, session, remoteChecksums)
+  const themeCreationPromise = ensureThemeCreation(theme, session, remoteChecksums).then((results) => {
+    results.forEach(recordResult)
+  })
 
   const uploadJobPromise = Promise.all([themeFileSystem.ready(), themeCreationPromise]).then(() =>
-    buildUploadJob(remoteChecksums, themeFileSystem, theme, session, uploadResults),
+    buildUploadJob(remoteChecksums, themeFileSystem, theme, session, recordResult),
   )
 
   const deleteJobPromise = uploadJobPromise
     .then((result) => result.promise)
-    .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, theme, session, options, uploadResults))
+    .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, theme, session, options, recordResult))
 
   const workPromise = options?.deferPartialWork
     ? themeCreationPromise
@@ -75,6 +82,9 @@ export function uploadTheme(
 
   return {
     uploadResults,
+    get hasChanges() {
+      return hasChanges
+    },
     workPromise,
     renderThemeSyncProgress: async () => {
       if (options?.deferPartialWork) return
@@ -155,7 +165,7 @@ function buildDeleteJob(
   theme: Theme,
   session: AdminSession,
   options: Pick<UploadOptions, 'nodelete'>,
-  uploadResults: Map<string, Result>,
+  recordResult: (result: Result) => void,
 ): SyncJob {
   if (options.nodelete) {
     return {progress: {current: 0, total: 0}, promise: Promise.resolve()}
@@ -178,7 +188,7 @@ function buildDeleteJob(
       session,
     ).then((results) => {
       results.forEach((result) => {
-        uploadResults.set(result.key, result)
+        recordResult(result)
         if (!result.success) {
           const errorMessage = result.errors?.asset?.map((err) => `-${err}`).join('\n')
           createSyncingCatchError(result.key, 'delete')(new Error(`Failed to delete ${result.key}: ${errorMessage}`))
@@ -244,8 +254,9 @@ async function ensureThemeCreation(theme: Theme, session: AdminSession, remoteCh
   const missingAssets = MINIMUM_THEME_ASSETS.filter(({key}) => !remoteAssetKeys.has(key))
 
   if (missingAssets.length > 0) {
-    await bulkUploadThemeAssets(theme.id, missingAssets, session)
+    return bulkUploadThemeAssets(theme.id, missingAssets, session)
   }
+  return []
 }
 
 interface SyncJob {
@@ -258,7 +269,7 @@ function buildUploadJob(
   themeFileSystem: ThemeFileSystem,
   theme: Theme,
   session: AdminSession,
-  uploadResults: Map<string, Result>,
+  recordResult: (result: Result) => void,
 ): SyncJob {
   const filesToUpload = selectUploadableFiles(themeFileSystem, remoteChecksums)
 
@@ -274,7 +285,7 @@ function buildUploadJob(
     if (fileType.length === 0) return Promise.resolve()
     return Promise.all(
       createBatches(fileType).map((batch) =>
-        uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults).then(() => {
+        uploadBatch(batch, themeFileSystem, session, theme.id, recordResult).then(() => {
           progress.current += batch.length
           batch.forEach((file) => themeFileSystem.unsyncedFileKeys.delete(file.key))
         }),
@@ -420,7 +431,7 @@ async function uploadBatch(
   localThemeFileSystem: ThemeFileSystem,
   session: AdminSession,
   themeId: number,
-  uploadResults: Map<string, Result>,
+  recordResult: (result: Result) => void,
 ) {
   const uploadParams = batch.map((file) => {
     const value = localThemeFileSystem.files.get(file.key)?.value
@@ -433,9 +444,8 @@ async function uploadBatch(
   })
   outputDebug(`Uploading the following files:\n${batch.map((file) => `-${file.key}`).join('\n')}`)
   const results = await handleBulkUpload(uploadParams, themeId, session)
-  // store the results in uploadResults, overwriting any existing results
   results.forEach((result) => {
-    uploadResults.set(result.key, result)
+    recordResult(result)
     updateUploadErrors(result, localThemeFileSystem, themeId)
   })
 }

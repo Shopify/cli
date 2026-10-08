@@ -8,7 +8,7 @@ import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {Role} from '../utilities/theme-selector/fetch.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
-import {ensureListingExists} from '../utilities/theme-listing.js'
+import {ensureListingExists, getListingFilePath} from '../utilities/theme-listing.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {themeCreate, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -189,16 +189,24 @@ async function executePush(
   })
   recordTiming('theme-service:push:file-system')
 
-  const {uploadResults, renderThemeSyncProgress} = uploadTheme(
-    theme,
-    session,
-    themeChecksums,
-    themeFileSystem,
-    options,
-    context,
-  )
+  let sourcePaths: Record<string, string> | undefined
+  if (options.listing) {
+    const listing = options.listing
+    await themeFileSystem.ready()
+    sourcePaths = Object.fromEntries(
+      await Promise.all(
+        [...themeFileSystem.files.keys()].map(async (key) => [
+          key,
+          (await getListingFilePath(options.path, listing, key)) ?? key,
+        ]),
+      ),
+    )
+  }
 
-  await renderThemeSyncProgress()
+  const upload = uploadTheme(theme, session, themeChecksums, themeFileSystem, options, context)
+
+  await upload.renderThemeSyncProgress()
+  const {uploadResults} = upload
 
   if (options.publish) {
     await themePublish(theme.id, session)
@@ -206,16 +214,16 @@ async function executePush(
 
   const errors: Record<string, string[]> = {}
   for (const [key, result] of uploadResults) {
-    if (!result.success && result.errors?.asset) errors[key] = result.errors.asset
+    if (!result.success) {
+      errors[key] = result.errors?.asset?.length ? result.errors.asset : ['File upload failed']
+    }
   }
 
   const result = themePushResultSchema.parse({
     environment: options.environment,
     directory: options.path,
-    changed:
-      theme.createdAtRuntime === true ||
-      options.publish === true ||
-      [...uploadResults.values()].some((result) => result.success),
+    ...(sourcePaths && {sourcePaths}),
+    changed: theme.createdAtRuntime === true || options.publish === true || upload.hasChanges,
     theme: {
       id: theme.id,
       name: theme.name,
@@ -248,13 +256,14 @@ export async function createOrSelectTheme(
     return themeManager.findOrCreate(developmentContext, DEVELOPMENT_THEME_ROLE)
   } else if (unpublished) {
     const themeName = theme ?? (await promptThemeName('Name of the new theme'))
-    return themeCreate(
+    const createdTheme = await themeCreate(
       {
         name: themeName,
         role: UNPUBLISHED_THEME_ROLE,
       },
       session,
     )
+    return createdTheme ? {...createdTheme, createdAtRuntime: true} : undefined
   } else {
     const selectedTheme = await findOrSelectTheme(session, {
       create: true,

@@ -49,11 +49,7 @@ export async function ensureDirectoryConfirmed(
     return false
   }
 
-  if (commandEventOutputMode() === 'json') {
-    emitCommandEvent({type: 'diagnostic', level: 'warning', message})
-  } else {
-    renderWarning({body: message})
-  }
+  renderWarning({body: message})
 
   if (isInputDisabled()) {
     throw new AbortError(

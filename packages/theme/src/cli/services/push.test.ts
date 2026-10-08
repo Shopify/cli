@@ -20,6 +20,7 @@ import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Severity, SourceCodeType} from '@shopify/theme-check-node'
 import {outputResult} from '@shopify/cli-kit/node/output'
+import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
 vi.mock('../utilities/theme-uploader.js')
 vi.mock('../utilities/theme-store.js')
@@ -51,6 +52,7 @@ describe('push', () => {
     vi.mocked(uploadTheme).mockReturnValue({
       workPromise: Promise.resolve(),
       uploadResults: new Map(),
+      hasChanges: false,
       renderThemeSyncProgress: () => Promise.resolve(),
     })
     vi.mocked(ensureThemeStore).mockReturnValue('example.myshopify.com')
@@ -95,6 +97,7 @@ describe('push', () => {
     vi.mocked(uploadTheme).mockReturnValue({
       workPromise: Promise.resolve(),
       uploadResults,
+      hasChanges: true,
       renderThemeSyncProgress: () => Promise.resolve(),
     })
 
@@ -235,20 +238,16 @@ describe('push', () => {
   })
 
   test('passes listing flag to file system when provided', async () => {
-    // Given
-    const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
-    vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+    await inTemporaryDirectory(async (themePath) => {
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+      const actual = await vi.importActual<typeof import('../utilities/theme-fs.js')>('../utilities/theme-fs.js')
+      vi.mocked(mountThemeFileSystem).mockImplementationOnce(actual.mountThemeFileSystem)
 
-    // When
-    await push({...defaultFlags, listing: 'my-preset'})
+      await push({...defaultFlags, path: themePath, listing: 'my-preset'})
 
-    // Then
-    expect(mountThemeFileSystem).toHaveBeenCalledWith(
-      path,
-      expect.objectContaining({
-        listing: 'my-preset',
-      }),
-    )
+      expect(mountThemeFileSystem).toHaveBeenCalledWith(themePath, expect.objectContaining({listing: 'my-preset'}))
+    })
   })
 })
 
@@ -264,7 +263,7 @@ describe('createOrSelectTheme', async () => {
     const theme = await createOrSelectTheme(adminSession, flags)
 
     // Then
-    expect(theme).toMatchObject({role: UNPUBLISHED_THEME_ROLE})
+    expect(theme).toMatchObject({role: UNPUBLISHED_THEME_ROLE, createdAtRuntime: true})
     expect(setDevelopmentTheme).not.toHaveBeenCalled()
   })
 
@@ -278,7 +277,7 @@ describe('createOrSelectTheme', async () => {
     const theme = await createOrSelectTheme(adminSession, flags)
 
     // Then
-    expect(theme).toMatchObject({role: DEVELOPMENT_THEME_ROLE})
+    expect(theme).toMatchObject({role: DEVELOPMENT_THEME_ROLE, createdAtRuntime: true})
     expect(setDevelopmentTheme).toHaveBeenCalled()
   })
 
@@ -292,7 +291,7 @@ describe('createOrSelectTheme', async () => {
     const theme = await createOrSelectTheme(adminSession, flags)
 
     // Then
-    expect(theme).toMatchObject({role: DEVELOPMENT_THEME_ROLE, name: 'Custom name'})
+    expect(theme).toMatchObject({role: DEVELOPMENT_THEME_ROLE, name: 'Custom name', createdAtRuntime: true})
     expect(setDevelopmentTheme).toHaveBeenCalled()
   })
 

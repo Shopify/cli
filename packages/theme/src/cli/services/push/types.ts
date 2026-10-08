@@ -17,6 +17,7 @@ const ThemePushThemeSchema = zod.object({
 export const themePushResultSchema = zod.object({
   environment: zod.string().optional(),
   directory: zod.string().optional(),
+  sourcePaths: zod.record(zod.string()).optional(),
   changed: zod.boolean().optional(),
   theme: ThemePushThemeSchema,
   published: zod.boolean(),
@@ -53,7 +54,10 @@ export function themePushJsonResult(result: ThemePushResult): ThemePushJsonResul
       previewUrl: theme.preview_url || null,
     },
     issues: Object.entries(errors).flatMap(([file, messages]) =>
-      messages.map((message) => ({filePath: resolvePath(result.directory ?? cwd(), file), message})),
+      messages.map((message) => ({
+        filePath: resolvePath(result.directory ?? cwd(), result.sourcePaths?.[file] ?? file),
+        message,
+      })),
     ),
   }
 }
