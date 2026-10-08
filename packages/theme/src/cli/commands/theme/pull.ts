@@ -92,10 +92,6 @@ If no theme is specified, then you're prompted to select the theme to pull from 
     return result ?? (flags.json && multiEnvironment ? {status: 'skipped', reason: 'unsafe-directory'} : undefined)
   }
 
-  protected collectsEnvironmentResults(flags: {json?: boolean}): boolean {
-    return Boolean(flags.json)
-  }
-
   protected renderEnvironmentResults(results: ThemeEnvironmentResult[]): void {
     renderThemePullEnvironmentResults(results)
   }
