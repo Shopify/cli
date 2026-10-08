@@ -382,14 +382,18 @@ Execute bulk operations.
 
 ```
 USAGE
-  $ shopify app bulk execute [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--output-file <value> --watch] [--path <value>] [-q <value>] [--query-file <value>] [--reset | ] [-s
-    <value>] [--variable-file <value> | -v <value>...] [--verbose] [--version <value>]
+  $ shopify app bulk execute [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--output-file <value> --watch] [--path <value>] [-q <value>] [--query-file <value>]
+    [--reset | ] [-s <value>] [--variable-file <value> | -v <value>...] [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -q, --query=<value>
       The GraphQL query or mutation to run as a bulk operation.
@@ -469,6 +473,176 @@ DESCRIPTION
 
   Use "`bulk status`" (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-status) to check the status of your bulk
   operations.
+
+  With `--watch`, completed results are written as JSONL to stdout or `--output-file`. With `--json`, stdout contains
+  one result object with operation details and downloaded JSONL in `resultsJsonl`. With `--json --output-file`, stdout
+  contains only an absolute file receipt with `path` and `format`.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ExecuteBulkOperationResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ExecuteBulkOperationResult"
+      },
+      {
+        "$ref": "#/definitions/BulkOperationFile"
+      }
+    ],
+    "title": "ExecuteBulkOperationResult",
+    "definitions": {
+      "BulkOperation": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/BulkOperation\\/[^/]+$",
+            "description": "The Shopify global ID of a bulk operation."
+          },
+          "type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "errorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          },
+          "completedAt": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/BulkOperation/properties/createdAt"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          },
+          "objectCount": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "A nonnegative decimal count, without loss of integer precision."
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "partialDataUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "gid",
+          "type",
+          "status",
+          "errorCode",
+          "createdAt",
+          "completedAt",
+          "objectCount",
+          "url",
+          "partialDataUrl"
+        ],
+        "additionalProperties": false
+      },
+      "ExecuteBulkOperationResult": {
+        "type": "object",
+        "properties": {
+          "storeDomain": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[^.]+\\.myshopify\\.com$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "apiVersion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The API version selected for the request."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success",
+              "partial",
+              "cancelled"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "const": "watch-aborted"
+          },
+          "operation": {
+            "$ref": "#/definitions/BulkOperation"
+          },
+          "resultsJsonl": {
+            "type": "string",
+            "description": "Downloaded results in their native JSONL format."
+          }
+        },
+        "required": [
+          "storeDomain",
+          "apiVersion",
+          "status",
+          "operation"
+        ],
+        "additionalProperties": false
+      },
+      "BulkOperationFile": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The absolute path of the downloaded results file."
+          },
+          "format": {
+            "type": "string",
+            "const": "jsonl"
+          }
+        },
+        "required": [
+          "path",
+          "format"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app bulk status`

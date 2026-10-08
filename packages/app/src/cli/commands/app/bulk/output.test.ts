@@ -1,47 +1,49 @@
 import BulkStatus from './status.js'
 import BulkCancel from './cancel.js'
+import BulkExecute from './execute.js'
 import {
   testBulkOperation,
   testBulkOperationContext,
 } from '../../../services/bulk-operations/bulk-operation.test-data.js'
-import {prepareAppStoreContext} from '../../../utilities/execute-command-helpers.js'
-import {createAdminSessionAsApp, resolveApiVersion} from '../../../services/graphql/common.js'
+import {prepareAppStoreContext, prepareExecuteContext} from '../../../utilities/execute-command-helpers.js'
 import {
   bulkOperationStatusJsonOutputSchema,
   cancelBulkOperationJsonOutputSchema,
+  executeBulkOperationJsonOutputSchema,
 } from '../../../services/bulk-operations/types.js'
+import * as ui from '@shopify/cli-kit/node/ui'
 import {
   fetchBulkOperationById,
   fetchRecentBulkOperations,
   cancelBulkOperationRequest,
+  runBulkOperationQuery,
+  runBulkOperationMutation,
+  shortBulkOperationPoll,
+  watchBulkOperation,
 } from '@shopify/cli-kit/node/api/bulk-operations'
+import {fetchApiVersions} from '@shopify/cli-kit/node/api/admin'
+import {fetch} from '@shopify/cli-kit/node/http'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, cwd, relativePath} from '@shopify/cli-kit/node/path'
 import {AbortError, handler} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
+import {fileURLToPath} from 'node:url'
 import type {BulkOperation} from '@shopify/cli-kit/node/api/bulk-operations'
 
 vi.mock('../../../utilities/execute-command-helpers.js')
 
-vi.mock('../../../services/graphql/common.js', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('../../../services/graphql/common.js')>()),
-  createAdminSessionAsApp: vi.fn(),
-  resolveApiVersion: vi.fn(),
-}))
-
-vi.mock('@shopify/cli-kit/node/session', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@shopify/cli-kit/node/session')>()),
-  ensureAuthenticatedAdminAsApp: vi.fn(),
-}))
-
-vi.mock('@shopify/cli-kit/node/api/bulk-operations', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@shopify/cli-kit/node/api/bulk-operations')>()),
-  fetchBulkOperationById: vi.fn(),
-  fetchRecentBulkOperations: vi.fn(),
-  cancelBulkOperationRequest: vi.fn(),
-}))
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/node/api/admin')
+vi.mock('@shopify/cli-kit/node/http')
+vi.mock('@shopify/cli-kit/node/api/bulk-operations/fetch')
+vi.mock('@shopify/cli-kit/node/api/bulk-operations/cancel')
+vi.mock('@shopify/cli-kit/node/api/bulk-operations/run-query')
+vi.mock('@shopify/cli-kit/node/api/bulk-operations/run-mutation')
+vi.mock('@shopify/cli-kit/node/api/bulk-operations/watch-bulk-operation')
 
 const originalExitCode = process.exitCode
 
@@ -58,6 +60,13 @@ function bulkOperation(overrides: Partial<BulkOperation> = {}): BulkOperation {
   })
 }
 
+function mockDownloadResults(results: string): void {
+  vi.mocked(fetch).mockResolvedValue({
+    ok: true,
+    text: async () => results,
+  } as Awaited<ReturnType<typeof fetch>>)
+}
+
 function expectedOperation() {
   return {
     gid: 'gid://shopify/BulkOperation/123',
@@ -72,14 +81,18 @@ function expectedOperation() {
   }
 }
 
-async function runCommand(Command: typeof BulkStatus | typeof BulkCancel, argv: string[]) {
-  const {appContextResult, store} = testBulkOperationContext()
+async function runCommand(
+  Command: typeof BulkStatus | typeof BulkCancel | typeof BulkExecute,
+  argv: string[],
+  query = 'query { shop { name } }',
+) {
+  const {appContextResult, store: defaultStore} = testBulkOperationContext()
+  const store = {...defaultStore, storeType: 'APP_DEVELOPMENT' as const}
   vi.mocked(prepareAppStoreContext).mockResolvedValue({appContextResult, store})
-
+  vi.mocked(prepareExecuteContext).mockResolvedValue({appContextResult, store, query})
   const session = {storeFqdn: store.shopDomain, token: 'token'}
-  vi.mocked(createAdminSessionAsApp).mockResolvedValue(session)
   vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue(session)
-  vi.mocked(resolveApiVersion).mockResolvedValue('2026-01')
+  vi.mocked(fetchApiVersions).mockResolvedValue([{handle: '2026-01', supported: true}])
   const config = await Config.load()
   return runWithCommandEventsForCommand(argv, () => new Command(argv, config).run())
 }
@@ -156,33 +169,203 @@ test('cancellation emits one result through the real service, codec, presenter, 
   })
 })
 
-test.each([{name: 'cancel', Command: BulkCancel}])(
-  '$name user errors reach the fatal envelope without a success document',
-  async ({Command}) => {
-    const userErrors = [{field: ['id'], message: 'Operation rejected'}]
-    vi.mocked(cancelBulkOperationRequest).mockResolvedValue({bulkOperation: null, userErrors})
-
-    vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      const argv = ['--id', '123']
-      try {
-        await runCommand(Command, [...argv, '--json'])
-        expect.fail('The command must reject the operation.')
-      } catch (error) {
-        if (!(error instanceof AbortError)) throw error
-        expect(error).toMatchObject({details: {userErrors}})
-        expect(stdout()).toBe('')
-        await handler(error)
-      }
-      expect(JSON.parse(stdout())).toMatchObject({error: {type: 'abort', details: {userErrors}}})
-      assertDiagnosticEvents(stderr(), 'Canceling bulk operation.')
+test('unwatched execution reports the operation without downloading results', async () => {
+  vi.mocked(runBulkOperationQuery).mockResolvedValue({bulkOperation: bulkOperation(), userErrors: []})
+  vi.mocked(shortBulkOperationPoll).mockResolvedValue(bulkOperation())
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await runCommand(BulkExecute, ['--query', 'query { shop { name } }', '--json'])
+    expect(JSON.parse(stdout())).toEqual({
+      storeDomain: 'shop.myshopify.com',
+      apiVersion: '2026-01',
+      status: 'success',
+      operation: expectedOperation(),
     })
-  },
-)
+    expect(fetch).not.toHaveBeenCalled()
+    assertDiagnosticEvents(stderr(), 'Starting bulk operation.')
+    const events = stderr()
+      .trim()
+      .split('\n')
+      .map((line) => JSON.parse(line))
+    expect(events).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({type: 'progress', status: 'started'}),
+        expect.objectContaining({type: 'progress', status: 'completed'}),
+      ]),
+    )
+  })
+})
+
+test.each(['', '{"id":"1"}\n{"id":"2"}\n'])('watched execution keeps native inline JSONL %j', async (results) => {
+  const operation = bulkOperation({status: 'COMPLETED', url: 'https://example.com/results.jsonl'})
+  vi.mocked(runBulkOperationQuery).mockResolvedValue({bulkOperation: operation, userErrors: []})
+  vi.mocked(watchBulkOperation).mockResolvedValue(operation)
+  mockDownloadResults(results)
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await runCommand(BulkExecute, ['--query', 'query { shop { name } }', '--watch', '--json'])
+    expect(JSON.parse(stdout())).toEqual({
+      storeDomain: 'shop.myshopify.com',
+      apiVersion: '2026-01',
+      status: 'success',
+      operation: {...expectedOperation(), status: 'COMPLETED', url: 'https://example.com/results.jsonl'},
+      resultsJsonl: results,
+    })
+    assertDiagnosticEvents(stderr(), 'Starting bulk operation.')
+  })
+})
+
+test('file output keeps the exact JSONL bytes and prints only an absolute receipt', async () => {
+  const operation = bulkOperation({status: 'COMPLETED', url: 'https://example.com/results.jsonl'})
+  const results = '{"id":"1"}\r\n{"id":"2"}\n'
+  vi.mocked(runBulkOperationQuery).mockResolvedValue({bulkOperation: operation, userErrors: []})
+  vi.mocked(watchBulkOperation).mockResolvedValue(operation)
+  mockDownloadResults(results)
+  await inTemporaryDirectory(async (directory) => {
+    const path = joinPath(directory, 'results.jsonl')
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runCommand(BulkExecute, [
+        '--query',
+        'query { shop { name } }',
+        '--watch',
+        '--json',
+        '--output-file',
+        relativePath(cwd(), path),
+      ])
+      expect(JSON.parse(stdout())).toEqual({path, format: 'jsonl'})
+      await expect(readFile(path)).resolves.toBe(results)
+      assertDiagnosticEvents(stderr(), 'Starting bulk operation.')
+    })
+  })
+})
+
+test.each([
+  {file: false, fragment: false},
+  {file: true, fragment: false},
+  {file: false, fragment: true},
+  {file: true, fragment: true},
+])('aliased mutation errors fail with file=$file and fragment=$fragment', async ({file, fragment}) => {
+  const query = fragment
+    ? await readFile(
+        fileURLToPath(new URL('../../../services/bulk-operations/fixtures/aliased-mutation.graphql', import.meta.url)),
+      )
+    : 'mutation Update($input: ProductInput!) { update: productUpdate(input: $input) { errors: userErrors { message } } }'
+  const operation = bulkOperation({type: 'MUTATION', status: 'COMPLETED', url: 'https://example.com/results.jsonl'})
+  const results = fragment
+    ? '{"data":{"__typename":"Mutation","update":{"errors":[{"message":"Rejected"}]}}}\r\n'
+    : '{"data":{"update":{"errors":[{"message":"Rejected"}]}}}\r\n'
+  vi.mocked(runBulkOperationMutation).mockResolvedValue({
+    bulkOperation: operation,
+    userErrors: [],
+  })
+  vi.mocked(watchBulkOperation).mockResolvedValue(operation)
+  mockDownloadResults(results)
+
+  await inTemporaryDirectory(async (directory) => {
+    const path = joinPath(directory, 'results.jsonl')
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runCommand(
+        BulkExecute,
+        [
+          '--query',
+          query,
+          '--variables',
+          '{"input":{"id":"gid://shopify/Product/1"}}',
+          '--watch',
+          '--json',
+          ...(file ? ['--output-file', path] : []),
+        ],
+        query,
+      )
+      if (file) {
+        expect(JSON.parse(stdout())).toEqual({path, format: 'jsonl'})
+        await expect(readFile(path)).resolves.toBe(results)
+      } else {
+        expect(JSON.parse(stdout())).toEqual({
+          storeDomain: 'shop.myshopify.com',
+          apiVersion: '2026-01',
+          status: 'partial',
+          operation: {...expectedOperation(), type: 'MUTATION', status: 'COMPLETED', url: operation.url},
+          resultsJsonl: results,
+        })
+      }
+      expect(process.exitCode).toBe(1)
+      assertDiagnosticEvents(stderr(), 'Starting bulk operation.')
+    })
+  })
+})
+
+test('a completed query with no matches writes an empty JSONL file and a success receipt', async () => {
+  const operation = bulkOperation({status: 'COMPLETED', objectCount: '0', url: null})
+  vi.mocked(runBulkOperationQuery).mockResolvedValue({bulkOperation: operation, userErrors: []})
+  vi.mocked(watchBulkOperation).mockResolvedValue(operation)
+  await inTemporaryDirectory(async (directory) => {
+    const path = joinPath(directory, 'results.jsonl')
+    await writeFile(path, 'previous export\n')
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runCommand(BulkExecute, [
+        '--query',
+        'query { products { edges { node { id } } } }',
+        '--watch',
+        '--json',
+        '--output-file',
+        path,
+      ])
+      expect(JSON.parse(stdout())).toEqual({path, format: 'jsonl'})
+      await expect(readFile(path)).resolves.toBe('')
+      expect(fetch).not.toHaveBeenCalled()
+      expect(process.exitCode).toBe(originalExitCode)
+      assertDiagnosticEvents(stderr(), 'Starting bulk operation.')
+    })
+  })
+})
+
+test('without JSON mode, watched execution preserves the exact native stdout bytes', async () => {
+  const authenticationProgress = vi.spyOn(ui, 'renderSingleTask').mockImplementation(async ({task}) => task(vi.fn()))
+  const operation = bulkOperation({status: 'COMPLETED', url: 'https://example.com/results.jsonl'})
+  const results = '{"id":"1"}\n{"id":"2"}\n'
+  vi.mocked(runBulkOperationQuery).mockResolvedValue({bulkOperation: operation, userErrors: []})
+  vi.mocked(watchBulkOperation).mockResolvedValue(operation)
+  mockDownloadResults(results)
+  try {
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runCommand(BulkExecute, ['--query', 'query { shop { name } }', '--watch'])
+      expect(stdout()).toBe(`${results}\n`)
+      expect(stderr()).toContain('Starting bulk operation.')
+      expect(stderr()).toContain('Bulk operation succeeded:')
+      expect(process.exitCode).toBe(originalExitCode)
+    })
+  } finally {
+    authenticationProgress.mockRestore()
+  }
+})
+
+test.each([
+  {name: 'cancel', Command: BulkCancel},
+  {name: 'execute', Command: BulkExecute},
+])('$name user errors reach the fatal envelope without a success document', async ({Command}) => {
+  const userErrors = [{field: ['id'], message: 'Operation rejected'}]
+  vi.mocked(cancelBulkOperationRequest).mockResolvedValue({bulkOperation: null, userErrors})
+  vi.mocked(runBulkOperationQuery).mockResolvedValue({bulkOperation: null, userErrors})
+  vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    const argv = Command === BulkCancel ? ['--id', '123'] : ['--query', 'query { shop { name } }']
+    try {
+      await runCommand(Command, [...argv, '--json'])
+      expect.fail('The command must reject the operation.')
+    } catch (error) {
+      if (!(error instanceof AbortError)) throw error
+      expect(error).toMatchObject({details: {userErrors}})
+      expect(stdout()).toBe('')
+      await handler(error)
+    }
+    expect(JSON.parse(stdout())).toMatchObject({error: {type: 'abort', details: {userErrors}}})
+    assertDiagnosticEvents(stderr(), Command === BulkCancel ? 'Canceling bulk operation.' : 'Starting bulk operation.')
+  })
+})
 
 test.each([
   {name: 'status', Command: BulkStatus, schema: bulkOperationStatusJsonOutputSchema},
   {name: 'cancel', Command: BulkCancel, schema: cancelBulkOperationJsonOutputSchema},
+  {name: 'execute', Command: BulkExecute, schema: executeBulkOperationJsonOutputSchema},
 ] as const)('exposes the schema, JSON flag, and help for $name', ({Command, schema}) => {
   expect(Command.jsonOutputSchema).toBe(schema)
   expect(Command.flags.json).toBeDefined()

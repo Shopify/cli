@@ -44,3 +44,33 @@ export interface CancelBulkOperationResult extends BulkOperationContext {
   operation: BulkOperation | null
   userErrors: {field?: string[] | null; message: string}[]
 }
+
+const ExecuteBulkOperationResultSchema = BulkOperationContextSchema.extend({
+  status: zod.enum(['success', 'partial', 'cancelled']),
+  reason: zod.literal('watch-aborted').optional(),
+  operation: BulkOperationSchema,
+  resultsJsonl: zod.string().optional().describe('Downloaded results in their native JSONL format.'),
+})
+
+const BulkOperationFileSchema = zod
+  .object({
+    path: zod.string().describe('The absolute path of the downloaded results file.'),
+    format: zod.literal('jsonl'),
+  })
+  .strict()
+
+export const executeBulkOperationJsonOutputSchema = defineJsonOutputSchema({
+  name: 'ExecuteBulkOperationResult',
+  schema: zod.union([ExecuteBulkOperationResultSchema, BulkOperationFileSchema]),
+  definitions: {
+    BulkOperation: BulkOperationSchema,
+    ExecuteBulkOperationResult: ExecuteBulkOperationResultSchema,
+    BulkOperationFile: BulkOperationFileSchema,
+  },
+})
+
+export interface ExecuteBulkOperationResult extends CancelBulkOperationResult {
+  query: string
+  watchAborted: boolean
+  results?: string
+}
