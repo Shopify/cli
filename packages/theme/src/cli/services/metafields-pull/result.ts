@@ -1,7 +1,7 @@
 import {themeMetafieldsPullJsonOutputSchema, type ThemeMetafieldsPullResult} from './types.js'
 import {outputDebug, outputResult} from '@shopify/cli-kit/node/output'
 import {emitCommandEvent} from '@shopify/cli-kit/node/command-events'
-import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 
 export function renderThemeMetafieldsPullResult(
   result: ThemeMetafieldsPullResult,
@@ -22,7 +22,13 @@ export function renderThemeMetafieldsPullResult(
     }
     outputResult(themeMetafieldsPullJsonOutputSchema.encode(result))
   } else if (result.status === 'downloaded') {
-    renderSuccess({body: 'Metafield definitions have been successfully downloaded.'})
+    if (result.failedOwnerTypes.length > 0) {
+      renderWarning({
+        body: `Metafield definitions were partially downloaded. Failed owner types: ${result.failedOwnerTypes.join(', ')}.`,
+      })
+    } else {
+      renderSuccess({body: 'Metafield definitions have been successfully downloaded.'})
+    }
   } else if (result.status === 'failed') {
     renderError({
       body: 'Failed to fetch metafield definitions.',

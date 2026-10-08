@@ -71,10 +71,6 @@ If the metafields file already exists, it will be overwritten.`
     return result
   }
 
-  protected collectsEnvironmentResults(flags: Partial<MetafieldsFlags>): boolean {
-    return Boolean(flags.json)
-  }
-
   protected renderEnvironmentResults(environments: ThemeEnvironmentResult[]): void {
     outputResult(themeMetafieldsPullJsonOutputSchema.encode({environments}))
   }
