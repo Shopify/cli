@@ -30,7 +30,11 @@ export function presentMigrationSubmissionResult(
   options: SubmissionPresentationOptions,
 ): 0 | 1 {
   if (result.status === 'failed' && result.submission.operations.length === 0) {
-    const error = new AbortError('Subscription migration submission failed.')
+    const message = [
+      'Subscription migration submission failed.',
+      ...(result.failure.type === 'submission' ? result.failure.userErrors.map(({message}) => message) : []),
+    ].join('\n')
+    const error = new AbortError(message)
     error.details =
       result.failure.type === 'submission'
         ? {

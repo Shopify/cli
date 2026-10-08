@@ -202,10 +202,26 @@ describe('migration submission result presenter', () => {
       const result: MigrationSubmissionResult = {
         status: 'failed',
         submission: value,
-        failure: {type: 'submission', batchIndex: 0, userErrors: [{message: 'App not found', field: ['apiKey']}]},
+        failure: {
+          type: 'submission',
+          batchIndex: 0,
+          userErrors: [
+            {message: 'App not found', field: ['apiKey']},
+            {message: 'Invalid plan', field: null},
+          ],
+        },
       }
       expect(() => presentMigrationSubmissionResult(result, {json, watch: false})).toThrow(
-        'Subscription migration submission failed.',
+        expect.objectContaining({
+          message: 'Subscription migration submission failed.\nApp not found\nInvalid plan',
+          details: {
+            batchIndex: 0,
+            userErrors: [
+              {message: 'App not found', fieldPath: ['apiKey']},
+              {message: 'Invalid plan', fieldPath: null},
+            ],
+          },
+        }),
       )
       expect(outputResult).not.toHaveBeenCalled()
     },
