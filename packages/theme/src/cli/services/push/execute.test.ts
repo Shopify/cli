@@ -45,7 +45,7 @@ describe('push execution', () => {
       const result = await executeThemePush({path, force: true, publish: true, environment: ['staging']}, session)
       expect(result).toEqual({
         environment: 'staging',
-        directory: nativePath(path),
+        directory: path,
         changed: true,
         theme: {
           id: 1,
