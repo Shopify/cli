@@ -20,6 +20,7 @@ const adminSession = {
 const developmentTheme = {
   id: 1,
   name: 'my development theme',
+  processing: false,
 } as Theme
 
 const options: RenameOptions = {
@@ -109,6 +110,16 @@ test('returns updated API data without presenting a final result', async () => {
     requestedName: 'Renamed Theme',
   })
   expect(renderSuccess).not.toHaveBeenCalled()
+})
+
+test('preserves processing state that the rename mutation does not return', async () => {
+  const selectedTheme = {...developmentTheme, processing: true}
+  vi.mocked(findOrSelectTheme).mockResolvedValue(selectedTheme)
+  vi.mocked(themeUpdate).mockResolvedValue({...developmentTheme, name: 'Renamed Theme', processing: false})
+
+  const result = await executeRename(options, adminSession)
+
+  expect(result.data.theme).toMatchObject({name: 'Renamed Theme', processing: true})
 })
 
 test('preserves the requested name and environment label in terminal output', async () => {
