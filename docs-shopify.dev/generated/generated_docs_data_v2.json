@@ -5181,7 +5181,7 @@
           "syntaxKind": "PropertySignature",
           "name": "--output <value>",
           "value": "string",
-          "description": "Write the document to this file path instead of printing it to stdout.",
+          "description": "Write the document to this file path instead of printing it to stdout. With --json, stdout contains the absolute path and Markdown format of the written file.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_OUTPUT"
         },
@@ -5201,9 +5201,18 @@
           "description": "Increase the verbosity of the output. May include sensitive data.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/doc-fetch.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface docfetch {\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Filter code examples in the returned Markdown to this language. Supply the language of the app you are building so examples match your stack. Optional — if omitted, or if shopify.dev does not recognize the language for a given page, the document includes examples in every language.\n   * @environment SHOPIFY_FLAG_LANGUAGE\n   */\n  '--language <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Write the document to this file path instead of printing it to stdout.\n   * @environment SHOPIFY_FLAG_OUTPUT\n   */\n  '--output <value>'?: string\n\n  /**\n   * The shopify.dev URL to fetch.\n   * @environment SHOPIFY_FLAG_URL\n   */\n  '--url <value>': string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface docfetch {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Filter code examples in the returned Markdown to this language. Supply the language of the app you are building so examples match your stack. Optional — if omitted, or if shopify.dev does not recognize the language for a given page, the document includes examples in every language.\n   * @environment SHOPIFY_FLAG_LANGUAGE\n   */\n  '--language <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Write the document to this file path instead of printing it to stdout. With --json, stdout contains the absolute path and Markdown format of the written file.\n   * @environment SHOPIFY_FLAG_OUTPUT\n   */\n  '--output <value>'?: string\n\n  /**\n   * The shopify.dev URL to fetch.\n   * @environment SHOPIFY_FLAG_URL\n   */\n  '--url <value>': string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "docsearch": {
