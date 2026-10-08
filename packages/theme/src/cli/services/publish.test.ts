@@ -27,6 +27,31 @@ const options = {
 }
 
 describe('publish', () => {
+  test('returns an unchanged result for a live theme without confirmation or publishing', async () => {
+    const liveTheme = {...theme, role: 'live'}
+    vi.mocked(findOrSelectTheme).mockResolvedValue(liveTheme)
+
+    const result = await publish(session, options)
+
+    expect(result).toEqual({
+      data: {status: 'success', changed: false, theme: {...liveTheme, shop: session.storeFqdn}},
+      originalTheme: liveTheme,
+      previewUrl: 'https://my-shop.myshopify.com',
+    })
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+    expect(themePublish).not.toHaveBeenCalled()
+    expect(renderSuccess).toHaveBeenCalledWith({
+      body: [
+        'The theme',
+        "'my theme'",
+        {subdued: '(#1)'},
+        'is already live at',
+        {link: {label: 'https://my-shop.myshopify.com', url: 'https://my-shop.myshopify.com'}},
+        {char: '.'},
+      ],
+    })
+  })
+
   test('prompts for confirmation, publishes the theme and renders the theme link', async () => {
     // Given
     vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
@@ -119,7 +144,7 @@ test('returns the published API data without presenting a final result', async (
   vi.mocked(themePublish).mockResolvedValue(publishedTheme)
   const result = await executePublish(session, {...options, force: true})
   expect(result).toEqual({
-    data: {status: 'success', theme: {...publishedTheme, shop: session.storeFqdn}},
+    data: {status: 'success', changed: true, theme: {...publishedTheme, shop: session.storeFqdn}},
     originalTheme: theme,
     previewUrl: 'https://my-shop.myshopify.com',
   })
