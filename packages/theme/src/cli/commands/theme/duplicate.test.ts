@@ -8,12 +8,14 @@ import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {outputWarn} from '@shopify/cli-kit/node/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
-import {describe, expect, test, vi} from 'vitest'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/environments')
 vi.mock('../../utilities/theme-selector.js')
+
+afterEach(() => vi.unstubAllEnvs())
 
 const originalTheme = {id: 1, name: 'Original', role: 'unpublished', processing: false, createdAtRuntime: false}
 const copiedTheme = {...originalTheme, id: 2, name: 'Copy'}
@@ -104,6 +106,53 @@ describe('theme duplicate JSON output', () => {
       await run(['--environment', 'staging'])
       expect(JSON.parse(stdout())).toEqual({environments: [{environment: 'staging', result: publicResult}]})
     })
+  })
+
+  test.each([['staging'], ['staging', 'production']])(
+    'does not prompt for CI environments: %j',
+    async (...environments) => {
+      vi.stubEnv('CI', '1')
+      vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(session)
+      vi.mocked(loadEnvironment).mockResolvedValue({store: session.storeFqdn, password: 'token', theme: 1})
+      vi.mocked(findThemeById).mockResolvedValue(originalTheme)
+      vi.mocked(themeDuplicate).mockResolvedValue({theme: copiedTheme, userErrors: []})
+      const config = new Config({root: __dirname})
+      await config.load()
+      const argv = ['--json', ...environments.flatMap((environment) => ['-e', environment])]
+
+      await withCapturedStandardStreams(async ({stdout}) => {
+        await runWithCommandEventsForCommand(argv, () => new Duplicate(argv, config).run())
+        expect(JSON.parse(stdout())).toEqual({
+          environments: environments.map((environment) => ({environment, result: publicResult})),
+        })
+      })
+      expect(themeDuplicate).toHaveBeenCalledTimes(environments.length)
+      expect(findThemeById).toHaveBeenCalledWith(session, '1')
+    },
+  )
+
+  test('reports missing force as an environment error when input is disabled outside CI', async () => {
+    vi.stubEnv('CI', '')
+    vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', '1')
+    vi.mocked(loadEnvironment).mockResolvedValue({store: session.storeFqdn, password: 'token', theme: 1})
+    const config = new Config({root: __dirname})
+    await config.load()
+    const argv = ['--json', '-e', 'staging']
+    const previousExitCode = process.exitCode
+    try {
+      await withCapturedStandardStreams(async ({stdout}) => {
+        await runWithCommandEventsForCommand(argv, () => new Duplicate(argv, config).run())
+
+        expect(JSON.parse(stdout())).toMatchObject({
+          environments: [{environment: 'staging', error: {type: 'abort', message: expect.stringContaining('--force')}}],
+        })
+      })
+      expect(process.exitCode).toBe(1)
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(themeDuplicate).not.toHaveBeenCalled()
+    } finally {
+      process.exitCode = previousExitCode
+    }
   })
 
   test('does not write a result when the API throws', async () => {
