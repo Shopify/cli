@@ -5,14 +5,69 @@ import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import * as pathUtilities from '@shopify/cli-kit/node/path'
 // Native JSON paths must preserve Windows separators instead of pathe normalization.
 // eslint-disable-next-line no-restricted-imports
 import {resolve as nativePath} from 'node:path'
 
 vi.mock('../../services/pull.js')
+vi.mock('@shopify/cli-kit/node/session')
 const session = {storeFqdn: 'test.myshopify.com', token: 'token'}
 
 describe('theme pull JSON', () => {
+  test('uses the current directory for one named environment without a configured path', async () => {
+    const previousExitCode = process.exitCode
+    try {
+      await inTemporaryDirectory(async (directory) => {
+        await writeFile(
+          joinPath(directory, 'shopify.theme.toml'),
+          '[environments.staging]\nstore = "test.myshopify.com"\npassword = "token"\ntheme = "1"\n',
+        )
+        const cwdSpy = vi.spyOn(pathUtilities, 'cwd').mockReturnValue(directory)
+        try {
+          vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(session)
+          vi.mocked(executeThemePull).mockResolvedValue({
+            theme: {
+              id: 1,
+              name: 'Theme',
+              role: 'unpublished',
+              processing: false,
+              shop: session.storeFqdn,
+              editor_url: 'https://test.myshopify.com/admin/themes/1/editor',
+              preview_url: 'https://test.myshopify.com?preview_theme_id=1',
+            },
+            path: directory,
+          })
+          const config = new Config({root: __dirname})
+          await config.load()
+          const command = new Pull(['--json', '--force', '-e', 'staging'], config)
+
+          await withCapturedStandardStreams(async ({stdout}) => {
+            await command.run()
+
+            expect(JSON.parse(stdout())).toMatchObject({
+              environments: [{environment: 'staging', result: {directory: nativePath(directory), status: 'success'}}],
+            })
+          })
+          expect(executeThemePull).toHaveBeenCalledWith(
+            expect.objectContaining({path: directory, theme: '1'}),
+            session,
+            true,
+            expect.anything(),
+          )
+        } finally {
+          cwdSpy.mockRestore()
+        }
+      })
+    } finally {
+      // eslint-disable-next-line require-atomic-updates
+      process.exitCode = previousExitCode
+    }
+  })
+
   test('exposes the schema in help and retains JSON and inherited flags', () => {
     expect(Pull.jsonOutputSchema).toBe(themePullJsonOutputSchema)
     expect(Pull.description).toContain('ThemePullResult')
