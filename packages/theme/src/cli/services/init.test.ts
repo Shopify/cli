@@ -1,5 +1,6 @@
 import {
   cloneRepoAndCheckoutLatestTag,
+  cloneLatestStableSkeletonTheme,
   cloneRepo,
   createAIInstructions,
   createAIInstructionFiles,
@@ -9,10 +10,12 @@ import {describe, expect, vi, test} from 'vitest'
 import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/node/git'
 import {fileExists, readFile, writeFile, mkdir, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {getLatestGitHubRelease, type GithubRelease} from '@shopify/cli-kit/node/github'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/git')
+vi.mock('@shopify/cli-kit/node/github')
 
 describe.each([cloneRepo, cloneRepoAndCheckoutLatestTag])('%s', (clone) => {
   test.each([SKELETON_THEME_URL, 'https://github.com/Shopify/dawn.git'])('clones and cleans up %s', async (repoUrl) => {
@@ -102,5 +105,46 @@ test('propagates clone failures', async () => {
       )
       expect(stdout()).toBe('')
     })
+  })
+})
+
+test('returns stable Skeleton clone metadata and removes development files', async () => {
+  vi.mocked(getLatestGitHubRelease).mockResolvedValue({tag_name: 'v1.0.0'} as GithubRelease)
+  await inTemporaryDirectory(async (destination) => {
+    await Promise.all(['.github', '.cursor', '.claude', '.git'].map((name) => mkdir(joinPath(destination, name))))
+    await withCapturedStandardStreams(async () => {
+      const result = await runWithCommandEventsForCommand(['--json'], () => cloneLatestStableSkeletonTheme(destination))
+      expect(result).toEqual({
+        path: destination,
+        repoUrl: SKELETON_THEME_URL,
+        latest: true,
+        aiInstructions: null,
+        instructionFiles: [],
+      })
+    })
+    expect(downloadGitRepository).toHaveBeenCalledWith({
+      repoUrl: `${SKELETON_THEME_URL}#v1.0.0`,
+      destination,
+      latestTag: undefined,
+      shallow: true,
+    })
+    for (const name of ['.github', '.cursor', '.claude', '.git']) {
+      // eslint-disable-next-line no-await-in-loop
+      await expect(fileExists(joinPath(destination, name))).resolves.toBe(false)
+    }
+  })
+  const filter = vi.mocked(getLatestGitHubRelease).mock.calls[0]![2]!.filter
+  expect(filter({draft: false, prerelease: false} as GithubRelease)).toBe(true)
+  expect(filter({draft: false, prerelease: true} as GithubRelease)).toBe(false)
+  expect(filter({draft: true, prerelease: false} as GithubRelease)).toBe(false)
+})
+
+test('fails without cloning when no stable Skeleton release exists', async () => {
+  vi.mocked(getLatestGitHubRelease).mockResolvedValue(undefined as unknown as GithubRelease)
+  await inTemporaryDirectory(async (destination) => {
+    await expect(cloneLatestStableSkeletonTheme(destination)).rejects.toThrow(
+      "Couldn't find a stable Skeleton theme release",
+    )
+    expect(downloadGitRepository).not.toHaveBeenCalled()
   })
 })

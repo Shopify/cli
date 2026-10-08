@@ -10,6 +10,7 @@ const AbsolutePathSchema = zod.string().refine(isAbsolutePath).describe('An abso
 
 export const themeInitJsonOutputSchema = defineJsonOutputSchema({
   name: 'ThemeInitResult',
+  definitions: {AbsolutePath: AbsolutePathSchema},
   schema: zod
     .object({
       status: zod.enum(['success', 'partial']),

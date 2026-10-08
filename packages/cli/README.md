@@ -12229,8 +12229,7 @@ DESCRIPTION
         "const": true
       },
       "directory": {
-        "type": "string",
-        "description": "An absolute native filesystem path."
+        "$ref": "#/definitions/AbsolutePath"
       },
       "repoUrl": {
         "type": "string",
@@ -12261,7 +12260,7 @@ DESCRIPTION
           {
             "type": "array",
             "items": {
-              "$ref": "#/definitions/ThemeInitResult/properties/directory"
+              "$ref": "#/definitions/AbsolutePath"
             }
           },
           {
@@ -12290,6 +12289,12 @@ DESCRIPTION
     ],
     "additionalProperties": false,
     "title": "ThemeInitResult",
+    "definitions": {
+      "AbsolutePath": {
+        "type": "string",
+        "description": "An absolute native filesystem path."
+      }
+    },
     "$schema": "http://json-schema.org/draft-07/schema#"
   }
   ```
