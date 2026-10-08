@@ -46,6 +46,11 @@ const DEFAULT_WATCH_IGNORE = [
 
 export const DEFAULT_DEV_SESSION_UPDATE_MESSAGE = 'Configuration accepted'
 
+function asWebhookSubscription(configuration: object): SingleWebhookSubscriptionType | undefined {
+  if (!('topic' in configuration) || !('uri' in configuration)) return undefined
+  return configuration as unknown as SingleWebhookSubscriptionType
+}
+
 /**
  * Class that represents an instance of a local extension
  * Before creating this class we've validated that:
@@ -532,15 +537,13 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         return this.specification.identifier
       case 'uuid':
         return this.configuration.handle ?? slugify(this.name ?? '')
-      case 'dynamic':
+      case 'dynamic': {
         // Hardcoded temporal solution for webhooks
-        if ('topic' in this.configuration && 'uri' in this.configuration) {
-          const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
-          const handle = `${subscription.topic}${subscription.uri}${subscription.filter}`
-          return hashString(handle).substring(0, MAX_EXTENSION_HANDLE_LENGTH)
-        } else {
-          return nonRandomUUID(JSON.stringify(this.configuration))
-        }
+        const subscription = asWebhookSubscription(this.configuration)
+        if (!subscription) return nonRandomUUID(JSON.stringify(this.configuration))
+        const handle = `${subscription.topic}${subscription.uri}${subscription.filter}`
+        return hashString(handle).substring(0, MAX_EXTENSION_HANDLE_LENGTH)
+      }
     }
   }
 
@@ -550,7 +553,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         return this.specification.identifier
       case 'uuid':
         return this.configuration.uid ?? nonRandomUUID(this.handle)
-      case 'dynamic':
+      case 'dynamic': {
         // NOTE: This is a temporary special case for webhook subscriptions.
         // We're directly checking for webhook properties and casting the configuration
         // instead of using a proper dynamic strategy implementation.
@@ -558,12 +561,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         // 1. Implement a proper dynamic UID strategy for webhooks in the server-side specification
         // 2. Update the CLI to use that strategy instead of this hardcoded logic
         // Related issues: PR #559094 in old Core repo
-        if ('topic' in this.configuration && 'uri' in this.configuration) {
-          const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
-          return `${subscription.topic}::${subscription.filter ?? ''}::${subscription.uri}`.substring(0, MAX_UID_LENGTH)
-        } else {
-          return nonRandomUUID(JSON.stringify(this.configuration))
-        }
+        const subscription = asWebhookSubscription(this.configuration)
+        if (!subscription) return nonRandomUUID(JSON.stringify(this.configuration))
+        return `${subscription.topic}::${subscription.filter ?? ''}::${subscription.uri}`.substring(0, MAX_UID_LENGTH)
+      }
     }
   }
 }
