@@ -46,9 +46,9 @@ beforeEach(() => {
 
 afterEach(() => vi.unstubAllEnvs())
 
-async function runCommand() {
+async function runCommand(flags: string[] = ['--json']) {
   const argv = [
-    '--json',
+    ...flags,
     '--topic',
     'orders/create',
     '--api-version',
@@ -60,43 +60,40 @@ async function runCommand() {
   return runWithCommandEventsForCommand(argv, () => command.run())
 }
 
-test('writes one public JSON result with diagnostics on stderr', async () => {
+test.each([['--json'], ['--json', '--no-input']])('writes one JSON result with flags %j', async (...flags) => {
   vi.mocked(webhookTriggerService).mockImplementation(async () => {
     outputInfo('Sending webhook sample.')
     return result
   })
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
-    await runCommand()
-    expect(JSON.parse(stdout())).toEqual({
-      status: 'success',
-      delivery: {
-        topic: 'orders/create',
-        apiVersion: '2026-10',
-        deliveryMethod: 'http',
-        address: 'https://example.com/webhooks',
-        status: 'enqueued',
-      },
-    })
+    await runCommand(flags)
+    expect(JSON.parse(stdout())).toEqual({status: 'success', delivery: result.delivery})
     expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', message: 'Sending webhook sample.'})
   })
 })
 
-test('writes one fatal JSON document when the sample request fails', async () => {
-  vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-  vi.mocked(webhookTriggerService).mockResolvedValue({
-    status: 'failed',
-    reason: 'sample-request',
-    userErrors: [{message: 'Invalid topic', fields: ['topic']}],
-  })
-  await withCapturedStandardStreams(async ({stdout, stderr}) => {
-    await runCommand().catch(handler)
-    expect(JSON.parse(stdout())).toEqual({
-      error: {
-        type: 'abort',
-        message: 'Webhook sample request failed.',
-        details: {userErrors: [{message: 'Invalid topic', fieldPath: ['topic']}]},
-      },
+test.each([
+  {
+    result: {status: 'failed', reason: 'sample-request', userErrors: [{message: 'Invalid topic', fields: ['topic']}]},
+    error: {
+      type: 'abort',
+      message: 'Webhook sample request failed.',
+      details: {userErrors: [{message: 'Invalid topic', fieldPath: ['topic']}]},
+    },
+  },
+  {
+    result: {status: 'failed', reason: 'localhost-delivery'},
+    error: {type: 'abort', message: 'Localhost delivery failed'},
+  },
+] satisfies {result: WebhookTriggerResult; error: object}[])(
+  'writes one fatal JSON document for $result.reason',
+  async ({result, error}) => {
+    vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
+    vi.mocked(webhookTriggerService).mockResolvedValue(result)
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runCommand().catch(handler)
+      expect(JSON.parse(stdout())).toEqual({error})
+      expect(stderr()).toBe('')
     })
-    expect(stderr()).toBe('')
-  })
-})
+  },
+)
