@@ -32,7 +32,7 @@ beforeEach(() => {
   vi.mocked(ensureDirectoryConfirmed).mockResolvedValue(true)
 })
 
-async function run(path: string, environment?: string) {
+async function run(path: string, environment?: string, json = true) {
   const config = new Config({root: __dirname})
   await config.load()
   const previousExitCode = process.exitCode
@@ -42,7 +42,7 @@ async function run(path: string, environment?: string) {
     path,
     '--store',
     'example.myshopify.com',
-    '--json',
+    ...(json ? ['--json'] : []),
     ...(environment ? ['--environment', environment, '--force'] : []),
   ]
   try {
@@ -116,6 +116,22 @@ test('retains the native artifact and reports partial failure with a nonzero exi
       expect(result).toMatchObject({status: 'partial', changed: true, failedOwnerTypes: ['PRODUCT'], definitions: []})
       expect(JSON.parse(await readFile(result.path)).product).toEqual([])
       expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', level: 'error'})
+    })
+  })
+})
+
+test('reports a partial text download once and exits unsuccessfully', async () => {
+  vi.mocked(metafieldDefinitionsByOwnerType).mockImplementation(async (owner) => {
+    if (owner === 'PRODUCT') throw new Error('Unavailable')
+    return []
+  })
+  await inTemporaryDirectory(async (directory) => {
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await expect(run(directory, undefined, false)).resolves.toBe(1)
+      const output = `${stdout()}${stderr()}`
+      expect(output.match(/Metafield definitions were partially downloaded/g)).toHaveLength(1)
+      expect(output).not.toContain('Failed to fetch metafield definitions for:')
+      await expect(fileExists(joinPath(directory, '.shopify/metafields.json'))).resolves.toBe(true)
     })
   })
 })

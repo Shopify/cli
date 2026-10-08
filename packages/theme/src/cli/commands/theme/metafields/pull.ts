@@ -61,18 +61,16 @@ If the metafields file already exists, it will be overwritten.`
     }
     if (result.status === 'downloaded' && result.failedOwnerTypes.length > 0) {
       process.exitCode = 1
-      emitCommandEvent({
-        type: 'diagnostic',
-        level: 'error',
-        message: `Failed to fetch metafield definitions for: ${result.failedOwnerTypes.join(', ')}.`,
-      })
+      if (flags.json) {
+        emitCommandEvent({
+          type: 'diagnostic',
+          level: 'error',
+          message: `Failed to fetch metafield definitions for: ${result.failedOwnerTypes.join(', ')}.`,
+        })
+      }
     }
     if (!multiEnvironment || !flags.json) renderThemeMetafieldsPullResult(result, flags.json ? 'json' : 'text')
     return result
-  }
-
-  protected collectsEnvironmentResults(flags: Partial<MetafieldsFlags>): boolean {
-    return Boolean(flags.json)
   }
 
   protected renderEnvironmentResults(environments: ThemeEnvironmentResult[]): void {
