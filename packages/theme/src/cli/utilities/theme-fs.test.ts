@@ -8,6 +8,7 @@ import {
   partitionThemeFiles,
   readThemeFile,
 } from './theme-fs.js'
+import {fileExistsNoFollow} from './theme-file-path.js'
 import {getPatternsFromShopifyIgnore, applyIgnoreFilters} from './asset-ignore.js'
 import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
 import {
@@ -17,6 +18,7 @@ import {
   fileExists,
   readFile,
   mkdir,
+  symlink,
 } from '@shopify/cli-kit/node/fs'
 import * as fsKit from '@shopify/cli-kit/node/fs'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
@@ -26,6 +28,7 @@ import {renderError} from '@shopify/cli-kit/node/ui'
 import {Operation, type Checksum, type ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {recordError} from '@shopify/cli-kit/node/analytics'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
 import EventEmitter from 'events'
@@ -52,6 +55,15 @@ beforeEach(async () => {
 
 describe('theme-fs', () => {
   const locationOfThisFile = dirname(fileURLToPath(import.meta.url))
+
+  test('treats a child of a regular file as a missing entry', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, 'file.txt')
+      await writeFile(filePath, 'content')
+
+      await expect(fileExistsNoFollow(joinPath(filePath, 'child.txt'))).resolves.toBe(false)
+    })
+  })
 
   describe('mountThemeFileSystem', async () => {
     test('mounts the local theme file system when the directory is valid', async () => {
@@ -192,6 +204,39 @@ describe('theme-fs', () => {
   })
 
   describe('themeFileSystem.delete', () => {
+    test.each(['.', './', './.'])('rejects %s before deleting the theme directory', async (key) => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const root = joinPath(tmpDir, 'theme')
+        const sentinelPath = joinPath(root, 'sentinel.txt')
+        await mkdir(root)
+        await writeFile(sentinelPath, 'untouched')
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+
+        await expect(themeFileSystem.delete(key)).rejects.toThrow(AbortError)
+
+        await expect(readFile(sentinelPath)).resolves.toBe('untouched')
+      })
+    })
+
+    test('rejects traversal before changing the map or removing an outside file', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const root = joinPath(tmpDir, 'theme')
+        const outsidePath = joinPath(tmpDir, 'outside.txt')
+        await mkdir(root)
+        await writeFile(outsidePath, 'untouched')
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+        const asset = {key: '../outside.txt', checksum: '1010', value: 'untouched'}
+        themeFileSystem.files.set(asset.key, asset)
+
+        await expect(themeFileSystem.delete(asset.key)).rejects.toThrow(AbortError)
+
+        expect(themeFileSystem.files.get(asset.key)).toEqual(asset)
+        await expect(readFile(outsidePath)).resolves.toBe('untouched')
+      })
+    })
+
     test('"delete" removes the file from the local disk and updates the file map', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
@@ -254,6 +299,57 @@ describe('theme-fs', () => {
   })
 
   describe('themeFileSystem.write', () => {
+    test('rejects a parent traversal key before changing files or writing outside the theme', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const root = joinPath(tmpDir, 'theme')
+        await mkdir(root)
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+
+        const write = themeFileSystem.write({key: '../outside.txt', checksum: '1010', value: 'owned'})
+
+        await expect(write).rejects.toThrow(AbortError)
+        expect(themeFileSystem.files.size).toBe(0)
+        await expect(fileExists(joinPath(tmpDir, 'outside.txt'))).resolves.toBe(false)
+      })
+    })
+
+    test.each([
+      '.',
+      './',
+      '..\\outside.txt',
+      '/outside.txt',
+      '\\outside.txt',
+      'C:\\outside.txt',
+      'assets/../../outside.txt',
+      '../theme-sibling/outside.txt',
+    ])('rejects unsafe key %s before changing files', async (key) => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const root = joinPath(tmpDir, 'theme')
+        await mkdir(root)
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+
+        await expect(themeFileSystem.write({key, checksum: '1010', value: 'owned'})).rejects.toThrow(AbortError)
+
+        expect(themeFileSystem.files.size).toBe(0)
+        await expect(fileExists(joinPath(tmpDir, 'outside.txt'))).resolves.toBe(false)
+      })
+    })
+
+    test('accepts nested keys and names beginning with two periods', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const root = joinPath(tmpDir, 'theme')
+        await mkdir(root)
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+
+        await themeFileSystem.write({key: 'assets/nested/..notes.css', checksum: '1010', value: 'safe'})
+
+        await expect(readFile(joinPath(root, 'assets/nested/..notes.css'))).resolves.toBe('safe')
+      })
+    })
+
     test('"write" creates a file on the local disk and updates the file map', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
@@ -341,6 +437,131 @@ describe('theme-fs', () => {
   })
 
   describe('themeFileSystem.read', async () => {
+    test.skipIf(process.platform === 'win32').each(['read', 'write', 'delete', 'missing-descendant write'])(
+      'rejects %s through a POSIX literal-backslash outside target without effects',
+      async (operation) => {
+        await inTemporaryDirectory(async (tmpDir) => {
+          const root = joinPath(tmpDir, 'theme')
+          // Preserve the literal backslash in the POSIX filename instead of normalizing it with joinPath.
+          const outsideDir = `${joinPath(tmpDir, 'outside')}/..\\theme`
+          const outsidePath = `${outsideDir}/secret.css`
+          const missingPath = `${outsideDir}/nested/new.css`
+          await mkdir(root)
+          await mkdir(outsideDir)
+          await writeFile(outsidePath, 'secret')
+          const themeFileSystem = mountThemeFileSystem(root)
+          await themeFileSystem.ready()
+          await symlink(outsideDir, joinPath(root, 'assets'))
+          const filesBefore = new Map(themeFileSystem.files)
+
+          await expect(readFile(outsidePath)).resolves.toBe('secret')
+
+          let result: Promise<unknown>
+          if (operation === 'read') {
+            result = themeFileSystem.read('assets/secret.css')
+          } else if (operation === 'delete') {
+            result = themeFileSystem.delete('assets/secret.css')
+          } else {
+            const key = operation === 'write' ? 'assets/secret.css' : 'assets/nested/new.css'
+            result = themeFileSystem.write({key, checksum: '1010', value: 'owned'})
+          }
+
+          /* Soft assertions observe every outside effect before fixture cleanup. */
+          await expect.soft(result).rejects.toThrow(AbortError)
+          await expect.soft(readFile(outsidePath)).resolves.toBe('secret')
+          await expect.soft(readFile(missingPath)).rejects.toMatchObject({code: 'ENOENT'})
+          expect.soft(themeFileSystem.files).toEqual(filesBefore)
+        })
+      },
+    )
+
+    test('allows ordinary in-root IO and a nested write with the root as the closest existing ancestor', async () => {
+      await inTemporaryDirectory(async (root) => {
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+        const key = 'assets/nested/new.css'
+        await themeFileSystem.write({key, checksum: '1010', value: 'safe'})
+        await expect(readFile(joinPath(root, key))).resolves.toBe('safe')
+        await expect(themeFileSystem.read(key)).resolves.toBe('safe')
+        expect(themeFileSystem.files.get(key)?.value).toBe('safe')
+        await themeFileSystem.delete(key)
+        await expect(fileExists(joinPath(root, key))).resolves.toBe(false)
+        expect(themeFileSystem.files.size).toBe(0)
+      })
+    })
+
+    test('rejects a traversal key before reading outside the theme', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const root = joinPath(tmpDir, 'theme')
+        await mkdir(root)
+        await writeFile(joinPath(tmpDir, 'outside.txt'), 'secret')
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+
+        await expect(readThemeFile(root, '../outside.txt')).rejects.toThrow(AbortError)
+        await expect(themeFileSystem.read('../outside.txt')).rejects.toThrow(AbortError)
+        expect(themeFileSystem.files.size).toBe(0)
+      })
+    })
+
+    test('rejects a parent symlink outside the theme for read, write, and delete', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const root = joinPath(tmpDir, 'theme')
+        const outsideDir = joinPath(tmpDir, 'outside')
+        const outsidePath = joinPath(outsideDir, 'secret.css')
+        await mkdir(root)
+        await mkdir(outsideDir)
+        await writeFile(outsidePath, 'secret')
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+        await symlink(outsideDir, joinPath(root, 'assets'))
+
+        await expect(themeFileSystem.read('assets/secret.css')).rejects.toThrow(AbortError)
+        await expect(
+          themeFileSystem.write({key: 'assets/secret.css', checksum: '1010', value: 'owned'}),
+        ).rejects.toThrow(AbortError)
+        await expect(themeFileSystem.delete('assets/secret.css')).rejects.toThrow(AbortError)
+        expect(themeFileSystem.files.size).toBe(0)
+        await expect(readFile(outsidePath)).resolves.toBe('secret')
+      })
+    })
+
+    test('rejects an existing leaf symlink outside the theme', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const root = joinPath(tmpDir, 'theme')
+        const outsidePath = joinPath(tmpDir, 'outside.css')
+        await mkdir(joinPath(root, 'assets'))
+        await writeFile(outsidePath, 'secret')
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+        await symlink(outsidePath, joinPath(root, 'assets/linked.css'))
+
+        await expect(themeFileSystem.read('assets/linked.css')).rejects.toThrow(AbortError)
+        await expect(
+          themeFileSystem.write({key: 'assets/linked.css', checksum: '1010', value: 'owned'}),
+        ).rejects.toThrow(AbortError)
+        await expect(readFile(outsidePath)).resolves.toBe('secret')
+        expect(themeFileSystem.files.size).toBe(0)
+      })
+    })
+
+    test('rejects a dangling leaf symlink before writing', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const root = joinPath(tmpDir, 'theme')
+        const outsidePath = joinPath(tmpDir, 'missing.css')
+        await mkdir(joinPath(root, 'assets'))
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+        await symlink(outsidePath, joinPath(root, 'assets/linked.css'))
+
+        await expect(
+          themeFileSystem.write({key: 'assets/linked.css', checksum: '1010', value: 'owned'}),
+        ).rejects.toThrow(AbortError)
+        await expect(fileExists(outsidePath)).resolves.toBe(false)
+        expect(themeFileSystem.files.size).toBe(0)
+      })
+    })
+
     test('"read" returns the content from the local disk and updates the file map', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
@@ -369,6 +590,104 @@ describe('theme-fs', () => {
         expect(updatedFile?.attachment).toBe('')
         expect(updatedFile?.stats?.size).toBe(content?.length)
         expect(typeof updatedFile?.stats?.mtime).toBe('number')
+      })
+    })
+  })
+
+  describe('themeFileSystem discovery selection', () => {
+    test.each([
+      {name: 'CLI ignore', filters: {ignore: ['assets/linked.css']}, ignoreFile: ''},
+      {name: 'CLI only', filters: {only: ['assets/safe.css']}, ignoreFile: ''},
+      {name: 'real .shopifyignore', filters: {}, ignoreFile: 'assets/linked.css\n'},
+    ])('loads only the safe asset when $name excludes an outside symlink', async ({filters, ignoreFile}) => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const realModule = await vi.importActual<typeof import('./asset-ignore.js')>('./asset-ignore.js')
+        vi.mocked(getPatternsFromShopifyIgnore).mockImplementation(realModule.getPatternsFromShopifyIgnore)
+        const root = joinPath(tmpDir, 'theme')
+        const outsidePath = joinPath(tmpDir, 'outside.css')
+        await mkdir(joinPath(root, 'assets'))
+        await writeFile(joinPath(root, 'assets/safe.css'), 'safe')
+        await writeFile(outsidePath, 'secret')
+        await symlink(outsidePath, joinPath(root, 'assets/linked.css'))
+        if (ignoreFile) await writeFile(joinPath(root, '.shopifyignore'), ignoreFile)
+
+        const themeFileSystem = mountThemeFileSystem(root, {filters})
+        await expect(themeFileSystem.ready()).resolves.toBeUndefined()
+        expect([...themeFileSystem.files.keys()]).toEqual(['assets/safe.css'])
+        expect(themeFileSystem.files.get('assets/safe.css')?.value).toBe('safe')
+        const filesBefore = new Map(themeFileSystem.files)
+
+        await expect(themeFileSystem.read('assets/linked.css')).rejects.toThrow(AbortError)
+        await expect(
+          themeFileSystem.write({key: 'assets/linked.css', checksum: '1010', value: 'owned'}),
+        ).rejects.toThrow(AbortError)
+        await expect(themeFileSystem.delete('assets/linked.css')).rejects.toThrow(AbortError)
+        await expect(readFile(outsidePath)).resolves.toBe('secret')
+        expect(themeFileSystem.files).toEqual(filesBefore)
+      })
+    })
+
+    test('loads a healthy safe-only theme', async () => {
+      await inTemporaryDirectory(async (root) => {
+        await mkdir(joinPath(root, 'assets'))
+        await writeFile(joinPath(root, 'assets/safe.css'), 'safe')
+        const themeFileSystem = mountThemeFileSystem(root)
+        await themeFileSystem.ready()
+        expect([...themeFileSystem.files.keys()]).toEqual(['assets/safe.css'])
+        expect(themeFileSystem.files.get('assets/safe.css')?.value).toBe('safe')
+      })
+    })
+
+    test.each([
+      {name: 'unfiltered', filters: {}},
+      {name: 'only-selected', filters: {only: ['assets/linked.css']}},
+    ])('rejects readiness for an $name outside symlink', async ({filters}) => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const root = joinPath(tmpDir, 'theme')
+        const outsidePath = joinPath(tmpDir, 'outside.css')
+        await mkdir(joinPath(root, 'assets'))
+        await writeFile(joinPath(root, 'assets/safe.css'), 'safe')
+        await writeFile(outsidePath, 'secret')
+        await symlink(outsidePath, joinPath(root, 'assets/linked.css'))
+        const themeFileSystem = mountThemeFileSystem(root, {filters})
+
+        await expect(themeFileSystem.ready()).rejects.toThrow(AbortError)
+        await expect(readFile(outsidePath)).resolves.toBe('secret')
+        expect(themeFileSystem.files.has('assets/linked.css')).toBe(false)
+      })
+    })
+
+    test.each([
+      {source: 'CLI ignore', reincluded: 'safe'},
+      {source: 'CLI ignore', reincluded: 'linked'},
+      {source: 'real .shopifyignore', reincluded: 'safe'},
+      {source: 'real .shopifyignore', reincluded: 'linked'},
+    ])('honors $source negation reincluding $reincluded before reading', async ({source, reincluded}) => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const realModule = await vi.importActual<typeof import('./asset-ignore.js')>('./asset-ignore.js')
+        vi.mocked(getPatternsFromShopifyIgnore).mockImplementation(realModule.getPatternsFromShopifyIgnore)
+        const root = joinPath(tmpDir, 'theme')
+        const outsidePath = joinPath(tmpDir, 'outside.css')
+        await mkdir(joinPath(root, 'assets'))
+        await writeFile(joinPath(root, 'assets/safe.css'), 'safe')
+        await writeFile(outsidePath, 'secret')
+        await symlink(outsidePath, joinPath(root, 'assets/linked.css'))
+        const patterns = ['assets/*.css', `!assets/${reincluded}.css`]
+        if (source === 'real .shopifyignore') {
+          await writeFile(joinPath(root, '.shopifyignore'), `${patterns.join('\n')}\n`)
+        }
+        const filters = source === 'CLI ignore' ? {ignore: patterns} : {}
+        const themeFileSystem = mountThemeFileSystem(root, {filters})
+
+        if (reincluded === 'safe') {
+          await expect(themeFileSystem.ready()).resolves.toBeUndefined()
+          expect([...themeFileSystem.files.keys()]).toEqual(['assets/safe.css'])
+          expect(themeFileSystem.files.get('assets/safe.css')?.value).toBe('safe')
+        } else {
+          await expect(themeFileSystem.ready()).rejects.toThrow(AbortError)
+          expect(themeFileSystem.files.has('assets/linked.css')).toBe(false)
+        }
+        await expect(readFile(outsidePath)).resolves.toBe('secret')
       })
     })
   })
@@ -673,6 +992,53 @@ describe('theme-fs', () => {
       const mockWatcher = new EventEmitter()
       vi.spyOn(chokidar, 'watch').mockImplementation((_) => {
         return mockWatcher as any
+      })
+    })
+
+    test('rejects an unsafe listing name before constructing watcher paths', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        expect(() => mountThemeFileSystem(tmpDir, {listing: '../outside'})).toThrow(AbortError)
+      })
+    })
+
+    test('rejects listing override reads and writes through a parent symlink', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const root = joinPath(tmpDir, 'theme')
+        const outsideDir = joinPath(tmpDir, 'outside')
+        const outsidePath = joinPath(outsideDir, 'templates/index.json')
+        await mkdir(root)
+        await mkdir(dirname(outsidePath))
+        await writeFile(outsidePath, '{"secret":true}')
+        const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+        await themeFileSystem.ready()
+        await mkdir(joinPath(root, 'listings'))
+        await symlink(outsideDir, joinPath(root, 'listings/modern'))
+
+        await expect(themeFileSystem.read('templates/index.json')).rejects.toThrow(AbortError)
+        await expect(
+          themeFileSystem.write({key: 'templates/index.json', checksum: '1010', value: 'owned'}),
+        ).rejects.toThrow(AbortError)
+        expect(themeFileSystem.files.size).toBe(0)
+        await expect(readFile(outsidePath)).resolves.toBe('{"secret":true}')
+      })
+    })
+
+    test('rejects listing override writes through a dangling leaf symlink', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const root = joinPath(tmpDir, 'theme')
+        const outsidePath = joinPath(tmpDir, 'missing.json')
+        await mkdir(root)
+        const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+        await themeFileSystem.ready()
+        const listingPath = joinPath(root, 'listings/modern/templates/index.json')
+        await mkdir(dirname(listingPath))
+        await symlink(outsidePath, listingPath)
+
+        await expect(
+          themeFileSystem.write({key: 'templates/index.json', checksum: '1010', value: 'owned'}),
+        ).rejects.toThrow(AbortError)
+        expect(themeFileSystem.files.size).toBe(0)
+        await expect(fileExists(outsidePath)).resolves.toBe(false)
       })
     })
 
