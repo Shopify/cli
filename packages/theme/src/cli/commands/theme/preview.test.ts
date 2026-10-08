@@ -226,9 +226,7 @@ test('returns one explicit environment result', async () => {
   vi.mocked(findOrSelectTheme).mockResolvedValue(namedTheme)
   vi.mocked(devWithOverrideFile).mockResolvedValue(result)
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
-    await runWithCommandEventsForCommand(['--json'], () =>
-      run(['--environment=staging', '--overrides=/path/to/overrides.json', '--theme=2', '--json']),
-    )
+    await runWithCommandEventsForCommand(['--json'], () => run(['--environment=staging', '--json']))
     expect(JSON.parse(stdout())).toEqual({
       environments: [
         {
@@ -243,3 +241,13 @@ test('returns one explicit environment result', async () => {
     expect(stderr()).toBe('')
   })
 })
+
+test.each([['--theme=2'], ['--overrides=/path/to/overrides.json']])(
+  'rejects missing required preview options: %j',
+  async (flag) => {
+    await expect(run([flag, '--json'])).rejects.toThrow(
+      'Specify both --theme and --overrides, either as flags or in an environment.',
+    )
+    expect(devWithOverrideFile).not.toHaveBeenCalled()
+  },
+)

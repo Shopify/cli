@@ -10,6 +10,7 @@ import {openURL} from '@shopify/cli-kit/node/system'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {InferredFlags} from '@oclif/core/interfaces'
 import {outputResult} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import type {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 
 type PreviewFlags = InferredFlags<typeof Preview.flags>
@@ -35,12 +36,10 @@ export default class Preview extends ThemeCommand {
       char: 't',
       description: 'Theme ID or name of the remote theme.',
       env: 'SHOPIFY_FLAG_THEME_ID',
-      required: true,
     }),
     overrides: Flags.string({
       description: 'Path to a JSON overrides file.',
       env: 'SHOPIFY_FLAG_OVERRIDES',
-      required: true,
     }),
     'preview-id': Flags.string({
       description: 'An existing preview identifier to update instead of creating a new preview.',
@@ -62,6 +61,9 @@ export default class Preview extends ThemeCommand {
   static multiEnvironmentsFlags: RequiredFlags = null
 
   async command(flags: PreviewFlags, adminSession: AdminSession, multiEnvironment = false) {
+    if (!flags.theme || !flags.overrides) {
+      throw new AbortError('Specify both --theme and --overrides, either as flags or in an environment.')
+    }
     const theme = await findOrSelectTheme(adminSession, {filter: {theme: flags.theme}})
     const result = await devWithOverrideFile({
       adminSession,
