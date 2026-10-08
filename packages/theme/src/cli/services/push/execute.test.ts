@@ -4,7 +4,7 @@ import {uploadTheme} from '../../utilities/theme-uploader.js'
 import {Operation} from '@shopify/cli-kit/node/themes/types'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
-import {fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
+import {fetchChecksums, themeCreate, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
@@ -23,6 +23,45 @@ vi.mock('@shopify/cli-kit/node/ui', async (importOriginal) => ({
 const session = {storeFqdn: 'test.myshopify.com', token: 'token'}
 
 describe('push execution', () => {
+  test.each([false, true])(
+    'reports creation as a change even without successful uploads (errors: %s)',
+    async (hasErrors) => {
+      await inTemporaryDirectory(async (path) => {
+        vi.mocked(themeCreate).mockResolvedValue(buildTheme({id: 1, name: 'New theme', role: 'unpublished'}))
+        vi.mocked(fetchChecksums).mockResolvedValue([])
+        vi.mocked(uploadTheme).mockImplementation((_theme, _session, _checksums, fileSystem) => ({
+          workPromise: Promise.resolve(),
+          uploadResults: new Map(
+            hasErrors
+              ? [
+                  [
+                    'assets/theme.css',
+                    {
+                      key: 'assets/theme.css',
+                      operation: Operation.Upload,
+                      success: false,
+                      errors: {asset: ['bad CSS']},
+                    },
+                  ],
+                ]
+              : [],
+          ),
+          renderThemeSyncProgress: async () => {
+            await fileSystem.ready()
+          },
+        }))
+
+        await expect(
+          executeThemePush({path, unpublished: true, theme: 'New theme', force: true}, session),
+        ).resolves.toMatchObject({
+          changed: true,
+          hasErrors,
+          theme: {id: 1, name: 'New theme'},
+        })
+      })
+    },
+  )
+
   test('returns transfer facts without rendering a final result', async () => {
     await inTemporaryDirectory(async (path) => {
       vi.mocked(findOrSelectTheme).mockResolvedValue(buildTheme({id: 1, name: 'Theme', role: 'unpublished'})!)

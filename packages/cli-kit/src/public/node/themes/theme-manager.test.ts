@@ -90,7 +90,7 @@ describe('ThemeManager', () => {
         },
         session,
       )
-      expect(result).toEqual(mockTheme)
+      expect(result).toEqual({...mockTheme, createdAtRuntime: true})
       expect(manager.getStoredThemeId()).toBe('123')
     })
 
@@ -190,7 +190,7 @@ describe('ThemeManager', () => {
         },
         session,
       )
-      expect(result).toEqual(mockTheme)
+      expect(result).toEqual({...mockTheme, createdAtRuntime: true})
       expect(manager.getStoredThemeId()).toBe('123')
     })
 
@@ -210,7 +210,7 @@ describe('ThemeManager', () => {
         },
         session,
       )
-      expect(result).toEqual(customTheme)
+      expect(result).toEqual({...customTheme, createdAtRuntime: true})
       expect(manager.getStoredThemeId()).toBe('123')
     })
 

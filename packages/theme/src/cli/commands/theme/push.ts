@@ -173,10 +173,6 @@ export default class Push extends ThemeCommand {
     return result ?? (flags.json && multiEnvironment ? {status: 'skipped', reason: 'unsafe-directory'} : undefined)
   }
 
-  protected collectsEnvironmentResults(flags: {json?: boolean}): boolean {
-    return Boolean(flags.json)
-  }
-
   protected renderEnvironmentResults(results: ThemeEnvironmentResult[]): void {
     renderThemePushEnvironmentResults(results)
   }

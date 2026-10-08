@@ -248,13 +248,14 @@ export async function createOrSelectTheme(
     return themeManager.findOrCreate(developmentContext, DEVELOPMENT_THEME_ROLE)
   } else if (unpublished) {
     const themeName = theme ?? (await promptThemeName('Name of the new theme'))
-    return themeCreate(
+    const createdTheme = await themeCreate(
       {
         name: themeName,
         role: UNPUBLISHED_THEME_ROLE,
       },
       session,
     )
+    return createdTheme ? {...createdTheme, createdAtRuntime: true} : undefined
   } else {
     const selectedTheme = await findOrSelectTheme(session, {
       create: true,

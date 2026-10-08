@@ -264,7 +264,7 @@ describe('createOrSelectTheme', async () => {
     const theme = await createOrSelectTheme(adminSession, flags)
 
     // Then
-    expect(theme).toMatchObject({role: UNPUBLISHED_THEME_ROLE})
+    expect(theme).toMatchObject({role: UNPUBLISHED_THEME_ROLE, createdAtRuntime: true})
     expect(setDevelopmentTheme).not.toHaveBeenCalled()
   })
 
@@ -278,7 +278,7 @@ describe('createOrSelectTheme', async () => {
     const theme = await createOrSelectTheme(adminSession, flags)
 
     // Then
-    expect(theme).toMatchObject({role: DEVELOPMENT_THEME_ROLE})
+    expect(theme).toMatchObject({role: DEVELOPMENT_THEME_ROLE, createdAtRuntime: true})
     expect(setDevelopmentTheme).toHaveBeenCalled()
   })
 
@@ -292,7 +292,7 @@ describe('createOrSelectTheme', async () => {
     const theme = await createOrSelectTheme(adminSession, flags)
 
     // Then
-    expect(theme).toMatchObject({role: DEVELOPMENT_THEME_ROLE, name: 'Custom name'})
+    expect(theme).toMatchObject({role: DEVELOPMENT_THEME_ROLE, name: 'Custom name', createdAtRuntime: true})
     expect(setDevelopmentTheme).toHaveBeenCalled()
   })
 
