@@ -29,7 +29,6 @@ const commandExceptions = [
   'packages/app/src/cli/commands/app/subscription-migrations/status.ts',
   'packages/app/src/cli/commands/app/subscription-migrations/unschedule.ts',
   'packages/app/src/cli/commands/app/webhook/trigger.ts',
-  'packages/cli/src/cli/commands/doc/search.ts',
   'packages/cli/src/cli/commands/upgrade.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/off.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/on.ts',

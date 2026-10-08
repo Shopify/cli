@@ -5145,10 +5145,14 @@ Query the shopify.dev vector store and print the most relevant documentation chu
 
 ```
 USAGE
-  $ shopify doc search --query <value> [--api-name <value>] [--api-version <value>] [--json-schema] [--no-color]
-    [--no-input] [--verbose]
+  $ shopify doc search --query <value> [--api-name <value>] [--api-version <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --api-name=<value>
       Limit results to a specific API (for example: admin, storefront, hydrogen, functions). Unrecognized values are
       ignored.
@@ -5183,11 +5187,99 @@ DESCRIPTION
   discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To
   download a full document verbatim, use `doc fetch`.
 
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `DocSearchResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "results": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/DocumentationSearchEntry"
+        },
+        "description": "The top matching chunks from one search request."
+      },
+      "pageInfo": {
+        "$ref": "#/definitions/PageInfo"
+      }
+    },
+    "required": [
+      "results",
+      "pageInfo"
+    ],
+    "additionalProperties": false,
+    "title": "DocSearchResult",
+    "definitions": {
+      "DocumentationSearchEntry": {
+        "type": "object",
+        "properties": {
+          "score": {
+            "type": "number",
+            "description": "The relevance score returned by shopify.dev."
+          },
+          "content": {
+            "type": "string",
+            "description": "The matching documentation chunk."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The URL of the matching document."
+          },
+          "title": {
+            "type": "string",
+            "description": "The title of the matching document."
+          },
+          "domain": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The documentation domain, or null when unavailable."
+          }
+        },
+        "required": [
+          "score",
+          "content",
+          "url",
+          "title",
+          "domain"
+        ],
+        "additionalProperties": false
+      },
+      "PageInfo": {
+        "type": "object",
+        "properties": {
+          "hasNextPage": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether more results are available, or null when unknown."
+          }
+        },
+        "required": [
+          "hasNextPage"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   # search shopify.dev for a topic
       shopify doc search --query "subscribe to webhooks"
       # narrow the search to a specific API and version
       shopify doc search --query "create a product" --api-name admin --api-version latest
+
+  # return typed documentation results as a JSON object
+
+    $ shopify doc search --query "subscribe to webhooks" --json
 ```
 
 ## `shopify help [command] [flags]`
