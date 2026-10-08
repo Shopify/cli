@@ -138,6 +138,36 @@ describe('React Router detection', () => {
     })
   })
 
+  test('checks every React Router root attributed to this app, not just one', async () => {
+    await inTemporaryDirectory(async (temporaryDirectory) => {
+      const repository = await fileRealPath(temporaryDirectory)
+      const unsafeRoute = 'export function preview(element, payload) {\n  element.innerHTML = payload\n}\n'
+      await writeFiles(repository, {
+        'package.json': JSON.stringify({private: true, workspaces: ['apps/*', 'packages/*']}),
+        'apps/product-reviews/shopify.app.toml': appConfiguration,
+        ...reactRouterServer('packages/server'),
+        'packages/server/app/routes/app.preview.tsx': unsafeRoute,
+        ...reactRouterServer('packages/server-next'),
+        'packages/server-next/app/routes/app.preview.tsx': unsafeRoute,
+      })
+
+      const result = await scanWithIncludeDirectories(joinPath(repository, 'apps/product-reviews'), [repository])
+
+      expect(result.detection).toMatchObject({framework: 'react_router', surface: 'react_router'})
+      expect(frameworkGatedChecks(result)).toEqual([])
+      expect(eolSourceFindings(result)).toEqual([
+        '../../packages/server-next/app/shopify.server.ts',
+        '../../packages/server/app/shopify.server.ts',
+      ])
+      expect(
+        result.issues.filter((issue) => issue.id === 'UNSAFE_INNERHTML').map((issue) => issue.location.file),
+      ).toEqual([
+        '../../packages/server-next/app/routes/app.preview.tsx',
+        '../../packages/server/app/routes/app.preview.tsx',
+      ])
+    })
+  })
+
   test('detects a React Router server in a subdirectory of the app directory', async () => {
     await inTemporaryDirectory(async (temporaryDirectory) => {
       const app = await fileRealPath(temporaryDirectory)
