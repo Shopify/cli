@@ -14820,8 +14820,8 @@ Applies JSON overrides to a theme and returns a preview URL.
 
 ```
 USAGE
-  $ shopify theme preview --overrides <value> -t <value> [--auth-alias <value>] [-e <value>...] [-j]
-    [--json-schema] [--no-color] [--no-input] [--open] [--password <value>] [--path <value>] [--preview-id <value>] [-s
+  $ shopify theme preview [--auth-alias <value>] [-e <value>...] [-j] [--json-schema] [--no-color] [--no-input]
+    [--open] [--overrides <value>] [--password <value>] [--path <value>] [--preview-id <value>] [-s <value>] [-t
     <value>] [--verbose]
 
 FLAGS
@@ -14839,7 +14839,7 @@ FLAGS
       [env: SHOPIFY_FLAG_STORE]
 
   -t, --theme=<value>
-      (required) Theme ID or name of the remote theme.
+      Theme ID or name of the remote theme.
       [env: SHOPIFY_FLAG_THEME_ID]
 
   --auth-alias=<value>
@@ -14863,7 +14863,7 @@ FLAGS
       [env: SHOPIFY_FLAG_OPEN]
 
   --overrides=<value>
-      (required) Path to a JSON overrides file.
+      Path to a JSON overrides file.
       [env: SHOPIFY_FLAG_OVERRIDES]
 
   --password=<value>
@@ -15004,6 +15004,11 @@ DESCRIPTION
                       "message": {
                         "type": "string"
                       },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
                       "tryMessage": {
                         "type": "string"
                       },
@@ -15044,7 +15049,9 @@ DESCRIPTION
                           "additionalProperties": false
                         }
                       },
-                      "details": {}
+                      "details": {
+                        "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                      }
                     },
                     "required": [
                       "type",
@@ -15061,6 +15068,9 @@ DESCRIPTION
                       },
                       "message": {
                         "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
                       },
                       "tryMessage": {
                         "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
@@ -15093,6 +15103,9 @@ DESCRIPTION
                       },
                       "message": {
                         "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
                       },
                       "tryMessage": {
                         "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
