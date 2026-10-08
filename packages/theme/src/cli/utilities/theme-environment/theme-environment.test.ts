@@ -19,7 +19,7 @@ import {createEvent} from 'h3'
 import * as output from '@shopify/cli-kit/node/output'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 
-import {IncomingMessage, ServerResponse} from 'node:http'
+import {IncomingMessage, ServerResponse, request} from 'node:http'
 import {Socket} from 'node:net'
 
 vi.mock('@shopify/cli-kit/node/themes/api', () => ({fetchChecksums: vi.fn(() => Promise.resolve([]))}))
@@ -185,6 +185,42 @@ describe('setupDevServer', () => {
       deferPartialWork: true,
       backgroundWorkCatch: expect.any(Function),
     })
+  })
+
+  test('accepts local requests with large cookie headers', async () => {
+    const context: DevServerContext = {
+      ...defaultServerContext,
+      options: {...defaultServerContext.options, port: 0},
+    }
+    const server = setupDevServer(developmentTheme, context)
+    await server.workPromise
+    const listeningServer = await server.serverStart()
+
+    try {
+      const status = await new Promise<number>((resolve, reject) => {
+        const requestToServer = request(
+          {
+            host: '127.0.0.1',
+            port: listeningServer.port,
+            path: '/.well-known/shopify/monorail',
+            headers: {
+              host: '127.0.0.1:0',
+              cookie: `session=${'x'.repeat(48 * 1024)}`,
+            },
+          },
+          (response) => {
+            response.resume()
+            response.on('end', () => resolve(response.statusCode ?? 0))
+          },
+        )
+        requestToServer.on('error', reject)
+        requestToServer.end()
+      })
+
+      expect(status).toBe(204)
+    } finally {
+      await listeningServer.close()
+    }
   })
 
   test('should initialize theme editor sync if themeEditorSync flag is passed', async () => {
@@ -1068,6 +1104,15 @@ describe('setupDevServer', () => {
       expect(res.getHeader('content-type')).toEqual('text/html; charset=utf-8')
       expect(body).toMatch(/<title>Failed to render storefront with status 502/i)
       expect(body).toMatch(hotReloadScriptId)
+    })
+
+    test('renders fetch error codes on the storefront error page', async () => {
+      const error = Object.assign(new Error('Headers Overflow Error'), {code: 'UND_ERR_HEADERS_OVERFLOW'})
+      vi.mocked(render).mockRejectedValueOnce(error)
+
+      const {body} = await dispatchEvent(server, '/', {host: defaultHost})
+
+      expect(body).toContain('UND_ERR_HEADERS_OVERFLOW: Headers Overflow Error')
     })
 
     test('renders error page with the standard events inspector when enabled', async () => {

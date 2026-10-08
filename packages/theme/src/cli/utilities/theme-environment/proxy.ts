@@ -1,4 +1,5 @@
 import {cleanHeader, defaultHeaders} from './storefront-utils.js'
+import {storefrontFetch} from './storefront-fetch.js'
 import {buildCookies} from './storefront-renderer.js'
 import {injectStandardEventsInspector, rewriteStandardEventsRuntimeReferences} from './standard-events.js'
 import {logRequestLine} from '../log-request-line.js'
@@ -367,8 +368,7 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
     })
   }
 
-  // eslint-disable-next-line no-restricted-globals
-  return fetch(url, {
+  return storefrontFetch(url, {
     method: event.method,
     body,
     duplex: body ? 'half' : undefined,
