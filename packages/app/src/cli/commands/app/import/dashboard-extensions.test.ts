@@ -76,26 +76,37 @@ async function runCommand(directory: string) {
   return runWithCommandEventsForCommand(args, () => command.run())
 }
 
-test('writes JSON after saving identifiers and sends diagnostics to stderr', async () => {
-  await withApp(async (app) => {
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await runCommand(app.directory)
-      const result = JSON.parse(stdout())
-      expect(result).toEqual({
-        status: 'success',
-        reason: null,
-        extensions: [publicExtension(app.directory)],
-        errors: [],
-        identifiersUpdated: true,
+test.each(['write', 'skip'])(
+  'writes %s JSON after saving identifiers and sends diagnostics to stderr',
+  async (action) => {
+    await withApp(async (app) => {
+      const record = publicExtension(app.directory)
+      const localToml = 'name = "Local action"\n# Preserve this comment.\n'
+      if (action === 'skip') {
+        await mkdir(record.directory)
+        await writeFile(record.configurationPath, localToml)
+        vi.mocked(ui.renderSelectPrompt).mockResolvedValueOnce(extension.uuid).mockResolvedValueOnce('skip')
+      }
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await runCommand(app.directory)
+        const result = JSON.parse(stdout())
+        expect(result).toEqual({
+          status: 'success',
+          reason: null,
+          extensions: [{...record, changed: action === 'write'}],
+          errors: [],
+          identifiersUpdated: true,
+        })
+        expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', message: 'Loaded dashboard extensions'})
+        expect(() => importDashboardExtensionsJsonOutputSchema.encode({...result, internal: true})).toThrow()
       })
-      expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', message: 'Loaded dashboard extensions'})
-      expect(() => importDashboardExtensionsJsonOutputSchema.encode({...result, internal: true})).toThrow()
+      if (action === 'skip') await expect(readFile(record.configurationPath)).resolves.toBe(localToml)
+      await expect(readFile(joinPath(app.directory, '.env'))).resolves.toContain(
+        `SHOPIFY_EXAMPLE_ACTION_ID=${extension.uuid}`,
+      )
     })
-    await expect(readFile(joinPath(app.directory, '.env'))).resolves.toContain(
-      `SHOPIFY_EXAMPLE_ACTION_ID=${extension.uuid}`,
-    )
-  })
-})
+  },
+)
 
 test('writes a skipped JSON result when there are no extensions', async () => {
   await withApp(async (app) => {
@@ -136,80 +147,84 @@ test('reports completed imports as partial when saving identifiers fails', async
   })
 })
 
-test.each(['cancelled', 'partial'])(
-  'waits for a pending import before writing %s JSON and exits once without postrun',
-  async (status) => {
-    const sibling = {...extension, uuid: '594a39be-1c11-4a47-a17c-4a7d043dbbb7', title: 'Other action'}
-    await withApp(
-      async (app) => {
-        await mkdir(publicExtension(app.directory).directory)
-        const siblingDirectory = joinPath(app.directory, 'extensions', 'other-action')
-        await mkdir(siblingDirectory)
-        if (status === 'partial') await mkdir(joinPath(siblingDirectory, 'shopify.extension.toml'))
-        let releaseWrite!: (action: string) => void
-        const pendingWrite = new Promise<string>((resolve) => {
-          releaseWrite = resolve
-        })
-        let reportFailure!: () => void
-        const failureReady = new Promise<void>((resolve) => {
-          reportFailure = resolve
-        })
-        const originalImport = extensionImportService.importExtensions
-        const importSpy = vi.spyOn(extensionImportService, 'importExtensions').mockImplementation(async (options) => {
-          try {
-            return await originalImport(options)
-          } catch (error) {
-            reportFailure()
-            throw error
-          }
-        })
-        vi.mocked(ui.renderSelectPrompt).mockImplementation(async ({message}) => {
-          if (message === 'Extensions to migrate') return 'All'
-          if (typeof message === 'string' && message.includes('example-action')) return pendingWrite
-          return status === 'cancelled' ? 'cancel' : 'write'
-        })
-        class LifecycleImportCommand extends ImportDashboardExtensions {
-          async catch(error: Error): Promise<never> {
-            await errorHandlers.errorHandler(error)
-            await Errors.handle(error)
-            throw error
-          }
-
-          protected async init() {
-            return undefined
-          }
-        }
-        const config = await Config.load()
-        const metadata = config.findCommand('app:import:dashboard-extensions')!
-        vi.spyOn(config, 'findCommand').mockReturnValue({...metadata, load: async () => LifecycleImportCommand})
-        const hooks = vi.spyOn(config, 'runHook').mockResolvedValue({successes: [], failures: []})
-        const exit = vi.spyOn(process, 'exit').mockReturnValue(undefined as never)
+test.each([
+  {name: 'cancellation', status: 'cancelled', cancel: true, fail: false},
+  {name: 'failure', status: 'partial', cancel: false, fail: true},
+  {name: 'cancellation followed by failure', status: 'partial', cancel: true, fail: true},
+])('$name waits for pending imports before writing one $status JSON result', async (row) => {
+  const cancelledExtension = {...extension, uuid: '594a39be-1c11-4a47-a17c-4a7d043dbbb7', title: 'Cancelled action'}
+  const failedExtension = {...extension, uuid: 'd8fb83d0-011b-47a4-b61e-4d304d352ca9', title: 'Failed action'}
+  await withApp(
+    async (app) => {
+      await mkdir(publicExtension(app.directory).directory)
+      if (row.cancel) await mkdir(joinPath(app.directory, 'extensions', 'cancelled-action'))
+      if (row.fail) await mkdir(joinPath(app.directory, 'extensions', 'failed-action', 'shopify.extension.toml'))
+      let releaseWrite!: (action: string) => void
+      const pendingWrite = new Promise<string>((resolve) => {
+        releaseWrite = resolve
+      })
+      let reportFailure!: () => void
+      const failureReady = new Promise<void>((resolve) => {
+        reportFailure = resolve
+      })
+      const originalImport = extensionImportService.importExtensions
+      const importSpy = vi.spyOn(extensionImportService, 'importExtensions').mockImplementation(async (options) => {
         try {
-          await withCapturedStandardStreams(async ({stdout}) => {
-            const outcome = config.runCommand('app:import:dashboard-extensions', ['--path', app.directory, '--json'])
-            const rejection = expect(outcome).rejects.toBeInstanceOf(AbortSilentError)
-            await failureReady
-            await new Promise<void>((resolve) => setImmediate(resolve))
-            expect(stdout()).toBe('')
-            releaseWrite('write')
-            await rejection
-            expect(JSON.parse(stdout())).toMatchObject({
-              status,
-              extensions: [publicExtension(app.directory)],
-              identifiersUpdated: false,
-              errors: status === 'cancelled' ? [] : [expect.objectContaining({extensionId: sibling.uuid})],
-            })
-          })
-          expect(exit).toHaveBeenCalledExactlyOnceWith(1)
-          expect(hooks.mock.calls.map(([event]) => event)).not.toContain('postrun')
-          expect(reportAnalyticsEvent).toHaveBeenCalledTimes(status === 'partial' ? 1 : 0)
-          expect(errorHandlers.sendErrorToBugsnag).toHaveBeenCalledTimes(status === 'partial' ? 1 : 0)
-        } finally {
-          exit.mockRestore()
-          importSpy.mockRestore()
+          return await originalImport(options)
+        } catch (error) {
+          reportFailure()
+          throw error
         }
-      },
-      [extension, sibling],
-    )
-  },
-)
+      })
+      vi.mocked(ui.renderSelectPrompt).mockImplementation(async ({message}) => {
+        if (message === 'Extensions to migrate') return 'All'
+        if (typeof message === 'string' && message.includes('example-action')) return pendingWrite
+        if (typeof message === 'string' && message.includes('cancelled-action')) return 'cancel'
+        if (row.cancel) await failureReady
+        return 'write'
+      })
+      class LifecycleImportCommand extends ImportDashboardExtensions {
+        async catch(error: Error): Promise<never> {
+          await errorHandlers.errorHandler(error)
+          await Errors.handle(error)
+          throw error
+        }
+
+        protected async init() {
+          return undefined
+        }
+      }
+      const config = await Config.load()
+      const metadata = config.findCommand('app:import:dashboard-extensions')!
+      vi.spyOn(config, 'findCommand').mockReturnValue({...metadata, load: async () => LifecycleImportCommand})
+      const hooks = vi.spyOn(config, 'runHook').mockResolvedValue({successes: [], failures: []})
+      const exit = vi.spyOn(process, 'exit').mockReturnValue(undefined as never)
+      try {
+        await withCapturedStandardStreams(async ({stdout}) => {
+          const outcome = config.runCommand('app:import:dashboard-extensions', ['--path', app.directory, '--json'])
+          const rejection = expect(outcome).rejects.toBeInstanceOf(AbortSilentError)
+          await failureReady
+          await new Promise<void>((resolve) => setImmediate(resolve))
+          expect(stdout()).toBe('')
+          releaseWrite('write')
+          await rejection
+          expect(JSON.parse(stdout())).toMatchObject({
+            status: row.status,
+            reason: row.status === 'cancelled' ? 'directory-selection-cancelled' : null,
+            extensions: [publicExtension(app.directory)],
+            identifiersUpdated: false,
+            errors: row.fail ? [expect.objectContaining({extensionId: failedExtension.uuid})] : [],
+          })
+        })
+        expect(exit).toHaveBeenCalledExactlyOnceWith(1)
+        expect(hooks.mock.calls.map(([event]) => event)).not.toContain('postrun')
+        expect(reportAnalyticsEvent).toHaveBeenCalledTimes(row.fail ? 1 : 0)
+        expect(errorHandlers.sendErrorToBugsnag).toHaveBeenCalledTimes(row.fail ? 1 : 0)
+      } finally {
+        exit.mockRestore()
+        importSpy.mockRestore()
+      }
+    },
+    [extension, ...(row.cancel ? [cancelledExtension] : []), ...(row.fail ? [failedExtension] : [])],
+  )
+})

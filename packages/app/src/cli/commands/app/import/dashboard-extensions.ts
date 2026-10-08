@@ -34,7 +34,9 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 export default class ImportDashboardExtensions extends AppLinkedCommand {
   static descriptionWithMarkdown = 'Import dashboard-managed extensions into your app.'
 
-  static jsonOutputSchema = importDashboardExtensionsJsonOutputSchema
+  static get jsonOutputSchema() {
+    return importDashboardExtensionsJsonOutputSchema
+  }
 
   static description = this.descriptionForHelp()
 
@@ -85,7 +87,6 @@ export default class ImportDashboardExtensions extends AppLinkedCommand {
     } else {
       const migrationChoice = await selectMigrationChoice(migrationChoices)
       let result: ImportExtensionsResult | undefined
-      let identifiersUpdated = false
       try {
         result = await importExtensions({
           ...appContext,
@@ -100,29 +101,19 @@ export default class ImportDashboardExtensions extends AppLinkedCommand {
           extensionUuids: result.extensionUuids,
           command: 'import-extensions',
         })
-        identifiersUpdated = true
-        if (flags.json) {
-          outputResult(
-            importDashboardExtensionsJsonOutputSchema.encode({
-              status: 'success',
-              reason: null,
-              extensions: projectExtensions(result.extensions),
-              errors: [],
-              identifiersUpdated: true,
-            }),
-          )
-        }
       } catch (error) {
         if (!flags.json) throw error instanceof ExtensionImportFailedError ? error.originalError : error
+        let originalError = error instanceof ExtensionImportFailedError ? error.originalError : error
         if (error instanceof ExtensionImportCancelledError || error instanceof ExtensionImportFailedError) {
           const completion = await error.completedImports()
           if (error instanceof ExtensionImportFailedError && completion.extensions.length === 0) {
             throw error.originalError
           }
+          const cancelled = error instanceof ExtensionImportCancelledError && completion.failures.length === 0
           outputResult(
             importDashboardExtensionsJsonOutputSchema.encode({
-              status: error instanceof ExtensionImportCancelledError ? 'cancelled' : 'partial',
-              reason: error instanceof ExtensionImportCancelledError ? 'directory-selection-cancelled' : null,
+              status: cancelled ? 'cancelled' : 'partial',
+              reason: cancelled ? 'directory-selection-cancelled' : null,
               extensions: projectExtensions(completion.extensions),
               errors: completion.failures.map(({extension, error: failure}) => ({
                 extensionId: extension.uuid,
@@ -131,7 +122,9 @@ export default class ImportDashboardExtensions extends AppLinkedCommand {
               identifiersUpdated: false,
             }),
           )
-        } else if (result && !identifiersUpdated) {
+          if (cancelled) throw error
+          if (error instanceof ExtensionImportCancelledError) originalError = completion.failures[0]!.error
+        } else if (result) {
           outputResult(
             importDashboardExtensionsJsonOutputSchema.encode({
               status: 'partial',
@@ -144,8 +137,6 @@ export default class ImportDashboardExtensions extends AppLinkedCommand {
         } else {
           throw error
         }
-        if (error instanceof ExtensionImportCancelledError) throw error
-        const originalError = error instanceof ExtensionImportFailedError ? error.originalError : error
         const mappedError = await errorMapper(originalError)
         const exitMode = shouldReportErrorAsUnexpected(mappedError) ? 'unexpected_error' : 'expected_error'
         await reportAnalyticsEvent({
@@ -155,6 +146,17 @@ export default class ImportDashboardExtensions extends AppLinkedCommand {
         })
         await sendErrorToBugsnag(mappedError, exitMode)
         throw new AbortSilentError()
+      }
+      if (flags.json) {
+        outputResult(
+          importDashboardExtensionsJsonOutputSchema.encode({
+            status: 'success',
+            reason: null,
+            extensions: projectExtensions(result.extensions),
+            errors: [],
+            identifiersUpdated: true,
+          }),
+        )
       }
     }
 
