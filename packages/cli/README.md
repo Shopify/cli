@@ -347,13 +347,17 @@ Check the status of bulk operations.
 
 ```
 USAGE
-  $ shopify app bulk status [--auth-alias <value>] [--client-id <value> | -c <value>] [--id <value>] [--json-schema]
-    [--no-color] [--no-input] [--path <value>] [--reset | ] [-s <value>] [--verbose]
+  $ shopify app bulk status [--auth-alias <value>] [--client-id <value> | -c <value>] [--id <value>] [-j]
+    [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [-s <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       The store domain. Must be an existing dev store.
@@ -407,6 +411,228 @@ DESCRIPTION
   (https://shopify.dev/docs/api/usage/bulk-operations/imports).
 
   Use "`bulk execute`" (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) to start a new bulk operation.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `BulkOperationStatusResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/GetBulkOperationStatusResult"
+      },
+      {
+        "$ref": "#/definitions/ListBulkOperationsResult"
+      }
+    ],
+    "title": "BulkOperationStatusResult",
+    "definitions": {
+      "GetBulkOperationStatusResult": {
+        "type": "object",
+        "properties": {
+          "storeDomain": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[^.]+\\.myshopify\\.com$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "apiVersion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The API version selected for the request."
+          },
+          "operationGid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/BulkOperation\\/[^/]+$",
+            "description": "The Shopify global ID of a bulk operation."
+          },
+          "operation": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/BulkOperation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "storeDomain",
+          "apiVersion",
+          "operationGid",
+          "operation"
+        ],
+        "additionalProperties": false
+      },
+      "ListBulkOperationsResult": {
+        "type": "object",
+        "properties": {
+          "storeDomain": {
+            "$ref": "#/definitions/GetBulkOperationStatusResult/properties/storeDomain"
+          },
+          "apiVersion": {
+            "$ref": "#/definitions/GetBulkOperationStatusResult/properties/apiVersion"
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ListedBulkOperation"
+            }
+          },
+          "pageInfo": {
+            "type": "object",
+            "properties": {
+              "hasNextPage": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "Unknown when the API result reaches the fetch limit."
+              }
+            },
+            "required": [
+              "hasNextPage"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "storeDomain",
+          "apiVersion",
+          "operations",
+          "pageInfo"
+        ],
+        "additionalProperties": false
+      },
+      "BulkOperation": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "$ref": "#/definitions/GetBulkOperationStatusResult/properties/operationGid"
+          },
+          "type": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "errorCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          },
+          "completedAt": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/BulkOperation/properties/createdAt"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          },
+          "objectCount": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "A nonnegative decimal count, without loss of integer precision."
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "partialDataUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "gid",
+          "type",
+          "status",
+          "errorCode",
+          "createdAt",
+          "completedAt",
+          "objectCount",
+          "url",
+          "partialDataUrl"
+        ],
+        "additionalProperties": false
+      },
+      "ListedBulkOperation": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "$ref": "#/definitions/GetBulkOperationStatusResult/properties/operationGid"
+          },
+          "status": {
+            "$ref": "#/definitions/BulkOperation/properties/status"
+          },
+          "errorCode": {
+            "$ref": "#/definitions/BulkOperation/properties/errorCode"
+          },
+          "createdAt": {
+            "$ref": "#/definitions/BulkOperation/properties/createdAt"
+          },
+          "completedAt": {
+            "$ref": "#/definitions/BulkOperation/properties/completedAt"
+          },
+          "objectCount": {
+            "$ref": "#/definitions/BulkOperation/properties/objectCount"
+          },
+          "url": {
+            "$ref": "#/definitions/BulkOperation/properties/url"
+          },
+          "partialDataUrl": {
+            "$ref": "#/definitions/BulkOperation/properties/partialDataUrl"
+          }
+        },
+        "required": [
+          "gid",
+          "status",
+          "errorCode",
+          "createdAt",
+          "completedAt",
+          "objectCount",
+          "url",
+          "partialDataUrl"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app config link`
