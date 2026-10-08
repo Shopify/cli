@@ -1,5 +1,6 @@
 import {renderThemePullResult} from './result.js'
 import {executeThemePull} from '../pull.js'
+import {useThemeStoreContext} from '../local-storage.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
@@ -31,7 +32,9 @@ describe('pull execution', () => {
       vi.mocked(fetchThemeAssets).mockResolvedValue([{key: 'assets/theme.css', checksum: 'new', value: 'body {}'}])
       await withCapturedStandardStreams(async ({stdout, stderr}) => {
         await runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, async () => {
-          const result = await executeThemePull({path, force: true, nodelete}, session)
+          const result = await useThemeStoreContext(session.storeFqdn, () =>
+            executeThemePull({path, force: true, nodelete}, session),
+          )
           expect(result).toEqual({
             path,
             changed: true,
@@ -73,7 +76,7 @@ describe('pull execution', () => {
       })
       vi.mocked(fetchChecksums).mockResolvedValue([])
       const result = await runWithCommandEvents({outputMode: 'json'}, () =>
-        executeThemePull({path, force: true}, session),
+        useThemeStoreContext(session.storeFqdn, () => executeThemePull({path, force: true}, session)),
       )
       expect(result?.theme).toMatchObject({role: 'live', src: 'https://example.com/theme.zip'})
       expect(result?.changed).toBe(false)
@@ -90,7 +93,9 @@ describe('pull execution', () => {
       vi.mocked(fetchThemeAssets).mockRejectedValue(failure)
       await withCapturedStandardStreams(async ({stdout}) => {
         await runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, async () => {
-          await expect(executeThemePull({path, force: true}, session)).rejects.toBe(failure)
+          await expect(
+            useThemeStoreContext(session.storeFqdn, () => executeThemePull({path, force: true}, session)),
+          ).rejects.toBe(failure)
         })
 
         expect(stdout()).toBe('')
