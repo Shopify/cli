@@ -35,9 +35,9 @@ const scalarKind = (named: GraphQLNamedInputType) =>
   builtinScalars[named.name] ?? codegenScalars[named.name] ?? shopifyFunctionCodegenDefaults.defaultScalarType
 
 /**
- * Checks what each `prepare` export returns against the variables its run target's input query declares. Values are
- * followed back to where they're created, past type annotations and casts, and anything that can't be followed is an
- * error rather than a pass.
+ * Checks what each `prepare` export returns against the variables its run target's input query declares. Type
+ * annotations and casts are ignored, values are followed back to where they're created, and anything that can't be
+ * followed is an error rather than a pass.
  */
 export async function prepareVariablesErrors(fun: ExtensionInstance<FunctionConfigType>): Promise<string[]> {
   const targets = fun.configuration.targeting ?? []
@@ -69,8 +69,51 @@ export async function prepareVariablesErrors(fun: ExtensionInstance<FunctionConf
   const libraries =
     (await findPathUp('assets/typescript', {type: 'directory', cwd: moduleDirectory(import.meta.url)})) ??
     dirname(ts.getDefaultLibFilePath(options))
-  const host = ts.createCompilerHost(options)
+  const host = ts.createCompilerHost(options, true)
   host.getDefaultLibLocation = () => libraries
+  // Annotations and casts are claims nothing checks against the value (`@ts-ignore` silences the compiler), so they're
+  // blanked out of the function's own files, leaving types to come from the values. Parameter types are kept. Blanking
+  // keeps positions, so errors point at the original source.
+  const {getSourceFile} = host
+  host.getSourceFile = (fileName, language, ...rest) => {
+    const file = getSourceFile(fileName, language, ...rest)
+    if (!file || file.isDeclarationFile || fileName.includes('/node_modules/')) return file
+    const text = file.text.split('')
+    const blank = (start: number, end: number) => {
+      for (let index = start; index < end; index++) if (text[index] !== '\n' && text[index] !== '\r') text[index] = ' '
+    }
+    const visit = (node: ts.Node): void => {
+      for (const tag of ts.getJSDocTags(node)) {
+        const typing =
+          ts.isJSDocTypeTag(tag) ||
+          ts.isJSDocReturnTag(tag) ||
+          ts.isJSDocSatisfiesTag(tag) ||
+          ts.isJSDocOverloadTag(tag)
+        if (typing && !ts.isParameter(tag.parent.parent)) blank(tag.pos, tag.end)
+      }
+      if (ts.isAsExpression(node) || ts.isSatisfiesExpression(node) || ts.isNonNullExpression(node)) {
+        blank(node.expression.end, node.end)
+      } else if (ts.isTypeAssertionExpression(node)) {
+        blank(node.type.pos - 1, node.expression.pos)
+      } else if ((ts.isCallExpression(node) || ts.isNewExpression(node)) && node.typeArguments) {
+        blank(node.typeArguments.pos - 1, node.typeArguments.end + 1)
+      } else if (
+        (ts.isVariableDeclaration(node) ||
+          ts.isPropertyDeclaration(node) ||
+          ts.isFunctionDeclaration(node) ||
+          ts.isFunctionExpression(node) ||
+          ts.isArrowFunction(node) ||
+          ts.isMethodDeclaration(node) ||
+          ts.isGetAccessorDeclaration(node)) &&
+        node.type
+      ) {
+        blank(node.type.pos - 1, node.type.end)
+      }
+      ts.forEachChild(node, visit)
+    }
+    visit(file)
+    return ts.createSourceFile(fileName, text.join(''), language)
+  }
   const program = ts.createProgram([fun.entrySourceFilePath], options, host)
   const checker = program.getTypeChecker()
   const entryFile = program.getSourceFile(fun.entrySourceFilePath)
@@ -87,13 +130,7 @@ export async function prepareVariablesErrors(fun: ExtensionInstance<FunctionConf
   const unchecked = (type: ts.Type) => Boolean(type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown))
 
   const unwrap = (node: ts.Expression): ts.Expression =>
-    ts.isParenthesizedExpression(node) ||
-    ts.isAsExpression(node) ||
-    ts.isSatisfiesExpression(node) ||
-    ts.isNonNullExpression(node) ||
-    ts.isTypeAssertionExpression(node)
-      ? unwrap(node.expression)
-      : node
+    ts.isParenthesizedExpression(node) ? unwrap(node.expression) : node
 
   const functionOf = (node: ts.Node | undefined): ts.FunctionLikeDeclaration | undefined => {
     if (!node) return
@@ -155,7 +192,7 @@ export async function prepareVariablesErrors(fun: ExtensionInstance<FunctionConf
     })
     const owner = (type: GraphQLInputObjectType) =>
       type === variables ? `declared by ${query}` : `a field of ${type.name}`
-    const followed = new Map<ts.VariableDeclaration & {name: ts.Identifier}, string>()
+    const followed = new Map<ts.VariableDeclaration, string>()
     const checkedReferences = new Set<ts.Node>()
     const visiting = new Set<ts.Node>()
 
@@ -173,44 +210,6 @@ export async function prepareVariablesErrors(fun: ExtensionInstance<FunctionConf
           return Boolean(type.flags & ts.TypeFlags.BooleanLike)
         default:
           return false
-      }
-    }
-
-    const missing = (object: GraphQLInputObjectType, present: Set<string>, path: string, node: ts.Node) => {
-      for (const [key, field] of Object.entries(object.getFields())) {
-        if (isNonNullType(field.type) && field.defaultValue === undefined && !present.has(key)) {
-          report(node, `${subject(join(path, key))} is missing, and ${field.type} has no default`)
-        }
-      }
-    }
-
-    const properties = (
-      type: ts.Type,
-      object: GraphQLInputObjectType,
-      path: string,
-      node: ts.Node,
-      present: Set<string>,
-    ) => {
-      if (unchecked(type))
-        return report(node, `${subject(path)} is typed ${checker.typeToString(type)}, so it can't be checked`)
-      if (checker.getIndexInfosOfType(type).length > 0) {
-        return report(node, `${subject(path)} can have any keys, so it can't be checked`)
-      }
-      const fields = object.getFields()
-      for (const property of checker.getPropertiesOfType(type)) {
-        present.add(property.name)
-        const field = fields[property.name]
-        if (field) {
-          typed(
-            checker.getTypeOfSymbol(property),
-            field.type,
-            join(path, property.name),
-            field.defaultValue !== undefined,
-            node,
-          )
-        } else {
-          report(node, `${subject(join(path, property.name))} isn't ${owner(object)}`)
-        }
       }
     }
 
@@ -245,9 +244,37 @@ export async function prepareVariablesErrors(fun: ExtensionInstance<FunctionConf
           : typed(type, inner.ofType, path, false, node)
       }
       if (isInputObjectType(inner) && type.flags & ts.TypeFlags.Object && !checker.isArrayType(type)) {
-        const present = new Set<string>()
-        properties(type, inner, path, node, present)
-        return missing(inner, present, path, node)
+        if (checker.getIndexInfosOfType(type).length > 0) {
+          return report(node, `${subject(path)} can have any keys, so it can't be checked`)
+        }
+        const fields = inner.getFields()
+        for (const property of checker.getPropertiesOfType(type)) {
+          const field = fields[property.name]
+          const key = join(path, property.name)
+          // A property written in an object literal is followed to its value, keeping literal types (like an enum
+          // value) that the object's type widens
+          const declaration = property.valueDeclaration
+          const assignment =
+            declaration && (ts.isPropertyAssignment(declaration) || ts.isShorthandPropertyAssignment(declaration))
+              ? declaration
+              : undefined
+          if (!field) {
+            report(assignment ?? node, `${subject(key)} isn't ${owner(inner)}`)
+          } else if (assignment) {
+            const binding = assignment.parent.parent
+            if (ts.isVariableDeclaration(binding) && ts.isIdentifier(binding.name)) followed.set(binding, path)
+            const initializer = ts.isPropertyAssignment(assignment) ? assignment.initializer : assignment.name
+            value(initializer, field.type, key, field.defaultValue !== undefined)
+          } else {
+            typed(checker.getTypeOfSymbol(property), field.type, key, field.defaultValue !== undefined, node)
+          }
+        }
+        for (const [key, field] of Object.entries(fields)) {
+          if (isNonNullType(field.type) && field.defaultValue === undefined && !checker.getPropertyOfType(type, key)) {
+            report(node, `${subject(join(path, key))} is missing, and ${field.type} has no default`)
+          }
+        }
+        return
       }
       if (isInputObjectType(inner) || !scalarMatches(type, inner)) {
         report(node, `${subject(path)} must be ${expected}, not ${checker.typeToString(type)}`)
@@ -275,13 +302,8 @@ export async function prepareVariablesErrors(fun: ExtensionInstance<FunctionConf
 
       if (ts.isIdentifier(expression)) {
         const declaration = symbolOf(expression)?.valueDeclaration
-        if (
-          declaration &&
-          ts.isVariableDeclaration(declaration) &&
-          ts.isIdentifier(declaration.name) &&
-          declaration.initializer
-        ) {
-          followed.set(declaration as ts.VariableDeclaration & {name: ts.Identifier}, path)
+        if (declaration && ts.isVariableDeclaration(declaration) && declaration.initializer) {
+          followed.set(declaration, path)
           checkedReferences.add(expression)
           return value(declaration.initializer, expected, path, omittable)
         }
@@ -304,34 +326,6 @@ export async function prepareVariablesErrors(fun: ExtensionInstance<FunctionConf
           visiting.delete(fn)
           return
         }
-      } else if (ts.isObjectLiteralExpression(expression) && isInputObjectType(inner)) {
-        const present = new Set<string>()
-        for (const property of expression.properties) {
-          if (ts.isSpreadAssignment(property)) {
-            properties(checker.getTypeAtLocation(property.expression), inner, path, property, present)
-            continue
-          }
-          const key =
-            (ts.isPropertyAssignment(property) || ts.isShorthandPropertyAssignment(property)) &&
-            (ts.isIdentifier(property.name) || ts.isStringLiteral(property.name) || ts.isNumericLiteral(property.name))
-              ? property.name.text
-              : undefined
-          if (key === undefined) {
-            report(property, `${subject(path)} has a property that can't be checked`)
-            continue
-          }
-          present.add(key)
-          const field = inner.getFields()[key]
-          if (field) {
-            const initializer = ts.isPropertyAssignment(property)
-              ? property.initializer
-              : (property.name as ts.Identifier)
-            value(initializer, field.type, join(path, key), field.defaultValue !== undefined)
-          } else {
-            report(property.name, `${subject(join(path, key))} isn't ${owner(inner)}`)
-          }
-        }
-        return missing(inner, present, path, expression)
       } else if (ts.isArrayLiteralExpression(expression) && isListType(inner)) {
         for (const element of expression.elements) {
           if (ts.isSpreadElement(element)) typed(checker.getTypeAtLocation(element), expected, path, omittable, element)

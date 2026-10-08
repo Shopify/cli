@@ -86,6 +86,14 @@ describe('prepareVariablesErrors', () => {
       '`variables.mode` must be Mode, not "MEDIUM"',
       '`variables.rules[].weight` must be Int, not "1"',
     ])
+    // Each branch is checked on its own, since TypeScript widens 'FAST' and 'MEDIUM' to string and merges the branches
+    await expect(
+      check(
+        prepare(
+          `return input.a ? {variables: {handle: 'a', mode: 'FAST'}} : {variables: {handle: 'a', mode: 'MEDIUM'}}`,
+        ),
+      ),
+    ).resolves.toEqual(['`variables.mode` must be Mode, not "MEDIUM"'])
   })
 
   test('rejects null and undefined where the variable needs a value', async () => {
@@ -144,6 +152,43 @@ describe('prepareVariablesErrors', () => {
     ).resolves.toEqual([
       "`variables` is changed or passed on after it's created, so it can't be checked",
       "`variables` is changed or passed on after it's created, so it can't be checked",
+    ])
+    await expect(
+      check(
+        prepare(`
+          const base = {handle: 'a'}
+          base.handle = 1
+          return {variables: {...base}}`),
+      ),
+    ).resolves.toEqual(["`variables` is changed or passed on after it's created, so it can't be checked"])
+  })
+
+  test('ignores what annotations and casts claim', async () => {
+    await expect(
+      check(
+        prepare(`
+          const raw = /** @type {{handle: string}} */ (JSON.parse(input.raw))
+          const {limit} = /** @type {{limit: number}} */ (JSON.parse(input.raw))
+          return {variables: {handle: raw.handle, limit}}`),
+      ),
+    ).resolves.toEqual([
+      "`variables.handle` is typed any, so it can't be checked",
+      "`variables.limit` is typed any, so it can't be checked",
+    ])
+    await expect(
+      check({
+        'index.js': `export * from './prepare.js'`,
+        'prepare.ts': `
+          type Variables = {handle: string}
+          export function cartValidationsGeneratePrepare(input: {name?: string; mode: string}): {variables: Variables} {
+            if (input.mode) return {variables: {handle: input.name!, mode: <'FAST'>input.mode}}
+            return {variables: new Map<string, Variables>().get(input.mode)! as Variables}
+          }`,
+      }),
+    ).resolves.toEqual([
+      '`variables.handle` can be undefined, but String! has no default',
+      '`variables.mode` must be Mode, not string',
+      "`variables` is typed any, so it can't be checked",
     ])
   })
 
