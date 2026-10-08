@@ -166,11 +166,7 @@ export default class Check extends ThemeCommand {
   protected async _run<T>(): Promise<T> {
     const separatorIndex = this.argv.indexOf('--')
     const argv = separatorIndex < 0 ? this.argv : this.argv.slice(0, separatorIndex)
-    const outputIndex = argv.findLastIndex((arg) => /^(?:--output(?:=|$)|-o)/.test(arg))
-    const output =
-      outputIndex < 0 ? process.env.SHOPIFY_FLAG_OUTPUT : argv[outputIndex]!.replace(/^(?:--output=|-o=?)/, '')
-    const legacyJson =
-      output === 'json' || ((output === '--output' || output === '') && argv[outputIndex + 1] === 'json')
+    const legacyJson = legacyOutputFormat(argv) === 'json'
     if (legacyJson && !argv.includes('--json')) {
       // The legacy format flag must also select CLI Kit's JSON error and side-event context.
       this.argv = [...argv, '--json', ...(separatorIndex < 0 ? [] : this.argv.slice(separatorIndex))]
@@ -183,14 +179,44 @@ export default class Check extends ThemeCommand {
   }
 
   protected collectsEnvironmentResults(flags: Partial<CheckFlags>): boolean {
-    return (
-      !flags.init && !flags.version && !flags.print && !flags.list && (Boolean(flags.json) || flags.output === 'json')
-    )
+    return Boolean(flags.json) || flags.output === 'json'
+  }
+
+  protected validateCommandFlags(flags: Partial<CheckFlags>): void {
+    if (!this.collectsEnvironmentResults(flags)) return
+    const action = (['init', 'version', 'print', 'list'] as const).find((flag) => flags[flag])
+    if (action) this.error(`JSON output can't be used with --${action}.`, {exit: 2})
   }
 
   protected renderEnvironmentResults(environments: ThemeEnvironmentResult[]): void {
     outputResult(encodeThemeCheckResult({environments}))
   }
+}
+
+// Select the error format before oclif validates values or rejects unknown flags.
+function legacyOutputFormat(argv: string[]): string | undefined {
+  let output = process.env.SHOPIFY_FLAG_OUTPUT
+  const flags = Object.entries(Check.flags)
+  for (let index = 0; index < argv.length; index++) {
+    const argument = argv[index]!
+    if (argument.startsWith('--')) {
+      const [name, ...value] = argument.slice(2).split('=')
+      const flag = flags.find(([key]) => key === name)?.[1]
+      if (flag?.type !== 'option') continue
+      const input = value.length ? value.join('=') : argv[++index]
+      if (name === 'output') output = input
+    } else if (argument.startsWith('-')) {
+      for (let offset = 1; offset < argument.length; offset++) {
+        const entry = flags.find(([, flag]) => flag.char === argument[offset])
+        if (!entry) break
+        if (entry[1].type !== 'option') continue
+        const input = argument.slice(offset + 1).replace(/^=/, '') || argv[++index]
+        if (entry[0] === 'output') output = input
+        break
+      }
+    }
+  }
+  return output
 }
 
 // Compatibility adapter for theme push, which still presents check results as text.
