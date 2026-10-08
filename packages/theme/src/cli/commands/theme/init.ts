@@ -88,12 +88,11 @@ export default class Init extends ThemeCommand {
           defaultValue: 'stable',
         })) === 'stable'
     }
+    const cloneRepository = latestRelease ? cloneRepoAndCheckoutLatestTag : cloneRepo
     const result =
       latestRelease && repoUrl === SKELETON_THEME_URL
         ? await cloneLatestStableSkeletonTheme(destination)
-        : latestRelease
-        ? await cloneRepoAndCheckoutLatestTag(repoUrl, destination)
-        : await cloneRepo(repoUrl, destination)
+        : await cloneRepository(repoUrl, destination)
     const format = flags.json ? 'json' : 'text'
 
     if (!flags['no-input'] && terminalSupportsPrompting()) {
@@ -103,7 +102,7 @@ export default class Init extends ThemeCommand {
         try {
           const instructions = await createAIInstructions(destination, aiInstruction)
           result.instructionFiles = instructions.files
-          renderAIInstructionsWarning(instructions.copiedFiles, format)
+          renderAIInstructionsWarning(instructions.copiedFiles)
         } catch (error) {
           if (error instanceof AbortSilentError || error instanceof CancelExecution) throw error
           result.status = 'partial'

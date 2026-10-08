@@ -9,15 +9,20 @@ import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {renderTextPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderSelectPrompt, renderTextPrompt, renderWarning} from '@shopify/cli-kit/node/ui'
 import {expect, test, vi} from 'vitest'
 // Native JSON paths must preserve Windows separators instead of pathe normalization.
 // eslint-disable-next-line no-restricted-imports
 import {resolve as nativePath} from 'node:path'
 
 vi.mock('@shopify/cli-kit/node/git')
+vi.mock('@shopify/cli-kit/node/github', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/github')>()),
+  getLatestGitHubRelease: vi.fn(async () => ({tag_name: 'v1.0.0'})),
+}))
 vi.mock('@shopify/cli-kit/node/ui', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@shopify/cli-kit/node/ui')>()),
+  renderSelectPrompt: vi.fn(async () => 'stable'),
   renderTextPrompt: vi.fn(),
   renderWarning: vi.fn(),
 }))
@@ -54,7 +59,7 @@ test.each([true, false])('emits the cloned theme after skipped AI setup, interac
         changed: true,
         directory: nativePath(directory, 'example'),
         repoUrl: SKELETON_THEME_URL,
-        latest: false,
+        latest: true,
         aiInstructions: null,
         instructionFilePaths: [],
         reason: null,
@@ -71,6 +76,9 @@ test.each([true, false])('emits the cloned theme after skipped AI setup, interac
 })
 
 test('preserves the name prompt in JSON mode and waits for AI instructions', async () => {
+  const {renderWarning: actualRenderWarning} =
+    await vi.importActual<typeof import('@shopify/cli-kit/node/ui')>('@shopify/cli-kit/node/ui')
+  vi.mocked(renderWarning).mockImplementationOnce(actualRenderWarning)
   vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
   vi.mocked(renderTextPrompt).mockResolvedValue('chosen-name')
   vi.mocked(promptAIInstruction).mockResolvedValue('claude')
@@ -124,7 +132,7 @@ test('preserves the cloned project when AI setup fails', async () => {
           changed: true,
           directory: nativePath(directory, 'example'),
           repoUrl: SKELETON_THEME_URL,
-          latest: false,
+          latest: true,
           aiInstructions: 'cursor',
           instructionFilePaths: null,
           reason: 'Failed to create AI instructions',
@@ -151,7 +159,7 @@ test('does not emit a result when cloning fails', async () => {
 })
 
 test('keeps the copy warning in the text presenter', () => {
-  renderAIInstructionsWarning(['CLAUDE.md'], 'text')
+  renderAIInstructionsWarning(['CLAUDE.md'])
   expect(renderWarning).toHaveBeenCalledWith({
     headline: 'Files created instead of symlinks.',
     body: "Shopify CLI attempted to create symbolic links between AGENTS.md and CLAUDE.md, but your system doesn't have Developer Mode enabled or symlinks are disabled. Separate files were created instead.",
@@ -176,16 +184,60 @@ test('exposes the schema and rejects invalid instruction choices', () => {
   ).toThrow()
 })
 
-test('requires a name without prompting in non-interactive JSON mode', async () => {
+test('generates a name without prompting in non-interactive JSON mode', async () => {
   vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
   await inTemporaryDirectory(async (directory) => {
     await withCapturedStandardStreams(async ({stdout}) => {
-      await expect(run(['--path', directory, '--json'])).rejects.toThrow(
-        'A theme name is required in non-interactive mode.',
-      )
-      expect(stdout()).toBe('')
+      await runWithCommandEventsForCommand(['--json'], () => run(['--path', directory, '--json']))
+      const result = JSON.parse(stdout())
+      expect(result).toMatchObject({status: 'success', changed: true, latest: true})
+      expect(nativePath(result.directory, '..')).toBe(nativePath(directory))
+      expect(result.directory).not.toBe(nativePath(directory))
     })
     expect(renderTextPrompt).not.toHaveBeenCalled()
-    expect(downloadGitRepository).not.toHaveBeenCalled()
+    expect(renderSelectPrompt).not.toHaveBeenCalled()
+    expect(promptAIInstruction).not.toHaveBeenCalled()
+  })
+})
+
+test.each([
+  {argv: [], interactive: true, choice: 'stable', repoUrl: `${SKELETON_THEME_URL}#v1.0.0`, latest: true},
+  {argv: [], interactive: true, choice: 'upstream', repoUrl: SKELETON_THEME_URL, latest: false},
+  {argv: ['--latest'], interactive: true, repoUrl: `${SKELETON_THEME_URL}#v1.0.0`, latest: true},
+  {argv: ['--no-input'], interactive: true, repoUrl: `${SKELETON_THEME_URL}#v1.0.0`, latest: true},
+  {argv: [], interactive: false, repoUrl: `${SKELETON_THEME_URL}#v1.0.0`, latest: true},
+  {
+    argv: ['--clone-url', 'https://example.com/theme.git'],
+    interactive: true,
+    repoUrl: 'https://example.com/theme.git',
+    latest: false,
+  },
+  {
+    argv: ['--clone-url', 'https://example.com/theme.git', '--no-input'],
+    interactive: true,
+    repoUrl: 'https://example.com/theme.git',
+    latest: false,
+  },
+  {
+    argv: ['--clone-url', 'https://example.com/theme.git', '--latest'],
+    interactive: true,
+    repoUrl: 'https://example.com/theme.git',
+    latest: true,
+  },
+])('preserves clone selection in JSON mode: %j', async ({argv, interactive, choice, repoUrl, latest}) => {
+  vi.mocked(terminalSupportsPrompting).mockReturnValue(interactive)
+  vi.mocked(promptAIInstruction).mockResolvedValue(null)
+  if (choice) vi.mocked(renderSelectPrompt).mockResolvedValue(choice)
+  await inTemporaryDirectory(async (directory) => {
+    await withCapturedStandardStreams(async ({stdout}) => {
+      await runWithCommandEventsForCommand(['--json'], () => run(['example', '--path', directory, '--json', ...argv]))
+      expect(JSON.parse(stdout())).toMatchObject({status: 'success', latest})
+    })
+    expect(downloadGitRepository).toHaveBeenCalledWith(
+      expect.objectContaining({repoUrl, destination: joinPath(directory, 'example')}),
+    )
+    if (choice) expect(renderSelectPrompt).toHaveBeenCalledOnce()
+    else expect(renderSelectPrompt).not.toHaveBeenCalled()
+    if (argv.some((flag) => flag === '--no-input') || !interactive) expect(promptAIInstruction).not.toHaveBeenCalled()
   })
 })
