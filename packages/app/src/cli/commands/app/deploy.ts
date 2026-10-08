@@ -23,7 +23,9 @@ export default class Deploy extends AppLinkedCommand {
   This command doesn't deploy your [web app](https://shopify.dev/docs/apps/tools/cli/structure#web-components). You need to [deploy your web app](https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.
   `
 
-  static jsonOutputSchema = appDeployJsonOutputSchema
+  static get jsonOutputSchema() {
+    return appDeployJsonOutputSchema
+  }
 
   static description = this.descriptionForHelp()
 

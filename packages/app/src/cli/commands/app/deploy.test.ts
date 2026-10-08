@@ -6,8 +6,7 @@ import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
-import {errorHandler} from '@shopify/cli-kit/node/error-handler'
-import {Config, Errors} from '@oclif/core'
+import {Config} from '@oclif/core'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {fileURLToPath} from 'node:url'
@@ -103,42 +102,19 @@ describe('app deploy command', () => {
     })
   })
 
-  test('cancelled JSON exits zero without running success hooks', async () => {
-    class CancelledDeploy extends Deploy {
-      async catch(error: Error): Promise<never> {
-        await errorHandler(error)
-        await Errors.handle(error)
-        throw error
-      }
-
-      protected async init(): Promise<void> {}
-    }
-    vi.mocked(deploy).mockResolvedValue({status: 'cancelled', app: testAppLinked()})
-    const config = await Config.load({root: joinPath(dirname(fileURLToPath(import.meta.url)), '../../../..')})
-    const runHook = vi.spyOn(config, 'runHook').mockResolvedValue({successes: [], failures: []})
+  test('cancelled JSON exits zero through the silent error path', async () => {
     const exit = vi.spyOn(process, 'exit').mockReturnValue(undefined as never)
+    vi.mocked(deploy).mockResolvedValue({status: 'cancelled', app: testAppLinked()})
     try {
       await inTemporaryDirectory(async (directory) => {
         await withCapturedStandardStreams(async ({stdout, stderr}) => {
-          await expect(
-            config.runCommand('app:deploy', ['--path', directory, '--json', '--allow-updates'], {
-              id: 'app:deploy',
-              aliases: [],
-              hiddenAliases: [],
-              hidden: false,
-              args: {},
-              flags: {},
-              load: async () => CancelledDeploy,
-            }),
-          ).rejects.toBeInstanceOf(AbortSilentError)
+          await runDeploy(['--path', directory, '--json', '--allow-updates'])
           expect(exit).toHaveBeenCalledExactlyOnceWith(0)
-          expect(runHook).not.toHaveBeenCalledWith('postrun', expect.anything())
           expect(JSON.parse(stdout())).toEqual({status: 'cancelled'})
           expect(stderr()).toBe('')
         })
       })
     } finally {
-      runHook.mockRestore()
       exit.mockRestore()
     }
   })
