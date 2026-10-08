@@ -3,6 +3,8 @@ import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {resolvePath, cwd, dirname} from '@shopify/cli-kit/node/path'
 import {fileExistsSync, isDirectorySync} from '@shopify/cli-kit/node/fs'
 import {renderError} from '@shopify/cli-kit/node/ui'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {jsonOutputEnabled} from '@shopify/cli-kit/node/environment'
 
 /**
  * An object that contains the flags that
@@ -12,10 +14,16 @@ export const themeFlags = {
   path: Flags.string({
     description: 'The path where you want to run the command. Defaults to the current working directory.',
     env: 'SHOPIFY_FLAG_PATH',
-    parse: async (input) => {
+    parse: async (input, context) => {
       const resolvedPath = resolvePath(input)
 
       if (!fileExistsSync(resolvedPath)) {
+        if (jsonOutputEnabled(process.env, context.argv)) {
+          throw new AbortError(
+            "A path was explicitly provided but doesn't exist.",
+            `Please check the path and try again: ${resolvedPath}`,
+          )
+        }
         // We can't use AbortError because oclif catches it and adds its own
         // messaging that breaks our UI
         renderError({
@@ -26,6 +34,12 @@ export const themeFlags = {
       }
 
       if (!isDirectorySync(resolvedPath)) {
+        if (jsonOutputEnabled(process.env, context.argv)) {
+          throw new AbortError(
+            'The path must be a directory, not a file.',
+            `The provided path is not a directory: ${resolvedPath}. Did you mean: ${dirname(resolvedPath)}`,
+          )
+        }
         renderError({
           headline: 'The path must be a directory, not a file.',
           body: [`The provided path is not a directory: ${resolvedPath}`, `Did you mean: ${dirname(resolvedPath)}`],

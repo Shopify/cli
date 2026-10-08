@@ -1,13 +1,20 @@
 import {themeFlags} from './flags.js'
-import {describe, expect, test} from 'vitest'
+import {afterEach, describe, expect, test, vi} from 'vitest'
+import {Config} from '@oclif/core'
 import Command from '@shopify/cli-kit/node/base-command'
+import {jsonFlag} from '@shopify/cli-kit/node/cli'
+import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
+import {errorMapper, handler} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+
+afterEach(() => vi.unstubAllEnvs())
 
 class MockCommand extends Command {
   static flags = {
     ...themeFlags,
+    ...jsonFlag,
   }
 
   async run(): Promise<Record<string, unknown>> {
@@ -20,6 +27,29 @@ class MockCommand extends Command {
 
 describe('themeFlags', () => {
   describe('path', () => {
+    test.each(['missing', 'file'])('reports an invalid %s path as a JSON error', async (kind) => {
+      vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
+      await inTemporaryDirectory(async (directory) => {
+        const path = joinPath(directory, 'theme')
+        if (kind === 'file') writeFileSync(path, 'content')
+        const config = new Config({root: __dirname})
+        await config.load()
+        const argv = ['--json', '--path', path]
+        await withCapturedStandardStreams(async ({stdout, stderr}) => {
+          await runWithCommandEventsForCommand(argv, async () => {
+            const command = new MockCommand(argv, config)
+            const runningCommand = command.run()
+            await expect(runningCommand).rejects.toThrow(kind === 'missing' ? "doesn't exist" : 'not a file')
+            await runningCommand.catch(async (error) => handler(await errorMapper(error)))
+          })
+          expect(JSON.parse(stdout())).toMatchObject({
+            error: {message: expect.stringContaining(kind === 'missing' ? "doesn't exist" : 'not a file')},
+          })
+          expect(stderr()).toBe('')
+        })
+      })
+    })
+
     test('defaults to the current working directory', async () => {
       const flags = await MockCommand.run([])
 

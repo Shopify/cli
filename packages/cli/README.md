@@ -11034,6 +11034,11 @@ DESCRIPTION
                       "message": {
                         "type": "string"
                       },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
                       "tryMessage": {
                         "type": "string"
                       },
@@ -11074,7 +11079,9 @@ DESCRIPTION
                           "additionalProperties": false
                         }
                       },
-                      "details": {}
+                      "details": {
+                        "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                      }
                     },
                     "required": [
                       "type",
@@ -11091,6 +11098,9 @@ DESCRIPTION
                       },
                       "message": {
                         "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
                       },
                       "tryMessage": {
                         "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
@@ -11123,6 +11133,9 @@ DESCRIPTION
                       },
                       "message": {
                         "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
                       },
                       "tryMessage": {
                         "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
