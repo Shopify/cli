@@ -85,7 +85,7 @@ describe('metafields-pull', () => {
     expect(capturedOutput.error()).toBeFalsy()
   })
 
-  test('should output to debug if some metafield definitions are not found', async () => {
+  test('warns about partial downloads and identifies failed owner types', async () => {
     // Given
     vi.mocked(metafieldDefinitionsByOwnerType).mockImplementation((type: any, _session: AdminSession) => {
       if (type === 'PRODUCT') return Promise.reject(new Error(`Failed to fetch metafield definitions for ${type}`))
@@ -120,7 +120,10 @@ describe('metafields-pull', () => {
           2,
         ),
       )
-      expect(capturedOutput.info()).toContain('Metafield definitions have been successfully downloaded.')
+      expect(capturedOutput.info()).not.toContain('Metafield definitions have been successfully downloaded.')
+      expect(capturedOutput.warn()).toContain('Metafield definitions were partially downloaded.')
+      expect(capturedOutput.warn()).toContain('Failed owner types:')
+      expect(capturedOutput.warn()).toContain('PRODUCT.')
       expect(capturedOutput.debug()).toContain('Failed to fetch metafield definitions for the following owner types')
       expect(capturedOutput.error()).toBeFalsy()
     })

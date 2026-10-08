@@ -13,6 +13,7 @@ import {
   AssetParams,
   deleteThemeAssets,
   parseThemeFileContent,
+  metafieldDefinitionsByOwnerType,
 } from './api.js'
 import {Operation} from './types.js'
 import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
@@ -26,6 +27,7 @@ import {ThemeFilesDelete} from '../../../cli/api/graphql/admin/generated/theme_f
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
+import {MetafieldDefinitionsByOwnerType} from '../../../cli/api/graphql/admin/generated/metafield_definitions_by_owner_type.js'
 import {adminRequestDoc, supportedApiVersions} from '../api/admin.js'
 import {AbortError} from '../error.js'
 
@@ -43,6 +45,62 @@ const expectedApiOptions = expect.objectContaining({
   maxRetryTimeMs: 90000,
   useAbortSignal: false,
   useNetworkLevelRetry: true,
+})
+
+describe('metafieldDefinitionsByOwnerType', () => {
+  test('fetches every page for the requested owner type', async () => {
+    const first = {
+      key: 'first',
+      namespace: 'custom',
+      name: 'First',
+      description: null,
+      type: {name: 'number_integer', category: 'NUMBER'},
+    }
+    const second = {...first, key: 'second', name: 'Second'}
+    vi.mocked(adminRequestDoc)
+      .mockResolvedValueOnce({metafieldDefinitions: {nodes: [first], pageInfo: {hasNextPage: true, endCursor: 'next'}}})
+      .mockResolvedValueOnce({
+        metafieldDefinitions: {nodes: [second], pageInfo: {hasNextPage: false, endCursor: 'last'}},
+      })
+
+    await expect(metafieldDefinitionsByOwnerType('PRODUCT', session)).resolves.toEqual([first, second])
+    expect(adminRequestDoc).toHaveBeenNthCalledWith(1, {
+      query: MetafieldDefinitionsByOwnerType,
+      session,
+      variables: {ownerType: 'PRODUCT', after: null},
+    })
+    expect(adminRequestDoc).toHaveBeenNthCalledWith(2, {
+      query: MetafieldDefinitionsByOwnerType,
+      session,
+      variables: {ownerType: 'PRODUCT', after: 'next'},
+    })
+    expect(adminRequestDoc).toHaveBeenCalledTimes(2)
+  })
+
+  test('returns an empty collection when there are no definitions', async () => {
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      metafieldDefinitions: {nodes: [], pageInfo: {hasNextPage: false, endCursor: null}},
+    })
+    await expect(metafieldDefinitionsByOwnerType('PRODUCT', session)).resolves.toEqual([])
+    expect(adminRequestDoc).toHaveBeenCalledTimes(1)
+  })
+
+  test('rejects when a later page fails instead of returning an incomplete collection', async () => {
+    vi.mocked(adminRequestDoc)
+      .mockResolvedValueOnce({metafieldDefinitions: {nodes: [], pageInfo: {hasNextPage: true, endCursor: 'next'}}})
+      .mockRejectedValueOnce(new Error('Request failed'))
+    await expect(metafieldDefinitionsByOwnerType('PRODUCT', session)).rejects.toThrow('Request failed')
+  })
+
+  test.each([null, 'next'])('rejects an invalid continuation cursor: %s', async (endCursor) => {
+    vi.mocked(adminRequestDoc)
+      .mockResolvedValueOnce({metafieldDefinitions: {nodes: [], pageInfo: {hasNextPage: true, endCursor: 'next'}}})
+      .mockResolvedValueOnce({metafieldDefinitions: {nodes: [], pageInfo: {hasNextPage: true, endCursor}}})
+    await expect(metafieldDefinitionsByOwnerType('PRODUCT', session)).rejects.toThrow(
+      'Failed to paginate metafield definitions',
+    )
+    expect(adminRequestDoc).toHaveBeenCalledTimes(2)
+  })
 })
 
 describe('fetchTheme', () => {

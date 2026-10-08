@@ -19,7 +19,10 @@ import {
   MetafieldOwnerType,
   ThemeRole,
 } from '../../../cli/api/graphql/admin/generated/types.js'
-import {MetafieldDefinitionsByOwnerType} from '../../../cli/api/graphql/admin/generated/metafield_definitions_by_owner_type.js'
+import {
+  MetafieldDefinitionsByOwnerType,
+  type MetafieldDefinitionsByOwnerTypeQuery,
+} from '../../../cli/api/graphql/admin/generated/metafield_definitions_by_owner_type.js'
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
@@ -574,13 +577,23 @@ export async function themeDuplicate(
 
 export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, session: AdminSession) {
   recordEvent('theme-api:fetch-metafield-definitions')
-  const {metafieldDefinitions} = await adminRequestDoc({
-    query: MetafieldDefinitionsByOwnerType,
-    session,
-    variables: {ownerType: type},
-  })
+  const definitions: MetafieldDefinitionsByOwnerTypeQuery['metafieldDefinitions']['nodes'] = []
+  let after: string | null = null
+  while (true) {
+    // eslint-disable-next-line no-await-in-loop
+    const {metafieldDefinitions}: MetafieldDefinitionsByOwnerTypeQuery = await adminRequestDoc({
+      query: MetafieldDefinitionsByOwnerType,
+      session,
+      variables: {ownerType: type, after},
+    })
+    definitions.push(...metafieldDefinitions.nodes)
+    if (!metafieldDefinitions.pageInfo.hasNextPage) break
+    const endCursor: string | null | undefined = metafieldDefinitions.pageInfo.endCursor
+    if (!endCursor || endCursor === after) unexpectedGraphQLError('Failed to paginate metafield definitions')
+    after = endCursor
+  }
 
-  return metafieldDefinitions.nodes.map((definition) => ({
+  return definitions.map((definition) => ({
     key: definition.key,
     namespace: definition.namespace,
     name: definition.name,
