@@ -30,10 +30,13 @@ function deployResult(
   }
 }
 
-test('an unreleased version returns null for unavailable metadata', async () => {
+test.each([
+  {versionTag: undefined, message: ''},
+  {versionTag: '', message: undefined},
+])('an unreleased version returns null for unavailable metadata %j', async (metadata) => {
   await withCapturedStandardStreams(async ({stdout}) => {
     await renderAppDeployResult(
-      {...deployResult({versionTag: undefined, message: ''}), release: false},
+      {...deployResult(metadata), release: false},
       testOrganizationApp(),
       testProject(),
       'json',
@@ -44,6 +47,18 @@ test('an unreleased version returns null for unavailable metadata', async () => 
     })
   })
 })
+
+test.each([{versionGid: 'invalid'}, {location: 'invalid'}])(
+  'rejects malformed version data %j before output',
+  async (data) => {
+    await withCapturedStandardStreams(async ({stdout}) => {
+      await expect(
+        renderAppDeployResult(deployResult(data), testOrganizationApp(), testProject(), 'json'),
+      ).rejects.toThrow()
+      expect(stdout()).toBe('')
+    })
+  },
+)
 
 test('a failed requested release retains the created version and exits nonzero', async () => {
   process.exitCode = undefined

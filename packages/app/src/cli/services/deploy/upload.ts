@@ -124,7 +124,8 @@ export async function uploadExtensionsBundle(
   }
 
   if (result.appDeploy.userErrors?.length > 0) {
-    deployError = result.appDeploy.userErrors.map((error) => error.message).join(', ')
+    deployError =
+      result.appDeploy.userErrors.map((error) => error.message).join(', ') || 'The app version could not be released.'
   }
 
   const validationErrors = result.appDeploy.appVersion.appModuleVersions
