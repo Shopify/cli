@@ -126,12 +126,14 @@ export async function exchangeAppAutomationTokenForAppManagementAccessToken(
 /**
  * Given a custom app automation token passed as ENV variable, request a valid Business Platform API token.
  * @param token - The app automation token passed as ENV variable `SHOPIFY_APP_AUTOMATION_TOKEN`
+ * @param scopes - The scopes to request. An empty list makes Identity issue every Business Platform scope the token holds.
  * @returns An instance with the application access tokens.
  */
 export async function exchangeAppAutomationTokenForBusinessPlatformAccessToken(
   token: string,
+  scopes: string[] = tokenExchangeScopes('business-platform'),
 ): Promise<{accessToken: string; userId: string}> {
-  return exchangeAppAutomationTokenForAccessToken('business-platform', token, tokenExchangeScopes('business-platform'))
+  return exchangeAppAutomationTokenForAccessToken('business-platform', token, scopes)
 }
 
 const identityDeviceErrors = [

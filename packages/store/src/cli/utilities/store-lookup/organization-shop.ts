@@ -33,7 +33,9 @@ export async function fetchOrganizationShop(options: FetchOrganizationShopOption
 export async function fetchOptionalOrganizationShop(
   options: FetchOrganizationShopOptions,
 ): Promise<OrganizationShopFields | undefined> {
-  const token = options.token ?? (await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt}))
+  const token =
+    options.token ??
+    (await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt, allowAutomationToken: true}))
   const unauthorizedHandler = businessPlatformTokenRefreshHandler({noPrompt: options.noPrompt})
 
   const response = await businessPlatformOrganizationsRequestDoc<StoreInfoShopQuery, StoreInfoShopQueryVariables>({
