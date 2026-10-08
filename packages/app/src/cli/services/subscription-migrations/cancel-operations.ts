@@ -1,4 +1,6 @@
 import {cancelMigrationOperation} from './partners-api.js'
+import {MigrationOperationGidSchema} from './types.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import type {MigrationCancellationOutcome, MigrationCancellationResult} from './types.js'
 
 export class MigrationCancellationProtocolError extends Error {
@@ -22,6 +24,15 @@ export async function cancelMigrationOperations({
   operationIds,
   cancelOperation = cancelMigrationOperation,
 }: CancelMigrationOperationsOptions): Promise<MigrationCancellationResult> {
+  const invalidOperationIds = operationIds.filter(
+    (operationId) => !MigrationOperationGidSchema.safeParse(operationId).success,
+  )
+  if (invalidOperationIds.length > 0) {
+    throw new AbortError(
+      `Invalid subscription migration operation IDs: ${invalidOperationIds.join(', ')}.`,
+      'Use Shopify AppSubscriptionMigrationOperation GIDs returned by a migration submission.',
+    )
+  }
   const outcomes = await Promise.all(
     operationIds.map(async (operationId): Promise<MigrationCancellationOutcome> => {
       try {

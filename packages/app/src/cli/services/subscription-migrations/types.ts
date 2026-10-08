@@ -3,7 +3,7 @@ import {zod} from '@shopify/cli-kit/node/schema'
 import type {MigrationOperation} from '../../models/subscription-migrations.js'
 import type {MigrationUserError} from './partners-api.js'
 
-const MigrationOperationGidSchema = zod
+export const MigrationOperationGidSchema = zod
   .string()
   .regex(/^gid:\/\/shopify\/AppSubscriptionMigrationOperation\/[^/]+$/)
   .describe('The Shopify AppSubscriptionMigrationOperation GID.')
