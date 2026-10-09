@@ -1,15 +1,16 @@
-import {ReleaseVersionLookupError, versionDiffByVersion} from './version-diff.js'
+import {versionDiffByVersion} from './version-diff.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {AppVersionWithContext} from '../../utilities/developer-platform-client.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {describe, expect, test} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 describe('versionDiffByVersion', () => {
-  test('reports the failed lookup without presentation and retains its cause', async () => {
+  test('reports the failed lookup as an abort without presentation', async () => {
     // Given
     const outputMock = mockAndCaptureOutput()
-    const cause = new Error('not found')
+    const cause = new AbortError('HTTP 404: Cannot find a valid organization')
     const developerPlatformClient = testDeveloperPlatformClient({
       appVersionByTag: () => {
         throw cause
@@ -18,8 +19,8 @@ describe('versionDiffByVersion', () => {
 
     // When/Then
     const result = versionDiffByVersion(testOrganizationApp(), 'version', developerPlatformClient)
-    await expect(result).rejects.toThrow(ReleaseVersionLookupError)
-    await expect(result).rejects.toMatchObject({versionTag: 'version', cause})
+    await expect(result).rejects.toThrow(AbortError)
+    await expect(result).rejects.toThrow('Version version could not be found.')
     expect(outputMock.error()).toBe('')
   })
 

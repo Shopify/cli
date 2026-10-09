@@ -1,11 +1,10 @@
 import Release from './release.js'
 import {release} from '../../services/release.js'
 import {linkedAppContext} from '../../services/app-context.js'
-import {ReleaseVersionLookupError} from '../../services/release/version-diff.js'
-import {testAppLinked, testOrganizationApp} from '../../models/app/app.test-data.js'
+import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputInfo, unstyled} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
@@ -57,24 +56,45 @@ describe('app release command', () => {
     })
   })
 
-  test.each(['release rejection', 'missing version'])('%s uses one shared error document', async (failure) => {
+  test('release rejection uses one shared error document', async () => {
     vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
     const userErrors = [{message: 'Release failed.', category: 'validation', details: [], field: ['version']}]
-    if (failure === 'missing version') {
-      vi.mocked(release).mockRejectedValue(new ReleaseVersionLookupError('v1', new AbortError('Version not found.')))
-    } else {
-      vi.mocked(release).mockResolvedValue({status: 'failed', version, userErrors})
-    }
+    vi.mocked(release).mockResolvedValue({status: 'failed', version, userErrors})
     await inTemporaryDirectory(async (tmp) => {
       await withCapturedStandardStreams(async ({stdout, stderr}) => {
         await expect(runRelease(['--path', tmp, '--version', 'v1', '--json', '--allow-updates'])).rejects.toThrow()
         expect(JSON.parse(stdout())).toMatchObject({
-          error:
-            failure === 'missing version'
-              ? {type: 'abort', message: 'Version not found.'}
-              : {type: 'abort', message: "Version couldn't be released.", details: {userErrors}},
+          error: {type: 'abort', message: "Version couldn't be released.", details: {userErrors}},
         })
         expect(stderr()).toBe('')
+      })
+    })
+  })
+
+  test.each(['json', 'text'])('missing version uses the shared %s error handler', async (format) => {
+    vi.stubEnv('SHOPIFY_FLAG_JSON', format === 'json' ? '1' : '0')
+    const {release: releaseService} =
+      await vi.importActual<typeof import('../../services/release.js')>('../../services/release.js')
+    vi.mocked(release).mockImplementationOnce(releaseService)
+    vi.mocked(linkedAppContext).mockResolvedValueOnce({
+      app: testAppLinked(),
+      remoteApp: testOrganizationApp(),
+      developerPlatformClient: testDeveloperPlatformClient({
+        appVersionByTag: vi.fn().mockRejectedValue(new AbortError('HTTP 404: Cannot find a valid organization')),
+      }),
+    } as unknown as Awaited<ReturnType<typeof linkedAppContext>>)
+    await inTemporaryDirectory(async (directory) => {
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        const argv = ['--path', directory, '--version', 'missing', '--allow-updates']
+        if (format === 'json') argv.push('--json')
+        await expect(runRelease(argv)).rejects.toThrow()
+        if (format === 'json') {
+          expect(JSON.parse(stdout())).toEqual({error: {type: 'abort', message: 'Version missing could not be found.'}})
+          expect(stderr()).toBe('')
+        } else {
+          expect(stdout()).toBe('')
+          expect(unstyled(stderr())).toContain('Version missing could not be found.')
+        }
       })
     })
   })

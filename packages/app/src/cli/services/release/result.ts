@@ -1,5 +1,4 @@
 import {appReleaseJsonOutputSchema, type AppReleaseResult, type ReleaseResult} from './types.js'
-import {ReleaseVersionLookupError} from './version-diff.js'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderError, renderSuccess, type TokenItem} from '@shopify/cli-kit/node/ui'
@@ -35,22 +34,6 @@ export function renderAppReleaseResult(
   } else {
     renderSuccess({headline: 'Version released to users.', body: linkAndMessage})
   }
-}
-
-export function renderAppReleaseError(error: unknown, format: 'json' | 'text'): never {
-  if (format === 'json') {
-    const cause = error instanceof ReleaseVersionLookupError ? error.cause : error
-    if (cause instanceof AbortSilentError) {
-      throw new AbortError('The app version could not be released. See the release diagnostics for details.')
-    }
-    throw cause
-  }
-  if (!(error instanceof ReleaseVersionLookupError)) throw error
-  renderError({
-    headline: "Version couldn't be released.",
-    body: ['Version', {userInput: error.versionTag}, 'could not be found.'],
-  })
-  throw new AbortSilentError()
 }
 
 function appReleaseResult(

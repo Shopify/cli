@@ -1,15 +1,7 @@
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {AppVersionWithContext, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
-
-export class ReleaseVersionLookupError extends Error {
-  constructor(
-    public readonly versionTag: string,
-    cause: unknown,
-  ) {
-    super(`Version ${versionTag} could not be found.`, {cause})
-  }
-}
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export async function versionDiffByVersion(
   app: MinimalOrganizationApp,
@@ -36,9 +28,8 @@ async function versionDetailsByTag(
   developerPlatformClient: DeveloperPlatformClient,
 ) {
   try {
-    const appVersion = await developerPlatformClient.appVersionByTag(app, versionTag)
-    return appVersion
-  } catch (err) {
-    throw new ReleaseVersionLookupError(versionTag, err)
+    return await developerPlatformClient.appVersionByTag(app, versionTag)
+  } catch {
+    throw new AbortError(`Version ${versionTag} could not be found.`)
   }
 }

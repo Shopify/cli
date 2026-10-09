@@ -1,9 +1,8 @@
-import {renderAppReleaseError, renderAppReleaseResult} from './result.js'
-import {ReleaseVersionLookupError} from './version-diff.js'
+import {renderAppReleaseResult} from './result.js'
 import {testOrganizationApp} from '../../models/app/app.test-data.js'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {unstyled} from '@shopify/cli-kit/node/output'
-import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {expect, test} from 'vitest'
 import type {ReleaseResult} from './types.js'
 
@@ -57,21 +56,4 @@ test('text retains the failed release banner and exit behavior', async () => {
 
 test('text retains silent cancellation', () => {
   expect(() => renderAppReleaseResult({status: 'cancelled'}, testOrganizationApp(), 'text')).toThrow(AbortSilentError)
-})
-
-test('text preserves the missing-version banner, while JSON retains the original failure', async () => {
-  const cause = new AbortError('Version not found for tag: missing')
-  const error = new ReleaseVersionLookupError('missing', cause)
-  await withCapturedStandardStreams(async ({stdout, stderr}) => {
-    expect(() => renderAppReleaseError(error, 'text')).toThrow(AbortSilentError)
-    expect(unstyled(stderr())).toContain('Version missing could not be found.')
-    expect(stdout()).toBe('')
-    expect(() => renderAppReleaseError(error, 'json')).toThrow(cause)
-  })
-})
-
-test('does not turn unrelated failures into cancellation', () => {
-  const cause = new AbortSilentError()
-  expect(() => renderAppReleaseError(cause, 'json')).toThrow(AbortError)
-  expect(() => renderAppReleaseError(cause, 'text')).toThrow(cause)
 })

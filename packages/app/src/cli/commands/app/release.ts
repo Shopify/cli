@@ -1,14 +1,12 @@
 import {appFlags} from '../../flags.js'
 import {release} from '../../services/release.js'
 import {appReleaseJsonOutputSchema} from '../../services/release/types.js'
-import {renderAppReleaseError, renderAppReleaseResult} from '../../services/release/result.js'
-import {ReleaseVersionLookupError} from '../../services/release/version-diff.js'
+import {renderAppReleaseResult} from '../../services/release/result.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 export default class Release extends AppLinkedCommand {
@@ -73,23 +71,15 @@ export default class Release extends AppLinkedCommand {
       userProvidedConfigName: flags.config,
     })
 
-    let result
-    try {
-      result = await release({
-        app,
-        remoteApp,
-        developerPlatformClient,
-        force,
-        allowUpdates,
-        allowDeletes,
-        version: flags.version,
-      })
-    } catch (error) {
-      if (error instanceof ReleaseVersionLookupError || error instanceof AbortSilentError) {
-        renderAppReleaseError(error, flags.json ? 'json' : 'text')
-      }
-      throw error
-    }
+    const result = await release({
+      app,
+      remoteApp,
+      developerPlatformClient,
+      force,
+      allowUpdates,
+      allowDeletes,
+      version: flags.version,
+    })
     renderAppReleaseResult(result, remoteApp, flags.json ? 'json' : 'text')
     return {app}
   }
