@@ -8,10 +8,7 @@ export type ThemeDeleteMutationVariables = Types.Exact<{
 }>
 
 export type ThemeDeleteMutation = {
-  themeDelete?: {
-    deletedThemeId?: string | null
-    userErrors: {field?: string[] | null; message: string}[]
-  } | null
+  themeDelete?: {deletedThemeId?: string | null; userErrors: {field?: string[] | null; message: string}[]} | null
 }
 
 export const ThemeDelete = {

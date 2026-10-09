@@ -1,8 +1,9 @@
 {
     "extends": "./tsconfig.json",
+    "compilerOptions": {"tsBuildInfoFile": "dist/tsconfig.build.tsbuildinfo"},
     "exclude": ["**/*.test.ts"],
     "references": [
-      {"path": "../cli-kit"},
-      {"path": "../theme"}
+      {"path": "../cli-kit/tsconfig.build.json"},
+      {"path": "../theme/tsconfig.build.json"}
     ]
 }
