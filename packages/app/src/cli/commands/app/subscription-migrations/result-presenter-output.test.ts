@@ -9,7 +9,6 @@ import {watchMigrationOperations} from '../../../services/subscription-migration
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-// eslint-disable-next-line compat/n-prefer-global-console
 import {Console} from 'node:console'
 import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
 
