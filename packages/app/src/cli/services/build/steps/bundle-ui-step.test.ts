@@ -61,6 +61,35 @@ describe('executeBundleUIStep', () => {
     })
   })
 
+  test('does not copy source maps into the deploy bundle', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionDir = joinPath(tmpDir, 'extension')
+      const localOutputDir = joinPath(extensionDir, 'dist')
+      const bundleDir = joinPath(tmpDir, 'bundle')
+      const bundleOutputDir = joinPath(bundleDir, 'handle')
+
+      await mkdir(localOutputDir)
+      await mkdir(joinPath(localOutputDir, 'assets'))
+      await writeFile(joinPath(localOutputDir, 'handle.js'), 'console.log("hello")')
+      await writeFile(joinPath(localOutputDir, 'handle.js.map'), '{"version":3}')
+      await writeFile(joinPath(localOutputDir, 'assets', 'widget.js'), 'console.log("widget")')
+
+      mockContext.extension.directory = extensionDir
+      mockContext.extension.outputPath = joinPath(bundleOutputDir, 'handle.js')
+      vi.mocked(buildExtension.buildUIExtension).mockResolvedValue(joinPath(localOutputDir, 'handle.js'))
+
+      // When
+      await executeBundleUIStep(step, mockContext)
+
+      // Then
+      await expect(fileExists(joinPath(bundleOutputDir, 'handle.js'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(bundleOutputDir, 'assets', 'widget.js'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(bundleOutputDir, 'handle.js.map'))).resolves.toBe(false)
+      await expect(fileExists(joinPath(localOutputDir, 'handle.js.map'))).resolves.toBe(true)
+    })
+  })
+
   test('skips the copy when local and bundle output directories resolve to the same path but differ as strings', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
