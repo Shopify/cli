@@ -14,6 +14,7 @@ import {AbortError} from './error.js'
 import {cwd, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {execa} from 'execa'
+import {lt} from 'semver'
 
 import ignore from 'ignore'
 
@@ -344,6 +345,78 @@ export async function ensureGitIsPresentOrAbort(): Promise<void> {
         'git',
         'https://git-scm.com/book/en/v2/Getting-Started-Installing-Git',
       )}`,
+    )
+  }
+}
+
+/**
+ * Parses the version from Git's documented `git version <version>` output shape.
+ *
+ * @param versionOutput - The complete output from `git --version`.
+ * @returns A semantic version, or undefined when the output doesn't have Git's expected shape.
+ */
+function parseGitVersion(versionOutput: string): string | undefined {
+  const match = /^git version (?<version>\d+\.\d+\.\d+)(?<suffix>[.\s-].*)?$/.exec(versionOutput.trim())
+  const version = match?.groups?.version
+  if (!version) return undefined
+
+  const releaseCandidate = /^(?:\.rc|-rc\.?)(?<number>\d+)(?:[.\s-].*)?$/.exec(match.groups?.suffix ?? '')
+  const releaseCandidateNumber = releaseCandidate?.groups?.number
+  // Git writes release candidates as `.rcN`; some distributions use `-rcN` or SemVer's `-rc.N`.
+  return releaseCandidateNumber ? `${version}-rc.${releaseCandidateNumber}` : version
+}
+
+export interface GitVersionCheckOptions {
+  /** The directory to run Git in. A version manager can select a different Git for each working directory. */
+  cwd?: string
+}
+
+/**
+ * Aborts when Git isn't installed, can't run, reports an unrecognized version, or is older than the required minimum.
+ *
+ * @param minimumVersion - The oldest supported Git version, in semantic version format.
+ * @param options - Where to run Git.
+ */
+export async function ensureGitVersionIsAtLeast(
+  minimumVersion: string,
+  options: GitVersionCheckOptions = {},
+): Promise<void> {
+  const {captureOutput} = await import('./system.js')
+  let versionOutput: string
+  try {
+    versionOutput = await captureOutput('git', ['--version'], {cwd: options.cwd})
+  } catch (error) {
+    // Refusing an unsafe `git` in the working directory already explains itself.
+    if (error instanceof AbortError) throw error
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+      throw new AbortError(
+        `Git ${minimumVersion} or later is required, but Git isn't installed.`,
+        `Install Git ${minimumVersion} or later, then try again.`,
+      )
+    }
+    const reason = error instanceof Error ? error.message : String(error)
+    outputDebug(outputContent`Couldn't run git --version: ${outputToken.raw(reason)}`)
+    throw new AbortError(
+      `Couldn't run Git to check its version.`,
+      `Check that Git ${minimumVersion} or later is installed and can run, then try again.`,
+    )
+  }
+
+  const installedVersion = parseGitVersion(versionOutput)
+  if (!installedVersion) {
+    outputDebug(
+      outputContent`Unrecognized git --version output: ${outputToken.raw(JSON.stringify(versionOutput.slice(0, 200)))}`,
+    )
+    throw new AbortError(
+      `Couldn't determine the installed Git version.`,
+      `Install Git ${minimumVersion} or later, then try again.`,
+    )
+  }
+
+  if (lt(installedVersion, minimumVersion)) {
+    throw new AbortError(
+      `Git ${minimumVersion} or later is required, but version ${installedVersion} is installed.`,
+      `Upgrade Git to version ${minimumVersion} or later, then try again.`,
     )
   }
 }

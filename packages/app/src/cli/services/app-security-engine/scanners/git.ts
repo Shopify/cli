@@ -1,3 +1,4 @@
+import {ensureGitVersionIsAtLeast} from '@shopify/cli-kit/node/git'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 
 export interface GitProtection {
@@ -18,11 +19,17 @@ export const UNTRUSTED_REPOSITORY_PROTECTIONS = {
   bareRepository: {args: ['-c', 'safe.bareRepository=explicit']},
   // A partial clone fetches a missing object on demand, running the repository's transport commands.
   lazyFetch: {env: {GIT_NO_LAZY_FETCH: '1'}},
-  // An empty allow-list refuses every transport, for Git versions that predate GIT_NO_LAZY_FETCH.
+  // An empty allow-list refuses every named transport, for Git versions that predate GIT_NO_LAZY_FETCH.
   transports: {env: {GIT_ALLOW_PROTOCOL: ''}},
+  // The allow-list still holds an empty name, which a remote's helper gets from an empty `vcs` or a URL that starts
+  // with `::`. Git runs that helper as `git remote-`, which falls back to the repository's `remote-` alias. The empty
+  // value replaces the alias, for Git versions that predate GIT_NO_LAZY_FETCH.
+  emptyRemoteHelper: {args: ['-c', 'alias.remote-=']},
 } satisfies {[name: string]: GitProtection}
 
 export type GitProtectionName = keyof typeof UNTRUSTED_REPOSITORY_PROTECTIONS
+
+const minimumAppSecurityGitVersion = '2.38.0'
 
 const protections: GitProtection[] = Object.values(UNTRUSTED_REPOSITORY_PROTECTIONS)
 const protectionArguments = protections.flatMap((protection) => protection.args ?? [])
@@ -37,8 +44,15 @@ interface GitResult {
   stdout: string
 }
 
-/** Runs Git in the directory. Undefined when Git can't be started. */
+/**
+ * Runs Git in the directory. Rejects when the Git selected there is missing, can't run, or is older than
+ * `minimumAppSecurityGitVersion`. Undefined when the command itself throws instead of exiting.
+ *
+ * A version manager can select a different Git for each working directory, so the version is checked where the
+ * command runs, before every command.
+ */
 export async function runGit(directory: string, args: string[]): Promise<GitResult | undefined> {
+  await ensureGitVersionIsAtLeast(minimumAppSecurityGitVersion, {cwd: directory})
   try {
     const result = await captureOutputWithExitCode('git', [...protectionArguments, ...args], {
       cwd: directory,

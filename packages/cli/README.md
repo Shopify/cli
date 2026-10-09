@@ -3758,7 +3758,8 @@ DESCRIPTION
 
   The check scans the app directory and each `--include-dir`. Git ignore rules apply by default: a file or directory
   that Git ignores is skipped, using the rules of the repository that contains it, while files that Git tracks are
-  always scanned. Use `--no-git-ignore` to turn Git ignore rules off for every scanned directory.
+  always scanned. Use `--no-git-ignore` to turn Git ignore rules off for every scanned directory. When the check uses
+  Git, it requires Git 2.38.0 or later.
 
   Use `--exclude` to skip more paths. Each value is a glob that is matched against the path relative to the working
   directory, so a path above it starts with `../`, and a name at any depth needs `**/`, for example `--exclude

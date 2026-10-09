@@ -1,6 +1,6 @@
 import {AbortSignal} from './abort.js'
 import {AbortError, ExternalError} from './error.js'
-import {cwd, dirname} from './path.js'
+import {cwd, joinPath} from './path.js'
 import {treeKill} from './tree-kill.js'
 import {isTruthy} from './context/utilities.js'
 import {renderWarning} from './ui.js'
@@ -11,7 +11,6 @@ import {isInputDisabled} from './no-input.js'
 import {execa, ExecaChildProcess} from 'execa'
 import supportsHyperlinks from 'supports-hyperlinks'
 import which from 'which'
-import {delimiter} from 'pathe'
 
 import {fstatSync, existsSync, readFileSync} from 'fs'
 import {release} from 'os'
@@ -284,7 +283,7 @@ function buildExec(
     env.FORCE_COLOR = '1'
   }
   const executionCwd = options?.cwd ?? cwd()
-  checkCommandSafety(command, {cwd: executionCwd})
+  checkCommandSafety(command, executionCwd)
   const backgroundStdio = options?.input === undefined ? 'ignore' : (['pipe', 'ignore', 'ignore'] as const)
   const commandProcess = execa(command, args, {
     env,
@@ -308,13 +307,19 @@ function buildExec(
   return commandProcess
 }
 
-function checkCommandSafety(command: string, _options: {cwd: string}): void {
-  const pathIncludingLocal = `${_options.cwd}${delimiter}${process.env.PATH}`
-  const commandPath = which.sync(command, {
-    nothrow: true,
-    path: pathIncludingLocal,
-  })
-  if (commandPath && dirname(commandPath) === _options.cwd) {
+/**
+ * Refuses a bare command name that matches an executable in the working directory, because that directory may be
+ * untrusted and Windows looks there before PATH. The name is looked up as a file in the working directory, with
+ * Windows executable extensions, instead of through a search path, which would split a directory whose name contains
+ * the path delimiter. A command given as a path runs the file the caller named, so it isn't checked.
+ *
+ * @param command - The command to run.
+ * @param workingDirectory - The directory the command runs in.
+ * @throws AbortError when the command matches an executable in the working directory.
+ */
+function checkCommandSafety(command: string, workingDirectory: string): void {
+  if (/[\\/]/.test(command)) return
+  if (which.sync(joinPath(workingDirectory, command), {nothrow: true})) {
     const headline = ['Skipped run of unsecure binary', {command}, 'found in the current directory.']
     const body = 'Please remove that file or review your current PATH.'
     renderWarning({headline, body})

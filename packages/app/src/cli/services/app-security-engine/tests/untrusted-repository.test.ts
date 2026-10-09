@@ -94,8 +94,8 @@ function committedBareRepository(): Fixture {
   return {directory: join(parent, 'clone', 'app'), marker, probe: ['ls-files', '--cached']}
 }
 
-/** A partial clone missing a skip-worktree .gitignore, which Git would fetch through the named transport command. */
-function partialCloneMissingObject(): Fixture {
+/** A partial clone missing a skip-worktree .gitignore, which listing ignored files makes Git fetch from its remote. */
+function partialCloneMissingIgnoreFile(): Fixture {
   const directory = makeDirectory()
   const marker = join(makeDirectory(), 'ran')
   git(directory, ['init', '-q', '.'])
@@ -111,10 +111,32 @@ function partialCloneMissingObject(): Fixture {
   rmSync(object)
   git(directory, ['config', 'core.repositoryformatversion', '1'])
   git(directory, ['config', 'extensions.partialClone', 'origin'])
-  git(directory, ['config', 'remote.origin.url', 'ssh://example.invalid/app'])
   git(directory, ['config', 'remote.origin.promisor', 'true'])
-  git(directory, ['config', 'core.sshCommand', recordingCommand(marker, 'ssh')])
   return {directory, marker, probe: ['ls-files', '-z', '--others', '--ignored', '--exclude-standard', '--directory']}
+}
+
+/** A partial clone that would fetch its missing object through the transport command it names. */
+function partialCloneMissingObject(): Fixture {
+  const fixture = partialCloneMissingIgnoreFile()
+  git(fixture.directory, ['config', 'remote.origin.url', 'ssh://example.invalid/app'])
+  git(fixture.directory, ['config', 'core.sshCommand', recordingCommand(fixture.marker, 'ssh')])
+  return fixture
+}
+
+/**
+ * A partial clone whose remote names the empty helper, through an empty `vcs` or a URL that starts with `::`, so Git
+ * would fetch its missing object by running the repository's `remote-` alias.
+ */
+function partialCloneWithEmptyHelper(namedBy: 'vcs' | 'url'): Fixture {
+  const fixture = partialCloneMissingIgnoreFile()
+  if (namedBy === 'vcs') {
+    git(fixture.directory, ['config', 'remote.origin.url', 'ssh://example.invalid/app'])
+    git(fixture.directory, ['config', 'remote.origin.vcs', ''])
+  } else {
+    git(fixture.directory, ['config', 'remote.origin.url', '::example.invalid/app'])
+  }
+  git(fixture.directory, ['config', 'alias.remote-', `!${recordingCommand(fixture.marker, 'empty-helper')}`])
+  return fixture
 }
 
 /** Runs Git without the engine; a protection may make it refuse, so the exit status isn't checked. */
@@ -142,6 +164,7 @@ const fixtureFor: Record<GitProtectionName, () => Fixture> = {
   bareRepository: committedBareRepository,
   lazyFetch: partialCloneMissingObject,
   transports: partialCloneMissingObject,
+  emptyRemoteHelper: () => partialCloneWithEmptyHelper('vcs'),
 }
 
 describe('each untrusted repository protection, on its own', () => {
@@ -150,6 +173,15 @@ describe('each untrusted repository protection, on its own', () => {
     expectPlainGitRunsProgram(fixture)
 
     plainGit(fixture, UNTRUSTED_REPOSITORY_PROTECTIONS[name])
+
+    expect(existsSync(fixture.marker)).toBe(false)
+  })
+
+  test('emptyRemoteHelper also stops the empty helper named by a URL that starts with ::', () => {
+    const fixture = partialCloneWithEmptyHelper('url')
+    expectPlainGitRunsProgram(fixture)
+
+    plainGit(fixture, UNTRUSTED_REPOSITORY_PROTECTIONS.emptyRemoteHelper)
 
     expect(existsSync(fixture.marker)).toBe(false)
   })
