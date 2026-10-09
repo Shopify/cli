@@ -595,7 +595,8 @@
         "typescript/no-unnecessary-template-expression": "error",
         "typescript/restrict-plus-operands": "off",
         "typescript/non-nullable-type-assertion-style": "off",
-        "typescript/prefer-reduce-type-parameter": "error"
+        "typescript/prefer-reduce-type-parameter": "error",
+        "@shopify/cli/required-fields-when-loading-app": "off"
       }
     },
     {
