@@ -1,8 +1,10 @@
 import {submissionFlags} from './flags.js'
 import {presentAcceptedMigrationSubmission, presentMigrationSubmissionResult} from './result-presenter.js'
+import {migrationSubmissionJsonOutputSchema} from '../../../services/subscription-migrations/types.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {runSubmissionCommand} from '../../../services/subscription-migrations/run-submission-command.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
+import {jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class Unschedule extends AppLinkedCommand {
   static summary = 'Reverses app subscription migrations that are still scheduled.'
@@ -22,7 +24,7 @@ Operations are submitted in batches of 250 shops. Preserve every operation GID p
 
 Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use \`--path\` to select an app directory or \`--config\` to select a configuration. Pass \`--client-id\` to select a different app within the project. Use \`--reset\` to relink the app.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static examples = [
     '<%= config.bin %> <%= command.id %> --input migrations.csv --force',
@@ -32,7 +34,11 @@ Run the command from an app project. By default, it uses the Client ID from the 
     '<%= config.bin %> <%= command.id %> --input - --force --watch',
   ]
 
-  static flags = {...submissionFlags}
+  static flags = {...submissionFlags, ...jsonFlag}
+
+  static get jsonOutputSchema() {
+    return migrationSubmissionJsonOutputSchema
+  }
 
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Unschedule)
