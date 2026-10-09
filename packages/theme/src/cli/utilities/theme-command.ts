@@ -143,8 +143,11 @@ export default abstract class ThemeCommand extends Command {
 
   /**
    * Admin API scopes that a stored `store auth` session must include for this
-   * command to reuse it. Commands opt in to reusing store auth sessions by
-   * returning the scopes they require; the default opts the command out.
+   * command to reuse it. Commands opt in to reusing standard store auth
+   * sessions by returning the scopes they require; the default opts the command
+   * out of standard sessions. Every theme command reuses preview store sessions
+   * regardless, because the CLI mints those for the store and cannot re-mint
+   * them.
    */
   protected storeAuthScopes(): string[] | undefined {
     return undefined
@@ -369,9 +372,6 @@ export default abstract class ThemeCommand extends Command {
   }
 
   private async storeAuthSessionForTheme(flags: FlagValues): Promise<AdminSession | undefined> {
-    const requiredScopes = this.storeAuthScopes()
-    if (!requiredScopes) return undefined
-
     const store = typeof flags.store === 'string' ? flags.store : undefined
     const password = flags.password
     if (!store || password) return undefined
@@ -380,12 +380,11 @@ export default abstract class ThemeCommand extends Command {
     const storedSession = getCurrentStoredStoreAppSession(storeFqdn)
     if (!storedSession) return undefined
 
-    return this.adminSessionFromStoreAuthSession(storedSession, storeFqdn, requiredScopes)
+    return this.adminSessionFromStoreAuthSession(storedSession, storeFqdn, this.storeAuthScopes())
   }
 
   private storeAuthSessionsForTheme(flagsList: FlagValues[]): Map<string, AdminSession> {
     const requiredScopes = this.storeAuthScopes()
-    if (!requiredScopes) return new Map()
 
     const stores = new Set(
       flagsList
@@ -421,7 +420,7 @@ export default abstract class ThemeCommand extends Command {
   private adminSessionFromStoreAuthSession(
     storedSession: StoredStoreAppSession,
     storeFqdn: string,
-    requiredScopes: string[],
+    requiredScopes: string[] | undefined,
   ): AdminSession | undefined {
     if (isSessionExpired(storedSession)) {
       outputDebug(
@@ -430,13 +429,23 @@ export default abstract class ThemeCommand extends Command {
       return undefined
     }
 
-    if (!this.hasRequiredStoreAuthScopes(storedSession.scopes, requiredScopes)) {
-      outputDebug(
-        `Ignoring stored store auth session for ${storeFqdn}: it is missing required scopes (has: ${storedSession.scopes.join(
-          ', ',
-        )}; needs: ${requiredScopes.join(', ')}).`,
-      )
-      return undefined
+    const isPreviewSession = storedSession.kind === 'preview'
+    if (!isPreviewSession) {
+      if (!requiredScopes) {
+        outputDebug(
+          `Ignoring stored store auth session for ${storeFqdn}: it is a standard session and this command only reuses preview store sessions.`,
+        )
+        return undefined
+      }
+
+      if (!this.hasRequiredStoreAuthScopes(storedSession.scopes, requiredScopes)) {
+        outputDebug(
+          `Ignoring stored store auth session for ${storeFqdn}: it is missing required scopes (has: ${storedSession.scopes.join(
+            ', ',
+          )}; needs: ${requiredScopes.join(', ')}).`,
+        )
+        return undefined
+      }
     }
 
     outputDebug(`Using stored store auth session for ${storeFqdn} (scopes: ${storedSession.scopes.join(', ')}).`)
