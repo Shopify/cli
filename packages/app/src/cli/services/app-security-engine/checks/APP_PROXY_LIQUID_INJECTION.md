@@ -1,6 +1,6 @@
 ---
 id: APP_PROXY_LIQUID_INJECTION
-version: 2
+version: 3
 severity: high
 precedence: prefer-agent
 ---
