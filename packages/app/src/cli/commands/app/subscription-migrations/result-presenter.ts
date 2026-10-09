@@ -8,11 +8,9 @@ import type {MigrationOperation} from '../../../models/subscription-migrations.j
 import type {
   MigrationCancellationOutcome,
   MigrationCancellationResult,
-} from '../../../services/subscription-migrations/types.js'
-import type {
   MigrationSubmission,
   MigrationSubmissionResult,
-} from '../../../services/subscription-migrations/submit-migration-plan.js'
+} from '../../../services/subscription-migrations/types.js'
 
 interface SubmissionPresentationOptions {
   json: boolean
@@ -31,6 +29,25 @@ export function presentMigrationSubmissionResult(
   result: MigrationSubmissionResult,
   options: SubmissionPresentationOptions,
 ): 0 | 1 {
+  if (result.status === 'failed' && result.submission.operations.length === 0) {
+    const message = [
+      'Subscription migration submission failed.',
+      ...(result.failure.type === 'submission' ? result.failure.userErrors.map(({message}) => message) : []),
+    ].join('\n')
+    const error = new AbortError(message)
+    error.details =
+      result.failure.type === 'submission'
+        ? {
+            batchIndex: result.failure.batchIndex,
+            userErrors: result.failure.userErrors.map(({message, field}) => ({message, fieldPath: field})),
+          }
+        : {operationGids: result.failure.operationIds}
+    throw error
+  }
+  if (result.status === 'cancelled') {
+    if (options.json) outputResult(encodeMigrationSubmissionResult(result))
+    return 0
+  }
   if (options.json) {
     outputResult(encodeMigrationSubmissionResult(result))
   } else if (result.status === 'failed') {

@@ -1,5 +1,5 @@
 import {JsonAbortErrorSchema, JsonErrorSchema} from '@shopify/cli-kit/node/error/schema'
-import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 import type {MigrationOperation} from '../../models/subscription-migrations.js'
 import type {MigrationUserError} from './partners-api.js'
@@ -134,3 +134,79 @@ export const migrationListJsonOutputSchema = defineJsonOutputSchema({
     MigratableSubscriptionNotification: MigratableSubscriptionNotificationSchema,
   },
 })
+
+const SubmittedMigrationOperationSchema = zod
+  .object({
+    batchIndex: zod.number().int().nonnegative(),
+    batchPayloadDigest: zod.string().min(1),
+    operation: MigrationOperationSchema,
+  })
+  .strict()
+
+const MigrationSubmissionFailureSchema = zod.discriminatedUnion('type', [
+  zod
+    .object({
+      type: zod.literal('submission'),
+      batchIndex: zod.number().int().nonnegative(),
+      userErrors: zod.array(MigrationUserErrorSchema),
+    })
+    .strict(),
+  zod.object({type: zod.literal('operations'), operationGids: zod.array(MigrationOperationGidSchema)}).strict(),
+])
+
+// Fresh field schemas keep generated references from pointing into the unnamed result union.
+function migrationSubmissionShape() {
+  return {
+    clientId: zod.string().min(1).describe('The app client ID, not a Shopify GID.'),
+    action: zod.enum(['schedule', 'unschedule']),
+    inputDigest: zod.string().min(1),
+    total: zod.number().int().nonnegative(),
+    operations: zod.array(SubmittedMigrationOperationSchema),
+  }
+}
+
+export const migrationSubmissionJsonOutputSchema = defineJsonOutputSchema({
+  name: 'MigrationSubmissionResult',
+  schema: zod.discriminatedUnion('status', [
+    zod.object({status: zod.literal('success'), changed: zod.boolean(), ...migrationSubmissionShape()}).strict(),
+    zod
+      .object({
+        status: zod.literal('partial'),
+        changed: zod.boolean(),
+        ...migrationSubmissionShape(),
+        failure: MigrationSubmissionFailureSchema,
+      })
+      .strict(),
+    zod
+      .object({
+        status: zod.literal('cancelled'),
+        changed: zod.literal(false),
+        action: zod.enum(['schedule', 'unschedule']),
+        reason: zod.string(),
+      })
+      .strict(),
+  ]),
+  definitions: {
+    SubmittedMigrationOperation: SubmittedMigrationOperationSchema,
+    MigrationOperation: MigrationOperationSchema,
+    MigrationSubmissionFailure: MigrationSubmissionFailureSchema,
+    MigrationUserError: MigrationUserErrorSchema,
+  },
+})
+
+export type MigrationSubmissionJsonOutput = InferJsonOutputSchema<typeof migrationSubmissionJsonOutputSchema>
+export interface MigrationSubmission {
+  clientId: string
+  action: 'schedule' | 'unschedule'
+  inputDigest: string
+  total: number
+  operations: {batchIndex: number; batchPayloadDigest: string; operation: MigrationOperation}[]
+}
+
+type MigrationSubmissionFailure =
+  | {type: 'submission'; batchIndex: number; userErrors: MigrationUserError[]}
+  | {type: 'operations'; operationIds: string[]}
+export type MigrationSubmissionResult =
+  | {status: 'success'; submission: MigrationSubmission}
+  | {status: 'failed'; submission: MigrationSubmission; failure: MigrationSubmissionFailure}
+  | {status: 'cancelled'; changed: false; action: 'schedule' | 'unschedule'; reason: string}

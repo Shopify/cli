@@ -4805,6 +4805,297 @@ DESCRIPTION
   accepted identifiers before polling begins, then displays operation progress and the final outcome. With `--json
   --watch`, the command outputs one structured JSON document after every operation reaches a terminal status.
 
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `MigrationSubmissionResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "changed": {
+            "type": "boolean"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The app client ID, not a Shopify GID."
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "schedule",
+              "unschedule"
+            ]
+          },
+          "inputDigest": {
+            "type": "string",
+            "minLength": 1
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/SubmittedMigrationOperation"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "changed",
+          "clientId",
+          "action",
+          "inputDigest",
+          "total",
+          "operations"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "partial"
+          },
+          "changed": {
+            "type": "boolean"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The app client ID, not a Shopify GID."
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "schedule",
+              "unschedule"
+            ]
+          },
+          "inputDigest": {
+            "type": "string",
+            "minLength": 1
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/SubmittedMigrationOperation"
+            }
+          },
+          "failure": {
+            "$ref": "#/definitions/MigrationSubmissionFailure"
+          }
+        },
+        "required": [
+          "status",
+          "changed",
+          "clientId",
+          "action",
+          "inputDigest",
+          "total",
+          "operations",
+          "failure"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "cancelled"
+          },
+          "changed": {
+            "type": "boolean",
+            "const": false
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "schedule",
+              "unschedule"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "changed",
+          "action",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "MigrationSubmissionResult",
+    "definitions": {
+      "SubmittedMigrationOperation": {
+        "type": "object",
+        "properties": {
+          "batchIndex": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "batchPayloadDigest": {
+            "type": "string",
+            "minLength": 1
+          },
+          "operation": {
+            "$ref": "#/definitions/MigrationOperation"
+          }
+        },
+        "required": [
+          "batchIndex",
+          "batchPayloadDigest",
+          "operation"
+        ],
+        "additionalProperties": false
+      },
+      "MigrationOperation": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/AppSubscriptionMigrationOperation\\/[^/]+$",
+            "description": "The Shopify AppSubscriptionMigrationOperation GID."
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Upstream status: RUNNING, COMPLETED, FAILED, or CANCELED."
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "shopGid": {
+                  "type": "string",
+                  "pattern": "^gid:\\/\\/shopify\\/Shop\\/\\d+$",
+                  "description": "The Shopify Shop GID."
+                },
+                "code": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The upstream per-shop migration result code."
+                }
+              },
+              "required": [
+                "shopGid",
+                "code"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "gid",
+          "status",
+          "total",
+          "results"
+        ],
+        "additionalProperties": false
+      },
+      "MigrationSubmissionFailure": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "submission"
+              },
+              "batchIndex": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "userErrors": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/MigrationUserError"
+                }
+              }
+            },
+            "required": [
+              "type",
+              "batchIndex",
+              "userErrors"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "operations"
+              },
+              "operationGids": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/MigrationOperation/properties/gid"
+                }
+              }
+            },
+            "required": [
+              "type",
+              "operationGids"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "MigrationUserError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "fieldPath": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "message",
+          "fieldPath"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify app subscription-migrations schedule --input migrations.csv --force
 

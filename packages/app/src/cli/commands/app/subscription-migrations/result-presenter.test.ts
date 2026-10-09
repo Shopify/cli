@@ -3,15 +3,16 @@ import {
   presentMigrationCancellationResult,
   presentMigrationSubmissionResult,
 } from './result-presenter.js'
+import {projectMigrationSubmissionResult} from '../../../services/subscription-migrations/result-codec.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import type {MigrationOperation} from '../../../models/subscription-migrations.js'
-import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
 import type {
+  MigrationCancellationResult,
   MigrationSubmission,
   MigrationSubmissionResult,
-} from '../../../services/subscription-migrations/submit-migration-plan.js'
+} from '../../../services/subscription-migrations/types.js'
 
 vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@shopify/cli-kit/node/output')>()
@@ -55,7 +56,9 @@ describe('migration submission result presenter', () => {
 
     expect(exitCode).toBe(0)
     expect(outputResult).toHaveBeenCalledOnce()
-    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(value)
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(
+      projectMigrationSubmissionResult(result),
+    )
     expect(renderSuccess).not.toHaveBeenCalled()
     expect(renderWarning).not.toHaveBeenCalled()
   })
@@ -76,10 +79,9 @@ describe('migration submission result presenter', () => {
 
     expect(exitCode).toBe(1)
     expect(outputResult).toHaveBeenCalledOnce()
-    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
-      ...value,
-      failure: {type: 'operations', operationIds: ['gid://shopify/AppSubscriptionMigrationOperation/operation-one']},
-    })
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(
+      projectMigrationSubmissionResult(result),
+    )
     expect(renderSuccess).not.toHaveBeenCalled()
     expect(renderWarning).not.toHaveBeenCalled()
   })
@@ -193,26 +195,47 @@ describe('migration submission result presenter', () => {
     expect(outputResult).not.toHaveBeenCalled()
   })
 
-  test('reports a failed submission without claiming operations were accepted', () => {
-    const value = submission()
-    value.operations = []
-    const result: MigrationSubmissionResult = {
-      status: 'failed',
-      submission: value,
-      failure: {
-        type: 'submission',
-        batchIndex: 0,
-        userErrors: [{message: 'App not found', field: ['apiKey']}],
-      },
+  test.each([false, true])(
+    'throws a fatal error for a failed submission without accepted work with json=%s',
+    (json) => {
+      const value = {...submission(), operations: []}
+      const result: MigrationSubmissionResult = {
+        status: 'failed',
+        submission: value,
+        failure: {
+          type: 'submission',
+          batchIndex: 0,
+          userErrors: [
+            {message: 'App not found', field: ['apiKey']},
+            {message: 'Invalid plan', field: null},
+          ],
+        },
+      }
+      expect(() => presentMigrationSubmissionResult(result, {json, watch: false})).toThrow(
+        expect.objectContaining({
+          message: 'Subscription migration submission failed.\nApp not found\nInvalid plan',
+          details: {
+            batchIndex: 0,
+            userErrors: [
+              {message: 'App not found', fieldPath: ['apiKey']},
+              {message: 'Invalid plan', fieldPath: null},
+            ],
+          },
+        }),
+      )
+      expect(outputResult).not.toHaveBeenCalled()
+    },
+  )
+
+  test('writes a declined confirmation result and exits zero', () => {
+    const result = {
+      status: 'cancelled' as const,
+      changed: false as const,
+      action: 'schedule' as const,
+      reason: 'Confirmation declined.',
     }
-
-    const exitCode = presentMigrationSubmissionResult(result, {json: false, watch: false})
-
-    expect(exitCode).toBe(1)
-    expect(renderWarning).toHaveBeenCalledWith(
-      expect.objectContaining({headline: 'Subscription migration submission failed.'}),
-    )
-    expect(JSON.stringify(vi.mocked(renderWarning).mock.calls[0]?.[0])).not.toContain('operations were accepted')
+    expect(presentMigrationSubmissionResult(result, {json: true, watch: false})).toBe(0)
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(result)
   })
 })
 

@@ -1,12 +1,15 @@
 import {encodeMigrationCancellationResult, encodeMigrationSubmissionResult} from './result-codec.js'
-import {migrationCancellationJsonOutputSchema} from '../../../services/subscription-migrations/types.js'
+import {
+  migrationCancellationJsonOutputSchema,
+  migrationSubmissionJsonOutputSchema,
+} from '../../../services/subscription-migrations/types.js'
 import {describe, expect, test} from 'vitest'
 import type {MigrationOperation} from '../../../models/subscription-migrations.js'
-import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
 import type {
+  MigrationCancellationResult,
   MigrationSubmission,
   MigrationSubmissionResult,
-} from '../../../services/subscription-migrations/submit-migration-plan.js'
+} from '../../../services/subscription-migrations/types.js'
 
 function operation(id: string): MigrationOperation {
   return {id, status: 'RUNNING', total: 1, results: {edges: []}}
@@ -29,69 +32,78 @@ function submission(): MigrationSubmission {
 }
 
 describe('subscription migration result codecs', () => {
-  test('encodes a successful submission with the existing JSON shape', () => {
-    const value = submission()
-    const result: MigrationSubmissionResult = {status: 'success', submission: value}
+  const publicSubmission = {
+    clientId: 'client-id',
+    action: 'schedule',
+    inputDigest: 'input-digest',
+    total: 1,
+    operations: [
+      {
+        batchIndex: 0,
+        batchPayloadDigest: 'batch-digest',
+        operation: {
+          gid: 'gid://shopify/AppSubscriptionMigrationOperation/operation-one',
+          status: 'RUNNING',
+          total: 1,
+          results: [],
+        },
+      },
+    ],
+  }
 
-    const document = encodeMigrationSubmissionResult(result)
-
-    expect(JSON.parse(document)).toEqual(value)
-    expect(document).toBe(JSON.stringify(value, null, 2))
+  test('encodes a successful submission with the public projection', () => {
+    const document = encodeMigrationSubmissionResult({status: 'success', submission: submission()})
+    const expected = {status: 'success', changed: true, ...publicSubmission}
+    expect(JSON.parse(document)).toEqual(expected)
+    expect(document).toBe(JSON.stringify(expected, null, 2))
     expect(document).not.toContain('idempotencyKey')
   })
 
-  test('encodes accepted submission evidence and failure details in one JSON document', () => {
-    const value = submission()
+  test('retains accepted work and projects submission diagnostics', () => {
     const result: MigrationSubmissionResult = {
       status: 'failed',
-      submission: value,
+      submission: submission(),
       failure: {
         type: 'submission',
         batchIndex: 1,
         userErrors: [{message: 'Rejected remaining shops', field: ['input']}],
       },
     }
-
-    const document = encodeMigrationSubmissionResult(result)
-
-    expect(JSON.parse(document)).toEqual({
-      ...value,
+    expect(JSON.parse(encodeMigrationSubmissionResult(result))).toEqual({
+      status: 'partial',
+      changed: true,
+      ...publicSubmission,
       failure: {
         type: 'submission',
         batchIndex: 1,
-        userErrors: [{message: 'Rejected remaining shops', field: ['input']}],
+        userErrors: [{message: 'Rejected remaining shops', fieldPath: ['input']}],
       },
     })
   })
 
-  test('encodes terminal operation failure evidence in one JSON document', () => {
+  test('retains terminal upstream failure states inside the resource', () => {
     const value = submission()
-    value.operations[0]!.operation = {...value.operations[0]!.operation, status: 'FAILED'}
+    value.operations[0]!.operation.status = 'FAILED'
     const result: MigrationSubmissionResult = {
       status: 'failed',
       submission: value,
-      failure: {type: 'operations', operationIds: ['gid://shopify/AppSubscriptionMigrationOperation/operation-one']},
+      failure: {
+        type: 'operations',
+        operationIds: ['gid://shopify/AppSubscriptionMigrationOperation/operation-one'],
+      },
     }
-
-    const document = encodeMigrationSubmissionResult(result)
-
-    expect(JSON.parse(document)).toEqual({
-      ...value,
-      failure: {type: 'operations', operationIds: ['gid://shopify/AppSubscriptionMigrationOperation/operation-one']},
-    })
-    expect(document).toBe(
-      JSON.stringify(
+    expect(JSON.parse(encodeMigrationSubmissionResult(result))).toEqual({
+      status: 'partial',
+      changed: true,
+      ...publicSubmission,
+      operations: [
         {
-          ...value,
-          failure: {
-            type: 'operations',
-            operationIds: ['gid://shopify/AppSubscriptionMigrationOperation/operation-one'],
-          },
+          ...publicSubmission.operations[0],
+          operation: {...publicSubmission.operations[0]!.operation, status: 'FAILED'},
         },
-        null,
-        2,
-      ),
-    )
+      ],
+      failure: {type: 'operations', operationGids: ['gid://shopify/AppSubscriptionMigrationOperation/operation-one']},
+    })
   })
 
   test('rejects cancellation documents with an invalid outcome', () => {
@@ -213,5 +225,49 @@ describe('subscription migration result codecs', () => {
         2,
       ),
     )
+  })
+})
+
+describe('migration submission JSON contract', () => {
+  test('every generated JSON Schema reference resolves within the document', () => {
+    const schema = migrationSubmissionJsonOutputSchema.jsonSchema
+
+    JSON.parse(JSON.stringify(schema), (key, value: unknown) => {
+      if (key === '$ref' && typeof value === 'string') {
+        const referencedSchema = value
+          .slice(2)
+          .split('/')
+          .map((part) => part.replace(/~1/g, '/').replace(/~0/g, '~'))
+          .reduce<unknown>(
+            (node, part) =>
+              typeof node === 'object' && node !== null ? (node as Record<string, unknown>)[part] : undefined,
+            schema,
+          )
+        expect(referencedSchema, `Unresolved JSON Schema reference: ${value}`).not.toBeUndefined()
+      }
+      return value
+    })
+  })
+
+  test('reports an empty successful submission as an unchanged object', () => {
+    const value = {...submission(), total: 0, operations: []}
+    expect(JSON.parse(encodeMigrationSubmissionResult({status: 'success', submission: value}))).toEqual({
+      status: 'success',
+      changed: false,
+      ...value,
+    })
+  })
+
+  test('rejects invalid public submission fields', () => {
+    const valid = JSON.parse(encodeMigrationSubmissionResult({status: 'success', submission: submission()}))
+    for (const fields of [
+      {action: 'cancel'},
+      {total: '1'},
+      {total: -1},
+      {unexpected: true},
+      {operations: [{batchIndex: -1}]},
+    ]) {
+      expect(() => migrationSubmissionJsonOutputSchema.validate({...valid, ...fields})).toThrow()
+    }
   })
 })

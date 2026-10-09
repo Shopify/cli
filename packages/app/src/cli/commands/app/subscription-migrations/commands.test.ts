@@ -3,6 +3,7 @@ import List from './list.js'
 import Schedule from './schedule.js'
 import Status from './status.js'
 import Unschedule from './unschedule.js'
+import {projectMigrationSubmissionResult} from '../../../services/subscription-migrations/result-codec.js'
 import {appFlags} from '../../../flags.js'
 import {commands} from '../../../index.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
@@ -11,6 +12,7 @@ import {cancelMigrationOperations} from '../../../services/subscription-migratio
 import {
   migrationCancellationJsonOutputSchema,
   migrationListJsonOutputSchema,
+  migrationSubmissionJsonOutputSchema,
 } from '../../../services/subscription-migrations/types.js'
 import {outputOperations} from '../../../services/subscription-migrations/command-output.js'
 import {getMigrationOperations} from '../../../services/subscription-migrations/get-operations.js'
@@ -22,8 +24,10 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import type {MigrationOperation} from '../../../models/subscription-migrations.js'
-import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
-import type {MigrationSubmissionResult} from '../../../services/subscription-migrations/submit-migration-plan.js'
+import type {
+  MigrationCancellationResult,
+  MigrationSubmissionResult,
+} from '../../../services/subscription-migrations/types.js'
 
 vi.mock('../../../services/app-context.js')
 vi.mock('../../../services/subscription-migrations/cancel-operations.js', async (importOriginal) => ({
@@ -117,7 +121,7 @@ describe('subscription migration submission commands', () => {
     })
     expect(outputResult).toHaveBeenCalledOnce()
     expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(
-      successfulSubmissionResult.submission,
+      projectMigrationSubmissionResult(successfulSubmissionResult),
     )
     expect(result).toEqual({app})
   })
@@ -197,10 +201,9 @@ describe('subscription migration submission commands', () => {
 
     expect(process.exitCode).toBe(1)
     expect(outputResult).toHaveBeenCalledOnce()
-    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
-      ...failedResult.submission,
-      failure: failedResult.failure,
-    })
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(
+      projectMigrationSubmissionResult(failedResult),
+    )
     expect(renderWarning).not.toHaveBeenCalled()
   })
 
@@ -462,6 +465,12 @@ describe('subscription migration command metadata', () => {
     expect(List.description).toContain('```json')
   })
 
+  test('schedule exposes and documents the submission JSON output schema', () => {
+    expect(Schedule.jsonOutputSchema).toBe(migrationSubmissionJsonOutputSchema)
+    expect(Schedule.description).toContain('`MigrationSubmissionResult` schema')
+    expect(Schedule.description).toContain('```json')
+  })
+
   test('cancel exposes its JSON output schema', () => {
     expect(Cancel.jsonOutputSchema).toBe(migrationCancellationJsonOutputSchema)
   })
@@ -585,7 +594,7 @@ describe('subscription migration command metadata', () => {
     },
   )
 
-  test.each([Schedule, Unschedule, Status])('$name has no fenced-code markers in its plain description', (Command) => {
+  test.each([Unschedule, Status])('$name has no fenced-code markers in its plain description', (Command) => {
     expect(Command.description).not.toContain('```')
   })
 
