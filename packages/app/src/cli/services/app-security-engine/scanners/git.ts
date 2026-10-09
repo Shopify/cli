@@ -19,8 +19,12 @@ export const UNTRUSTED_REPOSITORY_PROTECTIONS = {
   bareRepository: {args: ['-c', 'safe.bareRepository=explicit']},
   // A partial clone fetches a missing object on demand, running the repository's transport commands.
   lazyFetch: {env: {GIT_NO_LAZY_FETCH: '1'}},
-  // An empty allow-list refuses every transport, for Git versions that predate GIT_NO_LAZY_FETCH.
+  // An empty allow-list refuses every named transport, for Git versions that predate GIT_NO_LAZY_FETCH.
   transports: {env: {GIT_ALLOW_PROTOCOL: ''}},
+  // The allow-list still holds an empty name, which a remote's helper gets from an empty `vcs` or a URL that starts
+  // with `::`. Git runs that helper as `git remote-`, which falls back to the repository's `remote-` alias. The empty
+  // value replaces the alias, for Git versions that predate GIT_NO_LAZY_FETCH.
+  emptyRemoteHelper: {args: ['-c', 'alias.remote-=']},
 } satisfies {[name: string]: GitProtection}
 
 export type GitProtectionName = keyof typeof UNTRUSTED_REPOSITORY_PROTECTIONS
