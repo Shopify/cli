@@ -7730,7 +7730,7 @@
           "type": "option"
         },
         "template": {
-          "description": "Scaffolds project based on an existing template or example from the Hydrogen repository.",
+          "description": "Scaffolds project based on a template: `skeleton` (the default), `demo-store` or a URL to a git repository.",
           "env": "SHOPIFY_HYDROGEN_FLAG_TEMPLATE",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -12914,15 +12914,47 @@
       ],
       "args": {
       },
-      "description": "Upgrades Shopify CLI using your package manager.",
+      "description": "Upgrades Shopify CLI using your package manager.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `UpgradeResult` schema.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"status\": {\n          \"type\": \"string\",\n          \"const\": \"success\"\n        },\n        \"changed\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether the verified installed version differs from previousVersion.\"\n        },\n        \"scope\": {\n          \"type\": \"string\",\n          \"const\": \"global\"\n        },\n        \"previousVersion\": {\n          \"type\": \"string\",\n          \"minLength\": 1\n        },\n        \"version\": {\n          \"type\": \"string\",\n          \"minLength\": 1\n        },\n        \"packageManager\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"npm\",\n            \"pnpm\",\n            \"yarn\",\n            \"bun\",\n            \"homebrew\"\n          ]\n        }\n      },\n      \"required\": [\n        \"status\",\n        \"changed\",\n        \"scope\",\n        \"previousVersion\",\n        \"version\",\n        \"packageManager\"\n      ],\n      \"additionalProperties\": false\n    },\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"status\": {\n          \"type\": \"string\",\n          \"const\": \"success\"\n        },\n        \"changed\": {\n          \"type\": \"null\",\n          \"description\": \"Null because local dependency changes and installed versions are not verified.\"\n        },\n        \"scope\": {\n          \"type\": \"string\",\n          \"const\": \"local\"\n        },\n        \"directory\": {\n          \"type\": \"string\"\n        },\n        \"previousVersion\": {\n          \"type\": \"string\",\n          \"minLength\": 1\n        },\n        \"availableVersion\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"minLength\": 1\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"The available registry version, or null when unknown.\"\n        },\n        \"packages\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\",\n            \"minLength\": 1\n          }\n        }\n      },\n      \"required\": [\n        \"status\",\n        \"changed\",\n        \"scope\",\n        \"directory\",\n        \"previousVersion\",\n        \"availableVersion\",\n        \"packages\"\n      ],\n      \"additionalProperties\": false\n    },\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"status\": {\n          \"type\": \"string\",\n          \"const\": \"skipped\"\n        },\n        \"reason\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"development\",\n            \"local-autoupgrade\",\n            \"dependency-not-found\"\n          ]\n        },\n        \"scope\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"global\",\n            \"local\"\n          ]\n        }\n      },\n      \"required\": [\n        \"status\",\n        \"reason\",\n        \"scope\"\n      ],\n      \"additionalProperties\": false\n    }\n  ],\n  \"title\": \"UpgradeResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Upgrades Shopify CLI using your package manager.",
       "enableJsonFlag": false,
       "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
         "json-schema": {
           "allowNo": false,
           "description": "Print the command's JSON schemas.",
           "env": "SHOPIFY_FLAG_JSON_SCHEMA",
           "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "no-input": {
+          "allowNo": false,
+          "description": "Disable interactive prompts and browser authentication.",
+          "env": "SHOPIFY_FLAG_NO_INPUT",
+          "name": "no-input",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
           "type": "boolean"
         }
       },

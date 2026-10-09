@@ -12,15 +12,17 @@ import {
   getPackageManager,
 } from './node-package-manager.js'
 import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from './output.js'
-import {renderConcurrent, renderSuccess} from './ui.js'
+import {presentUpgradeResult} from './upgrade/result.js'
 import {commandEventOutputMode} from './command-events.js'
+import {execUpgradeCommand, upgradeOutputStreams} from './upgrade/output.js'
 import {cwd, moduleDirectory, sniffForPath} from './path.js'
-import {exec, isCI} from './system.js'
+import {isCI} from './system.js'
 import {globalCLIVersion, isPreReleaseVersion} from './version.js'
 import {AbortError} from './error.js'
 import {getAutoUpgradeEnabled, setAutoUpgradeEnabled, runAtMinimumInterval} from '../../private/node/conf-store.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {lt as semverLt} from 'semver'
+import type {UpgradeResult} from './upgrade/types.js'
 
 export {getAutoUpgradeEnabled, setAutoUpgradeEnabled}
 
@@ -65,6 +67,21 @@ export interface RunCLIUpgradeOptions {
  * @throws AbortError if the package manager or command cannot be determined.
  */
 export async function runCLIUpgrade(options: RunCLIUpgradeOptions = {}): Promise<void> {
+  const result = await upgradeCLI(options)
+  if (commandEventOutputMode() === 'json' && result.status === 'success' && result.scope === 'global') {
+    outputInfo(`Shopify CLI upgraded. You're now on version ${result.version}.`)
+  } else {
+    presentUpgradeResult(result, 'text')
+  }
+}
+
+/**
+ * Upgrades the CLI and returns the outcome independently of final presentation.
+ *
+ * @param options - Whether the upgrade was triggered automatically.
+ * @returns The verified global version, local dependency update, or skip reason.
+ */
+export async function upgradeCLI(options: RunCLIUpgradeOptions = {}): Promise<UpgradeResult> {
   // Path where the current project is (app/hydrogen)
   const path = sniffForPath() ?? cwd()
   const projectDir = getProjectDir(path)
@@ -75,7 +92,7 @@ export async function runCLIUpgrade(options: RunCLIUpgradeOptions = {}): Promise
   // Don't auto-upgrade for development mode
   if (isDevelopment()) {
     outputInfo('Skipping upgrade in development mode.')
-    return
+    return {status: 'skipped', reason: 'development', scope: isGlobal ? 'global' : 'local'}
   }
 
   // When triggered by the automatic postrun hook, skip project-local upgrades.
@@ -83,13 +100,14 @@ export async function runCLIUpgrade(options: RunCLIUpgradeOptions = {}): Promise
   // and produce noisy diffs; explicit `shopify upgrade` invocations still upgrade the
   // local project.
   if (options.autoupgrade && !isGlobal) {
-    return
+    return {status: 'skipped', reason: 'local-autoupgrade', scope: 'local'}
   }
 
   // Generate the install command for the global CLI and execute it
   if (isGlobal) {
+    const packageManager = inferPackageManagerForGlobalCLI()
     const installCommand = cliInstallCommand()
-    if (!installCommand) {
+    if (!installCommand || packageManager === 'unknown') {
       throw new Error('Could not determine the package manager')
     }
     const [command, ...args] = installCommand.split(' ')
@@ -106,20 +124,7 @@ export async function runCLIUpgrade(options: RunCLIUpgradeOptions = {}): Promise
       outputContent`${headline}
    Now upgrading by running: ${outputToken.genericShellCommand(installCommand)}...`,
     )
-    const jsonOutput = commandEventOutputMode() === 'json'
-    if (jsonOutput) {
-      await renderConcurrent({
-        processes: [
-          {
-            prefix: command,
-            action: async (stdout, stderr) => exec(command, args, {stdin: 'inherit', stdout, stderr}),
-          },
-        ],
-        showTimestamps: false,
-      })
-    } else {
-      await exec(command, args, {stdio: 'inherit'})
-    }
+    await execUpgradeCommand(command, args)
 
     // A zero exit code doesn't guarantee the right version landed: the version check above
     // queries the public npm registry, while the install goes through whatever registry the
@@ -140,16 +145,16 @@ export async function runCLIUpgrade(options: RunCLIUpgradeOptions = {}): Promise
         'Your package manager may be resolving @shopify/cli from a registry with outdated versions. Check your npm registry configuration and try again.',
       )
     }
-    if (jsonOutput) {
-      outputInfo(`Shopify CLI upgraded. You're now on version ${installedVersion}.`)
-    } else {
-      renderSuccess({
-        headline: 'Shopify CLI upgraded.',
-        body: `You're now on version ${installedVersion}.`,
-      })
+    return {
+      status: 'success',
+      changed: installedVersion !== CLI_KIT_VERSION,
+      scope: 'global',
+      previousVersion: CLI_KIT_VERSION,
+      version: installedVersion,
+      packageManager,
     }
   } else if (projectDir) {
-    await upgradeLocalShopify(projectDir, CLI_KIT_VERSION)
+    return upgradeLocalShopify(projectDir, CLI_KIT_VERSION)
   } else {
     throw new Error('Could not determine the local project directory')
   }
@@ -256,7 +261,7 @@ export function getOutputUpdateCLIReminder(version: string, isMajor = false): st
   return base
 }
 
-async function upgradeLocalShopify(projectDir: string, currentVersion: string) {
+async function upgradeLocalShopify(projectDir: string, currentVersion: string): Promise<UpgradeResult> {
   const packageJson = (await findUpAndReadPackageJson(projectDir)).content
   const packageJsonDependencies = packageJson.dependencies ?? {}
   const packageJsonDevDependencies = packageJson.devDependencies ?? {}
@@ -265,7 +270,7 @@ async function upgradeLocalShopify(projectDir: string, currentVersion: string) {
   let resolvedCLIVersion = allDependencies[await cliDependency()]
   if (!resolvedCLIVersion) {
     outputDebug('Auto-upgrade: CLI dependency not found in project dependencies, skipping local upgrade.')
-    return
+    return {status: 'skipped', reason: 'dependency-not-found', scope: 'local'}
   }
 
   if (resolvedCLIVersion.slice(0, 1).match(/[\^~]/)) resolvedCLIVersion = currentVersion
@@ -277,15 +282,25 @@ async function upgradeLocalShopify(projectDir: string, currentVersion: string) {
     outputWontInstallMessage(resolvedCLIVersion)
   }
 
-  await installJsonDependencies('prod', packageJsonDependencies, projectDir)
-  await installJsonDependencies('dev', packageJsonDevDependencies, projectDir)
+  const dependencies = await installJsonDependencies('prod', packageJsonDependencies, projectDir)
+  const devDependencies = await installJsonDependencies('dev', packageJsonDevDependencies, projectDir)
+  // Local installs are not verified, so the registry version is not an installed-version claim.
+  return {
+    status: 'success',
+    changed: null,
+    scope: 'local',
+    directory: projectDir,
+    previousVersion: resolvedCLIVersion,
+    availableVersion: newestCLIVersion ?? null,
+    packages: [...new Set([...dependencies, ...devDependencies])],
+  }
 }
 
 async function installJsonDependencies(
   depsEnv: DependencyType,
   deps: {[key: string]: string},
   directory: string,
-): Promise<void> {
+): Promise<string[]> {
   const packagesToUpdate = [await cliDependency(), ...(await oclifPlugins())]
     .filter((pkg: string): boolean => {
       const pkgRequirement: string | undefined = deps[pkg]
@@ -298,15 +313,22 @@ async function installJsonDependencies(
   const appUsesWorkspaces = await usesWorkspaces(directory)
 
   if (packagesToUpdate.length > 0) {
-    await addNPMDependencies(packagesToUpdate, {
-      packageManager: await getPackageManager(directory),
-      type: depsEnv,
-      directory,
-      stdout: process.stdout,
-      stderr: process.stderr,
-      addToRootDirectory: appUsesWorkspaces,
-    })
+    const packageManager = await getPackageManager(directory)
+    const streams = upgradeOutputStreams()
+    try {
+      await addNPMDependencies(packagesToUpdate, {
+        packageManager,
+        type: depsEnv,
+        directory,
+        ...streams,
+        addToRootDirectory: appUsesWorkspaces,
+      })
+    } finally {
+      if (streams.stdout !== process.stdout) streams.stdout.end()
+      if (streams.stderr !== process.stderr) streams.stderr.end()
+    }
   }
+  return packagesToUpdate.map(({name}) => name)
 }
 
 async function cliDependency(): Promise<string> {
