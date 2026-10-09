@@ -80,6 +80,8 @@
       "{workspaceRoot}/configurations/tsconfig.json",
       "{workspaceRoot}/configurations/vite.config.ts",
       "{workspaceRoot}/eslint.config.js",
+      "{workspaceRoot}/eslint.codegen.config.js",
+      "{workspaceRoot}/oxlint.json",
       "{workspaceRoot}/graphql.config.ts",
       "{workspaceRoot}/package.json",
       "{workspaceRoot}/packages/eslint-plugin-cli/**/*",
