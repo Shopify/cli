@@ -1,8 +1,10 @@
 import {submissionFlags} from './flags.js'
 import {presentAcceptedMigrationSubmission, presentMigrationSubmissionResult} from './result-presenter.js'
+import {migrationSubmissionJsonOutputSchema} from '../../../services/subscription-migrations/types.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {runSubmissionCommand} from '../../../services/subscription-migrations/run-submission-command.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
+import {jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class Schedule extends AppLinkedCommand {
   static summary = 'Schedules manual-billing subscriptions to migrate to Shopify-managed app pricing.'
@@ -24,7 +26,7 @@ Run the command from an app project. By default, it uses the Client ID from the 
 
 Use \`--force\` to skip confirmation and immediately submit every valid row. With \`--watch\`, human-readable output shows accepted identifiers before polling begins, then displays operation progress and the final outcome. With \`--json --watch\`, the command outputs one structured JSON document after every operation reaches a terminal status.`
 
-  static description = this.descriptionWithoutMarkdown()
+  static description = this.descriptionForHelp()
 
   static examples = [
     '<%= config.bin %> <%= command.id %> --input migrations.csv --force',
@@ -34,7 +36,11 @@ Use \`--force\` to skip confirmation and immediately submit every valid row. Wit
     '<%= config.bin %> <%= command.id %> --input - --force --watch',
   ]
 
-  static flags = {...submissionFlags}
+  static flags = {...submissionFlags, ...jsonFlag}
+
+  static get jsonOutputSchema() {
+    return migrationSubmissionJsonOutputSchema
+  }
 
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Schedule)

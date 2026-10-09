@@ -95,9 +95,18 @@
           "description": "The name of the app configuration.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_APP_CONFIG"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-build.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface appbuild {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Skips the installation of dependencies. Deprecated, use workspaces instead.\n   * @environment SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION\n   */\n  '--skip-dependencies-installation'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface appbuild {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Skips the installation of dependencies. Deprecated, use workspaces instead.\n   * @environment SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION\n   */\n  '--skip-dependencies-installation'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "appbulkcancel": {
@@ -1142,6 +1151,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/app-dev-clean.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-dev-clean.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-s, --store <value>",
           "value": "string",
           "description": "Store URL. Must be an existing development store.",
@@ -1149,7 +1167,7 @@
           "environmentValue": "SHOPIFY_FLAG_STORE"
         }
       ],
-      "value": "export interface appdevclean {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app. Use with --config to clean up the dev preview for a different app than the one it is linked to.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Store URL. Must be an existing development store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface appdevclean {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Client ID of your app. Use with --config to clean up the dev preview for a different app than the one it is linked to.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Store URL. Must be an existing development store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "appdev": {
@@ -6369,7 +6387,7 @@
           "syntaxKind": "PropertySignature",
           "name": "--template <value>",
           "value": "string",
-          "description": "Scaffolds project based on an existing template or example from the Hydrogen repository.",
+          "description": "Scaffolds project based on a template: `skeleton` (the default), `demo-store` or a URL to a git repository.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_TEMPLATE"
         },
@@ -6383,7 +6401,7 @@
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
         }
       ],
-      "value": "export interface hydrogeninit {\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Init Git and create initial commits.\n   * @environment SHOPIFY_HYDROGEN_FLAG_GIT\n   */\n  '--git'?: ''\n\n  /**\n   * Auto installs dependencies using the active package manager.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS\n   */\n  '--install-deps'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Sets the template language to use. One of `js` or `ts`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_LANGUAGE\n   */\n  '--language <value>'?: string\n\n  /**\n   * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_I18N\n   */\n  '--markets <value>'?: string\n\n  /**\n   * Use mock.shop as the data source for the storefront.\n   * @environment SHOPIFY_HYDROGEN_FLAG_MOCK_DATA\n   */\n  '--mock-shop'?: ''\n\n  /**\n   * The path to the directory of the new Hydrogen storefront.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Scaffolds a new Hydrogen project with a set of sensible defaults. Equivalent to `shopify hydrogen init --path hydrogen-quickstart --mock-shop --language js --shortcut --markets none`\n   * @environment SHOPIFY_HYDROGEN_FLAG_QUICKSTART\n   */\n  '--quickstart'?: ''\n\n  /**\n   * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_SHORTCUT\n   */\n  '--shortcut'?: ''\n\n  /**\n   * Sets the styling strategy to use. One of `tailwind`, `vanilla-extract`, `css-modules`, `postcss`, `none`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_STYLING\n   */\n  '--styling <value>'?: string\n\n  /**\n   * Scaffolds project based on an existing template or example from the Hydrogen repository.\n   * @environment SHOPIFY_HYDROGEN_FLAG_TEMPLATE\n   */\n  '--template <value>'?: string\n}"
+      "value": "export interface hydrogeninit {\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Init Git and create initial commits.\n   * @environment SHOPIFY_HYDROGEN_FLAG_GIT\n   */\n  '--git'?: ''\n\n  /**\n   * Auto installs dependencies using the active package manager.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS\n   */\n  '--install-deps'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Sets the template language to use. One of `js` or `ts`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_LANGUAGE\n   */\n  '--language <value>'?: string\n\n  /**\n   * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_I18N\n   */\n  '--markets <value>'?: string\n\n  /**\n   * Use mock.shop as the data source for the storefront.\n   * @environment SHOPIFY_HYDROGEN_FLAG_MOCK_DATA\n   */\n  '--mock-shop'?: ''\n\n  /**\n   * The path to the directory of the new Hydrogen storefront.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Scaffolds a new Hydrogen project with a set of sensible defaults. Equivalent to `shopify hydrogen init --path hydrogen-quickstart --mock-shop --language js --shortcut --markets none`\n   * @environment SHOPIFY_HYDROGEN_FLAG_QUICKSTART\n   */\n  '--quickstart'?: ''\n\n  /**\n   * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_SHORTCUT\n   */\n  '--shortcut'?: ''\n\n  /**\n   * Sets the styling strategy to use. One of `tailwind`, `vanilla-extract`, `css-modules`, `postcss`, `none`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_STYLING\n   */\n  '--styling <value>'?: string\n\n  /**\n   * Scaffolds project based on a template: `skeleton` (the default), `demo-store` or a URL to a git repository.\n   * @environment SHOPIFY_HYDROGEN_FLAG_TEMPLATE\n   */\n  '--template <value>'?: string\n}"
     }
   },
   "hydrogenlink": {
@@ -10550,9 +10568,45 @@
           "description": "Print the command's JSON schemas.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_JSON_SCHEMA"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/upgrade.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/upgrade.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/upgrade.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/upgrade.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface upgrade {\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n}"
+      "value": "export interface upgrade {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "version": {

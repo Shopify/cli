@@ -50,6 +50,11 @@ describe('app dev command', () => {
 
     vi.mocked(linkedAppContext).mockResolvedValue(appContextResult)
     vi.mocked(storeContext).mockResolvedValue(store)
+    vi.mocked(devClean).mockResolvedValue({
+      status: 'success',
+      app: {name: appContextResult.remoteApp.title, clientId: appContextResult.remoteApp.apiKey},
+      storeHostname: store.shopDomain,
+    })
 
     return {store}
   }

@@ -1,18 +1,7 @@
-import {cancelMigrationOperation, type MigrationUserError} from './partners-api.js'
-import type {MigrationOperation} from '../../models/subscription-migrations.js'
-
-export type MigrationCancellationOutcome =
-  | {status: 'success'; operationId: string; operation: MigrationOperation}
-  | {
-      status: 'failed'
-      operationId: string
-      operation: MigrationOperation | null
-      userErrors: MigrationUserError[]
-    }
-
-export interface MigrationCancellationResult {
-  outcomes: MigrationCancellationOutcome[]
-}
+import {cancelMigrationOperation} from './partners-api.js'
+import {MigrationOperationGidSchema} from './types.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import type {MigrationCancellationOutcome, MigrationCancellationResult} from './types.js'
 
 export class MigrationCancellationProtocolError extends Error {
   readonly operationId: string
@@ -35,19 +24,39 @@ export async function cancelMigrationOperations({
   operationIds,
   cancelOperation = cancelMigrationOperation,
 }: CancelMigrationOperationsOptions): Promise<MigrationCancellationResult> {
+  const invalidOperationIds = operationIds.filter(
+    (operationId) => !MigrationOperationGidSchema.safeParse(operationId).success,
+  )
+  if (invalidOperationIds.length > 0) {
+    throw new AbortError(
+      `Invalid subscription migration operation IDs: ${invalidOperationIds.join(', ')}.`,
+      'Use Shopify AppSubscriptionMigrationOperation GIDs returned by a migration submission.',
+    )
+  }
   const outcomes = await Promise.all(
     operationIds.map(async (operationId): Promise<MigrationCancellationOutcome> => {
-      const payload = await cancelOperation({clientId, operationId})
-      if (payload.userErrors.length > 0) {
+      try {
+        const payload = await cancelOperation({clientId, operationId})
+        if (payload.userErrors.length > 0) {
+          return {
+            status: 'failed',
+            operationId,
+            operation: payload.operation,
+            userErrors: payload.userErrors,
+          }
+        }
+        if (!payload.operation) throw new MigrationCancellationProtocolError(operationId)
+        return {status: 'success', operationId, operation: payload.operation}
+      } catch (error) {
+        if (operationIds.length === 1) throw error
+        // Preserve every batch outcome even if one request fails after another cancellation succeeds.
         return {
           status: 'failed',
           operationId,
-          operation: payload.operation,
-          userErrors: payload.userErrors,
+          operation: null,
+          error,
         }
       }
-      if (!payload.operation) throw new MigrationCancellationProtocolError(operationId)
-      return {status: 'success', operationId, operation: payload.operation}
     }),
   )
   return {outcomes}

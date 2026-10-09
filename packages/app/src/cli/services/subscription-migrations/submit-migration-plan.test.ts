@@ -97,6 +97,20 @@ describe('submitMigrationPlan', () => {
     expect(JSON.stringify(result)).not.toContain('idempotencyKey')
   })
 
+  test('retains accepted operations when a later request fails', async () => {
+    const migrationPlan = plan('schedule', 251)
+    const createOperation = vi
+      .fn()
+      .mockResolvedValueOnce(payload(1))
+      .mockRejectedValueOnce(new Error('Connection closed'))
+    const result = await submitMigrationPlan({clientId: 'client-id', plan: migrationPlan, createOperation})
+    expect(result.status).toBe('failed')
+    expect(result.submission.operations).toHaveLength(1)
+    expect(result).toMatchObject({
+      failure: {type: 'submission', batchIndex: 1, userErrors: [{message: 'Connection closed', field: null}]},
+    })
+  })
+
   test('uses different internal keys for separate invocations with identical input', async () => {
     const createOperation = vi.fn().mockResolvedValue(payload(1))
     const migrationPlan = plan('schedule')
