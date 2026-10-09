@@ -31,7 +31,7 @@ export function alert(options: AlertOptions) {
     renderOptions,
   } = options
 
-  if ((type === 'info' || type === 'warning') && commandEventOutputMode() === 'json') {
+  if ((type === 'info' || type === 'warning' || type === 'success') && commandEventOutputMode() === 'json') {
     const message = alertMessage(options)
     if (type === 'warning') outputWarn(message)
     else outputInfo(message)
