@@ -62,7 +62,20 @@ describe('event module configuration', () => {
     expect(appEventsSpec.getTarget!(config)).toBeUndefined()
   })
 
-  test.each([undefined, '', ' ', 42, '-orders', 'orders-', 'orders/create', 'a'.repeat(51), 'events'])(
+  test.each(['Orders_123', '-orders', 'orders-', 'a'.repeat(50), ' orders_create '])(
+    'accepts a valid module handle for a single subscription: %j',
+    (handle) => {
+      const events = {subscription: {topic: 'orders/create'}}
+
+      expect(appEventsSpec.parseConfigurationObject({handle, events})).toEqual({
+        state: 'ok',
+        data: {handle: handle.trim(), events},
+        errors: undefined,
+      })
+    },
+  )
+
+  test.each([undefined, '', ' ', 42, 'orders/create', 'orders.create', 'orders create', 'a'.repeat(51), 'events'])(
     'rejects an invalid module handle for a single subscription: %j',
     (handle) => {
       const result = appEventsSpec.parseConfigurationObject({handle, events: {subscription: {topic: 'orders/create'}}})

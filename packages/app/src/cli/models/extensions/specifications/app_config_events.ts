@@ -1,6 +1,6 @@
 import {transformToEventsConfig, transformFromEventsConfig} from './transform/app_config_events.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
-import {BaseSchemaWithHandle, BaseSchemaWithoutHandle} from '../schemas.js'
+import {BaseSchemaWithoutHandle, MAX_EXTENSION_HANDLE_LENGTH} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 
@@ -11,10 +11,16 @@ const EventsTransformConfig: CustomTransformationConfig = {
   reverse: transformToEventsConfig,
 }
 
-const ModuleHandleSchema = BaseSchemaWithHandle.shape.handle.refine(
-  (handle) => handle !== EventsSpecIdentifier,
-  'The handle "events" is reserved for the legacy events module. Choose a different subscription handle.',
-)
+const ModuleHandleSchema = zod
+  .string()
+  .trim()
+  .nonempty("Handle can't be empty")
+  .max(MAX_EXTENSION_HANDLE_LENGTH, `Handle can't exceed ${MAX_EXTENSION_HANDLE_LENGTH} characters`)
+  .regex(/^[a-zA-Z0-9_-]*$/, 'Handle can only contain alphanumeric characters, underscores and hyphens')
+  .refine(
+    (handle) => handle !== EventsSpecIdentifier,
+    'The handle "events" is reserved for the legacy events module. Choose a different subscription handle.',
+  )
 
 const EventsSectionSchema = zod
   .object({

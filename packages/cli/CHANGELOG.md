@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 4.9.1
+
+### Patch Changes
+
+- a289e1c: Accept event subscription handles with underscores or leading and trailing hyphens
+
 ## 4.9.0
 
 ### Minor Changes
