@@ -25,6 +25,7 @@ import {
   ClientError,
 } from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
+import {Kind, parse, type DocumentNode} from 'graphql'
 
 // to replace TVariable type when there graphql query has no variables
 export type Exact<T extends Record<string, unknown>> = {[K in keyof T]: T[K]}
@@ -64,6 +65,7 @@ interface GraphQLRequestBaseOptions<TResult> {
 
 type PerformGraphQLRequestOptions<TResult> = GraphQLRequestBaseOptions<TResult> & {
   queryAsString: string
+  requestIsIdempotent: boolean
   variables?: Variables
   unauthorizedHandler?: UnauthorizedHandler
   autoRateLimitRestore?: boolean
@@ -100,6 +102,29 @@ export interface GraphQLResponseOptions<T> {
 }
 
 const MAX_RATE_LIMIT_RESTORE_DELAY_SECONDS = 0.3
+
+/**
+ * Whether a document is a single `query` operation, and therefore safe to send again after a
+ * gateway error. Anything else — a mutation, or a document bundling several operations — is treated
+ * as non-idempotent so it is never retried.
+ *
+ * @param query - The query as a string, or an already-parsed document.
+ * @returns True when the document contains exactly one operation and it is a query.
+ */
+function isGraphQLQuery(query: string | DocumentNode): boolean {
+  let document: DocumentNode
+  try {
+    document = typeof query === 'string' ? parse(query) : query
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    // A document we cannot parse is left for the API to reject, exactly as before. Treating it as
+    // non-idempotent keeps this check from changing where a malformed query surfaces.
+    return false
+  }
+  const operations = document.definitions.filter((definition) => definition.kind === Kind.OPERATION_DEFINITION)
+
+  return operations.length === 1 && operations[0]?.operation === 'query'
+}
 
 async function createGraphQLClient({
   url,
@@ -173,6 +198,7 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
     unauthorizedHandler,
     cacheOptions,
     autoRateLimitRestore,
+    requestIsIdempotent,
   } = options
   const behaviour = requestMode(options.preferredBehaviour ?? 'default')
 
@@ -217,7 +243,7 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
 
   const request = () =>
     retryAwareRequest(
-      {request: rawGraphQLRequest, url, ...behaviour},
+      {request: rawGraphQLRequest, url, requestIsIdempotent, ...behaviour},
       responseOptions?.handleErrors === false ? undefined : errorHandler(api),
     )
 
@@ -292,6 +318,7 @@ export async function graphqlRequest<T>(options: GraphQLRequestOptions<T>): Prom
   return performGraphQLRequest<T>({
     ...options,
     queryAsString: options.query as string,
+    requestIsIdempotent: isGraphQLQuery(options.query),
   })
 }
 
@@ -307,5 +334,6 @@ export async function graphqlRequestDoc<TResult, TVariables extends Variables>(
   return performGraphQLRequest<TResult>({
     ...options,
     queryAsString: resolveRequestDocument(options.query).query,
+    requestIsIdempotent: isGraphQLQuery(options.query),
   })
 }
