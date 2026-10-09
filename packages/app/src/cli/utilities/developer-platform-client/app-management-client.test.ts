@@ -1871,7 +1871,7 @@ describe('appExtensionRegistrations', () => {
   const createMockAppModuleVersion = (overrides: Partial<any> = {}) => ({
     registrationId: 'mock-registration-id',
     registrationUuid: 'mock-uuid',
-    registrationTitle: 'Mock Extension',
+    handle: 'Mock Extension',
     type: 'ui_extension',
     specification: {
       identifier: 'ui_extension',
@@ -1888,7 +1888,7 @@ describe('appExtensionRegistrations', () => {
     // Given
     const configModule = createMockAppModuleVersion({
       registrationId: BrandingSpecIdentifier,
-      registrationTitle: 'Config Extension',
+      handle: 'Config Extension',
       type: 'config_extension',
       specification: {
         identifier: BrandingSpecIdentifier,
@@ -1902,12 +1902,12 @@ describe('appExtensionRegistrations', () => {
 
     const extensionModule = createMockAppModuleVersion({
       registrationId: 'extension-1',
-      registrationTitle: 'Regular Extension',
+      handle: 'Regular Extension',
     })
 
     const dashboardManagedModule = createMockAppModuleVersion({
       registrationId: 'dashboard-1',
-      registrationTitle: 'Dashboard Extension',
+      handle: 'Dashboard Extension',
       specification: {
         identifier: 'dashboard_extension',
         name: 'Dashboard Extension',
@@ -1960,7 +1960,7 @@ describe('appExtensionRegistrations', () => {
     // Given
     const extensionModule = createMockAppModuleVersion({
       registrationId: 'extension-1',
-      registrationTitle: 'Extension from API',
+      handle: 'Extension from API',
     })
 
     // Mock the activeAppVersion method
@@ -1995,7 +1995,7 @@ describe('appExtensionRegistrations', () => {
     const configModules = configExtensionIds.map((id: string, index: number) =>
       createMockAppModuleVersion({
         registrationId: id,
-        registrationTitle: `Config Extension ${index}`,
+        handle: `Config Extension ${index}`,
         type: 'config_extension',
         specification: {
           identifier: id,
@@ -2044,7 +2044,7 @@ describe('appExtensionRegistrations', () => {
     // Given
     const moduleWithoutSpec = createMockAppModuleVersion({
       registrationId: 'no-spec-1',
-      registrationTitle: 'No Spec Extension',
+      handle: 'No Spec Extension',
       specification: undefined,
     })
 
@@ -2067,7 +2067,7 @@ describe('appExtensionRegistrations', () => {
       ...[BrandingSpecIdentifier, AppHomeSpecIdentifier].map((id: string) =>
         createMockAppModuleVersion({
           registrationId: id,
-          registrationTitle: `Config ${id}`,
+          handle: `Config ${id}`,
           type: 'config',
           specification: {
             identifier: id,
@@ -2082,16 +2082,16 @@ describe('appExtensionRegistrations', () => {
       // Regular CLI-managed extensions
       createMockAppModuleVersion({
         registrationId: 'cli-1',
-        registrationTitle: 'CLI Extension 1',
+        handle: 'CLI Extension 1',
       }),
       createMockAppModuleVersion({
         registrationId: 'cli-2',
-        registrationTitle: 'CLI Extension 2',
+        handle: 'CLI Extension 2',
       }),
       // Dashboard-managed extensions
       createMockAppModuleVersion({
         registrationId: 'dashboard-1',
-        registrationTitle: 'Dashboard Extension 1',
+        handle: 'Dashboard Extension 1',
         specification: {
           identifier: 'dashboard_ext',
           name: 'Dashboard Extension',
@@ -2103,7 +2103,7 @@ describe('appExtensionRegistrations', () => {
       }),
       createMockAppModuleVersion({
         registrationId: 'dashboard-2',
-        registrationTitle: 'Dashboard Extension 2',
+        handle: 'Dashboard Extension 2',
         specification: {
           identifier: 'dashboard_ext',
           name: 'Dashboard Extension',
@@ -2132,7 +2132,7 @@ describe('appExtensionRegistrations', () => {
     const configData = {name: 'Test Extension', enabled: true}
     const extensionModule = createMockAppModuleVersion({
       registrationId: 'extension-with-config',
-      registrationTitle: 'Extension With Config',
+      handle: 'Extension With Config',
       config: configData,
     })
 
@@ -2159,7 +2159,7 @@ describe('appExtensionRegistrations', () => {
     const contextData = 'some-context-value'
     const extensionModule = createMockAppModuleVersion({
       registrationId: 'extension-with-config-and-context',
-      registrationTitle: 'Extension With Config And Context',
+      handle: 'Extension With Config And Context',
       config: configData,
       target: contextData,
     })
@@ -2186,7 +2186,7 @@ describe('appExtensionRegistrations', () => {
   test('excludes activeVersion when config is not present', async () => {
     const extensionModule = createMockAppModuleVersion({
       registrationId: 'extension-without-config',
-      registrationTitle: 'Extension Without Config',
+      handle: 'Extension Without Config',
       config: undefined,
       target: 'some-context',
     })
@@ -2211,7 +2211,7 @@ describe('appExtensionRegistrations', () => {
     const configData = {name: 'Test Extension', enabled: false}
     const extensionModule = createMockAppModuleVersion({
       registrationId: 'extension-with-config-only',
-      registrationTitle: 'Extension With Config Only',
+      handle: 'Extension With Config Only',
       config: configData,
       target: undefined,
     })
@@ -2238,7 +2238,7 @@ describe('appExtensionRegistrations', () => {
     const configData = {}
     const extensionModule = createMockAppModuleVersion({
       registrationId: 'extension-with-empty-config',
-      registrationTitle: 'Extension With Empty Config',
+      handle: 'Extension With Empty Config',
       config: configData,
     })
 
