@@ -1191,6 +1191,89 @@ DESCRIPTION
 
   Validates the selected app configuration file and all extension configurations against their schemas and reports any
   errors found.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppConfigValidateResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "valid": {
+        "type": "boolean"
+      },
+      "issues": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ValidationIssue"
+        }
+      }
+    },
+    "required": [
+      "valid",
+      "issues"
+    ],
+    "additionalProperties": false,
+    "title": "AppConfigValidateResult",
+    "definitions": {
+      "ValidationIssue": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "fieldPath": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The upstream validation code, or null when unavailable."
+          }
+        },
+        "required": [
+          "filePath",
+          "message",
+          "fieldPath",
+          "code"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app deploy`
