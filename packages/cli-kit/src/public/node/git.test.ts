@@ -1,6 +1,8 @@
 import * as git from './git.js'
-import {fileExistsSync, inTemporaryDirectory, mkdirSync, readFileSync, writeFileSync} from './fs.js'
-import {hasGit, isTerminalInteractive} from './context/local.js'
+import {chmod, fileExistsSync, inTemporaryDirectory, mkdirSync, readFileSync, writeFileSync} from './fs.js'
+import {hasGit, isTerminalInteractive, isUnitTest} from './context/local.js'
+import {joinPath} from './path.js'
+import {mockAndCaptureOutput} from './testing/output.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {execa} from 'execa'
 
@@ -325,6 +327,123 @@ describe('ensurePresentOrAbort()', () => {
     vi.mocked(hasGit).mockResolvedValue(true)
 
     await expect(git.ensureGitIsPresentOrAbort()).resolves.toBeUndefined()
+  })
+})
+
+describe('ensureGitVersionIsAtLeast()', () => {
+  test.each([
+    'git version 2.38.0',
+    'git version 2.39.5 (Apple Git-154)',
+    'git version 2.45.1.windows.1',
+    'git version 2.55.0-shop-ba0d22fa',
+  ])('accepts supported version output: %s', async (versionOutput) => {
+    mockGitCommand(versionOutput)
+
+    await expect(git.ensureGitVersionIsAtLeast('2.38.0')).resolves.toBeUndefined()
+    expect(mockedExeca).toHaveBeenCalledWith('git', ['--version'], expect.anything())
+  })
+
+  test('checks the Git selected in the given working directory', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      mockGitCommand('git version 2.38.0')
+
+      await git.ensureGitVersionIsAtLeast('2.38.0', {cwd: directory})
+
+      expect(mockedExeca).toHaveBeenCalledWith('git', ['--version'], expect.objectContaining({cwd: directory}))
+    })
+  })
+
+  test.skipIf(process.platform === 'win32')('refuses a git executable in the working directory', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const plantedGit = joinPath(directory, 'git')
+      writeFileSync(plantedGit, '#!/bin/sh\necho "git version 2.55.0"\n')
+      await chmod(plantedGit, 0o755)
+
+      await expect(git.ensureGitVersionIsAtLeast('2.38.0', {cwd: directory})).rejects.toThrow(
+        /Skipped run of unsecure binary/,
+      )
+      expect(mockedExeca).not.toHaveBeenCalled()
+    })
+  })
+
+  // Windows searches the working directory before PATH, so a planted script runs unless it is refused.
+  test.runIf(process.platform === 'win32')('refuses a git.cmd script in the working directory', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      writeFileSync(joinPath(directory, 'git.cmd'), '@echo git version 2.55.0\r\n')
+
+      await expect(git.ensureGitVersionIsAtLeast('2.38.0', {cwd: directory})).rejects.toThrow(
+        /Skipped run of unsecure binary/,
+      )
+      expect(mockedExeca).not.toHaveBeenCalled()
+    })
+  })
+
+  test('rejects an older Git version with the installed and required versions', async () => {
+    mockGitCommand('git version 2.37.6')
+
+    await expect(git.ensureGitVersionIsAtLeast('2.38.0')).rejects.toMatchObject({
+      message: 'Git 2.38.0 or later is required, but version 2.37.6 is installed.',
+      tryMessage: 'Upgrade Git to version 2.38.0 or later, then try again.',
+    })
+  })
+
+  test.each(['wrapper 3.1; git version 2.37.6', 'git version unknown (Apple Git-154)'])(
+    'rejects malformed version output, keeping it for debug output: %s',
+    async (versionOutput) => {
+      vi.mocked(isUnitTest).mockReturnValue(true)
+      const outputMock = mockAndCaptureOutput()
+      outputMock.clear()
+      mockGitCommand(versionOutput)
+
+      await expect(git.ensureGitVersionIsAtLeast('2.38.0')).rejects.toMatchObject({
+        message: "Couldn't determine the installed Git version.",
+        tryMessage: 'Install Git 2.38.0 or later, then try again.',
+      })
+      expect(outputMock.debug()).toContain(`Unrecognized git --version output: ${JSON.stringify(versionOutput)}`)
+    },
+  )
+
+  test.each(['git version 2.38.0.rc0', 'git version 2.38.0-rc0', 'git version 2.38.0-rc.0'])(
+    'rejects a release candidate of the minimum version: %s',
+    async (versionOutput) => {
+      mockGitCommand(versionOutput)
+
+      await expect(git.ensureGitVersionIsAtLeast('2.38.0')).rejects.toMatchObject({
+        message: 'Git 2.38.0 or later is required, but version 2.38.0-rc.0 is installed.',
+        tryMessage: 'Upgrade Git to version 2.38.0 or later, then try again.',
+      })
+    },
+  )
+
+  test('accepts a release candidate newer than the minimum version', async () => {
+    mockGitCommand('git version 2.39.0.rc0')
+
+    await expect(git.ensureGitVersionIsAtLeast('2.38.0')).resolves.toBeUndefined()
+  })
+
+  test("reports the required version when Git isn't installed", async () => {
+    mockedExeca.mockRejectedValue(Object.assign(new Error('spawn git ENOENT'), {code: 'ENOENT'}))
+
+    await expect(git.ensureGitVersionIsAtLeast('2.38.0')).rejects.toMatchObject({
+      message: "Git 2.38.0 or later is required, but Git isn't installed.",
+      tryMessage: 'Install Git 2.38.0 or later, then try again.',
+    })
+  })
+
+  test.each([
+    Object.assign(new Error('spawn git EACCES'), {code: 'EACCES'}),
+    Object.assign(new Error('Command failed with exit code 126: git --version'), {exitCode: 126}),
+  ])("reports that Git can't run, keeping the reason for debug output: $message", async (failure) => {
+    vi.mocked(isUnitTest).mockReturnValue(true)
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+    mockedExeca.mockRejectedValue(failure)
+
+    await expect(git.ensureGitVersionIsAtLeast('2.38.0')).rejects.toMatchObject({
+      message: "Couldn't run Git to check its version.",
+      tryMessage: 'Check that Git 2.38.0 or later is installed and can run, then try again.',
+    })
+    expect(outputMock.debug()).toContain(`Couldn't run git --version: ${failure.message}`)
   })
 })
 

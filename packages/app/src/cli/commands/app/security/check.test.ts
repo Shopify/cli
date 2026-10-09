@@ -200,6 +200,7 @@ describe('app security check command', () => {
     expect(SecurityCheck.flags['no-git-ignore'].description).toBe(
       'Turn off Git ignore rules for every scanned directory, so files that Git ignores are scanned too. Files that Git tracks are always scanned.',
     )
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('requires Git 2.38.0 or later')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('scans the app directory and each `--include-dir`')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('files that Git tracks are always scanned')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('relative to the working directory')

@@ -159,7 +159,7 @@ function isEnvFile(path: string): boolean {
 /** Why a file git reports as untracked and ignored still reached this rule. */
 type IgnoredFileScanReason = 'nested-repository' | 'listing-failed' | 'unknown'
 
-// A missing git binary resolves with exit code 0 and empty output.
+// Git that can't start after passing the version check exits 0 with no output, so empty output is unknown.
 async function gitTopLevel(cwd: string): Promise<string | undefined> {
   const result = await gitProbe(cwd, ['rev-parse', '--show-toplevel'])
   return result.exitCode === 0 && result.out !== '' ? result.out : undefined
@@ -339,7 +339,8 @@ export async function scanCommittedSecrets(
  *     trailing-* check gets all of them wrong.
  *
  * `tracked`/`ignored` are tri-state: `undefined` means "could not determine"
- * (no git, not a repo, git failed). Callers MUST treat undefined as unsafe.
+ * (not a repo, or a git command failed). Callers MUST treat undefined as unsafe.
+ * Missing or unsupported Git aborts the scan instead.
  */
 interface GitFileStatus {
   /** true = git tracks it, false = git confirms untracked, undefined = unknown */
@@ -352,7 +353,7 @@ interface GitFileStatus {
   evidence?: string[]
 }
 
-/** Missing Git or a failed probe is unknown status, not proof the file is safe. */
+/** A failed probe is unknown status, not proof the file is safe. */
 async function gitProbe(cwd: string, args: string[]): Promise<{exitCode?: number; out: string}> {
   const result = await runGit(cwd, args)
   return {exitCode: result?.exitCode, out: result?.stdout.trim() ?? ''}

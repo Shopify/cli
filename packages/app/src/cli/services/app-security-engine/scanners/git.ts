@@ -1,3 +1,4 @@
+import {ensureGitVersionIsAtLeast} from '@shopify/cli-kit/node/git'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 
 export interface GitProtection {
@@ -24,6 +25,8 @@ export const UNTRUSTED_REPOSITORY_PROTECTIONS = {
 
 export type GitProtectionName = keyof typeof UNTRUSTED_REPOSITORY_PROTECTIONS
 
+const minimumAppSecurityGitVersion = '2.38.0'
+
 const protections: GitProtection[] = Object.values(UNTRUSTED_REPOSITORY_PROTECTIONS)
 const protectionArguments = protections.flatMap((protection) => protection.args ?? [])
 
@@ -37,8 +40,15 @@ interface GitResult {
   stdout: string
 }
 
-/** Runs Git in the directory. Undefined when Git can't be started. */
+/**
+ * Runs Git in the directory. Rejects when the Git selected there is missing, can't run, or is older than
+ * `minimumAppSecurityGitVersion`. Undefined when the command itself throws instead of exiting.
+ *
+ * A version manager can select a different Git for each working directory, so the version is checked where the
+ * command runs, before every command.
+ */
 export async function runGit(directory: string, args: string[]): Promise<GitResult | undefined> {
+  await ensureGitVersionIsAtLeast(minimumAppSecurityGitVersion, {cwd: directory})
   try {
     const result = await captureOutputWithExitCode('git', [...protectionArguments, ...args], {
       cwd: directory,
