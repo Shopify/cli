@@ -1586,13 +1586,17 @@ Display app and extensions environment variables.
 
 ```
 USAGE
-  $ shopify app env show [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--path <value>] [--reset | ] [--verbose]
+  $ shopify app env show [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -1630,6 +1634,63 @@ DESCRIPTION
   Display app and extensions environment variables.
 
   Displays environment variables that can be used to deploy apps and app extensions.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppEnvShowResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "variables": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/AppEnvironmentVariable"
+        }
+      }
+    },
+    "required": [
+      "variables"
+    ],
+    "additionalProperties": false,
+    "title": "AppEnvShowResult",
+    "definitions": {
+      "AppEnvironmentVariable": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The environment variable name with its original spelling."
+          },
+          "value": {
+            "type": "string",
+            "description": "The value, included only when known."
+          },
+          "isSecret": {
+            "type": "boolean",
+            "description": "Whether the value is secret, included only when known."
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The upstream variable identifier, included only when known."
+          },
+          "readOnly": {
+            "type": "boolean",
+            "description": "Whether the variable is read-only, included only when known."
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app execute`
