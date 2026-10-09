@@ -44,10 +44,10 @@ export interface SourceFile {
   content?: string
 }
 
-/** Explicitly allowlisted dependency-management configuration inside the app-root evidence boundary. */
+/** Explicitly allowlisted dependency-management configuration at the root of the repository that holds the app. */
 export interface DependencyAutomationInputs {
   files: SourceFile[]
-  /** A specific discovery obstacle, including an app nested below its repository root. */
+  /** A specific discovery obstacle, such as an unreadable configuration file. */
   unresolvedReason?: string
 }
 

@@ -649,6 +649,18 @@ function readRepositoryFile(absolutePath: string): RepositoryReadResult {
   return result
 }
 
+/**
+ * Read a fixed path below a directory that isn't scanned, with that directory as the containment boundary.
+ * `undefined` means the path doesn't exist.
+ */
+function readFileContainedBy(directory: string, path: string): RepositoryReadResult | undefined {
+  const inspected = inspectRepositoryPath(directory, path)
+  if (inspected.status === 'missing') return undefined
+  const result = inspected.status === 'file' ? readBoundedFile(inspected.path) : repositoryPathFailure(inspected.reason)
+  if (!result.ok) recordSkippedFile(joinPath(directory, path), result)
+  return result
+}
+
 function readRepositoryText(absolutePath: string): string | undefined {
   const result = readRepositoryFile(absolutePath)
   return result.ok ? result.content.toString() : undefined
@@ -798,17 +810,20 @@ export function findSensitiveFiles(
   })
 }
 
-function nestedRepositoryReason(appRoot: string): string | undefined {
+/** Dependabot and Renovate read configuration from the root of the nearest repository that holds the app. */
+function dependencyAutomationRoot(appRoot: string): {directory: string} | {unresolvedReason: string} {
   const marker = findRepositoryMarker(appRoot)
-  if (marker.status === 'none') return undefined
-  if (marker.status === 'ambiguous') return marker.reason
-  return marker.directory === appRoot ? undefined : 'App root is nested below a parent Git repository'
+  if (marker.status === 'ambiguous') return {unresolvedReason: marker.reason}
+  return {directory: marker.status === 'found' ? marker.directory : appRoot}
 }
 
 /**
  * Read local bot configuration only; hosted integrations and CI workflows are
- * outside this check's scope. Only gathered paths are read, through the reader,
- * so a gathered symbolic link that leaves its scan directory is reported as unresolved.
+ * outside this check's scope. Configuration inside a scan directory is read only
+ * when it was gathered, through the reader, so path rules apply and a gathered
+ * symbolic link that leaves its scan directory is reported as unresolved. The root
+ * of a repository that holds the app below its top level may be outside every scan
+ * directory, so an allowlisted path outside them is read directly, contained by that root.
  */
 export function findDependencyAutomationInputs(
   appRoot: string,
@@ -825,16 +840,23 @@ export function findDependencyAutomationInputs(
     return {files: [], unresolvedReason: inspectErrorReason('app root', error)}
   }
 
-  const repositoryReason = nestedRepositoryReason(canonicalRoot)
-  if (repositoryReason) return {files: [], unresolvedReason: repositoryReason}
+  const configurationRoot = dependencyAutomationRoot(canonicalRoot)
+  if ('unresolvedReason' in configurationRoot) return {files: [], unresolvedReason: configurationRoot.unresolvedReason}
+  const repositoryRoot = configurationRoot.directory
+  const {scanDirectories} = configuredReader()
+  const isScanned = (absolutePath: string) =>
+    repositoryRoot === canonicalRoot || scanDirectories.some((directory) => isSubpath(directory, absolutePath))
 
   const gathered = new Set(gatheredPaths)
   const files: SourceFile[] = []
   let unresolvedReason: string | undefined
-  for (const relative of DEPENDENCY_AUTOMATION_CONFIG_PATHS) {
-    if (!gathered.has(relative)) continue
-    const absolutePath = joinPath(canonicalRoot, relative)
-    const result = readRepositoryFile(absolutePath)
+  for (const configurationPath of DEPENDENCY_AUTOMATION_CONFIG_PATHS) {
+    const absolutePath = joinPath(repositoryRoot, configurationPath)
+    const relative = normalizeCliPath(relativePath(canonicalRoot, absolutePath))
+    const scanned = isScanned(absolutePath)
+    if (scanned && !gathered.has(relative)) continue
+    const result = scanned ? readRepositoryFile(absolutePath) : readFileContainedBy(repositoryRoot, configurationPath)
+    if (result === undefined) continue
     if (!result.ok) {
       unresolvedReason ??=
         result.reason === 'too_large'
