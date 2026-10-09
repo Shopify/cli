@@ -268,7 +268,7 @@ describe('migration cancellation result presenter', () => {
                 total: outcome.operation.total,
                 results: outcome.operation.results.edges.map(({node}) => ({shopGid: node.shopId, code: node.code})),
               },
-        ...(outcome.status === 'failed'
+        ...(outcome.status === 'failed' && 'userErrors' in outcome
           ? {
               error: {
                 type: 'abort',

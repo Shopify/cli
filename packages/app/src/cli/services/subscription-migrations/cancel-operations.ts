@@ -54,9 +54,7 @@ export async function cancelMigrationOperations({
           status: 'failed',
           operationId,
           operation: null,
-          userErrors: [
-            {message: error instanceof Error ? error.message : 'Migration cancellation failed.', field: null},
-          ],
+          error,
         }
       }
     }),

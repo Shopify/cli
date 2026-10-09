@@ -1,3 +1,4 @@
+import {JsonAbortErrorSchema, JsonErrorSchema} from '@shopify/cli-kit/node/error/schema'
 import {defineJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 import type {MigrationOperation} from '../../models/subscription-migrations.js'
@@ -46,13 +47,12 @@ const MigrationCancellationOutcomeSchema = zod.discriminatedUnion('status', [
       status: zod.literal('failed'),
       operationGid: MigrationOperationGidSchema,
       operation: MigrationOperationSchema.nullable(),
-      error: zod
-        .object({
-          type: zod.literal('abort'),
-          message: zod.string(),
+      error: zod.union([
+        JsonAbortErrorSchema.extend({
           details: zod.object({userErrors: zod.array(MigrationUserErrorSchema)}).strict(),
-        })
-        .strict(),
+        }),
+        JsonErrorSchema,
+      ]),
     })
     .strict(),
 ])
@@ -79,3 +79,4 @@ export interface MigrationCancellationResult {
 export type MigrationCancellationOutcome =
   | {status: 'success'; operationId: string; operation: MigrationOperation}
   | {status: 'failed'; operationId: string; operation: MigrationOperation | null; userErrors: MigrationUserError[]}
+  | {status: 'failed'; operationId: string; operation: null; error: unknown}

@@ -133,10 +133,11 @@ describe('cancelMigrationOperations', () => {
   })
 
   test('retains successful cancellations and every requested operation when another request fails', async () => {
+    const transportError = new Error('Network unavailable')
     const cancelOperation = vi
       .fn()
       .mockResolvedValueOnce(payload('gid://shopify/AppSubscriptionMigrationOperation/one'))
-      .mockRejectedValueOnce(new Error('Network unavailable'))
+      .mockRejectedValueOnce(transportError)
     const result = await cancelMigrationOperations({
       clientId: 'client-id',
       operationIds: [
@@ -156,7 +157,7 @@ describe('cancelMigrationOperations', () => {
           status: 'failed',
           operationId: 'gid://shopify/AppSubscriptionMigrationOperation/two',
           operation: null,
-          userErrors: [{message: 'Network unavailable', field: null}],
+          error: transportError,
         },
       ],
     })

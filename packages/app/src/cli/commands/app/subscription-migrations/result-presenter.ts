@@ -1,6 +1,7 @@
 import {encodeMigrationCancellationResult, encodeMigrationSubmissionResult} from './result-codec.js'
 import {projectMigrationOperation} from '../../../services/subscription-migrations/result-codec.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {errorToJson} from '@shopify/cli-kit/node/error/serialization'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderInfo, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import type {MigrationOperation} from '../../../models/subscription-migrations.js'
@@ -52,6 +53,7 @@ export function presentMigrationCancellationResult(
 ): 0 | 1 {
   const outcome = result.outcomes[0]
   if (result.outcomes.length === 1 && outcome?.status === 'failed') {
+    if ('error' in outcome) throw outcome.error
     const error = new AbortError(outcome.userErrors.map(({message}) => message).join('; '))
     error.details = {
       operationGid: outcome.operationId,
@@ -141,9 +143,13 @@ function formatCancellationOutcomes(outcomes: MigrationCancellationOutcome[]): s
       ? []
       : [
           'Failed operations:',
-          ...failures.map(({operationId, operation, userErrors}) => {
-            const returnedStatus = operation ? ` (returned status: ${operation.status})` : ''
-            return `${operationId}: ${userErrors.map(({message}) => message).join('; ')}${returnedStatus}`
+          ...failures.map((outcome) => {
+            const returnedStatus = outcome.operation ? ` (returned status: ${outcome.operation.status})` : ''
+            const message =
+              'error' in outcome
+                ? errorToJson(outcome.error).message
+                : outcome.userErrors.map(({message}) => message).join('; ')
+            return `${outcome.operationId}: ${message}${returnedStatus}`
           }),
         ]),
   ]

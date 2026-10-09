@@ -6,6 +6,7 @@ import {
   projectMigrationOperation,
   projectMigrationUserErrors,
 } from '../../../services/subscription-migrations/result-codec.js'
+import {errorToJson} from '@shopify/cli-kit/node/error/serialization'
 import type {MigrationSubmissionResult} from '../../../services/subscription-migrations/submit-migration-plan.js'
 
 export function encodeMigrationSubmissionResult(result: MigrationSubmissionResult): string {
@@ -33,11 +34,14 @@ export function encodeMigrationCancellationResult(result: MigrationCancellationR
             status: outcome.status,
             operationGid: outcome.operationId,
             operation: outcome.operation === null ? null : projectMigrationOperation(outcome.operation),
-            error: {
-              type: 'abort' as const,
-              message: outcome.userErrors.map(({message}) => message).join('; '),
-              details: {userErrors: projectMigrationUserErrors(outcome.userErrors)},
-            },
+            error:
+              'error' in outcome
+                ? errorToJson(outcome.error)
+                : {
+                    type: 'abort' as const,
+                    message: outcome.userErrors.map(({message}) => message).join('; '),
+                    details: {userErrors: projectMigrationUserErrors(outcome.userErrors)},
+                  },
           },
     ),
   })
