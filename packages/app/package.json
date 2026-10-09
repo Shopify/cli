@@ -57,7 +57,7 @@
   "dependencies": {
     "@graphql-typed-document-node/core": "3.2.0",
     "@luckycatfactory/esbuild-graphql-loader": "3.8.1",
-    "@oclif/core": "4.8.3",
+    "@oclif/core": "4.14.0",
     "@shopify/cli-kit": "4.9.0",
     "@shopify/organizations": "4.9.0",
     "@shopify/plugin-cloudflare": "4.9.0",
@@ -66,26 +66,26 @@
     "@shopify/toml-patch": "0.3.0",
     "chokidar": "3.6.0",
     "clipboardy": "4.0.0",
-    "csv-parse": "7.0.2",
+    "csv-parse": "7.0.3",
     "diff": "5.2.2",
-    "esbuild": "0.28.1",
+    "esbuild": "0.28.2",
     "graphql-request": "6.1.0",
     "h3": "1.15.11",
     "http-proxy-node16": "1.0.6",
     "ignore": "6.0.2",
     "json-schema-to-typescript": "15.0.4",
-    "prettier": "3.8.4",
+    "prettier": "3.9.9",
     "proper-lockfile": "4.1.2",
     "react": "19.2.4",
     "which": "4.0.0",
-    "ws": "8.21.0"
+    "ws": "8.22.0"
   },
   "devDependencies": {
     "@types/diff": "^5.0.3",
     "@types/proper-lockfile": "4.1.4",
     "@types/react": "^19.0.0",
     "@types/which": "3.0.4",
-    "@types/ws": "^8.5.13",
+    "@types/ws": "^8.18.2",
     "@vitest/coverage-istanbul": "^3.2.7"
   },
   "engines": {
