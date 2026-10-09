@@ -4845,19 +4845,30 @@ DESCRIPTION
             "type": "boolean"
           },
           "clientId": {
-            "$ref": "#/definitions/MigrationSubmissionResult/anyOf/0/properties/clientId"
+            "type": "string",
+            "minLength": 1,
+            "description": "The app client ID, not a Shopify GID."
           },
           "action": {
-            "$ref": "#/definitions/MigrationSubmissionResult/anyOf/0/properties/action"
+            "type": "string",
+            "enum": [
+              "schedule",
+              "unschedule"
+            ]
           },
           "inputDigest": {
-            "$ref": "#/definitions/MigrationSubmissionResult/anyOf/0/properties/inputDigest"
+            "type": "string",
+            "minLength": 1
           },
           "total": {
-            "$ref": "#/definitions/MigrationSubmissionResult/anyOf/0/properties/total"
+            "type": "integer",
+            "minimum": 0
           },
           "operations": {
-            "$ref": "#/definitions/MigrationSubmissionResult/anyOf/0/properties/operations"
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/SubmittedMigrationOperation"
+            }
           },
           "failure": {
             "$ref": "#/definitions/MigrationSubmissionFailure"

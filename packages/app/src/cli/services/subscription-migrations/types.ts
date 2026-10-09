@@ -154,25 +154,26 @@ const MigrationSubmissionFailureSchema = zod.discriminatedUnion('type', [
   zod.object({type: zod.literal('operations'), operationGids: zod.array(MigrationOperationGidSchema)}).strict(),
 ])
 
-const MigrationSubmissionSchema = zod
-  .object({
+// Fresh field schemas keep generated references from pointing into the unnamed result union.
+function migrationSubmissionShape() {
+  return {
     clientId: zod.string().min(1).describe('The app client ID, not a Shopify GID.'),
     action: zod.enum(['schedule', 'unschedule']),
     inputDigest: zod.string().min(1),
     total: zod.number().int().nonnegative(),
     operations: zod.array(SubmittedMigrationOperationSchema),
-  })
-  .strict()
+  }
+}
 
 export const migrationSubmissionJsonOutputSchema = defineJsonOutputSchema({
   name: 'MigrationSubmissionResult',
   schema: zod.discriminatedUnion('status', [
-    zod.object({status: zod.literal('success'), changed: zod.boolean(), ...MigrationSubmissionSchema.shape}).strict(),
+    zod.object({status: zod.literal('success'), changed: zod.boolean(), ...migrationSubmissionShape()}).strict(),
     zod
       .object({
         status: zod.literal('partial'),
         changed: zod.boolean(),
-        ...MigrationSubmissionSchema.shape,
+        ...migrationSubmissionShape(),
         failure: MigrationSubmissionFailureSchema,
       })
       .strict(),

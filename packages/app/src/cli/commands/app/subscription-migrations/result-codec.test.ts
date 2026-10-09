@@ -229,6 +229,26 @@ describe('subscription migration result codecs', () => {
 })
 
 describe('migration submission JSON contract', () => {
+  test('every generated JSON Schema reference resolves within the document', () => {
+    const schema = migrationSubmissionJsonOutputSchema.jsonSchema
+
+    JSON.parse(JSON.stringify(schema), (key, value: unknown) => {
+      if (key === '$ref' && typeof value === 'string') {
+        const referencedSchema = value
+          .slice(2)
+          .split('/')
+          .map((part) => part.replace(/~1/g, '/').replace(/~0/g, '~'))
+          .reduce<unknown>(
+            (node, part) =>
+              typeof node === 'object' && node !== null ? (node as Record<string, unknown>)[part] : undefined,
+            schema,
+          )
+        expect(referencedSchema, `Unresolved JSON Schema reference: ${value}`).not.toBeUndefined()
+      }
+      return value
+    })
+  })
+
   test('reports an empty successful submission as an unchanged object', () => {
     const value = {...submission(), total: 0, operations: []}
     expect(JSON.parse(encodeMigrationSubmissionResult({status: 'success', submission: value}))).toEqual({
