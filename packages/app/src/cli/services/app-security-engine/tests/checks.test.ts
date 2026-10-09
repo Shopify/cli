@@ -151,6 +151,10 @@ describe('agent checks', () => {
     expect(instructions).toContain('name the candidate in the reason')
     expect(instructions).toContain('An unprovable hypothetical is not a reason to leave a check unresolved.')
     expect(getAgentInstructions()).toContain('not from whether you can prove a negative')
+    expect(getAgentInstructions()).toContain(
+      "`unresolved`: you couldn't complete the investigation, or you named a specific candidate whose boundary is still unclear.",
+    )
+    expect(getAgentInstructions()).not.toContain('prove the issue')
   })
 
   test('Shopify-sensitive prompts accept the React Router SDK defaults and keep the concrete failures', () => {

@@ -91,7 +91,7 @@ Write a single JSON document that covers every check you ran:
 - `status` is one of:
   - `executed`: you investigated the check, whether or not it produced findings.
   - `not_applicable`: the capability the check covers is absent. It can't have findings.
-  - `unresolved`: you couldn't finish the check or prove the issue. An unresolved check didn't pass; never describe it as passing.
+  - `unresolved`: you couldn't complete the investigation, or you named a specific candidate whose boundary is still unclear. An unresolved check didn't pass; never describe it as passing.
 - `not_applicable` and `unresolved` require a `reason` with a short `code` and a `message`.
 - Each finding needs `file`, `line` (1 or greater), `message`, and at least one `evidence` item with `file`, `line`, and `quote`.
 - Optional finding fields: `snippet`, `confidence` (`high`, `medium`, or `low`), `reasoning`, and `suppression` (`{"justification": "..."}`).
