@@ -1,7 +1,11 @@
+import {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 import {globFlags, themeFlags} from '../../flags.js'
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
-import {pull} from '../../services/pull.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {executeThemePull} from '../../services/pull.js'
+import {renderThemePullResult, renderThemePullEnvironmentResults} from '../../services/pull/result.js'
+import {themePullJsonOutputSchema} from '../../services/pull/types.js'
+import {outputResult} from '@shopify/cli-kit/node/output'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
 import {InferredFlags} from '@oclif/core/interfaces'
@@ -12,6 +16,10 @@ import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 type PullFlags = InferredFlags<typeof Pull.flags>
 export default class Pull extends ThemeCommand {
+  static get jsonOutputSchema() {
+    return themePullJsonOutputSchema
+  }
+
   static summary = 'Download your remote theme files locally.'
 
   static descriptionWithMarkdown = `Retrieves theme files from Shopify.
@@ -22,6 +30,7 @@ If no theme is specified, then you're prompted to select the theme to pull from 
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     ...themeFlags,
     ...globFlags('download'),
     theme: Flags.string({
@@ -69,8 +78,26 @@ If no theme is specified, then you're prompted to select the theme to pull from 
     context?: {stdout?: Writable; stderr?: Writable},
   ) {
     recordTiming('theme-command:pull')
-    await pull({...flags, noColor: flags['no-color']}, adminSession, multiEnvironment, context)
+    const result = await executeThemePull(
+      {...flags, noColor: flags['no-color']},
+      adminSession,
+      multiEnvironment,
+      context,
+    )
+    if (!(flags.json && multiEnvironment)) {
+      if (result) renderThemePullResult(result, flags.json ? 'json' : 'text')
+      else if (flags.json) outputResult(themePullJsonOutputSchema.encode({status: 'cancelled'}))
+    }
     recordTiming('theme-command:pull')
+    return result ?? (flags.json && multiEnvironment ? {status: 'skipped', reason: 'unsafe-directory'} : undefined)
+  }
+
+  protected collectsEnvironmentResults(flags: {json?: boolean}): boolean {
+    return Boolean(flags.json)
+  }
+
+  protected renderEnvironmentResults(results: ThemeEnvironmentResult[]): void {
+    renderThemePullEnvironmentResults(results)
   }
 
   protected storeAuthScopes(): string[] {
