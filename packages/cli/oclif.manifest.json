@@ -12288,7 +12288,7 @@
         "force": {
           "allowNo": false,
           "char": "f",
-          "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "description": "Proceed without confirmation, if current directory does not seem to be theme directory or local files would be overwritten.",
           "env": "SHOPIFY_FLAG_FORCE",
           "hidden": true,
           "name": "force",

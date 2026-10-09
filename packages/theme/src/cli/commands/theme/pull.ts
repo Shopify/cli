@@ -50,7 +50,8 @@ If no theme is specified, then you're prompted to select the theme to pull from 
     force: Flags.boolean({
       hidden: true,
       char: 'f',
-      description: 'Proceed without confirmation, if current directory does not seem to be theme directory.',
+      description:
+        'Proceed without confirmation, if current directory does not seem to be theme directory or local files would be overwritten.',
       env: 'SHOPIFY_FLAG_FORCE',
     }),
   }
