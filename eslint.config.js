@@ -22,8 +22,9 @@ const isEnabled = (ruleConfiguration) => {
   return severity !== 'off' && severity !== 0
 }
 
-const eslintCompatibilityConfig = ({files, rules}) => ({
-  ...(files ? {files} : {}),
+const eslintCompatibilityConfig = ({files, rules, excludeFiles = []}) => ({
+  files: files ?? ['packages/*/src/**/*.{js,mjs,ts,tsx}', 'packages/cli/bin/*.js', 'packages/e2e/**/*.ts'],
+  ignores: [...oxlintConfig.ignorePatterns, 'packages/eslint-plugin-cli/**', ...excludeFiles],
   rules: Object.fromEntries(
     Object.entries(rules)
       .filter(([, ruleConfiguration]) => isEnabled(ruleConfiguration))
