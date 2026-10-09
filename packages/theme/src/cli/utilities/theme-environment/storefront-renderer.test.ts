@@ -1,9 +1,15 @@
 import {render} from './storefront-renderer.js'
+import {STOREFRONT_REQUEST_BEHAVIOUR} from './storefront-utils.js'
 import {DevServerRenderContext, DevServerSession} from './types.js'
 import {describe, expect, test, vi} from 'vitest'
+import {fetch, Response} from '@shopify/cli-kit/node/http'
+import {Readable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/session')
-vi.stubGlobal('fetch', vi.fn())
+vi.mock('@shopify/cli-kit/node/http', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/http')>()),
+  fetch: vi.fn(),
+}))
 
 const session: DevServerSession = {
   token: 'admin_token_abc123',
@@ -56,6 +62,7 @@ describe('render', () => {
           'X-Special-Header': '200',
         }),
       }),
+      STOREFRONT_REQUEST_BEHAVIOUR,
     )
   })
 
@@ -83,6 +90,7 @@ describe('render', () => {
           'Signature-Agent': 'signature-agent-value',
         }),
       }),
+      STOREFRONT_REQUEST_BEHAVIOUR,
     )
   })
 
@@ -141,6 +149,7 @@ describe('render', () => {
           'Content-Length': '100',
         }),
       }),
+      STOREFRONT_REQUEST_BEHAVIOUR,
     )
     expect(fetch).toHaveBeenCalledWith(
       'https://theme-kit-access.shopifyapps.com/cli/sfr/products/1?_fd=0&pb=0',
@@ -150,6 +159,7 @@ describe('render', () => {
           'X-Special-Header': '200',
         }),
       }),
+      STOREFRONT_REQUEST_BEHAVIOUR,
     )
   })
 
@@ -176,6 +186,7 @@ describe('render', () => {
           'X-Special-Header': '200',
         }),
       }),
+      STOREFRONT_REQUEST_BEHAVIOUR,
     )
   })
 
@@ -202,6 +213,7 @@ describe('render', () => {
           'X-Special-Header': '200',
         }),
       }),
+      STOREFRONT_REQUEST_BEHAVIOUR,
     )
   })
 
@@ -229,6 +241,7 @@ describe('render', () => {
           'X-Special-Header': '200',
         }),
       }),
+      STOREFRONT_REQUEST_BEHAVIOUR,
     )
   })
 
@@ -253,6 +266,7 @@ describe('render', () => {
         method: 'GET',
         redirect: 'manual',
       }),
+      'slow-request',
     )
   })
 
@@ -281,6 +295,7 @@ describe('render', () => {
         method: 'POST',
         redirect: 'manual',
       }),
+      'slow-request',
     )
   })
 
@@ -310,6 +325,51 @@ describe('render', () => {
           'X-Special-Header': '200',
         }),
       }),
+      STOREFRONT_REQUEST_BEHAVIOUR,
     )
+  })
+
+  test('drops the body when the storefront responds with a status that cannot carry one', async () => {
+    // Given
+    // Unlike the built-in fetch, the client always exposes a body stream, even on a 304. The
+    // browser revalidates every cached asset, so this is the common path, not an edge case.
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(Readable.from(['']), {
+        status: 304,
+        statusText: 'Not Modified',
+        headers: {etag: 'W/"abc123"'},
+      }),
+    )
+
+    // When
+    const response = await render(session, context)
+
+    // Then
+    expect(response.status).toEqual(304)
+    expect(response.body).toBeNull()
+    expect(response.headers.get('etag')).toEqual('W/"abc123"')
+  })
+  test('keeps repeated set-cookie headers separate', async () => {
+    // Given
+    // Iterating the client's headers joins repeated values with ', ', which would merge the
+    // storefront's session cookies into one.
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(null, {
+        status: 302,
+        headers: [
+          ['set-cookie', '_shopify_essential=:abc:; path=/'],
+          ['set-cookie', 'storefront_digest=123; path=/'],
+        ],
+      }),
+    )
+
+    // When
+    const response = await render(session, context)
+
+    // Then
+    expect(response.headers.getSetCookie()).toEqual([
+      '_shopify_essential=:abc:; path=/',
+      'storefront_digest=123; path=/',
+    ])
   })
 })

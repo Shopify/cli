@@ -11,13 +11,21 @@ import {
   standardEventsRuntimeDevUrl,
   standardEventsRuntimeUrl,
 } from './standard-events.js'
-import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
+import {describe, test, expect, vi, beforeEach, afterEach, type Mock} from 'vitest'
 import {createEvent} from 'h3'
+import {fetch, Response as HttpResponse} from '@shopify/cli-kit/node/http'
 import {IncomingMessage, ServerResponse} from 'node:http'
 
 import {Socket} from 'node:net'
+import {Readable} from 'stream'
+import {text} from 'stream/consumers'
 
 import type {DevServerContext} from './types.js'
+
+vi.mock('@shopify/cli-kit/node/http', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/http')>()),
+  fetch: vi.fn(),
+}))
 
 function createH3Event(method = 'GET', path = '/', headers = {}) {
   const req = new IncomingMessage(new Socket())
@@ -385,6 +393,15 @@ describe('dev proxy', () => {
   })
 
   describe('getProxyStorefrontHeaders', () => {
+    test('does not forward the browser accept-encoding, so the client only negotiates encodings it decodes', () => {
+      const event = createH3Event('GET', '/', {'accept-encoding': 'gzip, deflate, br, zstd', accept: 'text/html'})
+
+      const headers = getProxyStorefrontHeaders(event)
+
+      expect(headers['accept-encoding']).toBeUndefined()
+      expect(headers.accept).toBe('text/html')
+    })
+
     test('filters out hop-by-hop headers and adds required headers', () => {
       const event = createH3Event()
       event.context.clientAddress = '42'
@@ -518,8 +535,8 @@ describe('dev proxy', () => {
     })
 
     test('passes crawler signature headers to proxied SFR requests', async () => {
-      const fetchMock = vi.fn().mockResolvedValue(new Response('OK'))
-      vi.stubGlobal('fetch', fetchMock)
+      const fetchMock = vi.fn().mockResolvedValue(new HttpResponse('OK'))
+      vi.mocked(fetch).mockImplementation(fetchMock)
       const event = createH3Event('GET', '/cart.js')
       const localCtx = {
         ...ctx,
@@ -539,7 +556,7 @@ describe('dev proxy', () => {
       try {
         await proxyStorefrontRequest(event, localCtx)
 
-        const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+        const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
         expect(init.headers).toEqual(
           expect.objectContaining({
             Signature: 'signature-value',
@@ -548,13 +565,80 @@ describe('dev proxy', () => {
           }),
         )
       } finally {
-        vi.unstubAllGlobals()
+        vi.mocked(fetch).mockReset()
+      }
+    })
+
+    test('drops the body when the storefront responds with 304 Not Modified', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(new HttpResponse(Readable.from(['']), {status: 304}))
+      vi.mocked(fetch).mockImplementation(fetchMock)
+      const event = createH3Event('GET', '/cdn/shop/files/style.css')
+
+      try {
+        const response = await proxyStorefrontRequest(event, ctx)
+
+        expect(response.status).toBe(304)
+        expect(response.body).toBeNull()
+        const [, init] = fetchMock.mock.calls[0] as [string, {body?: unknown}]
+        expect(init.body).toBeUndefined()
+      } finally {
+        vi.mocked(fetch).mockReset()
+      }
+    })
+
+    test('removes content-encoding when the client decompressed the body', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(new HttpResponse('body', {headers: {'content-encoding': 'gzip'}}))
+      vi.mocked(fetch).mockImplementation(fetchMock)
+      const event = createH3Event('GET', '/cdn/shop/files/style.css')
+
+      try {
+        const response = await proxyStorefrontRequest(event, ctx)
+
+        expect(response.headers.get('content-encoding')).toBeNull()
+      } finally {
+        vi.mocked(fetch).mockReset()
+      }
+    })
+
+    test('keeps content-encoding when the client left the body compressed', async () => {
+      const fetchMock = vi
+        .fn()
+        .mockResolvedValue(new HttpResponse('still-compressed', {headers: {'content-encoding': 'br, gzip'}}))
+      vi.mocked(fetch).mockImplementation(fetchMock)
+      const event = createH3Event('GET', '/cdn/shop/files/style.css')
+
+      try {
+        const response = await proxyStorefrontRequest(event, ctx)
+
+        expect(response.headers.get('content-encoding')).toBe('br, gzip')
+      } finally {
+        vi.mocked(fetch).mockReset()
+      }
+    })
+
+    test('forwards the request body as a stream, without retries or a timeout', async () => {
+      const fetchMock = vi.fn().mockResolvedValue(new HttpResponse('OK'))
+      vi.mocked(fetch).mockImplementation(fetchMock)
+      const event = createH3Event('POST', '/cart/add.js', {'content-type': 'application/x-www-form-urlencoded'})
+
+      try {
+        const pending = proxyStorefrontRequest(event, ctx)
+        event.node.req.push('id=1&quantity=2')
+        event.node.req.push(null)
+        await pending
+
+        const [, init, behaviour] = fetchMock.mock.calls[0] as [string, {body?: Readable}, string]
+        expect(init.body).toBeInstanceOf(Readable)
+        await expect(text(init.body!)).resolves.toBe('id=1&quantity=2')
+        expect(behaviour).toBe('slow-request')
+      } finally {
+        vi.mocked(fetch).mockReset()
       }
     })
   })
 
   describe('proxyStorefrontRequest — Bearer token auth scoping', () => {
-    let fetchMock: ReturnType<typeof vi.fn>
+    let fetchMock: Mock
     const tokenCtx = {
       ...ctx,
       type: 'theme',
@@ -566,18 +650,18 @@ describe('dev proxy', () => {
     } as unknown as DevServerContext
 
     beforeEach(() => {
-      fetchMock = vi.fn().mockResolvedValue(new Response('OK'))
-      vi.stubGlobal('fetch', fetchMock)
+      fetchMock = vi.fn().mockResolvedValue(new HttpResponse('OK'))
+      vi.mocked(fetch).mockImplementation(fetchMock)
     })
 
     afterEach(() => {
-      vi.unstubAllGlobals()
+      vi.mocked(fetch).mockReset()
     })
 
     test('sends Bearer token for CDN asset requests', async () => {
       const event = createH3Event('GET', '/cdn/shop/files/style.css')
       await proxyStorefrontRequest(event, tokenCtx)
-      const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
       const headers = init.headers as Record<string, string>
       expect(headers.Authorization).toBe('Bearer sfr-devtools-token')
     })
@@ -585,7 +669,7 @@ describe('dev proxy', () => {
     test('does NOT send Bearer token for /cart/add.js', async () => {
       const event = createH3Event('POST', '/cart/add.js')
       await proxyStorefrontRequest(event, tokenCtx)
-      const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
       const headers = init.headers as Record<string, string>
       expect(headers.Authorization).toBeUndefined()
     })
@@ -593,7 +677,7 @@ describe('dev proxy', () => {
     test('does NOT send Bearer token for /cart.js', async () => {
       const event = createH3Event('GET', '/cart.js')
       await proxyStorefrontRequest(event, tokenCtx)
-      const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
       const headers = init.headers as Record<string, string>
       expect(headers.Authorization).toBeUndefined()
     })
@@ -601,7 +685,7 @@ describe('dev proxy', () => {
     test('does NOT send Bearer token for /cart.json', async () => {
       const event = createH3Event('GET', '/cart.json')
       await proxyStorefrontRequest(event, tokenCtx)
-      const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
       const headers = init.headers as Record<string, string>
       expect(headers.Authorization).toBeUndefined()
     })
@@ -609,7 +693,7 @@ describe('dev proxy', () => {
     test('does NOT send Bearer token for /cart/', async () => {
       const event = createH3Event('GET', '/cart/')
       await proxyStorefrontRequest(event, tokenCtx)
-      const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
       const headers = init.headers as Record<string, string>
       expect(headers.Authorization).toBeUndefined()
     })
@@ -617,7 +701,7 @@ describe('dev proxy', () => {
     test('does NOT send Bearer token for checkout endpoints', async () => {
       const event = createH3Event('GET', '/checkouts/xyz')
       await proxyStorefrontRequest(event, tokenCtx)
-      const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
       const headers = init.headers as Record<string, string>
       expect(headers.Authorization).toBeUndefined()
     })
@@ -625,7 +709,7 @@ describe('dev proxy', () => {
     test('does NOT send Bearer token for account endpoints', async () => {
       const event = createH3Event('GET', '/account/logout')
       await proxyStorefrontRequest(event, tokenCtx)
-      const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
       const headers = init.headers as Record<string, string>
       expect(headers.Authorization).toBeUndefined()
     })
@@ -637,7 +721,7 @@ describe('dev proxy', () => {
       } as unknown as DevServerContext
       const event = createH3Event('GET', '/assets/style.css')
       await proxyStorefrontRequest(event, extCtx)
-      const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
       const headers = init.headers as Record<string, string>
       expect(headers.Authorization).toBeUndefined()
     })
@@ -645,7 +729,7 @@ describe('dev proxy', () => {
     test('strips query string before auth check for /cart.js?sections=header', async () => {
       const event = createH3Event('GET', '/cart.js?sections=header')
       await proxyStorefrontRequest(event, tokenCtx)
-      const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
       const headers = init.headers as Record<string, string>
       expect(headers.Authorization).toBeUndefined()
     })
@@ -653,7 +737,7 @@ describe('dev proxy', () => {
     test('sends Bearer token for non-CDN paths that are not cart/checkout/account', async () => {
       const event = createH3Event('GET', '/products/some-product')
       await proxyStorefrontRequest(event, tokenCtx)
-      const [, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+      const [, init] = fetchMock.mock.calls[0] as [string, RequestInit]
       const headers = init.headers as Record<string, string>
       expect(headers.Authorization).toBe('Bearer sfr-devtools-token')
     })
@@ -670,15 +754,15 @@ describe('dev proxy', () => {
       },
     } as unknown as DevServerContext
 
-    let fetchMock: ReturnType<typeof vi.fn>
+    let fetchMock: Mock
 
     beforeEach(() => {
-      fetchMock = vi.fn().mockResolvedValue(new Response('{"data":{}}'))
-      vi.stubGlobal('fetch', fetchMock)
+      fetchMock = vi.fn().mockResolvedValue(new HttpResponse('{"data":{}}'))
+      vi.mocked(fetch).mockImplementation(fetchMock)
     })
 
     afterEach(() => {
-      vi.unstubAllGlobals()
+      vi.mocked(fetch).mockReset()
     })
 
     test('forwards /api/YYYY-MM/graphql.json without injecting theme auth, cookies, referer, or dev params', async () => {
@@ -690,11 +774,11 @@ describe('dev proxy', () => {
       await proxyStorefrontRequest(event, passthroughCtx)
 
       expect(fetchMock).toHaveBeenCalledOnce()
-      const [requestUrl, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+      const [requestUrl, init] = fetchMock.mock.calls[0] as [string, RequestInit]
 
-      expect(requestUrl.toString()).toBe('https://my-store.myshopify.com/api/2026-01/graphql.json')
-      expect(requestUrl.searchParams.has('_fd')).toBe(false)
-      expect(requestUrl.searchParams.has('pb')).toBe(false)
+      expect(requestUrl).toBe('https://my-store.myshopify.com/api/2026-01/graphql.json')
+      expect(new URL(requestUrl).searchParams.has('_fd')).toBe(false)
+      expect(new URL(requestUrl).searchParams.has('pb')).toBe(false)
 
       const headers = init.headers as Record<string, string>
       expect(headers['x-shopify-storefront-access-token']).toBe('public-access-token')
@@ -710,9 +794,9 @@ describe('dev proxy', () => {
       await proxyStorefrontRequest(event, passthroughCtx)
 
       expect(fetchMock).toHaveBeenCalledOnce()
-      const [requestUrl, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+      const [requestUrl, init] = fetchMock.mock.calls[0] as [string, RequestInit]
 
-      expect(requestUrl.toString()).toBe('https://my-store.myshopify.com/api/unstable/graphql.json')
+      expect(requestUrl).toBe('https://my-store.myshopify.com/api/unstable/graphql.json')
       const headers = init.headers as Record<string, string>
       expect(headers.Authorization).toBeUndefined()
       expect(headers.Cookie).toBeUndefined()
@@ -724,10 +808,10 @@ describe('dev proxy', () => {
       await proxyStorefrontRequest(event, passthroughCtx)
 
       expect(fetchMock).toHaveBeenCalledOnce()
-      const [requestUrl, init] = fetchMock.mock.calls[0] as [URL, RequestInit]
+      const [requestUrl, init] = fetchMock.mock.calls[0] as [string, RequestInit]
 
-      expect(requestUrl.searchParams.get('_fd')).toBe('0')
-      expect(requestUrl.searchParams.get('pb')).toBe('0')
+      expect(new URL(requestUrl).searchParams.get('_fd')).toBe('0')
+      expect(new URL(requestUrl).searchParams.get('pb')).toBe('0')
       const headers = init.headers as Record<string, string>
       expect(headers.Authorization).toBe('Bearer sfr-devtools-token')
     })
