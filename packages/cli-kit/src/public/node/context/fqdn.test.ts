@@ -6,6 +6,7 @@ import {
   businessPlatformFqdn,
   appDevFqdn,
   adminFqdn,
+  storeAdminUrl,
 } from './fqdn.js'
 import {Environment, serviceEnvironment} from '../../../private/node/context/service.js'
 import {expect, describe, test, vi} from 'vitest'
@@ -175,6 +176,14 @@ describe('adminFqdn', () => {
 })
 
 describe('normalizeStore', () => {
+  test.each(['shop1.my.shop.dev', 'shop1.my.shop.devns.shop'])(
+    'preserves an explicit development shop domain (%s)',
+    (store) => {
+      vi.mocked(serviceEnvironment).mockReturnValue(Environment.Local)
+      expect(normalizeStoreFqdn(`https://${store}/admin/`)).toEqual(store)
+    },
+  )
+
   test('parses store name with http', async () => {
     // When
     const got = normalizeStoreFqdn('http://example.myshopify.com')
@@ -277,4 +286,30 @@ describe('normalizeStore', () => {
   test('rejects URL paths other than /admin', async () => {
     expect(() => normalizeStoreFqdn('https://example.myshopify.com/themes')).toThrow('Invalid store value')
   })
+})
+
+describe('storeAdminUrl', () => {
+  test.each(['shop1.my.shop.dev', 'shop1.my.shop.devns.shop'])(
+    'routes a local shop to the current admin domain (%s)',
+    (store) => {
+      vi.mocked(serviceEnvironment).mockReturnValue(Environment.Local)
+      expect(storeAdminUrl(store)).toEqual('admin.shop.dev/store/shop1')
+    },
+  )
+
+  test.each(['shop1.my.shop.dev', 'shop1.my.shop.devns.shop'])(
+    'does not rewrite development domains outside local mode (%s)',
+    (store) => {
+      vi.mocked(serviceEnvironment).mockReturnValue(Environment.Production)
+      expect(storeAdminUrl(store)).toEqual(store)
+    },
+  )
+
+  test.each(['shop1.myshopify.com', 'shop1.my.shop.devns.shop.example.com', 'shop1.my.shop.dev.example.com'])(
+    'leaves non-development shops unchanged (%s)',
+    (store) => {
+      vi.mocked(serviceEnvironment).mockReturnValue(Environment.Local)
+      expect(storeAdminUrl(store)).toEqual(store)
+    },
+  )
 })
