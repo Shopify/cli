@@ -814,7 +814,7 @@
         }
       },
       "customPluginName": "@shopify/app",
-      "description": "Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll be prompted to choose from the configuration files in your project.",
+      "description": "Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll be prompted to choose from the configuration files in your project.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppConfigUseResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\",\n      \"const\": \"success\"\n    },\n    \"changed\": {\n      \"type\": \"boolean\",\n      \"description\": \"Whether the preferred configuration changed.\"\n    },\n    \"path\": {\n      \"anyOf\": [\n        {\n          \"type\": \"string\"\n        },\n        {\n          \"type\": \"null\"\n        }\n      ],\n      \"description\": \"The preferred configuration file, or null after clearing the preference.\"\n    },\n    \"clientId\": {\n      \"anyOf\": [\n        {\n          \"type\": \"string\",\n          \"minLength\": 1\n        },\n        {\n          \"type\": \"null\"\n        }\n      ],\n      \"description\": \"The public OAuth client identifier, or null after clearing the preference.\"\n    }\n  },\n  \"required\": [\n    \"status\",\n    \"changed\",\n    \"path\",\n    \"clientId\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppConfigUseResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll be prompted to choose from the configuration files in your project.",
       "flags": {
         "auth-alias": {
@@ -836,6 +836,15 @@
           "multiple": false,
           "name": "client-id",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,
