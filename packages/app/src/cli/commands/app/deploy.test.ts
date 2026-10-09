@@ -5,7 +5,6 @@ import {testAppLinked, testOrganizationApp, testProject} from '../../models/app/
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -82,22 +81,6 @@ describe('app deploy command', () => {
           },
         })
         expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', message: 'Releasing an app version'})
-      })
-    })
-  })
-
-  test('a silent build failure uses the fatal error path instead of cancelled', async () => {
-    vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-    vi.mocked(deploy).mockRejectedValue(new AbortSilentError())
-    await inTemporaryDirectory(async (tmp) => {
-      await withCapturedStandardStreams(async ({stdout}) => {
-        await expect(runDeploy(['--path', tmp, '--json', '--allow-updates'])).rejects.toThrow()
-        expect(JSON.parse(stdout())).toMatchObject({
-          error: {
-            type: 'abort',
-            message: 'The app deployment did not complete. See the deployment diagnostics for details.',
-          },
-        })
       })
     })
   })

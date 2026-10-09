@@ -8,7 +8,6 @@ import metadata from '../../metadata.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
-import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
@@ -118,29 +117,21 @@ export default class Deploy extends AppLinkedCommand {
     const allowUpdates = flags['no-release'] || flags['allow-updates']
     const allowDeletes = flags['no-release'] || flags['allow-deletes']
 
-    let result
-    try {
-      result = await deploy({
-        app,
-        project,
-        remoteApp,
-        organization,
-        developerPlatformClient,
-        reset: flags.reset,
-        allowUpdates,
-        allowDeletes,
-        noRelease: flags['no-release'],
-        message: flags.message,
-        version: flags.version,
-        commitReference: flags['source-control-url'],
-        skipBuild: flags['no-build'],
-      })
-    } catch (error) {
-      if (flags.json && error instanceof AbortSilentError) {
-        throw new AbortError('The app deployment did not complete. See the deployment diagnostics for details.')
-      }
-      throw error
-    }
+    const result = await deploy({
+      app,
+      project,
+      remoteApp,
+      organization,
+      developerPlatformClient,
+      reset: flags.reset,
+      allowUpdates,
+      allowDeletes,
+      noRelease: flags['no-release'],
+      message: flags.message,
+      version: flags.version,
+      commitReference: flags['source-control-url'],
+      skipBuild: flags['no-build'],
+    })
     await renderAppDeployResult(result, remoteApp, project, flags.json ? 'json' : 'text')
     return {app: result.app}
   }

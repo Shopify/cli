@@ -538,17 +538,6 @@ describe('deploy', () => {
     expect(uploadExtensionsBundle).not.toHaveBeenCalled()
   })
 
-  test('does not report a silent build failure as cancelled', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const app = testAppLinked({directory})
-      vi.mocked(bundleAndBuildExtensions).mockRejectedValueOnce(new AbortSilentError())
-      await expect(testDeployBundle({app, remoteApp, developerPlatformClient, renderResult: false})).rejects.toThrow(
-        AbortSilentError,
-      )
-      expect(uploadExtensionsBundle).not.toHaveBeenCalled()
-    })
-  })
-
   test('shows a success message', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
