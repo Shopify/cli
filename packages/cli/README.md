@@ -7502,7 +7502,7 @@ FLAGS
       [env: SHOPIFY_HYDROGEN_FLAG_STYLING]
 
   --template=<value>
-      Scaffolds project based on an existing template or example from the Hydrogen repository.
+      Scaffolds project based on a template: `skeleton` (the default), `demo-store` or a URL to a git repository.
       [env: SHOPIFY_HYDROGEN_FLAG_TEMPLATE]
 
 DESCRIPTION
