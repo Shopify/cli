@@ -108,9 +108,16 @@ jobs:
     name: Publish PR snapshot
     if: ${{ github.event_name == 'workflow_dispatch' && (inputs.snapit_comment_id != '' || inputs.snapit_sha != '') }}
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.publish.outputs.version }}
+      npm-outcome: ${{ steps.publish.outcome }}
+      pull_request: ${{ steps.request.outputs.pull_request }}
+      comment_id: ${{ steps.request.outputs.comment_id }}
+      requester: ${{ steps.request.outputs.requester }}
+      sha: ${{ steps.request.outputs.sha }}
     permissions:
       contents: read
-      pull-requests: write
+      pull-requests: read
       id-token: write
     steps:
       - name: Validate snapshot request
@@ -182,7 +189,7 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: 24.12.0
-      - name: Publish snapshot
+      - name: Publish snapshot to npm
         id: publish
         run: |
           pnpm release snapshot
@@ -193,44 +200,86 @@ jobs:
           NPM_TOKEN: ''
           NPM_CONFIG_PROVENANCE: true
           SHOPIFY_CLI_BUILD_REPO: ${{ github.repository }}
+      - name: Pack CLI snapshot
+        id: pack
+        shell: bash
+        working-directory: packages/cli
+        run: |
+          set -euo pipefail
+          SNAPSHOT_DIRECTORY=$(mktemp -d "$RUNNER_TEMP/cli-snapshot.XXXXXX")
+          VERSION=$(node -p "require('./package.json').version")
+          # npm publishing already ran prepack; reuse the prepared release files.
+          npm pack --ignore-scripts --pack-destination "$SNAPSHOT_DIRECTORY"
+          echo "directory=$SNAPSHOT_DIRECTORY" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Upload CLI snapshot
+        id: artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-snapshot-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.pack.outputs.directory }}/shopify-cli-${{ steps.pack.outputs.version }}.tgz
+          if-no-files-found: error
+          retention-days: 7
+
+  snapshot-cloudsmith:
+    name: Publish PR snapshot to Cloudsmith
+    needs: snapshot-release
+    uses: ./.github/workflows/publish-snapshot-to-cloudsmith.yml
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    with:
+      version: ${{ needs.snapshot-release.outputs.version }}
+      service-slug: ${{ vars.CLOUDSMITH_SERVICE_SLUG }}
+
+  snapshot-report:
+    name: Report PR snapshot result
+    needs: [snapshot-release, snapshot-cloudsmith]
+    if: ${{ always() && needs.snapshot-release.outputs.pull_request != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
       - name: Report snapshot result
-        if: ${{ always() && steps.request.outputs.pull_request != '' }}
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         env:
-          SNAPSHOT_OUTCOME: ${{ steps.publish.outcome }}
-          SNAPSHOT_VERSION: ${{ steps.publish.outputs.version }}
-          SNAPSHOT_PR: ${{ steps.request.outputs.pull_request }}
-          SNAPSHOT_COMMENT: ${{ steps.request.outputs.comment_id }}
-          SNAPSHOT_REQUESTER: ${{ steps.request.outputs.requester }}
-          SNAPSHOT_SHA: ${{ steps.request.outputs.sha }}
+          SNAPSHOT_OUTCOME: ${{ needs.snapshot-release.outputs.npm-outcome }}
+          CLOUDSMITH_OUTCOME: ${{ needs.snapshot-cloudsmith.result }}
+          SNAPSHOT_VERSION: ${{ needs.snapshot-release.outputs.version }}
+          SNAPSHOT_PR: ${{ needs.snapshot-release.outputs.pull_request }}
+          SNAPSHOT_COMMENT: ${{ needs.snapshot-release.outputs.comment_id }}
+          SNAPSHOT_REQUESTER: ${{ needs.snapshot-release.outputs.requester }}
+          SNAPSHOT_SHA: ${{ needs.snapshot-release.outputs.sha }}
         with:
           script: |
             const {
               SNAPSHOT_OUTCOME: outcome,
+              CLOUDSMITH_OUTCOME: cloudsmithOutcome,
               SNAPSHOT_VERSION: version,
               SNAPSHOT_REQUESTER: requester,
               SNAPSHOT_SHA: sha,
             } = process.env;
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const published = outcome === 'success';
+            const published = outcome === 'success' && cloudsmithOutcome === 'success';
             const body = published
               ? [
-                  `🫰✨ **Thanks @${requester}! Your snapshot has been published to npm.**`,
-                  `Built from \`${sha}\`. [Workflow run](${runUrl}).`,
-                  'Test the snapshot by installing your package globally:',
+                  `✨ **@${requester} your snapshot has been published to NPM and Cloudsmith.**`,
+                  'You can install it with:',
                   [
                     '```bash',
-                    `pnpm i -g --@shopify:registry=https://registry.npmjs.org @shopify/cli@${version}`,
+                    `pnpm i -g @shopify/cli@${version}`,
                     '```',
                   ].join('\n'),
                   [
-                    '> [!CAUTION]',
+                    '> [!WARNING]',
                     '> After installing, validate the version by running `shopify version` in your terminal.',
                     "> If the versions don't match, you might have multiple global instances installed.",
                     '> Use `which shopify` to find out which one you are running and uninstall it.',
                   ].join('\n'),
                 ].join('\n\n')
-              : `The snapshot requested by @${requester} for \`${sha}\` could not be published. [View the workflow run](${runUrl}).`;
+              : `The snapshot requested by @${requester} for \`${sha}\` could not be published to both registries (npm: ${outcome}; Cloudsmith: ${cloudsmithOutcome}). [View the workflow run](${runUrl}).`;
             await github.rest.issues.createComment({
               ...context.repo,
               issue_number: Number(process.env.SNAPSHOT_PR),
@@ -351,6 +400,8 @@ jobs:
     name: Manual & Cron Release
     if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '' && inputs.snapit_comment_id == '' && inputs.snapit_sha == '') }}
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.pack.outputs.version }}
     permissions:
       contents: read
       pull-requests: write
@@ -371,3 +422,38 @@ jobs:
           NPM_TOKEN: ''
           NPM_CONFIG_PROVENANCE: true
           SHOPIFY_CLI_BUILD_REPO: ${{ github.repository }}
+      - name: Pack CLI snapshot
+        id: pack
+        if: github.event.inputs.tag == 'snapshot'
+        shell: bash
+        working-directory: packages/cli
+        run: |
+          set -euo pipefail
+          SNAPSHOT_DIRECTORY=$(mktemp -d "$RUNNER_TEMP/cli-snapshot.XXXXXX")
+          VERSION=$(node -p "require('./package.json').version")
+          # npm publishing already ran prepack; reuse the prepared release files.
+          npm pack --ignore-scripts --pack-destination "$SNAPSHOT_DIRECTORY"
+          echo "directory=$SNAPSHOT_DIRECTORY" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Upload CLI snapshot
+        id: artifact
+        if: github.event.inputs.tag == 'snapshot'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-snapshot-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.pack.outputs.directory }}/shopify-cli-${{ steps.pack.outputs.version }}.tgz
+          if-no-files-found: error
+          retention-days: 7
+
+  manual-snapshot-cloudsmith:
+    name: Publish manual snapshot to Cloudsmith
+    needs: manual-cron-release
+    if: github.event.inputs.tag == 'snapshot'
+    uses: ./.github/workflows/publish-snapshot-to-cloudsmith.yml
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    with:
+      version: ${{ needs.manual-cron-release.outputs.version }}
+      service-slug: ${{ vars.CLOUDSMITH_SERVICE_SLUG }}
