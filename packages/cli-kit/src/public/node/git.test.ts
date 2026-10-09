@@ -367,11 +367,17 @@ describe('ensureGitVersionIsAtLeast()', () => {
   })
 
   // Windows searches the working directory before PATH, so a planted script runs unless it is refused.
-  test.runIf(process.platform === 'win32')('refuses a git.cmd script in the working directory', async () => {
+  test.runIf(process.platform === 'win32').each([
+    ['forward slashes', (directory: string) => directory],
+    ['backslashes', (directory: string) => directory.replaceAll('/', '\\')],
+    ['a path delimiter in its name', (directory: string) => joinPath(directory, 'a;b')],
+  ])('refuses a git.cmd script in a working directory with %s', async (_description, workingDirectoryIn) => {
     await inTemporaryDirectory(async (directory) => {
-      writeFileSync(joinPath(directory, 'git.cmd'), '@echo git version 2.55.0\r\n')
+      const workingDirectory = workingDirectoryIn(directory)
+      mkdirSync(workingDirectory)
+      writeFileSync(joinPath(workingDirectory, 'git.cmd'), '@echo git version 2.55.0\r\n')
 
-      await expect(git.ensureGitVersionIsAtLeast('2.38.0', {cwd: directory})).rejects.toThrow(
+      await expect(git.ensureGitVersionIsAtLeast('2.38.0', {cwd: workingDirectory})).rejects.toThrow(
         /Skipped run of unsecure binary/,
       )
       expect(mockedExeca).not.toHaveBeenCalled()
