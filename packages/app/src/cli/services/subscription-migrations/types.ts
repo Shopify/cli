@@ -210,3 +210,11 @@ export type MigrationSubmissionResult =
   | {status: 'success'; submission: MigrationSubmission}
   | {status: 'failed'; submission: MigrationSubmission; failure: MigrationSubmissionFailure}
   | {status: 'cancelled'; changed: false; action: 'schedule' | 'unschedule'; reason: string}
+
+export const migrationStatusJsonOutputSchema = defineJsonOutputSchema({
+  name: 'MigrationStatusResult',
+  schema: zod.object({operations: zod.array(MigrationOperationSchema)}).strict(),
+  definitions: {MigrationOperation: MigrationOperationSchema},
+})
+
+export type MigrationStatusResult = InferJsonOutputSchema<typeof migrationStatusJsonOutputSchema>

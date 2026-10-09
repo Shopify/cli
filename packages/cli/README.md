@@ -5185,6 +5185,81 @@ DESCRIPTION
   to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app
   within the project. Use `--reset` to relink the app.
 
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `MigrationStatusResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "operations": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/MigrationOperation"
+        }
+      }
+    },
+    "required": [
+      "operations"
+    ],
+    "additionalProperties": false,
+    "title": "MigrationStatusResult",
+    "definitions": {
+      "MigrationOperation": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/AppSubscriptionMigrationOperation\\/[^/]+$",
+            "description": "The Shopify AppSubscriptionMigrationOperation GID."
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Upstream status: RUNNING, COMPLETED, FAILED, or CANCELED."
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "shopGid": {
+                  "type": "string",
+                  "pattern": "^gid:\\/\\/shopify\\/Shop\\/\\d+$",
+                  "description": "The Shopify Shop GID."
+                },
+                "code": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The upstream per-shop migration result code."
+                }
+              },
+              "required": [
+                "shopGid",
+                "code"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "gid",
+          "status",
+          "total",
+          "results"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify app subscription-migrations status --id <operation-id>
 
