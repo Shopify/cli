@@ -82,7 +82,7 @@ const generateExtensionPrompts = async (
       throw new AbortError('You have reached the limit for the number of extensions you can create.')
     }
 
-    // eslint-disable-next-line require-atomic-updates
+    // eslint-disable-next-line compat/require-atomic-updates
     templateType = await renderAutocompletePrompt({
       message: 'Type of extension?',
       choices: buildChoices(extensionTemplates, options.unavailableExtensions),

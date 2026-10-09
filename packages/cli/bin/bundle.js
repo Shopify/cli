@@ -1,4 +1,4 @@
-/* eslint-disable @shopify/cli/specific-imports-in-bootstrap-code, @nx/enforce-module-boundaries */
+/* eslint-disable @shopify/cli/specific-imports-in-bootstrap-code, compat/nx-enforce-module-boundaries */
 import {createRequire} from 'module'
 import {readFileSync} from 'fs'
 

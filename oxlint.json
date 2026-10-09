@@ -13,7 +13,11 @@
       "specifier": "./packages/eslint-plugin-cli/index.js"
     },
     "eslint-plugin-no-catch-all",
-    "eslint-plugin-tsdoc"
+    "eslint-plugin-tsdoc",
+    {
+      "name": "compat",
+      "specifier": "./packages/eslint-plugin-cli/oxlint-compat.js"
+    }
   ],
   "categories": {
     "correctness": "off"
@@ -358,7 +362,9 @@
       {
         "allowKeywords": true
       }
-    ]
+    ],
+    "@shopify/cli/command-json-output": "error",
+    "compat/eslint-comments-no-unused-disable": "error"
   },
   "overrides": [
     {
@@ -703,6 +709,663 @@
           "error",
           1
         ]
+      }
+    },
+    {
+      "files": [
+        "**/*.{js,ts,tsx}"
+      ],
+      "rules": {
+        "compat/consistent-return": "error",
+        "compat/curly": [
+          "error",
+          "all"
+        ],
+        "compat/dot-notation": [
+          "error",
+          {
+            "allowKeywords": true
+          }
+        ],
+        "compat/no-octal-escape": "error",
+        "compat/no-octal": "error",
+        "compat/no-process-env": "error",
+        "compat/no-return-await": "error",
+        "compat/no-dupe-args": "error",
+        "compat/require-atomic-updates": "error",
+        "compat/no-unexpected-multiline": "error",
+        "compat/shopify-binary-assignment-parens": [
+          "error",
+          "always"
+        ],
+        "compat/shopify-class-property-semi": "error",
+        "compat/shopify-images-no-direct-imports": "error",
+        "compat/shopify-no-context-menu": "error",
+        "compat/shopify-no-debugger": "error",
+        "compat/shopify-no-useless-computed-properties": "error",
+        "compat/shopify-no-fully-static-classes": "error",
+        "compat/shopify-prefer-early-return": [
+          "error",
+          {
+            "maximumStatements": 1
+          }
+        ],
+        "compat/shopify-prefer-module-scope-constants": "error",
+        "compat/shopify-prefer-twine": "error",
+        "compat/shopify-strict-component-boundaries": "error",
+        "compat/shopify-typescript-prefer-pascal-case-enums": "off",
+        "compat/shopify-typescript-prefer-singular-enums": "off",
+        "compat/shopify-typescript-prefer-build-client-schema": "error",
+        "compat/strict": [
+          "error",
+          "never"
+        ],
+        "compat/camelcase": [
+          "error",
+          {
+            "properties": "always"
+          }
+        ],
+        "compat/consistent-this": [
+          "error",
+          "self"
+        ],
+        "compat/id-length": [
+          "error",
+          {
+            "min": 2,
+            "properties": "always",
+            "exceptions": [
+              "x",
+              "y",
+              "i",
+              "j",
+              "t",
+              "q",
+              "_",
+              "$"
+            ]
+          }
+        ],
+        "compat/line-comment-position": [
+          "error",
+          {
+            "position": "above"
+          }
+        ],
+        "no-object-constructor": "error",
+        "compat/no-restricted-syntax": "off",
+        "compat/one-var": [
+          "error",
+          "never"
+        ],
+        "compat/no-catch-shadow": "error",
+        "compat/no-undef-init": "error",
+        "compat/no-undef": "error",
+        "compat/lines-between-class-members": [
+          "error",
+          "always",
+          {
+            "exceptAfterSingleLine": true
+          }
+        ],
+        "compat/padding-line-between-statements": [
+          "error",
+          {
+            "blankLine": "always",
+            "prev": "directive",
+            "next": "*"
+          },
+          {
+            "blankLine": "any",
+            "prev": "directive",
+            "next": "directive"
+          }
+        ],
+        "compat/spaced-comment": [
+          "error",
+          "always",
+          {
+            "markers": [
+              "="
+            ]
+          }
+        ],
+        "compat/eslint-comments-disable-enable-pair": [
+          "error",
+          {
+            "allowWholeFile": true
+          }
+        ],
+        "compat/eslint-comments-no-aggregating-enable": "error",
+        "compat/eslint-comments-no-duplicate-disable": "error",
+        "compat/eslint-comments-no-unlimited-disable": "error",
+        "compat/eslint-comments-no-unused-enable": "error"
+      }
+    },
+    {
+      "files": [
+        "**/*.{js,ts,tsx}"
+      ],
+      "rules": {
+        "compat/no-new-symbol": "error",
+        "compat/prefer-arrow-callback": [
+          "error",
+          {
+            "allowNamedFunctions": true
+          }
+        ],
+        "promise/no-return-in-finally": "error",
+        "compat/sort-class-members-sort-class-members": [
+          "error",
+          {
+            "order": [
+              "[static-members]",
+              "[properties]",
+              "[conventional-private-properties]",
+              "constructor",
+              "[methods]",
+              "[conventional-private-methods]",
+              "[everything-else]"
+            ],
+            "groups": {
+              "static-members": [
+                {
+                  "static": true
+                }
+              ]
+            },
+            "accessorPairPositioning": "getThenSet"
+          }
+        ],
+        "compat/import-x-no-unresolved": "error",
+        "compat/import-x-named": "error",
+        "compat/import-x-no-useless-path-segments": "error",
+        "compat/import-x-no-unused-modules": "error",
+        "compat/import-x-export": "error",
+        "compat/import-x-no-deprecated": "error",
+        "compat/import-x-no-extraneous-dependencies": "error",
+        "compat/import-x-order": [
+          "error",
+          {
+            "groups": [
+              "builtin",
+              "external",
+              "internal",
+              "parent",
+              "sibling"
+            ],
+            "newlines-between": "always"
+          }
+        ],
+        "compat/import-x-no-named-as-default": "error",
+        "compat/import-x-no-named-as-default-member": "error"
+      }
+    },
+    {
+      "files": [
+        "**/*.ts",
+        "**/*.tsx"
+      ],
+      "rules": {
+        "compat/typescript-eslint-no-array-constructor": "error",
+        "compat/typescript-eslint-member-ordering": [
+          "error",
+          {
+            "default": [
+              "public-static-field",
+              "protected-static-field",
+              "private-static-field",
+              "public-static-method",
+              "protected-static-method",
+              "private-static-method",
+              "public-instance-field",
+              "protected-instance-field",
+              "private-instance-field",
+              "constructor",
+              "public-instance-method",
+              "protected-instance-method",
+              "private-instance-method"
+            ]
+          }
+        ],
+        "compat/typescript-eslint-no-unused-vars": "off",
+        "compat/typescript-eslint-naming-convention": [
+          "error",
+          {
+            "selector": "default",
+            "format": [
+              "camelCase",
+              "PascalCase",
+              "UPPER_CASE"
+            ],
+            "leadingUnderscore": "allow",
+            "trailingUnderscore": "allow"
+          },
+          {
+            "selector": "default",
+            "filter": {
+              "match": true,
+              "regex": "^(__|UNSAFE_).+$"
+            },
+            "format": null
+          },
+          {
+            "selector": "typeLike",
+            "format": [
+              "PascalCase"
+            ]
+          },
+          {
+            "selector": "typeParameter",
+            "format": [
+              "PascalCase"
+            ],
+            "prefix": [
+              "T"
+            ]
+          },
+          {
+            "selector": "interface",
+            "format": [
+              "PascalCase"
+            ],
+            "custom": {
+              "regex": "^I[A-Z]",
+              "match": false
+            }
+          }
+        ],
+        "typescript/no-unnecessary-type-assertion": "off",
+        "compat/typescript-eslint-no-unused-expressions": "error",
+        "compat/no-undef": "off",
+        "compat/shopify-no-fully-static-classes": "off",
+        "compat/sort-class-members-sort-class-members": "off",
+        "compat/camelcase": "off",
+        "compat/no-dupe-args": "off",
+        "compat/no-new-symbol": "off",
+        "compat/import-x-no-unresolved": "off",
+        "compat/import-x-named": "off",
+        "compat/import-x-export": "off",
+        "compat/strict": "off",
+        "compat/shopify-prefer-early-return": "off",
+        "compat/shopify-typescript-prefer-pascal-case-enums": "error",
+        "compat/shopify-typescript-prefer-singular-enums": "error",
+        "compat/shopify-typescript-prefer-build-client-schema": "error"
+      }
+    },
+    {
+      "files": [
+        "**/*.{js,ts,tsx}"
+      ],
+      "rules": {
+        "compat/n-exports-style": [
+          "error",
+          "module.exports"
+        ],
+        "compat/n-prefer-global-buffer": "error",
+        "compat/n-prefer-global-console": "error",
+        "compat/n-prefer-global-process": "error",
+        "compat/n-prefer-global-text-decoder": "error",
+        "compat/n-prefer-global-text-encoder": "error",
+        "compat/n-prefer-global-url-search-params": "error",
+        "compat/n-prefer-global-url": "error",
+        "compat/n-no-deprecated-api": "error",
+        "compat/n-no-unpublished-bin": "error",
+        "compat/n-no-unsupported-features-node-builtins": "error",
+        "compat/n-shebang": "error",
+        "compat/n-prefer-promises-dns": "error",
+        "compat/n-prefer-promises-fs": "error",
+        "compat/n-no-callback-literal": "error",
+        "compat/no-process-env": "off"
+      }
+    },
+    {
+      "files": [
+        "**/*.{js,ts,tsx}"
+      ],
+      "rules": {
+        "compat/curly": 0,
+        "compat/no-unexpected-multiline": 0,
+        "compat/react-jsx-child-element-spacing": "off",
+        "compat/react-jsx-closing-bracket-location": "off",
+        "compat/react-jsx-closing-tag-location": "off",
+        "compat/react-jsx-curly-spacing": "off",
+        "compat/react-jsx-equals-spacing": "off",
+        "compat/react-jsx-first-prop-new-line": "off",
+        "compat/react-jsx-indent": "off",
+        "compat/react-jsx-indent-props": "off",
+        "compat/react-jsx-props-no-multi-spaces": "off",
+        "compat/react-jsx-tag-spacing": "off"
+      }
+    },
+    {
+      "files": [
+        "**/*.{js,ts,tsx}"
+      ],
+      "rules": {
+        "compat/shopify-class-property-semi": "off",
+        "compat/shopify-binary-assignment-parens": "off",
+        "compat/prefer-arrow-callback": "off",
+        "compat/no-unexpected-multiline": "error"
+      }
+    },
+    {
+      "files": [
+        "**/*.ts",
+        "**/*.tsx"
+      ],
+      "rules": {
+        "compat/shopify-strict-component-boundaries": "off",
+        "compat/import-x-order": [
+          "error",
+          {
+            "groups": [
+              "index",
+              "sibling",
+              "parent",
+              "internal",
+              "external",
+              "builtin",
+              "object",
+              "type"
+            ]
+          }
+        ],
+        "compat/no-catch-shadow": "off",
+        "compat/typescript-eslint-naming-convention": [
+          "error",
+          {
+            "selector": "default",
+            "format": [
+              "camelCase",
+              "PascalCase",
+              "UPPER_CASE"
+            ],
+            "leadingUnderscore": "allow",
+            "trailingUnderscore": "allow"
+          },
+          {
+            "selector": "default",
+            "filter": {
+              "match": true,
+              "regex": "^(__|UNSAFE_).+$"
+            },
+            "format": null
+          },
+          {
+            "selector": "typeLike",
+            "format": [
+              "PascalCase"
+            ]
+          },
+          {
+            "selector": "typeParameter",
+            "format": [
+              "PascalCase"
+            ],
+            "prefix": [
+              "T"
+            ]
+          },
+          {
+            "selector": "interface",
+            "format": [
+              "PascalCase"
+            ],
+            "custom": {
+              "regex": "^I[A-Z]",
+              "match": false
+            }
+          },
+          {
+            "selector": [
+              "objectLiteralProperty",
+              "typeProperty"
+            ],
+            "format": null
+          }
+        ],
+        "compat/typescript-eslint-no-unnecessary-type-assertion": "error",
+        "compat/consistent-return": "off",
+        "compat/n-no-deprecated-api": "off",
+        "compat/import-x-no-extraneous-dependencies": "off",
+        "compat/unused-imports-no-unused-imports": "error",
+        "compat/no-restricted-syntax": [
+          "error",
+          {
+            "selector": "Literal[value=/(cannot|will not|do not)/i]",
+            "message": "Be human - prefer don't to do not, won't to will not etc."
+          },
+          {
+            "selector": "TemplateElement[value.raw=/(cannot|will not|do not)/i]",
+            "message": "Be human - prefer don't to do not, won't to will not etc."
+          }
+        ],
+        "compat/typescript-eslint-no-unused-vars": [
+          "error",
+          {
+            "args": "all",
+            "argsIgnorePattern": "^_",
+            "caughtErrors": "none",
+            "caughtErrorsIgnorePattern": "^_",
+            "destructuredArrayIgnorePattern": "^_",
+            "varsIgnorePattern": "^_",
+            "ignoreRestSiblings": true
+          }
+        ],
+        "compat/n-no-unsupported-features-node-builtins": "off",
+        "compat/typescript-eslint-no-unused-expressions": [
+          "error",
+          {
+            "allowTernary": true
+          }
+        ],
+        "@shopify/cli/command-json-output": "error"
+      }
+    },
+    {
+      "files": [
+        "**/*.{js,ts,tsx}"
+      ],
+      "rules": {
+        "compat/curly": 0,
+        "compat/no-unexpected-multiline": 0,
+        "compat/react-jsx-child-element-spacing": "off",
+        "compat/react-jsx-closing-bracket-location": "off",
+        "compat/react-jsx-closing-tag-location": "off",
+        "compat/react-jsx-curly-spacing": "off",
+        "compat/react-jsx-equals-spacing": "off",
+        "compat/react-jsx-first-prop-new-line": "off",
+        "compat/react-jsx-indent": "off",
+        "compat/react-jsx-indent-props": "off",
+        "compat/react-jsx-props-no-multi-spaces": "off",
+        "compat/react-jsx-tag-spacing": "off"
+      }
+    },
+    {
+      "files": [
+        "**/*.test.ts",
+        "**/*.test.tsx",
+        "**/*.test-data.ts",
+        "**/testing/*.ts",
+        "**/testing/*.tsx"
+      ],
+      "rules": {
+        "compat/no-restricted-syntax": "off",
+        "compat/typescript-eslint-no-unused-vars": "off"
+      }
+    },
+    {
+      "files": [
+        "**/bin/*.js"
+      ],
+      "rules": {
+        "compat/import-x-no-unresolved": "off",
+        "compat/nx-enforce-module-boundaries": "off",
+        "compat/n-no-unpublished-bin": "off"
+      }
+    },
+    {
+      "files": [
+        "**/*.ts",
+        "**/*.tsx"
+      ],
+      "rules": {
+        "compat/nx-enforce-module-boundaries": "error"
+      }
+    },
+    {
+      "files": [
+        "packages/theme/src/**/*.ts"
+      ],
+      "rules": {
+        "compat/nx-enforce-module-boundaries": [
+          "error",
+          {
+            "checkDynamicDependenciesExceptions": [
+              "@shopify/cli-kit/**"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "**/public/**/*.ts"
+      ],
+      "excludeFiles": [
+        "**/*.test.ts",
+        "**/public/node/abort.ts",
+        "**/public/node/analytics.ts",
+        "**/public/node/base-command.ts",
+        "**/public/node/cli.ts",
+        "**/public/node/dot-env.ts",
+        "**/public/node/error-handler.ts",
+        "**/public/node/framework.ts",
+        "**/public/node/fs.ts",
+        "**/public/node/github.ts",
+        "**/public/node/hooks/prerun.ts",
+        "**/public/node/os.ts",
+        "**/public/node/node-package-manager.ts",
+        "**/public/node/plugins/tunnel.ts",
+        "**/public/node/environments.ts",
+        "**/public/node/result.ts",
+        "**/public/node/themes/**/*"
+      ],
+      "rules": {
+        "compat/jsdoc-check-alignment": "error",
+        "compat/jsdoc-check-indentation": "error",
+        "compat/jsdoc-check-line-alignment": "error",
+        "compat/jsdoc-check-param-names": "error",
+        "compat/jsdoc-check-syntax": "error",
+        "compat/jsdoc-check-types": "error",
+        "compat/jsdoc-check-values": "error",
+        "compat/jsdoc-match-description": "error",
+        "compat/jsdoc-multiline-blocks": "error",
+        "compat/jsdoc-no-bad-blocks": "error",
+        "compat/jsdoc-no-multi-asterisks": "error",
+        "compat/jsdoc-no-types": "error",
+        "compat/jsdoc-no-undefined-types": "error",
+        "compat/jsdoc-require-asterisk-prefix": "error",
+        "compat/jsdoc-require-description": "error",
+        "compat/jsdoc-require-description-complete-sentence": "error",
+        "compat/jsdoc-require-hyphen-before-param-description": "error",
+        "compat/jsdoc-require-jsdoc": [
+          "error",
+          {
+            "publicOnly": true
+          }
+        ],
+        "compat/jsdoc-require-returns-check": "error",
+        "compat/jsdoc-require-throws": "error",
+        "compat/jsdoc-require-yields-check": "error",
+        "compat/jsdoc-tag-lines": [
+          "error",
+          "any",
+          {
+            "startLines": 1
+          }
+        ],
+        "compat/jsdoc-valid-types": "error"
+      }
+    },
+    {
+      "files": [
+        "**/*.test.ts"
+      ],
+      "rules": {
+        "compat/no-restricted-syntax": "off"
+      }
+    },
+    {
+      "files": [
+        "src/private/node/ui/components/**/*.tsx"
+      ],
+      "rules": {
+        "compat/react-jsx-child-element-spacing": 2,
+        "compat/react-jsx-closing-bracket-location": 2,
+        "compat/react-jsx-closing-tag-location": 2,
+        "compat/react-jsx-curly-spacing": 2,
+        "compat/react-jsx-equals-spacing": 2,
+        "compat/react-jsx-first-prop-new-line": 2,
+        "compat/react-jsx-indent": [
+          2,
+          2,
+          {
+            "checkAttributes": true,
+            "indentLogicalExpressions": true
+          }
+        ],
+        "compat/react-jsx-indent-props": [
+          2,
+          2
+        ],
+        "compat/react-jsx-no-leaked-render": 2,
+        "compat/react-jsx-props-no-multi-spaces": 2,
+        "compat/react-jsx-tag-spacing": 2,
+        "compat/react-no-unused-prop-types": 2,
+        "compat/typescript-eslint-naming-convention": [
+          "error",
+          {
+            "selector": "interface",
+            "format": [
+              "PascalCase"
+            ],
+            "custom": {
+              "regex": "^Props",
+              "match": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "packages/cli/bin/*.js"
+      ],
+      "rules": {
+        "compat/shopify-strict-component-boundaries": "off"
+      }
+    },
+    {
+      "files": [
+        "packages/cli/src/**/*.ts"
+      ],
+      "rules": {
+        "compat/nx-enforce-module-boundaries": "off"
+      }
+    },
+    {
+      "files": [
+        "**/api/graphql/**/generated/*.ts"
+      ],
+      "rules": {
+        "typescript/consistent-type-definitions": "off",
+        "compat/typescript-eslint-naming-convention": "off",
+        "typescript/no-duplicate-type-constituents": "off",
+        "typescript/no-redundant-type-constituents": "off",
+        "compat/nx-enforce-module-boundaries": "off"
       }
     }
   ]

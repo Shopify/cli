@@ -1,7 +1,7 @@
 import {createStoreAuthPresenter} from './result.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-// eslint-disable-next-line n/prefer-global/console
+// eslint-disable-next-line compat/n-prefer-global-console
 import {Console} from 'node:console'
 
 function captureStandardStreams() {

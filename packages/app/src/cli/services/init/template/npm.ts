@@ -28,7 +28,7 @@ export async function updateCLIDependencies({
   if (local) {
     const cliPath = await packagePath('cli')
 
-    // eslint-disable-next-line require-atomic-updates
+    // eslint-disable-next-line compat/require-atomic-updates
     packageJSON.dependencies['@shopify/cli'] = cliPath
 
     const dependencyOverrides = {
