@@ -1638,14 +1638,18 @@ Execute GraphQL queries and mutations.
 
 ```
 USAGE
-  $ shopify app execute [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--output-file <value>] [--path <value>] [-q <value>] [--query-file <value>] [--reset | ] [-s <value>]
-    [--variable-file <value> | -v <value>] [--verbose] [--version <value>]
+  $ shopify app execute [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--output-file <value>] [--path <value>] [-q <value>] [--query-file <value>] [--reset | ]
+    [-s <value>] [--variable-file <value> | -v <value>] [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -q, --query=<value>
       The GraphQL query or mutation, as a string.
@@ -1715,6 +1719,75 @@ DESCRIPTION
 
   For operations that process large amounts of data, use "`bulk execute`"
   (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) instead.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppExecuteResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/AppExecuteGraphQLResult"
+      },
+      {
+        "$ref": "#/definitions/AppExecuteFileReceipt"
+      }
+    ],
+    "title": "AppExecuteResult",
+    "definitions": {
+      "AppExecuteGraphQLResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {},
+                  {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Native GraphQL query data, preserving fields and aliases."
+          },
+          "extensions": {
+            "$ref": "#/definitions/AppExecuteGraphQLResult/properties/data/anyOf/0",
+            "description": "Native GraphQL response extensions, when supplied."
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false
+      },
+      "AppExecuteFileReceipt": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string",
+            "const": "json"
+          }
+        },
+        "required": [
+          "path",
+          "format"
+        ],
+        "additionalProperties": false,
+        "description": "Receipt for a written JSON file containing the GraphQL result, including data and optional extensions."
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app function build`

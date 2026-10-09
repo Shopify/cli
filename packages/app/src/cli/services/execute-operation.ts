@@ -4,15 +4,16 @@ import {
   resolveApiVersion,
   validateMutationStore,
 } from './graphql/common.js'
+import {ExecuteOperationResult} from './execute-operation/types.js'
 import {OrganizationApp, Organization, OrganizationStore} from '../models/organization.js'
-import {renderSuccess, renderError, renderSingleTask} from '@shopify/cli-kit/node/ui'
+import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {ClientError} from 'graphql-request'
 import {parse} from 'graphql'
-import {writeFile, readFile, fileExists} from '@shopify/cli-kit/node/fs'
+import {readFile, fileExists} from '@shopify/cli-kit/node/fs'
 
 interface ExecuteOperationInput {
   organization: Organization
@@ -21,7 +22,6 @@ interface ExecuteOperationInput {
   query: string
   variables?: string
   variableFile?: string
-  outputFile?: string
   version?: string
 }
 
@@ -61,8 +61,8 @@ async function parseVariables(
   return undefined
 }
 
-export async function executeOperation(input: ExecuteOperationInput): Promise<void> {
-  const {remoteApp, store, query, variables, variableFile, version: userSpecifiedVersion, outputFile} = input
+export async function executeOperation(input: ExecuteOperationInput): Promise<ExecuteOperationResult> {
+  const {remoteApp, store, query, variables, variableFile, version: userSpecifiedVersion} = input
 
   const {adminSession, version} = await renderSingleTask({
     title: outputContent`Authenticating`,
@@ -80,47 +80,38 @@ export async function executeOperation(input: ExecuteOperationInput): Promise<vo
   validateMutationStore(query, store)
 
   try {
-    const result = await renderSingleTask({
+    let extensions: Record<string, unknown> | undefined
+    const data = await renderSingleTask({
       title: outputContent`Executing GraphQL operation`,
       task: async () => {
-        return adminRequestDoc({
+        return adminRequestDoc<Record<string, unknown> | null, Record<string, unknown>>({
           query: parse(query),
           session: adminSession,
           variables: parsedVariables,
           version,
-          responseOptions: {handleErrors: false},
+          responseOptions: {
+            handleErrors: false,
+            onResponse: (response) => {
+              extensions = response.extensions as Record<string, unknown> | undefined
+            },
+          },
         })
       },
       renderOptions: {stdout: process.stderr},
     })
 
-    const resultString = JSON.stringify(result, null, 2)
-
-    if (outputFile) {
-      await writeFile(outputFile, resultString)
-      renderSuccess({
-        headline: 'Operation succeeded.',
-        body: `Results written to ${outputFile}`,
-      })
-    } else {
-      renderSuccess({
-        headline: 'Operation succeeded.',
-      })
-      outputResult(resultString)
-    }
+    return {status: 'success', result: {data, ...(extensions === undefined ? {} : {extensions})}}
   } catch (error) {
     if (error instanceof ClientError) {
-      // GraphQL errors from user's query - render as error
-      const errorResult = {
-        errors: error.response.errors,
+      const {errors, extensions, data} = error.response
+      return {
+        status: 'failed',
+        details: {
+          ...(errors === undefined ? {} : {errors}),
+          ...(extensions === undefined ? {} : {extensions}),
+          ...(data === undefined ? {} : {data}),
+        },
       }
-      const errorString = JSON.stringify(errorResult, null, 2)
-
-      renderError({
-        headline: 'GraphQL operation failed.',
-        body: errorString,
-      })
-      return
     }
     // Network/system errors - let them propagate
     throw error
