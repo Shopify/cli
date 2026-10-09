@@ -11765,17 +11765,173 @@ Upgrades Shopify CLI.
 
 ```
 USAGE
-  $ shopify upgrade [--json-schema]
+  $ shopify upgrade [-j] [--json-schema] [--no-color] [--no-input] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
   Upgrades Shopify CLI.
 
   Upgrades Shopify CLI using your package manager.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `UpgradeResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "changed": {
+            "type": "boolean",
+            "description": "Whether the verified installed version differs from previousVersion."
+          },
+          "scope": {
+            "type": "string",
+            "const": "global"
+          },
+          "previousVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "packageManager": {
+            "type": "string",
+            "enum": [
+              "npm",
+              "pnpm",
+              "yarn",
+              "bun",
+              "homebrew"
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "changed",
+          "scope",
+          "previousVersion",
+          "version",
+          "packageManager"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "changed": {
+            "type": "null",
+            "description": "Null because local dependency changes and installed versions are not verified."
+          },
+          "scope": {
+            "type": "string",
+            "const": "local"
+          },
+          "directory": {
+            "type": "string"
+          },
+          "previousVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "availableVersion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The available registry version, or null when unknown."
+          },
+          "packages": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": [
+          "status",
+          "changed",
+          "scope",
+          "directory",
+          "previousVersion",
+          "availableVersion",
+          "packages"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "skipped"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "development",
+              "local-autoupgrade",
+              "dependency-not-found"
+            ]
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "global",
+              "local"
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "reason",
+          "scope"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "UpgradeResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify version`

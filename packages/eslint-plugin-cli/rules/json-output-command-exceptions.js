@@ -22,7 +22,6 @@ const commandExceptions = [
   'packages/app/src/cli/commands/app/init.ts',
   'packages/app/src/cli/commands/app/release.ts',
   'packages/app/src/cli/commands/app/webhook/trigger.ts',
-  'packages/cli/src/cli/commands/upgrade.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/off.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/on.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/status.ts',
