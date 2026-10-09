@@ -1,5 +1,16 @@
 # @shopify/cli-kit
 
+## 5.0.0
+
+### Minor Changes
+
+- f7feb6d: Normalize migration cancellation JSON and share error serialization to preserve completed batch outcomes, error classifications, and recovery guidance.
+- fdae48f: Add typed JSON output to `shopify upgrade`.
+
+### Patch Changes
+
+- 03d54a6: Fail with a clear error, instead of logging in with your Shopify account, when `SHOPIFY_APP_AUTOMATION_TOKEN` or `SHOPIFY_CLI_PARTNERS_TOKEN` is set but empty
+
 ## 4.9.0
 
 ### Minor Changes

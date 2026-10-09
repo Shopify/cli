@@ -1,5 +1,33 @@
 # @shopify/cli
 
+## 5.0.0
+
+### Major Changes
+
+- d5565e0: Normalize migration status JSON with gid and shopGid identifiers and flat per-shop results.
+- 4332594: Normalize migration submission JSON with outcome statuses, changed, GID fields, flattened results, fieldPath errors, and successful cancellation results.
+- 56e663d: Normalize migration subscription JSON with shopGid identifiers, whole-second UTC instants, and calendar dates.
+- 2ded4d0: Normalize migration unscheduling JSON with explicit outcomes, successful cancellation, GID fields, and flattened results.
+- f7feb6d: Normalize migration cancellation JSON and share error serialization to preserve completed batch outcomes, error classifications, and recovery guidance.
+
+### Minor Changes
+
+- 6616f2e: Add typed JSON output to app bulk cancel.
+- d1c2303: Add typed JSON output to app bulk execute.
+- 35ef50c: Add typed JSON output to app bulk status.
+- b46926e: Add typed JSON output to `app dev clean`.
+- 11dbcff: Add JSON status output to app build.
+- fdebfc5: Add typed JSON output and schema discovery to `doc fetch`.
+- 2e10837: Add typed JSON output and schema discovery to `doc search`.
+- fdae48f: Add typed JSON output to `shopify upgrade`.
+
+### Patch Changes
+
+- 02c6a6a: Clarify the `--blocking` and `--skip-instructions` help text for `shopify app security`
+- 70fd6eb: Skip lockfiles in every `shopify app security check` scan directory, so a monorepo root lockfile no longer leaves the secret check unresolved
+- f5f737a: Stop app security agent checks from leaving the React Router app template's metafield, authorization and frame-ancestors checks unresolved
+- 0c17a82: `shopify app security check` only reads from Git: it no longer starts file-system monitors or fetches missing objects, and it doesn't use repositories committed inside the scanned directory
+
 ## 4.9.0
 
 ### Minor Changes
