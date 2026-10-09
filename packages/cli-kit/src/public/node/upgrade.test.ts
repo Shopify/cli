@@ -20,9 +20,7 @@ import {
 } from './upgrade.js'
 import {Notification, fetchNotifications} from './notifications-system.js'
 import {globalCLIVersion, isPreReleaseVersion} from './version.js'
-import {mockAndCaptureOutput, withCapturedStandardStreams} from './testing/output.js'
-import {runWithCommandEventsForCommand} from './command-events.js'
-import {outputResult} from './output.js'
+import {mockAndCaptureOutput} from './testing/output.js'
 import {inTemporaryDirectory, writeFile} from './fs.js'
 import {joinPath} from './path.js'
 import {getAutoUpgradeEnabled} from '../../private/node/conf-store.js'
@@ -190,53 +188,6 @@ describe('runCLIUpgrade', () => {
 
     // Then
     expect(exec).toHaveBeenCalledWith('npm', ['install', '-g', '@shopify/cli@latest'], {stdio: 'inherit'})
-  })
-
-  test.each([false, true])('JSON auto-upgrade keeps stdout clear when the install fails: %s', async (fails) => {
-    vi.mocked(isUnitTest).mockReturnValue(false)
-    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
-    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
-    const failure = new Error('Install failed')
-    vi.mocked(exec).mockImplementationOnce(async (_command, _args, options) => {
-      if (options?.stdio === 'inherit') {
-        process.stdout.write('added 1 package\n')
-        process.stderr.write('package manager warning\n')
-      } else {
-        if (options?.stdout && options.stdout !== 'inherit') options.stdout.write('added 1 package\n')
-        if (options?.stderr && options.stderr !== 'inherit') options.stderr.write('package manager warning')
-      }
-      if (fails) throw failure
-    })
-
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await runWithCommandEventsForCommand(['--json'], async () => {
-        outputResult('{"status":"success"}')
-        const upgrade = runCLIUpgrade({autoupgrade: true})
-        if (fails) await expect(upgrade).rejects.toBe(failure)
-        else await upgrade
-      })
-
-      expect(stdout()).toBe('{"status":"success"}\n')
-      const events = stderr()
-        .trim()
-        .split('\n')
-        .map((line) => JSON.parse(line))
-      expect(events).toContainEqual(expect.objectContaining({type: 'diagnostic', message: 'added 1 package\n'}))
-      expect(events).toContainEqual(expect.objectContaining({type: 'diagnostic', message: 'package manager warning'}))
-      if (!fails) {
-        expect(events).toContainEqual(
-          expect.objectContaining({
-            type: 'diagnostic',
-            message: `Shopify CLI upgraded. You're now on version ${CLI_KIT_VERSION}.`,
-          }),
-        )
-      }
-      expect(exec).toHaveBeenCalledWith('npm', ['install', '-g', '@shopify/cli@latest'], {
-        stdin: 'inherit',
-        stdout: expect.anything(),
-        stderr: expect.anything(),
-      })
-    })
   })
 
   test('runs the install command via exec for a global yarn install', async () => {

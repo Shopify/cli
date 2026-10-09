@@ -13,7 +13,6 @@ import {
 } from './node-package-manager.js'
 import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from './output.js'
 import {presentUpgradeResult} from './upgrade/result.js'
-import {commandEventOutputMode} from './command-events.js'
 import {execUpgradeCommand, upgradeOutputStreams} from './upgrade/output.js'
 import {cwd, moduleDirectory, sniffForPath} from './path.js'
 import {isCI} from './system.js'
@@ -67,12 +66,7 @@ export interface RunCLIUpgradeOptions {
  * @throws AbortError if the package manager or command cannot be determined.
  */
 export async function runCLIUpgrade(options: RunCLIUpgradeOptions = {}): Promise<void> {
-  const result = await upgradeCLI(options)
-  if (commandEventOutputMode() === 'json' && result.status === 'success' && result.scope === 'global') {
-    outputInfo(`Shopify CLI upgraded. You're now on version ${result.version}.`)
-  } else {
-    presentUpgradeResult(result, 'text')
-  }
+  presentUpgradeResult(await upgradeCLI(options), 'text')
 }
 
 /**
