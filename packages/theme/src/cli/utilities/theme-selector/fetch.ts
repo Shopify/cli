@@ -17,11 +17,11 @@ export async function publicFetchStoreThemes(store: string, password: string) {
   return fetchStoreThemes(adminSession)
 }
 
-export async function fetchStoreThemes(session: AdminSession) {
+export async function fetchStoreThemes(session: AdminSession, {allowEmpty = false}: {allowEmpty?: boolean} = {}) {
   const store = session.storeFqdn
   const themes = (await fetchThemes(session)).filter(isRoleAllowed)
 
-  if (themes.length === 0) {
+  if (themes.length === 0 && !allowEmpty) {
     throw new AbortError(`There are no themes in the ${store} store`)
   }
 

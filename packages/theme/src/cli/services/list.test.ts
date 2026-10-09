@@ -1,13 +1,17 @@
 import {getDevelopmentTheme} from './local-storage.js'
 import {list} from './list.js'
+import {renderThemeListResult} from './list/result.js'
 import {fetchStoreThemes} from '../utilities/theme-selector/fetch.js'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {describe, expect, vi, test} from 'vitest'
 import {getHostTheme} from '@shopify/cli-kit/node/themes/conf'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 
-vi.mock('../utilities/theme-selector/fetch.js')
+vi.mock('../utilities/theme-selector/fetch.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../utilities/theme-selector/fetch.js')>()),
+  fetchStoreThemes: vi.fn(),
+}))
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/themes/conf')
 vi.mock('./local-storage.js')
@@ -18,12 +22,29 @@ const session = {
 }
 
 describe('list', () => {
+  test.each([{role: 'development' as const}, {name: 'missing'}, {name: '*missing*'}, {id: 999}])(
+    'returns an empty JSON collection when no themes match %j',
+    async (options) => {
+      vi.mocked(fetchStoreThemes).mockResolvedValue([
+        {id: 1, name: 'Dawn', processing: false, createdAtRuntime: false, role: 'live'},
+      ])
+
+      const result = await list(options, session)
+      expect(result).toEqual([])
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        renderThemeListResult(result, 'json', {store: session.storeFqdn})
+        expect(JSON.parse(stdout())).toEqual({themes: []})
+        expect(stderr()).toBe('')
+      })
+    },
+  )
+
   test('should call the renderInfo function, with correctly formatted data', async () => {
     const developmentThemeId = 5
     const hostThemeId = 6
     vi.mocked(fetchStoreThemes).mockResolvedValue([
-      {id: 1, name: 'Theme 1', role: 'live'},
-      {id: 2, name: 'Theme 2', role: ''},
+      {id: 1, name: 'Theme 1', processing: false, createdAtRuntime: false, role: 'live'},
+      {id: 2, name: 'Theme 2', processing: false, createdAtRuntime: false, role: ''},
       {id: 3, name: 'Theme 3', role: 'development'},
       {id: developmentThemeId, name: 'Theme 5', role: 'development'},
       {id: hostThemeId, name: 'Theme 6', role: 'development'},
@@ -31,7 +52,7 @@ describe('list', () => {
     vi.mocked(getDevelopmentTheme).mockReturnValue(developmentThemeId.toString())
     vi.mocked(getHostTheme).mockReturnValue(hostThemeId.toString())
 
-    await list({json: false}, session)
+    renderThemeListResult(await list({}, session), 'text', {store: session.storeFqdn})
 
     expect(renderInfo).toHaveBeenCalledWith({
       customSections: [
@@ -61,7 +82,7 @@ describe('list', () => {
       {id: 5, name: 'Theme 5', role: 'development'},
     ] as Theme[])
 
-    await list({role: 'live', name: '*eMe 3*', json: false}, session)
+    renderThemeListResult(await list({role: 'live', name: '*eMe 3*'}, session), 'text', {store: session.storeFqdn})
 
     expect(renderInfo).toHaveBeenCalledWith({
       customSections: [
@@ -83,25 +104,29 @@ describe('list', () => {
     const mockOutput = mockAndCaptureOutput()
 
     vi.mocked(fetchStoreThemes).mockResolvedValue([
-      {id: 1, name: 'Theme 1', role: 'live'},
-      {id: 2, name: 'Theme 2', role: ''},
+      {id: 1, name: 'Theme 1', processing: false, createdAtRuntime: false, role: 'live'},
+      {id: 2, name: 'Theme 2', processing: false, createdAtRuntime: false, role: ''},
     ] as Theme[])
 
-    await list({json: true}, session)
+    renderThemeListResult(await list({}, session), 'json', {store: session.storeFqdn})
 
     expect(mockOutput.info()).toMatchInlineSnapshot(`
-      "[
-        {
-          "id": 1,
-          "name": "Theme 1",
-          "role": "live"
-        },
-        {
-          "id": 2,
-          "name": "Theme 2",
-          "role": ""
-        }
-      ]"
+      "{
+        "themes": [
+          {
+            "id": "1",
+            "name": "Theme 1",
+            "role": "live",
+            "processing": false
+          },
+          {
+            "id": "2",
+            "name": "Theme 2",
+            "role": "",
+            "processing": false
+          }
+        ]
+      }"
     `)
   })
 })
