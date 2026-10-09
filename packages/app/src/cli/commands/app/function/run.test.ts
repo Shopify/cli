@@ -46,7 +46,7 @@ const nativeResult = {
 }
 
 async function command(argv: string[], targets = [{target: 'run', export: 'run'}]) {
-  vi.mocked(localAppContext).mockResolvedValue({app: testApp(), project: testProject()})
+  vi.mocked(localAppContext).mockResolvedValue({app: testApp(), project: testProject(), activeConfig: {} as never})
   const extension = await testFunctionExtension()
   extension.configuration.targeting = targets
   vi.mocked(chooseFunction).mockResolvedValue(extension)
