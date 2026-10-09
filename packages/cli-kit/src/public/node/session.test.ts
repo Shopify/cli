@@ -6,6 +6,7 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
   ensureAuthenticatedThemes,
+  ensureNoOrganizationAutomationToken,
   findSessionIdByAlias,
   setCurrentSessionAlias,
   setLastSeenUserId,
@@ -21,6 +22,7 @@ import {
   setLastSeenUserIdAfterAuth,
 } from '../../private/node/session.js'
 import * as sessionStore from '../../private/node/session/store.js'
+import {automationTokenVariable} from '../../private/node/session/automation-token.js'
 import {ApplicationToken} from '../../private/node/session/schema.js'
 import {
   exchangeCustomPartnerToken,
@@ -41,6 +43,7 @@ const partnersToken: ApplicationToken = {
 vi.mock('../../private/node/session.js')
 vi.mock('../../private/node/session/exchange.js')
 vi.mock('../../private/node/session/store.js')
+vi.mock('../../private/node/session/automation-token.js')
 vi.mock('./environment.js')
 vi.mock('./http.js')
 
@@ -50,6 +53,25 @@ describe('store command analytics session helpers', () => {
 
     expect(setLastSeenUserIdAfterAuth).toHaveBeenCalledWith('store-user-id')
   })
+})
+
+describe('ensureNoOrganizationAutomationToken', () => {
+  test('fails while SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN is set', () => {
+    vi.mocked(automationTokenVariable).mockReturnValue('SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN')
+
+    expect(() => ensureNoOrganizationAutomationToken()).toThrow(
+      "This command can't use SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN.",
+    )
+  })
+
+  test.each([undefined, 'SHOPIFY_APP_AUTOMATION_TOKEN', 'SHOPIFY_CLI_PARTNERS_TOKEN'])(
+    'does nothing when the automation token variable is %s',
+    (variable) => {
+      vi.mocked(automationTokenVariable).mockReturnValue(variable)
+
+      expect(() => ensureNoOrganizationAutomationToken()).not.toThrow()
+    },
+  )
 })
 
 describe('findSessionIdByAlias', () => {
@@ -308,6 +330,51 @@ describe('ensureAuthenticatedBusinessPlatform', () => {
     // Then
     await expect(got).rejects.toThrow(`No business-platform token`)
   })
+
+  test('exchanges the automation token with no fixed scopes when the caller allows one', async () => {
+    // Given
+    vi.mocked(getAppAutomationToken).mockReturnValue('custom_cli_token')
+    vi.mocked(exchangeAppAutomationTokenForBusinessPlatformAccessToken).mockResolvedValueOnce({
+      accessToken: 'business-platform-token',
+      userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
+    })
+
+    // When
+    const got = await ensureAuthenticatedBusinessPlatform([], {noPrompt: true, allowAutomationToken: true})
+
+    // Then
+    expect(got).toEqual('business-platform-token')
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).toHaveBeenCalledWith('custom_cli_token', [])
+    expect(exchangeAppAutomationTokenForAppManagementAccessToken).not.toHaveBeenCalled()
+    expect(ensureAuthenticated).not.toHaveBeenCalled()
+  })
+
+  test('uses the logged-in session when the caller allows a token but none is set', async () => {
+    // Given
+    vi.mocked(getAppAutomationToken).mockReturnValue(undefined)
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({businessPlatform: 'business_platform', userId: '1234-5678'})
+
+    // When
+    const got = await ensureAuthenticatedBusinessPlatform([], {noPrompt: true, allowAutomationToken: true})
+
+    // Then
+    expect(got).toEqual('business_platform')
+    expect(ensureAuthenticated).toHaveBeenCalledWith({businessPlatformApi: {scopes: []}}, process.env, {noPrompt: true})
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).not.toHaveBeenCalled()
+  })
+
+  test('ignores the automation token when the caller does not allow one', async () => {
+    // Given
+    vi.mocked(getAppAutomationToken).mockReturnValue('custom_cli_token')
+    vi.mocked(ensureAuthenticated).mockResolvedValueOnce({businessPlatform: 'business_platform', userId: '1234-5678'})
+
+    // When
+    const got = await ensureAuthenticatedBusinessPlatform()
+
+    // Then
+    expect(got).toEqual('business_platform')
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).not.toHaveBeenCalled()
+  })
 })
 
 describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
@@ -362,6 +429,8 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
       userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
       businessPlatformToken: 'business-platform-token',
     })
+    // App commands keep the exchange's default Business Platform scopes.
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).toHaveBeenCalledWith('custom_cli_token')
     expect(ensureAuthenticated).not.toHaveBeenCalled()
   })
 })

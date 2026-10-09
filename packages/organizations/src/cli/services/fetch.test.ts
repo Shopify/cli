@@ -98,6 +98,7 @@ describe('fetchOrganizations', () => {
 
     await fetchOrganizations()
 
+    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledWith([], {allowAutomationToken: true})
     expect(businessPlatformRequestDoc).toHaveBeenCalledWith(
       expect.objectContaining({
         token: 'test-token',

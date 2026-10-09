@@ -3,9 +3,10 @@ import {installAppDependencies} from './dependencies.js'
 import {installJavy} from './function/build.js'
 import {AppInterface, Web} from '../models/app/app.js'
 import {Project} from '../models/project/project.js'
-import {renderConcurrent, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderConcurrent} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
+import type {AppBuildResult} from './build/types.js'
 
 interface BuildOptions {
   app: AppInterface
@@ -14,7 +15,7 @@ interface BuildOptions {
   apiKey?: string
 }
 
-async function build(options: BuildOptions) {
+async function build(options: BuildOptions): Promise<AppBuildResult> {
   if (!options.skipDependenciesInstallation && !options.project.usesWorkspaces) {
     await installAppDependencies(options.project)
   }
@@ -50,7 +51,10 @@ async function build(options: BuildOptions) {
     showTimestamps: false,
   })
 
-  renderSuccess({headline: [{userInput: options.app.name}, 'built!']})
+  return {
+    status: 'success',
+    appName: options.app.name,
+  }
 }
 
 export default build

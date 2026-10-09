@@ -103,7 +103,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
   configRule(missingComplianceWebhooks),
   {
     id: 'MISSING_DEPENDENCY_SECURITY_AUTOMATION',
-    version: 1,
+    version: 2,
     lifecycle: 'active',
     analysisMode: 'structured_config',
     target: 'dependency_automation',
@@ -145,7 +145,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
   configRule(insecureWebhookUrl, 2),
   {
     id: 'COMMITTED_SECRET',
-    version: 3,
+    version: 4,
     lifecycle: 'active',
     analysisMode: 'regex',
     target: 'secrets',

@@ -110,7 +110,7 @@ describe('deleteDevStore', () => {
 
     await deleteDevStore(defaultOptions)
 
-    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalled()
+    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledWith([], {allowAutomationToken: true})
     expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith(
       expect.objectContaining({
         query: expect.anything(),

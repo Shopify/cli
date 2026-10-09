@@ -48,7 +48,7 @@ export async function fetchOrganizationById(
   token?: string,
   unauthorizedHandler?: UnauthorizedHandler,
 ): Promise<Organization | undefined> {
-  const resolvedToken = token ?? (await ensureAuthenticatedBusinessPlatform())
+  const resolvedToken = token ?? (await ensureAuthenticatedBusinessPlatform([], {allowAutomationToken: true}))
 
   const result = await businessPlatformRequestDoc({
     query: FindOrganization,
@@ -77,7 +77,7 @@ function encodedOrganizationGid(organizationId: string): string {
 }
 
 async function fetchOrganizationsWithDetails(token?: string): Promise<FetchOrganizationsWithDetailsResult> {
-  const resolvedToken = token ?? (await ensureAuthenticatedBusinessPlatform())
+  const resolvedToken = token ?? (await ensureAuthenticatedBusinessPlatform([], {allowAutomationToken: true}))
 
   const result = await businessPlatformRequestDoc({
     query: ListOrganizations,

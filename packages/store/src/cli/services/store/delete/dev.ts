@@ -35,7 +35,7 @@ interface StoreDeletionConfirmationOptions {
 
 export async function deleteDevStore(options: DeleteDevStoreOptions): Promise<void> {
   const {organization: org, store} = options
-  const token = await ensureAuthenticatedBusinessPlatform()
+  const token = await ensureAuthenticatedBusinessPlatform([], {allowAutomationToken: true})
   const unauthorizedHandler = businessPlatformTokenRefreshHandler()
   let shopifyShopId = await fetchShopifyShopId({store, organizationId: org.id, token})
 

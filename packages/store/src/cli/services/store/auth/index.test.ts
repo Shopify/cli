@@ -2,7 +2,8 @@ import {authenticateStoreWithApp} from './index.js'
 import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
 import {setStoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
-import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
+import {ensureNoOrganizationAutomationToken, setLastSeenUserId} from '@shopify/cli-kit/node/session'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/store-auth-session')
@@ -102,6 +103,30 @@ describe('store auth service', () => {
       lastName: undefined,
       accountOwner: undefined,
     })
+  })
+
+  test('authenticateStoreWithApp runs while the organization automation token is set', async () => {
+    vi.mocked(ensureNoOrganizationAutomationToken).mockImplementation(() => {
+      throw new AbortError("This command can't use SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN.")
+    })
+
+    const result = await authenticateStoreWithApp(
+      {store: 'shop.myshopify.com', scopes: 'read_products'},
+      {
+        openURL: vi.fn().mockResolvedValue(true),
+        waitForStoreAuthCode: vi.fn().mockResolvedValue('abc123'),
+        exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
+          access_token: 'token',
+          scope: 'read_products',
+          expires_in: 86400,
+          associated_user: {id: 42, email: 'test@example.com'},
+        }),
+        presenter: {openingBrowser: vi.fn(), manualAuthUrl: vi.fn(), success: vi.fn()},
+      },
+    )
+
+    expect(result.userId).toBe('42')
+    expect(ensureNoOrganizationAutomationToken).not.toHaveBeenCalled()
   })
 
   test('authenticateStoreWithApp opens a loopback handoff URL when a signup JWT is provided', async () => {
