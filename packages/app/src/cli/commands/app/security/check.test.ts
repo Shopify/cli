@@ -176,7 +176,9 @@ describe('app security check command', () => {
 
   test('describes the artifacts it writes and how agent results are recorded', () => {
     expect(SecurityCheck.flags.yes.description).toBe('Print coding-agent instructions without prompting.')
-    expect(SecurityCheck.flags['skip-instructions'].description).toBe("Don't offer to show coding-agent instructions.")
+    expect(SecurityCheck.flags['skip-instructions'].description).toBe(
+      "Don't offer the coding-agent instructions after the scan. Use it when you want only the deterministic scan results.",
+    )
     expect(SecurityCheck.flags.yes.exclusive).toEqual(['skip-instructions'])
     expect(SecurityCheck.flags['skip-instructions'].exclusive).toEqual(['yes'])
     expect(SecurityCheck.summary).toContain('deterministic-findings.json')

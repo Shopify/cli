@@ -1,8 +1,8 @@
 import {findRepositoryMarker} from './repository-marker.js'
 import {isMissingFilesystemEntry} from './filesystem-errors.js'
+import {runGit} from './git.js'
 import {matchGlob} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import {basename, cwd, dirname, joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {lstatSync, realpathSync} from 'node:fs'
 
@@ -189,14 +189,4 @@ export async function listNestedRepository(directory: string): Promise<GitIgnore
 
 function splitNullSeparated(output: string): string[] {
   return output.split('\0').filter((path) => path !== '')
-}
-
-async function runGit(directory: string, args: string[]): Promise<{exitCode: number; stdout: string} | undefined> {
-  try {
-    const result = await captureOutputWithExitCode('git', args, {cwd: directory})
-    return {exitCode: result.exitCode, stdout: result.stdout}
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return undefined
-  }
 }

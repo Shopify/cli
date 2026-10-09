@@ -4,7 +4,7 @@ import {scanAppDirectory as scanApp, scanDirectory as scan} from './scan-directo
 import {securityExitCode} from '../../app-security-api.js'
 import {formatJson} from '../output/format.js'
 import {getRegistry} from '../registry/index.js'
-import {DETERMINISTIC_CHECKS} from '../scanners/index.js'
+import {DETERMINISTIC_CHECKS, scan as scanInput} from '../scanners/index.js'
 import {translateFindingsDocument} from '../results/translate.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -12,7 +12,7 @@ import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {mkdir, writeFile} from 'node:fs/promises'
 import {basename, dirname, join} from 'node:path'
-import type {ScanResult} from '../types.js'
+import type {ScanOptions, ScanResult} from '../types.js'
 
 vi.mock('@shopify/cli-kit/node/http', async (importActual) => {
   const actual: any = await importActual()
@@ -68,7 +68,7 @@ function dependencyFindings(result: ScanResult) {
 describe('dependency automation scanner integration', () => {
   test('registers one framework-independent low-severity structured-config check', () => {
     expect(DETERMINISTIC_CHECKS.get(checkId)).toMatchObject({
-      version: 1,
+      version: 2,
       lifecycle: 'active',
       analysisMode: 'structured_config',
       target: 'dependency_automation',
@@ -143,9 +143,10 @@ describe('dependency automation scanner integration', () => {
         expect(securityExitCode({...execution, elapsedMilliseconds: 0}, 'low')).toBe(0)
         expect(JSON.stringify(execution.deterministicFindings)).not.toContain('local>org/renovate-config')
         // Outside any repository, gathering stops after asking whether the directory is ignored and probing for a repository.
+        const untrusted = ['-c', 'core.fsmonitor=', '-c', 'safe.bareRepository=explicit']
         expect(vi.mocked(captureOutputWithExitCode).mock.calls.map(([command, args]) => [command, args])).toEqual([
-          ['git', ['check-ignore', '--no-index', '-q', '--', basename(root)]],
-          ['git', ['rev-parse', '--is-inside-work-tree']],
+          ['git', [...untrusted, 'check-ignore', '--no-index', '-q', '--', basename(root)]],
+          ['git', [...untrusted, 'rev-parse', '--is-inside-work-tree']],
         ])
         expect(fetch).not.toHaveBeenCalled()
       })
@@ -273,16 +274,77 @@ describe('dependency automation scanner integration', () => {
     })
   })
 
-  test('does not inspect repository-level configuration outside a nested app root', async () => {
-    await inTemporaryDirectory(async (repository) => {
-      const app = join(repository, 'apps/example')
-      await mkdir(join(repository, '.git'))
-      await makeApp(app, {'.github/dependabot.yml': dependabot})
-      const result = await scan(app)
-      expect(dependencyFindings(result)).toEqual([])
-      expect(dependencyExecution(result)).toMatchObject({
-        status: 'unresolved',
-        reason: {message: 'App root is nested below a parent Git repository'},
+  describe('apps below the repository root', () => {
+    /** The assessment's monorepo layout: a workspace root holding the app in `apps/foo`. */
+    async function makeMonorepo(repository: string, rootFiles: Record<string, string> = {}): Promise<string> {
+      const app = join(repository, 'apps/foo')
+      await writeFiles(repository, {
+        'package.json': JSON.stringify({private: true, workspaces: ['apps/*', 'packages/*']}),
+        'packages/server/package.json': JSON.stringify({dependencies: {'@shopify/shopify-app-react-router': '^1.0.0'}}),
+        ...rootFiles,
+      })
+      await makeApp(app)
+      git(repository, ['init', '-q', '.'])
+      git(repository, ['add', '-A'])
+      git(repository, ['commit', '-qm', 'init'])
+      return app
+    }
+
+    function scanFrom(app: string, scanDirectories: string[], options?: ScanOptions) {
+      return scanInput(
+        {
+          appDirectory: app,
+          scanDirectories,
+          requestedScanDirectories: [app, ...scanDirectories.filter((directory) => directory !== app)],
+          appConfigFilePath: join(app, 'shopify.app.toml'),
+        },
+        options,
+      )
+    }
+
+    test('reads configuration at the repository root when only the app directory is scanned', async () => {
+      await inTemporaryDirectory(async (repository) => {
+        const app = await makeMonorepo(repository, {'.github/dependabot.yml': dependabot})
+        const result = await scan(app)
+        expect(dependencyFindings(result)).toEqual([])
+        expect(dependencyExecution(result)).toMatchObject({
+          status: 'executed',
+          findings: 0,
+          inspected_files: ['package.json', '../../.github/dependabot.yml'],
+        })
+        expect(result.scan.coverage_gaps).toEqual([])
+      })
+    })
+
+    test('reads configuration at the repository root when it is a scan directory', async () => {
+      await inTemporaryDirectory(async (repository) => {
+        const app = await makeMonorepo(repository, {'renovate.json': '{}'})
+        const result = await scanFrom(app, [repository])
+        expect(dependencyFindings(result)).toEqual([])
+        expect(dependencyExecution(result)).toMatchObject({
+          status: 'executed',
+          findings: 0,
+          inspected_files: expect.arrayContaining(['../../package.json', '../../renovate.json']),
+        })
+      })
+    })
+
+    test('reports missing configuration at the repository root', async () => {
+      await inTemporaryDirectory(async (repository) => {
+        const app = await makeMonorepo(repository, {'apps/foo/.github/dependabot.yml': dependabot})
+        const result = await scan(app)
+        expect(dependencyFindings(result)).toEqual([expect.objectContaining({location: {file: 'package.json'}})])
+        expect(dependencyExecution(result)).toMatchObject({status: 'executed', findings: 1})
+      })
+    })
+
+    test('does not count the root configuration of a parent repository for an app with its own repository', async () => {
+      await inTemporaryDirectory(async (repository) => {
+        const app = await makeMonorepo(repository, {'.github/dependabot.yml': dependabot})
+        git(app, ['init', '-q', '.'])
+        const result = await scan(app)
+        expect(dependencyFindings(result)).toHaveLength(1)
+        expect(dependencyExecution(result)).toMatchObject({status: 'executed', inspected_files: ['package.json']})
       })
     })
   })

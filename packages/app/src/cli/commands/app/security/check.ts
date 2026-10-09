@@ -59,7 +59,8 @@ In interactive terminals, the command offers to copy the coding-agent instructio
       env: 'SHOPIFY_FLAG_YES',
     }),
     'skip-instructions': Flags.boolean({
-      description: "Don't offer to show coding-agent instructions.",
+      description:
+        "Don't offer the coding-agent instructions after the scan. Use it when you want only the deterministic scan results.",
       default: false,
       exclusive: ['yes'],
       env: 'SHOPIFY_FLAG_APP_SECURITY_SKIP_INSTRUCTIONS',
