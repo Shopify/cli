@@ -3,6 +3,7 @@ import {SendSampleWebhookVariables, getWebhookSample} from './request-sample.js'
 import {requestApiVersions} from './request-api-versions.js'
 import {requestTopics} from './request-topics.js'
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
+import {renderWebhookTriggerResult} from './trigger/result.js'
 import {
   testApp,
   testAppLinked,
@@ -79,10 +80,11 @@ describe('webhookTriggerService', () => {
     vi.mocked(getWebhookSample).mockResolvedValue(response)
 
     // When
-    await webhookTriggerService(sampleFlags())
+    const result = await webhookTriggerService(sampleFlags())
 
     // Then
     expectCalls(aVersion, anOrganizationId)
+    renderWebhookTriggerResult(result, 'text')
     expect(outputWarn).toHaveBeenCalledWith(`Request errors:\n  · Some error\n  · Another error`)
   })
 
@@ -102,10 +104,11 @@ describe('webhookTriggerService', () => {
     vi.mocked(getWebhookSample).mockResolvedValue(response)
 
     // When
-    await webhookTriggerService(sampleFlags())
+    const result = await webhookTriggerService(sampleFlags())
 
     // Then
     expectCalls(aVersion, anOrganizationId)
+    renderWebhookTriggerResult(result, 'text')
     expect(outputWarn).toHaveBeenCalledWith(`Request errors:\n${JSON.stringify(response.userErrors)}`)
   })
 
@@ -123,7 +126,7 @@ describe('webhookTriggerService', () => {
     }
 
     // When
-    await webhookTriggerService(sampleFlags())
+    const result = await webhookTriggerService(sampleFlags())
 
     // Then
     expectCalls(aVersion, anOrganizationId)
@@ -133,6 +136,18 @@ describe('webhookTriggerService', () => {
       anOrganizationId,
     )
     expect(triggerLocalWebhook).toHaveBeenCalledTimes(0)
+    expect(result).toEqual({
+      status: 'success',
+      delivery: {
+        topic: aTopic,
+        apiVersion: aVersion,
+        deliveryMethod: expectedSampleWebhookVariables.delivery_method,
+        address: expectedSampleWebhookVariables.address,
+        status: 'enqueued',
+      },
+      samplePayloadIsEmpty: true,
+    })
+    renderWebhookTriggerResult(result, 'text')
     expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
   })
 
@@ -176,7 +191,7 @@ describe('webhookTriggerService', () => {
     }
 
     // When
-    await webhookTriggerService(flags)
+    const result = await webhookTriggerService(flags)
 
     // Then
     expectCalls(aVersion, anOrganizationId)
@@ -185,6 +200,7 @@ describe('webhookTriggerService', () => {
       expectedSampleWebhookVariables,
       anOrganizationId,
     )
+    renderWebhookTriggerResult(result, 'text')
     expect(outputSuccess).toHaveBeenCalledWith('Webhook has been enqueued for delivery')
   })
 
@@ -203,7 +219,7 @@ describe('webhookTriggerService', () => {
       }
 
       // When
-      await webhookTriggerService(sampleLocalhostFlags())
+      const result = await webhookTriggerService(sampleLocalhostFlags())
 
       // Then
       expectCalls(aVersion, anOrganizationId)
@@ -213,6 +229,8 @@ describe('webhookTriggerService', () => {
         anOrganizationId,
       )
       expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
+      expect(result).toMatchObject({status: 'success', delivery: {status: 'delivered'}})
+      renderWebhookTriggerResult(result, 'text')
       expect(outputSuccess).toHaveBeenCalledWith('Localhost delivery sucessful')
     })
 
@@ -230,7 +248,7 @@ describe('webhookTriggerService', () => {
       }
 
       // When
-      await webhookTriggerService(sampleLocalhostFlags())
+      const result = await webhookTriggerService(sampleLocalhostFlags())
 
       // Then
       expectCalls(aVersion, anOrganizationId)
@@ -240,6 +258,8 @@ describe('webhookTriggerService', () => {
         anOrganizationId,
       )
       expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
+      expect(result).toEqual({status: 'failed', reason: 'localhost-delivery'})
+      renderWebhookTriggerResult(result, 'text')
       expect(outputWarn).toHaveBeenCalledWith('Localhost delivery failed')
     })
   })

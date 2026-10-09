@@ -1,11 +1,13 @@
 import {DELIVERY_METHOD} from '../../../services/webhook/trigger-flags.js'
 import {WebhookTriggerInput, webhookTriggerService} from '../../../services/webhook/trigger.js'
+import {appWebhookTriggerJsonOutputSchema} from '../../../services/webhook/trigger/types.js'
+import {renderWebhookTriggerResult} from '../../../services/webhook/trigger/result.js'
 import {deliveryMethodInstructionsAsString} from '../../../prompts/webhook/trigger.js'
 import {appFlags} from '../../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
-import {requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 
 export default class WebhookTrigger extends AppLinkedCommand {
   static summary = 'Trigger delivery of a sample webhook topic payload to a designated address.'
@@ -27,10 +29,16 @@ export default class WebhookTrigger extends AppLinkedCommand {
   - You can't use this method to validate your API webhook subscriptions.
   `
 
+  static get jsonOutputSchema() {
+    return appWebhookTriggerJsonOutputSchema
+  }
+
   static description = this.descriptionForHelp()
 
   static flags = {
+    ...globalFlags,
     ...appFlags,
+    ...jsonFlag,
     help: Flags.help({
       required: false,
       hidden: false,
@@ -103,7 +111,8 @@ export default class WebhookTrigger extends AppLinkedCommand {
       organizationId: appContextResult.organization.id,
     }
 
-    await webhookTriggerService(usedFlags)
+    const result = await webhookTriggerService(usedFlags)
+    renderWebhookTriggerResult(result, flags.json ? 'json' : 'text')
     return {app: appContextResult.app}
   }
 }
