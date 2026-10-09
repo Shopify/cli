@@ -279,13 +279,16 @@ describe('store create dev command', () => {
     mockExit.mockRestore()
   })
 
-  test('does not output JSON for non-AbortError even when --json is active', async () => {
+  test('outputs one standard bug error for unexpected failures when --json is active', async () => {
     vi.mocked(createDevStore).mockRejectedValueOnce(new Error('unexpected'))
 
     await expect(
       StoreCreateDev.run(['--name', 'my-test-store', '--plan', 'plus', '--organization-id', '12345', '--json']),
     ).rejects.toThrow()
-    expect(vi.mocked(outputResult)).not.toHaveBeenCalled()
+    expect(outputResult).toHaveBeenCalledOnce()
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
+      error: {type: 'bug', message: 'unexpected', stack: expect.stringContaining('Error: unexpected')},
+    })
   })
 
   test('does not output JSON for AbortError when --json is not active', async () => {

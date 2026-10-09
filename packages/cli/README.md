@@ -10297,8 +10297,8 @@ Validate the theme.
 ```
 USAGE
   $ shopify theme check [--auth-alias <value>] [-a] [-C <value>] [-e <value>...] [--fail-level
-    crash|error|suggestion|style|warning|info] [--init] [--json-schema] [--list] [--no-color] [--no-input] [-o
-    text|json] [--path <value>] [--print] [--verbose] [-v]
+    crash|error|suggestion|style|warning|info] [-j | --init | -v | --print | --list] [--json-schema] [--no-color]
+    [--no-input] [-o text|json] [--path <value>] [--verbose]
 
 FLAGS
   -C, --config=<value>
@@ -10315,6 +10315,10 @@ FLAGS
   -e, --environment=<value>...
       The environment to apply to the current command.
       [env: SHOPIFY_FLAG_ENVIRONMENT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -o, --output=<option>
       [default: text] The output format to use
@@ -10372,6 +10376,322 @@ DESCRIPTION
   Calls and runs "Theme Check" (https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors
   and to ensure that it follows theme and Liquid best practices. "Learn more about the checks that Theme Check runs."
   (https://shopify.dev/docs/themes/tools/theme-check/checks)
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeCheckResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeCheckResult",
+    "definitions": {
+      "ThemeCheckIssue": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "The absolute native path of the file."
+          },
+          "check": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "info"
+            ]
+          },
+          "startRow": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The zero-based starting line."
+          },
+          "startColumn": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The zero-based starting column."
+          },
+          "endRow": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The zero-based ending line."
+          },
+          "endColumn": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The zero-based ending column."
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "filePath",
+          "check",
+          "severity",
+          "startRow",
+          "startColumn",
+          "endRow",
+          "endColumn",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "valid": {
+                        "type": "boolean",
+                        "description": "Whether the validation passes the selected blocking policy."
+                      },
+                      "issues": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/definitions/ThemeCheckIssue"
+                        }
+                      },
+                      "errorCount": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "warningCount": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "infoCount": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "valid",
+                      "issues",
+                      "errorCount",
+                      "warningCount",
+                      "infoCount"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {
+                        "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme console`

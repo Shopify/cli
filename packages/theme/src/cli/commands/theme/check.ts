@@ -1,32 +1,35 @@
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {
-  formatOffensesJson,
-  formatSummary,
+  checkTheme,
   initConfig,
   outputActiveChecks,
   outputActiveConfig,
   performAutoFixes,
-  renderOffensesText,
-  sortOffenses,
-  isExtendedWriteStream,
   handleExit,
-  withThemeCheckConfigErrorHandling,
+  themeCheckHasBlockingIssues,
   type FailLevel,
 } from '../../services/check.js'
+import {renderThemeCheckResult, encodeThemeCheckResult} from '../../services/check/result.js'
+import {themeCheckJsonOutputSchema} from '../../services/check/types.js'
 import {themeFlags} from '../../flags.js'
+import {runWithCommandEvents, renderCommandEventAsJson} from '@shopify/cli-kit/node/command-events'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {outputResult, outputDebug} from '@shopify/cli-kit/node/output'
-import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
-import {themeCheckRun, LegacyIdentifiers} from '@shopify/theme-check-node'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {outputResult} from '@shopify/cli-kit/node/output'
+import {LegacyIdentifiers} from '@shopify/theme-check-node'
 import {findPathUp} from '@shopify/cli-kit/node/fs'
 import {moduleDirectory, joinPath} from '@shopify/cli-kit/node/path'
 import {getPackageVersion} from '@shopify/cli-kit/node/node-package-manager'
 import {InferredFlags} from '@oclif/core/interfaces'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+import type {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 
 type CheckFlags = InferredFlags<typeof Check.flags>
 export default class Check extends ThemeCommand {
+  static get jsonOutputSchema() {
+    return themeCheckJsonOutputSchema
+  }
+
   static summary = 'Validate the theme.'
 
   static descriptionWithMarkdown = `Calls and runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors and to ensure that it follows theme and Liquid best practices. [Learn more about the checks that Theme Check runs.](https://shopify.dev/docs/themes/tools/theme-check/checks)`
@@ -35,6 +38,8 @@ export default class Check extends ThemeCommand {
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
+    json: Flags.boolean({...jsonFlag.json, env: 'SHOPIFY_FLAG_JSON', exclusive: ['init', 'version', 'print', 'list']}),
     path: themeFlags.path,
     'auto-correct': Flags.boolean({
       char: 'a',
@@ -92,7 +97,7 @@ export default class Check extends ThemeCommand {
 
   static multiEnvironmentsFlags: RequiredFlags = ['path']
 
-  async command(flags: CheckFlags, _session: AdminSession, multiEnvironment: boolean): Promise<void> {
+  async command(flags: CheckFlags, _session: AdminSession, multiEnvironment: boolean) {
     // Its not clear to typescript that path will always be defined
     const path = flags.path
     const environment = flags.environment?.[0]
@@ -139,59 +144,58 @@ export default class Check extends ThemeCommand {
       return
     }
 
-    const {offenses, theme} = await runThemeCheck(path, flags.output, config, environment)
+    const output = await checkTheme(path, config, environment)
+    const {offenses, theme} = output
+    const json = flags.json || flags.output === 'json'
+    const valid = !themeCheckHasBlockingIssues(offenses, flags['fail-level'] as FailLevel)
+    if (!json) renderThemeCheckResult({...output, valid}, flags.output, path, environment)
 
     if (flags['auto-correct']) {
       await performAutoFixes(theme, offenses)
     }
 
-    if (!multiEnvironment) {
-      return handleExit(offenses, flags['fail-level'] as FailLevel)
+    if (json && !multiEnvironment) renderThemeCheckResult({...output, valid}, 'json', path, environment)
+
+    if (json) {
+      if (!valid) process.exitCode = 1
+      return {files: output.result, valid}
     }
+    if (!multiEnvironment) return handleExit(offenses, flags['fail-level'] as FailLevel)
+  }
+
+  protected async _run<T>(): Promise<T> {
+    const separatorIndex = this.argv.indexOf('--')
+    const argv = separatorIndex < 0 ? this.argv : this.argv.slice(0, separatorIndex)
+    const outputIndex = argv.findLastIndex((arg) => /^(?:--output(?:=|$)|-o)/.test(arg))
+    const output =
+      outputIndex < 0 ? process.env.SHOPIFY_FLAG_OUTPUT : argv[outputIndex]!.replace(/^(?:--output=|-o=?)/, '')
+    const legacyJson =
+      output === 'json' || ((output === '--output' || output === '') && argv[outputIndex + 1] === 'json')
+    if (legacyJson && !argv.includes('--json')) {
+      // The legacy format flag must also select CLI Kit's JSON error and side-event context.
+      this.argv = [...argv, '--json', ...(separatorIndex < 0 ? [] : this.argv.slice(separatorIndex))]
+    }
+    if (legacyJson) {
+      // The CLI launcher may have selected text events before the legacy flag was normalized.
+      return runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, () => super._run<T>())
+    }
+    return super._run<T>()
+  }
+
+  protected collectsEnvironmentResults(flags: Partial<CheckFlags>): boolean {
+    return (
+      !flags.init && !flags.version && !flags.print && !flags.list && (Boolean(flags.json) || flags.output === 'json')
+    )
+  }
+
+  protected renderEnvironmentResults(environments: ThemeEnvironmentResult[]): void {
+    outputResult(encodeThemeCheckResult({environments}))
   }
 }
 
+// Compatibility adapter for theme push, which still presents check results as text.
 export async function runThemeCheck(path: string, outputFormat: string, config?: string, environment?: string) {
-  const {offenses, theme} = await withThemeCheckConfigErrorHandling(config, () =>
-    themeCheckRun(path, config, (message) => {
-      if (process.env.SHOPIFY_TMP_FLAG_DEBUG) {
-        outputDebug(message)
-      }
-    }),
-  )
-
-  const offensesByFile = sortOffenses(offenses)
-
-  if (outputFormat === 'text') {
-    renderOffensesText(offensesByFile, path, theme, environment)
-
-    // Use renderSuccess when theres no offenses
-    const render = offenses.length ? renderInfo : renderSuccess
-
-    render({
-      headline: environment ? `[${environment}] Theme Check Summary.` : 'Theme Check Summary.',
-      body: formatSummary(offenses, offensesByFile, theme),
-    })
-  }
-
-  if (outputFormat === 'json') {
-    /**
-     * Workaround:
-     * Force stdout to be blocking so that the JSON output is not broken when piped to another process.
-     * ie: ` | jq .`
-     * It turns out that console.log is technically asynchronous, and when we call process.exit(),
-     * node doesn't wait on all the output being sent to stdout and instead closes the process immediately
-     *
-     * https://github.com/pnp/cli-microsoft365/issues/1266#issuecomment-727254264
-     *
-     */
-    const stdout = process.stdout
-    if (isExtendedWriteStream(stdout)) {
-      stdout._handle.setBlocking(true)
-    }
-
-    outputResult(JSON.stringify(formatOffensesJson(offensesByFile, environment)))
-  }
-
-  return {offenses, theme}
+  const result = await checkTheme(path, config, environment)
+  renderThemeCheckResult(result, outputFormat, path, environment)
+  return {offenses: result.offenses, theme: result.theme}
 }
