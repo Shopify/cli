@@ -179,6 +179,72 @@ tester.run('commonjs-redeclarations', rules['no-redeclare'], {
   ],
 })
 
+test('applies cli-kit rules from the workspace root', () => {
+  const {mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync} = require('node:fs')
+  const {tmpdir} = require('node:os')
+  const {join, resolve, dirname} = require('node:path')
+  const {spawnSync} = require('node:child_process')
+  const workspace = mkdtempSync(join(tmpdir(), 'cli-kit oxlint-'))
+  try {
+    const root = resolve(__dirname, '../..')
+    const config = JSON.parse(readFileSync(join(root, 'oxlint.json'), 'utf8'))
+    config.options.typeAware = false
+    config.jsPlugins = config.jsPlugins.map((plugin) => ({...plugin, specifier: resolve(root, plugin.specifier)}))
+    writeFileSync(join(workspace, 'oxlint.json'), JSON.stringify(config))
+    const fixtures = [
+      {
+        path: 'packages/cli-kit/src/public/example.ts',
+        code: 'export function read(value: number) { return value }',
+        rule: 'typescript(explicit-module-boundary-types)',
+      },
+      {
+        path: 'packages/cli-kit/src/private/node/ui/components/Example.tsx',
+        code: 'const Example = () => <Box enabled={true} />',
+        rule: 'react(jsx-boolean-value)',
+      },
+      {
+        path: 'packages/cli-kit/src/private/node/ui/components/props.tsx',
+        code: 'interface PropsExample { value: string }',
+        rule: 'compat(typescript-eslint-naming-convention)',
+      },
+      {
+        path: 'packages/cli-kit/src/public/node/ui.tsx',
+        code: 'export function read(first: number, second: number) { return first + second }',
+        rule: 'eslint(max-params)',
+      },
+    ]
+    for (const fixture of fixtures) {
+      const path = join(workspace, fixture.path)
+      mkdirSync(dirname(path), {recursive: true})
+      writeFileSync(path, fixture.code)
+    }
+    const result = spawnSync(
+      process.execPath,
+      [
+        join(dirname(require.resolve('oxlint/package.json')), 'bin/oxlint'),
+        '--config',
+        'oxlint.json',
+        '--format',
+        'json',
+        'packages/cli-kit/src',
+      ],
+      {cwd: workspace, encoding: 'utf8'},
+    )
+    expect(result.status, result.stdout + result.stderr).toBe(1)
+    const diagnostics = JSON.parse(result.stdout).diagnostics.map((diagnostic) => ({
+      ...diagnostic,
+      filename: diagnostic.filename.replaceAll('\\', '/'),
+    }))
+    for (const fixture of fixtures) {
+      expect(diagnostics).toEqual(
+        expect.arrayContaining([expect.objectContaining({filename: fixture.path, code: fixture.rule})]),
+      )
+    }
+  } finally {
+    rmSync(workspace, {recursive: true, force: true, maxRetries: 2})
+  }
+})
+
 test('runs custom rules and named suppressions without ESLint', () => {
   const {mkdtempSync, mkdirSync, writeFileSync, rmSync} = require('node:fs')
   const {tmpdir} = require('node:os')

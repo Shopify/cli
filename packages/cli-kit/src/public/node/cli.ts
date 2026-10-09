@@ -3,6 +3,7 @@ import {noInputFlag} from './no-input.js'
 import {launchCLI as defaultLaunchCli} from './cli-launcher.js'
 import {environmentVariables} from '../../private/node/constants.js'
 import {Flags} from '@oclif/core'
+import type {OptionFlag} from '@oclif/core/interfaces'
 import type {LazyCommandLoader} from './custom-oclif-loader.js'
 
 /**
@@ -170,7 +171,9 @@ export const authAliasFlag = {
  * @param options - Optional overrides for the flag's description, environment variable, and visibility.
  * @returns An oclif integer flag constrained to the valid port range.
  */
-export const portFlag = (options: {description?: string; env?: string; hidden?: boolean} = {}) => {
+export const portFlag = (
+  options: {description?: string; env?: string; hidden?: boolean} = {},
+): OptionFlag<number | undefined> => {
   const description = [options.description, 'Must be between 1 and 65535.'].filter(Boolean).join(' ')
   return Flags.integer({min: 1, max: 65535, ...options, description})
 }

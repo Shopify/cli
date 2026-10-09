@@ -122,7 +122,7 @@ abstract class BaseCommand extends Command {
     }
   }
 
-  protected exitWithTimestampWhenEnvVariablePresent() {
+  protected exitWithTimestampWhenEnvVariablePresent(): void {
     if (isTruthy(process.env.SHOPIFY_CLI_ENV_STARTUP_PERFORMANCE_RUN)) {
       outputResult(`
       SHOPIFY_CLI_TIMESTAMP_START
