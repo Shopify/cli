@@ -130,13 +130,17 @@ Build the app, including extensions.
 
 ```
 USAGE
-  $ shopify app build [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--path <value>] [--reset | ] [--skip-dependencies-installation] [--verbose]
+  $ shopify app build [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--skip-dependencies-installation] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -184,6 +188,28 @@ DESCRIPTION
   If you're building a "theme app extension" (https://shopify.dev/docs/apps/online-store/theme-app-extensions), then
   running the `build` command runs "Theme Check" (https://shopify.dev/docs/themes/tools/theme-check) against your
   extension to ensure that it's valid.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppBuildResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      }
+    },
+    "required": [
+      "status"
+    ],
+    "additionalProperties": false,
+    "title": "AppBuildResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app bulk cancel`
@@ -1384,13 +1410,17 @@ Cleans up the dev preview from the selected store.
 
 ```
 USAGE
-  $ shopify app dev clean [--auth-alias <value>] [--client-id <value>] [--json-schema] [--no-color] [--no-input]
-    [--path <value>] [--reset | -c <value>] [-s <value>] [--verbose]
+  $ shopify app dev clean [--auth-alias <value>] [--client-id <value>] [-j] [--json-schema] [--no-color]
+    [--no-input] [--path <value>] [--reset | -c <value>] [-s <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       Store URL. Must be an existing development store.
@@ -1435,6 +1465,60 @@ DESCRIPTION
   Stop the dev preview that was started with `shopify app dev`.
 
   It restores the app's active version to the selected development store.
+
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppDevCleanResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "app": {
+        "$ref": "#/definitions/AppDevCleanApp"
+      },
+      "storeDomain": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "The canonical *.myshopify.com hostname, or null when unknown."
+      }
+    },
+    "required": [
+      "status",
+      "app",
+      "storeDomain"
+    ],
+    "additionalProperties": false,
+    "title": "AppDevCleanResult",
+    "definitions": {
+      "AppDevCleanApp": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "name",
+          "clientId"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app env pull`
@@ -4130,6 +4214,364 @@ DESCRIPTION
   to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app
   within the project. Use `--reset` to relink the app.
 
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `MigrationCancellationResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success",
+          "partial"
+        ]
+      },
+      "operations": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/MigrationCancellationOutcome"
+        }
+      }
+    },
+    "required": [
+      "status",
+      "operations"
+    ],
+    "additionalProperties": false,
+    "title": "MigrationCancellationResult",
+    "definitions": {
+      "MigrationCancellationOutcome": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "const": "success"
+              },
+              "operationGid": {
+                "type": "string",
+                "pattern": "^gid:\\/\\/shopify\\/AppSubscriptionMigrationOperation\\/[^/]+$",
+                "description": "The Shopify AppSubscriptionMigrationOperation GID."
+              },
+              "operation": {
+                "$ref": "#/definitions/MigrationOperation"
+              }
+            },
+            "required": [
+              "status",
+              "operationGid",
+              "operation"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "status": {
+                "type": "string",
+                "const": "failed"
+              },
+              "operationGid": {
+                "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/0/properties/operationGid"
+              },
+              "operation": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/MigrationOperation"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {
+                        "type": "object",
+                        "properties": {
+                          "userErrors": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/definitions/MigrationUserError"
+                            }
+                          }
+                        },
+                        "required": [
+                          "userErrors"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "details"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/type"
+                          },
+                          "message": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/message"
+                          },
+                          "code": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/code"
+                          },
+                          "tryMessage": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                          },
+                          "nextSteps": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                          },
+                          "customSections": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                          },
+                          "details": {
+                            "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "message"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "bug"
+                          },
+                          "message": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/message"
+                          },
+                          "code": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/code"
+                          },
+                          "tryMessage": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                          },
+                          "nextSteps": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                          },
+                          "customSections": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                          },
+                          "details": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/1/anyOf/0/properties/details"
+                          },
+                          "stack": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "message"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "external"
+                          },
+                          "message": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/message"
+                          },
+                          "code": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/code"
+                          },
+                          "tryMessage": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                          },
+                          "nextSteps": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                          },
+                          "customSections": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                          },
+                          "details": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/1/anyOf/0/properties/details"
+                          },
+                          "command": {
+                            "type": "string"
+                          },
+                          "args": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "message",
+                          "command",
+                          "args"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "required": [
+              "status",
+              "operationGid",
+              "operation",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "MigrationOperation": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/0/properties/operationGid"
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Upstream status: RUNNING, COMPLETED, FAILED, or CANCELED."
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "shopGid": {
+                  "type": "string",
+                  "pattern": "^gid:\\/\\/shopify\\/Shop\\/\\d+$",
+                  "description": "The Shopify Shop GID."
+                },
+                "code": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The upstream per-shop migration result code."
+                }
+              },
+              "required": [
+                "shopGid",
+                "code"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "gid",
+          "status",
+          "total",
+          "results"
+        ],
+        "additionalProperties": false
+      },
+      "MigrationUserError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "fieldPath": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "message",
+          "fieldPath"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify app subscription-migrations cancel --id <operation-id>
 
@@ -4199,9 +4641,9 @@ DESCRIPTION
   Lists every app subscription eligible for migration.
 
   By default, the command writes CSV to stdout, streaming each page of results as it arrives. If a later page fails, the
-  rows already written remain valid CSV. Use `--json` to fetch all pages first and then write a single versioned JSON
-  envelope to stdout. Use shell redirection to save either format, for example `shopify app subscription-migrations list
-  > subscriptions.csv` or `shopify app subscription-migrations list --json > subscriptions.json`.
+  rows already written remain valid CSV. Use `--json` to fetch all pages first and then write a single JSON envelope to
+  stdout. Use shell redirection to save either format, for example `shopify app subscription-migrations list >
+  subscriptions.csv` or `shopify app subscription-migrations list --json > subscriptions.json`.
 
   Use `--status` to filter subscriptions by migration status. Supported values are `UNSCHEDULED`, `SCHEDULED`, and
   `MIGRATED`.
@@ -4209,6 +4651,185 @@ DESCRIPTION
   Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path`
   to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app
   within the project. Use `--reset` to relink the app.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `MigrationListResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "subscriptions": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/MigratableSubscription"
+        },
+        "description": "The complete list across every fetched page."
+      }
+    },
+    "required": [
+      "subscriptions"
+    ],
+    "additionalProperties": false,
+    "title": "MigrationListResult",
+    "definitions": {
+      "MigratableSubscription": {
+        "type": "object",
+        "properties": {
+          "shopGid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/Shop\\/\\d+$",
+            "description": "The Shopify Shop GID."
+          },
+          "status": {
+            "type": "string",
+            "description": "Known values: UNSCHEDULED, SCHEDULED, MIGRATED."
+          },
+          "manualSubscriptionName": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "manualSubscriptionPrice": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/MigratableSubscriptionPrice"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "manualSubscriptionInterval": {
+            "type": "string",
+            "description": "Known values: EVERY_30_DAYS, ANNUAL."
+          },
+          "targetPlanHandle": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "notification": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/MigratableSubscriptionNotification"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "priceBehavior": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Known values: HONOR_BILLING_PRICE, PLAN_PRICE."
+          },
+          "effectiveDate": {
+            "anyOf": [
+              {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The upstream calendar date or whole-second UTC instant; date-only values retain their format."
+          },
+          "lastFailureReason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Known values: SUPERSEDED, SCHEDULING_FAILED."
+          }
+        },
+        "required": [
+          "shopGid",
+          "status",
+          "manualSubscriptionName",
+          "manualSubscriptionPrice",
+          "manualSubscriptionInterval",
+          "targetPlanHandle",
+          "notification",
+          "priceBehavior",
+          "effectiveDate",
+          "lastFailureReason"
+        ],
+        "additionalProperties": false,
+        "description": "All subscription projection fields are present; unavailable values are null."
+      },
+      "MigratableSubscriptionPrice": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "string",
+            "pattern": "^-?\\d+(?:\\.\\d+)?$"
+          },
+          "currencyCode": {
+            "type": "string",
+            "pattern": "^[A-Z]{3}$"
+          }
+        },
+        "required": [
+          "amount",
+          "currencyCode"
+        ],
+        "additionalProperties": false
+      },
+      "MigratableSubscriptionNotification": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "Known values: NONE, OPT_OUT, WHEN_REQUIRED."
+          },
+          "optOutDeadline": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/MigratableSubscription/properties/effectiveDate/anyOf/0/anyOf/1"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sentAt": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/MigratableSubscription/properties/effectiveDate/anyOf/0/anyOf/1"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "optOutDeadline",
+          "sentAt"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   $ shopify app subscription-migrations list
@@ -4313,6 +4934,297 @@ DESCRIPTION
   accepted identifiers before polling begins, then displays operation progress and the final outcome. With `--json
   --watch`, the command outputs one structured JSON document after every operation reaches a terminal status.
 
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `MigrationSubmissionResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "changed": {
+            "type": "boolean"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The app client ID, not a Shopify GID."
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "schedule",
+              "unschedule"
+            ]
+          },
+          "inputDigest": {
+            "type": "string",
+            "minLength": 1
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/SubmittedMigrationOperation"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "changed",
+          "clientId",
+          "action",
+          "inputDigest",
+          "total",
+          "operations"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "partial"
+          },
+          "changed": {
+            "type": "boolean"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The app client ID, not a Shopify GID."
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "schedule",
+              "unschedule"
+            ]
+          },
+          "inputDigest": {
+            "type": "string",
+            "minLength": 1
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/SubmittedMigrationOperation"
+            }
+          },
+          "failure": {
+            "$ref": "#/definitions/MigrationSubmissionFailure"
+          }
+        },
+        "required": [
+          "status",
+          "changed",
+          "clientId",
+          "action",
+          "inputDigest",
+          "total",
+          "operations",
+          "failure"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "cancelled"
+          },
+          "changed": {
+            "type": "boolean",
+            "const": false
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "schedule",
+              "unschedule"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "changed",
+          "action",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "MigrationSubmissionResult",
+    "definitions": {
+      "SubmittedMigrationOperation": {
+        "type": "object",
+        "properties": {
+          "batchIndex": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "batchPayloadDigest": {
+            "type": "string",
+            "minLength": 1
+          },
+          "operation": {
+            "$ref": "#/definitions/MigrationOperation"
+          }
+        },
+        "required": [
+          "batchIndex",
+          "batchPayloadDigest",
+          "operation"
+        ],
+        "additionalProperties": false
+      },
+      "MigrationOperation": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/AppSubscriptionMigrationOperation\\/[^/]+$",
+            "description": "The Shopify AppSubscriptionMigrationOperation GID."
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Upstream status: RUNNING, COMPLETED, FAILED, or CANCELED."
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "shopGid": {
+                  "type": "string",
+                  "pattern": "^gid:\\/\\/shopify\\/Shop\\/\\d+$",
+                  "description": "The Shopify Shop GID."
+                },
+                "code": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The upstream per-shop migration result code."
+                }
+              },
+              "required": [
+                "shopGid",
+                "code"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "gid",
+          "status",
+          "total",
+          "results"
+        ],
+        "additionalProperties": false
+      },
+      "MigrationSubmissionFailure": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "submission"
+              },
+              "batchIndex": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "userErrors": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/MigrationUserError"
+                }
+              }
+            },
+            "required": [
+              "type",
+              "batchIndex",
+              "userErrors"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "operations"
+              },
+              "operationGids": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/MigrationOperation/properties/gid"
+                }
+              }
+            },
+            "required": [
+              "type",
+              "operationGids"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "MigrationUserError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "fieldPath": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "message",
+          "fieldPath"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
 EXAMPLES
   $ shopify app subscription-migrations schedule --input migrations.csv --force
 
@@ -4401,6 +5313,81 @@ DESCRIPTION
   Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path`
   to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app
   within the project. Use `--reset` to relink the app.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `MigrationStatusResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "operations": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/MigrationOperation"
+        }
+      }
+    },
+    "required": [
+      "operations"
+    ],
+    "additionalProperties": false,
+    "title": "MigrationStatusResult",
+    "definitions": {
+      "MigrationOperation": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/AppSubscriptionMigrationOperation\\/[^/]+$",
+            "description": "The Shopify AppSubscriptionMigrationOperation GID."
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Upstream status: RUNNING, COMPLETED, FAILED, or CANCELED."
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "shopGid": {
+                  "type": "string",
+                  "pattern": "^gid:\\/\\/shopify\\/Shop\\/\\d+$",
+                  "description": "The Shopify Shop GID."
+                },
+                "code": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The upstream per-shop migration result code."
+                }
+              },
+              "required": [
+                "shopGid",
+                "code"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "gid",
+          "status",
+          "total",
+          "results"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   $ shopify app subscription-migrations status --id <operation-id>
@@ -4498,6 +5485,297 @@ DESCRIPTION
   Run the command from an app project. By default, it uses the Client ID from the active app configuration. Use `--path`
   to select an app directory or `--config` to select a configuration. Pass `--client-id` to select a different app
   within the project. Use `--reset` to relink the app.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `MigrationSubmissionResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "changed": {
+            "type": "boolean"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The app client ID, not a Shopify GID."
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "schedule",
+              "unschedule"
+            ]
+          },
+          "inputDigest": {
+            "type": "string",
+            "minLength": 1
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/SubmittedMigrationOperation"
+            }
+          }
+        },
+        "required": [
+          "status",
+          "changed",
+          "clientId",
+          "action",
+          "inputDigest",
+          "total",
+          "operations"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "partial"
+          },
+          "changed": {
+            "type": "boolean"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The app client ID, not a Shopify GID."
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "schedule",
+              "unschedule"
+            ]
+          },
+          "inputDigest": {
+            "type": "string",
+            "minLength": 1
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "operations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/SubmittedMigrationOperation"
+            }
+          },
+          "failure": {
+            "$ref": "#/definitions/MigrationSubmissionFailure"
+          }
+        },
+        "required": [
+          "status",
+          "changed",
+          "clientId",
+          "action",
+          "inputDigest",
+          "total",
+          "operations",
+          "failure"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "cancelled"
+          },
+          "changed": {
+            "type": "boolean",
+            "const": false
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "schedule",
+              "unschedule"
+            ]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "changed",
+          "action",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "MigrationSubmissionResult",
+    "definitions": {
+      "SubmittedMigrationOperation": {
+        "type": "object",
+        "properties": {
+          "batchIndex": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "batchPayloadDigest": {
+            "type": "string",
+            "minLength": 1
+          },
+          "operation": {
+            "$ref": "#/definitions/MigrationOperation"
+          }
+        },
+        "required": [
+          "batchIndex",
+          "batchPayloadDigest",
+          "operation"
+        ],
+        "additionalProperties": false
+      },
+      "MigrationOperation": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/AppSubscriptionMigrationOperation\\/[^/]+$",
+            "description": "The Shopify AppSubscriptionMigrationOperation GID."
+          },
+          "status": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Upstream status: RUNNING, COMPLETED, FAILED, or CANCELED."
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "shopGid": {
+                  "type": "string",
+                  "pattern": "^gid:\\/\\/shopify\\/Shop\\/\\d+$",
+                  "description": "The Shopify Shop GID."
+                },
+                "code": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The upstream per-shop migration result code."
+                }
+              },
+              "required": [
+                "shopGid",
+                "code"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "gid",
+          "status",
+          "total",
+          "results"
+        ],
+        "additionalProperties": false
+      },
+      "MigrationSubmissionFailure": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "submission"
+              },
+              "batchIndex": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "userErrors": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/MigrationUserError"
+                }
+              }
+            },
+            "required": [
+              "type",
+              "batchIndex",
+              "userErrors"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "operations"
+              },
+              "operationGids": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/MigrationOperation/properties/gid"
+                }
+              }
+            },
+            "required": [
+              "type",
+              "operationGids"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "MigrationUserError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "fieldPath": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "message",
+          "fieldPath"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   $ shopify app subscription-migrations unschedule --input migrations.csv --force
@@ -6353,7 +7631,7 @@ FLAGS
       [env: SHOPIFY_HYDROGEN_FLAG_STYLING]
 
   --template=<value>
-      Scaffolds project based on an existing template or example from the Hydrogen repository.
+      Scaffolds project based on a template: `skeleton` (the default), `demo-store` or a URL to a git repository.
       [env: SHOPIFY_HYDROGEN_FLAG_TEMPLATE]
 
 DESCRIPTION
@@ -10616,17 +11894,173 @@ Upgrades Shopify CLI.
 
 ```
 USAGE
-  $ shopify upgrade [--json-schema]
+  $ shopify upgrade [-j] [--json-schema] [--no-color] [--no-input] [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
   Upgrades Shopify CLI.
 
   Upgrades Shopify CLI using your package manager.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `UpgradeResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "changed": {
+            "type": "boolean",
+            "description": "Whether the verified installed version differs from previousVersion."
+          },
+          "scope": {
+            "type": "string",
+            "const": "global"
+          },
+          "previousVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "version": {
+            "type": "string",
+            "minLength": 1
+          },
+          "packageManager": {
+            "type": "string",
+            "enum": [
+              "npm",
+              "pnpm",
+              "yarn",
+              "bun",
+              "homebrew"
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "changed",
+          "scope",
+          "previousVersion",
+          "version",
+          "packageManager"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "changed": {
+            "type": "null",
+            "description": "Null because local dependency changes and installed versions are not verified."
+          },
+          "scope": {
+            "type": "string",
+            "const": "local"
+          },
+          "directory": {
+            "type": "string"
+          },
+          "previousVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "availableVersion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The available registry version, or null when unknown."
+          },
+          "packages": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": [
+          "status",
+          "changed",
+          "scope",
+          "directory",
+          "previousVersion",
+          "availableVersion",
+          "packages"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "skipped"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "development",
+              "local-autoupgrade",
+              "dependency-not-found"
+            ]
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "global",
+              "local"
+            ]
+          }
+        },
+        "required": [
+          "status",
+          "reason",
+          "scope"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "UpgradeResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify version`

@@ -29,6 +29,7 @@ import {
   packageManagerBinaryCommandForDirectory,
   readAndParsePackageJson,
 } from '@shopify/cli-kit/node/node-package-manager'
+import {commandEventOutputMode} from '@shopify/cli-kit/node/command-events'
 import {Writable} from 'stream'
 
 export const PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION = '2'
@@ -405,8 +406,8 @@ export async function runJavy(
 
   return exec(javy.path, args, {
     cwd: fun.directory,
-    stdout: 'inherit',
-    stderr: 'inherit',
+    stdout: commandEventOutputMode() === 'json' ? options.stdout : 'inherit',
+    stderr: commandEventOutputMode() === 'json' ? options.stderr : 'inherit',
     signal: options.signal,
   })
 }
