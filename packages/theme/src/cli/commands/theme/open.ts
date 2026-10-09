@@ -1,14 +1,22 @@
 import {open} from '../../services/open.js'
+import {renderThemeOpenResult} from '../../services/open/result.js'
+import {themeOpenJsonOutputSchema} from '../../services/open/types.js'
 import {themeFlags} from '../../flags.js'
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {openURL} from '@shopify/cli-kit/node/system'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {InferredFlags} from '@oclif/core/interfaces'
 import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 type OpenFlags = InferredFlags<typeof Open.flags>
 export default class Open extends ThemeCommand {
+  static get jsonOutputSchema() {
+    return themeOpenJsonOutputSchema
+  }
+
   static summary = 'Opens the preview of your remote theme.'
 
   static descriptionWithMarkdown = `Returns links that let you preview the specified theme. The following links are returned:
@@ -22,6 +30,7 @@ export default class Open extends ThemeCommand {
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     ...themeFlags,
     development: Flags.boolean({
       char: 'd',
@@ -48,13 +57,20 @@ export default class Open extends ThemeCommand {
     }),
   }
 
-  static multiEnvironmentsFlags: RequiredFlags = null
+  static multiEnvironmentsFlags: RequiredFlags = ['store', 'password', ['theme', 'live', 'development']]
 
   static nonTTYFlagRequirements(): NonTTYFlagRequirement[] {
     return [{flags: ['theme', 'development', 'live']}]
   }
 
-  async command(flags: OpenFlags, adminSession: AdminSession) {
-    await open(adminSession, flags)
+  async command(flags: OpenFlags, adminSession: AdminSession, multiEnvironment = false) {
+    const result = await open(adminSession, flags)
+    if (!flags.json) renderThemeOpenResult(result, 'text')
+    const url = flags.editor ? result.editor_url : result.preview_url
+    if (!(await openURL(url))) {
+      throw new AbortError('Could not open the browser.', `Open this URL manually: ${url}`)
+    }
+    if (flags.json && !multiEnvironment) renderThemeOpenResult(result, 'json')
+    return result
   }
 }

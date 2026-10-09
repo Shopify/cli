@@ -30,7 +30,6 @@ const commandExceptions = [
   'packages/theme/src/cli/commands/theme/duplicate.ts',
   'packages/theme/src/cli/commands/theme/init.ts',
   'packages/theme/src/cli/commands/theme/metafields/pull.ts',
-  'packages/theme/src/cli/commands/theme/open.ts',
   'packages/theme/src/cli/commands/theme/package.ts',
   'packages/theme/src/cli/commands/theme/preview.ts',
   'packages/theme/src/cli/commands/theme/profile.ts',
