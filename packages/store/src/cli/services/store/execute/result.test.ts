@@ -17,13 +17,14 @@ describe('writeOrOutputStoreExecuteResult', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const outputPath = joinPath(tmpDir, 'results.json')
+      const result = {data: {shop: {name: 'Test shop'}}, extensions: {cost: {actualQueryCost: 2}}}
 
       // When
-      await writeOrOutputStoreExecuteResult({data: {shop: {name: 'Test shop'}}}, outputPath)
+      await writeOrOutputStoreExecuteResult(result, outputPath)
 
       // Then
       const content = await readFile(outputPath)
-      expect(content).toContain('Test shop')
+      expect(JSON.parse(content)).toStrictEqual(result)
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'Operation succeeded.',
         body: `Results written to ${outputPath}`,
@@ -42,12 +43,13 @@ describe('writeOrOutputStoreExecuteResult', () => {
 
   test('outputs the exact JSON result without a success message', async () => {
     const output = mockAndCaptureOutput()
-    const result = {renamedShop: {name: 'Test shop', optional: null}, products: [], enabled: false}
+    const result = {data: {shop: {name: 'Test shop'}}, extensions: {cost: {actualQueryCost: 2}}}
 
     await writeOrOutputStoreExecuteResult(result, undefined, 'json')
 
     expect(output.output()).toBe(JSON.stringify(result, null, 2))
     expect(renderSuccess).not.toHaveBeenCalled()
+    expect(JSON.parse(output.output())).toStrictEqual(result)
   })
 
   test.each([{}, null, {zebra: false, apple: null, omitted: undefined, nested: {list: [null, 1, 'value']}}])(
