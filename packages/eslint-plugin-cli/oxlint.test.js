@@ -75,8 +75,19 @@ tester.run('import-order', rules['import-order'], {
 })
 
 tester.run('no-catch-all', rules['no-catch-all'], {
-  valid: ['try { run() } catch (error) { throw error }', 'try { run() } catch (error) { if (error) throw error }'],
-  invalid: [{code: 'try { run() } catch (error) { log(error) }', errors: 1}],
+  valid: [
+    'try { run() } catch (error) { throw error }',
+    'try { run() } catch (error) { if (error) throw error }',
+    'try { run() } catch (error) { const later = () => { throw error }; throw error }',
+  ],
+  invalid: [
+    {code: 'try { run() } catch (error) { log(error) }', errors: 1},
+    {code: 'try { run() } catch (error) { const later = () => { throw error }; log(error) }', errors: 1},
+    {code: 'try { run() } catch (error) { function later() { throw error }; log(error) }', errors: 1},
+    {code: 'try { run() } catch (error) { const later = function() { throw error }; log(error) }', errors: 1},
+    {code: 'try { run() } catch (error) { class Later { run() { throw error } }; log(error) }', errors: 1},
+    {code: 'try { run() } catch (error) { const Later = class { run() { throw error } }; log(error) }', errors: 1},
+  ],
 })
 
 tester.run('restricted-syntax', rules['restricted-syntax'], {
