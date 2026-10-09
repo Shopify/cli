@@ -52,6 +52,7 @@ describe('deterministic rules product contract', () => {
     expect(DETERMINISTIC_CHECKS.get('INSECURE_WEBHOOK_URL')?.version).toBe(2)
     expect(DETERMINISTIC_CHECKS.get('COMMITTED_SECRET')?.version).toBe(4)
     expect(DETERMINISTIC_CHECKS.get('UNAUTHENTICATED_ENDPOINT')?.version).toBe(2)
+    expect(DETERMINISTIC_CHECKS.get('STATIC_FRAME_ANCESTORS')?.version).toBe(2)
     expect(DETERMINISTIC_CHECKS.get('MISSING_DEPENDENCY_SECURITY_AUTOMATION')?.version).toBe(2)
   })
 
