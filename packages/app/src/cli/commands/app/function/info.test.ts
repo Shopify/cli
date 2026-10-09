@@ -23,7 +23,7 @@ vi.mock('../../../services/function/binaries.js', async (importOriginal) => ({
 
 async function runCommand(argv: string[]) {
   const app = testApp()
-  vi.mocked(localAppContext).mockResolvedValue({app, project: testProject()})
+  vi.mocked(localAppContext).mockResolvedValue({app, project: testProject(), activeConfig: {} as never})
   vi.mocked(chooseFunction).mockResolvedValue(await testFunctionExtension())
   vi.mocked(getOrGenerateSchemaPath).mockResolvedValue(undefined)
   const command = new FunctionInfo(argv, await Config.load())
