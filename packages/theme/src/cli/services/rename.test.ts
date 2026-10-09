@@ -1,4 +1,5 @@
-import {RenameOptions, renameTheme} from './rename.js'
+import {RenameOptions, renameTheme as executeRename} from './rename.js'
+import {renderThemeRenameResult} from './rename/result.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {test, describe, expect, vi} from 'vitest'
@@ -19,6 +20,7 @@ const adminSession = {
 const developmentTheme = {
   id: 1,
   name: 'my development theme',
+  processing: false,
 } as Theme
 
 const options: RenameOptions = {
@@ -78,5 +80,61 @@ describe('renameTheme', () => {
     expect(renderSuccess).toBeCalledWith({
       body: ['The theme', "'live theme'", {subdued: '(#2)'}, 'was renamed to', "'Renamed Theme'"],
     })
+  })
+})
+
+async function renameTheme(...args: Parameters<typeof executeRename>) {
+  const result = await executeRename(...args)
+  renderThemeRenameResult(result, 'text')
+  return result
+}
+
+test('returns updated API data without presenting a final result', async () => {
+  const updatedTheme = {
+    ...developmentTheme,
+    name: 'Canonical name',
+    role: 'development',
+    processing: false,
+    createdAtRuntime: false,
+  }
+  vi.mocked(findOrSelectTheme).mockResolvedValue(developmentTheme)
+  vi.mocked(themeUpdate).mockResolvedValue(updatedTheme)
+  const result = await executeRename(options, adminSession)
+  expect(result).toEqual({
+    data: {
+      status: 'success',
+      originalName: developmentTheme.name,
+      theme: {...updatedTheme, shop: adminSession.storeFqdn},
+    },
+    originalTheme: developmentTheme,
+    requestedName: 'Renamed Theme',
+  })
+  expect(renderSuccess).not.toHaveBeenCalled()
+})
+
+test('preserves processing state that the rename mutation does not return', async () => {
+  const selectedTheme = {...developmentTheme, processing: true}
+  vi.mocked(findOrSelectTheme).mockResolvedValue(selectedTheme)
+  vi.mocked(themeUpdate).mockResolvedValue({...developmentTheme, name: 'Renamed Theme', processing: false})
+
+  const result = await executeRename(options, adminSession)
+
+  expect(result.data.theme).toMatchObject({name: 'Renamed Theme', processing: true})
+})
+
+test('preserves the requested name and environment label in terminal output', async () => {
+  vi.mocked(findOrSelectTheme).mockResolvedValue(developmentTheme)
+  vi.mocked(themeUpdate).mockResolvedValue({...developmentTheme, name: 'Canonical name'})
+  const result = await executeRename(options, adminSession)
+  renderThemeRenameResult(result, 'text', ['staging'])
+  expect(renderSuccess).toHaveBeenCalledWith({
+    body: [
+      {subdued: 'Environment: staging\n\n'},
+      'The theme',
+      "'my development theme'",
+      {subdued: '(#1)'},
+      'was renamed to',
+      "'Renamed Theme'",
+    ],
   })
 })
