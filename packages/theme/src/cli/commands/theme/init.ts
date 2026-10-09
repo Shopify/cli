@@ -8,10 +8,14 @@ import {
 } from '../../services/init.js'
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
+import {themeInitJsonOutputSchema} from '../../services/init/types.js'
+import {renderThemeInitResult, renderAIInstructionsWarning} from '../../services/init/result.js'
+import {AbortSilentError, CancelExecution} from '@shopify/cli-kit/node/error'
+import {emitCommandEvent} from '@shopify/cli-kit/node/command-events'
 import {Args, Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
-import {renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderError, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {InferredArgs, InferredFlags} from '@oclif/core/interfaces'
@@ -21,6 +25,10 @@ type InitFlags = InferredFlags<typeof Init.flags>
 type InitArgs = InferredArgs<typeof Init.args>
 
 export default class Init extends ThemeCommand {
+  static get jsonOutputSchema() {
+    return themeInitJsonOutputSchema
+  }
+
   static summary = 'Clones a Git repository to use as a starting point for building a new theme.'
 
   static descriptionWithMarkdown = `Clones a Git repository to your local machine to use as the starting point for building a theme.
@@ -44,6 +52,7 @@ export default class Init extends ThemeCommand {
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     path: themeFlags.path,
     'clone-url': Flags.string({
       char: 'u',
@@ -64,8 +73,8 @@ export default class Init extends ThemeCommand {
     const name = args.name ?? (await this.promptName(flags.path, flags['no-input']))
     const repoUrl = flags['clone-url']
     const destination = joinPath(flags.path, name)
-    let latestRelease = flags.latest
 
+    let latestRelease = flags.latest
     if (!latestRelease && repoUrl === SKELETON_THEME_URL) {
       latestRelease =
         flags['no-input'] ||
@@ -79,24 +88,33 @@ export default class Init extends ThemeCommand {
           defaultValue: 'stable',
         })) === 'stable'
     }
+    const cloneRepository = latestRelease ? cloneRepoAndCheckoutLatestTag : cloneRepo
+    const result =
+      latestRelease && repoUrl === SKELETON_THEME_URL
+        ? await cloneLatestStableSkeletonTheme(destination)
+        : await cloneRepository(repoUrl, destination)
+    const format = flags.json ? 'json' : 'text'
 
-    if (latestRelease && repoUrl === SKELETON_THEME_URL) {
-      await cloneLatestStableSkeletonTheme(destination)
-    } else if (latestRelease) {
-      await cloneRepoAndCheckoutLatestTag(repoUrl, destination)
-    } else {
-      await cloneRepo(repoUrl, destination)
+    if (!flags['no-input'] && terminalSupportsPrompting()) {
+      const aiInstruction = await promptAIInstruction()
+      if (aiInstruction) {
+        result.aiInstructions = aiInstruction
+        try {
+          const instructions = await createAIInstructions(destination, aiInstruction)
+          result.instructionFiles = instructions.files
+          renderAIInstructionsWarning(instructions.copiedFiles, format)
+        } catch (error) {
+          if (error instanceof AbortSilentError || error instanceof CancelExecution) throw error
+          result.status = 'partial'
+          result.reason = error instanceof Error ? error.message : String(error)
+          process.exitCode = 1
+          if (flags.json) emitCommandEvent({type: 'diagnostic', level: 'error', message: result.reason})
+          else renderError({body: result.reason})
+        }
+      }
     }
 
-    if (flags['no-input'] || !terminalSupportsPrompting()) return
-
-    const aiInstruction = await promptAIInstruction()
-
-    if (!aiInstruction) {
-      return
-    }
-
-    await createAIInstructions(destination, aiInstruction)
+    renderThemeInitResult(result, format)
   }
 
   async promptName(directory: string, inputDisabled = false) {
