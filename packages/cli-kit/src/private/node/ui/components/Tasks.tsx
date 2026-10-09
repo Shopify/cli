@@ -27,14 +27,14 @@ enum TasksState {
 
 const noop = () => {}
 
-function Tasks<TContext>({
+const Tasks = <TContext,>({
   tasks,
   silent = isUnitTest(),
   onComplete = noop,
   abortSignal,
   noColor,
   noProgressBar = false,
-}: React.PropsWithChildren<TasksProps<TContext>>) {
+}: React.PropsWithChildren<TasksProps<TContext>>) => {
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
   const [state, setState] = useState<TasksState>(TasksState.Loading)
 

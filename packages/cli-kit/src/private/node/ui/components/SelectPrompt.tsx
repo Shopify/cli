@@ -19,7 +19,7 @@ export interface SelectPromptProps<T> {
   groupOrder?: string[]
 }
 
-function SelectPrompt<T>({
+const SelectPrompt = <T,>({
   message,
   choices,
   infoTable,
@@ -28,7 +28,7 @@ function SelectPrompt<T>({
   defaultValue,
   abortSignal,
   groupOrder,
-}: React.PropsWithChildren<SelectPromptProps<T>>): ReactElement | null {
+}: React.PropsWithChildren<SelectPromptProps<T>>): ReactElement | null => {
   if (choices.length === 0) {
     throw new Error('SelectPrompt requires at least one choice')
   }

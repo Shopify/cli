@@ -76,7 +76,7 @@ interface ItemProps<T> {
   index: number
 }
 
-function Item<T>({
+const Item = <T,>({
   item,
   previousItem,
   isSelected,
@@ -85,7 +85,7 @@ function Item<T>({
   items,
   hasAnyGroup,
   index,
-}: ItemProps<T>): React.ReactElement {
+}: ItemProps<T>): React.ReactElement => {
   const label = highlightedLabel(item.label, highlightedTerm)
   let title: string | undefined
   let labelColor
@@ -127,7 +127,7 @@ function Item<T>({
 
 const MAX_AVAILABLE_LINES = 25
 
-function SelectInput<T>({
+const SelectInput = <T,>({
   items: rawItems,
   initialItems = rawItems,
   onChange,
@@ -145,7 +145,7 @@ function SelectInput<T>({
   inputFixedAreaRef,
   ref,
   groupOrder,
-}: SelectInputProps<T>): React.ReactElement | null {
+}: SelectInputProps<T>): React.ReactElement | null => {
   let noItems = false
 
   if (rawItems.length === 0) {

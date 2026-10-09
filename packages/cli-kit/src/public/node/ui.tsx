@@ -249,6 +249,7 @@ interface RenderFatalErrorOptions {
  *
  */
 
+// eslint-disable-next-line max-params -- Preserve the public positional options argument.
 export function renderFatalError(error: Fatal, {renderOptions}: RenderFatalErrorOptions = {}) {
   return renderOnce(<FatalError error={error} />, {logLevel: 'error', renderOptions})
 }
@@ -290,6 +291,7 @@ export interface RenderSelectPromptOptions<T> extends Omit<SelectPromptProps<T>,
  *
  */
 
+// eslint-disable-next-line max-params -- Preserve the public positional options argument.
 export async function renderSelectPrompt<T>(
   {renderOptions, isConfirmationPrompt, ...props}: RenderSelectPromptOptions<T>,
   uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
@@ -425,6 +427,7 @@ export interface RenderAutocompleteOptions<T> extends PartialBy<
  *
  */
 
+// eslint-disable-next-line max-params -- Preserve the public positional options argument.
 export async function renderAutocompletePrompt<T>(
   {renderOptions, ...props}: RenderAutocompleteOptions<T>,
   uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
@@ -503,6 +506,7 @@ interface RenderTasksOptions {
  * Installing dependencies ...
  */
 
+// eslint-disable-next-line max-params -- Preserve the public positional options argument.
 export async function renderTasks<TContext>(
   tasks: Task<TContext>[],
   {renderOptions, noProgressBar}: RenderTasksOptions = {},
@@ -662,6 +666,7 @@ export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit
  *
  */
 
+// eslint-disable-next-line max-params -- Preserve the public positional options argument.
 export async function renderTextPrompt(
   {renderOptions, ...props}: RenderTextPromptOptions,
   uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
@@ -715,6 +720,7 @@ export interface RenderDangerousConfirmationPromptOptions extends Omit<Dangerous
  *
  */
 
+// eslint-disable-next-line max-params -- Preserve the public positional options argument.
 export async function renderDangerousConfirmationPrompt(
   {renderOptions, ...props}: RenderDangerousConfirmationPromptOptions,
   uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
@@ -742,10 +748,12 @@ export async function renderDangerousConfirmationPrompt(
 
 /** Waits for any key to be pressed except Ctrl+C which will terminate the process. */
 
+// eslint-disable-next-line max-params -- Preserve the public stdin and debug options arguments.
 export const keypress = async (stdin = process.stdin, uiDebugOptions: UIDebugOptions = defaultUIDebugOptions) => {
   throwInNonTTY({message: 'Press any key'}, uiDebugOptions)
 
   return runWithTimer('cmd_all_timing_prompts_ms')(() => {
+    // eslint-disable-next-line max-params -- Promise executors receive resolve and reject callbacks.
     return new Promise((resolve, reject) => {
       const handler = (buffer: Buffer) => {
         stdin.setRawMode(false)
@@ -785,6 +793,7 @@ interface ThrowInNonTTYOptions {
   stdin?: NodeJS.ReadStream
 }
 
+// eslint-disable-next-line max-params -- Keep the shared prompt check aligned with the public debug options argument.
 function throwInNonTTY({message, stdin = undefined}: ThrowInNonTTYOptions, uiDebugOptions: UIDebugOptions) {
   if (isTTY({stdin, uiDebugOptions})) return
 

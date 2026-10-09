@@ -836,13 +836,14 @@
       }
     },
     {
-      "files": ["src/public/**/*.ts"],
+      "files": ["packages/cli-kit/src/public/**/*.ts"],
+      "excludeFiles": ["packages/cli-kit/src/public/node/themes/**"],
       "rules": {
         "typescript/explicit-module-boundary-types": "error"
       }
     },
     {
-      "files": ["src/private/node/ui/components/**/*.tsx"],
+      "files": ["packages/cli-kit/src/private/node/ui/components/**/*.tsx"],
       "rules": {
         "react/function-component-definition": [
           "error",
@@ -879,7 +880,7 @@
       "plugins": ["react", "jsdoc"]
     },
     {
-      "files": ["src/public/node/ui.tsx"],
+      "files": ["packages/cli-kit/src/public/node/ui.tsx"],
       "rules": {
         "max-params": ["error", 1]
       }
@@ -1257,7 +1258,7 @@
       }
     },
     {
-      "files": ["src/private/node/ui/components/**/*.tsx"],
+      "files": ["packages/cli-kit/src/private/node/ui/components/**/*.tsx"],
       "rules": {
         "compat/typescript-eslint-naming-convention": [
           "error",
