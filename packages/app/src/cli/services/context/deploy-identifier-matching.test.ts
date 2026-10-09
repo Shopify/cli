@@ -826,12 +826,12 @@ describe('ensureDeployIdentifiersFromAppVersion', () => {
     })
   })
 
-  test('runs extension migrations before classifying the app version', async () => {
+  test.each(['checkout_ui', 'pos_ui'])('migrates %s before deploy and preserves its UUID', async (type) => {
     const legacyRemoteExtension = {
       uuid: 'legacy-uuid-a',
       id: '',
       title: EXTENSION_TO_MIGRATE.localIdentifier,
-      type: 'CHECKOUT_UI_EXTENSION',
+      type,
     }
     const migratedModule = {
       registrationId: EXTENSION_TO_MIGRATE.uid,
@@ -859,7 +859,7 @@ describe('ensureDeployIdentifiersFromAppVersion', () => {
       activeAppVersion: () => Promise.resolve(activeAppVersion),
     })
 
-    await ensureDeployIdentifiersFromAppVersion(
+    const identifiers = await ensureDeployIdentifiersFromAppVersion(
       deployOptions({
         app: testApp({...APP, allExtensions: [EXTENSION_TO_MIGRATE]}),
         developerPlatformClient,
@@ -884,6 +884,9 @@ describe('ensureDeployIdentifiersFromAppVersion', () => {
         }),
       }),
     )
+    expect(identifiers.appModuleUuids).toStrictEqual({
+      [EXTENSION_TO_MIGRATE.localIdentifier]: legacyRemoteExtension.uuid,
+    })
   })
 
   test('aborts when extension migration is declined', async () => {

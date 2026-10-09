@@ -24,7 +24,7 @@ export const FlowModulesMap = {
 }
 
 export const UIModulesMap = {
-  ui_extension: ['CHECKOUT_UI_EXTENSION', 'POS_UI_EXTENSION'],
+  ui_extension: ['CHECKOUT_UI_EXTENSION', 'POS_UI_EXTENSION', 'checkout_ui', 'pos_ui'],
 }
 
 export const AdminLinkModulesMap = {
