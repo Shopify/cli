@@ -50,6 +50,8 @@
 * [`shopify config autoupgrade off`](#shopify-config-autoupgrade-off)
 * [`shopify config autoupgrade on`](#shopify-config-autoupgrade-on)
 * [`shopify config autoupgrade status`](#shopify-config-autoupgrade-status)
+* [`shopify config mouse off`](#shopify-config-mouse-off)
+* [`shopify config mouse on`](#shopify-config-mouse-on)
 * [`shopify doc fetch`](#shopify-doc-fetch)
 * [`shopify doc search`](#shopify-doc-search)
 * [`shopify help [command] [flags]`](#shopify-help-command-flags)
@@ -6272,6 +6274,105 @@ DESCRIPTION
     ],
     "additionalProperties": false,
     "title": "AutoUpgradeResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+```
+
+## `shopify config mouse off`
+
+Disable mouse interactions in Shopify CLI.
+
+```
+USAGE
+  $ shopify config mouse off [-j] [--json-schema]
+
+FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+DESCRIPTION
+  Disable mouse interactions in Shopify CLI.
+
+  Disable mouse interactions in Shopify CLI.
+
+  When mouse interactions are disabled, standard terminal text selection and scrolling are restored.
+
+  To enable clickable prompt options and app dev tabs, run `shopify config mouse on`.
+
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `MouseConfigurationResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "enabled"
+    ],
+    "additionalProperties": false,
+    "title": "MouseConfigurationResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+```
+
+## `shopify config mouse on`
+
+Enable mouse interactions in Shopify CLI.
+
+```
+USAGE
+  $ shopify config mouse on [-j] [--json-schema]
+
+FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+DESCRIPTION
+  Enable mouse interactions in Shopify CLI.
+
+  Enable mouse interactions in Shopify CLI.
+
+  Mouse interactions are enabled by default and allow you to click prompt options and app dev tabs. To select text while
+  they are enabled, hold Option in iTerm2 or Shift in most other terminals while dragging.
+
+  To restore standard terminal text selection and scrolling, run `shopify config mouse off`.
+
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `MouseConfigurationResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "enabled"
+    ],
+    "additionalProperties": false,
+    "title": "MouseConfigurationResult",
     "$schema": "http://json-schema.org/draft-07/schema#"
   }
   ```
