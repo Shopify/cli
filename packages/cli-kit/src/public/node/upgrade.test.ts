@@ -7,6 +7,7 @@ import {
   getPackageManager,
   usesWorkspaces,
   packageManagerFromUserAgent,
+  PackageManager,
 } from './node-package-manager.js'
 import {exec, isCI} from './system.js'
 import {
