@@ -1,6 +1,6 @@
-import {downloadTheme} from '../utilities/theme-downloader.js'
+import {downloadTheme, localFileChanges} from '../utilities/theme-downloader.js'
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
-import {ensureDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
+import {ensureDirectoryConfirmed, ensureLocalFileChangesConfirmed, themeComponent} from '../utilities/theme-ui.js'
 import {rejectGeneratedStaticAssets} from '../utilities/asset-checksum.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
@@ -73,7 +73,7 @@ export interface PullFlags {
   ignore?: string[]
 
   /**
-   * Proceed without confirmation, if current directory does not seem to be theme directory.
+   * Proceed without confirmation, if current directory does not seem to be theme directory or local files would be overwritten.
    */
   force?: boolean
 
@@ -164,6 +164,11 @@ async function executePull(
   const [remoteChecksums] = await Promise.all([fetchChecksums(theme.id, session), themeFileSystem.ready()])
   const themeChecksums = rejectGeneratedStaticAssets(remoteChecksums)
   recordTiming('theme-service:pull:file-system')
+
+  const changes = localFileChanges(themeChecksums, themeFileSystem, options)
+  if (!(await ensureLocalFileChangesConfirmed(changes, options.force, options.environment, options.multiEnvironment))) {
+    return
+  }
 
   await downloadTheme(theme, session, themeChecksums, themeFileSystem, options, context)
 

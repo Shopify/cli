@@ -1,4 +1,10 @@
-import {themeComponent, themesComponent, ensureDirectoryConfirmed, ensureLiveThemeConfirmed} from './theme-ui.js'
+import {
+  themeComponent,
+  themesComponent,
+  ensureDirectoryConfirmed,
+  ensureLiveThemeConfirmed,
+  ensureLocalFileChangesConfirmed,
+} from './theme-ui.js'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderConfirmationPrompt, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
 import {test, describe, expect, vi, afterEach, beforeEach} from 'vitest'
@@ -93,6 +99,89 @@ describe('ensureDirectoryConfirmed', () => {
       })
       expect(confirmed).toBe(false)
     })
+  })
+})
+
+describe('ensureLocalFileChangesConfirmed', () => {
+  const changes = {overwritten: ['templates/index.json'], deleted: ['assets/old.css', 'assets/older.css']}
+  const warning = {
+    headline: '',
+    body: [
+      'Pulling this theme will overwrite 1 local file and delete 2 local files:',
+      {list: {items: ['templates/index.json', 'assets/old.css', 'assets/older.css']}},
+    ],
+  }
+
+  beforeEach(() => {
+    vi.stubGlobal('process', {
+      ...process,
+      stdin: {...process.stdin, isTTY: true},
+      stderr: {...process.stderr, isTTY: true},
+    })
+  })
+
+  test('prompts for confirmation when local files would be overwritten or deleted', async () => {
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+
+    const confirmed = await ensureLocalFileChangesConfirmed(changes, false)
+
+    expect(renderWarning).toHaveBeenCalledWith(warning)
+    expect(renderConfirmationPrompt).toHaveBeenCalledWith({
+      message: 'Do you want to proceed?',
+      confirmationMessage: 'Yes, update my local files',
+      cancellationMessage: 'No, cancel',
+    })
+    expect(confirmed).toBe(false)
+  })
+
+  test('does not prompt when no local files would change', async () => {
+    const confirmed = await ensureLocalFileChangesConfirmed({overwritten: [], deleted: []}, false)
+
+    expect(renderWarning).not.toHaveBeenCalled()
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+    expect(confirmed).toBe(true)
+  })
+
+  test('does not prompt when force flag is true', async () => {
+    const confirmed = await ensureLocalFileChangesConfirmed(changes, true)
+
+    expect(renderWarning).not.toHaveBeenCalled()
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+    expect(confirmed).toBe(true)
+  })
+
+  test('lists a limited number of files', async () => {
+    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+    const overwritten = Array.from({length: 12}, (_, index) => `snippets/file-${index}.liquid`)
+
+    await ensureLocalFileChangesConfirmed({overwritten, deleted: []}, false)
+
+    expect(renderWarning).toHaveBeenCalledWith({
+      headline: '',
+      body: [
+        'Pulling this theme will overwrite 12 local files:',
+        {list: {items: overwritten.slice(0, 10)}},
+        'and 2 more.',
+      ],
+    })
+  })
+
+  test('warns and proceeds when prompting is unavailable', async () => {
+    vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', 'true')
+
+    const confirmed = await ensureLocalFileChangesConfirmed(changes, false)
+
+    expect(renderWarning).toHaveBeenCalledWith(warning)
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+    expect(confirmed).toBe(true)
+  })
+
+  test('warns and proceeds during a multi environment command run', async () => {
+    const confirmed = await ensureLocalFileChangesConfirmed(changes, false, 'Production', true)
+
+    expect(renderWarning).toHaveBeenCalledWith({...warning, headline: 'Environment: Production'})
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+    expect(confirmed).toBe(true)
   })
 })
 

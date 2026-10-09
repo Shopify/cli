@@ -33,15 +33,46 @@ export async function downloadTheme(
   }
 }
 
-function buildDeleteTasks(remoteChecksums: Checksum[], themeFileSystem: ThemeFileSystem, options: DownloadOptions) {
+export interface LocalFileChanges {
+  overwritten: string[]
+  deleted: string[]
+}
+
+/**
+ * Returns the existing local files that downloading the remote theme would overwrite or delete.
+ */
+export function localFileChanges(
+  remoteChecksums: Checksum[],
+  themeFileSystem: ThemeFileSystem,
+  options: DownloadOptions,
+): LocalFileChanges {
+  return {
+    overwritten: filesToDownload(remoteChecksums, themeFileSystem).filter((key) => themeFileSystem.files.has(key)),
+    deleted: filesToDelete(remoteChecksums, themeFileSystem, options),
+  }
+}
+
+function filesToDelete(remoteChecksums: Checksum[], themeFileSystem: ThemeFileSystem, options: DownloadOptions) {
   if (options.nodelete) return []
 
   const remoteKeys = new Set(remoteChecksums.map((checksum) => checksum.key))
 
   const localKeys = themeFileSystem.applyIgnoreFilters([...themeFileSystem.files.values()]).map(({key}) => key)
-  const localFilesToBeDeleted = localKeys.filter((key) => !remoteKeys.has(key))
+  return localKeys.filter((key) => !remoteKeys.has(key))
+}
 
-  return localFilesToBeDeleted.map((key) => {
+function filesToDownload(remoteChecksums: Checksum[], themeFileSystem: ThemeFileSystem) {
+  return (
+    themeFileSystem
+      .applyIgnoreFilters(remoteChecksums)
+      // Filter out files we already have
+      .filter((checksum) => themeFileSystem.files.get(checksum.key)?.checksum !== checksum.checksum)
+      .map((checksum) => checksum.key)
+  )
+}
+
+function buildDeleteTasks(remoteChecksums: Checksum[], themeFileSystem: ThemeFileSystem, options: DownloadOptions) {
+  return filesToDelete(remoteChecksums, themeFileSystem, options).map((key) => {
     return {
       title: `Cleaning your local directory (removing ${key})`,
       task: async () => themeFileSystem.delete(key),
@@ -55,21 +86,7 @@ function buildDownloadTasks(
   themeFileSystem: ThemeFileSystem,
   session: AdminSession,
 ): Task[] {
-  let checksums = themeFileSystem.applyIgnoreFilters(remoteChecksums)
-
-  // Filter out files we already have
-  checksums = checksums.filter((checksum) => {
-    const remoteChecksumValue = checksum.checksum
-    const localAsset = themeFileSystem.files.get(checksum.key)
-
-    if (localAsset?.checksum === remoteChecksumValue) {
-      return false
-    } else {
-      return true
-    }
-  })
-
-  const filenames = checksums.map((checksum) => checksum.key)
+  const filenames = filesToDownload(remoteChecksums, themeFileSystem)
 
   const getProgress = (params: {current: number; total: number}) =>
     params.total === 0 ? `[100%]` : `[${Math.round((params.current / params.total) * 100)}%]`

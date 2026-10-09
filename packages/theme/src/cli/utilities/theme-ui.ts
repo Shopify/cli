@@ -1,3 +1,4 @@
+import {LocalFileChanges} from './theme-downloader.js'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {LIVE_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
@@ -83,6 +84,48 @@ export async function ensureLiveThemeConfirmed(theme: Theme, action: string, all
   })
 
   recordEvent(`theme-service:confirm-live-theme:${confirm}`)
+
+  return confirm
+}
+
+const MAX_LISTED_LOCAL_FILES = 10
+
+/**
+ * Asks for confirmation before local files are overwritten or deleted. When
+ * prompting isn't possible, it warns about the affected files and proceeds.
+ */
+export async function ensureLocalFileChangesConfirmed(
+  changes: LocalFileChanges,
+  force: boolean,
+  environment?: string,
+  multiEnvironment?: boolean,
+) {
+  const files = [...changes.overwritten, ...changes.deleted]
+  if (force || files.length === 0) return true
+
+  const fileCount = (count: number) => (count === 1 ? '1 local file' : `${count} local files`)
+  const actions = []
+  if (changes.overwritten.length > 0) actions.push(`overwrite ${fileCount(changes.overwritten.length)}`)
+  if (changes.deleted.length > 0) actions.push(`delete ${fileCount(changes.deleted.length)}`)
+
+  const unlistedCount = files.length - MAX_LISTED_LOCAL_FILES
+  const body = [
+    `Pulling this theme will ${actions.join(' and ')}:`,
+    {list: {items: files.slice(0, MAX_LISTED_LOCAL_FILES)}},
+    ...(unlistedCount > 0 ? [`and ${unlistedCount} more.`] : []),
+  ]
+
+  renderWarning({headline: environment ? `Environment: ${environment}` : '', body})
+
+  if (multiEnvironment || !terminalSupportsPrompting()) return true
+
+  const confirm = await renderConfirmationPrompt({
+    message: 'Do you want to proceed?',
+    confirmationMessage: 'Yes, update my local files',
+    cancellationMessage: 'No, cancel',
+  })
+
+  recordEvent(`theme-service:confirm-local-file-changes:${confirm}`)
 
   return confirm
 }

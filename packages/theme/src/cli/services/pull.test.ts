@@ -5,8 +5,8 @@ import {ensureThemeStore} from '../utilities/theme-store.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {fakeThemeFileSystem} from '../utilities/theme-fs/theme-fs-mock-factory.js'
-import {downloadTheme} from '../utilities/theme-downloader.js'
-import {themeComponent, ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
+import {downloadTheme, localFileChanges} from '../utilities/theme-downloader.js'
+import {themeComponent, ensureDirectoryConfirmed, ensureLocalFileChangesConfirmed} from '../utilities/theme-ui.js'
 
 import {mkTmpDir, rmdir} from '@shopify/cli-kit/node/fs'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
@@ -55,6 +55,7 @@ describe('pull', () => {
     vi.mocked(mountThemeFileSystem).mockReturnValue(localThemeFileSystem)
     vi.mocked(fetchChecksums).mockResolvedValue([])
     vi.mocked(themeComponent).mockReturnValue([])
+    vi.mocked(ensureLocalFileChangesConfirmed).mockResolvedValue(true)
     findDevelopmentThemeSpy.mockClear()
     fetchDevelopmentThemeSpy.mockClear()
   })
@@ -110,6 +111,36 @@ describe('pull', () => {
     expect(vi.mocked(findOrSelectTheme)).toHaveBeenCalledOnce()
     expect(vi.mocked(hasRequiredThemeDirectories)).not.toHaveBeenCalled()
     expect(vi.mocked(ensureDirectoryConfirmed)).not.toHaveBeenCalled()
+  })
+
+  test('should ask for confirmation before changing local files', async () => {
+    // Given
+    const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+    const changes = {overwritten: ['templates/index.json'], deleted: ['assets/old.css']}
+    vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+    vi.mocked(localFileChanges).mockReturnValue(changes)
+
+    // When
+    await pull({...defaultFlags, theme: theme.id.toString()})
+
+    // Then
+    expect(localFileChanges).toHaveBeenCalledWith([], localThemeFileSystem, expect.objectContaining({nodelete: false}))
+    expect(ensureLocalFileChangesConfirmed).toHaveBeenCalledWith(changes, false, undefined, undefined)
+    expect(downloadTheme).toHaveBeenCalled()
+  })
+
+  test('should not change local files when the confirmation is declined', async () => {
+    // Given
+    const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+    vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+    vi.mocked(ensureLocalFileChangesConfirmed).mockResolvedValue(false)
+
+    // When
+    await pull({...defaultFlags, theme: theme.id.toString()})
+
+    // Then
+    expect(downloadTheme).not.toHaveBeenCalled()
+    expect(renderSuccess).not.toHaveBeenCalled()
   })
 
   test('should render success message with theme preview and editor links', async () => {
