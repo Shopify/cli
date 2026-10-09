@@ -4,9 +4,10 @@ const {builtinRules} = require('eslint/use-at-your-own-risk')
 const typescriptParser = require('@typescript-eslint/parser')
 
 const {parserServices} = require('./oxlint-typescript-services')
+const config = require('./config')
+
 const shopifyRequire = createRequire(require.resolve('@shopify/eslint-plugin'))
 const DisabledArea = shopifyRequire('eslint-plugin-eslint-comments/lib/internal/disabled-area')
-const config = require('./config')
 
 const plugins = Object.assign({}, ...config.map((entry) => entry.plugins))
 plugins['@nx'] = require('@nx/eslint-plugin')
@@ -85,7 +86,7 @@ rules['eslint-comments-no-unused-disable'] = {
   meta: {type: 'problem', schema: [], messages: {unused: "Unused disable directive for '{{ruleId}}'."}},
   create(context) {
     return {
-      'Program:exit'() {
+      'Program:exit': function () {
         const usage = usageFor(context.sourceCode)
         for (const area of DisabledArea.get(context.sourceCode).areas) {
           if (area.ruleId && usage.activeRules.has(area.ruleId) && !usage.usedComments.has(area.comment)) {

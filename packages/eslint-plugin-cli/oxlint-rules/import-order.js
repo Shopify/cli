@@ -1,9 +1,9 @@
-const {isBuiltin} = require('node:module')
+const {builtinModules} = require('node:module')
 
 function groupFor(node) {
   if (node.importKind === 'type') return 'type'
   const source = node.source.value
-  if (isBuiltin(source)) return 'builtin'
+  if (source.startsWith('node:') || builtinModules.includes(source)) return 'builtin'
   if (/^\.\.?\/(?:index(?:\.[a-z]+)?)?$/.test(source)) return 'index'
   if (source.startsWith('../')) return 'parent'
   if (source.startsWith('./')) return 'sibling'

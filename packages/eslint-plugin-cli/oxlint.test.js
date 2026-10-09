@@ -1,4 +1,5 @@
 const {RuleTester} = require('oxlint/plugins-dev')
+
 const {rules} = require('./oxlint')
 
 const tester = new RuleTester({languageOptions: {sourceType: 'module', parserOptions: {lang: 'ts'}}})
