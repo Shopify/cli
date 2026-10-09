@@ -11,6 +11,8 @@ import {zod} from '@shopify/cli-kit/node/schema'
 import {describe, expect, test, vi} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import * as output from '@shopify/cli-kit/node/output'
+import {build} from 'esbuild'
+import {runInNewContext} from 'node:vm'
 import type {NewExtensionPointSchemaType} from '../schemas.js'
 
 describe('ui_extension', async () => {
@@ -1180,6 +1182,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         // Then
         expect(stdInContent).toContain(`import './src/ExtensionPointA.js';`)
         expect(stdInContent).toContain(`import './src/ExtensionPointB.js';`)
+        expect(uiExtension.getBundleExtensionStdinContent().assets).toBeUndefined()
       })
     })
 
@@ -1219,8 +1222,214 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         )
 
         expect(stdInContent.assets!.find((asset) => asset.identifier === AssetIdentifier.ShouldRender)?.content).toBe(
-          `import shouldRender from './src/condition/should-render.js';shopify.extend('admin.product-details.action.should-render', (...args) => shouldRender(...args));`,
+          `import ShouldRender_0 from './src/condition/should-render.js';shopify.extend('admin.product-details.action.should-render', (...args) => ShouldRender_0(...args));`,
         )
+      })
+    })
+
+    test.each([
+      {
+        description: 'a shared module',
+        productModule: './src/condition/shared.js',
+        variantModule: './src/condition/shared.js',
+      },
+      {
+        description: 'different modules',
+        productModule: './src/condition/product.js',
+        variantModule: './src/condition/variant.js',
+      },
+    ])('bundles both should-render targets with $description', async ({productModule, variantModule}) => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const uiExtension = await getTestUIExtension({
+          directory: tmpDir,
+          apiVersion: '2026-10',
+          extensionPoints: [
+            {
+              target: 'admin.product-details.configuration.render',
+              module: './src/Product.js',
+              build_manifest: {
+                assets: {
+                  main: {module: './src/Product.js', filepath: '/test-ui-extension.js'},
+                  should_render: {module: productModule, filepath: '/test-ui-extension-conditions.js'},
+                },
+              },
+            },
+            {
+              target: 'admin.product-variant-details.configuration.render',
+              module: './src/Variant.js',
+              build_manifest: {
+                assets: {
+                  main: {module: './src/Variant.js', filepath: '/test-ui-extension.js'},
+                  should_render: {module: variantModule, filepath: '/test-ui-extension-conditions.js'},
+                },
+              },
+            },
+          ],
+        })
+
+        const {main, assets} = uiExtension.getBundleExtensionStdinContent()
+
+        expect(main).toContain("shopify.extend('admin.product-details.configuration.render'")
+        expect(main).toContain("shopify.extend('admin.product-variant-details.configuration.render'")
+        expect(assets).toStrictEqual([
+          {
+            identifier: AssetIdentifier.ShouldRender,
+            outputFileName: '/test-ui-extension-conditions.js',
+            content: [
+              `import ShouldRender_0 from '${productModule}';shopify.extend('admin.product-details.configuration.should-render', (...args) => ShouldRender_0(...args));`,
+              `import ShouldRender_1 from '${variantModule}';shopify.extend('admin.product-variant-details.configuration.should-render', (...args) => ShouldRender_1(...args));`,
+            ].join('\n'),
+          },
+        ])
+
+        await mkdir(joinPath(tmpDir, 'src/condition'))
+        await writeFile(joinPath(tmpDir, productModule), 'export default () => ({display: true})')
+        if (productModule !== variantModule) {
+          await writeFile(joinPath(tmpDir, variantModule), 'export default () => ({display: false})')
+        }
+        const conditionAsset = assets?.[0]
+        if (!conditionAsset) throw new Error('Missing should-render asset')
+        const result = await build({
+          stdin: {contents: conditionAsset.content, resolveDir: tmpDir, sourcefile: 'conditions.ts'},
+          bundle: true,
+          write: false,
+        })
+        const bundledConditions = result.outputFiles?.[0]?.text
+        if (!bundledConditions) throw new Error('Missing bundled conditions')
+        const registrations = new Map<string, () => {display: boolean}>()
+        runInNewContext(bundledConditions, {
+          shopify: {
+            extend: (target: string, callback: () => {display: boolean}) => registrations.set(target, callback),
+          },
+        })
+        expect([...registrations.keys()]).toStrictEqual([
+          'admin.product-details.configuration.should-render',
+          'admin.product-variant-details.configuration.should-render',
+        ])
+        expect(registrations.get('admin.product-details.configuration.should-render')?.().display).toBe(true)
+        expect(registrations.get('admin.product-variant-details.configuration.should-render')?.().display).toBe(
+          productModule === variantModule,
+        )
+      })
+    })
+
+    test('rejects should-render targets with different output filenames', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const uiExtension = await getTestUIExtension({
+          directory: tmpDir,
+          apiVersion: '2026-10',
+          extensionPoints: [
+            {
+              target: 'admin.product-details.configuration.render',
+              module: './src/Product.js',
+              build_manifest: {
+                assets: {
+                  main: {module: './src/Product.js', filepath: '/test-ui-extension.js'},
+                  should_render: {module: './src/product-condition.js', filepath: '/product-conditions.js'},
+                },
+              },
+            },
+            {
+              target: 'admin.product-variant-details.configuration.render',
+              module: './src/Variant.js',
+              build_manifest: {
+                assets: {
+                  main: {module: './src/Variant.js', filepath: '/test-ui-extension.js'},
+                  should_render: {module: './src/variant-condition.js', filepath: '/variant-conditions.js'},
+                },
+              },
+            },
+          ],
+        })
+
+        expect(() => uiExtension.getBundleExtensionStdinContent()).toThrow(
+          'UI extension should-render targets must share an output filename',
+        )
+      })
+    })
+
+    test('skips unconditioned targets without losing either conditional registration', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const uiExtension = await getTestUIExtension({
+          directory: tmpDir,
+          apiVersion: '2026-10',
+          extensionPoints: [
+            {
+              target: 'admin.product-details.configuration.render',
+              module: './src/Product.js',
+              build_manifest: {
+                assets: {
+                  main: {module: './src/Product.js', filepath: '/test-ui-extension.js'},
+                  should_render: {module: './src/product-condition.js', filepath: '/test-ui-extension-conditions.js'},
+                },
+              },
+            },
+            {
+              target: 'admin.order-details.block.render',
+              module: './src/Order.js',
+              build_manifest: {
+                assets: {main: {module: './src/Order.js', filepath: '/test-ui-extension.js'}},
+              },
+            },
+            {
+              target: 'admin.product-variant-details.configuration.render',
+              module: './src/Variant.js',
+              build_manifest: {
+                assets: {
+                  main: {module: './src/Variant.js', filepath: '/test-ui-extension.js'},
+                  should_render: {module: './src/variant-condition.js', filepath: '/test-ui-extension-conditions.js'},
+                },
+              },
+            },
+          ],
+        })
+
+        const {assets} = uiExtension.getBundleExtensionStdinContent()
+        const content = assets?.[0]?.content
+        expect(assets).toHaveLength(1)
+        expect(content).toContain("shopify.extend('admin.product-details.configuration.should-render'")
+        expect(content).toContain("shopify.extend('admin.product-variant-details.configuration.should-render'")
+        expect(content).not.toContain('admin.order-details.block.should-render')
+        expect(content).toContain('ShouldRender_2(...args)')
+      })
+    })
+
+    test('includes every should-render import for non-Remote DOM API versions', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const uiExtension = await getTestUIExtension({
+          directory: tmpDir,
+          apiVersion: '2025-01',
+          extensionPoints: [
+            {
+              target: 'admin.product-details.configuration.render',
+              module: './src/Product.js',
+              build_manifest: {
+                assets: {
+                  main: {module: './src/Product.js', filepath: '/test-ui-extension.js'},
+                  should_render: {module: './src/product-condition.js', filepath: '/test-ui-extension-conditions.js'},
+                },
+              },
+            },
+            {
+              target: 'admin.product-variant-details.configuration.render',
+              module: './src/Variant.js',
+              build_manifest: {
+                assets: {
+                  main: {module: './src/Variant.js', filepath: '/test-ui-extension.js'},
+                  should_render: {module: './src/variant-condition.js', filepath: '/test-ui-extension-conditions.js'},
+                },
+              },
+            },
+          ],
+        })
+
+        expect(uiExtension.getBundleExtensionStdinContent().assets).toStrictEqual([
+          {
+            identifier: AssetIdentifier.ShouldRender,
+            outputFileName: '/test-ui-extension-conditions.js',
+            content: "import './src/product-condition.js'\nimport './src/variant-condition.js'",
+          },
+        ])
       })
     })
 
