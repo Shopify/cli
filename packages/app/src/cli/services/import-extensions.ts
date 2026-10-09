@@ -1,3 +1,9 @@
+import {
+  ExtensionImportCompletion,
+  ImportedDashboardExtension,
+  ImportExtensionsResult,
+} from './import-extensions/types.js'
+import {renderImportExtensionsResult} from './import-extensions/result.js'
 import {AppLinkedInterface, CurrentAppConfiguration} from '../models/app/app.js'
 import {updateAppIdentifiers, ExtensionUuidsByLocalIdentifier} from '../models/app/identifiers.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
@@ -6,12 +12,11 @@ import {MAX_EXTENSION_HANDLE_LENGTH} from '../models/extensions/schemas.js'
 import {OrganizationApp} from '../models/organization.js'
 import {allMigrationChoices, getMigrationChoices} from '../prompts/import-extensions.js'
 import {configurationFileNames, blocks} from '../constants.js'
-import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
-import {basename, joinPath} from '@shopify/cli-kit/node/path'
+import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {removeFile, fileExists, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
-import {outputContent} from '@shopify/cli-kit/node/output'
 import {slugify, hyphenate} from '@shopify/cli-kit/common/string'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 
@@ -65,10 +70,6 @@ async function handleExtensionDirectory({
       choices,
     })
 
-    if (action === DirectoryAction.Cancel) {
-      throw new AbortSilentError()
-    }
-
     return {directory: extensionDirectory, action}
   }
 
@@ -78,8 +79,50 @@ async function handleExtensionDirectory({
   return {directory: extensionDirectory, action: DirectoryAction.Write}
 }
 
-export async function importExtensions(options: ImportOptions) {
-  const {app, remoteApp, extensionTypes, extensions, buildExtensionConfig, all} = options
+export class ExtensionImportCancelledError extends AbortSilentError {
+  constructor(
+    private readonly pendingImports: Promise<ImportedDashboardExtension>[],
+    private readonly selectedExtensions: ExtensionRegistration[],
+  ) {
+    super()
+  }
+
+  completedImports(): Promise<ExtensionImportCompletion> {
+    return completeStartedImports(this.pendingImports, this.selectedExtensions)
+  }
+}
+
+export class ExtensionImportFailedError extends Error {
+  constructor(
+    readonly originalError: unknown,
+    private readonly pendingImports: Promise<ImportedDashboardExtension>[],
+    private readonly selectedExtensions: ExtensionRegistration[],
+  ) {
+    super(originalError instanceof Error ? originalError.message : 'Dashboard extension import failed')
+  }
+
+  completedImports(): Promise<ExtensionImportCompletion> {
+    return completeStartedImports(this.pendingImports, this.selectedExtensions)
+  }
+}
+
+async function completeStartedImports(
+  pendingImports: Promise<ImportedDashboardExtension>[],
+  selectedExtensions: ExtensionRegistration[],
+): Promise<ExtensionImportCompletion> {
+  const results = await Promise.allSettled(pendingImports)
+  return {
+    extensions: results.flatMap((result) => (result.status === 'fulfilled' ? [result.value] : [])),
+    failures: results.flatMap((result, index) =>
+      result.status === 'rejected' && !(result.reason instanceof ExtensionImportCancelledError)
+        ? [{extension: selectedExtensions[index]!, error: result.reason as unknown}]
+        : [],
+    ),
+  }
+}
+
+export async function importExtensions(options: ImportOptions): Promise<ImportExtensionsResult> {
+  const {app, extensionTypes, extensions, buildExtensionConfig, all} = options
 
   let extensionsToMigrate = extensions.filter((ext) => extensionTypes.includes(ext.type.toLowerCase()))
   extensionsToMigrate = filterOutImportedExtensions(app, extensionsToMigrate)
@@ -104,32 +147,40 @@ export async function importExtensions(options: ImportOptions) {
   }
 
   const extensionUuids: ExtensionUuidsByLocalIdentifier = {}
-  const importPromises = extensionsToMigrate.map(async (ext) => {
+  const importPromises: Promise<ImportedDashboardExtension>[] = extensionsToMigrate.map(async (ext) => {
     const {directory, action} = await handleExtensionDirectory({app, name: ext.title})
+
+    if (action === DirectoryAction.Cancel) {
+      throw new ExtensionImportCancelledError(importPromises, extensionsToMigrate)
+    }
 
     const handle = slugify(ext.title.substring(0, MAX_EXTENSION_HANDLE_LENGTH))
     extensionUuids[handle] = ext.uuid
 
+    const tomlPath = joinPath(directory, 'shopify.extension.toml')
     if (action === DirectoryAction.Write) {
       const tomlContent = buildExtensionConfig(ext, extensions, app.configuration)
-      const tomlPath = joinPath(directory, 'shopify.extension.toml')
       const file = new TomlFile(tomlPath, tomlContent as JsonMapType)
       await file.replace(tomlContent as JsonMapType)
       const lockFilePath = joinPath(directory, configurationFileNames.lockFile)
       await removeFile(lockFilePath)
     }
 
-    return {extension: ext, directory: joinPath('extensions', basename(directory))}
+    return {
+      extension: ext,
+      directory,
+      configurationPath: action === DirectoryAction.Write || (await fileExists(tomlPath)) ? tomlPath : null,
+      changed: action === DirectoryAction.Write,
+    }
   })
 
-  const generatedExtensions = await Promise.all(importPromises)
-  renderSuccessMessages(generatedExtensions)
-  await updateAppIdentifiers({
-    app,
-    appApiKey: remoteApp.apiKey,
-    extensionUuids,
-    command: 'import-extensions',
-  })
+  try {
+    const generatedExtensions = await Promise.all(importPromises)
+    return {extensions: generatedExtensions, extensionUuids}
+  } catch (error) {
+    if (error instanceof ExtensionImportCancelledError) throw error
+    throw new ExtensionImportFailedError(error, importPromises, extensionsToMigrate)
+  }
 }
 
 // import-extensions updates the .env file with the new UUIDs. we can use that to know if an extension was already imported.
@@ -144,23 +195,21 @@ export async function importAllExtensions(options: ImportAllOptions) {
   const migrationChoices = getMigrationChoices(options.extensions)
   await Promise.all(
     migrationChoices.map(async (choice) => {
-      return importExtensions({
+      const result = await importExtensions({
         ...options,
         extensionTypes: choice.extensionTypes,
         buildExtensionConfig: choice.buildExtensionConfig,
         all: true,
+      }).catch((error: unknown) => {
+        throw error instanceof ExtensionImportFailedError ? error.originalError : error
+      })
+      renderImportExtensionsResult(result.extensions)
+      await updateAppIdentifiers({
+        app: options.app,
+        appApiKey: options.remoteApp.apiKey,
+        extensionUuids: result.extensionUuids,
+        command: 'import-extensions',
       })
     }),
   )
-}
-
-function renderSuccessMessages(generatedExtensions: {extension: ExtensionRegistration; directory: string}[]) {
-  renderSuccess({
-    headline: ['Imported the following extensions from the dashboard:'],
-    body: generatedExtensions
-      .map((gen) => {
-        return outputContent`• "${gen.extension.title}" at: ${gen.directory}`.value
-      })
-      .join('\n'),
-  })
 }

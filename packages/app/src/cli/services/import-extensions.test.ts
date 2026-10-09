@@ -1,10 +1,11 @@
-import {importExtensions, filterOutImportedExtensions} from './import-extensions.js'
+import {importExtensions, importAllExtensions, filterOutImportedExtensions} from './import-extensions.js'
+import {renderImportExtensionsResult} from './import-extensions/result.js'
 import {buildExtensionConfig} from './flow/extension-config-builder.js'
 import {testAppLinked, testDeveloperPlatformClient, testUIExtension} from '../models/app/app.test-data.js'
 import {OrganizationApp} from '../models/organization.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
-import {fileExistsSync, inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, inTemporaryDirectory, mkdir, readFile} from '@shopify/cli-kit/node/fs'
 import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
@@ -97,7 +98,7 @@ describe('import-extensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testAppLinked({directory: tmpDir})
 
-      await importExtensions({
+      const result = await importExtensions({
         app,
         remoteApp: organizationApp,
         developerPlatformClient: testDeveloperPlatformClient(),
@@ -112,6 +113,7 @@ describe('import-extensions', () => {
         buildExtensionConfig,
       })
 
+      renderImportExtensionsResult(result.extensions)
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: ['Imported the following extensions from the dashboard:'],
         body: '• "titleA" at: extensions/title-a',
@@ -160,7 +162,7 @@ describe('import-extensions', () => {
         // Skip existing directory
         .mockResolvedValueOnce('skip')
 
-      await importExtensions({
+      const result = await importExtensions({
         app,
         remoteApp: organizationApp,
         developerPlatformClient: testDeveloperPlatformClient(),
@@ -169,7 +171,10 @@ describe('import-extensions', () => {
         buildExtensionConfig,
       })
 
+      expect(result.extensionUuids).toEqual({titlea: 'uuidA'})
+
       // Then - expect the success message to be shown (even for skipped extensions)
+      renderImportExtensionsResult(result.extensions)
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: ['Imported the following extensions from the dashboard:'],
         body: '• "titleA" at: extensions/title-a',
@@ -206,7 +211,7 @@ describe('import-extensions', () => {
         // Write/overwrite existing directory
         .mockResolvedValueOnce('write')
 
-      await importExtensions({
+      const result = await importExtensions({
         app,
         remoteApp: organizationApp,
         developerPlatformClient: testDeveloperPlatformClient(),
@@ -215,7 +220,10 @@ describe('import-extensions', () => {
         buildExtensionConfig,
       })
 
+      expect(result.extensionUuids).toEqual({titlea: 'uuidA'})
+
       // Then - expect the success message to be shown
+      renderImportExtensionsResult(result.extensions)
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: ['Imported the following extensions from the dashboard:'],
         body: '• "titleA" at: extensions/title-a',
@@ -287,7 +295,7 @@ describe('import-extensions', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const app = testAppLinked({directory: tmpDir})
 
-      await importExtensions({
+      const result = await importExtensions({
         app,
         remoteApp: organizationApp,
         developerPlatformClient: testDeveloperPlatformClient(),
@@ -302,6 +310,7 @@ describe('import-extensions', () => {
         buildExtensionConfig,
       })
 
+      renderImportExtensionsResult(result.extensions)
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: ['Imported the following extensions from the dashboard:'],
         body: '• "titleA" at: extensions/title-a\n• "titleB" at: extensions/title-b\n• "titleC" at: extensions/title-c\n• "titleD" at: extensions/title-d\n• "titleE" at: extensions/title-e',
@@ -398,5 +407,24 @@ describe('filterOutImportedExtensions', () => {
 
     // Then
     expect(result).toEqual([marketingActivityExtension])
+  })
+})
+
+test('the import-all caller retains text presentation and persists identifiers', async () => {
+  await inTemporaryDirectory(async (directory) => {
+    const app = testAppLinked({directory, configPath: joinPath(directory, 'shopify.app.toml')})
+    await importAllExtensions({
+      app,
+      remoteApp: organizationApp,
+      developerPlatformClient: testDeveloperPlatformClient(),
+      extensions: [flowExtensionA, flowExtensionB],
+    })
+    expect(renderSelectPrompt).not.toHaveBeenCalled()
+    expect(renderSuccess).toHaveBeenCalledWith({
+      headline: ['Imported the following extensions from the dashboard:'],
+      body: '• "titleA" at: extensions/title-a\n• "titleB" at: extensions/title-b',
+    })
+    await expect(readFile(joinPath(directory, '.env'))).resolves.toContain('SHOPIFY_TITLEA_ID=uuidA')
+    await expect(readFile(joinPath(directory, '.env'))).resolves.toContain('SHOPIFY_TITLEB_ID=uuidB')
   })
 })
