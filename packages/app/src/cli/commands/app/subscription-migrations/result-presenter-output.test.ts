@@ -1,7 +1,7 @@
 import {presentMigrationCancellationResult, presentMigrationSubmissionResult} from './result-presenter.js'
 import {cancelMigrationOperations} from '../../../services/subscription-migrations/cancel-operations.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {projectMigrationSubmissionResult} from '../../../services/subscription-migrations/result-codec.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
 
