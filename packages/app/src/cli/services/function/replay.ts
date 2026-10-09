@@ -1,5 +1,5 @@
 import {renderReplay} from './ui.js'
-import {runFunction} from './runner.js'
+import {runFunction, executeFunction, type FunctionExecution} from './runner.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
@@ -51,11 +51,7 @@ export async function replay(options: ReplayOptions) {
   const abortController = new AbortController()
 
   try {
-    const functionRunsDir = app.getLogsDir()
-
-    const selectedRun = options.log
-      ? await getRunFromIdentifier(functionRunsDir, extension.handle, options.log)
-      : await getRunFromSelector(functionRunsDir, extension.handle)
+    const selectedRun = await selectReplayRun(options)
 
     const {input, export: runExport} = selectedRun.payload
 
@@ -78,6 +74,25 @@ export async function replay(options: ReplayOptions) {
     abortController.abort()
     throw error
   }
+}
+
+/** Returns a finite replay result; watch and legacy text presentation remain separate. */
+export async function replayFunction(
+  options: Pick<ReplayOptions, 'app' | 'extension' | 'log'>,
+): Promise<FunctionExecution> {
+  const selectedRun = await selectReplayRun(options)
+  return executeFunction({
+    functionExtension: options.extension,
+    input: JSON.stringify(selectedRun.payload.input),
+    export: selectedRun.payload.export,
+  })
+}
+
+async function selectReplayRun(options: Pick<ReplayOptions, 'app' | 'extension' | 'log'>): Promise<FunctionRunData> {
+  const functionRunsDir = options.app.getLogsDir()
+  return options.log
+    ? getRunFromIdentifier(functionRunsDir, options.extension.handle, options.log)
+    : getRunFromSelector(functionRunsDir, options.extension.handle)
 }
 
 async function getRunFromIdentifier(

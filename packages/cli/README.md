@@ -2021,6 +2021,66 @@ DESCRIPTION
   Runs the function from your current directory for "testing purposes"
   (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when
   errors occur, refer to "Shopify Functions error handling" (https://shopify.dev/docs/api/functions/errors).
+
+  Use `--no-watch --json` for one finite replay in the native Function runner 7.x/9.x JSON format. JSON output is not
+  supported in watch mode. Use `--log` to select a saved run without prompting.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `FunctionRunResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "size": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "Module size in kilobytes, as reported by Function runner."
+      },
+      "memory_usage": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "Linear memory usage in kilobytes, as reported by Function runner."
+      },
+      "instructions": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "logs": {
+        "type": "string"
+      },
+      "input": {
+        "description": "Native Function input; query keys and values are preserved."
+      },
+      "output": {
+        "$ref": "#/definitions/FunctionRunResult/properties/input",
+        "description": "Native Function output, including the runner-specific invalid-output representation."
+      },
+      "success": {
+        "type": "boolean",
+        "description": "False for a completed Function execution that failed; the command exits nonzero."
+      }
+    },
+    "required": [
+      "name",
+      "size",
+      "memory_usage",
+      "instructions",
+      "logs",
+      "input",
+      "output",
+      "success"
+    ],
+    "additionalProperties": true,
+    "description": "The native JSON object produced by Function runner 7.x and 9.x. Extra upstream fields are preserved.",
+    "title": "FunctionRunResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app function run`
