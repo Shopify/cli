@@ -13055,10 +13055,14 @@ Package your theme into a .zip file, ready to upload to the Online Store.
 
 ```
 USAGE
-  $ shopify theme package [--auth-alias <value>] [--json-schema] [--no-color] [--no-input] [--path <value>]
+  $ shopify theme package [--auth-alias <value>] [-j] [--json-schema] [--no-color] [--no-input] [--path <value>]
     [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
@@ -13097,6 +13101,28 @@ DESCRIPTION
 
   The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your "settings_schema.json"
   (https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemePackageResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "The absolute native path of the ZIP archive."
+      }
+    },
+    "required": [
+      "path"
+    ],
+    "additionalProperties": false,
+    "title": "ThemePackageResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme preview`

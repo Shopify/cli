@@ -11849,7 +11849,7 @@
       "args": {
       },
       "customPluginName": "@shopify/theme",
-      "description": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the \"default Shopify theme folder structure\" (https://shopify.dev/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.\n\n  The package includes the `listings` directory if present (required for multi-preset themes per \"Theme Store requirements\" (https://shopify.dev/docs/storefronts/themes/store/requirements#adding-presets-to-your-theme-zip-submission)).\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your \"settings_schema.json\" (https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.",
+      "description": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the \"default Shopify theme folder structure\" (https://shopify.dev/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.\n\n  The package includes the `listings` directory if present (required for multi-preset themes per \"Theme Store requirements\" (https://shopify.dev/docs/storefronts/themes/store/requirements#adding-presets-to-your-theme-zip-submission)).\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your \"settings_schema.json\" (https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `ThemePackageResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"path\": {\n      \"type\": \"string\",\n      \"description\": \"The absolute native path of the ZIP archive.\"\n    }\n  },\n  \"required\": [\n    \"path\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"ThemePackageResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the [default Shopify theme folder structure](https://shopify.dev/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.\n\n  The package includes the `listings` directory if present (required for multi-preset themes per [Theme Store requirements](https://shopify.dev/docs/storefronts/themes/store/requirements#adding-presets-to-your-theme-zip-submission)).\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your [settings_schema.json](https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.",
       "enableJsonFlag": false,
       "flags": {
@@ -11860,6 +11860,15 @@
           "multiple": false,
           "name": "auth-alias",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,

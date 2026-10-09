@@ -1,8 +1,8 @@
+import {type ThemePackageResult} from './package/types.js'
 import {zip} from '@shopify/cli-kit/node/archiver'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {resolvePath, relativizePath} from '@shopify/cli-kit/node/path'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
 
 const themeFilesPattern = [
@@ -23,10 +23,10 @@ const themeFilesPattern = [
 ].join('|')
 
 // package is a reserved word so the function needs to be named packageTheme
-export async function packageTheme(inputDirectory: string) {
+export async function packageTheme(inputDirectory: string): Promise<ThemePackageResult> {
   const packageName = await getThemePackageName(inputDirectory)
 
-  const outputZipPath = `${inputDirectory}/${packageName}`
+  const outputZipPath = resolvePath(inputDirectory, packageName)
   const matchFilePattern = `${inputDirectory}/(${themeFilesPattern})`
 
   await zip({
@@ -35,9 +35,7 @@ export async function packageTheme(inputDirectory: string) {
     matchFilePattern,
   })
 
-  renderSuccess({
-    body: ['Your local theme was packaged in', {filePath: relativizePath(outputZipPath)}],
-  })
+  return {path: outputZipPath}
 }
 
 async function getThemePackageName(inputDirectory: string) {
@@ -54,6 +52,10 @@ async function getThemePackageName(inputDirectory: string) {
   }
 
   const themeNameVersion = [themeInfo.theme_name, themeInfo.theme_version].filter(Boolean).join('-')
+
+  if (/[/\\]/.test(themeNameVersion) || /^[a-z]:/i.test(themeNameVersion)) {
+    throw new AbortError('Theme name and version must not contain paths.')
+  }
 
   return `${themeNameVersion}.zip`
 }
