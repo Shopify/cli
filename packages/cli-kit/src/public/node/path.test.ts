@@ -117,6 +117,44 @@ describe('isSubpath', () => {
   test('returns true if the paths are identical', () => {
     expect(isSubpath('/foo', '/foo')).toBe(true)
   })
+
+  test.each([undefined, {}, {native: false}])('preserves normalized path semantics with options %j', (options) => {
+    expect(isSubpath('/theme', '/outside/..\\theme/secret.css', options)).toBe(true)
+    expect(isSubpath('/theme', '/theme/..\\outside/safe.css', options)).toBe(false)
+  })
+})
+
+describe('isSubpath with native: true', () => {
+  const directory = process.platform === 'win32' ? 'C:/theme' : '/theme'
+
+  test.each(['', '/assets/safe.css', '/assets/nested/safe.css', '/..styles/safe.css'])(
+    'accepts the directory and descendants: %s',
+    (suffix) => {
+      expect(isSubpath(directory, `${directory}${suffix}`, {native: true})).toBe(true)
+    },
+  )
+
+  test.each(['/..', '/../outside/safe.css', '-backup/safe.css'])('rejects parents and siblings: %s', (suffix) => {
+    expect(isSubpath(directory, `${directory}${suffix}`, {native: true})).toBe(false)
+  })
+
+  test.skipIf(process.platform === 'win32')('does not normalize literal POSIX backslashes into separators', () => {
+    expect(isSubpath('/theme', '/outside/..\\theme/secret.css', {native: true})).toBe(false)
+    expect(isSubpath('/theme', '/theme/..\\outside/safe.css', {native: true})).toBe(true)
+  })
+
+  test.runIf(process.platform === 'win32')('handles Windows separators and different drives', () => {
+    expect(isSubpath('C:\\theme', 'C:\\theme\\assets\\safe.css', {native: true})).toBe(true)
+    expect(isSubpath('C:\\theme', 'C:\\outside\\secret.css', {native: true})).toBe(false)
+    expect(isSubpath('C:\\theme', 'D:\\theme\\secret.css', {native: true})).toBe(false)
+  })
+
+  test.runIf(process.platform === 'win32')('rejects paths on a different UNC share', () => {
+    expect(isSubpath('\\\\server\\themes\\theme', '\\\\server\\themes\\theme\\assets\\safe.css', {native: true})).toBe(
+      true,
+    )
+    expect(isSubpath('\\\\server\\themes\\theme', '\\\\server\\outside\\secret.css', {native: true})).toBe(false)
+  })
 })
 
 describe('sniffForJson', () => {
