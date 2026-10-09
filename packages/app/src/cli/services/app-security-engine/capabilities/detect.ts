@@ -77,8 +77,11 @@ export function isReactRouterServerPath(root: string, path: string): boolean {
 }
 
 /**
- * Whether `path` is input for React Router source analysis: inside one of `reactRouterRoots` and outside other
- * apps' code. The `.` root covers every gathered path.
+ * Whether `path` is input for React Router source analysis: inside the app directory or one of `reactRouterRoots`,
+ * and outside other apps' code. The `.` root covers every gathered path.
+ *
+ * Code in the app directory belongs to this app even outside its detected roots, such as a `lib` module that a
+ * route in `web` imports, so it stays checked.
  *
  * Only other apps' code outside the detected roots is left out. An app configuration file anywhere inside a root,
  * such as in the app directory's `app` or `lib`, marks part of this app's own source, so it can't hide that source
@@ -92,10 +95,9 @@ export function isReactRouterSourcePath(
   const otherAppCode = otherAppCodeDirectories(otherAppDirectories).filter(
     (directory) => !isInsideReactRouterRoot(directory, reactRouterRoots),
   )
-  return (
-    reactRouterRoots.some((root) => pathWithinRoot(root, path) !== undefined) &&
-    !otherAppCode.some((directory) => pathWithinRoot(directory, path) !== undefined)
-  )
+  const isThisAppsCode =
+    !climbsOutOfDirectory(path) || reactRouterRoots.some((root) => pathWithinRoot(root, path) !== undefined)
+  return isThisAppsCode && !otherAppCode.some((directory) => pathWithinRoot(directory, path) !== undefined)
 }
 
 /** Whether `directory` is or is inside one of `reactRouterRoots`. For the `.` root, that's the app directory. */

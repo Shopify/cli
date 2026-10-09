@@ -187,6 +187,53 @@ describe('React Router detection', () => {
     })
   })
 
+  test('checks code in the app directory outside its React Router root, such as a module a route imports', async () => {
+    await inTemporaryDirectory(async (temporaryDirectory) => {
+      const app = await fileRealPath(temporaryDirectory)
+      await writeFiles(app, {
+        'shopify.app.toml': appConfiguration,
+        ...reactRouterServer('web'),
+        'web/app/routes/app.preview.tsx': "export {preview} from '../../../lib/preview'\n",
+        'lib/preview.ts': 'export function preview(element, payload) {\n  element.innerHTML = payload\n}\n',
+      })
+
+      const result = await scanWithIncludeDirectories(app)
+
+      expect(result.detection.framework).toBe('react_router')
+      expect(
+        result.issues.filter((issue) => issue.id === 'UNSAFE_INNERHTML').map((issue) => issue.location.file),
+      ).toEqual(['lib/preview.ts'])
+      const unsafeInnerHtml = result.scan.checks_executed.find((execution) => execution.id === 'UNSAFE_INNERHTML')
+      expect(unsafeInnerHtml?.inspected_files).toContain('lib/preview.ts')
+    })
+  })
+
+  test("doesn't check another app's code in the app directory outside its React Router root", async () => {
+    await inTemporaryDirectory(async (temporaryDirectory) => {
+      const app = await fileRealPath(temporaryDirectory)
+      const unsafeModule = 'export function preview(element, payload) {\n  element.innerHTML = payload\n}\n'
+      await writeFiles(app, {
+        'shopify.app.toml': appConfiguration,
+        ...reactRouterServer('web'),
+        'lib/preview.ts': unsafeModule,
+        'admin/shopify.app.toml': appConfiguration,
+        'admin/src/preview.ts': unsafeModule,
+      })
+
+      const result = await scanWithIncludeDirectories(app)
+
+      expect(result.otherAppDirectories).toEqual([joinPath(app, 'admin')])
+      expect(result.detection.framework).toBe('react_router')
+      expect(
+        result.issues.filter((issue) => issue.id === 'UNSAFE_INNERHTML').map((issue) => issue.location.file),
+      ).toEqual(['lib/preview.ts'])
+      const gatedInspectedFiles = result.scan.checks_executed
+        .filter((execution) => REACT_ROUTER_GATED_CHECKS.includes(execution.id))
+        .flatMap((execution) => execution.inspected_files)
+      expect(gatedInspectedFiles.filter((file) => file.startsWith('admin/'))).toEqual([])
+    })
+  })
+
   test("doesn't count a sibling app's React Router server as this app's", async () => {
     await inTemporaryDirectory(async (temporaryDirectory) => {
       const repository = await fileRealPath(temporaryDirectory)
@@ -429,5 +476,14 @@ describe('React Router roots above the app directory', () => {
     expect(isReactRouterSourcePath('../../packages/server/app/routes/app.tsx', ['../..'], ['../../apps/bar'])).toBe(
       true,
     )
+  })
+})
+
+describe('React Router source paths outside every root', () => {
+  test("counts the app directory's code as this app's, but not another app's code there", () => {
+    expect(isReactRouterSourcePath('lib/preview.ts', ['web'], [])).toBe(true)
+    expect(isReactRouterSourcePath('admin/src/preview.ts', ['web'], ['admin'])).toBe(false)
+    expect(isReactRouterSourcePath('../bar/app/routes/app.tsx', ['web'], ['../bar'])).toBe(false)
+    expect(isReactRouterSourcePath('../../packages/other/index.ts', ['web'], [])).toBe(false)
   })
 })

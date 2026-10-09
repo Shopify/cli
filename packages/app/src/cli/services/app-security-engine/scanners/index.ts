@@ -336,7 +336,10 @@ function appSourceFiles(context: ScanContext): SourceFile[] {
   return context.sourceFiles.filter((file) => !themePaths.has(file.path))
 }
 
-/** Every source path when the app isn't React Router; otherwise only paths under this app's React Router roots. */
+/**
+ * Every source path when the app isn't React Router; otherwise only this app's code, in its app directory or React
+ * Router roots.
+ */
 function isReactRouterFilePath(path: string, context: ScanContext): boolean {
   return (
     context.detection.framework !== 'react_router' ||
