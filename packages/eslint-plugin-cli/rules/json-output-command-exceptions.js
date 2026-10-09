@@ -2,13 +2,11 @@
 const commandExceptions = [
   // Existing finite commands awaiting migration. Remove entries as they adopt typed JSON output.
   // Do not add new finite commands to this section.
-  'packages/app/src/cli/commands/app/build.ts',
   'packages/app/src/cli/commands/app/config/link.ts',
   'packages/app/src/cli/commands/app/config/pull.ts',
   'packages/app/src/cli/commands/app/config/use.ts',
   'packages/app/src/cli/commands/app/config/validate.ts',
   'packages/app/src/cli/commands/app/deploy.ts',
-  'packages/app/src/cli/commands/app/dev/clean.ts',
   'packages/app/src/cli/commands/app/env/pull.ts',
   'packages/app/src/cli/commands/app/env/show.ts',
   'packages/app/src/cli/commands/app/execute.ts',
@@ -23,12 +21,6 @@ const commandExceptions = [
   'packages/app/src/cli/commands/app/import/dashboard-extensions.ts',
   'packages/app/src/cli/commands/app/init.ts',
   'packages/app/src/cli/commands/app/release.ts',
-  'packages/app/src/cli/commands/app/subscription-migrations/cancel.ts',
-  'packages/app/src/cli/commands/app/subscription-migrations/list.ts',
-  'packages/app/src/cli/commands/app/subscription-migrations/schedule.ts',
-  'packages/app/src/cli/commands/app/subscription-migrations/status.ts',
-  'packages/app/src/cli/commands/app/subscription-migrations/unschedule.ts',
-  'packages/cli/src/cli/commands/upgrade.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/off.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/on.ts',
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/status.ts',
