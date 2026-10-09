@@ -3,33 +3,25 @@ import {testDeveloperPlatformClient, testOrganizationApp} from '../../models/app
 import {AppVersionWithContext} from '../../utilities/developer-platform-client.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {describe, expect, test} from 'vitest'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 describe('versionDiffByVersion', () => {
-  test('throws an abort silent error and display an error message when the version is not found', async () => {
+  test('reports the failed lookup as an abort without presentation', async () => {
     // Given
     const outputMock = mockAndCaptureOutput()
+    const cause = new AbortError('HTTP 404: Cannot find a valid organization')
     const developerPlatformClient = testDeveloperPlatformClient({
       appVersionByTag: () => {
-        throw new Error('not found')
+        throw cause
       },
     })
 
     // When/Then
-    await expect(versionDiffByVersion(testOrganizationApp(), 'version', developerPlatformClient)).rejects.toThrow(
-      AbortSilentError,
-    )
-    expect(outputMock.error()).toMatchInlineSnapshot(`
-      "╭─ error ──────────────────────────────────────────────────────────────────────╮
-      │                                                                              │
-      │  Version couldn't be released.                                               │
-      │                                                                              │
-      │  Version version could not be found.                                         │
-      │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯
-      "
-    `)
+    const result = versionDiffByVersion(testOrganizationApp(), 'version', developerPlatformClient)
+    await expect(result).rejects.toThrow(AbortError)
+    await expect(result).rejects.toThrow('Version version could not be found.')
+    expect(outputMock.error()).toBe('')
   })
 
   test('returns versionDiff and versionDetails when the version is found', async () => {

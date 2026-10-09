@@ -1397,6 +1397,41 @@ describe('deploy', () => {
   })
 })
 
+describe('release', () => {
+  test.each([null, {version: {id: 'gid://shopify/Version/123', metadata: {}}}])(
+    'retains user errors with release response %j',
+    async (release) => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      const userError = {field: ['version'], message: 'Release failed.', category: 'validation', on: []}
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({appReleaseCreate: {release, userErrors: [userError]}})
+
+      await expect(
+        client.release({
+          app: testOrganizationApp(),
+          version: {versionId: 'gid://shopify/Version/123', appVersionId: 123},
+        }),
+      ).resolves.toEqual({appRelease: {userErrors: [{...userError, details: []}]}})
+    },
+  )
+
+  test.each([{userErrors: []}, {userErrors: undefined}])(
+    'rejects a missing release without user errors ($userErrors)',
+    async ({userErrors}) => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({appReleaseCreate: {release: null, userErrors}})
+
+      await expect(
+        client.release({
+          app: testOrganizationApp(),
+          version: {versionId: 'gid://shopify/Version/123', appVersionId: 123},
+        }),
+      ).rejects.toThrow('The Developer Dashboard did not confirm the app version release.')
+    },
+  )
+})
+
 describe('appVersions', () => {
   test('preserves a missing app in the API response instead of dereferencing it', async () => {
     // Given

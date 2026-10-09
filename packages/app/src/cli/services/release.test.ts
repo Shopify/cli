@@ -9,7 +9,6 @@ import {AppLinkedInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {renderError, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 vi.mock('./context.js')
 vi.mock('../models/app/identifiers.js')
@@ -52,7 +51,10 @@ describe('release', () => {
     vi.mocked(deployOrReleaseConfirmationPrompt).mockResolvedValue(false)
 
     // When/Then
-    await expect(testRelease(app, 'app-version')).rejects.toThrow(AbortSilentError)
+    const developerPlatformClient = testDeveloperPlatformClient()
+    await expect(testRelease(app, 'app-version', {developerPlatformClient})).resolves.toEqual({status: 'cancelled'})
+    expect(developerPlatformClient.release).not.toHaveBeenCalled()
+    expect(renderTasks).not.toHaveBeenCalled()
   })
 
   test('triggers mutations if the user confirms', async () => {
@@ -67,35 +69,27 @@ describe('release', () => {
 
       return {
         appRelease: {
-          appRelease: {},
+          appRelease: {
+            appVersion: {versionTag: '1.0.0', message: 'message', location: 'https://example.com'},
+          },
         },
       }
     })
     const developerPlatformClient = testDeveloperPlatformClient()
 
     // When
-    await testRelease(app, 'app-version', {developerPlatformClient})
+    const result = await testRelease(app, 'app-version', {developerPlatformClient})
 
     // Then
     expect(developerPlatformClient.release).toHaveBeenCalledWith({
       app: APP,
       version: {appVersionId: 1, versionId: 'uuid'},
     })
-    expect(renderSuccess).toHaveBeenCalledWith({
-      body: [
-        {
-          link: {
-            label: '1.0.0',
-            url: 'https://example.com',
-          },
-        },
-        '\nmessage',
-      ],
-      headline: 'Version released to users.',
-    })
+    expect(result).toEqual({status: 'success', version: buildExtensionsBreakdown().versionDetails})
+    expect(renderSuccess).not.toHaveBeenCalled()
   })
 
-  test('shows a custom error message with link and message if errors are returned', async () => {
+  test('returns failed release data if errors are returned', async () => {
     // Given
     const app = testAppLinked()
     vi.mocked(deployOrReleaseConfirmationPrompt).mockResolvedValue(true)
@@ -122,22 +116,15 @@ describe('release', () => {
     })
 
     // When
-    await testRelease(app, 'app-version')
+    const result = await testRelease(app, 'app-version')
 
     // Then
-    expect(renderError).toHaveBeenCalledWith({
-      body: [
-        {
-          link: {
-            label: '1.0.0',
-            url: 'https://example.com',
-          },
-        },
-        '\nmessage',
-        '\n\nsome kind of error 1, some kind of error 2',
-      ],
-      headline: "Version couldn't be released.",
+    expect(result).toEqual({
+      status: 'failed',
+      version: buildExtensionsBreakdown().versionDetails,
+      userErrors: [{message: 'some kind of error 1'}, {message: 'some kind of error 2'}],
     })
+    expect(renderError).not.toHaveBeenCalled()
   })
 })
 
@@ -150,7 +137,7 @@ async function testRelease(
   vi.mocked(extensionsIdentifiersReleaseBreakdown).mockResolvedValue(buildExtensionsBreakdown())
   vi.mocked(configExtensionsIdentifiersReleaseBreakdown).mockReturnValue(buildConfigExtensionsBreakdown())
 
-  await release({
+  return release({
     app,
     remoteApp: APP,
     developerPlatformClient,

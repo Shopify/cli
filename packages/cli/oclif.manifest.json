@@ -3901,7 +3901,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.",
+      "description": "Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppReleaseResult` schema.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"status\": {\n          \"type\": \"string\",\n          \"const\": \"success\"\n        },\n        \"app\": {\n          \"$ref\": \"#/definitions/App\"\n        },\n        \"release\": {\n          \"$ref\": \"#/definitions/AppRelease\"\n        }\n      },\n      \"required\": [\n        \"status\",\n        \"app\",\n        \"release\"\n      ],\n      \"additionalProperties\": false\n    },\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"status\": {\n          \"type\": \"string\",\n          \"const\": \"cancelled\"\n        }\n      },\n      \"required\": [\n        \"status\"\n      ],\n      \"additionalProperties\": false\n    }\n  ],\n  \"title\": \"AppReleaseResult\",\n  \"definitions\": {\n    \"App\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"clientId\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"description\": \"The client ID of the app receiving the release.\"\n        }\n      },\n      \"required\": [\n        \"name\",\n        \"clientId\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppRelease\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"version\": {\n          \"$ref\": \"#/definitions/AppReleaseVersion\"\n        }\n      },\n      \"required\": [\n        \"version\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppReleaseVersion\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"gid\": {\n          \"type\": \"string\",\n          \"pattern\": \"^gid:\\\\/\\\\/shopify\\\\/Version\\\\/\\\\d+$\",\n          \"description\": \"The Shopify app version GID.\"\n        },\n        \"name\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"minLength\": 1\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"The version tag, or null when no tag is available.\"\n        },\n        \"message\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"minLength\": 1\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"The version message, or null when no message is available.\"\n        },\n        \"url\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"description\": \"The Developer Dashboard URL for this version.\"\n        }\n      },\n      \"required\": [\n        \"gid\",\n        \"name\",\n        \"message\",\n        \"url\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.",
       "flags": {
         "allow-deletes": {
@@ -3949,6 +3949,15 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,
