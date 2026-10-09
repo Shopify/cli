@@ -1,6 +1,14 @@
+import {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 import {globFlags, themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {push} from '../../services/push.js'
+import {executeThemePush} from '../../services/push.js'
+import {themePushJsonOutputSchema} from '../../services/push/types.js'
+import {
+  checkThemeBeforePush,
+  renderThemePushResult,
+  renderThemePushEnvironmentResults,
+} from '../../services/push/result.js'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
@@ -13,6 +21,10 @@ import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 type PushFlags = InferredFlags<typeof Push.flags>
 
 export default class Push extends ThemeCommand {
+  static get jsonOutputSchema() {
+    return themePushJsonOutputSchema
+  }
+
   static summary = 'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
 
   static usage = ['theme push', 'theme push --unpublished --json']
@@ -34,13 +46,16 @@ export default class Push extends ThemeCommand {
 
   \`\`\`json
   {
+    "status": "success",
+    "changed": true,
+    "issues": [],
     "theme": {
-      "id": 108267175958,
+      "id": "108267175958",
       "name": "MyTheme",
       "role": "unpublished",
-      "shop": "mystore.myshopify.com",
-      "editor_url": "https://mystore.myshopify.com/admin/themes/108267175958/editor",
-      "preview_url": "https://mystore.myshopify.com/?preview_theme_id=108267175958"
+      "storeDomain": "mystore.myshopify.com",
+      "editorUrl": "https://mystore.myshopify.com/admin/themes/108267175958/editor",
+      "previewUrl": "https://mystore.myshopify.com/?preview_theme_id=108267175958"
     }
   }
   \`\`\`
@@ -137,7 +152,8 @@ export default class Push extends ThemeCommand {
     context?: {stdout?: Writable; stderr?: Writable},
   ) {
     recordTiming('theme-command:push')
-    await push(
+    await checkThemeBeforePush(flags)
+    const result = await executeThemePush(
       {
         ...flags,
         allowLive: flags['allow-live'],
@@ -148,7 +164,21 @@ export default class Push extends ThemeCommand {
       multiEnvironment,
       context,
     )
+    if (result?.hasErrors) process.exitCode = 1
+    if (!(flags.json && multiEnvironment)) {
+      if (result) renderThemePushResult(result, flags.json ? 'json' : 'text')
+      else if (flags.json) outputResult(themePushJsonOutputSchema.encode({status: 'cancelled'}))
+    }
     recordTiming('theme-command:push')
+    return result ?? (flags.json && multiEnvironment ? {status: 'skipped', reason: 'unsafe-directory'} : undefined)
+  }
+
+  protected collectsEnvironmentResults(flags: {json?: boolean}): boolean {
+    return Boolean(flags.json)
+  }
+
+  protected renderEnvironmentResults(results: ThemeEnvironmentResult[]): void {
+    renderThemePushEnvironmentResults(results)
   }
 
   protected storeAuthScopes(): string[] {
