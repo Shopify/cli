@@ -1,3 +1,4 @@
+import {isReactRouterServerPath} from '../capabilities/detect.js'
 import {relativePath} from '@shopify/cli-kit/node/path'
 import type {Issue} from '../types.js'
 import type {ScanContext, Rule, SourceFile} from './types.js'
@@ -65,12 +66,14 @@ export function scanEolApiVersions(context: ScanContext, referenceDate = new Dat
   })
 
   if (context.detection.framework !== 'react_router') return configIssues
-  const sourceIssues = context.sourceFiles.flatMap((file) => scanReactRouterApiVersion(file, referenceDate))
+  const sourceIssues = context.sourceFiles.flatMap((file) =>
+    scanReactRouterApiVersion(file, context.reactRouterRoots, referenceDate),
+  )
   return [...configIssues, ...sourceIssues]
 }
 
-function scanReactRouterApiVersion(file: SourceFile, referenceDate: Date): Issue[] {
-  if (!file.content || !/^app\/shopify\.server\.[cm]?[jt]sx?$/.test(file.path)) return []
+function scanReactRouterApiVersion(file: SourceFile, reactRouterRoots: string[], referenceDate: Date): Issue[] {
+  if (!file.content || !reactRouterRoots.some((root) => isReactRouterServerPath(root, file.path))) return []
   const content = maskStringsExceptVersions(stripComments(file.content))
   const declarations = [
     ...content.matchAll(/\bapiVersion\s*:\s*["'](\d{4}-(?:01|04|07|10))["']/g),

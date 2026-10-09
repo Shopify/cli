@@ -393,3 +393,56 @@ describe('the secret scan in a second repository', () => {
     })
   })
 })
+
+describe('lockfiles in a monorepo', () => {
+  const oversizedLockfile = `lockfileVersion: '9.0'\n${'#'.repeat(600_000)}\n`
+
+  function secretCheck(result: Awaited<ReturnType<typeof scanAll>>) {
+    return result.scan.checks_executed.find((execution) => execution.id === 'COMMITTED_SECRET')
+  }
+
+  test('skips the repository root lockfile when the repository root is a scan directory', async () => {
+    const monorepo = await makeRepository({
+      'pnpm-lock.yaml': oversizedLockfile,
+      'apps/foo/shopify.app.toml': appConfiguration,
+      'packages/server/app/shopify.server.ts': 'export const server = true',
+    })
+    commitEverything(monorepo)
+
+    const result = await scanAll({appDirectory: join(monorepo, 'apps', 'foo'), scanDirectories: [monorepo]})
+
+    expect(result.scan.files_skipped_count).toBe(0)
+    expect(secretCheck(result)).toMatchObject({status: 'executed', version: 4})
+  })
+
+  test('skips the lockfile of an include directory outside the app directory', async () => {
+    const monorepo = await makeRepository({
+      'apps/foo/shopify.app.toml': appConfiguration,
+      'packages/server/package-lock.json': oversizedLockfile,
+      'packages/server/app/shopify.server.ts': 'export const server = true',
+    })
+    commitEverything(monorepo)
+    const app = join(monorepo, 'apps', 'foo')
+
+    const result = await scanAll({appDirectory: app, scanDirectories: [app, join(monorepo, 'packages', 'server')]})
+
+    expect(result.scan.files_skipped_count).toBe(0)
+    expect(secretCheck(result)).toMatchObject({status: 'executed'})
+  })
+
+  test('still reports a secret in an include directory that also has a lockfile', async () => {
+    const monorepo = await makeRepository({
+      'pnpm-lock.yaml': oversizedLockfile,
+      'apps/foo/shopify.app.toml': appConfiguration,
+      'packages/server/config.json': `{"apiSecret": "${secret}"}\n`,
+    })
+    commitEverything(monorepo)
+
+    const result = await scanAll({appDirectory: join(monorepo, 'apps', 'foo'), scanDirectories: [monorepo]})
+
+    const issue = result.issues.find((candidate) => candidate.id === 'COMMITTED_SECRET')
+    expect(issue?.location.file).toBe('../../packages/server/config.json')
+    expect(issue?.rule_version).toBe(4)
+    expect(secretCheck(result)).toMatchObject({status: 'executed'})
+  })
+})
