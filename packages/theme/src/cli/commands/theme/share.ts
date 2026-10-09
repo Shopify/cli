@@ -1,8 +1,12 @@
+import {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
+import {themeShareJsonOutputSchema} from '../../services/share/types.js'
+import {renderThemeShareResult, renderThemeShareEnvironmentResults} from '../../services/share/result.js'
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {push, PushFlags} from '../../services/push.js'
+import {executeThemePush, PushFlags} from '../../services/push.js'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {getRandomName} from '@shopify/cli-kit/common/string'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
 import {InferredFlags} from '@oclif/core/interfaces'
@@ -13,6 +17,10 @@ import {Writable} from 'stream'
 
 type ShareFlags = InferredFlags<typeof Share.flags>
 export default class Share extends ThemeCommand {
+  static get jsonOutputSchema() {
+    return themeShareJsonOutputSchema
+  }
+
   static summary = 'Creates a shareable, unpublished, and new theme on your theme library with a randomized name.'
 
   static descriptionWithMarkdown = `Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.
@@ -23,6 +31,7 @@ export default class Share extends ThemeCommand {
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     ...themeFlags,
     force: Flags.boolean({
       hidden: true,
@@ -59,7 +68,21 @@ export default class Share extends ThemeCommand {
     }
 
     recordTiming('theme-command:share')
-    await push(pushFlags, adminSession, multiEnvironment, context)
+    const result = await executeThemePush(pushFlags, adminSession, multiEnvironment, context)
+    if (result?.hasErrors) process.exitCode = 1
+    if (!(flags.json && multiEnvironment)) {
+      if (result) renderThemeShareResult(result, flags.json ? 'json' : 'text')
+      else if (flags.json) outputResult(themeShareJsonOutputSchema.encode({status: 'cancelled'}))
+    }
     recordTiming('theme-command:share')
+    return result ?? (flags.json && multiEnvironment ? {status: 'skipped', reason: 'unsafe-directory'} : undefined)
+  }
+
+  protected collectsEnvironmentResults(flags: {json?: boolean}): boolean {
+    return Boolean(flags.json)
+  }
+
+  protected renderEnvironmentResults(results: ThemeEnvironmentResult[]): void {
+    renderThemeShareEnvironmentResults(results)
   }
 }
