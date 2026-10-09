@@ -1,5 +1,13 @@
 # @shopify/cli
 
+## 4.9.3
+
+### Patch Changes
+
+- 5e9df02: Clarify the `--blocking` and `--skip-instructions` help text for `shopify app security`
+- 5a175f4: Skip lockfiles in every `shopify app security check` scan directory, so a monorepo root lockfile no longer leaves the secret check unresolved
+- a7ec921: Stop app security agent checks from leaving the React Router app template's metafield, authorization and frame-ancestors checks unresolved
+
 ## 4.9.2
 
 ### Patch Changes
