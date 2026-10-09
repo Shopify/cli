@@ -3681,7 +3681,8 @@ FLAGS
       [env: SHOPIFY_FLAG_APP_CONFIG]
 
   --blocking=<option>
-      [default: none] The minimum finding severity that causes a non-zero exit code.
+      [default: none] The minimum finding severity that causes a non-zero exit code: high, medium, or low. Defaults to
+      none, which never fails on findings.
       [env: SHOPIFY_FLAG_APP_SECURITY_BLOCKING]
       <options: high|medium|low|none>
 
@@ -3724,7 +3725,7 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --skip-instructions
-      Don't offer to show coding-agent instructions.
+      Don't offer the coding-agent instructions after the scan. Use it when you want only the deterministic scan results.
       [env: SHOPIFY_FLAG_APP_SECURITY_SKIP_INSTRUCTIONS]
 
   --verbose
@@ -3963,7 +3964,8 @@ FLAGS
       [env: SHOPIFY_FLAG_APP_CONFIG]
 
   --blocking=<option>
-      [default: none] The minimum finding severity that causes a non-zero exit code.
+      [default: none] The minimum finding severity that causes a non-zero exit code: high, medium, or low. Defaults to
+      none, which never fails on findings.
       [env: SHOPIFY_FLAG_APP_SECURITY_BLOCKING]
       <options: high|medium|low|none>
 
