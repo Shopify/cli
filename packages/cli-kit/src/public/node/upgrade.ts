@@ -12,7 +12,8 @@ import {
   getPackageManager,
 } from './node-package-manager.js'
 import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from './output.js'
-import {renderSuccess} from './ui.js'
+import {renderConcurrent, renderSuccess} from './ui.js'
+import {commandEventOutputMode} from './command-events.js'
 import {cwd, moduleDirectory, sniffForPath} from './path.js'
 import {exec, isCI} from './system.js'
 import {globalCLIVersion, isPreReleaseVersion} from './version.js'
@@ -105,7 +106,20 @@ export async function runCLIUpgrade(options: RunCLIUpgradeOptions = {}): Promise
       outputContent`${headline}
    Now upgrading by running: ${outputToken.genericShellCommand(installCommand)}...`,
     )
-    await exec(command, args, {stdio: 'inherit'})
+    const jsonOutput = commandEventOutputMode() === 'json'
+    if (jsonOutput) {
+      await renderConcurrent({
+        processes: [
+          {
+            prefix: command,
+            action: async (stdout, stderr) => exec(command, args, {stdin: 'inherit', stdout, stderr}),
+          },
+        ],
+        showTimestamps: false,
+      })
+    } else {
+      await exec(command, args, {stdio: 'inherit'})
+    }
 
     // A zero exit code doesn't guarantee the right version landed: the version check above
     // queries the public npm registry, while the install goes through whatever registry the
@@ -126,10 +140,14 @@ export async function runCLIUpgrade(options: RunCLIUpgradeOptions = {}): Promise
         'Your package manager may be resolving @shopify/cli from a registry with outdated versions. Check your npm registry configuration and try again.',
       )
     }
-    renderSuccess({
-      headline: 'Shopify CLI upgraded.',
-      body: `You're now on version ${installedVersion}.`,
-    })
+    if (jsonOutput) {
+      outputInfo(`Shopify CLI upgraded. You're now on version ${installedVersion}.`)
+    } else {
+      renderSuccess({
+        headline: 'Shopify CLI upgraded.',
+        body: `You're now on version ${installedVersion}.`,
+      })
+    }
   } else if (projectDir) {
     await upgradeLocalShopify(projectDir, CLI_KIT_VERSION)
   } else {
