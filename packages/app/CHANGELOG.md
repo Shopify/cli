@@ -1,5 +1,19 @@
 # @shopify/app
 
+## 4.9.3
+
+### Patch Changes
+
+- efc1987: Check for Dependabot or Renovate configuration at the Git repository root when `shopify app security check` scans an app below it
+- 5e9df02: Clarify the `--blocking` and `--skip-instructions` help text for `shopify app security`
+- 5a175f4: Skip lockfiles in every `shopify app security check` scan directory, so a monorepo root lockfile no longer leaves the secret check unresolved
+- de830e0: Detect React Router app code outside the app directory, such as in `--include-dir` or web directories, in `shopify app security check`
+- a7ec921: Stop app security agent checks from leaving the React Router app template's metafield, authorization and frame-ancestors checks unresolved
+  - @shopify/organizations@4.9.3
+  - @shopify/cli-kit@4.9.3
+  - @shopify/theme@4.9.3
+  - @shopify/plugin-cloudflare@4.9.3
+
 ## 4.9.2
 
 ### Patch Changes
