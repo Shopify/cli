@@ -65,7 +65,7 @@ Read the guides that apply to your task.
 - [Conventions](docs/cli/conventions.md): follow shared patterns for modules, state, resource cleanup, and file IO.
 - [Cross-OS compatibility](docs/cli/cross-os-compatibility.md): avoid OS-specific failures when working with paths, processes, and dependencies.
 - [Debugging](docs/cli/debugging.md): investigate failures with the debugger and check diagnostics for credential leaks.
-- [ESLint rules](docs/cli/eslint-rules.md): understand local lint rules for command flags and environment variables.
+- [Oxlint rules](docs/cli/oxlint-rules.md): understand local lint rules for command flags and environment variables.
 - [FAQ](docs/cli/faq.md): understand the choice of TOML for configuration files.
 - [Get started](docs/cli/get-started.md): set up the repository and run the CLI against a local project.
 - [Naming conventions](docs/cli/naming-conventions.md): use reserved command names, flags, and short forms consistently.

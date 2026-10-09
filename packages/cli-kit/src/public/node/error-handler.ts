@@ -265,7 +265,7 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
   })
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, typescript/explicit-module-boundary-types -- Retain the public metadata helper's permissive event parameter.
 export async function addBugsnagMetadata(event: any, config: Interfaces.Config): Promise<void> {
   const publicData = metadata.getAllPublicMetadata()
   const {commandStartOptions} = metadata.getAllSensitiveMetadata()

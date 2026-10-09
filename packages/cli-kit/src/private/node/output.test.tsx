@@ -7,7 +7,6 @@ import ansiEscapes from 'ansi-escapes'
 import {describe, expect, test, vi} from 'vitest'
 import {PassThrough} from 'stream'
 // Vitest's console omits the constructor used by Ink's console patch.
-// eslint-disable-next-line compat/n-prefer-global-console
 import {Console} from 'console'
 
 // Ink detects CI when imported; exercise terminal rendering on CI runners too.

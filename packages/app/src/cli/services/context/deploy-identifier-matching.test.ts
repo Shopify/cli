@@ -1,4 +1,3 @@
-/* eslint-disable compat/shopify-prefer-module-scope-constants */
 import {classifyDeployExtensionChanges, ensureDeployIdentifiersFromAppVersion} from './deploy-identifier-matching.js'
 import {extensionMigrationPrompt} from './prompts.js'
 import {EnsureDeploymentIdsPresenceOptions} from './identifiers.js'

@@ -8,6 +8,10 @@ tester.run('naming-convention', rules['naming-convention'], {
   valid: [
     {code: 'interface Widget {}', options: [{selector: 'typeLike', format: ['PascalCase']}]},
     {
+      code: 'type Element<TValues> = TValues extends ReadonlyArray<infer Value> ? Value : never',
+      options: [{selector: 'typeParameter', format: ['PascalCase'], prefix: ['T']}],
+    },
+    {
       code: 'type Widget<T1, _TValue> = T1',
       options: [{selector: 'typeParameter', format: ['PascalCase'], prefix: ['T']}],
     },
@@ -175,7 +179,73 @@ tester.run('commonjs-redeclarations', rules['no-redeclare'], {
   ],
 })
 
-test('blocks project imports while ESLint and upstream plugins are forbidden', () => {
+test('applies cli-kit rules from the workspace root', () => {
+  const {mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync} = require('node:fs')
+  const {tmpdir} = require('node:os')
+  const {join, resolve, dirname} = require('node:path')
+  const {spawnSync} = require('node:child_process')
+  const workspace = mkdtempSync(join(tmpdir(), 'cli-kit oxlint-'))
+  try {
+    const root = resolve(__dirname, '../..')
+    const config = JSON.parse(readFileSync(join(root, 'oxlint.json'), 'utf8'))
+    config.options.typeAware = false
+    config.jsPlugins = config.jsPlugins.map((plugin) => ({...plugin, specifier: resolve(root, plugin.specifier)}))
+    writeFileSync(join(workspace, 'oxlint.json'), JSON.stringify(config))
+    const fixtures = [
+      {
+        path: 'packages/cli-kit/src/public/example.ts',
+        code: 'export function read(value: number) { return value }',
+        rule: 'typescript(explicit-module-boundary-types)',
+      },
+      {
+        path: 'packages/cli-kit/src/private/node/ui/components/Example.tsx',
+        code: 'const Example = () => <Box enabled={true} />',
+        rule: 'react(jsx-boolean-value)',
+      },
+      {
+        path: 'packages/cli-kit/src/private/node/ui/components/props.tsx',
+        code: 'interface PropsExample { value: string }',
+        rule: 'compat(typescript-eslint-naming-convention)',
+      },
+      {
+        path: 'packages/cli-kit/src/public/node/ui.tsx',
+        code: 'export function read(first: number, second: number) { return first + second }',
+        rule: 'eslint(max-params)',
+      },
+    ]
+    for (const fixture of fixtures) {
+      const path = join(workspace, fixture.path)
+      mkdirSync(dirname(path), {recursive: true})
+      writeFileSync(path, fixture.code)
+    }
+    const result = spawnSync(
+      process.execPath,
+      [
+        join(dirname(require.resolve('oxlint/package.json')), 'bin/oxlint'),
+        '--config',
+        'oxlint.json',
+        '--format',
+        'json',
+        'packages/cli-kit/src',
+      ],
+      {cwd: workspace, encoding: 'utf8'},
+    )
+    expect(result.status, result.stdout + result.stderr).toBe(1)
+    const diagnostics = JSON.parse(result.stdout).diagnostics.map((diagnostic) => ({
+      ...diagnostic,
+      filename: diagnostic.filename.replaceAll('\\', '/'),
+    }))
+    for (const fixture of fixtures) {
+      expect(diagnostics).toEqual(
+        expect.arrayContaining([expect.objectContaining({filename: fixture.path, code: fixture.rule})]),
+      )
+    }
+  } finally {
+    rmSync(workspace, {recursive: true, force: true, maxRetries: 2})
+  }
+})
+
+test('runs custom rules and named suppressions without ESLint', () => {
   const {mkdtempSync, mkdirSync, writeFileSync, rmSync} = require('node:fs')
   const {tmpdir} = require('node:os')
   const {join, resolve, dirname} = require('node:path')
@@ -209,15 +279,57 @@ test('blocks project imports while ESLint and upstream plugins are forbidden', (
           : 'export function read() { return 1 }',
       )
     }
+    const suppressedFile = join(workspace, 'packages', 'app', 'src', 'suppressed.ts')
+    const source = `/** @param value Description. */
+function read(value) { try { run() } catch (error) { log(error) } }
+interface widget {}`
+    writeFileSync(
+      suppressedFile,
+      `/* eslint-disable compat/typescript-eslint-naming-convention, no-catch-all/no-catch-all, tsdoc/syntax */\n${source}`,
+    )
     writeFileSync(
       join(workspace, 'oxlint.json'),
       JSON.stringify({
-        jsPlugins: [{name: 'cli', specifier: resolve(__dirname, 'oxlint.js')}],
+        jsPlugins: [
+          {name: 'cli', specifier: resolve(__dirname, 'oxlint.js')},
+          {name: 'compat', specifier: resolve(__dirname, 'oxlint-compat-names.js')},
+          {name: 'no-catch-all', specifier: resolve(__dirname, 'oxlint-no-catch-all.js')},
+          {name: 'tsdoc', specifier: resolve(__dirname, 'oxlint-tsdoc.js')},
+        ],
         categories: {correctness: 'off'},
-        rules: {'cli/module-boundaries': 'error'},
+        rules: {
+          'cli/module-boundaries': 'error',
+          'compat/typescript-eslint-naming-convention': ['error', {selector: 'typeLike', format: ['PascalCase']}],
+          'no-catch-all/no-catch-all': 'error',
+          'tsdoc/syntax': 'error',
+        },
       }),
     )
     const result = spawnSync(
+      process.execPath,
+      [
+        join(dirname(require.resolve('oxlint/package.json')), 'bin/oxlint'),
+        '--config',
+        'oxlint.json',
+        '--format',
+        'json',
+        '--deny-warnings',
+        '--report-unused-disable-directives',
+        'packages',
+      ],
+      {
+        cwd: workspace,
+        encoding: 'utf8',
+        env: {...process.env, NODE_OPTIONS: `--require "${guard.replaceAll('\\', '/')}"`},
+      },
+    )
+    expect(result.status, result.stdout + result.stderr).toBe(1)
+    expect(result.stdout, result.stderr).not.toBe('')
+    expect(JSON.parse(result.stdout).diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
+      'cli(module-boundaries)',
+    ])
+    writeFileSync(suppressedFile, source)
+    const unsuppressed = spawnSync(
       process.execPath,
       [
         join(dirname(require.resolve('oxlint/package.json')), 'bin/oxlint'),
@@ -233,10 +345,17 @@ test('blocks project imports while ESLint and upstream plugins are forbidden', (
         env: {...process.env, NODE_OPTIONS: `--require "${guard.replaceAll('\\', '/')}"`},
       },
     )
-    expect(result.status, result.stdout + result.stderr).toBe(1)
-    expect(result.stdout, result.stderr).not.toBe('')
-    expect(JSON.parse(result.stdout).diagnostics.map((diagnostic) => diagnostic.code)).toEqual([
+    expect(unsuppressed.status, unsuppressed.stdout + unsuppressed.stderr).toBe(1)
+    expect(unsuppressed.stdout, unsuppressed.stderr).not.toBe('')
+    expect(
+      JSON.parse(unsuppressed.stdout)
+        .diagnostics.map((diagnostic) => diagnostic.code)
+        .sort(),
+    ).toEqual([
       'cli(module-boundaries)',
+      'compat(typescript-eslint-naming-convention)',
+      'no-catch-all(no-catch-all)',
+      'tsdoc(syntax)',
     ])
   } finally {
     rmSync(workspace, {recursive: true, force: true, maxRetries: 2})

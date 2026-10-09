@@ -35,7 +35,7 @@ export async function username(platform: typeof process.platform = process.platf
       const {stdout} = await execa('id', ['-un', userId])
       return stdout
 
-      // eslint-disable-next-line no-catch-all/no-catch-all,no-empty
+      // eslint-disable-next-line no-catch-all/no-catch-all, no-empty
     } catch {}
     return makeUsernameFromId(userId)
     // eslint-disable-next-line no-catch-all/no-catch-all
