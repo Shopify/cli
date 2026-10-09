@@ -1,3 +1,5 @@
+import {projectMigratableSubscription} from './result-codec.js'
+import {migrationListJsonOutputSchema} from './types.js'
 import {outputMigrationList, serializeMigrationListCsv, serializeMigrationListJson} from './list-output.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {describe, expect, test, vi} from 'vitest'
@@ -8,11 +10,20 @@ vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
   return {...actual, outputResult: vi.fn()}
 })
 
+// Defaults to true, matching the real isUnitTest behavior under vitest. The stream boundary test overrides it to
+// false so outputResult writes to process.stdout instead of collecting logs.
+const isUnitTest = vi.hoisted(() => vi.fn(() => true))
+
+vi.mock('@shopify/cli-kit/node/context/local', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/context/local')>()),
+  isUnitTest,
+}))
+
 const CSV_HEADER =
   'shop_id,status,manual_subscription_name,manual_subscription_price_amount,manual_subscription_price_currency_code,manual_subscription_interval,target_plan_handle,notification_kind,notification_opt_out_deadline,notification_sent_at,price_behavior,effective_date,last_failure_reason'
 
 const CSV_ROW =
-  'gid://shopify/Shop/1,SCHEDULED,Legacy plan,19.99,USD,EVERY_30_DAYS,standard,NONE,2026-04-01T00:00:00Z,2026-03-01T00:00:00Z,HONOR_BILLING_PRICE,2026-05-01T00:00:00Z,SCHEDULING_FAILED'
+  'gid://shopify/Shop/1,SCHEDULED,Legacy plan,19.99,USD,EVERY_30_DAYS,standard,NONE,2026-04-01T00:00:00Z,2026-03-01T00:00:00Z,HONOR_BILLING_PRICE,2026-05-01,SCHEDULING_FAILED'
 
 function subscription(overrides: Partial<MigratableSubscription> = {}): MigratableSubscription {
   return {
@@ -28,7 +39,7 @@ function subscription(overrides: Partial<MigratableSubscription> = {}): Migratab
       sentAt: '2026-03-01T00:00:00Z',
     },
     priceBehavior: 'HONOR_BILLING_PRICE',
-    effectiveDate: '2026-05-01T00:00:00Z',
+    effectiveDate: '2026-05-01',
     lastFailureReason: 'SCHEDULING_FAILED',
     ...overrides,
   }
@@ -74,7 +85,7 @@ describe('migration list serialization', () => {
     const expected = `{
   "subscriptions": [
     {
-      "shopId": "gid://shopify/Shop/1",
+      "shopGid": "gid://shopify/Shop/1",
       "status": "SCHEDULED",
       "manualSubscriptionName": "Legacy plan",
       "manualSubscriptionPrice": {
@@ -89,7 +100,7 @@ describe('migration list serialization', () => {
         "sentAt": "2026-03-01T00:00:00Z"
       },
       "priceBehavior": "HONOR_BILLING_PRICE",
-      "effectiveDate": "2026-05-01T00:00:00Z",
+      "effectiveDate": "2026-05-01",
       "lastFailureReason": "SCHEDULING_FAILED"
     }
   ]
@@ -97,6 +108,27 @@ describe('migration list serialization', () => {
 
     expect(serializeMigrationListJson(subscriptions)).toBe(expected)
     expect(serializeMigrationListJson(subscriptions)).not.toMatch(/\n$/)
+  })
+
+  test('normalizes fractional instants and offsets while preserving calendar dates', () => {
+    const value = subscription({
+      notification: {kind: 'NONE', sentAt: '2026-03-01T01:00:00.999+01:00', optOutDeadline: null},
+      effectiveDate: '2026-05-01',
+    })
+    expect(JSON.parse(serializeMigrationListJson([value])).subscriptions[0]).toMatchObject({
+      effectiveDate: '2026-05-01',
+      notification: {sentAt: '2026-03-01T00:00:00Z', optOutDeadline: null},
+    })
+    expect(() =>
+      migrationListJsonOutputSchema.validate({
+        subscriptions: [
+          {
+            ...projectMigratableSubscription(value),
+            notification: {kind: 'NONE', sentAt: '2026-03-01T00:00:00.999Z', optOutDeadline: null},
+          },
+        ],
+      }),
+    ).toThrow()
   })
 
   test('serializes CSV fields in the fixed header order without a trailing newline', () => {
@@ -237,7 +269,7 @@ describe('outputMigrationList JSON', () => {
     expect(outputResult).toHaveBeenCalledOnce()
     const output = vi.mocked(outputResult).mock.calls[0]![0] as string
     expect(output).toBe(serializeMigrationListJson([...pageOne, ...pageTwo]))
-    expect(JSON.parse(output)).toEqual({subscriptions: [...pageOne, ...pageTwo]})
+    expect(JSON.parse(output)).toEqual({subscriptions: [...pageOne, ...pageTwo].map(projectMigratableSubscription)})
   })
 
   test('writes an empty JSON document for an empty result', async () => {
@@ -254,5 +286,78 @@ describe('outputMigrationList JSON', () => {
     await expect(outputMigrationList({pages: pagesThenFailure([pageOne], apiError), json: true})).rejects.toBe(apiError)
 
     expect(outputResult).not.toHaveBeenCalled()
+  })
+})
+
+describe('migration list JSON contract', () => {
+  test('preserves nullable fields and nested nulls', () => {
+    const value = subscription({
+      manualSubscriptionName: null,
+      manualSubscriptionPrice: null,
+      targetPlanHandle: null,
+      notification: {kind: 'NONE', optOutDeadline: null, sentAt: null},
+      priceBehavior: null,
+      effectiveDate: null,
+      lastFailureReason: null,
+    })
+
+    expect(serializeMigrationListJson([value])).toBe(
+      JSON.stringify({subscriptions: [value].map(projectMigratableSubscription)}, null, 2),
+    )
+  })
+
+  test.each([
+    {manualSubscriptionPrice: {amount: 19.99, currencyCode: 'USD'}},
+    {notification: {kind: 'NONE', optOutDeadline: null}},
+  ])('rejects invalid subscription fields: %j', (fields) => {
+    expect(() =>
+      migrationListJsonOutputSchema.validate({
+        subscriptions: [{...projectMigratableSubscription(subscription()), ...fields}],
+      }),
+    ).toThrow()
+  })
+
+  test.each([
+    {status: 'UNKNOWN'},
+    {priceBehavior: 'UNKNOWN'},
+    {manualSubscriptionInterval: 'MONTHLY'},
+    {lastFailureReason: 'UNKNOWN'},
+  ])('accepts unknown server-provided values for pass-through fields: %j', (fields) => {
+    const value = {...projectMigratableSubscription(subscription()), ...fields}
+
+    const encoded = migrationListJsonOutputSchema.encode({subscriptions: [value]})
+
+    expect(JSON.parse(encoded)).toEqual({subscriptions: [value]})
+  })
+})
+
+describe('outputMigrationList stream boundary', () => {
+  test('writes all pages as one JSON document to stdout', async () => {
+    // Restore the real outputResult and report a non-test context so the document reaches process.stdout.
+    const actualOutput =
+      await vi.importActual<typeof import('@shopify/cli-kit/node/output')>('@shopify/cli-kit/node/output')
+    vi.mocked(outputResult).mockImplementation(actualOutput.outputResult)
+    isUnitTest.mockReturnValue(false)
+    const stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+    const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true)
+    const value = subscription()
+    async function* pages() {
+      yield [value]
+      expect(stdout).not.toHaveBeenCalled()
+      yield []
+    }
+
+    try {
+      await outputMigrationList({pages: pages(), json: true})
+
+      expect(stdout).toHaveBeenCalledOnce()
+      expect(stdout.mock.calls[0]?.[0]).toBe(
+        `${JSON.stringify({subscriptions: [projectMigratableSubscription(value)]}, null, 2)}\n`,
+      )
+      expect(stderr).not.toHaveBeenCalled()
+    } finally {
+      stdout.mockRestore()
+      stderr.mockRestore()
+    }
   })
 })

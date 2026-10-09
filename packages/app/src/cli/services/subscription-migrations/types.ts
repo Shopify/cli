@@ -80,3 +80,57 @@ export type MigrationCancellationOutcome =
   | {status: 'success'; operationId: string; operation: MigrationOperation}
   | {status: 'failed'; operationId: string; operation: MigrationOperation | null; userErrors: MigrationUserError[]}
   | {status: 'failed'; operationId: string; operation: null; error: unknown}
+
+const UtcInstantSchema = zod
+  .string()
+  .datetime()
+  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/)
+const CalendarDateSchema = zod.string().date()
+
+const MigratableSubscriptionPriceSchema = zod
+  .object({
+    amount: zod.string().regex(/^-?\d+(?:\.\d+)?$/),
+    currencyCode: zod.string().regex(/^[A-Z]{3}$/),
+  })
+  .strict()
+
+const MigratableSubscriptionNotificationSchema = zod
+  .object({
+    kind: zod.string().describe('Known values: NONE, OPT_OUT, WHEN_REQUIRED.'),
+    optOutDeadline: UtcInstantSchema.nullable(),
+    sentAt: UtcInstantSchema.nullable(),
+  })
+  .strict()
+
+const MigratableSubscriptionSchema = zod
+  .object({
+    shopGid: ShopGidSchema,
+    status: zod.string().describe('Known values: UNSCHEDULED, SCHEDULED, MIGRATED.'),
+    manualSubscriptionName: zod.string().nullable(),
+    manualSubscriptionPrice: MigratableSubscriptionPriceSchema.nullable(),
+    manualSubscriptionInterval: zod.string().describe('Known values: EVERY_30_DAYS, ANNUAL.'),
+    targetPlanHandle: zod.string().nullable(),
+    notification: MigratableSubscriptionNotificationSchema.nullable(),
+    priceBehavior: zod.string().nullable().describe('Known values: HONOR_BILLING_PRICE, PLAN_PRICE.'),
+    effectiveDate: zod
+      .union([CalendarDateSchema, UtcInstantSchema])
+      .nullable()
+      .describe('The upstream calendar date or whole-second UTC instant; date-only values retain their format.'),
+    lastFailureReason: zod.string().nullable().describe('Known values: SUPERSEDED, SCHEDULING_FAILED.'),
+  })
+  .strict()
+  .describe('All subscription projection fields are present; unavailable values are null.')
+
+export const migrationListJsonOutputSchema = defineJsonOutputSchema({
+  name: 'MigrationListResult',
+  schema: zod
+    .object({
+      subscriptions: zod.array(MigratableSubscriptionSchema).describe('The complete list across every fetched page.'),
+    })
+    .strict(),
+  definitions: {
+    MigratableSubscription: MigratableSubscriptionSchema,
+    MigratableSubscriptionPrice: MigratableSubscriptionPriceSchema,
+    MigratableSubscriptionNotification: MigratableSubscriptionNotificationSchema,
+  },
+})
