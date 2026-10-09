@@ -1,19 +1,18 @@
+import {handleToOwnerType, type ThemeMetafieldsPullResult, type MetafieldDefinitions} from './metafields-pull/types.js'
+import {renderThemeMetafieldsPullResult} from './metafields-pull/result.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {hasRequiredThemeDirectories} from '../utilities/theme-fs.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {cwd, joinPath} from '@shopify/cli-kit/node/path'
+import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {metafieldDefinitionsByOwnerType} from '@shopify/cli-kit/node/themes/api'
-import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {writeFileSync} from '@shopify/cli-kit/node/fs'
-import {outputDebug} from '@shopify/cli-kit/node/output'
 import {getOrCreateHiddenShopifyFolder} from '@shopify/cli-kit/node/hidden-folder'
 
 interface MetafieldsPullOptions {
   path: string
   force: boolean
-  silent: boolean
 }
 
 export interface MetafieldsPullFlags {
@@ -59,32 +58,22 @@ export interface MetafieldsPullFlags {
  * @param flags - All flags are optional.
  */
 export async function metafieldsPull(flags: MetafieldsPullFlags): Promise<void> {
+  // Compatibility adapter for theme dev and callers that request silent downloads.
+  const result = await downloadMetafieldDefinitions(flags)
+  renderThemeMetafieldsPullResult(result, 'text', flags.silent)
+}
+
+export async function downloadMetafieldDefinitions(flags: MetafieldsPullFlags): Promise<ThemeMetafieldsPullResult> {
   configureCLIEnvironment({verbose: flags.verbose, noColor: flags.noColor})
 
   const store = ensureThemeStore({store: flags.store})
   const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
-  await executeMetafieldsPull(adminSession, {
-    path: flags.path ?? cwd(),
+  return executeMetafieldsPull(adminSession, {
+    path: resolvePath(flags.path ?? cwd()),
     force: flags.force ?? false,
-    silent: flags.silent ?? false,
   })
 }
-
-const handleToOwnerType = {
-  article: 'ARTICLE',
-  blog: 'BLOG',
-  collection: 'COLLECTION',
-  company: 'COMPANY',
-  company_location: 'COMPANY_LOCATION',
-  location: 'LOCATION',
-  market: 'MARKET',
-  order: 'ORDER',
-  page: 'PAGE',
-  product: 'PRODUCT',
-  variant: 'PRODUCTVARIANT',
-  shop: 'SHOP',
-} as const
 
 /**
  * Executes the pullMetafields operation for the shop.
@@ -92,23 +81,26 @@ const handleToOwnerType = {
  * @param session - the admin session to access the API and download the metafield definitions
  * @param options - the options that modify where the file gets created
  */
-async function executeMetafieldsPull(session: AdminSession, options: MetafieldsPullOptions) {
-  const {force, path, silent} = options
+async function executeMetafieldsPull(
+  session: AdminSession,
+  options: MetafieldsPullOptions,
+): Promise<ThemeMetafieldsPullResult> {
+  const {force, path} = options
 
   if (!(await hasRequiredThemeDirectories(path))) {
     // If this is not a theme, and the CLI is run by the language server, quick return
     if (process.env.SHOPIFY_LANGUAGE_SERVER === '1') {
-      return
+      return {status: 'skipped', reason: 'not-a-theme'}
     }
 
     // Ensure the user is okay with running this command outside a theme
     if (!(await ensureDirectoryConfirmed(force))) {
-      return
+      return {status: 'skipped', reason: 'cancelled'}
     }
   }
 
   const promises = []
-  const failedFetchByOwnerType: string[] = []
+  const failedFetchByOwnerType: (typeof handleToOwnerType)[keyof typeof handleToOwnerType][] = []
 
   for (const [handle, ownerType] of Object.entries(handleToOwnerType)) {
     promises.push(
@@ -130,38 +122,13 @@ async function executeMetafieldsPull(session: AdminSession, options: MetafieldsP
     ...metafieldDefinitionByOwnerType,
   }))
 
-  if (failedFetchByOwnerType.length === Object.values(handleToOwnerType).length) {
-    if (!silent) {
-      renderError({
-        body: `Failed to fetch metafield definitions.`,
-        nextSteps: [
-          'Check your network connection and try again.',
-          'Ensure you have the permission to fetch metafield definitions.',
-        ],
-        reference: [
-          {
-            link: {
-              label: 'Metafield Definition API',
-              url: 'https://shopify.dev/docs/api/admin-graphql/latest/queries/metafieldDefinition',
-            },
-          },
-        ],
-      })
-    }
-    return
+  const failedOwnerTypes = Object.values(handleToOwnerType).filter((type) => failedFetchByOwnerType.includes(type))
+  if (failedOwnerTypes.length === Object.values(handleToOwnerType).length) {
+    return {status: 'failed', failedOwnerTypes}
   }
 
-  await writeMetafieldDefinitionsToFile(path, result)
-
-  if (failedFetchByOwnerType.length > 0) {
-    outputDebug(
-      `Failed to fetch metafield definitions for the following owner types: ${failedFetchByOwnerType.join(', ')}`,
-    )
-  }
-
-  if (!silent) {
-    renderSuccess({body: 'Metafield definitions have been successfully downloaded.'})
-  }
+  const filePath = await writeMetafieldDefinitionsToFile(path, result)
+  return {status: 'downloaded', path: filePath, definitions: result as MetafieldDefinitions, failedOwnerTypes}
 }
 
 async function writeMetafieldDefinitionsToFile(path: string, content: unknown) {
@@ -171,4 +138,5 @@ async function writeMetafieldDefinitionsToFile(path: string, content: unknown) {
   const fileContent = JSON.stringify(content, null, 2)
 
   writeFileSync(filePath, fileContent)
+  return filePath
 }
