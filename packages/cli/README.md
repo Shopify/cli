@@ -1831,6 +1831,129 @@ DESCRIPTION
   - The schema path
   - The WASM path
   - The function runner path
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `FunctionInfoResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "function": {
+        "$ref": "#/definitions/FunctionInfo"
+      }
+    },
+    "required": [
+      "function"
+    ],
+    "additionalProperties": false,
+    "title": "FunctionInfoResult",
+    "definitions": {
+      "FunctionInfo": {
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Null when the extension does not configure a handle."
+          },
+          "name": {
+            "type": "string"
+          },
+          "apiVersion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The configured API version, or null when unavailable."
+          },
+          "directory": {
+            "type": "string",
+            "pattern": "^(?:\\/|[a-zA-Z]:[\\\\/]|\\\\\\\\)",
+            "description": "An absolute native filesystem path."
+          },
+          "targets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/FunctionTarget"
+            },
+            "description": "All configured targets; empty when none are configured."
+          },
+          "schemaPath": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/FunctionInfo/properties/directory"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when a GraphQL schema is unavailable."
+          },
+          "wasmPath": {
+            "$ref": "#/definitions/FunctionInfo/properties/directory"
+          },
+          "functionRunnerPath": {
+            "$ref": "#/definitions/FunctionInfo/properties/directory"
+          }
+        },
+        "required": [
+          "handle",
+          "name",
+          "apiVersion",
+          "directory",
+          "targets",
+          "schemaPath",
+          "wasmPath",
+          "functionRunnerPath"
+        ],
+        "additionalProperties": false
+      },
+      "FunctionTarget": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string",
+            "minLength": 1
+          },
+          "inputQueryPath": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/FunctionInfo/properties/directory"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when no input query is configured."
+          },
+          "export": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when no WebAssembly export is configured."
+          }
+        },
+        "required": [
+          "target",
+          "inputQueryPath",
+          "export"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app function replay`
