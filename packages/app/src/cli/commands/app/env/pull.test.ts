@@ -12,6 +12,8 @@ import {joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import * as context from '@shopify/cli-kit/node/context/local'
 import {mockAndCaptureStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
+// eslint-disable-next-line no-restricted-imports -- Verify native filesystem paths in JSON output.
+import {resolve} from 'node:path'
 
 vi.mock('../../../services/app-context.js')
 vi.mock('../../../services/context.js')
@@ -57,7 +59,7 @@ test.each([
       try {
         await expect(runWithCommandEventsForCommand(['--json'], () => command.run())).resolves.toEqual({app})
         expect(streams.stdout()).toBe(
-          `${JSON.stringify({path, status: 'success', changed: status !== 'unchanged', variables, content: expected}, null, 2)}\n`,
+          `${JSON.stringify({path: resolve(path), status: 'success', changed: status !== 'unchanged', variables, content: expected}, null, 2)}\n`,
         )
         expect(streams.stderr()).toBe('')
         expect(logMetadataForLoadedContext).toHaveBeenCalledExactlyOnceWith(remoteApp, organization.source)
