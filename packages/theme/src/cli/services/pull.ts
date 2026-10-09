@@ -12,7 +12,6 @@ import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {cwd} from '@shopify/cli-kit/node/path'
-import {insideGitDirectory, isClean} from '@shopify/cli-kit/node/git'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
 import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {Writable} from 'stream'
@@ -229,24 +228,6 @@ async function validateDirectory(path: string, force: boolean, environment?: str
     !(await isEmptyDir(path)) &&
     !(await hasRequiredThemeDirectories(path)) &&
     !(await ensureDirectoryConfirmed(force, undefined, environment, multiEnvironment))
-  ) {
-    return false
-  }
-
-  /**
-   * If users are not forcing the 'pull' command, and the current directory is a
-   * Git directory and it is not clean, we ask for confirmation before proceeding.
-   */
-  const dirtyDirectory = (await insideGitDirectory(path)) && !(await isClean(path))
-
-  if (
-    dirtyDirectory &&
-    !(await ensureDirectoryConfirmed(
-      force,
-      'The current Git directory has uncommitted changes.',
-      environment,
-      multiEnvironment,
-    ))
   ) {
     return false
   }

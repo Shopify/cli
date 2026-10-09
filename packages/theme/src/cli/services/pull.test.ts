@@ -12,7 +12,6 @@ import {mkTmpDir, rmdir} from '@shopify/cli-kit/node/fs'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
-import {insideGitDirectory, isClean} from '@shopify/cli-kit/node/git'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -28,7 +27,6 @@ vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/git')
 
 const adminSession = {token: '', storeFqdn: ''}
 const path = '/my-theme'
@@ -99,25 +97,6 @@ describe('pull', () => {
     )
   })
 
-  test('should ask for confirmation if the current directory is a Git directory and is not clean', async () => {
-    // Given
-    const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
-    vi.mocked(insideGitDirectory).mockResolvedValue(true)
-    vi.mocked(isClean).mockResolvedValue(false)
-    vi.mocked(ensureDirectoryConfirmed).mockResolvedValue(false)
-
-    // When
-    await pull({...defaultFlags, theme: theme.id.toString()})
-
-    // Then
-    expect(vi.mocked(ensureDirectoryConfirmed)).toHaveBeenCalledWith(
-      false,
-      'The current Git directory has uncommitted changes.',
-      undefined,
-      undefined,
-    )
-  })
-
   test('should not ask for confirmation if --force flag is provided', async () => {
     // Given
     const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
@@ -130,8 +109,6 @@ describe('pull', () => {
     // Then
     expect(vi.mocked(findOrSelectTheme)).toHaveBeenCalledOnce()
     expect(vi.mocked(hasRequiredThemeDirectories)).not.toHaveBeenCalled()
-    expect(vi.mocked(insideGitDirectory)).not.toHaveBeenCalled()
-    expect(vi.mocked(isClean)).not.toHaveBeenCalled()
     expect(vi.mocked(ensureDirectoryConfirmed)).not.toHaveBeenCalled()
   })
 
