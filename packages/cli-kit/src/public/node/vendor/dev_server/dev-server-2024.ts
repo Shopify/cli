@@ -1,5 +1,6 @@
 import {assertConnectable, getIpFromHosts} from './network/index.js'
 import {assertCompatibleEnvironment} from './env.js'
+import {DEVELOPMENT_DOMAIN} from './development-domains.js'
 import fs from 'node:fs'
 import os from 'node:os'
 
@@ -28,13 +29,13 @@ function host(projectName: string, options: HostOptions = {}): string {
   if (projectName === 'shopify') {
     if (prefix.endsWith('-dev-api')) {
       const shopName = prefix.replace('-dev-api', '')
-      return `${shopName}.dev-api.shop.dev`
+      return `${shopName}.dev-api.${DEVELOPMENT_DOMAIN}`
     }
     if (!NON_SHOP_PREFIXES.includes(prefix)) {
-      return `${prefix}.my.shop.dev`
+      return `${prefix}.my.${DEVELOPMENT_DOMAIN}`
     }
   }
-  return `${prefix}.shop.dev`
+  return `${prefix}.${DEVELOPMENT_DOMAIN}`
 }
 
 function url(projectName: string, options: HostOptions = {}): string {

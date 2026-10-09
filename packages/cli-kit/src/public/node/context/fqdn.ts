@@ -2,6 +2,7 @@
 import {AbortError} from '../error.js'
 import {serviceEnvironment} from '../../../private/node/context/service.js'
 import {DevServer, DevServerCore} from '../vendor/dev_server/index.js'
+import {ACCEPTED_DEVELOPMENT_DOMAINS, DEVELOPMENT_DOMAIN} from '../vendor/dev_server/development-domains.js'
 
 export const NotProvidedStoreFQDNError = new AbortError(
   "Couldn't obtain the Shopify FQDN because the store FQDN was not provided.",
@@ -139,7 +140,9 @@ export function normalizeStoreFqdn(store: string): string {
     }
   }
   const containDomain = (storeFqdn: string) =>
-    storeFqdn.endsWith('.myshopify.com') || storeFqdn.endsWith('.myshopify.io') || storeFqdn.endsWith('.shop.dev')
+    storeFqdn.endsWith('.myshopify.com') ||
+    storeFqdn.endsWith('.myshopify.io') ||
+    ACCEPTED_DEVELOPMENT_DOMAINS.some((domain) => storeFqdn.endsWith(`.${domain}`))
   return containDomain(storeFqdn) ? storeFqdn : addDomain(storeFqdn)
 }
 
@@ -203,15 +206,16 @@ function assertValidStoreFqdn(storeFqdn: string, store: string) {
 
 /**
  * Convert a store FQDN to the admin URL pattern for local development.
- * In local mode, transforms \{store\}.my.shop.dev to admin.shop.dev/store/\{store\}.
+ * In local mode, transforms accepted development shop hosts to the current local admin URL.
  *
  * @param storeFqdn - Normalized store FQDN.
  * @returns Store admin URL base (without protocol or path).
  */
 export function storeAdminUrl(storeFqdn: string): string {
-  if (serviceEnvironment() === 'local' && storeFqdn.endsWith('.my.shop.dev')) {
-    const storeName = storeFqdn.replace('.my.shop.dev', '')
-    return `admin.shop.dev/store/${storeName}`
+  const domain = ACCEPTED_DEVELOPMENT_DOMAINS.find((domain) => storeFqdn.endsWith(`.my.${domain}`))
+  if (serviceEnvironment() === 'local' && domain) {
+    const storeName = storeFqdn.slice(0, -`.my.${domain}`.length)
+    return `admin.${DEVELOPMENT_DOMAIN}/store/${storeName}`
   }
   return storeFqdn
 }
