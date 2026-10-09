@@ -1,13 +1,36 @@
-import {ImportDeclarativeDefinitionsResult} from './types.js'
-import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {importCustomDataDefinitionsJsonOutputSchema, type ImportDeclarativeDefinitionsResult} from './types.js'
+import {extractMyshopifyHandle} from '@shopify/cli-kit/common/url'
+import {outputContent, outputInfo, outputResult, outputToken} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 
-export function renderImportDeclarativeDefinitionsResult({
-  metafieldCount,
-  metaobjectCount,
-  storeDomain,
-  tomlContent,
-}: ImportDeclarativeDefinitionsResult) {
+export function renderImportDeclarativeDefinitionsResult(
+  {
+    status,
+    metafieldCount,
+    metaobjectCount,
+    storeDomain,
+    tomlContent,
+    skippedSections,
+  }: ImportDeclarativeDefinitionsResult,
+  json = false,
+) {
+  if (json) {
+    const storeHandle = extractMyshopifyHandle(storeDomain)
+    outputResult(
+      importCustomDataDefinitionsJsonOutputSchema.encode({
+        status,
+        storeDomain: storeHandle ? `${storeHandle}.myshopify.com` : null,
+        metafieldCount,
+        metaobjectCount,
+        toml: tomlContent,
+        skippedSections: skippedSections.map((section) =>
+          section.type === 'metafields' ? {type: section.type, ownerType: section.ownerType} : {type: section.type},
+        ),
+      }),
+    )
+    return
+  }
+
   renderInfo({
     headline: 'Conversion to TOML complete.',
     body: [
