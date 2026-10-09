@@ -2239,13 +2239,17 @@ Import metafield and metaobject definitions.
 
 ```
 USAGE
-  $ shopify app import custom-data-definitions [--auth-alias <value>] [--client-id <value> | -c <value>] [--include-existing]
+  $ shopify app import custom-data-definitions [--auth-alias <value>] [--client-id <value> | -c <value>] [--include-existing] [-j]
     [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [-s <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       Store URL. Must be an existing development or Shopify Plus sandbox store.
@@ -2292,6 +2296,107 @@ DESCRIPTION
 
   Import metafield and metaobject definitions from your development store. "Read more about declarative custom data
   definitions" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ImportCustomDataDefinitionsResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "storeDomain": {
+        "anyOf": [
+          {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "The full myshopify.com domain of the development store, or null when unavailable."
+      },
+      "metafieldCount": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "The number of available metafields converted to TOML."
+      },
+      "metaobjectCount": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "The number of available metaobjects converted to TOML."
+      },
+      "toml": {
+        "type": "string",
+        "description": "Suggested native TOML for app-reserved definitions. No file is written."
+      },
+      "skippedSections": {
+        "type": "array",
+        "items": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SkippedMetafields"
+            },
+            {
+              "$ref": "#/definitions/SkippedMetaobjects"
+            }
+          ]
+        },
+        "description": "Sections skipped because required access scopes are unavailable. An empty array means all requests were authorized."
+      }
+    },
+    "required": [
+      "status",
+      "storeDomain",
+      "metafieldCount",
+      "metaobjectCount",
+      "toml",
+      "skippedSections"
+    ],
+    "additionalProperties": false,
+    "title": "ImportCustomDataDefinitionsResult",
+    "definitions": {
+      "SkippedMetafields": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "metafields"
+          },
+          "ownerType": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The Admin API metafield owner type, such as PRODUCT."
+          }
+        },
+        "required": [
+          "type",
+          "ownerType"
+        ],
+        "additionalProperties": false
+      },
+      "SkippedMetaobjects": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "metaobjects"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app import dashboard-extensions`

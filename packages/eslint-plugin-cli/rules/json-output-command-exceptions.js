@@ -17,7 +17,6 @@ const commandExceptions = [
   'packages/app/src/cli/commands/app/function/schema.ts',
   'packages/app/src/cli/commands/app/function/typegen.ts',
   'packages/app/src/cli/commands/app/generate/extension.ts',
-  'packages/app/src/cli/commands/app/import/custom-data-definitions.ts',
   'packages/app/src/cli/commands/app/import/dashboard-extensions.ts',
   'packages/app/src/cli/commands/app/init.ts',
   'packages/app/src/cli/commands/app/release.ts',

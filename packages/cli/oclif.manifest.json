@@ -2849,7 +2849,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Import metafield and metaobject definitions from your development store. \"Read more about declarative custom data definitions\" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).",
+      "description": "Import metafield and metaobject definitions from your development store. \"Read more about declarative custom data definitions\" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `ImportCustomDataDefinitionsResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\",\n      \"const\": \"success\"\n    },\n    \"storeDomain\": {\n      \"anyOf\": [\n        {\n          \"type\": \"string\",\n          \"pattern\": \"^[a-z0-9][a-z0-9-]*\\\\.myshopify\\\\.com$\"\n        },\n        {\n          \"type\": \"null\"\n        }\n      ],\n      \"description\": \"The full myshopify.com domain of the development store, or null when unavailable.\"\n    },\n    \"metafieldCount\": {\n      \"type\": \"integer\",\n      \"minimum\": 0,\n      \"description\": \"The number of available metafields converted to TOML.\"\n    },\n    \"metaobjectCount\": {\n      \"type\": \"integer\",\n      \"minimum\": 0,\n      \"description\": \"The number of available metaobjects converted to TOML.\"\n    },\n    \"toml\": {\n      \"type\": \"string\",\n      \"description\": \"Suggested native TOML for app-reserved definitions. No file is written.\"\n    },\n    \"skippedSections\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"anyOf\": [\n          {\n            \"$ref\": \"#/definitions/SkippedMetafields\"\n          },\n          {\n            \"$ref\": \"#/definitions/SkippedMetaobjects\"\n          }\n        ]\n      },\n      \"description\": \"Sections skipped because required access scopes are unavailable. An empty array means all requests were authorized.\"\n    }\n  },\n  \"required\": [\n    \"status\",\n    \"storeDomain\",\n    \"metafieldCount\",\n    \"metaobjectCount\",\n    \"toml\",\n    \"skippedSections\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"ImportCustomDataDefinitionsResult\",\n  \"definitions\": {\n    \"SkippedMetafields\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"type\": {\n          \"type\": \"string\",\n          \"const\": \"metafields\"\n        },\n        \"ownerType\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"description\": \"The Admin API metafield owner type, such as PRODUCT.\"\n        }\n      },\n      \"required\": [\n        \"type\",\n        \"ownerType\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"SkippedMetaobjects\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"type\": {\n          \"type\": \"string\",\n          \"const\": \"metaobjects\"\n        }\n      },\n      \"required\": [\n        \"type\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Import metafield and metaobject definitions from your development store. [Read more about declarative custom data definitions](https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).",
       "flags": {
         "auth-alias": {
@@ -2887,6 +2887,15 @@
           "description": "Include existing declared definitions in the output.",
           "env": "SHOPIFY_FLAG_INCLUDE_EXISTING",
           "name": "include-existing",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
           "type": "boolean"
         },
         "json-schema": {
@@ -3180,7 +3189,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Import metafield and metaobject definitions from your development store. \"Read more about declarative custom data definitions\" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).",
+      "description": "Import metafield and metaobject definitions from your development store. \"Read more about declarative custom data definitions\" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `ImportCustomDataDefinitionsResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\",\n      \"const\": \"success\"\n    },\n    \"storeDomain\": {\n      \"anyOf\": [\n        {\n          \"type\": \"string\",\n          \"pattern\": \"^[a-z0-9][a-z0-9-]*\\\\.myshopify\\\\.com$\"\n        },\n        {\n          \"type\": \"null\"\n        }\n      ],\n      \"description\": \"The full myshopify.com domain of the development store, or null when unavailable.\"\n    },\n    \"metafieldCount\": {\n      \"type\": \"integer\",\n      \"minimum\": 0,\n      \"description\": \"The number of available metafields converted to TOML.\"\n    },\n    \"metaobjectCount\": {\n      \"type\": \"integer\",\n      \"minimum\": 0,\n      \"description\": \"The number of available metaobjects converted to TOML.\"\n    },\n    \"toml\": {\n      \"type\": \"string\",\n      \"description\": \"Suggested native TOML for app-reserved definitions. No file is written.\"\n    },\n    \"skippedSections\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"anyOf\": [\n          {\n            \"$ref\": \"#/definitions/SkippedMetafields\"\n          },\n          {\n            \"$ref\": \"#/definitions/SkippedMetaobjects\"\n          }\n        ]\n      },\n      \"description\": \"Sections skipped because required access scopes are unavailable. An empty array means all requests were authorized.\"\n    }\n  },\n  \"required\": [\n    \"status\",\n    \"storeDomain\",\n    \"metafieldCount\",\n    \"metaobjectCount\",\n    \"toml\",\n    \"skippedSections\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"ImportCustomDataDefinitionsResult\",\n  \"definitions\": {\n    \"SkippedMetafields\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"type\": {\n          \"type\": \"string\",\n          \"const\": \"metafields\"\n        },\n        \"ownerType\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"description\": \"The Admin API metafield owner type, such as PRODUCT.\"\n        }\n      },\n      \"required\": [\n        \"type\",\n        \"ownerType\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"SkippedMetaobjects\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"type\": {\n          \"type\": \"string\",\n          \"const\": \"metaobjects\"\n        }\n      },\n      \"required\": [\n        \"type\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Import metafield and metaobject definitions from your development store. [Read more about declarative custom data definitions](https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).",
       "flags": {
         "auth-alias": {
@@ -3218,6 +3227,15 @@
           "description": "Include existing declared definitions in the output.",
           "env": "SHOPIFY_FLAG_INCLUDE_EXISTING",
           "name": "include-existing",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
           "type": "boolean"
         },
         "json-schema": {
