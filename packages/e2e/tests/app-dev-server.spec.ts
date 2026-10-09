@@ -35,7 +35,7 @@ test.describe('App dev server', () => {
 
       // Step 2: Start dev server via PTY, targeting the worker's store
       const dev = await cli.spawn(['app', 'dev', '--path', appDir], {
-        env: {CI: '', SHOPIFY_FLAG_STORE: storeFqdn},
+        env: {CI: undefined, SHOPIFY_FLAG_STORE: storeFqdn},
       })
 
       // Step 3: Wait for the ready message

@@ -31,7 +31,7 @@ const LoadingIndicator = ({title, noColor = !shouldDisplayColors()}: LoadingIndi
       <Text bold color={noColor ? undefined : SHOPIFY_GREEN}>
         {isChevronVisible ? '>' : ' '}
       </Text>
-      {` ${title} ...`}
+      {` ${title}...`}
     </Text>
   )
 }
