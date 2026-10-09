@@ -72,7 +72,6 @@ describe('migration list serialization', () => {
   test('serializes the exact pretty JSON schema without a trailing newline', () => {
     const subscriptions = [subscription()]
     const expected = `{
-  "schemaVersion": 1,
   "subscriptions": [
     {
       "shopId": "gid://shopify/Shop/1",
@@ -238,10 +237,10 @@ describe('outputMigrationList JSON', () => {
     expect(outputResult).toHaveBeenCalledOnce()
     const output = vi.mocked(outputResult).mock.calls[0]![0] as string
     expect(output).toBe(serializeMigrationListJson([...pageOne, ...pageTwo]))
-    expect(JSON.parse(output)).toEqual({schemaVersion: 1, subscriptions: [...pageOne, ...pageTwo]})
+    expect(JSON.parse(output)).toEqual({subscriptions: [...pageOne, ...pageTwo]})
   })
 
-  test('writes an empty versioned JSON document for an empty result', async () => {
+  test('writes an empty JSON document for an empty result', async () => {
     await outputMigrationList({pages: pagesOf([]), json: true})
 
     expect(outputResult).toHaveBeenCalledOnce()

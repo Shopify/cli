@@ -1,7 +1,8 @@
 import {encodeMigrationCancellationResult, encodeMigrationSubmissionResult} from './result-codec.js'
+import {migrationCancellationJsonOutputSchema} from '../../../services/subscription-migrations/types.js'
 import {describe, expect, test} from 'vitest'
 import type {MigrationOperation} from '../../../models/subscription-migrations.js'
-import type {MigrationCancellationResult} from '../../../services/subscription-migrations/cancel-operations.js'
+import type {MigrationCancellationResult} from '../../../services/subscription-migrations/types.js'
 import type {
   MigrationSubmission,
   MigrationSubmissionResult,
@@ -21,7 +22,7 @@ function submission(): MigrationSubmission {
       {
         batchIndex: 0,
         batchPayloadDigest: 'batch-digest',
-        operation: operation('operation-one'),
+        operation: operation('gid://shopify/AppSubscriptionMigrationOperation/operation-one'),
       },
     ],
   }
@@ -34,8 +35,8 @@ describe('subscription migration result codecs', () => {
 
     const document = encodeMigrationSubmissionResult(result)
 
-    expect(JSON.parse(document)).toEqual({schemaVersion: 1, ...value})
-    expect(document).toBe(JSON.stringify({schemaVersion: 1, ...value}, null, 2))
+    expect(JSON.parse(document)).toEqual(value)
+    expect(document).toBe(JSON.stringify(value, null, 2))
     expect(document).not.toContain('idempotencyKey')
   })
 
@@ -54,7 +55,6 @@ describe('subscription migration result codecs', () => {
     const document = encodeMigrationSubmissionResult(result)
 
     expect(JSON.parse(document)).toEqual({
-      schemaVersion: 1,
       ...value,
       failure: {
         type: 'submission',
@@ -70,22 +70,23 @@ describe('subscription migration result codecs', () => {
     const result: MigrationSubmissionResult = {
       status: 'failed',
       submission: value,
-      failure: {type: 'operations', operationIds: ['operation-one']},
+      failure: {type: 'operations', operationIds: ['gid://shopify/AppSubscriptionMigrationOperation/operation-one']},
     }
 
     const document = encodeMigrationSubmissionResult(result)
 
     expect(JSON.parse(document)).toEqual({
-      schemaVersion: 1,
       ...value,
-      failure: {type: 'operations', operationIds: ['operation-one']},
+      failure: {type: 'operations', operationIds: ['gid://shopify/AppSubscriptionMigrationOperation/operation-one']},
     })
     expect(document).toBe(
       JSON.stringify(
         {
-          schemaVersion: 1,
           ...value,
-          failure: {type: 'operations', operationIds: ['operation-one']},
+          failure: {
+            type: 'operations',
+            operationIds: ['gid://shopify/AppSubscriptionMigrationOperation/operation-one'],
+          },
         },
         null,
         2,
@@ -93,19 +94,61 @@ describe('subscription migration result codecs', () => {
     )
   })
 
+  test('rejects cancellation documents with an invalid outcome', () => {
+    expect(() =>
+      migrationCancellationJsonOutputSchema.validate({
+        status: 'success',
+        operations: [
+          {status: 'success', operationGid: 'gid://shopify/AppSubscriptionMigrationOperation/one', operation: null},
+        ],
+      }),
+    ).toThrow()
+  })
+
+  test('rejects extra resource fields, invalid GIDs, and negative counts', () => {
+    const operationResult = {
+      gid: 'gid://shopify/AppSubscriptionMigrationOperation/1',
+      status: 'RUNNING',
+      total: 0,
+      results: [],
+    }
+    for (const invalid of [
+      {...operationResult, accidental: true},
+      {...operationResult, gid: '1'},
+      {...operationResult, total: -1},
+      {...operationResult, total: 0.5},
+      {...operationResult, results: [{shopGid: '1', code: 'SCHEDULED'}]},
+    ]) {
+      expect(() =>
+        migrationCancellationJsonOutputSchema.validate({
+          status: 'success',
+          operations: [{status: 'success', operationGid: operationResult.gid, operation: invalid}],
+        }),
+      ).toThrow()
+    }
+  })
+
+  test('encodes an empty cancellation collection as an object', () => {
+    expect(JSON.parse(encodeMigrationCancellationResult({outcomes: []}))).toEqual({status: 'success', operations: []})
+  })
+
   test('encodes every cancellation outcome in one JSON document', () => {
     const result: MigrationCancellationResult = {
       outcomes: [
-        {status: 'success', operationId: 'one', operation: operation('one')},
+        {
+          status: 'success',
+          operationId: 'gid://shopify/AppSubscriptionMigrationOperation/one',
+          operation: operation('gid://shopify/AppSubscriptionMigrationOperation/one'),
+        },
         {
           status: 'failed',
-          operationId: 'two',
-          operation: operation('two'),
+          operationId: 'gid://shopify/AppSubscriptionMigrationOperation/two',
+          operation: operation('gid://shopify/AppSubscriptionMigrationOperation/two'),
           userErrors: [{message: 'Already completed', field: ['id']}],
         },
         {
           status: 'failed',
-          operationId: 'three',
+          operationId: 'gid://shopify/AppSubscriptionMigrationOperation/three',
           operation: null,
           userErrors: [{message: 'Operation not found', field: null}],
         },
@@ -114,7 +157,61 @@ describe('subscription migration result codecs', () => {
 
     const document = encodeMigrationCancellationResult(result)
 
-    expect(JSON.parse(document)).toEqual({schemaVersion: 1, outcomes: result.outcomes})
-    expect(document).toBe(JSON.stringify({schemaVersion: 1, outcomes: result.outcomes}, null, 2))
+    expect(JSON.parse(document)).toEqual({
+      status: 'partial',
+      operations: result.outcomes.map((outcome) => ({
+        status: outcome.status,
+        operationGid: outcome.operationId,
+        operation:
+          outcome.operation === null
+            ? null
+            : {
+                gid: outcome.operation.id,
+                status: outcome.operation.status,
+                total: outcome.operation.total,
+                results: outcome.operation.results.edges.map(({node}) => ({shopGid: node.shopId, code: node.code})),
+              },
+        ...(outcome.status === 'failed' && 'userErrors' in outcome
+          ? {
+              error: {
+                type: 'abort',
+                message: outcome.userErrors.map(({message}) => message).join('; '),
+                details: {userErrors: outcome.userErrors.map(({message, field}) => ({message, fieldPath: field}))},
+              },
+            }
+          : {}),
+      })),
+    })
+    expect(document).toBe(
+      JSON.stringify(
+        {
+          status: 'partial',
+          operations: result.outcomes.map((outcome) => ({
+            status: outcome.status,
+            operationGid: outcome.operationId,
+            operation:
+              outcome.operation === null
+                ? null
+                : {
+                    gid: outcome.operation.id,
+                    status: outcome.operation.status,
+                    total: outcome.operation.total,
+                    results: outcome.operation.results.edges.map(({node}) => ({shopGid: node.shopId, code: node.code})),
+                  },
+            ...(outcome.status === 'failed' && 'userErrors' in outcome
+              ? {
+                  error: {
+                    type: 'abort',
+                    message: outcome.userErrors.map(({message}) => message).join('; '),
+                    details: {userErrors: outcome.userErrors.map(({message, field}) => ({message, fieldPath: field}))},
+                  },
+                }
+              : {}),
+          })),
+        },
+        null,
+        2,
+      ),
+    )
   })
 })
