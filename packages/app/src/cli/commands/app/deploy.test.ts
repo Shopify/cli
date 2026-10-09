@@ -1,22 +1,36 @@
 import Deploy from './deploy.js'
 import {deploy} from '../../services/deploy.js'
 import {linkedAppContext} from '../../services/app-context.js'
-import {testAppLinked, testOrganizationApp} from '../../models/app/app.test-data.js'
+import {testAppLinked, testOrganizationApp, testProject} from '../../models/app/app.test-data.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {outputInfo} from '@shopify/cli-kit/node/output'
+import {Config} from '@oclif/core'
+import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {fileURLToPath} from 'node:url'
+import type {DeployResult} from '../../services/deploy/types.js'
 
 vi.mock('../../services/deploy.js')
 vi.mock('../../services/app-context.js')
 
+const originalExitCode = process.exitCode
+afterEach(() => {
+  process.exitCode = originalExitCode
+  vi.unstubAllEnvs()
+})
+
 describe('app deploy command', () => {
   beforeEach(() => {
+    process.exitCode = undefined
     vi.mocked(linkedAppContext).mockReset()
     const app = testAppLinked()
     vi.mocked(linkedAppContext).mockResolvedValue({
       app,
+      project: testProject(),
       remoteApp: testOrganizationApp(),
     } as Awaited<ReturnType<typeof linkedAppContext>>)
-    vi.mocked(deploy).mockResolvedValue({app} as Awaited<ReturnType<typeof deploy>>)
+    vi.mocked(deploy).mockResolvedValue(completedDeployResult(app))
   })
 
   test('accepts --config together with --client-id to deploy a configuration to a different app', async () => {
@@ -44,4 +58,69 @@ describe('app deploy command', () => {
       expect(linkedAppContext).not.toHaveBeenCalled()
     })
   })
+
+  test('writes one JSON result and sends diagnostics to stderr', async () => {
+    vi.mocked(deploy).mockImplementationOnce(async () => {
+      outputInfo('Releasing an app version')
+      return completedDeployResult(testAppLinked())
+    })
+    await inTemporaryDirectory(async (directory) => {
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await runDeploy(['--path', directory, '--json', '--allow-updates'])
+        expect(JSON.parse(stdout())).toEqual({
+          status: 'success',
+          app: {name: 'app1', clientId: 'api-key'},
+          deployment: {
+            released: true,
+            version: {
+              gid: 'gid://shopify/Version/1',
+              name: 'v1',
+              message: null,
+              url: 'https://dev.shopify.com/dashboard/1/apps/1/versions/1',
+            },
+          },
+        })
+        expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', message: 'Releasing an app version'})
+      })
+    })
+  })
+
+  test('cancelled JSON exits zero through the silent error path', async () => {
+    const exit = vi.spyOn(process, 'exit').mockReturnValue(undefined as never)
+    vi.mocked(deploy).mockResolvedValue({status: 'cancelled', app: testAppLinked()})
+    try {
+      await inTemporaryDirectory(async (directory) => {
+        await withCapturedStandardStreams(async ({stdout, stderr}) => {
+          await runDeploy(['--path', directory, '--json', '--allow-updates'])
+          expect(exit).toHaveBeenCalledExactlyOnceWith(0)
+          expect(JSON.parse(stdout())).toEqual({status: 'cancelled'})
+          expect(stderr()).toBe('')
+        })
+      })
+    } finally {
+      exit.mockRestore()
+    }
+  })
 })
+
+async function runDeploy(argv: string[]) {
+  const config = await Config.load({root: joinPath(dirname(fileURLToPath(import.meta.url)), '../../../..')})
+  // The source package is bundled in the installed CLI, not a custom plugin.
+  config.plugins.delete('@shopify/app')
+  return Deploy.run(argv, config)
+}
+
+function completedDeployResult(app: ReturnType<typeof testAppLinked>): Exclude<DeployResult, {status: 'cancelled'}> {
+  return {
+    status: 'success',
+    app,
+    release: true,
+    didMigrateExtensionsToDevDash: false,
+    uploadExtensionsBundleResult: {
+      validationErrors: [],
+      versionGid: 'gid://shopify/Version/1',
+      versionTag: 'v1',
+      location: 'https://dev.shopify.com/dashboard/1/apps/1/versions/1',
+    },
+  }
+}

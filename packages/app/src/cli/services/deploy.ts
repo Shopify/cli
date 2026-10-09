@@ -10,14 +10,14 @@ import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js
 import {Organization, OrganizationApp} from '../models/organization.js'
 import {reloadApp} from '../models/app/loader.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
-import {getTomls} from '../utilities/app/config/getTomls.js'
-import {renderInfo, renderSuccess, renderTasks, renderConfirmationPrompt, isTTY} from '@shopify/cli-kit/node/ui'
+import {renderTasks, renderConfirmationPrompt, isTTY} from '@shopify/cli-kit/node/ui'
 import {mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {outputNewline, outputInfo} from '@shopify/cli-kit/node/output'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
-import type {AlertCustomSection, Task, TokenItem} from '@shopify/cli-kit/node/ui'
+import type {DeployResult} from './deploy/types.js'
+import type {Task} from '@shopify/cli-kit/node/ui'
 
 export interface DeployOptions {
   /** The app to be built and uploaded */
@@ -135,25 +135,33 @@ export async function importExtensionsIfNeeded(options: ImportExtensionsIfNeeded
   })
 }
 
-export async function deploy(options: DeployOptions) {
+export async function deploy(options: DeployOptions): Promise<DeployResult> {
   const {remoteApp, developerPlatformClient, noRelease, allowUpdates, allowDeletes} = options
 
-  const app = await importExtensionsIfNeeded({
-    app: options.app,
-    remoteApp,
-    developerPlatformClient,
-    noRelease,
-    allowUpdates,
-    allowDeletes,
-  })
+  let app: AppLinkedInterface
+  let deployContext
+  try {
+    app = await importExtensionsIfNeeded({
+      app: options.app,
+      remoteApp,
+      developerPlatformClient,
+      noRelease,
+      allowUpdates,
+      allowDeletes,
+    })
 
-  const {deployIdentifiers, didMigrateExtensionsToDevDash} = await ensureDeployContext({
-    ...options,
-    app,
-    developerPlatformClient,
-    allowUpdates,
-    allowDeletes,
-  })
+    deployContext = await ensureDeployContext({
+      ...options,
+      app,
+      developerPlatformClient,
+      allowUpdates,
+      allowDeletes,
+    })
+  } catch (error) {
+    if (!(error instanceof AbortSilentError)) throw error
+    return {status: 'cancelled', app: options.app}
+  }
+  const {deployIdentifiers, didMigrateExtensionsToDevDash} = deployContext
 
   const release = !noRelease
   const apiKey = remoteApp.apiKey
@@ -235,105 +243,13 @@ export async function deploy(options: DeployOptions) {
 
   await renderTasks(tasks)
 
-  await outputCompletionMessage({
+  return {
+    status: release && uploadExtensionsBundleResult.deployError ? 'partial' : 'success',
     app,
-    project: options.project,
     release,
     uploadExtensionsBundleResult,
     didMigrateExtensionsToDevDash,
-  })
-
-  return {app}
-}
-
-async function outputCompletionMessage({
-  app,
-  project,
-  release,
-  uploadExtensionsBundleResult,
-  didMigrateExtensionsToDevDash,
-}: {
-  app: AppLinkedInterface
-  project: Project
-  release: boolean
-  uploadExtensionsBundleResult: UploadExtensionsBundleOutput
-  didMigrateExtensionsToDevDash: boolean
-}) {
-  const linkAndMessage = [
-    {link: {label: uploadExtensionsBundleResult.versionTag ?? 'version', url: uploadExtensionsBundleResult.location}},
-    uploadExtensionsBundleResult.message ? `\n${uploadExtensionsBundleResult.message}` : '',
-  ]
-  let customSections: AlertCustomSection[] = []
-  if (didMigrateExtensionsToDevDash) {
-    const tomls = await getTomls(app.directory)
-    const tomlsWithoutCurrent = Object.values(tomls).filter((toml) => toml !== tomls[app.configuration.client_id])
-
-    const body: TokenItem = []
-    if (tomlsWithoutCurrent.length > 0) {
-      body.push(
-        '• Map extension IDs to other copies of your app by running',
-        {
-          command: formatPackageManagerCommand(project.packageManager, 'shopify app deploy'),
-        },
-        'for: ',
-        {
-          list: {
-            items: tomlsWithoutCurrent,
-          },
-        },
-      )
-    }
-
-    body.push("• Commit to source control to ensure your extension IDs aren't regenerated on the next deploy.")
-    customSections = [
-      {title: 'Next steps', body},
-      {
-        title: 'Reference',
-        body: [
-          '• ',
-          {
-            link: {
-              label: 'Migrating from the Partner Dashboard',
-              url: 'https://shopify.dev/docs/apps/build/dev-dashboard/migrate-from-partners',
-            },
-          },
-        ],
-      },
-    ]
   }
-
-  if (release) {
-    return uploadExtensionsBundleResult.deployError
-      ? renderInfo({
-          headline: 'New version created, but not released.',
-          body: [...linkAndMessage, `\n\n${uploadExtensionsBundleResult.deployError}`],
-          customSections,
-        })
-      : renderSuccess({
-          headline: 'New version released to users.',
-          body: linkAndMessage,
-          customSections,
-        })
-  }
-
-  return renderSuccess({
-    headline: 'New version created.',
-    body: linkAndMessage,
-    customSections,
-    nextSteps: [
-      [
-        'Run',
-        {
-          command: formatPackageManagerCommand(
-            project.packageManager,
-            'shopify app release',
-            `--version=${uploadExtensionsBundleResult.versionTag}`,
-          ),
-        },
-        'to release this version to users.',
-      ],
-    ],
-  })
 }
 
 function appManifestUuids(app: AppLinkedInterface, appModuleUuids: {[localIdentifier: string]: string}) {

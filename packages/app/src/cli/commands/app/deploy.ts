@@ -1,12 +1,14 @@
 import {appFlags} from '../../flags.js'
 import {deploy} from '../../services/deploy.js'
+import {appDeployJsonOutputSchema} from '../../services/deploy/types.js'
+import {renderAppDeployResult} from '../../services/deploy/result.js'
 import {validateVersion} from '../../validations/version-name.js'
 import {validateMessage} from '../../validations/message.js'
 import metadata from '../../metadata.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
@@ -20,11 +22,16 @@ export default class Deploy extends AppLinkedCommand {
   This command doesn't deploy your [web app](https://shopify.dev/docs/apps/tools/cli/structure#web-components). You need to [deploy your web app](https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.
   `
 
+  static get jsonOutputSchema() {
+    return appDeployJsonOutputSchema
+  }
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
     ...appFlags,
+    ...jsonFlag,
     // Unlike the shared app flag, deploy accepts --client-id together with --config:
     // the configuration selected by --config is deployed to the app identified by --client-id.
     'client-id': Flags.string({
@@ -125,7 +132,7 @@ export default class Deploy extends AppLinkedCommand {
       commitReference: flags['source-control-url'],
       skipBuild: flags['no-build'],
     })
-
+    await renderAppDeployResult(result, remoteApp, project, flags.json ? 'json' : 'text')
     return {app: result.app}
   }
 }

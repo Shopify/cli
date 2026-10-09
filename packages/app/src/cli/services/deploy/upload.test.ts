@@ -301,7 +301,7 @@ describe('uploadExtensionsBundle', () => {
     })
   })
 
-  test('return a deploy error message based on what is returned from partners when response includes an app version', async () => {
+  test.each(['No release error message.', ''])('retains a release failure with message %j', async (message) => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const errorResponse: AppDeploySchema = {
@@ -323,7 +323,7 @@ describe('uploadExtensionsBundle', () => {
           userErrors: [
             {
               field: [],
-              message: 'No release error message.',
+              message,
               category: '',
               details: [],
             },
@@ -360,8 +360,9 @@ describe('uploadExtensionsBundle', () => {
       // Then
       expect(result).toEqual({
         validationErrors: [],
+        versionGid: 'appVersion-uuid',
         versionTag: 'versionTag',
-        deployError: 'No release error message.',
+        deployError: message || 'The app version could not be released.',
         location: 'location',
         message: 'message',
       })

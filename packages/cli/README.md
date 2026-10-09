@@ -1199,7 +1199,7 @@ Deploy your Shopify app.
 
 ```
 USAGE
-  $ shopify app deploy [--auth-alias <value>] [--client-id <value>] [--json-schema] [--message <value>]
+  $ shopify app deploy [--auth-alias <value>] [--client-id <value>] [-j] [--json-schema] [--message <value>]
     [--no-build] [--no-color] [--no-input] [--no-release | --allow-updates | --allow-deletes] [--path <value>] [--reset
     | -c <value>] [--source-control-url <value>] [--verbose] [--version <value>]
 
@@ -1207,6 +1207,10 @@ FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --allow-deletes
       Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the
@@ -1287,6 +1291,245 @@ DESCRIPTION
 
   This command doesn't deploy your "web app" (https://shopify.dev/docs/apps/tools/cli/structure#web-components). You
   need to "deploy your web app" (https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.
+
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppDeployResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "app": {
+            "$ref": "#/definitions/App"
+          },
+          "deployment": {
+            "$ref": "#/definitions/AppDeployment"
+          }
+        },
+        "required": [
+          "status",
+          "app",
+          "deployment"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "partial"
+          },
+          "app": {
+            "$ref": "#/definitions/App"
+          },
+          "deployment": {
+            "type": "object",
+            "properties": {
+              "released": {
+                "type": "boolean",
+                "const": false
+              },
+              "version": {
+                "$ref": "#/definitions/AppDeploymentVersion"
+              }
+            },
+            "required": [
+              "released",
+              "version"
+            ],
+            "additionalProperties": false
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/JsonAbortError"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "status",
+          "app",
+          "deployment",
+          "errors"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "cancelled"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "AppDeployResult",
+    "definitions": {
+      "JsonAbortError": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "abort"
+          },
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A stable error code, included only when known."
+          },
+          "tryMessage": {
+            "type": "string"
+          },
+          "nextSteps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "customSections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "body": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "body"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "details": {
+            "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+          }
+        },
+        "required": [
+          "type",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "App": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The client ID of the app receiving the deployment."
+          }
+        },
+        "required": [
+          "name",
+          "clientId"
+        ],
+        "additionalProperties": false
+      },
+      "AppDeployment": {
+        "type": "object",
+        "properties": {
+          "released": {
+            "type": "boolean",
+            "description": "Whether this command released the version to users."
+          },
+          "version": {
+            "$ref": "#/definitions/AppDeploymentVersion"
+          }
+        },
+        "required": [
+          "released",
+          "version"
+        ],
+        "additionalProperties": false
+      },
+      "AppDeploymentVersion": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/Version\\/\\d+$",
+            "description": "The Shopify app version GID."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version tag, or null when no tag is available."
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version message, or null when no message is available."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The Developer Dashboard URL for this version."
+          }
+        },
+        "required": [
+          "gid",
+          "name",
+          "message",
+          "url"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app dev`

@@ -1222,6 +1222,37 @@ describe('deploy', () => {
     })
   })
 
+  test.each([false, true])('keeps the created version when release is returned: %s', async (released) => {
+    vi.mocked(appManagementRequestDoc)
+      .mockResolvedValueOnce({
+        appVersionCreate: {
+          version: {id: 'gid://shopify/Version/1', metadata: {}, appModules: []},
+          userErrors: [],
+        },
+      })
+      .mockResolvedValueOnce({
+        appReleaseCreate: {
+          release: released ? {version: {id: 'gid://shopify/Version/1', metadata: {}}} : null,
+          userErrors: [],
+        },
+      })
+
+    const result = await client.deploy({
+      appManifest: {name: 'Test App', handle: 'test-app', modules: []},
+      apiKey: 'api-key',
+      appId: 'gid://shopify/App/123',
+      name: 'Test App',
+      organizationId: 'gid://shopify/Organization/123',
+    })
+
+    expect(result.appDeploy.appVersion?.uuid).toBe('gid://shopify/Version/1')
+    expect(result.appDeploy.userErrors).toEqual(
+      released
+        ? []
+        : [{message: 'The API did not return a release for the created app version.', category: '', details: []}],
+    )
+  })
+
   test('handles version creation errors', async () => {
     // Given
     const mockResponse = {
