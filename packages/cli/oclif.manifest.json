@@ -1504,7 +1504,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Creates or updates an `.env` files that contains app and app extension environment variables.\n\n  When an existing `.env` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.",
+      "description": "Creates or updates an `.env` files that contains app and app extension environment variables.\n\n  When an existing `.env` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppEnvPullResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"path\": {\n      \"type\": \"string\",\n      \"description\": \"The absolute native dotenv file path.\"\n    },\n    \"status\": {\n      \"type\": \"string\",\n      \"const\": \"success\"\n    },\n    \"changed\": {\n      \"type\": \"boolean\",\n      \"description\": \"Whether the dotenv file was created or updated.\"\n    },\n    \"variables\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/AppEnvironmentVariable\"\n      },\n      \"description\": \"The known app variables, not unrelated local variables.\"\n    },\n    \"content\": {\n      \"type\": \"string\",\n      \"description\": \"The complete native dotenv content, preserving existing variables and comments.\"\n    }\n  },\n  \"required\": [\n    \"path\",\n    \"status\",\n    \"changed\",\n    \"variables\",\n    \"content\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppEnvPullResult\",\n  \"definitions\": {\n    \"AppEnvironmentVariable\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"name\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"description\": \"The environment variable name with its original spelling.\"\n        },\n        \"value\": {\n          \"type\": \"string\",\n          \"description\": \"The value, included only when known.\"\n        },\n        \"isSecret\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether the value is secret, included only when known.\"\n        },\n        \"id\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"description\": \"The upstream variable identifier, included only when known.\"\n        },\n        \"readOnly\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether the variable is read-only, included only when known.\"\n        }\n      },\n      \"required\": [\n        \"name\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Creates or updates an `.env` files that contains app and app extension environment variables.\n\n  When an existing `.env` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.",
       "flags": {
         "auth-alias": {
@@ -1545,6 +1545,15 @@
           "multiple": false,
           "name": "env-file",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,

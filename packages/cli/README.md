@@ -1527,13 +1527,17 @@ Pull app and extensions environment variables.
 
 ```
 USAGE
-  $ shopify app env pull [--auth-alias <value>] [--client-id <value> | -c <value>] [--env-file <value>]
+  $ shopify app env pull [--auth-alias <value>] [--client-id <value> | -c <value>] [--env-file <value>] [-j]
     [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -1578,6 +1582,84 @@ DESCRIPTION
 
   When an existing `.env` file is updated, changes to the variables are displayed in the terminal output. Existing
   variables and commented variables are preserved.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppEnvPullResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "The absolute native dotenv file path."
+      },
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "changed": {
+        "type": "boolean",
+        "description": "Whether the dotenv file was created or updated."
+      },
+      "variables": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/AppEnvironmentVariable"
+        },
+        "description": "The known app variables, not unrelated local variables."
+      },
+      "content": {
+        "type": "string",
+        "description": "The complete native dotenv content, preserving existing variables and comments."
+      }
+    },
+    "required": [
+      "path",
+      "status",
+      "changed",
+      "variables",
+      "content"
+    ],
+    "additionalProperties": false,
+    "title": "AppEnvPullResult",
+    "definitions": {
+      "AppEnvironmentVariable": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The environment variable name with its original spelling."
+          },
+          "value": {
+            "type": "string",
+            "description": "The value, included only when known."
+          },
+          "isSecret": {
+            "type": "boolean",
+            "description": "Whether the value is secret, included only when known."
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The upstream variable identifier, included only when known."
+          },
+          "readOnly": {
+            "type": "boolean",
+            "description": "Whether the variable is read-only, included only when known."
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app env show`
