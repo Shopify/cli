@@ -4134,37 +4134,199 @@ DESCRIPTION
                 ]
               },
               "error": {
-                "type": "object",
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "const": "abort"
-                  },
-                  "message": {
-                    "type": "string"
-                  },
-                  "details": {
+                "anyOf": [
+                  {
                     "type": "object",
                     "properties": {
-                      "userErrors": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
                         "type": "array",
                         "items": {
-                          "$ref": "#/definitions/MigrationUserError"
+                          "type": "string"
                         }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {
+                        "type": "object",
+                        "properties": {
+                          "userErrors": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/definitions/MigrationUserError"
+                            }
+                          }
+                        },
+                        "required": [
+                          "userErrors"
+                        ],
+                        "additionalProperties": false
                       }
                     },
                     "required": [
-                      "userErrors"
+                      "type",
+                      "message",
+                      "details"
                     ],
                     "additionalProperties": false
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/type"
+                          },
+                          "message": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/message"
+                          },
+                          "code": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/code"
+                          },
+                          "tryMessage": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                          },
+                          "nextSteps": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                          },
+                          "customSections": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                          },
+                          "details": {
+                            "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "message"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "bug"
+                          },
+                          "message": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/message"
+                          },
+                          "code": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/code"
+                          },
+                          "tryMessage": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                          },
+                          "nextSteps": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                          },
+                          "customSections": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                          },
+                          "details": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/1/anyOf/0/properties/details"
+                          },
+                          "stack": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "message"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "external"
+                          },
+                          "message": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/message"
+                          },
+                          "code": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/code"
+                          },
+                          "tryMessage": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                          },
+                          "nextSteps": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                          },
+                          "customSections": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                          },
+                          "details": {
+                            "$ref": "#/definitions/MigrationCancellationOutcome/anyOf/1/properties/error/anyOf/1/anyOf/0/properties/details"
+                          },
+                          "command": {
+                            "type": "string"
+                          },
+                          "args": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "message",
+                          "command",
+                          "args"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
                   }
-                },
-                "required": [
-                  "type",
-                  "message",
-                  "details"
-                ],
-                "additionalProperties": false
+                ]
               }
             },
             "required": [
