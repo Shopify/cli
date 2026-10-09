@@ -1,6 +1,5 @@
-// packages/theme/src/cli/services/duplicate.test.ts
-import {duplicate} from './duplicate.js'
-import {configureCLIEnvironment} from '../utilities/cli-config.js'
+import {duplicate as executeDuplicate} from './duplicate.js'
+import {renderThemeDuplicateResult} from './duplicate/result.js'
 import {themeComponent} from '../utilities/theme-ui.js'
 import {findThemeById, findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themeDuplicate} from '@shopify/cli-kit/node/themes/api'
@@ -14,10 +13,12 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/output')>()),
+  outputResult: vi.fn(),
+}))
 vi.mock('../utilities/theme-selector.js')
 vi.mock('../utilities/theme-ui.js')
-vi.mock('../utilities/cli-config.js')
 
 const session: AdminSession = {
   token: 'token',
@@ -44,7 +45,6 @@ const options = {
 describe('duplicate', () => {
   beforeEach(() => {
     vi.mocked(themeComponent).mockReturnValue(['theme component'])
-    vi.mocked(configureCLIEnvironment).mockReturnValue()
     vi.mocked(outputResult).mockReturnValue()
   })
 
@@ -106,6 +106,17 @@ describe('duplicate', () => {
     // Then
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
     expect(renderSuccess).toHaveBeenCalled()
+  })
+
+  test('does not prompt again after environment batch confirmation', async () => {
+    vi.mocked(isCI).mockReturnValue(false)
+    vi.mocked(findThemeById).mockResolvedValue(theme)
+    vi.mocked(themeDuplicate).mockResolvedValue({theme: duplicatedTheme, userErrors: []})
+
+    await executeDuplicate(session, '1', {}, true)
+
+    expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+    expect(themeDuplicate).toHaveBeenCalledWith(1, undefined, session)
   })
 
   test('does not prompt for confirmation in CI environment', async () => {
@@ -261,15 +272,39 @@ describe('duplicate', () => {
     })
 
     // When
-    await duplicate(session, '1', {...options, json: true})
-
-    // Then
-    expect(outputResult).toHaveBeenCalledWith(
-      JSON.stringify({
-        message: `The theme '${theme.name}' unexpectedly could not be duplicated `,
-        errors: [],
-        requestId: '12345-abcde-67890',
-      }),
+    await expect(duplicate(session, '1', {...options, json: true})).rejects.toThrow(
+      `The theme '${theme.name}' unexpectedly could not be duplicated`,
     )
+    expect(outputResult).not.toHaveBeenCalled()
   })
+})
+
+async function duplicate(
+  session: AdminSession,
+  themeId: string | undefined,
+  flags: Parameters<typeof executeDuplicate>[2] & {json?: boolean},
+) {
+  const result = await executeDuplicate(session, themeId, flags)
+  renderThemeDuplicateResult(result, flags.json ? 'json' : 'text')
+  return result
+}
+
+test('returns a typed result without presenting the final output', async () => {
+  vi.mocked(isCI).mockReturnValue(true)
+  vi.mocked(findThemeById).mockResolvedValue(theme)
+  vi.mocked(themeDuplicate).mockResolvedValue({theme: duplicatedTheme, userErrors: [], requestId: 'request-123'})
+
+  const result = await executeDuplicate(session, '1', {force: true})
+
+  expect(result).toMatchObject({
+    status: 'completed',
+    originalTheme: theme,
+    theme: duplicatedTheme,
+    shop: session.storeFqdn,
+    previewUrl: 'https://my-shop.myshopify.com?preview_theme_id=2',
+    requestId: 'request-123',
+  })
+  expect(outputResult).not.toHaveBeenCalled()
+  expect(renderSuccess).not.toHaveBeenCalled()
+  expect(renderError).not.toHaveBeenCalled()
 })
