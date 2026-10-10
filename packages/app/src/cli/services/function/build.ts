@@ -46,7 +46,7 @@ interface FunctionPackageJson {
   codegen?: FunctionCodegenConfig
 }
 
-const shopifyFunctionCodegenDefaults = {
+export const shopifyFunctionCodegenDefaults = {
   defaultScalarType: 'unknown',
   scalars: {
     Date: 'string',

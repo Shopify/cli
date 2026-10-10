@@ -8,7 +8,7 @@ import {zod} from '@shopify/cli-kit/node/schema'
 import {createRequire} from 'module'
 import type ts from 'typescript'
 
-async function loadTypeScript(): Promise<typeof ts> {
+export async function loadTypeScript(): Promise<typeof ts> {
   // typescript is CJS; dynamic import wraps it as { default: ... }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mod: any = await import('typescript')
