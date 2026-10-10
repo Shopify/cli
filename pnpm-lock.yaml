@@ -255,6 +255,9 @@ importers:
       '@vitest/coverage-istanbul':
         specifier: ^3.2.7
         version: 3.2.7(vitest@4.1.10)
+      msw:
+        specifier: ^2.15.0
+        version: 2.15.0(@types/node@26.1.1)(typescript@5.9.3)
 
   packages/cli:
     dependencies:
@@ -584,7 +587,7 @@ importers:
         version: 8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3)
       '@vitest/eslint-plugin':
         specifier: 1.1.44
-        version: 1.1.44(@typescript-eslint/utils@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(@vitest/coverage-istanbul@3.2.7)(jsdom@28.1.0)(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@6.4.3(@types/node@26.1.1)(jiti@2.6.1)(sass@1.100.0)(tsx@4.23.1)(yaml@2.9.0)))
+        version: 1.1.44(@typescript-eslint/utils@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(@vitest/coverage-istanbul@3.2.7(vitest@4.1.10))(jsdom@28.1.0)(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@6.4.3(@types/node@26.1.1)(jiti@2.6.1)(sass@1.100.0)(tsx@4.23.1)(yaml@2.9.0)))
       eslint:
         specifier: ^9.0.0
         version: 9.39.5(jiti@2.6.1)
@@ -13098,17 +13101,17 @@ snapshots:
       magicast: 0.3.5
       test-exclude: 7.0.2
       tinyrainbow: 2.0.0
-      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(@vitest/coverage-istanbul@3.2.7)(jsdom@28.1.0)(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@6.4.3(@types/node@26.1.1)(jiti@2.6.1)(sass@1.100.0)(tsx@4.23.1)(yaml@2.9.0))
+      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(@vitest/coverage-istanbul@3.2.7(vitest@4.1.10))(jsdom@28.1.0)(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@6.4.3(@types/node@26.1.1)(jiti@2.6.1)(sass@1.100.0)(tsx@4.23.1)(yaml@2.9.0))
     transitivePeerDependencies:
       - supports-color
 
-  '@vitest/eslint-plugin@1.1.44(@typescript-eslint/utils@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(@vitest/coverage-istanbul@3.2.7)(jsdom@28.1.0)(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@6.4.3(@types/node@26.1.1)(jiti@2.6.1)(sass@1.100.0)(tsx@4.23.1)(yaml@2.9.0)))':
+  '@vitest/eslint-plugin@1.1.44(@typescript-eslint/utils@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3)(vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(@vitest/coverage-istanbul@3.2.7(vitest@4.1.10))(jsdom@28.1.0)(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@6.4.3(@types/node@26.1.1)(jiti@2.6.1)(sass@1.100.0)(tsx@4.23.1)(yaml@2.9.0)))':
     dependencies:
       '@typescript-eslint/utils': 8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3)
       eslint: 9.39.5(jiti@2.6.1)
     optionalDependencies:
       typescript: 5.9.3
-      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(@vitest/coverage-istanbul@3.2.7)(jsdom@28.1.0)(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@6.4.3(@types/node@26.1.1)(jiti@2.6.1)(sass@1.100.0)(tsx@4.23.1)(yaml@2.9.0))
+      vitest: 4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(@vitest/coverage-istanbul@3.2.7(vitest@4.1.10))(jsdom@28.1.0)(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@6.4.3(@types/node@26.1.1)(jiti@2.6.1)(sass@1.100.0)(tsx@4.23.1)(yaml@2.9.0))
 
   '@vitest/eslint-plugin@1.1.44(@typescript-eslint/utils@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3)(vitest@4.1.10)':
     dependencies:
@@ -18159,7 +18162,7 @@ snapshots:
     transitivePeerDependencies:
       - msw
 
-  vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(@vitest/coverage-istanbul@3.2.7)(jsdom@28.1.0)(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@6.4.3(@types/node@26.1.1)(jiti@2.6.1)(sass@1.100.0)(tsx@4.23.1)(yaml@2.9.0)):
+  vitest@4.1.10(@opentelemetry/api@1.9.1)(@types/node@26.1.1)(@vitest/coverage-istanbul@3.2.7(vitest@4.1.10))(jsdom@28.1.0)(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@6.4.3(@types/node@26.1.1)(jiti@2.6.1)(sass@1.100.0)(tsx@4.23.1)(yaml@2.9.0)):
     dependencies:
       '@vitest/expect': 4.1.10
       '@vitest/mocker': 4.1.10(msw@2.15.0(@types/node@26.1.1)(typescript@5.9.3))(vite@6.4.3(@types/node@26.1.1)(jiti@2.6.1)(sass@1.100.0)(tsx@4.23.1)(yaml@2.9.0))

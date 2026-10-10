@@ -3786,6 +3786,139 @@
       "strict": true,
       "summary": "Stream detailed logs for your Shopify app."
     },
+    "app:logs-next": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Returns a bounded historical result and exits. Use shopify app dev for live Function logs in a development session.\n\nResults are unordered, may be incomplete, and have no pagination. Use --json --no-input for unattended execution. This preview requires an authorized CLI user session.\n\nDefaults: preceding hour, 20 records. Maximum: seven-day window within thirty days, 1000 records. Relative times use the server time from the app scope response before the search.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `HistoricalAppLogs` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"success\",\n        \"partial\"\n      ]\n    },\n    \"query\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"clientId\": {\n          \"type\": \"string\"\n        },\n        \"types\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"since\": {\n          \"$ref\": \"#/definitions/AppLogEvent/properties/timestamp\"\n        },\n        \"until\": {\n          \"$ref\": \"#/definitions/AppLogEvent/properties/timestamp\"\n        },\n        \"anchor\": {\n          \"$ref\": \"#/definitions/AppLogEvent/properties/timestamp\"\n        },\n        \"clockSource\": {\n          \"type\": \"string\",\n          \"const\": \"scope-response\"\n        },\n        \"limit\": {\n          \"type\": \"integer\",\n          \"exclusiveMinimum\": 0\n        }\n      },\n      \"required\": [\n        \"clientId\",\n        \"types\",\n        \"since\",\n        \"until\",\n        \"anchor\",\n        \"clockSource\",\n        \"limit\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"logs\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/AppLogEvent\"\n      }\n    },\n    \"ordering\": {\n      \"type\": \"string\",\n      \"const\": \"none\"\n    },\n    \"pageInfo\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"limit\": {\n          \"type\": \"integer\",\n          \"exclusiveMinimum\": 0\n        },\n        \"returnedCount\": {\n          \"type\": \"integer\",\n          \"minimum\": 0\n        },\n        \"limitReached\": {\n          \"type\": \"boolean\"\n        },\n        \"moreRecordsMatched\": {\n          \"type\": [\n            \"boolean\",\n            \"null\"\n          ]\n        }\n      },\n      \"required\": [\n        \"limit\",\n        \"returnedCount\",\n        \"limitReached\",\n        \"moreRecordsMatched\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"errors\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"code\": {\n            \"type\": \"string\"\n          },\n          \"message\": {\n            \"type\": \"string\"\n          },\n          \"fieldPath\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": [\n                \"string\",\n                \"number\"\n              ]\n            }\n          }\n        },\n        \"required\": [\n          \"code\",\n          \"message\"\n        ],\n        \"additionalProperties\": false\n      }\n    },\n    \"limitations\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      }\n    }\n  },\n  \"required\": [\n    \"status\",\n    \"query\",\n    \"logs\",\n    \"ordering\",\n    \"pageInfo\",\n    \"errors\",\n    \"limitations\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"HistoricalAppLogs\",\n  \"definitions\": {\n    \"AppLogEvent\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"gid\": {\n          \"type\": \"string\",\n          \"pattern\": \"^gid\\\\:\\\\/\\\\/shopify\\\\/AppLogRecord\\\\/\"\n        },\n        \"timestamp\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"description\": \"RFC 3339 log timestamp or exact query bound; offsets and up to nine fractional digits are preserved.\"\n        },\n        \"type\": {\n          \"type\": \"string\"\n        },\n        \"storeDomain\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        },\n        \"outcome\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"enum\": [\n                \"success\",\n                \"failure\"\n              ]\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        },\n        \"webhook\": {\n          \"anyOf\": [\n            {\n              \"type\": \"object\",\n              \"properties\": {\n                \"topic\": {\n                  \"type\": [\n                    \"string\",\n                    \"null\"\n                  ]\n                },\n                \"resultStatus\": {\n                  \"type\": [\n                    \"string\",\n                    \"null\"\n                  ]\n                },\n                \"statusCode\": {\n                  \"type\": [\n                    \"string\",\n                    \"null\"\n                  ]\n                },\n                \"responseTimeMs\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"integer\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ]\n                },\n                \"deliveryAttempt\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"integer\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ]\n                }\n              },\n              \"required\": [\n                \"topic\",\n                \"resultStatus\",\n                \"statusCode\",\n                \"responseTimeMs\",\n                \"deliveryAttempt\"\n              ],\n              \"additionalProperties\": false\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        },\n        \"function\": {\n          \"anyOf\": [\n            {\n              \"type\": \"object\",\n              \"properties\": {\n                \"invocationId\": {\n                  \"type\": [\n                    \"string\",\n                    \"null\"\n                  ]\n                },\n                \"functionHandle\": {\n                  \"type\": [\n                    \"string\",\n                    \"null\"\n                  ]\n                },\n                \"target\": {\n                  \"type\": [\n                    \"string\",\n                    \"null\"\n                  ]\n                },\n                \"resultStatus\": {\n                  \"type\": [\n                    \"string\",\n                    \"null\"\n                  ]\n                },\n                \"executionDurationMs\": {\n                  \"anyOf\": [\n                    {\n                      \"type\": \"integer\"\n                    },\n                    {\n                      \"type\": \"null\"\n                    }\n                  ]\n                }\n              },\n              \"required\": [\n                \"invocationId\",\n                \"functionHandle\",\n                \"target\",\n                \"resultStatus\",\n                \"executionDurationMs\"\n              ],\n              \"additionalProperties\": false\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        }\n      },\n      \"required\": [\n        \"gid\",\n        \"timestamp\",\n        \"type\",\n        \"storeDomain\",\n        \"outcome\",\n        \"webhook\",\n        \"function\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Returns a bounded historical result and exits. Use shopify app dev for live Function logs in a development session.\n\nResults are unordered, may be incomplete, and have no pagination. Use --json --no-input for unattended execution. This preview requires an authorized CLI user session.\n\nDefaults: preceding hour, 20 records. Maximum: seven-day window within thirty days, 1000 records. Relative times use the server time from the app scope response before the search.",
+      "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %> --client-id APP_ID --type webhook --since 30m",
+        "<%= config.bin %> <%= command.id %> --type function --json --no-input"
+      ],
+      "flags": {
+        "auth-alias": {
+          "description": "Alias of the Shopify account to use for authentication.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "auth-alias",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "App client ID; takes precedence over local app configuration.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
+        "json-schema": {
+          "allowNo": false,
+          "description": "Print the command's JSON schemas.",
+          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
+          "name": "json-schema",
+          "type": "boolean"
+        },
+        "limit": {
+          "default": 20,
+          "description": "Maximum records, from 1 through 1000; does not mean newest N.",
+          "env": "SHOPIFY_FLAG_LIMIT",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "limit",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "no-input": {
+          "allowNo": false,
+          "description": "Disable interactive prompts and browser authentication.",
+          "env": "SHOPIFY_FLAG_NO_INPUT",
+          "name": "no-input",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "Path to your app directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "type": "option"
+        },
+        "since": {
+          "default": "1h",
+          "description": "Inclusive start: positive duration (s/m/h/d) or RFC 3339 timestamp.",
+          "env": "SHOPIFY_FLAG_SINCE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "since",
+          "type": "option"
+        },
+        "type": {
+          "description": "Event type: webhook, function, graphql, or rest. Repeat to include multiple types; defaults to all.",
+          "env": "SHOPIFY_FLAG_TYPE",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "name": "type",
+          "type": "option"
+        },
+        "until": {
+          "description": "Exclusive RFC 3339 end; defaults to server time from the app scope response.",
+          "env": "SHOPIFY_FLAG_UNTIL",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "until",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "app:logs-next",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Retrieve a bounded historical result of app logs."
+    },
     "app:logs:sources": {
       "aliases": [
       ],

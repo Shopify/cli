@@ -71,6 +71,10 @@ Preserve JSONL, dotenv, TOML, GraphQL SDL, Function runner output, Speedscope, s
 deployment-log file in their native formats. Name and document each exception and its schema or format version.
 An API source alone does not make a CLI-owned wrapper exempt from these conventions.
 
+Historical app logs (`app logs-next`) preserve event timestamps and exact query-window bounds as RFC 3339 strings,
+including offsets and up to nine fractional digits. Truncating these values would lose log precision or misstate the
+search boundaries. The `HistoricalAppLogs` schema documents this exception.
+
 ### Outcomes, errors, and files
 
 Commands that can skip, cancel, or partly complete expose `status`: `success`, `partial`, `skipped`, or `cancelled`.
