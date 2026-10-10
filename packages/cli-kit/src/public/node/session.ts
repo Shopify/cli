@@ -24,6 +24,7 @@ import {
   setLastSeenUserIdAfterAuth,
 } from '../../private/node/session.js'
 import {isThemeAccessSession} from '../../private/node/api/rest.js'
+import {resolvePermanentStoreFqdn} from '../../private/node/session/permanent-store-domain.js'
 
 /**
  * Session Object to access the Admin API, includes the token and the store FQDN.
@@ -275,6 +276,10 @@ ${outputToken.json(scopes)}
  * If a password is provided, that token will be used against Theme Access API.
  * Otherwise, it will ensure that the user is authenticated with the Admin API.
  *
+ * Theme Access passwords only work with the store's permanent `.myshopify.com` domain, so when the password is a
+ * Theme Access password the returned session uses the permanent domain of `store`, even if `store` is another of the
+ * store's domains.
+ *
  * @param store - Store fqdn to request auth for.
  * @param password - Password generated from Theme Access app.
  * @param scopes - Optional array of extra scopes to authenticate with.
@@ -292,9 +297,10 @@ ${outputToken.json(scopes)}
 `)
   if (password) {
     const session = {token: password, storeFqdn: store}
-    const authMethod = isThemeAccessSession(session) ? 'theme_access_token' : 'custom_app_token'
-    setLastSeenAuthMethod(authMethod)
+    const themeAccess = isThemeAccessSession(session)
+    setLastSeenAuthMethod(themeAccess ? 'theme_access_token' : 'custom_app_token')
     setLastSeenUserIdAfterAuth(nonRandomUUID(password))
+    if (themeAccess) session.storeFqdn = await resolvePermanentStoreFqdn(store)
     return session
   }
   return ensureAuthenticatedAdmin(store, scopes, options)

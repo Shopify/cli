@@ -186,6 +186,23 @@ export async function fetchApiVersions(
         outputContent`If you're not the owner, create a dev store staff account for yourself`,
       )
     }
+    if (error instanceof ClientError && error.response.status === 401 && isThemeAccessSession(session)) {
+      throw new AbortError(
+        `The Theme Access password was rejected for the store ${session.storeFqdn}.`,
+        'Theme Access passwords only work on the store they were generated for, and only with its permanent .myshopify.com domain.',
+        [
+          'Check that the password was created in the Theme Access app on this store and has not been deleted.',
+          [
+            'Pass the permanent domain to',
+            {command: '--store'},
+            {char: '.'},
+            'It is the .myshopify.com domain listed in the Shopify admin under',
+            {subdued: 'Settings > Domains'},
+            {char: '.'},
+          ],
+        ],
+      )
+    }
     if (error instanceof ClientError && (error.response.status === 401 || error.response.status === 404)) {
       throw new AbortError(
         `Error connecting to your store ${session.storeFqdn}: ${error.message} ${error.response.status} ${error.response.data}`,
