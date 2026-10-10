@@ -1,6 +1,6 @@
 import {EMBEDDED_CHECK_SOURCES} from './embedded.js'
-import {redactText} from '../rules/secret-rules.js'
-import {RULE_CATALOG} from '../rules/catalog.js'
+import {redactScope, redactText} from '../rules/secret-rules.js'
+import {RULE_CATALOG, type RuleCatalogEntry} from '../rules/catalog.js'
 import {
   AGENT_CHECKS_SCHEMA_VERSION,
   ENGINE_NAME,
@@ -13,9 +13,9 @@ import type {
   AgentCheckStatus,
   AgentFindingEvidence,
   AgentFindingsDocument,
+  AppSecurityScope,
   CheckPrecedence,
   CheckSnapshot,
-  ProjectState,
   Severity,
   StoredCheck,
   StoredFinding,
@@ -112,29 +112,35 @@ export interface AgentChecks {
     version: string
   }
   generated_at: string
-  checks: Pick<Check, 'id' | 'version' | 'severity' | 'prompt'>[]
+  checks: (Pick<Check, 'id' | 'version' | 'severity' | 'prompt'> & {docs_url: string})[]
   instructions: string
 }
 
 const INSTRUCTIONS = `Each check below is a prompt for you to run against this
 codebase. For each one, explore the repository, find real instances of what
-it describes, and report them with evidence.
+it describes, and report them with evidence. Each check's docs_url is its
+page on shopify.dev: link it when you explain a finding to the user.
 
 Write ONE findings document that covers every check you ran. Copy each check's
 \`version\` from this file into \`check_version\`:
 
   { "schema_version": ${RECORD_INPUT_SCHEMA_VERSION},
+    "scope": { "include_dirs": [], "excludes": [], "no_git_ignore": false },
     "checks_executed": [ { "check_id": "...", "check_version": N, "status": "executed" } ],
     "findings": [ { "check_id": "...", "check_version": N,
       "file": "app/routes/example.ts", "line": 1, "message": "...",
       "evidence": [ { "file": "app/routes/example.ts", "line": 1, "quote": "..." } ] } ] }
 
+"scope" is the flags the check run used: copy it unchanged from the instructions you were given.
+
 Optional finding fields: "snippet", "confidence" (high, medium, or low),
 "reasoning", and "suppression": { "justification": "..." }.
 
-Pipe the whole document on stdin to: shopify app security record
-Each run replaces the previously recorded findings. If record rejects the
-document, fix every reported error and pipe the full document again.
+Pipe the whole document on stdin to \`shopify app security record\`, using the
+exact command from the instructions you were given: its flags select where the
+findings are recorded. Each run replaces the previously recorded findings. If
+record rejects the document, fix every reported error and pipe the full
+document again.
 
 Rules:
 - Only report a finding when you can prove a concrete trust-boundary violation by reading the code.
@@ -146,8 +152,16 @@ Rules:
 - Record unresolved and not_applicable checks with a reason: { "code": "...", "message": "..." }.
 - A not_applicable check can't have findings.
 - An unsupported or unresolved check didn't pass. Never describe it as passing or complete.
-- If you can't prove exploitability or affected authority, record the check as unresolved instead of reporting a finding.
+- If you can't prove exploitability or affected authority for a specific candidate, don't report a finding: record the check as unresolved and name the candidate in the reason.
+- If you investigated and the code establishes the boundary the check asks about, record the check as executed. An unprovable hypothetical is not a reason to leave a check unresolved.
 - Don't report things you couldn't confirm — uncertainty is not a finding.`
+
+/** registry/index.ts guarantees every agent check has a catalog entry ("Orphan agent implementation"). */
+const catalogEntry = (checkId: string): RuleCatalogEntry => {
+  const entry = RULE_CATALOG.find((candidate) => candidate.id === checkId)
+  if (!entry) throw new Error(`Agent check has no catalog entry: ${checkId}`)
+  return entry
+}
 
 /**
  * Build agent-checks.json — the prompts for the developer's agent.
@@ -161,6 +175,7 @@ export const buildAgentChecks = (engineVersion: string): AgentChecks => ({
     id: check.id,
     version: check.version,
     severity: check.severity,
+    docs_url: catalogEntry(check.id).docsUrl,
     prompt: check.prompt,
   })),
   instructions: INSTRUCTIONS,
@@ -208,20 +223,13 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isPositiveInteger = (value: unknown): value is number => Number.isInteger(value) && (value as number) >= 1
 
 /**
- * Reject paths that escape the app root or are absolute.
- *
- * The findings document is developer-controlled input that ends up verbatim in
- * agent-findings.json. A path like `../../../etc/passwd` is never a legitimate
- * finding location.
+ * Reject absolute paths. A path may start with `../`: a scan directory can sit outside the app directory, and
+ * finding locations are relative to the app directory.
  */
 const isSafeRelativePath = (path: string): boolean => {
   if (!path) return false
-  // Reject absolute POSIX and Windows paths.
   if (path.startsWith('/') || /^[a-zA-Z]:[\\/]/.test(path)) return false
-  if (path.includes('\0')) return false
-  // Normalise separators and reject any traversal segment.
-  const segments = path.replace(/\\/g, '/').split('/')
-  return !segments.includes('..')
+  return !path.includes('\0')
 }
 
 /**
@@ -241,8 +249,7 @@ export const validateFinding = (value: unknown): string | undefined => {
     return 'finding requires at least one evidence citation'
   if (finding.evidence.length > MAX_EVIDENCE) return `finding exceeds ${MAX_EVIDENCE} evidence citations`
   if (finding.file.length > MAX_PATH_LENGTH) return `file path exceeds ${MAX_PATH_LENGTH} characters`
-  if (!isSafeRelativePath(finding.file))
-    return `unsafe file path (must be relative and inside the app): ${finding.file}`
+  if (!isSafeRelativePath(finding.file)) return `unsafe file path (must be relative): ${finding.file}`
   if (finding.message.length > MAX_MESSAGE_LENGTH) return `message exceeds ${MAX_MESSAGE_LENGTH} characters`
   if (finding.snippet !== undefined && typeof finding.snippet !== 'string') return 'snippet must be a string'
   if (typeof finding.snippet === 'string' && finding.snippet.length > MAX_SNIPPET_LENGTH)
@@ -436,18 +443,29 @@ function groupFindingsByCheck(
 
 /** Check metadata as it stands in the catalog and frontmatter right now. */
 function snapshotCheck(check: Check): CheckSnapshot {
-  // registry/index.ts guarantees every agent check has a catalog entry ("Orphan agent implementation").
-  const entry = RULE_CATALOG.find((catalogEntry) => catalogEntry.id === check.id)
-  if (!entry) throw new Error(`Agent check has no catalog entry: ${check.id}`)
+  const entry = catalogEntry(check.id)
   return {
     title: entry.title,
     severity: check.severity,
     description: entry.description,
     ...(entry.guide ? {guide: entry.guide} : {}),
+    docs_url: entry.docsUrl,
     current_version: check.version,
     // Always written, even for the default, so the stored file describes itself without the current catalog.
     precedence: check.precedence,
   }
+}
+
+/** The scope block, rebuilt from only its known keys. A problem is reported as `scope: ...` with the first thing wrong. */
+const readScope = (value: unknown): {scope: AppSecurityScope} | {error: string} => {
+  if (!isRecord(value)) return {error: 'scope is required and must be an object'}
+  const {include_dirs: includeDirs, excludes, no_git_ignore: noGitIgnore} = value
+  const isStringArray = (candidate: unknown): candidate is string[] =>
+    Array.isArray(candidate) && candidate.every((item) => typeof item === 'string')
+  if (!isStringArray(includeDirs)) return {error: 'scope.include_dirs must be an array of strings'}
+  if (!isStringArray(excludes)) return {error: 'scope.excludes must be an array of strings'}
+  if (typeof noGitIgnore !== 'boolean') return {error: 'scope.no_git_ignore must be a boolean'}
+  return {scope: redactScope({include_dirs: includeDirs, excludes, no_git_ignore: noGitIgnore})}
 }
 
 const optionalArray = (document: Record<string, unknown>, key: string, errors: string[]): unknown[] => {
@@ -460,7 +478,6 @@ const optionalArray = (document: Record<string, unknown>, key: string, errors: s
 
 export interface RecordAgentFindingsOptions {
   engineVersion: string
-  project: ProjectState
   /** Defaults to now. */
   generatedAt?: string
 }
@@ -480,6 +497,8 @@ export function recordAgentFindings(document: unknown, options: RecordAgentFindi
   const errors: string[] = []
   if (document.schema_version !== RECORD_INPUT_SCHEMA_VERSION)
     errors.push(`schema_version must be ${RECORD_INPUT_SCHEMA_VERSION}`)
+  const scope = readScope(document.scope)
+  if ('error' in scope) errors.push(scope.error)
   const claims = optionalArray(document, 'checks_executed', errors)
   const rawFindings = optionalArray(document, 'findings', errors)
 
@@ -508,8 +527,8 @@ export function recordAgentFindings(document: unknown, options: RecordAgentFindi
   const grouped = groupFindingsByCheck(executed.reports, findings)
   errors.push(...grouped.errors)
   // Errors quote agent input (check IDs, paths, line values), which can hold secrets. They're shown in the
-  // terminal and in --json output, so they're redacted like everything that's stored.
-  if (errors.length > 0) return {ok: false, errors: errors.map(redactText)}
+  // terminal, so they're redacted like everything that's stored.
+  if (errors.length > 0 || 'error' in scope) return {ok: false, errors: errors.map(redactText)}
 
   const storedChecks = grouped.groups
     .map(
@@ -531,7 +550,7 @@ export function recordAgentFindings(document: unknown, options: RecordAgentFindi
       source: 'agent',
       engine: {name: ENGINE_NAME, version: options.engineVersion},
       generated_at: options.generatedAt ?? new Date().toISOString(),
-      project: options.project,
+      scope: scope.scope,
       checks: storedChecks,
     },
   }

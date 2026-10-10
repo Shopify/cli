@@ -4,8 +4,17 @@ import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-sp
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {describe, expect, test, vi} from 'vitest'
 import {context as esContext} from 'esbuild'
-import {glob, inTemporaryDirectory, mkdir, touchFileSync, readFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {
+  glob,
+  inTemporaryDirectory,
+  mkdir,
+  touchFileSync,
+  readFile,
+  fileExistsSync,
+  writeFile,
+} from '@shopify/cli-kit/node/fs'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
+import {runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
 
 vi.mock('esbuild', async () => {
   const esbuild: any = await vi.importActual('esbuild')
@@ -24,6 +33,33 @@ vi.mock('@luckycatfactory/esbuild-graphql-loader', () => ({
 }))
 
 describe('bundleExtension()', () => {
+  test('JSON compiler failures use the supplied stream with native logging disabled', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeFile(joinPath(directory, 'invalid.tsx'), 'export const broken = ;')
+      const actualEsbuild = await vi.importActual<typeof import('esbuild')>('esbuild')
+      vi.mocked(esContext).mockImplementation((options) => {
+        expect(options.logLevel).toBe('silent')
+        return actualEsbuild.context(options)
+      })
+      const stdout = {write: vi.fn()}
+      const stderr = {write: vi.fn()}
+      await expect(
+        runWithCommandEvents({outputMode: 'json'}, () =>
+          bundleExtension({
+            env: {},
+            outputPath: joinPath(directory, 'dist/extension.js'),
+            minify: true,
+            environment: 'production',
+            stdin: {contents: "import './invalid.tsx';", resolveDir: directory, loader: 'tsx'},
+            stdout: stdout as unknown as NodeJS.WriteStream,
+            stderr: stderr as unknown as NodeJS.WriteStream,
+          }),
+        ),
+      ).rejects.toThrow('Unexpected ";"')
+      expect(stderr.write).toHaveBeenCalledWith(expect.stringContaining('Unexpected ";"'))
+    })
+  })
+
   test('invokes ESBuild with the right options and forwards the logs', async () => {
     // Given
     const extension = await testUIExtension()

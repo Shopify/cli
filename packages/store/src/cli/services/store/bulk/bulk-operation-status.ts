@@ -1,10 +1,10 @@
-import {bulkOperationStatusJsonOutputSchema, type BulkOperationStatusResult} from './types.js'
 import {
   BULK_OPERATIONS_MIN_API_VERSION,
   fetchBulkOperationById,
   fetchRecentBulkOperations,
   resolveApiVersion,
 } from '@shopify/cli-kit/node/api/bulk-operations'
+import type {BulkOperationStatusResult} from './types.js'
 
 export async function getBulkOperationStatus(
   options: Pick<Parameters<typeof fetchBulkOperationById>[0], 'adminSession' | 'operationId'>,
@@ -14,12 +14,12 @@ export async function getBulkOperationStatus(
     minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
   })
   const operation = await fetchBulkOperationById({...options, version})
-  return bulkOperationStatusJsonOutputSchema.validate({
+  return {
     store: options.adminSession.storeFqdn,
     apiVersion: version,
     operationId: options.operationId,
     operation: operation ?? null,
-  })
+  }
 }
 
 export async function listBulkOperations(
@@ -29,10 +29,10 @@ export async function listBulkOperations(
     adminSession: options.adminSession,
     minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
   })
-  const operations = await fetchRecentBulkOperations({...options, version})
-  return bulkOperationStatusJsonOutputSchema.validate({
+  const operations = await fetchRecentBulkOperations({...options, version, first: 100})
+  return {
     store: options.adminSession.storeFqdn,
     apiVersion: version,
     operations,
-  })
+  }
 }

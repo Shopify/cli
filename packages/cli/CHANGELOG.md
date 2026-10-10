@@ -1,5 +1,33 @@
 # @shopify/cli
 
+## 4.9.0
+
+### Minor Changes
+
+- 7ac4962: Add typed JSON output to `auth login`.
+- de2c568: Add typed JSON output to `auth logout`.
+- 49a6ebe: Add typed JSON output to `config autoupgrade off`.
+- a9308dd: Add typed JSON output to `config autoupgrade on`.
+- 4ef30a0: Add typed JSON output to `config autoupgrade status`.
+- 5b4e82f: Add json flag and output schema for all store commands
+- 4986275: Add `--language` to `doc fetch` to filter shopify.dev Markdown code examples to a single language.
+- 3385c63: Move `app import-extensions` and `app import-custom-data-definitions` under the new `app import` topic; the old paths still work but are deprecated
+- 83fe8a2: Emit machine-readable fatal errors when JSON output is active
+- b5d1f33: Add `--no-input` to commands with global flags to disable interactive prompts and browser authentication.
+- 02fbf6e: Show JSON Schema in command help and use `--json-schema` to print result, error, and event schemas.
+- ba84763: Add `shopify app security` commands to check an app's source code for Shopify-specific security issues. `check` runs deterministic rules and generates checks for your coding agent to investigate, `record` saves the agent's findings, `review` shows the combined results, `instructions` prints the workflow for a coding agent, and `clean` removes local results.
+- f88ee51: Add JSON output to `version`, `search` and `help` commands.
+- 6d56ae6: Show app subscription migration commands in help and command discovery.
+
+### Patch Changes
+
+- ebd7430: Refer to `shopify app security` results and instructions as an app security check instead of the title-cased "App Security"
+- dddec36: Fix loading bars remaining on screen when a task prints log messages.
+- ab16257: Write interactive prompts to stderr by default to keep stdout clear for command results.
+- 22f4455: Require --allow-live for theme dev on a live theme when prompting is unavailable.
+- c7af682: Update cli-hydrogen 13.0.5
+- 667c628: Verify the installed version after `shopify upgrade` and fail instead of reporting a false success when the upgrade didn't complete
+
 ## 4.8.0
 
 ### Minor Changes

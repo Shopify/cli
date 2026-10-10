@@ -1,9 +1,9 @@
 import {appLogSourcesJsonOutputSchema, type AppLogSourcesResult} from './types.js'
 import {formatSection, outputResult} from '@shopify/cli-kit/node/output'
 
-export function renderAppLogSourcesResult(result: AppLogSourcesResult, format: 'json' | 'text'): void {
+export function renderAppLogSourcesResult(result: AppLogSourcesResult['sources'], format: 'json' | 'text'): void {
   if (format === 'json') {
-    outputResult(appLogSourcesJsonOutputSchema.encode(result))
+    outputResult(appLogSourcesJsonOutputSchema.encode({sources: result}))
     return
   }
 

@@ -25,6 +25,14 @@ export default class Deploy extends AppLinkedCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
+    // Unlike the shared app flag, deploy accepts --client-id together with --config:
+    // the configuration selected by --config is deployed to the app identified by --client-id.
+    'client-id': Flags.string({
+      hidden: false,
+      description:
+        'The Client ID of your app. Use with --config to deploy that configuration to a different app than the one it is linked to.',
+      env: 'SHOPIFY_FLAG_CLIENT_ID',
+    }),
     'allow-updates': Flags.boolean({
       hidden: false,
       description:

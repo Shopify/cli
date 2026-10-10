@@ -1,33 +1,7 @@
-import {createMigrationOperation, type MigrationApiInput, type MigrationUserError} from './partners-api.js'
+import {createMigrationOperation, type MigrationApiInput} from './partners-api.js'
 import {deriveBatchIdempotencyKey, generateInvocationId} from './plan/idempotency.js'
-import type {
-  MigrationOperation,
-  MigrationPlan,
-  PlannedMigrationRow,
-  ScheduledMigrationRow,
-} from '../../models/subscription-migrations.js'
-
-export interface SubmittedMigrationOperation {
-  batchIndex: number
-  batchPayloadDigest: string
-  operation: MigrationOperation
-}
-
-export interface MigrationSubmission {
-  clientId: string
-  action: MigrationPlan['action']
-  inputDigest: string
-  total: number
-  operations: SubmittedMigrationOperation[]
-}
-
-export type MigrationSubmissionFailure =
-  | {type: 'submission'; batchIndex: number; userErrors: MigrationUserError[]}
-  | {type: 'operations'; operationIds: string[]}
-
-export type MigrationSubmissionResult =
-  | {status: 'success'; submission: MigrationSubmission}
-  | {status: 'failed'; submission: MigrationSubmission; failure: MigrationSubmissionFailure}
+import type {MigrationSubmission, MigrationSubmissionResult} from './types.js'
+import type {MigrationPlan, PlannedMigrationRow, ScheduledMigrationRow} from '../../models/subscription-migrations.js'
 
 export class MigrationSubmissionProtocolError extends Error {
   readonly batchIndex: number
@@ -51,7 +25,7 @@ export async function submitMigrationPlan({
   plan,
   invocationId = generateInvocationId(),
   createOperation = createMigrationOperation,
-}: SubmitMigrationPlanOptions): Promise<MigrationSubmissionResult> {
+}: SubmitMigrationPlanOptions): Promise<Exclude<MigrationSubmissionResult, {status: 'cancelled'}>> {
   const submission: MigrationSubmission = {
     clientId,
     action: plan.action,
@@ -67,13 +41,27 @@ export async function submitMigrationPlan({
       invocationId,
       canonicalBatchPayload: batch.canonicalPayload,
     })
-    // Each accepted batch must be recorded before the next request can fail.
-    // eslint-disable-next-line no-await-in-loop
-    const payload = await createOperation({
-      clientId,
-      idempotencyKey,
-      migrations: batch.rows.map(toMigrationApiInput),
-    })
+    // Keep accepted work when a later request fails so callers can still inspect and cancel it.
+    let payload: Awaited<ReturnType<typeof createOperation>>
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      payload = await createOperation({
+        clientId,
+        idempotencyKey,
+        migrations: batch.rows.map(toMigrationApiInput),
+      })
+    } catch (error) {
+      if (submission.operations.length === 0) throw error
+      return {
+        status: 'failed',
+        submission,
+        failure: {
+          type: 'submission',
+          batchIndex: batch.index,
+          userErrors: [{message: error instanceof Error ? error.message : 'Migration request failed.', field: null}],
+        },
+      }
+    }
 
     if (payload.operation) {
       submission.operations.push({

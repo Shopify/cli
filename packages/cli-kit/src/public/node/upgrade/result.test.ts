@@ -1,0 +1,79 @@
+import {presentUpgradeResult} from './result.js'
+import {upgradeJsonOutputSchema, type UpgradeResult} from './types.js'
+import {mockAndCaptureOutput} from '../testing/output.js'
+import {afterEach, describe, expect, test} from 'vitest'
+// eslint-disable-next-line no-restricted-imports -- Verify native filesystem paths in JSON output.
+import {resolve} from 'node:path'
+
+afterEach(() => mockAndCaptureOutput().clear())
+
+const globalResult: UpgradeResult = {
+  status: 'success',
+  changed: true,
+  scope: 'global',
+  previousVersion: '4.8.0',
+  version: '4.9.0',
+  packageManager: 'npm',
+}
+
+const localResult: UpgradeResult = {
+  status: 'success',
+  changed: null,
+  scope: 'local',
+  directory: resolve('/project'),
+  previousVersion: '4.8.0',
+  availableVersion: null,
+  packages: ['@shopify/cli'],
+}
+
+describe('upgrade result contract', () => {
+  test('encodes local project directories with native filesystem separators', () => {
+    presentUpgradeResult({...localResult, directory: '/project/nested/..'}, 'json')
+    expect(JSON.parse(mockAndCaptureOutput().output()).directory).toBe(resolve('/project'))
+  })
+
+  test.each<UpgradeResult>([
+    globalResult,
+    localResult,
+    {...localResult, availableVersion: '4.9.0'},
+    {status: 'skipped', scope: 'global', reason: 'development'},
+    {status: 'skipped', scope: 'local', reason: 'local-autoupgrade'},
+    {status: 'skipped', scope: 'local', reason: 'dependency-not-found'},
+  ])('encodes $status', (result) => {
+    presentUpgradeResult(result, 'json')
+    expect(JSON.parse(mockAndCaptureOutput().output())).toEqual(result)
+  })
+
+  test.each([
+    {...globalResult, version: undefined},
+    {...globalResult, version: 42},
+    {...globalResult, scope: 'local'},
+    {...localResult, packages: [42]},
+    {...localResult, availableVersion: false},
+    {...localResult, availableVersion: undefined},
+    {...localResult, directory: 'relative/project'},
+    {...localResult, changed: false},
+    {...globalResult, internalValue: true},
+    {...globalResult, packageManager: 'unknown'},
+    {...globalResult, version: ''},
+    {...globalResult, changed: undefined},
+    {status: 'skipped', scope: 'local', reason: 'unknown'},
+  ])('rejects invalid result %j', (result) => {
+    expect(() => upgradeJsonOutputSchema.validate(result)).toThrow()
+  })
+
+  test('preserves the global success banner', () => {
+    presentUpgradeResult(globalResult, 'text')
+    expect(mockAndCaptureOutput().info()).toContain('Shopify CLI upgraded.')
+    expect(mockAndCaptureOutput().info()).toContain("You're now on version 4.9.0.")
+  })
+
+  test.each<UpgradeResult>([localResult, {status: 'skipped', scope: 'local', reason: 'development'}])(
+    'does not add terminal output for $status',
+    (result) => {
+      presentUpgradeResult(result, 'text')
+      expect(mockAndCaptureOutput().output()).toBe('')
+      expect(mockAndCaptureOutput().info()).toBe('')
+    },
+  )
+})

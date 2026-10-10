@@ -20,6 +20,7 @@ import {ApplicationToken, IdentityToken, Sessions} from './session/schema.js'
 import {validateSession} from './session/validate.js'
 import {applicationId} from './session/identity.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
+import {automationTokenVariable, automationTokenVariablesProblem} from './session/automation-token.js'
 import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
 import * as fqdnModule from '../../public/node/context/fqdn.js'
 import {themeToken} from '../../public/node/context/local.js'
@@ -113,6 +114,7 @@ vi.mock('./session/exchange')
 vi.mock('./session/scopes')
 vi.mock('./session/store')
 vi.mock('./session/validate')
+vi.mock('./session/automation-token')
 vi.mock('../../public/node/api/partners.js')
 vi.mock('../../public/node/api/business-platform.js')
 vi.mock('../../store')
@@ -150,6 +152,37 @@ beforeEach(() => {
     currentUserAccount: {
       email: 'user@example.com',
     },
+  })
+})
+
+describe('ensureAuthenticated with automation token variables', () => {
+  test('fails before logging in when the automation token variables are invalid', async () => {
+    // Given
+    vi.mocked(automationTokenVariablesProblem).mockReturnValue({
+      message: 'SHOPIFY_APP_AUTOMATION_TOKEN is set but empty.',
+      tryMessage: 'Set it to an automation token, or unset it to log in with your Shopify account.',
+    })
+
+    // When
+    const got = ensureAuthenticated(defaultApplications)
+
+    // Then
+    await expect(got).rejects.toThrow('SHOPIFY_APP_AUTOMATION_TOKEN is set but empty.')
+    expect(fetchSessions).not.toHaveBeenCalled()
+    expect(requestDeviceAuthorization).not.toHaveBeenCalled()
+  })
+
+  test('refuses to log in while the organization automation token is set', async () => {
+    // Given
+    vi.mocked(automationTokenVariable).mockReturnValue('SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN')
+
+    // When
+    const got = ensureAuthenticated(defaultApplications)
+
+    // Then
+    await expect(got).rejects.toThrow("This command can't use SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN.")
+    expect(fetchSessions).not.toHaveBeenCalled()
+    expect(requestDeviceAuthorization).not.toHaveBeenCalled()
   })
 })
 

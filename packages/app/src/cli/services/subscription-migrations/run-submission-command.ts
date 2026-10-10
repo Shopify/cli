@@ -1,8 +1,9 @@
 import {planMigrationInput} from './plan/plan-migration-input.js'
-import {submitMigrationPlan, type MigrationSubmission, type MigrationSubmissionResult} from './submit-migration-plan.js'
+import {submitMigrationPlan} from './submit-migration-plan.js'
 import {watchMigrationOperations} from './watch-operations.js'
-import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import type {MigrationSubmission, MigrationSubmissionResult} from './types.js'
 import type {
   MigrationAction,
   MigrationOperation,
@@ -26,7 +27,8 @@ export async function runSubmissionCommand(options: RunSubmissionCommandOptions)
     const confirmed = await renderConfirmationPrompt({
       message: `${options.action === 'schedule' ? 'Schedule' : 'Unschedule'} ${result.plan.rows.length} subscriptions?`,
     })
-    if (!confirmed) throw new AbortSilentError()
+    if (!confirmed)
+      return {status: 'cancelled', changed: false, action: options.action, reason: 'Confirmation declined.'}
   }
 
   const submissionResult = await submitMigrationPlan({

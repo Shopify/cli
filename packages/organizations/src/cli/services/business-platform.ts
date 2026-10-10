@@ -10,6 +10,8 @@ export function businessPlatformTokenRefreshHandler(
 ): UnauthorizedHandler {
   return {
     type: 'token_refresh',
-    handler: async () => ({token: await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt})}),
+    handler: async () => ({
+      token: await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt, allowAutomationToken: true}),
+    }),
   }
 }

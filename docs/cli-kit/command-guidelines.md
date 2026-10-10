@@ -46,6 +46,10 @@ shopify theme dev --theme-editor-sync --live-reload full-page
 
 Do not shorten them to `--sync` and `--reload`: those names remove context. They are not supported alternatives for this command.
 
+For changed dependent or defaulted flags, test omitted, explicit, default, valid, and invalid combinations through actual command parsing. A default value does not prove explicit presence; choose dependency declarations according to the intended behavior, not an “always `dependsOn`” rule.
+
+Command result, error, and output changes follow the existing [JSON contracts](../cli/json-output.md) and [error handling](../cli/error_handling.md).
+
 ### Aliases / shortcuts for flags
 
 Use a full name with two hyphens, such as `--store`. As a general rule, do not add a short alias. Add a single-letter alias only for a flag used frequently or repeatedly in daily interactive development.

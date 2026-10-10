@@ -14,13 +14,17 @@ import {
 } from './app-security-engine/tests/fixtures/findings-documents.js'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {unstyled} from '@shopify/cli-kit/node/output'
+import {cwd} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import type {AppSecurityBlockingLevel} from './app-security-api.js'
 import type {AgentFindingsDocument, DeterministicFindingsDocument} from './app-security-engine/index.js'
 
 const appRoot = '/tmp/review-app'
-const paths = appSecurityArtifactPaths(appRoot)
-const commands = resolveAppSecurityCommands(appRoot)
+const paths = appSecurityArtifactPaths(appRoot, 'shopify.app')
+const commands = resolveAppSecurityCommands(
+  {kind: 'config', appDirectory: appRoot, appConfigFilePath: `${appRoot}/shopify.app.toml`},
+  cwd(),
+)
 const checkCommand = formatAppSecurityCommand(commands.scan)
 // One hour after the agent file, two and a half after the deterministic one.
 const now = new Date('2026-09-01T12:30:00.000Z')
@@ -31,8 +35,8 @@ function presenterInput(
   sources: Sources,
   options: {checkIds?: string[]; blocking?: AppSecurityBlockingLevel; verbose?: boolean} = {},
 ): SecurityReviewPresenterInput {
-  const result = reviewAppSecurityResults(appSecurityResultsFor(appRoot, sources), {
-    appRoot,
+  const result = reviewAppSecurityResults(appSecurityResultsFor(appRoot, 'shopify.app', sources), {
+    resultsDirectory: paths.resultsDirectory,
     checkIds: options.checkIds ?? [],
     blocking: options.blocking ?? 'none',
   })
@@ -103,7 +107,7 @@ describe('buildSecurityReviewSummary', () => {
       const summary = buildSecurityReviewSummary(presenterInput(none))
 
       expect(summary.type).toBe('info')
-      expect(summary.headline).toBe('No App Security results to review.')
+      expect(summary.headline).toBe('No app security check results to review.')
     })
   })
 
@@ -258,15 +262,102 @@ describe('buildSecurityReviewSummary', () => {
     })
   })
 
+  describe('scope', () => {
+    const differentScope = {include_dirs: ['../backend'], excludes: ['**/generated'], no_git_ignore: true}
+    const scopedScan: DeterministicFindingsDocument = {
+      ...deterministicFindingsDocument,
+      coverage: {
+        ...deterministicFindingsDocument.coverage,
+        scope: differentScope,
+        scan_directories: [
+          {directory: '.', origin: 'app_directory'},
+          {directory: '../backend', origin: 'include_dir'},
+        ],
+      },
+    }
+    const note = 'Agent findings were recorded for a different scope than the latest scan.'
+
+    test('shows the scan directories, the scan scope and the scope the agent reported', () => {
+      const summary = buildSecurityReviewSummary(
+        presenterInput({deterministic: scopedScan, agent: {...agentFindingsDocument, scope: differentScope}}),
+      )
+
+      expect(summary.scopeLines).toEqual([
+        'Scan directories: ., ../backend',
+        'Scan scope: --include-dir ../backend --exclude **/generated --no-git-ignore',
+        'Scope reported by the agent: --include-dir ../backend --exclude **/generated --no-git-ignore',
+      ])
+    })
+
+    test('says none for a scope without flags and shows only the sources that exist', () => {
+      expect(buildSecurityReviewSummary(presenterInput(deterministicOnly)).scopeLines).toEqual([
+        'Scan directories: .',
+        'Scan scope: none',
+      ])
+      expect(buildSecurityReviewSummary(presenterInput(agentOnly)).scopeLines).toEqual([
+        'Scope reported by the agent: none',
+      ])
+      expect(buildSecurityReviewSummary(presenterInput(none)).scopeLines).toEqual([])
+    })
+
+    test('notes when the agent findings were recorded for a different scope than the latest scan', () => {
+      const summary = buildSecurityReviewSummary(
+        presenterInput({deterministic: scopedScan, agent: agentFindingsDocument}),
+      )
+
+      expect(summary.scopeNote).toBe(note)
+    })
+
+    test('has no note when the scopes match, or when only one source exists', () => {
+      const matching = {deterministic: scopedScan, agent: {...agentFindingsDocument, scope: differentScope}}
+
+      expect(buildSecurityReviewSummary(presenterInput(matching)).scopeNote).toBeUndefined()
+      expect(buildSecurityReviewSummary(presenterInput(both)).scopeNote).toBeUndefined()
+      expect(buildSecurityReviewSummary(presenterInput(deterministicOnly)).scopeNote).toBeUndefined()
+      expect(buildSecurityReviewSummary(presenterInput(agentOnly)).scopeNote).toBeUndefined()
+    })
+
+    test('treats the same values in a different order as a different scope', () => {
+      const reordered = {...differentScope, excludes: ['b', 'a']}
+      const sources = {
+        deterministic: {
+          ...scopedScan,
+          coverage: {...scopedScan.coverage, scope: {...differentScope, excludes: ['a', 'b']}},
+        },
+        agent: {...agentFindingsDocument, scope: reordered},
+      }
+
+      expect(buildSecurityReviewSummary(presenterInput(sources)).scopeNote).toBe(note)
+    })
+
+    test('renders the scopes, and the note only when they differ', () => {
+      const output = mockAndCaptureOutput()
+      output.clear()
+
+      renderSecurityReview(presenterInput({deterministic: scopedScan, agent: agentFindingsDocument}))
+
+      const different = unstyled(output.error())
+      expect(different).toContain('Scan directories: ., ../backend')
+      expect(different).toContain('Scope reported by the agent: none')
+      expect(different).toContain(note)
+      output.clear()
+
+      renderSecurityReview(presenterInput(both))
+
+      expect(unstyled(output.error())).not.toContain(note)
+      output.clear()
+    })
+  })
+
   describe('results files', () => {
-    test('names the directory once and shows age, commit state and engine version per file', () => {
+    test('names the results directory once and shows age and engine version per file', () => {
       const summary = buildSecurityReviewSummary(presenterInput(both))
 
       expect(summary.resultsFiles).toEqual({
-        directory: paths.artifactDirectory,
+        directory: paths.resultsDirectory,
         rows: [
-          {name: 'deterministic-findings.json', updated: '2 hours ago', commit: 'aaaaaaa', engine: '3.99.0'},
-          {name: 'agent-findings.json', updated: '1 hour ago', commit: 'aaaaaaa (uncommitted)', engine: '3.99.0'},
+          {name: 'deterministic-findings.json', updated: '2 hours ago', engine: '3.99.0'},
+          {name: 'agent-findings.json', updated: '1 hour ago', engine: '3.99.0'},
         ],
       })
     })
@@ -285,17 +376,6 @@ describe('buildSecurityReviewSummary', () => {
         {name: 'agent-findings.json', updated: 'not found'},
       ])
     })
-
-    test('shows an unknown commit', () => {
-      const deterministic: DeterministicFindingsDocument = {
-        ...deterministicFindingsDocument,
-        project: {commit: null, dirty: null},
-      }
-
-      const summary = buildSecurityReviewSummary(presenterInput({deterministic, agent: null}))
-
-      expect(summary.resultsFiles.rows[0]).toMatchObject({commit: 'unknown'})
-    })
   })
 
   describe('next steps', () => {
@@ -307,9 +387,8 @@ describe('buildSecurityReviewSummary', () => {
         [
           'Fix the issues, then run',
           {command: checkCommand},
-          'again. Your coding agent can run it too, which also updates',
-          {filePath: 'agent-findings.json'},
-          {char: '.'},
+          'again.',
+          'To refresh agent findings, have your agent run the command and record its findings.',
         ],
       ])
     })
@@ -328,17 +407,11 @@ describe('buildSecurityReviewSummary', () => {
       const summary = buildSecurityReviewSummary(presenterInput(staleAgent))
 
       expect(summary.nextSteps).toEqual([
-        [
-          'Fix the issues, then run',
-          {command: checkCommand},
-          'again. Your coding agent can run it too, which also updates',
-          {filePath: 'agent-findings.json'},
-          {char: '.'},
-        ],
+        ['Fix the issues, then run', {command: checkCommand}, 'again.'],
         [
           'Agent results are older than the deterministic results. Have your coding agent run',
           {command: checkCommand},
-          'to refresh them.',
+          'and record its findings again to refresh them.',
         ],
       ])
     })
@@ -349,11 +422,12 @@ describe('buildSecurityReviewSummary', () => {
       expect(summary.nextSteps).toEqual([expect.arrayContaining(['Fix the issues, then run'])])
     })
 
-    test('offers fixing without a deeper review when the deterministic file alone has findings', () => {
+    test('offers fixing and a deeper review when the deterministic file alone has findings', () => {
       const summary = buildSecurityReviewSummary(presenterInput(deterministicOnly))
 
-      expect(summary.nextSteps?.map((step) => (Array.isArray(step) ? step[0] : step))).toEqual([
-        'Fix the issues, then run',
+      expect(summary.nextSteps).toEqual([
+        ['Fix the issues, then run', {command: checkCommand}, 'again.'],
+        'For a deeper review, have your agent run the same command and record its findings.',
       ])
     })
 
@@ -528,6 +602,27 @@ describe('buildSecurityReviewAlerts', () => {
         ],
       },
     ])
+  })
+
+  test("links the check's docs page from its box", () => {
+    const docsUrl = 'https://shopify.dev/docs/apps/build/security/app-security-checks/eol-api-version'
+    const deterministic = {
+      ...deterministicFindingsDocument,
+      checks: deterministicFindingsDocument.checks.map((check) =>
+        check.id === 'EOL_API_VERSION' ? {...check, snapshot: {...check.snapshot, docs_url: docsUrl}} : check,
+      ),
+    }
+    const [alert] = buildSecurityReviewAlerts(
+      presenterInput({deterministic, agent: null}, {checkIds: ['EOL_API_VERSION']}),
+    )
+
+    expect(alert!.options.link).toEqual({label: 'EOL_API_VERSION on shopify.dev', url: docsUrl})
+  })
+
+  test('leaves out the docs link when the results file predates check docs pages', () => {
+    const [alert] = buildSecurityReviewAlerts(presenterInput(deterministicOnly, {checkIds: ['EOL_API_VERSION']}))
+
+    expect(alert!.options.link).toBeUndefined()
   })
 
   test('truncates long reasoning to three lines unless verbose', () => {
@@ -751,11 +846,12 @@ describe('buildSecurityReviewAlerts', () => {
       undefined,
       'Checks with findings',
       undefined,
-      `Results files in ${paths.artifactDirectory}`,
+      undefined,
+      `Results files in ${paths.resultsDirectory}`,
       'Blocking',
     ])
     expect(summary.options.customSections![0]!.body).toEqual({subdued: 'Showing 1 of 6 checks (--check-id).'})
-    expect(summary.options.customSections![4]!.body).toBe('1 check at or above low (--blocking low).')
+    expect(summary.options.customSections![5]!.body).toBe('1 check at or above low (--blocking low).')
   })
 
   test('puts the stale line after Other checks and before Deterministic coverage', () => {
@@ -767,13 +863,15 @@ describe('buildSecurityReviewAlerts', () => {
       'Other checks',
       undefined,
       undefined,
-      `Results files in ${paths.artifactDirectory}`,
+      undefined,
+      `Results files in ${paths.resultsDirectory}`,
       'Next steps',
     ])
     expect(sections[2]!.body).toBe(
       '1 check shows both sources because the agent results are older than the deterministic results.',
     )
     expect(sections[3]!.body).toEqual({subdued: expect.stringContaining('Deterministic coverage')})
+    expect(sections[4]!.body).toEqual({subdued: expect.stringContaining('Scan directories: .')})
   })
 })
 
@@ -793,12 +891,12 @@ describe('renderSecurityReview', () => {
     expect(summaryBox).toContain('Low   EOL_API_VERSION           1 deterministic')
     expect(summaryBox).toContain('1 passed · 1 not applicable · 1 unresolved')
     expect(summaryBox).toContain('Deterministic coverage: 12 files scanned, 1 skipped (1 too large).')
-    expect(summaryBox).toContain(`Results files in ${paths.artifactDirectory}`)
-    expect(summaryBox).toContain('Updated      Commit                 Engine')
-    expect(summaryBox).toContain('deterministic-findings.json  2 hours ago  aaaaaaa                3.99.0')
-    expect(summaryBox).toContain('agent-findings.json          1 hour ago   aaaaaaa (uncommitted)  3.99.0')
+    expect(summaryBox).toContain(`Results files in ${paths.resultsDirectory}`)
+    expect(summaryBox).toContain('Updated      Engine')
+    expect(summaryBox).toContain('deterministic-findings.json  2 hours ago  3.99.0')
+    expect(summaryBox).toContain('agent-findings.json          1 hour ago   3.99.0')
     expect(summaryBox).toContain('Next steps')
-    expect(summaryBox).toContain('• Fix the issues, then run `shopify app security check --path')
+    expect(summaryBox).toContain('• Fix the issues, then run `shopify app security check`')
   })
 
   test('renders an info box with not found rows when no file is present', () => {
@@ -808,7 +906,7 @@ describe('renderSecurityReview', () => {
     renderSecurityReview(presenterInput(none))
 
     const rendered = unstyled(output.info())
-    expect(rendered).toContain('No App Security results to review.')
+    expect(rendered).toContain('No app security check results to review.')
     expect(rendered).toContain('deterministic-findings.json  not found')
     expect(rendered).toContain('agent-findings.json          not found')
     expect(rendered).toContain(`• Run \`${checkCommand}\` or have your`)

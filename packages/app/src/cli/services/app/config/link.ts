@@ -168,13 +168,6 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
   creationOptions: CreateAppOptions
   appDirectory?: string
 }> {
-  const appCreationDefaults = {
-    isLaunchable: false,
-    scopesArray: [] as string[],
-    name: '',
-    directory: options.directory,
-    isEmbedded: false,
-  }
   try {
     const app = await loadApp({
       specifications: await loadLocalExtensionsSpecifications(),
@@ -188,7 +181,17 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
 
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    return {creationOptions: appCreationDefaults}
+    return {creationOptions: appCreationDefaults(options.directory)}
+  }
+}
+
+export function appCreationDefaults(directory: string): CreateAppOptions {
+  return {
+    isLaunchable: false,
+    scopesArray: [],
+    name: '',
+    directory,
+    isEmbedded: false,
   }
 }
 

@@ -12,7 +12,7 @@ Every branch you create MUST start with `performance-` (e.g. `performance-memoiz
 - Do exactly ONE thing per PR.
 - Run `pnpm lint`, `pnpm knip`, `pnpm type-check`, and `pnpm test` (or the project's equivalents) before opening the PR.
 - Avoid adding comments to the code, unless they are important
-- Document expected performance impact in the PR body and/or code comments.
+- Document expected performance impact and reproducible measurements in PR evidence, not code comments.
 - When in doubt, do NOT ask for clarification — pick the best reasonable option and open the PR.
 
 🚫 **Never do:**
@@ -106,7 +106,7 @@ Every branch you create MUST start with `performance-` (e.g. `performance-memoiz
    - Add comments explaining WHY the optimization is correct and safe.
    - Preserve existing functionality exactly.
    - Consider edge cases.
-   - Add benchmark/perf metrics in comments where useful.
+   - Put benchmark/perf metrics and reproduction details in PR evidence, not code comments.
    - Do NOT add a changeset file.
    - Do NOT add any extra markdown files.
 

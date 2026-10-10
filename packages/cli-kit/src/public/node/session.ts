@@ -4,6 +4,8 @@ import {getAppAutomationToken} from './environment.js'
 import {AbortError, BugError} from './error.js'
 import {outputContent, outputToken, outputDebug} from './output.js'
 import * as sessionStore from '../../private/node/session/store.js'
+import {automationTokenVariable} from '../../private/node/session/automation-token.js'
+import {environmentVariables} from '../../private/node/constants.js'
 import {
   exchangeCustomPartnerToken,
   exchangeAppAutomationTokenForAppManagementAccessToken,
@@ -299,24 +301,62 @@ ${outputToken.json(scopes)}
 }
 
 /**
+ * Options for `ensureAuthenticatedBusinessPlatform`.
+ */
+export interface EnsureAuthenticatedBusinessPlatformOptions extends EnsureAuthenticatedAdditionalOptions {
+  /**
+   * Authenticate with the automation token set in the environment, when there is one, instead of the
+   * logged-in user. Only commands that support automation tokens opt in; other callers, such as
+   * Hydrogen's login, keep using the user's session.
+   */
+  allowAutomationToken?: boolean
+}
+
+/**
  * Ensure that we have a valid session to access the Business Platform API.
  *
- * @param scopes - Optional array of extra scopes to authenticate with.
+ * @param scopes - Optional array of extra scopes to authenticate with. Ignored when an automation token is used.
  * @param options - Optional extra options to use.
  * @returns The access token for the Business Platform API.
  */
 export async function ensureAuthenticatedBusinessPlatform(
   scopes: BusinessPlatformScope[] = [],
-  options: EnsureAuthenticatedAdditionalOptions = {},
+  options: EnsureAuthenticatedBusinessPlatformOptions = {},
 ): Promise<string> {
   outputDebug(outputContent`Ensuring that the user is authenticated with the Business Platform API with the following scopes:
 ${outputToken.json(scopes)}
 `)
-  const tokens = await ensureAuthenticated({businessPlatformApi: {scopes}}, process.env, options)
+  const {allowAutomationToken = false, ...authenticationOptions} = options
+  const automationToken = allowAutomationToken ? getAppAutomationToken() : undefined
+  if (automationToken) {
+    // Request no explicit scopes, so Identity issues every Business Platform scope the token holds. The organizations
+    // API admits a CLI token only with a scope such as organization.store-management, and naming that scope would
+    // fail the exchange for app and Partner tokens, which don't hold it.
+    const result = await exchangeAppAutomationTokenForBusinessPlatformAccessToken(automationToken, [])
+    return result.accessToken
+  }
+
+  const tokens = await ensureAuthenticated({businessPlatformApi: {scopes}}, process.env, authenticationOptions)
   if (!tokens.businessPlatform) {
     throw new BugError('No business-platform token found after ensuring authenticated')
   }
   return tokens.businessPlatform
+}
+
+/**
+ * Fails when SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN is set, for commands that can't run with that token.
+ *
+ * Organization automation tokens can't log in as a user or call a store's Admin API, so commands that need either
+ * refuse to run instead of quietly using the person's own login. `ensureAuthenticated` runs this check before any
+ * login. Commands that run on a login saved by `shopify store auth` call it before loading that login.
+ *
+ * @throws AbortError when SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN is set.
+ */
+export function ensureNoOrganizationAutomationToken(): void {
+  const variable = environmentVariables.organizationAutomationToken
+  if (automationTokenVariable() !== variable) return
+
+  throw new AbortError(`This command can't use ${variable}.`, `Unset ${variable} to run it with your Shopify account.`)
 }
 
 /**

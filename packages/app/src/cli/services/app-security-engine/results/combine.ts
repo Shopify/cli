@@ -41,6 +41,8 @@ export interface CombinedCheck {
   severity: Severity
   description: string
   guide?: string
+  /** The check's page on shopify.dev. Absent when the describing results file predates check docs pages. */
+  docs_url?: string
   /** The agent snapshot's precedence, or 'union' when the agent didn't record the check. */
   precedence: CheckPrecedence
   /**
@@ -221,6 +223,7 @@ function combineCheck(id: string, {deterministic, agent, describingCheck}: Sourc
     severity: snapshot.severity,
     description: snapshot.description,
     ...(snapshot.guide ? {guide: snapshot.guide} : {}),
+    ...(snapshot.docs_url ? {docs_url: snapshot.docs_url} : {}),
     precedence,
     applied_precedence: appliedPrecedence,
     status: agentReplacesDeterministic

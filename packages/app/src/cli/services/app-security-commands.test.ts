@@ -6,15 +6,55 @@ import {
   resolveAppSecurityCommands,
   shellForPlatform,
   type AppSecurityCommand,
+  type AppSecurityCommands,
   type AppSecurityShell,
 } from './app-security-commands.js'
 import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {cwd, dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import {spawnSync} from 'node:child_process'
+import {symlink} from 'node:fs/promises'
+import type {AppSecuritySelection} from './app-security-selection.js'
+import type {AppSecurityScope} from './app-security-engine/index.js'
 
 const WINDOWS_APP_ROOT = 'C:/Users/50%/my app'
 const PAIRED_PERCENT_ROOT = 'C:\\Users\\%NAME%\\my app'
+
+/** Commands with exactly this `--path` value, so the quoting of awkward paths is tested without resolving them. */
+function commandsWithPath(pathValue: string, excludePatterns: string[] = []): AppSecurityCommands {
+  const args = (subcommand: string): AppSecurityCommands['scan']['args'] => [
+    'app',
+    'security',
+    subcommand,
+    {flag: '--path', value: pathValue},
+  ]
+  return {
+    scan: {
+      command: 'shopify',
+      args: [...args('check'), ...excludePatterns.map((value) => ({flag: '--exclude', value}))],
+    },
+    record: {command: 'shopify', args: args('record'), stdinPlaceholder: '<findings.json>'},
+    review: {command: 'shopify', args: args('review')},
+    clean: {command: 'shopify', args: args('clean')},
+  }
+}
+
+function configSelection(
+  configFileName = 'shopify.app.toml',
+  clientIdOverride?: string,
+  appDirectory = '/tmp/app',
+): AppSecuritySelection {
+  return {kind: 'config', appDirectory, appConfigFilePath: joinPath(appDirectory, configFileName), clientIdOverride}
+}
+
+const noConfigSelection: AppSecuritySelection = {
+  kind: 'no-config',
+  appDirectory: '/tmp/app',
+  clientId: 'client-1',
+  clientIdSource: 'picker',
+}
+
+const noScope: AppSecurityScope = {include_dirs: [], excludes: [], no_git_ignore: false}
 
 function undoubleTrailingBackslashes(value: string): string {
   // Inverse of quoteCmdSegment: CommandLineToArgvW keeps half the backslashes before a closer.
@@ -139,64 +179,134 @@ describe('quoteShellArgument', () => {
 })
 
 describe('resolveAppSecurityCommands', () => {
-  test('omits --config for the default shopify.app.toml', () => {
-    expect(resolveAppSecurityCommands('/tmp/app').scan.args).toEqual([
-      'app',
-      'security',
-      'check',
-      {flag: '--path', value: '/tmp/app'},
-    ])
-    expect(resolveAppSecurityCommands('/tmp/app', 'shopify.app.toml').scan.args).toEqual([
-      'app',
-      'security',
-      'check',
-      {flag: '--path', value: '/tmp/app'},
-    ])
+  test('omits --path and --config for the working directory and the default shopify.app.toml', () => {
+    const commands = resolveAppSecurityCommands(configSelection(), cwd())
+
+    for (const [subcommand, command] of Object.entries({
+      check: commands.scan,
+      record: commands.record,
+      review: commands.review,
+      clean: commands.clean,
+    })) {
+      expect(command.args).toEqual(['app', 'security', subcommand])
+    }
   })
 
-  test('includes --config only on scan for a named configuration', () => {
-    const commands = resolveAppSecurityCommands('/tmp/app', 'shopify.app.staging.toml')
+  test('renders --path relative to the working directory when it is somewhere else', () => {
+    const nested = resolveAppSecurityCommands(configSelection(), joinPath(cwd(), 'apps', 'web'))
+    const parent = resolveAppSecurityCommands(configSelection(), dirname(cwd()))
+
+    expect(nested.scan.args).toEqual(['app', 'security', 'check', {flag: '--path', value: joinPath('apps', 'web')}])
+    expect(nested.clean.args).toEqual(['app', 'security', 'clean', {flag: '--path', value: joinPath('apps', 'web')}])
+    expect(parent.review.args).toEqual(['app', 'security', 'review', {flag: '--path', value: '..'}])
+  })
+
+  test.skipIf(process.platform === 'win32')(
+    'omits --path for a symbolic link to the working directory, comparing real paths',
+    async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const link = joinPath(directory, 'link')
+        await symlink(cwd(), link)
+
+        expect(resolveAppSecurityCommands(configSelection(), link).scan.args).toEqual(['app', 'security', 'check'])
+      })
+    },
+  )
+
+  test('renders --config on every command for a named configuration', () => {
+    const commands = resolveAppSecurityCommands(configSelection('shopify.app.staging.toml'), cwd())
+    const configFlag = {flag: '--config', value: 'staging'}
+
+    expect(commands.scan.args).toEqual(['app', 'security', 'check', configFlag])
+    expect(commands.record.args).toEqual(['app', 'security', 'record', configFlag])
+    expect(commands.review.args).toEqual(['app', 'security', 'review', configFlag])
+    expect(commands.clean.args).toEqual(['app', 'security', 'clean', configFlag])
+  })
+
+  test('renders --client-id instead of --config when the client ID was overridden', () => {
+    const commands = resolveAppSecurityCommands(configSelection('shopify.app.staging.toml', 'override-id'), cwd())
+    const clientIdFlag = {flag: '--client-id', value: 'override-id'}
+
+    expect(commands.scan.args).toEqual(['app', 'security', 'check', clientIdFlag])
+    expect(commands.record.args).toEqual(['app', 'security', 'record', clientIdFlag])
+    expect(commands.review.args).toEqual(['app', 'security', 'review', clientIdFlag])
+    expect(commands.clean.args).toEqual(['app', 'security', 'clean', clientIdFlag])
+  })
+
+  test('always renders --client-id and --without-app-config without app configuration, even from the picker', () => {
+    const commands = resolveAppSecurityCommands(noConfigSelection, cwd())
+    const flags = [{flag: '--client-id', value: 'client-1'}, '--without-app-config']
+
+    expect(commands.scan.args).toEqual(['app', 'security', 'check', ...flags])
+    expect(commands.record.args).toEqual(['app', 'security', 'record', ...flags])
+    expect(commands.review.args).toEqual(['app', 'security', 'review', ...flags])
+    expect(commands.clean.args).toEqual(['app', 'security', 'clean', ...flags])
+  })
+
+  test('repeats the scope on check only: --include-dir and --exclude as typed and in order, then --no-git-ignore', () => {
+    const scope: AppSecurityScope = {
+      include_dirs: ['../backend', './lib/', '../backend'],
+      excludes: ['generated', '../shared/**'],
+      no_git_ignore: true,
+    }
+    const commands = resolveAppSecurityCommands(configSelection('shopify.app.staging.toml'), cwd(), scope)
 
     expect(commands.scan.args).toEqual([
       'app',
       'security',
       'check',
-      {flag: '--path', value: '/tmp/app'},
       {flag: '--config', value: 'staging'},
+      {flag: '--include-dir', value: '../backend'},
+      {flag: '--include-dir', value: './lib/'},
+      {flag: '--include-dir', value: '../backend'},
+      {flag: '--exclude', value: 'generated'},
+      {flag: '--exclude', value: '../shared/**'},
+      '--no-git-ignore',
     ])
-    expect(commands.record.args).toEqual(['app', 'security', 'record', {flag: '--path', value: '/tmp/app'}])
-    expect(commands.review.args).toEqual(['app', 'security', 'review', {flag: '--path', value: '/tmp/app'}])
-    expect(commands.clean.args).toEqual(['app', 'security', 'clean', {flag: '--path', value: '/tmp/app'}])
+    const configFlag = {flag: '--config', value: 'staging'}
+    expect(commands.record.args).toEqual(['app', 'security', 'record', configFlag])
+    expect(commands.review.args).toEqual(['app', 'security', 'review', configFlag])
+    expect(commands.clean.args).toEqual(['app', 'security', 'clean', configFlag])
   })
 
-  test('repeats --ignore patterns in order, after --config, on scan only', () => {
-    const commands = resolveAppSecurityCommands('/tmp/app', 'shopify.app.staging.toml', ['generated/', '!build/'])
+  test('orders the flags: --path, --config, --client-id, --without-app-config, --include-dir, --exclude, --no-git-ignore', () => {
+    const scope: AppSecurityScope = {include_dirs: ['lib'], excludes: ['generated'], no_git_ignore: true}
+    const path = joinPath(cwd(), 'apps', 'web')
+    const relativePathValue = joinPath('apps', 'web')
 
-    expect(commands.scan.args).toEqual([
+    expect(resolveAppSecurityCommands(configSelection('shopify.app.staging.toml'), path, scope).scan.args).toEqual([
       'app',
       'security',
       'check',
-      {flag: '--path', value: '/tmp/app'},
+      {flag: '--path', value: relativePathValue},
       {flag: '--config', value: 'staging'},
-      {flag: '--ignore', value: 'generated/'},
-      {flag: '--ignore', value: '!build/'},
+      {flag: '--include-dir', value: 'lib'},
+      {flag: '--exclude', value: 'generated'},
+      '--no-git-ignore',
     ])
-    expect(commands.record.args).toEqual(['app', 'security', 'record', {flag: '--path', value: '/tmp/app'}])
-    expect(commands.review.args).toEqual(['app', 'security', 'review', {flag: '--path', value: '/tmp/app'}])
-    expect(commands.clean.args).toEqual(['app', 'security', 'clean', {flag: '--path', value: '/tmp/app'}])
-  })
-
-  test('omits --ignore when there are no patterns', () => {
-    expect(resolveAppSecurityCommands('/tmp/app', undefined, []).scan.args).toEqual([
+    expect(resolveAppSecurityCommands(noConfigSelection, path, scope).scan.args).toEqual([
       'app',
       'security',
       'check',
-      {flag: '--path', value: '/tmp/app'},
+      {flag: '--path', value: relativePathValue},
+      {flag: '--client-id', value: 'client-1'},
+      '--without-app-config',
+      {flag: '--include-dir', value: 'lib'},
+      {flag: '--exclude', value: 'generated'},
+      '--no-git-ignore',
+    ])
+  })
+
+  test('omits the scope flags when the scope is empty', () => {
+    expect(resolveAppSecurityCommands(configSelection(), cwd(), noScope).scan.args).toEqual([
+      'app',
+      'security',
+      'check',
     ])
   })
 
   test('shows record reading a findings file from stdin in each shell', () => {
-    const commands = resolveAppSecurityCommands('/tmp/app')
+    const commands = commandsWithPath('/tmp/app')
 
     expect(formatAppSecurityCommand(commands.record, 'posix')).toBe(
       "shopify app security record --path '/tmp/app' < <findings.json>",
@@ -212,7 +322,7 @@ describe('resolveAppSecurityCommands', () => {
   })
 
   test('leaves the review subcommand unquoted in each shell', () => {
-    const commands = resolveAppSecurityCommands(WINDOWS_APP_ROOT)
+    const commands = commandsWithPath(WINDOWS_APP_ROOT)
 
     for (const shell of ['posix', 'cmd', 'powershell'] as const) {
       expect(splitQuotedCommand(formatAppSecurityCommand(commands.review, shell), shell)).toEqual([
@@ -229,9 +339,9 @@ describe('resolveAppSecurityCommands', () => {
 })
 
 describe('formatAppSecurityCommand', () => {
-  test('quotes --ignore patterns so the shell does not expand `!`, `*`, or spaces', () => {
-    const ignorePatterns = ['!build/', '*.log', 'a b/']
-    const commands = resolveAppSecurityCommands('/tmp/app', undefined, ignorePatterns)
+  test('quotes --exclude globs so the shell does not expand `!`, `*`, or spaces', () => {
+    const excludePatterns = ['!build/', '*.log', 'a b/']
+    const commands = commandsWithPath('/tmp/app', excludePatterns)
 
     for (const shell of ['posix', 'cmd', 'powershell'] as const) {
       const formatted = formatAppSecurityCommand(commands.scan, shell)
@@ -242,30 +352,30 @@ describe('formatAppSecurityCommand', () => {
         'check',
         '--path',
         '/tmp/app',
-        '--ignore',
+        '--exclude',
         '!build/',
-        '--ignore',
+        '--exclude',
         '*.log',
-        '--ignore',
+        '--exclude',
         'a b/',
       ])
       expect(formatted).not.toMatch(/ !build\//)
       expect(formatted).not.toMatch(/ \*\.log/)
     }
     expect(formatAppSecurityCommand(commands.scan, 'posix')).toContain(
-      "--ignore '!build/' --ignore '*.log' --ignore 'a b/'",
+      "--exclude '!build/' --exclude '*.log' --exclude 'a b/'",
     )
     expect(formatAppSecurityCommand(commands.scan, 'powershell')).toContain(
-      "--ignore '!build/' --ignore '*.log' --ignore 'a b/'",
+      "--exclude '!build/' --exclude '*.log' --exclude 'a b/'",
     )
     expect(formatAppSecurityCommand(commands.scan, 'cmd')).toContain(
-      '--ignore "!build/" --ignore "*.log" --ignore "a b/"',
+      '--exclude "!build/" --exclude "*.log" --exclude "a b/"',
     )
   })
 
-  test('quotes an --ignore pattern that starts with `-` or repeats a command word', () => {
-    const ignorePatterns = ['-*.log', '-tmp/', 'check']
-    const commands = resolveAppSecurityCommands('/tmp/app', undefined, ignorePatterns)
+  test('quotes an --exclude glob that starts with `-` or repeats a command word', () => {
+    const excludePatterns = ['-*.log', '-tmp/', 'check']
+    const commands = commandsWithPath('/tmp/app', excludePatterns)
 
     for (const shell of ['posix', 'cmd', 'powershell'] as const) {
       const formatted = formatAppSecurityCommand(commands.scan, shell)
@@ -276,39 +386,45 @@ describe('formatAppSecurityCommand', () => {
         'check',
         '--path',
         '/tmp/app',
-        '--ignore',
+        '--exclude',
         '-*.log',
-        '--ignore',
+        '--exclude',
         '-tmp/',
-        '--ignore',
+        '--exclude',
         'check',
       ])
       expect(formatted).not.toMatch(/ -\*\.log/)
       expect(formatted).not.toMatch(/ -tmp\//)
-      expect(formatted).not.toMatch(/--ignore check/)
+      expect(formatted).not.toMatch(/--exclude check/)
     }
     expect(formatAppSecurityCommand(commands.scan, 'posix')).toContain(
-      "--ignore '-*.log' --ignore '-tmp/' --ignore 'check'",
+      "--exclude '-*.log' --exclude '-tmp/' --exclude 'check'",
     )
     expect(formatAppSecurityCommand(commands.scan, 'powershell')).toContain(
-      "--ignore '-*.log' --ignore '-tmp/' --ignore 'check'",
+      "--exclude '-*.log' --exclude '-tmp/' --exclude 'check'",
     )
     expect(formatAppSecurityCommand(commands.scan, 'cmd')).toContain(
-      '--ignore "-*.log" --ignore "-tmp/" --ignore "check"',
+      '--exclude "-*.log" --exclude "-tmp/" --exclude "check"',
     )
   })
 
   test('leaves the command words and every flag name bare and quotes every flag value', () => {
-    const commands = resolveAppSecurityCommands('/tmp/app', 'shopify.app.staging.toml', ['generated/'])
+    const commands = resolveAppSecurityCommands(configSelection('shopify.app.staging.toml'), joinPath(cwd(), 'app'), {
+      include_dirs: [],
+      excludes: ['generated'],
+      no_git_ignore: true,
+    })
 
     expect(formatAppSecurityCommand(commands.scan, 'posix')).toBe(
-      "shopify app security check --path '/tmp/app' --config 'staging' --ignore 'generated/'",
+      "shopify app security check --path 'app' --config 'staging' --exclude 'generated' --no-git-ignore",
     )
-    expect(formatAppSecurityCommand(commands.clean, 'posix')).toBe("shopify app security clean --path '/tmp/app'")
+    expect(formatAppSecurityCommand(commands.clean, 'posix')).toBe(
+      "shopify app security clean --path 'app' --config 'staging'",
+    )
   })
 
   test('quotes a Windows path with spaces and percents for terminal and instruction shells', () => {
-    const commands = resolveAppSecurityCommands(WINDOWS_APP_ROOT)
+    const commands = commandsWithPath(WINDOWS_APP_ROOT)
 
     for (const shell of ['posix', 'cmd', 'powershell'] as const) {
       expect(splitQuotedCommand(formatAppSecurityCommand(commands.scan, shell), shell)).toEqual([
@@ -340,7 +456,7 @@ describe('formatAppSecurityCommand', () => {
   })
 
   test('quotes a Windows path with paired percent tokens without leaving %NAME% expandable', () => {
-    const commands = resolveAppSecurityCommands(PAIRED_PERCENT_ROOT)
+    const commands = commandsWithPath(PAIRED_PERCENT_ROOT)
 
     expect(splitQuotedCommand(formatAppSecurityCommand(commands.scan, 'cmd'), 'cmd')).toEqual([
       'shopify',
@@ -429,7 +545,7 @@ describe('formatAppSecurityInlineStdinCommand', () => {
   const document = '{"schema_version": 1, "note": "$HOME `id`"}'
 
   test('pipes the document through a quoted heredoc in POSIX shells', () => {
-    const {record} = resolveAppSecurityCommands("/tmp/O'Brien app")
+    const {record} = commandsWithPath("/tmp/O'Brien app")
 
     expect(formatAppSecurityInlineStdinCommand(record, document, 'posix')).toBe(
       `shopify app security record --path '/tmp/O'\\''Brien app' <<'EOF'\n${document}\nEOF`,
@@ -437,7 +553,7 @@ describe('formatAppSecurityInlineStdinCommand', () => {
   })
 
   test('pipes the document from a literal here-string in PowerShell', () => {
-    const {record} = resolveAppSecurityCommands("C:\\Users\\O'Brien\\my app")
+    const {record} = commandsWithPath("C:\\Users\\O'Brien\\my app")
 
     expect(formatAppSecurityInlineStdinCommand(record, document, 'powershell')).toBe(
       `@'\n${document}\n'@ | shopify app security record --path 'C:\\Users\\O''Brien\\my app'`,
@@ -445,7 +561,7 @@ describe('formatAppSecurityInlineStdinCommand', () => {
   })
 
   test('has no inline form for cmd.exe', () => {
-    const {record} = resolveAppSecurityCommands('C:\\Users\\my app')
+    const {record} = commandsWithPath('C:\\Users\\my app')
 
     expect(formatAppSecurityInlineStdinCommand(record, document, 'cmd')).toBeUndefined()
   })

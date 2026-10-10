@@ -474,3 +474,22 @@ describe('exchange device code for access token', () => {
     expect(result).toEqual(err('unknown_failure'))
   })
 })
+
+describe('exchangeAppAutomationTokenForBusinessPlatformAccessToken', () => {
+  test('requests no scopes when called with an empty scope list', async () => {
+    // Given
+    let capturedBody = ''
+    vi.mocked(shopifyFetch).mockImplementation(async (_url, options) => {
+      capturedBody = String((options as {body?: string} | undefined)?.body ?? '')
+      return Promise.resolve(
+        new Response(JSON.stringify({access_token: 'expected_access_token', expires_in: 300, scope: 'scope'})),
+      )
+    })
+
+    // When
+    await exchangeAppAutomationTokenForBusinessPlatformAccessToken('customToken', [])
+
+    // Then
+    expect(new URLSearchParams(capturedBody).get('scope')).toBe('')
+  })
+})

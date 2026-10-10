@@ -12,7 +12,6 @@ export const deterministicFindingsDocument: DeterministicFindingsDocument = {
   source: 'deterministic',
   engine: {name: 'shopify-app-security', version: '3.99.0', ruleset: 'app-security-rules@3.99.0'},
   generated_at: '2026-09-01T10:00:00.000Z',
-  project: {commit: 'a'.repeat(40), dirty: false},
   detection: {
     framework: 'react_router',
     surface: 'react_router',
@@ -33,6 +32,8 @@ export const deterministicFindingsDocument: DeterministicFindingsDocument = {
         check_id: 'MISSING_TENANT_ISOLATION',
       },
     ],
+    scope: {include_dirs: [], excludes: [], no_git_ignore: false},
+    scan_directories: [{directory: '.', origin: 'app_directory'}],
   },
   checks: [
     {
@@ -147,7 +148,7 @@ export const agentFindingsDocument: AgentFindingsDocument = {
   source: 'agent',
   engine: {name: 'shopify-app-security', version: '3.99.0'},
   generated_at: '2026-09-01T11:30:00.000Z',
-  project: {commit: 'a'.repeat(40), dirty: true},
+  scope: {include_dirs: [], excludes: [], no_git_ignore: false},
   checks: [
     {
       id: 'CREDENTIAL_LOG_LEAKAGE',

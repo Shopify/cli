@@ -1,5 +1,6 @@
 import {getStoreInfo} from './info/index.js'
 import {openURL as defaultOpenURL} from '@shopify/cli-kit/node/system'
+import {extractMyshopifyHandle} from '@shopify/cli-kit/common/url'
 import type {StoreInfoResult} from './info/types.js'
 import type {OpenStoreResult} from './open/types.js'
 
@@ -30,7 +31,8 @@ export async function openStore(
   const url = storefrontUrl(info)
 
   const opened = await openURL(url)
-  return {store: options.store, url, opened}
+  const handle = extractMyshopifyHandle(info.subdomain)
+  return {storeDomain: handle ? `${handle}.myshopify.com` : null, url, opened}
 }
 
 function storefrontUrl(info: StoreInfoResult): string {

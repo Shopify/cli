@@ -67,6 +67,7 @@ describe('createDevStore', () => {
     })
 
     expect(domain).toBe('test-store.myshopify.com')
+    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledWith([], {allowAutomationToken: true})
     expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledTimes(2)
     expect(businessPlatformOrganizationsRequestDoc).toHaveBeenLastCalledWith(
       expect.objectContaining({

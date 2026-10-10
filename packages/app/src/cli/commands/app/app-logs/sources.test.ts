@@ -70,30 +70,32 @@ test('writes one JSON document to stdout without terminal text', async () => {
     streams.restore()
   }
   const extension = app.allExtensions[0]!
-  expect(JSON.parse(streams.stdout())).toEqual([
-    {
-      source: 'extensions.discount',
-      namespace: 'extensions',
-      handle: 'discount',
-      name: extension.configuration.name,
-      type: extension.type,
-      externalType: extension.externalType,
-      humanName: extension.humanName,
-      uid: extension.uid,
-      directory: extension.directory,
-      configurationPath: extension.configurationPath,
-      configuration: extension.configuration,
-      entrySourceFilePath: extension.entrySourceFilePath,
-      outputPath: extension.outputPath,
-      surface: extension.surface,
-      features: extension.features,
-      ...(extension.dependency === undefined ? {} : {dependency: extension.dependency}),
-    },
-  ])
+  expect(JSON.parse(streams.stdout())).toEqual({
+    sources: [
+      {
+        source: 'extensions.discount',
+        namespace: 'extensions',
+        handle: 'discount',
+        name: extension.configuration.name,
+        type: extension.type,
+        externalType: extension.externalType,
+        humanName: extension.humanName,
+        uid: extension.uid,
+        directory: extension.directory,
+        configurationPath: extension.configurationPath,
+        configuration: extension.configuration,
+        entrySourceFilePath: extension.entrySourceFilePath,
+        outputPath: extension.outputPath,
+        surface: extension.surface,
+        features: extension.features,
+        ...(extension.dependency === undefined ? {} : {dependency: extension.dependency}),
+      },
+    ],
+  })
   expect(streams.stderr()).toBe('')
 })
 
-test('writes an empty JSON array when no sources exist', async () => {
+test('writes a named empty JSON collection when no sources exist', async () => {
   process.env.SHOPIFY_UNIT_TEST = 'false'
   vi.resetModules()
   const streams = captureStandardStreams()
@@ -102,7 +104,7 @@ test('writes an empty JSON array when no sources exist', async () => {
   } finally {
     streams.restore()
   }
-  expect(streams.stdout()).toBe('[]\n')
+  expect(JSON.parse(streams.stdout())).toEqual({sources: []})
   expect(streams.stderr()).toBe('')
 })
 

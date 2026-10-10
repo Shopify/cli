@@ -1,5 +1,12 @@
 import {formatAppSecurityCommand, type AppSecurityCommands} from './app-security-commands.js'
 import {
+  effectiveClientId,
+  selectedConfigFileName,
+  type AppSecurityScanDirectory,
+  type AppSecuritySelection,
+} from './app-security-selection.js'
+import {
+  checkDocsUrl,
   groupIssues,
   type Capabilities,
   type Issue,
@@ -7,6 +14,7 @@ import {
   type ScanResult,
   type Severity,
 } from './app-security-engine/index.js'
+import {relativePath} from '@shopify/cli-kit/node/path'
 import {renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import type {AlertCustomSection, InlineToken, RenderAlertOptions, Token, TokenItem} from '@shopify/cli-kit/node/ui'
 
@@ -18,6 +26,8 @@ interface SecurityEngineMetadata {
 
 export interface SecurityReportInput {
   scan: ScanResult
+  selection: AppSecuritySelection
+  scanDirectories: AppSecurityScanDirectory[]
   engine: SecurityEngineMetadata
   verbose: boolean
   elapsedMilliseconds: number
@@ -120,14 +130,38 @@ function securityBody(input: SecurityReportInput): TokenItem {
 
 function securityNextSteps(input: SecurityReportInput): TokenItem<InlineToken>[] {
   return [
-    ['Have your coding agent read', {filePath: input.agentChecksPath}],
+    ['Have your coding agent run the agent checks'],
     ['Record the agent results with', {command: formatAppSecurityCommand(input.commands.record)}],
     ['Review the results with', {command: formatAppSecurityCommand(input.commands.review)}],
   ]
 }
 
+function formatClientId(selection: AppSecuritySelection): string {
+  const clientId = effectiveClientId(selection) ?? 'not linked'
+  return selection.kind === 'config' && selection.clientIdOverride ? `${clientId} (from --client-id)` : clientId
+}
+
+function selectionSection(input: SecurityReportInput): AlertCustomSection {
+  const {selection} = input
+  return {
+    title: 'Selection',
+    body: {
+      tabularData: [
+        ['App directory', selection.appDirectory],
+        ['Config file', selectedConfigFileName(selection) ?? 'none'],
+        ['Client ID', formatClientId(selection)],
+        [
+          'Scan directories',
+          input.scanDirectories.map(({directory}) => relativePath(selection.appDirectory, directory) || '.').join(', '),
+        ],
+      ],
+      firstColumnSubdued: true,
+    },
+  }
+}
+
 function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]): AlertCustomSection[] {
-  const sections: AlertCustomSection[] = []
+  const sections: AlertCustomSection[] = [selectionSection(input)]
 
   for (const severity of ['high', 'medium', 'low'] as const) {
     const severityGroups = groups.filter((group) => group.severity === severity)
@@ -154,13 +188,14 @@ function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]
     sections.push({title: 'Coverage gaps', body: {list: {items}}})
   }
 
+  const {appDirectory} = input.selection
   sections.push({
     title: 'Artifacts',
     body: {
       list: {
         items: [
-          ['Deterministic findings:', {filePath: input.deterministicFindingsPath}],
-          ['Agent checks:', {filePath: input.agentChecksPath}],
+          ['Deterministic findings:', {filePath: relativePath(appDirectory, input.deterministicFindingsPath)}],
+          ['Agent security check instructions:', {filePath: relativePath(appDirectory, input.agentChecksPath)}],
         ],
       },
     },
@@ -197,14 +232,14 @@ function securityCustomSections(input: SecurityReportInput, groups: IssueGroup[]
 
 function issueListItem(issue: Issue): TokenItem<InlineToken> {
   const location = issue.location.line ? `${issue.location.file}:${issue.location.line}` : issue.location.file
-  const item: InlineToken[] = [{bold: issue.title}, {subdued: issue.id}, {filePath: location}]
+  const item: InlineToken[] = [{bold: issue.title}, checkIdToken(issue.id), {filePath: location}]
 
   item.push({subdued: issue.message}, {subdued: `Fix: ${issue.fix.description}`})
   if (issue.fix.guide) {
     if (issue.fix.guide.startsWith('https://') || issue.fix.guide.startsWith('http://')) {
-      item.push({link: {label: 'Docs', url: issue.fix.guide}})
+      item.push({link: {label: 'Guide', url: issue.fix.guide}})
     } else {
-      item.push({subdued: `Docs: ${issue.fix.guide}`})
+      item.push({subdued: `Guide: ${issue.fix.guide}`})
     }
   }
   if (issue.snippet) item.push({subdued: `Code: ${issue.snippet}`})
@@ -223,11 +258,17 @@ function issueGroupListItem(group: IssueGroup): TokenItem<InlineToken> {
   })
   return [
     {bold: issue.title},
-    {subdued: issue.id},
+    checkIdToken(issue.id),
     `${count} ${count === 1 ? 'occurrence' : 'occurrences'} across ${files} ${files === 1 ? 'file' : 'files'}`,
     ...samples,
     ...(files > SAMPLE_FILE_COUNT ? [{subdued: `+${files - SAMPLE_FILE_COUNT} more files`}] : []),
   ]
+}
+
+/** The check ID, linked to the check's shopify.dev page when the catalog has one. */
+function checkIdToken(checkId: string): InlineToken {
+  const url = checkDocsUrl(checkId)
+  return url ? {link: {label: checkId, url}} : {subdued: checkId}
 }
 
 function formatCapabilities(capabilities: Capabilities): string {

@@ -30,14 +30,34 @@ test("loads the app", async () => {
 })
 ```
 
-Tests can be run with `pnpm test` for the Vitest suite, `pnpm test:watch` for watch mode, or `pnpm test:e2e` for the Playwright end-to-end suite. If you want to run a single unit test, pass the path to the file as argument:
+- `pnpm test`: run the Vitest suite.
+- `pnpm exec vitest`: run Vitest in watch mode.
+- `pnpm test:e2e`: run the Playwright end-to-end suite.
+
+To run one unit test, pass its file path:
 
 ```
 pnpm test path/to/my.test.ts
 ```
 
+### Test the behavior that can fail
+
+A regression test must fail when the bug is present. Use input that reproduces the bug. Check the result that matters to the user or caller.
+
+- Run the code path affected by the change. Mocks must not replace the behavior the test needs to check.
+- Keep tests that check command parsing and how commands call services.
+- For encoded data, use an independent expected value when a shared encoder could hide a bug.
+- Check that secrets or unwanted actions are absent when that is part of the requirement.
+
+If a test must wait for async work, use a readiness or completion signal. Clean up tasks, listeners, and temporary resources after the test. Use a short, bounded delay only when no signal is available.
+
+Confirm that the test fails when the fix is removed or the faulty behavior is restored. Use checks that fit the risk of the change. No mutation-testing framework or complete test matrix is required.
+
+See [JSON output tests](json-output.md#test-a-new-command) and [UI tests](../cli-kit/ui-kit/contributing.md#testing-components).
+
 ### Filesystem I/O and temporary directories
-If the subject under test performs filesystem I/O, prefer using a temporary directory instead of stubbing the filesystem. Create a temporary directory whose lifecycle is tied to the lifecycle of the test:
+
+For filesystem tests, use real files in a temporary directory. The test must delete the directory after use, including when it fails:
 
 ```ts
 import {file, path} from "@shopify/cli-kit"
@@ -63,11 +83,9 @@ test("writes", async () => {
 
 > :exclamation: **Tests and promises**
 >
-> If inside your tests you call asynchronous functions and forget to `await` you might end up with false positives. Therefore we recommend that after writing your tests that you always make it fail.
+> Await the async operation that your assertion depends on. Otherwise, the assertion can run before the operation completes.
 
-> :exclamation: **Vitest is in beta**
->
-> Vitest is still in beta, so you might encounter issues while using it. If you come across any, check out [our troubleshooting page](/contributors/troubleshooting) or the [list of issues](https://github.com/vitest-dev/vitest/issues) on the project's repository.
+For Vitest problems, see [our troubleshooting page](troubleshooting.md) or the [Vitest issues](https://github.com/vitest-dev/vitest/issues).
 
 ### Resources
 - [Vitest API](https://vitest.dev/api/)
@@ -77,10 +95,8 @@ test("writes", async () => {
 
 End-to-end tests live under `packages/e2e` and are implemented using [Playwright](https://playwright.dev/). They test full user journeys by invoking the CLI and verifying outputs. Run them with `pnpm test:e2e`.
 
-## Github Actions
-Before being able to marge a PR, it must pass all CI checks executed in Github Actions.
+## GitHub Actions
 
-The jobs will detect what packages have changed in that PR and execute the tests only for those.
-If you want to execute all the tests for all the packages you can manually schedule a workflow through `Actions -> shopify-cli -> Run workflow`
+Use [the PR workflow](../../.github/workflows/tests-pr.yml) and [CLI pre-submit CI guide](../../.agents/skills/cli-pre-submit-ci/SKILL.md) to choose local checks and generated files. Follow the check requirements of the active automation task.
 
-There you can choose the branch and a custom command to send to `nx`, by default the command is `affected` which means only affected packages will be run. You can use `run-many --all` to run all packages instead.
+Repository settings determine which checks block a merge. A passing job proves only what that job checked. Jobs with `continue-on-error` can fail without failing the workflow.

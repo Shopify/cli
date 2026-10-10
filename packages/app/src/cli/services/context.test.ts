@@ -396,13 +396,29 @@ describe('appFromIdentifiers', () => {
       }),
     )
   })
+
+  test('omits the --reset step when offerReset is false', async () => {
+    vi.mocked(isUserAccount).mockReturnValue(true)
+    const developerPlatformClient = testDeveloperPlatformClient({
+      appFromIdentifiers: () => Promise.resolve(undefined),
+      accountInfo: () => Promise.resolve({type: 'UserAccount', email: 'user@example.com'}),
+    })
+    vi.mocked(defaultDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
+
+    await expect(appFromIdentifiers({apiKey: 'apiKey-12345', offerReset: false})).rejects.toThrowError(
+      expect.objectContaining({
+        message: 'No app with client ID apiKey-12345 found',
+        tryMessage: renderTryMessage(false, 'user@example.com', false),
+      }),
+    )
+  })
 })
 
 function emptyDeployIdentifiers() {
   return {appModuleUuids: {}, appModuleRegistrationIds: {}}
 }
 
-const renderTryMessage = (isOrg: boolean, identifier: string) => [
+const renderTryMessage = (isOrg: boolean, identifier: string, offerReset = true) => [
   {
     list: {
       title: 'Next steps:',
@@ -416,7 +432,7 @@ const renderTryMessage = (isOrg: boolean, identifier: string) => [
           'than',
           {bold: identifier},
         ],
-        ['Pass', {command: '--reset'}, 'to your command to create a new app'],
+        ...(offerReset ? [['Pass', {command: '--reset'}, 'to your command to create a new app']] : []),
       ],
     },
   },

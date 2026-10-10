@@ -1,7 +1,7 @@
 import {AppLogSourcesResult} from './sources/types.js'
 import {AppInterface} from '../../models/app/app.js'
 
-export function sources(app: AppInterface): AppLogSourcesResult {
+export function sources(app: AppInterface): AppLogSourcesResult['sources'] {
   return app.allExtensions
     .filter((extension) => extension.isFunctionExtension)
     .map((extension) => ({

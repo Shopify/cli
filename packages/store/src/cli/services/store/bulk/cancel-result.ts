@@ -1,4 +1,5 @@
 import {cancelBulkOperationJsonOutputSchema, type CancelBulkOperationResult} from './types.js'
+import {bulkOperationJsonContext, toBulkOperationJson} from './json.js'
 import {
   renderBulkOperationUserErrors,
   formatBulkOperationCancellationResult,
@@ -6,6 +7,7 @@ import {
 } from '@shopify/cli-kit/node/api/bulk-operations'
 import {renderInfo, renderError, renderSuccess, renderWarning, TokenItem} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export function renderCancelBulkOperationResult(
   result: CancelBulkOperationResult,
@@ -13,7 +15,22 @@ export function renderCancelBulkOperationResult(
   format: 'text' | 'json',
 ): void {
   if (format === 'json') {
-    outputResult(cancelBulkOperationJsonOutputSchema.encode(result))
+    if (result.userErrors.length || !result.operation) {
+      const error = new AbortError('Failed to cancel bulk operation.')
+      error.details = {
+        ...bulkOperationJsonContext(result),
+        operationGid: operationId,
+        userErrors: result.userErrors,
+      }
+      throw error
+    }
+    outputResult(
+      cancelBulkOperationJsonOutputSchema.encode({
+        ...bulkOperationJsonContext(result),
+        status: 'success',
+        operation: toBulkOperationJson(result.operation),
+      }),
+    )
     return
   }
   if (result.userErrors.length) {

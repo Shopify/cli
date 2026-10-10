@@ -160,6 +160,8 @@ export class Project {
 
 // ── Filesystem discovery functions ──────────────────────────
 
+export class NoAppConfigurationFoundError extends AbortError {}
+
 async function findProjectRoot(startDirectory: string): Promise<string> {
   const found = await findPathUp(
     async (directory) => {
@@ -172,7 +174,7 @@ async function findProjectRoot(startDirectory: string): Promise<string> {
     },
   )
   if (!found) {
-    throw new AbortError(
+    throw new NoAppConfigurationFoundError(
       `Could not find a Shopify app configuration file. Looked in ${startDirectory} and parent directories.`,
     )
   }

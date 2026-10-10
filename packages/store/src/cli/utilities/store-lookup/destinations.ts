@@ -31,7 +31,9 @@ interface FetchDestinationsContextOptions {
 export class StoreLookupStoreNotFoundError extends AbortError {}
 
 export async function fetchDestinationsContext(options: FetchDestinationsContextOptions): Promise<DestinationsContext> {
-  const token = options.token ?? (await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt}))
+  const token =
+    options.token ??
+    (await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt, allowAutomationToken: true}))
   const unauthorizedHandler = businessPlatformTokenRefreshHandler({noPrompt: options.noPrompt})
 
   // `options.store` is already a normalized FQDN; extractHost canonicalizes it (lowercased,

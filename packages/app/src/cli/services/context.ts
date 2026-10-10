@@ -33,7 +33,7 @@ export const resetHelpMessage = [
   'to your command to reset your app configuration.',
 ]
 
-const appNotFoundHelpMessage = (accountIdentifier: string, isOrg = false) => [
+const appNotFoundHelpMessage = (accountIdentifier: string, isOrg: boolean, offerReset: boolean) => [
   {
     list: {
       title: 'Next steps:',
@@ -47,7 +47,7 @@ const appNotFoundHelpMessage = (accountIdentifier: string, isOrg = false) => [
           'than',
           {bold: accountIdentifier},
         ],
-        ['Pass', {command: '--reset'}, 'to your command to create a new app'],
+        ...(offerReset ? [['Pass', {command: '--reset'}, 'to your command to create a new app']] : []),
       ],
     },
   },
@@ -55,6 +55,8 @@ const appNotFoundHelpMessage = (accountIdentifier: string, isOrg = false) => [
 
 interface AppFromIdOptions {
   apiKey: string
+  /** Suggest `--reset` when no app is found. Pass false from commands that don't take `--reset`. Defaults to true. */
+  offerReset?: boolean
 }
 
 export const appFromIdentifiers = async (options: AppFromIdOptions): Promise<OrganizationApp> => {
@@ -75,7 +77,7 @@ export const appFromIdentifiers = async (options: AppFromIdOptions): Promise<Org
 
     throw new AbortError(
       [`No app with client ID`, {command: options.apiKey}, 'found'],
-      appNotFoundHelpMessage(identifier, isOrg),
+      appNotFoundHelpMessage(identifier, isOrg, options.offerReset ?? true),
     )
   }
   return app

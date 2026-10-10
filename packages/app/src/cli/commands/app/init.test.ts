@@ -36,20 +36,20 @@ vi.mock('../../services/init/validate.js')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
 
 let originalStdinIsTTY: boolean | undefined
-let originalStdoutIsTTY: boolean | undefined
+let originalStderrIsTTY: boolean | undefined
 
 beforeEach(() => {
   originalStdinIsTTY = process.stdin.isTTY
-  originalStdoutIsTTY = process.stdout.isTTY
+  originalStderrIsTTY = process.stderr.isTTY
   vi.unstubAllEnvs()
   Object.defineProperty(process.stdin, 'isTTY', {value: true, configurable: true, writable: true})
-  Object.defineProperty(process.stdout, 'isTTY', {value: true, configurable: true, writable: true})
+  Object.defineProperty(process.stderr, 'isTTY', {value: true, configurable: true, writable: true})
   vi.stubEnv('CI', '')
 })
 
 afterEach(() => {
   Object.defineProperty(process.stdin, 'isTTY', {value: originalStdinIsTTY, configurable: true, writable: true})
-  Object.defineProperty(process.stdout, 'isTTY', {value: originalStdoutIsTTY, configurable: true, writable: true})
+  Object.defineProperty(process.stderr, 'isTTY', {value: originalStderrIsTTY, configurable: true, writable: true})
 })
 
 describe('Init command', () => {

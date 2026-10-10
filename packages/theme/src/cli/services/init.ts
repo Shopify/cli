@@ -3,6 +3,7 @@ import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/node/git'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {rmdir, fileExists, inTemporaryDirectory, readFile, writeFile, symlink} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {getLatestGitHubRelease} from '@shopify/cli-kit/node/github'
 
 export const SKELETON_THEME_URL = 'https://github.com/Shopify/skeleton-theme.git'
 const AI_INSTRUCTIONS_REPO_URL = 'https://github.com/Shopify/theme-liquid-docs.git'
@@ -24,6 +25,17 @@ export async function cloneRepoAndCheckoutLatestTag(repoUrl: string, destination
   await downloadRepository(repoUrl, destination, true)
 }
 
+export async function cloneLatestStableSkeletonTheme(destination: string) {
+  const release = await getLatestGitHubRelease('Shopify', 'skeleton-theme', {
+    filter: (release) => !release.draft && !release.prerelease,
+  })
+  if (!release) {
+    throw new AbortError("Couldn't find a stable Skeleton theme release")
+  }
+
+  await downloadRepository(`${SKELETON_THEME_URL}#${release.tag_name}`, destination)
+}
+
 async function downloadRepository(repoUrl: string, destination: string, latestTag?: boolean) {
   await renderTasks([
     {
@@ -33,11 +45,12 @@ async function downloadRepository(repoUrl: string, destination: string, latestTa
           repoUrl,
           destination,
           latestTag,
-          shallow: true,
+          shallow: !latestTag,
         })
+
         await removeGitRemote(destination)
 
-        if (repoUrl === SKELETON_THEME_URL) {
+        if (repoUrl.split('#')[0] === SKELETON_THEME_URL) {
           await Promise.all(
             Object.keys(SUPPORTED_AI_INSTRUCTIONS).map(async (key) =>
               removeDirectory(joinPath(destination, `.${key}`)),

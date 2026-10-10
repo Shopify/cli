@@ -1,6 +1,5 @@
 import {validateMutationsAllowed} from './common.js'
 import {prepareBulkAdminContext} from './bulk-admin-context.js'
-import {executeBulkOperationJsonOutputSchema, type ExecuteBulkOperationResult} from './types.js'
 import {
   runBulkOperationQuery,
   runBulkOperationMutation,
@@ -16,6 +15,7 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {readFile, fileExists} from '@shopify/cli-kit/node/fs'
+import type {ExecuteBulkOperationResult} from './types.js'
 
 interface ExecuteBulkOperationInput {
   store: string
@@ -87,13 +87,13 @@ export async function executeBulkOperation(
     : await runBulkOperationQuery({adminSession, query, version})
 
   if (response?.userErrors?.length || !response?.bulkOperation) {
-    return executeBulkOperationJsonOutputSchema.validate({
+    return {
       store: adminSession.storeFqdn,
       apiVersion: version,
       operation: response?.bulkOperation ?? null,
       userErrors: response?.userErrors ?? [],
       watchAborted: false,
-    })
+    }
   }
 
   const abortController = new AbortController()
@@ -109,14 +109,14 @@ export async function executeBulkOperation(
       ? await downloadBulkOperationResults(operation.url)
       : undefined
 
-  return executeBulkOperationJsonOutputSchema.validate({
+  return {
     store: adminSession.storeFqdn,
     apiVersion: version,
     operation,
     userErrors: [],
     watchAborted: abortController.signal.aborted,
     results,
-  })
+  }
 }
 
 function validateBulkOperationVariables(graphqlOperation: string, variablesJsonl?: string): void {

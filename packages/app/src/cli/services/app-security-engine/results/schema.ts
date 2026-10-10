@@ -10,8 +10,7 @@ import type {AgentFindingsDocument, DeterministicFindingsDocument, FindingsDocum
  * stay the internal representation; the assertions at the bottom fail to compile the day the two diverge,
  * which is the signal that a new schema version needs an explicit mapping.
  *
- * The component schemas are exported so the public `review --json` schema is composed from them and
- * every closed enum is declared once.
+ * The component schemas are exported so other schemas compose them and every closed enum is declared once.
  */
 
 export const severitySchema = zod.enum(['high', 'medium', 'low'])
@@ -35,6 +34,7 @@ const checkSnapshotSchema = zod.object({
   severity: severitySchema,
   description: zod.string(),
   guide: zod.string().optional(),
+  docs_url: zod.string().optional(),
   current_version: zod.number(),
   precedence: checkPrecedenceSchema.optional(),
 })
@@ -80,11 +80,6 @@ const storedChecksSchema = zod.array(storedCheckSchema).superRefine((checks, con
   })
 })
 
-export const projectStateSchema = zod.object({
-  commit: zod.string().nullable(),
-  dirty: zod.boolean().nullable(),
-})
-
 export const projectDetectionSchema = zod.object({
   framework: zod.enum(['react_router', 'none', 'unknown', 'mixed']),
   surface: zod.enum(['react_router', 'theme_app_extension', 'config_only', 'unknown', 'mixed']),
@@ -96,6 +91,17 @@ export const projectDetectionSchema = zod.object({
     }),
   ),
 })
+
+/**
+ * A function, so each document gets its own instance: a JSON Schema generated from a schema that composes both
+ * documents would render a shared instance as a `$ref` instead of the inline definition.
+ */
+const createScopeSchema = () =>
+  zod.object({
+    include_dirs: zod.array(zod.string()),
+    excludes: zod.array(zod.string()),
+    no_git_ignore: zod.boolean(),
+  })
 
 export const coverageSchema = zod.object({
   files_scanned: zod.number(),
@@ -115,12 +121,15 @@ export const coverageSchema = zod.object({
       file: zod.string().optional(),
     }),
   ),
+  scope: createScopeSchema(),
+  scan_directories: zod.array(
+    zod.object({directory: zod.string(), origin: zod.enum(['app_directory', 'include_dir', 'app_config_directory'])}),
+  ),
 })
 
 const documentBase = {
   schema_version: zod.literal(FINDINGS_SCHEMA_VERSION),
   generated_at: zod.string(),
-  project: projectStateSchema,
   checks: storedChecksSchema,
 }
 
@@ -136,6 +145,7 @@ export const agentFindingsDocumentSchema = zod.object({
   ...documentBase,
   source: zod.literal('agent'),
   engine: zod.object({name: zod.literal(ENGINE_NAME), version: zod.string()}),
+  scope: createScopeSchema(),
 })
 
 export const findingsDocumentSchemaV1 = zod.discriminatedUnion('source', [

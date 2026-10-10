@@ -109,15 +109,18 @@ describe('JSON output schema flag', () => {
       const validate = new Ajv({validateFormats: false}).compile(schema)
       expect(validate({value: 'ready'})).toBe(true)
       expect(validate({error: {type: 'abort', message: 'Failed'}})).toBe(true)
+      expect(validate({type: 'diagnostic', timestamp: '2026-08-26T12:00:00Z', level: 'info', message: 'Ready'})).toBe(
+        true,
+      )
+      expect(
+        validate({type: 'progress', timestamp: '2026-08-26T12:00:00Z', status: 'started', operation: 'upload'}),
+      ).toBe(true)
       expect(
         validate({type: 'diagnostic', timestamp: '2026-08-26T12:00:00.000Z', level: 'info', message: 'Ready'}),
-      ).toBe(true)
-      expect(
-        validate({type: 'progress', timestamp: '2026-08-26T12:00:00.000Z', status: 'started', operation: 'upload'}),
-      ).toBe(true)
+      ).toBe(false)
       expect(validate({value: 1})).toBe(false)
       expect(validate({error: {type: 'external', message: 'Missing command and args'}})).toBe(false)
-      expect(validate({type: 'progress', timestamp: '2026-08-26T12:00:00.000Z', status: 'started'})).toBe(false)
+      expect(validate({type: 'progress', timestamp: '2026-08-26T12:00:00Z', status: 'started'})).toBe(false)
     })
   })
 

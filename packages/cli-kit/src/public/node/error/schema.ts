@@ -10,10 +10,14 @@ export const JsonErrorCustomSectionSchema = zod
 
 const commonJsonErrorShape = {
   message: zod.string(),
+  code: zod.string().min(1).optional().describe('A stable error code, included only when known.'),
   tryMessage: zod.string().optional(),
   nextSteps: zod.array(zod.string()).optional(),
   customSections: zod.array(JsonErrorCustomSectionSchema).optional(),
-  details: zod.unknown().optional(),
+  details: zod
+    .unknown()
+    .optional()
+    .describe('Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data.'),
 }
 
 export const JsonAbortErrorSchema = zod

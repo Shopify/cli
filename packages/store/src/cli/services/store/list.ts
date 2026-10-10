@@ -13,7 +13,7 @@ interface ListStoresOptions {
 }
 
 export async function listStores(options: ListStoresOptions = {}): Promise<StoreListResult> {
-  const token = await ensureAuthenticatedBusinessPlatform()
+  const token = await ensureAuthenticatedBusinessPlatform([], {allowAutomationToken: true})
 
   // Look the organization up directly instead of paging through every one the account belongs to.
   // A miss falls through to the list below, which supplies the accessible organizations for the

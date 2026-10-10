@@ -269,6 +269,9 @@ describe('listBusinessPlatformStores', () => {
     const requestOptions = latestBusinessPlatformRequestOptions()
     await requestOptions.unauthorizedHandler.handler()
 
-    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledWith([], {noPrompt: undefined})
+    expect(ensureAuthenticatedBusinessPlatform).toHaveBeenCalledWith([], {
+      noPrompt: undefined,
+      allowAutomationToken: true,
+    })
   })
 })

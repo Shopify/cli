@@ -1,6 +1,6 @@
 ---
 id: REQUEST_CONTROLLED_ADMIN_CONTEXT
-version: 3
+version: 4
 severity: high
 precedence: prefer-agent
 ---

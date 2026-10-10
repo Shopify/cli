@@ -1,12 +1,10 @@
 import {showMultipleCLIWarningIfNeeded} from './multiple-installation-warning.js'
-import {jsonOutputEnabled} from './environment.js'
 import {currentProcessIsGlobal} from './is-global.js'
 import {renderInfo} from './ui.js'
 import {globalCLIVersion, localCLIVersion} from './version.js'
 import {runAtMinimumInterval} from '../../private/node/conf-store.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 
-vi.mock('./environment.js')
 vi.mock('./is-global.js')
 vi.mock('./ui.js')
 vi.mock('./version.js')
@@ -18,7 +16,6 @@ describe('showMultipleCLIWarningIfNeeded', () => {
       await task()
       return true
     })
-    vi.mocked(jsonOutputEnabled).mockReturnValue(false)
     vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
     vi.mocked(globalCLIVersion).mockResolvedValue('3.68.0')
     vi.mocked(localCLIVersion).mockResolvedValue('3.68.0')
@@ -27,18 +24,6 @@ describe('showMultipleCLIWarningIfNeeded', () => {
   test('does not run if @shopify/cli is missing from dependencies', async () => {
     // Given
     const dependencies = {}
-
-    // When
-    await showMultipleCLIWarningIfNeeded('dir', dependencies)
-
-    // Then
-    expect(renderInfo).not.toHaveBeenCalled()
-  })
-
-  test('does not run if json output is enabled', async () => {
-    // Given
-    vi.mocked(jsonOutputEnabled).mockReturnValue(true)
-    const dependencies = {'@shopify/cli': '3.68.0'}
 
     // When
     await showMultipleCLIWarningIfNeeded('dir', dependencies)

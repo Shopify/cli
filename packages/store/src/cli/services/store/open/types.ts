@@ -3,11 +3,16 @@ import {zod} from '@shopify/cli-kit/node/schema'
 
 export const openStoreJsonOutputSchema = defineJsonOutputSchema({
   name: 'OpenStoreResult',
-  schema: zod.object({
-    store: zod.string(),
-    url: zod.string(),
-    opened: zod.boolean(),
-  }),
+  schema: zod
+    .object({
+      storeDomain: zod
+        .string()
+        .regex(/^[^.]+\.myshopify\.com$/)
+        .nullable(),
+      url: zod.string().url(),
+      opened: zod.boolean(),
+    })
+    .strict(),
 })
 
 export type OpenStoreResult = InferJsonOutputSchema<typeof openStoreJsonOutputSchema>

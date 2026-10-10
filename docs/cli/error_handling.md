@@ -25,7 +25,7 @@ The CLI defines `FatalError` and several subtypes of `FatalError`. Within the CL
 * Use `AbortSilentError` for user-initiated cancellations
 * Use `ExternalError` when external commands fail
 
-Please, **don't** use the global `process.exit` and `process.abort` APIs. Also, don't `try {} catch {}` abort errors. If you need to communicate the failure of an operation to the caller (e.g., a 5xx HTTP response), use the result type from the following section.
+Please, **don't** use the global `process.exit` and `process.abort` APIs. Do not catch abort errors indiscriminately to continue anyway. Catch only a named domain condition that the operation explicitly expects and can recover from, such as `StoreNotFoundError` while waiting for a newly created store. Rethrow unrelated failures, including ordinary auth/session failures, and preserve user cancellation. If you need to communicate the failure of an operation to the caller (e.g., a 5xx HTTP response), use the result type from the following section.
 
 #### AbortError
 
@@ -148,6 +148,9 @@ When `--json` or `-j` is active, a fatal error writes one document to stdout:
 
 `type` is one of `abort`, `bug`, or `external`. `type` and `message` are always included. The regular error output's optional `tryMessage`, `nextSteps`, and `customSections` content is included as unstyled strings. Link URLs remain visible. Bug errors include `stack`; external errors include `command` and `args`. Other error properties are excluded.
 
+Set `error.code` to a stable nonempty string when consumers need to identify the failure without parsing its message.
+Unknown codes are omitted. Upstream API codes stay inside their native `details` payload.
+
 Callers can explicitly attach selected, JSON-serializable data to `error.details`. The renderer includes this field as
 data, so consumers do not need to parse display strings. Do not attach a raw error, request, credentials, or other private
 properties. For example, `store execute` exposes GraphQL errors at `error.details.errors`, including their error codes.
@@ -196,6 +199,10 @@ result.isErr() // true
 result.valueOrBug() // throws!
 result.mapError((error) => new FatalError("other error"))
 ```
+
+## Narrow recovery and retries
+
+Use stable API codes or domain state for retry decisions when supplied, not broad or localized message matches. Test false-positive messages and unrelated failures. When no structured signal exists, retain justified narrow string handling and test the producer-to-consumer contract; the conservative OS/environment backstop below remains valid.
 
 ## Environmental Issue Detection
 

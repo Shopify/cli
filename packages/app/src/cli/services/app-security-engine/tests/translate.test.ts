@@ -43,6 +43,17 @@ describe('translateFindingsDocument', () => {
     })
   })
 
+  test("keeps a check's docs_url", () => {
+    const docsUrl = 'https://shopify.dev/docs/apps/build/security/app-security-checks/eol-api-version'
+    const [first, ...rest] = deterministicFindingsDocument.checks
+    const document = {
+      ...deterministicFindingsDocument,
+      checks: [{...first!, snapshot: {...first!.snapshot, docs_url: docsUrl}}, ...rest],
+    }
+
+    expect(translateFindingsDocument(asJson(document))).toEqual({ok: true, document})
+  })
+
   test('strips unknown keys at every level', () => {
     const document = asJson(agentFindingsDocument) as Record<string, any>
     document.extra = 'ignored'
@@ -101,13 +112,13 @@ describe('translateFindingsDocument', () => {
 
   test('reports missing required fields with readable paths', () => {
     const document = asJson(deterministicFindingsDocument) as Record<string, any>
-    delete document.project
+    delete document.generated_at
     delete document.checks[0].snapshot.title
     delete document.checks[0].findings[0].location.file
     document.checks[0].findings[0].evidence = 'none'
 
     expect(translateInvalid(document)).toEqual([
-      expect.stringMatching(/^project: /),
+      expect.stringMatching(/^generated_at: /),
       expect.stringMatching(/^checks\[0\]\.snapshot\.title: /),
       expect.stringMatching(/^checks\[0\]\.findings\[0\]\.location\.file: /),
       expect.stringMatching(/^checks\[0\]\.findings\[0\]\.evidence: /),

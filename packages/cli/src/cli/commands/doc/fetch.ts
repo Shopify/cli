@@ -1,11 +1,15 @@
 import {docFetchService} from '../../services/commands/doc/fetch.js'
+import {presentDocFetchResult} from '../../services/commands/doc/fetch-result.js'
+import {docFetchJsonOutputSchema} from '../../services/commands/doc/types.js'
 import Command from '@shopify/cli-kit/node/base-command'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
 export default class DocFetch extends Command {
-  static description =
+  static descriptionWithMarkdown =
     'Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. Pass `--language` for the language of the app you are building so code examples match your stack. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.'
+
+  static description = this.descriptionForHelp()
 
   static examples = [
     `# fetch the Markdown version of a Shopify.dev page
@@ -14,10 +18,13 @@ shopify doc fetch --url https://shopify.dev/docs/api/shopify-cli`,
 shopify doc fetch --url https://shopify.dev/docs/api/shopify-cli --language ruby`,
     `# save the document to a file instead of printing it
 shopify doc fetch --url https://shopify.dev/docs/api/shopify-cli --output docs/shopify-cli.md`,
+    `# return a typed document as JSON
+shopify doc fetch --url https://shopify.dev/docs/api/shopify-cli --json`,
   ]
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     url: Flags.string({
       description: 'The shopify.dev URL to fetch.',
       env: 'SHOPIFY_FLAG_URL',
@@ -30,13 +37,19 @@ shopify doc fetch --url https://shopify.dev/docs/api/shopify-cli --output docs/s
       options: ['javascript', 'typescript', 'python', 'ruby', 'php', 'rust', 'curl', 'liquid', 'graphql', 'html'],
     }),
     output: Flags.string({
-      description: 'Write the document to this file path instead of printing it to stdout.',
+      description:
+        'Write the document to this file path instead of printing it to stdout. With --json, stdout contains the absolute path and Markdown format of the written file.',
       env: 'SHOPIFY_FLAG_OUTPUT',
     }),
   }
 
+  static get jsonOutputSchema() {
+    return docFetchJsonOutputSchema
+  }
+
   async run(): Promise<void> {
     const {flags} = await this.parse(DocFetch)
-    await docFetchService(flags.url, flags.output, flags.language)
+    const result = await docFetchService(flags.url, flags.language)
+    await presentDocFetchResult(result, flags.json ? 'json' : 'text', flags.output)
   }
 }

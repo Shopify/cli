@@ -1,6 +1,7 @@
 import securityReview, {reviewAppSecurityResults, type SecurityReviewDependencies} from './security-review.js'
-import {resolveAppSecurityRoot} from './app-security-api.js'
 import {appSecurityArtifactPaths} from './app-security-artifacts.js'
+import {resolveAppSecuritySelection, type AppSecuritySelectionOptions} from './app-security-selection.js'
+import {validAppConfiguration} from './app-security-selection.test-data.js'
 import {loadAppSecurityResults} from './app-security-results.js'
 import {appSecurityResultsFor} from './app-security-results.test-data.js'
 import {
@@ -8,13 +9,16 @@ import {
   deterministicFindingsDocument,
 } from './app-security-engine/tests/fixtures/findings-documents.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {cwd, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
 import type {AppSecurityBlockingLevel} from './app-security-api.js'
 import type {AgentFindingsDocument, DeterministicFindingsDocument} from './app-security-engine/index.js'
 
 const now = new Date('2026-09-01T12:30:00.000Z')
+
+// The results key of `createApp`'s shopify.app.toml.
+const RESULTS_KEY = 'shopify.app'
 
 interface Files {
   deterministic?: DeterministicFindingsDocument
@@ -23,8 +27,8 @@ interface Files {
 
 async function createApp(directory: string, files: Files): Promise<string> {
   await writeFile(joinPath(directory, 'shopify.app.toml'), 'client_id = "test"\n')
-  const paths = appSecurityArtifactPaths(directory)
-  await mkdir(paths.artifactDirectory)
+  const paths = appSecurityArtifactPaths(directory, RESULTS_KEY)
+  await mkdir(paths.resultsDirectory)
   if (files.deterministic) await writeFile(paths.deterministicFindingsPath, JSON.stringify(files.deterministic))
   if (files.agent) await writeFile(paths.agentFindingsPath, JSON.stringify(files.agent))
   return directory
@@ -32,23 +36,28 @@ async function createApp(directory: string, files: Files): Promise<string> {
 
 function testDependencies() {
   const dependencies = {
-    resolveRoot: resolveAppSecurityRoot,
+    resolveSelection: async ({path}) =>
+      ({
+        kind: 'config',
+        appDirectory: path,
+        appConfigFilePath: joinPath(path, 'shopify.app.toml'),
+      }) as const,
     loadResults: loadAppSecurityResults,
-    output: vi.fn(),
     render: vi.fn(),
     now: () => now,
     setExitCode: vi.fn(),
+    recordMetadata: vi.fn(async () => {}),
   } satisfies SecurityReviewDependencies
   return dependencies
 }
 
 function review(files: Files, options: {checkIds?: string[]; blocking?: AppSecurityBlockingLevel} = {}) {
-  const results = appSecurityResultsFor('/tmp/review-app', {
+  const results = appSecurityResultsFor('/tmp/review-app', RESULTS_KEY, {
     deterministic: files.deterministic ?? null,
     agent: files.agent ?? null,
   })
   return reviewAppSecurityResults(results, {
-    appRoot: '/tmp/review-app',
+    resultsDirectory: appSecurityArtifactPaths('/tmp/review-app', RESULTS_KEY).resultsDirectory,
     checkIds: options.checkIds ?? [],
     blocking: options.blocking ?? 'none',
   })
@@ -66,6 +75,35 @@ async function captureError(action: () => unknown): Promise<AbortError> {
 }
 
 describe('reviewAppSecurityResults', () => {
+  describe('scope', () => {
+    const otherScope = {include_dirs: ['../backend'], excludes: [], no_git_ignore: false}
+
+    test('differs when the agent reported another scope than the latest scan used', () => {
+      const differing = {
+        deterministic: deterministicFindingsDocument,
+        agent: {...agentFindingsDocument, scope: otherScope},
+      }
+
+      expect(review(differing).scopeDiffers).toBe(true)
+    })
+
+    test('does not differ when the scopes match, or when either result is missing', () => {
+      expect(review(both).scopeDiffers).toBe(false)
+      expect(review({deterministic: deterministicFindingsDocument}).scopeDiffers).toBe(false)
+      expect(review({agent: {...agentFindingsDocument, scope: otherScope}}).scopeDiffers).toBe(false)
+      expect(review({}).scopeDiffers).toBe(false)
+    })
+
+    test('does not change the blocking outcome', () => {
+      const differing = {
+        deterministic: deterministicFindingsDocument,
+        agent: {...agentFindingsDocument, scope: otherScope},
+      }
+
+      expect(review(differing, {blocking: 'high'}).blocking).toEqual(review(both, {blocking: 'high'}).blocking)
+    })
+  })
+
   describe('--check-id', () => {
     test('keeps every combined check in canonical order without a filter', () => {
       const result = review(both)
@@ -188,46 +226,75 @@ describe('reviewAppSecurityResults', () => {
 })
 
 describe('securityReview', () => {
+  test('records the number of active findings across every check, whatever --check-id selects', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, both)
+      const unfiltered = testDependencies()
+      const filtered = testDependencies()
+
+      await securityReview({directory: appRoot, verbose: false, checkIds: [], blocking: 'none'}, unfiltered)
+      await securityReview(
+        {directory: appRoot, verbose: false, checkIds: ['OPEN_REDIRECT'], blocking: 'none'},
+        filtered,
+      )
+
+      // Six recorded findings: two deterministic ones superseded by a prefer-agent check and one suppressed by the agent.
+      // OPEN_REDIRECT has none, so the filtered run would record zero if it counted only the selected checks.
+      expect(unfiltered.recordMetadata).toHaveBeenCalledWith({num_security_findings: 3})
+      expect(filtered.recordMetadata).toHaveBeenCalledWith({num_security_findings: 3})
+    })
+  })
+
+  test('records nothing when there are no result files', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createApp(directory, {})
+      const dependencies = testDependencies()
+
+      await securityReview({directory: appRoot, verbose: false, checkIds: [], blocking: 'none'}, dependencies)
+
+      expect(dependencies.recordMetadata).not.toHaveBeenCalled()
+    })
+  })
+
   test('renders the review to the terminal and exits 0 by default', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, both)
       const dependencies = testDependencies()
 
-      await securityReview(
-        {directory: appRoot, json: false, verbose: true, checkIds: [], blocking: 'none'},
-        dependencies,
-      )
+      await securityReview({directory: appRoot, verbose: true, checkIds: [], blocking: 'none'}, dependencies)
 
-      expect(dependencies.output).not.toHaveBeenCalled()
       expect(dependencies.setExitCode).not.toHaveBeenCalled()
       expect(dependencies.render).toHaveBeenCalledTimes(1)
       const input = dependencies.render.mock.calls[0]![0]
       expect(input.verbose).toBe(true)
       expect(input.now).toBe(now)
-      expect(input.commands.scan.args).toContainEqual({flag: '--path', value: appRoot})
-      expect(input.result.appRoot).toBe(appRoot)
-      expect(input.result.sources.deterministic?.path).toBe(appSecurityArtifactPaths(appRoot).deterministicFindingsPath)
+      expect(input.commands.scan.args).toContainEqual({flag: '--path', value: relativePath(cwd(), appRoot)})
+      expect(input.result.resultsDirectory).toBe(appSecurityArtifactPaths(appRoot, RESULTS_KEY).resultsDirectory)
+      expect(input.result.sources.deterministic?.path).toBe(
+        appSecurityArtifactPaths(appRoot, RESULTS_KEY).deterministicFindingsPath,
+      )
       expect(input.result.checks).toHaveLength(6)
     })
   })
 
-  test('prints the encoded JSON to stdout instead of rendering', async () => {
+  test('repeats the latest scan scope in the check command', async () => {
     await inTemporaryDirectory(async (directory) => {
-      const appRoot = await createApp(directory, {deterministic: deterministicFindingsDocument})
+      const scope = {include_dirs: ['../backend'], excludes: ['vendor/**'], no_git_ignore: true}
+      const deterministic = {
+        ...deterministicFindingsDocument,
+        coverage: {...deterministicFindingsDocument.coverage, scope},
+      }
+      const appRoot = await createApp(directory, {deterministic})
       const dependencies = testDependencies()
 
-      await securityReview(
-        {directory: appRoot, json: true, verbose: false, checkIds: ['OPEN_REDIRECT'], blocking: 'none'},
-        dependencies,
-      )
+      await securityReview({directory: appRoot, verbose: false, checkIds: [], blocking: 'none'}, dependencies)
 
-      expect(dependencies.render).not.toHaveBeenCalled()
-      expect(dependencies.output).toHaveBeenCalledTimes(1)
-      const json = JSON.parse(dependencies.output.mock.calls[0]![0])
-      expect(json.filter).toEqual({check_ids: ['OPEN_REDIRECT']})
-      expect(json.sources.agent).toBeNull()
-      expect(json.sources.deterministic.path).toBe(appSecurityArtifactPaths(appRoot).deterministicFindingsPath)
-      expect(json.checks.map((check: {id: string}) => check.id)).toEqual(['OPEN_REDIRECT'])
+      const input = dependencies.render.mock.calls[0]![0]
+      expect(input.commands.scan.args.slice(-3)).toEqual([
+        {flag: '--include-dir', value: '../backend'},
+        {flag: '--exclude', value: 'vendor/**'},
+        '--no-git-ignore',
+      ])
     })
   })
 
@@ -239,27 +306,9 @@ describe('securityReview', () => {
       dependencies.render.mockImplementation(() => order.push('render'))
       dependencies.setExitCode.mockImplementation((code) => order.push(`exit ${code}`))
 
-      await securityReview(
-        {directory: appRoot, json: false, verbose: false, checkIds: [], blocking: 'high'},
-        dependencies,
-      )
+      await securityReview({directory: appRoot, verbose: false, checkIds: [], blocking: 'high'}, dependencies)
 
       expect(order).toEqual(['render', 'exit 1'])
-    })
-  })
-
-  test('sets exit code 1 in JSON mode too', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const appRoot = await createApp(directory, both)
-      const dependencies = testDependencies()
-
-      await securityReview(
-        {directory: appRoot, json: true, verbose: false, checkIds: [], blocking: 'low'},
-        dependencies,
-      )
-
-      expect(dependencies.output).toHaveBeenCalledTimes(1)
-      expect(dependencies.setExitCode).toHaveBeenCalledWith(1)
     })
   })
 
@@ -269,7 +318,7 @@ describe('securityReview', () => {
       const dependencies = testDependencies()
 
       await securityReview(
-        {directory: appRoot, json: false, verbose: false, checkIds: ['NOT_A_CHECK'], blocking: 'high'},
+        {directory: appRoot, verbose: false, checkIds: ['NOT_A_CHECK'], blocking: 'high'},
         dependencies,
       )
 
@@ -287,14 +336,10 @@ describe('securityReview', () => {
       const dependencies = testDependencies()
 
       await expect(
-        securityReview(
-          {directory: appRoot, json: false, verbose: false, checkIds: ['NOT_A_CHECK'], blocking: 'none'},
-          dependencies,
-        ),
+        securityReview({directory: appRoot, verbose: false, checkIds: ['NOT_A_CHECK'], blocking: 'none'}, dependencies),
       ).rejects.toThrow('Unknown check ID: NOT_A_CHECK.')
 
       expect(dependencies.render).not.toHaveBeenCalled()
-      expect(dependencies.output).not.toHaveBeenCalled()
       expect(dependencies.setExitCode).not.toHaveBeenCalled()
     })
   })
@@ -302,14 +347,100 @@ describe('securityReview', () => {
   test('lets the loader abort on an invalid file', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, {deterministic: deterministicFindingsDocument})
-      await writeFile(appSecurityArtifactPaths(appRoot).agentFindingsPath, '{not json')
+      await writeFile(appSecurityArtifactPaths(appRoot, RESULTS_KEY).agentFindingsPath, '{not json')
       const dependencies = testDependencies()
 
       await expect(
-        securityReview({directory: appRoot, json: true, verbose: false, checkIds: [], blocking: 'none'}, dependencies),
-      ).rejects.toThrow('The App Security results could not be loaded because a results file is invalid.')
+        securityReview({directory: appRoot, verbose: false, checkIds: [], blocking: 'none'}, dependencies),
+      ).rejects.toThrow('The app security check results could not be loaded because a results file is invalid.')
 
-      expect(dependencies.output).not.toHaveBeenCalled()
+      expect(dependencies.render).not.toHaveBeenCalled()
+    })
+  })
+
+  test('aborts with "No results found" when the results directory does not exist', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await fileRealPath(directory)
+      const dependencies = testDependencies()
+
+      await expect(
+        securityReview({directory: appRoot, verbose: false, checkIds: [], blocking: 'none'}, dependencies),
+      ).rejects.toMatchObject({message: `No app security check results for ${RESULTS_KEY} in ${appRoot}.`})
+
+      expect(dependencies.render).not.toHaveBeenCalled()
+    })
+  })
+})
+
+describe('securityReview --client-id lookup', () => {
+  const unknownClientId = new AbortError('No app with client ID unknown-client-id found')
+  const reviewOptions = {verbose: false, checkIds: [], blocking: 'none' as const}
+
+  /** The real selection resolver, with the client ID lookup replaced, and a spy on the results loader. */
+  function lookUpDependencies(lookUpApp: (clientId: string) => Promise<void>) {
+    return {
+      ...testDependencies(),
+      resolveSelection: (options: AppSecuritySelectionOptions) =>
+        resolveAppSecuritySelection(options, {
+          confirmScanWithoutAppConfig: async () => true,
+          pickClientId: async () => 'picked-client-id',
+          pickConfigFile: async () => 'shopify.app.toml',
+          lookUpApp,
+        }),
+      loadResults: vi.fn(loadAppSecurityResults),
+    }
+  }
+
+  /** An app that the real resolver loads, with an empty results directory for `resultsKey`. */
+  async function createLinkedApp(directory: string, resultsKey: string): Promise<string> {
+    const appRoot = await fileRealPath(directory)
+    await writeFile(joinPath(appRoot, 'shopify.app.toml'), validAppConfiguration('toml-client-id'))
+    await mkdir(appSecurityArtifactPaths(appRoot, resultsKey).resultsDirectory)
+    return appRoot
+  }
+
+  test('looks up --client-id and reads its results when it is found', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createLinkedApp(directory, 'flag-client-id')
+      const lookUpApp = vi.fn(async (_clientId: string) => {})
+      const dependencies = lookUpDependencies(lookUpApp)
+
+      await securityReview({...reviewOptions, directory: appRoot, clientId: 'flag-client-id'}, dependencies)
+
+      expect(lookUpApp).toHaveBeenCalledWith('flag-client-id')
+      expect(dependencies.loadResults).toHaveBeenCalledWith(
+        expect.objectContaining({clientIdOverride: 'flag-client-id'}),
+        appRoot,
+      )
+      expect(dependencies.render).toHaveBeenCalled()
+    })
+  })
+
+  test('aborts on an unknown --client-id before reading any results', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createLinkedApp(directory, 'unknown-client-id')
+      const dependencies = lookUpDependencies(async () => {
+        throw unknownClientId
+      })
+
+      await expect(
+        securityReview({...reviewOptions, directory: appRoot, clientId: 'unknown-client-id'}, dependencies),
+      ).rejects.toBe(unknownClientId)
+
+      expect(dependencies.loadResults).not.toHaveBeenCalled()
+      expect(dependencies.render).not.toHaveBeenCalled()
+      expect(dependencies.recordMetadata).not.toHaveBeenCalled()
+    })
+  })
+
+  test('does not look up the TOML client ID', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appRoot = await createLinkedApp(directory, RESULTS_KEY)
+      const lookUpApp = vi.fn(async (_clientId: string) => {})
+
+      await securityReview({...reviewOptions, directory: appRoot}, lookUpDependencies(lookUpApp))
+
+      expect(lookUpApp).not.toHaveBeenCalled()
     })
   })
 })

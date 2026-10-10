@@ -27,6 +27,8 @@ export abstract class FatalError extends Error {
   nextSteps?: TokenItem<InlineToken>[]
   formattedMessage?: TokenItem
   customSections?: AlertCustomSection[]
+  /** A stable code for JSON consumers to identify this error, included only when known. */
+  code?: string
   /** Selected JSON-serializable data to include in JSON errors. Never attach the raw error or request. */
   details?: unknown
   skipOclifErrorHandling: boolean

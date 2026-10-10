@@ -6,8 +6,10 @@ import {expect, test} from 'vitest'
 test('encodes source metadata and preserves dynamic configuration fields', async () => {
   const extension = await testFunctionExtension()
   const result = sources(testApp({allExtensions: [extension]}))
-  expect(JSON.parse(appLogSourcesJsonOutputSchema.encode(result))).toEqual(JSON.parse(JSON.stringify(result)))
-  expect(appLogSourcesJsonOutputSchema.encode([])).toBe('[]')
+  expect(JSON.parse(appLogSourcesJsonOutputSchema.encode({sources: result}))).toEqual({
+    sources: JSON.parse(JSON.stringify(result)),
+  })
+  expect(JSON.parse(appLogSourcesJsonOutputSchema.encode({sources: []}))).toEqual({sources: []})
 })
 
 test.each([{value: {}}, {value: [1]}, {value: [null]}, {value: ['extensions.example']}])(
@@ -19,9 +21,9 @@ test.each([{value: {}}, {value: [1]}, {value: [null]}, {value: ['extensions.exam
 
 test('rejects malformed metadata and omits absent optional fields', async () => {
   const result = sources(testApp({allExtensions: [await testFunctionExtension()]}))[0]!
-  expect(() => appLogSourcesJsonOutputSchema.validate([{...result, uid: null}])).toThrow()
-  expect(() => appLogSourcesJsonOutputSchema.validate([{...result, features: [false]}])).toThrow()
-  expect(JSON.parse(appLogSourcesJsonOutputSchema.encode([{...result, dependency: undefined}]))[0]).not.toHaveProperty(
-    'dependency',
-  )
+  expect(() => appLogSourcesJsonOutputSchema.validate({sources: [{...result, uid: null}]})).toThrow()
+  expect(() => appLogSourcesJsonOutputSchema.validate({sources: [{...result, features: [false]}]})).toThrow()
+  expect(
+    JSON.parse(appLogSourcesJsonOutputSchema.encode({sources: [{...result, dependency: undefined}]})).sources[0],
+  ).not.toHaveProperty('dependency')
 })

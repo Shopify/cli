@@ -1,5 +1,7 @@
 import {loadChecks, buildAgentChecks, validateFinding, validateAgentChecksExecuted} from '../checks/index.js'
+import {getAgentInstructions} from '../run.js'
 import {EMBEDDED_CHECK_SOURCES} from '../checks/embedded.js'
+import {RULE_CATALOG} from '../rules/catalog.js'
 import {describe, expect, test} from 'vitest'
 import {readFileSync, readdirSync} from 'node:fs'
 
@@ -89,7 +91,7 @@ describe('agent checks', () => {
     expect(agentChecks.checks.map((check) => check.id).sort()).toEqual(EXPECTED_CHECK_IDS)
   })
 
-  test('gives each check only its id, version, severity, and prompt', () => {
+  test('gives each check only its id, version, severity, docs URL, and prompt', () => {
     const agentChecks = buildAgentChecks('0.1.0')
     const tenant = loadChecks().get('MISSING_TENANT_ISOLATION')!
 
@@ -105,8 +107,20 @@ describe('agent checks', () => {
       id: tenant.id,
       version: tenant.version,
       severity: tenant.severity,
+      docs_url: 'https://shopify.dev/docs/apps/build/security/app-security-checks/missing-tenant-isolation',
       prompt: tenant.prompt,
     })
+  })
+
+  test("gives each check its catalog entry's docs URL", () => {
+    for (const check of buildAgentChecks('0.1.0').checks) {
+      expect(check.docs_url, check.id).toBe(RULE_CATALOG.find((entry) => entry.id === check.id)!.docsUrl)
+    }
+  })
+
+  test('instructions tell the agent to link docs_url when explaining a finding', () => {
+    const {instructions} = buildAgentChecks('0.1.0')
+    expect(instructions).toContain("Each check's docs_url is its\npage on shopify.dev")
   })
 
   test('instructions tell the agent to explore and find, not adjudicate', () => {
@@ -119,6 +133,8 @@ describe('agent checks', () => {
     const {instructions} = buildAgentChecks('0.1.0')
     expect(instructions).toContain('ONE findings document')
     expect(instructions).toContain('shopify app security record')
+    // A bare `record` would write to the default configuration's results, not those of the `check` run.
+    expect(instructions).toContain('using the\nexact command from the instructions you were given')
     expect(instructions).toContain('check_version')
     expect(instructions).not.toMatch(/source_scan_id|prompt_hash|inspected_files|--findings/)
   })
@@ -128,6 +144,51 @@ describe('agent checks', () => {
     expect(agentChecks.instructions).toContain('concrete trust-boundary violation')
     expect(agentChecks.instructions).toContain('affected authority')
     expect(agentChecks.instructions).toContain('code smell')
+  })
+
+  test('instructions keep a check unresolved only for an incomplete investigation or a named candidate', () => {
+    const {instructions} = buildAgentChecks('0.1.0')
+    expect(instructions).toContain('name the candidate in the reason')
+    expect(instructions).toContain('An unprovable hypothetical is not a reason to leave a check unresolved.')
+    expect(getAgentInstructions()).toContain('not from whether you can prove a negative')
+    expect(getAgentInstructions()).toContain(
+      "`unresolved`: you couldn't complete the investigation, or you named a specific candidate whose boundary is still unclear.",
+    )
+    expect(getAgentInstructions()).not.toContain('prove the issue')
+  })
+
+  test('Shopify-sensitive prompts accept the React Router SDK defaults and keep the concrete failures', () => {
+    const checks = loadChecks()
+    const metafield = checks.get('METAFIELD_OFFLINE_TOKEN')!
+    expect(metafield.version).toBe(2)
+    expect(metafield.prompt).toContain('token provenance')
+    expect(metafield.prompt).toContain('unauthenticated.admin(shop)')
+    expect(metafield.prompt).toContain("Writing to the `$app` namespace isn't safe by itself.")
+
+    const authorization = checks.get('MISSING_AUTHORIZATION_CHECK')!
+    expect(authorization.version).toBe(3)
+    expect(authorization.prompt).toContain('not a finding by itself')
+    expect(authorization.prompt).toContain('sessionToken.sub')
+    expect(authorization.prompt).toContain('belongs to another user of the app')
+    expect(authorization.prompt).toContain('falls back to an offline session')
+
+    const frameAncestors = checks.get('STATIC_FRAME_ANCESTORS')!
+    expect(frameAncestors.version).toBe(2)
+    expect(frameAncestors.prompt).toContain('addDocumentResponseHeaders')
+    expect(frameAncestors.prompt).toContain('after or instead of the SDK')
+    expect(frameAncestors.prompt).toContain('built from variables')
+  })
+
+  test('METAFIELD_OFFLINE_TOKEN catalog text flags unverified writes, not offline tokens from authenticate.admin', () => {
+    const entry = RULE_CATALOG.find((candidate) => candidate.id === 'METAFIELD_OFFLINE_TOKEN')!
+    expect(entry.description).toContain('no verified request for the same shop authorizes')
+    expect(entry.description).not.toContain('offline-token contexts')
+    expect(entry.fix).toContain('authenticate.admin(request)')
+  })
+
+  test('STATIC_FRAME_ANCESTORS catalog text covers literal and constructed policies', () => {
+    const entry = RULE_CATALOG.find((candidate) => candidate.id === 'STATIC_FRAME_ANCESTORS')!
+    expect(entry.description).toContain('whether written literally or built from variables')
   })
 
   test('review prompts cover tenant provenance, authorization drift, proxy nuance, and data sensitivity', () => {
@@ -196,11 +257,18 @@ describe('finding validation', () => {
   })
 
   test('rejects unsafe file and evidence paths and lines', () => {
-    expect(validateFinding({...validFinding, file: '../outside.ts'})).toMatch(/unsafe file path/)
+    expect(validateFinding({...validFinding, file: '/etc/passwd'})).toMatch(/unsafe file path/)
     expect(validateFinding({...validFinding, file: 'C:\\app\\a.ts'})).toMatch(/unsafe file path/)
-    expect(validateFinding({...validFinding, evidence: [{file: '../secret', line: 1}]})).toMatch(/unsafe evidence/)
+    expect(validateFinding({...validFinding, file: 'a\0.ts'})).toMatch(/unsafe file path/)
+    expect(validateFinding({...validFinding, file: `${'a/'.repeat(600)}a.ts`})).toMatch(/exceeds 1024/)
+    expect(validateFinding({...validFinding, evidence: [{file: 'a\0.ts', line: 1}]})).toMatch(/unsafe evidence/)
     expect(validateFinding({...validFinding, evidence: [{file: '/etc/passwd', line: 1}]})).toMatch(/unsafe evidence/)
     expect(validateFinding({...validFinding, evidence: [{file: 'app/a.ts', line: 0}]})).toMatch(/evidence line/)
+  })
+
+  test('allows paths that start with ../, for a scan directory outside the app directory', () => {
+    expect(validateFinding({...validFinding, file: '../backend/src/a.ts'})).toBeUndefined()
+    expect(validateFinding({...validFinding, evidence: [{file: '../library/index.ts', line: 1}]})).toBeUndefined()
   })
 
   test('caps agent-supplied text and evidence', () => {

@@ -3,26 +3,39 @@ import List from './list.js'
 import Schedule from './schedule.js'
 import Status from './status.js'
 import Unschedule from './unschedule.js'
+import {projectMigrationSubmissionResult} from '../../../services/subscription-migrations/result-codec.js'
 import {appFlags} from '../../../flags.js'
 import {commands} from '../../../index.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {cancelMigrationOperations} from '../../../services/subscription-migrations/cancel-operations.js'
+import {
+  migrationCancellationJsonOutputSchema,
+  migrationListJsonOutputSchema,
+  migrationSubmissionJsonOutputSchema,
+  migrationStatusJsonOutputSchema,
+} from '../../../services/subscription-migrations/types.js'
 import {outputOperations} from '../../../services/subscription-migrations/command-output.js'
 import {getMigrationOperations} from '../../../services/subscription-migrations/get-operations.js'
 import {runSubmissionCommand} from '../../../services/subscription-migrations/run-submission-command.js'
 import {watchMigrationOperations} from '../../../services/subscription-migrations/watch-operations.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
+import * as system from '@shopify/cli-kit/node/system'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import type {MigrationOperation} from '../../../models/subscription-migrations.js'
-import type {MigrationCancellationResult} from '../../../services/subscription-migrations/cancel-operations.js'
-import type {MigrationSubmissionResult} from '../../../services/subscription-migrations/submit-migration-plan.js'
+import type {
+  MigrationCancellationResult,
+  MigrationSubmissionResult,
+} from '../../../services/subscription-migrations/types.js'
 
 vi.mock('../../../services/app-context.js')
-vi.mock('../../../services/subscription-migrations/cancel-operations.js')
+vi.mock('../../../services/subscription-migrations/cancel-operations.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../services/subscription-migrations/cancel-operations.js')>()),
+  cancelMigrationOperations: vi.fn(),
+}))
 vi.mock('../../../services/subscription-migrations/command-output.js')
 vi.mock('../../../services/subscription-migrations/get-operations.js')
 vi.mock('../../../services/subscription-migrations/run-submission-command.js')
@@ -109,10 +122,9 @@ describe('subscription migration submission commands', () => {
       watch: true,
     })
     expect(outputResult).toHaveBeenCalledOnce()
-    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
-      schemaVersion: 1,
-      ...successfulSubmissionResult.submission,
-    })
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(
+      projectMigrationSubmissionResult(successfulSubmissionResult),
+    )
     expect(result).toEqual({app})
   })
 
@@ -128,6 +140,49 @@ describe('subscription migration submission commands', () => {
     expect(runSubmissionCommand).toHaveBeenCalledWith(
       expect.objectContaining({action: 'schedule', clientId: 'remote-client-id'}),
     )
+  })
+
+  test.each([
+    {json: false, noInput: false},
+    {json: true, noInput: false},
+    {json: false, noInput: true},
+    {json: true, noInput: true},
+  ])('unschedule keeps format independent of no-input: %j', async ({json, noInput}) => {
+    const submission = {...successfulSubmissionResult.submission, action: 'unschedule' as const}
+    vi.mocked(runSubmissionCommand).mockResolvedValue({status: 'success', submission})
+    await Unschedule.run(['--input', '-', '--force', ...(json ? ['--json'] : []), ...(noInput ? ['--no-input'] : [])])
+    expect(runSubmissionCommand).toHaveBeenCalledWith(
+      expect.objectContaining({action: 'unschedule', skipConfirmation: true}),
+    )
+    if (json) {
+      expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toMatchObject({
+        status: 'success',
+        changed: true,
+        action: 'unschedule',
+      })
+    } else {
+      expect(outputResult).not.toHaveBeenCalled()
+      expect(renderSuccess).toHaveBeenCalledOnce()
+    }
+  })
+
+  test('unschedule emits cancellation and exits zero after declined confirmation', async () => {
+    const result = {
+      status: 'cancelled' as const,
+      changed: false as const,
+      action: 'unschedule' as const,
+      reason: 'Confirmation declined.',
+    }
+    vi.mocked(runSubmissionCommand).mockResolvedValue(result)
+    const supportsPrompting = vi.spyOn(system, 'terminalSupportsPrompting').mockReturnValue(true)
+    try {
+      await Unschedule.run(['--input', '-', '--json'])
+      expect(runSubmissionCommand).toHaveBeenCalledWith(expect.objectContaining({skipConfirmation: false}))
+      expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(result)
+      expect(process.exitCode).toBeUndefined()
+    } finally {
+      supportsPrompting.mockRestore()
+    }
   })
 
   test('unschedule delegates without idempotency controls', async () => {
@@ -191,11 +246,9 @@ describe('subscription migration submission commands', () => {
 
     expect(process.exitCode).toBe(1)
     expect(outputResult).toHaveBeenCalledOnce()
-    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
-      schemaVersion: 1,
-      ...failedResult.submission,
-      failure: failedResult.failure,
-    })
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(
+      projectMigrationSubmissionResult(failedResult),
+    )
     expect(renderWarning).not.toHaveBeenCalled()
   })
 
@@ -217,6 +270,30 @@ describe('subscription migration submission commands', () => {
     expect(process.exitCode).toBe(1)
     expect(renderWarning).toHaveBeenCalledOnce()
     expect(outputResult).not.toHaveBeenCalled()
+  })
+
+  test.each([false, true])('unschedule preserves JSON results and failure exits with watch=%s', async (watch) => {
+    const submission = {...successfulSubmissionResult.submission, action: 'unschedule' as const}
+    const failure = {type: 'submission' as const, batchIndex: 1, userErrors: [{message: 'Rejected', field: null}]}
+    vi.mocked(runSubmissionCommand).mockResolvedValue({status: 'failed', submission, failure})
+
+    await expect(
+      Unschedule.run(['--input', 'migrations.csv', '--force', '--json', ...(watch ? ['--watch'] : [])]),
+    ).resolves.toEqual({app})
+
+    expect(runSubmissionCommand).toHaveBeenCalledWith({
+      action: 'unschedule',
+      input: 'migrations.csv',
+      clientId: 'remote-client-id',
+      skipConfirmation: true,
+      watch,
+    })
+    expect(outputResult).toHaveBeenCalledOnce()
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual(
+      projectMigrationSubmissionResult({status: 'failed', submission, failure}),
+    )
+    expect(process.exitCode).toBe(1)
+    expect(renderWarning).not.toHaveBeenCalled()
   })
 
   test.each([Schedule, Unschedule])(
@@ -284,6 +361,16 @@ describe('subscription migration operation commands', () => {
     expect(watchMigrationOperations).not.toHaveBeenCalled()
   })
 
+  test('status reports failed operations without changing the command exit code', async () => {
+    const failedOperation = {...completedOperation, status: 'FAILED' as const}
+    vi.mocked(getMigrationOperations).mockResolvedValue([failedOperation])
+
+    await expect(Status.run(['--id', failedOperation.id, '--json'])).resolves.toEqual({app})
+
+    expect(outputOperations).toHaveBeenCalledWith([failedOperation], true)
+    expect(process.exitCode).toBeUndefined()
+  })
+
   test('cancel presents every repeated ID in exactly one JSON document', async () => {
     const secondOperation = {...completedOperation, id: 'gid://shopify/AppSubscriptionMigrationOperation/2'}
     const result: MigrationCancellationResult = {
@@ -326,8 +413,29 @@ describe('subscription migration operation commands', () => {
     })
     expect(outputResult).toHaveBeenCalledOnce()
     expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)).toEqual({
-      schemaVersion: 1,
-      outcomes: result.outcomes,
+      status: 'partial',
+      operations: result.outcomes.map((outcome) => ({
+        status: outcome.status,
+        operationGid: outcome.operationId,
+        operation:
+          outcome.operation === null
+            ? null
+            : {
+                gid: outcome.operation.id,
+                status: outcome.operation.status,
+                total: outcome.operation.total,
+                results: outcome.operation.results.edges.map(({node}) => ({shopGid: node.shopId, code: node.code})),
+              },
+        ...(outcome.status === 'failed' && 'userErrors' in outcome
+          ? {
+              error: {
+                type: 'abort',
+                message: outcome.userErrors.map(({message}) => message).join('; '),
+                details: {userErrors: outcome.userErrors.map(({message, field}) => ({message, fieldPath: field}))},
+              },
+            }
+          : {}),
+      })),
     })
     expect(process.exitCode).toBe(1)
   })
@@ -428,6 +536,28 @@ describe('subscription migration command metadata', () => {
 
   test.each([Schedule, Unschedule, Status, Cancel, List])('$name uses the canonical JSON flag', (Command) => {
     expect(Command.flags.json).toBe(jsonFlag.json)
+  })
+
+  test('list exposes and documents its JSON output schema', () => {
+    expect(List.jsonOutputSchema).toBe(migrationListJsonOutputSchema)
+    expect(List.description).toContain('`MigrationListResult` schema')
+    expect(List.description).toContain('```json')
+  })
+
+  test('schedule exposes and documents the submission JSON output schema', () => {
+    expect(Schedule.jsonOutputSchema).toBe(migrationSubmissionJsonOutputSchema)
+    expect(Schedule.description).toContain('`MigrationSubmissionResult` schema')
+    expect(Schedule.description).toContain('```json')
+  })
+
+  test('status exposes and documents its JSON output schema', () => {
+    expect(Status.jsonOutputSchema).toBe(migrationStatusJsonOutputSchema)
+    expect(Status.description).toContain('`MigrationStatusResult` schema')
+    expect(Status.description).toContain('```json')
+  })
+
+  test('cancel exposes its JSON output schema', () => {
+    expect(Cancel.jsonOutputSchema).toBe(migrationCancellationJsonOutputSchema)
   })
 
   test.each([Schedule, Unschedule, Status, Cancel, List])('$name has no legacy migration flags', (Command) => {
@@ -549,10 +679,14 @@ describe('subscription migration command metadata', () => {
     },
   )
 
-  test.each([Schedule, Unschedule, Status, Cancel, List])(
-    '$name has no fenced-code markers in its plain description',
-    (Command) => {
-      expect(Command.description).not.toContain('```')
-    },
-  )
+  test('unschedule exposes and documents the shared submission schema', () => {
+    expect(Unschedule.jsonOutputSchema).toBe(Schedule.jsonOutputSchema)
+    expect(Unschedule.description).toContain('`MigrationSubmissionResult` schema')
+    expect(Unschedule.description).toContain('```json')
+  })
+
+  test('cancel documents its JSON output schema', () => {
+    expect(Cancel.description).toContain('`MigrationCancellationResult` schema')
+    expect(Cancel.description).toContain('```json')
+  })
 })

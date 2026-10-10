@@ -54,7 +54,7 @@ describe('logs', () => {
     })
 
     // Then
-    expect(outputInfo).toHaveBeenCalledWith('{"message":"Waiting for app logs..."}')
+    expect(outputInfo).toHaveBeenCalledWith('Waiting for app logs...\n')
     expect(spy).toHaveBeenCalled()
   })
 
@@ -157,7 +157,7 @@ describe('logs', () => {
     expectedStoreMap.set('1', 'store-fqdn')
     expectedStoreMap.set('2', 'other-fqdn')
     expect(outputResult).toHaveBeenCalledWith('{"subscribedToStores":["store-fqdn","other-fqdn"]}')
-    expect(outputInfo).toHaveBeenCalledWith('{"message":"Waiting for app logs..."}')
+    expect(outputInfo).toHaveBeenCalledWith('Waiting for app logs...\n')
     expect(spy).toHaveBeenCalledWith({
       options: {
         developerPlatformClient: expect.anything(),
@@ -212,7 +212,7 @@ describe('logs', () => {
     })
   })
 
-  test('should render custom info box', async () => {
+  test.each(['text', 'json'] as const)('renders configuration info in %s mode', async (format) => {
     // Given
     const sources = ['extensions.source']
     await setupDevContext(sources)
@@ -220,7 +220,7 @@ describe('logs', () => {
 
     // When
     await logs({
-      format: 'text',
+      format,
       app,
       remoteApp,
       organization,

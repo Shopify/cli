@@ -1,29 +1,25 @@
 import {docFetchService} from './fetch.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
-import {fetch} from '@shopify/cli-kit/node/http'
-import {outputResult} from '@shopify/cli-kit/node/output'
+import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {inTemporaryDirectory, readFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
 
-vi.mock('@shopify/cli-kit/node/http')
-vi.mock('@shopify/cli-kit/node/output')
-
-const okResponse = (body: string) =>
-  ({ok: true, status: 200, statusText: 'OK', text: () => Promise.resolve(body)}) as any
+vi.mock('@shopify/cli-kit/node/http', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/http')>()),
+  fetch: vi.fn(),
+}))
 
 beforeEach(() => {
-  vi.mocked(fetch).mockResolvedValue(okResponse('# Doc'))
+  vi.mocked(fetch).mockResolvedValue(new Response('# Doc'))
 })
 
 describe('docFetchService', () => {
-  test('requests Markdown and prints the body to stdout', async () => {
-    await docFetchService('https://shopify.dev/docs/api/shopify-cli')
+  test('requests Markdown and returns a document', async () => {
+    const result = await docFetchService('https://shopify.dev/docs/api/shopify-cli')
 
     expect(fetch).toHaveBeenCalledWith('https://shopify.dev/docs/api/shopify-cli', {
       headers: {Accept: 'text/markdown', 'X-Shopify-Surface': 'cli'},
     })
-    expect(outputResult).toHaveBeenCalledWith('# Doc')
+    expect(result).toEqual({document: {url: 'https://shopify.dev/docs/api/shopify-cli', content: '# Doc'}})
   })
 
   test('accepts shopify.dev subdomains', async () => {
@@ -42,23 +38,15 @@ describe('docFetchService', () => {
     expect(fetch).not.toHaveBeenCalled()
   })
 
-  test('writes the document to the output path instead of stdout', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const outputPath = joinPath(tmpDir, 'docs/shopify-cli.md')
-
-      // When
-      await docFetchService('https://shopify.dev/docs/api/shopify-cli', outputPath)
-
-      // Then
-      expect(fileExistsSync(outputPath)).toBe(true)
-      await expect(readFile(outputPath)).resolves.toBe('# Doc')
-      expect(outputResult).not.toHaveBeenCalled()
+  test('returns an empty document as a valid result', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(''))
+    await expect(docFetchService('https://shopify.dev/docs')).resolves.toEqual({
+      document: {url: 'https://shopify.dev/docs', content: ''},
     })
   })
 
   test('sends Accept-Language when a language is provided', async () => {
-    await docFetchService('https://shopify.dev/docs/api/shopify-cli', undefined, 'ruby')
+    await docFetchService('https://shopify.dev/docs/api/shopify-cli', 'ruby')
 
     expect(fetch).toHaveBeenCalledWith('https://shopify.dev/docs/api/shopify-cli', {
       headers: {Accept: 'text/markdown', 'X-Shopify-Surface': 'cli', 'Accept-Language': 'ruby'},
@@ -66,9 +54,10 @@ describe('docFetchService', () => {
   })
 
   test('throws when the response is not ok', async () => {
-    vi.mocked(fetch).mockResolvedValue({ok: false, status: 404, statusText: 'Not Found'} as any)
+    vi.mocked(fetch).mockResolvedValue(new Response('', {status: 404, statusText: 'Not Found'}))
 
-    await expect(docFetchService('https://shopify.dev/missing')).rejects.toThrowError(AbortError)
-    expect(outputResult).not.toHaveBeenCalled()
+    const result = docFetchService('https://shopify.dev/missing')
+    await expect(result).rejects.toThrowError(AbortError)
+    await expect(result).rejects.toThrow('Failed to fetch https://shopify.dev/missing: 404 Not Found')
   })
 })

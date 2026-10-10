@@ -27,6 +27,10 @@ The visual representation might feel intimidating when you first open it, so we 
 
 We **strongly recommend** reading [this series of blog posts](https://marvinh.dev/blog/speeding-up-javascript-ecosystem/) on debugging to get more familiar with the process.
 
+Measure the effect of the change before you claim a performance improvement. Choose measurements that fit the change's size and risk. Preserve authentication, fallback, and operating-system behavior.
+
+Passing tests do not prove a speed increase. Put measurement commands and results in the PR, not in code comments.
+
 ## Principles
 
 ### Dependencies will most likely have a cost
@@ -38,6 +42,8 @@ When NPM dependencies are used in SPAs, they are tree-shaken through bundling to
 - If the dependency is large and uses ESM, use dynamic imports to import it. Note that it'll make the dependent modules' APIs asynchronous, but it'll be improved once this [TC39 proposal](https://github.com/tc39/proposal-defer-import-eval) lands.
 - As a **last resource**, if a dependency is a bottleneck, you can use its CJS version or dynamically import it when needed using `await import("my-dependency")`.
 
+A dynamic import still takes time to load the dependency. For an optional feature, check whether it is needed before you import a large dependency. Small helpers can use static imports.
+
 ### Use concurrency whenever possible
 
 When writing code as a sequence of statements, some of which are `awaited` because we are invoking `async` functions, we might end up with logic whose performance has a lot of room for improvement. Take the following example:
@@ -48,6 +54,8 @@ async function slowFunction() {
     await secondSlowFunction()
 }
 ```
+
+Run operations at the same time only if they do not depend on each other. Preserve required order, partial results, error handling, and [cleanup](conventions.md#15---resource-lifetime). Limit how many requests run at the same time when service limits or local resources require it.
 
 Since both functions don't depend on each other, we are not using the runtime most efficiently. Instead, consider running them concurrently with the help of the `Promise.all` API:
 

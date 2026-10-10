@@ -2,6 +2,7 @@ import {nonRandomUUID} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
 import {sniffForJson} from './path.js'
 import {environmentVariables, systemEnvironmentVariables} from '../../private/node/constants.js'
+import {automationTokenVariable, automationTokenVariablesProblem} from '../../private/node/session/automation-token.js'
 
 /**
  * It returns the environment variables of the environment
@@ -18,14 +19,19 @@ export function getEnvironmentVariables(): NodeJS.ProcessEnv {
 }
 
 /**
- * Returns the value of the SHOPIFY_APP_AUTOMATION_TOKEN environment variable,
- * falling back to the deprecated SHOPIFY_CLI_PARTNERS_TOKEN.
+ * Returns the automation token the CLI authenticates with, from the first of these variables that is set:
+ * SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN, SHOPIFY_APP_AUTOMATION_TOKEN, or the deprecated SHOPIFY_CLI_PARTNERS_TOKEN.
  *
- * @returns The app automation token value, or undefined if neither env var is set.
+ * Returns undefined when the variables can't be used (an empty value, or the organization variable set alongside
+ * another one). Callers then fall back to the login flow, which reports the problem instead of logging in.
+ *
+ * @returns The automation token, or undefined if there is no usable one.
  */
 export function getAppAutomationToken(): string | undefined {
   const env = getEnvironmentVariables()
-  return env[environmentVariables.appAutomationToken] ?? env[environmentVariables.partnersToken]
+  if (automationTokenVariablesProblem(env)) return undefined
+  const variable = automationTokenVariable(env)
+  return variable ? env[variable] : undefined
 }
 
 /**

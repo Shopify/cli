@@ -1,8 +1,17 @@
 import {buildSecurityAlert} from './security-output.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
+import {cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import type {SecurityReportInput} from './security-output.js'
+import type {AppSecuritySelection} from './app-security-selection.js'
 import type {ScanResult} from './app-security-engine/index.js'
+
+const appSelection: AppSecuritySelection = {
+  kind: 'config',
+  appDirectory: '/tmp/app',
+  appConfigFilePath: '/tmp/app/shopify.app.toml',
+  configClientId: 'toml-client-id',
+}
 
 const engine = {
   name: 'shopify-app-security',
@@ -13,7 +22,6 @@ const engine = {
 const scanWithIssues: ScanResult = {
   version: '0.1.0',
   timestamp: '2026-08-24T00:00:00.000Z',
-  project: {commit: null, dirty: null},
   app: {name: 'Example App', type: 'public'},
   detection: {
     framework: 'react_router',
@@ -70,10 +78,12 @@ const scanWithIssues: ScanResult = {
 function reportInput(overrides: Partial<SecurityReportInput> = {}): SecurityReportInput {
   return {
     scan: scanWithIssues,
+    selection: appSelection,
+    scanDirectories: [{directory: '/tmp/app', origin: 'app_directory'}],
     engine,
     verbose: false,
     elapsedMilliseconds: 125,
-    commands: resolveAppSecurityCommands('/tmp/app'),
+    commands: resolveAppSecurityCommands(appSelection, cwd()),
     deterministicFindingsPath: '/tmp/app/.shopify/app-security/deterministic-findings.json',
     agentChecksPath: '/tmp/app/.shopify/app-security/agent-checks.json',
     agentCheckCount: 31,
@@ -85,7 +95,66 @@ function section(input: SecurityReportInput, title: string) {
   return buildSecurityAlert(input).options.customSections?.find((entry) => entry.title === title)
 }
 
+function selectionRows(selection: AppSecuritySelection) {
+  return section(reportInput({selection}), 'Selection')?.body
+}
+
 describe('buildSecurityAlert', () => {
+  test('shows the app directory, the config file, the client ID and the scan directories', () => {
+    expect(selectionRows(reportInput().selection)).toEqual({
+      tabularData: [
+        ['App directory', '/tmp/app'],
+        ['Config file', 'shopify.app.toml'],
+        ['Client ID', 'toml-client-id'],
+        ['Scan directories', '.'],
+      ],
+      firstColumnSubdued: true,
+    })
+  })
+
+  test('says where the client ID came from when --client-id overrides the TOML', () => {
+    const rows = selectionRows({
+      kind: 'config',
+      appDirectory: '/tmp/app',
+      appConfigFilePath: '/tmp/app/shopify.app.staging.toml',
+      configClientId: 'toml-client-id',
+      clientIdOverride: 'flag-client-id',
+    })
+
+    expect(rows).toMatchObject({
+      tabularData: expect.arrayContaining([
+        ['Config file', 'shopify.app.staging.toml'],
+        ['Client ID', 'flag-client-id (from --client-id)'],
+      ]),
+    })
+  })
+
+  test('shows an unlinked configuration as not linked', () => {
+    const rows = selectionRows({
+      kind: 'config',
+      appDirectory: '/tmp/app',
+      appConfigFilePath: '/tmp/app/shopify.app.toml',
+    })
+
+    expect(rows).toMatchObject({tabularData: expect.arrayContaining([['Client ID', 'not linked']])})
+  })
+
+  test('shows no config file when scanning without app configuration', () => {
+    const rows = selectionRows({
+      kind: 'no-config',
+      appDirectory: '/tmp/app',
+      clientId: 'chosen-id',
+      clientIdSource: 'picker',
+    })
+
+    expect(rows).toMatchObject({
+      tabularData: expect.arrayContaining([
+        ['Config file', 'none'],
+        ['Client ID', 'chosen-id'],
+      ]),
+    })
+  })
+
   test('renders a concise grouped error report for high-severity issues', () => {
     const alert = buildSecurityAlert(reportInput())
     const serialized = JSON.stringify(alert)
@@ -102,20 +171,30 @@ describe('buildSecurityAlert', () => {
         items: [
           [
             {bold: 'Request input selects Admin API shop context'},
-            {subdued: 'REQUEST_CONTROLLED_ADMIN_CONTEXT'},
+            {
+              link: {
+                label: 'REQUEST_CONTROLLED_ADMIN_CONTEXT',
+                url: 'https://shopify.dev/docs/apps/build/security/app-security-checks/request-controlled-admin-context',
+              },
+            },
             '1 occurrence across 1 file',
             {filePath: 'app/routes/action.ts:42'},
           ],
           [
             {bold: 'Configured API version is no longer supported'},
-            {subdued: 'EOL_API_VERSION'},
+            {
+              link: {
+                label: 'EOL_API_VERSION',
+                url: 'https://shopify.dev/docs/apps/build/security/app-security-checks/eol-api-version',
+              },
+            },
             '1 occurrence across 1 file',
             {filePath: 'shopify.app.toml'},
           ],
         ],
       },
     })
-    const commands = resolveAppSecurityCommands('/tmp/app')
+    const commands = resolveAppSecurityCommands(appSelection, cwd())
     expect(alert.options.nextSteps).toBeUndefined()
     expect(serialized).toContain('31 checks ready for your coding agent.')
     const customSections = alert.options.customSections ?? []
@@ -123,8 +202,8 @@ describe('buildSecurityAlert', () => {
     expect(customSections[artifactsIndex]?.body).toEqual({
       list: {
         items: [
-          ['Deterministic findings:', {filePath: '/tmp/app/.shopify/app-security/deterministic-findings.json'}],
-          ['Agent checks:', {filePath: '/tmp/app/.shopify/app-security/agent-checks.json'}],
+          ['Deterministic findings:', {filePath: '.shopify/app-security/deterministic-findings.json'}],
+          ['Agent security check instructions:', {filePath: '.shopify/app-security/agent-checks.json'}],
         ],
       },
     })
@@ -133,7 +212,7 @@ describe('buildSecurityAlert', () => {
       body: {
         list: {
           items: [
-            ['Have your coding agent read', {filePath: '/tmp/app/.shopify/app-security/agent-checks.json'}],
+            ['Have your coding agent run the agent checks'],
             ['Record the agent results with', {command: formatAppSecurityCommand(commands.record)}],
             ['Review the results with', {command: formatAppSecurityCommand(commands.review)}],
           ],
@@ -164,7 +243,12 @@ describe('buildSecurityAlert', () => {
         items: [
           [
             {bold: issues[0]!.title},
-            {subdued: issues[0]!.id},
+            {
+              link: {
+                label: issues[0]!.id,
+                url: 'https://shopify.dev/docs/apps/build/security/app-security-checks/request-controlled-admin-context',
+              },
+            },
             '200 occurrences across 200 files',
             {filePath: 'app/routes/route-000.ts:42'},
             {filePath: 'app/routes/route-001.ts:42'},
@@ -225,7 +309,7 @@ describe('buildSecurityAlert', () => {
   })
 
   test('quotes record commands for Windows paths with spaces and percents', () => {
-    const commands = resolveAppSecurityCommands('C:/Users/50%/my app')
+    const commands = resolveAppSecurityCommands(appSelection, joinPath(cwd(), '50% my app'))
     const alert = buildSecurityAlert(reportInput({commands}))
     const recordCommand = formatAppSecurityCommand(commands.record)
 
@@ -233,7 +317,7 @@ describe('buildSecurityAlert', () => {
     expect(section(reportInput({commands}), 'Next steps')?.body).toEqual({
       list: {
         items: [
-          ['Have your coding agent read', {filePath: '/tmp/app/.shopify/app-security/agent-checks.json'}],
+          ['Have your coding agent run the agent checks'],
           ['Record the agent results with', {command: recordCommand}],
           ['Review the results with', {command: formatAppSecurityCommand(commands.review)}],
         ],
@@ -242,7 +326,7 @@ describe('buildSecurityAlert', () => {
     })
     expect(recordCommand).not.toContain('50%%')
     expect(formatAppSecurityCommand(commands.record, 'cmd')).toContain('^%')
-    expect(formatAppSecurityCommand(commands.record, 'powershell')).toContain("'C:/Users/50%/my app'")
+    expect(formatAppSecurityCommand(commands.record, 'powershell')).toContain("'50% my app'")
   })
 
   test('adds evidence, fix guidance, and scan details in verbose mode', () => {
@@ -302,6 +386,27 @@ describe('buildSecurityAlert', () => {
     expect(alert.type).toBe('warning')
     expect(alert.options.headline).toBe('1 security issue found.')
     expect(section(input, 'Medium')).toBeDefined()
+  })
+
+  test('links check IDs to their docs pages in every occurrence, apart from the guide, and leaves unknown IDs unlinked', () => {
+    const guide = 'https://shopify.dev/docs/api/usage/versioning'
+    const issues = [
+      {...scanWithIssues.issues[1]!, fix: {automated: false, description: 'Upgrade.', guide}},
+      {...scanWithIssues.issues[1]!, id: 'UNKNOWN_CHECK', title: 'Unknown check'},
+    ]
+    const serialized = JSON.stringify(section(reportInput({verbose: true, scan: {...scanWithIssues, issues}}), 'High'))
+    const eolLink = JSON.stringify({
+      link: {
+        label: 'EOL_API_VERSION',
+        url: 'https://shopify.dev/docs/apps/build/security/app-security-checks/eol-api-version',
+      },
+    })
+
+    // Once in the group and once in its occurrence.
+    expect(serialized.split(eolLink)).toHaveLength(3)
+    expect(serialized).toContain(JSON.stringify({link: {label: 'Guide', url: guide}}))
+    expect(serialized).toContain(JSON.stringify({subdued: 'UNKNOWN_CHECK'}))
+    expect(serialized).not.toContain('"label":"UNKNOWN_CHECK"')
   })
 
   test('renders engine-redacted titles, paths, and verbose evidence unchanged', () => {

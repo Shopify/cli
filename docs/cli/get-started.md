@@ -7,8 +7,8 @@ This wiki contains documentation that's useful for contributors of the project.
 
 If you'd like to contribute to this project, the following system dependencies need to be present in the environment.
 
-- [Node](https://nodejs.org/en/) (v20.10 or higher)
-- [PNPM](https://pnpm.io/) (v10)
+- [Node](https://nodejs.org/en/): use a supported version that meets the `engines` requirements in [CLI](../../packages/cli/package.json), [app](../../packages/app/package.json), and [CLI Kit](../../packages/cli-kit/package.json).
+- [PNPM](https://pnpm.io/): use the version in the root [`packageManager`](../../package.json) field.
 
 ### Set up
 

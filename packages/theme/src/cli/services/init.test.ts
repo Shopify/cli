@@ -1,10 +1,18 @@
-import {cloneRepoAndCheckoutLatestTag, cloneRepo, createAIInstructions, createAIInstructionFiles} from './init.js'
+import {
+  cloneRepoAndCheckoutLatestTag,
+  cloneLatestStableSkeletonTheme,
+  cloneRepo,
+  createAIInstructions,
+  createAIInstructionFiles,
+} from './init.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/node/git'
 import {rmdir, fileExists, readFile, writeFile, symlink} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {getLatestGitHubRelease, type GithubRelease} from '@shopify/cli-kit/node/github'
 
 vi.mock('@shopify/cli-kit/node/git')
+vi.mock('@shopify/cli-kit/node/github')
 vi.mock('@shopify/cli-kit/node/fs', async () => {
   const actual = await vi.importActual('@shopify/cli-kit/node/fs')
   return {
@@ -48,7 +56,7 @@ describe('cloneRepoAndCheckoutLatestTag()', async () => {
     const repoUrl = 'https://github.com/Shopify/dawn.git'
     const destination = 'destination'
     const latestTag = true
-    const shallow = true
+    const shallow = false
 
     // When
     await cloneRepoAndCheckoutLatestTag(repoUrl, destination)
@@ -94,6 +102,41 @@ describe('cloneRepoAndCheckoutLatestTag()', async () => {
 
     // Then
     expect(rmdir).not.toHaveBeenCalledWith('destination/.github')
+  })
+})
+
+describe('cloneLatestStableSkeletonTheme()', () => {
+  beforeEach(() => {
+    vi.mocked(fileExists).mockResolvedValue(true)
+    vi.mocked(joinPath).mockImplementation((...paths) => paths.join('/'))
+  })
+
+  test('clones the latest published stable release and removes Skeleton theme development files', async () => {
+    vi.mocked(getLatestGitHubRelease).mockResolvedValue({tag_name: 'v1.0.0'} as GithubRelease)
+
+    await cloneLatestStableSkeletonTheme('destination')
+
+    expect(getLatestGitHubRelease).toHaveBeenCalledWith('Shopify', 'skeleton-theme', {filter: expect.any(Function)})
+    const filter = vi.mocked(getLatestGitHubRelease).mock.calls[0]![2]!.filter
+    expect(filter({draft: false, prerelease: false} as GithubRelease)).toBe(true)
+    expect(filter({draft: false, prerelease: true} as GithubRelease)).toBe(false)
+    expect(filter({draft: true, prerelease: false} as GithubRelease)).toBe(false)
+    expect(downloadGitRepository).toHaveBeenCalledWith({
+      repoUrl: 'https://github.com/Shopify/skeleton-theme.git#v1.0.0',
+      destination: 'destination',
+      latestTag: undefined,
+      shallow: true,
+    })
+    expect(rmdir).toHaveBeenCalledWith('destination/.git')
+  })
+
+  test('fails when no stable release is available', async () => {
+    vi.mocked(getLatestGitHubRelease).mockResolvedValue(undefined as unknown as GithubRelease)
+
+    await expect(cloneLatestStableSkeletonTheme('destination')).rejects.toThrow(
+      "Couldn't find a stable Skeleton theme release",
+    )
+    expect(downloadGitRepository).not.toHaveBeenCalled()
   })
 })
 

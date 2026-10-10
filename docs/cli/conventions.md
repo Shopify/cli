@@ -19,6 +19,8 @@ import { joinPath } from "node:path"
 ```
 
 
+Prefer imports from the actual owner over forwarding-only internal wrappers. Preserve deliberate public package entrypoints and index modules that orchestrate behavior; this is not an index-file ban or a package-wide migration.
+
 ### 1.2 - Modules free of side effects
 
 Modules must not perform any side effect when they are imported. For example, doing an IO operation at the root of the module:
@@ -47,6 +49,8 @@ Instead, you can:
 - **Store the state in the system.** It leads to IO operations, which impact the performance, but because the state is often little, it's preferred over an unreliable experience.
 - **Load and pass the state down:** Load the state upfront, for example, an in-memory representation of the project the CLI is interacting with, and pass it down through function arguments.
 
+For necessary caches or remembered state, define applicable identity, project, store, and environment inputs, lifetime, invalidation, mutation, and unusable-state fallback. Derive auth-sensitive identity from the session or token authorizing the request, not an unrelated global account getter. Do not persist raw credentials in keys; token rotation can cost a cache miss. Test the actual cached path, changed context, and existing mutation/fallback branches. An optional auth lookup can return absence and use normal valid authentication; do not suppress unrelated errors.
+
 ### 1.4 - Functions that don't mutate the input arguments
 
 When designing the implementation of a function, refrain from mutating objects that the function receives as arguments. Function callers might design their business logic to assume that the arguments they pass to other functions are not mutated. If they do, the integration might not behave as expected, manifesting as bugs on the user side.
@@ -63,6 +67,20 @@ Note that copies come with an overhead in memory consumption,
 but considering the size of the state, the CLI deals with, and optimizations Javascript engines usually include,
 it shouldn't be an issue.
 
+
+### 1.5 - Resource lifetime
+
+When starting or changing watchers, servers, listeners, child processes, async tasks, or temporary resources, name the owner of completion, rejection, and cleanup on success, failure, cancellation, and repeated invocation. Observe started promise failures promptly. `Promise.race` observes its inputs but does not dispose losing resources; timeout settlement is not cleanup. Wait for owned processes and descendants to stop before deleting their files. Preserve scoped [filesystem](../../packages/cli-kit/src/public/node/fs.ts) and [process](../../packages/cli-kit/src/public/node/system.ts) helpers, deliberate background owners, and [UI cancellation/cleanup](../cli-kit/ui-kit/contributing.md#handling-user-input).
+
+### 1.6 - Input and artifact IO
+
+Reject locally invalid inputs or flag combinations before authentication, network access, or persistent writes where local validation is available. Validate the representation the parser, executor, or writer consumes. For restricted filesystem access, normalization alone is not containment: use established helpers and the allowed-root, ancestor, and symlink policy. Preserve legitimate paths.
+
+Artifact producers and consumers must agree on format, encoded byte bounds, and applicable encoding. Validate before replacing a valid artifact. Tie confirmation, file, size, and upload to the same serialized bytes. On later failure, clean only owned resources or provide safe recovery. Preserve the original error and pre-existing user content.
+
+### 1.7 - Optional observability
+
+Optional diagnostics or telemetry must not hide successful results, prevent credential persistence, prompt or authenticate unexpectedly, or mutate project files. Keep passive reads bounded, catches narrow, and background ownership explicit. Required security validation, audit, billing, or product-contract work is not automatically optional.
 
 ## 2 - Plugins (e.g `@shopify/app`)
 
@@ -106,7 +124,7 @@ app/
 ##### Definition and responsibilities
 
 Services represent **reusable units of business logic.**
-They export a default function representing the service and might contain additional internal combined functions to form the service.
+They export a named function representing the service and might contain additional internal combined functions to form the service.
 Each command must have a service representing it,
 and we might have additional services that don't map to commands.
 Note that services are decoupled from commands,
