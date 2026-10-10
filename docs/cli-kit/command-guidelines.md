@@ -48,7 +48,7 @@ Short aliases use one hyphen and can omit context already supplied by the topic.
 
 ### Booleans
 
-For a boolean with a supported negated form, `--OPTION` enables the behavior and `--no-OPTION` disables it. In general, make the enabled behavior the default when it is safe and useful for most developers. Do not apply this rule to safety controls or other documented opt-in modes. For example, `shopify theme dev --allow-live` must remain an explicit choice.
+A feature toggle turns a behavior on or off, such as `--watch` and `--no-watch` in `shopify app function replay`. Give a new feature toggle both forms: `--OPTION` enables the behavior and `--no-OPTION` disables it. In general, make the enabled behavior the default when it is safe and useful for most developers. This does not apply to safety controls, destructive actions, output modes such as `--json`, or other documented opt-in modes. For example, `shopify theme dev --allow-live` must remain an explicit choice.
 
 Preserve each existing command's documented defaults and supported flag forms. Do not assume that every boolean automatically supports a `--no-` form.
 
@@ -67,6 +67,6 @@ Use a space between the flag and value in documentation. If the value contains s
 
 ## Help
 
-Give every command, flag, and accepted option a description in command help. For a command, write a sentence fragment in the third-person singular, as if it starts with "This command...". For example, describe `shopify app generate extension` as "Generates a new app extension."
+Give every command, flag, and accepted option a description in command help. For a command, write both the summary and the description as sentence fragments in the third-person singular, as if they start with "This command...". Help shows both. For example, describe `shopify app generate extension` as "Generates a new app extension."
 
 Explain what the command does, not its internal implementation. Keep help, accepted values, and examples consistent with the command definition. Follow the [JSON output contracts](../cli/json-output.md) for result schema documentation.
