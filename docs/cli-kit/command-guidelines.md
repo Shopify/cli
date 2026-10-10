@@ -14,21 +14,11 @@ Commands move from a broad domain to a specific action:
 
 If a verb applies to more than one object, put the verb before the object: `shopify app generate extension`. Here, `extension` is a subcommand, not a positional argument. Add further subcommands only when they are necessary for clarity. Separate command words with spaces, not hyphens.
 
-A global installation is available across projects. A local installation belongs to one project or directory. For a project-local installation, use that project's package-manager invocation. For example, a project with a local Shopify CLI can use:
-
-```sh
-npm exec -- shopify app generate extension
-```
-
-The command hierarchy stays the same when the CLI is installed globally:
-
-```sh
-shopify app generate extension
-```
+Examples use a global installation of Shopify CLI.
 
 ### Topics
 
-Create a topic only when you add an entirely new domain to the CLI. Get maintainer input before you add one. Domain topics include `app` and `theme`. Hydrogen commands are supplied by a separate plugin; see the [architecture guide](../cli/architecture.md).
+Create a topic only when you add an entirely new domain to the CLI. Get maintainer input before you add one. Domain topics include `app`, `theme`, `store`, and `organization`. Hydrogen commands are supplied by a separate plugin; see the [architecture guide](../cli/architecture.md).
 
 Commands that apply across domains do not need a domain topic. Examples include `shopify help`, `shopify version`, and `shopify upgrade`.
 
@@ -44,7 +34,7 @@ For example, these names explain both choices:
 shopify theme dev --theme-editor-sync --live-reload full-page
 ```
 
-Do not shorten them to `--sync` and `--reload`: those names remove context. They are not supported alternatives for this command.
+Shorter names, such as `--sync` or `--reload`, would not say what is synced or reloaded.
 
 For changed dependent or defaulted flags, test omitted, explicit, default, valid, and invalid combinations through actual command parsing. A default value does not prove explicit presence; choose dependency declarations according to the intended behavior, not an “always `dependsOn`” rule.
 
@@ -64,7 +54,7 @@ Preserve each existing command's documented defaults and supported flag forms. D
 
 ### Options
 
-A flag can accept specific values, called options. Accept a space or an equals sign between a flag and its value:
+A flag can accept specific values, called options. oclif accepts a space or an equals sign between a flag and its value:
 
 ```sh
 shopify theme dev --live-reload full-page
