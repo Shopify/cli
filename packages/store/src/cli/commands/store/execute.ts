@@ -3,7 +3,7 @@ import {writeOrOutputStoreExecuteResult} from '../../services/store/execute/resu
 import {storeExecuteJsonOutputSchema} from '../../services/store/execute/types.js'
 import StoreCommand from '../../utilities/store-command.js'
 import {storeFlags} from '../../flags.js'
-import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {apiVersionFlag, globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 import {Flags} from '@oclif/core'
 
@@ -54,10 +54,7 @@ Mutations are disabled by default. Re-run with \`--allow-mutations\` if you inte
       exclusive: ['variables'],
     }),
     store: storeFlags.store,
-    version: Flags.string({
-      description: 'The API version to use for the query or mutation. Defaults to the latest stable version.',
-      env: 'SHOPIFY_FLAG_VERSION',
-    }),
+    'api-version': apiVersionFlag,
     'output-file': Flags.string({
       description: 'The file name where results should be written, instead of STDOUT.',
       env: 'SHOPIFY_FLAG_OUTPUT_FILE',
@@ -83,7 +80,7 @@ Mutations are disabled by default. Re-run with \`--allow-mutations\` if you inte
       queryFile: flags['query-file'],
       variables: flags.variables,
       variableFile: flags['variable-file'],
-      version: flags.version,
+      version: flags['api-version'],
       allowMutations: flags['allow-mutations'],
     })
 

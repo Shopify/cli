@@ -2,7 +2,7 @@ import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
 import {runWithCommandEventsForCommand} from './command-events.js'
-import {outputContent, outputResult, outputToken} from './output.js'
+import {outputContent, outputResult, outputToken, outputWarn} from './output.js'
 import {setCurrentSessionAlias} from './session.js'
 import {terminalSupportsPrompting} from './system.js'
 import {hashString} from './crypto.js'
@@ -143,6 +143,12 @@ abstract class BaseCommand extends Command {
   ): Promise<ParserOutput<TFlags, TGlobalFlags, TArgs> & {argv: string[]}> {
     let result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
     result = await this.resultWithEnvironment<TFlags, TGlobalFlags, TArgs>(result, options, argv)
+    if (
+      Object.hasOwn(result.flags, 'api-version') &&
+      (argv ?? this.argv).some((argument) => argument === '--version' || argument.startsWith('--version='))
+    ) {
+      outputWarn('The "--version" flag is deprecated. Use "--api-version" instead.')
+    }
     await setCurrentSessionAlias(result.flags['auth-alias'])
     await addFromParsedFlags(result.flags)
     this.failMissingNonTTYFlagRequirements(result.flags, this.applicableNonTTYFlagRequirements(result.flags))

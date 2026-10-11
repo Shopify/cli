@@ -44,7 +44,7 @@ export default class BulkExecute extends AppLinkedCommand {
       variables: flags.variables,
       variableFile: flags['variable-file'],
       watch: flags.watch ?? false,
-      ...(flags.version && {version: flags.version}),
+      ...(flags['api-version'] && {version: flags['api-version']}),
     })
     logBulkOperationStart(
       'Starting bulk operation.',

@@ -253,6 +253,18 @@
       "description": "Executes an Admin API GraphQL query or mutation on the specified store, as a bulk operation. Mutations are only allowed on dev stores.\n\n  Bulk operations allow you to process large amounts of data asynchronously. Learn more about \"bulk query operations\" (https://shopify.dev/docs/api/usage/bulk-operations/queries) and \"bulk mutation operations\" (https://shopify.dev/docs/api/usage/bulk-operations/imports).\n\n  Use \"`bulk status`\" (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-status) to check the status of your bulk operations.\n\n  With `--watch`, completed results are written as JSONL to stdout or `--output-file`. With `--json`, stdout contains one result object with operation details and downloaded JSONL in `resultsJsonl`. With `--json --output-file`, stdout contains only an absolute file receipt with `path` and `format`.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `ExecuteBulkOperationResult` schema.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"$ref\": \"#/definitions/ExecuteBulkOperationResult\"\n    },\n    {\n      \"$ref\": \"#/definitions/BulkOperationFile\"\n    }\n  ],\n  \"title\": \"ExecuteBulkOperationResult\",\n  \"definitions\": {\n    \"BulkOperation\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"gid\": {\n          \"type\": \"string\",\n          \"pattern\": \"^gid:\\\\/\\\\/shopify\\\\/BulkOperation\\\\/[^/]+$\",\n          \"description\": \"The Shopify global ID of a bulk operation.\"\n        },\n        \"type\": {\n          \"type\": \"string\"\n        },\n        \"status\": {\n          \"type\": \"string\"\n        },\n        \"errorCode\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"pattern\": \"^\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2}Z$\",\n          \"description\": \"A UTC ISO 8601 instant with whole seconds and the Z timezone marker.\"\n        },\n        \"completedAt\": {\n          \"anyOf\": [\n            {\n              \"$ref\": \"#/definitions/BulkOperation/properties/createdAt\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"A UTC ISO 8601 instant with whole seconds and the Z timezone marker.\"\n        },\n        \"objectCount\": {\n          \"type\": \"string\",\n          \"pattern\": \"^\\\\d+$\",\n          \"description\": \"A nonnegative decimal count, without loss of integer precision.\"\n        },\n        \"url\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"format\": \"uri\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        },\n        \"partialDataUrl\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"format\": \"uri\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        }\n      },\n      \"required\": [\n        \"gid\",\n        \"type\",\n        \"status\",\n        \"errorCode\",\n        \"createdAt\",\n        \"completedAt\",\n        \"objectCount\",\n        \"url\",\n        \"partialDataUrl\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"ExecuteBulkOperationResult\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"storeDomain\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"pattern\": \"^[^.]+\\\\.myshopify\\\\.com$\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        },\n        \"apiVersion\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"description\": \"The API version selected for the request.\"\n        },\n        \"status\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"success\",\n            \"partial\",\n            \"cancelled\"\n          ]\n        },\n        \"reason\": {\n          \"type\": \"string\",\n          \"const\": \"watch-aborted\"\n        },\n        \"operation\": {\n          \"$ref\": \"#/definitions/BulkOperation\"\n        },\n        \"resultsJsonl\": {\n          \"type\": \"string\",\n          \"description\": \"Downloaded results in their native JSONL format.\"\n        }\n      },\n      \"required\": [\n        \"storeDomain\",\n        \"apiVersion\",\n        \"status\",\n        \"operation\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"BulkOperationFile\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"path\": {\n          \"type\": \"string\",\n          \"description\": \"The absolute path of the downloaded results file.\"\n        },\n        \"format\": {\n          \"type\": \"string\",\n          \"const\": \"jsonl\"\n        }\n      },\n      \"required\": [\n        \"path\",\n        \"format\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Executes an Admin API GraphQL query or mutation on the specified store, as a bulk operation. Mutations are only allowed on dev stores.\n\n  Bulk operations allow you to process large amounts of data asynchronously. Learn more about [bulk query operations](https://shopify.dev/docs/api/usage/bulk-operations/queries) and [bulk mutation operations](https://shopify.dev/docs/api/usage/bulk-operations/imports).\n\n  Use [`bulk status`](https://shopify.dev/docs/api/shopify-cli/app/app-bulk-status) to check the status of your bulk operations.\n\n  With `--watch`, completed results are written as JSONL to stdout or `--output-file`. With `--json`, stdout contains one result object with operation details and downloaded JSONL in `resultsJsonl`. With `--json --output-file`, stdout contains only an absolute file receipt with `path` and `format`.",
       "flags": {
+        "api-version": {
+          "aliases": [
+            "version"
+          ],
+          "description": "The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.",
+          "env": "SHOPIFY_FLAG_API_VERSION",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "api-version",
+          "noCacheDefault": true,
+          "type": "option"
+        },
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
@@ -402,14 +414,6 @@
           "hidden": false,
           "name": "verbose",
           "type": "boolean"
-        },
-        "version": {
-          "description": "The API version to use for the bulk operation. If not specified, uses the latest stable version.",
-          "env": "SHOPIFY_FLAG_VERSION",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "version",
-          "type": "option"
         },
         "watch": {
           "allowNo": false,
@@ -1716,6 +1720,18 @@
       "description": "Executes an Admin API GraphQL query or mutation on the specified store. Mutations are only allowed on dev stores.\n\n  For operations that process large amounts of data, use \"`bulk execute`\" (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) instead.",
       "descriptionWithMarkdown": "Executes an Admin API GraphQL query or mutation on the specified store. Mutations are only allowed on dev stores.\n\n  For operations that process large amounts of data, use [`bulk execute`](https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) instead.",
       "flags": {
+        "api-version": {
+          "aliases": [
+            "version"
+          ],
+          "description": "The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.",
+          "env": "SHOPIFY_FLAG_API_VERSION",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "api-version",
+          "noCacheDefault": true,
+          "type": "option"
+        },
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
@@ -1853,14 +1869,6 @@
           "hidden": false,
           "name": "verbose",
           "type": "boolean"
-        },
-        "version": {
-          "description": "The API version to use for the query or mutation. Defaults to the latest stable version.",
-          "env": "SHOPIFY_FLAG_VERSION",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "version",
-          "type": "option"
         }
       },
       "hasDynamicHelp": false,
@@ -2718,6 +2726,18 @@
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --port 9123"
       ],
       "flags": {
+        "api-version": {
+          "aliases": [
+            "version"
+          ],
+          "description": "The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.",
+          "env": "SHOPIFY_FLAG_API_VERSION",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "api-version",
+          "noCacheDefault": true,
+          "type": "option"
+        },
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
           "env": "SHOPIFY_FLAG_AUTH_ALIAS",
@@ -2823,14 +2843,6 @@
           "hidden": false,
           "name": "verbose",
           "type": "boolean"
-        },
-        "version": {
-          "description": "The API version to use in GraphiQL. Defaults to the latest stable version.",
-          "env": "SHOPIFY_FLAG_VERSION",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "version",
-          "type": "option"
         }
       },
       "hasDynamicHelp": false,
@@ -9292,6 +9304,18 @@
           "name": "allow-mutations",
           "type": "boolean"
         },
+        "api-version": {
+          "aliases": [
+            "version"
+          ],
+          "description": "The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.",
+          "env": "SHOPIFY_FLAG_API_VERSION",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "api-version",
+          "noCacheDefault": true,
+          "type": "option"
+        },
         "json": {
           "allowNo": false,
           "char": "j",
@@ -9392,14 +9416,6 @@
           "hidden": false,
           "name": "verbose",
           "type": "boolean"
-        },
-        "version": {
-          "description": "The API version to use for the bulk operation. If not specified, uses the latest stable version.",
-          "env": "SHOPIFY_FLAG_VERSION",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "version",
-          "type": "option"
         },
         "watch": {
           "allowNo": false,
@@ -9815,6 +9831,18 @@
           "name": "allow-mutations",
           "type": "boolean"
         },
+        "api-version": {
+          "aliases": [
+            "version"
+          ],
+          "description": "The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.",
+          "env": "SHOPIFY_FLAG_API_VERSION",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "api-version",
+          "noCacheDefault": true,
+          "type": "option"
+        },
         "json": {
           "allowNo": false,
           "char": "j",
@@ -9912,14 +9940,6 @@
           "hidden": false,
           "name": "verbose",
           "type": "boolean"
-        },
-        "version": {
-          "description": "The API version to use for the query or mutation. Defaults to the latest stable version.",
-          "env": "SHOPIFY_FLAG_VERSION",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "version",
-          "type": "option"
         }
       },
       "hasDynamicHelp": false,
@@ -9952,6 +9972,18 @@
           "env": "SHOPIFY_FLAG_ALLOW_MUTATIONS",
           "name": "allow-mutations",
           "type": "boolean"
+        },
+        "api-version": {
+          "aliases": [
+            "version"
+          ],
+          "description": "The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.",
+          "env": "SHOPIFY_FLAG_API_VERSION",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "api-version",
+          "noCacheDefault": true,
+          "type": "option"
         },
         "json-schema": {
           "allowNo": false,
@@ -10009,14 +10041,6 @@
           "hidden": false,
           "name": "verbose",
           "type": "boolean"
-        },
-        "version": {
-          "description": "The API version to use in GraphiQL. Defaults to the latest stable version.",
-          "env": "SHOPIFY_FLAG_VERSION",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "version",
-          "type": "option"
         }
       },
       "hasDynamicHelp": false,

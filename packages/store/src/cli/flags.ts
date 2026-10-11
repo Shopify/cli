@@ -3,6 +3,7 @@ import {normalizeBulkOperationId} from '@shopify/cli-kit/node/api/bulk-operation
 import {resolvePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Flags} from '@oclif/core'
+import {apiVersionFlag} from '@shopify/cli-kit/node/cli'
 
 // Error message shown when a `--country` flag value is not a two-letter code.
 const invalidCountryCodeMessage = 'Country must be a two-letter country code, for example: US.'
@@ -103,10 +104,7 @@ export const bulkOperationFlags = {
     env: 'SHOPIFY_FLAG_OUTPUT_FILE',
     dependsOn: ['watch'],
   }),
-  version: Flags.string({
-    description: 'The API version to use for the bulk operation. If not specified, uses the latest stable version.',
-    env: 'SHOPIFY_FLAG_VERSION',
-  }),
+  'api-version': apiVersionFlag,
   'allow-mutations': Flags.boolean({
     description: 'Allow GraphQL mutations to run against the target store.',
     env: 'SHOPIFY_FLAG_ALLOW_MUTATIONS',

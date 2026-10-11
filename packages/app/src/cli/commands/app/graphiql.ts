@@ -3,7 +3,7 @@ import {openAppGraphiQL} from '../../services/app/graphiql.js'
 import {prepareAppStoreContext} from '../../utilities/execute-command-helpers.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {globalFlags, portFlag} from '@shopify/cli-kit/node/cli'
+import {apiVersionFlag, globalFlags, portFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
 export default class AppGraphiQL extends AppLinkedCommand {
@@ -39,10 +39,7 @@ The app must be installed on the store.`
       description: 'The values for any GraphQL variables in your query or mutation, in JSON format.',
       env: 'SHOPIFY_FLAG_VARIABLES',
     }),
-    version: Flags.string({
-      description: 'The API version to use in GraphiQL. Defaults to the latest stable version.',
-      env: 'SHOPIFY_FLAG_VERSION',
-    }),
+    'api-version': apiVersionFlag,
   }
 
   public async run(): Promise<AppLinkedCommandOutput> {
@@ -54,7 +51,7 @@ The app must be installed on the store.`
       store: store.shopDomain,
       port: flags.port,
       variables: flags.variables,
-      apiVersion: flags.version,
+      apiVersion: flags['api-version'],
     })
 
     return {app: appContextResult.app}

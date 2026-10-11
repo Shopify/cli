@@ -155,6 +155,31 @@ export const jsonFlag = {
   }),
 }
 
+/**
+ * An Admin API version flag with a deprecated `--version` alias.
+ * Reads `SHOPIFY_FLAG_API_VERSION`, with `SHOPIFY_FLAG_VERSION` as a deprecated fallback.
+ * BaseCommand routes alias warnings through the command event output.
+ */
+export const apiVersionFlag = Flags.string({
+  description:
+    'The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.',
+  env: 'SHOPIFY_FLAG_API_VERSION',
+  aliases: ['version'],
+  noCacheDefault: true,
+  default: async () => {
+    const legacyVersion = process.env.SHOPIFY_FLAG_VERSION
+    if (legacyVersion) {
+      const {renderWarning} = await import('./ui.js')
+      renderWarning({
+        headline: 'SHOPIFY_FLAG_VERSION is deprecated for API versions.',
+        body: 'Use SHOPIFY_FLAG_API_VERSION instead.',
+      })
+      return legacyVersion
+    }
+    return undefined
+  },
+})
+
 export const authAliasFlag = {
   'auth-alias': Flags.string({
     description: 'Alias of the Shopify account to use for authentication.',

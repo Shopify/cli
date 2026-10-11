@@ -1,7 +1,7 @@
 import {openStoreGraphiQL} from '../../services/store/graphiql.js'
 import StoreCommand from '../../utilities/store-command.js'
 import {storeFlags} from '../../flags.js'
-import {globalFlags, portFlag} from '@shopify/cli-kit/node/cli'
+import {apiVersionFlag, globalFlags, portFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
 export default class StoreGraphiQL extends StoreCommand {
@@ -38,10 +38,7 @@ Mutations are disabled by default. Re-run with \`--allow-mutations\` if you inte
       description: 'The values for any GraphQL variables in your query or mutation, in JSON format.',
       env: 'SHOPIFY_FLAG_VARIABLES',
     }),
-    version: Flags.string({
-      description: 'The API version to use in GraphiQL. Defaults to the latest stable version.',
-      env: 'SHOPIFY_FLAG_VERSION',
-    }),
+    'api-version': apiVersionFlag,
   }
 
   public async run(): Promise<void> {
@@ -52,7 +49,7 @@ Mutations are disabled by default. Re-run with \`--allow-mutations\` if you inte
       port: flags.port,
       allowMutations: flags['allow-mutations'],
       variables: flags.variables,
-      apiVersion: flags.version,
+      apiVersion: flags['api-version'],
     })
   }
 }
