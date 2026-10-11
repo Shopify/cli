@@ -61,7 +61,7 @@ shopify theme dev --live-reload full-page
 shopify theme dev --live-reload=full-page
 ```
 
-For new multi-word option values, use hyphens by default and accept underscore aliases where appropriate. Define and document those aliases explicitly. Existing commands' accepted-value contracts remain authoritative: do not assume an underscore spelling works for every existing option.
+Separate words in option values with hyphens, such as `full-page`. Do not use or accept underscores.
 
 Use a space between the flag and value in documentation. If the value contains spaces, use an equals sign and quote the value so the shell passes it as one value.
 
