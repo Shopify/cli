@@ -57,7 +57,7 @@ describe('app graphiql command', () => {
         store: 'shop.myshopify.com',
         port: 9123,
         variables: '{"id":1}',
-        version: '2024-10',
+        'api-version': '2024-10',
       }),
     )
     expect(openAppGraphiQL).toHaveBeenCalledWith({

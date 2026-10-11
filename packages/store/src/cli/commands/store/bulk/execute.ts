@@ -51,7 +51,7 @@ export default class StoreBulkExecute extends StoreCommand {
       variableFile: flags['variable-file'],
       watch: flags.watch ?? false,
       allowMutations: flags['allow-mutations'],
-      ...(flags.version && {version: flags.version}),
+      ...(flags['api-version'] && {version: flags['api-version']}),
     })
     const format = flags.json ? 'json' : 'text'
     logBulkOperationStart('Starting bulk operation.', {storeFqdn: input.adminSession.storeFqdn, version: input.version})

@@ -1,4 +1,5 @@
 import {Flags} from '@oclif/core'
+import {apiVersionFlag} from '@shopify/cli-kit/node/cli'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
@@ -80,10 +81,7 @@ export const bulkOperationFlags = {
     env: 'SHOPIFY_FLAG_OUTPUT_FILE',
     dependsOn: ['watch'],
   }),
-  version: Flags.string({
-    description: 'The API version to use for the bulk operation. If not specified, uses the latest stable version.',
-    env: 'SHOPIFY_FLAG_VERSION',
-  }),
+  'api-version': apiVersionFlag,
 }
 
 export const operationFlags = {
@@ -119,10 +117,7 @@ export const operationFlags = {
     env: 'SHOPIFY_FLAG_STORE',
     parse: async (input) => normalizeStoreFqdn(input),
   }),
-  version: Flags.string({
-    description: 'The API version to use for the query or mutation. Defaults to the latest stable version.',
-    env: 'SHOPIFY_FLAG_VERSION',
-  }),
+  'api-version': apiVersionFlag,
   'output-file': Flags.string({
     description: 'The file name where results should be written, instead of STDOUT.',
     env: 'SHOPIFY_FLAG_OUTPUT_FILE',

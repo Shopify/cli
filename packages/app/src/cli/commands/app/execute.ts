@@ -32,7 +32,7 @@ export default class Execute extends AppLinkedCommand {
       variables: flags.variables,
       variableFile: flags['variable-file'],
       outputFile: flags['output-file'],
-      ...(flags.version && {version: flags.version}),
+      ...(flags['api-version'] && {version: flags['api-version']}),
     })
 
     return {app: appContextResult.app}

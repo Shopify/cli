@@ -408,9 +408,9 @@ Execute bulk operations.
 
 ```
 USAGE
-  $ shopify app bulk execute [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
-    [--no-color] [--no-input] [--output-file <value> --watch] [--path <value>] [-q <value>] [--query-file <value>]
-    [--reset | ] [-s <value>] [--variable-file <value> | -v <value>...] [--verbose] [--version <value>]
+  $ shopify app bulk execute [--api-version <value>] [--auth-alias <value>] [--client-id <value> | -c <value>] [-j]
+    [--json-schema] [--no-color] [--no-input] [--output-file <value> --watch] [--path <value>] [-q <value>]
+    [--query-file <value>] [--reset | ] [-s <value>] [--variable-file <value> | -v <value>...] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -432,6 +432,10 @@ FLAGS
   -v, --variables=<value>...
       The values for any GraphQL variables in your mutation, in JSON format. Can be specified multiple times.
       [env: SHOPIFY_FLAG_VARIABLES]
+
+  --api-version=<value>
+      The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.
+      [env: SHOPIFY_FLAG_API_VERSION]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -478,10 +482,6 @@ FLAGS
   --verbose
       Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
-
-  --version=<value>
-      The API version to use for the bulk operation. If not specified, uses the latest stable version.
-      [env: SHOPIFY_FLAG_VERSION]
 
   --watch
       Wait for bulk operation results before exiting. Defaults to false.
@@ -1638,9 +1638,9 @@ Execute GraphQL queries and mutations.
 
 ```
 USAGE
-  $ shopify app execute [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--output-file <value>] [--path <value>] [-q <value>] [--query-file <value>] [--reset | ] [-s <value>]
-    [--variable-file <value> | -v <value>] [--verbose] [--version <value>]
+  $ shopify app execute [--api-version <value>] [--auth-alias <value>] [--client-id <value> | -c <value>]
+    [--json-schema] [--no-color] [--no-input] [--output-file <value>] [--path <value>] [-q <value>] [--query-file
+    <value>] [--reset | ] [-s <value>] [--variable-file <value> | -v <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -1659,6 +1659,10 @@ FLAGS
   -v, --variables=<value>
       The values for any GraphQL variables in your query or mutation, in JSON format.
       [env: SHOPIFY_FLAG_VARIABLES]
+
+  --api-version=<value>
+      The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.
+      [env: SHOPIFY_FLAG_API_VERSION]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -1703,10 +1707,6 @@ FLAGS
   --verbose
       Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
-
-  --version=<value>
-      The API version to use for the query or mutation. Defaults to the latest stable version.
-      [env: SHOPIFY_FLAG_VERSION]
 
 DESCRIPTION
   Execute GraphQL queries and mutations.
@@ -2162,9 +2162,9 @@ Open a local GraphiQL UI for your app and store.
 
 ```
 USAGE
-  $ shopify app graphiql [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--path <value>] [--port <value>] [--reset | ] [-s <value>] [-v <value>] [--verbose] [--version
-    <value>]
+  $ shopify app graphiql [--api-version <value>] [--auth-alias <value>] [--client-id <value> | -c <value>]
+    [--json-schema] [--no-color] [--no-input] [--path <value>] [--port <value>] [--reset | ] [-s <value>] [-v <value>]
+    [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -2179,6 +2179,10 @@ FLAGS
   -v, --variables=<value>
       The values for any GraphQL variables in your query or mutation, in JSON format.
       [env: SHOPIFY_FLAG_VARIABLES]
+
+  --api-version=<value>
+      The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.
+      [env: SHOPIFY_FLAG_API_VERSION]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -2215,10 +2219,6 @@ FLAGS
   --verbose
       Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
-
-  --version=<value>
-      The API version to use in GraphiQL. Defaults to the latest stable version.
-      [env: SHOPIFY_FLAG_VERSION]
 
 DESCRIPTION
   Open a local GraphiQL UI for your app and store.
@@ -8754,9 +8754,9 @@ Execute bulk operations on a store.
 
 ```
 USAGE
-  $ shopify store bulk execute -s <value> [--allow-mutations] [-j] [--json-schema] [--no-color] [--no-input]
-    [--output-file <value> --watch] [-q <value>] [--query-file <value>] [--variable-file <value> | -v <value>...]
-    [--verbose] [--version <value>]
+  $ shopify store bulk execute -s <value> [--allow-mutations] [--api-version <value>] [-j] [--json-schema] [--no-color]
+    [--no-input] [--output-file <value> --watch] [-q <value>] [--query-file <value>] [--variable-file <value> | -v
+    <value>...] [--verbose]
 
 FLAGS
   -j, --json
@@ -8778,6 +8778,10 @@ FLAGS
   --allow-mutations
       Allow GraphQL mutations to run against the target store.
       [env: SHOPIFY_FLAG_ALLOW_MUTATIONS]
+
+  --api-version=<value>
+      The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.
+      [env: SHOPIFY_FLAG_API_VERSION]
 
   --json-schema
       Print the command's JSON schemas.
@@ -8808,10 +8812,6 @@ FLAGS
   --verbose
       Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
-
-  --version=<value>
-      The API version to use for the bulk operation. If not specified, uses the latest stable version.
-      [env: SHOPIFY_FLAG_VERSION]
 
   --watch
       Wait for bulk operation results before exiting. Defaults to false.
@@ -9766,9 +9766,9 @@ Execute GraphQL queries and mutations on a store.
 
 ```
 USAGE
-  $ shopify store execute -s <value> [--allow-mutations] [-j] [--json-schema] [--no-color] [--no-input]
-    [--output-file <value>] [-q <value>] [--query-file <value>] [--variable-file <value> | -v <value>] [--verbose]
-    [--version <value>]
+  $ shopify store execute -s <value> [--allow-mutations] [--api-version <value>] [-j] [--json-schema] [--no-color]
+    [--no-input] [--output-file <value>] [-q <value>] [--query-file <value>] [--variable-file <value> | -v <value>]
+    [--verbose]
 
 FLAGS
   -j, --json
@@ -9790,6 +9790,10 @@ FLAGS
   --allow-mutations
       Allow GraphQL mutations to run against the target store.
       [env: SHOPIFY_FLAG_ALLOW_MUTATIONS]
+
+  --api-version=<value>
+      The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.
+      [env: SHOPIFY_FLAG_API_VERSION]
 
   --json-schema
       Print the command's JSON schemas.
@@ -9818,10 +9822,6 @@ FLAGS
   --verbose
       Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
-
-  --version=<value>
-      The API version to use for the query or mutation. Defaults to the latest stable version.
-      [env: SHOPIFY_FLAG_VERSION]
 
 DESCRIPTION
   Execute GraphQL queries and mutations on a store.
@@ -9868,8 +9868,8 @@ Open a local GraphiQL UI for a store.
 
 ```
 USAGE
-  $ shopify store graphiql -s <value> [--allow-mutations] [--json-schema] [--no-color] [--no-input] [--port <value>]
-    [-v <value>] [--verbose] [--version <value>]
+  $ shopify store graphiql -s <value> [--allow-mutations] [--api-version <value>] [--json-schema] [--no-color]
+    [--no-input] [--port <value>] [-v <value>] [--verbose]
 
 FLAGS
   -s, --store=<value>
@@ -9883,6 +9883,10 @@ FLAGS
   --allow-mutations
       Allow GraphQL mutations to run against the target store.
       [env: SHOPIFY_FLAG_ALLOW_MUTATIONS]
+
+  --api-version=<value>
+      The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.
+      [env: SHOPIFY_FLAG_API_VERSION]
 
   --json-schema
       Print the command's JSON schemas.
@@ -9903,10 +9907,6 @@ FLAGS
   --verbose
       Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
-
-  --version=<value>
-      The API version to use in GraphiQL. Defaults to the latest stable version.
-      [env: SHOPIFY_FLAG_VERSION]
 
 DESCRIPTION
   Open a local GraphiQL UI for a store.
