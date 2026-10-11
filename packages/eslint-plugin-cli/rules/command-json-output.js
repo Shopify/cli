@@ -1,4 +1,5 @@
 const {commandExceptions} = require('./json-output-command-exceptions')
+const {isCommandPath} = require('./command-path')
 
 module.exports = {
   meta: {
@@ -47,10 +48,6 @@ module.exports = {
       },
     }
   },
-}
-
-function isCommandPath(commandPath) {
-  return /\/src\/(?:cli\/)?commands\//.test(commandPath)
 }
 
 function repositoryPath(filename) {
