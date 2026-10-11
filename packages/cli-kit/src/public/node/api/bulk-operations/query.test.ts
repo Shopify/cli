@@ -1,9 +1,10 @@
 import {resolveBulkOperationQuery} from './query.js'
 import {writeFile} from '../../fs.js'
+import * as fs from '../../fs.js'
 import {joinPath} from '../../path.js'
 import {testWithTempDir as test} from '../../testing/test-with-temp-dir.js'
 import {AbortError, BugError} from '../../error.js'
-import {describe, expect} from 'vitest'
+import {describe, expect, vi} from 'vitest'
 
 describe('resolveBulkOperationQuery', () => {
   test('returns a valid inline query', async () => {
@@ -17,7 +18,9 @@ describe('resolveBulkOperationQuery', () => {
   test('reads and returns a valid query file', async ({tempDir}) => {
     const queryFile = joinPath(tempDir, 'op.graphql')
     await writeFile(queryFile, 'query { shop { name } }')
+    const readFile = vi.spyOn(fs, 'readFile')
     await expect(resolveBulkOperationQuery({queryFile})).resolves.toBe('query { shop { name } }')
+    expect(readFile).toHaveBeenCalledWith(queryFile, {encoding: 'utf8'})
   })
 
   test('throws when the query file does not exist', async ({tempDir}) => {
