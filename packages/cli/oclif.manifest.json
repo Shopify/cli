@@ -257,7 +257,6 @@
           "aliases": [
             "version"
           ],
-          "deprecateAliases": true,
           "description": "The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.",
           "env": "SHOPIFY_FLAG_API_VERSION",
           "hasDynamicHelp": false,
@@ -1725,7 +1724,6 @@
           "aliases": [
             "version"
           ],
-          "deprecateAliases": true,
           "description": "The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.",
           "env": "SHOPIFY_FLAG_API_VERSION",
           "hasDynamicHelp": false,
@@ -2732,7 +2730,6 @@
           "aliases": [
             "version"
           ],
-          "deprecateAliases": true,
           "description": "The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.",
           "env": "SHOPIFY_FLAG_API_VERSION",
           "hasDynamicHelp": false,
@@ -9311,7 +9308,6 @@
           "aliases": [
             "version"
           ],
-          "deprecateAliases": true,
           "description": "The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.",
           "env": "SHOPIFY_FLAG_API_VERSION",
           "hasDynamicHelp": false,
@@ -9839,7 +9835,6 @@
           "aliases": [
             "version"
           ],
-          "deprecateAliases": true,
           "description": "The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.",
           "env": "SHOPIFY_FLAG_API_VERSION",
           "hasDynamicHelp": false,
@@ -9982,7 +9977,6 @@
           "aliases": [
             "version"
           ],
-          "deprecateAliases": true,
           "description": "The Admin API version to use. Defaults to the latest stable version. --version is deprecated; use --api-version.",
           "env": "SHOPIFY_FLAG_API_VERSION",
           "hasDynamicHelp": false,

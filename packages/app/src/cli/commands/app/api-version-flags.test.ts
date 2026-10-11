@@ -2,7 +2,8 @@ import Execute from './execute.js'
 import BulkExecute from './bulk/execute.js'
 import GraphiQL from './graphiql.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
-import {Command, Config} from '@oclif/core'
+import {outputWarn} from '@shopify/cli-kit/node/output'
+import {Config} from '@oclif/core'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/ui', async (importOriginal) => ({
@@ -28,6 +29,11 @@ class ParseGraphiQL extends GraphiQL {
   }
 }
 
+vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/output')>()),
+  outputWarn: vi.fn(),
+}))
+
 describe.each([
   {
     name: 'app execute',
@@ -48,7 +54,6 @@ describe.each([
   beforeEach(() => {
     vi.stubEnv('SHOPIFY_FLAG_API_VERSION', '')
     vi.stubEnv('SHOPIFY_FLAG_VERSION', '')
-    vi.spyOn(Command.prototype, 'warn').mockImplementation(() => '')
   })
 
   afterEach(() => {
@@ -58,15 +63,19 @@ describe.each([
   test('parses --api-version without a deprecation warning', async () => {
     const {flags} = await parse([...argv, '--api-version', '2026-01'])
     expect(flags['api-version']).toBe('2026-01')
-    expect(Command.prototype.warn).not.toHaveBeenCalled()
+    expect(outputWarn).not.toHaveBeenCalled()
     expect(renderWarning).not.toHaveBeenCalled()
   })
 
-  test('keeps --version as an alias and warns', async () => {
-    const {flags} = await parse([...argv, '--version', '2025-10'])
-    expect(flags['api-version']).toBe('2025-10')
-    expect(Command.prototype.warn).toHaveBeenCalledWith(expect.stringContaining('--api-version'))
-  })
+  test.each([['--version', '2025-10'], ['--version=2025-10']])(
+    'keeps the deprecated alias and warns: %s',
+    async (...args) => {
+      const {flags} = await parse([...argv, ...args])
+      expect(flags['api-version']).toBe('2025-10')
+      expect(outputWarn).toHaveBeenCalledWith(expect.stringContaining('--api-version'))
+      expect(renderWarning).not.toHaveBeenCalled()
+    },
+  )
 
   test.each([
     ['--version', '2025-10', '--api-version', '2026-01'],
