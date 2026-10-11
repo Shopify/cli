@@ -1,6 +1,6 @@
 import ThemeCommand, {RequiredFlags} from './theme-command.js'
 import {ensureThemeStore} from './theme-store.js'
-import {describe, vi, expect, beforeEach} from 'vitest'
+import {describe, vi, expect} from 'vitest'
 import {testWithTempDir as test} from '@shopify/cli-kit/node/testing/test-with-temp-dir'
 import {Config, Flags} from '@oclif/core'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
@@ -200,7 +200,7 @@ describe('ThemeCommand', () => {
   let mockSession: AdminSession
   let themeDirectory: string
 
-  beforeEach(async ({tempDir}) => {
+  test.beforeEach(async ({tempDir}) => {
     themeDirectory = tempDir
     TestThemeCommand.flags.path.default = tempDir
     TestThemeCommandWithoutStoreRequired.flags.path.default = tempDir

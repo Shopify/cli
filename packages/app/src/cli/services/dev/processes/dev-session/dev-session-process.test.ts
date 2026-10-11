@@ -14,7 +14,7 @@ import {
 } from '../../../../models/app/app.test-data.js'
 import {getUploadURL, writeManifestToBundle} from '../../../bundle.js'
 import {formData} from '@shopify/cli-kit/node/http'
-import {describe, expect, vi, beforeEach, afterEach} from 'vitest'
+import {describe, expect, vi, afterEach} from 'vitest'
 import {testWithTempDir as test} from '@shopify/cli-kit/node/testing/test-with-temp-dir'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
@@ -87,7 +87,7 @@ describe('pushUpdatesForDevSession', () => {
     await Promise.all(processingPromises)
   }
 
-  beforeEach(({tempDir}) => {
+  test.beforeEach(({tempDir}) => {
     vi.mocked(formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()} as any)
     stdout = {write: vi.fn()}
     stderr = {write: vi.fn()}
@@ -757,6 +757,7 @@ describe('pushUpdatesForDevSession', () => {
     appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
     await flushPromises()
     await startPromise
+    // The takeover error escapes because bundleExtensionsAndUpload returns devSessionUpdateWithRetry without await.
     await expect(Promise.all(processingPromises)).rejects.toThrow('has taken ownership of this dev preview')
 
     // Then
