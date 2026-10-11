@@ -62,6 +62,7 @@ Read the guides that apply to your task.
 
 - [Docs index](docs/README.md): find related guides and the reasons behind past decisions.
 - [Architecture](docs/cli/architecture.md): choose the right package for new or moved code.
+- [Designing for CLI](docs/cli/designing-for-cli.md): design command outcomes, lifetimes, and long-running workflows.
 - [Conventions](docs/cli/conventions.md): follow shared patterns for modules, state, resource cleanup, and file IO.
 - [Cross-OS compatibility](docs/cli/cross-os-compatibility.md): avoid OS-specific failures when working with paths, processes, and dependencies.
 - [Debugging](docs/cli/debugging.md): investigate failures with the debugger and check diagnostics for credential leaks.
@@ -78,14 +79,14 @@ Read the guides that apply to your task.
 
 ### CLI kit
 
-- [Command guidelines](docs/cli-kit/command-guidelines.md): design commands and flags with consistent structure, defaults, and dependencies.
+- [Command guidelines](docs/cli-kit/command-guidelines.md): design commands and flags with consistent structure, defaults, dependencies, accepted values, and help text.
 - [Error handling](docs/cli/error_handling.md): choose error types, report failures, and retry only known recoverable conditions.
 - [Command reference](packages/cli/README.md): check documented command usage, flags, and examples.
 
 ### UI kit
 
 - [Contributing to UI Kit](docs/cli-kit/ui-kit/contributing.md): follow component design and testing patterns when changing UI Kit.
-- [Content guidelines](docs/cli-kit/ui-kit/guidelines.md): keep prompts, progress messages, and error text consistent.
+- [Content and UI guidelines](docs/cli-kit/ui-kit/guidelines.md): keep prompts, banners, progress, and logs consistent, and use semantic styling.
 - [Using UI Kit](docs/cli-kit/ui-kit/readme.md): use existing prompt and output APIs for consistent terminal UI.
 
 Follow the check requirements of the active automation task.
