@@ -11,7 +11,7 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 const DEFAULT_FUNCTION_EXPORT = '_start'
 
 export default class FunctionRun extends AppUnlinkedCommand {
-  static summary = 'Run a function locally for testing.'
+  static summary = 'Runs a function locally for testing.'
 
   static descriptionWithMarkdown = `Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).`
 

@@ -7,7 +7,7 @@ import {linkedAppContext} from '../../../services/app-context.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class VersionsList extends AppLinkedCommand {
-  static summary = 'List deployed versions of your app.'
+  static summary = 'Lists deployed versions of your app.'
 
   static descriptionWithMarkdown = `Lists the deployed app versions. An app version is a snapshot of your app extensions.`
 

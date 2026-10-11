@@ -6,7 +6,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputResult} from '@shopify/cli-kit/node/output'
 
 export default class EnvShow extends AppLinkedCommand {
-  static summary = 'Display app and extensions environment variables.'
+  static summary = 'Displays app and extensions environment variables.'
 
   static descriptionWithMarkdown = `Displays environment variables that can be used to deploy apps and app extensions.`
 

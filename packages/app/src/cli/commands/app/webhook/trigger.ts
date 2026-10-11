@@ -8,7 +8,7 @@ import {Flags} from '@oclif/core'
 import {requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 
 export default class WebhookTrigger extends AppLinkedCommand {
-  static summary = 'Trigger delivery of a sample webhook topic payload to a designated address.'
+  static summary = 'Triggers delivery of a sample webhook topic payload to a designated address.'
 
   static descriptionWithMarkdown = `
   Triggers the delivery of a sample Admin API event topic payload to a designated address.

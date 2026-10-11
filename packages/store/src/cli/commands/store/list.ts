@@ -8,7 +8,7 @@ import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
 export default class StoreList extends StoreCommand {
-  static summary = 'List stores in a Shopify organization.'
+  static summary = 'Lists stores in a Shopify organization.'
 
   static descriptionWithMarkdown = `Lists stores in a Shopify organization available to the current CLI account.
 

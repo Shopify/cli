@@ -10,7 +10,7 @@ export default class HelpCommand extends Command {
     command: Args.string({description: 'Command to show help for.', required: false}),
   }
 
-  static descriptionWithMarkdown = 'Display help for Shopify CLI'
+  static descriptionWithMarkdown = 'Displays help for Shopify CLI'
 
   static description = this.descriptionForHelp()
 

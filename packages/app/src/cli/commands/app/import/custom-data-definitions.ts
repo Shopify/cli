@@ -11,9 +11,9 @@ import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {outputContent} from '@shopify/cli-kit/node/output'
 
 export default class ImportCustomDataDefinitions extends AppLinkedCommand {
-  static summary = 'Import metafield and metaobject definitions.'
+  static summary = 'Imports metafield and metaobject definitions.'
 
-  static descriptionWithMarkdown = `Import metafield and metaobject definitions from your development store. [Read more about declarative custom data definitions](https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).`
+  static descriptionWithMarkdown = `Imports metafield and metaobject definitions from your development store. [Read more about declarative custom data definitions](https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).`
 
   static description = this.descriptionForHelp()
 

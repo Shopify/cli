@@ -4,9 +4,9 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 
 export default class AutocorrectOff extends Command {
-  static summary = 'Disable autocorrect. Off by default.'
+  static summary = 'Disables autocorrect. Off by default.'
 
-  static descriptionWithMarkdown = `Disable autocorrect. Off by default.
+  static descriptionWithMarkdown = `Disables autocorrect. Off by default.
 
   When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.
 

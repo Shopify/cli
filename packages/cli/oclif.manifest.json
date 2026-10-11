@@ -115,7 +115,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Build the app, including extensions."
+      "summary": "Builds the app, including extensions."
     },
     "app:bulk:cancel": {
       "aliases": [
@@ -242,7 +242,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Cancel a bulk operation."
+      "summary": "Cancels a bulk operation."
     },
     "app:bulk:execute": {
       "aliases": [
@@ -427,7 +427,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Execute bulk operations."
+      "summary": "Executes bulk operations."
     },
     "app:bulk:status": {
       "aliases": [
@@ -435,8 +435,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Check the status of a specific bulk operation by ID, or list all bulk operations belonging to this app on this store in the last 7 days.\n\n  Bulk operations allow you to process large amounts of data asynchronously. Learn more about \"bulk query operations\" (https://shopify.dev/docs/api/usage/bulk-operations/queries) and \"bulk mutation operations\" (https://shopify.dev/docs/api/usage/bulk-operations/imports).\n\n  Use \"`bulk execute`\" (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) to start a new bulk operation.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `BulkOperationStatusResult` schema.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"$ref\": \"#/definitions/GetBulkOperationStatusResult\"\n    },\n    {\n      \"$ref\": \"#/definitions/ListBulkOperationsResult\"\n    }\n  ],\n  \"title\": \"BulkOperationStatusResult\",\n  \"definitions\": {\n    \"GetBulkOperationStatusResult\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"storeDomain\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"pattern\": \"^[^.]+\\\\.myshopify\\\\.com$\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        },\n        \"apiVersion\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"description\": \"The API version selected for the request.\"\n        },\n        \"operationGid\": {\n          \"type\": \"string\",\n          \"pattern\": \"^gid:\\\\/\\\\/shopify\\\\/BulkOperation\\\\/[^/]+$\",\n          \"description\": \"The Shopify global ID of a bulk operation.\"\n        },\n        \"operation\": {\n          \"anyOf\": [\n            {\n              \"$ref\": \"#/definitions/BulkOperation\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        }\n      },\n      \"required\": [\n        \"storeDomain\",\n        \"apiVersion\",\n        \"operationGid\",\n        \"operation\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"ListBulkOperationsResult\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"storeDomain\": {\n          \"$ref\": \"#/definitions/GetBulkOperationStatusResult/properties/storeDomain\"\n        },\n        \"apiVersion\": {\n          \"$ref\": \"#/definitions/GetBulkOperationStatusResult/properties/apiVersion\"\n        },\n        \"operations\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/definitions/ListedBulkOperation\"\n          }\n        },\n        \"pageInfo\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"hasNextPage\": {\n              \"type\": [\n                \"boolean\",\n                \"null\"\n              ],\n              \"description\": \"Unknown when the API result reaches the fetch limit.\"\n            }\n          },\n          \"required\": [\n            \"hasNextPage\"\n          ],\n          \"additionalProperties\": false\n        }\n      },\n      \"required\": [\n        \"storeDomain\",\n        \"apiVersion\",\n        \"operations\",\n        \"pageInfo\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"BulkOperation\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"gid\": {\n          \"$ref\": \"#/definitions/GetBulkOperationStatusResult/properties/operationGid\"\n        },\n        \"type\": {\n          \"type\": \"string\"\n        },\n        \"status\": {\n          \"type\": \"string\"\n        },\n        \"errorCode\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"pattern\": \"^\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2}Z$\",\n          \"description\": \"A UTC ISO 8601 instant with whole seconds and the Z timezone marker.\"\n        },\n        \"completedAt\": {\n          \"anyOf\": [\n            {\n              \"$ref\": \"#/definitions/BulkOperation/properties/createdAt\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"A UTC ISO 8601 instant with whole seconds and the Z timezone marker.\"\n        },\n        \"objectCount\": {\n          \"type\": \"string\",\n          \"pattern\": \"^\\\\d+$\",\n          \"description\": \"A nonnegative decimal count, without loss of integer precision.\"\n        },\n        \"url\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"format\": \"uri\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        },\n        \"partialDataUrl\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"format\": \"uri\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        }\n      },\n      \"required\": [\n        \"gid\",\n        \"type\",\n        \"status\",\n        \"errorCode\",\n        \"createdAt\",\n        \"completedAt\",\n        \"objectCount\",\n        \"url\",\n        \"partialDataUrl\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"ListedBulkOperation\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"gid\": {\n          \"$ref\": \"#/definitions/GetBulkOperationStatusResult/properties/operationGid\"\n        },\n        \"status\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/status\"\n        },\n        \"errorCode\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/errorCode\"\n        },\n        \"createdAt\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/createdAt\"\n        },\n        \"completedAt\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/completedAt\"\n        },\n        \"objectCount\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/objectCount\"\n        },\n        \"url\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/url\"\n        },\n        \"partialDataUrl\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/partialDataUrl\"\n        }\n      },\n      \"required\": [\n        \"gid\",\n        \"status\",\n        \"errorCode\",\n        \"createdAt\",\n        \"completedAt\",\n        \"objectCount\",\n        \"url\",\n        \"partialDataUrl\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
-      "descriptionWithMarkdown": "Check the status of a specific bulk operation by ID, or list all bulk operations belonging to this app on this store in the last 7 days.\n\n  Bulk operations allow you to process large amounts of data asynchronously. Learn more about [bulk query operations](https://shopify.dev/docs/api/usage/bulk-operations/queries) and [bulk mutation operations](https://shopify.dev/docs/api/usage/bulk-operations/imports).\n\n  Use [`bulk execute`](https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) to start a new bulk operation.",
+      "description": "Checks the status of a specific bulk operation by ID, or lists all bulk operations belonging to this app on this store in the last 7 days.\n\n  Bulk operations allow you to process large amounts of data asynchronously. Learn more about \"bulk query operations\" (https://shopify.dev/docs/api/usage/bulk-operations/queries) and \"bulk mutation operations\" (https://shopify.dev/docs/api/usage/bulk-operations/imports).\n\n  Use \"`bulk execute`\" (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) to start a new bulk operation.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `BulkOperationStatusResult` schema.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"$ref\": \"#/definitions/GetBulkOperationStatusResult\"\n    },\n    {\n      \"$ref\": \"#/definitions/ListBulkOperationsResult\"\n    }\n  ],\n  \"title\": \"BulkOperationStatusResult\",\n  \"definitions\": {\n    \"GetBulkOperationStatusResult\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"storeDomain\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"pattern\": \"^[^.]+\\\\.myshopify\\\\.com$\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        },\n        \"apiVersion\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"description\": \"The API version selected for the request.\"\n        },\n        \"operationGid\": {\n          \"type\": \"string\",\n          \"pattern\": \"^gid:\\\\/\\\\/shopify\\\\/BulkOperation\\\\/[^/]+$\",\n          \"description\": \"The Shopify global ID of a bulk operation.\"\n        },\n        \"operation\": {\n          \"anyOf\": [\n            {\n              \"$ref\": \"#/definitions/BulkOperation\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        }\n      },\n      \"required\": [\n        \"storeDomain\",\n        \"apiVersion\",\n        \"operationGid\",\n        \"operation\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"ListBulkOperationsResult\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"storeDomain\": {\n          \"$ref\": \"#/definitions/GetBulkOperationStatusResult/properties/storeDomain\"\n        },\n        \"apiVersion\": {\n          \"$ref\": \"#/definitions/GetBulkOperationStatusResult/properties/apiVersion\"\n        },\n        \"operations\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/definitions/ListedBulkOperation\"\n          }\n        },\n        \"pageInfo\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"hasNextPage\": {\n              \"type\": [\n                \"boolean\",\n                \"null\"\n              ],\n              \"description\": \"Unknown when the API result reaches the fetch limit.\"\n            }\n          },\n          \"required\": [\n            \"hasNextPage\"\n          ],\n          \"additionalProperties\": false\n        }\n      },\n      \"required\": [\n        \"storeDomain\",\n        \"apiVersion\",\n        \"operations\",\n        \"pageInfo\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"BulkOperation\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"gid\": {\n          \"$ref\": \"#/definitions/GetBulkOperationStatusResult/properties/operationGid\"\n        },\n        \"type\": {\n          \"type\": \"string\"\n        },\n        \"status\": {\n          \"type\": \"string\"\n        },\n        \"errorCode\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"pattern\": \"^\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2}Z$\",\n          \"description\": \"A UTC ISO 8601 instant with whole seconds and the Z timezone marker.\"\n        },\n        \"completedAt\": {\n          \"anyOf\": [\n            {\n              \"$ref\": \"#/definitions/BulkOperation/properties/createdAt\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"A UTC ISO 8601 instant with whole seconds and the Z timezone marker.\"\n        },\n        \"objectCount\": {\n          \"type\": \"string\",\n          \"pattern\": \"^\\\\d+$\",\n          \"description\": \"A nonnegative decimal count, without loss of integer precision.\"\n        },\n        \"url\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"format\": \"uri\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        },\n        \"partialDataUrl\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"format\": \"uri\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        }\n      },\n      \"required\": [\n        \"gid\",\n        \"type\",\n        \"status\",\n        \"errorCode\",\n        \"createdAt\",\n        \"completedAt\",\n        \"objectCount\",\n        \"url\",\n        \"partialDataUrl\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"ListedBulkOperation\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"gid\": {\n          \"$ref\": \"#/definitions/GetBulkOperationStatusResult/properties/operationGid\"\n        },\n        \"status\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/status\"\n        },\n        \"errorCode\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/errorCode\"\n        },\n        \"createdAt\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/createdAt\"\n        },\n        \"completedAt\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/completedAt\"\n        },\n        \"objectCount\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/objectCount\"\n        },\n        \"url\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/url\"\n        },\n        \"partialDataUrl\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/partialDataUrl\"\n        }\n      },\n      \"required\": [\n        \"gid\",\n        \"status\",\n        \"errorCode\",\n        \"createdAt\",\n        \"completedAt\",\n        \"objectCount\",\n        \"url\",\n        \"partialDataUrl\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Checks the status of a specific bulk operation by ID, or lists all bulk operations belonging to this app on this store in the last 7 days.\n\n  Bulk operations allow you to process large amounts of data asynchronously. Learn more about [bulk query operations](https://shopify.dev/docs/api/usage/bulk-operations/queries) and [bulk mutation operations](https://shopify.dev/docs/api/usage/bulk-operations/imports).\n\n  Use [`bulk execute`](https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) to start a new bulk operation.",
       "flags": {
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
@@ -553,7 +553,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Check the status of bulk operations."
+      "summary": "Checks the status of bulk operations."
     },
     "app:config:link": {
       "aliases": [
@@ -684,7 +684,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Fetch your app configuration from the Developer Dashboard."
+      "summary": "Fetches your app configuration from the Developer Dashboard."
     },
     "app:config:pull": {
       "aliases": [
@@ -784,7 +784,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Refresh an already-linked app configuration without prompts."
+      "summary": "Refreshes an already-linked app configuration without prompts."
     },
     "app:config:use": {
       "aliases": [
@@ -878,7 +878,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Activate an app configuration.",
+      "summary": "Activates an app configuration.",
       "usage": "app config use [config] [flags]"
     },
     "app:config:validate": {
@@ -988,7 +988,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Validate your app configuration and extensions."
+      "summary": "Validates your app configuration and extensions."
     },
     "app:deploy": {
       "aliases": [
@@ -1147,7 +1147,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Deploy your Shopify app."
+      "summary": "Deploys your Shopify app."
     },
     "app:dev": {
       "aliases": [
@@ -1380,7 +1380,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Run the app."
+      "summary": "Runs the app."
     },
     "app:dev:clean": {
       "aliases": [
@@ -1388,8 +1388,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Stop the dev preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n  \n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppDevCleanResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\",\n      \"const\": \"success\"\n    },\n    \"app\": {\n      \"$ref\": \"#/definitions/AppDevCleanApp\"\n    },\n    \"storeDomain\": {\n      \"type\": [\n        \"string\",\n        \"null\"\n      ],\n      \"description\": \"The canonical *.myshopify.com hostname, or null when unknown.\"\n    }\n  },\n  \"required\": [\n    \"status\",\n    \"app\",\n    \"storeDomain\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppDevCleanResult\",\n  \"definitions\": {\n    \"AppDevCleanApp\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"clientId\": {\n          \"type\": \"string\",\n          \"minLength\": 1\n        }\n      },\n      \"required\": [\n        \"name\",\n        \"clientId\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
-      "descriptionWithMarkdown": "Stop the dev preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n  ",
+      "description": "Stops the dev preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n  \n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppDevCleanResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\",\n      \"const\": \"success\"\n    },\n    \"app\": {\n      \"$ref\": \"#/definitions/AppDevCleanApp\"\n    },\n    \"storeDomain\": {\n      \"type\": [\n        \"string\",\n        \"null\"\n      ],\n      \"description\": \"The canonical *.myshopify.com hostname, or null when unknown.\"\n    }\n  },\n  \"required\": [\n    \"status\",\n    \"app\",\n    \"storeDomain\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppDevCleanResult\",\n  \"definitions\": {\n    \"AppDevCleanApp\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"clientId\": {\n          \"type\": \"string\",\n          \"minLength\": 1\n        }\n      },\n      \"required\": [\n        \"name\",\n        \"clientId\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Stops the dev preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n  ",
       "flags": {
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
@@ -1605,7 +1605,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Pull app and extensions environment variables."
+      "summary": "Pulls app and extensions environment variables."
     },
     "app:env:show": {
       "aliases": [
@@ -1705,7 +1705,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Display app and extensions environment variables."
+      "summary": "Displays app and extensions environment variables."
     },
     "app:execute": {
       "aliases": [
@@ -1871,7 +1871,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Execute GraphQL queries and mutations."
+      "summary": "Executes GraphQL queries and mutations."
     },
     "app:function:build": {
       "aliases": [
@@ -1972,7 +1972,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Compile a function to wasm."
+      "summary": "Compiles a function to wasm."
     },
     "app:function:info": {
       "aliases": [
@@ -2082,7 +2082,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Print basic information about your function."
+      "summary": "Prints basic information about your function."
     },
     "app:function:replay": {
       "aliases": [
@@ -2346,7 +2346,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Run a function locally for testing."
+      "summary": "Runs a function locally for testing."
     },
     "app:function:schema": {
       "aliases": [
@@ -2455,7 +2455,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Fetch the latest GraphQL schema for a function."
+      "summary": "Fetches the latest GraphQL schema for a function."
     },
     "app:function:typegen": {
       "aliases": [
@@ -2556,7 +2556,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Generate GraphQL types for a function."
+      "summary": "Generates GraphQL types for a function."
     },
     "app:generate:extension": {
       "aliases": [
@@ -2703,7 +2703,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Generate a new app Extension."
+      "summary": "Generates a new app Extension."
     },
     "app:graphiql": {
       "aliases": [
@@ -2841,7 +2841,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Open a local GraphiQL UI for your app and store."
+      "summary": "Opens a local GraphiQL UI for your app and store."
     },
     "app:import-custom-data-definitions": {
       "aliases": [
@@ -2849,8 +2849,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Import metafield and metaobject definitions from your development store. \"Read more about declarative custom data definitions\" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).",
-      "descriptionWithMarkdown": "Import metafield and metaobject definitions from your development store. [Read more about declarative custom data definitions](https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).",
+      "description": "Imports metafield and metaobject definitions from your development store. \"Read more about declarative custom data definitions\" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).",
+      "descriptionWithMarkdown": "Imports metafield and metaobject definitions from your development store. [Read more about declarative custom data definitions](https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).",
       "flags": {
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
@@ -2957,7 +2957,7 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "summary": "Import metafield and metaobject definitions."
+      "summary": "Imports metafield and metaobject definitions."
     },
     "app:import-extensions": {
       "aliases": [
@@ -2965,7 +2965,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Import dashboard-managed extensions into your app.",
+      "description": "Imports dashboard-managed extensions into your app.",
       "flags": {
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
@@ -3172,7 +3172,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Import your app's default channel spec as a channel_config extension."
+      "summary": "Imports your app's default channel spec as a channel_config extension."
     },
     "app:import:custom-data-definitions": {
       "aliases": [
@@ -3180,8 +3180,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Import metafield and metaobject definitions from your development store. \"Read more about declarative custom data definitions\" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).",
-      "descriptionWithMarkdown": "Import metafield and metaobject definitions from your development store. [Read more about declarative custom data definitions](https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).",
+      "description": "Imports metafield and metaobject definitions from your development store. \"Read more about declarative custom data definitions\" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).",
+      "descriptionWithMarkdown": "Imports metafield and metaobject definitions from your development store. [Read more about declarative custom data definitions](https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).",
       "flags": {
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
@@ -3288,7 +3288,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Import metafield and metaobject definitions."
+      "summary": "Imports metafield and metaobject definitions."
     },
     "app:import:dashboard-extensions": {
       "aliases": [
@@ -3296,7 +3296,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Import dashboard-managed extensions into your app.",
+      "description": "Imports dashboard-managed extensions into your app.",
       "flags": {
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
@@ -3503,7 +3503,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Print basic information about your app and extensions."
+      "summary": "Prints basic information about your app and extensions."
     },
     "app:init": {
       "aliases": [
@@ -3646,7 +3646,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Create a new app project"
+      "summary": "Creates a new app project"
     },
     "app:logs": {
       "aliases": [
@@ -3784,7 +3784,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Stream detailed logs for your Shopify app."
+      "summary": "Streams detailed logs for your Shopify app."
     },
     "app:logs:sources": {
       "aliases": [
@@ -3893,7 +3893,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Print out a list of sources that may be used with the logs command."
+      "summary": "Prints out a list of sources that may be used with the logs command."
     },
     "app:release": {
       "aliases": [
@@ -4019,7 +4019,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Release an app version.",
+      "summary": "Releases an app version.",
       "usage": "app release --version <version>"
     },
     "app:security:check": {
@@ -4183,7 +4183,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Check an app for Shopify-specific security issues and write deterministic-findings.json and agent-checks.json."
+      "summary": "Checks an app for Shopify-specific security issues and writes deterministic-findings.json and agent-checks.json."
     },
     "app:security:clean": {
       "aliases": [
@@ -4295,7 +4295,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Remove local app security check results."
+      "summary": "Removes local app security check results."
     },
     "app:security:instructions": {
       "aliases": [
@@ -4411,7 +4411,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Provide app security check instructions to a coding agent."
+      "summary": "Provides app security check instructions to a coding agent."
     },
     "app:security:record": {
       "aliases": [
@@ -4506,7 +4506,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Record agent findings from an app security check."
+      "summary": "Records agent findings from an app security check."
     },
     "app:security:review": {
       "aliases": [
@@ -4624,7 +4624,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Show the combined app security check results."
+      "summary": "Shows the combined app security check results."
     },
     "app:subscription-migrations:cancel": {
       "aliases": [
@@ -5395,7 +5395,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "List deployed versions of your app."
+      "summary": "Lists deployed versions of your app."
     },
     "app:webhook:trigger": {
       "aliases": [
@@ -5536,7 +5536,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
+      "summary": "Triggers delivery of a sample webhook topic payload to a designated address."
     },
     "auth:login": {
       "aliases": [
@@ -5667,7 +5667,7 @@
       ],
       "args": {
       },
-      "description": "Clear the CLI cache, used to store some API responses and handle notifications status",
+      "description": "Clears the CLI cache, used to store some API responses and handle notifications status",
       "enableJsonFlag": false,
       "flags": {
         "json-schema": {
@@ -5792,8 +5792,8 @@
       "args": {
       },
       "customPluginName": "@shopify/plugin-did-you-mean",
-      "description": "Disable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
-      "descriptionWithMarkdown": "Disable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
+      "description": "Disables autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
+      "descriptionWithMarkdown": "Disables autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "enableJsonFlag": false,
       "flags": {
         "json-schema": {
@@ -5812,7 +5812,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Disable autocorrect. Off by default."
+      "summary": "Disables autocorrect. Off by default."
     },
     "config:autocorrect:on": {
       "aliases": [
@@ -5820,8 +5820,8 @@
       "args": {
       },
       "customPluginName": "@shopify/plugin-did-you-mean",
-      "description": "Enable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
-      "descriptionWithMarkdown": "Enable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
+      "description": "Enables autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
+      "descriptionWithMarkdown": "Enables autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "enableJsonFlag": false,
       "flags": {
         "json-schema": {
@@ -5840,7 +5840,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Enable autocorrect. Off by default."
+      "summary": "Enables autocorrect. Off by default."
     },
     "config:autocorrect:status": {
       "aliases": [
@@ -5848,8 +5848,8 @@
       "args": {
       },
       "customPluginName": "@shopify/plugin-did-you-mean",
-      "description": "Check whether autocorrect is enabled or disabled. On by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
-      "descriptionWithMarkdown": "Check whether autocorrect is enabled or disabled. On by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
+      "description": "Checks whether autocorrect is enabled or disabled. On by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
+      "descriptionWithMarkdown": "Checks whether autocorrect is enabled or disabled. On by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "enableJsonFlag": false,
       "flags": {
         "json-schema": {
@@ -5868,15 +5868,15 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Check whether autocorrect is enabled or disabled. On by default."
+      "summary": "Checks whether autocorrect is enabled or disabled. On by default."
     },
     "config:autoupgrade:off": {
       "aliases": [
       ],
       "args": {
       },
-      "description": "Disable automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is disabled, Shopify CLI won't automatically update. Run `shopify upgrade` to update manually.\n\n  To enable auto-upgrade, run `shopify config autoupgrade on`.\n\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AutoUpgradeResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"enabled\": {\n      \"type\": \"boolean\"\n    }\n  },\n  \"required\": [\n    \"enabled\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AutoUpgradeResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
-      "descriptionWithMarkdown": "Disable automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is disabled, Shopify CLI won't automatically update. Run `shopify upgrade` to update manually.\n\n  To enable auto-upgrade, run `shopify config autoupgrade on`.\n",
+      "description": "Disables automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is disabled, Shopify CLI won't automatically update. Run `shopify upgrade` to update manually.\n\n  To enable auto-upgrade, run `shopify config autoupgrade on`.\n\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AutoUpgradeResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"enabled\": {\n      \"type\": \"boolean\"\n    }\n  },\n  \"required\": [\n    \"enabled\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AutoUpgradeResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Disables automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is disabled, Shopify CLI won't automatically update. Run `shopify upgrade` to update manually.\n\n  To enable auto-upgrade, run `shopify config autoupgrade on`.\n",
       "enableJsonFlag": false,
       "flags": {
         "json": {
@@ -5927,15 +5927,15 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Disable automatic upgrades for Shopify CLI."
+      "summary": "Disables automatic upgrades for Shopify CLI."
     },
     "config:autoupgrade:on": {
       "aliases": [
       ],
       "args": {
       },
-      "description": "Enable automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version once per day. Major version upgrades are skipped and must be done manually.\n\n  To disable auto-upgrade, run `shopify config autoupgrade off`.\n\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AutoUpgradeResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"enabled\": {\n      \"type\": \"boolean\"\n    }\n  },\n  \"required\": [\n    \"enabled\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AutoUpgradeResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
-      "descriptionWithMarkdown": "Enable automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version once per day. Major version upgrades are skipped and must be done manually.\n\n  To disable auto-upgrade, run `shopify config autoupgrade off`.\n",
+      "description": "Enables automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version once per day. Major version upgrades are skipped and must be done manually.\n\n  To disable auto-upgrade, run `shopify config autoupgrade off`.\n\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AutoUpgradeResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"enabled\": {\n      \"type\": \"boolean\"\n    }\n  },\n  \"required\": [\n    \"enabled\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AutoUpgradeResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Enables automatic upgrades for Shopify CLI.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version once per day. Major version upgrades are skipped and must be done manually.\n\n  To disable auto-upgrade, run `shopify config autoupgrade off`.\n",
       "enableJsonFlag": false,
       "flags": {
         "json": {
@@ -5986,15 +5986,15 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Enable automatic upgrades for Shopify CLI."
+      "summary": "Enables automatic upgrades for Shopify CLI."
     },
     "config:autoupgrade:status": {
       "aliases": [
       ],
       "args": {
       },
-      "description": "Check whether auto-upgrade is enabled, disabled, or not yet configured.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.\n\n  Run `shopify config autoupgrade on` or `shopify config autoupgrade off` to configure it.\n\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AutoUpgradeResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"enabled\": {\n      \"type\": \"boolean\"\n    }\n  },\n  \"required\": [\n    \"enabled\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AutoUpgradeResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
-      "descriptionWithMarkdown": "Check whether auto-upgrade is enabled, disabled, or not yet configured.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.\n\n  Run `shopify config autoupgrade on` or `shopify config autoupgrade off` to configure it.\n",
+      "description": "Checks whether auto-upgrade is enabled, disabled, or not yet configured.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.\n\n  Run `shopify config autoupgrade on` or `shopify config autoupgrade off` to configure it.\n\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AutoUpgradeResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"enabled\": {\n      \"type\": \"boolean\"\n    }\n  },\n  \"required\": [\n    \"enabled\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AutoUpgradeResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Checks whether auto-upgrade is enabled, disabled, or not yet configured.\n\n  When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.\n\n  Run `shopify config autoupgrade on` or `shopify config autoupgrade off` to configure it.\n",
       "enableJsonFlag": false,
       "flags": {
         "json": {
@@ -6045,14 +6045,14 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Check whether auto-upgrade is enabled, disabled, or not yet configured."
+      "summary": "Checks whether auto-upgrade is enabled, disabled, or not yet configured."
     },
     "debug:command-flags": {
       "aliases": [
       ],
       "args": {
       },
-      "description": "View all the available command flags",
+      "description": "Views all the available command flags",
       "enableJsonFlag": false,
       "flags": {
         "csv": {
@@ -6177,15 +6177,15 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Watch and prints out changes to an app."
+      "summary": "Watches and prints out changes to an app."
     },
     "doc:fetch": {
       "aliases": [
       ],
       "args": {
       },
-      "description": "Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. Pass `--language` for the language of the app you are building so code examples match your stack. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `DocFetchResult` schema.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"document\": {\n          \"$ref\": \"#/definitions/Document\"\n        }\n      },\n      \"required\": [\n        \"document\"\n      ],\n      \"additionalProperties\": false\n    },\n    {\n      \"$ref\": \"#/definitions/DocumentFile\"\n    }\n  ],\n  \"title\": \"DocFetchResult\",\n  \"definitions\": {\n    \"Document\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"url\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"description\": \"The requested shopify.dev document URL.\"\n        },\n        \"content\": {\n          \"type\": \"string\",\n          \"description\": \"The document in Markdown, with the requested language filter applied.\"\n        }\n      },\n      \"required\": [\n        \"url\",\n        \"content\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"DocumentFile\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"path\": {\n          \"type\": \"string\",\n          \"pattern\": \"^(?:\\\\/|[A-Za-z]:[\\\\\\\\/]|\\\\\\\\\\\\\\\\)\",\n          \"description\": \"The absolute native path of the written file.\"\n        },\n        \"format\": {\n          \"type\": \"string\",\n          \"const\": \"markdown\",\n          \"description\": \"The file contains the original Markdown document, not a JSON wrapper.\"\n        }\n      },\n      \"required\": [\n        \"path\",\n        \"format\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
-      "descriptionWithMarkdown": "Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. Pass `--language` for the language of the app you are building so code examples match your stack. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.",
+      "description": "Downloads a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. Pass `--language` for the language of the app you are building so code examples match your stack. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `DocFetchResult` schema.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"document\": {\n          \"$ref\": \"#/definitions/Document\"\n        }\n      },\n      \"required\": [\n        \"document\"\n      ],\n      \"additionalProperties\": false\n    },\n    {\n      \"$ref\": \"#/definitions/DocumentFile\"\n    }\n  ],\n  \"title\": \"DocFetchResult\",\n  \"definitions\": {\n    \"Document\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"url\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"description\": \"The requested shopify.dev document URL.\"\n        },\n        \"content\": {\n          \"type\": \"string\",\n          \"description\": \"The document in Markdown, with the requested language filter applied.\"\n        }\n      },\n      \"required\": [\n        \"url\",\n        \"content\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"DocumentFile\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"path\": {\n          \"type\": \"string\",\n          \"pattern\": \"^(?:\\\\/|[A-Za-z]:[\\\\\\\\/]|\\\\\\\\\\\\\\\\)\",\n          \"description\": \"The absolute native path of the written file.\"\n        },\n        \"format\": {\n          \"type\": \"string\",\n          \"const\": \"markdown\",\n          \"description\": \"The file contains the original Markdown document, not a JSON wrapper.\"\n        }\n      },\n      \"required\": [\n        \"path\",\n        \"format\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Downloads a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. Pass `--language` for the language of the app you are building so code examples match your stack. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.",
       "enableJsonFlag": false,
       "examples": [
         "# fetch the Markdown version of a Shopify.dev page\nshopify doc fetch --url https://shopify.dev/docs/api/shopify-cli",
@@ -6285,8 +6285,8 @@
       ],
       "args": {
       },
-      "description": "Query the shopify.dev vector store and print the most relevant documentation chunks as JSON. Best for programmatic discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `DocSearchResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"results\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/DocumentationSearchEntry\"\n      },\n      \"description\": \"The top matching chunks from one search request.\"\n    },\n    \"pageInfo\": {\n      \"$ref\": \"#/definitions/PageInfo\"\n    }\n  },\n  \"required\": [\n    \"results\",\n    \"pageInfo\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"DocSearchResult\",\n  \"definitions\": {\n    \"DocumentationSearchEntry\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"score\": {\n          \"type\": \"number\",\n          \"description\": \"The relevance score returned by shopify.dev.\"\n        },\n        \"content\": {\n          \"type\": \"string\",\n          \"description\": \"The matching documentation chunk.\"\n        },\n        \"url\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"description\": \"The URL of the matching document.\"\n        },\n        \"title\": {\n          \"type\": \"string\",\n          \"description\": \"The title of the matching document.\"\n        },\n        \"domain\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"description\": \"The documentation domain, or null when unavailable.\"\n        }\n      },\n      \"required\": [\n        \"score\",\n        \"content\",\n        \"url\",\n        \"title\",\n        \"domain\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"PageInfo\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"hasNextPage\": {\n          \"type\": [\n            \"boolean\",\n            \"null\"\n          ],\n          \"description\": \"Whether more results are available, or null when unknown.\"\n        }\n      },\n      \"required\": [\n        \"hasNextPage\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
-      "descriptionWithMarkdown": "Query the shopify.dev vector store and print the most relevant documentation chunks as JSON. Best for programmatic discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.",
+      "description": "Queries the shopify.dev vector store and prints the most relevant documentation chunks as JSON. Best for programmatic discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `DocSearchResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"results\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/DocumentationSearchEntry\"\n      },\n      \"description\": \"The top matching chunks from one search request.\"\n    },\n    \"pageInfo\": {\n      \"$ref\": \"#/definitions/PageInfo\"\n    }\n  },\n  \"required\": [\n    \"results\",\n    \"pageInfo\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"DocSearchResult\",\n  \"definitions\": {\n    \"DocumentationSearchEntry\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"score\": {\n          \"type\": \"number\",\n          \"description\": \"The relevance score returned by shopify.dev.\"\n        },\n        \"content\": {\n          \"type\": \"string\",\n          \"description\": \"The matching documentation chunk.\"\n        },\n        \"url\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"description\": \"The URL of the matching document.\"\n        },\n        \"title\": {\n          \"type\": \"string\",\n          \"description\": \"The title of the matching document.\"\n        },\n        \"domain\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"description\": \"The documentation domain, or null when unavailable.\"\n        }\n      },\n      \"required\": [\n        \"score\",\n        \"content\",\n        \"url\",\n        \"title\",\n        \"domain\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"PageInfo\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"hasNextPage\": {\n          \"type\": [\n            \"boolean\",\n            \"null\"\n          ],\n          \"description\": \"Whether more results are available, or null when unknown.\"\n        }\n      },\n      \"required\": [\n        \"hasNextPage\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Queries the shopify.dev vector store and prints the most relevant documentation chunks as JSON. Best for programmatic discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.",
       "enableJsonFlag": false,
       "examples": [
         "# search shopify.dev for a topic\n    shopify doc search --query \"subscribe to webhooks\"\n\n    # narrow the search to a specific API and version\n    shopify doc search --query \"create a product\" --api-name admin --api-version latest",
@@ -6372,7 +6372,7 @@
       ],
       "args": {
       },
-      "description": "Generate CLI commands documentation",
+      "description": "Generates CLI commands documentation",
       "enableJsonFlag": false,
       "flags": {
         "json-schema": {
@@ -6398,7 +6398,7 @@
       ],
       "args": {
       },
-      "description": "Run CLI doctor-release tests",
+      "description": "Runs CLI doctor-release tests",
       "enableJsonFlag": false,
       "flags": {
         "json-schema": {
@@ -6424,7 +6424,7 @@
       ],
       "args": {
       },
-      "description": "Run all theme command doctor-release tests",
+      "description": "Runs all theme command doctor-release tests",
       "enableJsonFlag": false,
       "flags": {
         "environment": {
@@ -6515,8 +6515,8 @@
           "required": false
         }
       },
-      "description": "Display help for Shopify CLI\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `HelpResult` schema.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"kind\": {\n          \"type\": \"string\",\n          \"const\": \"root\"\n        },\n        \"commands\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/definitions/HelpCommandSummary\"\n          }\n        },\n        \"topics\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/definitions/HelpTopic\"\n          }\n        }\n      },\n      \"required\": [\n        \"kind\",\n        \"commands\",\n        \"topics\"\n      ],\n      \"additionalProperties\": false\n    },\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"kind\": {\n          \"type\": \"string\",\n          \"const\": \"topic\"\n        },\n        \"topic\": {\n          \"$ref\": \"#/definitions/HelpTopic\"\n        },\n        \"commands\": {\n          \"$ref\": \"#/definitions/HelpResult/anyOf/0/properties/commands\"\n        },\n        \"topics\": {\n          \"$ref\": \"#/definitions/HelpResult/anyOf/0/properties/topics\"\n        }\n      },\n      \"required\": [\n        \"kind\",\n        \"topic\",\n        \"commands\",\n        \"topics\"\n      ],\n      \"additionalProperties\": false\n    },\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"kind\": {\n          \"type\": \"string\",\n          \"const\": \"command\"\n        },\n        \"command\": {\n          \"$ref\": \"#/definitions/HelpCommand\"\n        },\n        \"commands\": {\n          \"$ref\": \"#/definitions/HelpResult/anyOf/0/properties/commands\"\n        },\n        \"topics\": {\n          \"$ref\": \"#/definitions/HelpResult/anyOf/0/properties/topics\"\n        }\n      },\n      \"required\": [\n        \"kind\",\n        \"command\",\n        \"commands\",\n        \"topics\"\n      ],\n      \"additionalProperties\": false\n    }\n  ],\n  \"title\": \"HelpResult\",\n  \"definitions\": {\n    \"HelpCommandSummary\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"id\": {\n          \"type\": \"string\"\n        },\n        \"summary\": {\n          \"type\": \"string\"\n        },\n        \"hidden\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        }\n      },\n      \"required\": [\n        \"id\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"HelpTopic\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"string\"\n        },\n        \"hidden\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        }\n      },\n      \"required\": [\n        \"name\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"HelpArgument\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"string\"\n        },\n        \"required\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        },\n        \"hidden\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        },\n        \"options\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"default\": {}\n      },\n      \"required\": [\n        \"name\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"HelpFlag\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"type\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"boolean\",\n            \"option\"\n          ]\n        },\n        \"char\": {\n          \"type\": \"string\"\n        },\n        \"summary\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"string\"\n        },\n        \"env\": {\n          \"type\": \"string\"\n        },\n        \"required\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        },\n        \"hidden\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        },\n        \"options\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"default\": {},\n        \"multiple\": {\n          \"type\": \"boolean\"\n        },\n        \"allowNo\": {\n          \"type\": \"boolean\"\n        },\n        \"aliases\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"dependsOn\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"exclusive\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"exactlyOne\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        }\n      },\n      \"required\": [\n        \"name\",\n        \"type\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"HelpCommand\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"id\": {\n          \"$ref\": \"#/definitions/HelpCommandSummary/properties/id\"\n        },\n        \"summary\": {\n          \"$ref\": \"#/definitions/HelpCommandSummary/properties/summary\"\n        },\n        \"hidden\": {\n          \"$ref\": \"#/definitions/HelpCommandSummary/properties/hidden\"\n        },\n        \"description\": {\n          \"type\": \"string\"\n        },\n        \"aliases\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"usage\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\"\n            },\n            {\n              \"type\": \"array\",\n              \"items\": {\n                \"type\": \"string\"\n              }\n            }\n          ]\n        },\n        \"examples\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"anyOf\": [\n              {\n                \"type\": \"string\"\n              },\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"description\": {\n                    \"type\": \"string\"\n                  },\n                  \"command\": {\n                    \"type\": \"string\"\n                  }\n                },\n                \"required\": [\n                  \"description\",\n                  \"command\"\n                ],\n                \"additionalProperties\": false\n              }\n            ]\n          }\n        },\n        \"strict\": {\n          \"type\": \"boolean\",\n          \"default\": true\n        },\n        \"args\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"$ref\": \"#/definitions/HelpArgument\"\n          }\n        },\n        \"flags\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"$ref\": \"#/definitions/HelpFlag\"\n          }\n        }\n      },\n      \"required\": [\n        \"id\",\n        \"aliases\",\n        \"args\",\n        \"flags\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
-      "descriptionWithMarkdown": "Display help for Shopify CLI",
+      "description": "Displays help for Shopify CLI\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `HelpResult` schema.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"kind\": {\n          \"type\": \"string\",\n          \"const\": \"root\"\n        },\n        \"commands\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/definitions/HelpCommandSummary\"\n          }\n        },\n        \"topics\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/definitions/HelpTopic\"\n          }\n        }\n      },\n      \"required\": [\n        \"kind\",\n        \"commands\",\n        \"topics\"\n      ],\n      \"additionalProperties\": false\n    },\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"kind\": {\n          \"type\": \"string\",\n          \"const\": \"topic\"\n        },\n        \"topic\": {\n          \"$ref\": \"#/definitions/HelpTopic\"\n        },\n        \"commands\": {\n          \"$ref\": \"#/definitions/HelpResult/anyOf/0/properties/commands\"\n        },\n        \"topics\": {\n          \"$ref\": \"#/definitions/HelpResult/anyOf/0/properties/topics\"\n        }\n      },\n      \"required\": [\n        \"kind\",\n        \"topic\",\n        \"commands\",\n        \"topics\"\n      ],\n      \"additionalProperties\": false\n    },\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"kind\": {\n          \"type\": \"string\",\n          \"const\": \"command\"\n        },\n        \"command\": {\n          \"$ref\": \"#/definitions/HelpCommand\"\n        },\n        \"commands\": {\n          \"$ref\": \"#/definitions/HelpResult/anyOf/0/properties/commands\"\n        },\n        \"topics\": {\n          \"$ref\": \"#/definitions/HelpResult/anyOf/0/properties/topics\"\n        }\n      },\n      \"required\": [\n        \"kind\",\n        \"command\",\n        \"commands\",\n        \"topics\"\n      ],\n      \"additionalProperties\": false\n    }\n  ],\n  \"title\": \"HelpResult\",\n  \"definitions\": {\n    \"HelpCommandSummary\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"id\": {\n          \"type\": \"string\"\n        },\n        \"summary\": {\n          \"type\": \"string\"\n        },\n        \"hidden\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        }\n      },\n      \"required\": [\n        \"id\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"HelpTopic\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"string\"\n        },\n        \"hidden\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        }\n      },\n      \"required\": [\n        \"name\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"HelpArgument\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"string\"\n        },\n        \"required\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        },\n        \"hidden\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        },\n        \"options\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"default\": {}\n      },\n      \"required\": [\n        \"name\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"HelpFlag\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"type\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"boolean\",\n            \"option\"\n          ]\n        },\n        \"char\": {\n          \"type\": \"string\"\n        },\n        \"summary\": {\n          \"type\": \"string\"\n        },\n        \"description\": {\n          \"type\": \"string\"\n        },\n        \"env\": {\n          \"type\": \"string\"\n        },\n        \"required\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        },\n        \"hidden\": {\n          \"type\": \"boolean\",\n          \"default\": false\n        },\n        \"options\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"default\": {},\n        \"multiple\": {\n          \"type\": \"boolean\"\n        },\n        \"allowNo\": {\n          \"type\": \"boolean\"\n        },\n        \"aliases\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"dependsOn\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"exclusive\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"exactlyOne\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        }\n      },\n      \"required\": [\n        \"name\",\n        \"type\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"HelpCommand\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"id\": {\n          \"$ref\": \"#/definitions/HelpCommandSummary/properties/id\"\n        },\n        \"summary\": {\n          \"$ref\": \"#/definitions/HelpCommandSummary/properties/summary\"\n        },\n        \"hidden\": {\n          \"$ref\": \"#/definitions/HelpCommandSummary/properties/hidden\"\n        },\n        \"description\": {\n          \"type\": \"string\"\n        },\n        \"aliases\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"usage\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\"\n            },\n            {\n              \"type\": \"array\",\n              \"items\": {\n                \"type\": \"string\"\n              }\n            }\n          ]\n        },\n        \"examples\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"anyOf\": [\n              {\n                \"type\": \"string\"\n              },\n              {\n                \"type\": \"object\",\n                \"properties\": {\n                  \"description\": {\n                    \"type\": \"string\"\n                  },\n                  \"command\": {\n                    \"type\": \"string\"\n                  }\n                },\n                \"required\": [\n                  \"description\",\n                  \"command\"\n                ],\n                \"additionalProperties\": false\n              }\n            ]\n          }\n        },\n        \"strict\": {\n          \"type\": \"boolean\",\n          \"default\": true\n        },\n        \"args\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"$ref\": \"#/definitions/HelpArgument\"\n          }\n        },\n        \"flags\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {\n            \"$ref\": \"#/definitions/HelpFlag\"\n          }\n        }\n      },\n      \"required\": [\n        \"id\",\n        \"aliases\",\n        \"args\",\n        \"flags\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Displays help for Shopify CLI",
       "enableJsonFlag": false,
       "flags": {
         "json": {
@@ -8402,7 +8402,7 @@
       ],
       "args": {
       },
-      "description": "View all the available UI kit components",
+      "description": "Views all the available UI kit components",
       "enableJsonFlag": false,
       "flags": {
         "json-schema": {
@@ -8429,7 +8429,7 @@
       ],
       "args": {
       },
-      "description": "View the UI kit components that process async tasks",
+      "description": "Views the UI kit components that process async tasks",
       "enableJsonFlag": false,
       "flags": {
         "json-schema": {
@@ -8455,7 +8455,7 @@
       ],
       "args": {
       },
-      "description": "View the UI kit components prompts",
+      "description": "Views the UI kit components prompts",
       "enableJsonFlag": false,
       "flags": {
         "json-schema": {
@@ -8481,7 +8481,7 @@
       ],
       "args": {
       },
-      "description": "View the UI kit components that display static output",
+      "description": "Views the UI kit components that display static output",
       "enableJsonFlag": false,
       "flags": {
         "json-schema": {
@@ -8507,7 +8507,7 @@
       ],
       "args": {
       },
-      "description": "Generate a notifications.json file for the the CLI, appending a new notification to the current file.",
+      "description": "Generates a notifications.json file for the the CLI, appending a new notification to the current file.",
       "enableJsonFlag": false,
       "flags": {
         "json-schema": {
@@ -8533,7 +8533,7 @@
       ],
       "args": {
       },
-      "description": "List current notifications configured for the CLI.",
+      "description": "Lists current notifications configured for the CLI.",
       "enableJsonFlag": false,
       "flags": {
         "ignore-errors": {
@@ -8628,7 +8628,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "List Shopify organizations you have access to."
+      "summary": "Lists Shopify organizations you have access to."
     },
     "plugins": {
       "aliases": [
@@ -8962,8 +8962,8 @@
           "name": "query"
         }
       },
-      "description": "Search shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `SearchResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"url\": {\n      \"type\": \"string\",\n      \"format\": \"uri\"\n    }\n  },\n  \"required\": [\n    \"url\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"SearchResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
-      "descriptionWithMarkdown": "Search shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.",
+      "description": "Searches shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `SearchResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"url\": {\n      \"type\": \"string\",\n      \"format\": \"uri\"\n    }\n  },\n  \"required\": [\n    \"url\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"SearchResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Searches shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.",
       "enableJsonFlag": false,
       "examples": [
         "# open the search modal on Shopify.dev\n    shopify search\n\n    # search for a term on Shopify.dev\n    shopify search <query>\n\n    # search for a phrase on Shopify.dev\n    shopify search \"<a search query separated by spaces>\"\n    "
@@ -9124,7 +9124,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Authenticate an app against a store for store commands."
+      "summary": "Authenticates an app against a store for store commands."
     },
     "store:auth:list": {
       "aliases": [
@@ -9188,7 +9188,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "List stores authenticated directly with store auth."
+      "summary": "Lists stores authenticated directly with store auth."
     },
     "store:bulk:cancel": {
       "aliases": [
@@ -9269,7 +9269,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Cancel a bulk operation on a store."
+      "summary": "Cancels a bulk operation on a store."
     },
     "store:bulk:execute": {
       "aliases": [
@@ -9417,7 +9417,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Execute bulk operations on a store."
+      "summary": "Executes bulk operations on a store."
     },
     "store:bulk:status": {
       "aliases": [
@@ -9425,8 +9425,8 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Check the status of a specific bulk operation by ID, or list all bulk operations on this store in the last 7 days, using previously stored app authentication.\n\n  Run `shopify store auth` first to create stored auth for the store.\n\n  Use \"`store bulk execute`\" (https://shopify.dev/docs/api/shopify-cli/store/store-bulk-execute) to start a new bulk operation.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `BulkOperationStatusResult` schema.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"$ref\": \"#/definitions/GetBulkOperationStatusResult\"\n    },\n    {\n      \"$ref\": \"#/definitions/ListBulkOperationsResult\"\n    }\n  ],\n  \"title\": \"BulkOperationStatusResult\",\n  \"definitions\": {\n    \"GetBulkOperationStatusResult\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"storeDomain\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"pattern\": \"^[^.]+\\\\.myshopify\\\\.com$\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        },\n        \"apiVersion\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"description\": \"The API version selected for the request.\"\n        },\n        \"operationGid\": {\n          \"type\": \"string\",\n          \"pattern\": \"^gid:\\\\/\\\\/shopify\\\\/BulkOperation\\\\/[^/]+$\",\n          \"description\": \"The Shopify global ID of a bulk operation.\"\n        },\n        \"operation\": {\n          \"anyOf\": [\n            {\n              \"$ref\": \"#/definitions/BulkOperation\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        }\n      },\n      \"required\": [\n        \"storeDomain\",\n        \"apiVersion\",\n        \"operationGid\",\n        \"operation\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"ListBulkOperationsResult\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"storeDomain\": {\n          \"$ref\": \"#/definitions/GetBulkOperationStatusResult/properties/storeDomain\"\n        },\n        \"apiVersion\": {\n          \"$ref\": \"#/definitions/GetBulkOperationStatusResult/properties/apiVersion\"\n        },\n        \"operations\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/definitions/ListedBulkOperation\"\n          }\n        },\n        \"pageInfo\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"hasNextPage\": {\n              \"type\": [\n                \"boolean\",\n                \"null\"\n              ],\n              \"description\": \"Unknown when the API result reaches the fetch limit.\"\n            }\n          },\n          \"required\": [\n            \"hasNextPage\"\n          ],\n          \"additionalProperties\": false\n        }\n      },\n      \"required\": [\n        \"storeDomain\",\n        \"apiVersion\",\n        \"operations\",\n        \"pageInfo\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"BulkOperation\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"gid\": {\n          \"$ref\": \"#/definitions/GetBulkOperationStatusResult/properties/operationGid\"\n        },\n        \"type\": {\n          \"type\": \"string\"\n        },\n        \"status\": {\n          \"type\": \"string\"\n        },\n        \"errorCode\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"pattern\": \"^\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2}Z$\",\n          \"description\": \"A UTC ISO 8601 instant with whole seconds and the Z timezone marker.\"\n        },\n        \"completedAt\": {\n          \"anyOf\": [\n            {\n              \"$ref\": \"#/definitions/BulkOperation/properties/createdAt\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"A UTC ISO 8601 instant with whole seconds and the Z timezone marker.\"\n        },\n        \"objectCount\": {\n          \"type\": \"string\",\n          \"pattern\": \"^\\\\d+$\",\n          \"description\": \"A nonnegative decimal count, without loss of integer precision.\"\n        },\n        \"url\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"format\": \"uri\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        },\n        \"partialDataUrl\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"format\": \"uri\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        }\n      },\n      \"required\": [\n        \"gid\",\n        \"type\",\n        \"status\",\n        \"errorCode\",\n        \"createdAt\",\n        \"completedAt\",\n        \"objectCount\",\n        \"url\",\n        \"partialDataUrl\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"ListedBulkOperation\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"gid\": {\n          \"$ref\": \"#/definitions/GetBulkOperationStatusResult/properties/operationGid\"\n        },\n        \"status\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/status\"\n        },\n        \"errorCode\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/errorCode\"\n        },\n        \"createdAt\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/createdAt\"\n        },\n        \"completedAt\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/completedAt\"\n        },\n        \"objectCount\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/objectCount\"\n        },\n        \"url\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/url\"\n        },\n        \"partialDataUrl\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/partialDataUrl\"\n        }\n      },\n      \"required\": [\n        \"gid\",\n        \"status\",\n        \"errorCode\",\n        \"createdAt\",\n        \"completedAt\",\n        \"objectCount\",\n        \"url\",\n        \"partialDataUrl\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
-      "descriptionWithMarkdown": "Check the status of a specific bulk operation by ID, or list all bulk operations on this store in the last 7 days, using previously stored app authentication.\n\n  Run `shopify store auth` first to create stored auth for the store.\n\n  Use [`store bulk execute`](https://shopify.dev/docs/api/shopify-cli/store/store-bulk-execute) to start a new bulk operation.",
+      "description": "Checks the status of a specific bulk operation by ID, or lists all bulk operations on this store in the last 7 days, using previously stored app authentication.\n\n  Run `shopify store auth` first to create stored auth for the store.\n\n  Use \"`store bulk execute`\" (https://shopify.dev/docs/api/shopify-cli/store/store-bulk-execute) to start a new bulk operation.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `BulkOperationStatusResult` schema.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"$ref\": \"#/definitions/GetBulkOperationStatusResult\"\n    },\n    {\n      \"$ref\": \"#/definitions/ListBulkOperationsResult\"\n    }\n  ],\n  \"title\": \"BulkOperationStatusResult\",\n  \"definitions\": {\n    \"GetBulkOperationStatusResult\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"storeDomain\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"pattern\": \"^[^.]+\\\\.myshopify\\\\.com$\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        },\n        \"apiVersion\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"description\": \"The API version selected for the request.\"\n        },\n        \"operationGid\": {\n          \"type\": \"string\",\n          \"pattern\": \"^gid:\\\\/\\\\/shopify\\\\/BulkOperation\\\\/[^/]+$\",\n          \"description\": \"The Shopify global ID of a bulk operation.\"\n        },\n        \"operation\": {\n          \"anyOf\": [\n            {\n              \"$ref\": \"#/definitions/BulkOperation\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        }\n      },\n      \"required\": [\n        \"storeDomain\",\n        \"apiVersion\",\n        \"operationGid\",\n        \"operation\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"ListBulkOperationsResult\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"storeDomain\": {\n          \"$ref\": \"#/definitions/GetBulkOperationStatusResult/properties/storeDomain\"\n        },\n        \"apiVersion\": {\n          \"$ref\": \"#/definitions/GetBulkOperationStatusResult/properties/apiVersion\"\n        },\n        \"operations\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"$ref\": \"#/definitions/ListedBulkOperation\"\n          }\n        },\n        \"pageInfo\": {\n          \"type\": \"object\",\n          \"properties\": {\n            \"hasNextPage\": {\n              \"type\": [\n                \"boolean\",\n                \"null\"\n              ],\n              \"description\": \"Unknown when the API result reaches the fetch limit.\"\n            }\n          },\n          \"required\": [\n            \"hasNextPage\"\n          ],\n          \"additionalProperties\": false\n        }\n      },\n      \"required\": [\n        \"storeDomain\",\n        \"apiVersion\",\n        \"operations\",\n        \"pageInfo\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"BulkOperation\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"gid\": {\n          \"$ref\": \"#/definitions/GetBulkOperationStatusResult/properties/operationGid\"\n        },\n        \"type\": {\n          \"type\": \"string\"\n        },\n        \"status\": {\n          \"type\": \"string\"\n        },\n        \"errorCode\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ]\n        },\n        \"createdAt\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"pattern\": \"^\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2}Z$\",\n          \"description\": \"A UTC ISO 8601 instant with whole seconds and the Z timezone marker.\"\n        },\n        \"completedAt\": {\n          \"anyOf\": [\n            {\n              \"$ref\": \"#/definitions/BulkOperation/properties/createdAt\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"A UTC ISO 8601 instant with whole seconds and the Z timezone marker.\"\n        },\n        \"objectCount\": {\n          \"type\": \"string\",\n          \"pattern\": \"^\\\\d+$\",\n          \"description\": \"A nonnegative decimal count, without loss of integer precision.\"\n        },\n        \"url\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"format\": \"uri\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        },\n        \"partialDataUrl\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"format\": \"uri\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ]\n        }\n      },\n      \"required\": [\n        \"gid\",\n        \"type\",\n        \"status\",\n        \"errorCode\",\n        \"createdAt\",\n        \"completedAt\",\n        \"objectCount\",\n        \"url\",\n        \"partialDataUrl\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"ListedBulkOperation\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"gid\": {\n          \"$ref\": \"#/definitions/GetBulkOperationStatusResult/properties/operationGid\"\n        },\n        \"status\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/status\"\n        },\n        \"errorCode\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/errorCode\"\n        },\n        \"createdAt\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/createdAt\"\n        },\n        \"completedAt\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/completedAt\"\n        },\n        \"objectCount\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/objectCount\"\n        },\n        \"url\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/url\"\n        },\n        \"partialDataUrl\": {\n          \"$ref\": \"#/definitions/BulkOperation/properties/partialDataUrl\"\n        }\n      },\n      \"required\": [\n        \"gid\",\n        \"status\",\n        \"errorCode\",\n        \"createdAt\",\n        \"completedAt\",\n        \"objectCount\",\n        \"url\",\n        \"partialDataUrl\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Checks the status of a specific bulk operation by ID, or lists all bulk operations on this store in the last 7 days, using previously stored app authentication.\n\n  Run `shopify store auth` first to create stored auth for the store.\n\n  Use [`store bulk execute`](https://shopify.dev/docs/api/shopify-cli/store/store-bulk-execute) to start a new bulk operation.",
       "examples": [
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com",
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --id 123456789"
@@ -9498,7 +9498,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Check the status of bulk operations on a store."
+      "summary": "Checks the status of bulk operations on a store."
     },
     "store:create:dev": {
       "aliases": [
@@ -9618,7 +9618,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Create a new dev store."
+      "summary": "Creates a new dev store."
     },
     "store:create:preview": {
       "aliases": [
@@ -9700,7 +9700,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Create a preview Shopify store."
+      "summary": "Creates a preview Shopify store."
     },
     "store:delete": {
       "aliases": [
@@ -9791,7 +9791,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Delete a dev store."
+      "summary": "Deletes a dev store."
     },
     "store:execute": {
       "aliases": [
@@ -9930,7 +9930,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Execute GraphQL queries and mutations on a store."
+      "summary": "Executes GraphQL queries and mutations on a store."
     },
     "store:graphiql": {
       "aliases": [
@@ -10027,7 +10027,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Open a local GraphiQL UI for a store."
+      "summary": "Opens a local GraphiQL UI for a store."
     },
     "store:info": {
       "aliases": [
@@ -10100,7 +10100,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Surface metadata about a Shopify store."
+      "summary": "Surfaces metadata about a Shopify store."
     },
     "store:list": {
       "aliases": [
@@ -10187,7 +10187,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "List stores in a Shopify organization."
+      "summary": "Lists stores in a Shopify organization."
     },
     "store:open": {
       "aliases": [
@@ -10259,7 +10259,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Open your Shopify store in the default web browser."
+      "summary": "Opens your Shopify store in the default web browser."
     },
     "store:stripe-auth": {
       "aliases": [
@@ -10352,7 +10352,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Authenticate for store commands."
+      "summary": "Authenticates for store commands."
     },
     "theme:check": {
       "aliases": [
@@ -10517,7 +10517,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Validate the theme."
+      "summary": "Validates the theme."
     },
     "theme:console": {
       "aliases": [
@@ -10769,7 +10769,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Delete remote themes from the connected store. This command can't be undone."
+      "summary": "Deletes remote themes from the connected store. This command can't be undone."
     },
     "theme:dev": {
       "aliases": [
@@ -11427,7 +11427,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Start a Language Server Protocol server."
+      "summary": "Starts a Language Server Protocol server."
     },
     "theme:list": {
       "aliases": [
@@ -11665,7 +11665,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Download metafields definitions from your shop into a local file."
+      "summary": "Downloads metafields definitions from your shop into a local file."
     },
     "theme:open": {
       "aliases": [
@@ -11862,7 +11862,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Package your theme into a .zip file, ready to upload to the Online Store."
+      "summary": "Packages your theme into a .zip file, ready to upload to the Online Store."
     },
     "theme:preview": {
       "aliases": [
@@ -12006,8 +12006,8 @@
       "args": {
       },
       "customPluginName": "@shopify/theme",
-      "description": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
-      "descriptionWithMarkdown": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
+      "description": "Profiles the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
+      "descriptionWithMarkdown": "Profiles the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
       "enableJsonFlag": false,
       "flags": {
         "auth-alias": {
@@ -12128,7 +12128,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Profile the Liquid rendering of a theme page.",
+      "summary": "Profiles the Liquid rendering of a theme page.",
       "usage": [
         "theme profile",
         "theme profile --url /products/classic-leather-jacket"
@@ -12248,7 +12248,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Set a remote theme as the live theme."
+      "summary": "Sets a remote theme as the live theme."
     },
     "theme:pull": {
       "aliases": [
@@ -12412,7 +12412,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Download your remote theme files locally."
+      "summary": "Downloads your remote theme files locally."
     },
     "theme:push": {
       "aliases": [

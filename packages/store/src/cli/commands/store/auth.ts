@@ -7,7 +7,7 @@ import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
 export default class StoreAuth extends StoreCommand {
-  static summary = 'Authenticate an app against a store for store commands.'
+  static summary = 'Authenticates an app against a store for store commands.'
 
   static descriptionWithMarkdown = `Authenticates the app against the specified store for store commands and stores an online access token for later reuse.
 

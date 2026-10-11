@@ -25,7 +25,7 @@ export default class Init extends AppLinkedCommand {
     return true
   }
 
-  static summary?: string | undefined = 'Create a new app project'
+  static summary?: string | undefined = 'Creates a new app project'
 
   static examples = [
     '<%= config.bin %> <%= command.id %> --name my-app --organization-id 123 --template reactRouter --flavor typescript',

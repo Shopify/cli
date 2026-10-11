@@ -3,7 +3,7 @@ import {canRunDoctorRelease} from '@shopify/cli-kit/node/context/local'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 
 export default class DoctorRelease extends Command {
-  static description = 'Run CLI doctor-release tests'
+  static description = 'Runs CLI doctor-release tests'
   static hidden = true
 
   async run(): Promise<void> {

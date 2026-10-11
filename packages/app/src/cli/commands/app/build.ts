@@ -10,7 +10,7 @@ import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Build extends AppUnlinkedCommand {
-  static summary = 'Build the app, including extensions.'
+  static summary = 'Builds the app, including extensions.'
 
   static descriptionWithMarkdown = `This command executes the build script specified in the element's TOML file. You can specify a custom script in the file. To learn about configuration files in Shopify apps, refer to [App configuration](https://shopify.dev/docs/apps/tools/cli/configuration).
 

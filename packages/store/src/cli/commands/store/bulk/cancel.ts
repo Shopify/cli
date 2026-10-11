@@ -8,7 +8,7 @@ import {requiredBulkOperationIdFlag, storeFlags} from '../../../flags.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class StoreBulkCancel extends StoreCommand {
-  static summary = 'Cancel a bulk operation on a store.'
+  static summary = 'Cancels a bulk operation on a store.'
 
   static descriptionWithMarkdown = `Cancels a running bulk operation by ID, using previously stored app authentication.
 

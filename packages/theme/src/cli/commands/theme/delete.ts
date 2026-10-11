@@ -9,7 +9,7 @@ import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 type DeleteFlags = OutputFlags<typeof Delete.flags>
 export default class Delete extends ThemeCommand {
-  static summary = "Delete remote themes from the connected store. This command can't be undone."
+  static summary = "Deletes remote themes from the connected store. This command can't be undone."
 
   static descriptionWithMarkdown = `Deletes a theme from your store.
 

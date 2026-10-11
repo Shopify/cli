@@ -11,11 +11,11 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 
 type ProfileFlags = InferredFlags<typeof Profile.flags>
 export default class Profile extends ThemeCommand {
-  static summary = 'Profile the Liquid rendering of a theme page.'
+  static summary = 'Profiles the Liquid rendering of a theme page.'
 
   static usage = ['theme profile', 'theme profile --url /products/classic-leather-jacket']
 
-  static descriptionWithMarkdown = `Profile the Shopify Liquid on a given page.
+  static descriptionWithMarkdown = `Profiles the Shopify Liquid on a given page.
 
   This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.`
 

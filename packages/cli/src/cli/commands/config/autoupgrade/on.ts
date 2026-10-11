@@ -5,9 +5,9 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class AutoupgradeOn extends Command {
-  static summary = 'Enable automatic upgrades for Shopify CLI.'
+  static summary = 'Enables automatic upgrades for Shopify CLI.'
 
-  static descriptionWithMarkdown = `Enable automatic upgrades for Shopify CLI.
+  static descriptionWithMarkdown = `Enables automatic upgrades for Shopify CLI.
 
   When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version once per day. Major version upgrades are skipped and must be done manually.
 

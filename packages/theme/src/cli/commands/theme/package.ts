@@ -6,7 +6,7 @@ import {InferredFlags} from '@oclif/core/interfaces'
 
 type PackageFlags = InferredFlags<typeof Package.flags>
 export default class Package extends ThemeCommand {
-  static summary = 'Package your theme into a .zip file, ready to upload to the Online Store.'
+  static summary = 'Packages your theme into a .zip file, ready to upload to the Online Store.'
 
   static descriptionWithMarkdown = `Packages your local theme files into a ZIP file that can be uploaded to Shopify.
 

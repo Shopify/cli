@@ -9,7 +9,7 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {AlertCustomSection, renderInfo} from '@shopify/cli-kit/node/ui'
 
 export default class FunctionInfo extends AppUnlinkedCommand {
-  static summary = 'Print basic information about your function.'
+  static summary = 'Prints basic information about your function.'
 
   static descriptionWithMarkdown = `The information returned includes the following:
 

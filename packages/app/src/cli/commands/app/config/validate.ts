@@ -21,7 +21,7 @@ async function recordValidationFailure(issueCount: number, fileCount: number) {
 }
 
 export default class Validate extends AppLinkedCommand {
-  static summary = 'Validate your app configuration and extensions.'
+  static summary = 'Validates your app configuration and extensions.'
 
   static descriptionWithMarkdown = `Validates the selected app configuration file and all extension configurations against their schemas and reports any errors found.`
 

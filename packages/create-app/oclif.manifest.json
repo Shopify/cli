@@ -140,7 +140,7 @@
       "pluginName": "@shopify/create-app",
       "pluginType": "core",
       "strict": true,
-      "summary": "Create a new app project"
+      "summary": "Creates a new app project"
     }
   },
   "version": "4.9.0"

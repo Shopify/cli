@@ -7,7 +7,7 @@ import {Flags} from '@oclif/core'
 
 export default class DocSearch extends Command {
   static descriptionWithMarkdown =
-    'Query the shopify.dev vector store and print the most relevant documentation chunks as JSON. Best for programmatic discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.'
+    'Queries the shopify.dev vector store and prints the most relevant documentation chunks as JSON. Best for programmatic discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.'
 
   static description = this.descriptionForHelp()
 

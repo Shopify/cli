@@ -11,7 +11,7 @@ import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 export default class Deploy extends AppLinkedCommand {
-  static summary = 'Deploy your Shopify app.'
+  static summary = 'Deploys your Shopify app.'
 
   static descriptionWithMarkdown = `[Builds the app](https://shopify.dev/docs/api/shopify-cli/app/app-build), then deploys your app configuration and extensions.
 

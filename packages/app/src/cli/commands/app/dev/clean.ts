@@ -12,7 +12,7 @@ import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 export default class DevClean extends AppLinkedCommand {
   static summary = 'Cleans up the dev preview from the selected store.'
 
-  static descriptionWithMarkdown = `Stop the dev preview that was started with \`shopify app dev\`.
+  static descriptionWithMarkdown = `Stops the dev preview that was started with \`shopify app dev\`.
 
   It restores the app's active version to the selected development store.
   `

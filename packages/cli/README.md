@@ -126,7 +126,7 @@
 
 ## `shopify app build`
 
-Build the app, including extensions.
+Builds the app, including extensions.
 
 ```
 USAGE
@@ -179,7 +179,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Build the app, including extensions.
+  Builds the app, including extensions.
 
   This command executes the build script specified in the element's TOML file. You can specify a custom script in the
   file. To learn about configuration files in Shopify apps, refer to "App configuration"
@@ -214,7 +214,7 @@ DESCRIPTION
 
 ## `shopify app bulk cancel`
 
-Cancel a bulk operation.
+Cancels a bulk operation.
 
 ```
 USAGE
@@ -271,7 +271,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Cancel a bulk operation.
+  Cancels a bulk operation.
 
   Cancels a running bulk operation by ID.
 
@@ -404,7 +404,7 @@ DESCRIPTION
 
 ## `shopify app bulk execute`
 
-Execute bulk operations.
+Executes bulk operations.
 
 ```
 USAGE
@@ -488,7 +488,7 @@ FLAGS
       [env: SHOPIFY_FLAG_WATCH]
 
 DESCRIPTION
-  Execute bulk operations.
+  Executes bulk operations.
 
   Executes an Admin API GraphQL query or mutation on the specified store, as a bulk operation. Mutations are only
   allowed on dev stores.
@@ -673,7 +673,7 @@ DESCRIPTION
 
 ## `shopify app bulk status`
 
-Check the status of bulk operations.
+Checks the status of bulk operations.
 
 ```
 USAGE
@@ -731,9 +731,9 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Check the status of bulk operations.
+  Checks the status of bulk operations.
 
-  Check the status of a specific bulk operation by ID, or list all bulk operations belonging to this app on this store
+  Checks the status of a specific bulk operation by ID, or lists all bulk operations belonging to this app on this store
   in the last 7 days.
 
   Bulk operations allow you to process large amounts of data asynchronously. Learn more about "bulk query operations"
@@ -967,7 +967,7 @@ DESCRIPTION
 
 ## `shopify app config link`
 
-Fetch your app configuration from the Developer Dashboard.
+Fetches your app configuration from the Developer Dashboard.
 
 ```
 USAGE
@@ -1021,7 +1021,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Fetch your app configuration from the Developer Dashboard.
+  Fetches your app configuration from the Developer Dashboard.
 
   Pulls app configuration from the Developer Dashboard and creates or overwrites a configuration file. You can create a
   new app with this command to start with a default configuration file.
@@ -1032,7 +1032,7 @@ DESCRIPTION
 
 ## `shopify app config pull`
 
-Refresh an already-linked app configuration without prompts.
+Refreshes an already-linked app configuration without prompts.
 
 ```
 USAGE
@@ -1077,7 +1077,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Refresh an already-linked app configuration without prompts.
+  Refreshes an already-linked app configuration without prompts.
 
   Pulls the latest configuration from the already-linked Shopify app and updates the selected configuration file.
 
@@ -1087,7 +1087,7 @@ DESCRIPTION
 
 ## `shopify app config use [config] [flags]`
 
-Activate an app configuration.
+Activates an app configuration.
 
 ```
 USAGE
@@ -1130,7 +1130,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Activate an app configuration.
+  Activates an app configuration.
 
   Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll
   be prompted to choose from the configuration files in your project.
@@ -1138,7 +1138,7 @@ DESCRIPTION
 
 ## `shopify app config validate`
 
-Validate your app configuration and extensions.
+Validates your app configuration and extensions.
 
 ```
 USAGE
@@ -1187,7 +1187,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Validate your app configuration and extensions.
+  Validates your app configuration and extensions.
 
   Validates the selected app configuration file and all extension configurations against their schemas and reports any
   errors found.
@@ -1195,7 +1195,7 @@ DESCRIPTION
 
 ## `shopify app deploy`
 
-Deploy your Shopify app.
+Deploys your Shopify app.
 
 ```
 USAGE
@@ -1277,7 +1277,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERSION]
 
 DESCRIPTION
-  Deploy your Shopify app.
+  Deploys your Shopify app.
 
   "Builds the app" (https://shopify.dev/docs/api/shopify-cli/app/app-build), then deploys your app configuration and
   extensions.
@@ -1291,7 +1291,7 @@ DESCRIPTION
 
 ## `shopify app dev`
 
-Run the app.
+Runs the app.
 
 ```
 USAGE
@@ -1398,7 +1398,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Run the app.
+  Runs the app.
 
   Builds and previews your app on a dev store, and watches for changes. "Read more about testing apps locally"
   (https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).
@@ -1462,7 +1462,7 @@ FLAGS
 DESCRIPTION
   Cleans up the dev preview from the selected store.
 
-  Stop the dev preview that was started with `shopify app dev`.
+  Stops the dev preview that was started with `shopify app dev`.
 
   It restores the app's active version to the selected development store.
 
@@ -1523,7 +1523,7 @@ DESCRIPTION
 
 ## `shopify app env pull`
 
-Pull app and extensions environment variables.
+Pulls app and extensions environment variables.
 
 ```
 USAGE
@@ -1572,7 +1572,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Pull app and extensions environment variables.
+  Pulls app and extensions environment variables.
 
   Creates or updates an `.env` files that contains app and app extension environment variables.
 
@@ -1582,7 +1582,7 @@ DESCRIPTION
 
 ## `shopify app env show`
 
-Display app and extensions environment variables.
+Displays app and extensions environment variables.
 
 ```
 USAGE
@@ -1627,14 +1627,14 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Display app and extensions environment variables.
+  Displays app and extensions environment variables.
 
   Displays environment variables that can be used to deploy apps and app extensions.
 ```
 
 ## `shopify app execute`
 
-Execute GraphQL queries and mutations.
+Executes GraphQL queries and mutations.
 
 ```
 USAGE
@@ -1709,7 +1709,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERSION]
 
 DESCRIPTION
-  Execute GraphQL queries and mutations.
+  Executes GraphQL queries and mutations.
 
   Executes an Admin API GraphQL query or mutation on the specified store. Mutations are only allowed on dev stores.
 
@@ -1719,7 +1719,7 @@ DESCRIPTION
 
 ## `shopify app function build`
 
-Compile a function to wasm.
+Compiles a function to wasm.
 
 ```
 USAGE
@@ -1764,14 +1764,14 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Compile a function to wasm.
+  Compiles a function to wasm.
 
   Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.
 ```
 
 ## `shopify app function info`
 
-Print basic information about your function.
+Prints basic information about your function.
 
 ```
 USAGE
@@ -1820,7 +1820,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Print basic information about your function.
+  Prints basic information about your function.
 
   The information returned includes the following:
 
@@ -1902,7 +1902,7 @@ DESCRIPTION
 
 ## `shopify app function run`
 
-Run a function locally for testing.
+Runs a function locally for testing.
 
 ```
 USAGE
@@ -1963,7 +1963,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Run a function locally for testing.
+  Runs a function locally for testing.
 
   Runs the function from your current directory for "testing purposes"
   (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when
@@ -1972,7 +1972,7 @@ DESCRIPTION
 
 ## `shopify app function schema`
 
-Fetch the latest GraphQL schema for a function.
+Fetches the latest GraphQL schema for a function.
 
 ```
 USAGE
@@ -2021,7 +2021,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Fetch the latest GraphQL schema for a function.
+  Fetches the latest GraphQL schema for a function.
 
   Generates the latest "GraphQL schema" (https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a
   function in your app. Run this command from the function directory.
@@ -2032,7 +2032,7 @@ DESCRIPTION
 
 ## `shopify app function typegen`
 
-Generate GraphQL types for a function.
+Generates GraphQL types for a function.
 
 ```
 USAGE
@@ -2077,7 +2077,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Generate GraphQL types for a function.
+  Generates GraphQL types for a function.
 
   Creates GraphQL types based on your "input query" (https://shopify.dev/docs/apps/functions/input-output#input) for a
   function. Supports JavaScript functions out of the box, or any language via the `build.typegen_command` configuration.
@@ -2085,7 +2085,7 @@ DESCRIPTION
 
 ## `shopify app generate extension`
 
-Generate a new app Extension.
+Generates a new app Extension.
 
 ```
 USAGE
@@ -2145,7 +2145,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Generate a new app Extension.
+  Generates a new app Extension.
 
   Generates a new "app extension" (https://shopify.dev/docs/apps/build/app-extensions). For a list of app extensions
   that you can generate using this command, refer to "Supported extensions"
@@ -2158,7 +2158,7 @@ DESCRIPTION
 
 ## `shopify app graphiql`
 
-Open a local GraphiQL UI for your app and store.
+Opens a local GraphiQL UI for your app and store.
 
 ```
 USAGE
@@ -2221,7 +2221,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERSION]
 
 DESCRIPTION
-  Open a local GraphiQL UI for your app and store.
+  Opens a local GraphiQL UI for your app and store.
 
   Opens an authenticated Admin API GraphiQL UI for your app and selected store.
 
@@ -2235,7 +2235,7 @@ EXAMPLES
 
 ## `shopify app import custom-data-definitions`
 
-Import metafield and metaobject definitions.
+Imports metafield and metaobject definitions.
 
 ```
 USAGE
@@ -2288,15 +2288,15 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Import metafield and metaobject definitions.
+  Imports metafield and metaobject definitions.
 
-  Import metafield and metaobject definitions from your development store. "Read more about declarative custom data
+  Imports metafield and metaobject definitions from your development store. "Read more about declarative custom data
   definitions" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).
 ```
 
 ## `shopify app import dashboard-extensions`
 
-Import dashboard-managed extensions into your app.
+Imports dashboard-managed extensions into your app.
 
 ```
 USAGE
@@ -2341,12 +2341,12 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Import dashboard-managed extensions into your app.
+  Imports dashboard-managed extensions into your app.
 ```
 
 ## `shopify app info`
 
-Print basic information about your app and extensions.
+Prints basic information about your app and extensions.
 
 ```
 USAGE
@@ -2399,7 +2399,7 @@ FLAGS
       [env: SHOPIFY_FLAG_OUTPUT_WEB_ENV]
 
 DESCRIPTION
-  Print basic information about your app and extensions.
+  Prints basic information about your app and extensions.
 
   The information returned includes the following:
 
@@ -3294,7 +3294,7 @@ DESCRIPTION
 
 ## `shopify app init`
 
-Create a new app project
+Creates a new app project
 
 ```
 USAGE
@@ -3366,7 +3366,7 @@ EXAMPLES
 
 ## `shopify app logs`
 
-Stream detailed logs for your Shopify app.
+Streams detailed logs for your Shopify app.
 
 ```
 USAGE
@@ -3429,7 +3429,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Stream detailed logs for your Shopify app.
+  Streams detailed logs for your Shopify app.
 
 
   Opens a real-time stream of detailed app logs from the selected app and store.
@@ -3443,7 +3443,7 @@ DESCRIPTION
 
 ## `shopify app logs sources`
 
-Print out a list of sources that may be used with the logs command.
+Prints out a list of sources that may be used with the logs command.
 
 ```
 USAGE
@@ -3492,7 +3492,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Print out a list of sources that may be used with the logs command.
+  Prints out a list of sources that may be used with the logs command.
 
   The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently
   only function extensions are supported as sources.
@@ -3602,7 +3602,7 @@ DESCRIPTION
 
 ## `shopify app release --version <version>`
 
-Release an app version.
+Releases an app version.
 
 ```
 USAGE
@@ -3660,14 +3660,14 @@ FLAGS
       [env: SHOPIFY_FLAG_VERSION]
 
 DESCRIPTION
-  Release an app version.
+  Releases an app version.
 
   Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
 ```
 
 ## `shopify app security check`
 
-Check an app for Shopify-specific security issues and write deterministic-findings.json and agent-checks.json.
+Checks an app for Shopify-specific security issues and writes deterministic-findings.json and agent-checks.json.
 
 ```
 USAGE
@@ -3741,7 +3741,7 @@ FLAGS
       [env: SHOPIFY_FLAG_YES]
 
 DESCRIPTION
-  Check an app for Shopify-specific security issues and write deterministic-findings.json and agent-checks.json.
+  Checks an app for Shopify-specific security issues and writes deterministic-findings.json and agent-checks.json.
 
   Runs an app security check locally and writes `deterministic-findings.json` and `agent-checks.json` to the results
   directory, `.shopify/app-security/<results key>/`. The results key is `--client-id` when you pass it, and otherwise
@@ -3778,7 +3778,7 @@ DESCRIPTION
 
 ## `shopify app security clean`
 
-Remove local app security check results.
+Removes local app security check results.
 
 ```
 USAGE
@@ -3822,7 +3822,7 @@ FLAGS
       [env: SHOPIFY_FLAG_WITHOUT_APP_CONFIG]
 
 DESCRIPTION
-  Remove local app security check results.
+  Removes local app security check results.
 
   Deletes the results directory, `.shopify/app-security/<results key>/`, without asking. The results key is
   `--client-id` when you pass it, and otherwise the name of the app configuration file without `.toml`. Other results
@@ -3834,7 +3834,7 @@ DESCRIPTION
 
 ## `shopify app security instructions`
 
-Provide app security check instructions to a coding agent.
+Provides app security check instructions to a coding agent.
 
 ```
 USAGE
@@ -3883,7 +3883,7 @@ FLAGS
       [env: SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_WRITE]
 
 DESCRIPTION
-  Provide app security check instructions to a coding agent.
+  Provides app security check instructions to a coding agent.
 
   Prints the complete workflow that a coding agent should follow to review app security check results.
 
@@ -3894,7 +3894,7 @@ DESCRIPTION
 
 ## `shopify app security record`
 
-Record agent findings from an app security check.
+Records agent findings from an app security check.
 
 ```
 USAGE
@@ -3935,7 +3935,7 @@ FLAGS
       [env: SHOPIFY_FLAG_WITHOUT_APP_CONFIG]
 
 DESCRIPTION
-  Record agent findings from an app security check.
+  Records agent findings from an app security check.
 
   Reads a coding agent's complete findings document from stdin, validates it, and replaces `agent-findings.json` in the
   results directory, `.shopify/app-security/<results key>/`. The results key is `--client-id` when you pass it, and
@@ -3951,7 +3951,7 @@ DESCRIPTION
 
 ## `shopify app security review`
 
-Show the combined app security check results.
+Shows the combined app security check results.
 
 ```
 USAGE
@@ -4002,7 +4002,7 @@ FLAGS
       [env: SHOPIFY_FLAG_WITHOUT_APP_CONFIG]
 
 DESCRIPTION
-  Show the combined app security check results.
+  Shows the combined app security check results.
 
   Combines the deterministic results (`deterministic-findings.json`, written by `shopify app security check`) with the
   recorded agent results (`agent-findings.json`, written by `shopify app security record`) and shows one view of every
@@ -5664,7 +5664,7 @@ EXAMPLES
 
 ## `shopify app versions list`
 
-List deployed versions of your app.
+Lists deployed versions of your app.
 
 ```
 USAGE
@@ -5713,7 +5713,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  List deployed versions of your app.
+  Lists deployed versions of your app.
 
   Lists the deployed app versions. An app version is a snapshot of your app extensions.
 
@@ -5771,7 +5771,7 @@ DESCRIPTION
 
 ## `shopify app webhook trigger`
 
-Trigger delivery of a sample webhook topic payload to a designated address.
+Triggers delivery of a sample webhook topic payload to a designated address.
 
 ```
 USAGE
@@ -5838,7 +5838,7 @@ FLAGS
       [env: SHOPIFY_FLAG_TOPIC]
 
 DESCRIPTION
-  Trigger delivery of a sample webhook topic payload to a designated address.
+  Triggers delivery of a sample webhook topic payload to a designated address.
 
 
   Triggers the delivery of a sample Admin API event topic payload to a designated address.
@@ -6025,7 +6025,7 @@ DESCRIPTION
 
 ## `shopify config autocorrect off`
 
-Disable autocorrect. Off by default.
+Disables autocorrect. Off by default.
 
 ```
 USAGE
@@ -6037,9 +6037,9 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
 DESCRIPTION
-  Disable autocorrect. Off by default.
+  Disables autocorrect. Off by default.
 
-  Disable autocorrect. Off by default.
+  Disables autocorrect. Off by default.
 
   When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is
   available.
@@ -6049,7 +6049,7 @@ DESCRIPTION
 
 ## `shopify config autocorrect on`
 
-Enable autocorrect. Off by default.
+Enables autocorrect. Off by default.
 
 ```
 USAGE
@@ -6061,9 +6061,9 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
 DESCRIPTION
-  Enable autocorrect. Off by default.
+  Enables autocorrect. Off by default.
 
-  Enable autocorrect. Off by default.
+  Enables autocorrect. Off by default.
 
   When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is
   available.
@@ -6073,7 +6073,7 @@ DESCRIPTION
 
 ## `shopify config autocorrect status`
 
-Check whether autocorrect is enabled or disabled. On by default.
+Checks whether autocorrect is enabled or disabled. On by default.
 
 ```
 USAGE
@@ -6085,9 +6085,9 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
 DESCRIPTION
-  Check whether autocorrect is enabled or disabled. On by default.
+  Checks whether autocorrect is enabled or disabled. On by default.
 
-  Check whether autocorrect is enabled or disabled. On by default.
+  Checks whether autocorrect is enabled or disabled. On by default.
 
   When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is
   available.
@@ -6097,7 +6097,7 @@ DESCRIPTION
 
 ## `shopify config autoupgrade off`
 
-Disable automatic upgrades for Shopify CLI.
+Disables automatic upgrades for Shopify CLI.
 
 ```
 USAGE
@@ -6125,9 +6125,9 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Disable automatic upgrades for Shopify CLI.
+  Disables automatic upgrades for Shopify CLI.
 
-  Disable automatic upgrades for Shopify CLI.
+  Disables automatic upgrades for Shopify CLI.
 
   When auto-upgrade is disabled, Shopify CLI won't automatically update. Run `shopify upgrade` to update manually.
 
@@ -6158,7 +6158,7 @@ DESCRIPTION
 
 ## `shopify config autoupgrade on`
 
-Enable automatic upgrades for Shopify CLI.
+Enables automatic upgrades for Shopify CLI.
 
 ```
 USAGE
@@ -6186,9 +6186,9 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Enable automatic upgrades for Shopify CLI.
+  Enables automatic upgrades for Shopify CLI.
 
-  Enable automatic upgrades for Shopify CLI.
+  Enables automatic upgrades for Shopify CLI.
 
   When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version once per day. Major version
   upgrades are skipped and must be done manually.
@@ -6220,7 +6220,7 @@ DESCRIPTION
 
 ## `shopify config autoupgrade status`
 
-Check whether auto-upgrade is enabled, disabled, or not yet configured.
+Checks whether auto-upgrade is enabled, disabled, or not yet configured.
 
 ```
 USAGE
@@ -6248,9 +6248,9 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Check whether auto-upgrade is enabled, disabled, or not yet configured.
+  Checks whether auto-upgrade is enabled, disabled, or not yet configured.
 
-  Check whether auto-upgrade is enabled, disabled, or not yet configured.
+  Checks whether auto-upgrade is enabled, disabled, or not yet configured.
 
   When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.
 
@@ -6281,7 +6281,7 @@ DESCRIPTION
 
 ## `shopify doc fetch`
 
-Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. Pass `--language` for the language of the app you are building so code examples match your stack. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.
+Downloads a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like a centrally-served skill. Pass `--language` for the language of the app you are building so code examples match your stack. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.
 
 ```
 USAGE
@@ -6327,10 +6327,10 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Download a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what this
-  tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows like
-  a centrally-served skill. Pass `--language` for the language of the app you are building so code examples match your
-  stack. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.
+  Downloads a complete document from shopify.dev. Every page on shopify.dev has a Markdown version, and that is what
+  this tool returns. Use this to pull an entire document verbatim — for example, a set of instructions an agent follows
+  like a centrally-served skill. Pass `--language` for the language of the app you are building so code examples match
+  your stack. For finding the relevant pieces of content across shopify.dev instead, use `doc search`.
 
   Use `--json-schema` to print the result, error, and event schemas.
 
@@ -6421,7 +6421,7 @@ EXAMPLES
 
 ## `shopify doc search`
 
-Query the shopify.dev vector store and print the most relevant documentation chunks as JSON. Best for programmatic discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.
+Queries the shopify.dev vector store and prints the most relevant documentation chunks as JSON. Best for programmatic discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.
 
 ```
 USAGE
@@ -6463,7 +6463,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Query the shopify.dev vector store and print the most relevant documentation chunks as JSON. Best for programmatic
+  Queries the shopify.dev vector store and prints the most relevant documentation chunks as JSON. Best for programmatic
   discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To
   download a full document verbatim, use `doc fetch`.
 
@@ -6564,7 +6564,7 @@ EXAMPLES
 
 ## `shopify help [command] [flags]`
 
-Display help for Shopify CLI
+Displays help for Shopify CLI
 
 ```
 USAGE
@@ -6587,7 +6587,7 @@ FLAGS
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
 DESCRIPTION
-  Display help for Shopify CLI
+  Displays help for Shopify CLI
 
   Use `--json-schema` to print the result, error, and event schemas.
 
@@ -7873,7 +7873,7 @@ DESCRIPTION
 
 ## `shopify organization list`
 
-List Shopify organizations you have access to.
+Lists Shopify organizations you have access to.
 
 ```
 USAGE
@@ -7905,7 +7905,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  List Shopify organizations you have access to.
+  Lists Shopify organizations you have access to.
 
   Lists the Shopify organizations that you have access to, along with their organization IDs.
 
@@ -8246,7 +8246,7 @@ DESCRIPTION
 
 ## `shopify search [query]`
 
-Search shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.
+Searches shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.
 
 ```
 USAGE
@@ -8274,9 +8274,9 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Search shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces
-  of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc
-  fetch`.
+  Searches shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant
+  pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim,
+  use `doc fetch`.
 
   Use `--json-schema` to print the result, error, and event schemas.
 
@@ -8311,7 +8311,7 @@ EXAMPLES
 
 ## `shopify store auth`
 
-Authenticate an app against a store for store commands.
+Authenticates an app against a store for store commands.
 
 ```
 USAGE
@@ -8347,7 +8347,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Authenticate an app against a store for store commands.
+  Authenticates an app against a store for store commands.
 
   Authenticates the app against the specified store for store commands and stores an online access token for later
   reuse.
@@ -8437,7 +8437,7 @@ EXAMPLES
 
 ## `shopify store auth list`
 
-List stores authenticated directly with store auth.
+Lists stores authenticated directly with store auth.
 
 ```
 USAGE
@@ -8465,7 +8465,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  List stores authenticated directly with store auth.
+  Lists stores authenticated directly with store auth.
 
   Lists stores authenticated directly on this machine with `shopify store auth`.
 
@@ -8576,7 +8576,7 @@ EXAMPLES
 
 ## `shopify store bulk cancel`
 
-Cancel a bulk operation on a store.
+Cancels a bulk operation on a store.
 
 ```
 USAGE
@@ -8612,7 +8612,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Cancel a bulk operation on a store.
+  Cancels a bulk operation on a store.
 
   Cancels a running bulk operation by ID, using previously stored app authentication.
 
@@ -8750,7 +8750,7 @@ EXAMPLES
 
 ## `shopify store bulk execute`
 
-Execute bulk operations on a store.
+Executes bulk operations on a store.
 
 ```
 USAGE
@@ -8818,7 +8818,7 @@ FLAGS
       [env: SHOPIFY_FLAG_WATCH]
 
 DESCRIPTION
-  Execute bulk operations on a store.
+  Executes bulk operations on a store.
 
   Executes an Admin API GraphQL query or mutation on the specified store as a bulk operation, using previously stored
   app authentication.
@@ -9010,7 +9010,7 @@ EXAMPLES
 
 ## `shopify store bulk status`
 
-Check the status of bulk operations on a store.
+Checks the status of bulk operations on a store.
 
 ```
 USAGE
@@ -9047,9 +9047,9 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Check the status of bulk operations on a store.
+  Checks the status of bulk operations on a store.
 
-  Check the status of a specific bulk operation by ID, or list all bulk operations on this store in the last 7 days,
+  Checks the status of a specific bulk operation by ID, or lists all bulk operations on this store in the last 7 days,
   using previously stored app authentication.
 
   Run `shopify store auth` first to create stored auth for the store.
@@ -9287,7 +9287,7 @@ EXAMPLES
 
 ## `shopify store create dev`
 
-Create a new dev store.
+Creates a new dev store.
 
 ```
 USAGE
@@ -9341,7 +9341,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Create a new dev store.
+  Creates a new dev store.
 
   Creates a new dev store in your organization.
 
@@ -9477,7 +9477,7 @@ EXAMPLES
 
 ## `shopify store create preview`
 
-Create a preview Shopify store.
+Creates a preview Shopify store.
 
 ```
 USAGE
@@ -9514,7 +9514,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Create a preview Shopify store.
+  Creates a preview Shopify store.
 
   Creates a new Shopify store, with no need for an existing account.
 
@@ -9605,7 +9605,7 @@ EXAMPLES
 
 ## `shopify store delete`
 
-Delete a dev store.
+Deletes a dev store.
 
 ```
 USAGE
@@ -9646,7 +9646,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Delete a dev store.
+  Deletes a dev store.
 
   Deletes a dev store from your organization.
 
@@ -9762,7 +9762,7 @@ EXAMPLES
 
 ## `shopify store execute`
 
-Execute GraphQL queries and mutations on a store.
+Executes GraphQL queries and mutations on a store.
 
 ```
 USAGE
@@ -9824,7 +9824,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERSION]
 
 DESCRIPTION
-  Execute GraphQL queries and mutations on a store.
+  Executes GraphQL queries and mutations on a store.
 
   Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.
 
@@ -9864,7 +9864,7 @@ EXAMPLES
 
 ## `shopify store graphiql`
 
-Open a local GraphiQL UI for a store.
+Opens a local GraphiQL UI for a store.
 
 ```
 USAGE
@@ -9909,7 +9909,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERSION]
 
 DESCRIPTION
-  Open a local GraphiQL UI for a store.
+  Opens a local GraphiQL UI for a store.
 
   Opens an authenticated Admin API GraphiQL UI for the specified store using previously stored app authentication.
 
@@ -9927,7 +9927,7 @@ EXAMPLES
 
 ## `shopify store info`
 
-Surface metadata about a Shopify store.
+Surfaces metadata about a Shopify store.
 
 ```
 USAGE
@@ -9959,7 +9959,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Surface metadata about a Shopify store.
+  Surfaces metadata about a Shopify store.
 
   Returns available metadata about a store you have access to, such as its id, display name, subdomain, organization,
   store owner, type, plan, feature preview, admin URL, and access and save URLs for preview stores.
@@ -10054,7 +10054,7 @@ EXAMPLES
 
 ## `shopify store list`
 
-List stores in a Shopify organization.
+Lists stores in a Shopify organization.
 
 ```
 USAGE
@@ -10093,7 +10093,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  List stores in a Shopify organization.
+  Lists stores in a Shopify organization.
 
   Lists stores in a Shopify organization available to the current CLI account.
 
@@ -10214,7 +10214,7 @@ EXAMPLES
 
 ## `shopify store open`
 
-Open your Shopify store in the default web browser.
+Opens your Shopify store in the default web browser.
 
 ```
 USAGE
@@ -10246,7 +10246,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Open your Shopify store in the default web browser.
+  Opens your Shopify store in the default web browser.
 
   Opens the storefront for a store you have access to in your default web browser.
 
@@ -10294,7 +10294,7 @@ EXAMPLES
 
 ## `shopify theme check`
 
-Validate the theme.
+Validates the theme.
 
 ```
 USAGE
@@ -10369,7 +10369,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Validate the theme.
+  Validates the theme.
 
   Calls and runs "Theme Check" (https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors
   and to ensure that it follows theme and Liquid best practices. "Learn more about the checks that Theme Check runs."
@@ -10442,7 +10442,7 @@ DESCRIPTION
 
 ## `shopify theme delete`
 
-Delete remote themes from the connected store. This command can't be undone.
+Deletes remote themes from the connected store. This command can't be undone.
 
 ```
 USAGE
@@ -10505,7 +10505,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Delete remote themes from the connected store. This command can't be undone.
+  Deletes remote themes from the connected store. This command can't be undone.
 
   Deletes a theme from your store.
 
@@ -10899,7 +10899,7 @@ DESCRIPTION
 
 ## `shopify theme language-server`
 
-Start a Language Server Protocol server.
+Starts a Language Server Protocol server.
 
 ```
 USAGE
@@ -10927,7 +10927,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Start a Language Server Protocol server.
+  Starts a Language Server Protocol server.
 
   Starts the "Language Server" (https://shopify.dev/docs/themes/tools/cli/language-server).
 ```
@@ -11003,7 +11003,7 @@ DESCRIPTION
 
 ## `shopify theme metafields pull`
 
-Download metafields definitions from your shop into a local file.
+Downloads metafields definitions from your shop into a local file.
 
 ```
 USAGE
@@ -11049,7 +11049,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Download metafields definitions from your shop into a local file.
+  Downloads metafields definitions from your shop into a local file.
 
   Retrieves metafields from Shopify Admin.
 
@@ -11135,7 +11135,7 @@ DESCRIPTION
 
 ## `shopify theme package`
 
-Package your theme into a .zip file, ready to upload to the Online Store.
+Packages your theme into a .zip file, ready to upload to the Online Store.
 
 ```
 USAGE
@@ -11168,7 +11168,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Package your theme into a .zip file, ready to upload to the Online Store.
+  Packages your theme into a .zip file, ready to upload to the Online Store.
 
   Packages your local theme files into a ZIP file that can be uploaded to Shopify.
 
@@ -11262,7 +11262,7 @@ DESCRIPTION
 
 ## `shopify theme profile`
 
-Profile the Liquid rendering of a theme page.
+Profiles the Liquid rendering of a theme page.
 
 ```
 USAGE
@@ -11324,9 +11324,9 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Profile the Liquid rendering of a theme page.
+  Profiles the Liquid rendering of a theme page.
 
-  Profile the Shopify Liquid on a given page.
+  Profiles the Shopify Liquid on a given page.
 
   This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given
   page.
@@ -11334,7 +11334,7 @@ DESCRIPTION
 
 ## `shopify theme publish`
 
-Set a remote theme as the live theme.
+Sets a remote theme as the live theme.
 
 ```
 USAGE
@@ -11388,7 +11388,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Set a remote theme as the live theme.
+  Sets a remote theme as the live theme.
 
   Publishes an unpublished theme from your theme library.
 
@@ -11404,7 +11404,7 @@ DESCRIPTION
 
 ## `shopify theme pull`
 
-Download your remote theme files locally.
+Downloads your remote theme files locally.
 
 ```
 USAGE
@@ -11478,7 +11478,7 @@ FLAGS
       [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
-  Download your remote theme files locally.
+  Downloads your remote theme files locally.
 
   Retrieves theme files from Shopify.
 

@@ -27,7 +27,7 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 
 type CheckFlags = InferredFlags<typeof Check.flags>
 export default class Check extends ThemeCommand {
-  static summary = 'Validate the theme.'
+  static summary = 'Validates the theme.'
 
   static descriptionWithMarkdown = `Calls and runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors and to ensure that it follows theme and Liquid best practices. [Learn more about the checks that Theme Check runs.](https://shopify.dev/docs/themes/tools/theme-check/checks)`
 

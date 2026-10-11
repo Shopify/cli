@@ -11,7 +11,7 @@ import {normalizeBulkOperationId} from '@shopify/cli-kit/node/api/bulk-operation
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 export default class BulkCancel extends AppLinkedCommand {
-  static summary = 'Cancel a bulk operation.'
+  static summary = 'Cancels a bulk operation.'
 
   static descriptionWithMarkdown = 'Cancels a running bulk operation by ID.'
 

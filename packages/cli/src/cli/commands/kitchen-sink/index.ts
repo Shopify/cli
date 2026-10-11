@@ -9,7 +9,7 @@ import Command from '@shopify/cli-kit/node/base-command'
  * and to help update the documentation when they change.
  */
 export default class KitchenSinkAll extends Command {
-  static description = 'View all the available UI kit components'
+  static description = 'Views all the available UI kit components'
   static hiddenAliases = ['kitchen-sink all']
   static hidden = true
 

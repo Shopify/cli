@@ -7,7 +7,7 @@ import {globalFlags, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export default class ConfigLink extends AppLinkedCommand {
-  static summary = 'Fetch your app configuration from the Developer Dashboard.'
+  static summary = 'Fetches your app configuration from the Developer Dashboard.'
 
   static descriptionWithMarkdown = `Pulls app configuration from the Developer Dashboard and creates or overwrites a configuration file. You can create a new app with this command to start with a default configuration file.
 

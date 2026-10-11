@@ -8,7 +8,7 @@ import {prepareExecuteContext} from '../../../utilities/execute-command-helpers.
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class BulkExecute extends AppLinkedCommand {
-  static summary = 'Execute bulk operations.'
+  static summary = 'Executes bulk operations.'
 
   static descriptionWithMarkdown = `Executes an Admin API GraphQL query or mutation on the specified store, as a bulk operation. Mutations are only allowed on dev stores.
 

@@ -8,7 +8,7 @@ import {resolveBulkOperationQuery} from '@shopify/cli-kit/node/api/bulk-operatio
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class StoreBulkExecute extends StoreCommand {
-  static summary = 'Execute bulk operations on a store.'
+  static summary = 'Executes bulk operations on a store.'
 
   static descriptionWithMarkdown = `Executes an Admin API GraphQL query or mutation on the specified store as a bulk operation, using previously stored app authentication.
 

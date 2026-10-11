@@ -14,7 +14,7 @@ export interface CommandData {
 }
 
 export default class DocsGenerate extends Command {
-  static description = 'Generate CLI commands documentation'
+  static description = 'Generates CLI commands documentation'
   static hidden = true
 
   async run(): Promise<void> {

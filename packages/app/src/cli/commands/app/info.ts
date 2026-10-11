@@ -8,7 +8,7 @@ import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class AppInfo extends AppLinkedCommand {
-  static summary = 'Print basic information about your app and extensions.'
+  static summary = 'Prints basic information about your app and extensions.'
 
   static descriptionWithMarkdown = `The information returned includes the following:
 
