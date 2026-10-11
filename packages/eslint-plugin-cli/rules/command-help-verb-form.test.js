@@ -42,6 +42,11 @@ const addedVerbs = [
 ruleTester.run('command-help-verb-form', rule, {
   valid: [
     {name: 'third-person verb', filename, code: 'export default class List { static summary = "Lists widgets." }'},
+    ...['Passes', 'Focuses', 'Addresses'].map((verb) => ({
+      name: `third-person form ending in es: ${verb}`,
+      filename,
+      code: `export default class List { static summary = "${verb} widgets." }`,
+    })),
     {
       name: 'third-person authentication',
       filename,
@@ -113,6 +118,12 @@ ruleTester.run('command-help-verb-form', rule, {
       code: 'export default class List { static summary = "List widgets." }',
       errors: [{messageId: 'imperative', data: {verb: 'List'}}],
     },
+    ...['Pass', 'Press', 'Dismiss', 'Focus', 'Address'].map((verb) => ({
+      name: `imperative ending in ss or us: ${verb}`,
+      filename,
+      code: `export default class List { static summary = "${verb} widgets." }`,
+      errors: [{messageId: 'imperative', data: {verb}}],
+    })),
     {
       name: 'unknown imperative caught by suffix check',
       filename,

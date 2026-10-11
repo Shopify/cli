@@ -90,6 +90,9 @@ const imperativeVerbs = new Set([
 // These starts introduce conditional, product-name, or explanatory copy, not an imperative verb.
 const nonVerbStarts = new Set(['if', 'shopify', 'the', 'this'])
 
+// Base forms such as "Pass" and "Focus" also end in s; their third-person forms end in "es".
+const isThirdPerson = (word) => word.endsWith('s') && !/(ss|us)$/.test(word)
+
 module.exports = {
   meta: {
     type: 'suggestion',
@@ -121,7 +124,7 @@ module.exports = {
           const verb = text.trimStart().match(/^\[?([a-z]+)(?=[\s\].,!?:;()]|$)/i)?.[1]
           if (!verb) continue
           const firstWord = verb.toLowerCase()
-          if (imperativeVerbs.has(firstWord) || (!firstWord.endsWith('s') && !nonVerbStarts.has(firstWord))) {
+          if (imperativeVerbs.has(firstWord) || (!isThirdPerson(firstWord) && !nonVerbStarts.has(firstWord))) {
             context.report({node: value, messageId: 'imperative', data: {verb}})
           }
         }
