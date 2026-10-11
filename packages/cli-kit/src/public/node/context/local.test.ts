@@ -11,13 +11,14 @@ import {
   getThemeKitAccessDomain,
   opentelemetryDomain,
 } from './local.js'
-import {fileExists} from '../fs.js'
+import {inTemporaryDirectory, writeFile} from '../fs.js'
+import {joinPath} from '../path.js'
+import {pathConstants} from '../../../private/node/constants.js'
 import {exec} from '../system.js'
 import {afterEach, expect, describe, vi, test} from 'vitest'
 import * as os from 'os'
 import type {NetworkInterfaceInfo} from 'os'
 
-vi.mock('../fs.js')
 vi.mock('../system.js')
 vi.mock('../environment.js')
 vi.mock('os', async (importOriginal) => {
@@ -132,11 +133,16 @@ describe('isShopify', () => {
   })
 
   test('returns true when dev is installed', async () => {
-    // Given
-    vi.mocked(fileExists).mockResolvedValue(true)
-
-    // When
-    await expect(isShopify()).resolves.toBe(true)
+    await inTemporaryDirectory(async (tempDir) => {
+      const originalDevPath = pathConstants.executables.dev
+      pathConstants.executables.dev = joinPath(tempDir, 'dev')
+      try {
+        await writeFile(pathConstants.executables.dev, '')
+        await expect(isShopify({})).resolves.toBe(true)
+      } finally {
+        Object.assign(pathConstants.executables, {dev: originalDevPath})
+      }
+    })
   })
 })
 

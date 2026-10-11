@@ -1,6 +1,7 @@
 import ThemeCommand, {RequiredFlags} from './theme-command.js'
 import {ensureThemeStore} from './theme-store.js'
-import {describe, vi, expect, test, beforeEach} from 'vitest'
+import {describe, vi, expect, beforeEach} from 'vitest'
+import {testWithTempDir as test} from '@shopify/cli-kit/node/testing/test-with-temp-dir'
 import {Config, Flags} from '@oclif/core'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {
@@ -8,8 +9,10 @@ import {
   listCurrentStoredStoreAppSessions,
 } from '@shopify/cli-kit/node/store-auth-session'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
-import {fileExistsSync} from '@shopify/cli-kit/node/fs'
-import {resolvePath} from '@shopify/cli-kit/node/path'
+import {fileExistsSync, rmdir, removeFile, writeFile} from '@shopify/cli-kit/node/fs'
+import * as fs from '@shopify/cli-kit/node/fs'
+import {joinPath, resolvePath} from '@shopify/cli-kit/node/path'
+import * as path from '@shopify/cli-kit/node/path'
 import {renderConcurrent, renderConfirmationPrompt, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {hashString} from '@shopify/cli-kit/node/crypto'
@@ -33,7 +36,6 @@ vi.mock('@shopify/cli-kit/node/metadata', () => ({
   addSensitiveMetadata: vi.fn(),
 }))
 vi.mock('./theme-store.js')
-vi.mock('@shopify/cli-kit/node/fs')
 
 const CommandConfig = new Config({root: __dirname})
 
@@ -196,8 +198,15 @@ class TestThemeCommandWithoutStoreRequired extends ThemeCommand {
 
 describe('ThemeCommand', () => {
   let mockSession: AdminSession
+  let themeDirectory: string
 
-  beforeEach(() => {
+  beforeEach(async ({tempDir}) => {
+    themeDirectory = tempDir
+    TestThemeCommand.flags.path.default = tempDir
+    TestThemeCommandWithoutStoreRequired.flags.path.default = tempDir
+    vi.spyOn(path, 'cwd').mockReturnValue(tempDir)
+    vi.spyOn(fs, 'fileExistsSync')
+    await writeFile(joinPath(tempDir, 'shopify.theme.toml'), '')
     mockSession = {
       token: 'test-token',
       storeFqdn: 'test-store.myshopify.com',
@@ -206,7 +215,6 @@ describe('ThemeCommand', () => {
     vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(mockSession)
     vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(undefined)
     vi.mocked(listCurrentStoredStoreAppSessions).mockReturnValue([])
-    vi.mocked(fileExistsSync).mockReturnValue(true)
     mockAndCaptureOutput().clear()
   })
 
@@ -245,7 +253,7 @@ describe('ThemeCommand', () => {
 
       // Then
       expect(loadEnvironment).toHaveBeenCalledWith('development', 'shopify.theme.toml', {
-        from: 'current/working/directory',
+        from: themeDirectory,
       })
       expect(ensureAuthenticatedThemes).toHaveBeenCalledTimes(1)
       expect(renderConcurrent).not.toHaveBeenCalled()
@@ -484,7 +492,7 @@ describe('ThemeCommand', () => {
 
     test('single environment provided without store - does not throw when store is not required', async () => {
       // Given
-      const environmentConfig = {path: '/some/path'}
+      const environmentConfig = {path: themeDirectory}
       vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
 
       await CommandConfig.load()
@@ -498,7 +506,7 @@ describe('ThemeCommand', () => {
       expect(command.commandCalls[0]).toMatchObject({
         flags: {
           environment: ['development'],
-          path: '/some/path',
+          path: themeDirectory,
         },
         session: undefined,
         multiEnvironment: false,
@@ -508,7 +516,7 @@ describe('ThemeCommand', () => {
 
     test('single environment provided with store - does not create session when command does not require auth', async () => {
       // Given
-      const environmentConfig = {path: '/some/path', store: 'store.myshopify.com'}
+      const environmentConfig = {path: themeDirectory, store: 'store.myshopify.com'}
       vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
 
       await CommandConfig.load()
@@ -540,11 +548,11 @@ describe('ThemeCommand', () => {
 
       // Then
       expect(loadEnvironment).toHaveBeenCalledWith('development', 'shopify.theme.toml', {
-        from: 'current/working/directory',
+        from: themeDirectory,
         silent: true,
       })
       expect(loadEnvironment).toHaveBeenCalledWith('staging', 'shopify.theme.toml', {
-        from: 'current/working/directory',
+        from: themeDirectory,
         silent: true,
       })
 
@@ -607,10 +615,10 @@ describe('ThemeCommand', () => {
       await CommandConfig.load()
       const command = new TestThemeCommand([], CommandConfig)
 
-      vi.mocked(fileExistsSync).mockReturnValue(false)
+      await rmdir(themeDirectory)
 
-      await expect(command.run()).rejects.toThrow('Path does not exist: current/working/directory')
-      expect(fileExistsSync).toHaveBeenCalledWith('current/working/directory')
+      await expect(command.run()).rejects.toThrow(`Path does not exist: ${themeDirectory}`)
+      expect(fileExistsSync).toHaveBeenCalledWith(themeDirectory)
     })
 
     test('multiple environments provided - displays warning if not allowed', async () => {
@@ -996,7 +1004,7 @@ describe('ThemeCommand', () => {
       const environmentConfig = {store: 'store.myshopify.com'}
       vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-      vi.mocked(fileExistsSync).mockReturnValue(false)
+      await removeFile(joinPath(themeDirectory, 'shopify.theme.toml'))
 
       await CommandConfig.load()
       const command = new TestThemeCommand(
@@ -1059,7 +1067,7 @@ describe('ThemeCommand', () => {
       expect(developmentEnvFlags?.['no-color']).toEqual(true)
 
       const liveEnvFlags = commandCalls[2]?.flags
-      expect(liveEnvFlags?.path).toEqual('current/working/directory')
+      expect(liveEnvFlags?.path).toEqual(themeDirectory)
       expect(liveEnvFlags?.store).toEqual('store3.myshopify.com')
       expect(liveEnvFlags?.live).toEqual(true)
       expect(liveEnvFlags?.['no-color']).toEqual(true)

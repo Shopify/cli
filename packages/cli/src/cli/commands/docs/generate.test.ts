@@ -1,8 +1,6 @@
-import {CommandData, CommandWithMarkdown, extractCommandData, writeCommandFlagInterface} from './generate.js'
-import {writeFile} from '@shopify/cli-kit/node/fs'
-import {describe, test, vi, expect} from 'vitest'
-
-vi.mock('@shopify/cli-kit/node/fs')
+import {CommandData, CommandWithMarkdown, extractCommandData} from './generate.js'
+import {testWithTempDir as test} from '@shopify/cli-kit/node/testing/test-with-temp-dir'
+import {describe, vi, expect} from 'vitest'
 
 const testCommand: CommandWithMarkdown = {
   aliases: [],
@@ -45,7 +43,13 @@ describe('extractCommandData', () => {
 })
 
 describe('writeCommandFlagInterface', () => {
-  test('calls writeFile with the correct content', async () => {
+  test('calls writeFile with the correct content', async ({tempDir}) => {
+    vi.resetModules()
+    const path = await import('@shopify/cli-kit/node/path')
+    const fs = await import('@shopify/cli-kit/node/fs')
+    vi.spyOn(path, 'cwd').mockReturnValue(tempDir)
+    const writeFile = vi.spyOn(fs, 'writeFile')
+    const {writeCommandFlagInterface} = await import('./generate.js')
     await writeCommandFlagInterface(testCommand, commandData)
 
     expect(writeFile).toHaveBeenCalledWith(
@@ -72,7 +76,13 @@ export interface topictestcommand {
     )
   })
 
-  test('calls writeFile with the correct content for a command with no flags', async () => {
+  test('calls writeFile with the correct content for a command with no flags', async ({tempDir}) => {
+    vi.resetModules()
+    const path = await import('@shopify/cli-kit/node/path')
+    const fs = await import('@shopify/cli-kit/node/fs')
+    vi.spyOn(path, 'cwd').mockReturnValue(tempDir)
+    const writeFile = vi.spyOn(fs, 'writeFile')
+    const {writeCommandFlagInterface} = await import('./generate.js')
     await writeCommandFlagInterface({...testCommand, flags: {}}, commandData)
 
     expect(writeFile).toHaveBeenCalledWith(

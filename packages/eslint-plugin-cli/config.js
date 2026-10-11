@@ -161,6 +161,7 @@ const baseRules = {
   '@shopify/cli/command-conventional-flag-env': 'error',
   '@shopify/cli/command-reserved-flags': 'error',
   '@shopify/cli/command-json-output': 'error',
+  '@shopify/cli/no-filesystem-auto-mocks': 'error',
   '@shopify/cli/no-error-factory-functions': 'error',
   '@shopify/cli/no-process-cwd': 'error',
   '@shopify/cli/no-trailing-js-in-cli-kit-imports': 'error',
