@@ -12,6 +12,7 @@ const rules = {
   'command-conventional-flag-env': require('./rules/command-conventional-flag-env'),
   'command-reserved-flags': require('./rules/command-reserved-flags'),
   'command-json-output': require('./rules/command-json-output'),
+  'no-filesystem-auto-mocks': require('./rules/no-filesystem-auto-mocks'),
   'no-error-factory-functions': require('./rules/no-error-factory-functions'),
   'no-process-cwd': require('./rules/no-process-cwd'),
   'no-trailing-js-in-cli-kit-imports': require('./rules/no-trailing-js-in-cli-kit-imports'),
