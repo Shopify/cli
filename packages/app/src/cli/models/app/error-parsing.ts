@@ -63,24 +63,20 @@ function findBestMatchingVariant(unionErrors: UnionError[]): UnionError | null {
 }
 
 export function parseStructuredErrors(issues: ExtendedZodIssue[]): ParsedIssue[] {
-  const result: ParsedIssue[] = []
-  for (const issue of issues) {
-    if (issue.code === 'invalid_union' && issue.unionErrors) {
-      const bestVariant = findBestMatchingVariant(issue.unionErrors)
-      if (bestVariant?.issues?.length) {
-        for (const nested of bestVariant.issues) {
-          result.push({path: nested.path, message: nested.message, code: issue.code})
-        }
-      } else {
-        result.push({
-          path: issue.path,
-          message: issue.message ?? "Configuration doesn't match any expected format",
-          code: issue.code,
-        })
-      }
-    } else {
-      result.push({path: issue.path, message: issue.message ?? 'Unknown error', code: issue.code})
+  return issues.flatMap((issue) => {
+    if (issue.code !== 'invalid_union' || !issue.unionErrors) {
+      return {path: issue.path, message: issue.message ?? 'Unknown error', code: issue.code}
     }
-  }
-  return result
+
+    const bestVariant = findBestMatchingVariant(issue.unionErrors)
+    if (!bestVariant?.issues?.length) {
+      return {
+        path: issue.path,
+        message: issue.message ?? "Configuration doesn't match any expected format",
+        code: issue.code,
+      }
+    }
+
+    return bestVariant.issues.map((nested) => ({path: nested.path, message: nested.message, code: issue.code}))
+  })
 }
