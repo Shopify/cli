@@ -302,7 +302,9 @@ async function performDownload(bin: DownloadableBinary) {
         const tmpFile = joinPath(tmpDir, 'binary')
         const outputStream = createFileWriteStream(tmpFile)
         await bin.processResponse(responseStream, outputStream)
-        await chmod(tmpFile, 0o775)
+        // Group write would let any other account in the owner's group swap out a binary the CLI
+        // later executes, so the downloaded file is only writable by its owner.
+        await chmod(tmpFile, 0o755)
         await moveFile(tmpFile, bin.path, {overwrite: true})
       })
     },

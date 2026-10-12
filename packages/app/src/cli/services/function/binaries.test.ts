@@ -13,6 +13,7 @@ import {
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {fileExists, removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {describe, expect, test, vi} from 'vitest'
+import {statSync} from 'fs'
 import {gzipSync} from 'zlib'
 
 const javy = javyBinary()
@@ -153,6 +154,19 @@ describe('javy', () => {
     // Then
     expect(fetch).toHaveBeenCalledOnce()
     await expect(fileExists(javy.path)).resolves.toBeTruthy()
+  })
+
+  test.skipIf(process.platform === 'win32')('downloads Javy without group or world write permissions', async () => {
+    // Given
+    await removeFile(javy.path)
+    vi.mocked(fetch).mockResolvedValue(new Response(gzipSync('javy binary')))
+
+    // When
+    await downloadBinary(javy)
+
+    // Then
+    const permissions = statSync(javy.path).mode & 0o777
+    expect(permissions).toBe(0o755)
   })
 
   test('handles concurrent downloads of Javy', async () => {
