@@ -25,6 +25,16 @@ Reports the number of findings to Shopify as usage telemetry, but not finding de
 
   static description = this.descriptionWithoutMarkdown()
 
+  static examples = [
+    '<%= config.bin %> <%= command.id %>',
+    '<%= config.bin %> <%= command.id %> --include-dir ../backend',
+    '<%= config.bin %> <%= command.id %> --path extensions --config production --include-dir .',
+    '<%= config.bin %> <%= command.id %> --without-app-config --client-id <client-id>',
+    "<%= config.bin %> <%= command.id %> --path app --include-dir . --exclude marketing --exclude '**/generated'",
+    '<%= config.bin %> <%= command.id %> --no-git-ignore --exclude local-data',
+    '<%= config.bin %> <%= command.id %> --include-dir ../backend --list-files',
+  ]
+
   static flags = {
     ...globalFlags,
     ...appSecuritySelectionFlags,
