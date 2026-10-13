@@ -2373,7 +2373,7 @@ describe('load', () => {
       const remoteModules = extensions.map(
         (extension, index): AppModuleVersion => ({
           registrationId: extension.uid,
-          registrationTitle: extension.handle,
+          handle: extension.handle,
           type: 'events',
           config: payloads[index],
           specification: {

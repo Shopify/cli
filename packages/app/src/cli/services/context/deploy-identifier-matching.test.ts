@@ -743,7 +743,7 @@ describe('ensureDeployIdentifiersFromAppVersion', () => {
     const remoteEventsModule: AppModuleVersion = {
       registrationId: eventsExtension.uid,
       registrationUuid: 'events-uuid',
-      registrationTitle: 'Events',
+      handle: 'Events',
       type: 'events',
       config: {
         events: {
