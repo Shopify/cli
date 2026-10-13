@@ -4013,7 +4013,7 @@ Create a new app project
 
 ```
 USAGE
-  $ shopify app init [--auth-alias <value>] [--flavor <value>] [--json-schema] [-n <value>] [--no-color]
+  $ shopify app init [--auth-alias <value>] [--flavor <value>] [-j] [--json-schema] [-n <value>] [--no-color]
     [--no-input] [--organization-id <value> | [--client-id <value> | ]] [-d npm|yarn|pnpm|bun] [-p <value>] [--template
     <value>] [--verbose]
 
@@ -4021,6 +4021,10 @@ FLAGS
   -d, --package-manager=<option>
       [env: SHOPIFY_FLAG_PACKAGE_MANAGER]
       <options: npm|yarn|pnpm|bun>
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -n, --name=<value>
       The name for the new app. When provided, skips the app selection prompt and creates a new app with this name.
@@ -4072,6 +4076,97 @@ FLAGS
   --verbose
       Increase the verbosity of the output. May include sensitive data.
       [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  Create a new app project
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppInitResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "app": {
+        "$ref": "#/definitions/InitializedApp"
+      },
+      "packageManager": {
+        "type": "string",
+        "enum": [
+          "npm",
+          "yarn",
+          "pnpm",
+          "bun"
+        ]
+      },
+      "template": {
+        "type": "string",
+        "format": "uri",
+        "description": "The selected GitHub template reference, including its branch and subpath."
+      }
+    },
+    "required": [
+      "status",
+      "app",
+      "packageManager",
+      "template"
+    ],
+    "additionalProperties": false,
+    "title": "AppInitResult",
+    "definitions": {
+      "InitializedApp": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "The decimal App ID, not a Shopify GID."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The name of the linked remote app."
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The client ID of the linked remote app."
+          },
+          "organizationId": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "The decimal organization ID, not a Shopify GID."
+          },
+          "directory": {
+            "type": "string",
+            "pattern": "^(?:\\/|[A-Za-z]:[\\\\/]|\\\\\\\\)",
+            "description": "The absolute filesystem path of the created app project."
+          },
+          "configurationPath": {
+            "type": "string",
+            "pattern": "^(?:\\/|[A-Za-z]:[\\\\/]|\\\\\\\\)",
+            "description": "The absolute filesystem path of the linked app configuration."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "clientId",
+          "organizationId",
+          "directory",
+          "configurationPath"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   $ shopify app init --name my-app --organization-id 123 --template reactRouter --flavor typescript

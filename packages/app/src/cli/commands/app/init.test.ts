@@ -2,10 +2,12 @@ import Init from './init.js'
 import initPrompt from '../../prompts/init/init.js'
 import initService from '../../services/init/init.js'
 import {defaultDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {selectOrg} from '../../services/context.js'
+import {appFromIdentifiers, selectOrg} from '../../services/context.js'
 import {fetchOrgFromId, NoOrgError} from '../../services/dev/fetch.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {validateFlavorValue, validateTemplateValue} from '../../services/init/validate.js'
+import {appInitJsonOutputSchema, InitResult} from '../../services/init/types.js'
+import {AppLinkedInterface} from '../../models/app/app.js'
 import {
   testAppLinked,
   testDeveloperPlatformClient,
@@ -13,9 +15,18 @@ import {
   testOrganizationApp,
 } from '../../models/app/app.test-data.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {inferPackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {Config} from '@oclif/core'
+import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
+import {outputInfo, unstyled} from '@shopify/cli-kit/node/output'
+import {AbortError, handler} from '@shopify/cli-kit/node/error'
+import {launchCLI} from '@shopify/cli-kit/node/cli-launcher'
+import {ShopifyConfig} from '@shopify/cli-kit/node/custom-oclif-loader'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {pathToFileURL} from 'node:url'
+import {createRequire} from 'node:module'
 
 vi.mock('../../prompts/init/init.js', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../prompts/init/init.js')>()
@@ -116,7 +127,7 @@ describe('Init command', () => {
       })
       vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
       vi.mocked(appNamePrompt).mockResolvedValue('test-app')
-      vi.mocked(initService).mockResolvedValue({app: mockApp})
+      vi.mocked(initService).mockResolvedValue(initResult(mockApp))
 
       // When
       await Init.run(['--path', tmpDir])
@@ -160,7 +171,7 @@ describe('Init command', () => {
         templateType: 'none',
         globalCLIResult: {install: false, alreadyInstalled: false},
       })
-      vi.mocked(initService).mockResolvedValue({app: mockApp})
+      vi.mocked(initService).mockResolvedValue(initResult(mockApp))
 
       // When
       await Init.run([
@@ -275,7 +286,7 @@ describe('Init command', () => {
         templateType: 'remix',
         globalCLIResult: {install: false, alreadyInstalled: false},
       })
-      vi.mocked(initService).mockResolvedValue({app: mockApp})
+      vi.mocked(initService).mockResolvedValue(initResult(mockApp))
 
       // When
       await Init.run([
@@ -361,3 +372,175 @@ describe('Init command', () => {
     })
   })
 })
+
+describe('Init JSON output', () => {
+  beforeEach(() => {
+    vi.mocked(inferPackageManager).mockReturnValue('npm')
+    vi.mocked(defaultDeveloperPlatformClient).mockReturnValue(testDeveloperPlatformClient())
+    vi.mocked(appFromIdentifiers).mockResolvedValue(testOrganizationApp())
+    vi.mocked(initPrompt).mockResolvedValue({
+      template: 'https://github.com/Shopify/shopify-app-template-extension-only',
+      templateType: 'none',
+      globalCLIResult: {install: false, alreadyInstalled: false},
+    })
+  })
+
+  test.each([['--json'], ['-j'], ['--json', '--no-input'], []])(
+    'writes one result and keeps diagnostics on stderr with flags %j',
+    async (...flags) => {
+      if (flags.length === 0) vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
+      await inTemporaryDirectory(async (directory) => {
+        const app = testAppLinked({directory, configPath: `${directory}/shopify.app.toml`})
+        vi.mocked(initService).mockImplementation(async () => {
+          outputInfo('Initializing project.')
+          return initResult(app)
+        })
+
+        await withCapturedStandardStreams(async ({stdout, stderr}) => {
+          const got = await runInitCommand([
+            ...flags,
+            '--template',
+            'none',
+            '--client-id',
+            'api-key',
+            '--path',
+            directory,
+          ])
+
+          expect(got).toEqual({app})
+          expect(JSON.parse(stdout())).toEqual({
+            status: 'success',
+            app: {
+              id: '1',
+              name: 'app1',
+              clientId: 'api-key',
+              organizationId: '1',
+              directory,
+              configurationPath: `${directory}/shopify.app.toml`,
+            },
+            packageManager: 'npm',
+            template: 'https://github.com/Shopify/shopify-app-template-extension-only',
+          })
+          expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', message: 'Initializing project.'})
+        })
+      })
+    },
+  )
+
+  test('JSON output permits app selection prompts', async () => {
+    const organization = testOrganization()
+    const client = testDeveloperPlatformClient()
+    vi.mocked(defaultDeveloperPlatformClient).mockReturnValue(client)
+    vi.mocked(selectOrg).mockResolvedValue(organization)
+    vi.mocked(client.orgAndApps).mockResolvedValue({organization, apps: [], hasMorePages: false})
+    vi.mocked(appNamePrompt).mockResolvedValue('selected-app')
+    vi.mocked(initService).mockResolvedValue(initResult(testAppLinked()))
+
+    await withCapturedStandardStreams(async ({stdout}) => {
+      await runInitCommand(['--json', '--template', 'none'])
+      expect(JSON.parse(stdout()).status).toBe('success')
+    })
+    expect(selectOrg).toHaveBeenCalledOnce()
+    expect(appNamePrompt).toHaveBeenCalledOnce()
+  })
+
+  test.each(['--no-input', '--json'])('rejects missing non-interactive input with %s', async (flag) => {
+    vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
+    if (flag === '--json') vi.stubEnv('CI', 'true')
+
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runInitCommand([flag, '--template', 'none']).catch(handler)
+      expect(JSON.parse(stdout())).toMatchObject({error: {type: 'abort', message: expect.stringContaining('--name')}})
+      expect(stderr()).toBe('')
+    })
+    expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
+    expect(initPrompt).not.toHaveBeenCalled()
+    expect(initService).not.toHaveBeenCalled()
+  })
+
+  test('writes a fatal error without a success result when initialization fails', async () => {
+    vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
+    vi.mocked(initService).mockRejectedValue(new AbortError('Initialization failed.'))
+
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runInitCommand(['--json', '--template', 'none', '--client-id', 'api-key']).catch(handler)
+      expect(JSON.parse(stdout())).toEqual({error: {type: 'abort', message: 'Initialization failed.'}})
+      expect(stderr()).toBe('')
+    })
+  })
+
+  test('non-interactive text output retains the final success banner', async () => {
+    vi.mocked(initService).mockResolvedValue(initResult(testAppLinked()))
+
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runInitCommand(['--no-input', '--template', 'none', '--client-id', 'api-key'])
+      expect(stdout()).toBe('')
+      expect(unstyled(stderr())).toContain('test-app is ready for you to build!')
+    })
+  })
+
+  test('prints the result schema before hooks, authentication, or initialization', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeFile(
+        joinPath(directory, 'package.json'),
+        JSON.stringify({
+          name: 'init-schema-test',
+          version: '1.0.0',
+          type: 'module',
+          oclif: {commands: './commands', topicSeparator: ' '},
+        }),
+      )
+      await mkdir(joinPath(directory, 'commands', 'app'))
+      const oclifUrl = pathToFileURL(createRequire(import.meta.url).resolve('@oclif/core')).href
+      await writeFile(
+        joinPath(directory, 'commands', 'app', 'init.js'),
+        `import {Command} from '${oclifUrl}'; export default class extends Command { async run() {} }`,
+      )
+      const hooks = vi.spyOn(ShopifyConfig.prototype, 'runHook')
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await launchCLI({
+          moduleURL: pathToFileURL(joinPath(directory, 'index.js')).href,
+          argv: ['app', 'init', '--json-schema'],
+          lazyCommandLoader: async () => Init,
+        })
+
+        expect(JSON.parse(stdout()).definitions.Result).toMatchObject({
+          type: 'object',
+          additionalProperties: false,
+          required: ['status', 'app', 'packageManager', 'template'],
+        })
+        expect(stderr()).toBe('')
+      })
+      expect(hooks).not.toHaveBeenCalled()
+      expect(defaultDeveloperPlatformClient).not.toHaveBeenCalled()
+      expect(initService).not.toHaveBeenCalled()
+      hooks.mockRestore()
+    })
+    expect(Init.jsonOutputSchema).toBe(appInitJsonOutputSchema)
+    expect(Init.description).toContain('configurationPath')
+  })
+})
+
+function initResult(app: AppLinkedInterface): InitResult {
+  return {
+    app,
+    remoteApp: testOrganizationApp(),
+    projectName: 'test-app',
+    packageManager: 'npm',
+    template: 'https://github.com/Shopify/shopify-app-template-extension-only',
+  }
+}
+
+async function runInitCommand(argv: string[]) {
+  const originalArgv = process.argv
+  const restoreArgv = () => {
+    process.argv = originalArgv
+  }
+  process.argv = ['node', 'shopify', ...argv]
+  try {
+    const command = new Init(argv, await Config.load())
+    return await runWithCommandEventsForCommand(argv, () => command.run())
+  } finally {
+    restoreArgv()
+  }
+}

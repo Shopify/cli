@@ -5,6 +5,7 @@
       ],
       "args": {
       },
+      "description": "Use `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppInitResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\",\n      \"const\": \"success\"\n    },\n    \"app\": {\n      \"$ref\": \"#/definitions/InitializedApp\"\n    },\n    \"packageManager\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"npm\",\n        \"yarn\",\n        \"pnpm\",\n        \"bun\"\n      ]\n    },\n    \"template\": {\n      \"type\": \"string\",\n      \"format\": \"uri\",\n      \"description\": \"The selected GitHub template reference, including its branch and subpath.\"\n    }\n  },\n  \"required\": [\n    \"status\",\n    \"app\",\n    \"packageManager\",\n    \"template\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppInitResult\",\n  \"definitions\": {\n    \"InitializedApp\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"id\": {\n          \"type\": \"string\",\n          \"pattern\": \"^\\\\d+$\",\n          \"description\": \"The decimal App ID, not a Shopify GID.\"\n        },\n        \"name\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"description\": \"The name of the linked remote app.\"\n        },\n        \"clientId\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"description\": \"The client ID of the linked remote app.\"\n        },\n        \"organizationId\": {\n          \"type\": \"string\",\n          \"pattern\": \"^\\\\d+$\",\n          \"description\": \"The decimal organization ID, not a Shopify GID.\"\n        },\n        \"directory\": {\n          \"type\": \"string\",\n          \"pattern\": \"^(?:\\\\/|[A-Za-z]:[\\\\\\\\/]|\\\\\\\\\\\\\\\\)\",\n          \"description\": \"The absolute filesystem path of the created app project.\"\n        },\n        \"configurationPath\": {\n          \"type\": \"string\",\n          \"pattern\": \"^(?:\\\\/|[A-Za-z]:[\\\\\\\\/]|\\\\\\\\\\\\\\\\)\",\n          \"description\": \"The absolute filesystem path of the linked app configuration.\"\n        }\n      },\n      \"required\": [\n        \"id\",\n        \"name\",\n        \"clientId\",\n        \"organizationId\",\n        \"directory\",\n        \"configurationPath\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "examples": [
         "<%= config.bin %> <%= command.id %> --name my-app --organization-id 123 --template reactRouter --flavor typescript",
         "<%= config.bin %> <%= command.id %> --client-id 123 --template none"
@@ -37,6 +38,15 @@
           "multiple": false,
           "name": "flavor",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,
