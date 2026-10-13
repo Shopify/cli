@@ -4491,6 +4491,9 @@ DESCRIPTION
   copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass
   `--print-instructions`, which prints them. You can also run `shopify app security instructions` to print, copy, or
   write them later.
+
+  Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
+  (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
 ```
 
 ## `shopify app security clean`
@@ -4664,6 +4667,9 @@ DESCRIPTION
 
   The document is recorded all or nothing: if anything is invalid, the command fails with every error, writes nothing,
   and exits with a non-zero code. It needs the results directory that `shopify app security check` creates.
+
+  Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
+  (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
 ```
 
 ## `shopify app security review`
@@ -4733,6 +4739,9 @@ DESCRIPTION
   The agent results are optional. Use `--check-id` to narrow the review to specific checks, `--verbose` for full
   reasoning, evidence and suppressed findings, and `--blocking` to exit with code 1 when a check with findings is at or
   above a severity.
+
+  Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
+  (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
 ```
 
 ## `shopify app subscription-migrations cancel`
@@ -8305,7 +8314,7 @@ FLAGS
       [env: SHOPIFY_HYDROGEN_FLAG_STYLING]
 
   --template=<value>
-      Scaffolds project based on a template: `skeleton` (the default), `demo-store` or a URL to a git repository.
+      Scaffolds project based on an existing template or example from the Hydrogen repository.
       [env: SHOPIFY_HYDROGEN_FLAG_TEMPLATE]
 
 DESCRIPTION

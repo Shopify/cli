@@ -10,6 +10,17 @@ import {describe, expect, test, vi} from 'vitest'
 vi.mock('../../../services/security-review.js')
 
 describe('app security review command', () => {
+  test('documents command-specific telemetry and links to usage reporting', () => {
+    expect(SecurityReview.descriptionWithMarkdown).toContain(
+      'Reports the number of findings to Shopify as usage telemetry, but not finding details.',
+    )
+    expect(SecurityReview.descriptionWithMarkdown).toContain(
+      '[usage reporting](https://shopify.dev/docs/api/shopify-cli#usage-reporting)',
+    )
+    expect(SecurityReview.descriptionWithMarkdown).not.toContain('SHOPIFY_CLI_NO_ANALYTICS=1')
+    expect(SecurityReview.description).toContain('https://shopify.dev/docs/api/shopify-cli#usage-reporting')
+  })
+
   test('does not require linked app context', () => {
     expect(SecurityReview.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityReview.prototype).not.toBeInstanceOf(AppLinkedCommand)
