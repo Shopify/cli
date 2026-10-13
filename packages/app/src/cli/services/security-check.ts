@@ -44,7 +44,7 @@ interface SecurityOptions {
   withoutAppConfig: boolean
   verbose: boolean
   blocking: AppSecurityBlockingLevel
-  yes: boolean
+  printInstructions: boolean
   skipInstructions: boolean
   includeDirs: ReadonlyArray<string>
   excludePatterns: ReadonlyArray<string>
@@ -131,7 +131,7 @@ async function instructionsDestination(
   agentCheckCount: number,
 ): Promise<AppSecurityInstructionsDestination> {
   if (options.skipInstructions) return 'nothing'
-  if (options.yes) return 'print'
+  if (options.printInstructions) return 'print'
   if (!canPrompt) return 'nothing'
   return dependencies.selectInstructionsDestination(agentCheckCount)
 }
