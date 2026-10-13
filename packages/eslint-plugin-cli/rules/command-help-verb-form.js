@@ -91,7 +91,15 @@ const imperativeVerbs = new Set([
 const nonVerbStarts = new Set(['if', 'shopify', 'the', 'this'])
 
 // Base forms such as "Pass" and "Focus" also end in s; their third-person forms end in "es".
-const isThirdPerson = (word) => word.endsWith('s') && !/(ss|us)$/.test(word)
+const baseFormsEndingInS = new Set(['alias', 'bias', 'canvas'])
+const isThirdPerson = (word) => word.endsWith('s') && !/(ss|us)$/.test(word) && !baseFormsEndingInS.has(word)
+
+// Markdown help can start with a list, heading, or quote marker, or with emphasis around the first word.
+const stripLeadingMarkdown = (text) =>
+  text
+    .trimStart()
+    .replace(/^(?:(?:[-*+]|\d+[.)])\s+|#{1,6}\s+|>\s*)+/, '')
+    .replace(/^(?:\*\*|__|\*|_)/, '')
 
 module.exports = {
   meta: {
@@ -118,10 +126,10 @@ module.exports = {
           if (value?.type === 'Literal') text = value.value
           else if (value?.type === 'TemplateLiteral') {
             text = value.quasis[0].value.cooked
-            if (value.expressions.length && !/^\s*\[?[a-z]+[\s\].,!?:;()]/i.test(text)) continue
+            if (value.expressions.length && !/^\[?[a-z]+[\s\].,!?:;()*_]/i.test(stripLeadingMarkdown(text))) continue
           }
           if (typeof text !== 'string') continue
-          const verb = text.trimStart().match(/^\[?([a-z]+)(?=[\s\].,!?:;()]|$)/i)?.[1]
+          const verb = stripLeadingMarkdown(text).match(/^\[?([a-z]+)(?=[\s\].,!?:;()*_]|$)/i)?.[1]
           if (!verb) continue
           const firstWord = verb.toLowerCase()
           if (imperativeVerbs.has(firstWord) || (!isThirdPerson(firstWord) && !nonVerbStarts.has(firstWord))) {
