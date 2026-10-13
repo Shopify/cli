@@ -22,7 +22,7 @@ to ${sanitizeURL(url)}`)
 
 export function sanitizeVariables(variables: Variables): string {
   const result: Variables = {...variables}
-  const sensitiveKeys = ['apiKey', 'serialized_script']
+  const sensitiveKeys = ['apiKey', 'serialized_script', 'sharedSecret', 'shared_secret']
 
   const sanitizedResult = sanitizeDeepVariables(result, sensitiveKeys)
 

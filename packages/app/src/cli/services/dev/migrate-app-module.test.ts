@@ -1,4 +1,4 @@
-import {getModulesToMigrate, migrateAppModules} from './migrate-app-module.js'
+import {getModulesToMigrate, migrateAppModules, UIModulesMap} from './migrate-app-module.js'
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {ClientName} from '../../utilities/developer-platform-client.js'
@@ -43,6 +43,18 @@ describe('getModulesToMigrate()', () => {
     const toMigrate = getModulesToMigrate([], [], {}, defaultMap)
     expect(toMigrate).toStrictEqual([])
   })
+
+  test.each(['CHECKOUT_UI_EXTENSION', 'POS_UI_EXTENSION', 'checkout_ui', 'pos_ui'])(
+    'matches legacy %s registrations for UI extension migration',
+    (type) => {
+      const localExtension = getLocalExtension({type: 'ui_extension', localIdentifier: 'custom-fields'})
+      const remoteExtension = getRemoteExtension({type, title: 'custom-fields'})
+
+      const toMigrate = getModulesToMigrate([localExtension], [remoteExtension], {}, UIModulesMap)
+
+      expect(toMigrate).toStrictEqual([{local: localExtension, remote: remoteExtension}])
+    },
+  )
 
   test('matching by remote title and localIdentifier, without defaultIdentifiers', () => {
     // Given

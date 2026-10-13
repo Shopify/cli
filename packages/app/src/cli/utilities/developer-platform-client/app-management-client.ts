@@ -823,6 +823,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
         releaseResult.appReleaseCreate.userErrors.map(toUserError),
       )
     }
+    if (!releaseResult.appReleaseCreate.release && versionResult.appDeploy.userErrors.length === 0) {
+      versionResult.appDeploy.userErrors.push({
+        message: 'The API did not return a release for the created app version.',
+        category: '',
+        details: [],
+      })
+    }
 
     return versionResult
   }
