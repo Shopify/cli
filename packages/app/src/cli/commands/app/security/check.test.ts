@@ -31,6 +31,7 @@ describe('app security check command', () => {
       'list-files',
       'no-git-ignore',
       'path',
+      'print-instructions',
       'skip-instructions',
       'without-app-config',
       'yes',
@@ -50,7 +51,7 @@ describe('app security check command', () => {
       withoutAppConfig: false,
       verbose: true,
       blocking: 'high',
-      yes: false,
+      printInstructions: false,
       skipInstructions: true,
       includeDirs: [],
       excludePatterns: [],
@@ -101,10 +102,10 @@ describe('app security check command', () => {
     expect(SecurityCheck.flags['list-files'].env).toBe('SHOPIFY_FLAG_LIST_FILES')
   })
 
-  test('keeps --list-files exclusive with --yes, --skip-instructions and --blocking', async () => {
-    expect(SecurityCheck.flags['list-files'].exclusive).toEqual(['yes', 'skip-instructions', 'blocking'])
+  test('keeps --list-files exclusive with printing, --skip-instructions and --blocking', async () => {
+    expect(SecurityCheck.flags['list-files'].exclusive).toEqual(['print-instructions', 'skip-instructions', 'blocking'])
 
-    for (const incompatible of [['--yes'], ['--skip-instructions'], ['--blocking', 'high']]) {
+    for (const incompatible of [['--print-instructions'], ['--yes'], ['--skip-instructions'], ['--blocking', 'high']]) {
       // eslint-disable-next-line no-await-in-loop
       await expect(SecurityCheck.run(['--list-files', ...incompatible], import.meta.url)).rejects.toThrow()
     }
@@ -114,23 +115,112 @@ describe('app security check command', () => {
     await expect(SecurityCheck.run(['--ignore', 'build/', '--skip-instructions'], import.meta.url)).rejects.toThrow()
   })
 
-  test('forwards --yes without requiring an app configuration', async () => {
-    await SecurityCheck.run(['--path', '/tmp/directory-without-shopify-toml', '--yes'], import.meta.url)
+  test('keeps --yes hidden and deprecated without warning on default invocations', async () => {
+    const warningSpy = vi.spyOn(SecurityCheck.prototype, 'warn').mockImplementation((warning) => warning)
+    vi.stubEnv('SHOPIFY_FLAG_YES', undefined)
+    vi.stubEnv('SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS', undefined)
 
-    expect(securityCheck).toHaveBeenCalledWith({
-      directory: '/tmp/directory-without-shopify-toml',
-      configName: undefined,
-      clientId: undefined,
-      withoutAppConfig: false,
-      verbose: false,
-      blocking: 'none',
-      yes: true,
-      skipInstructions: false,
-      includeDirs: [],
-      excludePatterns: [],
-      noGitIgnore: false,
-      listFiles: false,
-    })
+    try {
+      expect(SecurityCheck.flags.yes.hidden).toBe(true)
+      expect(SecurityCheck.flags.yes.deprecated).toEqual({to: '--print-instructions'})
+      expect(SecurityCheck.flags.yes.env).toBe('SHOPIFY_FLAG_YES')
+      expect(SecurityCheck.flags.yes.default).toBeUndefined()
+      expect(SecurityCheck.flags['print-instructions'].default).toBe(false)
+
+      await SecurityCheck.run([], import.meta.url)
+
+      expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({printInstructions: false}))
+      expect(warningSpy).not.toHaveBeenCalled()
+    } finally {
+      warningSpy.mockRestore()
+      vi.unstubAllEnvs()
+    }
+  })
+
+  test.each([
+    {name: '--print-instructions', flags: ['--print-instructions'], deprecated: false},
+    {name: '--yes', flags: ['--yes'], deprecated: true},
+    {name: '--no-input --print-instructions', flags: ['--no-input', '--print-instructions'], deprecated: false},
+    {name: '--no-input --yes', flags: ['--no-input', '--yes'], deprecated: true},
+    {name: 'both printing flags', flags: ['--print-instructions', '--yes'], deprecated: true},
+  ])('forwards $name without bypassing app selection', async ({flags, deprecated}) => {
+    const warningSpy = vi.spyOn(SecurityCheck.prototype, 'warn').mockImplementation((warning) => warning)
+    vi.stubEnv('SHOPIFY_FLAG_YES', undefined)
+    vi.stubEnv('SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS', undefined)
+    vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', undefined)
+
+    try {
+      await SecurityCheck.run(['--path', '/tmp/directory-without-shopify-toml', ...flags], import.meta.url)
+
+      expect(securityCheck).toHaveBeenCalledWith(
+        expect.objectContaining({
+          directory: '/tmp/directory-without-shopify-toml',
+          printInstructions: true,
+          withoutAppConfig: false,
+          skipInstructions: false,
+        }),
+      )
+      if (deprecated) {
+        expect(warningSpy).toHaveBeenCalledOnce()
+        expect(warningSpy).toHaveBeenCalledWith(expect.stringContaining('--print-instructions'))
+      } else {
+        expect(warningSpy).not.toHaveBeenCalled()
+      }
+    } finally {
+      warningSpy.mockRestore()
+      vi.unstubAllEnvs()
+    }
+  })
+
+  test.each([
+    ['SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS', '1', true, false],
+    ['SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS', '0', false, false],
+    ['SHOPIFY_FLAG_YES', '1', true, true],
+    ['SHOPIFY_FLAG_YES', '0', false, true],
+  ] as const)('reads %s=%s as printInstructions=%s', async (environment, value, printInstructions, deprecated) => {
+    const warningSpy = vi.spyOn(SecurityCheck.prototype, 'warn').mockImplementation((warning) => warning)
+    vi.stubEnv('SHOPIFY_FLAG_YES', undefined)
+    vi.stubEnv('SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS', undefined)
+    vi.stubEnv(environment, value)
+
+    try {
+      await SecurityCheck.run([], import.meta.url)
+
+      expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({printInstructions}))
+      if (deprecated) {
+        expect(warningSpy).toHaveBeenCalledOnce()
+        expect(warningSpy).toHaveBeenCalledWith(expect.stringContaining('--print-instructions'))
+      } else {
+        expect(warningSpy).not.toHaveBeenCalled()
+      }
+    } finally {
+      warningSpy.mockRestore()
+      vi.unstubAllEnvs()
+    }
+  })
+
+  test.each([{flags: ['--print-instructions']}, {flags: ['--yes']}, {flags: ['--print-instructions', '--yes']}])(
+    'rejects $flags with --skip-instructions',
+    async ({flags}) => {
+      await expect(SecurityCheck.run([...flags, '--skip-instructions'], import.meta.url)).rejects.toThrow()
+      expect(securityCheck).not.toHaveBeenCalled()
+    },
+  )
+
+  test.each([
+    ['SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS', '--skip-instructions'],
+    ['SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS', '--list-files'],
+    ['SHOPIFY_FLAG_YES', '--skip-instructions'],
+    ['SHOPIFY_FLAG_YES', '--list-files'],
+  ])('rejects %s with %s', async (environment, incompatible) => {
+    vi.stubEnv(environment, '1')
+
+    try {
+      await expect(SecurityCheck.run([incompatible], import.meta.url)).rejects.toThrow()
+      expect(securityCheck).not.toHaveBeenCalled()
+    } finally {
+      vi.unstubAllEnvs()
+    }
   })
 
   test('forwards --client-id and --without-app-config', async () => {
@@ -174,13 +264,34 @@ describe('app security check command', () => {
     await expect(SecurityCheck.run([removedFlag, '--skip-instructions'], import.meta.url)).rejects.toThrow()
   })
 
+  test.each([
+    ['SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS', '--skip-instructions'],
+    ['SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS', '--list-files'],
+    ['SHOPIFY_FLAG_YES', '--skip-instructions'],
+    ['SHOPIFY_FLAG_YES', '--list-files'],
+  ])('rejects %s=0 with %s, preserving explicit flag exclusions', async (environment, mode) => {
+    vi.stubEnv('SHOPIFY_FLAG_YES', undefined)
+    vi.stubEnv('SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS', undefined)
+    vi.stubEnv(environment, '0')
+
+    try {
+      await expect(SecurityCheck.run([mode], import.meta.url)).rejects.toThrow()
+      expect(securityCheck).not.toHaveBeenCalled()
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
+
   test('describes the artifacts it writes and how agent results are recorded', () => {
-    expect(SecurityCheck.flags.yes.description).toBe('Print coding-agent instructions without prompting.')
+    expect(SecurityCheck.flags['print-instructions'].description).toBe(
+      'Print coding-agent instructions without prompting for how to deliver them.',
+    )
     expect(SecurityCheck.flags['skip-instructions'].description).toBe(
       "Don't offer the coding-agent instructions after the scan. Use it when you want only the deterministic scan results.",
     )
-    expect(SecurityCheck.flags.yes.exclusive).toEqual(['skip-instructions'])
-    expect(SecurityCheck.flags['skip-instructions'].exclusive).toEqual(['yes'])
+    expect(SecurityCheck.flags.yes.exclusive).toEqual(['skip-instructions', 'list-files'])
+    expect(SecurityCheck.flags['print-instructions'].exclusive).toEqual(['skip-instructions'])
+    expect(SecurityCheck.flags['skip-instructions'].exclusive).toEqual(['print-instructions'])
     expect(SecurityCheck.summary).toContain('deterministic-findings.json')
     expect(SecurityCheck.summary).toContain('agent-checks.json')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('`deterministic-findings.json` and `agent-checks.json`')
@@ -189,6 +300,10 @@ describe('app security check command', () => {
     expect(SecurityCheck.descriptionWithMarkdown).toContain('`--config`')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('copying is the default')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('shopify app security instructions')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('`--print-instructions`')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('does not bypass app-selection prompts')
+    expect(SecurityCheck.descriptionWithMarkdown).toContain('`--no-input` to disable prompts')
+    expect(SecurityCheck.descriptionWithMarkdown).not.toContain('`--yes`')
     expect(SecurityCheck.descriptionWithMarkdown).not.toMatch(/--findings|--clean|compile|trace/)
   })
 

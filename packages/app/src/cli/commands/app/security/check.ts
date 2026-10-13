@@ -19,7 +19,7 @@ Use \`--exclude\` to skip more paths. Each value is a glob that is matched again
 
 Use \`--list-files\` to check the scope before scanning: it prints the files the check would gather, one path per line and relative to the app directory, and then stops. It writes no results and never prompts. \`--client-id\` is still checked, but doesn't change the list.
 
-In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--yes\`, which prints them. You can also run \`shopify app security instructions\` to print, copy, or write them later.`
+In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--print-instructions\`, which prints them. This flag only controls instruction delivery; it does not bypass app-selection prompts. Use \`--no-input\` to disable prompts. You can also run \`shopify app security instructions\` to print, copy, or write them later.`
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -49,20 +49,27 @@ In interactive terminals, the command offers to copy the coding-agent instructio
       description:
         'Print the files the check would gather, one path per line, and stop. Nothing is scanned, no results are written, and nothing is prompted for.',
       env: 'SHOPIFY_FLAG_LIST_FILES',
-      exclusive: ['yes', 'skip-instructions', 'blocking'],
+      exclusive: ['print-instructions', 'skip-instructions', 'blocking'],
     }),
     ...appSecurityBlockingFlag,
-    yes: Flags.boolean({
-      description: 'Print coding-agent instructions without prompting.',
+    'print-instructions': Flags.boolean({
+      description: 'Print coding-agent instructions without prompting for how to deliver them.',
       default: false,
       exclusive: ['skip-instructions'],
+      env: 'SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS',
+    }),
+    yes: Flags.boolean({
+      description: 'Print coding-agent instructions without prompting.',
+      hidden: true,
+      deprecated: {to: '--print-instructions'},
+      exclusive: ['skip-instructions', 'list-files'],
       env: 'SHOPIFY_FLAG_YES',
     }),
     'skip-instructions': Flags.boolean({
       description:
         "Don't offer the coding-agent instructions after the scan. Use it when you want only the deterministic scan results.",
       default: false,
-      exclusive: ['yes'],
+      exclusive: ['print-instructions'],
       env: 'SHOPIFY_FLAG_APP_SECURITY_SKIP_INSTRUCTIONS',
     }),
   }
@@ -77,7 +84,7 @@ In interactive terminals, the command offers to copy the coding-agent instructio
       withoutAppConfig: Boolean(flags['without-app-config']),
       verbose: Boolean(flags.verbose),
       blocking: flags.blocking,
-      yes: flags.yes,
+      printInstructions: Boolean(flags['print-instructions'] || flags.yes),
       skipInstructions: flags['skip-instructions'],
       includeDirs: flags['include-dir'] ?? [],
       excludePatterns: flags.exclude ?? [],
