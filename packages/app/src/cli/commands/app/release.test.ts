@@ -9,6 +9,7 @@ import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {renderError} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
+import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {Config} from '@oclif/core'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -29,6 +30,7 @@ vi.mock('graphql-request', async (importOriginal) => ({
 vi.mock('../../services/release.js')
 vi.mock('../../services/app-context.js')
 vi.mock('@shopify/cli-kit/node/api/app-management')
+vi.mock('@shopify/cli-kit/node/analytics')
 
 const version = {
   id: 123,
@@ -128,6 +130,12 @@ describe('app release command', () => {
         const argv = ['--path', directory, '--version', 'missing', '--allow-updates']
         if (format === 'json') argv.push('--json')
         await expect(runRelease(argv)).rejects.toThrow()
+        expect(reportAnalyticsEvent).toHaveBeenCalledExactlyOnceWith(
+          expect.objectContaining({
+            errorMessage: format === 'json' ? 'Version missing could not be found.' : "Version couldn't be released.",
+            exitMode: 'expected_error',
+          }),
+        )
         expect(rawRequest).toHaveBeenCalledWith(expect.stringContaining('versionByTag(appId: $appId'), {
           appId: testOrganizationApp().id,
           versionTag: 'missing',
@@ -197,14 +205,21 @@ describe('app release command', () => {
     })
   })
 
-  test('cancelled JSON exits zero through the silent error path', async () => {
+  test('cancelled JSON runs postrun without an explicit exit', async () => {
     vi.mocked(release).mockResolvedValue({status: 'cancelled'})
     const exit = vi.spyOn(process, 'exit').mockReturnValue(undefined as never)
     try {
       await inTemporaryDirectory(async (directory) => {
         await withCapturedStandardStreams(async ({stdout, stderr}) => {
-          await runRelease(['--path', directory, '--version', 'v1', '--json', '--allow-updates'])
-          expect(exit).toHaveBeenCalledExactlyOnceWith(0)
+          const config = await releaseConfig()
+          const metadata = config.findCommand('app:release')!
+          vi.spyOn(config, 'findCommand').mockReturnValue({...metadata, id: 'app:release', load: async () => Release})
+          const hooks = vi.spyOn(config, 'runHook').mockResolvedValue({successes: [], failures: []})
+          const argv = ['--path', directory, '--version', 'v1', '--json', '--allow-updates']
+          const result = await config.runCommand('app:release', argv)
+          expect(result).toEqual({app: testAppLinked()})
+          expect(hooks).toHaveBeenCalledWith('postrun', {argv, Command: Release, result})
+          expect(exit).not.toHaveBeenCalled()
           expect(JSON.parse(stdout())).toEqual({status: 'cancelled'})
           expect(stderr()).toBe('')
         })
@@ -216,8 +231,12 @@ describe('app release command', () => {
 })
 
 async function runRelease(argv: string[]) {
+  return Release.run(argv, await releaseConfig())
+}
+
+async function releaseConfig() {
   const config = await Config.load({root: joinPath(dirname(fileURLToPath(import.meta.url)), '../../../..')})
   // The source package is bundled in the installed CLI, not a custom plugin.
   config.plugins.delete('@shopify/app')
-  return Release.run(argv, config)
+  return config
 }

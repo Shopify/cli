@@ -7,11 +7,11 @@ import type {OrganizationApp} from '../../models/organization.js'
 
 export function renderAppReleaseError(error: unknown, format: 'json' | 'text'): never {
   if (format === 'text' && error instanceof AppVersionNotFoundError) {
-    renderError({
-      headline: "Version couldn't be released.",
-      body: ['Version', {userInput: error.versionTag}, 'could not be found.'],
-    })
-    throw new AbortSilentError()
+    throw new AbortError({bold: "Version couldn't be released."}, [
+      'Version',
+      {userInput: error.versionTag},
+      'could not be found.',
+    ])
   }
   throw error
 }
@@ -28,7 +28,6 @@ export function renderAppReleaseResult(
       throw error
     }
     outputResult(appReleaseJsonOutputSchema.encode(appReleaseResult(result, remoteApp)))
-    if (result.status === 'cancelled') throw Object.assign(new AbortSilentError(), {oclif: {exit: 0}})
     return
   }
 
