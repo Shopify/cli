@@ -9,24 +9,21 @@ import {
   renderOffensesText,
   sortOffenses,
 } from './check.js'
-import {fileExists, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {
   Severity,
   SourceCodeType,
   loadConfig,
   path as pathUtils,
+  type Config,
   type Offense,
   type Theme,
 } from '@shopify/theme-check-node'
-import {beforeEach, describe, expect, test, vi, type Mock} from 'vitest'
-
-vi.mock('@shopify/cli-kit/node/fs', async () => ({
-  fileExists: vi.fn(),
-  writeFile: vi.fn(),
-}))
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/output', async () => {
   const actual = await vi.importActual('@shopify/cli-kit/node/output')
@@ -404,34 +401,31 @@ describe('handleExit', () => {
 })
 
 describe('initConfig', () => {
-  let fileMock: Mock
-  let loadConfigMock: Mock
+  test('should leave an existing config file untouched', async () => {
+    await inTemporaryDirectory(async (root) => {
+      const configPath = joinPath(root, '.theme-check.yml')
+      await writeFile(configPath, 'extends: theme-check:all\n')
 
-  beforeEach(() => {
-    fileMock = fileExists as Mock
-    loadConfigMock = loadConfig as Mock
+      await initConfig(root)
+
+      await expect(readFile(configPath)).resolves.toBe('extends: theme-check:all\n')
+      expect(loadConfig).not.toHaveBeenCalled()
+      expect(outputInfo).toHaveBeenCalledWith(`.theme-check.yml already exists at ${root}`)
+    })
   })
 
-  test('should not create a new config file if one already exists', async () => {
-    fileMock.mockResolvedValue(true)
+  test('should create a config file extending the recommended settings with the checks commented out', async () => {
+    await inTemporaryDirectory(async (root) => {
+      vi.mocked(loadConfig).mockResolvedValue({settings: {UnusedAssign: {enabled: true}}} as unknown as Config)
 
-    await initConfig('/path/to/root')
+      await initConfig(root)
 
-    expect(fileExists).toHaveBeenCalledWith('/path/to/root/.theme-check.yml')
-    expect(outputInfo).toHaveBeenCalledWith('.theme-check.yml already exists at /path/to/root')
-    expect(writeFile).toHaveBeenCalledTimes(0)
-  })
-
-  test('should create a new config file if one does not exist', async () => {
-    fileMock.mockResolvedValue(false)
-    loadConfigMock.mockResolvedValue({settings: {}})
-
-    await initConfig('/path/to/root')
-
-    expect(fileExists).toHaveBeenCalledWith('/path/to/root/.theme-check.yml')
-    expect(loadConfig).toHaveBeenCalledWith(undefined, '/path/to/root')
-    expect(writeFile).toHaveBeenCalledWith('/path/to/root/.theme-check.yml', expect.any(String))
-    expect(outputSuccess).toHaveBeenCalledWith('Created .theme-check.yml at /path/to/root')
+      expect(loadConfig).toHaveBeenCalledWith(undefined, root)
+      await expect(readFile(joinPath(root, '.theme-check.yml'))).resolves.toBe(
+        'extends: theme-check:recommended\nignore:\n  - node_modules/**\n# UnusedAssign:\n#   enabled: true\n# ',
+      )
+      expect(outputSuccess).toHaveBeenCalledWith(`Created .theme-check.yml at ${root}`)
+    })
   })
 })
 
