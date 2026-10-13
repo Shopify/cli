@@ -205,6 +205,21 @@ describe('listGitIgnoredPaths', () => {
       },
     )
 
+    test('reports a failure, not a Git version error, for a corrupt config while Git logs its configuration', async () => {
+      const traceDirectory = makeDirectory()
+      const globalConfig = join(traceDirectory, 'gitconfig')
+      const traceFile = join(traceDirectory, 'trace2.json').replace(/\\/g, '/')
+      writeFileSync(globalConfig, `[trace2]\n\teventTarget = ${traceFile}\n\tconfigParams = core.*\n`)
+      vi.stubEnv('GIT_CONFIG_GLOBAL', globalConfig)
+      const root = makeRepository({'.gitignore': 'tmp/\n', 'tmp/a.ts': ''})
+      commitAll(root)
+      writeFileSync(join(root, '.git', 'config'), '[core\nbogus')
+      // Logging configuration parameters makes even `git --version` read the repository's config.
+      expect(() => git(root, ['--version'])).toThrow(/bad config/)
+
+      await expect(listGitIgnoredPaths(root)).resolves.toEqual({status: 'failed'})
+    })
+
     test.skipIf(process.platform === 'win32')(
       'reports a failure, not a missing repository, when the .git marker is a dangling symlink',
       async () => {
