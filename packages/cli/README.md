@@ -4933,6 +4933,21 @@ DESCRIPTION
 
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
+
+EXAMPLES
+  $ shopify app security check
+
+  $ shopify app security check --include-dir ../backend
+
+  $ shopify app security check --path extensions --config production --include-dir .
+
+  $ shopify app security check --without-app-config --client-id <client-id>
+
+  $ shopify app security check --path app --include-dir . --exclude marketing --exclude "**/generated"
+
+  $ shopify app security check --no-git-ignore --exclude local-data
+
+  $ shopify app security check --include-dir ../backend --list-files
 ```
 
 ## `shopify app security clean`
