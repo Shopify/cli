@@ -4,9 +4,11 @@ import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-l
 import {linkedAppContext} from '../../../services/app-context.js'
 import {storeContext} from '../../../services/store-context.js'
 import {importDeclarativeDefinitions} from '../../../services/generate/shop-import/declarative-definitions.js'
+import {importCustomDataDefinitionsJsonOutputSchema} from '../../../services/generate/shop-import/declarative-definitions/types.js'
+import {renderImportDeclarativeDefinitionsResult} from '../../../services/generate/shop-import/declarative-definitions/result.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {outputContent} from '@shopify/cli-kit/node/output'
 
@@ -15,11 +17,16 @@ export default class ImportCustomDataDefinitions extends AppLinkedCommand {
 
   static descriptionWithMarkdown = `Import metafield and metaobject definitions from your development store. [Read more about declarative custom data definitions](https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).`
 
+  static get jsonOutputSchema() {
+    return importCustomDataDefinitionsJsonOutputSchema
+  }
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
     ...appFlags,
+    ...jsonFlag,
     store: Flags.string({
       char: 's',
       description: 'Store URL. Must be an existing development or Shopify Plus sandbox store.',
@@ -34,7 +41,7 @@ export default class ImportCustomDataDefinitions extends AppLinkedCommand {
   }
 
   public async run(): Promise<AppLinkedCommandOutput> {
-    const {appContextResult, ...options} = await renderSingleTask({
+    const {appContextResult, json, ...options} = await renderSingleTask({
       title: outputContent`Loading application`,
       task: async () => {
         const {flags} = await this.parse(ImportCustomDataDefinitions)
@@ -55,6 +62,7 @@ export default class ImportCustomDataDefinitions extends AppLinkedCommand {
 
         return {
           appContextResult,
+          json: flags.json,
           appConfiguration: appContextResult.app.configuration,
           remoteApp: appContextResult.remoteApp,
           store,
@@ -62,7 +70,8 @@ export default class ImportCustomDataDefinitions extends AppLinkedCommand {
         }
       },
     })
-    await importDeclarativeDefinitions(options)
+    const result = await importDeclarativeDefinitions(options)
+    renderImportDeclarativeDefinitionsResult(result, json)
 
     return {app: appContextResult.app}
   }
