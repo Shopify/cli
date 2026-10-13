@@ -21,10 +21,8 @@ module.exports = {
 
         const argument = node.arguments[0]
         let moduleName
-        if (argument.type === 'Literal') moduleName = argument.value
-        else if (argument.type === 'TemplateLiteral' && argument.expressions.length === 0)
-          moduleName = argument.quasis[0].value.cooked
-        else if (argument.type === 'ImportExpression') moduleName = argument.source.value
+        if (argument.type === 'Literal' || argument.type === 'TemplateLiteral') moduleName = staticString(argument)
+        else if (argument.type === 'ImportExpression') moduleName = staticString(argument.source)
         if (typeof moduleName !== 'string') return
         const isFilesystemModule = moduleName.startsWith('.')
           ? /\/packages\/cli-kit\/src\/public\/node\/fs\.[jt]s$/.test(
@@ -39,11 +37,18 @@ module.exports = {
   },
 }
 
-// Accepts the global `vi`, any local name bound to `import {vi} from 'vitest'`, and `ns.vi` for `import * as ns from 'vitest'`.
+function staticString(node) {
+  if (node.type === 'Literal') return node.value
+  if (node.type === 'TemplateLiteral' && node.expressions.length === 0) return node.quasis[0].value.cooked
+  return undefined
+}
+
+// Accepts the global `vi` (undeclared or a configured global), any local name bound to
+// `import {vi} from 'vitest'`, and `ns.vi` for `import * as ns from 'vitest'`.
 function isVitestVi(scope, object) {
   if (object.type === 'Identifier') {
     const variable = findVariable(scope, object.name)
-    if (!variable) return object.name === 'vi'
+    if (!variable || variable.defs.length === 0) return object.name === 'vi'
     return variable.defs.some(
       (definition) =>
         definition.type === 'ImportBinding' &&

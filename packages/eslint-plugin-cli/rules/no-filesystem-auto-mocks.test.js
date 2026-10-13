@@ -67,6 +67,13 @@ ruleTester.run('no-filesystem-auto-mocks', rule, {
       errors: [{messageId: 'filesystemMock'}],
     },
     {filename, code: 'vi.mock(`fs`)', errors: [{messageId: 'filesystemMock'}]},
+    {filename, code: 'vi.mock(import(`node:fs`))', errors: [{messageId: 'filesystemMock'}]},
+    {
+      filename,
+      code: 'vi.mock("fs")',
+      languageOptions: {globals: {vi: 'readonly'}},
+      errors: [{messageId: 'filesystemMock'}],
+    },
     {filename: '/repo/services/widgets.spec.ts', code: 'vi.mock("fs")', errors: [{messageId: 'filesystemMock'}]},
     {filename: '/repo/services/widgets.test.mts', code: 'vi.mock("fs")', errors: [{messageId: 'filesystemMock'}]},
   ],
