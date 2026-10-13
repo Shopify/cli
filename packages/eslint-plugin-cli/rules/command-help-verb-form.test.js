@@ -155,6 +155,9 @@ ruleTester.run('command-help-verb-form', rule, {
       ['1. Run the checks.', 'Run'],
       ['## Create a widget', 'Create'],
       ['> Create a widget.', 'Create'],
+      ['***Create*** a widget.', 'Create'],
+      ['___Build___ the app.', 'Build'],
+      ['- **Create** a widget.', 'Create'],
     ].map(([text, verb]) => ({
       name: `imperative after leading Markdown: ${text}`,
       filename,

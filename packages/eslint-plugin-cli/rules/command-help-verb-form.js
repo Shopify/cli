@@ -99,7 +99,7 @@ const stripLeadingMarkdown = (text) =>
   text
     .trimStart()
     .replace(/^(?:(?:[-*+]|\d+[.)])\s+|#{1,6}\s+|>\s*)+/, '')
-    .replace(/^(?:\*\*|__|\*|_)/, '')
+    .replace(/^[*_]{1,3}/, '')
 
 module.exports = {
   meta: {
