@@ -2,4 +2,4 @@
 '@shopify/cli': major
 ---
 
-Validate native `app function run --json` results without losing numeric precision, emit runner diagnostics on stderr, and avoid duplicate failure documents.
+Change `app function run --json` to emit one validated result or `{error: ...}` envelope, send diagnostics as JSON events on stderr, and exit nonzero when `success` is false.
