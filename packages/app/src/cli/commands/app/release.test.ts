@@ -7,7 +7,8 @@ import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
 import {graphqlRequestDoc} from '@shopify/cli-kit/node/api/graphql'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {outputInfo, unstyled} from '@shopify/cli-kit/node/output'
+import {renderError} from '@shopify/cli-kit/node/ui'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 import {Config} from '@oclif/core'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -95,7 +96,7 @@ describe('app release command', () => {
     })
   })
 
-  test.each(['json', 'text'])('missing version uses the shared %s error handler', async (format) => {
+  test.each(['json', 'text'])('missing version retains the %s error output', async (format) => {
     vi.stubEnv('SHOPIFY_FLAG_JSON', format === 'json' ? '1' : '0')
     const {release: releaseService} =
       await vi.importActual<typeof import('../../services/release.js')>('../../services/release.js')
@@ -136,7 +137,14 @@ describe('app release command', () => {
           expect(stderr()).toBe('')
         } else {
           expect(stdout()).toBe('')
-          expect(unstyled(stderr())).toContain('Version missing could not be found.')
+          const actualBanner = stderr()
+          await withCapturedStandardStreams(async ({stderr: expectedStderr}) => {
+            renderError({
+              headline: "Version couldn't be released.",
+              body: ['Version', {userInput: 'missing'}, 'could not be found.'],
+            })
+            expect(actualBanner).toBe(expectedStderr())
+          })
         }
       })
     })

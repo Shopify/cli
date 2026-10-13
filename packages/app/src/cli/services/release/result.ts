@@ -1,8 +1,20 @@
 import {appReleaseJsonOutputSchema, type AppReleaseResult, type ReleaseResult} from './types.js'
+import {AppVersionNotFoundError} from './errors.js'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderError, renderSuccess, type TokenItem} from '@shopify/cli-kit/node/ui'
 import type {OrganizationApp} from '../../models/organization.js'
+
+export function renderAppReleaseError(error: unknown, format: 'json' | 'text'): never {
+  if (format === 'text' && error instanceof AppVersionNotFoundError) {
+    renderError({
+      headline: "Version couldn't be released.",
+      body: ['Version', {userInput: error.versionTag}, 'could not be found.'],
+    })
+    throw new AbortSilentError()
+  }
+  throw error
+}
 
 export function renderAppReleaseResult(
   result: ReleaseResult,

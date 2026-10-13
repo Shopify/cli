@@ -8,6 +8,7 @@ import {
   OrganizationExpFlags,
 } from '../../api/graphql/business-platform-organizations/generated/organization_exp_flags.js'
 import {NoOrgError} from '../../services/dev/fetch.js'
+import {AppVersionNotFoundError} from '../../services/release/errors.js'
 import {environmentVariableNames} from '../../constants.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
@@ -702,13 +703,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const variables = {appId, versionTag}
     const result = await this.appManagementRequest({query, variables}).catch((error: unknown) => {
       if (appVersionNotFoundErrorSchema.safeParse(error).success) {
-        throw new AbortError(`Version ${versionTag} could not be found.`)
+        throw new AppVersionNotFoundError(versionTag)
       }
       throw error
     })
     const version = result.versionByTag
     if (!version) {
-      throw new AbortError(`Version ${versionTag} could not be found.`)
+      throw new AppVersionNotFoundError(versionTag)
     }
 
     return {

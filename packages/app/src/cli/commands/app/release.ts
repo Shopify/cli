@@ -1,7 +1,7 @@
 import {appFlags} from '../../flags.js'
 import {release} from '../../services/release.js'
 import {appReleaseJsonOutputSchema} from '../../services/release/types.js'
-import {renderAppReleaseResult} from '../../services/release/result.js'
+import {renderAppReleaseError, renderAppReleaseResult} from '../../services/release/result.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
@@ -79,7 +79,7 @@ export default class Release extends AppLinkedCommand {
       allowUpdates,
       allowDeletes,
       version: flags.version,
-    })
+    }).catch((error: unknown) => renderAppReleaseError(error, flags.json ? 'json' : 'text'))
     renderAppReleaseResult(result, remoteApp, flags.json ? 'json' : 'text')
     return {app}
   }
