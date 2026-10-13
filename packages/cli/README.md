@@ -4488,9 +4488,8 @@ DESCRIPTION
 
   In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing;
   copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass
-  `--print-instructions`, which prints them. This flag only controls instruction delivery; it does not bypass
-  app-selection prompts. Use `--no-input` to disable prompts. You can also run `shopify app security instructions` to
-  print, copy, or write them later.
+  `--print-instructions`, which prints them. You can also run `shopify app security instructions` to print, copy, or
+  write them later.
 ```
 
 ## `shopify app security clean`

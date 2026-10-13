@@ -301,8 +301,6 @@ describe('app security check command', () => {
     expect(SecurityCheck.descriptionWithMarkdown).toContain('copying is the default')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('shopify app security instructions')
     expect(SecurityCheck.descriptionWithMarkdown).toContain('`--print-instructions`')
-    expect(SecurityCheck.descriptionWithMarkdown).toContain('does not bypass app-selection prompts')
-    expect(SecurityCheck.descriptionWithMarkdown).toContain('`--no-input` to disable prompts')
     expect(SecurityCheck.descriptionWithMarkdown).not.toContain('`--yes`')
     expect(SecurityCheck.descriptionWithMarkdown).not.toMatch(/--findings|--clean|compile|trace/)
   })

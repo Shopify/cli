@@ -19,7 +19,7 @@ Use \`--exclude\` to skip more paths. Each value is a glob that is matched again
 
 Use \`--list-files\` to check the scope before scanning: it prints the files the check would gather, one path per line and relative to the app directory, and then stops. It writes no results and never prompts. \`--client-id\` is still checked, but doesn't change the list.
 
-In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--print-instructions\`, which prints them. This flag only controls instruction delivery; it does not bypass app-selection prompts. Use \`--no-input\` to disable prompts. You can also run \`shopify app security instructions\` to print, copy, or write them later.`
+In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass \`--print-instructions\`, which prints them. You can also run \`shopify app security instructions\` to print, copy, or write them later.`
 
   static description = this.descriptionWithoutMarkdown()
 
