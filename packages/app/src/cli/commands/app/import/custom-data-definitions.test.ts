@@ -30,7 +30,7 @@ afterEach(() => {
 const toml =
   '# namespace: $app key: color owner_type: PRODUCT\n[product.metafields.app.color]\ntype = "single_line_text_field"\n'
 
-test.each([{metafieldCount: -1}, {storeDomain: 'custom.example.com'}, {skippedSections: [{type: 'unknown'}]}])(
+test.each([{metafieldCount: -1}, {storeDomain: 123}, {skippedSections: [{type: 'unknown'}]}])(
   'rejects invalid public fields: %j',
   (fields) => {
     expect(() =>

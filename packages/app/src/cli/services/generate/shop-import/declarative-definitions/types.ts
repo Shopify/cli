@@ -17,7 +17,6 @@ export const importCustomDataDefinitionsJsonOutputSchema = defineJsonOutputSchem
       status: zod.literal('success'),
       storeDomain: zod
         .string()
-        .regex(/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/)
         .nullable()
         .describe('The full myshopify.com domain of the development store, or null when unavailable.'),
       metafieldCount: zod
