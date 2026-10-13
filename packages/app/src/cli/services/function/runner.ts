@@ -1,6 +1,6 @@
 import {functionRunnerBinary, downloadBinary} from './binaries.js'
 import {validateShopifyFunctionPackageVersion} from './build.js'
-import {functionRunJsonOutputSchema, type FunctionRunResult} from './runner/types.js'
+import {functionRunJsonOutputSchema} from './runner/types.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {exec, captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
@@ -129,7 +129,7 @@ function functionRunnerArguments(options: FunctionRunnerOptions): string[] {
 }
 
 export type FunctionExecution =
-  | {state: 'completed'; result: FunctionRunResult; exitCode: number; diagnostics: string[]}
+  | {state: 'completed'; resultJson: string; exitCode: number; diagnostics: string[]}
   | {state: 'failed'; message: string; command: string; args: string[]; exitCode: number; stderr: string}
 
 /** Runs the native JSON protocol without writing the child process's output to the terminal. */
@@ -182,7 +182,8 @@ export async function executeFunction(
   }
   return {
     state: 'completed',
-    result: parsed.data,
+    // Re-encoding parsed data would round arbitrary native payload numbers.
+    resultJson: execution.stdout.trim(),
     exitCode: execution.exitCode || Number(!parsed.data.success),
     diagnostics: execution.stderr.trim() ? [...diagnostics, execution.stderr.trim()] : diagnostics,
   }

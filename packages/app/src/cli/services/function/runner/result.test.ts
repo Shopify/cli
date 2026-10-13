@@ -18,13 +18,18 @@ function result(): FunctionRunResult {
   }
 }
 
-test('preserves native keys and payloads through the real encoder and stdout writer', async () => {
+test('preserves native keys and payloads through the stdout writer', async () => {
   const value = {...result(), extra_native_field: {nested_key: true}}
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await runWithCommandEventsForCommand(['--json'], () =>
-      presentFunctionExecution({state: 'completed', result: value, exitCode: 0, diagnostics: ['Runner warning']}),
+      presentFunctionExecution({
+        state: 'completed',
+        resultJson: JSON.stringify(value),
+        exitCode: 0,
+        diagnostics: ['Runner warning'],
+      }),
     )
-    expect(stdout()).toBe(`${functionRunJsonOutputSchema.encode(value)}\n`)
+    expect(stdout()).toBe(`${JSON.stringify(value)}\n`)
     expect(JSON.parse(stdout())).toEqual(value)
     expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', level: 'warning', message: 'Runner warning'})
   })
@@ -36,7 +41,7 @@ test('prints one failed execution result and retains its nonzero exit code', asy
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
       presentFunctionExecution({
         state: 'completed',
-        result: {...result(), success: false},
+        resultJson: JSON.stringify({...result(), success: false}),
         exitCode: 1,
         diagnostics: [],
       })

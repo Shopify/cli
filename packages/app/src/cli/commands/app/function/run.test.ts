@@ -73,6 +73,22 @@ test('writes the native result once and routes runner diagnostics to stderr', as
   )
 })
 
+test.each(['9007199254740991', '9007199254740993', '0.12345678901234567890123456789', '1e400'])(
+  'preserves native numeric tokens through validation and stdout: %s',
+  async (number) => {
+    const nativeJson = `{"name":"function.wasm","size":1,"memory_usage":64,"instructions":1000,"logs":"",
+"input":{"nested":[${number}]},"output":{"nested":{"value":${number}}},
+"extra_native_field":${number},"success":true}`
+    vi.mocked(captureOutputWithExitCode).mockResolvedValue({stdout: nativeJson, stderr: '', exitCode: 0})
+    const instance = await command(['--json', '--no-input'])
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runWithCommandEventsForCommand(instance.argv, () => instance.run())
+      expect(stdout()).toBe(`${nativeJson}\n`)
+      expect(stderr()).toBe('')
+    })
+  },
+)
+
 test.each([{argv: ['--json']}, {argv: []}])(
   'keeps target selection interactive independently of JSON: $argv',
   async ({argv}) => {

@@ -196,7 +196,7 @@ const nativeRunResult = {
 }
 
 describe('executeFunction', () => {
-  test('captures the native runner protocol as typed data', async () => {
+  test('captures the validated native runner protocol', async () => {
     const functionExtension = await testFunctionExtension()
     vi.mocked(captureOutputWithExitCode).mockResolvedValue({
       stdout: JSON.stringify(nativeRunResult),
@@ -205,7 +205,7 @@ describe('executeFunction', () => {
     })
     await expect(executeFunction({functionExtension, input: '{}', export: 'run'})).resolves.toEqual({
       state: 'completed',
-      result: nativeRunResult,
+      resultJson: JSON.stringify(nativeRunResult),
       diagnostics: ['Runner diagnostic'],
       exitCode: 0,
     })
@@ -225,7 +225,7 @@ describe('executeFunction', () => {
     })
     await expect(executeFunction({functionExtension})).resolves.toMatchObject({
       state: 'completed',
-      result: {success: false},
+      resultJson: JSON.stringify({...nativeRunResult, success: false}),
       exitCode: 1,
     })
   })
