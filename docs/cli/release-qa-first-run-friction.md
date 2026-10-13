@@ -12,9 +12,16 @@ and Windows. The candidate eventually passed the required functional coverage,
 but setup and attribution required many retries that were unrelated to product
 regressions.
 
-This is a sanitized synthesis of four detailed QA notebooks. Raw logs are kept
-out of the repository because they contain account, store, app, request, and
-local-machine details.
+This summary is a sanitized synthesis of four detailed QA notebooks. At the
+experiment owner's request, the original logs are also attached unchanged:
+
+- [Stable 4.8.5 macOS](release-qa-first-run-logs/shopify-cli-4-8-5-macos-qa/LOG.md)
+- [4.9 candidate macOS](release-qa-first-run-logs/shopify-cli-4-9-0-candidate-macos-qa/LOG.md)
+- [4.9 nightly Linux and Windows](release-qa-first-run-logs/shopify-cli-4-9-0-nightly-linux-windows-qa/LOG.md)
+- [4.9 pre-candidate nightly macOS](release-qa-first-run-logs/shopify-cli-4-9-0-nightly-macos-qa/LOG.md)
+
+The attached logs contain original account, store, app, request, and
+local-machine details and should be treated as investigation artifacts.
 
 ## Executive summary
 
