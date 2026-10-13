@@ -390,6 +390,109 @@ describe('Storefront API', () => {
         ),
       )
     })
+
+    test('follows a same-origin redirect that still carries preview_theme_id and keeps the final cookie', async () => {
+      // Given: every market uses a subfolder, so SFR redirects before storing the preview
+      vi.mocked(shopifyFetch)
+        .mockResolvedValueOnce(
+          response({
+            status: 302,
+            headers: {
+              'set-cookie': '_shopify_essential=:FIRST:; path=/; HttpOnly',
+              location: '/en-us?preview_theme_id=123456&_fd=0&pb=0',
+            },
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 302,
+            headers: {
+              'set-cookie': '_shopify_essential=:SECOND:; path=/; HttpOnly',
+              location: '/en-us?_fd=0&pb=0',
+            },
+          }),
+        )
+
+      // When
+      const cookies = await getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+      )
+
+      // Then
+      expect(cookies).toEqual({_shopify_essential: ':SECOND:'})
+      expect(shopifyFetch).toHaveBeenNthCalledWith(
+        2,
+        'https://example-store.myshopify.com/en-us?preview_theme_id=123456&_fd=0&pb=0',
+        expect.objectContaining({
+          method: 'HEAD',
+          headers: expect.objectContaining({Cookie: '_shopify_essential=:FIRST:'}),
+        }),
+      )
+    })
+
+    test('does not follow a redirect to another host', async () => {
+      // Given
+      vi.mocked(shopifyFetch)
+        .mockResolvedValueOnce(
+          response({
+            status: 302,
+            headers: {
+              'set-cookie': '_shopify_essential=:FIRST:; path=/; HttpOnly',
+              location: '/en-us?preview_theme_id=123456&_fd=0&pb=0',
+            },
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 302,
+            headers: {location: 'https://www.example-store.com/en-us?preview_theme_id=123456&_fd=0&pb=0'},
+          }),
+        )
+
+      // When
+      const cookies = await getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+      )
+
+      // Then
+      expect(cookies).toEqual({_shopify_essential: ':FIRST:'})
+      expect(shopifyFetch).toHaveBeenCalledTimes(2)
+    })
+
+    test('stops following once the redirect no longer carries preview_theme_id', async () => {
+      // Given: hop 2 is ThemeSwitcher storing the preview, which strips the param and sets no cookie
+      vi.mocked(shopifyFetch)
+        .mockResolvedValueOnce(
+          response({
+            status: 302,
+            headers: {
+              'set-cookie': '_shopify_essential=:FIRST:; path=/; HttpOnly',
+              location: '/en-us?preview_theme_id=123456&_fd=0&pb=0',
+            },
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 302,
+            headers: {location: '/en-us?_fd=0&pb=0'},
+          }),
+        )
+
+      // When
+      const cookies = await getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+      )
+
+      // Then
+      expect(cookies).toEqual({_shopify_essential: ':FIRST:'})
+      expect(shopifyFetch).toHaveBeenCalledTimes(2)
+    })
   })
 
   // Tests rely on this function because the 'packages/theme' package cannot
