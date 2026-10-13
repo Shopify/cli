@@ -10,10 +10,6 @@ ruleTester.run('no-filesystem-auto-mocks', rule, {
   valid: [
     {filename, code: 'vi.mock("./service")'},
     {filename, code: 'vi.mock("../fs.js")'},
-    {filename, code: 'import {vi as v} from "vitest"; v.mock("fs")'},
-    {filename, code: 'import * as vitest from "vitest"; vitest.vi.mock("fs")'},
-    {filename, code: 'vi.mock(`fs`)'},
-    {filename: '/repo/services/widgets.spec.ts', code: 'vi.mock("fs")'},
     {filename, code: 'vi.mock("fs", async (importOriginal) => ({...await importOriginal()}))'},
     {filename: '/repo/packages/cli-kit/src/public/node/context/local.test.ts', code: 'vi.mock("../fs.js", () => ({}))'},
     {filename: '/repo/packages/cli-kit/src/public/node/context/local.test.ts', code: 'vi.mock("./fs.js")'},
@@ -26,6 +22,12 @@ ruleTester.run('no-filesystem-auto-mocks', rule, {
     {filename, code: 'import {vi} from "another-library"; vi.mock("node:fs")'},
     {filename, code: 'vi.mock(moduleName)'},
     {filename: '/repo/services/widgets.ts', code: 'vi.mock("node:fs")'},
+    {filename, code: 'import {vi as v} from "another-library"; v.mock("fs")'},
+    {filename, code: 'import * as other from "another-library"; other.vi.mock("fs")'},
+    {filename, code: 'import * as vitest from "vitest"; vitest.vi.mock("./service")'},
+    // eslint-disable-next-line no-template-curly-in-string
+    {filename, code: 'vi.mock(`${prefix}fs`)'},
+    {filename, code: 'v.mock("fs")'},
   ],
   invalid: [
     {filename, code: 'vi.mock("node:fs")', errors: [{messageId: 'filesystemMock'}]},
@@ -57,5 +59,15 @@ ruleTester.run('no-filesystem-auto-mocks', rule, {
     {filename, code: 'vi.mock("@shopify/cli-kit/node/fs")', errors: [{messageId: 'filesystemMock'}]},
     {filename, code: 'import {vi} from "vitest"; vi.mock("fs")', errors: [{messageId: 'filesystemMock'}]},
     {filename, code: 'vi.mock(import("node:fs"))', errors: [{messageId: 'filesystemMock'}]},
+    {filename, code: 'import {vi as v} from "vitest"; v.mock("fs")', errors: [{messageId: 'filesystemMock'}]},
+    {filename, code: 'import * as vitest from "vitest"; vitest.vi.mock("fs")', errors: [{messageId: 'filesystemMock'}]},
+    {
+      filename,
+      code: 'import * as vitest from "vitest"; vitest.vi.doMock("node:fs/promises")',
+      errors: [{messageId: 'filesystemMock'}],
+    },
+    {filename, code: 'vi.mock(`fs`)', errors: [{messageId: 'filesystemMock'}]},
+    {filename: '/repo/services/widgets.spec.ts', code: 'vi.mock("fs")', errors: [{messageId: 'filesystemMock'}]},
+    {filename: '/repo/services/widgets.test.mts', code: 'vi.mock("fs")', errors: [{messageId: 'filesystemMock'}]},
   ],
 })
