@@ -2,10 +2,36 @@ import {mockAndCaptureStandardStreams, withCapturedStandardStreams} from './outp
 import {outputInfo, outputResult} from '../output.js'
 import {isUnitTest} from '../context/local.js'
 import {environmentVariables} from '../../../private/node/constants.js'
+import {renderInfo} from '../ui.js'
+import {flush} from '@oclif/core'
 import {describe, expect, test, vi} from 'vitest'
 import type {CapturedStandardStreams} from './output.js'
 
 describe('withCapturedStandardStreams', () => {
+  test('cleans up Oclif flush listeners while retaining existing stream listeners', async () => {
+    const existingListener = vi.fn()
+    process.stdout.once('drain', existingListener)
+    const originalListeners = process.stdout.rawListeners('drain')
+    try {
+      await withCapturedStandardStreams(async () => {
+        await flush()
+        expect(process.stdout.listenerCount('drain')).toBe(originalListeners.length + 1)
+      })
+      expect(process.stdout.rawListeners('drain')).toEqual(originalListeners)
+      expect(existingListener).not.toHaveBeenCalled()
+    } finally {
+      process.stdout.removeListener('drain', existingListener)
+    }
+  })
+
+  test('keeps the Console constructor available to the real Ink text presenter', async () => {
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      renderInfo({headline: 'Captured text presentation.'})
+      expect(stdout()).toBe('')
+      expect(stderr()).toContain('Captured text presentation')
+    })
+  })
+
   test('captures output functions on the standard streams and disables unit-test suppression', async () => {
     expect(isUnitTest()).toBe(true)
 

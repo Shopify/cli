@@ -1,5 +1,5 @@
 import StoreCreateDev from './dev.js'
-import {createDevStore, createDevStoreJsonOutputSchema} from '../../../services/store/create/dev.js'
+import {createDevStore} from '../../../services/store/create/dev.js'
 import {storeNamePrompt, storePlanPrompt, storeDemoDataPrompt} from '../../../prompts/store.js'
 import {selectOrg} from '@shopify/organizations'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -41,10 +41,6 @@ beforeEach(() => {
 })
 
 describe('store create dev command', () => {
-  test('exposes the output schema', () => {
-    expect(StoreCreateDev.jsonOutputSchema).toBe(createDevStoreJsonOutputSchema)
-  })
-
   test('resolves the organization and passes parsed flags through to the service', async () => {
     await StoreCreateDev.run([
       '--name',
@@ -65,29 +61,6 @@ describe('store create dev command', () => {
       withDemoData: false,
       country: undefined,
       json: false,
-    })
-  })
-
-  test('passes json flag through to the service', async () => {
-    await StoreCreateDev.run([
-      '--name',
-      'my-test-store',
-      '--json',
-      '--plan',
-      'plus',
-      '--organization-id',
-      '12345',
-      '--no-demo-data',
-    ])
-
-    expect(createDevStore).toHaveBeenCalledWith({
-      name: 'my-test-store',
-      organization: defaultOrg,
-      plan: 'plus',
-      featurePreview: undefined,
-      withDemoData: false,
-      country: undefined,
-      json: true,
     })
   })
 
@@ -253,7 +226,6 @@ describe('store create dev command', () => {
     expect(StoreCreateDev.flags['feature-preview']).toBeDefined()
     expect(StoreCreateDev.flags['demo-data']).toBeDefined()
     expect(StoreCreateDev.flags.country).toBeDefined()
-    expect(StoreCreateDev.flags.json).toBeDefined()
   })
 
   test('outputs structured JSON error when --json is active and service throws AbortError', async () => {

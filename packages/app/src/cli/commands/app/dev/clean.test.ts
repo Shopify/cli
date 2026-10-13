@@ -9,61 +9,77 @@ import {
   testOrganizationStore,
   testProject,
 } from '../../../models/app/app.test-data.js'
-import {Config} from '@oclif/core'
-import {afterEach, expect, test, vi} from 'vitest'
-import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
-import {handler} from '@shopify/cli-kit/node/error'
+import {expect, vi} from 'vitest'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 
 vi.mock('../../../services/app-context.js')
 vi.mock('../../../services/store-context.js')
 
-afterEach(() => vi.unstubAllEnvs())
+let client: ReturnType<typeof testDeveloperPlatformClient>
+const userErrors = [{message: 'Preview cannot be stopped', code: 'UPSTREAM_ERROR'}]
 
-async function runCommand(response: unknown = {devSessionDelete: {userErrors: []}}, diagnostic = false) {
-  const appContext = {
-    app: testAppLinked(),
-    remoteApp: testOrganizationApp({title: 'Test App', apiKey: 'public-client-id'}),
-    developerPlatformClient: testDeveloperPlatformClient({devSessionDelete: vi.fn().mockResolvedValue(response)}),
-    organization: testOrganization(),
-    specifications: [],
-    project: testProject(),
-    activeConfig: {} as never,
-  }
-  vi.mocked(linkedAppContext).mockImplementation(async () => {
-    if (diagnostic) outputInfo('Using the selected app.')
-    return appContext
-  })
-  vi.mocked(storeContext).mockResolvedValue(testOrganizationStore({shopDomain: 'test-store.myshopify.com'}))
-  const command = new DevClean(['--json'], await Config.load())
-  return runWithCommandEventsForCommand(['--json'], () => command.run())
-}
-
-test('writes one public JSON result with diagnostics on stderr', async () => {
-  await withCapturedStandardStreams(async ({stdout, stderr}) => {
-    await runCommand(undefined, true)
-    expect(JSON.parse(stdout())).toEqual({
-      status: 'success',
-      app: {name: 'Test App', clientId: 'public-client-id'},
-      storeDomain: 'test-store.myshopify.com',
+describeJsonCommand({
+  command: DevClean,
+  commandId: 'app:dev:clean',
+  moduleURL: new URL('../../../../../../cli/bin/dev.js', import.meta.url).href,
+  args: [],
+  expectedResult: {
+    status: 'success',
+    app: {name: 'Test App', clientId: 'public-client-id'},
+    storeDomain: 'test-store.myshopify.com',
+  },
+  expectedSchema: {type: 'object', required: ['status', 'app', 'storeDomain'], additionalProperties: false},
+  setup: () => {
+    client = testDeveloperPlatformClient({
+      devSessionDelete: vi.fn().mockResolvedValue({devSessionDelete: {userErrors: []}}),
     })
-    expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', message: 'Using the selected app.'})
-  })
-})
-
-test('writes one fatal JSON document when deletion returns user errors', async () => {
-  vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-  const userErrors = [{message: 'Preview cannot be stopped', code: 'UPSTREAM_ERROR'}]
-  await withCapturedStandardStreams(async ({stdout, stderr}) => {
-    await runCommand({devSessionDelete: {userErrors}}).catch(handler)
-    expect(JSON.parse(stdout())).toEqual({
+    vi.mocked(linkedAppContext).mockResolvedValue({
+      app: testAppLinked(),
+      remoteApp: testOrganizationApp({title: 'Test App', apiKey: 'public-client-id'}),
+      developerPlatformClient: client,
+      organization: testOrganization(),
+      specifications: [],
+      project: testProject(),
+      activeConfig: {} as never,
+    })
+    vi.mocked(storeContext).mockResolvedValue(testOrganizationStore({shopDomain: 'test-store.myshopify.com'}))
+  },
+  assertExecuted: () => {
+    expect(linkedAppContext).toHaveBeenCalledOnce()
+    expect(storeContext).toHaveBeenCalledOnce()
+    expect(client.devSessionDelete).toHaveBeenCalledExactlyOnceWith({shopFqdn: 'test-store.myshopify.com', appId: '1'})
+  },
+  assertNotExecuted: () => {
+    expect(linkedAppContext).not.toHaveBeenCalled()
+    expect(storeContext).not.toHaveBeenCalled()
+    expect(client.devSessionDelete).not.toHaveBeenCalled()
+  },
+  textOutput: ({stdout, stderr}) => {
+    expect(stdout).toBe('')
+    expect(stderr).toContain('Dev preview stopped.')
+    expect(stderr).toContain('test-store.myshopify.com')
+  },
+  diagnostics: {
+    setup: () => {
+      vi.mocked(linkedAppContext).mockImplementationOnce(async (options) => {
+        outputInfo('Using the selected app.')
+        return vi.mocked(linkedAppContext).getMockImplementation()!(options)
+      })
+    },
+    expectedEvents: [{type: 'diagnostic', message: 'Using the selected app.'}],
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(client.devSessionDelete).mockResolvedValue({devSessionDelete: {userErrors}})
+    },
+    expectedError: {
       error: {
         type: 'abort',
         message: 'Failed to stop the dev preview: Preview cannot be stopped',
         details: {userErrors},
       },
-    })
-    expect(stderr()).toBe('')
-  })
+    },
+    exitCode: 1,
+  },
 })

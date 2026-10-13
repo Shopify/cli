@@ -75,7 +75,7 @@ export function mockAndCaptureStandardStreams(): StandardStreamsMock {
   const stderr = captureStream(process.stderr)
   // Vitest intercepts console output before it reaches the streams; use Node's console to exercise the writers.
   const originalConsole = globalThis.console
-  globalThis.console = new Console(process.stdout, process.stderr)
+  globalThis.console = Object.assign(new Console(process.stdout, process.stderr), {Console})
 
   return {
     stdout: stdout.output,
@@ -91,6 +91,7 @@ export function mockAndCaptureStandardStreams(): StandardStreamsMock {
 function captureStream(stream: NodeJS.WriteStream) {
   const chunks: Buffer[] = []
   const originalWrite = stream.write
+  const originalDrainListeners = new Set(stream.rawListeners('drain'))
   stream.write = (
     chunk: string | Uint8Array,
     encodingOrCallback?: BufferEncoding | ((error?: Error | null) => void),
@@ -107,6 +108,10 @@ function captureStream(stream: NodeJS.WriteStream) {
     output: () => Buffer.concat(chunks).toString('utf8'),
     restore: () => {
       stream.write = originalWrite
+      // Captured writes always succeed, so Oclif's flush listener never receives a drain event.
+      for (const listener of stream.rawListeners('drain')) {
+        if (!originalDrainListeners.has(listener)) stream.removeListener('drain', listener as () => void)
+      }
     },
   }
 }

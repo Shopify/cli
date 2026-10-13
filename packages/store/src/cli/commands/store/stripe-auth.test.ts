@@ -1,5 +1,4 @@
 import StoreStripeAuth, {readSignupJwtFromStdin} from './stripe-auth.js'
-import {storeAuthJsonOutputSchema} from '../../services/store/auth/types.js'
 import {authenticateStoreWithApp} from '../../services/store/auth/index.js'
 import {createStoreAuthPresenter} from '../../services/store/auth/result.js'
 import {isStdinPiped} from '@shopify/cli-kit/node/system'
@@ -38,35 +37,11 @@ describe('store stripe-auth command', () => {
     )
   })
 
-  test('passes a json presenter when --json is provided', async () => {
-    await StoreStripeAuth.run([
-      '--store',
-      'shop.myshopify.com',
-      '--scopes',
-      'read_products',
-      '--signup',
-      'signed.signup.jwt',
-      '--json',
-    ])
-
-    expect(createStoreAuthPresenter).toHaveBeenCalledWith('json')
-    expect(authenticateStoreWithApp).toHaveBeenCalledWith(
-      {
-        store: 'shop.myshopify.com',
-        scopes: 'read_products',
-        signup: 'signed.signup.jwt',
-      },
-      {presenter: {format: 'json'}},
-    )
-  })
-
   test('defines the expected flags', () => {
-    expect(StoreStripeAuth.jsonOutputSchema).toBe(storeAuthJsonOutputSchema)
     expect(StoreStripeAuth.flags.store).toBeDefined()
     expect(StoreStripeAuth.flags.scopes).toBeDefined()
     expect(StoreStripeAuth.flags.signup).toBeDefined()
     expect(StoreStripeAuth.flags.signup.required).toBe(false)
-    expect(StoreStripeAuth.flags.json).toBeDefined()
     expect('port' in StoreStripeAuth.flags).toBe(false)
     expect('client-secret-file' in StoreStripeAuth.flags).toBe(false)
   })

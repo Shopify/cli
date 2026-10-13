@@ -1,67 +1,57 @@
 import Build from './build.js'
 import build from '../../services/build.js'
 import {localAppContext} from '../../services/app-context.js'
-import {appBuildJsonOutputSchema} from '../../services/build/types.js'
 import {testApp, testProject} from '../../models/app/app.test-data.js'
 import {appFlags} from '../../flags.js'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
-import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {tempDirectory, rmdir} from '@shopify/cli-kit/node/fs'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {expect, test, vi} from 'vitest'
-import {unstyled} from '@shopify/cli-kit/node/output'
 
 vi.mock('../../services/build.js')
 vi.mock('../../services/app-context.js')
 
-function setup(directory: string) {
-  const app = testApp({name: 'Example app', directory, webs: []})
-  vi.mocked(localAppContext).mockResolvedValue({app, project: testProject(), activeConfig: {} as never})
-  vi.mocked(build).mockResolvedValue({status: 'success', appName: app.name})
-  return app
-}
+let directory: string
 
-test('declares JSON/schema/help and retains app and inherited flags', () => {
-  expect(Build.flags.json).toBeDefined()
-  expect(Build.flags.path).toBe(appFlags.path)
-  expect(Build.baseFlags).toHaveProperty('json-schema')
-  expect(Build.baseFlags['auth-alias']).toBeDefined()
-  expect(Build.jsonOutputSchema).toBe(appBuildJsonOutputSchema)
-  expect(Build.descriptionForHelp()).toContain('AppBuildResult')
+describeJsonCommand({
+  command: Build,
+  commandId: 'app:build',
+  moduleURL: new URL('../../../../../cli/bin/dev.js', import.meta.url).href,
+  args: () => ['--path', directory, '--skip-dependencies-installation'],
+  expectedResult: {status: 'success'},
+  expectedSchema: {type: 'object', required: ['status'], additionalProperties: false},
+  setup: () => {
+    directory = tempDirectory()
+    const app = testApp({name: 'Example app', directory, webs: []})
+    vi.mocked(localAppContext).mockResolvedValue({app, project: testProject(), activeConfig: {} as never})
+    vi.mocked(build).mockResolvedValue({status: 'success', appName: app.name})
+    const fixtureDirectory = directory
+    return () => rmdir(fixtureDirectory)
+  },
+  assertExecuted: () => {
+    expect(localAppContext).toHaveBeenCalledExactlyOnceWith({directory, userProvidedConfigName: undefined})
+    expect(build).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({skipDependenciesInstallation: true}))
+  },
+  assertNotExecuted: () => {
+    expect(localAppContext).not.toHaveBeenCalled()
+    expect(build).not.toHaveBeenCalled()
+  },
+  textOutput: ({stdout, stderr}) => {
+    expect(stdout).toBe('')
+    expect(stderr).toContain('Example app built!')
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(build).mockRejectedValue(new AbortSilentError())
+    },
+    expectedError: {
+      error: {type: 'abort', message: 'The app build did not complete. See the build diagnostics for details.'},
+    },
+    exitCode: 1,
+  },
 })
 
-test.each([['--json'], ['--json', '--no-input'], ['--no-input']])(
-  'JSON and no-input remain independent: %j',
-  async (...flags) => {
-    await inTemporaryDirectory(async (directory) => {
-      setup(directory)
-      await withCapturedStandardStreams(async ({stdout, stderr}) => {
-        await Build.run(['--path', directory, '--skip-dependencies-installation', ...flags], import.meta.url)
-        if (flags.includes('--json')) {
-          expect(JSON.parse(stdout())).toStrictEqual({status: 'success'})
-        } else {
-          expect(stdout()).toBe('')
-          expect(unstyled(stderr())).toContain('Example app built!')
-        }
-      })
-      expect(build).toHaveBeenCalledWith(expect.objectContaining({skipDependenciesInstallation: true}))
-    })
-  },
-)
-
-test('silent build failure becomes one fatal JSON document, not an empty stdout', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    setup(directory)
-    vi.mocked(build).mockRejectedValueOnce(new AbortSilentError())
-    vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-    try {
-      await withCapturedStandardStreams(async ({stdout}) => {
-        await expect(Build.run(['--path', directory, '--json'], import.meta.url)).rejects.toThrow()
-        expect(JSON.parse(stdout())).toMatchObject({
-          error: {type: 'abort', message: 'The app build did not complete. See the build diagnostics for details.'},
-        })
-      })
-    } finally {
-      vi.unstubAllEnvs()
-    }
-  })
+test('retains app and inherited authentication flags', () => {
+  expect(Build.flags.path).toBe(appFlags.path)
+  expect(Build.baseFlags['auth-alias']).toBeDefined()
 })

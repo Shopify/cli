@@ -325,9 +325,15 @@ check file receipts against real files in temporary directories and verify error
 
 Use `describeJsonCommand` from `@shopify/cli-kit/node/testing/json-command` for the shared command checks. Supply the
 command ID, valid arguments, independent expected result and schema, text output, and callbacks to set up and check
-service calls. The suite runs the real launcher with `--json`, `-j`, the JSON environment flag, and both `--no-input`
-output modes. It checks the help description and discovers the schema without required inputs, command hooks, or service
-calls. Optional diagnostic and failure fixtures check stderr routing and fatal error output with its exit code.
+service calls. The suite runs the real launcher with `--json`, `-j`, the JSON environment flag, and both output modes.
+It also tests `--no-input` when the command supports that flag. It checks the help description and discovers the schema
+without required inputs, command hooks, or service calls. Optional diagnostic and failure fixtures check stderr routing
+and fatal error output with its exit code.
+
+For real temporary files, let `setup` return a cleanup callback and use callbacks for `args` and `expectedResult` when
+paths depend on the fixture. The suite awaits cleanup after each test. Use fixed text strings for exact byte contracts,
+or a `textOutput` assertion callback for terminal banners. An `expectedEvents` callback can check progress invariants
+when the task count varies; every stderr line must still be a JSON event. `assertExecuted` receives the output format.
 
 Keep command-specific input, strict schema validation, prompts, cancellations, partial results, and real file tests
 beside the command. See `packages/cli/src/cli/commands/auth/logout-json.test.ts` for an example. The suite replaces process

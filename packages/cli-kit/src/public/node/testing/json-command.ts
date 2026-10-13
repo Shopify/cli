@@ -1,31 +1,39 @@
 import {withCapturedStandardStreams, mockAndCaptureOutput} from './output.js'
 import {launchCLI} from '../cli-launcher.js'
 import {ShopifyConfig} from '../custom-oclif-loader.js'
+import {expectCommandEvents, type CommandEventExpectation} from '../../../private/node/testing/json-command-events.js'
 import {unstyled} from '../output.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import type BaseCommand from '../base-command.js'
 import type {JsonOutputSchema} from '../json-output-schema.js'
 
+type JsonCommandResult = Record<string, unknown> | ReadonlyArray<unknown>
+type TestCleanup = () => void | Promise<void>
+interface TextOutput {
+  stdout: string
+  stderr: string
+}
+
 interface JsonCommandTestOptions {
   command: typeof BaseCommand & {readonly jsonOutputSchema: JsonOutputSchema}
   commandId: string
   moduleURL: string
-  args: string[]
-  expectedResult: Record<string, unknown>
-  expectedEvents?: Record<string, unknown>[]
+  args: string[] | (() => string[])
+  expectedResult: JsonCommandResult | (() => JsonCommandResult)
+  expectedEvents?: CommandEventExpectation
   expectedSchema: Record<string, unknown>
-  setup: () => void | Promise<void>
-  assertExecuted: () => void
+  setup: () => void | TestCleanup | Promise<void | TestCleanup>
+  assertExecuted: (format: 'text' | 'json') => void
   assertNotExecuted: () => void
-  textOutput: {stdout: string; stderr: string}
+  textOutput: TextOutput | ((output: TextOutput) => void)
   diagnostics?: {
     setup: () => void | Promise<void>
-    expectedEvents: Record<string, unknown>[]
+    expectedEvents: CommandEventExpectation
   }
   failure?: {
     setup: () => void | Promise<void>
     expectedError: Record<string, unknown>
-    expectedEvents?: Record<string, unknown>[]
+    expectedEvents?: CommandEventExpectation
     exitCode: number
   }
 }
@@ -39,11 +47,12 @@ interface JsonCommandTestOptions {
  * @param options - The command, fixtures, expected output, and service assertions.
  */
 export function describeJsonCommand(options: JsonCommandTestOptions): void {
-  const {command, commandId, moduleURL, args, expectedResult} = options
+  const {command, commandId, moduleURL} = options
 
   describe.sequential(`${commandId} JSON contract`, () => {
     let originalExitCode: typeof process.exitCode
     let restoreMocks: () => void
+    let cleanup: void | TestCleanup
 
     beforeEach(async () => {
       originalExitCode = process.exitCode
@@ -59,17 +68,25 @@ export function describeJsonCommand(options: JsonCommandTestOptions): void {
         hooks.mockRestore()
         exit.mockRestore()
       }
-      await options.setup()
+      cleanup = undefined
+      cleanup = await options.setup()
     })
 
-    afterEach(() => {
-      restoreMocks()
-      process.exitCode = originalExitCode
-      vi.unstubAllEnvs()
-      mockAndCaptureOutput().clear()
+    afterEach(async () => {
+      try {
+        await cleanup?.()
+      } finally {
+        restoreMocks()
+        process.exitCode = originalExitCode
+        vi.unstubAllEnvs()
+        mockAndCaptureOutput().clear()
+      }
     })
 
-    const run = async (flags: string[], commandArgs = args) => {
+    const run = async (
+      flags: string[],
+      commandArgs = typeof options.args === 'function' ? options.args() : options.args,
+    ) => {
       const argv = [...commandId.split(':'), ...commandArgs, ...flags]
       const originalArgv = process.argv
       const restoreArgv = () => {
@@ -85,21 +102,17 @@ export function describeJsonCommand(options: JsonCommandTestOptions): void {
     }
 
     const expectResult = (stdout: string) => {
+      const expectedResult =
+        typeof options.expectedResult === 'function' ? options.expectedResult() : options.expectedResult
       expect(stdout).toBe(`${JSON.stringify(expectedResult, null, 2)}\n`)
       command.jsonOutputSchema.validate(JSON.parse(stdout))
-      options.assertExecuted()
+      options.assertExecuted('json')
       expect(process.exit).not.toHaveBeenCalled()
       expect(process.exitCode ?? 0).toBe(0)
     }
 
     const expectEvents = (stderr: string, expectedEvents = options.expectedEvents ?? []) => {
-      const events = stderr.trim()
-        ? stderr
-            .trim()
-            .split('\n')
-            .map((line) => JSON.parse(line))
-        : []
-      expect(events).toMatchObject(expectedEvents)
+      expectCommandEvents(stderr, expectedEvents)
     }
 
     test.each(['--json', '-j'])('writes one result with %s', async (flag) => {
@@ -119,21 +132,29 @@ export function describeJsonCommand(options: JsonCommandTestOptions): void {
       })
     })
 
-    test.each([false, true])('keeps no-input independent from JSON: %s', async (json) => {
-      await withCapturedStandardStreams(async ({stdout, stderr}) => {
-        await run(['--no-input', ...(json ? ['--json'] : [])])
-        if (json) {
-          expectResult(stdout())
-          expectEvents(stderr())
-        } else {
-          expect(stdout()).toBe(options.textOutput.stdout)
-          expect(unstyled(stderr())).toBe(options.textOutput.stderr)
-          options.assertExecuted()
-          expect(process.exit).not.toHaveBeenCalled()
-          expect(process.exitCode ?? 0).toBe(0)
-        }
-      })
-    })
+    const supportsNoInput = 'no-input' in (command.flags ?? {}) || 'no-input' in command.baseFlags
+    test.each([false, true])(
+      supportsNoInput ? 'keeps no-input independent from JSON: %s' : 'selects text and JSON output independently: %s',
+      async (json) => {
+        await withCapturedStandardStreams(async ({stdout, stderr}) => {
+          await run([...(supportsNoInput ? ['--no-input'] : []), ...(json ? ['--json'] : [])])
+          if (json) {
+            expectResult(stdout())
+            expectEvents(stderr())
+          } else {
+            const textOutput = {stdout: stdout(), stderr: unstyled(stderr())}
+            if (typeof options.textOutput === 'function') {
+              options.textOutput(textOutput)
+            } else {
+              expect(textOutput).toEqual(options.textOutput)
+            }
+            options.assertExecuted('text')
+            expect(process.exit).not.toHaveBeenCalled()
+            expect(process.exitCode ?? 0).toBe(0)
+          }
+        })
+      },
+    )
 
     test('exposes the result schema in help', () => {
       expect(command.description).toContain(
@@ -172,7 +193,7 @@ export function describeJsonCommand(options: JsonCommandTestOptions): void {
           await run(['--json'])
           expect(JSON.parse(stdout())).toEqual(failure.expectedError)
           expectEvents(stderr(), failure.expectedEvents ?? [])
-          options.assertExecuted()
+          options.assertExecuted('json')
           expect(process.exit).toHaveBeenCalledExactlyOnceWith(failure.exitCode)
         })
       })
