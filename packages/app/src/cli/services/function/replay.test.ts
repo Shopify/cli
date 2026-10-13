@@ -51,7 +51,7 @@ describe('replay', () => {
     await writeFunctionRunFiles(app.getLogsDir(), [file])
     const result = {
       state: 'completed' as const,
-      result: {
+      resultJson: JSON.stringify({
         name: 'function.wasm',
         size: 1,
         memory_usage: 64,
@@ -60,7 +60,7 @@ describe('replay', () => {
         input: {},
         output: {},
         success: true,
-      },
+      }),
       exitCode: 0,
       diagnostics: [],
     }

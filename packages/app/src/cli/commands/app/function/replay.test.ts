@@ -57,7 +57,7 @@ async function command(argv: string[], directory: string) {
   return new FunctionReplay(argv, await Config.load())
 }
 
-test('replays a saved log through the real native encoder and output writer', async () => {
+test('replays a saved log through native validation and the output writer', async () => {
   await inTemporaryDirectory(async (directory) => {
     vi.mocked(captureOutputWithExitCode).mockResolvedValue({
       stdout: JSON.stringify(nativeResult),
@@ -77,6 +77,21 @@ test('replays a saved log through the real native encoder and output writer', as
     )
     expect(renderReplay).not.toHaveBeenCalled()
     expect(selectFunctionRunPrompt).not.toHaveBeenCalled()
+  })
+})
+
+test('preserves native numeric tokens in finite replay output', async () => {
+  await inTemporaryDirectory(async (directory) => {
+    const nativeJson = `{"name":"function.wasm","size":1,"memory_usage":64,"instructions":1000,"logs":"",
+"input":{"nested":[9007199254740993]},
+"output":{"nested":[9007199254740993,0.12345678901234567890123456789]},"success":true}`
+    vi.mocked(captureOutputWithExitCode).mockResolvedValue({stdout: nativeJson, stderr: '', exitCode: 0})
+    const instance = await command(['--json', '--no-watch', '--log', 'abcdef'], directory)
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runWithCommandEventsForCommand(instance.argv, () => instance.run())
+      expect(stdout()).toBe(`${nativeJson}\n`)
+      expect(stderr()).toBe('')
+    })
   })
 })
 
