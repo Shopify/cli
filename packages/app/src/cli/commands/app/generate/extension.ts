@@ -1,11 +1,13 @@
 import {appFlags} from '../../../flags.js'
 import metadata from '../../../metadata.js'
 import generate from '../../../services/generate.js'
+import {appGenerateExtensionJsonOutputSchema} from '../../../services/generate/extension/types.js'
+import {renderGenerateExtensionResult} from '../../../services/generate/extension/result.js'
 import {checkFolderIsValidApp} from '../../../models/app/loader.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
-import {globalFlags, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 
 export default class AppGenerateExtension extends AppLinkedCommand {
   static summary = 'Generate a new app Extension.'
@@ -15,11 +17,16 @@ export default class AppGenerateExtension extends AppLinkedCommand {
   Each new app extension is created in a folder under \`extensions/\`. To learn more about the extensions file structure, refer to [App structure](https://shopify.dev/docs/apps/build/cli-for-apps/app-structure) and the documentation for your extension.
   `
 
+  static get jsonOutputSchema() {
+    return appGenerateExtensionJsonOutputSchema
+  }
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
     ...appFlags,
+    ...jsonFlag,
     template: requiredIfNonInteractive(
       Flags.string({
         char: 't',
@@ -70,7 +77,7 @@ export default class AppGenerateExtension extends AppLinkedCommand {
       userProvidedConfigName: flags.config,
     })
 
-    await generate({
+    const result = await generate({
       directory: flags.path,
       reset: flags.reset,
       name: flags.name,
@@ -83,6 +90,7 @@ export default class AppGenerateExtension extends AppLinkedCommand {
       remoteApp,
       developerPlatformClient,
     })
+    renderGenerateExtensionResult(result, flags.json)
 
     return {app}
   }

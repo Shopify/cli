@@ -1,5 +1,6 @@
 import generate from './generate.js'
 import {generateExtensionTemplate} from './generate/extension.js'
+import {renderGenerateExtensionResult} from './generate/extension/result.js'
 import {loadApp} from '../models/app/loader.js'
 import {
   testAppLinked,
@@ -64,7 +65,7 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('subscription_ui')
 
     // When
-    await generate({
+    const result = await generate({
       directory: '/',
       reset: false,
       app,
@@ -73,6 +74,19 @@ describe('generate', () => {
       specifications,
       developerPlatformClient,
     })
+
+    expect(outputInfo.info()).toBe('')
+    expect(result).toEqual({
+      status: 'success',
+      extension: {
+        directory: joinPath('extensions', 'name'),
+        extensionTemplate: expect.objectContaining({identifier: 'subscription_ui'}),
+        name: 'subscription_ui',
+        flavor: 'vanilla-js',
+      },
+      packageManager: 'yarn',
+    })
+    renderGenerateExtensionResult(result)
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -94,7 +108,7 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('theme_app_extension')
 
     // When
-    await generate({
+    const result = await generate({
       directory: '/',
       reset: false,
       app,
@@ -103,6 +117,7 @@ describe('generate', () => {
       specifications,
       developerPlatformClient,
     })
+    renderGenerateExtensionResult(result)
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
@@ -124,7 +139,7 @@ describe('generate', () => {
     const outputInfo = await mockSuccessfulCommandExecution('product_discounts')
 
     // When
-    await generate({
+    const result = await generate({
       directory: '/',
       reset: false,
       app,
@@ -133,6 +148,7 @@ describe('generate', () => {
       specifications,
       developerPlatformClient,
     })
+    renderGenerateExtensionResult(result)
 
     // Then
     expect(outputInfo.info()).toMatchInlineSnapshot(`
