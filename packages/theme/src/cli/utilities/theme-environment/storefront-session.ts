@@ -91,7 +91,7 @@ export async function getStorefrontSessionCookies(
   return {...cookieRecord, ...additionalCookies}
 }
 
-const MAX_PREVIEW_REDIRECTS = 3
+const MAX_PREVIEW_REDIRECTS = 1
 
 async function sessionEssentialCookie(storeUrl: string, themeId: string, headers: Record<string, string>, retries = 1) {
   const params = new URLSearchParams({
@@ -174,9 +174,20 @@ async function followPreviewRedirects(
   })
 
   const setCookies = nextResponse.headers.raw()['set-cookie'] ?? []
-  const nextShopifyEssential = getCookie(setCookies, '_shopify_essential') ?? shopifyEssential
+  const nextShopifyEssential = getCookie(setCookies, '_shopify_essential')
+  if (!nextShopifyEssential) {
+    outputDebug(
+      `Preview redirect to ${nextUrl.pathname} did not set a new _shopify_essential cookie; keeping the previous one.`,
+    )
+  }
 
-  return followPreviewRedirects(nextResponse, nextUrl.toString(), nextShopifyEssential, headers, hops + 1)
+  return followPreviewRedirects(
+    nextResponse,
+    nextUrl.toString(),
+    nextShopifyEssential ?? shopifyEssential,
+    headers,
+    hops + 1,
+  )
 }
 
 async function enrichSessionWithStorefrontPassword(
