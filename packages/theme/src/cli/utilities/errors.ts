@@ -28,12 +28,11 @@ export function renderThrownError(headline: string, error: Error | AbortError) {
  * @returns A function that accepts an error and renders it.
  */
 export function createSyncingCatchError(resource: string, preset?: 'delete' | 'upload') {
-  const headline =
-    {
-      delete: `Failed to delete file "${resource}" from remote theme.`,
-      upload: `Failed to upload file "${resource}" to remote theme.`,
-      default: resource,
-    }[preset ?? 'default'] ?? resource
+  const headlines = {
+    delete: `Failed to delete file "${resource}" from remote theme.`,
+    upload: `Failed to upload file "${resource}" to remote theme.`,
+  }
+  const headline = preset ? headlines[preset] : resource
 
   return (error: Error) => {
     renderThrownError(headline, error)
