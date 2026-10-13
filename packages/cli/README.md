@@ -1199,7 +1199,7 @@ Deploy your Shopify app.
 
 ```
 USAGE
-  $ shopify app deploy [--auth-alias <value>] [--client-id <value>] [--json-schema] [--message <value>]
+  $ shopify app deploy [--auth-alias <value>] [--client-id <value>] [-j] [--json-schema] [--message <value>]
     [--no-build] [--no-color] [--no-input] [--no-release | --allow-updates | --allow-deletes] [--path <value>] [--reset
     | -c <value>] [--source-control-url <value>] [--verbose] [--version <value>]
 
@@ -1207,6 +1207,10 @@ FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --allow-deletes
       Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the
@@ -1287,6 +1291,245 @@ DESCRIPTION
 
   This command doesn't deploy your "web app" (https://shopify.dev/docs/apps/tools/cli/structure#web-components). You
   need to "deploy your web app" (https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.
+
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppDeployResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "app": {
+            "$ref": "#/definitions/App"
+          },
+          "deployment": {
+            "$ref": "#/definitions/AppDeployment"
+          }
+        },
+        "required": [
+          "status",
+          "app",
+          "deployment"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "partial"
+          },
+          "app": {
+            "$ref": "#/definitions/App"
+          },
+          "deployment": {
+            "type": "object",
+            "properties": {
+              "released": {
+                "type": "boolean",
+                "const": false
+              },
+              "version": {
+                "$ref": "#/definitions/AppDeploymentVersion"
+              }
+            },
+            "required": [
+              "released",
+              "version"
+            ],
+            "additionalProperties": false
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/JsonAbortError"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "status",
+          "app",
+          "deployment",
+          "errors"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "cancelled"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "AppDeployResult",
+    "definitions": {
+      "JsonAbortError": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "abort"
+          },
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A stable error code, included only when known."
+          },
+          "tryMessage": {
+            "type": "string"
+          },
+          "nextSteps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "customSections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "body": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "body"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "details": {
+            "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+          }
+        },
+        "required": [
+          "type",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "App": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The client ID of the app receiving the deployment."
+          }
+        },
+        "required": [
+          "name",
+          "clientId"
+        ],
+        "additionalProperties": false
+      },
+      "AppDeployment": {
+        "type": "object",
+        "properties": {
+          "released": {
+            "type": "boolean",
+            "description": "Whether this command released the version to users."
+          },
+          "version": {
+            "$ref": "#/definitions/AppDeploymentVersion"
+          }
+        },
+        "required": [
+          "released",
+          "version"
+        ],
+        "additionalProperties": false
+      },
+      "AppDeploymentVersion": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/Version\\/\\d+$",
+            "description": "The Shopify app version GID."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version tag, or null when no tag is available."
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version message, or null when no message is available."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The Developer Dashboard URL for this version."
+          }
+        },
+        "required": [
+          "gid",
+          "name",
+          "message",
+          "url"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app dev`
@@ -1638,14 +1881,18 @@ Execute GraphQL queries and mutations.
 
 ```
 USAGE
-  $ shopify app execute [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--output-file <value>] [--path <value>] [-q <value>] [--query-file <value>] [--reset | ] [-s <value>]
-    [--variable-file <value> | -v <value>] [--verbose] [--version <value>]
+  $ shopify app execute [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--output-file <value>] [--path <value>] [-q <value>] [--query-file <value>] [--reset | ]
+    [-s <value>] [--variable-file <value> | -v <value>] [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -q, --query=<value>
       The GraphQL query or mutation, as a string.
@@ -1715,6 +1962,75 @@ DESCRIPTION
 
   For operations that process large amounts of data, use "`bulk execute`"
   (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) instead.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppExecuteResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/AppExecuteGraphQLResult"
+      },
+      {
+        "$ref": "#/definitions/AppExecuteFileReceipt"
+      }
+    ],
+    "title": "AppExecuteResult",
+    "definitions": {
+      "AppExecuteGraphQLResult": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "allOf": [
+                  {},
+                  {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Native GraphQL query data, preserving fields and aliases."
+          },
+          "extensions": {
+            "$ref": "#/definitions/AppExecuteGraphQLResult/properties/data/anyOf/0",
+            "description": "Native GraphQL response extensions, when supplied."
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "additionalProperties": false
+      },
+      "AppExecuteFileReceipt": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string",
+            "const": "json"
+          }
+        },
+        "required": [
+          "path",
+          "format"
+        ],
+        "additionalProperties": false,
+        "description": "Receipt for a written JSON file containing the GraphQL result, including data and optional extensions."
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app function build`
@@ -2239,13 +2555,17 @@ Import metafield and metaobject definitions.
 
 ```
 USAGE
-  $ shopify app import custom-data-definitions [--auth-alias <value>] [--client-id <value> | -c <value>] [--include-existing]
+  $ shopify app import custom-data-definitions [--auth-alias <value>] [--client-id <value> | -c <value>] [--include-existing] [-j]
     [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [-s <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       Store URL. Must be an existing development or Shopify Plus sandbox store.
@@ -2292,6 +2612,102 @@ DESCRIPTION
 
   Import metafield and metaobject definitions from your development store. "Read more about declarative custom data
   definitions" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ImportCustomDataDefinitionsResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "storeDomain": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "The full myshopify.com domain of the development store, or null when unavailable."
+      },
+      "metafieldCount": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "The number of available metafields converted to TOML."
+      },
+      "metaobjectCount": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "The number of available metaobjects converted to TOML."
+      },
+      "toml": {
+        "type": "string",
+        "description": "Suggested native TOML for app-reserved definitions. No file is written."
+      },
+      "skippedSections": {
+        "type": "array",
+        "items": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/SkippedMetafields"
+            },
+            {
+              "$ref": "#/definitions/SkippedMetaobjects"
+            }
+          ]
+        },
+        "description": "Sections skipped because required access scopes are unavailable. An empty array means all requests were authorized."
+      }
+    },
+    "required": [
+      "status",
+      "storeDomain",
+      "metafieldCount",
+      "metaobjectCount",
+      "toml",
+      "skippedSections"
+    ],
+    "additionalProperties": false,
+    "title": "ImportCustomDataDefinitionsResult",
+    "definitions": {
+      "SkippedMetafields": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "metafields"
+          },
+          "ownerType": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The Admin API metafield owner type, such as PRODUCT."
+          }
+        },
+        "required": [
+          "type",
+          "ownerType"
+        ],
+        "additionalProperties": false
+      },
+      "SkippedMetaobjects": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "metaobjects"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app import dashboard-extensions`
@@ -2300,13 +2716,17 @@ Import dashboard-managed extensions into your app.
 
 ```
 USAGE
-  $ shopify app import dashboard-extensions [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--path <value>] [--reset | ] [--verbose]
+  $ shopify app import dashboard-extensions [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -2342,6 +2762,301 @@ FLAGS
 
 DESCRIPTION
   Import dashboard-managed extensions into your app.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ImportDashboardExtensionsResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success",
+          "partial",
+          "skipped",
+          "cancelled"
+        ]
+      },
+      "reason": {
+        "anyOf": [
+          {
+            "type": "string",
+            "enum": [
+              "no-extensions",
+              "directory-selection-cancelled"
+            ]
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "extensions": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ImportedDashboardExtension"
+        },
+        "description": "Completed extension imports and kept local directories, in selection order."
+      },
+      "errors": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ExtensionImportFailure"
+        },
+        "description": "Failed selected imports or identifier persistence."
+      },
+      "identifiersUpdated": {
+        "type": "boolean",
+        "description": "Whether the extension identifier persistence step completed."
+      }
+    },
+    "required": [
+      "status",
+      "reason",
+      "extensions",
+      "errors",
+      "identifiersUpdated"
+    ],
+    "additionalProperties": false,
+    "title": "ImportDashboardExtensionsResult",
+    "definitions": {
+      "ImportedDashboardExtension": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The dashboard extension registration UUID, not a Shopify GID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The upstream dashboard extension type."
+          },
+          "directory": {
+            "type": "string",
+            "description": "The absolute local extension directory."
+          },
+          "configurationPath": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/ImportedDashboardExtension/properties/directory"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The absolute local TOML path, or null when no TOML file exists in a kept directory."
+          },
+          "changed": {
+            "type": "boolean",
+            "description": "Whether this import wrote the local extension TOML."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "directory",
+          "configurationPath",
+          "changed"
+        ],
+        "additionalProperties": false
+      },
+      "ExtensionImportFailure": {
+        "type": "object",
+        "properties": {
+          "extensionId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The registration UUID, or null for identifier persistence."
+          },
+          "error": {
+            "$ref": "#/definitions/JsonError"
+          }
+        },
+        "required": [
+          "extensionId",
+          "error"
+        ],
+        "additionalProperties": false
+      },
+      "JsonError": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/JsonAbortError"
+          },
+          {
+            "$ref": "#/definitions/JsonBugError"
+          },
+          {
+            "$ref": "#/definitions/JsonExternalError"
+          }
+        ]
+      },
+      "JsonErrorCustomSection": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "additionalProperties": false
+      },
+      "JsonAbortError": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "abort"
+          },
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A stable error code, included only when known."
+          },
+          "tryMessage": {
+            "type": "string"
+          },
+          "nextSteps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "customSections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/JsonErrorCustomSection"
+            }
+          },
+          "details": {
+            "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+          }
+        },
+        "required": [
+          "type",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "JsonBugError": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "bug"
+          },
+          "message": {
+            "$ref": "#/definitions/JsonAbortError/properties/message"
+          },
+          "code": {
+            "$ref": "#/definitions/JsonAbortError/properties/code"
+          },
+          "tryMessage": {
+            "$ref": "#/definitions/JsonAbortError/properties/tryMessage"
+          },
+          "nextSteps": {
+            "$ref": "#/definitions/JsonAbortError/properties/nextSteps"
+          },
+          "customSections": {
+            "$ref": "#/definitions/JsonAbortError/properties/customSections"
+          },
+          "details": {
+            "$ref": "#/definitions/JsonAbortError/properties/details"
+          },
+          "stack": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "JsonExternalError": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "external"
+          },
+          "message": {
+            "$ref": "#/definitions/JsonAbortError/properties/message"
+          },
+          "code": {
+            "$ref": "#/definitions/JsonAbortError/properties/code"
+          },
+          "tryMessage": {
+            "$ref": "#/definitions/JsonAbortError/properties/tryMessage"
+          },
+          "nextSteps": {
+            "$ref": "#/definitions/JsonAbortError/properties/nextSteps"
+          },
+          "customSections": {
+            "$ref": "#/definitions/JsonAbortError/properties/customSections"
+          },
+          "details": {
+            "$ref": "#/definitions/JsonAbortError/properties/details"
+          },
+          "command": {
+            "type": "string"
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "message",
+          "command",
+          "args"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app info`
@@ -5776,13 +6491,17 @@ Trigger delivery of a sample webhook topic payload to a designated address.
 ```
 USAGE
   $ shopify app webhook trigger [--address <value>] [--api-version <value>] [--auth-alias <value>] [--client-id <value> |
-    -c <value>] [--client-secret <value>] [--delivery-method http|google-pub-sub|event-bridge] [--help] [--json-schema]
-    [--path <value>] [--reset | ] [--topic <value>]
+    -c <value>] [--client-secret <value>] [--delivery-method http|google-pub-sub|event-bridge] [--help] [-j]
+    [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [--topic <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --address=<value>
       The URL where the webhook payload should be sent.
@@ -5825,6 +6544,14 @@ FLAGS
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
 
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
   --path=<value>
       The path to your app directory.
       [env: SHOPIFY_FLAG_PATH]
@@ -5836,6 +6563,10 @@ FLAGS
   --topic=<value>
       The requested webhook topic. Required if non interactive.
       [env: SHOPIFY_FLAG_TOPIC]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
 
 DESCRIPTION
   Trigger delivery of a sample webhook topic payload to a designated address.
@@ -5862,6 +6593,74 @@ DESCRIPTION
   - Trigger requests are rate-limited using the "Partner API rate limit"
   (https://shopify.dev/docs/api/partner#rate_limits).
   - You can't use this method to validate your API webhook subscriptions.
+
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppWebhookTriggerResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "delivery": {
+        "$ref": "#/definitions/AppWebhookDelivery"
+      }
+    },
+    "required": [
+      "status",
+      "delivery"
+    ],
+    "additionalProperties": false,
+    "title": "AppWebhookTriggerResult",
+    "definitions": {
+      "AppWebhookDelivery": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "apiVersion": {
+            "type": "string"
+          },
+          "deliveryMethod": {
+            "type": "string",
+            "enum": [
+              "localhost",
+              "http",
+              "google-pub-sub",
+              "event-bridge"
+            ]
+          },
+          "address": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "delivered",
+              "enqueued"
+            ],
+            "description": "Remote delivery is enqueued, not confirmed received."
+          }
+        },
+        "required": [
+          "topic",
+          "apiVersion",
+          "deliveryMethod",
+          "address",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify auth login`

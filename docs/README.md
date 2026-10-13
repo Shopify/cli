@@ -12,6 +12,7 @@ The list below contains valuable resources for people interested in contributing
 
 * [Get started](./cli/get-started.md)
 * [Architecture](./cli/architecture.md)
+* [Designing for CLI](./cli/designing-for-cli.md)
 * [Conventions](./cli/conventions.md)
 * [JSON output contracts](./cli/json-output.md)
 * [Performance](./cli/performance.md)

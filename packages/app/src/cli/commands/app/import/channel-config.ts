@@ -3,6 +3,7 @@ import {linkedAppContext} from '../../../services/app-context.js'
 import {importChannelConfig} from '../../../services/import-channel-config/import.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {importChannelConfigJsonOutputSchema} from '../../../services/import-channel-config/types.js'
+import {renderImportChannelConfigResult} from '../../../services/import-channel-config/result.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
@@ -16,11 +17,11 @@ export default class ImportChannelConfig extends AppLinkedCommand {
 
   The generated TOML only includes public \`channel_config\` fields. Review it, then deploy it with \`shopify app deploy\`.`
 
-  static description = this.descriptionWithoutMarkdown()
-
   static get jsonOutputSchema() {
     return importChannelConfigJsonOutputSchema
   }
+
+  static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
@@ -43,13 +44,18 @@ export default class ImportChannelConfig extends AppLinkedCommand {
       userProvidedConfigName: flags.config,
     })
 
-    await importChannelConfig({
+    const result = await importChannelConfig({
       app,
       remoteApp,
       developerPlatformClient,
       force: flags.force,
-      json: flags.json,
     })
+
+    renderImportChannelConfigResult(
+      result,
+      {directory: app.directory, name: remoteApp.title},
+      flags.json ? 'json' : 'text',
+    )
 
     return {app}
   }
