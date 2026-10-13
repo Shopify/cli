@@ -686,7 +686,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const result = await this.appManagementRequest({query, variables})
     const version = result.versionByTag
     if (!version) {
-      throw new AbortError(`Version not found for tag: ${versionTag}`)
+      throw new AbortError(`Version ${versionTag} could not be found.`)
     }
 
     return {

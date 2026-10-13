@@ -7,7 +7,7 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 describe('versionDiffByVersion', () => {
-  test('reports the failed lookup as an abort without presentation', async () => {
+  test('preserves lookup failures without presentation', async () => {
     // Given
     const outputMock = mockAndCaptureOutput()
     const cause = new AbortError('HTTP 404: Cannot find a valid organization')
@@ -19,8 +19,7 @@ describe('versionDiffByVersion', () => {
 
     // When/Then
     const result = versionDiffByVersion(testOrganizationApp(), 'version', developerPlatformClient)
-    await expect(result).rejects.toThrow(AbortError)
-    await expect(result).rejects.toThrow('Version version could not be found.')
+    await expect(result).rejects.toBe(cause)
     expect(outputMock.error()).toBe('')
   })
 

@@ -1,7 +1,9 @@
 import Release from './release.js'
 import {release} from '../../services/release.js'
 import {linkedAppContext} from '../../services/app-context.js'
-import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
+import {testAppLinked, testOrganizationApp} from '../../models/app/app.test-data.js'
+import {AppManagementClient} from '../../utilities/developer-platform-client/app-management-client.js'
+import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {outputInfo, unstyled} from '@shopify/cli-kit/node/output'
@@ -13,6 +15,7 @@ import {fileURLToPath} from 'node:url'
 
 vi.mock('../../services/release.js')
 vi.mock('../../services/app-context.js')
+vi.mock('@shopify/cli-kit/node/api/app-management')
 
 const version = {
   id: 123,
@@ -27,6 +30,7 @@ const originalExitCode = process.exitCode
 afterEach(() => {
   process.exitCode = originalExitCode
   vi.unstubAllEnvs()
+  AppManagementClient.resetInstance()
 })
 
 describe('app release command', () => {
@@ -76,12 +80,13 @@ describe('app release command', () => {
     const {release: releaseService} =
       await vi.importActual<typeof import('../../services/release.js')>('../../services/release.js')
     vi.mocked(release).mockImplementationOnce(releaseService)
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({versionByTag: null})
     vi.mocked(linkedAppContext).mockResolvedValueOnce({
       app: testAppLinked(),
       remoteApp: testOrganizationApp(),
-      developerPlatformClient: testDeveloperPlatformClient({
-        appVersionByTag: vi.fn().mockRejectedValue(new AbortError('HTTP 404: Cannot find a valid organization')),
-      }),
+      developerPlatformClient: client,
     } as unknown as Awaited<ReturnType<typeof linkedAppContext>>)
     await inTemporaryDirectory(async (directory) => {
       await withCapturedStandardStreams(async ({stdout, stderr}) => {
@@ -95,6 +100,46 @@ describe('app release command', () => {
           expect(stdout()).toBe('')
           expect(unstyled(stderr())).toContain('Version missing could not be found.')
         }
+      })
+    })
+  })
+
+  test.each([
+    {message: 'HTTP 503: Service unavailable', tryMessage: undefined},
+    {message: 'HTTP 403: Access denied', tryMessage: 'Sign in with an account that can access the app.'},
+    {message: 'HTTP 404: Cannot find a valid organization', tryMessage: undefined},
+  ])('preserves the lookup failure in JSON: $message', async ({message, tryMessage}) => {
+    vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
+    const {release: releaseService} =
+      await vi.importActual<typeof import('../../services/release.js')>('../../services/release.js')
+    vi.mocked(release).mockImplementationOnce(releaseService)
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+    const releaseRequest = vi.spyOn(client, 'release')
+    const errorMessage = `${message}\n\nRequest ID: lookup-request-id`
+    vi.mocked(appManagementRequestDoc).mockRejectedValueOnce(new AbortError(errorMessage, tryMessage))
+    vi.mocked(linkedAppContext).mockResolvedValueOnce({
+      app: testAppLinked(),
+      remoteApp: testOrganizationApp(),
+      developerPlatformClient: client,
+    } as unknown as Awaited<ReturnType<typeof linkedAppContext>>)
+    await inTemporaryDirectory(async (directory) => {
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await expect(
+          runRelease([
+            '--path',
+            directory,
+            '--version',
+            'v1',
+            '--json',
+            '--allow-updates',
+            '--allow-deletes',
+            '--no-input',
+          ]),
+        ).rejects.toThrow()
+        expect(JSON.parse(stdout())).toEqual({error: {type: 'abort', message: errorMessage, tryMessage}})
+        expect(stderr()).toBe('')
+        expect(releaseRequest).not.toHaveBeenCalled()
       })
     })
   })
