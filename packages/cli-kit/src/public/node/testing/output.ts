@@ -32,7 +32,7 @@ export interface CapturedStandardStreams {
  *
  * The callback receives accessors instead of the function returning captured output so that
  * assertions remain possible when the callback throws (for example commands that abort).
- * Streams, console.warn and unit-test detection are restored afterwards.
+ * Streams, console and unit-test detection are restored afterwards.
  * Not safe for concurrent tests.
  *
  * @param run - Callback receiving accessors for the captured stdout and stderr.
@@ -64,7 +64,7 @@ function setUnitTestVariable(value: string | undefined): void {
 }
 
 /**
- * Captures writes to stdout and stderr, including console warnings intercepted by Vitest.
+ * Captures writes to stdout and stderr, including console output intercepted by Vitest.
  * Call restore in a finally block. This replaces process globals and must not be used in concurrent tests.
  * Prefer withCapturedStandardStreams, which also disables unit-test output suppression while it runs.
  *
@@ -73,18 +73,15 @@ function setUnitTestVariable(value: string | undefined): void {
 export function mockAndCaptureStandardStreams(): StandardStreamsMock {
   const stdout = captureStream(process.stdout)
   const stderr = captureStream(process.stderr)
-  // Vitest intercepts console.warn before it reaches stderr; use Node's console to exercise the writer.
-  // eslint-disable-next-line no-console
-  const originalWarn = console.warn
-  // eslint-disable-next-line no-console
-  console.warn = new Console(process.stdout, process.stderr).warn
+  // Vitest intercepts console output before it reaches the streams; use Node's console to exercise the writers.
+  const originalConsole = globalThis.console
+  globalThis.console = new Console(process.stdout, process.stderr)
 
   return {
     stdout: stdout.output,
     stderr: stderr.output,
     restore: () => {
-      // eslint-disable-next-line no-console
-      console.warn = originalWarn
+      globalThis.console = originalConsole
       stdout.restore()
       stderr.restore()
     },

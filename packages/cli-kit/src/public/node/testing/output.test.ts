@@ -42,6 +42,7 @@ describe('withCapturedStandardStreams', () => {
   test('restores streams and unit-test detection when the callback throws, keeping output readable', async () => {
     const stdoutWrite = process.stdout.write
     const stderrWrite = process.stderr.write
+    const originalConsole = globalThis.console
     let captured: CapturedStandardStreams | undefined
 
     await expect(
@@ -54,6 +55,7 @@ describe('withCapturedStandardStreams', () => {
 
     expect(process.stdout.write).toBe(stdoutWrite)
     expect(process.stderr.write).toBe(stderrWrite)
+    expect(globalThis.console).toBe(originalConsole)
     expect(isUnitTest()).toBe(true)
     expect(process.env[environmentVariables.unitTest]).toBe('1')
     expect(captured?.stdout()).toBe('written before failing\n')
@@ -61,17 +63,34 @@ describe('withCapturedStandardStreams', () => {
 })
 
 describe('mockAndCaptureStandardStreams', () => {
-  test('captures stdout, stderr, and console warnings separately', () => {
+  test('captures stdout and stderr separately', () => {
     const streams = mockAndCaptureStandardStreams()
 
     try {
       expect(process.stdout.write('result\n')).toBe(true)
       process.stderr.write('diagnostic\n')
-      // eslint-disable-next-line no-console
-      console.warn('Warning: %s', 'example')
-
       expect(streams.stdout()).toBe('result\n')
-      expect(streams.stderr()).toBe('diagnostic\nWarning: example\n')
+      expect(streams.stderr()).toBe('diagnostic\n')
+    } finally {
+      streams.restore()
+    }
+  })
+
+  test.each([
+    ['log', 'stdout'],
+    ['info', 'stdout'],
+    ['debug', 'stdout'],
+    ['warn', 'stderr'],
+    ['error', 'stderr'],
+  ] as const)('captures console.%s on %s', (method, stream) => {
+    const streams = mockAndCaptureStandardStreams()
+
+    try {
+      // eslint-disable-next-line no-console
+      console[method]('Message: %s', 'example')
+
+      expect(streams.stdout()).toBe(stream === 'stdout' ? 'Message: example\n' : '')
+      expect(streams.stderr()).toBe(stream === 'stderr' ? 'Message: example\n' : '')
     } finally {
       streams.restore()
     }
@@ -113,8 +132,7 @@ describe('mockAndCaptureStandardStreams', () => {
   test('restores the original writers and leaves captured output available', () => {
     const stdoutWrite = process.stdout.write
     const stderrWrite = process.stderr.write
-    // eslint-disable-next-line no-console
-    const consoleWarn = console.warn
+    const originalConsole = globalThis.console
     const streams = mockAndCaptureStandardStreams()
 
     try {
@@ -125,8 +143,7 @@ describe('mockAndCaptureStandardStreams', () => {
 
     expect(process.stdout.write).toBe(stdoutWrite)
     expect(process.stderr.write).toBe(stderrWrite)
-    // eslint-disable-next-line no-console
-    expect(console.warn).toBe(consoleWarn)
+    expect(globalThis.console).toBe(originalConsole)
     expect(streams.stdout()).toBe('captured')
   })
 })
