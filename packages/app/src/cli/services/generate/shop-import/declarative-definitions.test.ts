@@ -1,10 +1,13 @@
 import {
   processDeclarativeDefinitionNodes,
   MetafieldNodesInput,
-  renderTomlStringWithFormatting,
   paginatedQuery,
   importDeclarativeDefinitions,
 } from './declarative-definitions.js'
+import {
+  renderTomlStringWithFormatting,
+  renderImportDeclarativeDefinitionsResult,
+} from './declarative-definitions/result.js'
 import {
   MetaobjectDefinitions,
   MetaobjectDefinitionsQuery,
@@ -1099,7 +1102,7 @@ describe('paginatedQuery', () => {
 })
 
 describe('importDeclarativeDefinitions', () => {
-  test('imports metafields and metaobjects from a shop and outputs TOML', async () => {
+  test('returns a known empty conversion without final terminal output', async () => {
     const outputMock = mockAndCaptureOutput()
 
     vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue({
@@ -1128,7 +1131,7 @@ describe('importDeclarativeDefinitions', () => {
       return {}
     })
 
-    await importDeclarativeDefinitions({
+    const result = await importDeclarativeDefinitions({
       remoteApp: {
         apiKey: 'test-api-key',
         apiSecretKeys: [{secret: 'test-secret'}],
@@ -1139,7 +1142,15 @@ describe('importDeclarativeDefinitions', () => {
       appConfiguration: {},
     } as any)
 
-    expect(outputMock.info()).toMatchInlineSnapshot(`""`)
+    expect(result).toEqual({
+      status: 'success',
+      storeDomain: 'test-shop.myshopify.com',
+      tomlContent: '',
+      metafieldCount: 0,
+      metaobjectCount: 0,
+      skippedSections: [],
+    })
+    expect(outputMock.info()).toBe('')
     outputMock.clear()
   })
 
@@ -1316,10 +1327,12 @@ describe('importDeclarativeDefinitions', () => {
       },
     }
 
-    await importDeclarativeDefinitions({
+    const filteredResult = await importDeclarativeDefinitions({
       ...options,
       includeExistingDeclaredDefinitions: false,
     } as any)
+    expect(filteredResult).toMatchObject({metafieldCount: 1, metaobjectCount: 1, skippedSections: []})
+    renderImportDeclarativeDefinitionsResult(filteredResult)
 
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "# type: $app:new
@@ -1333,10 +1346,12 @@ describe('importDeclarativeDefinitions', () => {
     `)
     outputMock.clear()
 
-    await importDeclarativeDefinitions({
+    const fullResult = await importDeclarativeDefinitions({
       ...options,
       includeExistingDeclaredDefinitions: true,
     } as any)
+    expect(fullResult).toMatchObject({metafieldCount: 2, metaobjectCount: 2, skippedSections: []})
+    renderImportDeclarativeDefinitionsResult(fullResult)
 
     expect(outputMock.info()).toMatchInlineSnapshot(`
       "# type: $app:existing

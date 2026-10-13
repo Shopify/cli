@@ -1,13 +1,13 @@
 import {executeOperation} from './execute-operation.js'
 import {createAdminSessionAsApp, resolveApiVersion, validateMutationStore} from './graphql/common.js'
 import {OrganizationApp, OrganizationSource, OrganizationStore} from '../models/organization.js'
-import {renderSuccess, renderError, renderSingleTask} from '@shopify/cli-kit/node/ui'
+import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {ClientError} from 'graphql-request'
-import {inTemporaryDirectory, writeFile, readFile} from '@shopify/cli-kit/node/fs'
+import {GraphQLError} from 'graphql'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
+import {describe, test, expect, vi, beforeEach} from 'vitest'
 
 vi.mock('./graphql/common.js')
 vi.mock('@shopify/cli-kit/node/ui')
@@ -47,22 +47,19 @@ describe('executeOperation', () => {
     })
   })
 
-  afterEach(() => {
-    mockAndCaptureOutput().clear()
-  })
-
   test('executes GraphQL operation successfully', async () => {
     const query = 'query { shop { name } }'
-    const mockResult = {data: {shop: {name: 'Test Shop'}}}
+    const mockResult = {shop: {name: 'Test Shop'}}
     vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
 
-    await executeOperation({
+    const result = await executeOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
       store: mockStore,
       query,
     })
 
+    expect(result).toEqual({status: 'success', result: {data: mockResult}})
     expect(createAdminSessionAsApp).toHaveBeenCalledWith(mockRemoteApp, storeFqdn)
     expect(resolveApiVersion).toHaveBeenCalledWith({adminSession: mockAdminSession})
     expect(adminRequestDoc).toHaveBeenCalledWith({
@@ -71,14 +68,14 @@ describe('executeOperation', () => {
       session: mockAdminSession,
       variables: undefined,
       version: '2024-07',
-      responseOptions: {handleErrors: false},
+      responseOptions: {handleErrors: false, onResponse: expect.any(Function)},
     })
   })
 
   test('passes variables correctly when provided', async () => {
     const query = 'mutation UpdateProduct($input: ProductInput!) { productUpdate(input: $input) { product { id } } }'
     const variables = '{"input":{"id":"gid://shopify/Product/123","title":"Updated"}}'
-    const mockResult = {data: {productUpdate: {product: {id: 'gid://shopify/Product/123'}}}}
+    const mockResult = {productUpdate: {product: {id: 'gid://shopify/Product/123'}}}
     vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
 
     await executeOperation({
@@ -120,7 +117,7 @@ describe('executeOperation', () => {
       await writeFile(variableFile, JSON.stringify(variables))
 
       const query = 'mutation UpdateProduct($input: ProductInput!) { productUpdate(input: $input) { product { id } } }'
-      const mockResult = {data: {productUpdate: {product: {id: 'gid://shopify/Product/123'}}}}
+      const mockResult = {productUpdate: {product: {id: 'gid://shopify/Product/123'}}}
       vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
 
       await executeOperation({
@@ -182,7 +179,7 @@ describe('executeOperation', () => {
   test('uses specified API version when provided', async () => {
     const query = 'query { shop { name } }'
     const version = '2024-01'
-    const mockResult = {data: {shop: {name: 'Test Shop'}}}
+    const mockResult = {shop: {name: 'Test Shop'}}
     vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
     vi.mocked(resolveApiVersion).mockResolvedValue(version)
 
@@ -202,66 +199,45 @@ describe('executeOperation', () => {
     )
   })
 
-  test('writes formatted JSON results to stdout by default', async () => {
-    const query = 'query { shop { name } }'
-    const mockResult = {data: {shop: {name: 'Test Shop'}}}
-    vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
+  test('retains response extensions without adding another request', async () => {
+    const data = {store: {name: 'Test Shop'}, value: null, enabled: false}
+    const extensions = {cost: {requestedQueryCost: 2}}
+    vi.mocked(adminRequestDoc).mockImplementation(async ({responseOptions}) => {
+      responseOptions?.onResponse?.({data, extensions, status: 200, headers: new Headers()})
+      return data
+    })
 
-    const mockOutput = mockAndCaptureOutput()
-
-    await executeOperation({
+    const result = await executeOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
       store: mockStore,
-      query,
+      query: 'query { store: shop { name } }',
     })
 
-    const expectedOutput = JSON.stringify(mockResult, null, 2)
-    expect(mockOutput.info()).toContain(expectedOutput)
+    expect(result).toEqual({status: 'success', result: {data, extensions}})
+    expect(adminRequestDoc).toHaveBeenCalledOnce()
   })
 
-  test('writes results to file when outputFile is provided', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      const outputFile = joinPath(tmpDir, 'results.json')
-      const query = 'query { shop { name } }'
-      const mockResult = {data: {shop: {name: 'Test Shop'}}}
-      vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
+  test('retains partial query data and native error extensions', async () => {
+    const response = {
+      errors: [new GraphQLError('Access denied', {extensions: {code: 'ACCESS_DENIED'}})],
+      data: {shop: null},
+      extensions: {cost: {actualQueryCost: 1}},
+      status: 200,
+    }
+    vi.mocked(adminRequestDoc).mockRejectedValue(new ClientError(response, {query: 'query { shop { name } }'}))
 
-      await executeOperation({
-        organization: mockOrganization,
-        remoteApp: mockRemoteApp,
-        store: mockStore,
-        query,
-        outputFile,
-      })
-
-      const expectedContent = JSON.stringify(mockResult, null, 2)
-      await expect(readFile(outputFile)).resolves.toBe(expectedContent)
-      expect(renderSuccess).toHaveBeenCalledWith(
-        expect.objectContaining({
-          body: expect.stringContaining(outputFile),
-        }),
-      )
-    })
-  })
-
-  test('renders success message after successful execution', async () => {
-    const query = 'query { shop { name } }'
-    const mockResult = {data: {shop: {name: 'Test Shop'}}}
-    vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
-
-    await executeOperation({
+    const result = await executeOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
       store: mockStore,
-      query,
+      query: 'query { shop { name } }',
     })
 
-    expect(renderSuccess).toHaveBeenCalledWith(
-      expect.objectContaining({
-        headline: 'Operation succeeded.',
-      }),
-    )
+    expect(result).toEqual({
+      status: 'failed',
+      details: {errors: response.errors, data: response.data, extensions: response.extensions},
+    })
   })
 
   test('throws when API request fails', async () => {
@@ -279,27 +255,6 @@ describe('executeOperation', () => {
     ).rejects.toThrow('API request failed')
   })
 
-  test('handles GraphQL errors in response', async () => {
-    const query = 'query { shop { name } }'
-    const mockResult = {
-      data: null,
-      errors: [{message: 'Field "name" not found'}],
-    }
-    vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
-
-    await executeOperation({
-      organization: mockOrganization,
-      remoteApp: mockRemoteApp,
-      store: mockStore,
-      query,
-    })
-
-    // Should still format and output the result with errors
-    const mockOutput = mockAndCaptureOutput()
-    const expectedOutput = JSON.stringify(mockResult, null, 2)
-    expect(mockOutput.info()).toContain(expectedOutput)
-  })
-
   test('handles ClientError from GraphQL validation failures', async () => {
     const query = 'query { invalidField }'
     const graphqlErrors = [
@@ -311,19 +266,14 @@ describe('executeOperation', () => {
 
     vi.mocked(adminRequestDoc).mockRejectedValue(clientError)
 
-    await executeOperation({
+    const result = await executeOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
       store: mockStore,
       query,
     })
 
-    expect(renderError).toHaveBeenCalledWith(
-      expect.objectContaining({
-        headline: 'GraphQL operation failed.',
-        body: expect.stringContaining('invalidField'),
-      }),
-    )
+    expect(result).toEqual({status: 'failed', details: {errors: graphqlErrors}})
   })
 
   test('throws AbortError when attempting mutation on non-dev store', async () => {
