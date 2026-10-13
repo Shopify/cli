@@ -44,7 +44,10 @@ For each check:
 5. Keep the check `id` and `version` exactly as they appear in {{AGENT_CHECKS_PATH}}.
 6. Include concise evidence citations. Never include a detected secret value or unnecessary personal data.
 
-A check with no verified issue must not produce a fabricated finding. If you cannot establish exploitability or affected authority, record the check as `unresolved` with a reason instead.
+A check with no verified issue must not produce a fabricated finding. Choose the status from what you were able to investigate, not from whether you can prove a negative:
+
+- `executed`: you traced the paths the check directs you to and found no concrete issue. This includes code that follows the safe pattern the check or its `docs_url` describes. A candidate is ruled out when the code establishes the boundary the check asks about, even if you can't rule out hypothetical policies or requirements that the repository doesn't define.
+- `unresolved`: you couldn't complete the investigation, for example because required code was unreadable, out of scope, or outside the repository and you couldn't inspect it, or you found a specific candidate whose boundary you could neither establish nor show to be missing. Name the candidate's file and line, or the missing input, in the reason.
 
 ### 4. Write one findings document
 
@@ -88,7 +91,7 @@ Write a single JSON document that covers every check you ran:
 - `status` is one of:
   - `executed`: you investigated the check, whether or not it produced findings.
   - `not_applicable`: the capability the check covers is absent. It can't have findings.
-  - `unresolved`: you couldn't finish the check or prove the issue. An unresolved check didn't pass; never describe it as passing.
+  - `unresolved`: you couldn't complete the investigation, or you named a specific candidate whose boundary is still unclear. An unresolved check didn't pass; never describe it as passing.
 - `not_applicable` and `unresolved` require a `reason` with a short `code` and a `message`.
 - Each finding needs `file`, `line` (1 or greater), `message`, and at least one `evidence` item with `file`, `line`, and `quote`.
 - Optional finding fields: `snippet`, `confidence` (`high`, `medium`, or `low`), `reasoning`, and `suppression` (`{"justification": "..."}`).

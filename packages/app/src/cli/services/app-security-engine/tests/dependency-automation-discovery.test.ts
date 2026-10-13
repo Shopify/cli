@@ -9,6 +9,7 @@ import {
 import {DEPENDENCY_AUTOMATION_CONFIG_PATHS} from '../rules/dependency-automation-rules.js'
 import {createPathRules} from '../scanners/path-rules.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {execFileSync} from 'node:child_process'
 import {mkdir, symlink, writeFile} from 'node:fs/promises'
@@ -142,21 +143,171 @@ describe('dependency automation discovery', () => {
     })
   })
 
-  test.each(['directory', 'worktree file'])('respects repository %s boundaries', async (marker) => {
-    await inTemporaryDirectory(async (repository) => {
+  describe('apps below the repository root', () => {
+    async function writeRepositoryMarker(directory: string, marker: string): Promise<void> {
+      if (marker === 'directory') await mkdir(join(directory, '.git'))
+      else await writeFile(join(directory, '.git'), 'gitdir: /outside/not-read')
+    }
+
+    async function makeMonorepo(repository: string, marker: string): Promise<string> {
       const app = join(repository, 'apps', 'example')
-      await writeFiles(app, {'.github/dependabot.yml': 'version: 2\nupdates: []'})
-      if (marker === 'directory') await mkdir(join(repository, '.git'))
-      else await writeFile(join(repository, '.git'), 'gitdir: /outside/not-read')
-      const nested = await findInputs(app)
-      expect(nested).toMatchObject({
-        files: [],
-        unresolvedReason: 'App root is nested below a parent Git repository',
+      await mkdir(app, {recursive: true})
+      await writeRepositoryMarker(repository, marker)
+      return app
+    }
+
+    test.each(['directory', 'worktree file'])(
+      'reads configuration at the root of a %s repository that is not scanned',
+      async (marker) => {
+        await inTemporaryDirectory(async (repository) => {
+          const app = await makeMonorepo(repository, marker)
+          await expect(findInputs(app)).resolves.toEqual({files: []})
+          const content = 'version: 2\nupdates: []\n'
+          await writeFiles(repository, {'.github/dependabot.yml': content})
+          const result = await findInputs(app)
+          expect(result.unresolvedReason).toBeUndefined()
+          expect(result.files).toEqual([
+            expect.objectContaining({
+              path: '../../.github/dependabot.yml',
+              absolutePath: joinPath(repository, '.github/dependabot.yml'),
+              ext: '.yml',
+              content,
+            }),
+          ])
+        })
+      },
+    )
+
+    test('ignores configuration in the app directory, which bots do not read below the repository root', async () => {
+      await inTemporaryDirectory(async (repository) => {
+        const app = await makeMonorepo(repository, 'directory')
+        await writeFiles(app, {'.github/dependabot.yml': 'version: 2\nupdates: []'})
+        await expect(findInputs(app)).resolves.toEqual({files: []})
       })
-      expect(nested.unresolvedReason).not.toContain(repository)
-      if (marker === 'directory') await mkdir(join(app, '.git'))
-      else await writeFile(join(app, '.git'), 'gitdir: /outside/not-read')
-      expect((await findInputs(app)).files).toMatchObject([{path: '.github/dependabot.yml'}])
+    })
+
+    test.each(['directory', 'worktree file'])(
+      'keeps an app with its own %s repository inside that repository',
+      async (marker) => {
+        await inTemporaryDirectory(async (repository) => {
+          const app = await makeMonorepo(repository, 'directory')
+          await writeFiles(repository, {'.github/dependabot.yml': 'version: 2\nupdates: []'})
+          await writeRepositoryMarker(app, marker)
+          await expect(findInputs(app)).resolves.toEqual({files: []})
+          await writeFiles(app, {'renovate.json': '{}'})
+          expect((await findInputs(app)).files).toMatchObject([{path: 'renovate.json'}])
+        })
+      },
+    )
+
+    test('applies path rules to the repository root when it is a scan directory', async () => {
+      await inTemporaryDirectory(async (repository) => {
+        vi.stubEnv('INIT_CWD', repository)
+        const app = await makeMonorepo(repository, 'directory')
+        await writeFiles(repository, {'.github/dependabot.yml': 'version: 2\nupdates: []'})
+        const findScanningRoot = async (excludePatterns: string[]) => {
+          configureRepositoryReader({appDirectory: app, scanDirectories: [repository], explicitInputs: new Set()})
+          const {paths} = await gatherPaths({
+            appDirectory: app,
+            scanDirectories: [repository],
+            requestedScanDirectories: [app, repository],
+            rules: createPathRules({excludePatterns, noGitIgnore: true}),
+          })
+          return findDependencyAutomationInputs(app, paths)
+        }
+        expect((await findScanningRoot([])).files).toMatchObject([{path: '../../.github/dependabot.yml'}])
+        await expect(findScanningRoot(['.github'])).resolves.toEqual({files: []})
+      })
+    })
+
+    async function findIncludingGitHubDirectory(
+      repository: string,
+      app: string,
+      rules: {excludePatterns?: string[]; noGitIgnore?: boolean},
+    ) {
+      const scanDirectories = [app, joinPath(repository, '.github')]
+      configureRepositoryReader({appDirectory: app, scanDirectories, explicitInputs: new Set()})
+      const {paths} = await gatherPaths({
+        appDirectory: app,
+        scanDirectories,
+        requestedScanDirectories: scanDirectories,
+        rules: createPathRules({excludePatterns: [], noGitIgnore: true, ...rules}),
+      })
+      return findDependencyAutomationInputs(app, paths)
+    }
+
+    test('reads configuration that an included directory below the repository root gathered', async () => {
+      await inTemporaryDirectory(async (repository) => {
+        vi.stubEnv('INIT_CWD', repository)
+        const app = await makeMonorepo(repository, 'directory')
+        await writeFiles(repository, {'.github/dependabot.yml': 'version: 2\nupdates: []'})
+        expect((await findIncludingGitHubDirectory(repository, app, {})).files).toMatchObject([
+          {path: '../../.github/dependabot.yml', absolutePath: joinPath(repository, '.github/dependabot.yml')},
+        ])
+      })
+    })
+
+    test('applies exclusions to configuration in an included directory below the repository root', async () => {
+      await inTemporaryDirectory(async (repository) => {
+        vi.stubEnv('INIT_CWD', repository)
+        const app = await makeMonorepo(repository, 'directory')
+        await writeFiles(repository, {'.github/dependabot.yml': 'version: 2\nupdates: []'})
+        const excludePatterns = ['.github/dependabot.yml']
+        await expect(findIncludingGitHubDirectory(repository, app, {excludePatterns})).resolves.toEqual({files: []})
+        expect(getSkippedFiles()).toEqual([])
+
+        await writeFiles(repository, {'renovate.json': '{}'})
+        const result = await findIncludingGitHubDirectory(repository, app, {excludePatterns})
+        expect(result.files).toMatchObject([{path: '../../renovate.json', content: '{}'}])
+        expect(result.unresolvedReason).toBeUndefined()
+      })
+    })
+
+    test('does not read Git-ignored configuration in an included directory below the repository root', async () => {
+      await inTemporaryDirectory(async (repository) => {
+        const app = joinPath(repository, 'apps/example')
+        await mkdir(app, {recursive: true})
+        execFileSync('git', ['init', '--quiet'], {cwd: repository})
+        await writeFiles(repository, {
+          '.gitignore': '.github/dependabot.yml\n',
+          '.github/dependabot.yml': 'version: 2\nupdates: []',
+        })
+        await expect(findIncludingGitHubDirectory(repository, app, {noGitIgnore: false})).resolves.toEqual({
+          files: [],
+        })
+      })
+    })
+
+    test('does not follow a root configuration link that leaves the repository', async () => {
+      await inTemporaryDirectory(async (repository) => {
+        await inTemporaryDirectory(async (outside) => {
+          const app = await makeMonorepo(repository, 'directory')
+          await writeFile(join(outside, 'dependabot.yml'), 'version: 2')
+          await mkdir(join(repository, '.github'))
+          await symlink(join(outside, 'dependabot.yml'), join(repository, '.github/dependabot.yml'))
+          const result = await findInputs(app)
+          expect(result).toMatchObject({files: [], unresolvedReason: expect.stringContaining('outside')})
+          expect(result.unresolvedReason).not.toContain(repository)
+          expect(result.unresolvedReason).not.toContain(outside)
+          expect(getSkippedFiles()).toContainEqual(
+            expect.objectContaining({path: '../../.github/dependabot.yml', reason: 'unreadable'}),
+          )
+        })
+      })
+    })
+
+    test('preserves bounded reads of root configuration', async () => {
+      await inTemporaryDirectory(async (repository) => {
+        const app = await makeMonorepo(repository, 'directory')
+        await writeFiles(repository, {'.github/dependabot.yml': 'x'.repeat(500_001)})
+        await expect(findInputs(app)).resolves.toMatchObject({
+          files: [],
+          unresolvedReason: expect.stringContaining('too large'),
+        })
+        expect(getSkippedFiles()).toEqual([
+          expect.objectContaining({path: '../../.github/dependabot.yml', reason: 'too_large', size_bytes: 500_001}),
+        ])
+      })
     })
   })
 

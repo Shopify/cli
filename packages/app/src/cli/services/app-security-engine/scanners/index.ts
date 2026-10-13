@@ -12,7 +12,12 @@ import {
   gatherPaths,
 } from './discover.js'
 import {createPathRules} from './path-rules.js'
-import {detectCapabilities, detectProject} from '../capabilities/detect.js'
+import {
+  detectCapabilities,
+  detectProject,
+  detectReactRouterRoots,
+  isReactRouterSourcePath,
+} from '../capabilities/detect.js'
 import {computeScanMetadata} from '../scorer/index.js'
 import {deprecatedScriptTagScope, insecureWebhookUrl} from '../rules/config-rules.js'
 import {
@@ -103,7 +108,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
   configRule(missingComplianceWebhooks),
   {
     id: 'MISSING_DEPENDENCY_SECURITY_AUTOMATION',
-    version: 1,
+    version: 2,
     lifecycle: 'active',
     analysisMode: 'structured_config',
     target: 'dependency_automation',
@@ -111,7 +116,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
   },
   {
     id: 'EOL_API_VERSION',
-    version: 1,
+    version: 2,
     lifecycle: 'active',
     analysisMode: 'regex',
     target: 'config_and_source',
@@ -119,21 +124,21 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     runner: (context) => scanEolApiVersions(context),
   },
   {
-    ...jsCheck('EXPIRING_OFFLINE_TOKEN', (context) => scanExpiringOfflineTokens(context)),
+    ...jsCheck('EXPIRING_OFFLINE_TOKEN', (context) => scanExpiringOfflineTokens(context), 'source', 2),
     extensions: [...JAVASCRIPT_EXTENSIONS, '.prisma'],
   },
   {
-    ...jsCheck('UNAUTHENTICATED_ENDPOINT', (context) => scanUnauthenticatedEndpoints(context.sourceFiles), 'source', 2),
+    ...jsCheck('UNAUTHENTICATED_ENDPOINT', (context) => scanUnauthenticatedEndpoints(context.sourceFiles), 'source', 3),
     requires: 'has_backend',
   },
   jsCheck(
     'REQUEST_CONTROLLED_ADMIN_CONTEXT',
     (context) => scanRequestControlledAdminContext(context.sourceFiles),
     'source',
-    3,
+    4,
   ),
   {
-    ...configRule(deprecatedScriptTagScope),
+    ...configRule(deprecatedScriptTagScope, 2),
     target: 'config_and_source',
     analysisMode: 'regex',
     extensions: JAVASCRIPT_EXTENSIONS,
@@ -151,8 +156,8 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     target: 'secrets',
     runner: (context) => scanCommittedSecrets(context.sensitiveFiles, context.appRoot, context.gitIgnoreListing),
   },
-  jsCheck('CREDENTIAL_LOG_LEAKAGE', (context) => scanCredentialLogLeakage(context.sourceFiles)),
-  jsCheck('CREDENTIAL_BROWSER_LEAKAGE', (context) => scanCredentialBrowserLeakage(context.sourceFiles)),
+  jsCheck('CREDENTIAL_LOG_LEAKAGE', (context) => scanCredentialLogLeakage(context.sourceFiles), 'source', 2),
+  jsCheck('CREDENTIAL_BROWSER_LEAKAGE', (context) => scanCredentialBrowserLeakage(context.sourceFiles), 'source', 2),
   {
     id: 'LIQUID_UNSAFE_RENDER',
     version: 1,
@@ -164,7 +169,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     runner: (context) => liquidRunner(context, 'LIQUID_UNSAFE_RENDER'),
   },
   {
-    ...jsCheck('UNSAFE_INNERHTML', unsafeInnerHtmlRunner, 'source_and_theme', 2),
+    ...jsCheck('UNSAFE_INNERHTML', unsafeInnerHtmlRunner, 'source_and_theme', 3),
     analysisMode: 'regex',
     extensions: [...JAVASCRIPT_EXTENSIONS, '.liquid', '.html'],
   },
@@ -173,12 +178,12 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
       'APP_PROXY_LIQUID_INJECTION',
       (context) => scanAppProxyLiquidInjection(context.sourceFiles),
       'source',
-      2,
+      3,
     ),
     requires: 'app_proxy',
   },
   {
-    ...jsCheck('STATIC_FRAME_ANCESTORS', (context) => scanStaticFrameAncestors(context.sourceFiles), 'app_source'),
+    ...jsCheck('STATIC_FRAME_ANCESTORS', (context) => scanStaticFrameAncestors(context.sourceFiles), 'app_source', 2),
     requires: 'embedded_app',
   },
 ]
@@ -331,8 +336,19 @@ function appSourceFiles(context: ScanContext): SourceFile[] {
   return context.sourceFiles.filter((file) => !themePaths.has(file.path))
 }
 
+/**
+ * Every source path when the app isn't React Router; otherwise only this app's code, in its app directory or React
+ * Router roots.
+ */
+function isReactRouterFilePath(path: string, context: ScanContext): boolean {
+  return (
+    context.detection.framework !== 'react_router' ||
+    isReactRouterSourcePath(path, context.reactRouterRoots, context.otherAppDirectories)
+  )
+}
+
 function reactRouterFiles(context: ScanContext): SourceFile[] {
-  return appSourceFiles(context)
+  return appSourceFiles(context).filter((file) => isReactRouterFilePath(file.path, context))
 }
 
 function selectedFiles(definition: DeterministicCheckDefinition, context: ScanContext): string[] {
@@ -501,6 +517,7 @@ function skippedInputsForCheck(
     themeDirectories.some((directory) => path.startsWith(directory)) || path.endsWith('shopify.extension.toml')
   const isSourcePath = (path: string) =>
     !isThemePath(path) && Boolean(definition.extensions?.some((extension) => path.endsWith(extension)))
+  const isReactRouterInput = (path: string) => isSourcePath(path) && isReactRouterFilePath(path, context)
   const isConfig = (path: string) => /^shopify\.app(?:\.[^/]+)?\.toml$/.test(path)
   const isDependencyAutomationInput = (path: string) =>
     /(^|\/)package\.json$/.test(path) || context.dependencyAutomation.files.some((file) => file.path === path)
@@ -513,10 +530,11 @@ function skippedInputsForCheck(
   return skippedFiles.filter((file) => {
     if (definition.target === 'config') return isConfig(file.path)
     if (definition.target === 'dependency_automation') return isDependencyAutomationInput(file.path)
-    if (definition.target === 'config_and_source') return isConfig(file.path) || isSourcePath(file.path)
-    if (definition.target === 'source' || definition.target === 'app_source') return isSourcePath(file.path)
+    if (definition.target === 'config_and_source') return isConfig(file.path) || isReactRouterInput(file.path)
+    if (definition.target === 'source') return isReactRouterInput(file.path)
+    if (definition.target === 'app_source') return isSourcePath(file.path)
     if (definition.target === 'theme') return isThemePath(file.path)
-    if (definition.target === 'source_and_theme') return isSourcePath(file.path) || isThemePath(file.path)
+    if (definition.target === 'source_and_theme') return isReactRouterInput(file.path) || isThemePath(file.path)
     return isSecretInput(file)
   })
 }
@@ -602,7 +620,11 @@ export async function scan(input: ScanInput, options: ScanOptions = {}): Promise
     ? findDependencyAutomationInputs(appRoot, repositoryFiles)
     : {files: []}
   const capabilities = detectCapabilities(appToml, extensions, sourceFiles, appTomls)
-  const detection = detectProject(manifests, extensions, sourceCandidates)
+  const relativeOtherAppDirectories = otherAppDirectories.map((directory) =>
+    normalizePath(relativePath(appRoot, directory)),
+  )
+  const reactRouterRoots = detectReactRouterRoots(manifests, sourceCandidates, relativeOtherAppDirectories)
+  const detection = detectProject(extensions, sourceCandidates, reactRouterRoots)
   const context: ScanContext = {
     appRoot,
     appToml,
@@ -614,6 +636,8 @@ export async function scan(input: ScanInput, options: ScanOptions = {}): Promise
     sensitiveFiles,
     capabilities,
     detection,
+    reactRouterRoots,
+    otherAppDirectories: relativeOtherAppDirectories,
     sourceCandidates,
     gitIgnoreListing: listingStatus,
   }

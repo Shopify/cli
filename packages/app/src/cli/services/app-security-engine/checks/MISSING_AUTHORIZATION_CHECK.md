@@ -1,6 +1,6 @@
 ---
 id: MISSING_AUTHORIZATION_CHECK
-version: 2
+version: 3
 severity: high
 ---
 
@@ -56,6 +56,16 @@ actions.
    handler. Compare create/read/update/delete paths, replay after role or UI
    changes, direct URLs that survive permission downgrades, and backend actions
    that remain callable after a feature is hidden or disabled in the UI.
+
+## Shopify embedded apps (React Router)
+
+`authenticate.admin(request)` verifies the Shopify session token, so the caller is a staff member of that shop whom Shopify has granted access to this app. With offline tokens (the SDK default), Admin API calls use the app's granted scopes rather than the staff member's own permissions. That is Shopify's standard embedded app model, not a finding by itself. Report a handler only when it skips a concrete authorization boundary inside the app:
+
+- The app defines its own roles, owners, or allowlists (for example a check on `sessionToken.sub`, `onlineAccessInfo.associated_user`, `account_owner`, or an app database role), and a handler that performs the same or a more privileged operation doesn't apply it. Compare each route's loader and action, and sibling routes.
+- A request-supplied identifier selects an app-owned record that belongs to another user of the app.
+- The app uses online tokens to respect staff permissions on some paths, but a privileged path falls back to an offline session.
+
+If none of these applies, record the check as executed with no finding.
 
 ## What to report
 

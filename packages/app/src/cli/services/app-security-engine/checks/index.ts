@@ -152,7 +152,8 @@ Rules:
 - Record unresolved and not_applicable checks with a reason: { "code": "...", "message": "..." }.
 - A not_applicable check can't have findings.
 - An unsupported or unresolved check didn't pass. Never describe it as passing or complete.
-- If you can't prove exploitability or affected authority, record the check as unresolved instead of reporting a finding.
+- If you can't prove exploitability or affected authority for a specific candidate, don't report a finding: record the check as unresolved and name the candidate in the reason.
+- If you investigated and the code establishes the boundary the check asks about, record the check as executed. An unprovable hypothetical is not a reason to leave a check unresolved.
 - Don't report things you couldn't confirm — uncertainty is not a finding.`
 
 /** registry/index.ts guarantees every agent check has a catalog entry ("Orphan agent implementation"). */

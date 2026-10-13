@@ -55,6 +55,10 @@ export interface ScanContext {
   capabilities: Capabilities
   /** Framework, surface, and language inventory. */
   detection: ProjectDetection
+  /** React Router app roots relative to the app root, with `.` for the app root. Empty unless the framework is React Router. */
+  reactRouterRoots: string[]
+  /** Other apps' directories relative to the app root, with forward slashes. */
+  otherAppDirectories: string[]
   /** Path-only inventory, including unsupported source candidates. */
   sourceCandidates: SourceCandidate[]
   /** Outcome of listing git's ignored paths for the first scan directory. */

@@ -478,7 +478,7 @@ describe('authenticated-route review handoff', () => {
     expect(agentChecks.checks).toContainEqual(
       expect.objectContaining({
         id: 'UNAUTHENTICATED_ENDPOINT',
-        version: 2,
+        version: 3,
       }),
     )
   })

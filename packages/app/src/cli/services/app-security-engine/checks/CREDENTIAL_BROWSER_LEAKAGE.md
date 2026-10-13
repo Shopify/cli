@@ -1,6 +1,6 @@
 ---
 id: CREDENTIAL_BROWSER_LEAKAGE
-version: 1
+version: 2
 severity: high
 precedence: prefer-agent
 ---

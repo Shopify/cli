@@ -1,5 +1,5 @@
+import {runGit} from '../scanners/git.js'
 import {basename, dirname} from '@shopify/cli-kit/node/path'
-import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import type {ScanContext, SourceFile} from './types.js'
 import type {AppSecurityScope, Issue} from '../types.js'
 
@@ -161,7 +161,7 @@ type IgnoredFileScanReason = 'nested-repository' | 'listing-failed' | 'unknown'
 
 // A missing git binary resolves with exit code 0 and empty output.
 async function gitTopLevel(cwd: string): Promise<string | undefined> {
-  const result = await runGit(cwd, ['rev-parse', '--show-toplevel'])
+  const result = await gitProbe(cwd, ['rev-parse', '--show-toplevel'])
   return result.exitCode === 0 && result.out !== '' ? result.out : undefined
 }
 
@@ -352,20 +352,15 @@ interface GitFileStatus {
   evidence?: string[]
 }
 
-async function runGit(cwd: string, args: string[]): Promise<{exitCode?: number; out: string}> {
-  try {
-    const result = await captureOutputWithExitCode('git', args, {cwd})
-    return {exitCode: result.exitCode, out: result.stdout.trim()}
-    // Missing Git or a failed probe is unknown status, not proof the file is safe.
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    return {exitCode: undefined, out: ''}
-  }
+/** Missing Git or a failed probe is unknown status, not proof the file is safe. */
+async function gitProbe(cwd: string, args: string[]): Promise<{exitCode?: number; out: string}> {
+  const result = await runGit(cwd, args)
+  return {exitCode: result?.exitCode, out: result?.stdout.trim() ?? ''}
 }
 
 /** Asks the file's own repository, which may differ from the app's: a scan directory can be another repository. */
 export async function gitStatusFor(file: Pick<SourceFile, 'path' | 'absolutePath'>): Promise<GitFileStatus> {
-  const run = async (args: string[]) => runGit(dirname(file.absolutePath), args)
+  const run = async (args: string[]) => gitProbe(dirname(file.absolutePath), args)
   const name = basename(file.absolutePath)
 
   // Is this even a git repo? If not, we cannot confirm anything.

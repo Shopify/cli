@@ -111,12 +111,12 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
   },
   {
     id: 'METAFIELD_OFFLINE_TOKEN',
-    title: 'Metafield write using offline token context',
+    title: 'Metafield write in an unverified offline token context',
     severity: 'high',
     points: -15,
     description:
-      'Detects metafield writes (metafieldsSet) in offline-token contexts. Online tokens provide user attribution and expiry.',
-    fix: 'Use authenticate.admin(request) instead of unauthenticated.admin() for metafield writes.',
+      'Investigates metafield and metaobject writes made with an offline Admin API context that no verified request for the same shop authorizes.',
+    fix: 'Make the write from a request verified with authenticate.admin(request), or derive the shop and values from a verified source.',
     guide: 'https://shopify.dev/docs/apps/build/authentication-authorization/access-token-types/online-access-tokens',
     docsUrl: `${CHECK_DOCS_BASE_URL}/metafield-offline-token`,
   },
@@ -266,7 +266,8 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     title: 'Embedded app frame-ancestors uses a wildcard',
     severity: 'high',
     points: -12,
-    description: 'Detects literal wildcard or clearly permissive frame-ancestors policies in embedded app code.',
+    description:
+      'Detects wildcard or static cross-shop frame-ancestors policies in embedded app code, whether written literally or built from variables.',
     fix: 'Restrict frame-ancestors to Shopify Admin and the authenticated shop origin.',
     guide: 'https://shopify.dev/docs/apps/build/security/set-up-iframe-protection',
     requires: 'embedded_app',

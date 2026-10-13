@@ -1,3 +1,4 @@
+import {fileExistsNoFollow, resolveThemeFilePath, validateListingName} from './theme-file-path.js'
 import {fileExists, readFile, glob} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {capitalizeWords} from '@shopify/cli-kit/common/string'
@@ -13,8 +14,10 @@ export async function getListingFilePath(
   listingName: string,
   fileKey: string,
 ): Promise<string | undefined> {
+  validateListingName(listingName)
   if (isListingFile(fileKey)) {
-    const listingFilePath = joinPath(themeDirectory, 'listings', listingName, fileKey)
+    await resolveThemeFilePath(themeDirectory, fileKey)
+    const listingFilePath = await resolveThemeFilePath(themeDirectory, joinPath('listings', listingName, fileKey))
 
     if (await fileExists(listingFilePath)) {
       return listingFilePath
@@ -25,7 +28,8 @@ export async function getListingFilePath(
 }
 
 export async function updateSettingsDataForListing(themeDirectory: string, listingName: string): Promise<string> {
-  const settingsDataPath = joinPath(themeDirectory, 'config', 'settings_data.json')
+  validateListingName(listingName)
+  const settingsDataPath = await resolveThemeFilePath(themeDirectory, 'config/settings_data.json')
   const settingsContent = await readFile(settingsDataPath, {encoding: 'utf8'})
 
   const settingsData = parseJSON(settingsContent, null, true)
@@ -41,8 +45,13 @@ export async function updateSettingsDataForListing(themeDirectory: string, listi
 }
 
 export async function ensureListingExists(themeDirectory: string, listingName: string): Promise<void> {
+  validateListingName(listingName)
   const listingsRoot = joinPath(themeDirectory, 'listings')
   const dir = joinPath(listingsRoot, listingName)
+  if (await fileExistsNoFollow(themeDirectory)) {
+    await resolveThemeFilePath(themeDirectory, 'listings')
+    await resolveThemeFilePath(themeDirectory, joinPath('listings', listingName))
+  }
   const exists = await fileExists(dir)
   if (exists) return
 
