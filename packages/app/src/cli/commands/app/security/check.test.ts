@@ -10,6 +10,20 @@ import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/security-check.js')
 
+async function expectInstructionFlagConflict(flags: string[]): Promise<void> {
+  const outputMock = mockAndCaptureOutput()
+  const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+  try {
+    await expect(SecurityCheck.run(flags, import.meta.url)).rejects.toThrow('process.exit unexpectedly called with "1"')
+    expect(outputMock.error()).toContain('cannot also be provided')
+    expect(securityCheck).not.toHaveBeenCalled()
+  } finally {
+    consoleErrorSpy.mockRestore()
+    outputMock.clear()
+  }
+}
+
 describe('app security check command', () => {
   test('does not require linked app context', () => {
     expect(SecurityCheck.prototype).toBeInstanceOf(BaseCommand)
@@ -107,7 +121,7 @@ describe('app security check command', () => {
 
     for (const incompatible of [['--print-instructions'], ['--yes'], ['--skip-instructions'], ['--blocking', 'high']]) {
       // eslint-disable-next-line no-await-in-loop
-      await expect(SecurityCheck.run(['--list-files', ...incompatible], import.meta.url)).rejects.toThrow()
+      await expectInstructionFlagConflict(['--list-files', ...incompatible])
     }
   })
 
@@ -199,11 +213,77 @@ describe('app security check command', () => {
     }
   })
 
+  test.each([
+    ['1', '1', true],
+    ['1', '0', true],
+    ['0', '1', true],
+    ['0', '0', false],
+  ] as const)(
+    'combines printing variables (print-instructions=%s, yes=%s) as printInstructions=%s',
+    async (printValue, yesValue, printInstructions) => {
+      const warningSpy = vi.spyOn(SecurityCheck.prototype, 'warn').mockImplementation((warning) => warning)
+      vi.stubEnv('SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS', printValue)
+      vi.stubEnv('SHOPIFY_FLAG_YES', yesValue)
+
+      try {
+        await SecurityCheck.run([], import.meta.url)
+
+        expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({printInstructions}))
+        expect(warningSpy).toHaveBeenCalledOnce()
+        expect(warningSpy).toHaveBeenCalledWith(expect.stringContaining('--print-instructions'))
+      } finally {
+        warningSpy.mockRestore()
+        vi.unstubAllEnvs()
+      }
+    },
+  )
+
+  test.each([
+    {flag: '--print-instructions', environment: 'SHOPIFY_FLAG_YES', value: '0'},
+    {flag: '--print-instructions', environment: 'SHOPIFY_FLAG_YES', value: '1'},
+    {flag: '--yes', environment: 'SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS', value: '0'},
+    {flag: '--yes', environment: 'SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS', value: '1'},
+  ])('prints with $flag and $environment=$value', async ({flag, environment, value}) => {
+    const warningSpy = vi.spyOn(SecurityCheck.prototype, 'warn').mockImplementation((warning) => warning)
+    vi.stubEnv('SHOPIFY_FLAG_YES', undefined)
+    vi.stubEnv('SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS', undefined)
+    vi.stubEnv(environment, value)
+
+    try {
+      await SecurityCheck.run([flag], import.meta.url)
+
+      expect(securityCheck).toHaveBeenCalledWith(expect.objectContaining({printInstructions: true}))
+      expect(warningSpy).toHaveBeenCalledOnce()
+      expect(warningSpy).toHaveBeenCalledWith(expect.stringContaining('--print-instructions'))
+    } finally {
+      warningSpy.mockRestore()
+      vi.unstubAllEnvs()
+    }
+  })
+
+  test.each([
+    ['SHOPIFY_FLAG_LIST_FILES', '--print-instructions'],
+    ['SHOPIFY_FLAG_LIST_FILES', '--yes'],
+    ['SHOPIFY_FLAG_APP_SECURITY_SKIP_INSTRUCTIONS', '--print-instructions'],
+    ['SHOPIFY_FLAG_APP_SECURITY_SKIP_INSTRUCTIONS', '--yes'],
+  ])('rejects %s=1 with %s', async (environment, printingFlag) => {
+    vi.stubEnv('SHOPIFY_FLAG_YES', undefined)
+    vi.stubEnv('SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS', undefined)
+    vi.stubEnv('SHOPIFY_FLAG_LIST_FILES', undefined)
+    vi.stubEnv('SHOPIFY_FLAG_APP_SECURITY_SKIP_INSTRUCTIONS', undefined)
+    vi.stubEnv(environment, '1')
+
+    try {
+      await expectInstructionFlagConflict([printingFlag])
+    } finally {
+      vi.unstubAllEnvs()
+    }
+  })
+
   test.each([{flags: ['--print-instructions']}, {flags: ['--yes']}, {flags: ['--print-instructions', '--yes']}])(
     'rejects $flags with --skip-instructions',
     async ({flags}) => {
-      await expect(SecurityCheck.run([...flags, '--skip-instructions'], import.meta.url)).rejects.toThrow()
-      expect(securityCheck).not.toHaveBeenCalled()
+      await expectInstructionFlagConflict([...flags, '--skip-instructions'])
     },
   )
 
@@ -216,8 +296,7 @@ describe('app security check command', () => {
     vi.stubEnv(environment, '1')
 
     try {
-      await expect(SecurityCheck.run([incompatible], import.meta.url)).rejects.toThrow()
-      expect(securityCheck).not.toHaveBeenCalled()
+      await expectInstructionFlagConflict([incompatible])
     } finally {
       vi.unstubAllEnvs()
     }
@@ -275,8 +354,7 @@ describe('app security check command', () => {
     vi.stubEnv(environment, '0')
 
     try {
-      await expect(SecurityCheck.run([mode], import.meta.url)).rejects.toThrow()
-      expect(securityCheck).not.toHaveBeenCalled()
+      await expectInstructionFlagConflict([mode])
     } finally {
       vi.unstubAllEnvs()
     }
