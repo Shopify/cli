@@ -1,5 +1,6 @@
 import {ensureDeployContext} from './context.js'
 import {deploy, importExtensionsIfNeeded} from './deploy.js'
+import {renderAppDeployResult} from './deploy/result.js'
 import {uploadExtensionsBundle} from './deploy/upload.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {importAllExtensions, allExtensionTypes, filterOutImportedExtensions} from './import-extensions.js'
@@ -34,6 +35,7 @@ import {
 } from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 const versionTag = 'unique-version-tag'
@@ -511,6 +513,31 @@ describe('deploy', () => {
     expect(bundleAndBuildExtensions).toHaveBeenCalledOnce()
   })
 
+  test('returns deployment data without a completion banner', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const app = testAppLinked({directory, allExtensions: []})
+      const result = await testDeployBundle({app, remoteApp, developerPlatformClient, renderResult: false})
+      expect(result).toMatchObject({
+        status: 'success',
+        app,
+        release: true,
+        uploadExtensionsBundleResult: {versionGid: 'gid://shopify/Version/1', versionTag},
+        didMigrateExtensionsToDevDash: false,
+      })
+      expect(renderSuccess).not.toHaveBeenCalled()
+      expect(renderInfo).not.toHaveBeenCalled()
+    })
+  })
+
+  test('returns cancelled when deployment confirmation is declined', async () => {
+    const app = testAppLinked()
+    vi.mocked(ensureDeployContext).mockRejectedValueOnce(new AbortSilentError())
+    const result = await testDeployBundle({app, remoteApp, developerPlatformClient, renderResult: false})
+    expect(result).toEqual({status: 'cancelled', app})
+    expect(bundleAndBuildExtensions).not.toHaveBeenCalled()
+    expect(uploadExtensionsBundle).not.toHaveBeenCalled()
+  })
+
   test('shows a success message', async () => {
     // Given
     const uiExtension = await testUIExtension({type: 'web_pixel_extension'})
@@ -690,6 +717,7 @@ interface TestDeployBundleInput {
   appToDeploy?: AppInterface
   developerPlatformClient: DeveloperPlatformClient
   didMigrateExtensionsToDevDash?: boolean
+  renderResult?: boolean
 }
 
 async function testDeployBundle({
@@ -701,6 +729,7 @@ async function testDeployBundle({
   appToDeploy,
   developerPlatformClient,
   didMigrateExtensionsToDevDash = false,
+  renderResult = true,
 }: TestDeployBundleInput) {
   // Given
   const appModuleUuids: {[key: string]: string} = {}
@@ -713,13 +742,14 @@ async function testDeployBundle({
 
   vi.mocked(uploadExtensionsBundle).mockResolvedValue({
     validationErrors: [],
+    versionGid: 'gid://shopify/Version/1',
     versionTag,
     message: options?.message,
     ...(!released && {deployError: 'no release error'}),
     location: 'https://partners.shopify.com/0/apps/0/versions/1',
   })
 
-  await deploy({
+  const result = await deploy({
     app,
     project: testProject(),
     remoteApp,
@@ -732,6 +762,8 @@ async function testDeployBundle({
     developerPlatformClient,
     skipBuild: false,
   })
+  if (renderResult) await renderAppDeployResult(result, remoteApp, testProject(), 'text')
+  return result
 }
 
 describe('ImportExtensionsIfNeeded', () => {
