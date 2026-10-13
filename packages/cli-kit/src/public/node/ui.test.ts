@@ -247,11 +247,12 @@ describe('renderWarning', async () => {
   })
 })
 
-describe('info and warning diagnostics', () => {
+describe('alert diagnostics', () => {
   test.each([
-    {renderAlert: renderInfo, level: 'info'},
-    {renderAlert: renderWarning, level: 'warning'},
-  ] as const)('writes $level alerts as JSON on stderr with --json', async ({renderAlert, level}) => {
+    {renderAlert: renderInfo, type: 'info', level: 'info'},
+    {renderAlert: renderWarning, type: 'warning', level: 'warning'},
+    {renderAlert: renderSuccess, type: 'success', level: 'info'},
+  ] as const)('writes $type alerts as JSON on stderr with --json', async ({renderAlert, level}) => {
     await withCapturedStandardStreams(({stdout, stderr}) => {
       runWithCommandEventsForCommand(['--json'], () => {
         renderAlert({headline: 'Scan directory ignored', body: ['Use', {command: '--no-git-ignore'}]})
@@ -317,17 +318,21 @@ describe('info and warning diagnostics', () => {
     })
   })
 
-  test.each([renderInfo, renderWarning])('does not emit a diagnostic for an empty alert', (renderAlert) => {
-    const sink = vi.fn()
+  test.each([renderInfo, renderWarning, renderSuccess])(
+    'does not emit a diagnostic for an empty alert',
+    (renderAlert) => {
+      const sink = vi.fn()
 
-    runWithCommandEvents({outputMode: 'json', sink}, () => renderAlert({}))
+      runWithCommandEvents({outputMode: 'json', sink}, () => renderAlert({}))
 
-    expect(sink).not.toHaveBeenCalled()
-  })
+      expect(sink).not.toHaveBeenCalled()
+    },
+  )
 
   test.each([
     {renderAlert: renderInfo, banner: 'info'},
     {renderAlert: renderWarning, banner: 'warning'},
+    {renderAlert: renderSuccess, banner: 'success'},
   ])('keeps the $banner banner on stderr in text mode', async ({renderAlert, banner}) => {
     await withCapturedStandardStreams(({stdout, stderr}) => {
       runWithCommandEvents({outputMode: 'text'}, () => renderAlert({headline: 'Title', body: 'Body'}))
