@@ -128,6 +128,7 @@ import {getAppAutomationToken} from '@shopify/cli-kit/node/environment'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform, Session} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {zod} from '@shopify/cli-kit/node/schema'
 import {fetch, shopifyFetch, Response} from '@shopify/cli-kit/node/http'
 import {
   appManagementRequestDoc,
@@ -162,6 +163,22 @@ import {randomUUID} from 'crypto'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 const commandRunId = randomUUID()
+
+const appVersionNotFoundErrorSchema = zod.object({
+  statusCode: zod.literal(200),
+  errors: zod
+    .array(
+      zod.object({
+        path: zod.tuple([zod.literal('versionByTag')]),
+        extensions: zod.object({
+          app_errors: zod.object({
+            errors: zod.array(zod.object({category: zod.literal('not_found')})).nonempty(),
+          }),
+        }),
+      }),
+    )
+    .nonempty(),
+})
 
 type OrgType = NonNullable<ListAppDevStoresQuery['organization']>
 type AccessibleShops = NonNullable<OrgType['accessibleShops']>
@@ -682,8 +699,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
     versionTag: string,
   ): Promise<AppVersionWithContext> {
     const query = AppVersionByTag
-    const variables = {versionTag}
-    const result = await this.appManagementRequest({query, variables})
+    const variables = {appId, versionTag}
+    const result = await this.appManagementRequest({query, variables}).catch((error: unknown) => {
+      if (appVersionNotFoundErrorSchema.safeParse(error).success) {
+        throw new AbortError(`Version ${versionTag} could not be found.`)
+      }
+      throw error
+    })
     const version = result.versionByTag
     if (!version) {
       throw new AbortError(`Version ${versionTag} could not be found.`)

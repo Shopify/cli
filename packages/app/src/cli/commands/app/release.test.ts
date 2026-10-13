@@ -4,14 +4,26 @@ import {linkedAppContext} from '../../services/app-context.js'
 import {testAppLinked, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {AppManagementClient} from '../../utilities/developer-platform-client/app-management-client.js'
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
+import {graphqlRequestDoc} from '@shopify/cli-kit/node/api/graphql'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {outputInfo, unstyled} from '@shopify/cli-kit/node/output'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {ClientError} from 'graphql-request'
+import {GraphQLError} from 'graphql'
 import {fileURLToPath} from 'node:url'
+
+const {rawRequest} = vi.hoisted(() => ({rawRequest: vi.fn()}))
+
+vi.mock('graphql-request', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('graphql-request')>()),
+  GraphQLClient: class {
+    requestConfig = {}
+    rawRequest = rawRequest
+  },
+}))
 
 vi.mock('../../services/release.js')
 vi.mock('../../services/app-context.js')
@@ -35,6 +47,14 @@ afterEach(() => {
 
 describe('app release command', () => {
   beforeEach(() => {
+    vi.mocked(appManagementRequestDoc).mockImplementation((options) =>
+      graphqlRequestDoc({
+        ...options,
+        api: 'App Management',
+        url: 'https://app-management.example/graphql',
+        preferredBehaviour: 'non-blocking',
+      }),
+    )
     vi.mocked(linkedAppContext).mockResolvedValue({
       app: testAppLinked(),
       remoteApp: testOrganizationApp(),
@@ -82,7 +102,21 @@ describe('app release command', () => {
     vi.mocked(release).mockImplementationOnce(releaseService)
     const client = AppManagementClient.getInstance()
     client.token = () => Promise.resolve('token')
-    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({versionByTag: null})
+    rawRequest.mockRejectedValueOnce(
+      new ClientError(
+        {
+          status: 200,
+          headers: new Headers(),
+          errors: [
+            new GraphQLError('Query errors', {
+              path: ['versionByTag'],
+              extensions: {app_errors: {errors: [{category: 'not_found', message: 'The entity could not be found.'}]}},
+            }),
+          ],
+        },
+        {query: 'query AppVersionByTag { versionByTag { id } }'},
+      ),
+    )
     vi.mocked(linkedAppContext).mockResolvedValueOnce({
       app: testAppLinked(),
       remoteApp: testOrganizationApp(),
@@ -93,6 +127,10 @@ describe('app release command', () => {
         const argv = ['--path', directory, '--version', 'missing', '--allow-updates']
         if (format === 'json') argv.push('--json')
         await expect(runRelease(argv)).rejects.toThrow()
+        expect(rawRequest).toHaveBeenCalledWith(expect.stringContaining('versionByTag(appId: $appId'), {
+          appId: testOrganizationApp().id,
+          versionTag: 'missing',
+        })
         if (format === 'json') {
           expect(JSON.parse(stdout())).toEqual({error: {type: 'abort', message: 'Version missing could not be found.'}})
           expect(stderr()).toBe('')
@@ -105,10 +143,10 @@ describe('app release command', () => {
   })
 
   test.each([
-    {message: 'HTTP 503: Service unavailable', tryMessage: undefined},
-    {message: 'HTTP 403: Access denied', tryMessage: 'Sign in with an account that can access the app.'},
-    {message: 'HTTP 404: Cannot find a valid organization', tryMessage: undefined},
-  ])('preserves the lookup failure in JSON: $message', async ({message, tryMessage}) => {
+    {status: 503, message: 'Service unavailable'},
+    {status: 403, message: 'Access denied'},
+    {status: 404, message: 'Cannot find a valid organization'},
+  ])('preserves the lookup failure in JSON: HTTP $status', async ({status, message}) => {
     vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
     const {release: releaseService} =
       await vi.importActual<typeof import('../../services/release.js')>('../../services/release.js')
@@ -116,8 +154,12 @@ describe('app release command', () => {
     const client = AppManagementClient.getInstance()
     client.token = () => Promise.resolve('token')
     const releaseRequest = vi.spyOn(client, 'release')
-    const errorMessage = `${message}\n\nRequest ID: lookup-request-id`
-    vi.mocked(appManagementRequestDoc).mockRejectedValueOnce(new AbortError(errorMessage, tryMessage))
+    rawRequest.mockRejectedValueOnce(
+      new ClientError(
+        {status, headers: new Headers({'x-request-id': 'lookup-request-id'}), errors: [new GraphQLError(message)]},
+        {query: 'query AppVersionByTag { versionByTag { id } }'},
+      ),
+    )
     vi.mocked(linkedAppContext).mockResolvedValueOnce({
       app: testAppLinked(),
       remoteApp: testOrganizationApp(),
@@ -137,7 +179,10 @@ describe('app release command', () => {
             '--no-input',
           ]),
         ).rejects.toThrow()
-        expect(JSON.parse(stdout())).toEqual({error: {type: 'abort', message: errorMessage, tryMessage}})
+        const {error} = JSON.parse(stdout())
+        expect(error).toMatchObject({type: 'abort', message: expect.stringContaining(message)})
+        expect(error.message).toContain('Request ID: lookup-request-id')
+        if (status === 403) expect(error.tryMessage).toContain('shopify auth login')
         expect(stderr()).toBe('')
         expect(releaseRequest).not.toHaveBeenCalled()
       })

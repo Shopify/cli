@@ -59,7 +59,7 @@ import {
   appManagementRequestDoc,
 } from '@shopify/cli-kit/node/api/app-management'
 import {appDevRequestDoc} from '@shopify/cli-kit/node/api/app-dev'
-import {BugError} from '@shopify/cli-kit/node/error'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {webhooksRequestDoc} from '@shopify/cli-kit/node/api/webhooks'
 
@@ -1394,6 +1394,23 @@ describe('deploy', () => {
         },
       },
     })
+  })
+})
+
+describe('appVersionByTag', () => {
+  test.each([
+    {path: ['app'], categories: ['not_found']},
+    {path: ['versionByTag'], categories: ['not_found', 'access_denied']},
+  ])('preserves errors for $path with categories $categories', async ({path, categories}) => {
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+    const error = Object.assign(new AbortError('Lookup failed.'), {
+      statusCode: 200,
+      errors: [{path, extensions: {app_errors: {errors: categories.map((category) => ({category}))}}}],
+    })
+    vi.mocked(appManagementRequestDoc).mockRejectedValueOnce(error)
+
+    await expect(client.appVersionByTag(testOrganizationApp(), 'invalid')).rejects.toBe(error)
   })
 })
 
