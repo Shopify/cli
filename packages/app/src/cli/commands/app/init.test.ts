@@ -461,12 +461,19 @@ describe('Init JSON output', () => {
   test('writes a fatal error without a success result when initialization fails', async () => {
     vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
     vi.mocked(initService).mockRejectedValue(new AbortError('Initialization failed.'))
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
 
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await runInitCommand(['--json', '--template', 'none', '--client-id', 'api-key']).catch(handler)
-      expect(JSON.parse(stdout())).toEqual({error: {type: 'abort', message: 'Initialization failed.'}})
-      expect(stderr()).toBe('')
-    })
+    try {
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await expect(Init.run(['--json', '--template', 'none', '--client-id', 'api-key'])).rejects.toThrow(
+          'process.exit unexpectedly called with "1"',
+        )
+        expect(JSON.parse(stdout())).toEqual({error: {type: 'abort', message: 'Initialization failed.'}})
+        expect(stderr()).toBe('')
+      })
+    } finally {
+      consoleError.mockRestore()
+    }
   })
 
   test('non-interactive text output retains the final success banner', async () => {
