@@ -4386,9 +4386,9 @@ Check an app for Shopify-specific security issues and write deterministic-findin
 
 ```
 USAGE
-  $ shopify app security check [--exclude <value>...] [--include-dir <value>...] [--json-schema] [--list-files | --yes |
-    --skip-instructions | --blocking high|medium|low|none] [--no-color] [--no-git-ignore] [--no-input] [--path <value>]
-    [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
+  $ shopify app security check [--exclude <value>...] [--include-dir <value>...] [--json-schema] [--list-files |
+    --print-instructions | --skip-instructions | --blocking high|medium|low|none] [--no-color] [--no-git-ignore]
+    [--no-input] [--path <value>] [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
 
 FLAGS
   -c, --config=<value>
@@ -4439,6 +4439,10 @@ FLAGS
       The path to your app directory.
       [env: SHOPIFY_FLAG_PATH]
 
+  --print-instructions
+      Print coding-agent instructions without prompting for how to deliver them.
+      [env: SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS]
+
   --skip-instructions
       Don't offer the coding-agent instructions after the scan. Use it when you want only the deterministic scan results.
       [env: SHOPIFY_FLAG_APP_SECURITY_SKIP_INSTRUCTIONS]
@@ -4450,10 +4454,6 @@ FLAGS
   --without-app-config
       Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.
       [env: SHOPIFY_FLAG_WITHOUT_APP_CONFIG]
-
-  --yes
-      Print coding-agent instructions without prompting.
-      [env: SHOPIFY_FLAG_YES]
 
 DESCRIPTION
   Check an app for Shopify-specific security issues and write deterministic-findings.json and agent-checks.json.
@@ -4488,7 +4488,8 @@ DESCRIPTION
 
   In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing;
   copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass
-  `--yes`, which prints them. You can also run `shopify app security instructions` to print, copy, or write them later.
+  `--print-instructions`, which prints them. You can also run `shopify app security instructions` to print, copy, or
+  write them later.
 ```
 
 ## `shopify app security clean`

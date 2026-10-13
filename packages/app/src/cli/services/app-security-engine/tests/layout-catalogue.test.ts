@@ -111,7 +111,7 @@ async function checkListFiles(temporaryDirectory: string, workingDirectory: stri
       listFiles: true,
       verbose: false,
       blocking: 'none',
-      yes: false,
+      printInstructions: false,
       skipInstructions: false,
     })
     return {resolution, stdout: stdout(), stderr: stderr()}
