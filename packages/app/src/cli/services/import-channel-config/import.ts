@@ -1,5 +1,5 @@
 import {fetchChannelSpecExport} from './fetch.js'
-import {importChannelConfigJsonOutputSchema} from './types.js'
+import {importChannelConfigJsonOutputSchema, type ImportedChannelConfig} from './types.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {
   CHANNEL_CONFIG_IDENTIFIER,
@@ -9,9 +9,7 @@ import {OrganizationApp} from '../../models/organization.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, matchGlob, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {basename, dirname, joinPath, relativePath} from '@shopify/cli-kit/node/path'
-import {outputResult} from '@shopify/cli-kit/node/output'
-import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {basename, dirname, joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 
 export const CHANNEL_SPEC_EXTENSION_DIRECTORY = joinPath('extensions', 'channel-config')
 export const CHANNEL_SPEC_DIRECTORY = joinPath(
@@ -36,15 +34,14 @@ interface ImportChannelConfigOptions {
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
   force: boolean
-  json: boolean
 }
 
 /**
  * Imports the Shopify-authored channel spec for the linked app into the app's channel_config
  * extension, creating the extension if the app doesn't have one yet.
  */
-export async function importChannelConfig(options: ImportChannelConfigOptions): Promise<void> {
-  const {app, remoteApp, developerPlatformClient, force, json} = options
+export async function importChannelConfig(options: ImportChannelConfigOptions): Promise<ImportedChannelConfig> {
+  const {app, remoteApp, developerPlatformClient, force} = options
 
   const result = await fetchChannelSpecExport({remoteApp, developerPlatformClient})
 
@@ -57,7 +54,7 @@ export async function importChannelConfig(options: ImportChannelConfigOptions): 
   const {extensionDirectory, createExtension} = resolveExtensionDirectory(app)
 
   // basename() so a filename with path separators can't escape the specifications directory
-  const outputPath = joinPath(extensionDirectory, CHANNEL_CONFIG_SPECIFICATIONS_DIRECTORY, basename(result.filename))
+  const outputPath = resolvePath(extensionDirectory, CHANNEL_CONFIG_SPECIFICATIONS_DIRECTORY, basename(result.filename))
   if (!force && (await fileExists(outputPath))) {
     throw new AbortError(
       `A channel spec already exists at ${relativePath(app.directory, outputPath)}.`,
@@ -65,47 +62,25 @@ export async function importChannelConfig(options: ImportChannelConfigOptions): 
     )
   }
 
+  const imported = importChannelConfigJsonOutputSchema.validate({
+    status: 'success',
+    handle: result.handle,
+    filename: basename(result.filename),
+    path: outputPath,
+    toml: result.toml,
+    warnings: result.warnings.map(({code, message}) => ({code, message})),
+  })
+
   await mkdir(dirname(outputPath))
   if (createExtension) {
     await writeFile(joinPath(extensionDirectory, EXTENSION_CONFIG_FILENAME), EXTENSION_CONFIG_CONTENT)
   }
-  await writeFile(outputPath, result.toml)
+  await writeFile(outputPath, imported.toml)
 
-  if (json) {
-    outputResult(
-      importChannelConfigJsonOutputSchema.encode({
-        handle: result.handle,
-        filename: basename(result.filename),
-        path: relativePath(app.directory, outputPath),
-        toml: result.toml,
-        warnings: result.warnings,
-      }),
-    )
-    return
+  return {
+    ...imported,
+    extensionConfigurationPath: createExtension ? resolvePath(extensionDirectory, EXTENSION_CONFIG_FILENAME) : null,
   }
-
-  result.warnings.forEach((warning) => renderWarning({body: warning.message}))
-
-  renderSuccess({
-    headline: ['Imported the channel spec for', {userInput: remoteApp.title}, {char: '.'}],
-    body: [
-      'The spec was written to',
-      {filePath: relativePath(app.directory, outputPath)},
-      {char: '.'},
-      ...(createExtension
-        ? [
-            'Also created',
-            {filePath: relativePath(app.directory, joinPath(extensionDirectory, EXTENSION_CONFIG_FILENAME))},
-            'so the spec is included when your app is deployed.',
-          ]
-        : []),
-    ],
-    nextSteps: [
-      'Review the generated spec and make any changes your channel needs.',
-      ['Run', {command: 'shopify app dev'}, 'to try the spec on a development store before releasing it.'],
-      ['Run', {command: 'shopify app deploy'}, 'to deploy the spec as part of your app.'],
-    ],
-  })
 }
 
 /**
