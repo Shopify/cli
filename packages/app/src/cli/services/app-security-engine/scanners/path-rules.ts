@@ -5,6 +5,7 @@ import {matchGlob} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {basename, cwd, dirname, joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {lstatSync, realpathSync} from 'node:fs'
+import type {Stats} from 'node:fs'
 
 export interface PathRules {
   /** `--exclude` globs, with their literal start resolved against the working directory. */
@@ -137,7 +138,7 @@ async function runGitIgnoreListing(directory: string): Promise<GitIgnoreListing>
     return findRepositoryMarker(directory).status === 'none' ? {status: 'not-a-repository'} : {status: 'failed'}
   }
   if (location.stdout.trim() === 'false') return {status: 'not-a-repository'}
-  // A missing git binary resolves with exit code 0 and empty output.
+  // Git that can't start after passing the version check, for example once removed, exits 0 with no output.
   if (location.stdout.trim() !== 'true') return {status: 'failed'}
 
   const listed = await runGit(directory, [
@@ -175,16 +176,18 @@ export async function listTrackedFiles(directory: string): Promise<string[] | un
 /**
  * The listing for a directory that is a repository's top level, or undefined when it isn't one.
  * A symbolic-linked `.git` is never followed, so that subtree has no listing-based exclusions.
+ * Git errors, such as an unsupported version, propagate.
  */
 export async function listNestedRepository(directory: string): Promise<GitIgnoreListing | undefined> {
+  let stats: Stats
   try {
-    const stats = lstatSync(joinPath(directory, '.git'))
-    if (stats.isDirectory() || stats.isFile()) return await listGitIgnoredPaths(directory)
-    return {status: 'failed'}
+    stats = lstatSync(joinPath(directory, '.git'))
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return isMissingFilesystemEntry(error) ? undefined : {status: 'failed'}
   }
+  if (stats.isDirectory() || stats.isFile()) return listGitIgnoredPaths(directory)
+  return {status: 'failed'}
 }
 
 function splitNullSeparated(output: string): string[] {
