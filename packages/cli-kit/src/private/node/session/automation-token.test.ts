@@ -2,6 +2,7 @@ import {
   automationTokenAuthMethod,
   automationTokenVariable,
   automationTokenVariablesProblem,
+  isAppAutomationTokenVariableInUse,
 } from './automation-token.js'
 import {environmentVariables} from '../constants.js'
 import {describe, expect, test} from 'vitest'
@@ -44,6 +45,28 @@ describe('automationTokenAuthMethod', () => {
     },
   ])('reports $expected for $name', ({env, expected}) => {
     expect(automationTokenAuthMethod(env)).toBe(expected)
+  })
+})
+
+describe('isAppAutomationTokenVariableInUse', () => {
+  test.each([
+    {name: 'the app variable', env: {[APP]: 'a'}},
+    {name: 'the app variable over the Partners variable', env: {[APP]: 'a', [PARTNERS]: 'p'}},
+  ])('is true for $name', ({env}) => {
+    expect(isAppAutomationTokenVariableInUse(env)).toBe(true)
+  })
+
+  test.each([
+    {name: 'no automation token variable', env: {}},
+    {name: 'the service account variable', env: {[SERVICE_ACCOUNT]: 's'}},
+    {name: 'the Partners variable', env: {[PARTNERS]: 'p'}},
+    {name: 'an empty app variable', env: {[APP]: ''}},
+    {
+      name: 'the app variable set together with the service account variable',
+      env: {[SERVICE_ACCOUNT]: 's', [APP]: 'a'},
+    },
+  ])('is false for $name', ({env}) => {
+    expect(isAppAutomationTokenVariableInUse(env)).toBe(false)
   })
 })
 

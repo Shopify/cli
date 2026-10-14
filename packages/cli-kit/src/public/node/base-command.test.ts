@@ -260,6 +260,25 @@ describe('command events', () => {
     })
   })
 
+  test('reports the SHOPIFY_APP_AUTOMATION_TOKEN deprecation as a JSON diagnostic for JSON commands', async () => {
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+    vi.stubEnv('SHOPIFY_APP_AUTOMATION_TOKEN', 'app-token')
+
+    await MockCommandWithEvents.run(['--json'])
+
+    const events = outputMock
+      .info()
+      .split('\n')
+      .map((line) => JSON.parse(line))
+    expect(events).toContainEqual({
+      type: 'diagnostic',
+      level: 'warning',
+      timestamp: expect.any(String),
+      message: expect.stringContaining('SHOPIFY_APP_AUTOMATION_TOKEN is deprecated.'),
+    })
+  })
+
   test('does not duplicate events already displayed by the text UI', async () => {
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
@@ -854,6 +873,43 @@ describe('applying environments', async () => {
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
     `)
+  })
+
+  test('shows a deprecation warning when SHOPIFY_APP_AUTOMATION_TOKEN is set', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+    vi.stubEnv('SHOPIFY_APP_AUTOMATION_TOKEN', 'app-token')
+
+    // When
+    await MockCommand.run()
+
+    // Then
+    expect(outputMock.warn()).toMatchInlineSnapshot(`
+      "╭─ warning ────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  SHOPIFY_APP_AUTOMATION_TOKEN is deprecated.                                 │
+      │                                                                              │
+      │  Move the token to SHOPIFY_SERVICE_ACCOUNT_TOKEN.                            │
+      │  SHOPIFY_APP_AUTOMATION_TOKEN still works for now, but a future release      │
+      │  will stop reading it.                                                       │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
+  })
+
+  test('does not show the deprecation warning when SHOPIFY_SERVICE_ACCOUNT_TOKEN is set', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+    vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'service-account-token')
+
+    // When
+    await MockCommand.run()
+
+    // Then
+    expect(outputMock.warn()).toMatchInlineSnapshot('""')
   })
 
   test('does not show a warning about NPM separator when no flag matches a NPM config env variable', async () => {

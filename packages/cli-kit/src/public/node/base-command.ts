@@ -10,6 +10,8 @@ import {isTruthy} from './context/utilities.js'
 import {setCurrentCommandId} from './global-context.js'
 import {type JsonOutputSchema} from './json-output-schema.js'
 import {JsonMap} from '../../private/common/json.js'
+import {environmentVariables} from '../../private/node/constants.js'
+import {isAppAutomationTokenVariableInUse} from '../../private/node/session/automation-token.js'
 import {underscore} from '../common/string.js'
 import {Command, Config, Errors, Flags} from '@oclif/core'
 import {OutputFlags, Input, ParserOutput, FlagInput, OutputArgs} from '@oclif/core/parser'
@@ -94,6 +96,7 @@ abstract class BaseCommand extends Command {
     }
     await removeDuplicatedPlugins(this.config)
     this.showNpmFlagWarning()
+    await this.showDeprecatedAutomationTokenVariableWarning()
     const {showNotificationsIfNeeded} = await import('./notifications-system.js')
     await showNotificationsIfNeeded()
     return super.init()
@@ -120,6 +123,19 @@ abstract class BaseCommand extends Command {
         })
       })
     }
+  }
+
+  // SHOPIFY_APP_AUTOMATION_TOKEN keeps working, but SHOPIFY_SERVICE_ACCOUNT_TOKEN replaces it and takes the same token.
+  // This warning is how people still using the old name find out about the new one.
+  protected async showDeprecatedAutomationTokenVariableWarning(): Promise<void> {
+    if (!isAppAutomationTokenVariableInUse()) return
+
+    const {appAutomationToken, serviceAccountToken} = environmentVariables
+    const {renderWarning} = await import('./ui.js')
+    renderWarning({
+      headline: `${appAutomationToken} is deprecated.`,
+      body: `Move the token to ${serviceAccountToken}. ${appAutomationToken} still works for now, but a future release will stop reading it.`,
+    })
   }
 
   protected exitWithTimestampWhenEnvVariablePresent() {
