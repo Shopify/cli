@@ -1,5 +1,5 @@
 import {chooseFunction, functionFlags, getOrGenerateSchemaPath} from '../../../services/function/common.js'
-import {runFunction, executeFunction} from '../../../services/function/runner.js'
+import {runFunction, captureFunctionRun} from '../../../services/function/runner.js'
 import {functionRunJsonOutputSchema} from '../../../services/function/runner/types.js'
 import {presentFunctionExecution} from '../../../services/function/runner/result.js'
 import {appFlags} from '../../../flags.js'
@@ -8,7 +8,7 @@ import {localAppContext} from '../../../services/app-context.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
-import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 const DEFAULT_FUNCTION_EXPORT = '_start'
@@ -65,7 +65,7 @@ export default class FunctionRun extends AppUnlinkedCommand {
     } else if (ourFunction.configuration.targeting !== undefined && ourFunction.configuration.targeting.length > 0) {
       const targeting = ourFunction.configuration.targeting
 
-      if (targeting.length > 1 && !flags['no-input'] && isTerminalInteractive()) {
+      if (targeting.length > 1 && !flags['no-input'] && terminalSupportsPrompting()) {
         const targets = targeting.map((target) => ({
           label: target.target,
           value: target.export || DEFAULT_FUNCTION_EXPORT, // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing -- empty export should use default
@@ -107,7 +107,8 @@ export default class FunctionRun extends AppUnlinkedCommand {
       profile: flags.profile,
     }
     if (flags.json) {
-      presentFunctionExecution(await executeFunction(options))
+      const execution = await captureFunctionRun(options)
+      presentFunctionExecution(execution)
     } else {
       await runFunction(options)
     }

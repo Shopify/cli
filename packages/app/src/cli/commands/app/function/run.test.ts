@@ -5,7 +5,7 @@ import {testApp, testFunctionExtension, testProject} from '../../../models/app/a
 import {functionRunJsonOutputSchema} from '../../../services/function/runner/types.js'
 import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
-import {captureOutputWithExitCode, exec} from '@shopify/cli-kit/node/system'
+import {captureOutputWithExitCode, exec, terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
@@ -92,7 +92,7 @@ test.each(['9007199254740991', '9007199254740993', '0.12345678901234567890123456
 test.each([{argv: ['--json']}, {argv: []}])(
   'keeps target selection interactive independently of JSON: $argv',
   async ({argv}) => {
-    vi.mocked(isTerminalInteractive).mockReturnValue(true)
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
     vi.mocked(renderAutocompletePrompt).mockResolvedValue('second')
     vi.mocked(captureOutputWithExitCode).mockResolvedValue({
       stdout: JSON.stringify(nativeResult),
@@ -114,10 +114,41 @@ test.each([{argv: ['--json']}, {argv: []}])(
   },
 )
 
+test.each([
+  {argv: ['--json'], promptable: false, stdoutInteractive: true, expectedExport: 'first'},
+  {argv: [], promptable: false, stdoutInteractive: true, expectedExport: 'first'},
+  {argv: ['--json'], promptable: true, stdoutInteractive: false, expectedExport: 'second'},
+  {argv: [], promptable: true, stdoutInteractive: false, expectedExport: 'second'},
+])(
+  'selects the correct target with redirected streams: %j',
+  async ({argv, promptable, stdoutInteractive, expectedExport}) => {
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(promptable)
+    vi.mocked(isTerminalInteractive).mockReturnValue(stdoutInteractive)
+    vi.mocked(renderAutocompletePrompt).mockResolvedValue('second')
+    vi.mocked(captureOutputWithExitCode).mockResolvedValue({
+      stdout: JSON.stringify(nativeResult),
+      stderr: '',
+      exitCode: 0,
+    })
+    const instance = await command(argv, [
+      {target: 'first', export: 'first'},
+      {target: 'second', export: 'second'},
+    ])
+    await runWithCommandEventsForCommand(argv, () => instance.run())
+    expect(renderAutocompletePrompt).toHaveBeenCalledTimes(Number(promptable))
+    const runner = argv.includes('--json') ? captureOutputWithExitCode : exec
+    expect(runner).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.arrayContaining(['--export', expectedExport]),
+      expect.objectContaining({stdin: 'inherit'}),
+    )
+  },
+)
+
 test.each([{argv: ['--json', '--no-input']}, {argv: ['--no-input']}])(
   'does not prompt with --no-input: $argv',
   async ({argv}) => {
-    vi.mocked(isTerminalInteractive).mockReturnValue(true)
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
     vi.mocked(captureOutputWithExitCode).mockResolvedValue({
       stdout: JSON.stringify(nativeResult),
       stderr: '',

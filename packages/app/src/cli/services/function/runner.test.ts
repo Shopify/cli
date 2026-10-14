@@ -1,4 +1,4 @@
-import {runFunction, executeFunction} from './runner.js'
+import {runFunction, captureFunctionRun} from './runner.js'
 import {functionRunnerBinary, downloadBinary} from './binaries.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
 import {describe, test, vi, expect} from 'vitest'
@@ -195,7 +195,45 @@ const nativeRunResult = {
   success: true,
 }
 
-describe('executeFunction', () => {
+describe('captureFunctionRun', () => {
+  test('uses the configured module and forwards runner options', async () => {
+    const functionExtension = await testFunctionExtension()
+    functionExtension.configuration.build!.path = 'dist/custom.wasm'
+    const stdin = new Readable()
+    vi.mocked(captureOutputWithExitCode).mockResolvedValue({
+      stdout: JSON.stringify(nativeRunResult),
+      stderr: '',
+      exitCode: 0,
+    })
+    await captureFunctionRun({
+      functionExtension,
+      input: '{}',
+      inputPath: 'input.json',
+      export: 'custom-export',
+      stdin,
+      schemaPath: 'schema.graphql',
+      queryPath: 'query.graphql',
+    })
+    expect(downloadBinary).toHaveBeenCalledOnce()
+    expect(captureOutputWithExitCode).toHaveBeenCalledWith(
+      functionRunnerBinary().path,
+      [
+        '-f',
+        joinPath(functionExtension.directory, 'dist/custom.wasm'),
+        '--input',
+        'input.json',
+        '--export',
+        'custom-export',
+        '--json',
+        '--schema-path',
+        'schema.graphql',
+        '--query-path',
+        'query.graphql',
+      ],
+      {cwd: functionExtension.directory, stdin, input: '{}'},
+    )
+  })
+
   test('captures the validated native runner protocol', async () => {
     const functionExtension = await testFunctionExtension()
     vi.mocked(captureOutputWithExitCode).mockResolvedValue({
@@ -203,7 +241,7 @@ describe('executeFunction', () => {
       stderr: 'Runner diagnostic',
       exitCode: 0,
     })
-    await expect(executeFunction({functionExtension, input: '{}', export: 'run'})).resolves.toEqual({
+    await expect(captureFunctionRun({functionExtension, input: '{}', export: 'run'})).resolves.toEqual({
       state: 'completed',
       resultJson: JSON.stringify(nativeRunResult),
       diagnostics: ['Runner diagnostic'],
@@ -223,7 +261,7 @@ describe('executeFunction', () => {
       stderr: 'Execution failed',
       exitCode: 1,
     })
-    await expect(executeFunction({functionExtension})).resolves.toMatchObject({
+    await expect(captureFunctionRun({functionExtension})).resolves.toMatchObject({
       state: 'completed',
       resultJson: JSON.stringify({...nativeRunResult, success: false}),
       exitCode: 1,
@@ -238,7 +276,7 @@ describe('executeFunction', () => {
   ])('classifies infrastructure or invalid-output failure: %j', async ({stdout, exitCode}) => {
     const functionExtension = await testFunctionExtension()
     vi.mocked(captureOutputWithExitCode).mockResolvedValue({stdout, stderr: 'Failure details', exitCode})
-    await expect(executeFunction({functionExtension})).resolves.toMatchObject({
+    await expect(captureFunctionRun({functionExtension})).resolves.toMatchObject({
       state: 'failed',
       exitCode,
       stderr: 'Failure details',
@@ -255,7 +293,7 @@ describe('executeFunction', () => {
         stderr: '',
         exitCode: 0,
       })
-      await expect(executeFunction({functionExtension, profile: true})).resolves.toMatchObject({
+      await expect(captureFunctionRun({functionExtension, profile: true})).resolves.toMatchObject({
         state: 'completed',
         diagnostics: [expect.stringContaining('profile')],
       })

@@ -62,12 +62,7 @@ async function profileWarningType(
   }
 }
 
-async function warnIfProfileWillNotContainFunctionNames(
-  ext: ExtensionInstance<FunctionConfigType>,
-  functionPath: string,
-): Promise<void> {
-  const warningType = await profileWarningType(ext, functionPath)
-  if (!warningType) return
+function renderProfileWarning(warningType: 'javascript' | 'wasm') {
   if (warningType === 'javascript') {
     renderWarning({headline: profileWarningHeadline, body: javaScriptProfileWarning})
   } else {
@@ -85,25 +80,30 @@ async function warnIfProfileWillNotContainFunctionNames(
 }
 
 export async function runFunction(options: FunctionRunnerOptions) {
-  const ext = options.functionExtension
+  const {command, args, processOptions, warningType} = await prepareFunctionRun(options)
+  if (warningType) renderProfileWarning(warningType)
 
-  const functionRunner = await getFunctionRunnerBinary(ext)
-  await downloadBinary(functionRunner)
-
-  const args = functionRunnerArguments(options)
-
-  const functionPath = getFunctionPath(ext)
-  if (options.profile) {
-    await warnIfProfileWillNotContainFunctionNames(ext, functionPath)
-  }
-
-  return exec(functionRunner.path, ['-f', functionPath, ...args], {
-    cwd: options.functionExtension.directory,
-    stdin: options.stdin,
+  return exec(command, args, {
+    ...processOptions,
     stdout: options.stdout ?? 'inherit',
     stderr: options.stderr ?? 'inherit',
-    input: options.input,
   })
+}
+
+async function prepareFunctionRun(options: FunctionRunnerOptions) {
+  const binary = await getFunctionRunnerBinary(options.functionExtension)
+  await downloadBinary(binary)
+  const functionPath = getFunctionPath(options.functionExtension)
+  return {
+    command: binary.path,
+    args: ['-f', functionPath, ...functionRunnerArguments(options)],
+    processOptions: {
+      cwd: options.functionExtension.directory,
+      stdin: options.stdin,
+      input: options.input,
+    },
+    warningType: options.profile ? await profileWarningType(options.functionExtension, functionPath) : undefined,
+  }
 }
 
 function functionRunnerArguments(options: FunctionRunnerOptions): string[] {
@@ -133,22 +133,14 @@ export type FunctionExecution =
   | {state: 'failed'; message: string; command: string; args: string[]; exitCode: number; stderr: string}
 
 /** Runs the native JSON protocol without writing the child process's output to the terminal. */
-export async function executeFunction(
+export async function captureFunctionRun(
   options: Omit<FunctionRunnerOptions, 'json' | 'stdout' | 'stderr'>,
 ): Promise<FunctionExecution> {
-  const binary = await getFunctionRunnerBinary(options.functionExtension)
-  await downloadBinary(binary)
-  const functionPath = getFunctionPath(options.functionExtension)
-  const args = ['-f', functionPath, ...functionRunnerArguments({...options, json: true})]
-  const warningType = options.profile ? await profileWarningType(options.functionExtension, functionPath) : undefined
+  const {command, args, processOptions, warningType} = await prepareFunctionRun({...options, json: true})
   const diagnostics = warningType
     ? [`${profileWarningHeadline} ${warningType === 'javascript' ? javaScriptProfileWarning : wasmProfileWarning}`]
     : []
-  const execution = await captureOutputWithExitCode(binary.path, args, {
-    cwd: options.functionExtension.directory,
-    stdin: options.stdin,
-    input: options.input,
-  })
+  const execution = await captureOutputWithExitCode(command, args, processOptions)
 
   let value: unknown
   try {
@@ -161,7 +153,7 @@ export async function executeFunction(
         execution.exitCode === 0
           ? 'Function runner returned invalid JSON.'
           : `Function runner failed with exit code ${execution.exitCode}.`,
-      command: binary.path,
+      command,
       args,
       exitCode: execution.exitCode,
       stderr: execution.stderr,
@@ -174,7 +166,7 @@ export async function executeFunction(
       message: parsed.success
         ? `Function runner failed with exit code ${execution.exitCode}.`
         : 'Function runner returned an invalid result.',
-      command: binary.path,
+      command,
       args,
       exitCode: execution.exitCode,
       stderr: execution.stderr,
