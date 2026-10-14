@@ -1,5 +1,6 @@
 import {trustChallengeUrl, withTrustChallengeRetry} from './trust-challenge.js'
 import {GraphQLClientError} from '../api/headers.js'
+import {commandEventOutputMode} from '../command-event-context.js'
 import {waitForEnter} from '../ui/wait-for-enter.js'
 import {recordEvent} from '../../../public/node/analytics.js'
 import {adminFqdn} from '../../../public/node/context/fqdn.js'
@@ -9,6 +10,7 @@ import {isTTY, renderInfo, renderSuccess} from '../../../public/node/ui.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {ClientError} from 'graphql-request'
 
+vi.mock('../command-event-context.js')
 vi.mock('../ui/wait-for-enter.js')
 vi.mock('../../../public/node/analytics.js')
 vi.mock('../../../public/node/context/fqdn.js')
@@ -20,6 +22,7 @@ const challengeUrl = 'https://admin.shopify.com/challenges/user_verification?tok
 
 beforeEach(() => {
   vi.mocked(adminFqdn).mockResolvedValue('admin.shopify.com')
+  vi.mocked(commandEventOutputMode).mockReturnValue(undefined)
   vi.mocked(isCI).mockReturnValue(false)
   vi.mocked(isTTY).mockReturnValue(true)
   vi.mocked(openURL).mockResolvedValue(true)
@@ -121,7 +124,7 @@ describe('withTrustChallengeRetry', () => {
     expect(recordEvent).toHaveBeenCalledWith('theme-api:trust-challenge:required')
     expect(recordEvent).toHaveBeenCalledWith('theme-api:trust-challenge:browser-opened')
     expect(recordEvent).toHaveBeenCalledWith('theme-api:trust-challenge:acknowledged')
-    expect(renderSuccess).toHaveBeenCalledWith({headline: 'Continuing with your theme changes.'})
+    expect(renderSuccess).toHaveBeenCalledWith({headline: 'Verification complete. Continuing.'})
   })
 
   test('renders a link to the challenge URL when the browser cannot be opened', async () => {
@@ -174,6 +177,22 @@ describe('withTrustChallengeRetry', () => {
     })
     expect(request).toHaveBeenCalledTimes(1)
     expect(openURL).not.toHaveBeenCalled()
+    expect(recordEvent).toHaveBeenCalledWith('theme-api:trust-challenge:non-interactive')
+  })
+
+  test('aborts with the challenge URL instead of prompting in JSON output mode', async () => {
+    vi.mocked(commandEventOutputMode).mockReturnValue('json')
+    const request = vi.fn().mockRejectedValue(challengeClientError(challengeUrl))
+
+    const promise = withTrustChallengeRetry(request)
+
+    await expect(promise).rejects.toBeInstanceOf(AbortError)
+    await expect(promise).rejects.toMatchObject({
+      nextSteps: [expect.arrayContaining([{link: {url: challengeUrl}}])],
+    })
+    expect(request).toHaveBeenCalledTimes(1)
+    expect(openURL).not.toHaveBeenCalled()
+    expect(waitForEnter).not.toHaveBeenCalled()
     expect(recordEvent).toHaveBeenCalledWith('theme-api:trust-challenge:non-interactive')
   })
 
