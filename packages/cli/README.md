@@ -2481,9 +2481,6 @@ DESCRIPTION
   (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when
   errors occur, refer to "Shopify Functions error handling" (https://shopify.dev/docs/api/functions/errors).
 
-  Use `--no-watch --json` for one finite replay in the native Function runner 7.x/9.x JSON format. JSON output is not
-  supported in watch mode. Use `--log` to select a saved run without prompting.
-
   Use `--json-schema` to print the result, error, and event schemas.
 
   Output from `--json` conforms to the `FunctionRunResult` schema.

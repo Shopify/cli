@@ -20,9 +20,7 @@ export default class FunctionReplay extends AppLinkedCommand {
 
   static summary = 'Replays a function run from an app log.'
 
-  static descriptionWithMarkdown = `Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).
-
-Use \`--no-watch --json\` for one finite replay in the native Function runner 7.x/9.x JSON format. JSON output is not supported in watch mode. Use \`--log\` to select a saved run without prompting.`
+  static descriptionWithMarkdown = `Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).`
 
   static description = this.descriptionForHelp()
 
