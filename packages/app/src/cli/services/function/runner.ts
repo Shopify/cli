@@ -130,17 +130,41 @@ function functionRunnerArguments(options: FunctionRunnerOptions): string[] {
 
 export type FunctionExecution =
   | {state: 'completed'; resultJson: string; exitCode: number; diagnostics: string[]}
-  | {state: 'failed'; message: string; command: string; args: string[]; exitCode: number; stderr: string}
+  | {state: 'completed-text'; stdout: string; stderr: string}
+  | {
+      state: 'failed'
+      message: string
+      command: string
+      args: string[]
+      exitCode: number
+      stderr: string
+      stdout?: string
+    }
 
-/** Runs the native JSON protocol without writing the child process's output to the terminal. */
+/** Captures native runner output, validating JSON results when requested. */
 export async function captureFunctionRun(
-  options: Omit<FunctionRunnerOptions, 'json' | 'stdout' | 'stderr'>,
+  options: Omit<FunctionRunnerOptions, 'stdout' | 'stderr'>,
 ): Promise<FunctionExecution> {
-  const {command, args, processOptions, warningType} = await prepareFunctionRun({...options, json: true})
+  const json = options.json ?? true
+  const {command, args, processOptions, warningType} = await prepareFunctionRun({...options, json})
+  if (!json && warningType) renderProfileWarning(warningType)
   const diagnostics = warningType
     ? [`${profileWarningHeadline} ${warningType === 'javascript' ? javaScriptProfileWarning : wasmProfileWarning}`]
     : []
   const execution = await captureOutputWithExitCode(command, args, processOptions)
+
+  if (!json) {
+    if (execution.exitCode !== 0) {
+      return {
+        state: 'failed',
+        message: `Function runner failed with exit code ${execution.exitCode}.`,
+        command,
+        args,
+        ...execution,
+      }
+    }
+    return {state: 'completed-text', stdout: execution.stdout, stderr: execution.stderr}
+  }
 
   let value: unknown
   try {

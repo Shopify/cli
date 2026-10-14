@@ -56,6 +56,32 @@ test('prints one failed execution result and retains its nonzero exit code', asy
   }
 })
 
+test('preserves native text streams exactly', async () => {
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    presentFunctionExecution({state: 'completed-text', stdout: '  Output\n\n', stderr: 'Diagnostic\n'})
+    expect(stdout()).toBe('  Output\n\n')
+    expect(stderr()).toBe('Diagnostic\n')
+  })
+})
+
+test('preserves partial text output before reporting the runner failure', async () => {
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    expect(() =>
+      presentFunctionExecution({
+        state: 'failed',
+        message: 'Function runner failed with exit code 1.',
+        command: '/bin/runner',
+        args: [],
+        exitCode: 1,
+        stdout: 'Partial output\n',
+        stderr: 'Invalid WASM\n',
+      }),
+    ).toThrow(ExternalError)
+    expect(stdout()).toBe('Partial output\n')
+    expect(stderr()).toBe('Invalid WASM\n')
+  })
+})
+
 test('throws an external failure before writing a result', async () => {
   await withCapturedStandardStreams(async ({stdout}) => {
     expect(() =>

@@ -1,5 +1,5 @@
 import {chooseFunction, functionFlags, getOrGenerateSchemaPath} from '../../../services/function/common.js'
-import {runFunction, captureFunctionRun} from '../../../services/function/runner.js'
+import {captureFunctionRun} from '../../../services/function/runner.js'
 import {functionRunJsonOutputSchema} from '../../../services/function/runner/types.js'
 import {presentFunctionExecution} from '../../../services/function/runner/result.js'
 import {appFlags} from '../../../flags.js'
@@ -105,13 +105,10 @@ export default class FunctionRun extends AppUnlinkedCommand {
       schemaPath,
       queryPath,
       profile: flags.profile,
+      json: flags.json,
     }
-    if (flags.json) {
-      const execution = await captureFunctionRun(options)
-      presentFunctionExecution(execution)
-    } else {
-      await runFunction(options)
-    }
+    const execution = await captureFunctionRun(options)
+    presentFunctionExecution(execution)
 
     return {app}
   }

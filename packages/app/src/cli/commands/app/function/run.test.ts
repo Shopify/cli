@@ -105,8 +105,7 @@ test.each([{argv: ['--json']}, {argv: []}])(
     ])
     await runWithCommandEventsForCommand(argv, () => instance.run())
     expect(renderAutocompletePrompt).toHaveBeenCalledOnce()
-    const runner = argv.includes('--json') ? captureOutputWithExitCode : exec
-    expect(runner).toHaveBeenCalledWith(
+    expect(captureOutputWithExitCode).toHaveBeenCalledWith(
       expect.any(String),
       expect.arrayContaining(['--export', 'second']),
       expect.any(Object),
@@ -136,8 +135,7 @@ test.each([
     ])
     await runWithCommandEventsForCommand(argv, () => instance.run())
     expect(renderAutocompletePrompt).toHaveBeenCalledTimes(Number(promptable))
-    const runner = argv.includes('--json') ? captureOutputWithExitCode : exec
-    expect(runner).toHaveBeenCalledWith(
+    expect(captureOutputWithExitCode).toHaveBeenCalledWith(
       expect.any(String),
       expect.arrayContaining(['--export', expectedExport]),
       expect.objectContaining({stdin: 'inherit'}),
@@ -163,14 +161,20 @@ test.each([{argv: ['--json', '--no-input']}, {argv: ['--no-input']}])(
   },
 )
 
-test('retains the existing runner text presentation', async () => {
+test('captures and preserves native text output without JSON validation', async () => {
+  const text = '\u001b[32mOutput\u001b[0m\n{"operations":[]}\nBenchmark Results\n'
+  vi.mocked(captureOutputWithExitCode).mockResolvedValue({stdout: text, stderr: 'Runner diagnostic\n', exitCode: 0})
   const instance = await command([])
-  await instance.run()
-  expect(captureOutputWithExitCode).not.toHaveBeenCalled()
-  expect(exec).toHaveBeenCalledWith(
+  await withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await instance.run()
+    expect(stdout()).toBe(text)
+    expect(stderr()).toBe('Runner diagnostic\n')
+  })
+  expect(exec).not.toHaveBeenCalled()
+  expect(captureOutputWithExitCode).toHaveBeenCalledWith(
     expect.any(String),
     expect.not.arrayContaining(['--json']),
-    expect.objectContaining({stdout: 'inherit', stderr: 'inherit'}),
+    expect.objectContaining({stdin: 'inherit'}),
   )
 })
 
