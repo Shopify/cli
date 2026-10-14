@@ -1,4 +1,5 @@
 import {GraphQLClientError} from '../api/headers.js'
+import {commandEventOutputMode} from '../command-event-context.js'
 import {waitForEnter} from '../ui/wait-for-enter.js'
 import {recordEvent} from '../../../public/node/analytics.js'
 import {adminFqdn} from '../../../public/node/context/fqdn.js'
@@ -8,7 +9,7 @@ import {isCI, openURL} from '../../../public/node/system.js'
 import {isTTY, renderInfo, renderSuccess} from '../../../public/node/ui.js'
 import {ClientError} from 'graphql-request'
 
-export const TRUST_CHALLENGE_ERROR_CODE = 'CHALLENGE_REQUIRED'
+const TRUST_CHALLENGE_ERROR_CODE = 'CHALLENGE_REQUIRED'
 
 interface GraphQLErrorWithExtensions {
   extensions?: {
@@ -17,7 +18,7 @@ interface GraphQLErrorWithExtensions {
   }
 }
 
-export interface TrustChallengeOptions {
+interface TrustChallengeOptions {
   stdin?: typeof process.stdin
 }
 
@@ -57,11 +58,9 @@ export async function withTrustChallengeRetry<T>(
     if (!challengeUrl) throw error
 
     recordEvent('theme-api:trust-challenge:retry-challenged')
-    throw new AbortError(
-      'Shopify still needs to verify your identity before it can apply this theme change.',
-      undefined,
-      [['Complete the verification at', {link: {url: challengeUrl}}, 'then run the command again.']],
-    )
+    throw new AbortError('Shopify still needs to verify your identity before it can continue.', undefined, [
+      ['Complete the verification at', {link: {url: challengeUrl}}, 'then run the command again.'],
+    ])
   }
 }
 
@@ -124,13 +123,13 @@ async function completeTrustChallenge(challengeUrl: string, options: TrustChalle
 async function promptForTrustChallenge(challengeUrl: string, options: TrustChallengeOptions): Promise<void> {
   recordEvent('theme-api:trust-challenge:required')
 
-  if (isCI() || !isTTY()) {
+  if (isCI() || !isTTY() || commandEventOutputMode() === 'json') {
     recordEvent('theme-api:trust-challenge:non-interactive')
-    throw new AbortError('Shopify needs to verify your identity before it can apply this theme change.', undefined, [
+    throw new AbortError('Shopify needs to verify your identity before it can continue.', undefined, [
       [
         'Open',
         {link: {url: challengeUrl}},
-        "in a browser where you're logged in to Shopify, complete the verification, then run the command again.",
+        "in a browser where you're logged in to Shopify with the same account you use in Shopify CLI, complete the verification, then run the command again.",
       ],
     ])
   }
@@ -144,10 +143,10 @@ async function promptForTrustChallenge(challengeUrl: string, options: TrustChall
     headline: 'Verify your identity to continue.',
     body: opened
       ? 'A verification page opened in your browser.'
-      : 'Shopify needs to verify your identity before it can apply your theme changes.',
+      : 'Shopify needs to verify your identity before it can continue.',
     link: opened ? undefined : {label: 'Open the verification page', url: challengeUrl},
     nextSteps: [
-      ['Complete the verification in your browser.'],
+      ['Complete the verification in your browser, logged in with the same account you use in Shopify CLI.'],
       ['Press', {userInput: 'Enter'}, 'here once you have completed it.'],
     ],
     orderedNextSteps: true,
@@ -156,5 +155,5 @@ async function promptForTrustChallenge(challengeUrl: string, options: TrustChall
   await waitForEnter(options.stdin ?? process.stdin)
 
   recordEvent('theme-api:trust-challenge:acknowledged')
-  renderSuccess({headline: 'Continuing with your theme changes.'})
+  renderSuccess({headline: 'Verification complete. Continuing.'})
 }
