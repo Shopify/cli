@@ -11,7 +11,7 @@ import {
   type TsConfigCache,
   ToolsFileSchema,
 } from './type-generation.js'
-import {Asset, AssetIdentifier, BuildAsset, ExtensionFeature, createExtensionSpecification} from '../specification.js'
+import {AssetIdentifier, BuildAsset, ExtensionFeature, createExtensionSpecification} from '../specification.js'
 import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema, MetafieldSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
@@ -23,7 +23,7 @@ import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 
 const dependency = '@shopify/checkout-ui-extensions'
 
@@ -180,18 +180,30 @@ const uiExtensionSpec = createExtensionSpecification({
       })
       .join('\n')
 
-    const assets: {[key: string]: Asset} = {}
-    extensionPoints.forEach((extensionPoint) => {
-      const shouldRenderAsset = buildShouldRenderAsset(extensionPoint, shouldIncludeShopifyExtend)
-      if (shouldRenderAsset) {
-        assets[AssetIdentifier.ShouldRender] = shouldRenderAsset
-      }
+    const shouldRenderAssets = extensionPoints.flatMap((extensionPoint, index) => {
+      const asset = buildShouldRenderAsset(extensionPoint, shouldIncludeShopifyExtend, index)
+      return asset ? [asset] : []
     })
+    const [firstShouldRenderAsset] = shouldRenderAssets
+    if (
+      firstShouldRenderAsset &&
+      shouldRenderAssets.some(({outputFileName}) => outputFileName !== firstShouldRenderAsset.outputFileName)
+    ) {
+      throw new BugError('UI extension should-render targets must share an output filename')
+    }
 
-    const assetsArray = Object.values(assets)
     return {
       main,
-      ...(assetsArray.length ? {assets: assetsArray} : {}),
+      ...(firstShouldRenderAsset
+        ? {
+            assets: [
+              {
+                ...firstShouldRenderAsset,
+                content: shouldRenderAssets.map(({content}) => content).join('\n'),
+              },
+            ],
+          }
+        : {}),
     }
   },
   hasExtensionPointTarget: (config, requestedTarget) => {
@@ -547,6 +559,7 @@ export function getShouldRenderTarget(target: string) {
 function buildShouldRenderAsset(
   extensionPoint: NewExtensionPointSchemaType & {build_manifest: BuildManifest},
   shouldIncludeShopifyExtend: boolean,
+  index: number,
 ) {
   const shouldRenderAsset = extensionPoint.build_manifest.assets[AssetIdentifier.ShouldRender]
   if (!shouldRenderAsset) {
@@ -556,9 +569,9 @@ function buildShouldRenderAsset(
     identifier: AssetIdentifier.ShouldRender,
     outputFileName: shouldRenderAsset.filepath,
     content: shouldIncludeShopifyExtend
-      ? `import shouldRender from '${shouldRenderAsset.module}';shopify.extend('${getShouldRenderTarget(
+      ? `import ShouldRender_${index} from '${shouldRenderAsset.module}';shopify.extend('${getShouldRenderTarget(
           extensionPoint.target,
-        )}', (...args) => shouldRender(...args));`
+        )}', (...args) => ShouldRender_${index}(...args));`
       : `import '${shouldRenderAsset.module}'`,
   }
 }
