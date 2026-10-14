@@ -7,7 +7,7 @@ import * as confStore from '../../../private/node/conf-store.js'
 import {inTemporaryDirectory} from '../fs.js'
 import {LocalStorage} from '../local-storage.js'
 import {ConfSchema, GraphQLRequestKey} from '../../../private/node/conf-store.js'
-import {nonRandomUUID} from '../crypto.js'
+import {nonRandomUUID, sha256} from '../crypto.js'
 import {CLI_KIT_VERSION} from '../../common/version.js'
 import * as system from '../system.js'
 import {test, vi, describe, expect, beforeEach, beforeAll, afterAll, afterEach} from 'vitest'
@@ -640,10 +640,11 @@ describe('graphqlRequest with caching', () => {
       await expect(seventhRes).resolves.toEqual({MutationName: {example: 'new-value'}})
       expect(requestCount).toBe(6)
 
-      const firstKey: GraphQLRequestKey = `q-${mutationHash}-${firstVariablesHash}-${CLI_KIT_VERSION}-extra`
-      const withOtherVariablesKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${CLI_KIT_VERSION}-extra`
-      const withOtherExtraKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${CLI_KIT_VERSION}-other-extra`
-      const noExtraKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${CLI_KIT_VERSION}-`
+      const principalHash = sha256(JSON.stringify([mockedAddress, mockToken])).toString('hex')
+      const firstKey: GraphQLRequestKey = `q-${mutationHash}-${firstVariablesHash}-${CLI_KIT_VERSION}-${principalHash}-extra`
+      const withOtherVariablesKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${CLI_KIT_VERSION}-${principalHash}-extra`
+      const withOtherExtraKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${CLI_KIT_VERSION}-${principalHash}-other-extra`
+      const noExtraKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${CLI_KIT_VERSION}-${principalHash}-`
 
       expect(cacheStore.get('cache')![firstKey]).toEqual({
         value: '{"MutationName":{"example":"variables"}}',
@@ -663,6 +664,55 @@ describe('graphqlRequest with caching', () => {
       })
 
       expect(Object.keys(cacheStore.get('cache')!).length).toBe(4)
+    })
+    vi.useRealTimers()
+  })
+
+  test('does not share a cached response across tokens or endpoints', async () => {
+    vi.useFakeTimers()
+    await inTemporaryDirectory(async (dir) => {
+      let requestCount = 0
+      server.events.on('request:start', () => {
+        requestCount++
+      })
+      const cacheStore = new LocalStorage<ConfSchema>({projectName: 'test', cwd: dir})
+      const cachedRequest = async (options: {url: string; token: string}) => {
+        const response = graphqlRequest({
+          query: 'mutation MutationName($some: String!) { example }',
+          api: 'mockApi',
+          url: options.url,
+          token: options.token,
+          variables: mockVariables,
+          cacheOptions: {cacheTTL: {hours: 1}, cacheStore},
+        })
+        await vi.runAllTimersAsync()
+        return response
+      }
+
+      // Given a cached response for one token and endpoint
+      await expect(cachedRequest({url: mockedAddress, token: mockToken})).resolves.toEqual({
+        MutationName: {example: 'variables'},
+      })
+      expect(requestCount).toBe(1)
+
+      // When the same query and variables are sent with another token, or to another endpoint
+      await cachedRequest({url: mockedAddress, token: 'other-token'})
+      await cachedRequest({url: `${mockedAddress}?other-endpoint=1`, token: mockToken})
+
+      // Then each one is sent to the API instead of reading the first response
+      expect(requestCount).toBe(3)
+
+      // And a repeated request with the original token and endpoint still uses its own cache entry
+      await cachedRequest({url: mockedAddress, token: mockToken})
+      expect(requestCount).toBe(3)
+
+      // And the raw tokens are not part of any cache key
+      const keys = Object.keys(cacheStore.get('cache')!)
+      expect(keys.length).toBe(3)
+      for (const key of keys) {
+        expect(key).not.toContain(mockToken)
+        expect(key).not.toContain('other-token')
+      }
     })
     vi.useRealTimers()
   })

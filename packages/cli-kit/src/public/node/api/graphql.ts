@@ -3,7 +3,7 @@ import {debugLogRequestInfo, errorHandler} from '../../../private/node/api/graph
 import {addPublicMetadata, runWithTimer} from '../metadata.js'
 import {retryAwareRequest} from '../../../private/node/api.js'
 import {requestIdsCollection} from '../../../private/node/request-ids.js'
-import {nonRandomUUID} from '../crypto.js'
+import {nonRandomUUID, sha256} from '../crypto.js'
 import {
   cacheRetrieveOrRepopulate,
   ConfSchema,
@@ -251,10 +251,15 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
 
   const {cacheTTL, cacheExtraKey, cacheStore} = cacheOptions
 
-  // The cache key is a combination of the hashed query and variables, with an optional extra key provided by the user.
+  // The cache key is a combination of the hashed query and variables, the hashed endpoint and token, and an optional
+  // extra key provided by the user. The endpoint and token keep one principal's cached response from being returned
+  // to another principal or another API; they are hashed so the raw token is never written to the cache.
   const queryHash = nonRandomUUID(queryAsString)
   const variablesHash = nonRandomUUID(JSON.stringify(variables ?? {}))
-  const cacheKey: GraphQLRequestKey = `q-${queryHash}-${variablesHash}-${CLI_KIT_VERSION}-${cacheExtraKey ?? ''}`
+  const principalHash = graphQLCachePrincipalHash(url, token)
+  const cacheKey: GraphQLRequestKey = `q-${queryHash}-${variablesHash}-${CLI_KIT_VERSION}-${principalHash}-${
+    cacheExtraKey ?? ''
+  }`
 
   const result = await cacheRetrieveOrRepopulate(
     cacheKey,
@@ -267,6 +272,17 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
   )
 
   return JSON.parse(result) as TResult
+}
+
+/**
+ * Returns a non-reversible hash that partitions cached GraphQL responses by endpoint URL and access token.
+ *
+ * @param url - The GraphQL endpoint URL.
+ * @param token - The access token used for the request, if any.
+ * @returns A hex SHA-256 digest of the endpoint and token.
+ */
+function graphQLCachePrincipalHash(url: string, token: string | undefined): string {
+  return sha256(JSON.stringify([url, token ?? ''])).toString('hex')
 }
 
 async function logLastRequestIdFromResponse(response: GraphQLResponse<unknown>) {
