@@ -1,5 +1,7 @@
 import initPrompt, {templateRequiresFlavor, visibleTemplates} from '../../prompts/init/init.js'
 import initService from '../../services/init/init.js'
+import {appInitJsonOutputSchema} from '../../services/init/types.js'
+import {renderInitResult} from '../../services/init/result.js'
 import {defaultDeveloperPlatformClient, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {appFromIdentifiers, selectOrg} from '../../services/context.js'
 import {fetchOrgFromId} from '../../services/dev/fetch.js'
@@ -10,7 +12,7 @@ import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompt
 import {searchForAppsByNameFactory} from '../../services/dev/prompt-helpers.js'
 import {isValidName} from '../../models/app/validation/common.js'
 import {Flags} from '@oclif/core'
-import {globalFlags, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
@@ -27,6 +29,12 @@ export default class Init extends AppLinkedCommand {
 
   static summary?: string | undefined = 'Create a new app project'
 
+  static get jsonOutputSchema() {
+    return appInitJsonOutputSchema
+  }
+
+  static description = this.descriptionForHelp()
+
   static examples = [
     '<%= config.bin %> <%= command.id %> --name my-app --organization-id 123 --template reactRouter --flavor typescript',
     '<%= config.bin %> <%= command.id %> --client-id 123 --template none',
@@ -34,6 +42,7 @@ export default class Init extends AppLinkedCommand {
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     name: Flags.string({
       char: 'n',
       env: 'SHOPIFY_FLAG_NAME',
@@ -159,7 +168,7 @@ export default class Init extends AppLinkedCommand {
       cmd_create_app_template_url: promptAnswers.template,
     }))
 
-    const {app} = await initService({
+    const result = await initService({
       name: appName,
       selectedAppOrNameResult: selectAppResult,
       packageManager: inferredPackageManager,
@@ -173,7 +182,8 @@ export default class Init extends AppLinkedCommand {
       },
     })
 
-    return {app}
+    renderInitResult(result, flags.json)
+    return {app: result.app}
   }
 }
 

@@ -10,7 +10,7 @@ import {exec, terminalSupportsPrompting} from './system.js'
 import {renderSelectPrompt} from './ui.js'
 import {globalCLIVersion} from './version.js'
 import {outputInfo} from './output.js'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {realpathSync} from 'fs'
 
 vi.mock('./system.js')
@@ -65,6 +65,8 @@ beforeEach(() => {
   // This lets currentProcessIsGlobal compare binary paths against the project root.
   vi.mocked(findPathUpSync).mockReturnValue(`${cwd()}/shopify.app.toml`)
 })
+
+afterEach(() => vi.unstubAllEnvs())
 
 describe('currentProcessIsGlobal', () => {
   test('returns true if argv point to the global npm path', () => {
@@ -332,6 +334,21 @@ describe('installGlobalCLIPrompt', () => {
 })
 
 describe('installGlobalShopifyCLI', () => {
+  test.each(['flag', 'environment'])('captures child output when JSON is selected by %s', async (selection) => {
+    const originalArgv = process.argv
+    const restoreArgv = () => {
+      process.argv = originalArgv
+    }
+    if (selection === 'flag') process.argv = ['node', 'shopify', 'app', 'init', '--json']
+    else vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
+    try {
+      await installGlobalShopifyCLI('npm')
+      expect(exec).toHaveBeenCalledWith('npm', ['install', '-g', '@shopify/cli@latest'], {})
+    } finally {
+      restoreArgv()
+    }
+  })
+
   test('calls exec with the correct arguments when using yarn', async () => {
     // Given
     vi.mocked(exec).mockResolvedValue(undefined)
