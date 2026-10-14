@@ -223,10 +223,6 @@ describe('setupGraphiQLServer', () => {
   })
 
   describe('initial query and variables', () => {
-    /**
-     * Returns the source text of the inline script property `name` (for example `variables: {...},`)
-     * in the rendered GraphiQL page.
-     */
     function inlineScriptValue(body: string, name: 'query' | 'variables'): string {
       const match = new RegExp(`^\\s*${name}: (.*),$`, 'm').exec(body)
       if (!match) throw new Error(`No ${name} property in the rendered page`)
@@ -270,7 +266,6 @@ describe('setupGraphiQLServer', () => {
 
       const body = await renderPage({query, variables})
 
-      // Newlines are sent to the page as escaped `\n` sequences, as before.
       expect(JSON.parse(inlineScriptValue(body, 'query'))).toBe(query.replace(/\n/g, '\\n'))
       expect(JSON.parse(inlineScriptValue(body, 'variables'))).toBe(variables)
       expect(inlineScriptValue(body, 'variables')).not.toContain('\u2028')
