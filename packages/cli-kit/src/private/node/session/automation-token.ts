@@ -23,6 +23,20 @@ export function automationTokenVariable(env: NodeJS.ProcessEnv = process.env): s
 }
 
 /**
+ * Returns the `env_auth_method` analytics value for the automation token variable the CLI authenticates with:
+ * `service_account_token` for SHOPIFY_SERVICE_ACCOUNT_TOKEN, and `partners_token` for SHOPIFY_APP_AUTOMATION_TOKEN and
+ * SHOPIFY_CLI_PARTNERS_TOKEN, which existing dashboards already expect.
+ *
+ * @param env - Environment variables to read.
+ * @returns The auth method to report.
+ */
+export function automationTokenAuthMethod(
+  env: NodeJS.ProcessEnv = process.env,
+): 'service_account_token' | 'partners_token' {
+  return automationTokenVariable(env) === SERVICE_ACCOUNT_TOKEN ? 'service_account_token' : 'partners_token'
+}
+
+/**
  * Explains why the automation token variables can't be used, so a misconfigured environment fails instead of
  * falling back to the logged-in user.
  *
