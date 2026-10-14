@@ -201,6 +201,37 @@ test('does not remove local state when remote deletion fails', async () => {
   expect(removeDevelopmentTheme).not.toHaveBeenCalled()
 })
 
+test.each([false, true])('preserves the first fatal error when all deletions fail (multiple: %s)', async (multiple) => {
+  const error = new AbortError('Missing theme access scope', 'Check the access token scopes.', [
+    'Request the required theme access scope.',
+  ])
+  error.code = 'MISSING_THEME_SCOPE'
+  error.customSections = [{title: 'Required access', body: 'write_themes'}]
+  error.details = {requiredScope: 'write_themes'}
+  vi.mocked(findThemes).mockResolvedValue(multiple ? [theme1, theme2] : [theme1])
+  vi.mocked(themeDelete).mockRejectedValueOnce(error).mockRejectedValueOnce(new Error('Another deletion failed'))
+
+  await expect(executeDelete(session, {...options, themes: ['1', '2'], force: true})).rejects.toBe(error)
+  expect(error.details).toEqual({requiredScope: 'write_themes'})
+})
+
+test('includes each theme failure when ordinary errors cause total failure', async () => {
+  vi.mocked(findThemes).mockResolvedValue([theme1, theme2])
+  vi.mocked(themeDelete)
+    .mockRejectedValueOnce(new Error('First deletion failed'))
+    .mockRejectedValueOnce(new Error('Second deletion failed'))
+
+  await expect(executeDelete(session, {...options, themes: ['1', '2'], force: true})).rejects.toMatchObject({
+    message: 'First deletion failed',
+    details: {
+      errors: [
+        {themeId: '1', message: 'First deletion failed'},
+        {themeId: '2', message: 'Second deletion failed'},
+      ],
+    },
+  })
+})
+
 test('preserves the environment label in terminal output', () => {
   renderThemeDeleteResult({status: 'success', themes: [{...theme1, shop: session.storeFqdn}]}, 'text', {
     store: session.storeFqdn,
