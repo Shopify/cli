@@ -120,10 +120,10 @@ test('captures finite text replay and preserves native output', async () => {
   await inTemporaryDirectory(async (directory) => {
     const nativeText = '  Function output:\n{ operations: [] }\n'
     const nativeStderr = 'Runner warning\n'
-    vi.mocked(captureOutputWithExitCode).mockResolvedValue({
-      stdout: nativeText,
-      stderr: nativeStderr,
-      exitCode: 0,
+    vi.mocked(captureOutputWithExitCode).mockImplementation(async (_command, _args, options) => {
+      if (options?.stderr && options.stderr !== 'inherit') options.stderr.write(nativeStderr)
+      if (options?.stdout && options.stdout !== 'inherit') options.stdout.write(nativeText)
+      return {stdout: nativeText, stderr: nativeStderr, exitCode: 0}
     })
     const instance = await command(['--no-watch', '--log', 'abcdef'], directory)
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
