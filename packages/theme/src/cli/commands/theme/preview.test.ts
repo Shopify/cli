@@ -5,7 +5,7 @@ import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
@@ -211,6 +211,43 @@ describe('Preview', () => {
         preview: {id: result.preview_identifier, url: result.url},
       })
     })
+  })
+
+  test.each([false, true])('reports the browser open result in JSON diagnostics (opened: %s)', async (opened) => {
+    vi.mocked(openURL).mockResolvedValue(opened)
+
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runWithCommandEventsForCommand(['--json'], () =>
+        run(['--overrides=/path/to/overrides.json', '--theme=2', '--json', '--open']),
+      )
+
+      expect(JSON.parse(stdout())).toEqual({
+        status: 'success',
+        preview: {id: result.preview_identifier, url: result.url},
+      })
+      if (opened) {
+        expect(stderr()).toBe('')
+      } else {
+        expect(JSON.parse(stderr())).toMatchObject({
+          type: 'diagnostic',
+          level: 'warning',
+          message: expect.stringContaining(`Open this URL manually: ${result.url}`),
+        })
+      }
+    })
+    expect(openURL).toHaveBeenCalledWith(result.url)
+  })
+
+  test('warns in text mode when the browser could not be opened', async () => {
+    vi.mocked(openURL).mockResolvedValue(false)
+
+    await run(['--overrides=/path/to/overrides.json', '--theme=2', '--open'])
+
+    expect(renderWarning).toHaveBeenCalledWith({
+      headline: 'Failed to open theme preview.',
+      body: expect.stringContaining(`Open this URL manually: ${result.url}`),
+    })
+    expect(renderSuccess).toHaveBeenCalledOnce()
   })
 })
 

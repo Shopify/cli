@@ -74,7 +74,13 @@ export default class Preview extends ThemeCommand {
     })
     const format = flags.json ? 'json' : 'text'
     if (flags.open) {
-      await openURL(result.url).catch((error: Error) => renderThemePreviewOpenError(error, format))
+      const opened = await openURL(result.url).catch((error: Error) => renderThemePreviewOpenError(error, format))
+      if (opened === false) {
+        renderThemePreviewOpenError(
+          new Error(`Could not open the browser. Open this URL manually: ${result.url}`),
+          format,
+        )
+      }
     }
     if (!multiEnvironment || !flags.json) renderThemePreviewResult(result, format, Boolean(flags['preview-id']))
     return result
