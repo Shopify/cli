@@ -23,6 +23,7 @@ import {slugify} from '@shopify/cli-kit/common/string'
 import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {upgradeOutputStreams} from '@shopify/cli-kit/node/upgrade/output'
 
 export interface GenerateExtensionTemplateOptions {
   app: AppLinkedInterface
@@ -246,7 +247,13 @@ async function functionExtensionInit({
     taskList.push({
       title: `Building GraphQL types`,
       task: async () => {
-        await buildGraphqlTypes({directory, isJavaScript: true}, {stdout: process.stdout, stderr: process.stderr, app})
+        const streams = upgradeOutputStreams()
+        try {
+          await buildGraphqlTypes({directory, isJavaScript: true}, {...streams, app})
+        } finally {
+          if (streams.stdout !== process.stdout) streams.stdout.end()
+          if (streams.stderr !== process.stderr) streams.stderr.end()
+        }
       },
     })
   }

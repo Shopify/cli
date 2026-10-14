@@ -2582,7 +2582,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Generates a new \"app extension\" (https://shopify.dev/docs/apps/build/app-extensions). For a list of app extensions that you can generate using this command, refer to \"Supported extensions\" (https://shopify.dev/docs/apps/build/app-extensions/list-of-app-extensions).\n\n  Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure, refer to \"App structure\" (https://shopify.dev/docs/apps/build/cli-for-apps/app-structure) and the documentation for your extension.\n  ",
+      "description": "Generates a new \"app extension\" (https://shopify.dev/docs/apps/build/app-extensions). For a list of app extensions that you can generate using this command, refer to \"Supported extensions\" (https://shopify.dev/docs/apps/build/app-extensions/list-of-app-extensions).\n\n  Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure, refer to \"App structure\" (https://shopify.dev/docs/apps/build/cli-for-apps/app-structure) and the documentation for your extension.\n  \n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppGenerateExtensionResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\",\n      \"const\": \"success\"\n    },\n    \"extension\": {\n      \"$ref\": \"#/definitions/GeneratedExtension\"\n    }\n  },\n  \"required\": [\n    \"status\",\n    \"extension\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppGenerateExtensionResult\",\n  \"definitions\": {\n    \"GeneratedExtension\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"name\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"description\": \"The name selected for the generated extension.\"\n        },\n        \"type\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"description\": \"The extension type, such as function, theme, or ui_extension.\"\n        },\n        \"template\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"description\": \"The identifier of the selected extension template.\"\n        },\n        \"flavor\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"description\": \"The selected template flavor, or null when the template has no flavors.\"\n        },\n        \"directory\": {\n          \"type\": \"string\",\n          \"description\": \"The absolute native filesystem path of the generated extension directory.\"\n        }\n      },\n      \"required\": [\n        \"name\",\n        \"type\",\n        \"template\",\n        \"flavor\",\n        \"directory\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Generates a new [app extension](https://shopify.dev/docs/apps/build/app-extensions). For a list of app extensions that you can generate using this command, refer to [Supported extensions](https://shopify.dev/docs/apps/build/app-extensions/list-of-app-extensions).\n\n  Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure, refer to [App structure](https://shopify.dev/docs/apps/build/cli-for-apps/app-structure) and the documentation for your extension.\n  ",
       "flags": {
         "auth-alias": {
@@ -2641,6 +2641,15 @@
             "rust"
           ],
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,

@@ -2406,13 +2406,17 @@ Generate a new app Extension.
 ```
 USAGE
   $ shopify app generate extension [--auth-alias <value>] [--client-id <value> | -c <value>] [--flavor
-    vanilla-js|react|typescript|typescript-react|wasm|rust] [--json-schema] [-n <value>] [--no-color] [--no-input]
+    vanilla-js|react|typescript|typescript-react|wasm|rust] [-j] [--json-schema] [-n <value>] [--no-color] [--no-input]
     [--path <value>] [--reset | ] [-t <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -n, --name=<value>
       name of your Extension. Required if non interactive.
@@ -2470,6 +2474,74 @@ DESCRIPTION
   Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure,
   refer to "App structure" (https://shopify.dev/docs/apps/build/cli-for-apps/app-structure) and the documentation for
   your extension.
+
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppGenerateExtensionResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "extension": {
+        "$ref": "#/definitions/GeneratedExtension"
+      }
+    },
+    "required": [
+      "status",
+      "extension"
+    ],
+    "additionalProperties": false,
+    "title": "AppGenerateExtensionResult",
+    "definitions": {
+      "GeneratedExtension": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The name selected for the generated extension."
+          },
+          "type": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The extension type, such as function, theme, or ui_extension."
+          },
+          "template": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The identifier of the selected extension template."
+          },
+          "flavor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The selected template flavor, or null when the template has no flavors."
+          },
+          "directory": {
+            "type": "string",
+            "description": "The absolute native filesystem path of the generated extension directory."
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "template",
+          "flavor",
+          "directory"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app graphiql`
