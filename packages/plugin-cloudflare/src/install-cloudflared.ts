@@ -133,7 +133,6 @@ async function installWindows(file: string, binTarget: string) {
 async function installMacos(file: string, binTarget: string) {
   await downloadFile(file, `${binTarget}.tgz`)
   const filename = basename(`${binTarget}.tgz`)
-  // Pass the archive name as an argument, not through a shell, so the configured path is never parsed as shell syntax.
   await exec('tar', ['-xzf', filename], {cwd: dirname(binTarget)})
   unlinkFileSync(`${binTarget}.tgz`)
   await renameFile(`${dirname(binTarget)}/cloudflared`, binTarget)

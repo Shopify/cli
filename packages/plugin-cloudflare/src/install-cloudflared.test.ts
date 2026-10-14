@@ -27,7 +27,6 @@ describe('install-cloudflare', () => {
 
   const mockTarExtraction = () => {
     vi.mocked(system.exec).mockImplementation(async (_command, _args, options) => {
-      // Simulate tar extracting the file
       const cwd = options?.cwd as string
       writeFileSync(joinPath(cwd, 'cloudflared'), 'extracted binary')
     })
