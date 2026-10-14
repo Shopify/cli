@@ -1,5 +1,5 @@
 import {chooseFunction, functionFlags} from '../../../services/function/common.js'
-import {replay, replayFunction} from '../../../services/function/replay.js'
+import {replay} from '../../../services/function/replay.js'
 import {functionRunJsonOutputSchema} from '../../../services/function/runner/types.js'
 import {presentFunctionExecution} from '../../../services/function/runner/result.js'
 import {appFlags} from '../../../flags.js'
@@ -62,19 +62,15 @@ export default class FunctionReplay extends AppLinkedCommand {
 
     const ourFunction = await chooseFunction(app, flags.path)
 
-    if (flags.json) {
-      const execution = await replayFunction({app, extension: ourFunction, log: flags.log})
-      presentFunctionExecution(execution)
-    } else {
-      await replay({
-        app,
-        extension: ourFunction,
-        path: flags.path,
-        log: flags.log,
-        json: false,
-        watch: flags.watch,
-      })
-    }
+    const execution = await replay({
+      app,
+      extension: ourFunction,
+      path: flags.path,
+      log: flags.log,
+      json: flags.json,
+      watch: flags.watch,
+    })
+    if (execution) presentFunctionExecution(execution)
 
     return {app}
   }

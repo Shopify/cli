@@ -2,4 +2,4 @@
 '@shopify/cli': major
 ---
 
-Require `--no-watch` for `app function replay --json` and emit one validated native result with structured diagnostics.
+Buffer finite `app function replay` text output until completion and require `--no-watch` for validated JSON output with structured diagnostics.

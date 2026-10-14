@@ -116,15 +116,27 @@ test('keeps the default text watch workflow', async () => {
   })
 })
 
-test('keeps finite text replay on the original runner output path', async () => {
+test('captures finite text replay and preserves native output', async () => {
   await inTemporaryDirectory(async (directory) => {
+    const nativeText = '  Function output:\n{ operations: [] }\n'
+    const nativeStderr = 'Runner warning\n'
+    vi.mocked(captureOutputWithExitCode).mockResolvedValue({
+      stdout: nativeText,
+      stderr: nativeStderr,
+      exitCode: 0,
+    })
     const instance = await command(['--no-watch', '--log', 'abcdef'], directory)
-    await instance.run()
-    expect(exec).toHaveBeenCalledWith(
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await instance.run()
+      expect(stdout()).toBe(nativeText)
+      expect(stderr()).toBe(nativeStderr)
+    })
+    expect(captureOutputWithExitCode).toHaveBeenCalledWith(
       expect.any(String),
       expect.not.arrayContaining(['--json']),
-      expect.objectContaining({stdout: 'inherit', stderr: 'inherit'}),
+      expect.objectContaining({input: JSON.stringify(nativeResult.input)}),
     )
+    expect(exec).not.toHaveBeenCalled()
   })
 })
 

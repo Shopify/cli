@@ -1,6 +1,6 @@
-import {FunctionRunData, replay, replayFunction} from './replay.js'
+import {FunctionRunData, replay} from './replay.js'
 import {renderReplay} from './ui.js'
-import {runFunction, captureFunctionRun} from './runner.js'
+import {captureFunctionRun} from './runner.js'
 import {testAppLinked, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
@@ -65,14 +65,16 @@ describe('replay', () => {
       diagnostics: [],
     }
     vi.mocked(captureFunctionRun).mockResolvedValue(result)
-    await expect(replayFunction({app, extension, log: file.run.identifier})).resolves.toEqual(result)
+    await expect(
+      replay({app, extension, log: file.run.identifier, json: true, watch: false, path: 'test-path'}),
+    ).resolves.toEqual(result)
     expect(captureFunctionRun).toHaveBeenCalledWith({
       functionExtension: extension,
+      json: true,
       input: JSON.stringify(file.run.payload.input),
       export: file.run.payload.export,
     })
     expect(renderReplay).not.toHaveBeenCalled()
-    expect(runFunction).not.toHaveBeenCalled()
   })
 
   testWithTempDir('selects a saved run independently from JSON presentation', async ({tempDir}) => {
@@ -80,7 +82,7 @@ describe('replay', () => {
     const file = createFunctionRunFile({handle: extension.handle})
     await writeFunctionRunFiles(app.getLogsDir(), [file])
     vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
-    await replayFunction({app, extension})
+    await replay({app, extension, json: true, watch: false, path: 'test-path'})
     expect(selectFunctionRunPrompt).toHaveBeenCalledWith([file.run])
     expect(captureFunctionRun).toHaveBeenCalledWith(
       expect.objectContaining({input: JSON.stringify(file.run.payload.input)}),
@@ -89,7 +91,9 @@ describe('replay', () => {
 
   testWithTempDir('rejects a missing finite replay log before executing the runner', async ({tempDir}) => {
     const app = testAppLinked({directory: tempDir})
-    await expect(replayFunction({app, extension, log: 'missing'})).rejects.toThrow('No log found')
+    await expect(replay({app, extension, log: 'missing', json: true, watch: false, path: 'test-path'})).rejects.toThrow(
+      'No log found',
+    )
     expect(captureFunctionRun).not.toHaveBeenCalled()
   })
 
@@ -383,7 +387,12 @@ function createFunctionRunFile(options: FunctionRunFileOptions) {
 }
 
 function expectFunctionRun(functionExtension: ExtensionInstance<FunctionConfigType>, input: unknown) {
-  expect(runFunction).toHaveBeenCalledWith({functionExtension, json: true, export: 'run', input: JSON.stringify(input)})
+  expect(captureFunctionRun).toHaveBeenCalledWith({
+    functionExtension,
+    json: true,
+    export: 'run',
+    input: JSON.stringify(input),
+  })
 }
 
 async function writeFunctionRunFiles(logsDir: string, data: {run: FunctionRunData; path: string}[]) {
