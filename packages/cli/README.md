@@ -2530,13 +2530,17 @@ Compile a function to wasm.
 
 ```
 USAGE
-  $ shopify app function build [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--path <value>] [--reset | ] [--verbose]
+  $ shopify app function build [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -2574,6 +2578,72 @@ DESCRIPTION
   Compile a function to wasm.
 
   Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `FunctionBuildResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "function": {
+        "$ref": "#/definitions/FunctionBuild"
+      }
+    },
+    "required": [
+      "status",
+      "function"
+    ],
+    "additionalProperties": false,
+    "title": "FunctionBuildResult",
+    "definitions": {
+      "FunctionBuild": {
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Null when the extension does not configure a handle."
+          },
+          "name": {
+            "type": "string"
+          },
+          "directory": {
+            "type": "string",
+            "pattern": "^(?:\\/|[a-zA-Z]:[\\\\/]|\\\\\\\\)",
+            "description": "An absolute native filesystem path."
+          },
+          "wasmPath": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/FunctionBuild/properties/directory"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The built Wasm file, or null when the build produced no file."
+          }
+        },
+        "required": [
+          "handle",
+          "name",
+          "directory",
+          "wasmPath"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app function info`
