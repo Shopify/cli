@@ -3967,7 +3967,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.",
+      "description": "Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppReleaseResult` schema.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"status\": {\n          \"type\": \"string\",\n          \"const\": \"success\"\n        },\n        \"app\": {\n          \"$ref\": \"#/definitions/App\"\n        },\n        \"release\": {\n          \"$ref\": \"#/definitions/AppRelease\"\n        }\n      },\n      \"required\": [\n        \"status\",\n        \"app\",\n        \"release\"\n      ],\n      \"additionalProperties\": false\n    },\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"status\": {\n          \"type\": \"string\",\n          \"const\": \"cancelled\"\n        }\n      },\n      \"required\": [\n        \"status\"\n      ],\n      \"additionalProperties\": false\n    }\n  ],\n  \"title\": \"AppReleaseResult\",\n  \"definitions\": {\n    \"App\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"clientId\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"description\": \"The client ID of the app receiving the release.\"\n        }\n      },\n      \"required\": [\n        \"name\",\n        \"clientId\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppRelease\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"version\": {\n          \"$ref\": \"#/definitions/AppReleaseVersion\"\n        }\n      },\n      \"required\": [\n        \"version\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppReleaseVersion\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"gid\": {\n          \"type\": \"string\",\n          \"pattern\": \"^gid:\\\\/\\\\/shopify\\\\/Version\\\\/\\\\d+$\",\n          \"description\": \"The Shopify app version GID.\"\n        },\n        \"name\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"minLength\": 1\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"The version tag, or null when no tag is available.\"\n        },\n        \"message\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"minLength\": 1\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"The version message, or null when no message is available.\"\n        },\n        \"url\": {\n          \"type\": \"string\",\n          \"format\": \"uri\",\n          \"description\": \"The Developer Dashboard URL for this version.\"\n        }\n      },\n      \"required\": [\n        \"gid\",\n        \"name\",\n        \"message\",\n        \"url\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.",
       "flags": {
         "allow-deletes": {
@@ -4015,6 +4015,15 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,
@@ -4094,8 +4103,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Runs an app security check locally and writes `deterministic-findings.json` and `agent-checks.json` to the results directory, `.shopify/app-security/<results key>/`. The results key is `--client-id` when you pass it, and otherwise the name of the app configuration file without `.toml`; the other `app security` commands take the same selection flags and find the same directory. Every run replaces both files, so it's always safe to run the check again.\n\n`deterministic-findings.json` holds the deterministic scan results. `agent-checks.json` holds the checks for your coding agent to investigate; the agent's results are recorded with `shopify app security record`. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; the check inspects only that configuration. Use `--client-id` to replace the configuration's client ID for this run. `--client-id` is checked against your Shopify account before anything is scanned, so it needs you to be logged in. When no app configuration exists, use `--without-app-config --client-id <client-id>` to scan `--path` anyway with config checks skipped; in an interactive terminal the command offers to do this.\n\nThe check scans the app directory and each `--include-dir`. Git ignore rules apply by default: a file or directory that Git ignores is skipped, using the rules of the repository that contains it, while files that Git tracks are always scanned. Use `--no-git-ignore` to turn Git ignore rules off for every scanned directory.\n\nUse `--exclude` to skip more paths. Each value is a glob that is matched against the path relative to the working directory, so a path above it starts with `../`, and a name at any depth needs `**/`, for example `--exclude '**/generated'`. Repeat the flag to add globs. An exclusion can't remove the selected app configuration file. Quote each value so your shell doesn't expand `*`. The coding-agent instructions this check offers repeat the globs. Other `app security` commands don't take `--exclude` or `--no-git-ignore`, so pass the same flags each time you run the check.\n\nUse `--list-files` to check the scope before scanning: it prints the files the check would gather, one path per line and relative to the app directory, and then stops. It writes no results and never prompts. `--client-id` is still checked, but doesn't change the list.\n\nIn interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. You can also run `shopify app security instructions` to print, copy, or write them later.",
-      "descriptionWithMarkdown": "Runs an app security check locally and writes `deterministic-findings.json` and `agent-checks.json` to the results directory, `.shopify/app-security/<results key>/`. The results key is `--client-id` when you pass it, and otherwise the name of the app configuration file without `.toml`; the other `app security` commands take the same selection flags and find the same directory. Every run replaces both files, so it's always safe to run the check again.\n\n`deterministic-findings.json` holds the deterministic scan results. `agent-checks.json` holds the checks for your coding agent to investigate; the agent's results are recorded with `shopify app security record`. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; the check inspects only that configuration. Use `--client-id` to replace the configuration's client ID for this run. `--client-id` is checked against your Shopify account before anything is scanned, so it needs you to be logged in. When no app configuration exists, use `--without-app-config --client-id <client-id>` to scan `--path` anyway with config checks skipped; in an interactive terminal the command offers to do this.\n\nThe check scans the app directory and each `--include-dir`. Git ignore rules apply by default: a file or directory that Git ignores is skipped, using the rules of the repository that contains it, while files that Git tracks are always scanned. Use `--no-git-ignore` to turn Git ignore rules off for every scanned directory.\n\nUse `--exclude` to skip more paths. Each value is a glob that is matched against the path relative to the working directory, so a path above it starts with `../`, and a name at any depth needs `**/`, for example `--exclude '**/generated'`. Repeat the flag to add globs. An exclusion can't remove the selected app configuration file. Quote each value so your shell doesn't expand `*`. The coding-agent instructions this check offers repeat the globs. Other `app security` commands don't take `--exclude` or `--no-git-ignore`, so pass the same flags each time you run the check.\n\nUse `--list-files` to check the scope before scanning: it prints the files the check would gather, one path per line and relative to the app directory, and then stops. It writes no results and never prompts. `--client-id` is still checked, but doesn't change the list.\n\nIn interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--yes`, which prints them. You can also run `shopify app security instructions` to print, copy, or write them later.",
+      "description": "Runs an app security check locally and writes `deterministic-findings.json` and `agent-checks.json` to the results directory, `.shopify/app-security/<results key>/`. The results key is `--client-id` when you pass it, and otherwise the name of the app configuration file without `.toml`; the other `app security` commands take the same selection flags and find the same directory. Every run replaces both files, so it's always safe to run the check again.\n\n`deterministic-findings.json` holds the deterministic scan results. `agent-checks.json` holds the checks for your coding agent to investigate; the agent's results are recorded with `shopify app security record`. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; the check inspects only that configuration. Use `--client-id` to replace the configuration's client ID for this run. `--client-id` is checked against your Shopify account before anything is scanned, so it needs you to be logged in. When no app configuration exists, use `--without-app-config --client-id <client-id>` to scan `--path` anyway with config checks skipped; in an interactive terminal the command offers to do this.\n\nThe check scans the app directory and each `--include-dir`. Git ignore rules apply by default: a file or directory that Git ignores is skipped, using the rules of the repository that contains it, while files that Git tracks are always scanned. Use `--no-git-ignore` to turn Git ignore rules off for every scanned directory. When the check uses Git, it requires Git 2.38.0 or later.\n\nUse `--exclude` to skip more paths. Each value is a glob that is matched against the path relative to the working directory, so a path above it starts with `../`, and a name at any depth needs `**/`, for example `--exclude '**/generated'`. Repeat the flag to add globs. An exclusion can't remove the selected app configuration file. Quote each value so your shell doesn't expand `*`. The coding-agent instructions this check offers repeat the globs. Other `app security` commands don't take `--exclude` or `--no-git-ignore`, so pass the same flags each time you run the check.\n\nUse `--list-files` to check the scope before scanning: it prints the files the check would gather, one path per line and relative to the app directory, and then stops. It writes no results and never prompts. `--client-id` is still checked, but doesn't change the list.\n\nIn interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--print-instructions`, which prints them. You can also run `shopify app security instructions` to print, copy, or write them later.",
+      "descriptionWithMarkdown": "Runs an app security check locally and writes `deterministic-findings.json` and `agent-checks.json` to the results directory, `.shopify/app-security/<results key>/`. The results key is `--client-id` when you pass it, and otherwise the name of the app configuration file without `.toml`; the other `app security` commands take the same selection flags and find the same directory. Every run replaces both files, so it's always safe to run the check again.\n\n`deterministic-findings.json` holds the deterministic scan results. `agent-checks.json` holds the checks for your coding agent to investigate; the agent's results are recorded with `shopify app security record`. Use `--config` to select a specific app configuration when the project has multiple `shopify.app*.toml` files; the check inspects only that configuration. Use `--client-id` to replace the configuration's client ID for this run. `--client-id` is checked against your Shopify account before anything is scanned, so it needs you to be logged in. When no app configuration exists, use `--without-app-config --client-id <client-id>` to scan `--path` anyway with config checks skipped; in an interactive terminal the command offers to do this.\n\nThe check scans the app directory and each `--include-dir`. Git ignore rules apply by default: a file or directory that Git ignores is skipped, using the rules of the repository that contains it, while files that Git tracks are always scanned. Use `--no-git-ignore` to turn Git ignore rules off for every scanned directory. When the check uses Git, it requires Git 2.38.0 or later.\n\nUse `--exclude` to skip more paths. Each value is a glob that is matched against the path relative to the working directory, so a path above it starts with `../`, and a name at any depth needs `**/`, for example `--exclude '**/generated'`. Repeat the flag to add globs. An exclusion can't remove the selected app configuration file. Quote each value so your shell doesn't expand `*`. The coding-agent instructions this check offers repeat the globs. Other `app security` commands don't take `--exclude` or `--no-git-ignore`, so pass the same flags each time you run the check.\n\nUse `--list-files` to check the scope before scanning: it prints the files the check would gather, one path per line and relative to the app directory, and then stops. It writes no results and never prompts. `--client-id` is still checked, but doesn't change the list.\n\nIn interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing; copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass `--print-instructions`, which prints them. You can also run `shopify app security instructions` to print, copy, or write them later.",
       "enableJsonFlag": false,
       "flags": {
         "blocking": {
@@ -4161,7 +4170,7 @@
           "description": "Print the files the check would gather, one path per line, and stop. Nothing is scanned, no results are written, and nothing is prompted for.",
           "env": "SHOPIFY_FLAG_LIST_FILES",
           "exclusive": [
-            "yes",
+            "print-instructions",
             "skip-instructions",
             "blocking"
           ],
@@ -4199,12 +4208,22 @@
           "noCacheDefault": true,
           "type": "option"
         },
+        "print-instructions": {
+          "allowNo": false,
+          "description": "Print coding-agent instructions without prompting for how to deliver them.",
+          "env": "SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS",
+          "exclusive": [
+            "skip-instructions"
+          ],
+          "name": "print-instructions",
+          "type": "boolean"
+        },
         "skip-instructions": {
           "allowNo": false,
           "description": "Don't offer the coding-agent instructions after the scan. Use it when you want only the deterministic scan results.",
           "env": "SHOPIFY_FLAG_APP_SECURITY_SKIP_INSTRUCTIONS",
           "exclusive": [
-            "yes"
+            "print-instructions"
           ],
           "name": "skip-instructions",
           "type": "boolean"
@@ -4232,11 +4251,16 @@
         },
         "yes": {
           "allowNo": false,
+          "deprecated": {
+            "to": "--print-instructions"
+          },
           "description": "Print coding-agent instructions without prompting.",
           "env": "SHOPIFY_FLAG_YES",
           "exclusive": [
-            "skip-instructions"
+            "skip-instructions",
+            "list-files"
           ],
+          "hidden": true,
           "name": "yes",
           "type": "boolean"
         }

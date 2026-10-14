@@ -143,7 +143,7 @@ describe('dependency automation scanner integration', () => {
         expect(securityExitCode({...execution, elapsedMilliseconds: 0}, 'low')).toBe(0)
         expect(JSON.stringify(execution.deterministicFindings)).not.toContain('local>org/renovate-config')
         // Outside any repository, gathering stops after asking whether the directory is ignored and probing for a repository.
-        const untrusted = ['-c', 'core.fsmonitor=', '-c', 'safe.bareRepository=explicit']
+        const untrusted = ['-c', 'core.fsmonitor=', '-c', 'safe.bareRepository=explicit', '-c', 'alias.remote-=']
         expect(vi.mocked(captureOutputWithExitCode).mock.calls.map(([command, args]) => [command, args])).toEqual([
           ['git', [...untrusted, 'check-ignore', '--no-index', '-q', '--', basename(root)]],
           ['git', [...untrusted, 'rev-parse', '--is-inside-work-tree']],

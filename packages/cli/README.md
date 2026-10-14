@@ -4423,6 +4423,10 @@ FLAGS
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
 
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --allow-deletes
       Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the
       recommended flag is --allow-updates. Required in non-interactive environments unless --allow-updates is provided.
@@ -4473,6 +4477,131 @@ DESCRIPTION
   Release an app version.
 
   Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppReleaseResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "app": {
+            "$ref": "#/definitions/App"
+          },
+          "release": {
+            "$ref": "#/definitions/AppRelease"
+          }
+        },
+        "required": [
+          "status",
+          "app",
+          "release"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "cancelled"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "AppReleaseResult",
+    "definitions": {
+      "App": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The client ID of the app receiving the release."
+          }
+        },
+        "required": [
+          "name",
+          "clientId"
+        ],
+        "additionalProperties": false
+      },
+      "AppRelease": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "$ref": "#/definitions/AppReleaseVersion"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "additionalProperties": false
+      },
+      "AppReleaseVersion": {
+        "type": "object",
+        "properties": {
+          "gid": {
+            "type": "string",
+            "pattern": "^gid:\\/\\/shopify\\/Version\\/\\d+$",
+            "description": "The Shopify app version GID."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version tag, or null when no tag is available."
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The version message, or null when no message is available."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "The Developer Dashboard URL for this version."
+          }
+        },
+        "required": [
+          "gid",
+          "name",
+          "message",
+          "url"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app security check`
@@ -4481,9 +4610,9 @@ Check an app for Shopify-specific security issues and write deterministic-findin
 
 ```
 USAGE
-  $ shopify app security check [--exclude <value>...] [--include-dir <value>...] [--json-schema] [--list-files | --yes |
-    --skip-instructions | --blocking high|medium|low|none] [--no-color] [--no-git-ignore] [--no-input] [--path <value>]
-    [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
+  $ shopify app security check [--exclude <value>...] [--include-dir <value>...] [--json-schema] [--list-files |
+    --print-instructions | --skip-instructions | --blocking high|medium|low|none] [--no-color] [--no-git-ignore]
+    [--no-input] [--path <value>] [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
 
 FLAGS
   -c, --config=<value>
@@ -4534,6 +4663,10 @@ FLAGS
       The path to your app directory.
       [env: SHOPIFY_FLAG_PATH]
 
+  --print-instructions
+      Print coding-agent instructions without prompting for how to deliver them.
+      [env: SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS]
+
   --skip-instructions
       Don't offer the coding-agent instructions after the scan. Use it when you want only the deterministic scan results.
       [env: SHOPIFY_FLAG_APP_SECURITY_SKIP_INSTRUCTIONS]
@@ -4545,10 +4678,6 @@ FLAGS
   --without-app-config
       Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.
       [env: SHOPIFY_FLAG_WITHOUT_APP_CONFIG]
-
-  --yes
-      Print coding-agent instructions without prompting.
-      [env: SHOPIFY_FLAG_YES]
 
 DESCRIPTION
   Check an app for Shopify-specific security issues and write deterministic-findings.json and agent-checks.json.
@@ -4568,7 +4697,8 @@ DESCRIPTION
 
   The check scans the app directory and each `--include-dir`. Git ignore rules apply by default: a file or directory
   that Git ignores is skipped, using the rules of the repository that contains it, while files that Git tracks are
-  always scanned. Use `--no-git-ignore` to turn Git ignore rules off for every scanned directory.
+  always scanned. Use `--no-git-ignore` to turn Git ignore rules off for every scanned directory. When the check uses
+  Git, it requires Git 2.38.0 or later.
 
   Use `--exclude` to skip more paths. Each value is a glob that is matched against the path relative to the working
   directory, so a path above it starts with `../`, and a name at any depth needs `**/`, for example `--exclude
@@ -4583,7 +4713,8 @@ DESCRIPTION
 
   In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing;
   copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass
-  `--yes`, which prints them. You can also run `shopify app security instructions` to print, copy, or write them later.
+  `--print-instructions`, which prints them. You can also run `shopify app security instructions` to print, copy, or
+  write them later.
 ```
 
 ## `shopify app security clean`

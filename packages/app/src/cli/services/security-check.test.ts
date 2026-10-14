@@ -225,7 +225,7 @@ function testOptions() {
     withoutAppConfig: false,
     verbose: false,
     blocking: 'none' as const,
-    yes: false,
+    printInstructions: false,
     skipInstructions: false,
     includeDirs: [],
     excludePatterns: [],
@@ -703,7 +703,7 @@ describe('securityCheck', () => {
       await securityCheck(
         {
           ...testOptions(),
-          yes: true,
+          printInstructions: true,
           includeDirs: ['backend', './backend/'],
           excludePatterns: ['**/generated', '!keep'],
           noGitIgnore: true,
@@ -751,20 +751,25 @@ describe('securityCheck', () => {
     expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
   })
 
-  test('--yes prints post-scan instructions without prompting, including in CI', async () => {
-    const dependencies = testDependencies()
+  test.each([false, true])(
+    '--print-instructions prints without a delivery prompt and preserves app selection prompts (interactive=%s)',
+    async (interactive) => {
+      const dependencies = testDependencies()
+      dependencies.canPrompt.mockReturnValue(interactive)
 
-    await securityCheck({...testOptions(), yes: true}, dependencies)
+      await securityCheck({...testOptions(), printInstructions: true}, dependencies)
 
-    expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
-    expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
-      appDirectory,
-      resultsKey: 'shopify.app',
-      copy: false,
-      scanScope: noScope,
-      commands: commandsFor(),
-    })
-  })
+      expect(dependencies.resolveSelection).toHaveBeenCalledWith(expect.objectContaining({allowPrompts: interactive}))
+      expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
+      expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
+        appDirectory,
+        resultsKey: 'shopify.app',
+        copy: false,
+        scanScope: noScope,
+        commands: commandsFor(),
+      })
+    },
+  )
 
   test('--skip-instructions never offers instructions', async () => {
     const dependencies = testDependencies()
