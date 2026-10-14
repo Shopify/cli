@@ -64,12 +64,36 @@ export async function openURL(url: string): Promise<boolean> {
 
   const externalOpen = await import('open')
   try {
-    await externalOpen.default(url)
-    return true
+    const subprocess = await externalOpen.default(url)
+    return await browserLaunchSucceeded(subprocess)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     return false
   }
+}
+
+/**
+ * Waits for the process spawned to open a browser to either start or fail.
+ *
+ * `open` resolves as soon as it has called `spawn`, before the OS reports whether the
+ * launcher exists. A missing launcher (e.g. `xdg-open` in a headless container) is
+ * reported later as an `error` event on the child process. Without a listener that
+ * event is thrown as an uncaught exception and terminates the CLI, which kills flows
+ * such as device-code login that could otherwise carry on with the printed link.
+ *
+ * @param subprocess - The child process returned by `open`.
+ * @returns A promise that resolves true if the process started, false if it failed to start.
+ */
+async function browserLaunchSucceeded(subprocess: NodeJS.EventEmitter | undefined): Promise<boolean> {
+  if (!subprocess || typeof subprocess.once !== 'function') return true
+  return new Promise<boolean>((resolve) => {
+    // Keep a permanent listener so a late error can never become an uncaught exception.
+    subprocess.on('error', (error: Error) => {
+      outputDebug(`Failed to open the browser: ${error.message}`)
+      resolve(false)
+    })
+    subprocess.once('spawn', () => resolve(true))
+  })
 }
 
 /**
