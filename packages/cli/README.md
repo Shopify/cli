@@ -2518,24 +2518,9 @@ DESCRIPTION
             "description": "The identifier of the selected extension template."
           },
           "flavor": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "vanilla-js",
-                  "preact",
-                  "react",
-                  "typescript",
-                  "typescript-react",
-                  "rust",
-                  "wasm",
-                  "liquid",
-                  "config-only"
-                ]
-              },
-              {
-                "type": "null"
-              }
+            "type": [
+              "string",
+              "null"
             ],
             "description": "The selected template flavor, or null when the template has no flavors."
           },

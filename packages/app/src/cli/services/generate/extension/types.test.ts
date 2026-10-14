@@ -10,21 +10,22 @@ const extension = {
   directory: resolvePath('extensions/my-extension'),
 }
 
-test.each([
-  {name: ''},
-  {type: ''},
-  {template: ''},
-  {flavor: 'unknown'},
-  {directory: 'extensions/my-extension'},
-  {secret: 'unexpected'},
-])('rejects invalid generated extension fields: %j', (fields) => {
-  expect(() =>
-    appGenerateExtensionJsonOutputSchema.validate({status: 'success', extension: {...extension, ...fields}}),
-  ).toThrow()
-})
+test.each([{name: ''}, {type: ''}, {template: ''}, {directory: 'extensions/my-extension'}, {secret: 'unexpected'}])(
+  'rejects invalid generated extension fields: %j',
+  (fields) => {
+    expect(() =>
+      appGenerateExtensionJsonOutputSchema.validate({status: 'success', extension: {...extension, ...fields}}),
+    ).toThrow()
+  },
+)
 
 test('rejects fields outside the public result projection', () => {
   expect(() =>
     appGenerateExtensionJsonOutputSchema.validate({status: 'success', extension, packageManager: 'pnpm'}),
   ).toThrow()
+})
+
+test.each(['custom-flavor', null])('accepts a generated extension flavor of %j', (flavor) => {
+  const result = {status: 'success' as const, extension: {...extension, flavor}}
+  expect(JSON.parse(appGenerateExtensionJsonOutputSchema.encode(result))).toEqual(result)
 })

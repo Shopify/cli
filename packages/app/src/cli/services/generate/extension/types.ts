@@ -9,20 +9,7 @@ const generatedExtensionSchema = zod
     name: zod.string().min(1).describe('The name selected for the generated extension.'),
     type: zod.string().min(1).describe('The extension type, such as function, theme, or ui_extension.'),
     template: zod.string().min(1).describe('The identifier of the selected extension template.'),
-    flavor: zod
-      .enum([
-        'vanilla-js',
-        'preact',
-        'react',
-        'typescript',
-        'typescript-react',
-        'rust',
-        'wasm',
-        'liquid',
-        'config-only',
-      ])
-      .nullable()
-      .describe('The selected template flavor, or null when the template has no flavors.'),
+    flavor: zod.string().nullable().describe('The selected template flavor, or null when the template has no flavors.'),
     directory: zod
       .string()
       .refine(isAbsolutePath, 'Expected an absolute filesystem path.')
