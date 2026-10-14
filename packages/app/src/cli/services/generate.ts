@@ -1,10 +1,10 @@
 import {fetchExtensionTemplates} from './generate/fetch-template-specifications.js'
 import {
   GenerateExtensionTemplateOptions,
-  GeneratedExtension,
   generateExtensionTemplate,
   ExtensionFlavorValue,
 } from './generate/extension.js'
+import {GenerateExtensionResult} from './generate/extension/types.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import {Project} from '../models/project/project.js'
@@ -16,12 +16,9 @@ import metadata from '../metadata.js'
 import {ExtensionTemplate} from '../models/app/template.js'
 import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {OrganizationApp} from '../models/organization.js'
-import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {RenderAlertOptions, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {groupBy} from '@shopify/cli-kit/common/collection'
 
 interface GenerateOptions {
@@ -38,7 +35,7 @@ interface GenerateOptions {
   cloneUrl?: string
 }
 
-async function generate(options: GenerateOptions) {
+async function generate(options: GenerateOptions): Promise<GenerateExtensionResult> {
   const {app, developerPlatformClient, remoteApp, specifications, template} = options
 
   const availableSpecifications = specifications.map((spec) => spec.identifier)
@@ -57,7 +54,16 @@ async function generate(options: GenerateOptions) {
   const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
   const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
 
-  renderSuccessMessage(generatedExtension, options.project.packageManager)
+  return {
+    status: 'success',
+    extension: {
+      directory: generatedExtension.directory,
+      extensionTemplate: generatedExtension.extensionTemplate,
+      name: promptAnswers.extensionContent.name,
+      flavor: promptAnswers.extensionContent.flavor,
+    },
+    packageManager: options.project.packageManager,
+  }
 }
 
 async function buildPromptOptions(
@@ -129,15 +135,6 @@ function buildGenerateOptions(
   }
 }
 
-function renderSuccessMessage(extension: GeneratedExtension, packageManager: PackageManager) {
-  const formattedSuccessfulMessage = formatSuccessfulRunMessage(
-    extension.extensionTemplate,
-    extension.directory,
-    packageManager,
-  )
-  renderSuccess(formattedSuccessfulMessage)
-}
-
 function validateExtensionFlavor(extensionTemplate?: ExtensionTemplate, flavor?: string) {
   if (!flavor || !extensionTemplate) return
 
@@ -149,34 +146,6 @@ function validateExtensionFlavor(extensionTemplate?: ExtensionTemplate, flavor?:
       `Expected template to be one of the following: ${possibleFlavors.join(', ')}.`,
     )
   }
-}
-
-function formatSuccessfulRunMessage(
-  extensionTemplate: ExtensionTemplate,
-  extensionDirectory: string,
-  depndencyManager: PackageManager,
-): RenderAlertOptions {
-  const options: RenderAlertOptions = {
-    headline: ['Your extension was created in', {filePath: extensionDirectory}, {char: '.'}],
-    nextSteps: [],
-    reference: [],
-  }
-
-  if (extensionTemplate.type !== 'function') {
-    options.nextSteps!.push([
-      'To preview this extension along with the rest of the project, run',
-      {command: formatPackageManagerCommand(depndencyManager, 'shopify app dev')},
-    ])
-  }
-
-  if (extensionTemplate.supportLinks[0]) {
-    options.reference!.push([
-      'For more details, see the',
-      {link: {label: 'docs', url: extensionTemplate.supportLinks[0]}},
-    ])
-  }
-
-  return options
 }
 
 async function handleTypeParameter(
