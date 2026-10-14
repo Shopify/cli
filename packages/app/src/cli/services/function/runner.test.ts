@@ -208,7 +208,7 @@ describe('captureFunctionRun', () => {
     expect(captureOutputWithExitCode).toHaveBeenCalledWith(
       functionRunnerBinary().path,
       ['-f', functionExtension.outputPath],
-      {cwd: functionExtension.directory, stdin: undefined, input: undefined},
+      {cwd: functionExtension.directory, stdin: undefined, input: undefined, stripFinalNewline: false},
     )
   })
 
@@ -261,7 +261,7 @@ describe('captureFunctionRun', () => {
         '--query-path',
         'query.graphql',
       ],
-      {cwd: functionExtension.directory, stdin, input: '{}'},
+      {cwd: functionExtension.directory, stdin, input: '{}', stripFinalNewline: true},
     )
   })
 
@@ -281,7 +281,7 @@ describe('captureFunctionRun', () => {
     expect(captureOutputWithExitCode).toHaveBeenCalledWith(
       functionRunnerBinary().path,
       ['-f', functionExtension.outputPath, '--export', 'run', '--json'],
-      {cwd: functionExtension.directory, stdin: undefined, input: '{}'},
+      {cwd: functionExtension.directory, stdin: undefined, input: '{}', stripFinalNewline: true},
     )
   })
 

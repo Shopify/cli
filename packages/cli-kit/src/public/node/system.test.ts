@@ -168,6 +168,22 @@ describe('captureOutput', () => {
 })
 
 describe('captureOutputWithExitCode', () => {
+  test.each([0, 1])('preserves final newlines when requested with exit code %s', async (exitCode) => {
+    const {execa: actualExeca} = await vi.importActual<typeof import('execa')>('execa')
+    vi.mocked(execa).mockImplementationOnce(actualExeca)
+
+    const result = await system.captureOutputWithExitCode(
+      process.execPath,
+      [
+        '-e',
+        `process.stdout.write('Output\\n\\n'); process.stderr.write('Diagnostic\\r\\n'); process.exitCode = ${exitCode}`,
+      ],
+      {stripFinalNewline: false},
+    )
+
+    expect(result).toEqual({stdout: 'Output\n\n', stderr: 'Diagnostic\r\n', exitCode})
+  })
+
   test('returns stdout, stderr, and exitCode on success', async () => {
     // Given
     vi.mocked(execa).mockResolvedValueOnce({stdout: 'output', stderr: '', exitCode: 0} as any)

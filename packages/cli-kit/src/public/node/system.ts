@@ -32,6 +32,8 @@ export interface ExecOptions {
   stderr?: Writable | 'inherit'
   stdio?: 'inherit'
   input?: string
+  /** Whether to remove the final newline from captured stdout/stderr (default: true). */
+  stripFinalNewline?: boolean
   signal?: AbortSignal
   // Custom handler if process exits with a non-zero code
   externalErrorHandler?: (error: unknown) => Promise<void>
@@ -313,6 +315,7 @@ function buildExec(
     env,
     cwd: executionCwd,
     input: options?.input,
+    stripFinalNewline: options?.stripFinalNewline,
     stdio: options?.background ? backgroundStdio : options?.stdio,
     stdin: options?.stdin,
     stdout: options?.stdout === 'inherit' ? 'inherit' : undefined,

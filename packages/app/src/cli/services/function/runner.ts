@@ -151,7 +151,7 @@ export async function captureFunctionRun(
   const diagnostics = warningType
     ? [`${profileWarningHeadline} ${warningType === 'javascript' ? javaScriptProfileWarning : wasmProfileWarning}`]
     : []
-  const execution = await captureOutputWithExitCode(command, args, processOptions)
+  const execution = await captureOutputWithExitCode(command, args, {...processOptions, stripFinalNewline: json})
 
   if (!json) {
     if (execution.exitCode !== 0) {
