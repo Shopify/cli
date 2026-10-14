@@ -3057,9 +3057,9 @@ Check an app for Shopify-specific security issues and write deterministic-findin
 
 ```
 USAGE
-  $ shopify app security check [--exclude <value>...] [--include-dir <value>...] [--json-schema] [--list-files | --yes |
-    --skip-instructions | --blocking high|medium|low|none] [--no-color] [--no-git-ignore] [--no-input] [--path <value>]
-    [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
+  $ shopify app security check [--exclude <value>...] [--include-dir <value>...] [--json-schema] [--list-files |
+    --print-instructions | --skip-instructions | --blocking high|medium|low|none] [--no-color] [--no-git-ignore]
+    [--no-input] [--path <value>] [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
 
 FLAGS
   -c, --config=<value>
@@ -3110,6 +3110,10 @@ FLAGS
       The path to your app directory.
       [env: SHOPIFY_FLAG_PATH]
 
+  --print-instructions
+      Print coding-agent instructions without prompting for how to deliver them.
+      [env: SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS]
+
   --skip-instructions
       Don't offer the coding-agent instructions after the scan. Use it when you want only the deterministic scan results.
       [env: SHOPIFY_FLAG_APP_SECURITY_SKIP_INSTRUCTIONS]
@@ -3121,10 +3125,6 @@ FLAGS
   --without-app-config
       Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.
       [env: SHOPIFY_FLAG_WITHOUT_APP_CONFIG]
-
-  --yes
-      Print coding-agent instructions without prompting.
-      [env: SHOPIFY_FLAG_YES]
 
 DESCRIPTION
   Check an app for Shopify-specific security issues and write deterministic-findings.json and agent-checks.json.
@@ -3144,7 +3144,8 @@ DESCRIPTION
 
   The check scans the app directory and each `--include-dir`. Git ignore rules apply by default: a file or directory
   that Git ignores is skipped, using the rules of the repository that contains it, while files that Git tracks are
-  always scanned. Use `--no-git-ignore` to turn Git ignore rules off for every scanned directory.
+  always scanned. Use `--no-git-ignore` to turn Git ignore rules off for every scanned directory. When the check uses
+  Git, it requires Git 2.38.0 or later.
 
   Use `--exclude` to skip more paths. Each value is a glob that is matched against the path relative to the working
   directory, so a path above it starts with `../`, and a name at any depth needs `**/`, for example `--exclude
@@ -3159,7 +3160,26 @@ DESCRIPTION
 
   In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing;
   copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass
-  `--yes`, which prints them. You can also run `shopify app security instructions` to print, copy, or write them later.
+  `--print-instructions`, which prints them. You can also run `shopify app security instructions` to print, copy, or
+  write them later.
+
+  Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
+  (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
+
+EXAMPLES
+  $ shopify app security check
+
+  $ shopify app security check --include-dir ../backend
+
+  $ shopify app security check --path extensions --config production --include-dir .
+
+  $ shopify app security check --without-app-config --client-id <client-id>
+
+  $ shopify app security check --path app --include-dir . --exclude marketing --exclude "**/generated"
+
+  $ shopify app security check --no-git-ignore --exclude local-data
+
+  $ shopify app security check --include-dir ../backend --list-files
 ```
 
 ## `shopify app security clean`
@@ -3333,6 +3353,9 @@ DESCRIPTION
 
   The document is recorded all or nothing: if anything is invalid, the command fails with every error, writes nothing,
   and exits with a non-zero code. It needs the results directory that `shopify app security check` creates.
+
+  Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
+  (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
 ```
 
 ## `shopify app security review`
@@ -3402,6 +3425,9 @@ DESCRIPTION
   The agent results are optional. Use `--check-id` to narrow the review to specific checks, `--verbose` for full
   reasoning, evidence and suppressed findings, and `--blocking` to exit with code 1 when a check with findings is at or
   above a severity.
+
+  Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
+  (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
 ```
 
 ## `shopify app subscription-migrations cancel`

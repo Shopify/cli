@@ -22,8 +22,8 @@ const metadata = createRuntimeMetadataContainer<
     partner_id: number
     api_key: string
   } & CmdFieldsFromMonorail &
-    // The app security check fields don't share a prefix with other command fields.
-    Pick<MonorailEventPublic, 'num_security_findings' | 'num_security_findings_resolved'>,
+    // The app security check field doesn't share a prefix with other command fields.
+    Pick<MonorailEventPublic, 'num_security_findings'>,
   CmdSensitiveFieldsFromMonorail
 >({
   cmd_app_warning_api_key_deprecation_displayed: false,

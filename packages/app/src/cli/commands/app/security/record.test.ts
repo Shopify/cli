@@ -66,6 +66,17 @@ function recordedResult(appRoot: string) {
 }
 
 describe('app security record command', () => {
+  test('documents command-specific telemetry and links to usage reporting', () => {
+    expect(SecurityRecord.descriptionWithMarkdown).toContain(
+      'Reports the number of findings to Shopify as usage telemetry, but not finding details.',
+    )
+    expect(SecurityRecord.descriptionWithMarkdown).toContain(
+      '[usage reporting](https://shopify.dev/docs/api/shopify-cli#usage-reporting)',
+    )
+    expect(SecurityRecord.descriptionWithMarkdown).not.toContain('SHOPIFY_CLI_NO_ANALYTICS=1')
+    expect(SecurityRecord.description).toContain('https://shopify.dev/docs/api/shopify-cli#usage-reporting')
+  })
+
   test('does not require linked app context', () => {
     expect(SecurityRecord.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityRecord.prototype).not.toBeInstanceOf(AppLinkedCommand)
