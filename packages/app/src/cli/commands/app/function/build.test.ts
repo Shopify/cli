@@ -7,11 +7,14 @@ import {functionBuildJsonOutputSchema} from '../../../services/function/build-co
 import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {dirname} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {AbortError, AbortSilentError, handler} from '@shopify/cli-kit/node/error'
 import {unstyled} from '@shopify/cli-kit/node/output'
+
+// eslint-disable-next-line no-restricted-imports
+import {resolve} from 'node:path'
 
 vi.mock('../../../services/app-context.js')
 vi.mock('../../../services/build/extension.js')
@@ -50,7 +53,7 @@ test.each([['--json'], ['--json', '--no-input']])(
             handle: extension.configuration.handle ?? null,
             name: extension.name,
             directory,
-            wasmPath: joinPath(directory, 'dist/index.wasm'),
+            wasmPath: resolve(directory, 'dist/index.wasm'),
           },
         })
         const events = stderr()

@@ -5,6 +5,9 @@ import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {expect, test, vi} from 'vitest'
 
+// eslint-disable-next-line no-restricted-imports
+import {resolve} from 'node:path'
+
 vi.mock('../build/extension.js')
 
 test('returns typed facts using the builder-selected output path', async () => {
@@ -22,7 +25,7 @@ test('returns typed facts using the builder-selected output path', async () => {
         handle: extension.configuration.handle ?? null,
         name: extension.name,
         directory,
-        wasmPath: path,
+        wasmPath: resolve(path),
       },
     })
     expect(buildFunctionExtension).toHaveBeenCalledWith(extension, options)
