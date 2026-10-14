@@ -1,5 +1,6 @@
 import install, {CURRENT_CLOUDFLARE_VERSION, versionIsGreaterThan} from './install-cloudflared.js'
 import * as http from '@shopify/cli-kit/node/http'
+import * as system from '@shopify/cli-kit/node/system'
 import {inTemporaryDirectory, readFile, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
@@ -12,11 +13,23 @@ vi.mock('@shopify/cli-kit/node/http')
 
 vi.mock('child_process')
 
+vi.mock('@shopify/cli-kit/node/system', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@shopify/cli-kit/node/system')>()
+  return {...original, exec: vi.fn()}
+})
+
 describe('install-cloudflare', () => {
   const mockFetch = (ok = true) => {
     vi.mocked(http.fetch).mockResolvedValue(
       new Response('cloudflared content', {status: ok ? 200 : 404, statusText: ok ? 'OK' : 'Not Found'}),
     )
+  }
+
+  const mockTarExtraction = () => {
+    vi.mocked(system.exec).mockImplementation(async (_command, _args, options) => {
+      const cwd = options?.cwd as string
+      writeFileSync(joinPath(cwd, 'cloudflared'), 'extracted binary')
+    })
   }
 
   test('install is ignored if SHOPIFY_CLI_IGNORE_CLOUDFLARED is present', async () => {
@@ -39,12 +52,7 @@ describe('install-cloudflare', () => {
       const binPath = joinPath(tmpDir, 'cloudflared')
       const env = {SHOPIFY_CLI_CLOUDFLARED_PATH: binPath}
       mockFetch()
-      vi.mocked(childProcess.execSync).mockImplementation((_command, options) => {
-        // Simulate tar extracting the file
-        const cwd = options?.cwd as string
-        writeFileSync(joinPath(cwd, 'cloudflared'), 'extracted binary')
-        return Buffer.from('')
-      })
+      mockTarExtraction()
 
       // When
       await install(env, 'darwin', 'x64')
@@ -57,6 +65,27 @@ describe('install-cloudflare', () => {
       )
       await expect(fileExists(binPath)).resolves.toBe(true)
       await expect(readFile(binPath)).resolves.toBe('extracted binary')
+      expect(system.exec).toHaveBeenCalledWith('tar', ['-xzf', 'cloudflared.tgz'], {cwd: tmpDir})
+      expect(childProcess.execSync).not.toHaveBeenCalled()
+      await expect(fileExists(`${binPath}.tgz`)).resolves.toBe(false)
+    })
+  })
+
+  test('passes a custom macOS install path to tar as a single argument', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const binPath = joinPath(tmpDir, 'my cloudflared')
+      const env = {SHOPIFY_CLI_CLOUDFLARED_PATH: binPath}
+      mockFetch()
+      mockTarExtraction()
+
+      // When
+      await install(env, 'darwin', 'arm64')
+
+      // Then
+      expect(system.exec).toHaveBeenCalledWith('tar', ['-xzf', 'my cloudflared.tgz'], {cwd: tmpDir})
+      expect(childProcess.execSync).not.toHaveBeenCalled()
+      await expect(readFile(binPath)).resolves.toBe('extracted binary')
     })
   })
 
@@ -66,11 +95,7 @@ describe('install-cloudflare', () => {
       const binPath = joinPath(tmpDir, 'cloudflared')
       const env = {SHOPIFY_CLI_CLOUDFLARED_PATH: binPath}
       mockFetch()
-      vi.mocked(childProcess.execSync).mockImplementation((_command, options) => {
-        const cwd = options?.cwd as string
-        writeFileSync(joinPath(cwd, 'cloudflared'), 'extracted binary')
-        return Buffer.from('')
-      })
+      mockTarExtraction()
 
       // When
       await install(env, 'darwin', 'arm64')
