@@ -25,6 +25,17 @@ async function expectInstructionFlagConflict(flags: string[]): Promise<void> {
 }
 
 describe('app security check command', () => {
+  test('documents command-specific telemetry and links to usage reporting', () => {
+    expect(SecurityCheck.descriptionWithMarkdown).toContain(
+      'Reports the number of findings to Shopify as usage telemetry, but not finding details.',
+    )
+    expect(SecurityCheck.descriptionWithMarkdown).toContain(
+      '[usage reporting](https://shopify.dev/docs/api/shopify-cli#usage-reporting)',
+    )
+    expect(SecurityCheck.descriptionWithMarkdown).not.toContain('SHOPIFY_CLI_NO_ANALYTICS=1')
+    expect(SecurityCheck.description).toContain('https://shopify.dev/docs/api/shopify-cli#usage-reporting')
+  })
+
   test('does not require linked app context', () => {
     expect(SecurityCheck.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityCheck.prototype).not.toBeInstanceOf(AppLinkedCommand)
