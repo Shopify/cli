@@ -155,5 +155,5 @@ async function promptForTrustChallenge(challengeUrl: string, options: TrustChall
   await waitForEnter(options.stdin ?? process.stdin)
 
   recordEvent('theme-api:trust-challenge:acknowledged')
-  renderSuccess({headline: 'Verification complete. Continuing.'})
+  renderSuccess({headline: 'Continuing.'})
 }

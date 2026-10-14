@@ -124,7 +124,7 @@ describe('withTrustChallengeRetry', () => {
     expect(recordEvent).toHaveBeenCalledWith('theme-api:trust-challenge:required')
     expect(recordEvent).toHaveBeenCalledWith('theme-api:trust-challenge:browser-opened')
     expect(recordEvent).toHaveBeenCalledWith('theme-api:trust-challenge:acknowledged')
-    expect(renderSuccess).toHaveBeenCalledWith({headline: 'Verification complete. Continuing.'})
+    expect(renderSuccess).toHaveBeenCalledWith({headline: 'Continuing.'})
   })
 
   test('renders a link to the challenge URL when the browser cannot be opened', async () => {
