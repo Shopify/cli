@@ -14,7 +14,7 @@ import {
 import {pluralize} from '@shopify/cli-kit/common/string'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {isDevelopmentTheme} from '@shopify/cli-kit/node/themes/utils'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, FatalError} from '@shopify/cli-kit/node/error'
 import {outputWarn} from '@shopify/cli-kit/node/output'
 
 interface DeleteOptions {
@@ -67,6 +67,8 @@ export async function themesDelete(
     return [{themeId: themes[index]!.id, message: error instanceof Error ? error.message : String(error)}]
   })
   if (errors.length > 0 && deletedThemes.length === 0) {
+    const firstError: unknown = deletions.find((deletion) => deletion.status === 'rejected')?.reason
+    if (firstError instanceof FatalError) throw firstError
     const error = new AbortError(errors[0]!.message)
     error.details = {errors: errors.map(({themeId, message}) => ({themeId: String(themeId), message}))}
     throw error
