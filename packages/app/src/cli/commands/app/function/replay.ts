@@ -63,7 +63,8 @@ export default class FunctionReplay extends AppLinkedCommand {
     const ourFunction = await chooseFunction(app, flags.path)
 
     if (flags.json) {
-      presentFunctionExecution(await replayFunction({app, extension: ourFunction, log: flags.log}))
+      const execution = await replayFunction({app, extension: ourFunction, log: flags.log})
+      presentFunctionExecution(execution)
     } else {
       await replay({
         app,

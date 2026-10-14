@@ -1,6 +1,6 @@
 import {FunctionRunData, replay, replayFunction} from './replay.js'
 import {renderReplay} from './ui.js'
-import {runFunction, executeFunction} from './runner.js'
+import {runFunction, captureFunctionRun} from './runner.js'
 import {testAppLinked, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
@@ -64,9 +64,9 @@ describe('replay', () => {
       exitCode: 0,
       diagnostics: [],
     }
-    vi.mocked(executeFunction).mockResolvedValue(result)
+    vi.mocked(captureFunctionRun).mockResolvedValue(result)
     await expect(replayFunction({app, extension, log: file.run.identifier})).resolves.toEqual(result)
-    expect(executeFunction).toHaveBeenCalledWith({
+    expect(captureFunctionRun).toHaveBeenCalledWith({
       functionExtension: extension,
       input: JSON.stringify(file.run.payload.input),
       export: file.run.payload.export,
@@ -82,7 +82,7 @@ describe('replay', () => {
     vi.mocked(selectFunctionRunPrompt).mockResolvedValue(file.run)
     await replayFunction({app, extension})
     expect(selectFunctionRunPrompt).toHaveBeenCalledWith([file.run])
-    expect(executeFunction).toHaveBeenCalledWith(
+    expect(captureFunctionRun).toHaveBeenCalledWith(
       expect.objectContaining({input: JSON.stringify(file.run.payload.input)}),
     )
   })
@@ -90,7 +90,7 @@ describe('replay', () => {
   testWithTempDir('rejects a missing finite replay log before executing the runner', async ({tempDir}) => {
     const app = testAppLinked({directory: tempDir})
     await expect(replayFunction({app, extension, log: 'missing'})).rejects.toThrow('No log found')
-    expect(executeFunction).not.toHaveBeenCalled()
+    expect(captureFunctionRun).not.toHaveBeenCalled()
   })
 
   testWithTempDir('runs selected function', async ({tempDir}) => {

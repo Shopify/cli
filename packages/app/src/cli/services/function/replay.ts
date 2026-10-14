@@ -1,5 +1,5 @@
 import {renderReplay} from './ui.js'
-import {runFunction, executeFunction, type FunctionExecution} from './runner.js'
+import {runFunction, captureFunctionRun, type FunctionExecution} from './runner.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
@@ -81,7 +81,7 @@ export async function replayFunction(
   options: Pick<ReplayOptions, 'app' | 'extension' | 'log'>,
 ): Promise<FunctionExecution> {
   const selectedRun = await selectReplayRun(options)
-  return executeFunction({
+  return captureFunctionRun({
     functionExtension: options.extension,
     input: JSON.stringify(selectedRun.payload.input),
     export: selectedRun.payload.export,
