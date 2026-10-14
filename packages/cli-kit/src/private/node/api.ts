@@ -1,6 +1,7 @@
 import {sanitizedHeadersOutput} from './api/headers.js'
 import {sanitizeURL} from './api/urls.js'
-import {hasRateLimitCode} from './analytics/graphql-error-codes.js'
+import {hasRateLimitCode, hasTransientServerCode} from './analytics/graphql-error-codes.js'
+import {isGatewayErrorStatus} from './api/status-checks.js'
 import {sleepWithBackoffUntil} from './sleep-with-backoff.js'
 import {outputDebug} from '../../public/node/output.js'
 import {recordRetry} from '../../public/node/analytics.js'
@@ -16,17 +17,31 @@ export const allAPIs: API[] = ['admin', 'storefront-renderer', 'partners', 'busi
 
 const DEFAULT_RETRY_DELAY_MS = 1000
 const DEFAULT_RETRY_LIMIT = 10
+// Transient server errors (e.g. `INTERNAL_SERVER_ERROR`, 502/503/504) get a smaller retry budget
+// with exponential backoff, so a struggling backend isn't hit by many quick retries.
+const TRANSIENT_SERVER_ERROR_RETRY_LIMIT = 3
+const TRANSIENT_SERVER_ERROR_BASE_DELAY_MS = 1000
+
+interface CommonRetryBehaviour {
+  recordCommandRetries?: boolean
+  /**
+   * Retry, with backoff, requests that fail with a transient server-side error: a GraphQL
+   * `INTERNAL_SERVER_ERROR` (usually on an HTTP 200) or an HTTP 502/503/504.
+   *
+   * Only enable this for requests that are safe to repeat. GraphQL requests only honour it for
+   * queries; mutations are never retried on these errors.
+   */
+  retryTransientServerErrors?: boolean
+}
 
 export type NetworkRetryBehaviour =
-  | {
+  | ({
       useNetworkLevelRetry: true
       maxRetryTimeMs: number
-      recordCommandRetries?: boolean
-    }
-  | {
+    } & CommonRetryBehaviour)
+  | ({
       useNetworkLevelRetry: false
-      recordCommandRetries?: boolean
-    }
+    } & CommonRetryBehaviour)
 
 type RequestOptions<T> = {
   request: () => Promise<T>
@@ -58,6 +73,7 @@ type ClientErrorResponse = CommonResponse & {status: 'client-error'; clientError
 type UnknownErrorResponse = CommonResponse & {status: 'unknown-error'; error: unknown}
 type CanRetryErrorResponse = CommonResponse & {
   status: 'can-retry'
+  reason: 'throttled' | 'transient-server-error'
   clientError: ClientError
   delayMs: number | undefined
 }
@@ -233,12 +249,24 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
         }
         return {
           status: 'can-retry',
+          reason: 'throttled',
           clientError: err,
           duration,
           sanitizedHeaders,
           sanitizedUrl,
           requestId: responseHeaders['x-request-id'],
           delayMs,
+        }
+      } else if (requestOptions.retryTransientServerErrors && isTransientServerError(err)) {
+        return {
+          status: 'can-retry',
+          reason: 'transient-server-error',
+          clientError: err,
+          duration,
+          sanitizedHeaders,
+          sanitizedUrl,
+          requestId: responseHeaders['x-request-id'],
+          delayMs: undefined,
         }
       } else if (err.response.status === 401) {
         return {
@@ -291,6 +319,19 @@ function isThrottled(error: ClientError): boolean {
     return true
   }
   return hasRateLimitCode(error.response.errors)
+}
+
+/**
+ * Checks whether an error is a transient server-side failure that is likely to succeed if retried:
+ * a GraphQL `INTERNAL_SERVER_ERROR` (Shopify APIs usually return it on an HTTP 200), or an HTTP
+ * 502, 503 or 504.
+ *
+ * @param error - The error to check.
+ * @returns Whether the error is a transient server-side failure.
+ */
+export function isTransientServerError(error: unknown): error is ClientError {
+  if (!(error instanceof ClientError)) return false
+  return hasTransientServerCode(error.response.errors) || isGatewayErrorStatus(error.response.status)
 }
 
 export async function simpleRequestWithDebugLog<T extends {headers: Headers; status: number}>(
@@ -368,6 +409,7 @@ export async function retryAwareRequest<T extends {headers: Headers; status: num
   },
 ): Promise<T> {
   let retriesUsed = 0
+  let transientServerErrorRetriesUsed = 0
   const limitRetriesTo = retryOptions.limitRetriesTo ?? DEFAULT_RETRY_LIMIT
 
   let result = await makeVerboseRequest(requestOptions)
@@ -399,8 +441,12 @@ ${result.sanitizedHeaders}
       throw result.clientError
     }
 
-    if (limitRetriesTo <= retriesUsed) {
-      outputDebug(`${limitRetriesTo} retries exhausted for request to ${result.sanitizedUrl}`)
+    const isTransientServerErrorRetry = result.reason === 'transient-server-error'
+    const retriesExhausted =
+      limitRetriesTo <= retriesUsed ||
+      (isTransientServerErrorRetry && TRANSIENT_SERVER_ERROR_RETRY_LIMIT <= transientServerErrorRetriesUsed)
+    if (retriesExhausted) {
+      outputDebug(`${retriesUsed} retries exhausted for request to ${result.sanitizedUrl}`)
       if (errorHandler) {
         throw errorHandler(result.clientError, result.requestId)
       } else {
@@ -409,13 +455,22 @@ ${result.sanitizedHeaders}
     }
     retriesUsed += 1
 
-    // Record command retries
-    if (requestOptions.recordCommandRetries) {
-      recordRetry(requestOptions.url, `http-retry-${retriesUsed}:${result.status}:`)
+    let retryDelayMs: number
+    if (isTransientServerErrorRetry) {
+      // exponential backoff: 1s, 2s, 4s, ...
+      retryDelayMs =
+        (retryOptions.defaultDelayMs ?? TRANSIENT_SERVER_ERROR_BASE_DELAY_MS) * 2 ** transientServerErrorRetriesUsed
+      transientServerErrorRetriesUsed += 1
+    } else {
+      // prefer to wait based on a header if given; the caller's preference if not; and a default if neither.
+      retryDelayMs = result.delayMs ?? retryOptions.defaultDelayMs ?? DEFAULT_RETRY_DELAY_MS
     }
 
-    // prefer to wait based on a header if given; the caller's preference if not; and a default if neither.
-    const retryDelayMs = result.delayMs ?? retryOptions.defaultDelayMs ?? DEFAULT_RETRY_DELAY_MS
+    // Record command retries
+    if (requestOptions.recordCommandRetries) {
+      const retryKind = isTransientServerErrorRetry ? result.reason : result.status
+      recordRetry(requestOptions.url, `http-retry-${retriesUsed}:${retryKind}:`)
+    }
     outputDebug(`Scheduling retry request #${retriesUsed} to ${result.sanitizedUrl} in ${retryDelayMs} ms`)
 
     // eslint-disable-next-line no-await-in-loop

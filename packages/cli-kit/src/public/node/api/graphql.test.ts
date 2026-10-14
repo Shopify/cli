@@ -738,3 +738,85 @@ describe('graphqlRequest with caching', () => {
     expect(retryAwareSpy).toHaveBeenCalled()
   })
 })
+
+describe('graphqlRequest with transient server errors', () => {
+  const internalServerError = () =>
+    HttpResponse.json<{errors: {message: string; extensions: {code: string}}[]}>({
+      errors: [
+        {
+          message: 'Internal error. Looks like something went wrong on our end.',
+          extensions: {code: 'INTERNAL_SERVER_ERROR'},
+        },
+      ],
+    })
+  const retryBehaviour = {
+    useNetworkLevelRetry: false,
+    useAbortSignal: false,
+    retryTransientServerErrors: true,
+  } as const
+
+  test('retries a query that fails with INTERNAL_SERVER_ERROR when the behaviour enables it', async () => {
+    let attempts = 0
+    server.use(
+      mockApi.query('Flaky', () => {
+        attempts += 1
+        if (attempts === 1) return internalServerError()
+        return HttpResponse.json({data: {Flaky: {example: 'hello'}}})
+      }),
+    )
+
+    const res = await graphqlRequest({
+      query: 'query Flaky { example }',
+      api: 'mockApi',
+      url: mockedAddress,
+      token: mockToken,
+      preferredBehaviour: retryBehaviour,
+    })
+
+    expect(res).toEqual({Flaky: {example: 'hello'}})
+    expect(attempts).toEqual(2)
+  })
+
+  test('does not retry a mutation that fails with INTERNAL_SERVER_ERROR, even when the behaviour enables it', async () => {
+    let attempts = 0
+    server.use(
+      mockApi.mutation('FlakyMutation', () => {
+        attempts += 1
+        return internalServerError()
+      }),
+    )
+
+    await expect(
+      graphqlRequest({
+        query: 'mutation FlakyMutation { example }',
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        preferredBehaviour: retryBehaviour,
+        responseOptions: {handleErrors: false},
+      }),
+    ).rejects.toThrow()
+    expect(attempts).toEqual(1)
+  })
+
+  test('does not retry INTERNAL_SERVER_ERROR by default', async () => {
+    let attempts = 0
+    server.use(
+      mockApi.query('Flaky', () => {
+        attempts += 1
+        return internalServerError()
+      }),
+    )
+
+    await expect(
+      graphqlRequest({
+        query: 'query Flaky { example }',
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        responseOptions: {handleErrors: false},
+      }),
+    ).rejects.toThrow()
+    expect(attempts).toEqual(1)
+  })
+})

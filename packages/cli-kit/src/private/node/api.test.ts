@@ -1,4 +1,4 @@
-import {retryAwareRequest, isNetworkError, isTransientNetworkError} from './api.js'
+import {retryAwareRequest, isNetworkError, isTransientNetworkError, isTransientServerError} from './api.js'
 import {recordRetry} from '../../public/node/analytics.js'
 import {ClientError} from 'graphql-request'
 import {describe, test, vi, expect, beforeEach, afterEach} from 'vitest'
@@ -812,5 +812,110 @@ describe('isNetworkError', () => {
     expect(isNetworkError(null)).toBe(false)
     expect(isNetworkError(undefined)).toBe(false)
     expect(isNetworkError({message: 'certificate error'})).toBe(false)
+  })
+})
+
+describe('retryAwareRequest with transient server errors', () => {
+  const internalServerErrorResponse = {
+    status: 200,
+    errors: [
+      {
+        message: 'Internal error. Looks like something went wrong on our end.',
+        extensions: {code: 'INTERNAL_SERVER_ERROR', requestId: 'request-id'},
+      } as any,
+    ],
+    headers: new Headers(),
+  }
+  const okResponse = {status: 200, data: {hello: 'world!'}, headers: new Headers()}
+
+  test('retries INTERNAL_SERVER_ERROR and records each attempt when enabled', async () => {
+    const mockRequestFn = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new ClientError(internalServerErrorResponse, {query: ''})
+      })
+      .mockImplementationOnce(() => {
+        throw new ClientError(internalServerErrorResponse, {query: ''})
+      })
+      .mockImplementationOnce(() => Promise.resolve(okResponse))
+    const mockScheduleDelayFn = vi.fn((fn, _delay) => fn())
+
+    const result = await retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://example.com',
+        useNetworkLevelRetry: false,
+        retryTransientServerErrors: true,
+        recordCommandRetries: true,
+      },
+      undefined,
+      {scheduleDelay: mockScheduleDelayFn},
+    )
+
+    expect(result).toEqual(okResponse)
+    expect(mockRequestFn).toHaveBeenCalledTimes(3)
+    expect(recordRetry).toHaveBeenCalledWith('https://example.com', 'http-retry-1:transient-server-error:')
+    expect(recordRetry).toHaveBeenCalledWith('https://example.com', 'http-retry-2:transient-server-error:')
+  })
+
+  test('retries gateway errors when retryTransientServerErrors is enabled', async () => {
+    const gatewayErrorResponse = {status: 503, headers: new Headers()}
+    const mockRequestFn = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new ClientError(gatewayErrorResponse, {query: ''})
+      })
+      .mockImplementationOnce(() => Promise.resolve(okResponse))
+    const mockScheduleDelayFn = vi.fn((fn, _delay) => fn())
+
+    const result = await retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://example.com',
+        useNetworkLevelRetry: false,
+        retryTransientServerErrors: true,
+      },
+      undefined,
+      {scheduleDelay: mockScheduleDelayFn},
+    )
+
+    expect(result).toEqual(okResponse)
+    expect(mockRequestFn).toHaveBeenCalledTimes(2)
+  })
+
+  test('gives up after 3 retries of a transient server error, even when the overall retry limit is higher', async () => {
+    vi.useRealTimers()
+    const mockRequestFn = vi.fn().mockImplementation(() => {
+      throw new ClientError(internalServerErrorResponse, {query: ''})
+    })
+    const mockScheduleDelayFn = vi.fn((fn, _delay) => fn())
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://example.com',
+        useNetworkLevelRetry: false,
+        retryTransientServerErrors: true,
+      },
+      undefined,
+      {scheduleDelay: mockScheduleDelayFn},
+    )
+
+    await expect(result).rejects.toThrowError(ClientError)
+    expect(mockRequestFn).toHaveBeenCalledTimes(4)
+    expect(mockScheduleDelayFn.mock.calls.map(([, delay]) => delay)).toEqual([1000, 2000, 4000])
+  })
+})
+
+describe('isTransientServerError', () => {
+  test('does not identify other errors', () => {
+    const accessDenied = new ClientError(
+      {status: 200, errors: [{message: 'Access denied', extensions: {code: 'ACCESS_DENIED'}} as any]},
+      {query: ''},
+    )
+    expect(isTransientServerError(accessDenied)).toBe(false)
+    expect(isTransientServerError(new ClientError({status: 500}, {query: ''}))).toBe(false)
+    expect(isTransientServerError(new Error('INTERNAL_SERVER_ERROR'))).toBe(false)
+    expect(isTransientServerError(undefined)).toBe(false)
   })
 })

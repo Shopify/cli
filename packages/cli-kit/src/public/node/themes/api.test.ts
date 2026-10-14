@@ -3,6 +3,7 @@ import {
   themeDelete,
   themeDuplicate,
   fetchTheme,
+  fetchThemeAssets,
   fetchThemes,
   findDevelopmentThemeByName,
   ThemeParams,
@@ -12,7 +13,9 @@ import {
   bulkUploadThemeAssets,
   AssetParams,
   deleteThemeAssets,
+  metafieldDefinitionsByOwnerType,
   parseThemeFileContent,
+  passwordProtected,
 } from './api.js'
 import {Operation} from './types.js'
 import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
@@ -26,6 +29,8 @@ import {ThemeFilesDelete} from '../../../cli/api/graphql/admin/generated/theme_f
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
+import {MetafieldDefinitionsByOwnerType} from '../../../cli/api/graphql/admin/generated/metafield_definitions_by_owner_type.js'
+import {OnlineStorePasswordProtection} from '../../../cli/api/graphql/admin/generated/online_store_password_protection.js'
 import {adminRequestDoc, supportedApiVersions} from '../api/admin.js'
 import {AbortError} from '../error.js'
 
@@ -43,7 +48,23 @@ const expectedApiOptions = expect.objectContaining({
   maxRetryTimeMs: 90000,
   useAbortSignal: false,
   useNetworkLevelRetry: true,
+  retryTransientServerErrors: true,
 })
+
+function internalServerError(requestId?: string) {
+  return new ClientError(
+    {
+      status: 200,
+      errors: [
+        {
+          message: 'Internal error. Looks like something went wrong on our end.',
+          extensions: {code: 'INTERNAL_SERVER_ERROR', ...(requestId ? {requestId} : {})},
+        } as any,
+      ],
+    },
+    {query: ''},
+  )
+}
 
 describe('fetchTheme', () => {
   test('returns a store theme', async () => {
@@ -96,6 +117,72 @@ describe('fetchTheme', () => {
     await expect(fetchTheme(123, session)).rejects.toThrow(
       'The authenticated account or access token is missing `read_themes` access scope.',
     )
+  })
+  test('throws a friendly error instead of returning undefined when the server has a temporary problem', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(internalServerError('request-id'))
+
+    await expect(fetchTheme(123, session)).rejects.toThrow(
+      'Shopify had a temporary problem and could not complete the request.',
+    )
+  })
+})
+
+describe('fetchThemeAssets', () => {
+  test('throws a friendly error with the request ID when the server keeps failing', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(internalServerError('request-id'))
+
+    const error = await fetchThemeAssets(123, ['templates/index.json'], session).catch((error) => error)
+
+    expect(error).toBeInstanceOf(AbortError)
+    expect(error.message).toEqual('Shopify had a temporary problem and could not complete the request.')
+    expect(error.tryMessage).toContain('request-id')
+    expect(adminRequestDoc).toHaveBeenCalledWith(expect.objectContaining({preferredBehaviour: expectedApiOptions}))
+  })
+
+  test('includes a gateway response request ID in the friendly error', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(
+      new ClientError({status: 503, headers: new Headers({'x-request-id': 'gateway-request-id'})}, {query: ''}),
+    )
+
+    const error = await fetchThemeAssets(123, ['templates/index.json'], session).catch((error) => error)
+
+    expect(error).toBeInstanceOf(AbortError)
+    expect(error.tryMessage).toContain('gateway-request-id')
+  })
+})
+
+describe('metafieldDefinitionsByOwnerType', () => {
+  test('uses theme retries and friendly handling for exhausted transient errors', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(internalServerError('metafield-request-id'))
+
+    const error = await metafieldDefinitionsByOwnerType('PRODUCT', session).catch((error) => error)
+
+    expect(error).toBeInstanceOf(AbortError)
+    expect(error.tryMessage).toContain('metafield-request-id')
+    expect(adminRequestDoc).toHaveBeenCalledWith({
+      query: MetafieldDefinitionsByOwnerType,
+      session,
+      variables: {ownerType: 'PRODUCT'},
+      responseOptions: {handleErrors: false},
+      preferredBehaviour: expectedApiOptions,
+    })
+  })
+})
+
+describe('passwordProtected', () => {
+  test('uses theme retries and friendly handling for exhausted transient errors', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(internalServerError('password-request-id'))
+
+    const error = await passwordProtected(session).catch((error) => error)
+
+    expect(error).toBeInstanceOf(AbortError)
+    expect(error.tryMessage).toContain('password-request-id')
+    expect(adminRequestDoc).toHaveBeenCalledWith({
+      query: OnlineStorePasswordProtection,
+      session,
+      responseOptions: {handleErrors: false},
+      preferredBehaviour: expectedApiOptions,
+    })
   })
 })
 
