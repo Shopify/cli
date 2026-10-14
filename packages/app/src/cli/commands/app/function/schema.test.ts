@@ -18,6 +18,9 @@ import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {AbortError, handler} from '@shopify/cli-kit/node/error'
 
+// eslint-disable-next-line no-restricted-imports
+import {resolve} from 'node:path'
+
 vi.mock('../../../services/app-context.js')
 vi.mock('../../../services/function/common.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../services/function/common.js')>()),
@@ -49,7 +52,7 @@ test.each([['--json'], ['--json', '--no-input']])(
       const {instance, extension, app} = await command(argv, directory)
       await withCapturedStandardStreams(async ({stdout, stderr}) => {
         await expect(instance.run()).resolves.toEqual({app})
-        expect(JSON.parse(stdout())).toEqual({path: joinPath(directory, 'schema.graphql'), format: 'graphql'})
+        expect(JSON.parse(stdout())).toEqual({path: resolve(directory, 'schema.graphql'), format: 'graphql'})
         expect(stderr()).toBe('')
         await expect(readFile(joinPath(directory, 'schema.graphql'))).resolves.toBe(
           `# api_version: ${extension.configuration.api_version}\n\nschema`,
