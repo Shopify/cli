@@ -274,13 +274,6 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
   return JSON.parse(result) as TResult
 }
 
-/**
- * Returns a non-reversible hash that partitions cached GraphQL responses by endpoint URL and access token.
- *
- * @param url - The GraphQL endpoint URL.
- * @param token - The access token used for the request, if any.
- * @returns A hex SHA-256 digest of the endpoint and token.
- */
 function graphQLCachePrincipalHash(url: string, token: string | undefined): string {
   return sha256(JSON.stringify([url, token ?? ''])).toString('hex')
 }
