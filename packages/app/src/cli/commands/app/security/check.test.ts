@@ -36,6 +36,12 @@ describe('app security check command', () => {
     expect(SecurityCheck.description).toContain('https://shopify.dev/docs/api/shopify-cli#usage-reporting')
   })
 
+  test('double-quotes glob values in the scan example for cross-platform shells', () => {
+    expect(SecurityCheck.examples).toContain(
+      '<%= config.bin %> <%= command.id %> --path app --include-dir . --exclude marketing --exclude "**/generated"',
+    )
+  })
+
   test('does not require linked app context', () => {
     expect(SecurityCheck.prototype).toBeInstanceOf(BaseCommand)
     expect(SecurityCheck.prototype).not.toBeInstanceOf(AppLinkedCommand)
