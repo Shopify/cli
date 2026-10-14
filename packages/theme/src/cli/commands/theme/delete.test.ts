@@ -1,6 +1,7 @@
 import Delete from './delete.js'
 import {themeDeleteJsonOutputSchema} from '../../services/delete/types.js'
 import {findThemes} from '../../utilities/theme-selector.js'
+import * as localStorage from '../../services/local-storage.js'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {themeDelete} from '@shopify/cli-kit/node/themes/api'
@@ -10,6 +11,7 @@ import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputWarn} from '@shopify/cli-kit/node/output'
 import {addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/session')
@@ -104,6 +106,30 @@ describe('theme delete JSON output', () => {
       expect(JSON.parse(stdout())).toHaveProperty('themes')
       expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', level: 'warning', message: 'Retrying request'})
     })
+  })
+
+  test('keeps successful JSON output when development theme cleanup fails', async () => {
+    vi.mocked(findThemes).mockResolvedValue([{...theme, role: 'development'}])
+    const cleanup = vi.spyOn(localStorage, 'removeDevelopmentTheme').mockImplementation(() => {
+      throw new AbortError('Local storage is not writable')
+    })
+    const exitCode = process.exitCode
+    try {
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await run(['--store', store, '--theme', '1', '--force', '--json'])
+
+        expect(JSON.parse(stdout())).toMatchObject({status: 'success', changed: true, themes: [{id: '1'}]})
+        expect(JSON.parse(stderr())).toMatchObject({
+          type: 'diagnostic',
+          level: 'warning',
+          message: expect.stringContaining('Local storage is not writable'),
+        })
+        expect(process.exitCode).toBe(exitCode)
+      })
+    } finally {
+      cleanup.mockRestore()
+      restoreExitCode(exitCode)
+    }
   })
 
   test.each([false, true])('preserves partial deletions and rejects total failure (partial: %s)', async (partial) => {

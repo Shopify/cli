@@ -15,6 +15,7 @@ import {pluralize} from '@shopify/cli-kit/common/string'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {isDevelopmentTheme} from '@shopify/cli-kit/node/themes/utils'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputWarn} from '@shopify/cli-kit/node/output'
 
 interface DeleteOptions {
   selectTheme: boolean
@@ -44,11 +45,22 @@ export async function themesDelete(
   const deletions = await Promise.allSettled(
     themes.map(async (theme) => {
       await themeDelete(theme.id, adminSession)
-      if (isDevelopmentTheme(theme)) removeDevelopmentTheme()
       return {...theme, shop: store}
     }),
   )
   const deletedThemes = deletions.flatMap((deletion) => (deletion.status === 'fulfilled' ? [deletion.value] : []))
+  for (const theme of deletedThemes) {
+    if (!isDevelopmentTheme(theme)) continue
+    try {
+      removeDevelopmentTheme()
+      // eslint-disable-next-line no-catch-all/no-catch-all -- Local cleanup cannot undo a completed remote deletion.
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      outputWarn(
+        `Theme #${theme.id} was deleted, but its local development theme reference could not be removed: ${message}`,
+      )
+    }
+  }
   const errors = deletions.flatMap((deletion, index) => {
     if (deletion.status === 'fulfilled') return []
     const error: unknown = deletion.reason
