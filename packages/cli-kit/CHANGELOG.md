@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 4.9.4
+
+### Patch Changes
+
+- 38bfad4: Require Git 2.38.0 or later when `shopify app security check` uses Git, and add a reusable CLI Kit minimum-version guard.
+- 38bfad4: Fix the check that stops the CLI from running a program found in the working directory on Windows
+
 ## 4.9.3
 
 ## 4.9.2
