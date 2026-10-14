@@ -7,7 +7,7 @@ import {
   ensureAuthenticatedStorefront,
   ensureAuthenticatedThemes,
   ensureNoServiceAccountToken,
-  usingServiceAccountToken,
+  isServiceAccountTokenSet,
   findSessionIdByAlias,
   setCurrentSessionAlias,
   setLastSeenUserId,
@@ -73,11 +73,11 @@ describe('ensureNoServiceAccountToken', () => {
   )
 })
 
-describe('usingServiceAccountToken', () => {
+describe('isServiceAccountTokenSet', () => {
   test('is true while SHOPIFY_SERVICE_ACCOUNT_TOKEN is the selected variable', () => {
     vi.mocked(automationTokenVariable).mockReturnValue('SHOPIFY_SERVICE_ACCOUNT_TOKEN')
 
-    expect(usingServiceAccountToken()).toBe(true)
+    expect(isServiceAccountTokenSet()).toBe(true)
   })
 
   test.each([undefined, 'SHOPIFY_APP_AUTOMATION_TOKEN', 'SHOPIFY_CLI_PARTNERS_TOKEN'])(
@@ -85,7 +85,7 @@ describe('usingServiceAccountToken', () => {
     (variable) => {
       vi.mocked(automationTokenVariable).mockReturnValue(variable)
 
-      expect(usingServiceAccountToken()).toBe(false)
+      expect(isServiceAccountTokenSet()).toBe(false)
     },
   )
 })

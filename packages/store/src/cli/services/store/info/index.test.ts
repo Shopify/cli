@@ -10,7 +10,7 @@ import {clearStoredStoreAppSession, getCurrentStoredStoreAppSession} from '@shop
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
-import {setLastSeenUserId, usingServiceAccountToken} from '@shopify/cli-kit/node/session'
+import {setLastSeenUserId, isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
 import {beforeEach, describe, test, expect, vi} from 'vitest'
 import type {OrganizationShopFields} from '../../../utilities/store-lookup/types.js'
 import type {Store} from '../../../api/graphql/business-platform-organizations/generated/types.js'
@@ -418,7 +418,7 @@ The CLI is currently unable to prompt for reauthentication.`)
   })
 
   test('ignores a stored preview session while the service account token is set', async () => {
-    vi.mocked(usingServiceAccountToken).mockReturnValue(true)
+    vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
     vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({
       ...STORED_SESSION,
       kind: 'preview',
@@ -441,7 +441,7 @@ The CLI is currently unable to prompt for reauthentication.`)
   })
 
   test('throws the BP error instead of falling back to stored store auth while the service account token is set', async () => {
-    vi.mocked(usingServiceAccountToken).mockReturnValue(true)
+    vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
     mockStoreAuthFallback()
 
     await expect(getStoreInfo({store: SHOP})).rejects.toMatchObject({

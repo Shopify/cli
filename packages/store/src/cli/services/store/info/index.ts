@@ -13,7 +13,7 @@ import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {compact} from '@shopify/cli-kit/common/object'
 import {extractMyshopifyHandle} from '@shopify/cli-kit/common/url'
-import {setLastSeenUserId, usingServiceAccountToken} from '@shopify/cli-kit/node/session'
+import {setLastSeenUserId, isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import type {DestinationsContext, OrganizationShopFields} from '../../../utilities/store-lookup/types.js'
 import type {StoreInfoResult, StoreInfoStoreOwner} from './types.js'
@@ -64,7 +64,7 @@ export async function getStoreInfo(options: GetStoreInfoOptions): Promise<StoreI
 
   // A service account token never uses logins saved on this machine: no preview store session, and no fallback to a
   // `shopify store auth` login when the Business Platform can't find the store.
-  const storedSession = usingServiceAccountToken() ? undefined : getCurrentStoredStoreAppSession(store)
+  const storedSession = isServiceAccountTokenSet() ? undefined : getCurrentStoredStoreAppSession(store)
 
   if (isPreviewStoreSession(storedSession)) {
     await recordStoreFqdnMetadata(storedSession.store, true, storedSession.preview.shopId)

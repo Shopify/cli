@@ -344,15 +344,14 @@ ${outputToken.json(scopes)}
 }
 
 /**
- * Whether the CLI authenticates with SHOPIFY_SERVICE_ACCOUNT_TOKEN.
+ * Whether SHOPIFY_SERVICE_ACCOUNT_TOKEN is set, which makes it the automation token the CLI authenticates with.
  *
- * True whenever that variable is set, even when it's empty or set together with another automation token variable.
- * Commands use this to skip logins saved on this machine, and authentication then reports any problem with the
- * variables.
+ * True even when it's empty or set together with another automation token variable. Commands use this to skip logins
+ * saved on this machine, and authentication then reports any problem with the variables.
  *
  * @returns True when SHOPIFY_SERVICE_ACCOUNT_TOKEN is set.
  */
-export function usingServiceAccountToken(): boolean {
+export function isServiceAccountTokenSet(): boolean {
   return automationTokenVariable() === environmentVariables.serviceAccountToken
 }
 
@@ -366,7 +365,7 @@ export function usingServiceAccountToken(): boolean {
  * @throws AbortError when SHOPIFY_SERVICE_ACCOUNT_TOKEN is set.
  */
 export function ensureNoServiceAccountToken(): void {
-  if (!usingServiceAccountToken()) return
+  if (!isServiceAccountTokenSet()) return
   const variable = environmentVariables.serviceAccountToken
 
   throw new AbortError(`This command can't use ${variable}.`, `Unset ${variable} to run it with your Shopify account.`)
