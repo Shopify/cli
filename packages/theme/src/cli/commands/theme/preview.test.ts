@@ -5,15 +5,20 @@ import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {Config} from '@oclif/core'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/ui', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@shopify/cli-kit/node/ui')>()
+  return {...actual, renderSuccess: vi.fn(), renderWarning: vi.fn(actual.renderWarning)}
+})
 vi.mock('@shopify/cli-kit/node/system', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@shopify/cli-kit/node/system')>()),
   openURL: vi.fn(),
@@ -52,6 +57,36 @@ describe('Preview', () => {
     vi.mocked(findOrSelectTheme).mockResolvedValue(namedTheme)
     vi.mocked(devWithOverrideFile).mockResolvedValue(result)
   })
+
+  test.each(['default', 'staging'].flatMap((environment) => [false, true].map((json) => ({environment, json}))))(
+    'uses the remembered store for the $environment environment with json=$json',
+    async ({environment, json}) => {
+      const environments = await import('@shopify/cli-kit/node/environments')
+      const actual = await vi.importActual<typeof environments>('@shopify/cli-kit/node/environments')
+      vi.mocked(environments.loadEnvironment).mockImplementation(actual.loadEnvironment)
+      vi.mocked(environments.environmentFilePath).mockImplementation(actual.environmentFilePath)
+      await inTemporaryDirectory(async (directory) => {
+        await writeFile(
+          joinPath(directory, 'shopify.theme.toml'),
+          `[environments.${environment}]\ntheme = "2"\noverrides = "/path/to/overrides.json"\n`,
+        )
+        const config = new Config({root: __dirname})
+        await config.load()
+        const argv = [
+          '--path',
+          directory,
+          ...(environment === 'default' ? [] : ['--environment', environment]),
+          ...(json ? ['--json'] : []),
+        ]
+        await withCapturedStandardStreams(async () => {
+          await runWithCommandEventsForCommand(argv, () => new Preview(argv, config).run())
+        })
+        expect(ensureThemeStore).toHaveBeenCalledWith(expect.objectContaining({store: undefined}))
+        expect(ensureAuthenticatedThemes).toHaveBeenCalledWith(adminSession.storeFqdn, undefined)
+        expect(devWithOverrideFile).toHaveBeenCalledWith(expect.objectContaining({adminSession, themeId: '2'}))
+      })
+    },
+  )
 
   test('calls devWithOverrideFile with minimum options passed into the command', async () => {
     const expectedTheme = buildTheme({id: 5, name: 'Expected Theme', role: 'unpublished'})!
@@ -204,13 +239,50 @@ describe('Preview', () => {
         .split('\n')
         .map((line) => JSON.parse(line))
       expect(events).toMatchObject([
-        {type: 'diagnostic', level: 'warning', message: `Failed to open theme preview.\n${error.stack}`},
+        {type: 'diagnostic', level: 'warning', message: `Failed to open theme preview.\n\n${error.stack}`},
       ])
       expect(JSON.parse(stdout())).toEqual({
         status: 'success',
         preview: {id: result.preview_identifier, url: result.url},
       })
     })
+  })
+
+  test.each([false, true])('reports the browser open result in JSON diagnostics (opened: %s)', async (opened) => {
+    vi.mocked(openURL).mockResolvedValue(opened)
+
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runWithCommandEventsForCommand(['--json'], () =>
+        run(['--overrides=/path/to/overrides.json', '--theme=2', '--json', '--open']),
+      )
+
+      expect(JSON.parse(stdout())).toEqual({
+        status: 'success',
+        preview: {id: result.preview_identifier, url: result.url},
+      })
+      if (opened) {
+        expect(stderr()).toBe('')
+      } else {
+        expect(JSON.parse(stderr())).toMatchObject({
+          type: 'diagnostic',
+          level: 'warning',
+          message: expect.stringContaining(`Open this URL manually: ${result.url}`),
+        })
+      }
+    })
+    expect(openURL).toHaveBeenCalledWith(result.url)
+  })
+
+  test('warns in text mode when the browser could not be opened', async () => {
+    vi.mocked(openURL).mockResolvedValue(false)
+
+    await run(['--overrides=/path/to/overrides.json', '--theme=2', '--open'])
+
+    expect(renderWarning).toHaveBeenCalledWith({
+      headline: 'Failed to open theme preview.',
+      body: expect.stringContaining(`Open this URL manually: ${result.url}`),
+    })
+    expect(renderSuccess).toHaveBeenCalledOnce()
   })
 })
 
@@ -249,5 +321,81 @@ test.each([['--theme=2'], ['--overrides=/path/to/overrides.json']])(
       'Specify both --theme and --overrides, either as flags or in an environment.',
     )
     expect(devWithOverrideFile).not.toHaveBeenCalled()
+    expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+  },
+)
+
+test.each(['none', 'validation', 'store', 'execution'])(
+  'retains every preview environment with %s failures',
+  async (failure) => {
+    const {loadEnvironment} = await import('@shopify/cli-kit/node/environments')
+    vi.mocked(loadEnvironment).mockImplementation(async (environment) => ({
+      ...(failure === 'store' && environment === 'staging' ? {} : {store: `${environment}.myshopify.com`}),
+      password: 'token',
+      theme: '2',
+      ...(failure === 'validation' && environment === 'staging' ? {} : {overrides: '/path/to/overrides.json'}),
+    }))
+    vi.mocked(ensureThemeStore).mockImplementation(({store}) => store!)
+    vi.mocked(ensureAuthenticatedThemes).mockImplementation(async (storeFqdn) => ({storeFqdn, token: 'token'}))
+    vi.mocked(findOrSelectTheme).mockResolvedValue(namedTheme)
+    vi.mocked(devWithOverrideFile).mockImplementation(async ({adminSession}) => {
+      if (failure === 'execution' && adminSession.storeFqdn === 'staging.myshopify.com') {
+        throw new Error('Preview failed')
+      }
+      return result
+    })
+    const config = new Config({root: __dirname})
+    await config.load()
+    const argv = ['--json', '-e', 'staging', '-e', 'production']
+    const missingFlag = failure === 'store' ? 'store' : 'overrides'
+    const previousExitCode = process.exitCode
+    process.exitCode = 0
+    try {
+      await withCapturedStandardStreams(async ({stdout}) => {
+        await runWithCommandEventsForCommand(argv, () => new Preview(argv, config).run())
+        expect(JSON.parse(stdout())).toEqual({
+          environments: ['staging', 'production'].map((environment) => ({
+            environment,
+            ...(environment === 'staging' && failure !== 'none'
+              ? {
+                  error: expect.objectContaining({
+                    message: expect.stringContaining(failure === 'execution' ? 'Preview failed' : missingFlag),
+                  }),
+                }
+              : {result: {status: 'success', preview: {id: result.preview_identifier, url: result.url}}}),
+          })),
+        })
+      })
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledTimes(['validation', 'store'].includes(failure) ? 1 : 2)
+      expect(devWithOverrideFile).toHaveBeenCalledTimes(['validation', 'store'].includes(failure) ? 1 : 2)
+      expect(process.exitCode).toBe(failure === 'none' ? 0 : 1)
+    } finally {
+      process.exitCode = previousExitCode
+    }
+  },
+)
+
+test.each(['theme', 'overrides'])(
+  'validates missing %s in a JSON environment before authentication',
+  async (missing) => {
+    const {loadEnvironment} = await import('@shopify/cli-kit/node/environments')
+    vi.mocked(loadEnvironment).mockResolvedValue({
+      store: adminSession.storeFqdn,
+      ...(missing === 'theme' ? {overrides: '/path/to/overrides.json'} : {theme: '2'}),
+    })
+    const previousExitCode = process.exitCode
+    try {
+      await withCapturedStandardStreams(async ({stdout}) => {
+        await runWithCommandEventsForCommand(['--json'], () => run(['--environment=staging', '--json']))
+        expect(JSON.parse(stdout())).toMatchObject({
+          environments: [{environment: 'staging', error: {message: expect.stringContaining(missing)}}],
+        })
+      })
+      expect(process.exitCode).toBe(1)
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(devWithOverrideFile).not.toHaveBeenCalled()
+    } finally {
+      process.exitCode = previousExitCode
+    }
   },
 )

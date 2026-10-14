@@ -25,24 +25,26 @@ test.each([false, true])('preserves the success banner with updated=%s', (update
 
 test('preserves the browser warning in text mode', () => {
   const error = new Error('Browser unavailable')
-  renderThemePreviewOpenError(error, 'text')
+  renderThemePreviewOpenError(error)
 
   expect(renderWarning).toHaveBeenCalledWith({headline: 'Failed to open theme preview.', body: error.stack})
 })
 
 test('sends browser failures as diagnostic events to stderr', async () => {
+  const {renderWarning: actualRenderWarning} =
+    await vi.importActual<typeof import('@shopify/cli-kit/node/ui')>('@shopify/cli-kit/node/ui')
+  vi.mocked(renderWarning).mockImplementationOnce(actualRenderWarning)
   const error = new Error('Browser unavailable')
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
-    await runWithCommandEventsForCommand(['--json'], () => renderThemePreviewOpenError(error, 'json'))
+    await runWithCommandEventsForCommand(['--json'], () => renderThemePreviewOpenError(error))
 
     expect(stdout()).toBe('')
     expect(JSON.parse(stderr())).toMatchObject({
       type: 'diagnostic',
       level: 'warning',
-      message: `Failed to open theme preview.\n${error.stack}`,
+      message: `Failed to open theme preview.\n\n${error.stack}`,
     })
   })
-  expect(renderWarning).not.toHaveBeenCalled()
 })
 
 test('writes one JSON object to stdout outside the command event context', async () => {

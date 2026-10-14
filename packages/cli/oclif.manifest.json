@@ -12238,7 +12238,12 @@
       "hiddenAliases": [
       ],
       "id": "theme:preview",
-      "multiEnvironmentsFlags": null,
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        "theme",
+        "overrides"
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",

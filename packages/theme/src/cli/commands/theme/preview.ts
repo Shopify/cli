@@ -58,23 +58,23 @@ export default class Preview extends ThemeCommand {
     }),
   }
 
-  static multiEnvironmentsFlags: RequiredFlags = null
+  static multiEnvironmentsFlags: RequiredFlags = ['store', 'password', 'theme', 'overrides']
 
   async command(flags: PreviewFlags, adminSession: AdminSession, multiEnvironment = false) {
-    if (!flags.theme || !flags.overrides) {
-      throw new AbortError('Specify both --theme and --overrides, either as flags or in an environment.')
-    }
     const theme = await findOrSelectTheme(adminSession, {filter: {theme: flags.theme}})
     const result = await devWithOverrideFile({
       adminSession,
-      overrideJson: flags.overrides,
+      overrideJson: flags.overrides!,
       themeId: theme.id.toString(),
       previewIdentifier: flags['preview-id'],
       password: flags.password,
     })
     const format = flags.json ? 'json' : 'text'
     if (flags.open) {
-      await openURL(result.url).catch((error: Error) => renderThemePreviewOpenError(error, format))
+      const opened = await openURL(result.url).catch((error: Error) => renderThemePreviewOpenError(error))
+      if (opened === false) {
+        renderThemePreviewOpenError(new Error(`Could not open the browser. Open this URL manually: ${result.url}`))
+      }
     }
     if (!multiEnvironment || !flags.json) renderThemePreviewResult(result, format, Boolean(flags['preview-id']))
     return result
@@ -82,5 +82,17 @@ export default class Preview extends ThemeCommand {
 
   protected renderEnvironmentResults(environments: ThemeEnvironmentResult[]): void {
     outputResult(themePreviewJsonOutputSchema.encode({environments}))
+  }
+
+  protected validateCommandFlags(flags: PreviewFlags): void {
+    if (!flags.theme || !flags.overrides) {
+      throw new AbortError('Specify both --theme and --overrides, either as flags or in an environment.')
+    }
+  }
+
+  protected requiredFlagsForSingleEnvironment(
+    requiredFlags: Exclude<RequiredFlags, null>,
+  ): Exclude<RequiredFlags, null> {
+    return super.requiredFlagsForSingleEnvironment(requiredFlags).filter((flag) => flag !== 'store')
   }
 }

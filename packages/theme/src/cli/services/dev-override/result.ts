@@ -1,12 +1,10 @@
-import {type ThemePreviewResult} from './types.js'
-import {encodeThemePreviewResult} from './codec.js'
+import {themePreviewJsonOutputSchema, type ThemePreviewResult} from './types.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
-import {emitCommandEvent} from '@shopify/cli-kit/node/command-events'
 
 export function renderThemePreviewResult(result: ThemePreviewResult, format: 'text' | 'json', updated: boolean): void {
   if (format === 'json') {
-    outputResult(encodeThemePreviewResult(result))
+    outputResult(themePreviewJsonOutputSchema.encode(result))
     return
   }
 
@@ -22,12 +20,8 @@ export function renderThemePreviewResult(result: ThemePreviewResult, format: 'te
   })
 }
 
-export function renderThemePreviewOpenError(error: Error, format: 'text' | 'json'): void {
+export function renderThemePreviewOpenError(error: Error): void {
   const headline = 'Failed to open theme preview.'
   const body = error.stack ?? error.message
-  if (format === 'json') {
-    emitCommandEvent({type: 'diagnostic', level: 'warning', message: `${headline}\n${body}`})
-  } else {
-    renderWarning({headline, body})
-  }
+  renderWarning({headline, body})
 }
