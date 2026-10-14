@@ -1,5 +1,18 @@
 # @shopify/app
 
+## 4.9.4
+
+### Patch Changes
+
+- 38bfad4: Stop `shopify app security check` from running a command that a scanned repository names through an empty Git remote helper
+- 38bfad4: Require Git 2.38.0 or later when `shopify app security check` uses Git, and add a reusable CLI Kit minimum-version guard.
+- Updated dependencies [38bfad4]
+- Updated dependencies [38bfad4]
+  - @shopify/cli-kit@4.9.4
+  - @shopify/organizations@4.9.4
+  - @shopify/plugin-cloudflare@4.9.4
+  - @shopify/theme@4.9.4
+
 ## 4.9.3
 
 ### Patch Changes

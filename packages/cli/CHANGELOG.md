@@ -1,5 +1,16 @@
 # @shopify/cli
 
+## 4.9.4
+
+### Patch Changes
+
+- 38bfad4: Stop `shopify app security check` from running a command that a scanned repository names through an empty Git remote helper
+- 38bfad4: Require Git 2.38.0 or later when `shopify app security check` uses Git, and add a reusable CLI Kit minimum-version guard.
+- 6045195: Add `--print-instructions` to `app security check` and deprecate `--yes` without removing support.
+- 1c54b17: Document command-specific telemetry in security command help.
+- 16ad575: Add usage examples to `shopify app security check` help.
+- 38bfad4: Fix the check that stops the CLI from running a program found in the working directory on Windows
+
 ## 4.9.3
 
 ### Patch Changes

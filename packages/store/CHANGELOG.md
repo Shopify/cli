@@ -1,5 +1,14 @@
 # @shopify/store
 
+## 4.9.4
+
+### Patch Changes
+
+- Updated dependencies [38bfad4]
+- Updated dependencies [38bfad4]
+  - @shopify/cli-kit@4.9.4
+  - @shopify/organizations@4.9.4
+
 ## 4.9.3
 
 ### Patch Changes
