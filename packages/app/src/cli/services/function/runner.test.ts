@@ -196,35 +196,37 @@ const nativeRunResult = {
 }
 
 describe('captureFunctionRun', () => {
-  test('captures native text through the same subprocess helper', async () => {
+  test.each([0, 1])('captures text chunks in observed stream order with exit code %s', async (exitCode) => {
     const functionExtension = await testFunctionExtension()
-    vi.mocked(captureOutputWithExitCode).mockResolvedValue({stdout: 'Output\n', stderr: 'Diagnostic\n', exitCode: 0})
-    await expect(captureFunctionRun({functionExtension, json: false})).resolves.toEqual({
-      state: 'completed-text',
-      stdout: 'Output\n',
-      stderr: 'Diagnostic\n',
+    vi.mocked(captureOutputWithExitCode).mockImplementation(async (_command, _args, options) => {
+      if (options?.stderr && options.stderr !== 'inherit') options.stderr.write('Diagnostic\n')
+      if (options?.stdout && options.stdout !== 'inherit') options.stdout.write('Output\n')
+      if (options?.stderr && options.stderr !== 'inherit') options.stderr.write('More diagnostics\n')
+      return {stdout: 'Output\n', stderr: 'Diagnostic\nMore diagnostics\n', exitCode}
     })
+    const execution = await captureFunctionRun({functionExtension, json: false})
+    expect(execution).toMatchObject({
+      state: exitCode === 0 ? 'completed-text' : 'failed',
+      outputChunks: [
+        {stream: 'stderr', data: Buffer.from('Diagnostic\n')},
+        {stream: 'stdout', data: Buffer.from('Output\n')},
+        {stream: 'stderr', data: Buffer.from('More diagnostics\n')},
+      ],
+    })
+    if (exitCode !== 0) expect(execution).toMatchObject({exitCode, stderr: 'Diagnostic\nMore diagnostics\n'})
     expect(exec).not.toHaveBeenCalled()
     expect(captureOutputWithExitCode).toHaveBeenCalledWith(
       functionRunnerBinary().path,
       ['-f', functionExtension.outputPath],
-      {cwd: functionExtension.directory, stdin: undefined, input: undefined, stripFinalNewline: false},
+      {
+        cwd: functionExtension.directory,
+        stdin: undefined,
+        input: undefined,
+        stripFinalNewline: false,
+        stdout: expect.any(Writable),
+        stderr: expect.any(Writable),
+      },
     )
-  })
-
-  test('uses the same failure result for text execution errors', async () => {
-    const functionExtension = await testFunctionExtension()
-    vi.mocked(captureOutputWithExitCode).mockResolvedValue({
-      stdout: 'Partial output\n',
-      stderr: 'Invalid WASM',
-      exitCode: 1,
-    })
-    await expect(captureFunctionRun({functionExtension, json: false})).resolves.toMatchObject({
-      state: 'failed',
-      stdout: 'Partial output\n',
-      stderr: 'Invalid WASM',
-      exitCode: 1,
-    })
   })
 
   test('uses the configured module and forwards runner options', async () => {

@@ -2,4 +2,4 @@
 '@shopify/cli-kit': patch
 ---
 
-Allow preserving final newlines in captured process output with `stripFinalNewline: false`.
+Support writable streams and optional final-newline preservation when capturing process output.

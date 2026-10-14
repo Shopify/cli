@@ -1,6 +1,6 @@
 import {presentFunctionExecution} from './result.js'
 import {functionRunJsonOutputSchema, type FunctionRunResult} from './types.js'
-import {expect, test} from 'vitest'
+import {expect, test, vi} from 'vitest'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {ExternalError} from '@shopify/cli-kit/node/error'
@@ -56,30 +56,47 @@ test('prints one failed execution result and retains its nonzero exit code', asy
   }
 })
 
-test('preserves native text streams exactly', async () => {
-  await withCapturedStandardStreams(async ({stdout, stderr}) => {
-    presentFunctionExecution({state: 'completed-text', stdout: '  Output\n\n', stderr: 'Diagnostic\n'})
-    expect(stdout()).toBe('  Output\n\n')
-    expect(stderr()).toBe('Diagnostic\n')
+test.each([0, 1])('preserves observed text stream order with exit code %s', (exitCode) => {
+  const writes: {stream: string; data: Buffer}[] = []
+  const stdout = vi.spyOn(process.stdout, 'write').mockImplementation((data) => {
+    writes.push({stream: 'stdout', data: Buffer.from(data)})
+    return true
   })
-})
+  const stderr = vi.spyOn(process.stderr, 'write').mockImplementation((data) => {
+    writes.push({stream: 'stderr', data: Buffer.from(data)})
+    return true
+  })
+  const outputChunks = [
+    {stream: 'stderr' as const, data: Buffer.from('Diagnostic\n')},
+    {stream: 'stdout' as const, data: Buffer.from('  Output\n\n')},
+    {stream: 'stderr' as const, data: Buffer.from('More diagnostics\r\n')},
+  ]
 
-test('preserves partial text output before reporting the runner failure', async () => {
-  await withCapturedStandardStreams(async ({stdout, stderr}) => {
-    expect(() =>
-      presentFunctionExecution({
-        state: 'failed',
-        message: 'Function runner failed with exit code 1.',
-        command: '/bin/runner',
-        args: [],
-        exitCode: 1,
-        stdout: 'Partial output\n',
-        stderr: 'Invalid WASM\n',
-      }),
-    ).toThrow(ExternalError)
-    expect(stdout()).toBe('Partial output\n')
-    expect(stderr()).toBe('Invalid WASM\n')
-  })
+  try {
+    const present = () =>
+      presentFunctionExecution(
+        exitCode === 0
+          ? {
+              state: 'completed-text',
+              outputChunks,
+            }
+          : {
+              state: 'failed',
+              message: 'Function runner failed with exit code 1.',
+              command: '/bin/runner',
+              args: [],
+              exitCode,
+              stderr: 'Diagnostic\nMore diagnostics\r\n',
+              outputChunks,
+            },
+      )
+    if (exitCode === 0) present()
+    else expect(present).toThrow(ExternalError)
+    expect(writes).toEqual(outputChunks)
+  } finally {
+    stdout.mockRestore()
+    stderr.mockRestore()
+  }
 })
 
 test('throws an external failure before writing a result', async () => {

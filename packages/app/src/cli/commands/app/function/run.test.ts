@@ -163,7 +163,11 @@ test.each([{argv: ['--json', '--no-input']}, {argv: ['--no-input']}])(
 
 test('captures and preserves native text output without JSON validation', async () => {
   const text = '\u001b[32mOutput\u001b[0m\n{"operations":[]}\nBenchmark Results\n'
-  vi.mocked(captureOutputWithExitCode).mockResolvedValue({stdout: text, stderr: 'Runner diagnostic\n', exitCode: 0})
+  vi.mocked(captureOutputWithExitCode).mockImplementation(async (_command, _args, options) => {
+    if (options?.stdout && options.stdout !== 'inherit') options.stdout.write(text)
+    if (options?.stderr && options.stderr !== 'inherit') options.stderr.write('Runner diagnostic\n')
+    return {stdout: text, stderr: 'Runner diagnostic\n', exitCode: 0}
+  })
   const instance = await command([])
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await instance.run()

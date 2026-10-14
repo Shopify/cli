@@ -5,7 +5,7 @@ import {execa} from 'execa'
 import open from 'open'
 import {describe, expect, test, vi} from 'vitest'
 import which from 'which'
-import {Readable} from 'stream'
+import {Readable, Writable} from 'stream'
 import {EventEmitter} from 'events'
 
 import * as fs from 'fs'
@@ -172,16 +172,27 @@ describe('captureOutputWithExitCode', () => {
     const {execa: actualExeca} = await vi.importActual<typeof import('execa')>('execa')
     vi.mocked(execa).mockImplementationOnce(actualExeca)
 
+    const stdout: Buffer[] = []
+    const stderr: Buffer[] = []
+    const collect = (chunks: Buffer[]) =>
+      new Writable({
+        write(chunk: Buffer, _encoding, callback) {
+          chunks.push(chunk)
+          callback()
+        },
+      })
     const result = await system.captureOutputWithExitCode(
       process.execPath,
       [
         '-e',
         `process.stdout.write('Output\\n\\n'); process.stderr.write('Diagnostic\\r\\n'); process.exitCode = ${exitCode}`,
       ],
-      {stripFinalNewline: false},
+      {stripFinalNewline: false, stdout: collect(stdout), stderr: collect(stderr)},
     )
 
     expect(result).toEqual({stdout: 'Output\n\n', stderr: 'Diagnostic\r\n', exitCode})
+    expect(Buffer.concat(stdout).toString()).toBe('Output\n\n')
+    expect(Buffer.concat(stderr).toString()).toBe('Diagnostic\r\n')
   })
 
   test('returns stdout, stderr, and exitCode on success', async () => {

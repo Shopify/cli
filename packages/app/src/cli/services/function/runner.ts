@@ -128,9 +128,14 @@ function functionRunnerArguments(options: FunctionRunnerOptions): string[] {
   return args
 }
 
+interface FunctionOutputChunk {
+  stream: 'stdout' | 'stderr'
+  data: Buffer
+}
+
 export type FunctionExecution =
   | {state: 'completed'; resultJson: string; exitCode: number; diagnostics: string[]}
-  | {state: 'completed-text'; stdout: string; stderr: string}
+  | {state: 'completed-text'; outputChunks: FunctionOutputChunk[]}
   | {
       state: 'failed'
       message: string
@@ -138,7 +143,7 @@ export type FunctionExecution =
       args: string[]
       exitCode: number
       stderr: string
-      stdout?: string
+      outputChunks?: FunctionOutputChunk[]
     }
 
 /** Captures native runner output, validating JSON results when requested. */
@@ -151,7 +156,19 @@ export async function captureFunctionRun(
   const diagnostics = warningType
     ? [`${profileWarningHeadline} ${warningType === 'javascript' ? javaScriptProfileWarning : wasmProfileWarning}`]
     : []
-  const execution = await captureOutputWithExitCode(command, args, {...processOptions, stripFinalNewline: json})
+  const outputChunks: FunctionOutputChunk[] = []
+  const captureTextStream = (stream: 'stdout' | 'stderr') =>
+    new Writable({
+      write(chunk: Buffer, _encoding, callback) {
+        outputChunks.push({stream, data: chunk})
+        callback()
+      },
+    })
+  const execution = await captureOutputWithExitCode(command, args, {
+    ...processOptions,
+    stripFinalNewline: json,
+    ...(json ? {} : {stdout: captureTextStream('stdout'), stderr: captureTextStream('stderr')}),
+  })
 
   if (!json) {
     if (execution.exitCode !== 0) {
@@ -160,10 +177,12 @@ export async function captureFunctionRun(
         message: `Function runner failed with exit code ${execution.exitCode}.`,
         command,
         args,
-        ...execution,
+        exitCode: execution.exitCode,
+        stderr: execution.stderr,
+        outputChunks,
       }
     }
-    return {state: 'completed-text', stdout: execution.stdout, stderr: execution.stderr}
+    return {state: 'completed-text', outputChunks}
   }
 
   let value: unknown

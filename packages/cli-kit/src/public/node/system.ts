@@ -257,12 +257,6 @@ export async function exec(command: string, args: string[], options?: ExecOption
     commandProcess.unref()
   }
 
-  if (options?.stderr && options.stderr !== 'inherit') {
-    commandProcess.stderr?.pipe(options.stderr, {end: false})
-  }
-  if (options?.stdout && options.stdout !== 'inherit') {
-    commandProcess.stdout?.pipe(options.stdout, {end: false})
-  }
   let aborted = false
   options?.signal?.addEventListener('abort', () => {
     const pid = commandProcess.pid
@@ -327,6 +321,12 @@ function buildExec(
     cleanup: !options?.background,
     ...execaOptions,
   })
+  if (options?.stderr && options.stderr !== 'inherit') {
+    commandProcess.stderr?.pipe(options.stderr, {end: false})
+  }
+  if (options?.stdout && options.stdout !== 'inherit') {
+    commandProcess.stdout?.pipe(options.stdout, {end: false})
+  }
   outputDebug(`Running system process${options?.background ? ' in background' : ''}:
   · Command: ${command} ${args.join(' ')}
   · Working directory: ${executionCwd}
