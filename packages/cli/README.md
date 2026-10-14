@@ -2551,9 +2551,6 @@ DESCRIPTION
   (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when
   errors occur, refer to "Shopify Functions error handling" (https://shopify.dev/docs/api/functions/errors).
 
-  JSON output preserves the native Function runner 7.x and 9.x format, including `memory_usage` and arbitrary
-  input/output fields. Profiling files retain the native Speedscope format.
-
   Use `--json-schema` to print the result, error, and event schemas.
 
   Output from `--json` conforms to the `FunctionRunResult` schema.

@@ -20,9 +20,7 @@ export default class FunctionRun extends AppUnlinkedCommand {
 
   static summary = 'Run a function locally for testing.'
 
-  static descriptionWithMarkdown = `Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).
-
-JSON output preserves the native Function runner 7.x and 9.x format, including \`memory_usage\` and arbitrary input/output fields. Profiling files retain the native Speedscope format.`
+  static descriptionWithMarkdown = `Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).`
 
   static description = this.descriptionForHelp()
 
