@@ -481,6 +481,14 @@ describe('themePublish', () => {
       expect(theme!.role).toEqual(role)
     })
   }
+
+  test('throws a friendly error when access is denied by a missing theme access scope', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(themeAccessDeniedError('`write_themes` access scope.'))
+
+    await expect(themePublish(123, session)).rejects.toThrow(
+      'The authenticated account or access token is missing `write_themes` access scope.',
+    )
+  })
 })
 
 describe('deleteThemeAssets', () => {
@@ -567,6 +575,14 @@ describe('themeDelete', () => {
       expect(response).toBe(true)
     })
   }
+
+  test('throws a friendly error when access is denied by a missing theme access scope', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(themeAccessDeniedError('`write_themes` access scope.'))
+
+    await expect(themeDelete(123, session)).rejects.toThrow(
+      'The authenticated account or access token is missing `write_themes` access scope.',
+    )
+  })
 })
 
 describe('themeDuplicate', () => {

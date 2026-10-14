@@ -239,7 +239,7 @@ export async function deleteThemeAssets(id: number, filenames: Key[], session: A
   for (let i = 0; i < filenames.length; i += batchSize) {
     const batch = filenames.slice(i, i + batchSize)
     // eslint-disable-next-line no-await-in-loop
-    const {themeFilesDelete} = await adminRequestDoc({
+    const {themeFilesDelete} = await requestThemeAdminDoc({
       query: ThemeFilesDelete,
       session,
       variables: {
@@ -329,7 +329,7 @@ async function uploadFiles(
   files: {filename: string; body: {type: OnlineStoreThemeFileBodyInputType; value: string}}[],
   session: AdminSession,
 ): Promise<ThemeFilesUpsertMutation> {
-  return adminRequestDoc({
+  return requestThemeAdminDoc({
     query: ThemeFilesUpsert,
     session,
     variables: {themeId: themeGid(themeId), files},
@@ -417,7 +417,7 @@ export async function themeUpdate(id: number, params: ThemeParams, session: Admi
   }
   recordEvent('theme-api:update-theme')
 
-  const {themeUpdate} = await adminRequestDoc({
+  const {themeUpdate} = await requestThemeAdminDoc({
     query: ThemeUpdate,
     session,
     variables: {id: composeThemeGid(id), input},
@@ -448,7 +448,7 @@ export async function themeUpdate(id: number, params: ThemeParams, session: Admi
 
 export async function themePublish(id: number, session: AdminSession): Promise<Theme | undefined> {
   recordEvent('theme-api:publish-theme')
-  const {themePublish} = await adminRequestDoc({
+  const {themePublish} = await requestThemeAdminDoc({
     query: ThemePublish,
     session,
     variables: {id: composeThemeGid(id)},
@@ -479,7 +479,7 @@ export async function themePublish(id: number, session: AdminSession): Promise<T
 
 export async function themeDelete(id: number, session: AdminSession): Promise<boolean | undefined> {
   recordEvent('theme-api:delete-theme')
-  const {themeDelete} = await adminRequestDoc({
+  const {themeDelete} = await requestThemeAdminDoc({
     query: ThemeDelete,
     session,
     variables: {id: composeThemeGid(id)},
@@ -518,7 +518,7 @@ export async function themeDuplicate(
   let requestId: string | undefined
   recordEvent('theme-api:duplicate-theme')
 
-  const {themeDuplicate} = await adminRequestDoc({
+  const {themeDuplicate} = await requestThemeAdminDoc({
     query: ThemeDuplicate,
     session,
     variables: {id: composeThemeGid(id), name},
