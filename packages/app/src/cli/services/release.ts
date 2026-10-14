@@ -7,8 +7,8 @@ import {AppReleaseSchema} from '../api/graphql/app_release.js'
 import {deployOrReleaseConfirmationPrompt} from '../prompts/deploy-release.js'
 import {OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {renderError, renderSuccess, renderTasks, TokenItem} from '@shopify/cli-kit/node/ui'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {renderTasks} from '@shopify/cli-kit/node/ui'
+import type {ReleaseResult} from './release/types.js'
 
 interface ReleaseOptions {
   /** The app to be built and uploaded */
@@ -33,7 +33,7 @@ interface ReleaseOptions {
   version: string
 }
 
-export async function release(options: ReleaseOptions) {
+export async function release(options: ReleaseOptions): Promise<ReleaseResult> {
   const {developerPlatformClient, app, remoteApp} = options
 
   const {extensionIdentifiersBreakdown, versionDetails} = await extensionsIdentifiersReleaseBreakdown(
@@ -56,7 +56,7 @@ export async function release(options: ReleaseOptions) {
     allowDeletes: options.force || options.allowDeletes,
   })
 
-  if (!confirmed) throw new AbortSilentError()
+  if (!confirmed) return {status: 'cancelled'}
   interface Context {
     appRelease: AppReleaseSchema
   }
@@ -80,21 +80,8 @@ export async function release(options: ReleaseOptions) {
     appRelease: {appRelease: release},
   } = await renderTasks<Context>(tasks)
 
-  const linkAndMessage: TokenItem = [
-    {link: {label: versionDetails.versionTag ?? undefined, url: versionDetails.location}},
-    versionDetails.message ? `\n${versionDetails.message}` : '',
-  ]
-
   if (release.userErrors && release.userErrors.length > 0) {
-    const errorMessages = release.userErrors?.map((error) => error.message).join(', ')
-    renderError({
-      headline: "Version couldn't be released.",
-      body: [...linkAndMessage, `${linkAndMessage.length > 0 ? '\n\n' : ''}${errorMessages}`],
-    })
-  } else {
-    renderSuccess({
-      headline: 'Version released to users.',
-      body: linkAndMessage,
-    })
+    return {status: 'failed', version: versionDetails, userErrors: release.userErrors}
   }
+  return {status: 'success', version: versionDetails}
 }

@@ -59,7 +59,7 @@ import {
   appManagementRequestDoc,
 } from '@shopify/cli-kit/node/api/app-management'
 import {appDevRequestDoc} from '@shopify/cli-kit/node/api/app-dev'
-import {BugError} from '@shopify/cli-kit/node/error'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {webhooksRequestDoc} from '@shopify/cli-kit/node/api/webhooks'
 
@@ -1426,6 +1426,58 @@ describe('deploy', () => {
       },
     })
   })
+})
+
+describe('appVersionByTag', () => {
+  test.each([
+    {path: ['app'], categories: ['not_found']},
+    {path: ['versionByTag'], categories: ['not_found', 'access_denied']},
+  ])('preserves errors for $path with categories $categories', async ({path, categories}) => {
+    const client = AppManagementClient.getInstance()
+    client.token = () => Promise.resolve('token')
+    const error = Object.assign(new AbortError('Lookup failed.'), {
+      statusCode: 200,
+      errors: [{path, extensions: {app_errors: {errors: categories.map((category) => ({category}))}}}],
+    })
+    vi.mocked(appManagementRequestDoc).mockRejectedValueOnce(error)
+
+    await expect(client.appVersionByTag(testOrganizationApp(), 'invalid')).rejects.toBe(error)
+  })
+})
+
+describe('release', () => {
+  test.each([null, {version: {id: 'gid://shopify/Version/123', metadata: {}}}])(
+    'retains user errors with release response %j',
+    async (release) => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      const userError = {field: ['version'], message: 'Release failed.', category: 'validation', on: []}
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({appReleaseCreate: {release, userErrors: [userError]}})
+
+      await expect(
+        client.release({
+          app: testOrganizationApp(),
+          version: {versionId: 'gid://shopify/Version/123', appVersionId: 123},
+        }),
+      ).resolves.toEqual({appRelease: {userErrors: [{...userError, details: []}]}})
+    },
+  )
+
+  test.each([{userErrors: []}, {userErrors: undefined}])(
+    'rejects a missing release without user errors ($userErrors)',
+    async ({userErrors}) => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({appReleaseCreate: {release: null, userErrors}})
+
+      await expect(
+        client.release({
+          app: testOrganizationApp(),
+          version: {versionId: 'gid://shopify/Version/123', appVersionId: 123},
+        }),
+      ).rejects.toThrow('The Developer Dashboard did not confirm the app version release.')
+    },
+  )
 })
 
 describe('appVersions', () => {
