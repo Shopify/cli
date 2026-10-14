@@ -1,12 +1,18 @@
-import {generateSchemaService} from '../../../services/generate-schema.js'
+import {functionSchemaJsonOutputSchema} from '../../../services/generate-schema/types.js'
+import {presentFunctionSchema} from '../../../services/generate-schema/result.js'
+import {fetchFunctionSchema} from '../../../services/generate-schema.js'
 import {chooseFunction, functionFlags} from '../../../services/function/common.js'
 import {appFlags} from '../../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class FetchSchema extends AppLinkedCommand {
+  static get jsonOutputSchema() {
+    return functionSchemaJsonOutputSchema
+  }
+
   static summary = 'Fetch the latest GraphQL schema for a function.'
 
   static descriptionWithMarkdown = `Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.
@@ -19,6 +25,7 @@ export default class FetchSchema extends AppLinkedCommand {
     ...globalFlags,
     ...appFlags,
     ...functionFlags,
+    ...jsonFlag,
     stdout: Flags.boolean({
       description: 'Output the schema to stdout instead of writing to a file.',
       required: false,
@@ -39,13 +46,14 @@ export default class FetchSchema extends AppLinkedCommand {
 
     const ourFunction = await chooseFunction(app, flags.path)
 
-    await generateSchemaService({
+    const result = await fetchFunctionSchema({
       app,
       extension: ourFunction,
-      stdout: flags.stdout,
       developerPlatformClient,
       orgId: organization.id,
     })
+
+    await presentFunctionSchema(result, {stdout: flags.stdout, json: flags.json})
 
     return {app}
   }

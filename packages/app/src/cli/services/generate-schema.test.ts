@@ -1,9 +1,10 @@
-import {generateSchemaService} from './generate-schema.js'
+import {generateSchemaService, fetchFunctionSchema} from './generate-schema.js'
 import {testAppLinked, testDeveloperPlatformClient, testFunctionExtension} from '../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {inTemporaryDirectory, readFile, mkdir} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, readFile, mkdir, fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import * as output from '@shopify/cli-kit/node/output'
 
 vi.mock('@shopify/cli-kit/node/context/local')
@@ -196,5 +197,27 @@ describe('generateSchemaService', () => {
 
     // Then
     await expect(result).rejects.toThrow(AbortError)
+  })
+})
+
+test('fetches typed schema data without selecting output or writing files', async () => {
+  await inTemporaryDirectory(async (directory) => {
+    const extension = await testFunctionExtension({dir: directory})
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      const result = await fetchFunctionSchema({
+        app: testAppLinked(),
+        extension,
+        developerPlatformClient: testDeveloperPlatformClient(),
+        orgId: '123',
+      })
+      expect(result).toEqual({
+        definition: `# api_version: ${extension.configuration.api_version}\n\nschema`,
+        path: joinPath(directory, 'schema.graphql'),
+        localIdentifier: extension.localIdentifier,
+      })
+      expect(stdout()).toBe('')
+      expect(stderr()).toBe('')
+    })
+    await expect(fileExists(joinPath(directory, 'schema.graphql'))).resolves.toBe(false)
   })
 })

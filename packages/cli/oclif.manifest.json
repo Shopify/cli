@@ -2426,7 +2426,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Generates the latest \"GraphQL schema\" (https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
+      "description": "Generates the latest \"GraphQL schema\" (https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `FunctionSchemaResult` schema.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"$ref\": \"#/definitions/FunctionSchemaFile\"\n    },\n    {\n      \"$ref\": \"#/definitions/FunctionSchemaContent\"\n    }\n  ],\n  \"title\": \"FunctionSchemaResult\",\n  \"definitions\": {\n    \"FunctionSchemaFile\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"path\": {\n          \"type\": \"string\",\n          \"pattern\": \"^(?:\\\\/|[a-zA-Z]:[\\\\\\\\/]|\\\\\\\\\\\\\\\\)\",\n          \"description\": \"An absolute native filesystem path.\"\n        },\n        \"format\": {\n          \"type\": \"string\",\n          \"const\": \"graphql\",\n          \"description\": \"The file contains native GraphQL SDL with the API-version header.\"\n        }\n      },\n      \"required\": [\n        \"path\",\n        \"format\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"FunctionSchemaContent\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"schema\": {\n          \"type\": \"string\",\n          \"description\": \"Native GraphQL SDL with the API-version header, returned with --stdout --json.\"\n        }\n      },\n      \"required\": [\n        \"schema\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
       "flags": {
         "auth-alias": {
@@ -2458,6 +2458,15 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,
