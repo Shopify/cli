@@ -172,15 +172,15 @@ describe('ensureAuthenticated with automation token variables', () => {
     expect(requestDeviceAuthorization).not.toHaveBeenCalled()
   })
 
-  test('refuses to log in while the organization automation token is set', async () => {
+  test('refuses to log in while the service account token is set', async () => {
     // Given
-    vi.mocked(automationTokenVariable).mockReturnValue('SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN')
+    vi.mocked(automationTokenVariable).mockReturnValue('SHOPIFY_SERVICE_ACCOUNT_TOKEN')
 
     // When
     const got = ensureAuthenticated(defaultApplications)
 
     // Then
-    await expect(got).rejects.toThrow("This command can't use SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN.")
+    await expect(got).rejects.toThrow("This command can't use SHOPIFY_SERVICE_ACCOUNT_TOKEN.")
     expect(fetchSessions).not.toHaveBeenCalled()
     expect(requestDeviceAuthorization).not.toHaveBeenCalled()
   })
