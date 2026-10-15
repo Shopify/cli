@@ -40,11 +40,13 @@ export async function useAppConfiguration({
   directory,
   configName,
   reset = false,
-}: Pick<UseOptions, 'directory' | 'configName' | 'reset'>): Promise<AppConfigUseResult> {
-  const previousConfigFile = getCachedAppInfo(directory)?.configFile
+  previousConfigFile = getCachedAppInfo(directory)?.configFile ?? null,
+}: Pick<UseOptions, 'directory' | 'configName' | 'reset'> & {
+  previousConfigFile?: string | null
+}): Promise<AppConfigUseResult> {
   if (reset) {
     clearCurrentConfigFile(directory)
-    return {status: 'success', changed: previousConfigFile !== undefined, path: null, clientId: null}
+    return {status: 'success', changed: previousConfigFile !== null, path: null, clientId: null}
   }
   const configFileName = (await getConfigFileName(directory, configName)).valueOrAbort()
   const {activeConfig} = await getAppConfigurationContext(directory, configFileName)

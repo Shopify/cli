@@ -12,6 +12,7 @@ import {mockAndCaptureStandardStreams} from '@shopify/cli-kit/node/testing/outpu
 vi.mock('../../../services/app/config/use.js')
 vi.mock('../../../services/app-context.js')
 vi.mock('../../../models/app/loader.js')
+vi.mock('../../../services/local-storage.js')
 
 test.each([
   {
@@ -35,6 +36,7 @@ test.each([
       directory: expect.any(String),
       configName: result.path ? 'staging' : undefined,
       reset: result.path === null,
+      previousConfigFile: null,
     })
   } finally {
     streams.restore()

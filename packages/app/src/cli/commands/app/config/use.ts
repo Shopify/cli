@@ -1,6 +1,7 @@
 import {appFlags} from '../../../flags.js'
 import {checkFolderIsValidApp} from '../../../models/app/loader.js'
 import {localAppContext} from '../../../services/app-context.js'
+import {getCachedAppInfo} from '../../../services/local-storage.js'
 import {useAppConfiguration} from '../../../services/app/config/use.js'
 import {appConfigUseJsonOutputSchema} from '../../../services/app/config/use/types.js'
 import {renderAppConfigUseResult} from '../../../services/app/config/use/result.js'
@@ -41,6 +42,7 @@ export default class ConfigUse extends AppUnlinkedCommand {
 
   public async run(): Promise<AppUnlinkedCommandOutput> {
     const {flags, args} = await this.parse(ConfigUse)
+    const previousConfigFile = getCachedAppInfo(flags.path)?.configFile ?? null
 
     const {app} = await localAppContext({
       directory: flags.path,
@@ -48,7 +50,12 @@ export default class ConfigUse extends AppUnlinkedCommand {
     })
 
     await checkFolderIsValidApp(flags.path)
-    const result = await useAppConfiguration({directory: flags.path, configName: args.config, reset: flags.reset})
+    const result = await useAppConfiguration({
+      directory: flags.path,
+      configName: args.config,
+      reset: flags.reset,
+      previousConfigFile,
+    })
     await renderAppConfigUseResult(result, flags.path, flags.json ? 'json' : 'text')
 
     return {app}
