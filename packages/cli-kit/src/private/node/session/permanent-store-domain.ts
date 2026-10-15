@@ -8,7 +8,7 @@ import {outputContent, outputDebug, outputInfo, outputToken} from '../../../publ
  */
 const PERMANENT_DOMAIN_LOOKUP_TIMEOUT_MS = 5000
 
-const resolvedStoreFqdns = new Map<string, Promise<string>>()
+const resolvedStoreFqdns = new Map<string, string>()
 
 /**
  * Resolves the permanent `.myshopify.com` domain of a store.
@@ -32,12 +32,11 @@ export async function resolvePermanentStoreFqdn(storeFqdn: string): Promise<stri
   const cached = resolvedStoreFqdns.get(storeFqdn)
   if (cached) return cached
 
-  const resolution = fetchPermanentStoreFqdn(storeFqdn)
-  resolvedStoreFqdns.set(storeFqdn, resolution)
+  const permanentStoreFqdn = await fetchPermanentStoreFqdn(storeFqdn)
+  resolvedStoreFqdns.set(storeFqdn, permanentStoreFqdn)
 
-  const permanentStoreFqdn = await resolution
   if (permanentStoreFqdn !== storeFqdn) {
-    resolvedStoreFqdns.set(permanentStoreFqdn, Promise.resolve(permanentStoreFqdn))
+    resolvedStoreFqdns.set(permanentStoreFqdn, permanentStoreFqdn)
     outputInfo(
       outputContent`Using the permanent domain ${outputToken.raw(permanentStoreFqdn)} for ${outputToken.raw(
         storeFqdn,
