@@ -43,10 +43,13 @@ Install all dependencies:
 pnpm install
 ```
 
-Now you can test creating an app and installing in your dev store:
+Run these commands from the CLI repository root to create an app in `../test-app`, generate an extension, and start the development server. Select a UI extension when prompted, then follow the development server prompts to select a development store:
 
 ```bash
-node bin/create-test-app.js -e ui
+pnpm nx build cli
+pnpm create-app --local --name test-app --path .. --template reactRouter --flavor javascript
+pnpm shopify app generate extension --path ../test-app
+pnpm shopify app dev --path ../test-app
 ```
 
 #### Windows
@@ -79,8 +82,11 @@ Install all dependencies:
 pnpm install
 ```
 
-Now you can test creating an app and installing in your dev store:
+Run these commands from the CLI repository root to create an app in `../test-app`, generate an extension, and start the development server. Select a UI extension when prompted, then follow the development server prompts to select a development store:
 
 ```bash
-node bin/create-test-app.js -e ui
+pnpm nx build cli
+pnpm create-app --local --name test-app --path .. --template reactRouter --flavor javascript
+pnpm shopify app generate extension --path ../test-app
+pnpm shopify app dev --path ../test-app
 ```
