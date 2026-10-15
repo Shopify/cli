@@ -1,5 +1,5 @@
 import {getDevelopmentTheme} from './local-storage.js'
-import {Filter, FilterProps, filterThemes} from '../utilities/theme-selector/filter.js'
+import {Filter, filterThemes} from '../utilities/theme-selector/filter.js'
 import {ALLOWED_ROLES, fetchStoreThemes, Role} from '../utilities/theme-selector/fetch.js'
 import {InlineToken, renderInfo} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -26,11 +26,9 @@ function tabularSection(
 
 export async function list(options: Options, adminSession: AdminSession) {
   const store = adminSession.storeFqdn
+  const selectedRoles = Object.fromEntries(ALLOWED_ROLES.map((role) => [role, options.role === role]))
   const filter = new Filter({
-    ...ALLOWED_ROLES.reduce((roles: FilterProps, role) => {
-      roles[role] = options.role === role
-      return roles
-    }, {}),
+    ...selectedRoles,
     theme: options.id?.toString() ?? options.name,
   })
 
