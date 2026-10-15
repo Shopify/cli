@@ -8,7 +8,7 @@ import {Project} from '../../../models/project/project.js'
 import {selectActiveConfig} from '../../../models/project/active-config.js'
 import {errorsForConfig} from '../../../models/project/config-selection.js'
 import metadata from '../../../metadata.js'
-import {outputResult} from '@shopify/cli-kit/node/output'
+import {outputResult, stringifyMessage} from '@shopify/cli-kit/node/output'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
@@ -283,7 +283,7 @@ describe('app config validate command', () => {
 
       expect(linkedAppContext).toHaveBeenCalledWith(expect.objectContaining({forceRelink: true}))
       expect(outputResult).toHaveBeenCalledOnce()
-      expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0])).toEqual({
+      expect(JSON.parse(stringifyMessage(vi.mocked(outputResult).mock.calls[0]![0]))).toEqual({
         valid: false,
         issues: [
           {
