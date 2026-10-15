@@ -8,7 +8,7 @@ import {outputInfo} from '@shopify/cli-kit/node/output'
 import {endHRTimeInMs} from '@shopify/cli-kit/node/hrtime'
 
 export default class DemoWatcher extends AppLinkedCommand {
-  static summary = 'Watch and prints out changes to an app.'
+  static summary = 'Watches and prints out changes to an app.'
   static hidden = true
 
   static flags = {

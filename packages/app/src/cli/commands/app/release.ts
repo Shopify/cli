@@ -10,7 +10,7 @@ import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 export default class Release extends AppLinkedCommand {
-  static summary = 'Release an app version.'
+  static summary = 'Releases an app version.'
 
   static usage = `app release --version <version>`
 

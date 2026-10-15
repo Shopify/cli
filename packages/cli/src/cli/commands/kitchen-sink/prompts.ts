@@ -7,7 +7,7 @@ import Command from '@shopify/cli-kit/node/base-command'
  * and to help update the documentation when they change.
  */
 export default class KitchenSinkPrompts extends Command {
-  static description = 'View the UI kit components prompts'
+  static description = 'Views the UI kit components prompts'
   static hidden = true
 
   async run(): Promise<void> {

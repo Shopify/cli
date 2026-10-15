@@ -8,9 +8,9 @@ import {bulkOperationIdFlag, storeFlags} from '../../../flags.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class StoreBulkStatus extends StoreCommand {
-  static summary = 'Check the status of bulk operations on a store.'
+  static summary = 'Checks the status of bulk operations on a store.'
 
-  static descriptionWithMarkdown = `Check the status of a specific bulk operation by ID, or list all bulk operations on this store in the last 7 days, using previously stored app authentication.
+  static descriptionWithMarkdown = `Checks the status of a specific bulk operation by ID, or lists all bulk operations on this store in the last 7 days, using previously stored app authentication.
 
   Run \`shopify store auth\` first to create stored auth for the store.
 

@@ -5,9 +5,9 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class AutoupgradeOff extends Command {
-  static summary = 'Disable automatic upgrades for Shopify CLI.'
+  static summary = 'Disables automatic upgrades for Shopify CLI.'
 
-  static descriptionWithMarkdown = `Disable automatic upgrades for Shopify CLI.
+  static descriptionWithMarkdown = `Disables automatic upgrades for Shopify CLI.
 
   When auto-upgrade is disabled, Shopify CLI won't automatically update. Run \`shopify upgrade\` to update manually.
 

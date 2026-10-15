@@ -10,7 +10,7 @@ import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 
 export default class EnvPull extends AppLinkedCommand {
-  static summary = 'Pull app and extensions environment variables.'
+  static summary = 'Pulls app and extensions environment variables.'
 
   static descriptionWithMarkdown = `Creates or updates an \`.env\` files that contains app and app extension environment variables.
 

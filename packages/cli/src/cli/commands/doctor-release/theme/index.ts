@@ -6,7 +6,7 @@ import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {canRunDoctorRelease} from '@shopify/cli-kit/node/context/local'
 
 export default class DoctorReleaseTheme extends Command {
-  static description = 'Run all theme command doctor-release tests'
+  static description = 'Runs all theme command doctor-release tests'
   static hidden = true
 
   static flags = {

@@ -7,7 +7,7 @@ import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-l
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class Sources extends AppLinkedCommand {
-  static summary = 'Print out a list of sources that may be used with the logs command.'
+  static summary = 'Prints out a list of sources that may be used with the logs command.'
 
   static descriptionWithMarkdown = `The output source names can be used with the \`--source\` argument of \`shopify app logs\` to filter log output. Currently only function extensions are supported as sources.`
 

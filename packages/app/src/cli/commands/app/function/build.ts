@@ -7,7 +7,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 
 export default class FunctionBuild extends AppUnlinkedCommand {
-  static summary = 'Compile a function to wasm.'
+  static summary = 'Compiles a function to wasm.'
 
   static descriptionWithMarkdown = `Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.`
 

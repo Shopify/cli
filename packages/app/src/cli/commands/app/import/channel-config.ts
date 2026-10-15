@@ -11,7 +11,7 @@ export default class ImportChannelConfig extends AppLinkedCommand {
   // Only available to allowlisted channel partners for now
   static hidden = true
 
-  static summary = "Import your app's default channel spec as a channel_config extension."
+  static summary = "Imports your app's default channel spec as a channel_config extension."
 
   static descriptionWithMarkdown = `Imports the Shopify-authored channel spec for your app as a \`channel_config\` extension.
 

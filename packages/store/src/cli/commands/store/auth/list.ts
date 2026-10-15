@@ -5,7 +5,7 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class StoreAuthList extends Command {
-  static summary = 'List stores authenticated directly with store auth.'
+  static summary = 'Lists stores authenticated directly with store auth.'
 
   static descriptionWithMarkdown = `Lists stores authenticated directly on this machine with \`shopify store auth\`.
 

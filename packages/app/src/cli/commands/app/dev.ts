@@ -15,7 +15,7 @@ export default class Dev extends AppLinkedCommand {
     return true
   }
 
-  static summary = 'Run the app.'
+  static summary = 'Runs the app.'
 
   static descriptionWithMarkdown = `Builds and previews your app on a dev store, and watches for changes. [Read more about testing apps locally](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).`
 

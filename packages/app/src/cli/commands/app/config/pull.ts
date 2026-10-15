@@ -7,7 +7,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {basename} from '@shopify/cli-kit/node/path'
 
 export default class ConfigPull extends AppLinkedCommand {
-  static summary = 'Refresh an already-linked app configuration without prompts.'
+  static summary = 'Refreshes an already-linked app configuration without prompts.'
 
   static descriptionWithMarkdown = `Pulls the latest configuration from the already-linked Shopify app and updates the selected configuration file.
 

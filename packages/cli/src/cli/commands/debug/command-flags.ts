@@ -4,7 +4,7 @@ import {renderTable} from '@shopify/cli-kit/node/ui'
 import {Flags} from '@oclif/core'
 
 export default class CommandFlags extends Command {
-  static description = 'View all the available command flags'
+  static description = 'Views all the available command flags'
   static hidden = true
 
   static flags = {

@@ -8,7 +8,7 @@ import {resolvePath} from '@shopify/cli-kit/node/path'
 import {Flags} from '@oclif/core'
 
 export default class StoreExecute extends StoreCommand {
-  static summary = 'Execute GraphQL queries and mutations on a store.'
+  static summary = 'Executes GraphQL queries and mutations on a store.'
 
   static descriptionWithMarkdown = `Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.
 

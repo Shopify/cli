@@ -10,7 +10,7 @@ import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag, requiredIfNonInteractive} from '@shopify/cli-kit/node/cli'
 
 export default class AppGenerateExtension extends AppLinkedCommand {
-  static summary = 'Generate a new app Extension.'
+  static summary = 'Generates a new app Extension.'
 
   static descriptionWithMarkdown = `Generates a new [app extension](https://shopify.dev/docs/apps/build/app-extensions). For a list of app extensions that you can generate using this command, refer to [Supported extensions](https://shopify.dev/docs/apps/build/app-extensions/list-of-app-extensions).
 

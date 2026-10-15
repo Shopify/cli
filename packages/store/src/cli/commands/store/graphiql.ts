@@ -5,7 +5,7 @@ import {globalFlags, portFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
 export default class StoreGraphiQL extends StoreCommand {
-  static summary = 'Open a local GraphiQL UI for a store.'
+  static summary = 'Opens a local GraphiQL UI for a store.'
 
   static descriptionWithMarkdown = `Opens an authenticated Admin API GraphiQL UI for the specified store using previously stored app authentication.
 

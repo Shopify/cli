@@ -9,7 +9,7 @@ import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class Logs extends AppLinkedCommand {
-  static summary = 'Stream detailed logs for your Shopify app.'
+  static summary = 'Streams detailed logs for your Shopify app.'
 
   static descriptionWithMarkdown = `
   Opens a real-time stream of detailed app logs from the selected app and store.

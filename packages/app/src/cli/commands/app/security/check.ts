@@ -7,7 +7,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class SecurityCheck extends BaseCommand {
   static summary =
-    'Check an app for Shopify-specific security issues and write deterministic-findings.json and agent-checks.json.'
+    'Checks an app for Shopify-specific security issues and writes deterministic-findings.json and agent-checks.json.'
 
   static descriptionWithMarkdown = `Runs an app security check locally and writes \`deterministic-findings.json\` and \`agent-checks.json\` to the results directory, \`.shopify/app-security/<results key>/\`. The results key is \`--client-id\` when you pass it, and otherwise the name of the app configuration file without \`.toml\`; the other \`app security\` commands take the same selection flags and find the same directory. Every run replaces both files, so it's always safe to run the check again.
 

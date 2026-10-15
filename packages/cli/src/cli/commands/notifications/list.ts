@@ -4,7 +4,7 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {sendErrorToBugsnag} from '@shopify/cli-kit/node/error-handler'
 
 export default class List extends Command {
-  static description = 'List current notifications configured for the CLI.'
+  static description = 'Lists current notifications configured for the CLI.'
   static hidden = true
 
   static flags = {

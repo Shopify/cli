@@ -5,9 +5,9 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class AutoupgradeStatus extends Command {
-  static summary = 'Check whether auto-upgrade is enabled, disabled, or not yet configured.'
+  static summary = 'Checks whether auto-upgrade is enabled, disabled, or not yet configured.'
 
-  static descriptionWithMarkdown = `Check whether auto-upgrade is enabled, disabled, or not yet configured.
+  static descriptionWithMarkdown = `Checks whether auto-upgrade is enabled, disabled, or not yet configured.
 
   When auto-upgrade is enabled, Shopify CLI automatically updates to the latest version after each command.
 

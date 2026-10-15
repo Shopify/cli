@@ -11,7 +11,7 @@ import {Flags} from '@oclif/core'
 export default class StoreStripeAuth extends StoreCommand {
   static hidden = true
 
-  static summary = 'Authenticate for store commands.'
+  static summary = 'Authenticates for store commands.'
 
   static descriptionWithMarkdown = `Authenticates to a store then stores an online access token for later reuse. Pass the provided JWT to --signup or stdin.`
 

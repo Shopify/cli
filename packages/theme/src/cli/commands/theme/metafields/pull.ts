@@ -8,7 +8,7 @@ import {InferredFlags} from '@oclif/core/interfaces'
 type MetafieldsFlags = InferredFlags<typeof MetafieldsPull.flags>
 
 export default class MetafieldsPull extends ThemeCommand {
-  static summary = 'Download metafields definitions from your shop into a local file.'
+  static summary = 'Downloads metafields definitions from your shop into a local file.'
 
   static descriptionWithMarkdown = `Retrieves metafields from Shopify Admin.
 

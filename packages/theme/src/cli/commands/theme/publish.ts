@@ -9,7 +9,7 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 type PublishFlags = OutputFlags<typeof Publish.flags>
 
 export default class Publish extends ThemeCommand {
-  static summary = 'Set a remote theme as the live theme.'
+  static summary = 'Sets a remote theme as the live theme.'
 
   static descriptionWithMarkdown = `Publishes an unpublished theme from your theme library.
 
