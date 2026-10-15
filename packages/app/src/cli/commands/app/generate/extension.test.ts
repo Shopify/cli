@@ -24,7 +24,6 @@ import {outputInfo, unstyled} from '@shopify/cli-kit/node/output'
 import {cwd, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
-// eslint-disable-next-line compat/n-prefer-global-console
 import {Console} from 'node:console'
 
 vi.mock('../../../services/generate.js')
