@@ -10,6 +10,9 @@ import {isTruthy} from './context/utilities.js'
 import {setCurrentCommandId} from './global-context.js'
 import {type JsonOutputSchema} from './json-output-schema.js'
 import {JsonMap} from '../../private/common/json.js'
+import {environmentVariables} from '../../private/node/constants.js'
+import {deprecatedAutomationTokenVariable} from '../../private/node/session/automation-token.js'
+import {runAtMinimumInterval} from '../../private/node/conf-store.js'
 import {underscore} from '../common/string.js'
 import {Command, Config, Errors, Flags} from '@oclif/core'
 import {OutputFlags, Input, ParserOutput, FlagInput, OutputArgs} from '@oclif/core/parser'
@@ -94,6 +97,7 @@ abstract class BaseCommand extends Command {
     }
     await removeDuplicatedPlugins(this.config)
     this.showNpmFlagWarning()
+    await this.showDeprecatedAutomationTokenVariableWarning()
     const {showNotificationsIfNeeded} = await import('./notifications-system.js')
     await showNotificationsIfNeeded()
     return super.init()
@@ -120,6 +124,22 @@ abstract class BaseCommand extends Command {
         })
       })
     }
+  }
+
+  // SHOPIFY_APP_AUTOMATION_TOKEN and SHOPIFY_CLI_PARTNERS_TOKEN keep working, but SHOPIFY_SERVICE_ACCOUNT_TOKEN replaces
+  // them and takes the same tokens. This warning is how people still using an old name find out about the new one.
+  protected async showDeprecatedAutomationTokenVariableWarning(): Promise<void> {
+    const variable = deprecatedAutomationTokenVariable()
+    if (!variable) return
+
+    // Show the warning only once per day
+    await runAtMinimumInterval('warn-on-deprecated-automation-token-variable', {days: 1}, async () => {
+      const {renderWarning} = await import('./ui.js')
+      renderWarning({
+        headline: `${variable} is deprecated.`,
+        body: `Move the token to ${environmentVariables.serviceAccountToken}. ${variable} still works for now, but a future release will stop reading it.`,
+      })
+    })
   }
 
   protected exitWithTimestampWhenEnvVariablePresent() {

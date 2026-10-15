@@ -40,6 +40,22 @@ export function automationTokenAuthMethod(
 }
 
 /**
+ * Returns the deprecated automation token variable the CLI authenticates with: SHOPIFY_APP_AUTOMATION_TOKEN or
+ * SHOPIFY_CLI_PARTNERS_TOKEN. Both are deprecated in favor of SHOPIFY_SERVICE_ACCOUNT_TOKEN, which takes the same
+ * tokens.
+ *
+ * Returns undefined when the variables can't be used, since the CLI reports that problem instead.
+ *
+ * @param env - Environment variables to read.
+ * @returns The deprecated variable in use, or undefined.
+ */
+export function deprecatedAutomationTokenVariable(env: NodeJS.ProcessEnv = process.env): string | undefined {
+  if (automationTokenVariablesProblem(env)) return undefined
+  const variable = automationTokenVariable(env)
+  return variable === APP_TOKEN || variable === PARTNERS_TOKEN ? variable : undefined
+}
+
+/**
  * Explains why the automation token variables can't be used, so a misconfigured environment fails instead of
  * falling back to the logged-in user.
  *
