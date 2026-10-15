@@ -122,7 +122,7 @@ It combines {{DETERMINISTIC_FINDINGS_PATH}} with {{AGENT_FINDINGS_PATH}} into on
 - skipped or incomplete coverage and unresolved checks;
 - prioritized remediation steps.
 
-Make clear that the results are informational; they are not proof of App Store approval. If the user asks for fixes, make the smallest safe changes and avoid weakening security controls or hiding findings. Use a finding's `suppression` only when the user has an explicit, justified false positive or accepted risk; never drop a verified finding silently.
+Make clear that the results are informational; they are not proof of App Store approval. If the user asks for fixes, make the smallest safe changes and avoid weakening security controls or hiding findings. When you fix a verified finding, add or update a deterministic regression test that reproduces it where the app has a suitable test setup, and run that test after the fix. Use a finding's `suppression` only when the user has an explicit, justified false positive or accepted risk; never drop a verified finding silently.
 
 ### 7. Check again after changes
 
