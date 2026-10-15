@@ -82,7 +82,6 @@ export default class ConfigLink extends AppLinkedCommand {
     }
 
     const result = await linkAppConfiguration(options)
-    if (!flags.json) renderAppConfigLinkResult(result.result, result.packageManager, 'text')
 
     const {app} = await linkedAppContext({
       directory: flags.path,
@@ -91,8 +90,7 @@ export default class ConfigLink extends AppLinkedCommand {
       userProvidedConfigName: result.configFileName,
     })
 
-    // JSON must wait until all command work succeeds, so a later failure cannot emit a second document.
-    if (flags.json) renderAppConfigLinkResult(result.result, result.packageManager, 'json')
+    renderAppConfigLinkResult(result.result, result.packageManager, flags.json ? 'json' : 'text')
 
     return {app}
   }

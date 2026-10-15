@@ -3,8 +3,7 @@ import {linkAppConfiguration as link} from '../../../services/app/config/link.js
 import {projectAppConfigResult} from '../../../services/app/config/link/types.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
-import {mockAndCaptureStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import * as context from '@shopify/cli-kit/node/context/local'
+import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {Config} from '@oclif/core'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
@@ -133,27 +132,28 @@ describe('app config link command', () => {
   })
 })
 
-test('does not write a JSON result if final app loading fails after linking', async () => {
-  const app = testAppLinked()
-  vi.mocked(link).mockResolvedValue({
-    remoteApp: testOrganizationApp(),
-    configuration: app.configuration,
-    configFileName: 'shopify.app.toml',
-    packageManager: 'npm',
-    result: projectAppConfigResult({
-      path: app.configPath,
+test.each([{outputFlags: []}, {outputFlags: ['--json']}])(
+  'does not write a result if final app loading fails with output flags %j',
+  async ({outputFlags}) => {
+    const app = testAppLinked()
+    vi.mocked(link).mockResolvedValue({
+      remoteApp: testOrganizationApp(),
       configuration: app.configuration,
-      app: testOrganizationApp(),
-    }),
-  })
-  vi.mocked(linkedAppContext).mockRejectedValue(new Error('App loading failed'))
-  const command = new ConfigLink(['--json', '--client-id', 'key'], await Config.load())
-  vi.spyOn(context, 'isUnitTest').mockReturnValue(false)
-  const streams = mockAndCaptureStandardStreams()
-  try {
-    await expect(command.run()).rejects.toThrow('App loading failed')
-    expect(streams.stdout()).toBe('')
-  } finally {
-    streams.restore()
-  }
-})
+      configFileName: 'shopify.app.toml',
+      packageManager: 'npm',
+      result: projectAppConfigResult({
+        path: app.configPath,
+        configuration: app.configuration,
+        app: testOrganizationApp(),
+      }),
+    })
+    vi.mocked(linkedAppContext).mockRejectedValue(new Error('App loading failed'))
+    const command = new ConfigLink([...outputFlags, '--client-id', 'key'], await Config.load())
+
+    await withCapturedStandardStreams(async (streams) => {
+      await expect(command.run()).rejects.toThrow('App loading failed')
+      expect(streams.stdout()).toBe('')
+      expect(streams.stderr()).toBe('')
+    })
+  },
+)
