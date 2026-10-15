@@ -7,10 +7,11 @@ import {linkedAppContext} from '../../../services/app-context.js'
 import {selectActiveConfig} from '../../../models/project/active-config.js'
 import {errorsForConfig} from '../../../models/project/config-selection.js'
 import {Project} from '../../../models/project/project.js'
+import {AppConfigurationValidationError} from '../../../models/app/loader.js'
 import metadata from '../../../metadata.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
-import {outputResult, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {outputResult} from '@shopify/cli-kit/node/output'
 import {basename} from '@shopify/cli-kit/node/path'
 import {renderError} from '@shopify/cli-kit/node/ui'
 // CLI Kit normalizes separators; public JSON paths must use the native filesystem format.
@@ -94,12 +95,10 @@ export default class Validate extends AppLinkedCommand {
       })
       app = context.app
     } catch (err) {
-      // Only catch config validation errors for JSON output. Auth/linking/remote
-      // failures should propagate normally — they aren't validation results.
-      const message = err instanceof AbortError ? unstyled(stringifyMessage(err.message)).trim() : ''
-      const isValidationError = message.startsWith('Validation errors in ')
-      if (isValidationError && flags.json) {
-        await failJsonValidation([{filePath: resolve(activeConfig.file.path), message, fieldPath: null, code: null}])
+      if (err instanceof AppConfigurationValidationError && flags.json) {
+        await failJsonValidation([
+          {filePath: resolve(err.configurationPath), message: err.message, fieldPath: null, code: null},
+        ])
       }
       throw err
     }

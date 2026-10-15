@@ -3,15 +3,21 @@ import {appConfigValidateJsonOutputSchema} from '../../../services/validate/type
 import {linkedAppContext} from '../../../services/app-context.js'
 import {validateApp} from '../../../services/validate.js'
 import {testAppLinked} from '../../../models/app/app.test-data.js'
+import {AppConfigurationValidationError, loadAppFromContext} from '../../../models/app/loader.js'
 import {Project} from '../../../models/project/project.js'
 import {selectActiveConfig} from '../../../models/project/active-config.js'
 import {errorsForConfig} from '../../../models/project/config-selection.js'
 import metadata from '../../../metadata.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {describe, expect, test, vi} from 'vitest'
+import {Config} from '@oclif/core'
+// eslint-disable-next-line no-restricted-imports
+import {resolve} from 'node:path'
 
 vi.mock('../../../services/app-context.js')
 vi.mock('../../../services/validate.js')
@@ -222,7 +228,11 @@ describe('app config validate command', () => {
     vi.mocked(Project.load).mockResolvedValue({errors: []} as unknown as Project)
     vi.mocked(selectActiveConfig).mockResolvedValue({file: new TomlFile('shopify.app.toml', {})} as any)
     vi.mocked(errorsForConfig).mockReturnValue([])
-    vi.mocked(linkedAppContext).mockRejectedValue(new AbortError('Validation errors in /app/shopify.app.toml'))
+    vi.mocked(linkedAppContext).mockRejectedValue(
+      new AppConfigurationValidationError('/app/shopify.app.toml', [
+        {file: '/app/shopify.app.toml', message: 'Required'},
+      ]),
+    )
 
     await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow()
 
@@ -235,6 +245,57 @@ describe('app config validate command', () => {
         cmd_app_validate_file_count: 1,
       },
     )
+  })
+
+  test('reports the failing config path when --reset selects a different config', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const initialPath = joinPath(directory, 'shopify.app.toml')
+      const linkedPath = joinPath(directory, 'shopify.app.staging.toml')
+      await writeFile(initialPath, 'client_id = "initial-client"')
+      await writeFile(linkedPath, 'client_id = 123')
+      const {Project: RealProject} = await vi.importActual<typeof import('../../../models/project/project.js')>(
+        '../../../models/project/project.js',
+      )
+      const project = await RealProject.load(directory)
+      mockHealthyProject()
+      vi.mocked(selectActiveConfig).mockResolvedValue({
+        file: await TomlFile.read(initialPath),
+        source: 'default',
+        isLinked: true,
+        hiddenConfig: {},
+      })
+      vi.mocked(linkedAppContext).mockImplementation(async () => {
+        await loadAppFromContext({
+          project,
+          activeConfig: {
+            file: await TomlFile.read(linkedPath),
+            source: 'flag',
+            isLinked: true,
+            hiddenConfig: {},
+          },
+          specifications: [],
+        })
+        throw new Error('Expected invalid configuration to fail loading')
+      })
+
+      const command = new Validate(['--path', directory, '--reset', '--json'], await Config.load())
+      await expect(command.run()).rejects.toThrow(AbortSilentError)
+
+      expect(linkedAppContext).toHaveBeenCalledWith(expect.objectContaining({forceRelink: true}))
+      expect(outputResult).toHaveBeenCalledOnce()
+      expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0])).toEqual({
+        valid: false,
+        issues: [
+          {
+            filePath: resolve(linkedPath),
+            message: expect.stringContaining(`Validation errors in ${linkedPath}:`),
+            fieldPath: null,
+            code: null,
+          },
+        ],
+      })
+      expect(validateApp).not.toHaveBeenCalled()
+    })
   })
 })
 
