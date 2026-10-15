@@ -1,4 +1,4 @@
-import {GraphQLClientError} from '../api/headers.js'
+import {extractGraphQLErrors} from '../api/graphql.js'
 import {commandEventOutputMode} from '../command-event-context.js'
 import {waitForEnter} from '../ui/wait-for-enter.js'
 import {recordEvent} from '../../../public/node/analytics.js'
@@ -7,16 +7,8 @@ import {AbortError} from '../../../public/node/error.js'
 import {outputDebug} from '../../../public/node/output.js'
 import {isCI, openURL} from '../../../public/node/system.js'
 import {isTTY, renderInfo, renderSuccess} from '../../../public/node/ui.js'
-import {ClientError} from 'graphql-request'
 
 const TRUST_CHALLENGE_ERROR_CODE = 'CHALLENGE_REQUIRED'
-
-interface GraphQLErrorWithExtensions {
-  extensions?: {
-    code?: unknown
-    redirect_to?: unknown
-  }
-}
 
 interface TrustChallengeOptions {
   stdin?: typeof process.stdin
@@ -74,9 +66,9 @@ export async function withTrustChallengeRetry<T>(
  * @returns The challenge URL, or undefined when the error is not a trust challenge.
  */
 export async function trustChallengeUrl(error: unknown): Promise<string | undefined> {
-  const challengeError = graphQLErrors(error).find((graphQLError) => {
-    return graphQLError?.extensions?.code === TRUST_CHALLENGE_ERROR_CODE
-  })
+  const challengeError = extractGraphQLErrors(error).find(
+    (graphQLError) => graphQLError.extensions?.code === TRUST_CHALLENGE_ERROR_CODE,
+  )
   const redirectTo = challengeError?.extensions?.redirect_to
   if (typeof redirectTo !== 'string') return undefined
 
@@ -86,16 +78,6 @@ export async function trustChallengeUrl(error: unknown): Promise<string | undefi
   }
 
   return redirectTo
-}
-
-function graphQLErrors(error: unknown): GraphQLErrorWithExtensions[] {
-  if (error instanceof ClientError) {
-    return Array.isArray(error.response.errors) ? error.response.errors : []
-  }
-  if (error instanceof GraphQLClientError) {
-    return Array.isArray(error.errors) ? error.errors : []
-  }
-  return []
 }
 
 async function isAdminUrl(url: string): Promise<boolean> {
