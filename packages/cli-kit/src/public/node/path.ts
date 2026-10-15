@@ -12,7 +12,7 @@ import {
 import {fileURLToPath} from 'url'
 // eslint-disable-next-line no-restricted-imports -- Native containment must preserve literal POSIX backslashes.
 import {relative as nativeRelative, isAbsolute as nativeIsAbsolute, sep as nativeSeparator} from 'node:path'
-// eslint-disable-next-line n/prefer-global/url
+// eslint-disable-next-line compat/n-prefer-global-url
 import type {URL} from 'url'
 
 interface IsSubpathOptions {

@@ -13,8 +13,7 @@ function projectFactory(name: string, schemaName: string, project: string = 'app
               {'graphql-codegen-typescript-operation-types': {enumsAsTypes: true, useTypeImports: true}},
               {
                 add: {
-                  content:
-                    "/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any, tsdoc/syntax, @typescript-eslint/no-duplicate-type-constituents, @typescript-eslint/no-redundant-type-constituents, @nx/enforce-module-boundaries  */\nimport {JsonMapType} from '@shopify/cli-kit/node/toml'",
+                  content: "import {JsonMapType} from '@shopify/cli-kit/node/toml'",
                 },
               },
             ],
@@ -34,8 +33,7 @@ function projectFactory(name: string, schemaName: string, project: string = 'app
             plugins: [
               {
                 add: {
-                  content:
-                    "/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/no-duplicate-type-constituents, @typescript-eslint/no-redundant-type-constituents, @nx/enforce-module-boundaries */\nimport {JsonMapType} from '@shopify/cli-kit/node/toml'",
+                  content: "import {JsonMapType} from '@shopify/cli-kit/node/toml'",
                 },
               },
               {
@@ -44,6 +42,7 @@ function projectFactory(name: string, schemaName: string, project: string = 'app
                   skipTypename: true,
                   useTypeImports: true,
                   onlyOperationTypes: true,
+                  defaultScalarType: 'unknown',
                   scalars: {
                     GlobalID: 'string',
                     PropertyId: 'string',
@@ -84,13 +83,25 @@ export default {
     webhooks: projectFactory('webhooks', 'webhooks_schema.graphql'),
     functions: projectFactory('functions', 'functions_cli_schema.graphql', 'app'),
     adminAsApp: projectFactory('admin', 'admin_schema.graphql'),
-    organizationsDestinations: projectFactory('business-platform-destinations', 'destinations_schema.graphql', 'organizations'),
+    organizationsDestinations: projectFactory(
+      'business-platform-destinations',
+      'destinations_schema.graphql',
+      'organizations',
+    ),
     organizationsBusinessPlatformOrganizations: projectFactory(
       'business-platform-organizations',
       'organizations_schema.graphql',
       'organizations',
     ),
-    storeBusinessPlatformDestinations: projectFactory('business-platform-destinations', 'destinations_schema.graphql', 'store'),
-    storeBusinessPlatformOrganizations: projectFactory('business-platform-organizations', 'organizations_schema.graphql', 'store'),
+    storeBusinessPlatformDestinations: projectFactory(
+      'business-platform-destinations',
+      'destinations_schema.graphql',
+      'store',
+    ),
+    storeBusinessPlatformOrganizations: projectFactory(
+      'business-platform-organizations',
+      'organizations_schema.graphql',
+      'store',
+    ),
   },
 }

@@ -892,7 +892,7 @@ describe('removeDuplicatedPlugins', () => {
       const result = await super.init()
 
       // Capture the plugins after init (which calls removeDuplicatedPlugins)
-      // eslint-disable-next-line require-atomic-updates
+      // eslint-disable-next-line compat/require-atomic-updates
       capturedPlugins = new Map(this.config.plugins)
 
       return result

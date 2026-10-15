@@ -59,7 +59,7 @@ export async function updateAppIdentifiers(
     const updatedEnvFileContent = patchEnvFile(envFileContent, updatedVariables)
     await writeFile(dotenvFile.path, updatedEnvFileContent)
 
-    // eslint-disable-next-line require-atomic-updates
+    // eslint-disable-next-line compat/require-atomic-updates
     app.dotenv = dotenvFile
   }
 

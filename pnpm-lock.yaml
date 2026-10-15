@@ -582,6 +582,9 @@ importers:
 
   packages/eslint-plugin-cli:
     dependencies:
+      '@microsoft/tsdoc':
+        specifier: 0.16.0
+        version: 0.16.0
       '@shopify/eslint-plugin':
         specifier: 50.0.0
         version: 50.0.0(@typescript-eslint/eslint-plugin@8.56.1(@typescript-eslint/parser@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(@typescript-eslint/parser@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(@typescript-eslint/utils@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.5(jiti@2.6.1))(prettier@3.8.4)(typescript@5.9.3)
@@ -621,6 +624,16 @@ importers:
       globals:
         specifier: 16.5.0
         version: 16.5.0
+    devDependencies:
+      '@nx/eslint-plugin':
+        specifier: 22.7.7
+        version: 22.7.7(@babel/traverse@7.29.7)(@typescript-eslint/parser@8.56.1(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3))(eslint-config-prettier@10.1.8(eslint@9.39.5(jiti@2.6.1)))(eslint@9.39.5(jiti@2.6.1))(nx@22.7.7)(typescript@5.9.3)
+      eslint-plugin-jsdoc:
+        specifier: 50.8.0
+        version: 50.8.0(eslint@9.39.5(jiti@2.6.1))
+      oxlint:
+        specifier: 1.75.0
+        version: 1.75.0(oxlint-tsgolint@7.0.2001)
 
   packages/organizations:
     dependencies:
@@ -3459,48 +3472,56 @@ packages:
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@oxlint/binding-linux-arm64-musl@1.75.0':
     resolution: {integrity: sha512-UWzp5wRHFe/ESO3+eEaxXsTkYTGLYjnTsi/I5neEacXSItQ6WNleapfOAeA4x2b8nyhJ4uQxqvtv9pHv8kWJtQ==, tarball: https://registry.npmjs.org/@oxlint/binding-linux-arm64-musl/-/binding-linux-arm64-musl-1.75.0.tgz}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@oxlint/binding-linux-ppc64-gnu@1.75.0':
     resolution: {integrity: sha512-XEVRwGMLKCUKrvhLAz4F6AIh8MJrQVdSZtAmPpRZt9tGPsUnamPOcl3dS/ZQzJnar/Ymgc//+xho0L60Emzuxg==, tarball: https://registry.npmjs.org/@oxlint/binding-linux-ppc64-gnu/-/binding-linux-ppc64-gnu-1.75.0.tgz}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [ppc64]
     os: [linux]
+    libc: [glibc]
 
   '@oxlint/binding-linux-riscv64-gnu@1.75.0':
     resolution: {integrity: sha512-mAG4DUXqfLC8cTjMD2kt3jDmVzFREYtDyeLNdLdsCcBc4Zbl2EMuiFektGBilQwkNjYnMvCqJs55U+Hyb+b+jw==, tarball: https://registry.npmjs.org/@oxlint/binding-linux-riscv64-gnu/-/binding-linux-riscv64-gnu-1.75.0.tgz}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [riscv64]
     os: [linux]
+    libc: [glibc]
 
   '@oxlint/binding-linux-riscv64-musl@1.75.0':
     resolution: {integrity: sha512-95hrAvriAlI+pekSomTFIn0+bawMDlDwTNVmdjsFusTHyL2JWh7TWvRNG/Lkim72uN8OiCcO9wcaC6omLP5E3w==, tarball: https://registry.npmjs.org/@oxlint/binding-linux-riscv64-musl/-/binding-linux-riscv64-musl-1.75.0.tgz}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [riscv64]
     os: [linux]
+    libc: [musl]
 
   '@oxlint/binding-linux-s390x-gnu@1.75.0':
     resolution: {integrity: sha512-4b6f2+FrtruAESrCqIKcrarzfrSx+wk2QNcp+RT91/Prc+pMQMAfyZ1rG1c3tFQNl8Bc616tx40uNXyxNBRPbQ==, tarball: https://registry.npmjs.org/@oxlint/binding-linux-s390x-gnu/-/binding-linux-s390x-gnu-1.75.0.tgz}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   '@oxlint/binding-linux-x64-gnu@1.75.0':
     resolution: {integrity: sha512-nshAhrUvXFUWOvqQ2soIw7HFNWvpvEV4o0cYSqPtzLiPF5gKyYTDOOTJ6Rn8g8K/iGvPIrbDA4v8+5MvnjJrrg==, tarball: https://registry.npmjs.org/@oxlint/binding-linux-x64-gnu/-/binding-linux-x64-gnu-1.75.0.tgz}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@oxlint/binding-linux-x64-musl@1.75.0':
     resolution: {integrity: sha512-e4jNxLKnxLC6sYBQRxrI2pgIIxnmMtF8U/VwNYcjTT/CLS+spH624cYVnj07bTKwaEWT37/e025isOs6j/0xqA==, tarball: https://registry.npmjs.org/@oxlint/binding-linux-x64-musl/-/binding-linux-x64-musl-1.75.0.tgz}
     engines: {node: ^20.19.0 || >=22.12.0}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@oxlint/binding-openharmony-arm64@1.75.0':
     resolution: {integrity: sha512-hZ2lH+1qLf/DiEP9UWuQTK2JWj/BgvMB4jhIV4SmNU1wfEiYYX4TynQyAZXx0j9X4qRYizAL042SKaV+8ynh4w==, tarball: https://registry.npmjs.org/@oxlint/binding-openharmony-arm64/-/binding-openharmony-arm64-1.75.0.tgz}
@@ -11817,7 +11838,7 @@ snapshots:
       confusing-browser-globals: 1.0.11
       globals: 17.7.0
       jsonc-eslint-parser: 2.4.2
-      semver: 7.8.5
+      semver: 7.8.4
       tslib: 2.8.1
     optionalDependencies:
       eslint-config-prettier: 10.1.8(eslint@9.39.5(jiti@2.6.1))
@@ -12679,7 +12700,6 @@ snapshots:
       eslint: 9.39.5(jiti@2.6.1)
       eslint-config-prettier: 10.1.8(eslint@9.39.5(jiti@2.6.1))
       eslint-plugin-no-catch-all: 1.1.0(eslint@9.39.5(jiti@2.6.1))
-      eslint-plugin-prettier: 5.5.6(eslint-config-prettier@10.1.8(eslint@9.39.5(jiti@2.6.1)))(eslint@9.39.5(jiti@2.6.1))(prettier@3.8.4)
       eslint-plugin-react: 7.37.5(eslint@9.39.5(jiti@2.6.1))
       eslint-plugin-react-hooks: 5.2.0(eslint@9.39.5(jiti@2.6.1))
       eslint-plugin-tsdoc: 0.5.2(eslint@9.39.5(jiti@2.6.1))(typescript@5.9.3)
@@ -14827,15 +14847,6 @@ snapshots:
   eslint-plugin-no-catch-all@1.1.0(eslint@9.39.5(jiti@2.6.1)):
     dependencies:
       eslint: 9.39.5(jiti@2.6.1)
-
-  eslint-plugin-prettier@5.5.6(eslint-config-prettier@10.1.8(eslint@9.39.5(jiti@2.6.1)))(eslint@9.39.5(jiti@2.6.1))(prettier@3.8.4):
-    dependencies:
-      eslint: 9.39.5(jiti@2.6.1)
-      prettier: 3.8.4
-      prettier-linter-helpers: 1.0.1
-      synckit: 0.11.13
-    optionalDependencies:
-      eslint-config-prettier: 10.1.8(eslint@9.39.5(jiti@2.6.1))
 
   eslint-plugin-prettier@5.5.6(eslint-config-prettier@9.1.2(eslint@9.39.5(jiti@2.6.1)))(eslint@9.39.5(jiti@2.6.1))(prettier@3.8.4):
     dependencies:
