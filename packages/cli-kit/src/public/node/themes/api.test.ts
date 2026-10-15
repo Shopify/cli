@@ -28,6 +28,7 @@ import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
 import {MetafieldDefinitionsByOwnerType} from '../../../cli/api/graphql/admin/generated/metafield_definitions_by_owner_type.js'
+import {errorHandler} from '../../../private/node/api/graphql.js'
 import {adminRequestDoc, supportedApiVersions} from '../api/admin.js'
 import {AbortError} from '../error.js'
 
@@ -541,7 +542,9 @@ describe('themePublish', () => {
   }
 
   test('throws a friendly error when access is denied by a missing theme access scope', async () => {
-    vi.mocked(adminRequestDoc).mockRejectedValue(themeAccessDeniedError('`write_themes` access scope.'))
+    vi.mocked(adminRequestDoc).mockRejectedValue(
+      errorHandler('Admin')(themeAccessDeniedError('`write_themes` access scope.'), 'request-id'),
+    )
 
     await expect(themePublish(123, session)).rejects.toThrow(
       'The authenticated account or access token is missing `write_themes` access scope.',
@@ -635,7 +638,9 @@ describe('themeDelete', () => {
   }
 
   test('throws a friendly error when access is denied by a missing theme access scope', async () => {
-    vi.mocked(adminRequestDoc).mockRejectedValue(themeAccessDeniedError('`write_themes` access scope.'))
+    vi.mocked(adminRequestDoc).mockRejectedValue(
+      errorHandler('Admin')(themeAccessDeniedError('`write_themes` access scope.'), 'request-id'),
+    )
 
     await expect(themeDelete(123, session)).rejects.toThrow(
       'The authenticated account or access token is missing `write_themes` access scope.',

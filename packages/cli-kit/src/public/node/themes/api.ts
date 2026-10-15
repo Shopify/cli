@@ -27,6 +27,7 @@ import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
 import {OnlineStorePasswordProtection} from '../../../cli/api/graphql/admin/generated/online_store_password_protection.js'
+import {GraphQLClientError} from '../../../private/node/api/headers.js'
 import {RequestModeInput} from '../http.js'
 import {adminRequestDoc, type AdminRequestOptions} from '../api/admin.js'
 import {AdminSession} from '../session.js'
@@ -637,8 +638,6 @@ async function requestThemeAdminDoc<TResult, TVariables extends Variables>(
 }
 
 function abortIfMissingThemeAccessScope(error: unknown): void {
-  if (!(error instanceof ClientError)) return
-
   const requiredAccess = getThemeAccessRequirementForAccessDeniedError(error)
   if (!requiredAccess) return
 
@@ -687,17 +686,22 @@ function abortIfMissingThemeAccessScope(error: unknown): void {
   )
 }
 
-function getThemeAccessRequirementForAccessDeniedError(error: ClientError): string | undefined {
-  const graphQLErrors = error.response.errors
-  if (!Array.isArray(graphQLErrors)) return undefined
-
-  const accessDeniedError = graphQLErrors.find((graphQLError) => graphQLError.extensions?.code === 'ACCESS_DENIED')
+function getThemeAccessRequirementForAccessDeniedError(error: unknown): string | undefined {
+  const accessDeniedError = themeGraphQLErrors(error).find(
+    (graphQLError) => graphQLError.extensions?.code === 'ACCESS_DENIED',
+  )
   if (!accessDeniedError) return undefined
 
   const requiredAccess = accessDeniedError.extensions?.requiredAccess
   if (typeof requiredAccess !== 'string') return DEFAULT_THEME_ACCESS_REQUIREMENT
 
   return formatThemeAccessRequirement(requiredAccess)
+}
+
+function themeGraphQLErrors(error: unknown): NonNullable<ClientError['response']['errors']> {
+  if (error instanceof ClientError) return Array.isArray(error.response.errors) ? error.response.errors : []
+  if (error instanceof GraphQLClientError) return Array.isArray(error.errors) ? error.errors : []
+  return []
 }
 
 function formatThemeAccessRequirement(requiredAccess: string): string {
