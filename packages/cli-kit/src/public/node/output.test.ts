@@ -18,7 +18,6 @@ import {renderCommandEventAsJson, runWithCommandEvents} from './command-events.j
 import {currentProcessIsGlobal} from './is-global.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Writable} from 'stream'
-// eslint-disable-next-line compat/n-prefer-global-console
 import {Console} from 'node:console'
 
 const isVerboseMock = vi.hoisted(() => vi.fn(() => false))

@@ -20,31 +20,11 @@
   },
   "license": "MIT",
   "author": "Shopify Inc.",
-  "dependencies": {
-    "@shopify/eslint-plugin": "50.0.0",
-    "@typescript-eslint/eslint-plugin": "8.56.1",
-    "@typescript-eslint/parser": "8.56.1",
-    "eslint-config-prettier": "10.1.8",
-    "eslint-plugin-no-catch-all": "1.1.0",
-    "eslint-plugin-react": "7.37.5",
-    "eslint-plugin-react-hooks": "5.2.0",
-    "eslint-plugin-tsdoc": "0.5.2",
-    "eslint-plugin-unused-imports": "4.4.1",
-    "@vitest/eslint-plugin": "1.1.44",
-    "globals": "16.5.0",
-    "execa": "7.2.0",
-    "@microsoft/tsdoc": "0.16.0"
-  },
-  "peerDependencies": {
-    "eslint": "^9.0.0"
-  },
   "publishConfig": {
     "@shopify:registry": "https://registry.npmjs.org",
     "access": "public"
   },
-  "devDependencies": {
-    "@nx/eslint-plugin": "22.7.7",
-    "eslint-plugin-jsdoc": "50.8.0",
-    "oxlint": "1.75.0"
+  "dependencies": {
+    "@microsoft/tsdoc": "0.16.0"
   }
 }

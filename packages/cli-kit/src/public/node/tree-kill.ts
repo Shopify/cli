@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-/* eslint-disable compat/jsdoc-require-throws */
+
 /* eslint-disable no-restricted-imports */
 
 import {outputDebug} from './output.js'

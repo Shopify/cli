@@ -122,7 +122,7 @@ abstract class BaseCommand extends Command {
     }
   }
 
-  protected exitWithTimestampWhenEnvVariablePresent() {
+  protected exitWithTimestampWhenEnvVariablePresent(): void {
     if (isTruthy(process.env.SHOPIFY_CLI_ENV_STARTUP_PERFORMANCE_RUN)) {
       outputResult(`
       SHOPIFY_CLI_TIMESTAMP_START
@@ -444,7 +444,7 @@ async function removeDuplicatedPlugins(config: Config): Promise<void> {
     })
   }
   const filteredPlugins = plugins.filter((plugin) => !bundlePlugins.includes(plugin.name))
-  // eslint-disable-next-line compat/require-atomic-updates -- config.plugins won't be modified by renderWarning above
+
   config.plugins = new Map(filteredPlugins.map((plugin) => [plugin.name, plugin]))
 }
 

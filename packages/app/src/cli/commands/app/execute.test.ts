@@ -11,7 +11,7 @@ import {
 import {Config} from '@oclif/core'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {ClientError} from 'graphql-request'
-// eslint-disable-next-line compat/shopify-typescript-prefer-build-client-schema -- Local execution fixture without an introspection response.
+// eslint-disable-next-line @shopify/cli/prefer-build-client-schema -- Local execution fixture without an introspection response.
 import {GraphQLError, buildSchema, graphql} from 'graphql'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'

@@ -4,7 +4,6 @@ import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
 import {formatSection} from '@shopify/cli-kit/node/output'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-// eslint-disable-next-line compat/n-prefer-global-console
 import {Console} from 'node:console'
 
 vi.mock('../../../services/app-context.js')

@@ -40,7 +40,7 @@ export interface AutocompletePromptProps<T> {
 const MIN_NUMBER_OF_ITEMS_FOR_SEARCH = 5
 const DEFAULT_SEARCH_DEBOUNCE_MS = 400
 
-function AutocompletePrompt<T>({
+const AutocompletePrompt = <T,>({
   message,
   choices,
   infoTable,
@@ -51,7 +51,7 @@ function AutocompletePrompt<T>({
   infoMessage,
   groupOrder,
   searchDebounceMs = DEFAULT_SEARCH_DEBOUNCE_MS,
-}: React.PropsWithChildren<AutocompletePromptProps<T>>): ReactElement | null {
+}: React.PropsWithChildren<AutocompletePromptProps<T>>): ReactElement | null => {
   const complete = useComplete()
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(choices)

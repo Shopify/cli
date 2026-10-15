@@ -35,7 +35,6 @@ export function pollThemeEditorChanges(
     // but ensure the polling work is done before starting the next interval.
     await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL))
 
-    // eslint-disable-next-line compat/require-atomic-updates
     latestChecksums = await pollRemoteJsonChanges(targetTheme, session, latestChecksums, localFileSystem, options)
       .then((checksums) => {
         failedPollingAttempts = 0

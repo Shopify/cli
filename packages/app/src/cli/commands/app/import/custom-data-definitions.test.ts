@@ -14,7 +14,6 @@ import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-even
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {AbortError, handler} from '@shopify/cli-kit/node/error'
-// eslint-disable-next-line compat/n-prefer-global-console
 import {Console} from 'node:console'
 
 vi.mock('../../../services/app-context.js')

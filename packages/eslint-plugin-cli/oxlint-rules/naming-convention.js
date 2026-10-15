@@ -95,6 +95,8 @@ module.exports = {
         check(node.id, 'enum')
       },
       TSTypeParameter(node) {
+        // Inferred type bindings are exempt from type-parameter naming requirements.
+        if (node.parent.type === 'TSInferType') return
         check(node.name, 'typeParameter')
       },
       Property(node) {
