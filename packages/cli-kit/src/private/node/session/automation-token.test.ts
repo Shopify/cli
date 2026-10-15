@@ -1,4 +1,8 @@
-import {automationTokenVariable, automationTokenVariablesProblem} from './automation-token.js'
+import {
+  automationTokenAuthMethod,
+  automationTokenVariable,
+  automationTokenVariablesProblem,
+} from './automation-token.js'
 import {environmentVariables} from '../constants.js'
 import {describe, expect, test} from 'vitest'
 
@@ -25,6 +29,21 @@ describe('automationTokenVariable', () => {
     },
   ])('selects $name', ({env, expected}) => {
     expect(automationTokenVariable(env)).toBe(expected)
+  })
+})
+
+describe('automationTokenAuthMethod', () => {
+  test.each([
+    {name: 'the service account variable', env: {[SERVICE_ACCOUNT]: 's'}, expected: 'service_account_token'},
+    {name: 'the app variable', env: {[APP]: 'a'}, expected: 'partners_token'},
+    {name: 'the Partners variable', env: {[PARTNERS]: 'p'}, expected: 'partners_token'},
+    {
+      name: 'the service account variable over another one',
+      env: {[SERVICE_ACCOUNT]: 's', [APP]: 'a'},
+      expected: 'service_account_token',
+    },
+  ])('reports $expected for $name', ({env, expected}) => {
+    expect(automationTokenAuthMethod(env)).toBe(expected)
   })
 })
 
