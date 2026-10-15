@@ -195,6 +195,25 @@ describe('captureOutputWithExitCode', () => {
     expect(Buffer.concat(stderr).toString()).toBe('Diagnostic\r\n')
   })
 
+  test.each(['captureOutput', 'captureOutputWithExitCode', 'captureCommandWithExitCode'] as const)(
+    'strips the final newline by default with %s',
+    async (capture) => {
+      const {execa: actualExeca} = await vi.importActual<typeof import('execa')>('execa')
+      vi.mocked(execa).mockImplementationOnce(actualExeca)
+      const script = "process.stdout.write('Output\\n'); process.stderr.write('Diagnostic\\r\\n')"
+
+      if (capture === 'captureOutput') {
+        await expect(system.captureOutput(process.execPath, ['-e', script])).resolves.toBe('Output')
+      } else {
+        const result =
+          capture === 'captureCommandWithExitCode'
+            ? await system.captureCommandWithExitCode(`"${process.execPath}" -e "${script}"`)
+            : await system.captureOutputWithExitCode(process.execPath, ['-e', script])
+        expect(result).toEqual({stdout: 'Output', stderr: 'Diagnostic', exitCode: 0})
+      }
+    },
+  )
+
   test('rejects a missing working directory instead of returning exit code zero', async () => {
     const {execa: actualExeca} = await vi.importActual<typeof import('execa')>('execa')
     vi.mocked(execa).mockImplementationOnce(actualExeca)

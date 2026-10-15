@@ -318,7 +318,7 @@ function buildExec(
     env,
     cwd: executionCwd,
     input: options?.input,
-    stripFinalNewline: options?.stripFinalNewline,
+    stripFinalNewline: options?.stripFinalNewline ?? true,
     stdio: options?.background ? backgroundStdio : options?.stdio,
     stdin: options?.stdin,
     stdout: options?.stdout === 'inherit' ? 'inherit' : undefined,
