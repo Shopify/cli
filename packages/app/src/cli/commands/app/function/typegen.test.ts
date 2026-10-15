@@ -14,6 +14,9 @@ import {exec} from '@shopify/cli-kit/node/system'
 import {packageManagerBinaryCommandForDirectory} from '@shopify/cli-kit/node/node-package-manager'
 import {unstyled} from '@shopify/cli-kit/node/output'
 
+// eslint-disable-next-line no-restricted-imports
+import {resolve} from 'node:path'
+
 vi.mock('../../../services/app-context.js')
 vi.mock('@shopify/cli-kit/node/system', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@shopify/cli-kit/node/system')>()),
@@ -60,7 +63,7 @@ test.each([
       await expect(runWithCommandEventsForCommand(argv, () => instance.run())).resolves.toEqual({app})
       expect(JSON.parse(stdout())).toEqual({
         status: 'success',
-        function: {handle: extension.configuration.handle ?? null, name: extension.name, directory},
+        function: {handle: extension.configuration.handle ?? null, name: extension.name, directory: resolve(directory)},
       })
       const events = stderr()
         .trim()
