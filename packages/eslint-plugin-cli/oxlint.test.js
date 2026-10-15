@@ -139,6 +139,23 @@ tester.run('tsdoc-syntax', rules['tsdoc-syntax'], {
   invalid: [{code: '/** Read a value.\n * @param value The value.\n */\nfunction read(value) {}', errors: 1}],
 })
 
+tester.run('dot-notation', rules['dot-notation'], {
+  valid: ['input.field', "input['not-a-name']", {code: "input['allowed_name']", options: [{allowPattern: '_'}]}],
+  invalid: [
+    {code: "input['field']", output: 'input.field', errors: 1},
+    {code: "input[('field')]", output: 'input.field', errors: 1},
+    {code: "input?.[('field')]", output: 'input?.field', errors: 1},
+    {code: "(input)['field']", output: '(input).field', errors: 1},
+    {code: "((input))['field']", output: '((input)).field', errors: 1},
+    {code: "123['toString']()", output: '(123).toString()', errors: 1},
+    {code: "1.5['toString']()", output: '(1.5).toString()', errors: 1},
+    {code: "(123)['toString']()", output: '((123)).toString()', errors: 1},
+    {code: "input?.['field']", output: 'input?.field', errors: 1},
+    {code: "(input)?.['field']", output: '(input)?.field', errors: 1},
+    {code: "123?.['toString']()", output: '123?.toString()', errors: 1},
+  ],
+})
+
 tester.run('no-undef-init', rules['no-undef-init'], {
   valid: ['let value;', 'const value = undefined'],
   invalid: [{code: 'let value = undefined', errors: 1}],

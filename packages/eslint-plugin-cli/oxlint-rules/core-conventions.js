@@ -55,8 +55,13 @@ module.exports = {
           context.report({
             node: node.property,
             message: 'Use dot notation for this property.',
-            fix: (fixer) =>
-              fixer.replaceTextRange([node.object.range[1], node.range[1]], `${node.optional ? '?.' : '.'}${name}`),
+            fix(fixer) {
+              const openingBracket = context.sourceCode.getTokenAfter(node.object, (token) => token.value === '[')
+              const receiver = context.sourceCode.text.slice(node.range[0], openingBracket.range[0])
+              const numericReceiver = node.object.type === 'Literal' && typeof node.object.value === 'number'
+              const safeReceiver = numericReceiver && !node.optional ? `(${receiver})` : receiver
+              return fixer.replaceText(node, `${safeReceiver}${node.optional ? '' : '.'}${name}`)
+            },
           })
         },
       }
