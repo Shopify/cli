@@ -195,11 +195,15 @@ describe('captureOutputWithExitCode', () => {
     expect(Buffer.concat(stderr).toString()).toBe('Diagnostic\r\n')
   })
 
-  test('rejects a missing executable instead of returning exit code zero', async () => {
+  test('rejects a missing working directory instead of returning exit code zero', async () => {
     const {execa: actualExeca} = await vi.importActual<typeof import('execa')>('execa')
     vi.mocked(execa).mockImplementationOnce(actualExeca)
 
-    await expect(system.captureOutputWithExitCode('/nonexistent/function-runner', [])).rejects.toThrow('ENOENT')
+    await inTemporaryDirectory(async (directory) => {
+      await expect(
+        system.captureOutputWithExitCode(process.execPath, [], {cwd: joinPath(directory, 'missing')}),
+      ).rejects.toThrow('ENOENT')
+    })
   })
 
   test.runIf(process.platform !== 'win32')(
