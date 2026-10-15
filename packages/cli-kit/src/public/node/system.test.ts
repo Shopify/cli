@@ -6,6 +6,7 @@ import open from 'open'
 import {describe, expect, test, vi} from 'vitest'
 import which from 'which'
 import {Readable} from 'stream'
+import {EventEmitter} from 'events'
 
 import * as fs from 'fs'
 
@@ -41,6 +42,56 @@ test('openURL does not launch a browser when input is disabled', async () => {
   } finally {
     vi.unstubAllEnvs()
   }
+})
+
+describe('openURL', () => {
+  function fakeChildProcess() {
+    return new EventEmitter() as unknown as Awaited<ReturnType<typeof open>>
+  }
+
+  test('returns true when the browser launcher starts', async () => {
+    // Given
+    const subprocess = fakeChildProcess()
+    vi.mocked(open).mockImplementation(async () => {
+      setImmediate(() => subprocess.emit('spawn'))
+      return subprocess
+    })
+
+    // When
+    const got = await system.openURL('https://shopify.dev')
+
+    // Then
+    expect(got).toBe(true)
+    expect(open).toHaveBeenCalledWith('https://shopify.dev')
+  })
+
+  test('returns false instead of crashing when the browser launcher is missing', async () => {
+    // Given
+    const subprocess = fakeChildProcess()
+    vi.mocked(open).mockImplementation(async () => {
+      setImmediate(() => subprocess.emit('error', new Error('spawn xdg-open ENOENT')))
+      return subprocess
+    })
+
+    // When
+    const got = await system.openURL('https://shopify.dev')
+
+    // Then
+    expect(got).toBe(false)
+    // A later error must not be thrown as an unhandled 'error' event
+    expect(() => subprocess.emit('error', new Error('late failure'))).not.toThrow()
+  })
+
+  test('returns false when open rejects', async () => {
+    // Given
+    vi.mocked(open).mockRejectedValue(new Error('unsupported platform'))
+
+    // When
+    const got = await system.openURL('https://shopify.dev')
+
+    // Then
+    expect(got).toBe(false)
+  })
 })
 
 describe('captureOutput', () => {
