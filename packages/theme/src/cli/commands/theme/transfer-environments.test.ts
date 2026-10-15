@@ -4,6 +4,7 @@ import Share from './share.js'
 import {executeThemePush} from '../../services/push.js'
 import {executeThemePull} from '../../services/pull.js'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -20,17 +21,15 @@ vi.mock('@shopify/cli-kit/node/metadata')
 class TestPush extends Push {
   public parse = vi.fn()
 }
-
 class TestPull extends Pull {
   public parse = vi.fn()
 }
-
 class TestShare extends Share {
   public parse = vi.fn()
 }
 
 describe.each([TestPush, TestPull, TestShare])('%s', (Command) => {
-  test.each(['none', 'partial', 'total', 'cancelled'] as const)(
+  test.each(['none', 'partial', 'total', 'cancelled', 'analytics'] as const)(
     'retains all environments in request order with %s failures',
     async (failures) => {
       await inTemporaryDirectory(async (path) => {
@@ -44,6 +43,11 @@ describe.each([TestPush, TestPull, TestShare])('%s', (Command) => {
         let releaseFirst: () => void = () => {}
         const secondStarted = new Promise<void>((resolve) => {
           releaseFirst = resolve
+        })
+        vi.mocked(addPublicMetadata).mockImplementation(async (collect) => {
+          const metadata = await collect()
+          if (failures === 'analytics' && metadata?.store_domain === 'second.myshopify.com')
+            throw new Error('analytics failed')
         })
         const executionOrder: string[] = []
         const execute = async (flags: {environment?: string[]}, session?: {storeFqdn: string}) => {
@@ -73,7 +77,6 @@ describe.each([TestPush, TestPull, TestShare])('%s', (Command) => {
         }
         vi.mocked(executeThemePush).mockImplementation(execute)
         vi.mocked(executeThemePull).mockImplementation(execute)
-
         const config = new Config({root: __dirname})
         await config.load()
         const command = new Command(
@@ -114,7 +117,7 @@ describe.each([TestPush, TestPull, TestShare])('%s', (Command) => {
                   .map((line) => JSON.parse(line))
               : []
             expect(events.filter((event) => event.level === 'error')).toHaveLength(
-              {none: 0, partial: 1, total: 3, cancelled: 0}[failures],
+              {none: 0, partial: 1, total: 3, cancelled: 0, analytics: 0}[failures],
             )
           })
         } finally {
@@ -151,7 +154,6 @@ describe.each([TestPush, TestPull, TestShare])('%s', (Command) => {
         ])
         expect(executeThemePush).not.toHaveBeenCalled()
         expect(executeThemePull).not.toHaveBeenCalled()
-
         expect(process.exitCode).toBe(1)
       })
     } finally {
