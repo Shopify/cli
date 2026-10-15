@@ -52,7 +52,7 @@ test.each([['--json'], ['--json', '--no-input']])(
           function: {
             handle: extension.configuration.handle ?? null,
             name: extension.name,
-            directory,
+            directory: resolve(directory),
             wasmPath: resolve(directory, 'dist/index.wasm'),
           },
         })

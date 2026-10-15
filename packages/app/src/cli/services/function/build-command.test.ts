@@ -24,7 +24,7 @@ test('returns typed facts using the builder-selected output path', async () => {
       function: {
         handle: extension.configuration.handle ?? null,
         name: extension.name,
-        directory,
+        directory: resolve(directory),
         wasmPath: resolve(path),
       },
     })
