@@ -195,6 +195,25 @@ describe('captureOutputWithExitCode', () => {
     expect(Buffer.concat(stderr).toString()).toBe('Diagnostic\r\n')
   })
 
+  test('rejects a missing executable instead of returning exit code zero', async () => {
+    const {execa: actualExeca} = await vi.importActual<typeof import('execa')>('execa')
+    vi.mocked(execa).mockImplementationOnce(actualExeca)
+
+    await expect(system.captureOutputWithExitCode('/nonexistent/function-runner', [])).rejects.toThrow('ENOENT')
+  })
+
+  test.runIf(process.platform !== 'win32')(
+    'rejects signal termination instead of returning exit code zero',
+    async () => {
+      const {execa: actualExeca} = await vi.importActual<typeof import('execa')>('execa')
+      vi.mocked(execa).mockImplementationOnce(actualExeca)
+
+      await expect(
+        system.captureOutputWithExitCode(process.execPath, ['-e', "process.kill(process.pid, 'SIGTERM')"]),
+      ).rejects.toThrow('SIGTERM')
+    },
+  )
+
   test('returns stdout, stderr, and exitCode on success', async () => {
     // Given
     vi.mocked(execa).mockResolvedValueOnce({stdout: 'output', stderr: '', exitCode: 0} as any)
@@ -323,15 +342,10 @@ describe('captureCommandWithExitCode', () => {
     )
   })
 
-  test('defaults exitCode to 0 when undefined', async () => {
-    // Given
+  test('rejects when the command terminates without an exit code', async () => {
     vi.mocked(execa).mockResolvedValueOnce({stdout: 'out', stderr: '', exitCode: undefined} as any)
 
-    // When
-    const got = await system.captureCommandWithExitCode('cmd')
-
-    // Then
-    expect(got.exitCode).toBe(0)
+    await expect(system.captureCommandWithExitCode('cmd')).rejects.toThrow('Command terminated without an exit code.')
   })
 
   test('raises an error if the command to run is found in the current directory', async () => {

@@ -126,6 +126,7 @@ export interface CaptureOutputResult {
 /**
  * Runs a command asynchronously and returns stdout, stderr, and exit code.
  * Unlike captureOutput, this function does NOT throw on non-zero exit codes.
+ * Startup failures and signal termination still throw an ExternalError.
  *
  * @param command - Command to be executed.
  * @param args - Arguments to pass to the command.
@@ -146,10 +147,17 @@ export async function captureOutputWithExitCode(
   options?: ExecOptions,
 ): Promise<CaptureOutputResult> {
   const result = await buildExec(command, args, options, {reject: false})
+  if (result.exitCode === undefined) {
+    throw new ExternalError(
+      result instanceof Error ? result.message : 'Command terminated without an exit code.',
+      command,
+      args,
+    )
+  }
   return {
     stdout: result.stdout,
     stderr: result.stderr,
-    exitCode: result.exitCode ?? 0,
+    exitCode: result.exitCode,
   }
 }
 
@@ -202,6 +210,7 @@ function parseCommand(command: string): string[] {
  * Runs a command string asynchronously and returns stdout, stderr, and exit code.
  * Parses the command string into command and arguments (handles quoted strings).
  * Unlike captureOutput, this function does NOT throw on non-zero exit codes.
+ * Startup failures and signal termination still throw an ExternalError.
  *
  * @param command - Full command string to be executed (e.g., 'ls -la "my folder"').
  * @param options - Optional settings for how to run the command.

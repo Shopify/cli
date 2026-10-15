@@ -2583,7 +2583,6 @@ DESCRIPTION
         "description": "Native Function input; query keys and values are preserved."
       },
       "output": {
-        "$ref": "#/definitions/FunctionRunResult/properties/input",
         "description": "Native Function output, including the runner-specific invalid-output representation."
       },
       "success": {

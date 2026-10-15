@@ -11,6 +11,8 @@ import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-even
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 import {ExternalError, handler} from '@shopify/cli-kit/node/error'
+import {chmod, inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('../../../services/app-context.js')
 vi.mock('@shopify/cli-kit/node/system')
@@ -206,4 +208,33 @@ test('prints a single standard fatal document for an infrastructure failure', as
 test('exposes the native schema in help', () => {
   expect(FunctionRun.jsonOutputSchema).toBe(functionRunJsonOutputSchema)
   expect(FunctionRun.descriptionForHelp()).toContain('FunctionRunResult')
+})
+
+test.runIf(process.platform !== 'win32').each([
+  {failure: 'EACCES', json: false},
+  {failure: 'EACCES', json: true},
+  {failure: 'SIGTERM', json: false},
+  {failure: 'SIGTERM', json: true},
+])('rejects actual runner $failure failures with json=$json', async ({failure, json}) => {
+  await inTemporaryDirectory(async (directory) => {
+    const runner = joinPath(directory, 'runner')
+    await writeFile(runner, '#!/bin/sh\nexit 0\n')
+    await chmod(runner, 0o644)
+    const {captureOutputWithExitCode: actualCapture} =
+      await vi.importActual<typeof import('@shopify/cli-kit/node/system')>('@shopify/cli-kit/node/system')
+    vi.mocked(captureOutputWithExitCode).mockImplementation((_command, _args, options) =>
+      actualCapture(
+        failure === 'EACCES' ? runner : process.execPath,
+        failure === 'EACCES' ? [] : ['-e', "process.kill(process.pid, 'SIGTERM')"],
+        {...options, cwd: directory},
+      ),
+    )
+    const argv = [...(json ? ['--json'] : []), '--no-input']
+    const instance = await command(argv)
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await expect(runWithCommandEventsForCommand(argv, () => instance.run())).rejects.toThrow(failure)
+      expect(stdout()).toBe('')
+      expect(stderr()).toBe('')
+    })
+  })
 })

@@ -1,7 +1,8 @@
 import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const nativeValueSchema = zod.unknown().refine((value) => value !== undefined, 'The native value must be present.')
+const nativeValueSchema = () =>
+  zod.unknown().refine((value) => value !== undefined, 'The native value must be present.')
 
 export const functionRunJsonOutputSchema = defineJsonOutputSchema({
   name: 'FunctionRunResult',
@@ -17,8 +18,8 @@ export const functionRunJsonOutputSchema = defineJsonOutputSchema({
         .describe('Linear memory usage in kilobytes, as reported by Function runner.'),
       instructions: zod.number().int().nonnegative(),
       logs: zod.string(),
-      input: nativeValueSchema.describe('Native Function input; query keys and values are preserved.'),
-      output: nativeValueSchema.describe(
+      input: nativeValueSchema().describe('Native Function input; query keys and values are preserved.'),
+      output: nativeValueSchema().describe(
         'Native Function output, including the runner-specific invalid-output representation.',
       ),
       success: zod

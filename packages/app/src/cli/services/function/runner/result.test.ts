@@ -135,3 +135,13 @@ test.each([
 test('requires input and output in its discoverable schema', () => {
   expect(functionRunJsonOutputSchema.jsonSchema).toMatchObject({required: expect.arrayContaining(['input', 'output'])})
 })
+
+test('publishes a self-contained result schema for help and documentation', () => {
+  expect(JSON.stringify(functionRunJsonOutputSchema.jsonSchema)).not.toContain('"$ref"')
+  expect(functionRunJsonOutputSchema.jsonSchema).toMatchObject({
+    properties: {
+      input: {description: 'Native Function input; query keys and values are preserved.'},
+      output: {description: 'Native Function output, including the runner-specific invalid-output representation.'},
+    },
+  })
+})
