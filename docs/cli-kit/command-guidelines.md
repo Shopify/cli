@@ -69,4 +69,6 @@ Use a space between the flag and value in documentation. If the value contains s
 
 Give every command, flag, and accepted option a description in command help. For a command, write both the summary and the description as sentence fragments in the third-person singular, as if they start with "This command...". Help shows both. For example, describe `shopify app generate extension` as "Generates a new app extension."
 
+The `@shopify/cli/command-help-verb-form` ESLint rule checks the first word of static command summaries and descriptions.
+
 Explain what the command does, not its internal implementation. Keep help, accepted values, and examples consistent with the command definition. Follow the [JSON output contracts](../cli/json-output.md) for result schema documentation.
