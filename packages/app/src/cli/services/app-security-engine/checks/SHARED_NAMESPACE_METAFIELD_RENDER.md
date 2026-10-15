@@ -33,6 +33,7 @@ Report this check alongside any XSS check that also reports the same sink. This 
 
 - App-owned values. Being app-owned doesn't make a value safe: the merchant can still edit it when the definition allows, and the XSS checks still require escaping.
 - Shared values that are escaped for their exact context, rendered as text, serialized with `json`, or rendered with `metafield_tag`.
+- Shared values passed through a strict allowlist sanitizer that is adequate for the final output context, whether the defense is custom or library-provided. A sanitizer's name alone isn't proof: verify its configuration and which executable constructs survive in that context.
 - Values used only as data that never reaches HTML, JavaScript or URL output.
 
 ## Suggested fix
