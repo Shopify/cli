@@ -10,7 +10,7 @@ import {clearStoredStoreAppSession, getCurrentStoredStoreAppSession} from '@shop
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
-import {setLastSeenUserId} from '@shopify/cli-kit/node/session'
+import {setLastSeenUserId, isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
 import {beforeEach, describe, test, expect, vi} from 'vitest'
 import type {OrganizationShopFields} from '../../../utilities/store-lookup/types.js'
 import type {Store} from '../../../api/graphql/business-platform-organizations/generated/types.js'
@@ -415,6 +415,41 @@ The CLI is currently unable to prompt for reauthentication.`)
 
     await expect(getStoreInfo({store: SHOP})).rejects.toThrow('upstream exploded')
     expect(loadStoredStoreSession).not.toHaveBeenCalled()
+  })
+
+  test('ignores a stored preview session while the service account token is set', async () => {
+    vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
+    vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({
+      ...STORED_SESSION,
+      kind: 'preview',
+      preview: {
+        placeholderAccountUuid: 'placeholder-uuid',
+        shopId: '123',
+        name: 'Lavender Candles',
+        country: 'US',
+        createdAt: '2026-06-08T12:00:00.000Z',
+        accessUrl: 'https://app.shopify.com/auth/preview-store?token=access-token',
+      },
+    })
+
+    const result = await getStoreInfo({store: SHOP})
+
+    expect(getCurrentStoredStoreAppSession).not.toHaveBeenCalled()
+    expect(getPreviewStore).not.toHaveBeenCalled()
+    expect(fetchDestinationsContext).toHaveBeenCalledWith({store: SHOP, noPrompt: false})
+    expect(result.displayName).toBe('My Shop (Org)')
+  })
+
+  test('throws the BP error instead of falling back to stored store auth while the service account token is set', async () => {
+    vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
+    mockStoreAuthFallback()
+
+    await expect(getStoreInfo({store: SHOP})).rejects.toMatchObject({
+      message: `Couldn't find a store with domain ${SHOP} for the current account.`,
+    })
+    expect(getCurrentStoredStoreAppSession).not.toHaveBeenCalled()
+    expect(loadStoredStoreSession).not.toHaveBeenCalled()
+    expect(graphqlRequest).not.toHaveBeenCalled()
   })
 
   test('uses the refreshed session store returned by the stored-auth loader', async () => {
