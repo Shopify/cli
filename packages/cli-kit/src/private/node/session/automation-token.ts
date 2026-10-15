@@ -27,6 +27,9 @@ export function automationTokenVariable(env: NodeJS.ProcessEnv = process.env): s
  * `service_account_token` for SHOPIFY_SERVICE_ACCOUNT_TOKEN, and `partners_token` for SHOPIFY_APP_AUTOMATION_TOKEN and
  * SHOPIFY_CLI_PARTNERS_TOKEN, which existing dashboards already expect.
  *
+ * The value tells which variable held the token, not which kind of token it is: the CLI can't tell tokens apart, and
+ * any of them works in any of the variables. It shows how much usage has moved to SHOPIFY_SERVICE_ACCOUNT_TOKEN.
+ *
  * @param env - Environment variables to read.
  * @returns The auth method to report.
  */
