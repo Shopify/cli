@@ -9,7 +9,7 @@ vi.mock('../dev/fetch.js')
 const webhooksActiveAppModule: AppModuleVersion = {
   registrationId: 'C_A',
   registrationUuid: 'UUID_C_A',
-  registrationTitle: 'Registration title',
+  handle: 'Registration title',
   type: 'Module:Webhooks',
   config: {api_version: '2023-04'},
   specification: {
@@ -24,7 +24,7 @@ const webhooksActiveAppModule: AppModuleVersion = {
 const homeActiveAppModule: AppModuleVersion = {
   registrationId: 'C_B',
   registrationUuid: 'UUID_C_B',
-  registrationTitle: 'Registration title',
+  handle: 'Registration title',
   type: 'Module:AppHome',
   config: {app_url: 'https://myapp.com', embedded: true},
   specification: {
@@ -39,7 +39,7 @@ const homeActiveAppModule: AppModuleVersion = {
 const brandingActiveAppModule: AppModuleVersion = {
   registrationId: 'C_C',
   registrationUuid: 'UUID_C_C',
-  registrationTitle: 'Registration title',
+  handle: 'Registration title',
   type: 'Module:Branding',
   config: {name: 'name'},
   specification: {
@@ -91,7 +91,7 @@ describe('fetchAppRemoteConfiguration', () => {
     const complianceActiveAppModule: AppModuleVersion = {
       registrationId: 'C_B',
       registrationUuid: 'UUID_C_B',
-      registrationTitle: 'Registration title',
+      handle: 'Registration title',
       type: 'Module:Privacy',
       config: {
         customers_redact_url: 'https://myapp.com/redact',
@@ -171,7 +171,7 @@ describe('remoteAppConfigurationExtensionContent', () => {
     const eventsModule = (handle: string, topic: string): AppModuleVersion => ({
       registrationId: handle,
       registrationUuid: `UUID_${handle}`,
-      registrationTitle: handle,
+      handle,
       type: 'events',
       config: {events: {api_version: '2024-01', subscription: {topic, actions: ['create'], uri: 'https://myapp.com'}}},
       specification: {

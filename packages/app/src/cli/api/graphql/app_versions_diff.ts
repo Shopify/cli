@@ -1,6 +1,6 @@
 export interface AppVersionsDiffExtensionSchema {
   uuid: string
-  registrationTitle: string
+  handle: string
   specification: {
     identifier: string
     experience: string

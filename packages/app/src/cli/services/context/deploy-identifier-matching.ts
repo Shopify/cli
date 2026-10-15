@@ -113,7 +113,7 @@ function uniqueHandleAndTypeMatch(
   remote: AppModuleVersion,
 ): ExtensionInstance | undefined {
   const sameHandleAndType = (local: ExtensionInstance, candidate: AppModuleVersion) =>
-    slugify(local.handle) === slugify(candidate.registrationTitle) &&
+    slugify(local.handle) === slugify(candidate.handle) &&
     (local.specification.identifier === candidate.specification?.identifier ||
       local.specification.externalIdentifier === candidate.specification?.identifier)
 
@@ -202,9 +202,9 @@ async function localAppConfigurationExtensionContent(app: AppInterface, apiKey: 
 /** Builds prompt metadata for a remote-only module. */
 function buildRemoteBreakdownInfo(remote: AppModuleVersion) {
   if (remote.specification?.options.managementExperience === 'dashboard') {
-    return buildDashboardBreakdownInfo(remote.registrationTitle)
+    return buildDashboardBreakdownInfo(remote.handle)
   }
-  return buildExtensionBreakdownInfo(remote.registrationTitle, remote.registrationId)
+  return buildExtensionBreakdownInfo(remote.handle, remote.registrationId)
 }
 
 /** Fetches install count for delete warnings. */

@@ -38,7 +38,7 @@ describe('versionDiffByVersion', () => {
         versionsDiff: {
           added: [
             {
-              registrationTitle: 'Extension 1',
+              handle: 'Extension 1',
               uuid: 'uuid1',
               specification: {
                 identifier: 'app_access',
@@ -51,7 +51,7 @@ describe('versionDiffByVersion', () => {
           ],
           updated: [
             {
-              registrationTitle: 'Extension 2',
+              handle: 'Extension 2',
               uuid: 'uuid2',
               specification: {
                 identifier: 'flow_action_definition',
@@ -64,7 +64,7 @@ describe('versionDiffByVersion', () => {
           ],
           removed: [
             {
-              registrationTitle: 'Extension 3',
+              handle: 'Extension 3',
               uuid: 'uuid3',
               specification: {
                 identifier: 'post_purchase_ui_extension',
