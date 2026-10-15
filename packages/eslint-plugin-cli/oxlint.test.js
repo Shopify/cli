@@ -405,3 +405,33 @@ interface widget {}`
     rmSync(workspace, {recursive: true, force: true, maxRetries: 2})
   }
 })
+
+test.each(['lint', 'lint:fix'])('CLI %s checks entry scripts in bin', (targetName) => {
+  const {mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync} = require('node:fs')
+  const {tmpdir} = require('node:os')
+  const {join, dirname} = require('node:path')
+  const {spawnSync} = require('node:child_process')
+  const {targets} = JSON.parse(readFileSync(join(__dirname, '../cli/project.json'), 'utf8'))
+  const workspace = mkdtempSync(join(tmpdir(), 'cli lint bin-'))
+  try {
+    const target = targets[targetName].options
+    const directory = join(workspace, target.cwd)
+    mkdirSync(join(directory, 'src'), {recursive: true})
+    mkdirSync(join(directory, 'bin'), {recursive: true})
+    writeFileSync(join(directory, 'src', 'index.ts'), 'export const value = 1\n')
+    writeFileSync(join(directory, 'bin', 'dev.js'), 'debugger\n')
+    writeFileSync(
+      join(workspace, 'oxlint.json'),
+      JSON.stringify({categories: {correctness: 'off'}, rules: {'no-debugger': 'error'}}),
+    )
+    const binary = join(dirname(require.resolve('oxlint/package.json')), 'bin/oxlint')
+    const command = target.command.replace('pnpm oxlint', `"${process.execPath}" "${binary}" --format json`)
+    const result = spawnSync(command, {cwd: directory, shell: true, encoding: 'utf8'})
+    expect(result.status, result.stdout + result.stderr).toBe(1)
+    const {diagnostics} = JSON.parse(result.stdout)
+    expect(diagnostics.map((diagnostic) => diagnostic.code)).toEqual(['eslint(no-debugger)'])
+    expect(diagnostics[0].filename.replaceAll('\\', '/')).toBe('bin/dev.js')
+  } finally {
+    rmSync(workspace, {recursive: true, force: true, maxRetries: 2})
+  }
+})
