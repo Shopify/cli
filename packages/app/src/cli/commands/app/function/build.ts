@@ -7,7 +7,6 @@ import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../../utilities/a
 import {localAppContext} from '../../../services/app-context.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
-import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 
 export default class FunctionBuild extends AppUnlinkedCommand {
@@ -42,20 +41,13 @@ export default class FunctionBuild extends AppUnlinkedCommand {
       const result = await buildFunction(ourFunction, {app, stdout, stderr, useTasks: true, environment: 'production'})
       renderFunctionBuildResult(result, flags.json)
     }
-    try {
-      if (flags.json) {
-        await renderConcurrent({
-          processes: [{prefix: ourFunction.localIdentifier, action: execute}],
-          showTimestamps: false,
-        })
-      } else {
-        await execute(process.stdout, process.stderr)
-      }
-    } catch (error) {
-      if (flags.json && error instanceof AbortSilentError) {
-        throw new AbortError('The Function build did not complete. See the build diagnostics for details.')
-      }
-      throw error
+    if (flags.json) {
+      await renderConcurrent({
+        processes: [{prefix: ourFunction.localIdentifier, action: execute}],
+        showTimestamps: false,
+      })
+    } else {
+      await execute(process.stdout, process.stderr)
     }
 
     return {app}

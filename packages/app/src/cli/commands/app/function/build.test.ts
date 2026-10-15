@@ -10,7 +10,7 @@ import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {dirname} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
-import {AbortError, AbortSilentError, handler} from '@shopify/cli-kit/node/error'
+import {AbortError, handler} from '@shopify/cli-kit/node/error'
 import {unstyled} from '@shopify/cli-kit/node/output'
 
 // eslint-disable-next-line no-restricted-imports
@@ -98,13 +98,13 @@ test.each([[], ['--no-input']])('keeps native build output and the text success 
   })
 })
 
-test.each([new AbortError('Compiler failed'), new AbortSilentError()])(
+test.each(['Compiler failed', 'Failed to build function.'])(
   'writes a fatal document for failed builds: %s',
-  async (error) => {
+  async (message) => {
     vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
     await inTemporaryDirectory(async (directory) => {
       const {instance} = await command(['--json'], directory)
-      vi.mocked(buildFunctionExtension).mockRejectedValue(error)
+      vi.mocked(buildFunctionExtension).mockRejectedValue(new AbortError(message))
       await withCapturedStandardStreams(async ({stdout}) => {
         await runWithCommandEventsForCommand(instance.argv, async () => {
           try {
@@ -114,7 +114,7 @@ test.each([new AbortError('Compiler failed'), new AbortSilentError()])(
             await handler(failure)
           }
         })
-        expect(JSON.parse(stdout())).toMatchObject({error: {type: 'abort', message: expect.any(String)}})
+        expect(JSON.parse(stdout())).toEqual({error: {type: 'abort', message}})
         expect(stdout()).not.toContain('"status":"success"')
       })
     })
