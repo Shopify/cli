@@ -1,5 +1,5 @@
 import {chooseFunction, functionFlags} from '../../../services/function/common.js'
-import {buildFunction} from '../../../services/function/build-command.js'
+import {buildFunctionExtension} from '../../../services/build/extension.js'
 import {functionBuildJsonOutputSchema} from '../../../services/function/build-command/types.js'
 import {renderFunctionBuildResult} from '../../../services/function/build-command/result.js'
 import {appFlags} from '../../../flags.js'
@@ -38,7 +38,13 @@ export default class FunctionBuild extends AppUnlinkedCommand {
     const ourFunction = await chooseFunction(app, flags.path)
 
     const execute = async (stdout: Writable, stderr: Writable) => {
-      const result = await buildFunction(ourFunction, {app, stdout, stderr, useTasks: true, environment: 'production'})
+      const result = await buildFunctionExtension(ourFunction, {
+        app,
+        stdout,
+        stderr,
+        useTasks: true,
+        environment: 'production',
+      })
       renderFunctionBuildResult(result, flags.json)
     }
     if (flags.json) {

@@ -3,11 +3,13 @@ import {chooseFunction} from '../../../services/function/common.js'
 import {buildFunctionExtension} from '../../../services/build/extension.js'
 import {localAppContext} from '../../../services/app-context.js'
 import {testApp, testFunctionExtension, testProject} from '../../../models/app/app.test-data.js'
-import {functionBuildJsonOutputSchema} from '../../../services/function/build-command/types.js'
+import {
+  functionBuildJsonOutputSchema,
+  type FunctionBuildResult,
+} from '../../../services/function/build-command/types.js'
 import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
-import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {dirname} from '@shopify/cli-kit/node/path'
+import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {AbortError, handler} from '@shopify/cli-kit/node/error'
@@ -30,19 +32,28 @@ async function command(argv: string[], directory: string) {
   const extension = await testFunctionExtension({dir: directory})
   vi.mocked(localAppContext).mockResolvedValue({app, project: testProject(), activeConfig: {} as never})
   vi.mocked(chooseFunction).mockResolvedValue(extension)
-  return {instance: new FunctionBuild(argv, await Config.load()), extension, app}
+  const result: FunctionBuildResult = {
+    status: 'success',
+    function: {
+      handle: extension.configuration.handle ?? null,
+      name: extension.name,
+      directory: resolve(directory),
+      wasmPath: null,
+    },
+  }
+  vi.mocked(buildFunctionExtension).mockResolvedValue(result)
+  return {instance: new FunctionBuild(argv, await Config.load()), extension, app, result}
 }
 
 test.each([['--json'], ['--json', '--no-input']])(
   'writes one result and structured build diagnostics: %j',
   async (...argv) => {
     await inTemporaryDirectory(async (directory) => {
-      const {instance, extension, app} = await command(argv, directory)
+      const {instance, extension, app, result} = await command(argv, directory)
       vi.mocked(buildFunctionExtension).mockImplementation(async (_extension, options) => {
-        await mkdir(dirname(extension.outputPath))
-        await writeFile(extension.outputPath, Buffer.from([0, 97, 115, 109, 1, 0, 0, 0]))
         options.stdout.write('Compiler output\n')
         options.stderr.write('Compiler warning\n')
+        return {...result, function: {...result.function, wasmPath: resolve(extension.outputPath)}}
       })
       await withCapturedStandardStreams(async ({stdout, stderr}) => {
         const result = await runWithCommandEventsForCommand(argv, () => instance.run())
@@ -84,10 +95,11 @@ test('reports an absent Wasm artifact as null', async () => {
 
 test.each([[], ['--no-input']])('keeps native build output and the text success banner: %j', async (...argv) => {
   await inTemporaryDirectory(async (directory) => {
-    const {instance} = await command(argv, directory)
+    const {instance, result} = await command(argv, directory)
     vi.mocked(buildFunctionExtension).mockImplementation(async (_extension, options) => {
       options.stdout.write('Native build output\n')
       options.stderr.write('Native build warning\n')
+      return result
     })
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
       await instance.run()
