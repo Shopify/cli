@@ -1,6 +1,7 @@
 import {type FunctionInfoResult} from './info/types.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
+import {joinPath} from '@shopify/cli-kit/node/path'
 // Public artifact paths use native separators rather than CLI Kit's normalized paths.
 // eslint-disable-next-line no-restricted-imports
 import {resolve} from 'node:path'
@@ -25,11 +26,11 @@ export function functionInfo(
         .filter(({target}) => Boolean(target))
         .map((target) => ({
           target: target.target,
-          inputQueryPath: target.input_query ? resolve(ourFunction.directory, target.input_query) : null,
+          inputQueryPath: target.input_query ? resolve(joinPath(ourFunction.directory, target.input_query)) : null,
           export: target.export === '' ? null : (target.export ?? null),
         })),
       schemaPath: schemaPath ? resolve(schemaPath) : null,
-      wasmPath: resolve(ourFunction.directory, config.build?.path ?? ourFunction.outputRelativePath),
+      wasmPath: resolve(joinPath(ourFunction.directory, config.build?.path ?? ourFunction.outputRelativePath)),
       functionRunnerPath: resolve(functionRunnerPath),
     },
   }

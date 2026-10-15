@@ -1,6 +1,8 @@
 import {functionInfo} from './info.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
 import {describe, expect, test} from 'vitest'
+import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 // Public artifact paths use native separators rather than CLI Kit's normalized paths.
 // eslint-disable-next-line no-restricted-imports
 import {resolve} from 'node:path'
@@ -50,6 +52,24 @@ describe('functionInfo', () => {
     extension.configuration.build!.path = 'custom/output.wasm'
     const result = functionInfo(extension, {functionRunnerPath: '/path/to/runner'})
     expect(result.function.wasmPath).toBe(resolve('/path/to/function/custom/output.wasm'))
+  })
+
+  test('resolves backslashes in configured paths like build and deployment', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await mkdir(joinPath(directory, 'custom'))
+      await writeFile(joinPath(directory, 'custom/index.wasm'), 'wasm')
+      await writeFile(joinPath(directory, 'custom/input.graphql'), 'query Input { shop { id } }')
+      const extension = await testFunctionExtension({dir: directory})
+      extension.configuration.build!.path = 'custom\\index.wasm'
+      extension.configuration.targeting = [{target: 'run', input_query: 'custom\\input.graphql'}]
+
+      const result = functionInfo(extension, {functionRunnerPath: '/path/to/runner'})
+
+      expect(result.function.wasmPath).toBe(resolve(directory, 'custom/index.wasm'))
+      expect(result.function.targets[0]!.inputQueryPath).toBe(resolve(directory, 'custom/input.graphql'))
+      await expect(readFile(result.function.wasmPath)).resolves.toBe('wasm')
+      await expect(readFile(result.function.targets[0]!.inputQueryPath!)).resolves.toBe('query Input { shop { id } }')
+    })
   })
 
   test('returns null for unavailable fields and an empty targets array', async () => {
