@@ -39,6 +39,7 @@ import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {DevInstance} from '@shopify/cli-kit/node/dev-instance'
 
 export interface DevOptions {
   app: AppLinkedInterface
@@ -63,6 +64,8 @@ export interface DevOptions {
   graphiqlPort?: number
   graphiqlKey?: string
   installMkcert?: boolean
+  /** The running-instance record for this session: its log receives every process's output. */
+  devInstance?: DevInstance
 }
 
 export async function dev(commandOptions: DevOptions) {
@@ -328,16 +331,31 @@ async function launchDevProcesses({
   devSessionStatusManager: DevSessionStatusManager
 }) {
   const abortController = new AbortController()
+  const devInstance = config.commandOptions.devInstance
   const processesForTaskRunner: OutputProcess[] = processes.map((process) => {
     const outputProcess: OutputProcess = {
       prefix: process.prefix,
       action: async (stdout, stderr, signal) => {
         const fn = process.function as DevProcessFunction<typeof process.options>
-        return fn({stdout, stderr, abortSignal: signal}, process.options)
+        const processStdout = devInstance ? devInstance.tee(stdout, {source: process.prefix, stream: 'stdout'}) : stdout
+        const processStderr = devInstance ? devInstance.tee(stderr, {source: process.prefix, stream: 'stderr'}) : stderr
+        return fn({stdout: processStdout, stderr: processStderr, abortSignal: signal}, process.options)
       },
     }
     return outputProcess
   })
+
+  if (devInstance) {
+    const urls = {
+      storeFqdn: config.storeFqdn,
+      previewUrl,
+      graphiqlUrl,
+      appUrl: config.localApp.devApplicationURLs?.applicationUrl,
+      localUrl: config.network.proxyUrl,
+    }
+    await devInstance.update({status: 'running', details: urls})
+    devInstance.log({source: 'app dev', level: 'info', message: `Preview URL: ${previewUrl}`})
+  }
 
   const developerPlatformClient = config.developerPlatformClient
   const app = {
