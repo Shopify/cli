@@ -1,6 +1,6 @@
 import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
 import {recordStoreFqdnMetadata} from '../attribution.js'
-import {ensureNoOrganizationAutomationToken, setLastSeenUserId} from '@shopify/cli-kit/node/session'
+import {ensureNoServiceAccountToken, setLastSeenUserId} from '@shopify/cli-kit/node/session'
 import type {AdminSession} from '@shopify/cli-kit/node/session'
 
 /**
@@ -12,7 +12,7 @@ import type {AdminSession} from '@shopify/cli-kit/node/session'
  * @returns The Admin session for the stored auth.
  */
 export async function prepareBulkAdminContext(store: string): Promise<AdminSession> {
-  ensureNoOrganizationAutomationToken()
+  ensureNoServiceAccountToken()
   const session = await loadStoredStoreSession(store)
   await recordStoreFqdnMetadata(session.store, true)
   setLastSeenUserId(session.userId)

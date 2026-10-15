@@ -21,7 +21,7 @@ import {themeToken} from '../../public/node/context/local.js'
 import {AbortError} from '../../public/node/error.js'
 import {normalizeStoreFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
 import {getIdentityTokenInformation, getAppAutomationToken} from '../../public/node/environment.js'
-import {AdminSession, ensureNoOrganizationAutomationToken, logout} from '../../public/node/session.js'
+import {AdminSession, ensureNoServiceAccountToken, logout} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
 import {businessPlatformRequest} from '../../public/node/api/business-platform.js'
@@ -209,7 +209,7 @@ export async function ensureAuthenticated(
   // login starts.
   const variablesProblem = automationTokenVariablesProblem()
   if (variablesProblem) throw new AbortError(variablesProblem.message, variablesProblem.tryMessage)
-  ensureNoOrganizationAutomationToken()
+  ensureNoServiceAccountToken()
 
   const fqdn = await identityFqdn()
 

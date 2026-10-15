@@ -6,7 +6,7 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
   ensureAuthenticatedThemes,
-  ensureNoOrganizationAutomationToken,
+  ensureNoServiceAccountToken,
   findSessionIdByAlias,
   setCurrentSessionAlias,
   setLastSeenUserId,
@@ -55,13 +55,11 @@ describe('store command analytics session helpers', () => {
   })
 })
 
-describe('ensureNoOrganizationAutomationToken', () => {
-  test('fails while SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN is set', () => {
-    vi.mocked(automationTokenVariable).mockReturnValue('SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN')
+describe('ensureNoServiceAccountToken', () => {
+  test('fails while SHOPIFY_SERVICE_ACCOUNT_TOKEN is set', () => {
+    vi.mocked(automationTokenVariable).mockReturnValue('SHOPIFY_SERVICE_ACCOUNT_TOKEN')
 
-    expect(() => ensureNoOrganizationAutomationToken()).toThrow(
-      "This command can't use SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN.",
-    )
+    expect(() => ensureNoServiceAccountToken()).toThrow("This command can't use SHOPIFY_SERVICE_ACCOUNT_TOKEN.")
   })
 
   test.each([undefined, 'SHOPIFY_APP_AUTOMATION_TOKEN', 'SHOPIFY_CLI_PARTNERS_TOKEN'])(
@@ -69,7 +67,7 @@ describe('ensureNoOrganizationAutomationToken', () => {
     (variable) => {
       vi.mocked(automationTokenVariable).mockReturnValue(variable)
 
-      expect(() => ensureNoOrganizationAutomationToken()).not.toThrow()
+      expect(() => ensureNoServiceAccountToken()).not.toThrow()
     },
   )
 })

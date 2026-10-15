@@ -344,16 +344,16 @@ ${outputToken.json(scopes)}
 }
 
 /**
- * Fails when SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN is set, for commands that can't run with that token.
+ * Fails when SHOPIFY_SERVICE_ACCOUNT_TOKEN is set, for commands that can't run with that token.
  *
- * Organization automation tokens can't log in as a user or call a store's Admin API, so commands that need either
+ * Service account tokens can't log in as a user or call a store's Admin API, so commands that need either
  * refuse to run instead of quietly using the person's own login. `ensureAuthenticated` runs this check before any
  * login. Commands that run on a login saved by `shopify store auth` call it before loading that login.
  *
- * @throws AbortError when SHOPIFY_ORGANIZATION_AUTOMATION_TOKEN is set.
+ * @throws AbortError when SHOPIFY_SERVICE_ACCOUNT_TOKEN is set.
  */
-export function ensureNoOrganizationAutomationToken(): void {
-  const variable = environmentVariables.organizationAutomationToken
+export function ensureNoServiceAccountToken(): void {
+  const variable = environmentVariables.serviceAccountToken
   if (automationTokenVariable() !== variable) return
 
   throw new AbortError(`This command can't use ${variable}.`, `Unset ${variable} to run it with your Shopify account.`)
