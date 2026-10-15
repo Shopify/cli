@@ -162,9 +162,36 @@ tester.run('no-undef-init', rules['no-undef-init'], {
 })
 
 tester.run('prefer-global-url', rules['prefer-global-url'], {
-  valid: ['const value = new URL("https://example.com")'],
-  invalid: [{code: "import {URL} from 'node:url'", errors: 1}],
+  valid: [
+    'const value = new URL("https://example.com")',
+    "import * as url from 'node:url'",
+    "import url from 'node:url'",
+    "import * as url from 'url'",
+    "import url from 'url'",
+    "import {URLSearchParams} from 'node:url'",
+  ],
+  invalid: [
+    {code: "import {URL} from 'node:url'", errors: 1},
+    {code: "import {URL as CustomURL} from 'url'", errors: 1},
+    {code: "import url, {URL} from 'node:url'", errors: 1},
+  ],
 })
+
+tester.run('prefer-global-buffer', rules['prefer-global-buffer'], {
+  valid: ["import * as buffer from 'node:buffer'", "import buffer from 'buffer'"],
+  invalid: [{code: "import {Buffer as CustomBuffer} from 'node:buffer'", errors: 1}],
+})
+
+for (const global of ['console', 'process']) {
+  tester.run(`prefer-global-${global}`, rules[`prefer-global-${global}`], {
+    valid: [`import {unrelated} from 'node:${global}'`],
+    invalid: [
+      {code: `import value from 'node:${global}'`, errors: 1},
+      {code: `import * as value from '${global}'`, errors: 1},
+      {code: `import {${global} as value} from 'node:${global}'`, errors: 1},
+    ],
+  })
+}
 
 tester.run('unused-imports', rules['unused-imports'], {
   valid: [

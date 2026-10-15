@@ -22,8 +22,12 @@ function globalRule(global) {
         ImportDeclaration(node) {
           const source = node.source.value.replace(/^node:/, '')
           for (const specifier of node.specifiers) {
-            const imported = specifier.imported?.name ?? (source === global.toLowerCase() ? global : undefined)
-            if (imported === global && globalModules[source]?.includes(global)) {
+            const imported = specifier.imported?.name
+            const importsGlobalModule =
+              specifier.type !== 'ImportSpecifier' &&
+              source === global &&
+              (source === 'console' || source === 'process')
+            if ((imported === global || importsGlobalModule) && globalModules[source]?.includes(global)) {
               context.report({node: specifier, message: `Use the global ${global} instead of importing it.`})
             }
           }
