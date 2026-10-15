@@ -9,9 +9,21 @@ import {mockAndCaptureOutput} from './testing/output.js'
 import {unstyled} from './output.js'
 import {defineJsonOutputSchema} from './json-output-schema.js'
 import {zod} from './schema.js'
+import {runAtMinimumInterval} from '../../private/node/conf-store.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {Flags} from '@oclif/core'
 import {Ajv} from 'ajv'
+
+vi.mock('../../private/node/conf-store.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../private/node/conf-store.js')>()
+  return {
+    ...actual,
+    runAtMinimumInterval: vi.fn(async (_key: string, _interval: unknown, task: () => Promise<void>) => {
+      await task()
+      return true
+    }),
+  }
+})
 
 let originalStdinIsTTY: boolean | undefined
 let originalStderrIsTTY: boolean | undefined
@@ -897,6 +909,49 @@ describe('applying environments', async () => {
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
     `)
+  })
+
+  test('shows a deprecation warning when SHOPIFY_CLI_PARTNERS_TOKEN is set', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+    vi.stubEnv('SHOPIFY_CLI_PARTNERS_TOKEN', 'partners-token')
+
+    // When
+    await MockCommand.run()
+
+    // Then
+    expect(outputMock.warn()).toMatchInlineSnapshot(`
+      "╭─ warning ────────────────────────────────────────────────────────────────────╮
+      │                                                                              │
+      │  SHOPIFY_CLI_PARTNERS_TOKEN is deprecated.                                   │
+      │                                                                              │
+      │  Move the token to SHOPIFY_SERVICE_ACCOUNT_TOKEN.                            │
+      │  SHOPIFY_CLI_PARTNERS_TOKEN still works for now, but a future release will   │
+      │  stop reading it.                                                            │
+      │                                                                              │
+      ╰──────────────────────────────────────────────────────────────────────────────╯
+      "
+    `)
+  })
+
+  test('shows the deprecation warning at most once a day', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+    vi.stubEnv('SHOPIFY_APP_AUTOMATION_TOKEN', 'app-token')
+    vi.mocked(runAtMinimumInterval).mockResolvedValueOnce(false)
+
+    // When
+    await MockCommand.run()
+
+    // Then
+    expect(runAtMinimumInterval).toHaveBeenCalledWith(
+      'warn-on-deprecated-automation-token-variable',
+      {days: 1},
+      expect.any(Function),
+    )
+    expect(outputMock.warn()).toMatchInlineSnapshot('""')
   })
 
   test('does not show the deprecation warning when SHOPIFY_SERVICE_ACCOUNT_TOKEN is set', async () => {
