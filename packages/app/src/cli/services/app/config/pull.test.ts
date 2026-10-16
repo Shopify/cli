@@ -10,7 +10,7 @@ import {resolve} from 'node:path'
 vi.mock('./link.js')
 vi.mock('../../generate/fetch-extension-specifications.js')
 
-test('returns the written configuration and public app metadata', async () => {
+test('returns the written path and app identity', async () => {
   const app = testAppLinked()
   const remoteApp = testOrganizationApp()
   vi.mocked(fetchSpecifications).mockResolvedValue([])
@@ -31,7 +31,8 @@ test('returns the written configuration and public app metadata', async () => {
     remoteApp,
   })
   expect(result.path).toBe(resolve(app.configPath))
-  expect(result.configuration).toEqual(app.configuration)
+  expect(result).not.toHaveProperty('configuration')
+  expect(result.app.name).toBe(app.configuration.name)
   expect(result.app.clientId).toBe(remoteApp.apiKey)
   expect(result.app).not.toHaveProperty('apiSecretKeys')
   expect(overwriteLocalConfigFileWithRemoteAppConfiguration).toHaveBeenCalledWith(

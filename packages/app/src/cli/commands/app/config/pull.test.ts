@@ -18,7 +18,7 @@ function setup() {
   const remoteApp = testOrganizationApp()
   const result = projectAppConfigResult({
     path: app.configPath,
-    configuration: app.configuration,
+    appName: app.configuration.name,
     app: remoteApp,
   })
   vi.mocked(linkedAppContext).mockResolvedValue({app, remoteApp} as Awaited<ReturnType<typeof linkedAppContext>>)
@@ -82,46 +82,26 @@ test('rejects an invalid file path while all other fields are valid', () => {
   expect(() => appConfigPullJsonOutputSchema.validate({...setup().result, path: null})).toThrow()
 })
 
-test('preserves all available public remote fields without exposing credentials', () => {
+test('returns app identity without duplicated configuration fields', () => {
   const remoteApp = testOrganizationApp({
-    appType: 'custom',
-    newApp: false,
-    grantedScopes: ['read_products'],
-    developmentStorePreviewEnabled: false,
-    applicationUrl: 'https://example.com',
     redirectUrlWhitelist: [],
     requestedAccessScopes: [],
     webhookApiVersion: '2026-07',
-    embedded: false,
-    posEmbedded: false,
-    preferencesUrl: '',
-    gdprWebhooks: {customerDeletionUrl: '', customerDataRequestUrl: '', shopDeletionUrl: ''},
-    appProxy: {subPath: 'example', subPathPrefix: 'apps', url: 'https://example.com/proxy'},
     configuration: testAppLinked().configuration,
   })
   const result = projectAppConfigResult({
     path: setup().result.path,
-    configuration: testAppLinked().configuration,
+    appName: 'Configured name',
     app: remoteApp,
   })
   const encoded = JSON.parse(appConfigPullJsonOutputSchema.encode(result))
-  expect(encoded.app).toMatchObject({
-    name: remoteApp.title,
+  expect(Object.keys(encoded)).toEqual(['path', 'app'])
+  expect(encoded.app).toEqual({
+    id: remoteApp.id,
+    gid: null,
+    name: 'Configured name',
     clientId: remoteApp.apiKey,
-    appType: 'custom',
-    newApp: false,
-    grantedScopes: ['read_products'],
-    developmentStorePreviewEnabled: false,
-    applicationUrl: 'https://example.com',
-    redirectUrls: [],
-    requestedAccessScopes: [],
-    webhookApiVersion: '2026-07',
-    embedded: false,
-    posEmbedded: false,
-    preferencesUrl: null,
-    privacyWebhooks: {customerDeletionUrl: null, customerDataRequestUrl: null, shopDeletionUrl: null},
-    appProxy: {subPath: 'example', subPathPrefix: 'apps', url: 'https://example.com/proxy'},
+    organizationId: remoteApp.organizationId,
+    organizationGid: null,
   })
-  expect(encoded.app).not.toHaveProperty('apiSecretKeys')
-  expect(encoded.app).not.toHaveProperty('configuration')
 })

@@ -64,7 +64,7 @@ export default async function pull(options: PullOptions): Promise<AppConfigPullR
 
   return projectAppConfigResult({
     path: resolvePath(localAppOptions.appDirectory ?? directory, configFileName),
-    configuration: mergedConfiguration,
+    appName: mergedConfiguration.name,
     app: remoteApp,
   })
 }
