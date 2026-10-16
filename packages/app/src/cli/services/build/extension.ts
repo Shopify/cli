@@ -3,7 +3,6 @@ import {AppInterface} from '../../models/app/app.js'
 import {bundleExtension} from '../extensions/bundle.js'
 import {buildGraphqlTypes, buildJSFunction, runTrampoline, runWasmOpt} from '../function/build.js'
 import {validateSchemaApiVersion} from '../function/schema-version.js'
-import {functionIdentity} from '../function/identity.js'
 import {type FunctionBuildResult} from '../function/build-command/types.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
@@ -213,7 +212,9 @@ export async function buildFunctionExtension(
     return {
       status: 'success',
       function: {
-        ...functionIdentity(extension as ExtensionInstance<FunctionConfigType>),
+        handle: functionConfiguration.handle ?? null,
+        name: extension.name,
+        directory: resolve(extension.directory),
         wasmPath: fileExistsSync(extension.outputPath) ? resolve(extension.outputPath) : null,
       },
     }

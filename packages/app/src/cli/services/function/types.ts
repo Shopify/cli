@@ -12,5 +12,3 @@ export const functionIdentitySchema = zod
     directory: functionAbsolutePathSchema,
   })
   .strict()
-
-export type FunctionIdentity = zod.infer<typeof functionIdentitySchema>
