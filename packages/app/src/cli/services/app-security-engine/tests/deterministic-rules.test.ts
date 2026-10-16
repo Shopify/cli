@@ -58,6 +58,7 @@ describe('deterministic rules product contract', () => {
     expect(DETERMINISTIC_CHECKS.get('CREDENTIAL_LOG_LEAKAGE')?.version).toBe(2)
     expect(DETERMINISTIC_CHECKS.get('CREDENTIAL_BROWSER_LEAKAGE')?.version).toBe(2)
     expect(DETERMINISTIC_CHECKS.get('UNSAFE_INNERHTML')?.version).toBe(3)
+    expect(DETERMINISTIC_CHECKS.get('LIQUID_UNSAFE_RENDER')?.version).toBe(2)
     expect(DETERMINISTIC_CHECKS.get('STATIC_FRAME_ANCESTORS')?.version).toBe(2)
     expect(DETERMINISTIC_CHECKS.get('MISSING_DEPENDENCY_SECURITY_AUTOMATION')?.version).toBe(2)
   })
@@ -332,5 +333,40 @@ describe('Liquid AST mode', () => {
     expect(scanLiquidSecurity([source('{% if', 'extensions/theme/blocks/a.liquid')]).parserFailures).toEqual([
       'extensions/theme/blocks/a.liquid',
     ])
+  })
+
+  test('exempts schema-defined inert settings only in HTML text and non-URL attributes', () => {
+    const schema = (settings: string) => `{% schema %}{"settings":[${settings}]}{% endschema %}`
+    const select = schema('{"type":"select","id":"layout","options":[{"value":"left"},{"value":"right"}]}')
+    const liquid = (content: string) =>
+      scanLiquidSecurity([source(content, 'extensions/theme/blocks/a.liquid')]).issues.map((finding) => finding.id)
+    // Inert select clean in text and non-URL attribute; escaped variants stay clean.
+    expect(liquid(`{{ block.settings.layout }}${select}`)).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<div class="{{ block.settings.layout }}"></div>${select}`)).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`{{ block.settings.layout | escape }}${select}`)).not.toContain('LIQUID_UNSAFE_RENDER')
+    // Checkbox and range clean.
+    expect(liquid(`{{ block.settings.show }}${schema('{"type":"checkbox","id":"show"}')}`)).not.toContain(
+      'LIQUID_UNSAFE_RENDER',
+    )
+    expect(liquid(`{{ section.settings.size }}${schema('{"type":"range","id":"size"}')}`)).not.toContain(
+      'LIQUID_UNSAFE_RENDER',
+    )
+    // Bad option, free-text types, property access, JS/executable and URL contexts still flagged.
+    expect(
+      liquid(`{{ block.settings.layout }}${schema('{"type":"select","id":"layout","options":[{"value":"a<b"}]}')}`),
+    ).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`{{ block.settings.title }}${schema('{"type":"text","id":"title"}')}`)).toContain(
+      'LIQUID_UNSAFE_RENDER',
+    )
+    expect(liquid(`{{ block.settings.body }}${schema('{"type":"richtext","id":"body"}')}`)).toContain(
+      'LIQUID_UNSAFE_RENDER',
+    )
+    expect(liquid(`{{ block.settings.layout.title }}${select}`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<script>const v = {{ block.settings.layout }};</script>${select}`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<div onclick="{{ block.settings.layout }}"></div>${select}`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<a href="{{ block.settings.layout }}">x</a>${select}`)).toContain('LIQUID_UNSAFE_RENDER')
+    // Missing or unparseable schema stays flagged.
+    expect(liquid('{{ block.settings.layout }}')).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid('{{ block.settings.layout }}{% schema %}not-json{% endschema %}')).toContain('LIQUID_UNSAFE_RENDER')
   })
 })

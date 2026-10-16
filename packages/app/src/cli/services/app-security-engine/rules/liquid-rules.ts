@@ -30,13 +30,69 @@ export function scanLiquidSecurity(files: SourceFile[]): LiquidScanResult {
       parserFailures.push(file.path)
       continue
     }
-    issues.push(...visit<SourceCodeType.LiquidHtml, Issue>(ast, liquidUnsafeRenderVisitor(file)))
+    const schemaSettings = extractSchemaSettings(file.content)
+    issues.push(...visit<SourceCodeType.LiquidHtml, Issue>(ast, liquidUnsafeRenderVisitor(file, schemaSettings)))
     issues.push(...visit<SourceCodeType.LiquidHtml, Issue>(ast, liquidExecutableContextVisitor(file)))
   }
   return {issues, parserFailures}
 }
 
-function liquidUnsafeRenderVisitor(file: SourceFile) {
+interface SchemaSetting {
+  type?: unknown
+  options?: unknown
+}
+
+const URL_ATTRIBUTE_NAMES = new Set(['href', 'src', 'action', 'formaction', 'poster', 'cite', 'xlink:href'])
+const INERT_OPTION_VALUE = /^[A-Za-z0-9\-._~:/?#@!$()*+,;%]*$/
+
+// Extract id -> setting from the file's {% schema %} JSON. Returns undefined
+// (fail-closed: no exemption) when the schema is missing, duplicated,
+// unparseable, or has duplicate setting ids.
+function extractSchemaSettings(content: string): Map<string, SchemaSetting> | undefined {
+  const blocks = [...content.matchAll(/\{%-?\s*schema\s*-?%\}([\s\S]*?)\{%-?\s*endschema\s*-?%\}/g)]
+  if (blocks.length !== 1) return undefined
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(blocks[0]![1]!.trim())
+    // Unparseable schema fails closed: no exemption.
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return undefined
+  }
+  if (!parsed || typeof parsed !== 'object') return undefined
+  const settings = (parsed as {settings?: unknown}).settings
+  if (!Array.isArray(settings)) return undefined
+  const byId = new Map<string, SchemaSetting>()
+  for (const setting of settings) {
+    if (!setting || typeof setting !== 'object') continue
+    const id = (setting as {id?: unknown}).id
+    if (typeof id !== 'string' || id === '') continue
+    if (byId.has(id)) return undefined
+    byId.set(id, setting as SchemaSetting)
+  }
+  return byId
+}
+
+function isSchemaExemptSetting(expression: string, schemaSettings: Map<string, SchemaSetting> | undefined): boolean {
+  if (!schemaSettings) return false
+  const baseExpression = expression.split('|')[0]!.trim()
+  const match = /^(?:block|section)\.settings\.([A-Za-z0-9_-]+)$/.exec(baseExpression)
+  if (!match) return false
+  const setting = schemaSettings.get(match[1]!)
+  if (!setting) return false
+  if (setting.type === 'checkbox' || setting.type === 'range') return true
+  if (setting.type === 'select' || setting.type === 'radio') {
+    if (!Array.isArray(setting.options) || setting.options.length === 0) return false
+    return setting.options.every((option) => {
+      if (!option || typeof option !== 'object') return false
+      const value = (option as {value?: unknown}).value
+      return typeof value === 'string' && INERT_OPTION_VALUE.test(value)
+    })
+  }
+  return false
+}
+
+function liquidUnsafeRenderVisitor(file: SourceFile, schemaSettings?: Map<string, SchemaSetting>) {
   return {
     LiquidVariableOutput(node: LiquidVariableOutput, ancestors: LiquidHtmlNode[]): Issue[] | undefined {
       const expression = outputSource(node)
@@ -44,6 +100,11 @@ function liquidUnsafeRenderVisitor(file: SourceFile) {
       const filters = filterNames(node)
       const context = liquidOutputContext(ancestors)
       if (isSafelyRendered(filters, context)) return undefined
+      if (
+        (context === 'html_text' || (context === 'html_attribute' && !isUrlAttributeContext(ancestors))) &&
+        isSchemaExemptSetting(expression, schemaSettings)
+      )
+        return undefined
       return [
         makeLiquidIssue(
           'LIQUID_UNSAFE_RENDER',
@@ -114,6 +175,12 @@ function liquidOutputContext(ancestors: LiquidHtmlNode[]): LiquidOutputContext {
   if (/^on/i.test(name) || name.toLowerCase() === 'srcdoc') return 'executable_attribute'
   if (name.toLowerCase() === 'src' && script) return 'executable_attribute'
   return 'html_attribute'
+}
+
+function isUrlAttributeContext(ancestors: LiquidHtmlNode[]): boolean {
+  const attribute = ancestors.find((ancestor): ancestor is AttributeNode => ancestor.type.startsWith('Attr'))
+  if (!attribute) return false
+  return URL_ATTRIBUTE_NAMES.has(attributeName(attribute).toLowerCase())
 }
 
 function attributeName(attribute: AttributeNode): string {
