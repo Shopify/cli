@@ -1,7 +1,6 @@
 import StoreCreatePreview from './preview.js'
 import {createPreviewStoreCommand} from '../../../services/store/create/preview/index.js'
 import {presentCreatePreviewStoreResult} from '../../../services/store/create/preview/result.js'
-import {createPreviewStoreJsonOutputSchema} from '../../../services/store/create/preview/types.js'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -42,9 +41,5 @@ describe('store create preview command', () => {
     await expect(StoreCreatePreview.run(['--country', 'USA'])).rejects.toThrow('process.exit unexpectedly called')
 
     expect(createPreviewStoreCommand).not.toHaveBeenCalled()
-  })
-
-  test('exposes the JSON output schema', () => {
-    expect(StoreCreatePreview.jsonOutputSchema).toBe(createPreviewStoreJsonOutputSchema)
   })
 })

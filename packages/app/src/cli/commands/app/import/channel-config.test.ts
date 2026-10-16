@@ -7,9 +7,10 @@ import {
 } from '../../../services/import-channel-config/import.js'
 import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {Config} from '@oclif/core'
-import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, readFile, tempDirectory, rmdir} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {expect, test, vi} from 'vitest'
 import {fileURLToPath} from 'node:url'
 
@@ -67,3 +68,58 @@ async function runCommand(argv: string[]) {
   config.plugins.delete('@shopify/app')
   return ImportChannelConfig.run(argv, config)
 }
+
+let fixtureDirectory: string
+let client: ReturnType<typeof testDeveloperPlatformClient>
+
+describeJsonCommand({
+  command: ImportChannelConfig,
+  commandId: 'app:import:channel-config',
+  moduleURL: new URL('../../../../../../cli/bin/dev.js', import.meta.url).href,
+  args: () => ['--path', fixtureDirectory],
+  expectedResult: () => ({
+    status: 'success',
+    handle: 'example',
+    filename: 'example.toml',
+    path: joinPath(fixtureDirectory, CHANNEL_SPEC_DIRECTORY, 'example.toml'),
+    toml: TOML,
+    warnings: [warning],
+  }),
+  expectedEvents: [{type: 'diagnostic', level: 'warning', message: warning.message}],
+  expectedSchema: {
+    type: 'object',
+    required: ['status', 'handle', 'filename', 'path', 'toml', 'warnings'],
+    additionalProperties: false,
+  },
+  setup: () => {
+    fixtureDirectory = tempDirectory()
+    client = testDeveloperPlatformClient({
+      channelSpecExport: vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        body: {handle: 'example', filename: 'example.toml', toml: TOML, warnings: [{...warning, internal: 'private'}]},
+      }),
+    })
+    vi.mocked(linkedAppContext).mockResolvedValue({
+      app: testAppLinked({directory: fixtureDirectory}),
+      remoteApp: testOrganizationApp(),
+      developerPlatformClient: client,
+    } as unknown as Awaited<ReturnType<typeof linkedAppContext>>)
+    const directory = fixtureDirectory
+    return () => rmdir(directory)
+  },
+  assertExecuted: () => {
+    expect(linkedAppContext).toHaveBeenCalledOnce()
+    expect(client.channelSpecExport).toHaveBeenCalledOnce()
+  },
+  assertNotExecuted: () => {
+    expect(linkedAppContext).not.toHaveBeenCalled()
+    expect(client.channelSpecExport).not.toHaveBeenCalled()
+  },
+  textOutput: ({stdout, stderr}) => {
+    expect(stdout).toBe('')
+    expect(stderr).toContain('Imported the channel spec for app1.')
+    expect(stderr).toContain('example.toml')
+    expect(stderr).toContain(warning.message)
+  },
+})

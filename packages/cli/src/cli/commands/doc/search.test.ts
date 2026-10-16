@@ -1,8 +1,6 @@
 import DocSearch from './search.js'
-import {docSearchJsonOutputSchema} from '../../services/commands/doc/types.js'
 import {shopifyFetch, Response} from '@shopify/cli-kit/node/http'
-import {launchCLI} from '@shopify/cli-kit/node/cli-launcher'
-import {ShopifyConfig} from '@shopify/cli-kit/node/custom-oclif-loader'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
@@ -21,20 +19,53 @@ beforeEach(() => {
   vi.spyOn(process, 'exit').mockReturnValue(undefined as never)
 })
 
-afterEach(() => {
+afterEach(async () => {
+  // Returning exit spies let Oclif queue development warnings after the command completes.
+  await new Promise<void>((resolve) => process.nextTick(resolve))
   vi.unstubAllEnvs()
   mockAndCaptureOutput().clear()
 })
 
-describe('doc search command', () => {
-  test('preserves the exact response bytes on stdout without JSON selection', async () => {
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await DocSearch.run(['--query', 'webhooks', '--no-input'], import.meta.url)
-      expect(stdout()).toBe(`${body}\n`)
-      expect(stderr()).toBe('')
-    })
-  })
+describeJsonCommand({
+  command: DocSearch,
+  commandId: 'doc:search',
+  moduleURL: import.meta.url,
+  args: ['--query', 'webhooks', '--api-name', 'admin', '--api-version', 'latest'],
+  expectedResult: {results: [entry], pageInfo: {hasNextPage: null}},
+  expectedSchema: {
+    type: 'object',
+    properties: {
+      results: {type: 'array', items: {properties: {domain: {type: ['string', 'null']}}}},
+      pageInfo: {properties: {hasNextPage: {type: ['boolean', 'null']}}},
+    },
+    required: ['results', 'pageInfo'],
+    additionalProperties: false,
+  },
+  setup: () => {
+    vi.mocked(shopifyFetch).mockResolvedValue(new Response(body))
+  },
+  assertExecuted: () => {
+    expect(shopifyFetch).toHaveBeenCalledExactlyOnceWith(
+      'https://shopify.dev/assistant/search?query=webhooks&api_name=admin&api_version=latest',
+      {headers: {Accept: 'application/json', 'X-Shopify-Surface': 'cli'}},
+    )
+  },
+  assertNotExecuted: () => {
+    expect(shopifyFetch).not.toHaveBeenCalled()
+  },
+  textOutput: {stdout: `${body}\n`, stderr: ''},
+  failure: {
+    setup: () => {
+      vi.mocked(shopifyFetch).mockResolvedValue(
+        new Response('<html>nope</html>', {status: 500, statusText: 'Internal Server Error'}),
+      )
+    },
+    expectedError: {error: {type: 'abort', message: 'Search failed: 500 Internal Server Error'}},
+    exitCode: 1,
+  },
+})
 
+describe('doc search command', () => {
   test.each([
     'not JSON',
     JSON.stringify([{...entry, title: null}]),
@@ -62,35 +93,6 @@ describe('doc search command', () => {
       })
       expect(stderr()).toBe('')
       expect(process.exit).toHaveBeenCalledWith(1)
-    })
-  })
-
-  test.each([{flags: []}, {flags: ['--no-input']}])(
-    'writes one result object with JSON and flags $flags',
-    async ({flags}) => {
-      await withCapturedStandardStreams(async ({stdout, stderr}) => {
-        await DocSearch.run(
-          ['--query', 'webhooks', '--api-name', 'admin', '--api-version', 'latest', '--json', ...flags],
-          import.meta.url,
-        )
-        expect(JSON.parse(stdout())).toEqual({results: [entry], pageInfo: {hasNextPage: null}})
-        expect(stderr()).toBe('')
-        expect(shopifyFetch).toHaveBeenCalledWith(
-          'https://shopify.dev/assistant/search?query=webhooks&api_name=admin&api_version=latest',
-          {
-            headers: {Accept: 'application/json', 'X-Shopify-Surface': 'cli'},
-          },
-        )
-      })
-    },
-  )
-
-  test('supports the shared JSON environment flag', async () => {
-    vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await DocSearch.run(['--query', 'webhooks'], import.meta.url)
-      expect(JSON.parse(stdout())).toEqual({results: [entry], pageInfo: {hasNextPage: null}})
-      expect(stderr()).toBe('')
     })
   })
 
@@ -161,26 +163,6 @@ describe('doc search command', () => {
         },
       })
       expect(stderr()).toBe('')
-    })
-  })
-
-  test('exposes the schema in help and through the launcher without a search request', async () => {
-    expect(DocSearch.jsonOutputSchema).toBe(docSearchJsonOutputSchema)
-    expect(DocSearch.flags.json).toBeDefined()
-    expect(DocSearch.description).toContain('Output from `--json` conforms to the `DocSearchResult` schema.')
-    vi.spyOn(ShopifyConfig.prototype, 'runHook').mockResolvedValue({successes: [], failures: []})
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await launchCLI({
-        moduleURL: import.meta.url,
-        argv: ['doc', 'search', '--json-schema'],
-        lazyCommandLoader: async () => DocSearch,
-      })
-      const schema = JSON.parse(stdout())
-      expect(schema.definitions.Result.required).toEqual(['results', 'pageInfo'])
-      expect(schema.definitions.Result.properties.results.items.properties.domain.type).toEqual(['string', 'null'])
-      expect(schema.definitions.Result.additionalProperties).toBe(false)
-      expect(stderr()).toBe('')
-      expect(shopifyFetch).not.toHaveBeenCalled()
     })
   })
 })

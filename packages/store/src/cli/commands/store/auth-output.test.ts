@@ -1,7 +1,10 @@
+import StoreAuth from './auth.js'
+import {waitForStoreAuthCode} from '../../services/store/auth/callback.js'
+import {exchangeStoreAuthCodeForToken} from '../../services/store/auth/token-client.js'
+import {resolveExistingStoreAuthScopes} from '../../services/store/auth/existing-scopes.js'
+import {storeAuthJsonOutputSchema} from '../../services/store/auth/types.js'
+import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
-// Vitest intercepts console.warn; use Node's console to exercise the real stderr writer.
-// eslint-disable-next-line n/prefer-global/console
-import {Console} from 'node:console'
 import type * as System from '@shopify/cli-kit/node/system'
 
 const {openURLMock} = vi.hoisted(() => ({openURLMock: vi.fn()}))
@@ -19,27 +22,7 @@ vi.mock('@shopify/cli-kit/node/system', async (importOriginal) => ({
 
 describe('store auth JSON output', () => {
   test.each([true, false])('separates browser guidance from the result when opening succeeds: %s', async (opened) => {
-    const stdout: string[] = []
-    const stderr: string[] = []
-    vi.stubEnv('SHOPIFY_UNIT_TEST', 'false')
-    vi.resetModules()
-    const stdoutSpy = vi.spyOn(process.stdout, 'write').mockImplementation((chunk) => {
-      stdout.push(String(chunk))
-      return true
-    })
-    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation((chunk) => {
-      stderr.push(String(chunk))
-      return true
-    })
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(new Console(process.stdout, process.stderr).warn)
-
-    try {
-      const {default: StoreAuth} = await import('./auth.js')
-      const {waitForStoreAuthCode} = await import('../../services/store/auth/callback.js')
-      const {exchangeStoreAuthCodeForToken} = await import('../../services/store/auth/token-client.js')
-      const {resolveExistingStoreAuthScopes} = await import('../../services/store/auth/existing-scopes.js')
-      const {storeAuthJsonOutputSchema} = await import('../../services/store/auth/types.js')
-
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
       openURLMock.mockResolvedValue(opened)
       vi.mocked(resolveExistingStoreAuthScopes).mockResolvedValue({scopes: [], authoritative: false})
       vi.mocked(waitForStoreAuthCode).mockImplementation(async (options) => {
@@ -55,7 +38,7 @@ describe('store auth JSON output', () => {
       await StoreAuth.run(['--store', 'shop.myshopify.com', '--scopes', 'read_products', '--json'])
 
       // Parsing the entire stream also rejects extra results or guidance written to stdout.
-      const result = JSON.parse(stdout.join(''))
+      const result = JSON.parse(stdout())
       expect(storeAuthJsonOutputSchema.validate(result)).toEqual({
         store: 'shop.myshopify.com',
         userId: '42',
@@ -64,20 +47,14 @@ describe('store auth JSON output', () => {
         hasRefreshToken: false,
         associatedUser: {id: 42, email: 'merchant@example.com'},
       })
-      expect(stderr.join('')).toContain('Shopify CLI will open the app authorization page in your browser.')
+      expect(stderr()).toContain('Shopify CLI will open the app authorization page in your browser.')
       expect(openURLMock).toHaveBeenCalledWith(
         expect.stringContaining('https://shop.myshopify.com/admin/oauth/authorize?'),
       )
       if (!opened) {
-        expect(stderr.join('')).toContain('Browser did not open automatically. Open this URL manually:')
-        expect(stderr.join('')).toContain(openURLMock.mock.calls[0]![0])
+        expect(stderr()).toContain('Browser did not open automatically. Open this URL manually:')
+        expect(stderr()).toContain(openURLMock.mock.calls[0]![0])
       }
-    } finally {
-      warnSpy.mockRestore()
-      stdoutSpy.mockRestore()
-      stderrSpy.mockRestore()
-      vi.unstubAllEnvs()
-      vi.resetModules()
-    }
+    })
   })
 })

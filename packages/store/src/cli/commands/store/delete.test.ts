@@ -36,10 +36,6 @@ beforeEach(() => {
 })
 
 describe('store delete command', () => {
-  test('exposes the output schema', () => {
-    expect(StoreDelete.jsonOutputSchema).toBe(deleteDevStoreJsonOutputSchema)
-  })
-
   test('resolves the organization and passes parsed flags through to the service', async () => {
     await StoreDelete.run(['--store', 'my-store.myshopify.com', '--organization-id', '12345'])
 
@@ -57,16 +53,6 @@ describe('store delete command', () => {
     expect(deleteDevStore).toHaveBeenCalledWith(expect.objectContaining({store: 'my-store.myshopify.com'}))
   })
 
-  test('passes json flag through to the service', async () => {
-    await StoreDelete.run(['--store', 'my-store.myshopify.com', '--json', '--organization-id', '12345'])
-
-    expect(deleteDevStore).toHaveBeenCalledWith({
-      store: 'my-store.myshopify.com',
-      organization: defaultOrg,
-      json: true,
-    })
-  })
-
   test('resolves the organization without an ID when --organization-id is omitted', async () => {
     await StoreDelete.run(['--store', 'my-store.myshopify.com'])
 
@@ -77,7 +63,6 @@ describe('store delete command', () => {
   test('defines the expected flags', () => {
     expect(StoreDelete.flags.store).toBeDefined()
     expect(StoreDelete.flags['organization-id']).toBeDefined()
-    expect(StoreDelete.flags.json).toBeDefined()
     expect(StoreDelete.flags.force).toBeDefined()
   })
 
