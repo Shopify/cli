@@ -100,6 +100,29 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
   })
 })
 
+describe('http-reverse-proxy unmatched paths', () => {
+  test('serves the invalid path error as non-sniffable plain text', async () => {
+    const abortController = new AbortController()
+    // No `default` rule, so every request falls through to the invalid path response.
+    const {server} = await getProxyingWebServer({'/path1': 'http://localhost:1'}, abortController.signal)
+    await new Promise<void>((resolve) => server.listen(0, 'localhost', resolve))
+    const port = (server.address() as net.AddressInfo).port
+
+    try {
+      const response = await fetch(`http://localhost:${port}/<script>alert(1)</script>`, {
+        agent: new http.Agent({keepAlive: false}),
+      })
+
+      expect(response.status).toBe(500)
+      expect(response.headers.get('content-type')).toBe('text/plain; charset=utf-8')
+      expect(response.headers.get('x-content-type-options')).toBe('nosniff')
+    } finally {
+      server.closeAllConnections()
+      await new Promise<void>((resolve) => server.close(() => resolve()))
+    }
+  })
+})
+
 function getTestReverseProxy(protocol: 'http' | 'https') {
   return test.extend<{
     setup: {
