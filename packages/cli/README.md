@@ -3088,13 +3088,17 @@ Fetch the latest GraphQL schema for a function.
 
 ```
 USAGE
-  $ shopify app function schema [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--path <value>] [--reset | ] [--stdout] [--verbose]
+  $ shopify app function schema [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--stdout] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -3140,6 +3144,60 @@ DESCRIPTION
 
   This command uses the API type and version of your function, as defined in your extension TOML file, to generate the
   latest GraphQL schema. The schema is written to the `schema.graphql` file.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `FunctionSchemaResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/FunctionSchemaFile"
+      },
+      {
+        "$ref": "#/definitions/FunctionSchemaContent"
+      }
+    ],
+    "title": "FunctionSchemaResult",
+    "definitions": {
+      "FunctionSchemaFile": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^(?:\\/|[a-zA-Z]:[\\\\/]|\\\\\\\\)",
+            "description": "An absolute native filesystem path."
+          },
+          "format": {
+            "type": "string",
+            "const": "graphql",
+            "description": "The file contains native GraphQL SDL with the API-version header."
+          }
+        },
+        "required": [
+          "path",
+          "format"
+        ],
+        "additionalProperties": false
+      },
+      "FunctionSchemaContent": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "string",
+            "description": "Native GraphQL SDL with the API-version header, returned with --stdout --json."
+          }
+        },
+        "required": [
+          "schema"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app function typegen`
