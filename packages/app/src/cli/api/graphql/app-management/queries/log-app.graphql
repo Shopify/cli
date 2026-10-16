@@ -1,0 +1,6 @@
+query LogApp($clientId: String!) {
+  app: appByKey(key: $clientId) {
+    key
+    organizationId
+  }
+}
