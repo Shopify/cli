@@ -5,7 +5,6 @@ const commandExceptions = [
   'packages/app/src/cli/commands/app/config/link.ts',
   'packages/app/src/cli/commands/app/config/pull.ts',
   'packages/app/src/cli/commands/app/config/use.ts',
-  'packages/app/src/cli/commands/app/config/validate.ts',
   'packages/app/src/cli/commands/app/function/build.ts',
   'packages/app/src/cli/commands/app/function/schema.ts',
   'packages/app/src/cli/commands/app/function/typegen.ts',
