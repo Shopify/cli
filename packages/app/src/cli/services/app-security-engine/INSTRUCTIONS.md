@@ -36,6 +36,7 @@ Use separate sub-agents or isolated evaluation passes when available so each che
 ### 3. Investigate each check
 
 For each check:
+This review is static only: verify by reading code. Do not execute app, SDK, test, or repro code, and do not make network calls or probe live stores or services to prove a finding. If a candidate can't be proved from code, record the check as unresolved naming the candidate instead of running it.
 
 1. Follow its prompt exactly.
 2. Trace relevant request, authentication, authorization, data-flow, configuration, and rendering paths far enough to verify the behavior.
