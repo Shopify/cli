@@ -220,7 +220,8 @@ export const subscribeToAppLogs = async (
 
   const {jwtToken, success, errors} = result.appLogsSubscribe
 
-  outputDebug(`Token: ${jwtToken}\n`)
+  // The subscription JWT is a bearer credential for the app's logs, so it must never reach debug
+  // output: users routinely share `--verbose` logs when reporting issues.
   outputDebug(`API Key: ${variables.apiKey}\n`)
 
   if (errors && errors.length > 0) {
