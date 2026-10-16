@@ -1,6 +1,6 @@
-import {downloadTheme} from '../utilities/theme-downloader.js'
+import {downloadTheme, localFileChanges} from '../utilities/theme-downloader.js'
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
-import {ensureDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
+import {ensureDirectoryConfirmed, ensureLocalFileChangesConfirmed, themeComponent} from '../utilities/theme-ui.js'
 import {rejectGeneratedStaticAssets} from '../utilities/asset-checksum.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
@@ -12,7 +12,6 @@ import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {cwd} from '@shopify/cli-kit/node/path'
-import {insideGitDirectory, isClean} from '@shopify/cli-kit/node/git'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
 import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {Writable} from 'stream'
@@ -74,7 +73,7 @@ export interface PullFlags {
   ignore?: string[]
 
   /**
-   * Proceed without confirmation, if current directory does not seem to be theme directory.
+   * Proceed without confirmation, if current directory does not seem to be theme directory or local files would be overwritten.
    */
   force?: boolean
 
@@ -166,6 +165,11 @@ async function executePull(
   const themeChecksums = rejectGeneratedStaticAssets(remoteChecksums)
   recordTiming('theme-service:pull:file-system')
 
+  const changes = localFileChanges(themeChecksums, themeFileSystem, options)
+  if (!(await ensureLocalFileChangesConfirmed(changes, options.force, options.environment, options.multiEnvironment))) {
+    return
+  }
+
   await downloadTheme(theme, session, themeChecksums, themeFileSystem, options, context)
 
   const header = options.environment ? `Environment: ${options.environment}` : ''
@@ -229,24 +233,6 @@ async function validateDirectory(path: string, force: boolean, environment?: str
     !(await isEmptyDir(path)) &&
     !(await hasRequiredThemeDirectories(path)) &&
     !(await ensureDirectoryConfirmed(force, undefined, environment, multiEnvironment))
-  ) {
-    return false
-  }
-
-  /**
-   * If users are not forcing the 'pull' command, and the current directory is a
-   * Git directory and it is not clean, we ask for confirmation before proceeding.
-   */
-  const dirtyDirectory = (await insideGitDirectory(path)) && !(await isClean(path))
-
-  if (
-    dirtyDirectory &&
-    !(await ensureDirectoryConfirmed(
-      force,
-      'The current Git directory has uncommitted changes.',
-      environment,
-      multiEnvironment,
-    ))
   ) {
     return false
   }
