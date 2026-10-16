@@ -10,11 +10,14 @@ import {isTTY, renderInfo, renderSuccess} from '../../../public/node/ui.js'
 
 const TRUST_CHALLENGE_ERROR_CODE = 'CHALLENGE_REQUIRED'
 
-interface TrustChallengeOptions {
-  stdin?: typeof process.stdin
-}
+/**
+ * The abort that ends a Trust Battery challenge: the session cannot answer it, or
+ * the request was challenged again after the verification.
+ */
+export class TrustChallengeError extends AbortError {}
 
 let pendingChallenge: Promise<void> | undefined
+let completedChallenges = 0
 
 /**
  * Runs a theme Admin API request and, when Core answers with a Trust Battery
@@ -22,17 +25,15 @@ let pendingChallenge: Promise<void> | undefined
  *
  * A request that starts while another request's challenge is still being completed
  * waits for that challenge first, so it is sent once instead of being challenged
- * itself and then retried.
+ * itself and then retried. A request that was already in flight when a challenge
+ * was completed retries without a second prompt.
  *
  * @param request - The request to run and possibly retry.
- * @param options - Overrides for the prompt, mainly for tests.
  * @returns The result of the request.
  */
-export async function withTrustChallengeRetry<T>(
-  request: () => Promise<T>,
-  options: TrustChallengeOptions = {},
-): Promise<T> {
+export async function withTrustChallengeRetry<T>(request: () => Promise<T>): Promise<T> {
   if (pendingChallenge) await pendingChallenge
+  const completedChallengesAtStart = completedChallenges
 
   try {
     return await request()
@@ -40,7 +41,8 @@ export async function withTrustChallengeRetry<T>(
     const challengeUrl = await trustChallengeUrl(error)
     if (!challengeUrl) throw error
 
-    await completeTrustChallenge(challengeUrl, options)
+    const verifiedSinceStart = completedChallenges > completedChallengesAtStart
+    if (!verifiedSinceStart) await completeTrustChallenge(challengeUrl)
   }
 
   try {
@@ -50,7 +52,7 @@ export async function withTrustChallengeRetry<T>(
     if (!challengeUrl) throw error
 
     recordEvent('theme-api:trust-challenge:retry-challenged')
-    throw new AbortError('Shopify still needs to verify your identity before it can continue.', undefined, [
+    throw new TrustChallengeError('Shopify still needs to verify your identity before it can continue.', undefined, [
       ['Complete the verification at', {link: {url: challengeUrl}}, 'then run the command again.'],
     ])
   }
@@ -95,19 +97,23 @@ async function isAdminUrl(url: string): Promise<boolean> {
  * all receive the same challenge. Share one prompt so the browser opens once and
  * every waiting request retries after the same verification.
  */
-async function completeTrustChallenge(challengeUrl: string, options: TrustChallengeOptions): Promise<void> {
-  pendingChallenge ??= promptForTrustChallenge(challengeUrl, options).finally(() => {
-    pendingChallenge = undefined
-  })
+async function completeTrustChallenge(challengeUrl: string): Promise<void> {
+  pendingChallenge ??= promptForTrustChallenge(challengeUrl)
+    .then(() => {
+      completedChallenges += 1
+    })
+    .finally(() => {
+      pendingChallenge = undefined
+    })
   return pendingChallenge
 }
 
-async function promptForTrustChallenge(challengeUrl: string, options: TrustChallengeOptions): Promise<void> {
+async function promptForTrustChallenge(challengeUrl: string): Promise<void> {
   recordEvent('theme-api:trust-challenge:required')
 
   if (isCI() || !isTTY() || commandEventOutputMode() === 'json') {
     recordEvent('theme-api:trust-challenge:non-interactive')
-    throw new AbortError('Shopify needs to verify your identity before it can continue.', undefined, [
+    throw new TrustChallengeError('Shopify needs to verify your identity before it can continue.', undefined, [
       [
         'Open',
         {link: {url: challengeUrl}},
@@ -134,7 +140,7 @@ async function promptForTrustChallenge(challengeUrl: string, options: TrustChall
     orderedNextSteps: true,
   })
 
-  await waitForEnter(options.stdin ?? process.stdin)
+  await waitForEnter()
 
   recordEvent('theme-api:trust-challenge:acknowledged')
   renderSuccess({headline: 'Continuing.'})

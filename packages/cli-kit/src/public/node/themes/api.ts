@@ -25,7 +25,7 @@ import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
 import {OnlineStorePasswordProtection} from '../../../cli/api/graphql/admin/generated/online_store_password_protection.js'
 import {extractGraphQLErrors} from '../../../private/node/api/graphql.js'
-import {withTrustChallengeRetry} from '../../../private/node/themes/trust-challenge.js'
+import {TrustChallengeError, withTrustChallengeRetry} from '../../../private/node/themes/trust-challenge.js'
 import {RequestModeInput} from '../http.js'
 import {adminRequestDoc, type AdminRequestOptions} from '../api/admin.js'
 import {AdminSession} from '../session.js'
@@ -611,6 +611,18 @@ export async function passwordProtected(session: AdminSession): Promise<boolean>
 
 function unexpectedGraphQLError(message: string): never {
   throw recordError(new AbortError(message))
+}
+
+/**
+ * Whether the error ends a Trust Battery challenge on a theme request. A caller that
+ * retries theme requests must rethrow it, or the user is asked to verify again for
+ * each attempt.
+ *
+ * @param error - The error to check.
+ * @returns True when the error ends a Trust Battery challenge.
+ */
+export function isTrustChallengeError(error: unknown): boolean {
+  return error instanceof TrustChallengeError
 }
 
 async function requestThemeAdminDoc<TResult, TVariables extends Variables>(

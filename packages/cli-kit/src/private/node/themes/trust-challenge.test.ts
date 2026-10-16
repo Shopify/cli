@@ -1,4 +1,4 @@
-import {trustChallengeUrl, withTrustChallengeRetry} from './trust-challenge.js'
+import {TrustChallengeError, trustChallengeUrl, withTrustChallengeRetry} from './trust-challenge.js'
 import {GraphQLClientError} from '../api/headers.js'
 import {commandEventOutputMode} from '../command-event-context.js'
 import {waitForEnter} from '../ui/wait-for-enter.js'
@@ -147,7 +147,7 @@ describe('withTrustChallengeRetry', () => {
 
     const promise = withTrustChallengeRetry(request)
 
-    await expect(promise).rejects.toBeInstanceOf(AbortError)
+    await expect(promise).rejects.toBeInstanceOf(TrustChallengeError)
     await expect(promise).rejects.toMatchObject({
       nextSteps: [expect.arrayContaining([{link: {url: challengeUrl}}])],
     })
@@ -171,7 +171,7 @@ describe('withTrustChallengeRetry', () => {
 
     const promise = withTrustChallengeRetry(request)
 
-    await expect(promise).rejects.toBeInstanceOf(AbortError)
+    await expect(promise).rejects.toBeInstanceOf(TrustChallengeError)
     await expect(promise).rejects.toMatchObject({
       nextSteps: [expect.arrayContaining([{link: {url: challengeUrl}}])],
     })
@@ -249,6 +249,32 @@ describe('withTrustChallengeRetry', () => {
     expect(openURL).toHaveBeenCalledTimes(1)
   })
 
+  test('retries without a second prompt when a request already in flight is challenged after the verification', async () => {
+    const enter = deferredEnter()
+    let rejectSecondResponse!: (error: unknown) => void
+    const secondResponse = new Promise<string>((_resolve, reject) => {
+      rejectSecondResponse = reject
+    })
+    const firstRequest = vi
+      .fn()
+      .mockRejectedValueOnce(challengeClientError(challengeUrl))
+      .mockResolvedValueOnce('first')
+    const secondRequest = vi.fn().mockReturnValueOnce(secondResponse).mockResolvedValueOnce('second')
+
+    const firstResult = withTrustChallengeRetry(firstRequest)
+    const secondResult = withTrustChallengeRetry(secondRequest)
+    await vi.waitFor(() => expect(waitForEnter).toHaveBeenCalledTimes(1))
+    enter.press()
+    await expect(firstResult).resolves.toBe('first')
+
+    rejectSecondResponse(challengeClientError(challengeUrl))
+
+    await expect(secondResult).resolves.toBe('second')
+    expect(secondRequest).toHaveBeenCalledTimes(2)
+    expect(waitForEnter).toHaveBeenCalledTimes(1)
+    expect(openURL).toHaveBeenCalledTimes(1)
+  })
+
   test('rejects requests waiting on a pending challenge when the prompt is cancelled with Ctrl+C', async () => {
     const enter = deferredEnter()
     const challengedRequest = vi.fn().mockRejectedValueOnce(challengeClientError(challengeUrl))
@@ -264,15 +290,6 @@ describe('withTrustChallengeRetry', () => {
     await expect(laterResult).rejects.toBeInstanceOf(AbortSilentError)
     expect(laterRequest).not.toHaveBeenCalled()
     expect(renderSuccess).not.toHaveBeenCalled()
-  })
-
-  test('passes the provided stdin to the Enter prompt', async () => {
-    const stdin = {} as typeof process.stdin
-    const request = vi.fn().mockRejectedValueOnce(challengeClientError(challengeUrl)).mockResolvedValueOnce('retried')
-
-    await withTrustChallengeRetry(request, {stdin})
-
-    expect(waitForEnter).toHaveBeenCalledWith(stdin)
   })
 })
 
