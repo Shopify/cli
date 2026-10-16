@@ -1,0 +1,17 @@
+query HistoricalLogs(
+  $clientId: String!
+  $types: [LogEventType!]!
+  $timestamp: TimestampRangeInput!
+  $limit: Int!
+  $filters: [LogFilterInput!]
+  $sortKey: LogSortKeys
+  $reverse: Boolean
+) {
+  app(clientId: $clientId) {
+    logs(types: $types, timestamp: $timestamp, limit: $limit, filters: $filters, sortKey: $sortKey, reverse: $reverse) {
+      records {
+        json
+      }
+    }
+  }
+}
