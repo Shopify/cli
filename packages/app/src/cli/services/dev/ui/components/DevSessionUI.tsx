@@ -163,7 +163,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
   const activeShortcuts = devStatusShortcuts.filter((shortcut) => shortcut.condition?.() ?? true)
 
   const tabs: {[key: string]: Tab} = {
-    // eslint-disable-next-line id-length
+    // eslint-disable-next-line compat/id-length
     d: {
       label: 'Dev status',
       shortcuts: devStatusShortcuts,
@@ -210,7 +210,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         </>
       ),
     },
-    // eslint-disable-next-line id-length
+    // eslint-disable-next-line compat/id-length
     a: {
       label: 'App info',
       content: (
@@ -227,7 +227,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         </Box>
       ),
     },
-    // eslint-disable-next-line id-length
+    // eslint-disable-next-line compat/id-length
     s: {
       label: 'Store info',
       content: (

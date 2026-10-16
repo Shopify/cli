@@ -164,7 +164,7 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
           payloadOptions.extensions.push(event.extension)
           if (!payloadOptions.checkoutCartUrl) {
             const cartUrl = await buildCartURLIfNeeded(payloadOptions.extensions, payloadOptions.storeFqdn)
-            // eslint-disable-next-line require-atomic-updates
+            // eslint-disable-next-line compat/require-atomic-updates
             payloadOptions.checkoutCartUrl = cartUrl
           }
           await payloadStore.addExtension(event.extension, bundlePath)

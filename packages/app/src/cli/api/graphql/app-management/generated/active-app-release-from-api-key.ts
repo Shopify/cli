@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions */
 import * as Types from './types.js'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
