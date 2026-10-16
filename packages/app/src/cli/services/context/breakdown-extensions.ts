@@ -41,27 +41,29 @@ export async function extensionsIdentifiersReleaseBreakdown(
 ) {
   const {versionsDiff, versionDetails} = await versionDiffByVersion(app, version, developerPlatformClient)
 
-  const mapIsExtension = (extensions: AppVersionsDiffExtensionSchema[]) =>
-    extensions
-      .filter(
-        (extension) =>
-          extension.specification.experience === 'extension' &&
-          extension.specification.identifier !== 'webhook_subscription',
-      )
-      .map((extension) => buildExtensionBreakdownInfo(extension.handle, undefined))
-  const mapIsDashboard = (extensions: AppVersionsDiffExtensionSchema[]) =>
-    extensions
-      .filter((extension) => extension.specification.options.managementExperience === 'dashboard')
-      .map((extension) => buildDashboardBreakdownInfo(extension.handle))
-
   const extensionIdentifiersBreakdown = {
-    onlyRemote: [...mapIsExtension(versionsDiff.removed), ...mapIsDashboard(versionsDiff.removed)],
-    toCreate: [...mapIsExtension(versionsDiff.added), ...mapIsDashboard(versionsDiff.added)],
+    onlyRemote: buildBreakdownInfo(versionsDiff.removed),
+    toCreate: buildBreakdownInfo(versionsDiff.added),
     toUpdate: [],
-    unchanged: [...mapIsExtension(versionsDiff.updated), ...mapIsDashboard(versionsDiff.updated)],
+    unchanged: buildBreakdownInfo(versionsDiff.updated),
   }
 
   return {extensionIdentifiersBreakdown, versionDetails}
+}
+
+function buildBreakdownInfo(extensions: AppVersionsDiffExtensionSchema[]): ExtensionIdentifierBreakdownInfo[] {
+  const extensionModules = extensions
+    .filter(
+      (extension) =>
+        extension.specification.experience === 'extension' &&
+        extension.specification.identifier !== 'webhook_subscription',
+    )
+    .map((extension) => buildExtensionBreakdownInfo(extension.handle, undefined))
+  const dashboardModules = extensions
+    .filter((extension) => extension.specification.options.managementExperience === 'dashboard')
+    .map((extension) => buildDashboardBreakdownInfo(extension.handle))
+
+  return [...extensionModules, ...dashboardModules]
 }
 
 export function configExtensionsIdentifiersReleaseBreakdown({
