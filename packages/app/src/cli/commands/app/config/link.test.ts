@@ -1,7 +1,9 @@
 import ConfigLink from './link.js'
-import link from '../../../services/app/config/link.js'
+import {linkAppConfiguration as link} from '../../../services/app/config/link.js'
+import {projectAppConfigResult} from '../../../services/app/config/link/types.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {testAppLinked, testOrganizationApp} from '../../../models/app/app.test-data.js'
+import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {Config} from '@oclif/core'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
@@ -47,36 +49,45 @@ describe('app config link command', () => {
     })
   })
 
-  test('accepts --client-id with --file-name to link a specific app to a specific config file', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      const app = testAppLinked()
-      vi.mocked(link).mockResolvedValue({
-        remoteApp: testOrganizationApp(),
-        configFileName: 'shopify.app.staging.toml',
-        configuration: app.configuration,
-      })
-      vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
+  test.each([{outputFlags: []}, {outputFlags: ['--json']}])(
+    'accepts explicit app and file selection with output flags %j',
+    async ({outputFlags}) => {
+      await inTemporaryDirectory(async (tmp) => {
+        const app = testAppLinked()
+        vi.mocked(link).mockResolvedValue({
+          remoteApp: testOrganizationApp(),
+          configFileName: 'shopify.app.staging.toml',
+          configuration: app.configuration,
+          packageManager: 'npm',
+          result: projectAppConfigResult({
+            path: '/app/shopify.app.toml',
+            appName: app.configuration.name,
+            app: testOrganizationApp(),
+          }),
+        })
+        vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
 
-      await ConfigLink.run(
-        ['--path', tmp, '--client-id', 'api-key', '--file-name', 'staging', '--force'],
-        import.meta.url,
-      )
+        await ConfigLink.run(
+          ['--path', tmp, '--client-id', 'api-key', '--file-name', 'staging', '--force', ...outputFlags],
+          import.meta.url,
+        )
 
-      expect(link).toHaveBeenCalledWith({
-        directory: tmp,
-        apiKey: 'api-key',
-        configName: undefined,
-        fileName: 'staging',
-        force: true,
+        expect(link).toHaveBeenCalledWith({
+          directory: tmp,
+          apiKey: 'api-key',
+          configName: undefined,
+          fileName: 'staging',
+          force: true,
+        })
+        expect(linkedAppContext).toHaveBeenCalledWith({
+          directory: tmp,
+          clientId: undefined,
+          forceRelink: false,
+          userProvidedConfigName: 'shopify.app.staging.toml',
+        })
       })
-      expect(linkedAppContext).toHaveBeenCalledWith({
-        directory: tmp,
-        clientId: undefined,
-        forceRelink: false,
-        userProvidedConfigName: 'shopify.app.staging.toml',
-      })
-    })
-  })
+    },
+  )
 
   test('accepts --config without requiring --file-name when --force is not passed', async () => {
     await inTemporaryDirectory(async (tmp) => {
@@ -85,6 +96,12 @@ describe('app config link command', () => {
         remoteApp: testOrganizationApp(),
         configFileName: 'shopify.app.secondary.toml',
         configuration: app.configuration,
+        packageManager: 'npm',
+        result: projectAppConfigResult({
+          path: '/app/shopify.app.toml',
+          appName: app.configuration.name,
+          app: testOrganizationApp(),
+        }),
       })
       vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
 
@@ -114,3 +131,29 @@ describe('app config link command', () => {
     })
   })
 })
+
+test.each([{outputFlags: []}, {outputFlags: ['--json']}])(
+  'does not write a result if final app loading fails with output flags %j',
+  async ({outputFlags}) => {
+    const app = testAppLinked()
+    vi.mocked(link).mockResolvedValue({
+      remoteApp: testOrganizationApp(),
+      configuration: app.configuration,
+      configFileName: 'shopify.app.toml',
+      packageManager: 'npm',
+      result: projectAppConfigResult({
+        path: app.configPath,
+        appName: app.configuration.name,
+        app: testOrganizationApp(),
+      }),
+    })
+    vi.mocked(linkedAppContext).mockRejectedValue(new Error('App loading failed'))
+    const command = new ConfigLink([...outputFlags, '--client-id', 'key'], await Config.load())
+
+    await withCapturedStandardStreams(async (streams) => {
+      await expect(command.run()).rejects.toThrow('App loading failed')
+      expect(streams.stdout()).toBe('')
+      expect(streams.stderr()).toBe('')
+    })
+  },
+)

@@ -561,7 +561,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Pulls app configuration from the Developer Dashboard and creates or overwrites a configuration file. You can create a new app with this command to start with a default configuration file.\n\n  For more information on the format of the created TOML configuration file, refer to the \"App configuration\" (https://shopify.dev/docs/apps/tools/cli/configuration) page.\n  ",
+      "description": "Pulls app configuration from the Developer Dashboard and creates or overwrites a configuration file. You can create a new app with this command to start with a default configuration file.\n\n  For more information on the format of the created TOML configuration file, refer to the \"App configuration\" (https://shopify.dev/docs/apps/tools/cli/configuration) page.\n  \n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppConfigLinkResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"path\": {\n      \"type\": \"string\"\n    },\n    \"app\": {\n      \"$ref\": \"#/definitions/LinkedApp\"\n    }\n  },\n  \"required\": [\n    \"path\",\n    \"app\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppConfigLinkResult\",\n  \"definitions\": {\n    \"LinkedApp\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"id\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"minLength\": 1\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"The upstream non-GID app identifier, or null when the platform supplies a GID.\"\n        },\n        \"gid\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"pattern\": \"^gid:\\\\/\\\\/shopify\\\\/App\\\\/[^\\\\s/]+$\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"The Shopify App GID, or null when the platform supplies another identifier.\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"clientId\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"description\": \"The public OAuth client identifier.\"\n        },\n        \"organizationId\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"minLength\": 1\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"The upstream non-GID organization identifier, or null when unavailable.\"\n        },\n        \"organizationGid\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"pattern\": \"^gid:\\\\/\\\\/shopify\\\\/Organization\\\\/[^\\\\s/]+$\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"The Shopify Organization GID, or null when unavailable.\"\n        }\n      },\n      \"required\": [\n        \"id\",\n        \"gid\",\n        \"name\",\n        \"clientId\",\n        \"organizationId\",\n        \"organizationGid\"\n      ],\n      \"additionalProperties\": false,\n      \"description\": \"The linked app identity. Read the file at path for its configuration.\"\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Pulls app configuration from the Developer Dashboard and creates or overwrites a configuration file. You can create a new app with this command to start with a default configuration file.\n\n  For more information on the format of the created TOML configuration file, refer to the [App configuration](https://shopify.dev/docs/apps/tools/cli/configuration) page.\n  ",
       "flags": {
         "auth-alias": {
@@ -612,6 +612,15 @@
           "env": "SHOPIFY_FLAG_FORCE",
           "hidden": false,
           "name": "force",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
           "type": "boolean"
         },
         "json-schema": {
