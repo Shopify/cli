@@ -35,6 +35,9 @@ const wasmTomlPatchFile = glob.sync('../../node_modules/.pnpm/**/toml_patch_bg.w
 const themePath = require.resolve('@shopify/theme-check-node')
 const configYmlPath = joinPath(themePath, '..', '..', 'configs/*.yml')
 
+// The function prepare variables check type-checks with TypeScript, which needs its standard library beside it
+const typescriptLibs = joinPath(dirname(require.resolve('typescript')), 'lib.{es,decorators}*.d.ts')
+
 const themeUpdaterPath = require.resolve('@shopify/theme-check-docs-updater')
 const themeUpdaterDataPath = joinPath(themeUpdaterPath, '..', '..', 'data/*')
 
@@ -156,6 +159,10 @@ esBuild({
         {
           from: [hydrogenAssets],
           to: ['./dist/assets/hydrogen'],
+        },
+        {
+          from: [typescriptLibs],
+          to: ['./dist/assets/typescript'],
         },
       ],
     }),
