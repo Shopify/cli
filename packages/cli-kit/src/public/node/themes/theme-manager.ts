@@ -57,6 +57,6 @@ export abstract class ThemeManager {
       throw new BugError(`Could not create theme with name "${name}" and role "${role}"`)
     }
     this.setTheme(theme.id.toString())
-    return theme
+    return {...theme, createdAtRuntime: true}
   }
 }
