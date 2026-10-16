@@ -25,7 +25,7 @@ const mocks = vi.hoisted(() => {
     useStdout: vi.fn(() => {
       return {
         stdout: {
-          columns: 120,
+          columns: 100,
           on: vi.fn(),
           off: vi.fn(),
         },
@@ -73,18 +73,61 @@ describe('TabPanel', () => {
     },
   }
 
-  test('renders tab headers with line separators', async () => {
+  test('renders tab headers as buttons', async () => {
     const renderInstance = render(<TabPanel tabs={sampleTabs} initialActiveTab="a" />)
 
     await waitForInputsToBeReady()
 
     const output = unstyled(renderInstance.lastFrame()!)
-    expect(output).toContain('────────────────')
+    expect(output).toContain('╭')
+    expect(output).toContain('╰')
+    expect(output.split('\n').some((line) => /^─+$/.test(line))).toBe(false)
     expect(output).toContain('(a) First Tab')
     expect(output).toContain('(b) Second Tab')
     expect(output).toContain('(c) Action Tab')
+    expect(output).toContain('S> Shopify CLI')
 
     renderInstance.unmount()
+  })
+
+  test('renders actions together on the right', async () => {
+    const renderInstance = render(<TabPanel tabs={sampleTabs} initialActiveTab="a" />)
+
+    await waitForInputsToBeReady()
+
+    const header = unstyled(renderInstance.lastFrame()!)
+      .split('\n')
+      .find((line) => line.includes('(c) Action Tab'))!
+    expect(header.indexOf('(b) Second Tab')).toBeLessThan(header.indexOf('(c) Action Tab'))
+
+    renderInstance.unmount()
+  })
+
+  test('continues the panel border with a single line after the content tabs', async () => {
+    const originalUseStdoutImplementation = mocks.useStdout.getMockImplementation()!
+    mocks.useStdout.mockImplementation(() => {
+      return {
+        stdout: {
+          columns: 200,
+          on: vi.fn(),
+          off: vi.fn(),
+        },
+      }
+    })
+    const renderInstance = render(<TabPanel tabs={sampleTabs} initialActiveTab="a" />)
+
+    await waitForInputsToBeReady()
+
+    const outputLines = unstyled(renderInstance.lastFrame()!).split('\n')
+    const tabLabelRow = outputLines.findIndex((line) => line.includes('(b) Second Tab'))
+    const secondTabLabelColumn = outputLines[tabLabelRow]!.indexOf('(b) Second Tab')
+    const fillerStartColumn = secondTabLabelColumn + '(b) Second Tab'.length + 2
+    const panelRightColumn = outputLines[tabLabelRow + 1]!.indexOf('╮')
+    expect(outputLines[tabLabelRow + 1]!.slice(fillerStartColumn, panelRightColumn)).toMatch(/^─+$/)
+    expect(outputLines[tabLabelRow - 1]?.at(panelRightColumn - 1)).toBe(' ')
+
+    renderInstance.unmount()
+    mocks.useStdout.mockImplementation(originalUseStdoutImplementation)
   })
 
   test('shows initial active tab content', async () => {
@@ -120,8 +163,11 @@ describe('TabPanel', () => {
     const renderInstance = render(<TabPanel tabs={sampleTabs} initialActiveTab="a" />)
 
     await waitForInputsToBeReady()
+    const outputLines = unstyled(renderInstance.lastFrame()!).split('\n')
+    const tabRow = outputLines.findIndex((line) => line.includes('(b) Second Tab'))
+    const tabColumn = outputLines[tabRow]!.indexOf('(b) Second Tab')
     await waitForContent(renderInstance, 'Second tab content', () =>
-      mouseClick(20, 2).forEach((input) => renderInstance.stdin.write(input)),
+      mouseClick(tabColumn + 1, tabRow + 1).forEach((input) => renderInstance.stdin.write(input)),
     )
 
     expect(renderInstance.lastFrame()).toContain('Second tab content')
@@ -134,12 +180,16 @@ describe('TabPanel', () => {
     const renderInstance = render(<TabPanel tabs={sampleTabs} initialActiveTab="a" />)
 
     await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstance, 60, '\u001B[40;1R')
-    await waitForContent(renderInstance, 'Second tab content', () =>
-      mouseClick(20, 37).forEach((input) => renderInstance.stdin.write(input)),
-    )
-
-    expect(renderInstance.lastFrame()).toContain('Second tab content')
+    const outputLines = unstyled(renderInstance.lastFrame()!).split('\n')
+    const tabRow = outputLines.findIndex((line) => line.includes('(b) Second Tab'))
+    const tabColumn = outputLines[tabRow]!.indexOf('(b) Second Tab')
+    const verticalOffset = 40 - outputLines.length - 1
+    // The cursor position listener is registered asynchronously, so retry the response and click together.
+    await vi.waitFor(() => {
+      renderInstance.stdin.write('\u001B[40;1R')
+      mouseClick(tabColumn + 1, verticalOffset + tabRow + 1).forEach((input) => renderInstance.stdin.write(input))
+      expect(renderInstance.lastFrame()).toContain('Second tab content')
+    })
 
     renderInstance.unmount()
   })
@@ -154,6 +204,19 @@ describe('TabPanel', () => {
 
     expect(mockAction).toHaveBeenCalledOnce()
 
+    renderInstance.unmount()
+  })
+
+  test('executes tab action when action tab is clicked', async () => {
+    const renderInstance = render(<TabPanel tabs={sampleTabs} initialActiveTab="a" />)
+
+    await waitForInputsToBeReady()
+    const outputLines = unstyled(renderInstance.lastFrame()!).split('\n')
+    const actionRow = outputLines.findIndex((line) => line.includes('(c) Action Tab'))
+    const actionColumn = outputLines[actionRow]!.indexOf('(c) Action Tab')
+    await sendInputAndWait(renderInstance, 10, ...mouseClick(actionColumn + 1, actionRow + 1))
+
+    expect(mockAction).toHaveBeenCalledOnce()
     renderInstance.unmount()
   })
 

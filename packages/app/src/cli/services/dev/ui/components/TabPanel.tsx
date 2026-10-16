@@ -9,6 +9,8 @@ import {
   useOnClick,
   type DOMElement,
 } from '@shopify/cli-kit/node/ink'
+import {Link} from '@shopify/cli-kit/node/ui/components'
+import {terminalSupportsHyperlinks} from '@shopify/cli-kit/node/system'
 
 export interface Tab {
   label: string
@@ -33,26 +35,72 @@ interface TabPanelProps {
   initialActiveTab: string
 }
 
-// Using a width less than 100% reduces (but doesn't eliminate) screen artifacts when resizing the terminal
-const TAB_WIDTH_PERCENTAGE = 0.9
-
+const TAB_WIDTH_PERCENTAGE = 1
+const INFORMATION_PANEL_WIDTH_PERCENTAGE = 0.5
+const SHOPIFY_GREEN = '#96BF48'
+const SHOPIFY_CLI_DOCUMENTATION_URL = 'https://shopify.dev/docs/apps/build/cli-for-apps'
+const CHROME_TAB_BORDER = {
+  topLeft: '╭',
+  top: '─',
+  topRight: '╮',
+  right: '│',
+  bottomRight: '┴',
+  bottom: '─',
+  bottomLeft: '┴',
+  left: '│',
+}
+const FIRST_CHROME_TAB_BORDER = {
+  ...CHROME_TAB_BORDER,
+  bottomLeft: '├',
+}
+const ACTIVE_CHROME_TAB_BORDER = {
+  ...CHROME_TAB_BORDER,
+  bottomRight: '└',
+  bottom: ' ',
+  bottomLeft: '┘',
+}
+const FIRST_ACTIVE_CHROME_TAB_BORDER = {
+  ...ACTIVE_CHROME_TAB_BORDER,
+  bottomLeft: '│',
+}
+const CONTENT_PANEL_BORDER = {
+  topLeft: '├',
+  top: '─',
+  topRight: '┤',
+  right: '│',
+  bottomRight: '╯',
+  bottom: '─',
+  bottomLeft: '╰',
+  left: '│',
+}
 interface ClickableTabProps {
   active?: boolean
+  chromeTab?: boolean
+  firstChromeTab?: boolean
   header: string
+  marginRight?: number
   onClick: () => void
 }
 
-const ClickableTab: React.FunctionComponent<ClickableTabProps> = ({active = false, header, onClick}) => {
+const ClickableTab: React.FunctionComponent<ClickableTabProps> = ({
+  active = false,
+  chromeTab = false,
+  firstChromeTab = false,
+  header,
+  marginRight = 1,
+  onClick,
+}) => {
   const tabRef = useRef<DOMElement>(null)
+  let chromeTabBorder = firstChromeTab ? FIRST_CHROME_TAB_BORDER : CHROME_TAB_BORDER
+  if (active) chromeTabBorder = ACTIVE_CHROME_TAB_BORDER
+  if (active && firstChromeTab) chromeTabBorder = FIRST_ACTIVE_CHROME_TAB_BORDER
   useOnClick(tabRef, (event) => {
     if (event.button === 'left') onClick()
   })
 
   return (
-    <Box ref={tabRef}>
-      <Text bold={active} inverse={active} wrap="truncate">
-        {header}
-      </Text>
+    <Box ref={tabRef} borderStyle={chromeTab ? chromeTabBorder : 'round'} marginRight={marginRight} overflowX="hidden">
+      <Text bold={active}> {header} </Text>
     </Box>
   )
 }
@@ -135,12 +183,25 @@ export const TabPanel: React.FunctionComponent<TabPanelProps> = ({tabs, initialA
     return {
       ...tab,
       inputKey: key,
-      header: ` (${key}) ${tab.label} `,
+      header: `(${key}) ${tab.label}`,
     }
   })
 
   const contentTabs = tabsArray.filter((tab) => !tab.action)
   const actionTabs = tabsArray.filter((tab) => tab.action)
+  const requiredContentPanelWidth = contentTabs.reduce((width, tab) => width + tab.header.length + 4, 0)
+  const requiredActionPanelWidth = actionTabs.reduce(
+    (width, tab, index) => width + tab.header.length + 4 + (index === 0 ? 0 : 1),
+    0,
+  )
+  const informationPanelWidth = Math.max(
+    1,
+    Math.min(
+      Math.max(Math.floor(tabWidth * INFORMATION_PANEL_WIDTH_PERCENTAGE), requiredContentPanelWidth),
+      tabWidth - requiredActionPanelWidth - 1,
+    ),
+  )
+  const actionPanelWidth = tabWidth - informationPanelWidth - 1
 
   const activateTab = async (tab: TabDisplay) => {
     if (tab.action) {
@@ -156,46 +217,82 @@ export const TabPanel: React.FunctionComponent<TabPanelProps> = ({tabs, initialA
   }
 
   return (
-    <>
+    <Box flexDirection="row" height="100%" width={tabWidth}>
+      <Box flexDirection="column" flexShrink={0} marginRight={1} overflowY="hidden" width={informationPanelWidth}>
+        <Box ref={contentTabsRef} flexDirection="row" flexShrink={0} flexWrap="nowrap">
+          {contentTabs.map((tab, index) => (
+            <ClickableTab
+              key={tab.inputKey}
+              active={activeTab === tab.inputKey}
+              chromeTab
+              firstChromeTab={index === 0}
+              header={tab.header}
+              marginRight={0}
+              onClick={() => activateTabFromClick(tab)}
+            />
+          ))}
+          <Box alignItems="flex-end" flexDirection="row" flexGrow={1}>
+            <Box
+              borderBottom
+              borderLeft={false}
+              borderRight={false}
+              borderStyle="single"
+              borderTop={false}
+              flexGrow={1}
+            />
+            <Text>╮</Text>
+          </Box>
+        </Box>
+        <Box
+          borderTop={false}
+          borderRight
+          borderStyle={CONTENT_PANEL_BORDER}
+          flexDirection="column"
+          flexGrow={1}
+          overflowY="hidden"
+          paddingLeft={1}
+          paddingRight={1}
+        >
+          {tabs[activeTab]?.content}
+        </Box>
+      </Box>
+
       <Box
-        paddingTop={0}
-        width={tabWidth}
-        flexDirection="row"
-        flexGrow={1}
-        borderStyle="single"
-        borderBottom={false}
-        borderLeft={false}
-        borderRight={false}
-        borderTop
+        alignItems="flex-end"
+        flexDirection="column"
+        flexShrink={0}
+        justifyContent="space-between"
+        overflowX="hidden"
+        width={actionPanelWidth}
       >
-        <Box ref={contentTabsRef} flexDirection="row" flexWrap="nowrap" flexShrink={0} marginRight={3}>
-          <Text>│</Text>
-          {contentTabs.map((tab) => (
-            <React.Fragment key={tab.inputKey}>
+        {displayActions && (
+          <Box justifyContent="flex-end" width="100%">
+            {actionTabs.map((tab, index) => (
               <ClickableTab
-                active={activeTab === tab.inputKey}
-                header={tab.header}
+                key={tab.inputKey}
+                header={`(${tab.inputKey}) ${tab.label}`}
+                marginRight={index === actionTabs.length - 1 ? 0 : 1}
                 onClick={() => activateTabFromClick(tab)}
               />
-              <Text>│</Text>
-            </React.Fragment>
-          ))}
-        </Box>
-        {displayActions && (
-          <Box flexGrow={1} justifyContent="flex-end">
-            {actionTabs.map((tab, index) => (
-              <React.Fragment key={tab.inputKey}>
-                <ClickableTab header={`(${tab.inputKey}) ${tab.label}`} onClick={() => activateTabFromClick(tab)} />
-                {index < actionTabs.length - 1 && <Text> │ </Text>}
-              </React.Fragment>
             ))}
           </Box>
         )}
+        <Box justifyContent="flex-end" marginBottom={1} paddingRight={1} width="100%">
+          <Text wrap="truncate">
+            <Text bold italic>
+              S
+            </Text>
+            <Text bold color={SHOPIFY_GREEN}>
+              &gt;
+            </Text>{' '}
+            {terminalSupportsHyperlinks() ? (
+              <Link label="Shopify CLI" url={SHOPIFY_CLI_DOCUMENTATION_URL} />
+            ) : (
+              'Shopify CLI'
+            )}
+          </Text>
+        </Box>
       </Box>
-      {/* Tab Content Area */}
-      <Box flexDirection="column" marginLeft={1} marginRight={1} marginTop={1}>
-        {tabs[activeTab]?.content}
-      </Box>
-    </>
+    </Box>
   )
 }

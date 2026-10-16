@@ -1,17 +1,12 @@
 import {DevSessionUI} from './DevSessionUI.js'
 import {DevSessionStatus, DevSessionStatusManager} from '../../processes/dev-session/dev-session-status-manager.js'
-import {
-  getLastFrameAfterUnmount,
-  render,
-  sendInputAndWait,
-  waitForContent,
-  waitForInputsToBeReady,
-} from '@shopify/cli-kit/node/testing/ui'
+import {render, sendInputAndWait, waitForContent, waitForInputsToBeReady} from '@shopify/cli-kit/node/testing/ui'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import React from 'react'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/system', async () => {
@@ -34,12 +29,15 @@ vi.mock('@shopify/cli-kit/node/hooks/postrun', async () => {
 
 const mocks = vi.hoisted(() => {
   return {
+    getMouseEnabled: vi.fn(() => true),
     useStdin: vi.fn(() => {
       return {isRawModeSupported: true}
     }),
     terminalSupportsHyperlinks: vi.fn(() => false),
   }
 })
+
+vi.mock('@shopify/cli-kit/node/mouse', () => ({getMouseEnabled: mocks.getMouseEnabled}))
 
 vi.mock('@shopify/cli-kit/node/ink', async () => {
   const actual = await vi.importActual('@shopify/cli-kit/node/ink')
@@ -61,12 +59,37 @@ const initialStatus: DevSessionStatus = {
 
 const onAbort = vi.fn()
 
+function mouseWheelDown(column: number, row: number): string {
+  return `\u001B[<65;${column};${row}M`
+}
+
 function mouseWheelUp(column: number, row: number): string {
   return `\u001B[<64;${column};${row}M`
 }
 
+function mouseClick(column: number, row: number): [string, string] {
+  return [`\u001B[<0;${column};${row}M`, `\u001B[<0;${column};${row}m`]
+}
+
+function mouseDrag(startColumn: number, startRow: number, endColumn: number, endRow: number): [string, string, string] {
+  return [
+    `\u001B[<0;${startColumn};${startRow}M`,
+    `\u001B[<32;${endColumn};${endRow}M`,
+    `\u001B[<0;${endColumn};${endRow}m`,
+  ]
+}
+
+function mouseClickOn(frame: string, text: string): [string, string] {
+  const lines = unstyled(frame).split('\n')
+  const rowIndex = lines.findIndex((line) => line.includes(text))
+  const columnIndex = lines[rowIndex]?.indexOf(text) ?? -1
+  if (rowIndex === -1 || columnIndex === -1) throw new Error(`Could not find ${text} in the rendered output`)
+  return mouseClick(columnIndex + 1, rowIndex + 1)
+}
+
 describe('DevSessionUI', () => {
   beforeEach(() => {
+    mocks.getMouseEnabled.mockReturnValue(true)
     mocks.terminalSupportsHyperlinks.mockReturnValue(false)
     mocks.useStdin.mockReturnValue({isRawModeSupported: true})
     devSessionStatusManager = new DevSessionStatusManager()
@@ -91,7 +114,69 @@ describe('DevSessionUI', () => {
 
     await waitForContent(renderInstance, 'Preparing dev preview')
 
-    expect(unstyled(renderInstance.lastFrame()!)).toMatch(/S[> ] Preparing dev preview \.\.\./)
+    expect(unstyled(renderInstance.lastFrame()!)).toMatch(/S[> ] Preparing dev preview\.\.\./)
+
+    renderInstance.unmount()
+  })
+
+  test('renders configuration and GraphiQL port notices as initial app-preview logs', async () => {
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        configPath="/app/shopify.app.toml"
+        usingLocalhost
+        unavailableGraphiqlPort={4000}
+        localhostPortUnavailable={8081}
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForContent(renderInstance, 'Using shopify.app.toml')
+    const output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('app-preview │ Using shopify.app.toml for default values.')
+    expect(output).toContain('app-preview │ ⚠️ `--use-localhost` is not compatible')
+    expect(output).toContain('app-preview │ ⚠️ A random port will be used for GraphiQL because 4000')
+    expect(output).toContain('app-preview │ ⚠️ A random port will be used for localhost because 8081')
+
+    renderInstance.unmount()
+  })
+
+  test('reports all normalized output for rendering after exit', async () => {
+    let outputReadyResolve = () => {}
+    const outputReady = new Promise<void>((resolve) => {
+      outputReadyResolve = resolve
+    })
+    const onOutput = vi.fn()
+    const process = {
+      prefix: 'backend',
+      action: async (stdout: Writable) => {
+        stdout.write('\u001b[32mfirst line\nsecond line\u001b[39m')
+        outputReadyResolve()
+        await new Promise<void>(() => {})
+      },
+    }
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[process]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        onAbort={onAbort}
+        onOutput={onOutput}
+      />,
+    )
+
+    await outputReady
+    await waitForContent(renderInstance, 'second line')
+
+    expect(onOutput).toHaveBeenCalledWith({
+      lines: ['first line', 'second line'],
+      prefix: 'backend',
+      timestamp: expect.stringMatching(/^\d{2}:\d{2}:\d{2}$/),
+    })
 
     renderInstance.unmount()
   })
@@ -169,10 +254,123 @@ describe('DevSessionUI', () => {
     expect(output).toContain('(g) Open GraphiQL (Admin API)')
     expect(output).toContain('(p) Open app preview')
     expect(output).toContain('(c) Open Dev Console for extension previews')
-    expect(output).toContain('Preview URL: https://shopify.com')
-    expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
-    expect(output).toContain('Dev Console URL: https://mystore.myshopify.com/admin?dev-console=show')
+    expect(output).toContain('Open app preview: https://shopify.com')
+    expect(output).toContain('Open GraphiQL (Admin API): https://graphi')
+    expect(output).toContain('Open Dev Console for extension previews:')
+    expect(output).toContain('S> Shopify CLI')
 
+    renderInstance.unmount()
+  })
+
+  test('cycles through log prefixes and only renders output for the selected prefix', async () => {
+    let processesStartedResolve: () => void
+    const processesStarted = new Promise<void>((resolve) => {
+      processesStartedResolve = resolve
+    })
+    let releaseProcesses = () => {}
+    const processesReleased = new Promise<void>((resolve) => {
+      releaseProcesses = resolve
+    })
+    let startedProcessCount = 0
+    const processStarted = () => {
+      startedProcessCount++
+      if (startedProcessCount === 3) processesStartedResolve()
+    }
+    let writeAppPreview = (_message: string) => {}
+    let writeAppHome = (_message: string) => {}
+    let writeWeb = (_message: string) => {}
+    let writeGraphiql = (_message: string) => {}
+    const appPreviewProcess = {
+      prefix: 'app-preview',
+      action: async (stdout: Writable) => {
+        writeAppPreview = (message) => stdout.write(message)
+        writeAppHome = (message) => useConcurrentOutputContext({outputPrefix: 'app_home'}, () => stdout.write(message))
+        writeAppPreview('app preview message')
+        writeAppHome('app home message')
+        processStarted()
+        await processesReleased
+      },
+    }
+    const webProcess = {
+      prefix: 'React Router',
+      action: async (stdout: Writable) => {
+        writeWeb = (message) => stdout.write(message)
+        writeWeb('react router message')
+        processStarted()
+        await processesReleased
+      },
+    }
+    const graphiqlProcess = {
+      prefix: 'graphiql',
+      action: async (stdout: Writable) => {
+        writeGraphiql = (message) => stdout.write(message)
+        writeGraphiql('graphiql message')
+        processStarted()
+        await processesReleased
+      },
+    }
+
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[appPreviewProcess, webProcess, graphiqlProcess]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        onAbort={onAbort}
+      />,
+    )
+    await processesStarted
+    await waitForContent(renderInstance, 'app home message')
+
+    let output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('(f) Filter logs: all')
+    const actionsRow = output.split('\n').find((line) => line.includes('(f) Filter logs: all'))!
+    expect(actionsRow.indexOf('(f) Filter logs: all')).toBeLessThan(actionsRow.indexOf('(q) Quit'))
+    expect(output).toContain('app preview message')
+    expect(output).toContain('react router message')
+    expect(output).toContain('app home message')
+    expect(output).toContain('graphiql message')
+
+    await sendInputAndWait(renderInstance, 10, 'f')
+    writeAppHome('filtered app home message')
+    writeWeb('filtered react router message')
+    writeGraphiql('filtered graphiql message')
+    writeAppPreview('filtered app preview message')
+    await waitForContent(renderInstance, 'filtered app preview message')
+    output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('(f) Filter logs: app-previ')
+    expect(output).toContain('filtered app preview message')
+    expect(output).not.toContain('filtered react router message')
+    expect(output).not.toContain('filtered app home message')
+    expect(output).not.toContain('filtered graphiql message')
+
+    await sendInputAndWait(renderInstance, 10, 'f', 'f', 'f')
+    writeAppPreview('app preview while filtering app home')
+    writeWeb('react router while filtering app home')
+    writeGraphiql('graphiql while filtering app home')
+    writeAppHome('app home while filtering app home')
+    await waitForContent(renderInstance, 'app home while filtering app home')
+    output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('(f) Filter logs: app_home')
+    expect(output).not.toContain('app preview while filtering app home')
+    expect(output).not.toContain('react router while filtering app home')
+    expect(output).toContain('app home while filtering app home')
+    expect(output).not.toContain('graphiql while filtering app home')
+
+    await sendInputAndWait(renderInstance, 10, 'f')
+    writeAppPreview('app preview after resetting filter')
+    writeWeb('react router after resetting filter')
+    writeAppHome('app home after resetting filter')
+    writeGraphiql('graphiql after resetting filter')
+    await waitForContent(renderInstance, 'graphiql after resetting filter')
+    output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('(f) Filter logs: all')
+    expect(output).toContain('app preview after resetting filter')
+    expect(output).toContain('react router after resetting filter')
+    expect(output).toContain('app home after resetting filter')
+    expect(output).toContain('graphiql after resetting filter')
+
+    releaseProcesses()
     renderInstance.unmount()
   })
 
@@ -348,7 +546,7 @@ describe('DevSessionUI', () => {
     renderInstance.unmount()
   })
 
-  test('shows persistent dev info when aborting and dev preview is ready', async () => {
+  test('preserves the dev preview when aborting after it is ready', async () => {
     // Given
     const abortController = new AbortController()
 
@@ -370,91 +568,7 @@ describe('DevSessionUI', () => {
 
     await promise
 
-    // Then - check final frame for key content without exact formatting
-    const finalOutput = unstyled(getLastFrameAfterUnmount(renderInstance)!)
-
-    // Info message should be present
-    expect(finalOutput).toContain('A preview of your development changes is still available')
-    expect(finalOutput).toContain('mystore.myshopify.com')
-    expect(finalOutput).toContain('shopify app dev clean')
-    expect(finalOutput).toContain('Learn more about dev previews')
-
-    // unmount so that polling is cleared after every test
-    renderInstance.unmount()
-  })
-
-  test('shows error shutting down message when aborted with error', async () => {
-    // Given
-    const abortController = new AbortController()
-
-    const backendProcess: any = {
-      prefix: 'backend',
-      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
-        stdout.write('first backend message')
-        stdout.write('second backend message')
-        stdout.write('third backend message')
-
-        // await promise that never resolves
-        await new Promise(() => {})
-      },
-    }
-
-    // When
-    const renderInstance = render(
-      <DevSessionUI
-        processes={[backendProcess]}
-        abortController={abortController}
-        devSessionStatusManager={devSessionStatusManager}
-        shopFqdn="mystore.myshopify.com"
-        onAbort={onAbort}
-      />,
-    )
-    await waitForContent(renderInstance, 'third backend message')
-
-    const promise = renderInstance.waitUntilExit()
-
-    abortController.abort('something went wrong')
-    // Wait for React 19 to render the abort state
-    await waitForContent(renderInstance, 'something went wrong')
-
-    // Then - check for key content without exact formatting
-    const output = unstyled(renderInstance.lastFrame()!)
-
-    // Process output should be visible
-    expect(output).toContain('backend │ first backend message')
-    expect(output).toContain('backend │ second backend message')
-    expect(output).toContain('backend │ third backend message')
-
-    // Info message should be present
-    expect(output).toContain('A preview of your development changes is still available')
-    expect(output).toContain('mystore.myshopify.com')
-    expect(output).toContain('shopify app dev clean')
-    expect(output).toContain('Learn more about dev previews')
-
-    // Tab interface is hidden after abort (React 19 batches setIsAborted with other state updates)
-    expect(output).not.toContain('(d) Dev status')
-
-    // Error message should be shown
-    expect(output).toContain('something went wrong')
-
-    await promise
-
-    // Then - check final frame for key content without exact formatting
-    const finalOutput = unstyled(getLastFrameAfterUnmount(renderInstance)!)
-
-    // Process output should be visible
-    expect(finalOutput).toContain('backend │ first backend message')
-    expect(finalOutput).toContain('backend │ second backend message')
-    expect(finalOutput).toContain('backend │ third backend message')
-
-    // Info message should be present
-    expect(finalOutput).toContain('A preview of your development changes is still available')
-    expect(finalOutput).toContain('mystore.myshopify.com')
-    expect(finalOutput).toContain('shopify app dev clean')
-    expect(finalOutput).toContain('Learn more about dev previews')
-
-    // Error message should be shown
-    expect(finalOutput).toContain('something went wrong')
+    expect(onAbort).not.toHaveBeenCalled()
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()
@@ -490,8 +604,8 @@ describe('DevSessionUI', () => {
     await waitForContent(renderInstance, 'Open app preview')
 
     // Then
-    expect(unstyled(renderInstance.lastFrame()!)).toContain('Preview URL: https://new-preview-url.shopify.com')
-    expect(unstyled(renderInstance.lastFrame()!)).toContain('GraphiQL URL: https://new-graphiql.shopify.com')
+    expect(unstyled(renderInstance.lastFrame()!)).toContain('Open app preview: https://new-preview-url')
+    expect(unstyled(renderInstance.lastFrame()!)).toContain('Open GraphiQL (Admin API): https://new-')
     renderInstance.unmount()
   })
 
@@ -525,8 +639,8 @@ describe('DevSessionUI', () => {
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toContain('(p)')
     expect(unstyled(renderInstance.lastFrame()!)).toContain('(g)')
-    expect(unstyled(renderInstance.lastFrame()!)).toContain('Preview URL: https://shopify.com')
-    expect(unstyled(renderInstance.lastFrame()!)).toContain('GraphiQL URL: https://graphiql.shopify.com')
+    expect(unstyled(renderInstance.lastFrame()!)).toContain('Open app preview: https://shopify.com')
+    expect(unstyled(renderInstance.lastFrame()!)).toContain('Open GraphiQL (Admin API): https://graphi')
     renderInstance.unmount()
   })
 
@@ -588,7 +702,161 @@ describe('DevSessionUI', () => {
     renderInstance.unmount()
   })
 
-  test('temporarily releases mouse reporting when scrolling', async () => {
+  test('keeps the full-screen layout, mouse scrolling, and clicks working after filtering', async () => {
+    let outputReadyResolve = () => {}
+    const outputReady = new Promise<void>((resolve) => {
+      outputReadyResolve = resolve
+    })
+    const process = {
+      prefix: 'backend',
+      action: async (stdout: Writable) => {
+        stdout.write(Array.from({length: 100}, (_, index) => `[${String(index + 1).padStart(3, '0')}]`).join('\n'))
+        outputReadyResolve()
+        await new Promise<void>(() => {})
+      },
+    }
+    const onOutput = vi.fn()
+    devSessionStatusManager.updateStatus({
+      statusMessage: {message: 'Ready, watching for changes in your app', type: 'success'},
+    })
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[process]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        appName="My Test App"
+        onAbort={onAbort}
+        onOutput={onOutput}
+      />,
+      {stdoutIsTTY: true},
+    )
+
+    await outputReady
+    await waitForContent(renderInstance, '[100]')
+    const initialFrame = unstyled(renderInstance.lastFrame()!)
+    const initialLines = initialFrame.split('\n')
+    const initialMenuRow = initialLines.findIndex((line) => line.includes('(d) Dev status'))
+    const statusMessageRow = initialLines.findIndex((line) => line.includes('Ready, watching'))
+    const firstShortcutRow = initialLines.findIndex((line) => line.includes('(p) Open app preview'))
+    const quitMenuRow = initialLines.findIndex((line) => line.includes('(q) Quit'))
+    const logBoxTopRow = initialLines.findIndex((line) => line.startsWith('╭'))
+    const logBoxBottomRow = initialLines.findIndex((line) => line.startsWith('╰'))
+    const contentPanelTopRow = initialMenuRow + 1
+    const footerBottomRow = initialLines.length - 1
+    const informationPanelLastColumn = initialLines[footerBottomRow]!.indexOf('╯')
+    expect(initialLines).toHaveLength(80)
+    expect(initialLines[logBoxTopRow]).toHaveLength(100)
+    expect(initialLines.length - (logBoxBottomRow + 1)).toBe(9)
+    expect(contentPanelTopRow).toBe(initialMenuRow + 1)
+    expect(firstShortcutRow - statusMessageRow).toBe(2)
+    expect(initialLines[contentPanelTopRow]!.slice(1, 17)).not.toContain('─')
+    expect(initialLines[initialMenuRow]?.at(informationPanelLastColumn)).not.toBe('│')
+    expect(initialLines[statusMessageRow + 1]?.at(informationPanelLastColumn)).toBe('│')
+    expect(initialLines.slice(quitMenuRow - 1, quitMenuRow + 2).map((line) => line.at(-1))).toEqual(['╮', '│', '╯'])
+    expect(initialLines[footerBottomRow - 1]).toHaveLength(99)
+    expect(initialLines[footerBottomRow - 1]).toContain('S> Shopify CLI')
+    initialLines.slice(logBoxTopRow, logBoxBottomRow + 1).forEach((line) => {
+      expect(['╮', '│', '╯']).toContain(line.at(-1))
+    })
+    expect(initialFrame).not.toContain('Using shopify.app.toml')
+
+    const textSelectionHint =
+      'If you want to select text, try holding Option or Shift while dragging. Or disable mouse support with `shopify config mouse off`.'
+    await sendInputAndWait(renderInstance, 50, ...mouseDrag(2, logBoxTopRow + 2, 20, logBoxTopRow + 2))
+    await waitForContent(renderInstance, 'If you want to select text')
+    await sendInputAndWait(renderInstance, 50, ...mouseClick(2, logBoxTopRow + 2))
+    const textSelectionHintChunks = onOutput.mock.calls
+      .map(([chunk]) => chunk)
+      .filter(({prefix}) => prefix === 'app-preview')
+    expect(textSelectionHintChunks).toEqual([
+      {
+        lines: [textSelectionHint],
+        prefix: 'app-preview',
+        timestamp: expect.stringMatching(/^\d{2}:\d{2}:\d{2}$/),
+      },
+    ])
+
+    await sendInputAndWait(renderInstance, 50, ...mouseClickOn(renderInstance.lastFrame()!, '(f) Filter logs'))
+    await waitForContent(renderInstance, '[001]')
+    let filteredFrame = unstyled(renderInstance.lastFrame()!)
+    expect(filteredFrame).toContain('Filter logs: backend')
+    expect(filteredFrame).toContain('[001]')
+    expect(filteredFrame.split('\n').findIndex((line) => line.includes('(d) Dev status'))).toBe(initialMenuRow)
+
+    const firstLogRow = filteredFrame.split('\n').findIndex((line) => line.includes('[001]'))
+    await sendInputAndWait(renderInstance, 50, mouseWheelDown(2, firstLogRow + 1))
+    filteredFrame = unstyled(renderInstance.lastFrame()!)
+    expect(filteredFrame).not.toContain('[001]')
+    expect(filteredFrame).toContain('[004]')
+    expect(filteredFrame.split('\n').findIndex((line) => line.includes('(d) Dev status'))).toBe(initialMenuRow)
+
+    await sendInputAndWait(renderInstance, 50, ...mouseClickOn(renderInstance.lastFrame()!, '(a) App info'))
+    const appInfoFrame = unstyled(renderInstance.lastFrame()!)
+    expect(appInfoFrame).toContain('My Test App')
+    expect(appInfoFrame.split('\n').findIndex((line) => line.includes('(d) Dev status'))).toBe(initialMenuRow)
+    renderInstance.unmount()
+  })
+
+  test('disables mouse interactions while keeping keyboard log scrolling available', async () => {
+    mocks.getMouseEnabled.mockReturnValue(false)
+    let outputReadyResolve = () => {}
+    const outputReady = new Promise<void>((resolve) => {
+      outputReadyResolve = resolve
+    })
+    const process = {
+      prefix: 'backend',
+      action: async (stdout: Writable) => {
+        stdout.write(Array.from({length: 100}, (_, index) => `[${String(index + 1).padStart(3, '0')}]`).join('\n'))
+        outputReadyResolve()
+        await new Promise<void>(() => {})
+      },
+    }
+    const onOutput = vi.fn()
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[process]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        onAbort={onAbort}
+        onOutput={onOutput}
+      />,
+      {stdoutIsTTY: true},
+    )
+
+    await outputReady
+    await waitForContent(renderInstance, '[100]')
+
+    const initialFrame = unstyled(renderInstance.lastFrame()!)
+    expect(initialFrame.split('\n')).toHaveLength(80)
+    expect(initialFrame).not.toContain('[001]')
+    expect(initialFrame).toContain('[100]')
+
+    const firstLogRow = initialFrame.split('\n').findIndex((line) => line.includes('backend'))
+    await sendInputAndWait(renderInstance, 50, ...mouseDrag(2, firstLogRow + 1, 20, firstLogRow + 1))
+    expect(onOutput.mock.calls.map(([chunk]) => chunk).filter(({prefix}) => prefix === 'app-preview')).toEqual([])
+    expect(unstyled(renderInstance.lastFrame()!)).not.toContain('If you want to select text')
+
+    await sendInputAndWait(renderInstance, 50, mouseWheelUp(2, firstLogRow + 1))
+    const frameAfterMouseWheel = unstyled(renderInstance.lastFrame()!)
+    expect(frameAfterMouseWheel).toContain('[100]')
+
+    await sendInputAndWait(renderInstance, 50, '\u001B[5~')
+
+    const scrolledFrame = unstyled(renderInstance.lastFrame()!)
+    expect(scrolledFrame).toContain('[001]')
+    expect(scrolledFrame).not.toContain('[100]')
+
+    await sendInputAndWait(renderInstance, 50, '\u001B[B')
+    expect(unstyled(renderInstance.lastFrame()!)).not.toContain('[001]')
+
+    await sendInputAndWait(renderInstance, 50, '\u001B[A')
+    expect(unstyled(renderInstance.lastFrame()!)).toContain('[001]')
+    renderInstance.unmount()
+  })
+
+  test('resizes the layout to fill the terminal', async () => {
     const renderInstance = render(
       <DevSessionUI
         processes={[]}
@@ -597,17 +865,17 @@ describe('DevSessionUI', () => {
         shopFqdn="mystore.myshopify.com"
         onAbort={onAbort}
       />,
-      {stdoutIsTTY: true},
     )
-    const stdoutWrite = vi.spyOn(renderInstance.stdout, 'write')
-
     await waitForInputsToBeReady()
-    // The row is intentionally outside the rendered UI to cover trackpad gestures
-    // over blank areas of the terminal viewport.
-    await sendInputAndWait(renderInstance, 10, mouseWheelUp(2, 200))
 
-    expect(stdoutWrite).toHaveBeenCalledWith('\u001B[?1003l\u001B[?1002l\u001B[?1000l')
+    renderInstance.stdout.columns = 60
+    renderInstance.stdout.rows = 40
+    renderInstance.stdout.emit('resize')
+    await sendInputAndWait(renderInstance, 20)
 
+    const resizedLines = unstyled(renderInstance.lastFrame()!).split('\n')
+    expect(resizedLines).toHaveLength(40)
+    expect(resizedLines.find((line) => line.startsWith('╭'))).toHaveLength(60)
     renderInstance.unmount()
   })
 
@@ -693,11 +961,12 @@ describe('DevSessionUI', () => {
     expect(output).not.toContain('Preview URL:')
     expect(output).not.toContain('Dev Console URL:')
     expect(output).not.toContain('GraphiQL URL:')
+    expect(renderInstance.lastFrame()).toContain('https://shopify.dev')
 
     renderInstance.unmount()
   })
 
-  test('shows URL list when terminal does not support hyperlinks', async () => {
+  test('shows URLs inline when terminal does not support hyperlinks', async () => {
     // Given
     mocks.terminalSupportsHyperlinks.mockReturnValue(false)
 
@@ -713,14 +982,14 @@ describe('DevSessionUI', () => {
 
     await waitForInputsToBeReady()
 
-    // Then - both shortcuts with label text and URL list should be present
+    // Then - each shortcut and its URL share one row so the footer stays compact
     const output = unstyled(renderInstance.lastFrame()!)
     expect(output).toContain('(p) Open app preview')
     expect(output).toContain('(c) Open Dev Console for extension previews')
     expect(output).toContain('(g) Open GraphiQL (Admin API)')
-    expect(output).toContain('Preview URL: https://shopify.com')
-    expect(output).toContain('Dev Console URL: https://mystore.myshopify.com/admin?dev-console=show')
-    expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
+    expect(output).toContain('Open app preview: https://shopify.com')
+    expect(output).toContain('Open Dev Console for extension previews:')
+    expect(output).toContain('Open GraphiQL (Admin API): https://graphi')
 
     renderInstance.unmount()
   })
