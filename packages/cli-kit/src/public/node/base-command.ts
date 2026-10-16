@@ -1,7 +1,7 @@
 import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
-import {runWithCommandEventsForCommand} from './command-events.js'
+import {commandEventOutputMode, emitCommandEvent, runWithCommandEventsForCommand} from './command-events.js'
 import {outputContent, outputResult, outputToken} from './output.js'
 import {setCurrentSessionAlias} from './session.js'
 import {terminalSupportsPrompting} from './system.js'
@@ -165,13 +165,35 @@ abstract class BaseCommand extends Command {
     result = await this.resultWithEnvironment<TFlags, TGlobalFlags, TArgs>(result, options, argv)
     await setCurrentSessionAlias(result.flags['auth-alias'])
     await addFromParsedFlags(result.flags)
-    this.failMissingNonTTYFlagRequirements(result.flags, this.applicableNonTTYFlagRequirements(result.flags))
+    this.validateNonTTYFlags(result.flags)
     return {...result, ...{argv: result.argv as string[]}}
   }
 
   protected environmentsFilename(): string | undefined {
     // To be re-implemented if needed
     return undefined
+  }
+
+  protected async parseEnvironmentFlags<
+    TFlags extends FlagOutput,
+    TGlobalFlags extends FlagOutput,
+    TArgs extends ArgOutput,
+  >(environment: JsonMap, options: Input<TFlags, TGlobalFlags, TArgs>, explicitFlags: FlagOutput): Promise<FlagOutput> {
+    const originalArgv = this.argv
+    try {
+      const result = await super.parse(options, [
+        ...originalArgv,
+        ...argsFromEnvironment(environment, options, explicitFlags),
+      ])
+      return result.flags
+    } finally {
+      // Oclif replaces argv when parsing; the next environment needs the original arguments.
+      this.argv = originalArgv
+    }
+  }
+
+  protected validateNonTTYFlags(flags: FlagOutput): void {
+    this.failMissingNonTTYFlagRequirements(flags, this.applicableNonTTYFlagRequirements(flags))
   }
 
   protected failMissingNonTTYFlags(flags: FlagOutput, requiredFlags: string[]): void {
@@ -272,7 +294,7 @@ ${explanation} in non-interactive terminal environments, such as a CI environmen
     const result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, [
       // Need to specify argv default because we're merging with argsFromEnvironment.
       ...(argv ?? this.argv),
-      ...argsFromEnvironment<TFlags, TGlobalFlags, TArgs>(environment, options, noDefaultsResult),
+      ...argsFromEnvironment<TFlags, TGlobalFlags, TArgs>(environment, options, noDefaultsResult.flags),
       ...(isDefaultEnvironment ? ['--environment', 'default'] : []),
     ])
 
@@ -342,13 +364,21 @@ function reportEnvironmentApplication<
     const userSpecifiedThisFlag = Object.prototype.hasOwnProperty.call(noDefaultsFlags, name)
     const environmentContainsFlag = Object.prototype.hasOwnProperty.call(environment, name)
     if (!userSpecifiedThisFlag && environmentContainsFlag) {
-      const valueToReport = name === 'password' ? `********${value.substr(-4)}` : value
+      const valueToReport = name === 'password' || name === 'store-password' ? `********${value.substr(-4)}` : value
       changes[name] = valueToReport
     }
   }
   if (Object.keys(changes).length === 0) return
 
   const items = Object.entries(changes).map(([name, value]) => `${name}: ${value}`)
+  if (commandEventOutputMode() === 'json') {
+    emitCommandEvent({
+      type: 'diagnostic',
+      level: 'info',
+      message: `Using applicable flags from ${environmentName} environment:\n${items.join('\n')}`,
+    })
+    return
+  }
   // eslint-disable-next-line no-void
   void import('./ui.js').then(({renderInfo}) => {
     renderInfo({
@@ -402,13 +432,12 @@ export function noDefaultsOptions<TFlags extends FlagOutput, TGlobalFlags extend
 function argsFromEnvironment<TFlags extends FlagOutput, TGlobalFlags extends FlagOutput, TArgs extends ArgOutput>(
   environment: JsonMap,
   options: Input<TFlags, TGlobalFlags, TArgs> | undefined,
-  noDefaultsResult: ParserOutput<TFlags, TArgs>,
+  explicitFlags: FlagOutput,
 ): string[] {
   const args: string[] = []
   for (const [label, value] of Object.entries(environment)) {
     const flagIsRelevantToCommand = commandSupportsFlag(options?.flags, label)
-    const userSpecifiedThisFlag =
-      noDefaultsResult.flags && Object.prototype.hasOwnProperty.call(noDefaultsResult.flags, label)
+    const userSpecifiedThisFlag = Object.prototype.hasOwnProperty.call(explicitFlags, label)
     if (flagIsRelevantToCommand && !userSpecifiedThisFlag) {
       if (typeof value === 'boolean') {
         if (value) {
