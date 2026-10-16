@@ -5,7 +5,7 @@ import {execa} from 'execa'
 import open from 'open'
 import {describe, expect, test, vi} from 'vitest'
 import which from 'which'
-import {Readable} from 'stream'
+import {Readable, Writable} from 'stream'
 import {EventEmitter} from 'events'
 
 import * as fs from 'fs'
@@ -168,6 +168,75 @@ describe('captureOutput', () => {
 })
 
 describe('captureOutputWithExitCode', () => {
+  test.each([0, 1])('preserves final newlines when requested with exit code %s', async (exitCode) => {
+    const {execa: actualExeca} = await vi.importActual<typeof import('execa')>('execa')
+    vi.mocked(execa).mockImplementationOnce(actualExeca)
+
+    const stdout: Buffer[] = []
+    const stderr: Buffer[] = []
+    const collect = (chunks: Buffer[]) =>
+      new Writable({
+        write(chunk: Buffer, _encoding, callback) {
+          chunks.push(chunk)
+          callback()
+        },
+      })
+    const result = await system.captureOutputWithExitCode(
+      process.execPath,
+      [
+        '-e',
+        `process.stdout.write('Output\\n\\n'); process.stderr.write('Diagnostic\\r\\n'); process.exitCode = ${exitCode}`,
+      ],
+      {stripFinalNewline: false, stdout: collect(stdout), stderr: collect(stderr)},
+    )
+
+    expect(result).toEqual({stdout: 'Output\n\n', stderr: 'Diagnostic\r\n', exitCode})
+    expect(Buffer.concat(stdout).toString()).toBe('Output\n\n')
+    expect(Buffer.concat(stderr).toString()).toBe('Diagnostic\r\n')
+  })
+
+  test.each(['captureOutput', 'captureOutputWithExitCode', 'captureCommandWithExitCode'] as const)(
+    'strips the final newline by default with %s',
+    async (capture) => {
+      const {execa: actualExeca} = await vi.importActual<typeof import('execa')>('execa')
+      vi.mocked(execa).mockImplementationOnce(actualExeca)
+      const script = "process.stdout.write('Output\\n'); process.stderr.write('Diagnostic\\r\\n')"
+
+      if (capture === 'captureOutput') {
+        await expect(system.captureOutput(process.execPath, ['-e', script])).resolves.toBe('Output')
+      } else {
+        const result =
+          capture === 'captureCommandWithExitCode'
+            ? await system.captureCommandWithExitCode(`"${process.execPath}" -e "${script}"`)
+            : await system.captureOutputWithExitCode(process.execPath, ['-e', script])
+        expect(result).toEqual({stdout: 'Output', stderr: 'Diagnostic', exitCode: 0})
+      }
+    },
+  )
+
+  test('rejects a missing working directory instead of returning exit code zero', async () => {
+    const {execa: actualExeca} = await vi.importActual<typeof import('execa')>('execa')
+    vi.mocked(execa).mockImplementationOnce(actualExeca)
+
+    await inTemporaryDirectory(async (directory) => {
+      await expect(
+        system.captureOutputWithExitCode(process.execPath, [], {cwd: joinPath(directory, 'missing')}),
+      ).rejects.toThrow('ENOENT')
+    })
+  })
+
+  test.runIf(process.platform !== 'win32')(
+    'rejects signal termination instead of returning exit code zero',
+    async () => {
+      const {execa: actualExeca} = await vi.importActual<typeof import('execa')>('execa')
+      vi.mocked(execa).mockImplementationOnce(actualExeca)
+
+      await expect(
+        system.captureOutputWithExitCode(process.execPath, ['-e', "process.kill(process.pid, 'SIGTERM')"]),
+      ).rejects.toThrow('SIGTERM')
+    },
+  )
+
   test('returns stdout, stderr, and exitCode on success', async () => {
     // Given
     vi.mocked(execa).mockResolvedValueOnce({stdout: 'output', stderr: '', exitCode: 0} as any)
@@ -296,15 +365,10 @@ describe('captureCommandWithExitCode', () => {
     )
   })
 
-  test('defaults exitCode to 0 when undefined', async () => {
-    // Given
+  test('rejects when the command terminates without an exit code', async () => {
     vi.mocked(execa).mockResolvedValueOnce({stdout: 'out', stderr: '', exitCode: undefined} as any)
 
-    // When
-    const got = await system.captureCommandWithExitCode('cmd')
-
-    // Then
-    expect(got.exitCode).toBe(0)
+    await expect(system.captureCommandWithExitCode('cmd')).rejects.toThrow('Command terminated without an exit code.')
   })
 
   test('raises an error if the command to run is found in the current directory', async () => {
