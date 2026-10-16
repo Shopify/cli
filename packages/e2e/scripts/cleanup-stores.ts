@@ -7,10 +7,10 @@
  * Stores are matched by the "e2e-w" prefix in their name (default).
  *
  * Usage:
- *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts              # Full: uninstall apps + delete stores
- *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --list        # List stores with app counts
- *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --delete      # Delete only stores with 0 apps installed
- *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --force       # Delete stores via API, without checking installed apps
+ *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts              # Delete matching stores with the CLI
+ *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --list        # List matching stores
+ *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --delete      # Delete matching stores with the CLI (default)
+ *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --force       # Request store deletion via API without polling
  *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --headed      # Show browser window
  *   pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --pattern X   # Match stores containing "X" (default: "e2e-w")
  *
@@ -27,7 +27,7 @@ import * as fs from 'fs'
 import {fileURLToPath} from 'url'
 import {chromium} from '@playwright/test'
 import {BROWSER_TIMEOUT, CLI_TIMEOUT} from '../setup/constants.js'
-import {deleteDevStoreWithCli, dismissDevConsole, isStoreAppsEmpty} from '../setup/store.js'
+import {deleteDevStoreWithCli} from '../setup/store.js'
 import {executables} from '../setup/env.js'
 import {refreshIfPageError, trackMainFrameStatus} from '../setup/browser.js'
 import {completeLogin} from '../helpers/browser-login.js'
@@ -58,23 +58,24 @@ if (
 // Core cleanup logic
 // ---------------------------------------------------------------------------
 
-export type CleanupStoresMode = 'full' | 'list' | 'delete' | 'force'
+export type CleanupStoresMode = 'list' | 'delete' | 'force'
 
-type CleanupOutcome = 'succeeded' | 'skipped' | 'failed'
+type CleanupOutcome = 'succeeded' | 'already-deleted' | 'failed'
+
+type DeletedStoreChecker = (storeFqdn: string) => Promise<boolean>
 
 const CLEANUP_WORKER_COUNT = 5
-// Force mode is pure API calls (no browser pages), so it can run much wider.
+// API requests use fewer resources than CLI processes, so force mode can use more workers.
 const FORCE_DELETE_WORKER_COUNT = 20
 
 const MODE_LABELS: Record<CleanupStoresMode, string> = {
-  full: 'Uninstall apps + Delete stores',
   list: 'List only',
-  delete: 'Delete empty stores only',
-  force: 'Delete stores via API, without checking installed apps',
+  delete: 'Delete stores with the CLI',
+  force: 'Request store deletion via API without polling',
 }
 
 export interface CleanupStoresOptions {
-  /** Cleanup mode (default: "full") */
+  /** Cleanup mode (default: "delete") */
   mode?: CleanupStoresMode
   /** Store name pattern to match (default: "e2e-w") */
   pattern?: string
@@ -123,7 +124,7 @@ const cleanupCli: Pick<CLIProcess, 'exec'> = {
 }
 
 export async function cleanupStores(opts: CleanupStoresOptions = {}): Promise<void> {
-  const mode = opts.mode ?? 'full'
+  const mode = opts.mode ?? 'delete'
   const pattern = opts.pattern ?? 'e2e-w'
   const orgId = opts.orgId ?? (process.env.E2E_ORG_ID ?? '').trim()
   const email = process.env.E2E_ACCOUNT_EMAIL
@@ -176,33 +177,28 @@ export async function cleanupStores(opts: CleanupStoresOptions = {}): Promise<vo
     if (stores.length === 0) return
 
     if (mode === 'list') {
-      // List mode: count apps for each store, then print summary
-      for (const store of stores) {
-        store.appCount = await countInstalledApps(page, store.fqdn)
-      }
       for (let i = 0; i < stores.length; i++) {
         const store = stores[i]!
-        console.log(`  ${i + 1}. ${store.name} (${store.appCount} app${store.appCount !== 1 ? 's' : ''} installed)`)
+        console.log(`  ${i + 1}. ${store.name}`)
       }
       console.log('')
       return
     }
 
     // Step 3: Process stores in parallel — each worker handles one store at a time.
-    // Force mode deletes via the Business Platform API directly (no app check, no CLI process, no
-    // confirmation polling); other modes visit each store's admin in a browser page first.
+    const isStoreDeleted = createDeletedStoreChecker(page, {email, password})
     const outcomes =
       mode === 'force'
-        ? await forceDeleteStoresInParallel({stores, orgId})
-        : await cleanupStoresInParallel({dashboardPage: page, mode, stores, orgId})
-    const stats: Record<CleanupOutcome, number> = {succeeded: 0, skipped: 0, failed: 0}
+        ? await forceDeleteStoresInParallel({stores, orgId, isStoreDeleted})
+        : await cleanupStoresInParallel({stores, orgId, isStoreDeleted})
+    const stats: Record<CleanupOutcome, number> = {succeeded: 0, 'already-deleted': 0, failed: 0}
     for (const outcome of outcomes) {
       stats[outcome]++
     }
 
     // Summary
     const parts = [`${stats.succeeded} succeeded`]
-    if (stats.skipped > 0) parts.push(`${stats.skipped} skipped`)
+    if (stats['already-deleted'] > 0) parts.push(`${stats['already-deleted']} already deleted`)
     if (stats.failed > 0) parts.push(`${stats.failed} failed`)
     const totalElapsed = ((Date.now() - totalStart) / 1000).toFixed(1)
     console.log('')
@@ -214,39 +210,30 @@ export async function cleanupStores(opts: CleanupStoresOptions = {}): Promise<vo
 }
 
 async function cleanupStoresInParallel(opts: {
-  dashboardPage: Page
-  mode: CleanupStoresMode
   stores: StoreInfo[]
   orgId: string
+  isStoreDeleted: DeletedStoreChecker
 }): Promise<CleanupOutcome[]> {
-  const {dashboardPage, mode, stores, orgId} = opts
+  const {stores, orgId, isStoreDeleted} = opts
   const outcomes = new Array<CleanupOutcome>(stores.length)
   const workerCount = Math.min(CLEANUP_WORKER_COUNT, stores.length)
   let nextStoreIndex = 0
 
   await Promise.all(
     Array.from({length: workerCount}, async (_, workerIndex) => {
-      const workerPage = await dashboardPage.context().newPage()
-      trackMainFrameStatus(workerPage)
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const storeIndex = nextStoreIndex++
+        if (storeIndex >= stores.length) break
 
-      try {
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-          const storeIndex = nextStoreIndex++
-          if (storeIndex >= stores.length) break
-
-          outcomes[storeIndex] = await cleanupStore({
-            page: workerPage,
-            mode,
-            store: stores[storeIndex]!,
-            orgId,
-            workerNumber: workerIndex + 1,
-            storeNumber: storeIndex + 1,
-            foundCount: stores.length,
-          })
-        }
-      } finally {
-        await workerPage.close()
+        outcomes[storeIndex] = await cleanupStore({
+          store: stores[storeIndex]!,
+          orgId,
+          isStoreDeleted,
+          workerNumber: workerIndex + 1,
+          storeNumber: storeIndex + 1,
+          foundCount: stores.length,
+        })
       }
     }),
   )
@@ -255,86 +242,38 @@ async function cleanupStoresInParallel(opts: {
 }
 
 async function cleanupStore(opts: {
-  page: Page
-  mode: CleanupStoresMode
   store: StoreInfo
   orgId: string
+  isStoreDeleted: DeletedStoreChecker
   workerNumber: number
   storeNumber: number
   foundCount: number
 }): Promise<CleanupOutcome> {
-  const {page, mode, store, orgId, workerNumber, storeNumber, foundCount} = opts
+  const {store, orgId, isStoreDeleted, workerNumber, storeNumber, foundCount} = opts
   const tag = `[cleanup-stores] [worker ${workerNumber}] [${storeNumber}/${foundCount}] ${store.name}`
   const storeStart = Date.now()
   let outcome: CleanupOutcome = 'failed'
 
-  console.log(`${tag}: Starting`)
+  console.log(`${tag}: Deleting store...`)
 
-  try {
-    const storeSlug = store.fqdn.replace('.myshopify.com', '')
-
-    // Navigate to apps settings page once
-    await page.goto(`https://admin.shopify.com/store/${storeSlug}/settings/apps`, {
-      waitUntil: 'domcontentloaded',
-    })
-    await page.waitForTimeout(BROWSER_TIMEOUT.long)
-    await dismissDevConsole(page)
-
-    // Wait for page to settle: either the empty state or at least one app menu button
-    const emptyState = page.locator('text=Add apps to your store')
-    const firstMenuBtn = page.locator('.Polaris-Layout__Section button[aria-label="More actions"]').first()
-    await Promise.race([
-      emptyState.waitFor({state: 'visible', timeout: BROWSER_TIMEOUT.max}).catch(() => {}),
-      firstMenuBtn.waitFor({state: 'visible', timeout: BROWSER_TIMEOUT.max}).catch(() => {}),
-    ])
-
-    // Gate: confirm zero apps before attempting delete.
-    let safeToDelete = false
-    if (await isStoreAppsEmpty(page)) {
-      console.log(`${tag}: No apps installed (empty state confirmed)`)
-      safeToDelete = true
-    } else {
-      const appMenuButtons = await page.locator('.Polaris-Layout__Section button[aria-label="More actions"]').all()
-      console.log(`${tag}: ${appMenuButtons.length || '?'} app(s) installed`)
-
-      if (mode === 'delete') {
-        console.log(`${tag}: Skipped (still has apps)`)
-        outcome = 'skipped'
-      } else {
-        // Full mode: uninstall all apps, then re-gate.
-        console.log(`${tag}: Uninstalling apps...`)
-        await uninstallAllAppsFromStore(page, tag)
-        if (await isStoreAppsEmpty(page)) {
-          console.log(`${tag}: Apps uninstalled (empty state confirmed)`)
-          safeToDelete = true
-        } else {
-          console.warn(`${tag}: Apps may still be installed (empty state not confirmed) — skipping delete`)
-          outcome = 'skipped'
-        }
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const deletionConfirmed = await deleteDevStoreWithCli({cli: cleanupCli, storeFqdn: store.fqdn, orgId})
+      console.log(deletionConfirmed ? `${tag}: Deletion confirmed by CLI` : `${tag}: Deletion requested with CLI`)
+      outcome = 'succeeded'
+      break
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (err) {
+      if (attempt === 1 && (await isStoreDeleted(store.fqdn))) {
+        console.log(`${tag}: Already deleted (confirmed in store admin)`)
+        outcome = 'already-deleted'
+        break
       }
+      console.log(`${tag}: (${attempt}/3) deletion failed: ${err instanceof Error ? err.message : err}`)
     }
-
-    if (safeToDelete) {
-      console.log(`${tag}: Deleting store...`)
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        try {
-          const deletionConfirmed = await deleteDevStoreWithCli({cli: cleanupCli, storeFqdn: store.fqdn, orgId})
-          console.log(deletionConfirmed ? `${tag}: Deletion confirmed by CLI` : `${tag}: Deletion requested with CLI`)
-          outcome = 'succeeded'
-          break
-          // eslint-disable-next-line no-catch-all/no-catch-all
-        } catch (err) {
-          console.log(`${tag}: (${attempt}/3) deletion failed: ${err instanceof Error ? err.message : err}`)
-        }
-      }
-      if (outcome !== 'succeeded') {
-        console.warn(`${tag}: Failed after 3 attempts`)
-      }
-    }
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    console.warn(`${tag}: Failed: ${msg}`)
-    outcome = 'failed'
+  }
+  if (outcome === 'failed') {
+    console.warn(`${tag}: Failed after 3 attempts`)
   }
 
   const storeElapsed = ((Date.now() - storeStart) / 1000).toFixed(1)
@@ -345,13 +284,15 @@ async function cleanupStore(opts: {
 /**
  * Force mode: request deletion for every store through the Business Platform API.
  *
- * This skips the per-store admin visit, the app check, the CLI subprocess, and the CLI's
- * deletion-confirmation polling — deletions are requested and left to complete asynchronously.
- * Stores that still have apps installed will leave those apps undeletable in the Dev Dashboard
- * until their install records clear.
+ * This skips the CLI subprocess and deletion-confirmation polling.
+ * Deletions are requested and left to complete asynchronously.
  */
-async function forceDeleteStoresInParallel(opts: {stores: StoreInfo[]; orgId: string}): Promise<CleanupOutcome[]> {
-  const {stores, orgId} = opts
+async function forceDeleteStoresInParallel(opts: {
+  stores: StoreInfo[]
+  orgId: string
+  isStoreDeleted: DeletedStoreChecker
+}): Promise<CleanupOutcome[]> {
+  const {stores, orgId, isStoreDeleted} = opts
   const token = await ensureAuthenticatedBusinessPlatform([], {noPrompt: true})
   const outcomes = new Array<CleanupOutcome>(stores.length)
   const workerCount = Math.min(FORCE_DELETE_WORKER_COUNT, stores.length)
@@ -368,6 +309,7 @@ async function forceDeleteStoresInParallel(opts: {stores: StoreInfo[]; orgId: st
           store: stores[storeIndex]!,
           orgId,
           token,
+          isStoreDeleted,
           workerNumber: workerIndex + 1,
           storeNumber: storeIndex + 1,
           foundCount: stores.length,
@@ -383,11 +325,12 @@ async function forceDeleteStore(opts: {
   store: StoreInfo
   orgId: string
   token: string
+  isStoreDeleted: DeletedStoreChecker
   workerNumber: number
   storeNumber: number
   foundCount: number
 }): Promise<CleanupOutcome> {
-  const {store, orgId, token, workerNumber, storeNumber, foundCount} = opts
+  const {store, orgId, token, isStoreDeleted, workerNumber, storeNumber, foundCount} = opts
   const tag = `[cleanup-stores] [worker ${workerNumber}] [${storeNumber}/${foundCount}] ${store.name}`
   const storeStart = Date.now()
   let outcome: CleanupOutcome = 'failed'
@@ -415,15 +358,61 @@ async function forceDeleteStore(opts: {
       break
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (err) {
+      if (attempt === 1 && (await isStoreDeleted(store.fqdn))) {
+        console.log(`${tag}: Already deleted (confirmed in store admin)`)
+        outcome = 'already-deleted'
+        break
+      }
       console.log(`${tag}: (${attempt}/3) deletion failed: ${err instanceof Error ? err.message : err}`)
       if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, BROWSER_TIMEOUT.medium))
     }
   }
 
   const storeElapsed = ((Date.now() - storeStart) / 1000).toFixed(1)
-  const summary = outcome === 'succeeded' ? 'Deletion requested' : 'Failed after 3 attempts'
-  console.log(`${tag}: ${summary} (${storeElapsed}s)`)
+  const summaries: Record<CleanupOutcome, string> = {
+    succeeded: 'Deletion requested',
+    'already-deleted': 'Already deleted',
+    failed: 'Failed after 3 attempts',
+  }
+  console.log(`${tag}: ${summaries[outcome]} (${storeElapsed}s)`)
   return outcome
+}
+
+/** Confirm deletion through store admin when the API's store record is stale. */
+function createDeletedStoreChecker(page: Page, credentials: {email?: string; password?: string}): DeletedStoreChecker {
+  // Workers share this page, so wait for each check to finish before navigating again.
+  let previousCheck = Promise.resolve(false)
+
+  return (storeFqdn) => {
+    const check = previousCheck.then(async () => {
+      const storeSlug = storeFqdn.replace('.myshopify.com', '')
+      const storeUrl = `https://admin.shopify.com/store/${storeSlug}`
+      await page.goto(storeUrl, {waitUntil: 'domcontentloaded'})
+
+      if (isAccountsShopifyUrl(page.url())) {
+        const {email, password} = credentials
+        if (!email || !password) throw new Error('E2E credentials are required to refresh the browser login')
+        await completeLogin(page, page.url(), email, password)
+        await page.goto(storeUrl, {waitUntil: 'domcontentloaded'})
+      }
+
+      return page
+        .getByText('This dev store has been deleted', {exact: true})
+        .waitFor({state: 'visible', timeout: BROWSER_TIMEOUT.long})
+        .then(
+          () => new URL(page.url()).pathname === `/store/${storeSlug}/access_account`,
+          () => false,
+        )
+    })
+
+    previousCheck = check.catch((error: unknown) => {
+      console.warn(
+        `[cleanup-stores] ${storeFqdn}: Could not confirm deletion: ${error instanceof Error ? error.message : error}`,
+      )
+      return false
+    })
+    return previousCheck
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -433,7 +422,6 @@ async function forceDeleteStore(opts: {
 interface StoreInfo {
   name: string
   fqdn: string
-  appCount: number
 }
 
 interface FindStoresOptions {
@@ -560,7 +548,7 @@ function toStoreInfo(node: AppDevStoreNode, namePattern: string): StoreInfo | un
   const searchable = [node.name, node.shortName, node.primaryDomain, node.url, fqdn].filter(Boolean).join(' ')
   if (!searchable.toLowerCase().includes(namePattern.toLowerCase())) return undefined
 
-  return {name: fqdn.replace('.myshopify.com', ''), fqdn, appCount: 0}
+  return {name: fqdn.replace('.myshopify.com', ''), fqdn}
 }
 
 function normalizeStoreFqdn(rawValue?: string | null): string | undefined {
@@ -645,132 +633,12 @@ async function findStoresOnDashboard(page: Page, opts: FindStoresOptions): Promi
     const fqdn = `${slug}.myshopify.com`
     if (!seen.has(fqdn) && slug.toLowerCase().includes(namePattern.toLowerCase())) {
       seen.add(fqdn)
-      stores.push({name: slug, fqdn, appCount: 0})
+      stores.push({name: slug, fqdn})
     }
     match = fqdnRegex.exec(bodyHtml)
   }
 
   return stores
-}
-
-/** Count installed apps on a store (used by --list mode only). Handles pagination on store admin settings/apps page. */
-async function countInstalledApps(page: Page, storeFqdn: string): Promise<number> {
-  const storeSlug = storeFqdn.replace('.myshopify.com', '')
-  await page.goto(`https://admin.shopify.com/store/${storeSlug}/settings/apps`, {
-    waitUntil: 'domcontentloaded',
-  })
-  await page.waitForTimeout(BROWSER_TIMEOUT.long)
-  await dismissDevConsole(page)
-
-  // Wait for page to settle: either the empty state or at least one app menu button should appear
-  const emptyState = page.locator('text=Add apps to your store')
-  const firstMenuBtn = page.locator('.Polaris-Layout__Section button[aria-label="More actions"]').first()
-  await Promise.race([
-    emptyState.waitFor({state: 'visible', timeout: BROWSER_TIMEOUT.max}).catch(() => {}),
-    firstMenuBtn.waitFor({state: 'visible', timeout: BROWSER_TIMEOUT.max}).catch(() => {}),
-  ])
-
-  // Check empty state after page has settled
-  if (await isStoreAppsEmpty(page)) return 0
-
-  let total = 0
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const appMenuButtons = await page.locator('.Polaris-Layout__Section button[aria-label="More actions"]').all()
-    total += appMenuButtons.length
-
-    const nextBtn = page.locator('button#nextURL')
-    if (!(await nextBtn.isVisible({timeout: BROWSER_TIMEOUT.short}).catch(() => false))) break
-    const isNextDisabled = await nextBtn
-      .evaluate((el) => el.getAttribute('aria-disabled') === 'true' || el.hasAttribute('disabled'))
-      .catch(() => true)
-    if (isNextDisabled) break
-
-    await nextBtn.click()
-    await page.waitForTimeout(BROWSER_TIMEOUT.long)
-    await dismissDevConsole(page)
-  }
-
-  return total
-}
-
-/**
- * Uninstall every app from the store's admin settings/apps page.
- * Caller must have already navigated to /settings/apps and dismissed Dev Console.
- */
-async function uninstallAllAppsFromStore(page: Page, tag: string): Promise<void> {
-  // Uninstall apps one at a time using the ⋯ "More actions" menu buttons.
-  // The admin paginates installed apps, so after clearing the current page
-  // we check for a "Next" button and continue on subsequent pages.
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    // Uninstall all apps visible on the current page
-    let consecutiveSkips = 0
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      // Primary termination: store is empty (all apps uninstalled).
-      if (await isStoreAppsEmpty(page)) break
-
-      // Backstop: no menu button at current position — remaining apps are all "stuck"
-      // (Uninstall option never appeared). Give up; outer caller will log a skip.
-      const menuBtn = page.locator('.Polaris-Layout__Section button[aria-label="More actions"]').nth(consecutiveSkips)
-      if (!(await menuBtn.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false))) break
-
-      // Get the app name from the list item container
-      const appName = await menuBtn
-        .evaluate((el) => {
-          const row = el.closest('div[role="listitem"]')
-          if (!row) return 'unknown'
-          // The app name is in a <span> inside the clickable <a> link
-          const link = row.querySelector('a span')
-          return link?.textContent?.trim() || 'unknown'
-        })
-        .catch(() => 'unknown')
-
-      await menuBtn.click()
-      await page.waitForTimeout(BROWSER_TIMEOUT.short)
-
-      const uninstallOpt = page.locator('text=Uninstall').last()
-      if (!(await uninstallOpt.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false))) {
-        // Close the menu and skip this app — try the next one in the list
-        await page.keyboard.press('Escape')
-        await page.waitForTimeout(BROWSER_TIMEOUT.short)
-        consecutiveSkips++
-        continue
-      }
-      await uninstallOpt.click()
-      await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-
-      const confirmBtn = page.locator('button:has-text("Uninstall"), button:has-text("Confirm")').last()
-      if (await confirmBtn.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) {
-        await confirmBtn.click()
-        await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-        consecutiveSkips = 0
-        console.log(`${tag}: Uninstalled ${appName}`)
-      } else {
-        // Confirm never appeared — skip this app to avoid infinite loop
-        console.log(`${tag}: Uninstall confirm not found for ${appName}, skipping`)
-        consecutiveSkips++
-      }
-
-      // Reload to refresh the list
-      await page.reload({waitUntil: 'domcontentloaded'})
-      await page.waitForTimeout(BROWSER_TIMEOUT.long)
-      await dismissDevConsole(page)
-    }
-
-    // Check for pagination — if there's a next page, navigate to it
-    const nextBtn = page.locator('button#nextURL')
-    if (!(await nextBtn.isVisible({timeout: BROWSER_TIMEOUT.short}).catch(() => false))) break
-    const isNextDisabled = await nextBtn
-      .evaluate((el) => el.getAttribute('aria-disabled') === 'true' || el.hasAttribute('disabled'))
-      .catch(() => true)
-    if (isNextDisabled) break
-
-    await nextBtn.click()
-    await page.waitForTimeout(BROWSER_TIMEOUT.long)
-    await dismissDevConsole(page)
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -792,9 +660,8 @@ async function main() {
     pattern = nextArg
   }
 
-  let mode: CleanupStoresMode = 'full'
+  let mode: CleanupStoresMode = 'delete'
   if (args.includes('--list')) mode = 'list'
-  else if (args.includes('--delete')) mode = 'delete'
   else if (args.includes('--force')) mode = 'force'
 
   await cleanupStores({mode, pattern, headed})
