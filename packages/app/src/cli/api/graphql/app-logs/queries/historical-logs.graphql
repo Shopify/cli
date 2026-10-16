@@ -1,0 +1,15 @@
+query HistoricalLogs(
+  $clientId: String!
+  $types: [LogEventType!]!
+  $timestamp: TimestampRangeInput!
+  $limit: Int!
+  $filters: [LogFilterInput!]
+) {
+  app(clientId: $clientId) {
+    logs(types: $types, timestamp: $timestamp, limit: $limit, filters: $filters) {
+      records {
+        json
+      }
+    }
+  }
+}
