@@ -701,7 +701,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Pulls the latest configuration from the already-linked Shopify app and updates the selected configuration file.\n\nThis command reuses the existing linked app and organization and skips all interactive prompts. Use `--config` to target a specific configuration file, or omit it to use the default one.",
+      "description": "Pulls the latest configuration from the already-linked Shopify app and updates the selected configuration file.\n\nThis command reuses the existing linked app and organization and skips all interactive prompts. Use `--config` to target a specific configuration file, or omit it to use the default one.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppConfigPullResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"path\": {\n      \"type\": \"string\"\n    },\n    \"app\": {\n      \"$ref\": \"#/definitions/LinkedApp\"\n    }\n  },\n  \"required\": [\n    \"path\",\n    \"app\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppConfigPullResult\",\n  \"definitions\": {\n    \"LinkedApp\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"id\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"minLength\": 1\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"The upstream non-GID app identifier, or null when the platform supplies a GID.\"\n        },\n        \"gid\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"pattern\": \"^gid:\\\\/\\\\/shopify\\\\/App\\\\/[^\\\\s/]+$\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"The Shopify App GID, or null when the platform supplies another identifier.\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"clientId\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"description\": \"The public OAuth client identifier.\"\n        },\n        \"organizationId\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"minLength\": 1\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"The upstream non-GID organization identifier, or null when unavailable.\"\n        },\n        \"organizationGid\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"pattern\": \"^gid:\\\\/\\\\/shopify\\\\/Organization\\\\/[^\\\\s/]+$\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"The Shopify Organization GID, or null when unavailable.\"\n        }\n      },\n      \"required\": [\n        \"id\",\n        \"gid\",\n        \"name\",\n        \"clientId\",\n        \"organizationId\",\n        \"organizationGid\"\n      ],\n      \"additionalProperties\": false,\n      \"description\": \"The linked app identity. Read the file at path for its configuration.\"\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Pulls the latest configuration from the already-linked Shopify app and updates the selected configuration file.\n\nThis command reuses the existing linked app and organization and skips all interactive prompts. Use `--config` to target a specific configuration file, or omit it to use the default one.",
       "flags": {
         "auth-alias": {
@@ -733,6 +733,15 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,

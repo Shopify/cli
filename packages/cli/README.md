@@ -1139,13 +1139,17 @@ Refresh an already-linked app configuration without prompts.
 
 ```
 USAGE
-  $ shopify app config pull [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--path <value>] [--reset | ] [--verbose]
+  $ shopify app config pull [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -1186,6 +1190,104 @@ DESCRIPTION
 
   This command reuses the existing linked app and organization and skips all interactive prompts. Use `--config` to
   target a specific configuration file, or omit it to use the default one.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppConfigPullResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string"
+      },
+      "app": {
+        "$ref": "#/definitions/LinkedApp"
+      }
+    },
+    "required": [
+      "path",
+      "app"
+    ],
+    "additionalProperties": false,
+    "title": "AppConfigPullResult",
+    "definitions": {
+      "LinkedApp": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The upstream non-GID app identifier, or null when the platform supplies a GID."
+          },
+          "gid": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^gid:\\/\\/shopify\\/App\\/[^\\s/]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Shopify App GID, or null when the platform supplies another identifier."
+          },
+          "name": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The public OAuth client identifier."
+          },
+          "organizationId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The upstream non-GID organization identifier, or null when unavailable."
+          },
+          "organizationGid": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^gid:\\/\\/shopify\\/Organization\\/[^\\s/]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Shopify Organization GID, or null when unavailable."
+          }
+        },
+        "required": [
+          "id",
+          "gid",
+          "name",
+          "clientId",
+          "organizationId",
+          "organizationGid"
+        ],
+        "additionalProperties": false,
+        "description": "The linked app identity. Read the file at path for its configuration."
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app config use [config] [flags]`
