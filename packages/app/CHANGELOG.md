@@ -1,5 +1,47 @@
 # @shopify/app
 
+## 5.0.0
+
+### Minor Changes
+
+- 463c38b: Add typed JSON output to `app execute` with GraphQL error details and file receipts.
+- e5ac2d0: Add typed JSON output to `app webhook trigger`.
+
+### Patch Changes
+
+- d7129a5: Check for Dependabot or Renovate configuration at the Git repository root when `shopify app security check` scans an app below it
+- fc638a0: Stop `shopify app security check` from running a command that a scanned repository names through an empty Git remote helper
+- 02c6a6a: Clarify the `--blocking` and `--skip-instructions` help text for `shopify app security`
+- 71bb7c4: Require Git 2.38.0 or later when `shopify app security check` uses Git, and add a reusable CLI Kit minimum-version guard.
+- 70fd6eb: Skip lockfiles in every `shopify app security check` scan directory, so a monorepo root lockfile no longer leaves the secret check unresolved
+- a3765eb: Detect React Router app code outside the app directory, such as in `--include-dir` or web directories, in `shopify app security check`
+- f5f737a: Stop app security agent checks from leaving the React Router app template's metafield, authorization and frame-ancestors checks unresolved
+- 0c17a82: `shopify app security check` only reads from Git: it no longer starts file-system monitors or fetches missing objects, and it doesn't use repositories committed inside the scanned directory
+- a98e34f: Bundle every UI extension `should_render` target instead of only the last one.
+- Updated dependencies [dfe353a]
+- Updated dependencies [71bb7c4]
+- Updated dependencies [dd71f5f]
+- Updated dependencies [1678264]
+- Updated dependencies [03d54a6]
+- Updated dependencies [3f4baab]
+- Updated dependencies [217db4d]
+- Updated dependencies [1cdbfa2]
+- Updated dependencies [f945f9d]
+- Updated dependencies [1678264]
+- Updated dependencies [f7feb6d]
+- Updated dependencies [6afb51b]
+- Updated dependencies [72fe13b]
+- Updated dependencies [fdae48f]
+- Updated dependencies [730d051]
+- Updated dependencies [2c9d28b]
+- Updated dependencies [a07e09e]
+- Updated dependencies [e5ac2d0]
+- Updated dependencies [a23c474]
+  - @shopify/cli-kit@5.0.0
+  - @shopify/theme@5.0.0
+  - @shopify/plugin-cloudflare@5.0.0
+  - @shopify/organizations@5.0.0
+
 ## 4.9.0
 
 ### Minor Changes

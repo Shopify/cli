@@ -1,5 +1,63 @@
 # @shopify/cli
 
+## 5.0.0
+
+### Major Changes
+
+- 36a009a: Wrap `app function info --json` in `function`, expose targets as an array, and use null for unavailable fields.
+- e98b4e3: Buffer finite `app function replay` text output until completion and require `--no-watch` for validated JSON output with structured diagnostics.
+- f515b00: Buffer `app function run` text output until completion and validate JSON output with structured errors, stderr diagnostics, and nonzero exits for failed executions.
+- 731f591: Return a success status and absolute file path in `app import channel-config --json`.
+- d5565e0: Normalize migration status JSON with gid and shopGid identifiers and flat per-shop results.
+- 4332594: Normalize migration submission JSON with outcome statuses, changed, GID fields, flattened results, fieldPath errors, and successful cancellation results.
+- 56e663d: Normalize migration subscription JSON with shopGid identifiers, whole-second UTC instants, and calendar dates.
+- 2ded4d0: Normalize migration unscheduling JSON with explicit outcomes, successful cancellation, GID fields, and flattened results.
+- f7feb6d: Normalize migration cancellation JSON and share error serialization to preserve completed batch outcomes, error classifications, and recovery guidance.
+- 3e14abe: Use string IDs, camelCase resources, cancellation results, and fatal error envelopes for `theme duplicate --json`.
+- 124a33e: Use camelCase fields, string theme IDs, null unavailable values, and one complete environment batch object in `theme info --json`.
+- 0b8e0f7: Return `{themes}` with string IDs and complete environment batches from `theme list --json`, excluding internal runtime fields.
+- 09a84e0: Use string IDs and camelCase links inside `theme open --json` resources, and emit only a fatal error when opening the browser fails.
+- 2811afa: Use string theme IDs, camelCase fields, complete environment batches and partial upload results in theme push JSON.
+- 37e12ac: Rename app config validate JSON diagnostics to filePath and fieldPath, use null for unavailable fields, and report setup failures as fatal errors.
+
+### Minor Changes
+
+- 6616f2e: Add typed JSON output to app bulk cancel.
+- d1c2303: Add typed JSON output to app bulk execute.
+- 35ef50c: Add typed JSON output to app bulk status.
+- b46926e: Add typed JSON output to `app dev clean`.
+- 463c38b: Add typed JSON output to `app execute` with GraphQL error details and file receipts.
+- 576f240: Add typed JSON output to `app import custom-data-definitions`.
+- 6f94240: Add typed JSON output to `app import dashboard-extensions`.
+- 264c3a0: Add `--print-instructions` to `app security check` and deprecate `--yes` without removing support.
+- e5ac2d0: Add typed JSON output to `app webhook trigger`.
+- 11dbcff: Add JSON status output to app build.
+- fdebfc5: Add typed JSON output and schema discovery to `doc fetch`.
+- 2e10837: Add typed JSON output and schema discovery to `doc search`.
+- a6f00e2: Add typed JSON output to `app function` commands
+- 49efca9: Add typed JSON output to `app generate extension`.
+- 9aa11b4: Add typed JSON output to `app deploy`.
+- fd6b631: Add typed JSON output to `app init`.
+- 4762dfa: Add typed JSON output to app release.
+- fdae48f: Add typed JSON output to `shopify upgrade`.
+- d0a6f30: Add typed JSON output to app config use, pull, and link.
+- 7b3abc7: Add typed JSON output to app env commands.
+
+### Patch Changes
+
+- fc638a0: Stop `shopify app security check` from running a command that a scanned repository names through an empty Git remote helper
+- 02c6a6a: Clarify the `--blocking` and `--skip-instructions` help text for `shopify app security`
+- 71bb7c4: Require Git 2.38.0 or later when `shopify app security check` uses Git, and add a reusable CLI Kit minimum-version guard.
+- 70fd6eb: Skip lockfiles in every `shopify app security check` scan directory, so a monorepo root lockfile no longer leaves the secret check unresolved
+- 13e5cfe: Document command-specific telemetry in security command help.
+- f5f737a: Stop app security agent checks from leaving the React Router app template's metafield, authorization and frame-ancestors checks unresolved
+- 0c17a82: `shopify app security check` only reads from Git: it no longer starts file-system monitors or fetches missing objects, and it doesn't use repositories committed inside the scanned directory
+- 04842af: Fix migration detection for legacy Checkout and POS UI extensions in App Management apps.
+- f945f9d: Route success banners through JSON diagnostics.
+- c76bad7: Add usage examples to `shopify app security check` help.
+- e5ac2d0: Hide webhook shared secrets in GraphQL request diagnostics.
+- a23c474: Fix the check that stops the CLI from running a program found in the working directory on Windows
+
 ## 4.9.0
 
 ### Minor Changes

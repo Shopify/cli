@@ -1,5 +1,30 @@
 # @shopify/theme
 
+## 5.0.0
+
+### Patch Changes
+
+- 1678264: Keep theme pull files inside the selected theme directory.
+- 2c9d28b: Fix Theme Access authentication to work with all of a store’s domains.
+- a07e09e: Fix `theme dev` showing the live theme instead of the development theme on stores where every market uses a subfolder. Sessions using a Theme Access password are not yet covered.
+- Updated dependencies [dfe353a]
+- Updated dependencies [71bb7c4]
+- Updated dependencies [dd71f5f]
+- Updated dependencies [03d54a6]
+- Updated dependencies [3f4baab]
+- Updated dependencies [217db4d]
+- Updated dependencies [1cdbfa2]
+- Updated dependencies [f945f9d]
+- Updated dependencies [1678264]
+- Updated dependencies [f7feb6d]
+- Updated dependencies [72fe13b]
+- Updated dependencies [fdae48f]
+- Updated dependencies [730d051]
+- Updated dependencies [2c9d28b]
+- Updated dependencies [e5ac2d0]
+- Updated dependencies [a23c474]
+  - @shopify/cli-kit@5.0.0
+
 ## 4.9.0
 
 ### Patch Changes
