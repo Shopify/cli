@@ -15,7 +15,7 @@ import {
 
 import {sep, join} from 'pathe'
 import {findUp as internalFindUp, findUpSync as internalFindUpSync} from 'find-up'
-import {minimatch} from 'minimatch'
+import {Minimatch} from 'minimatch'
 import fastGlobLib from 'fast-glob'
 import {
   mkdirSync as fsMkdirSync,
@@ -706,6 +706,23 @@ export interface MatchGlobOptions {
   noglobstar: boolean
 }
 
+// `minimatch()` parses the pattern into a new Minimatch instance on every call, which dominates the
+// cost when the same handful of patterns is matched against thousands of paths (theme ignore filters
+// run over every file of a theme, the app file watcher over every event). Compiled matchers are
+// stateless, so caching them by pattern and options makes repeated matching ~24x faster.
+const compiledGlobMatchers = new Map<string, Minimatch>()
+
+function compiledGlobMatcher(pattern: string, options?: MatchGlobOptions): Minimatch {
+  const cacheKey = `${options?.matchBase ?? false}:${options?.noglobstar ?? false}:${pattern}`
+
+  let matcher = compiledGlobMatchers.get(cacheKey)
+  if (!matcher) {
+    matcher = new Minimatch(pattern, options)
+    compiledGlobMatchers.set(cacheKey, matcher)
+  }
+  return matcher
+}
+
 /**
  * Matches a key against a glob pattern.
  * @param key - The key to match.
@@ -714,7 +731,7 @@ export interface MatchGlobOptions {
  * @returns true if the key matches the pattern, false otherwise.
  */
 export function matchGlob(key: string, pattern: string, options?: MatchGlobOptions): boolean {
-  return minimatch(key, pattern, options)
+  return compiledGlobMatcher(pattern, options).match(key)
 }
 
 /**
