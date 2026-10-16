@@ -1,3 +1,4 @@
+import {storeExecuteJsonOutputSchema, type StoreExecuteResult} from './types.js'
 import {
   classifyAdminApiError,
   isGraphQLClientErrorLike,
@@ -13,8 +14,6 @@ import type {AdminSession} from '@shopify/cli-kit/node/session'
 import type {PreparedStoreExecuteRequest} from './request.js'
 import type {AdminStoreGraphQLContext} from './admin-context.js'
 import type {StoredStoreAppSession} from '@shopify/cli-kit/node/store-auth-session'
-import type {StoreExecuteResult} from './types.js'
-import type {GraphQLResponse} from '@shopify/cli-kit/node/api/graphql'
 
 export {ABORTED_FETCH_MESSAGE_FRAGMENTS}
 
@@ -84,8 +83,8 @@ export async function runAdminStoreGraphQLOperation(input: {
     return await renderSingleTask({
       title: outputContent`Executing GraphQL operation`,
       task: async () => {
-        let extensions: GraphQLResponse<StoreExecuteResult>['extensions']
-        const data = await graphqlRequest<StoreExecuteResult>({
+        let extensions: unknown
+        const data = await graphqlRequest<StoreExecuteResult['data']>({
           query: input.request.query,
           api: 'Admin',
           url: adminUrl(input.context.adminSession.storeFqdn, input.context.version, input.context.adminSession),
@@ -99,7 +98,7 @@ export async function runAdminStoreGraphQLOperation(input: {
           },
         })
         // Keep response metadata separate from query fields, including aliases named `extensions`.
-        return {data, ...(extensions === undefined ? {} : {extensions})}
+        return storeExecuteJsonOutputSchema.validate({data, ...(extensions === undefined ? {} : {extensions})})
       },
       renderOptions: {stdout: process.stderr},
     })

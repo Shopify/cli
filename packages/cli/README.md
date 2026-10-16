@@ -9836,15 +9836,30 @@ DESCRIPTION
 
   ```json
   {
-    "anyOf": [
-      {
-        "type": "object",
-        "additionalProperties": {}
+    "type": "object",
+    "properties": {
+      "data": {
+        "anyOf": [
+          {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "GraphQL response data, preserving query fields and aliases."
       },
-      {
-        "type": "null"
+      "extensions": {
+        "type": "object",
+        "additionalProperties": {},
+        "description": "Response-level GraphQL metadata, when returned by the API."
       }
+    },
+    "required": [
+      "data"
     ],
+    "additionalProperties": false,
     "title": "StoreExecuteResult",
     "$schema": "http://json-schema.org/draft-07/schema#"
   }
