@@ -169,7 +169,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     runner: (context) => liquidRunner(context, 'LIQUID_UNSAFE_RENDER'),
   },
   {
-    ...jsCheck('UNSAFE_INNERHTML', unsafeInnerHtmlRunner, 'source_and_theme', 3),
+    ...jsCheck('UNSAFE_INNERHTML', unsafeInnerHtmlRunner, 'source_and_theme', 4),
     analysisMode: 'regex',
     extensions: [...JAVASCRIPT_EXTENSIONS, '.liquid', '.html'],
   },

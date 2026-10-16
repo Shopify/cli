@@ -33,6 +33,7 @@ const EXPECTED_CHECK_IDS = [
   'SCOPE_OVER_REQUEST',
   'SCRIPT_TAG_URL_INJECTION',
   'SESSION_LIFECYCLE_AND_REPLAY',
+  'SHARED_NAMESPACE_METAFIELD_RENDER',
   'SQL_INJECTION',
   'SSRF_REQUEST_FORGERY',
   'STATIC_FRAME_ANCESTORS',
@@ -184,6 +185,42 @@ describe('agent checks', () => {
     expect(entry.description).toContain('no verified request for the same shop authorizes')
     expect(entry.description).not.toContain('offline-token contexts')
     expect(entry.fix).toContain('authenticate.admin(request)')
+  })
+
+  test('XSS prompts treat shared-namespace metafields as writable by other installed apps', () => {
+    const checks = loadChecks()
+    const expectedVersions = {
+      CROSS_SITE_SCRIPTING: 2,
+      TEXT_SETTING_HTML_SMUGGLING: 3,
+      THEME_EXTENSION_XSS: 3,
+      UNSAFE_INNERHTML: 4,
+    }
+    for (const [id, version] of Object.entries(expectedVersions)) {
+      const check = checks.get(id)!
+      expect(check.version, id).toBe(version)
+      expect(check.prompt, id).toMatch(/other\s+(installed\s+)?app/)
+      expect(check.prompt, id).toMatch(/write\s+access\s+to\s+that\s+resource/)
+      expect(check.prompt, id).toMatch(/lower-trust\s+writer/)
+    }
+
+    const crossSiteScripting = checks.get('CROSS_SITE_SCRIPTING')!.prompt
+    expect(crossSiteScripting).toMatch(/is\s+not\s+author-controlled\s+content/)
+    expect(crossSiteScripting).toContain("It doesn't own the XSS")
+  })
+
+  test('SHARED_NAMESPACE_METAFIELD_RENDER classifies ownership by namespace prefix only', () => {
+    const check = loadChecks().get('SHARED_NAMESPACE_METAFIELD_RENDER')!
+    expect(check.version).toBe(1)
+    expect(check.severity).toBe('medium')
+    expect(check.prompt).toContain("Don't look up definitions in `shopify.app.toml`.")
+    expect(check.prompt).toContain('Treat `shopify--` namespaces and standard definitions as shared')
+    expect(check.prompt).toContain('`product.metafields[ns]`')
+    expect(check.prompt).toContain('Treat any `app--` prefix as app-owned')
+    expect(check.prompt).toContain("Being app-owned doesn't make a value safe")
+
+    const entry = RULE_CATALOG.find((candidate) => candidate.id === 'SHARED_NAMESPACE_METAFIELD_RENDER')!
+    expect(entry.severity).toBe('medium')
+    expect(entry.requires).toBeUndefined()
   })
 
   test('STATIC_FRAME_ANCESTORS catalog text covers literal and constructed policies', () => {

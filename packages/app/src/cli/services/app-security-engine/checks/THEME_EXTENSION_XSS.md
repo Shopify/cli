@@ -1,6 +1,6 @@
 ---
 id: THEME_EXTENSION_XSS
-version: 2
+version: 3
 severity: high
 ---
 
@@ -30,7 +30,7 @@ template, not a JavaScript file.
 
 3. **Trace Liquid data sources.** For each `{{ }}` output, determine
    where the data comes from:
-   - `{{ product.metafield.custom.field }}` — merchant-writable, user-controlled
+   - `{{ product.metafield.custom.field }}` — merchant- and other-app-writable, user-controlled
    - `{{ customer.metafield.app.value }}` — customer-editable in some apps
    - `{{ variant.metafield.custom.html }}` — could contain malicious HTML
    - `{{ request.params.x }}` — URL parameter, user-controlled
@@ -38,6 +38,13 @@ template, not a JavaScript file.
    - `{{ block.settings.text }}` — theme settings, merchant-configurable
    - `{{ app.metafield.namespace.key }}` — app metafield, could be
      merchant-writable depending on permissions
+
+   Metafields and metaobjects outside the app-owned namespace (`app--…` or
+   `app.metafields`) can be written by the merchant and by any other app
+   installed on the shop with write access to that resource. A compromised or
+   malicious app is a lower-trust writer. HTML or script the app stores in a
+   shared namespace such as `custom` or `reviews` is not trusted author
+   content, even if this app is the usual writer.
 
 4. **Check Liquid rendering context.** `{{ }}` and `echo` emit the rendered value; safety depends on its type, filters, and destination context. Follow rendered snippets and require HTML escaping, URL validation, or JSON serialization as appropriate.
 
