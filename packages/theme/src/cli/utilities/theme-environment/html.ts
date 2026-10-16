@@ -119,6 +119,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
 
         const {status, statusText, cause, ...errorInfo} = extractFetchErrorInfo(error, 'Failed to render storefront')
         const [title, ...rest] = errorInfo.headline.split('\n') as [string, ...string[]]
+        const causeCode = 'code' in cause && typeof cause.code === 'string' ? `${cause.code}: ` : ''
 
         renderError(errorInfo)
 
@@ -130,7 +131,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
             header: title,
             errors: [
               {
-                message: [...rest, cause.message].join('<br>'),
+                message: [...rest, `${causeCode}${cause.message}`].join('<br>'),
                 code: cause.stack?.replace(`${cause.message}\n`, '') ?? '',
               },
             ],
