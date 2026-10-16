@@ -508,6 +508,9 @@ describe('formatAppSecurityCommand', () => {
 
   test.skipIf(process.platform !== 'win32')(
     'the PowerShell record command reads a findings file without a byte order mark as UTF-8 in Windows PowerShell 5.1',
+    // Starting powershell.exe dominates this test and varies widely on CI runners, so it needs more than
+    // the 13s Windows default.
+    {timeout: 60000},
     async () => {
       await inTemporaryDirectory(async (directory) => {
         const findingsPath = joinPath(directory, 'findings.json')
