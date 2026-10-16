@@ -146,6 +146,24 @@ describe('agent checks', () => {
     expect(agentChecks.instructions).toContain('code smell')
   })
 
+  test('instructions and credential checks are static only', () => {
+    const {instructions} = buildAgentChecks('0.1.0')
+    expect(instructions).toContain('This review is static only: verify by reading code.')
+    expect(instructions).toContain("Don't execute app, SDK, test, or repro code")
+    expect(instructions).toContain("don't make network calls or probe live stores or services")
+    expect(instructions).toContain('record the check as unresolved naming the candidate instead of running it')
+    expect(getAgentInstructions()).toContain('This review is static only: verify by reading code.')
+    expect(getAgentInstructions()).toContain('Do not execute app, SDK, test, or repro code')
+
+    const checks = loadChecks()
+    for (const id of ['CREDENTIAL_LOG_LEAKAGE', 'CREDENTIAL_BROWSER_LEAKAGE']) {
+      const check = checks.get(id)!
+      expect(check.version, id).toBe(3)
+      expect(check.prompt, id).toContain('Verify by reading code only: do not execute app, SDK, test, or repro code')
+      expect(check.prompt, id).toContain('do not make network calls or probe live stores or services')
+    }
+  })
+
   test('instructions keep a check unresolved only for an incomplete investigation or a named candidate', () => {
     const {instructions} = buildAgentChecks('0.1.0')
     expect(instructions).toContain('name the candidate in the reason')
