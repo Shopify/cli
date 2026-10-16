@@ -13,7 +13,7 @@ export function renderAppConfigLinkResult(
     outputResult(appConfigLinkJsonOutputSchema.encode(result))
     return
   }
-  renderSuccessMessage(basename(result.path), String(result.configuration.name), packageManager)
+  renderSuccessMessage(basename(result.path), result.app.name, packageManager)
 }
 
 function renderSuccessMessage(configFileName: string, appName: string, packageManager: PackageManager) {

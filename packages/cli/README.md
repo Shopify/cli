@@ -1045,34 +1045,17 @@ DESCRIPTION
       "path": {
         "type": "string"
       },
-      "configuration": {
-        "$ref": "#/definitions/AppConfiguration"
-      },
       "app": {
         "$ref": "#/definitions/LinkedApp"
       }
     },
     "required": [
       "path",
-      "configuration",
       "app"
     ],
     "additionalProperties": false,
     "title": "AppConfigLinkResult",
     "definitions": {
-      "AppConfiguration": {
-        "type": "object",
-        "properties": {
-          "client_id": {
-            "type": "string",
-            "minLength": 1
-          }
-        },
-        "required": [
-          "client_id"
-        ],
-        "additionalProperties": true
-      },
       "LinkedApp": {
         "type": "object",
         "properties": {
@@ -1131,110 +1114,6 @@ DESCRIPTION
               }
             ],
             "description": "The Shopify Organization GID, or null when unavailable."
-          },
-          "appType": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "description": "The upstream app type; known values vary by platform."
-          },
-          "newApp": {
-            "type": [
-              "boolean",
-              "null"
-            ]
-          },
-          "grantedScopes": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "developmentStorePreviewEnabled": {
-            "type": [
-              "boolean",
-              "null"
-            ]
-          },
-          "applicationUrl": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uri"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "redirectUrls": {
-            "anyOf": [
-              {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "format": "uri"
-                }
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "requestedAccessScopes": {
-            "anyOf": [
-              {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "webhookApiVersion": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "embedded": {
-            "type": [
-              "boolean",
-              "null"
-            ]
-          },
-          "posEmbedded": {
-            "type": [
-              "boolean",
-              "null"
-            ]
-          },
-          "preferencesUrl": {
-            "$ref": "#/definitions/LinkedApp/properties/applicationUrl"
-          },
-          "privacyWebhooks": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/PrivacyWebhooks"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "appProxy": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/AppProxy"
-              },
-              {
-                "type": "null"
-              }
-            ]
           }
         },
         "required": [
@@ -1243,63 +1122,10 @@ DESCRIPTION
           "name",
           "clientId",
           "organizationId",
-          "organizationGid",
-          "appType",
-          "newApp",
-          "grantedScopes",
-          "developmentStorePreviewEnabled",
-          "applicationUrl",
-          "redirectUrls",
-          "requestedAccessScopes",
-          "webhookApiVersion",
-          "embedded",
-          "posEmbedded",
-          "preferencesUrl",
-          "privacyWebhooks",
-          "appProxy"
+          "organizationGid"
         ],
         "additionalProperties": false,
-        "description": "The linked app projection. Unavailable selected fields are null; secrets and runtime state are excluded."
-      },
-      "PrivacyWebhooks": {
-        "type": "object",
-        "properties": {
-          "customerDeletionUrl": {
-            "$ref": "#/definitions/LinkedApp/properties/applicationUrl"
-          },
-          "customerDataRequestUrl": {
-            "$ref": "#/definitions/LinkedApp/properties/applicationUrl"
-          },
-          "shopDeletionUrl": {
-            "$ref": "#/definitions/LinkedApp/properties/applicationUrl"
-          }
-        },
-        "required": [
-          "customerDeletionUrl",
-          "customerDataRequestUrl",
-          "shopDeletionUrl"
-        ],
-        "additionalProperties": false
-      },
-      "AppProxy": {
-        "type": "object",
-        "properties": {
-          "subPath": {
-            "type": "string"
-          },
-          "subPathPrefix": {
-            "type": "string"
-          },
-          "url": {
-            "$ref": "#/definitions/LinkedApp/properties/applicationUrl"
-          }
-        },
-        "required": [
-          "subPath",
-          "subPathPrefix",
-          "url"
-        ],
-        "additionalProperties": false
+        "description": "The linked app identity. Read the file at path for its configuration."
       }
     },
     "$schema": "http://json-schema.org/draft-07/schema#"

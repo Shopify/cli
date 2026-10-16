@@ -61,7 +61,7 @@ describe('app config link command', () => {
           packageManager: 'npm',
           result: projectAppConfigResult({
             path: '/app/shopify.app.toml',
-            configuration: app.configuration,
+            appName: app.configuration.name,
             app: testOrganizationApp(),
           }),
         })
@@ -99,7 +99,7 @@ describe('app config link command', () => {
         packageManager: 'npm',
         result: projectAppConfigResult({
           path: '/app/shopify.app.toml',
-          configuration: app.configuration,
+          appName: app.configuration.name,
           app: testOrganizationApp(),
         }),
       })
@@ -143,7 +143,7 @@ test.each([{outputFlags: []}, {outputFlags: ['--json']}])(
       packageManager: 'npm',
       result: projectAppConfigResult({
         path: app.configPath,
-        configuration: app.configuration,
+        appName: app.configuration.name,
         app: testOrganizationApp(),
       }),
     })

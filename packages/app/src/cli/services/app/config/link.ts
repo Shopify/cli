@@ -102,7 +102,7 @@ export async function linkAppConfiguration(
     packageManager: localAppOptions.packageManager,
     result: projectAppConfigResult({
       path: joinPath(appDirectory, configFileName),
-      configuration: mergedAppConfiguration,
+      appName: mergedAppConfiguration.name,
       app: remoteApp,
     }),
   }
