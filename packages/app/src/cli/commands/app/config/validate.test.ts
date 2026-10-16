@@ -9,6 +9,7 @@ import {selectActiveConfig} from '../../../models/project/active-config.js'
 import {errorsForConfig} from '../../../models/project/config-selection.js'
 import metadata from '../../../metadata.js'
 import {outputResult, stringifyMessage} from '@shopify/cli-kit/node/output'
+import * as output from '@shopify/cli-kit/node/output'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
@@ -35,6 +36,36 @@ async function expectValidationMetadataCalls(...expectedMetadata: Record<string,
   const metadataCalls = vi.mocked(metadata.addPublicMetadata).mock.calls.map(([getMetadata]) => getMetadata)
   expect(metadataCalls).toHaveLength(expectedMetadata.length)
   await expect(Promise.all(metadataCalls.map((getMetadata) => getMetadata()))).resolves.toEqual(expectedMetadata)
+}
+
+async function expectFlushedSilentExit(run: () => Promise<unknown>) {
+  let finishFlush!: () => void
+  const pendingFlush = new Promise<void>((resolve) => {
+    finishFlush = resolve
+  })
+  let signalFlush!: () => void
+  const flushing = new Promise<void>((resolve) => {
+    signalFlush = resolve
+  })
+  const flush = vi.spyOn(output, 'flushStdout').mockImplementation(async () => {
+    signalFlush()
+    await pendingFlush
+  })
+  let settled = false
+  const outcome = run().finally(() => {
+    settled = true
+  })
+  const rejection = expect(outcome).rejects.toBeInstanceOf(AbortSilentError)
+  try {
+    await Promise.race([flushing, rejection])
+    await new Promise<void>((resolve) => setImmediate(resolve))
+    expect(flush).toHaveBeenCalledExactlyOnceWith()
+    expect(settled).toBe(false)
+  } finally {
+    finishFlush()
+    flush.mockRestore()
+    await rejection
+  }
 }
 
 function mockHealthyProject() {
@@ -85,7 +116,8 @@ describe('app config validate command', () => {
     const issues = [{filePath: '/app/shopify.app.toml', message: 'Required', fieldPath: ['name'], code: 'invalid_type'}]
     vi.mocked(validateApp).mockResolvedValue({path: resolve(app.configPath), valid: false, issues})
 
-    await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow()
+    const command = new Validate(['--json'], await Config.load())
+    await expectFlushedSilentExit(() => command.run())
 
     expect(outputResult).toHaveBeenCalledWith(
       appConfigValidateJsonOutputSchema.encode({path: resolve(app.configPath), valid: false, issues}),
@@ -173,7 +205,8 @@ describe('app config validate command', () => {
       {path: '/app/shopify.app.toml', message: 'Unexpected character at row 1, col 5'} as any,
     ])
 
-    await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow()
+    const command = new Validate(['--json'], await Config.load())
+    await expectFlushedSilentExit(() => command.run())
 
     expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"valid": false'))
     expect(linkedAppContext).not.toHaveBeenCalled()

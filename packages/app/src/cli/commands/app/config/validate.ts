@@ -11,7 +11,7 @@ import {AppConfigurationValidationError} from '../../../models/app/loader.js'
 import metadata from '../../../metadata.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
-import {outputResult} from '@shopify/cli-kit/node/output'
+import {flushStdout, outputResult} from '@shopify/cli-kit/node/output'
 import {basename} from '@shopify/cli-kit/node/path'
 import {renderError} from '@shopify/cli-kit/node/ui'
 // CLI Kit normalizes separators; public JSON paths must use the native filesystem format.
@@ -30,6 +30,7 @@ async function failJsonValidation(configPath: string, issues: AppConfigValidateR
   const fileCount = new Set(issues.map((issue) => issue.filePath)).size
   await recordValidationFailure(issues.length, fileCount)
   outputResult(appConfigValidateJsonOutputSchema.encode({path: resolve(configPath), valid: false, issues}))
+  await flushStdout()
   throw new AbortSilentError()
 }
 
@@ -111,7 +112,10 @@ export default class Validate extends AppLinkedCommand {
 
     const result = await validateApp(app)
     renderAppConfigValidateResult(result, flags.json ? 'json' : 'text')
-    if (!result.valid) throw new AbortSilentError()
+    if (!result.valid) {
+      await flushStdout()
+      throw new AbortSilentError()
+    }
 
     return {app}
   }
