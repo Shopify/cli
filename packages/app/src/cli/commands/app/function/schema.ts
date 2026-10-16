@@ -1,6 +1,6 @@
 import {functionSchemaJsonOutputSchema} from '../../../services/generate-schema/types.js'
 import {presentFunctionSchema} from '../../../services/generate-schema/result.js'
-import {fetchFunctionSchema} from '../../../services/generate-schema.js'
+import {generateSchemaService} from '../../../services/generate-schema.js'
 import {chooseFunction, functionFlags} from '../../../services/function/common.js'
 import {appFlags} from '../../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
@@ -46,7 +46,7 @@ export default class FetchSchema extends AppLinkedCommand {
 
     const ourFunction = await chooseFunction(app, flags.path)
 
-    const result = await fetchFunctionSchema({
+    const result = await generateSchemaService({
       app,
       extension: ourFunction,
       developerPlatformClient,

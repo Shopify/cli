@@ -1,11 +1,10 @@
-import {generateSchemaService, fetchFunctionSchema} from './generate-schema.js'
+import {generateSchemaService} from './generate-schema.js'
 import {testAppLinked, testDeveloperPlatformClient, testFunctionExtension} from '../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {inTemporaryDirectory, readFile, mkdir, fileExists} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import * as output from '@shopify/cli-kit/node/output'
 
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('../../../models/app/loader.ts')
@@ -25,58 +24,6 @@ vi.mock('./context.js', async () => {
 })
 
 describe('generateSchemaService', () => {
-  test('Save the latest GraphQL schema to ./[extension]/schema.graphql when stdout flag is ABSENT', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const orgId = 'test'
-      const extensionDir = joinPath(tmpDir, 'extensions', 'my-function')
-      await mkdir(extensionDir)
-
-      const app = testAppLinked()
-      const extension = await testFunctionExtension({
-        dir: tmpDir,
-      })
-
-      // When
-      await generateSchemaService({
-        app,
-        extension,
-        stdout: false,
-        developerPlatformClient: testDeveloperPlatformClient(),
-        orgId,
-      })
-
-      // Then
-      const outputFile = await readFile(joinPath(extension.directory, 'schema.graphql'))
-      expect(outputFile).toEqual(`# api_version: ${extension.configuration.api_version}\n\nschema`)
-    })
-  })
-
-  test('Print the latest GraphQL schema to stdout when stdout flag is PRESENT', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const app = testAppLinked()
-      const extension = await testFunctionExtension()
-      const path = tmpDir
-      const stdout = true
-      const orgId = '123'
-      const mockOutput = vi.fn()
-      vi.spyOn(output, 'outputResult').mockImplementation(mockOutput)
-
-      // When
-      await generateSchemaService({
-        app,
-        extension,
-        stdout,
-        developerPlatformClient: testDeveloperPlatformClient(),
-        orgId,
-      })
-
-      // Then
-      expect(mockOutput).toHaveBeenCalledWith(`# api_version: ${extension.configuration.api_version}\n\nschema`)
-    })
-  })
-
   describe('GraphQL query', () => {
     test('Uses ApiSchemaDefinitionQuery when not using targets', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
@@ -107,7 +54,6 @@ describe('generateSchemaService', () => {
         await generateSchemaService({
           app,
           extension,
-          stdout: false,
           developerPlatformClient,
           orgId,
         })
@@ -160,7 +106,6 @@ describe('generateSchemaService', () => {
         await generateSchemaService({
           app,
           extension,
-          stdout: false,
           developerPlatformClient,
           orgId,
         })
@@ -190,7 +135,6 @@ describe('generateSchemaService', () => {
     const result = generateSchemaService({
       app,
       extension,
-      stdout: true,
       developerPlatformClient,
       orgId,
     })
@@ -204,7 +148,7 @@ test('fetches typed schema data without selecting output or writing files', asyn
   await inTemporaryDirectory(async (directory) => {
     const extension = await testFunctionExtension({dir: directory})
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      const result = await fetchFunctionSchema({
+      const result = await generateSchemaService({
         app: testAppLinked(),
         extension,
         developerPlatformClient: testDeveloperPlatformClient(),

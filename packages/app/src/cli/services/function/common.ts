@@ -2,6 +2,7 @@ import {AppInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {generateSchemaService} from '../generate-schema.js'
+import {presentFunctionSchema} from '../generate-schema/result.js'
 import {linkedAppContext} from '../app-context.js'
 import {resolvePath, cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -60,13 +61,13 @@ export async function getOrGenerateSchemaPath(
     userProvidedConfigName,
   })
 
-  await generateSchemaService({
+  const result = await generateSchemaService({
     app,
     developerPlatformClient,
     extension,
-    stdout: false,
     orgId: organization.id,
   })
+  await presentFunctionSchema(result, {stdout: false, json: false})
 
   return (await fileExists(path)) ? path : undefined
 }

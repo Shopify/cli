@@ -1,4 +1,3 @@
-import {presentFunctionSchema} from './generate-schema/result.js'
 import {type GeneratedFunctionSchema} from './generate-schema/types.js'
 import {prependSchemaVersionHeader} from './function/schema-version.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
@@ -14,20 +13,11 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 interface GenerateSchemaOptions {
   app: AppLinkedInterface
   extension: ExtensionInstance<FunctionConfigType>
-  stdout: boolean
   developerPlatformClient: DeveloperPlatformClient
   orgId: string
 }
 
-/** Compatibility entrypoint for automatic schema generation during Function runs. */
-export async function generateSchemaService(options: GenerateSchemaOptions) {
-  const result = await fetchFunctionSchema(options)
-  await presentFunctionSchema(result, {stdout: options.stdout, json: false})
-}
-
-export async function fetchFunctionSchema(
-  options: Omit<GenerateSchemaOptions, 'stdout'>,
-): Promise<GeneratedFunctionSchema> {
+export async function generateSchemaService(options: GenerateSchemaOptions): Promise<GeneratedFunctionSchema> {
   const {extension, developerPlatformClient, app, orgId} = options
   const apiKey = app.configuration.client_id
   const {api_version: version, type, targeting} = extension.configuration
