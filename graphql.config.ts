@@ -1,4 +1,4 @@
-function projectFactory(name: string, schemaName: string, project: string = 'app') {
+function projectFactory(name: string, schemaName: string, project: string = 'app', scalars: Record<string, string> = {}) {
   return {
     schema: `./packages/${project}/src/cli/api/graphql/${name}/${schemaName}`,
     documents: [
@@ -26,6 +26,7 @@ function projectFactory(name: string, schemaName: string, project: string = 'app
                 PropertyPublicID: 'string',
                 JSON: {input: 'JsonMapType | string', output: 'JsonMapType'},
                 URL: 'string',
+                ...scalars,
               },
             },
           },
@@ -50,6 +51,7 @@ function projectFactory(name: string, schemaName: string, project: string = 'app
                     PropertyPublicID: 'string',
                     JSON: {input: 'JsonMapType | string', output: 'JsonMapType'},
                     URL: 'string',
+                    ...scalars,
                   },
                 },
               },
@@ -79,6 +81,7 @@ export default {
     businessPlatformOrganizations: projectFactory('business-platform-organizations', 'organizations_schema.graphql'),
     appDev: projectFactory('app-dev', 'app_dev_schema.graphql'),
     appManagement: projectFactory('app-management', 'app_management_schema.graphql'),
+    appLogs: projectFactory('app-logs', 'app_logs_schema.graphql', 'app', {DateTime: 'string'}),
     admin: projectFactory('admin', 'admin_schema.graphql', 'cli-kit'),
     bulkOperations: projectFactory('bulk-operations', 'admin_schema.graphql', 'cli-kit'),
     webhooks: projectFactory('webhooks', 'webhooks_schema.graphql'),
