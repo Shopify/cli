@@ -14,6 +14,7 @@ import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {AbortError, handler} from '@shopify/cli-kit/node/error'
 import {unstyled} from '@shopify/cli-kit/node/output'
+import {exec} from '@shopify/cli-kit/node/system'
 
 // eslint-disable-next-line no-restricted-imports
 import {resolve} from 'node:path'
@@ -45,14 +46,16 @@ async function command(argv: string[], directory: string) {
   return {instance: new FunctionBuild(argv, await Config.load()), extension, app, result}
 }
 
-test.each([['--json'], ['--json', '--no-input']])(
+test.each([['--json'], ['--json', '--no-input'], ['-j'], ['-jcstaging'], ['-cstaging', '-j']])(
   'writes one result and structured build diagnostics: %j',
   async (...argv) => {
     await inTemporaryDirectory(async (directory) => {
       const {instance, extension, app, result} = await command(argv, directory)
       vi.mocked(buildFunctionExtension).mockImplementation(async (_extension, options) => {
-        options.stdout.write('Compiler output\n')
-        options.stderr.write('Compiler warning\n')
+        await exec(process.execPath, ['-e', 'console.log("Compiler output"); console.error("Compiler warning")'], {
+          stdout: options.stdout,
+          stderr: options.stderr,
+        })
         return {...result, function: {...result.function, wasmPath: resolve(extension.outputPath)}}
       })
       await withCapturedStandardStreams(async ({stdout, stderr}) => {
