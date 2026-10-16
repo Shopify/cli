@@ -518,22 +518,26 @@ describe('committed secret classification', () => {
     rmSync(dir, {recursive: true, force: true})
   })
 
-  test('does not score a 32-hex value under a secret-sounding name, quoted or not', async () => {
-    // Legacy Shopify API secrets are 32 hex chars, but so are client IDs,
-    // webhook ids, and content hashes — without a prefix the value is not
-    // provably a secret.
-    for (const assignment of [`SHOPIFY_API_SECRET="${HEX32}"\n`, `SHOPIFY_API_SECRET=${HEX32}\n`]) {
+  // Legacy Shopify API secrets are 32 hex chars, but so are client IDs,
+  // webhook ids, and content hashes — without a prefix the value is not
+  // provably a secret.
+  const hex32Assignments: [label: string, assignment: string][] = [
+    ['quoted', `SHOPIFY_API_SECRET="${HEX32}"\n`],
+    ['unquoted', `SHOPIFY_API_SECRET=${HEX32}\n`],
+  ]
+
+  for (const [label, assignment] of hex32Assignments) {
+    test(`does not score a ${label} 32-hex value under a secret-sounding name`, async () => {
       const dir = makeApp({'.env': assignment})
       git(dir, ['init', '-q', '.'])
       git(dir, ['add', '-f', '.env'])
       git(dir, ['commit', '-qm', 'init'])
 
-      // eslint-disable-next-line no-await-in-loop
       const result = await scan(dir)
       expect(result.issues.filter((issue) => issue.id === 'COMMITTED_SECRET')).toEqual([])
       rmSync(dir, {recursive: true, force: true})
-    }
-  })
+    })
+  }
 
   test('scores a prefixed Shopify token in source regardless of variable name', async () => {
     const dir = makeApp({'config.js': `const token = "${PROBES.shopifySecret}"\n`})
