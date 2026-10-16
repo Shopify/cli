@@ -3,7 +3,6 @@ const commandExceptions = [
   // Existing finite commands awaiting migration. Remove entries as they adopt typed JSON output.
   // Do not add new finite commands to this section.
   'packages/plugin-did-you-mean/src/commands/config/autocorrect/off.ts',
-  'packages/plugin-did-you-mean/src/commands/config/autocorrect/on.ts',
   'packages/theme/src/cli/commands/theme/check.ts',
   'packages/theme/src/cli/commands/theme/init.ts',
   'packages/theme/src/cli/commands/theme/metafields/pull.ts',
