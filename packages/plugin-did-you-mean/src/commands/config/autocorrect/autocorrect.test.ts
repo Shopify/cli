@@ -1,4 +1,5 @@
 import AutocorrectStatus from './status.js'
+import AutocorrectOn from './on.js'
 import {isAutocorrectEnabled, setAutocorrect} from '../../../services/conf.js'
 import {autocorrectJsonOutputSchema} from '../../../services/autocorrect/types.js'
 import {launchCLI} from '@shopify/cli-kit/node/cli-launcher'
@@ -19,7 +20,10 @@ afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-const commands = [{name: 'status', command: AutocorrectStatus, enabled: false}]
+const commands = [
+  {name: 'status', command: AutocorrectStatus, enabled: false},
+  {name: 'on', command: AutocorrectOn, enabled: true},
+]
 
 test.each(commands)('$name exposes the result schema and JSON flags in help', ({command}) => {
   expect(command.jsonOutputSchema).toBe(autocorrectJsonOutputSchema)

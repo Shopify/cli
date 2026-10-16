@@ -1,4 +1,4 @@
-import {getAutocorrectStatus} from './index.js'
+import {configureAutocorrect, getAutocorrectStatus} from './index.js'
 import * as conf from '../conf.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
@@ -18,6 +18,25 @@ test('returns the default and persisted preferences without changing configurati
       for (const enabled of [true, false]) {
         storage.set('autocorrectEnabled', enabled)
         expect(getAutocorrectStatus()).toEqual({enabled})
+        const reloadedStorage = new LocalStorage<conf.ConfigSchema>({cwd: directory})
+        expect(reloadedStorage.get('autocorrectEnabled')).toBe(enabled)
+      }
+
+      expect(stdout()).toBe('')
+      expect(stderr()).toBe('')
+    })
+  })
+})
+
+test('persists configured preferences and returns typed data without printing output', async () => {
+  await inTemporaryDirectory(async (directory) => {
+    const storage = new LocalStorage<conf.ConfigSchema>({cwd: directory})
+    const {setAutocorrect} = conf
+    vi.spyOn(conf, 'setAutocorrect').mockImplementation((enabled) => setAutocorrect(enabled, storage))
+
+    await withCapturedStandardStreams(({stdout, stderr}) => {
+      for (const enabled of [true, false]) {
+        expect(configureAutocorrect(enabled)).toEqual({enabled})
         const reloadedStorage = new LocalStorage<conf.ConfigSchema>({cwd: directory})
         expect(reloadedStorage.get('autocorrectEnabled')).toBe(enabled)
       }
