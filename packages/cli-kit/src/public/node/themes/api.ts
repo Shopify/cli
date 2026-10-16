@@ -30,6 +30,7 @@ import {AdminSession} from '../session.js'
 import {AbortError} from '../error.js'
 import {outputDebug} from '../output.js'
 import {recordTiming, recordEvent, recordError} from '../analytics.js'
+import {isTransientServerError} from '../../../private/node/api.js'
 import {ClientError, type Variables} from 'graphql-request'
 import type {InlineToken, TokenItem} from '../ui.js'
 
@@ -41,6 +42,7 @@ const THEME_API_NETWORK_BEHAVIOUR: RequestModeInput = {
   useAbortSignal: false,
   maxRetryTimeMs: 90 * 1000,
   recordCommandRetries: true,
+  retryTransientServerErrors: true,
 }
 const DEFAULT_THEME_ACCESS_REQUIREMENT = 'the required theme access scope'
 
@@ -69,6 +71,8 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     abortIfMissingThemeAccessScope(error)
+    // A temporary server failure doesn't mean the theme is missing, so don't report it as one.
+    abortIfTransientServerError(error)
     /**
      * Consumers of this and other theme APIs in this file expect either a theme
      * or `undefined`.
@@ -574,10 +578,12 @@ export async function themeDuplicate(
 
 export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, session: AdminSession) {
   recordEvent('theme-api:fetch-metafield-definitions')
-  const {metafieldDefinitions} = await adminRequestDoc({
+  const {metafieldDefinitions} = await requestThemeAdminDoc({
     query: MetafieldDefinitionsByOwnerType,
     session,
     variables: {ownerType: type},
+    responseOptions: {handleErrors: false},
+    preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
 
   return metafieldDefinitions.nodes.map((definition) => ({
@@ -594,9 +600,11 @@ export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, 
 
 export async function passwordProtected(session: AdminSession): Promise<boolean> {
   recordEvent('theme-api:check-password-protection')
-  const {onlineStore} = await adminRequestDoc({
+  const {onlineStore} = await requestThemeAdminDoc({
     query: OnlineStorePasswordProtection,
     session,
+    responseOptions: {handleErrors: false},
+    preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
   if (!onlineStore) {
     unexpectedGraphQLError("Unable to get details about the storefront's password protection")
@@ -619,8 +627,41 @@ async function requestThemeAdminDoc<TResult, TVariables extends Variables>(
     return response
   } catch (error) {
     abortIfMissingThemeAccessScope(error)
+    abortIfTransientServerError(error)
     throw error
   }
+}
+
+/**
+ * Turns a transient server-side failure that is still failing after retries into a friendly,
+ * expected error instead of a crash with the raw GraphQL response.
+ *
+ * @param error - The error thrown by the Admin API request.
+ */
+function abortIfTransientServerError(error: unknown): void {
+  if (!isTransientServerError(error)) return
+
+  const requestId = transientServerErrorRequestId(error)
+  throw recordError(
+    new AbortError(
+      'Shopify had a temporary problem and could not complete the request.',
+      requestId
+        ? `Wait a moment and try again. If the problem continues, contact Shopify support and include this request ID: ${requestId}`
+        : 'Wait a moment and try again.',
+    ),
+  )
+}
+
+function transientServerErrorRequestId(error: ClientError): string | undefined {
+  const errors: unknown = error.response.errors
+  if (Array.isArray(errors)) {
+    for (const entry of errors) {
+      const requestId = (entry as {extensions?: {requestId?: unknown}} | undefined)?.extensions?.requestId
+      if (typeof requestId === 'string') return requestId
+    }
+  }
+  const headers = error.response.headers as {get?: (name: string) => string | null} | undefined
+  return headers?.get?.('x-request-id') ?? undefined
 }
 
 function abortIfMissingThemeAccessScope(error: unknown): void {
