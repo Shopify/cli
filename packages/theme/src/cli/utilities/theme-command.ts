@@ -26,7 +26,12 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {errorToJson} from '@shopify/cli-kit/node/error/serialization'
 import {recordEvent, compileData} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
-import {commandEventOutputMode, emitCommandEvent} from '@shopify/cli-kit/node/command-events'
+import {
+  commandEventOutputMode,
+  emitCommandEvent,
+  renderCommandEventAsJson,
+  runWithCommandEvents,
+} from '@shopify/cli-kit/node/command-events'
 import {outputDebug, outputResult} from '@shopify/cli-kit/node/output'
 import {jsonOutputEnabled} from '@shopify/cli-kit/node/environment'
 import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
@@ -96,90 +101,100 @@ export default abstract class ThemeCommand extends Command {
     const requiredFlags = klass.multiEnvironmentsFlags
     const hasExplicitEnvironment = this.hasExplicitEnvironment()
     const {args, flags} = await this.parse(klass)
-    const commandRequiresAuth = 'password' in klass.flags
+    return this.runWithParsedOutput(flags, async () => {
+      const commandRequiresAuth = 'password' in klass.flags
 
-    const environments = (Array.isArray(flags.environment) ? flags.environment : [flags.environment]).filter(Boolean)
-    const collectResults = hasExplicitEnvironment && this.collectsEnvironmentResults(flags)
+      const environments = (Array.isArray(flags.environment) ? flags.environment : [flags.environment]).filter(Boolean)
+      let collectResults = hasExplicitEnvironment && this.collectsEnvironmentResults(flags)
 
-    // Check if store flag is required by the command
-    const singleEnvironmentFlags = this.requiredFlagsForSingleEnvironment(requiredFlags ?? [])
-    const storeIsRequired = singleEnvironmentFlags.some((flag) =>
-      Array.isArray(flag) ? flag.includes('store') : flag === 'store',
-    )
+      // Check if store flag is required by the command
+      const singleEnvironmentFlags = this.requiredFlagsForSingleEnvironment(requiredFlags ?? [])
+      const storeIsRequired = singleEnvironmentFlags.some((flag) =>
+        Array.isArray(flag) ? flag.includes('store') : flag === 'store',
+      )
 
-    // Single environment or no environment
-    if (environments.length <= 1 && !(environments.length > 0 && collectResults)) {
-      if (environments[0] && !flags.store && storeIsRequired) {
-        throw new AbortError(`Please provide a valid environment.`)
-      }
+      // Single environment or no environment
+      if (environments.length <= 1 && !(environments.length > 0 && collectResults)) {
+        if (environments[0] && !flags.store && storeIsRequired) {
+          throw new AbortError(`Please provide a valid environment.`)
+        }
 
-      this.validateCommandFlags(flags)
-      const session = commandRequiresAuth ? await this.createSession(flags) : undefined
-      const commandName = this.constructor.name.toLowerCase()
+        this.validateCommandFlags(flags)
+        const session = commandRequiresAuth ? await this.createSession(flags) : undefined
+        const commandName = this.constructor.name.toLowerCase()
 
-      recordEvent(`theme-command:${commandName}:single-env:authenticated`)
+        recordEvent(`theme-command:${commandName}:single-env:authenticated`)
 
-      if (flags.path && !fileExistsSync(flags.path)) {
-        throw new AbortError(`Path does not exist: ${flags.path}`)
-      }
+        if (flags.path && !fileExistsSync(flags.path)) {
+          throw new AbortError(`Path does not exist: ${flags.path}`)
+        }
 
-      try {
-        await this.command(flags, session, false, args)
-      } finally {
-        await this.logAnalyticsData(session)
-      }
-      return
-    }
-
-    // Multiple environments
-    if (requiredFlags === null && environments.length > 1) {
-      if (flags.json) throw new AbortError('This command does not support multiple environments.')
-      renderWarning({body: 'This command does not support multiple environments.'})
-      return
-    }
-
-    const {flags: flagsWithoutDefaults} = await this.parse(noDefaultsOptions(klass), this.argv)
-    if (environments.length > 1 && 'path' in flagsWithoutDefaults) {
-      this.errorOnGlobalPath(Boolean(flags.json))
-      return
-    }
-
-    const environmentsMap = await this.loadEnvironments(environments, flags, flagsWithoutDefaults)
-    const validationResults = await this.validateEnvironments(
-      environmentsMap,
-      environments.length === 1 ? singleEnvironmentFlags : (requiredFlags ?? []),
-      commandRequiresAuth,
-      collectResults,
-    )
-
-    const requiresConfirmation = collectResults
-      ? validationResults.valid.some(({flags}) => this.requiresEnvironmentConfirmation(flags))
-      : this.requiresEnvironmentConfirmation(flags)
-    if (requiresConfirmation) {
-      const confirmed = await this.showConfirmation(this.constructor.name, requiredFlags ?? [], validationResults)
-      if (!confirmed) {
-        if (collectResults)
-          this.renderEnvironmentResults(
-            environments.map((environment) => ({environment, result: {status: 'cancelled'}})),
-          )
+        try {
+          await this.command(flags, session, false, args)
+        } finally {
+          await this.logAnalyticsData(session)
+        }
         return
       }
-    }
 
-    const results = await this.runConcurrent(validationResults.valid, collectResults)
-    if (collectResults) {
-      const entries: ThemeEnvironmentResult[] = environments.map((environment) => {
-        const invalid = validationResults.invalid.find((entry) => entry.environment === environment)
-        return (
-          results.get(environment) ?? {
-            environment,
-            error: {type: 'abort', message: invalid?.reason ?? 'The environment did not return a result.'},
-          }
+      // Multiple environments
+      if (requiredFlags === null && environments.length > 1) {
+        if (flags.json) throw new AbortError('This command does not support multiple environments.')
+        renderWarning({body: 'This command does not support multiple environments.'})
+        return
+      }
+
+      const {flags: flagsWithoutDefaults} = await this.parse(noDefaultsOptions(klass), this.argv)
+      if (environments.length > 1 && 'path' in flagsWithoutDefaults) {
+        this.errorOnGlobalPath(Boolean(flags.json))
+        return
+      }
+
+      const environmentsMap = await this.loadEnvironments(environments, flags, flagsWithoutDefaults)
+      collectResults ||= Array.from(environmentsMap.values()).some(({flags}) => this.collectsEnvironmentResults(flags))
+      const runEnvironments = async () => {
+        const validationResults = await this.validateEnvironments(
+          environmentsMap,
+          environments.length === 1 ? singleEnvironmentFlags : (requiredFlags ?? []),
+          commandRequiresAuth,
+          collectResults,
         )
-      })
-      this.renderEnvironmentResults(entries)
-      if (entries.some((entry) => 'error' in entry)) process.exitCode = 1
-    }
+
+        const requiresConfirmation = collectResults
+          ? validationResults.valid.some(({flags}) => this.requiresEnvironmentConfirmation(flags))
+          : this.requiresEnvironmentConfirmation(flags)
+        if (requiresConfirmation) {
+          const confirmed = await this.showConfirmation(this.constructor.name, requiredFlags ?? [], validationResults)
+          if (!confirmed) {
+            if (collectResults)
+              this.renderEnvironmentResults(
+                environments.map((environment) => ({environment, result: {status: 'cancelled'}})),
+              )
+            return
+          }
+        }
+
+        const results = await this.runConcurrent(validationResults.valid, collectResults)
+        if (collectResults) {
+          const entries: ThemeEnvironmentResult[] = environments.map((environment) => {
+            const invalid = validationResults.invalid.find((entry) => entry.environment === environment)
+            return (
+              results.get(environment) ?? {
+                environment,
+                error: {type: 'abort', message: invalid?.reason ?? 'The environment did not return a result.'},
+              }
+            )
+          })
+          this.renderEnvironmentResults(entries)
+          if (entries.some((entry) => 'error' in entry)) process.exitCode = 1
+        }
+      }
+
+      if (collectResults && commandEventOutputMode() !== 'json') {
+        return runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, runEnvironments)
+      }
+      return runEnvironments()
+    })
   }
 
   protected validateCommandFlags(_flags: FlagValues): void {}
@@ -248,7 +263,10 @@ export default abstract class ThemeCommand extends Command {
    * @returns The map of environments
    */
   private async loadEnvironments(environments: EnvironmentName[], flags: FlagValues, flagsWithoutDefaults: FlagValues) {
-    const environmentMap = new Map<EnvironmentName, {flags: FlagValues; validationFlags: FlagValues; error?: string}>()
+    const environmentMap = new Map<
+      EnvironmentName,
+      {flags: FlagValues; validationFlags: FlagValues; parserFlags: FlagValues; error?: string}
+    >()
 
     for (const environmentName of environments) {
       let environmentFlags
@@ -263,6 +281,7 @@ export default abstract class ThemeCommand extends Command {
         environmentMap.set(environmentName, {
           flags,
           validationFlags: {},
+          parserFlags: {},
           error: error instanceof Error ? error.message : String(error),
         })
         continue
@@ -282,30 +301,12 @@ export default abstract class ThemeCommand extends Command {
         environmentFlags.path = resolvePath(environmentFlags.path)
       }
 
-      let effectiveFlags = {...flags, ...environmentFlags, ...flagsWithoutDefaults} as FlagValues
-      if (this.collectsEnvironmentResults(effectiveFlags)) {
-        try {
-          // eslint-disable-next-line no-await-in-loop
-          const parsedFlags = await this.parseEnvironmentFlags(
-            environmentFlags ?? {},
-            this.constructor as unknown as Input<FlagOutput, FlagOutput, ArgOutput>,
-            flagsWithoutDefaults,
-          )
-          effectiveFlags = {...flags, ...parsedFlags, ...flagsWithoutDefaults}
-          // eslint-disable-next-line no-catch-all/no-catch-all
-        } catch (error) {
-          environmentMap.set(environmentName, {
-            flags: effectiveFlags,
-            validationFlags: {},
-            error: error instanceof Error ? error.message : String(error),
-          })
-          continue
-        }
-      }
-
       environmentMap.set(environmentName, {
+        parserFlags: {...environmentFlags, ...flagsWithoutDefaults} as FlagValues,
         flags: {
-          ...effectiveFlags,
+          ...flags,
+          ...environmentFlags,
+          ...flagsWithoutDefaults,
           environment: [environmentName],
         },
         validationFlags: {
@@ -314,6 +315,28 @@ export default abstract class ThemeCommand extends Command {
           ...flagsWithoutDefaults,
         } as FlagValues,
       })
+    }
+
+    const collectResults =
+      this.collectsEnvironmentResults(flags) ||
+      Array.from(environmentMap.values()).some((environment) => this.collectsEnvironmentResults(environment.flags))
+    if (collectResults) {
+      for (const [environmentName, environment] of environmentMap) {
+        if (environment.error) continue
+        environment.flags = {...environment.flags, json: true}
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          const parsedFlags = await this.parseEnvironmentFlags(
+            {json: true, ...environment.parserFlags},
+            this.constructor as unknown as Input<FlagOutput, FlagOutput, ArgOutput>,
+            flagsWithoutDefaults,
+          )
+          environment.flags = {...environment.flags, ...parsedFlags, environment: [environmentName]}
+          // eslint-disable-next-line no-catch-all/no-catch-all
+        } catch (error) {
+          environment.error = error instanceof Error ? error.message : String(error)
+        }
+      }
     }
 
     return environmentMap
