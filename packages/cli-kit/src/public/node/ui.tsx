@@ -537,9 +537,9 @@ export interface RenderSingleTaskOptions<T> {
 }
 
 /**
- * Awaits a single task and displays a loading bar while it's in progress. The task's result is returned.
+ * Awaits a single task and displays a loading indicator while it's in progress. The task's result is returned.
  * @param options - Configuration object
- * @param options.title - The initial title to display with the loading bar
+ * @param options.title - The initial title to display with the loading indicator
  * @param options.task - The async task to execute. Receives an updateStatus callback to change the displayed title.
  * @param options.retry - The number of additional attempts after a failure. Defaults to zero.
  * @param options.renderOptions - Optional render configuration

@@ -1,15 +1,10 @@
-import {Spinner} from './Spinner.js'
 import {TabPanel, Tab, TabShortcut} from './TabPanel.js'
 import metadata from '../../../../metadata.js'
-import {
-  DevSessionStatus,
-  DevSessionStatusManager,
-  DevSessionStatusMessageType,
-} from '../../processes/dev-session/dev-session-status-manager.js'
+import {DevSessionStatus, DevSessionStatusManager} from '../../processes/dev-session/dev-session-status-manager.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../../../models/extensions/schemas.js'
 import {buildDevConsoleURL} from '../../../../utilities/app/app-url.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
-import {Alert, ConcurrentOutput, Link, TabularData} from '@shopify/cli-kit/node/ui/components'
+import {Alert, ConcurrentOutput, Link, LoadingIndicator, TabularData} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
 import React, {FunctionComponent, useEffect, useMemo, useState} from 'react'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -24,6 +19,16 @@ interface DevStatusShortcut extends TabShortcut {
   shortcutLabel: string
   linkLabel: string
   url?: string
+}
+
+const StatusMessage = ({message, type}: NonNullable<DevSessionStatus['statusMessage']>) => {
+  if (type === 'loading') return <LoadingIndicator title={message} />
+
+  return (
+    <Text>
+      {type === 'success' ? '✅' : '❌'} {message}
+    </Text>
+  )
 }
 
 interface DevSesionUIProps {
@@ -103,17 +108,6 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
     {isActive: Boolean(canUseShortcuts)},
   )
 
-  const getStatusIndicator = (type: DevSessionStatusMessageType) => {
-    switch (type) {
-      case 'loading':
-        return <Spinner />
-      case 'success':
-        return '✅'
-      case 'error':
-        return '❌'
-    }
-  }
-
   const devStatusShortcuts: DevStatusShortcut[] = [
     {
       key: 'p',
@@ -170,9 +164,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
       content: (
         <>
           {status.statusMessage && (
-            <Text>
-              {getStatusIndicator(status.statusMessage.type)} {status.statusMessage.message}
-            </Text>
+            <StatusMessage message={status.statusMessage.message} type={status.statusMessage.type} />
           )}
           {canUseShortcuts && activeShortcuts.length > 0 && (
             <Box marginTop={1} flexDirection="column">
