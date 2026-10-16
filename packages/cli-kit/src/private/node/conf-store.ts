@@ -33,6 +33,7 @@ export interface ConfSchema {
   currentDevSessionId?: string
   cache?: Cache
   autoUpgradeEnabled?: boolean
+  mouseEnabled?: boolean
 }
 
 let _instance: LocalStorage<ConfSchema> | undefined
@@ -283,6 +284,25 @@ export function getAutoUpgradeEnabled(config: LocalStorage<ConfSchema> = cliKitS
  */
 export function setAutoUpgradeEnabled(enabled: boolean, config: LocalStorage<ConfSchema> = cliKitStore()): void {
   config.set('autoUpgradeEnabled', enabled)
+}
+
+/**
+ * Get mouse interaction preference.
+ * Defaults to true if the preference has never been explicitly set.
+ *
+ * @returns Whether mouse interactions are enabled.
+ */
+export function getMouseEnabled(config: LocalStorage<ConfSchema> = cliKitStore()): boolean {
+  return config.get('mouseEnabled') ?? true
+}
+
+/**
+ * Set mouse interaction preference.
+ *
+ * @param enabled - Whether mouse interactions should be enabled.
+ */
+export function setMouseEnabled(enabled: boolean, config: LocalStorage<ConfSchema> = cliKitStore()): void {
+  config.set('mouseEnabled', enabled)
 }
 
 export function getConfigStoreForPartnerStatus() {
