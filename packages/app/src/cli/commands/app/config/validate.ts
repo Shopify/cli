@@ -96,9 +96,15 @@ export default class Validate extends AppLinkedCommand {
       app = context.app
     } catch (err) {
       if (err instanceof AppConfigurationValidationError && flags.json) {
-        await failJsonValidation(err.configurationPath, [
-          {filePath: resolve(err.configurationPath), message: err.message, fieldPath: null, code: null},
-        ])
+        await failJsonValidation(
+          err.configurationPath,
+          err.errors.map((error) => ({
+            filePath: resolve(error.file),
+            message: error.message,
+            fieldPath: error.path ?? null,
+            code: error.code ?? null,
+          })),
+        )
       }
       throw err
     }

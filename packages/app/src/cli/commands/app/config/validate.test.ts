@@ -257,7 +257,7 @@ describe('app config validate command', () => {
       const initialPath = joinPath(directory, 'shopify.app.toml')
       const linkedPath = joinPath(directory, 'shopify.app.staging.toml')
       await writeFile(initialPath, 'client_id = "initial-client"')
-      await writeFile(linkedPath, 'client_id = 123')
+      await writeFile(linkedPath, 'client_id = 123\n[build]\nautomatically_update_urls_on_dev = "yes"')
       const {Project: RealProject} = await vi.importActual<typeof import('../../../models/project/project.js')>(
         '../../../models/project/project.js',
       )
@@ -294,13 +294,23 @@ describe('app config validate command', () => {
         issues: [
           {
             filePath: resolve(linkedPath),
-            message: expect.stringContaining(`Validation errors in ${linkedPath}:`),
-            fieldPath: null,
-            code: null,
+            message: expect.any(String),
+            fieldPath: ['client_id'],
+            code: 'invalid_type',
+          },
+          {
+            filePath: resolve(linkedPath),
+            message: expect.any(String),
+            fieldPath: ['build', 'automatically_update_urls_on_dev'],
+            code: 'invalid_type',
           },
         ],
       })
       expect(validateApp).not.toHaveBeenCalled()
+      await expectValidationMetadataCalls(
+        {cmd_app_validate_json: true},
+        {cmd_app_validate_valid: false, cmd_app_validate_issue_count: 2, cmd_app_validate_file_count: 1},
+      )
     })
   })
 })

@@ -76,7 +76,7 @@ export interface ConfigurationError {
 export class AppConfigurationValidationError extends AbortError {
   constructor(
     public readonly configurationPath: string,
-    errors: ConfigurationError[],
+    public readonly errors: ConfigurationError[],
   ) {
     super(`Validation errors in ${configurationPath}:\n\n${errors.map(formatConfigurationError).join('\n')}`)
   }
