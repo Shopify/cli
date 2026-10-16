@@ -19,6 +19,7 @@ export async function validateApp(app: AppLinkedInterface): Promise<AppConfigVal
   const errors = app.errors?.getErrors() ?? []
   await recordValidationMetadata(errors.length === 0, errors)
   return {
+    path: resolve(app.configPath),
     valid: errors.length === 0,
     issues: errors.map(({file, message, path, code}) => ({
       filePath: resolve(file),

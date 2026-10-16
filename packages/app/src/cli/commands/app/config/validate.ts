@@ -26,10 +26,10 @@ async function recordValidationFailure(issueCount: number, fileCount: number) {
   }))
 }
 
-async function failJsonValidation(issues: AppConfigValidateResult['issues']): Promise<never> {
+async function failJsonValidation(configPath: string, issues: AppConfigValidateResult['issues']): Promise<never> {
   const fileCount = new Set(issues.map((issue) => issue.filePath)).size
   await recordValidationFailure(issues.length, fileCount)
-  outputResult(appConfigValidateJsonOutputSchema.encode({valid: false, issues}))
+  outputResult(appConfigValidateJsonOutputSchema.encode({path: resolve(configPath), valid: false, issues}))
   throw new AbortSilentError()
 }
 
@@ -72,7 +72,7 @@ export default class Validate extends AppLinkedCommand {
         code: null,
       }))
       if (flags.json) {
-        await failJsonValidation(issues)
+        await failJsonValidation(activeConfig.file.path, issues)
       }
       const fileCount = new Set(configErrors.map((err) => err.path)).size
       await recordValidationFailure(issues.length, fileCount)
@@ -96,7 +96,7 @@ export default class Validate extends AppLinkedCommand {
       app = context.app
     } catch (err) {
       if (err instanceof AppConfigurationValidationError && flags.json) {
-        await failJsonValidation([
+        await failJsonValidation(err.configurationPath, [
           {filePath: resolve(err.configurationPath), message: err.message, fieldPath: null, code: null},
         ])
       }
@@ -104,7 +104,7 @@ export default class Validate extends AppLinkedCommand {
     }
 
     const result = await validateApp(app)
-    renderAppConfigValidateResult(result, app.configPath, flags.json ? 'json' : 'text')
+    renderAppConfigValidateResult(result, flags.json ? 'json' : 'text')
     if (!result.valid) throw new AbortSilentError()
 
     return {app}

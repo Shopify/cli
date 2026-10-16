@@ -13,7 +13,13 @@ const validationIssueSchema = zod
 
 export const appConfigValidateJsonOutputSchema = defineJsonOutputSchema({
   name: 'AppConfigValidateResult',
-  schema: zod.object({valid: zod.boolean(), issues: zod.array(validationIssueSchema)}).strict(),
+  schema: zod
+    .object({
+      path: zod.string().refine(isAbsolutePath, 'Expected an absolute filesystem path.'),
+      valid: zod.boolean(),
+      issues: zod.array(validationIssueSchema),
+    })
+    .strict(),
   definitions: {ValidationIssue: validationIssueSchema},
 })
 

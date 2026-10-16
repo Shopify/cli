@@ -110,7 +110,7 @@ describe('validateApp', () => {
   test('returns a valid result and records metadata when there are no errors', async () => {
     const app = testAppLinked()
 
-    await expect(validateApp(app)).resolves.toEqual({valid: true, issues: []})
+    await expect(validateApp(app)).resolves.toEqual({path: resolve(app.configPath), valid: true, issues: []})
 
     await expectLastValidationMetadata({
       cmd_app_validate_valid: true,
@@ -123,7 +123,7 @@ describe('validateApp', () => {
     const app = testAppLinked()
     app.errors = new AppErrors()
 
-    await expect(validateApp(app)).resolves.toEqual({valid: true, issues: []})
+    await expect(validateApp(app)).resolves.toEqual({path: resolve(app.configPath), valid: true, issues: []})
 
     await expectLastValidationMetadata({
       cmd_app_validate_valid: true,
@@ -140,6 +140,7 @@ describe('validateApp', () => {
     app.errors = errors
 
     await expect(validateApp(app)).resolves.toEqual({
+      path: resolve(app.configPath),
       valid: false,
       issues: [
         {filePath: resolve('/path/to/shopify.app.toml'), message: 'client_id is required', fieldPath: null, code: null},
@@ -166,6 +167,7 @@ describe('validateApp', () => {
     app.errors = errors
 
     await expect(validateApp(app)).resolves.toEqual({
+      path: resolve(app.configPath),
       valid: false,
       issues: [
         {

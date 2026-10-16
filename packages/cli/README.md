@@ -1200,6 +1200,9 @@ DESCRIPTION
   {
     "type": "object",
     "properties": {
+      "path": {
+        "type": "string"
+      },
       "valid": {
         "type": "boolean"
       },
@@ -1211,6 +1214,7 @@ DESCRIPTION
       }
     },
     "required": [
+      "path",
       "valid",
       "issues"
     ],
@@ -4330,7 +4334,7 @@ FLAGS
       [env: SHOPIFY_FLAG_NAME]
 
   -p, --path=<value>
-      [default: .] [env: SHOPIFY_FLAG_PATH]
+      [default: ./packages/cli] [env: SHOPIFY_FLAG_PATH]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.

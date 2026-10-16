@@ -52,7 +52,7 @@ describe('app config validate command', () => {
     const app = testAppLinked()
     mockHealthyProject()
     vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
-    vi.mocked(validateApp).mockResolvedValue({valid: true, issues: []})
+    vi.mocked(validateApp).mockResolvedValue({path: resolve(app.configPath), valid: true, issues: []})
 
     await Validate.run([], import.meta.url)
 
@@ -66,12 +66,14 @@ describe('app config validate command', () => {
     const app = testAppLinked()
     mockHealthyProject()
     vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
-    vi.mocked(validateApp).mockResolvedValue({valid: true, issues: []})
+    vi.mocked(validateApp).mockResolvedValue({path: resolve(app.configPath), valid: true, issues: []})
 
     await Validate.run(['--json'], import.meta.url)
 
     expect(validateApp).toHaveBeenCalledWith(app)
-    expect(outputResult).toHaveBeenCalledWith(appConfigValidateJsonOutputSchema.encode({valid: true, issues: []}))
+    expect(outputResult).toHaveBeenCalledWith(
+      appConfigValidateJsonOutputSchema.encode({path: resolve(app.configPath), valid: true, issues: []}),
+    )
     expect(renderSuccess).not.toHaveBeenCalled()
     await expectValidationMetadataCalls({cmd_app_validate_json: true})
   })
@@ -81,11 +83,13 @@ describe('app config validate command', () => {
     mockHealthyProject()
     vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
     const issues = [{filePath: '/app/shopify.app.toml', message: 'Required', fieldPath: ['name'], code: 'invalid_type'}]
-    vi.mocked(validateApp).mockResolvedValue({valid: false, issues})
+    vi.mocked(validateApp).mockResolvedValue({path: resolve(app.configPath), valid: false, issues})
 
     await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow()
 
-    expect(outputResult).toHaveBeenCalledWith(appConfigValidateJsonOutputSchema.encode({valid: false, issues}))
+    expect(outputResult).toHaveBeenCalledWith(
+      appConfigValidateJsonOutputSchema.encode({path: resolve(app.configPath), valid: false, issues}),
+    )
     expect(renderError).not.toHaveBeenCalled()
   })
 
@@ -94,6 +98,7 @@ describe('app config validate command', () => {
     mockHealthyProject()
     vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
     vi.mocked(validateApp).mockResolvedValue({
+      path: resolve(app.configPath),
       valid: false,
       issues: [{filePath: '/app/shopify.app.toml', message: 'client_id is required', fieldPath: null, code: null}],
     })
@@ -111,7 +116,7 @@ describe('app config validate command', () => {
     const app = testAppLinked()
     mockHealthyProject()
     vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
-    vi.mocked(validateApp).mockResolvedValue({valid: true, issues: []})
+    vi.mocked(validateApp).mockResolvedValue({path: resolve(app.configPath), valid: true, issues: []})
 
     await Validate.run(['-j'], import.meta.url)
 
@@ -126,7 +131,7 @@ describe('app config validate command', () => {
       file: new TomlFile('shopify.app.staging.toml', {}),
     } as any)
     vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
-    vi.mocked(validateApp).mockResolvedValue({valid: true, issues: []})
+    vi.mocked(validateApp).mockResolvedValue({path: resolve(app.configPath), valid: true, issues: []})
 
     await Validate.run(['--client-id', 'api-key'], import.meta.url)
 
@@ -149,7 +154,7 @@ describe('app config validate command', () => {
     const app = testAppLinked()
     mockHealthyProject()
     vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
-    vi.mocked(validateApp).mockResolvedValue({valid: true, issues: []})
+    vi.mocked(validateApp).mockResolvedValue({path: resolve(app.configPath), valid: true, issues: []})
 
     await Validate.run([], import.meta.url)
 
@@ -284,6 +289,7 @@ describe('app config validate command', () => {
       expect(linkedAppContext).toHaveBeenCalledWith(expect.objectContaining({forceRelink: true}))
       expect(outputResult).toHaveBeenCalledOnce()
       expect(JSON.parse(stringifyMessage(vi.mocked(outputResult).mock.calls[0]![0]))).toEqual({
+        path: resolve(linkedPath),
         valid: false,
         issues: [
           {

@@ -9,10 +9,19 @@ import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
 vi.mock('@shopify/cli-kit/node/ui')
 
 const cases = [
-  {valid: true, issues: []},
-  {valid: false, issues: [{filePath: null, message: 'No config found', fieldPath: null, code: null}]},
-  {valid: false, issues: [{filePath: '/app/shopify.app.toml', message: 'Invalid TOML', fieldPath: null, code: null}]},
+  {path: '/app/shopify.app.toml', valid: true, issues: []},
   {
+    path: '/app/shopify.app.toml',
+    valid: false,
+    issues: [{filePath: null, message: 'No config found', fieldPath: null, code: null}],
+  },
+  {
+    path: '/app/shopify.app.toml',
+    valid: false,
+    issues: [{filePath: '/app/shopify.app.toml', message: 'Invalid TOML', fieldPath: null, code: null}],
+  },
+  {
+    path: '/app/shopify.app.toml',
     valid: false,
     issues: [{filePath: '/app/shopify.app.toml', message: 'Required', fieldPath: ['name'], code: 'invalid_type'}],
   },
@@ -20,8 +29,12 @@ const cases = [
 
 describe('validation contract', () => {
   test.each([
-    {valid: true, issues: [], extra: true},
-    {valid: false, issues: [{filePath: '/app/config', message: 'Error', fieldPath: null, code: null, extra: true}]},
+    {path: '/app/shopify.app.toml', valid: true, issues: [], extra: true},
+    {
+      path: '/app/shopify.app.toml',
+      valid: false,
+      issues: [{filePath: '/app/config', message: 'Error', fieldPath: null, code: null, extra: true}],
+    },
   ])('rejects unknown fields %j', (result) => {
     expect(() => appConfigValidateJsonOutputSchema.validate(result)).toThrow()
   })
@@ -31,10 +44,12 @@ describe('validation contract', () => {
   })
 
   test.each([
-    {valid: 'true', issues: []},
-    {valid: true, issues: [{message: 123}]},
-    {valid: false, issues: [{message: 'Required', fieldPath: [false]}]},
-    {valid: false, issues: [{message: 'Required', code: null}]},
+    {valid: true, issues: []},
+    {path: 'shopify.app.toml', valid: true, issues: []},
+    {path: '/app/shopify.app.toml', valid: 'true', issues: []},
+    {path: '/app/shopify.app.toml', valid: true, issues: [{message: 123}]},
+    {path: '/app/shopify.app.toml', valid: false, issues: [{message: 'Required', fieldPath: [false]}]},
+    {path: '/app/shopify.app.toml', valid: false, issues: [{message: 'Required', code: null}]},
   ])('rejects malformed data %j', (result) => {
     expect(() => appConfigValidateJsonOutputSchema.validate(result)).toThrow()
   })
@@ -43,7 +58,7 @@ describe('validation contract', () => {
     await withCapturedStandardStreams((streams) => {
       runWithCommandEventsForCommand(['--json'], () => {
         outputInfo('Checking configuration')
-        renderAppConfigValidateResult(result, '/app/shopify.app.toml', 'json')
+        renderAppConfigValidateResult(result, 'json')
       })
 
       expect(streams.stdout()).toBe(`${JSON.stringify(result, null, 2)}\n`)
@@ -54,7 +69,7 @@ describe('validation contract', () => {
 
 describe('renderAppConfigValidateResult in text mode', () => {
   test('renders a success message with the config file name', () => {
-    renderAppConfigValidateResult({valid: true, issues: []}, '/app/shopify.app.toml', 'text')
+    renderAppConfigValidateResult({path: '/app/shopify.app.toml', valid: true, issues: []}, 'text')
 
     expect(renderSuccess).toHaveBeenCalledWith({headline: "App configuration 'shopify.app.toml' is valid."})
     expect(renderError).not.toHaveBeenCalled()
@@ -62,6 +77,7 @@ describe('renderAppConfigValidateResult in text mode', () => {
 
   test('renders formatted issues without throwing when the result is invalid', () => {
     const result = {
+      path: '/app/shopify.app.toml',
       valid: false,
       issues: [
         {filePath: '/app/shopify.app.toml', message: 'client_id is required', fieldPath: null, code: null},
@@ -69,7 +85,7 @@ describe('renderAppConfigValidateResult in text mode', () => {
       ],
     }
 
-    expect(() => renderAppConfigValidateResult(result, '/app/shopify.app.toml', 'text')).not.toThrow()
+    expect(() => renderAppConfigValidateResult(result, 'text')).not.toThrow()
 
     expect(renderError).toHaveBeenCalledWith({
       headline: 'Validation errors found.',
@@ -80,13 +96,14 @@ describe('renderAppConfigValidateResult in text mode', () => {
 
   test('falls back to the validated config path when an issue has no file', () => {
     const result = {
+      path: '/app/shopify.app.toml',
       valid: false,
       issues: [
         {filePath: null, fieldPath: ['events', '1', 'metrics'], message: 'Expected object, received array', code: null},
       ],
     }
 
-    renderAppConfigValidateResult(result, '/app/shopify.app.toml', 'text')
+    renderAppConfigValidateResult(result, 'text')
 
     // The TOML table hint only applies to .toml files, so it proves the configPath fallback was used.
     expect(renderError).toHaveBeenCalledWith({
