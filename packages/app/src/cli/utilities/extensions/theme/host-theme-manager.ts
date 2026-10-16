@@ -3,9 +3,9 @@ import {getHostTheme, removeHostTheme, setHostTheme} from '@shopify/cli-kit/node
 import {ThemeManager} from '@shopify/cli-kit/node/themes/theme-manager'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {themeCreate} from '@shopify/cli-kit/node/themes/api'
+import {isTrustChallengeError, themeCreate} from '@shopify/cli-kit/node/themes/api'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {BugError} from '@shopify/cli-kit/node/error'
+import {AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export const DEFAULT_THEME_ZIP = 'https://codeload.github.com/Shopify/dawn/zip/refs/tags/v15.0.0'
@@ -60,8 +60,8 @@ export class HostThemeManager extends ThemeManager {
         } else {
           throw new Error()
         }
-        // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (error) {
+        if (error instanceof AbortSilentError || isTrustChallengeError(error)) throw error
         outputDebug(`Failed to create theme with name "${options.name}" and role "${options.role}". Retrying...`)
       }
     }
