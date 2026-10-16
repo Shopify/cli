@@ -1,7 +1,7 @@
 import Push from './push.js'
-
+import Pull from './pull.js'
 import {executeThemePush} from '../../services/push.js'
-
+import {executeThemePull} from '../../services/pull.js'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
@@ -11,7 +11,7 @@ import {Config} from '@oclif/core'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../services/push.js')
-
+vi.mock('../../services/pull.js')
 vi.mock('@shopify/cli-kit/node/environments')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/metadata')
@@ -20,7 +20,11 @@ class TestPush extends Push {
   public parse = vi.fn()
 }
 
-describe.each([TestPush])('%s', (Command) => {
+class TestPull extends Pull {
+  public parse = vi.fn()
+}
+
+describe.each([TestPush, TestPull])('%s', (Command) => {
   test.each(['none', 'partial', 'total', 'cancelled'] as const)(
     'retains all environments in request order with %s failures',
     async (failures) => {
@@ -63,6 +67,7 @@ describe.each([TestPush])('%s', (Command) => {
           }
         }
         vi.mocked(executeThemePush).mockImplementation(execute)
+        vi.mocked(executeThemePull).mockImplementation(execute)
 
         const config = new Config({root: __dirname})
         await config.load()
@@ -140,6 +145,7 @@ describe.each([TestPush])('%s', (Command) => {
           },
         ])
         expect(executeThemePush).not.toHaveBeenCalled()
+        expect(executeThemePull).not.toHaveBeenCalled()
 
         expect(process.exitCode).toBe(1)
       })
