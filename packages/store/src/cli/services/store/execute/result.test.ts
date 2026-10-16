@@ -17,13 +17,14 @@ describe('writeOrOutputStoreExecuteResult', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const outputPath = joinPath(tmpDir, 'results.json')
+      const result = {data: {shop: {name: 'Test shop'}}, extensions: {cost: {actualQueryCost: 2}}}
 
       // When
-      await writeOrOutputStoreExecuteResult({data: {shop: {name: 'Test shop'}}}, outputPath)
+      await writeOrOutputStoreExecuteResult(result, outputPath)
 
       // Then
       const content = await readFile(outputPath)
-      expect(content).toContain('Test shop')
+      expect(JSON.parse(content)).toStrictEqual(result)
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'Operation succeeded.',
         body: `Results written to ${outputPath}`,
@@ -42,30 +43,58 @@ describe('writeOrOutputStoreExecuteResult', () => {
 
   test('outputs the exact JSON result without a success message', async () => {
     const output = mockAndCaptureOutput()
-    const result = {renamedShop: {name: 'Test shop', optional: null}, products: [], enabled: false}
+    const result = {data: {shop: {name: 'Test shop'}}, extensions: {cost: {actualQueryCost: 2}}}
 
     await writeOrOutputStoreExecuteResult(result, undefined, 'json')
 
     expect(output.output()).toBe(JSON.stringify(result, null, 2))
     expect(renderSuccess).not.toHaveBeenCalled()
+    expect(JSON.parse(output.output())).toStrictEqual(result)
   })
 
-  test.each([{}, null, {zebra: false, apple: null, omitted: undefined, nested: {list: [null, 1, 'value']}}])(
-    'preserves arbitrary GraphQL fields, order, and omissions: %j',
-    (result) => {
-      expect(storeExecuteJsonOutputSchema.encode(result)).toBe(JSON.stringify(result, null, 2))
-    },
-  )
+  test.each([
+    {},
+    null,
+    {zebra: false, apple: null, omitted: undefined, nested: {list: [null, 1, 'value']}},
+    {extensions: {name: 'Test shop'}, data: false, error: null},
+  ])('preserves arbitrary GraphQL fields, order, and omissions: %j', (data) => {
+    const result = {data}
 
-  test.each([undefined, 'not an object', 42, []])('rejects invalid response roots: %j', (result) => {
+    expect(storeExecuteJsonOutputSchema.encode(result)).toBe(JSON.stringify(result, null, 2))
+  })
+
+  test.each([undefined, null, 'not an object', 42, []])('rejects invalid response roots: %j', (result) => {
     expect(() => storeExecuteJsonOutputSchema.validate(result)).toThrow()
+  })
+
+  test.each([
+    {},
+    {shop: {name: 'Test shop'}},
+    {data: undefined},
+    {data: 'not an object'},
+    {data: []},
+    {data: {}, unexpected: true},
+    {data: {}, extensions: null},
+    {data: {}, extensions: []},
+    {data: {}, extensions: 'not an object'},
+  ])('rejects invalid response envelopes: %j', (result) => {
+    expect(() => storeExecuteJsonOutputSchema.validate(result)).toThrow()
+  })
+
+  test('documents the response envelope in JSON Schema', () => {
+    expect(storeExecuteJsonOutputSchema.jsonSchema).toMatchObject({
+      type: 'object',
+      properties: {data: expect.any(Object), extensions: expect.any(Object)},
+      required: ['data'],
+      additionalProperties: false,
+    })
   })
 
   test('writes an exact JSON file without a result or success message in JSON mode', async () => {
     const output = mockAndCaptureOutput()
     await inTemporaryDirectory(async (directory) => {
       const path = joinPath(directory, 'result.json')
-      const result = {shop: {name: 'Test shop'}, products: []}
+      const result = {data: {shop: {name: 'Test shop'}, products: []}}
 
       await writeOrOutputStoreExecuteResult(result, path, 'json')
 
