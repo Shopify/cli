@@ -445,6 +445,16 @@ describe('themeUpdate', () => {
     expect(theme!.name).toEqual(name)
     expect(theme!.role).toEqual(role)
   })
+
+  test('throws a friendly error when access is denied by a missing theme access scope', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(
+      errorHandler('Admin')(themeAccessDeniedError('`write_themes` access scope.'), 'request-id'),
+    )
+
+    await expect(themeUpdate(123, {name: 'renamed theme'}, session)).rejects.toThrow(
+      'The authenticated account or access token is missing `write_themes` access scope.',
+    )
+  })
 })
 
 describe('themePublish', () => {
@@ -550,6 +560,16 @@ describe('deleteThemeAssets', () => {
     })
     expect(output).toEqual([{key, success: true, operation: 'DELETE'}])
   })
+
+  test('throws a friendly error when access is denied by a missing theme access scope', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(
+      errorHandler('Admin')(themeAccessDeniedError('`write_themes` access scope.'), 'request-id'),
+    )
+
+    await expect(deleteThemeAssets(123, ['snippets/product-variant-picker.liquid'], session)).rejects.toThrow(
+      'The authenticated account or access token is missing `write_themes` access scope.',
+    )
+  })
 })
 
 describe('themeDelete', () => {
@@ -623,6 +643,16 @@ describe('themeDuplicate', () => {
       })
     })
   }
+
+  test('throws a friendly error when access is denied by a missing theme access scope', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(
+      errorHandler('Admin')(themeAccessDeniedError('`write_themes` access scope.'), 'request-id'),
+    )
+
+    await expect(themeDuplicate(123, 'duplicate theme', session)).rejects.toThrow(
+      'The authenticated account or access token is missing `write_themes` access scope.',
+    )
+  })
 })
 
 describe('request errors', () => {
@@ -787,6 +817,16 @@ describe('bulkUploadThemeAssets', async () => {
     await expect(bulkUploadThemeAssets(id, assets, session)).rejects.toThrow(
       'Error uploading theme files: Something went wrong',
     )
+  })
+
+  test('throws a friendly error when access is denied by a missing theme access scope', async () => {
+    vi.mocked(adminRequestDoc).mockRejectedValue(
+      errorHandler('Admin')(themeAccessDeniedError('`write_themes` access scope.'), 'request-id'),
+    )
+
+    await expect(
+      bulkUploadThemeAssets(123, [{key: 'snippets/product-variant-picker.liquid', value: 'content'}], session),
+    ).rejects.toThrow('The authenticated account or access token is missing `write_themes` access scope.')
   })
 })
 
