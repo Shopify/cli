@@ -2544,7 +2544,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Creates GraphQL types based on your \"input query\" (https://shopify.dev/docs/apps/functions/input-output#input) for a function. Supports JavaScript functions out of the box, or any language via the `build.typegen_command` configuration.",
+      "description": "Creates GraphQL types based on your \"input query\" (https://shopify.dev/docs/apps/functions/input-output#input) for a function. Supports JavaScript functions out of the box, or any language via the `build.typegen_command` configuration.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `FunctionTypegenResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\",\n      \"const\": \"success\"\n    },\n    \"function\": {\n      \"$ref\": \"#/definitions/Function\"\n    }\n  },\n  \"required\": [\n    \"status\",\n    \"function\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"FunctionTypegenResult\",\n  \"definitions\": {\n    \"Function\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"handle\": {\n          \"type\": [\n            \"string\",\n            \"null\"\n          ],\n          \"description\": \"Null when the extension does not configure a handle.\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"directory\": {\n          \"type\": \"string\",\n          \"pattern\": \"^(?:\\\\/|[a-zA-Z]:[\\\\\\\\/]|\\\\\\\\\\\\\\\\)\",\n          \"description\": \"An absolute native filesystem path.\"\n        }\n      },\n      \"required\": [\n        \"handle\",\n        \"name\",\n        \"directory\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Creates GraphQL types based on your [input query](https://shopify.dev/docs/apps/functions/input-output#input) for a function. Supports JavaScript functions out of the box, or any language via the `build.typegen_command` configuration.",
       "flags": {
         "auth-alias": {
@@ -2576,6 +2576,15 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,
