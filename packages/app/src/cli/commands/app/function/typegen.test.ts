@@ -46,13 +46,16 @@ async function command(argv: string[], directory: string, custom = false) {
 }
 
 test.each([
-  {custom: true, noInput: true},
-  {custom: true, noInput: false},
-  {custom: false, noInput: true},
-  {custom: false, noInput: false},
-])('emits one result and codegen side events: %j', async ({custom, noInput}) => {
+  {custom: true, argv: ['--json', '--no-input']},
+  {custom: true, argv: ['--json']},
+  {custom: false, argv: ['--json', '--no-input']},
+  {custom: false, argv: ['--json']},
+  {custom: true, argv: ['-jcstaging']},
+  {custom: false, argv: ['-jcstaging']},
+  {custom: true, argv: ['-j']},
+  {custom: false, argv: ['-j']},
+])('emits one result and codegen side events: %j', async ({custom, argv}) => {
   await inTemporaryDirectory(async (directory) => {
-    const argv = ['--json', ...(noInput ? ['--no-input'] : [])]
     const {instance, extension, app} = await command(argv, directory, custom)
     vi.mocked(exec).mockImplementation(async (_command, _args, options) => {
       if (options?.stdout && options.stdout !== 'inherit') options.stdout.write('Generating types\n')

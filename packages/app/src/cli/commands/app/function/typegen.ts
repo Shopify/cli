@@ -7,6 +7,7 @@ import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../../utilities/a
 import {localAppContext} from '../../../services/app-context.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {renderConcurrent} from '@shopify/cli-kit/node/ui'
+import {renderCommandEventAsJson, runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
 import {Writable} from 'stream'
 
 export default class FunctionTypegen extends AppUnlinkedCommand {
@@ -42,10 +43,12 @@ export default class FunctionTypegen extends AppUnlinkedCommand {
       renderFunctionTypegenResult(result, flags.json)
     }
     if (flags.json) {
-      await renderConcurrent({
-        processes: [{prefix: ourFunction.localIdentifier, action: execute}],
-        showTimestamps: false,
-      })
+      await runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, () =>
+        renderConcurrent({
+          processes: [{prefix: ourFunction.localIdentifier, action: execute}],
+          showTimestamps: false,
+        }),
+      )
     } else {
       await execute(process.stdout, process.stderr)
     }
