@@ -1,5 +1,28 @@
 # @shopify/store
 
+## 5.0.0
+
+### Patch Changes
+
+- Updated dependencies [dfe353a]
+- Updated dependencies [71bb7c4]
+- Updated dependencies [dd71f5f]
+- Updated dependencies [03d54a6]
+- Updated dependencies [3f4baab]
+- Updated dependencies [217db4d]
+- Updated dependencies [1cdbfa2]
+- Updated dependencies [f945f9d]
+- Updated dependencies [1678264]
+- Updated dependencies [f7feb6d]
+- Updated dependencies [72fe13b]
+- Updated dependencies [fdae48f]
+- Updated dependencies [730d051]
+- Updated dependencies [2c9d28b]
+- Updated dependencies [e5ac2d0]
+- Updated dependencies [a23c474]
+  - @shopify/cli-kit@5.0.0
+  - @shopify/organizations@5.0.0
+
 ## 4.9.0
 
 ### Patch Changes

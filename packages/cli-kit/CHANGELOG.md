@@ -1,5 +1,29 @@
 # @shopify/cli-kit
 
+## 5.0.0
+
+### Minor Changes
+
+- dfe353a: Warn that `SHOPIFY_APP_AUTOMATION_TOKEN` and `SHOPIFY_CLI_PARTNERS_TOKEN` are deprecated in favor of `SHOPIFY_SERVICE_ACCOUNT_TOKEN`, which takes the same tokens. The warning shows at most once a day, and both variables keep working for now.
+- 71bb7c4: Require Git 2.38.0 or later when `shopify app security check` uses Git, and add a reusable CLI Kit minimum-version guard.
+- 1678264: Add a native option to isSubpath for checking containment using filesystem path semantics.
+- f7feb6d: Normalize migration cancellation JSON and share error serialization to preserve completed batch outcomes, error classifications, and recovery guidance.
+- fdae48f: Add typed JSON output to `shopify upgrade`.
+- 730d051: Add `SHOPIFY_SERVICE_ACCOUNT_TOKEN` to run `shopify organization list`, `shopify store list`, `shopify store create dev`, `shopify store info`, `shopify store delete` and app commands with a service account token. It can't be set together with `SHOPIFY_APP_AUTOMATION_TOKEN` or `SHOPIFY_CLI_PARTNERS_TOKEN`, and commands that need your Shopify account or a store's Admin API access, such as `shopify store execute`, refuse to run while it's set.
+
+### Patch Changes
+
+- dd71f5f: Reject captured process startup failures and signal termination instead of reporting exit code zero.
+- 03d54a6: Fail with a clear error, instead of logging in with your Shopify account, when `SHOPIFY_APP_AUTOMATION_TOKEN` or `SHOPIFY_CLI_PARTNERS_TOKEN` is set but empty
+- 3f4baab: Serialize the GraphiQL initial query and variables as HTML-safe JSON before they are placed in the page's inline script.
+- 217db4d: Partition the GraphQL response cache by a hash of the endpoint URL and access token. Existing cache entries are not reused, so each cached query is fetched again once.
+- 1cdbfa2: Don't crash `shopify auth login` when the browser can't be opened (for example, `spawn xdg-open ENOENT` in a headless container). The CLI now prints the login link and keeps waiting for you to approve it in any browser.
+- f945f9d: Route success banners through JSON diagnostics.
+- 72fe13b: Support writable streams and optional final-newline preservation when capturing process output.
+- 2c9d28b: Fix Theme Access authentication to work with all of a store’s domains.
+- e5ac2d0: Hide webhook shared secrets in GraphQL request diagnostics.
+- a23c474: Fix the check that stops the CLI from running a program found in the working directory on Windows
+
 ## 4.9.0
 
 ### Minor Changes
