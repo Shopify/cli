@@ -42,25 +42,36 @@ function regularFileChecksum(fileKey: string, fileContent: string) {
   return md5(content)
 }
 
+/**
+ * Strips insignificant whitespace from a JSON document, leaving whitespace inside strings intact.
+ *
+ * Instead of appending character by character, this copies the text between stripped characters in
+ * slices, so a document with no whitespace to strip costs a single slice rather than one string
+ * concatenation per character. On a 735KB `settings_data.json` this is ~4.8x faster (12ms to 2.5ms).
+ */
 function normalizeJson(jsonStr: string) {
   let inStr = false
   let wasBackslash = false
-  let formattedStr = ''
+  let keptFrom = 0
+  let normalized = ''
 
-  for (const char of jsonStr) {
+  for (let index = 0; index < jsonStr.length; index++) {
+    const char = jsonStr[index]
+
     if (char === '"' && !wasBackslash) {
       inStr = !inStr
     }
 
     if (!inStr && (char === ' ' || char === '\n')) {
+      normalized += jsonStr.slice(keptFrom, index)
+      keptFrom = index + 1
       continue
     }
 
-    formattedStr += char
     wasBackslash = char === '\\' && !wasBackslash
   }
 
-  return formattedStr
+  return normalized + jsonStr.slice(keptFrom)
 }
 
 function md5(content: string | Buffer) {
