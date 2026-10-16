@@ -57,6 +57,8 @@ See [JSON output tests](json-output.md#test-a-new-command) and [UI tests](../cli
 
 ### Filesystem I/O and temporary directories
 
+The `@shopify/cli/no-filesystem-auto-mocks` ESLint rule rejects automatic filesystem mocks in test files.
+
 For filesystem tests, use real files in a temporary directory. The test must delete the directory after use, including when it fails:
 
 ```ts

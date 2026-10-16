@@ -9,11 +9,11 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import * as appLogsUtils from '../../app-logs/utils.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
-import {mkdir} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
+import * as fs from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, Mock, beforeEach, test} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('../../app-logs/dev/poll-app-logs.js')
 
@@ -102,7 +102,7 @@ describe('app-logs-polling', () => {
 
       developerPlatformClient = testDeveloperPlatformClient({subscribeToAppLogs})
 
-      vi.mocked(mkdir).mockResolvedValue()
+      vi.spyOn(fs, 'mkdir')
       vi.mocked(pollAppLogs).mockResolvedValue()
       vi.spyOn(appLogsUtils, 'subscribeToAppLogs').mockResolvedValue(JWT_TOKEN)
     })
@@ -134,7 +134,10 @@ describe('app-logs-polling', () => {
         startTime: [0, 0],
         path: '',
       }
-      await startCallback(appEvent)
+      await inTemporaryDirectory(async (tempDir) => {
+        vi.spyOn(localApp, 'getLogsDir').mockReturnValue(tempDir)
+        await startCallback(appEvent)
+      })
 
       // Then
       expect(outputDebug).toHaveBeenCalledWith('Function extensions detected, starting logs polling')

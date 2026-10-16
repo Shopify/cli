@@ -14,14 +14,15 @@ import {
 } from '../../../../models/app/app.test-data.js'
 import {getUploadURL, writeManifestToBundle} from '../../../bundle.js'
 import {formData} from '@shopify/cli-kit/node/http'
-import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
+import {describe, expect, vi, afterEach} from 'vitest'
+import {testWithTempDir as test} from '@shopify/cli-kit/node/testing/test-with-temp-dir'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import * as outputContext from '@shopify/cli-kit/node/ui/components'
-import {readdir} from '@shopify/cli-kit/node/fs'
+import {mkdir} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {SerialBatchProcessor} from '@shopify/cli-kit/node/serial-batch-processor'
 
-vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/archiver')
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('../../../../utilities/app/app-url.js')
@@ -76,14 +77,42 @@ describe('pushUpdatesForDevSession', () => {
   let app: AppLinkedInterface
   let abortController: AbortController
   let devSessionStatusManager: DevSessionStatusManager
+  let startPromise: Promise<void> | undefined
+  let processingPromises: Promise<void>[]
+  const originalEnqueue = SerialBatchProcessor.prototype.enqueue
 
-  beforeEach(() => {
+  const waitForDevSession = async () => {
+    await flushPromises()
+    await startPromise
+    await Promise.all(processingPromises)
+  }
+
+  test.beforeEach(({tempDir}) => {
     vi.mocked(formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()} as any)
     stdout = {write: vi.fn()}
     stderr = {write: vi.fn()}
     developerPlatformClient = testDeveloperPlatformClient()
-    app = testAppLinked()
+    app = testAppLinked({directory: tempDir})
     appWatcher = new AppEventWatcher(app)
+    startPromise = undefined
+    processingPromises = []
+    const originalOnStart = appWatcher.onStart
+    vi.spyOn(appWatcher, 'onStart').mockImplementation((listener) =>
+      originalOnStart.call(appWatcher, (event) => {
+        startPromise = Promise.resolve(listener(event))
+        return startPromise
+      }),
+    )
+    vi.spyOn(SerialBatchProcessor.prototype, 'enqueue').mockImplementation(function (
+      this: SerialBatchProcessor<unknown>,
+      item: unknown,
+    ) {
+      originalEnqueue.call(this, item)
+      const completion = this.waitForCompletion()
+      // Keep the rejection available for assertions without an unhandled rejection.
+      completion.catch(() => {})
+      processingPromises.push(completion)
+    })
     abortController = new AbortController()
     devSessionStatusManager = new DevSessionStatusManager()
     options = {
@@ -108,7 +137,7 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
 
     // Then
     expect(developerPlatformClient.devSessionCreate).toHaveBeenCalled()
@@ -120,9 +149,9 @@ describe('pushUpdatesForDevSession', () => {
 
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
     appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
-    await flushPromises()
+    await waitForDevSession()
 
     expect(developerPlatformClient.devSessionCreate).toHaveBeenCalledWith(
       expect.objectContaining({unsafeValidation: true}),
@@ -138,11 +167,11 @@ describe('pushUpdatesForDevSession', () => {
     const spyContext = vi.spyOn(outputContext, 'useConcurrentOutputContext')
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
 
     const extension = await testUIExtension()
     appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension}]})
-    await flushPromises()
+    await waitForDevSession()
 
     // Then
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated dev preview on test.myshopify.com'))
@@ -161,7 +190,7 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: new AbortController().signal}, options)
-    await flushPromises()
+    await waitForDevSession()
 
     // Then
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Error'))
@@ -172,7 +201,7 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
-    await flushPromises()
+    await waitForDevSession()
 
     // Then
     expect(stdout.write).toHaveBeenCalledWith(
@@ -190,9 +219,9 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
     appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
-    await flushPromises()
+    await waitForDevSession()
 
     // Then
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Error'))
@@ -220,9 +249,9 @@ describe('pushUpdatesForDevSession', () => {
 
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
     appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
-    await flushPromises()
+    await waitForDevSession()
 
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining(renderedMessage))
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated dev preview on test.myshopify.com'))
@@ -240,9 +269,9 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
     appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
-    await flushPromises()
+    await waitForDevSession()
 
     // Then
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Validation warning'))
@@ -258,9 +287,9 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
     appWatcher.emit('all', event)
-    await flushPromises()
+    await waitForDevSession()
 
     // Then
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated dev preview on test.myshopify.com'))
@@ -280,9 +309,9 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
     appWatcher.emit('all', {app: newApp, extensionEvents: [{type: 'updated', extension}]})
-    await flushPromises()
+    await waitForDevSession()
 
     // Then
     expect(devSessionStatusManager.status.previewURL).toBe(options.appPreviewURL)
@@ -296,9 +325,9 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
     appWatcher.emit('all', {app: newApp, extensionEvents: [{type: 'updated', extension}]})
-    await flushPromises()
+    await waitForDevSession()
 
     // Then
     expect(devSessionStatusManager.status.previewURL).toBe(options.appPreviewURL)
@@ -312,9 +341,9 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
     appWatcher.emit('all', {app: newApp, extensionEvents: [{type: 'updated', extension}]})
-    await flushPromises()
+    await waitForDevSession()
 
     // Then
     expect(devSessionStatusManager.status.isReady).toBe(true)
@@ -335,7 +364,7 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     appWatcher.emit('error', testError)
-    await flushPromises()
+    await waitForDevSession()
 
     // Then
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Error'))
@@ -358,7 +387,7 @@ describe('pushUpdatesForDevSession', () => {
 
     // When - Start the session
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
 
     // Then - Ready state
     expect(statusSpy).toHaveBeenCalledWith('READY')
@@ -366,7 +395,7 @@ describe('pushUpdatesForDevSession', () => {
     // When - Emit an update event
     const extension = await testUIExtension()
     appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension}]})
-    await flushPromises()
+    await waitForDevSession()
 
     // Then - Loading state during update
     expect(statusSpy).toHaveBeenCalledWith('CHANGE_DETECTED')
@@ -392,9 +421,9 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
     appWatcher.emit('all', errorEvent)
-    await flushPromises()
+    await waitForDevSession()
 
     // Then
     expect(devSessionStatusManager.status.statusMessage).toEqual({
@@ -411,9 +440,9 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
     appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
-    await flushPromises()
+    await waitForDevSession()
 
     // Then
     expect(devSessionStatusManager.status.statusMessage).toEqual({
@@ -430,9 +459,9 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
     appWatcher.emit('error', validationError)
-    await flushPromises()
+    await waitForDevSession()
 
     // Then
     expect(devSessionStatusManager.status.statusMessage).toEqual({
@@ -443,7 +472,6 @@ describe('pushUpdatesForDevSession', () => {
 
   test('manifest sent in update payload only includes affected extensions', async () => {
     // Given
-    vi.mocked(readdir).mockResolvedValue(['assets', 'assets/updated-extension'])
     vi.mocked(getUploadURL).mockResolvedValue('https://gcs.url')
 
     const updatedExtension = await testUIExtension()
@@ -456,12 +484,13 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await mkdir(joinPath(appWatcher.buildOutputPath, 'assets', 'updated-extension'))
+    await waitForDevSession()
     appWatcher.emit('all', {
       app: appWithMultipleExtensions,
       extensionEvents: [{type: 'updated', extension: updatedExtension}],
     })
-    await flushPromises()
+    await waitForDevSession()
 
     // Then
     expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledWith({
@@ -492,7 +521,6 @@ describe('pushUpdatesForDevSession', () => {
 
   test('writes full manifest to bundle on session update, not just create', async () => {
     // Given
-    vi.mocked(readdir).mockResolvedValue([])
     vi.mocked(getUploadURL).mockResolvedValue('https://gcs.url')
 
     const updatedExtension = await testUIExtension({handle: 'updated-ext', uid: 'updated-uid'})
@@ -506,7 +534,7 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
 
     // Capture manifests at call time (the object is mutated after writeManifestToBundle)
     const capturedManifests: any[] = []
@@ -519,7 +547,7 @@ describe('pushUpdatesForDevSession', () => {
       app: appWithMultipleExtensions,
       extensionEvents: [{type: 'updated', extension: updatedExtension}],
     })
-    await flushPromises()
+    await waitForDevSession()
 
     // Then - writeManifestToBundle should have been called with ALL modules, not just the updated one
     expect(capturedManifests).toHaveLength(1)
@@ -531,7 +559,6 @@ describe('pushUpdatesForDevSession', () => {
 
   test('writes full manifest including new extension on created event', async () => {
     // Given
-    vi.mocked(readdir).mockResolvedValue([])
     vi.mocked(getUploadURL).mockResolvedValue('https://gcs.url')
 
     const existingExtension = await testUIExtension({handle: 'existing-ext', uid: 'existing-uid'})
@@ -547,7 +574,7 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
 
     // Capture manifests at call time (the object is mutated after writeManifestToBundle)
     const capturedManifests: any[] = []
@@ -560,7 +587,7 @@ describe('pushUpdatesForDevSession', () => {
       app: appAfterReload,
       extensionEvents: [{type: 'created', extension: newExtension}],
     })
-    await flushPromises()
+    await waitForDevSession()
 
     // Then - writeManifestToBundle should include ALL modules (existing + new)
     expect(capturedManifests).toHaveLength(1)
@@ -573,8 +600,6 @@ describe('pushUpdatesForDevSession', () => {
   test('assetsURL is only generated if affected extensions have assets', async () => {
     // Given
     vi.mocked(formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()} as any)
-    // Mock readdir to return that a folder for the extension assets exists
-    vi.mocked(readdir).mockResolvedValue(['other-folders', 'ui-extension-uid'])
     vi.mocked(getUploadURL).mockResolvedValue('https://gcs.url')
 
     const extensionWithAssets = await testUIExtension({handle: 'ui-extension-handle', uid: 'ui-extension-uid'})
@@ -584,12 +609,14 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await mkdir(joinPath(appWatcher.buildOutputPath, 'other-folders'))
+    await mkdir(joinPath(appWatcher.buildOutputPath, 'ui-extension-uid'))
+    await waitForDevSession()
     appWatcher.emit('all', {
       app,
       extensionEvents: [{type: 'updated', extension: extensionWithAssets}],
     })
-    await flushPromises()
+    await waitForDevSession()
 
     // Then
     expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledWith({
@@ -610,7 +637,7 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
 
     // Then
     expect(developerPlatformClient.devSessionCreate).toHaveBeenCalledWith({
@@ -624,7 +651,6 @@ describe('pushUpdatesForDevSession', () => {
 
   test('multiple updates to different extensions are consolidated if a request is in progress', async () => {
     vi.mocked(getUploadURL).mockResolvedValue('https://gcs.url')
-    vi.mocked(readdir).mockResolvedValue([])
 
     const extension1 = await testUIExtension({type: 'ui_extension'})
     extension1.uid = 'ext1'
@@ -640,7 +666,7 @@ describe('pushUpdatesForDevSession', () => {
 
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await options.appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
 
     // First event is processed immediat
     options.appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: extension1}]})
@@ -649,7 +675,7 @@ describe('pushUpdatesForDevSession', () => {
     options.appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: extension2}]})
     options.appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: extension1}]})
 
-    await flushPromises()
+    await waitForDevSession()
 
     expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledTimes(2)
     const calls = developerPlatformClient.devSessionUpdate.mock.calls
@@ -690,7 +716,7 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
 
     // Then
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining("⚠️  You took over another user's session"))
@@ -698,18 +724,6 @@ describe('pushUpdatesForDevSession', () => {
   })
 
   test('detects session takeover during update when user ID changes', async () => {
-    // The session takeover detection throws an AbortError that propagates as an unhandled
-    // rejection through the SerialBatchProcessor (due to a missing await in bundleExtensionsAndUpload).
-    // Attach a .catch() to the processing promise to prevent the unhandled rejection.
-    const originalEnqueue = SerialBatchProcessor.prototype.enqueue
-    const enqueueSpy = vi.spyOn(SerialBatchProcessor.prototype, 'enqueue').mockImplementation(function (
-      this: any,
-      ...args: [any]
-    ) {
-      originalEnqueue.apply(this, args)
-      this.processingPromise?.catch(() => {})
-    })
-
     // Given - Create with initial session state
     developerPlatformClient.devSessionCreate = vi.fn().mockResolvedValue({
       devSessionCreate: {
@@ -739,16 +753,17 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
     appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
     await flushPromises()
+    await startPromise
+    // The takeover error escapes because bundleExtensionsAndUpload returns devSessionUpdateWithRetry without await.
+    await expect(Promise.all(processingPromises)).rejects.toThrow('has taken ownership of this dev preview')
 
     // Then
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Another developer'))
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('user2@test.com'))
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('taken ownership of this dev preview'))
-
-    enqueueSpy.mockRestore()
   })
 
   test('does not detect session takeover when session state matches during update', async () => {
@@ -780,9 +795,9 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
     appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
-    await flushPromises()
+    await waitForDevSession()
 
     // Then - Should succeed normally without takeover error
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated dev preview on test.myshopify.com'))
@@ -792,7 +807,6 @@ describe('pushUpdatesForDevSession', () => {
 
   test('retries failed events along with newly received events', async () => {
     vi.mocked(getUploadURL).mockResolvedValue('https://gcs.url')
-    vi.mocked(readdir).mockResolvedValue([])
     // Setup test extensions
     const extension1 = await testUIExtension()
     extension1.uid = 'ext1-uid'
@@ -815,11 +829,11 @@ describe('pushUpdatesForDevSession', () => {
     // Start the dev session
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
-    await flushPromises()
+    await waitForDevSession()
 
     // First event (will fail)
     appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: extension1}]})
-    await flushPromises()
+    await waitForDevSession()
 
     // Verify the update was attempted and failed
     expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledTimes(1)
@@ -828,7 +842,7 @@ describe('pushUpdatesForDevSession', () => {
 
     // Second event (should include retry of first failed event)
     appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: extension2}]})
-    await flushPromises()
+    await waitForDevSession()
 
     // Verify a second update attempt was made
     expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledTimes(2)

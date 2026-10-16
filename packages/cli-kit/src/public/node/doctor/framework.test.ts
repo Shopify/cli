@@ -2,7 +2,6 @@ import {DoctorSuite} from './framework.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import type {DoctorContext} from './types.js'
 
-vi.mock('../fs.js')
 vi.mock('../system.js')
 
 /**
