@@ -16,9 +16,9 @@
  *      notificationPolicyId, vaultTeamId, etc.) are preserved verbatim.
  *
  * Usage:
- *   pnpm update-observe -- --version=3.94.2                              # update all resources
- *   pnpm update-observe -- --version=3.94.2 --resource=slo-p50-latency   # update one resource
- *   pnpm update-observe -- --version=3.94.2 --dry-run                    # print payloads without sending
+ *   pnpm update-observe --version=3.94.2                              # update all resources
+ *   pnpm update-observe --version=3.94.2 --resource=slo-p50-latency   # update one resource
+ *   pnpm update-observe --version=3.94.2 --dry-run                    # print payloads without sending
  *
  * --version is required and must be concrete semver X.Y.Z. Wildcards
  * (`*`) are intentionally not allowed in the CLI argument — if a live
@@ -48,6 +48,8 @@ import {dirname, join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {parseArgs} from 'node:util'
 
+import {applyVersion, patchVersionInFilterJson, patchVersionString} from './observe-version.js'
+
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const {values: args} = parseArgs({
@@ -63,26 +65,6 @@ const dryRun = args['dry-run']
 const version = args.version
 if (!version) fail('--version is required (e.g. --version=3.94.2)')
 if (!/^\d+\.\d+\.\d+$/.test(version)) fail(`Version must be concrete semver X.Y.Z (got: ${version})`)
-
-// Matches a 3-component version literal: digits or `*` separated by dots.
-// Used to find/rewrite versions inside live names, expressions, and filter values.
-const VERSION_LITERAL_RE = /(?<![\w.])(\d+|\*)\.(\d+|\*)\.(\d+|\*)(?![\w.])/g
-
-const targetParts = version.split('.')
-
-// Apply the target version to an existing version literal, component by
-// component. Wildcard components in the LIVE value are preserved — only
-// numeric components are rewritten. So if Observe pins `3.*.*` and we run
-// with --version=4.95.3, we produce `4.*.*` (the wildcards stay).
-const applyVersion = (existing) => {
-  const eParts = existing.split('.')
-  if (eParts.length !== 3) return version // unexpected shape; fall back to the literal target
-  return eParts.map((e, i) => (e === '*' ? '*' : targetParts[i])).join('.')
-}
-
-// Rewrite every version literal found inside an arbitrary string.
-const patchVersionString = (str) =>
-  typeof str === 'string' ? str.replace(VERSION_LITERAL_RE, (match) => applyVersion(match)) : str
 
 const config = JSON.parse(readFileSync(join(__dirname, 'observe-cli-resources.json'), 'utf-8'))
 let COOKIE = null  // populated lazily; see authenticate()
@@ -177,7 +159,7 @@ const buildSloInput = (live, resource) => {
 
   const input = stripUndefined({
     id: live.id,
-    name: patchVersionString(live.name),
+    name: patchVersionString(live.name, version),
     objective: live.objective,
     vaultTeamId: live.vaultTeam?.id,
     serviceId: live.service?.name,
@@ -209,14 +191,14 @@ const buildSloInput = (live, resource) => {
       throw new Error(`Resource ${resource.key} is a RawSLI but has no live expression to patch`)
     }
     input.rawSLIInput = {
-      expression: patchVersionString(live.sli.expression),
-      weightExpression: patchVersionString(live.sli.weightExpression) || undefined,
+      expression: patchVersionString(live.sli.expression, version),
+      weightExpression: patchVersionString(live.sli.weightExpression, version) || undefined,
     }
   } else {
     const filters = live.sli.metric.filters.map((f) => ({
       key: f.key,
       op: f.op,
-      value: f.key === 'cli_version' && f.op === '=' ? applyVersion(f.value) : f.value,
+      value: f.key === 'cli_version' && f.op === '=' ? applyVersion(f.value, version) : f.value,
     }))
     input.histogramSLIInput = {
       metric: {
@@ -232,29 +214,15 @@ const buildSloInput = (live, resource) => {
   return input
 }
 
-const patchVersionInFilterJson = (jsonString, column) => {
-  const parsed = JSON.parse(jsonString)
-  const patchGroup = (group) => {
-    if (group.filters) {
-      for (const f of group.filters) {
-        if (f.column === column && typeof f.value === 'string') f.value = applyVersion(f.value)
-      }
-    }
-    if (group.filter_groups) group.filter_groups.forEach(patchGroup)
-  }
-  patchGroup(parsed)
-  return JSON.stringify(parsed)
-}
-
 const buildRuleInput = (live, resource) => {
   if (!live.customErrorFilters) {
     throw new Error(`Alert rule ${resource.key} has no customErrorFilters to patch`)
   }
   return stripUndefined({
     id: live.id,
-    name: patchVersionString(live.name),
+    name: patchVersionString(live.name, version),
     vaultTeamId: live.vaultTeam?.id,
-    expression: patchVersionString(live.expression),
+    expression: patchVersionString(live.expression, version),
     dataSourceType: live.dataSourceType,
     for: live.for,
     sustainType: live.sustainType || undefined,
@@ -271,7 +239,7 @@ const buildRuleInput = (live, resource) => {
     notificationPolicyId: live.notificationPolicy?.id,
     servicesDbServiceName: live.servicesDbService?.name,
     errorAlertFlavor: live.errorAlertFlavor,
-    customErrorFilters: patchVersionInFilterJson(live.customErrorFilters, resource.versionFilterColumn),
+    customErrorFilters: patchVersionInFilterJson(live.customErrorFilters, resource.versionFilterColumn, version),
     includedVersionCount: live.includedVersionCount,
     threshold: live.threshold
       ? stripUndefined({
@@ -296,13 +264,13 @@ const buildErrorProjectInput = (live, resource) => {
   }
   return stripUndefined({
     id: live.id,
-    name: patchVersionString(live.name),
+    name: patchVersionString(live.name, version),
     zone: live.zone || undefined,
     serviceName: live.serviceName || undefined,
     vaultTeamID: live.vaultTeam?.id,
     platformType: live.platformType || undefined,
     priorityCountType: live.priorityCountType,
-    errorFilters: patchVersionInFilterJson(live.errorFilters, resource.versionFilterColumn),
+    errorFilters: patchVersionInFilterJson(live.errorFilters, resource.versionFilterColumn, version),
     severityThresholds: live.severityThresholds?.map((t) => ({severityId: t.severity.id, value: t.value})),
     includedVersionCount: live.includedVersionCount,
     useLlm: live.useLlm,
