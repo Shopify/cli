@@ -99,7 +99,7 @@ export const pollAppLogs = async ({
           outputWarn(`Retrying in ${retryIntervalMs / 1000} seconds.`, stdout)
         },
         onUnknownError: (retryIntervalMs) => {
-          outputWarn(`Error while polling app logs.`, stdout)
+          outputWarn(`Error while polling app logs (HTTP ${status}): ${errors.join(', ')}.`, stdout)
           outputWarn(`Retrying in ${retryIntervalMs / 1000} seconds.`, stdout)
         },
         onResubscribe: () => {
