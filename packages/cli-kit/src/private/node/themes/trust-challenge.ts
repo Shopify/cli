@@ -26,7 +26,8 @@ let completedChallenges = 0
  * A request that starts while another request's challenge is still being completed
  * waits for that challenge first, so it is sent once instead of being challenged
  * itself and then retried. A request that was already in flight when a challenge
- * was completed retries without a second prompt.
+ * was completed retries without a second prompt, unless another prompt is open:
+ * then it waits for that prompt too.
  *
  * @param request - The request to run and possibly retry.
  * @returns The result of the request.
@@ -42,7 +43,7 @@ export async function withTrustChallengeRetry<T>(request: () => Promise<T>): Pro
     if (!challengeUrl) throw error
 
     const verifiedSinceStart = completedChallenges > completedChallengesAtStart
-    if (!verifiedSinceStart) await completeTrustChallenge(challengeUrl)
+    if (pendingChallenge || !verifiedSinceStart) await completeTrustChallenge(challengeUrl)
   }
 
   try {

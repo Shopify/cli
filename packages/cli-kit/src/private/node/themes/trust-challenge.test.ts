@@ -275,6 +275,43 @@ describe('withTrustChallengeRetry', () => {
     expect(openURL).toHaveBeenCalledTimes(1)
   })
 
+  test('waits for a newer open prompt before retrying a request that was in flight during an earlier verification', async () => {
+    const firstEnter = Promise.withResolvers<void>()
+    const secondEnter = Promise.withResolvers<void>()
+    vi.mocked(waitForEnter).mockReturnValueOnce(firstEnter.promise).mockReturnValueOnce(secondEnter.promise)
+    const secondResponse = Promise.withResolvers<string>()
+    const firstRequest = vi
+      .fn()
+      .mockRejectedValueOnce(challengeClientError(challengeUrl))
+      .mockResolvedValueOnce('first')
+    const secondRequest = vi.fn().mockReturnValueOnce(secondResponse.promise).mockResolvedValueOnce('second')
+    const thirdRequest = vi
+      .fn()
+      .mockRejectedValueOnce(challengeClientError(challengeUrl))
+      .mockResolvedValueOnce('third')
+
+    const firstResult = withTrustChallengeRetry(firstRequest)
+    const secondResult = withTrustChallengeRetry(secondRequest)
+    await vi.waitFor(() => expect(waitForEnter).toHaveBeenCalledTimes(1))
+    firstEnter.resolve()
+    await expect(firstResult).resolves.toBe('first')
+
+    const thirdResult = withTrustChallengeRetry(thirdRequest)
+    await vi.waitFor(() => expect(waitForEnter).toHaveBeenCalledTimes(2))
+
+    secondResponse.reject(challengeClientError(challengeUrl))
+    // No timer is involved: the mocks resolve at once, so one event-loop turn runs the
+    // second request's whole challenge check before the assertion.
+    await new Promise((resolve) => setImmediate(resolve))
+    expect(secondRequest).toHaveBeenCalledTimes(1)
+
+    secondEnter.resolve()
+
+    await expect(Promise.all([secondResult, thirdResult])).resolves.toEqual(['second', 'third'])
+    expect(secondRequest).toHaveBeenCalledTimes(2)
+    expect(waitForEnter).toHaveBeenCalledTimes(2)
+  })
+
   test('rejects requests waiting on a pending challenge when the prompt is cancelled with Ctrl+C', async () => {
     const enter = deferredEnter()
     const challengedRequest = vi.fn().mockRejectedValueOnce(challengeClientError(challengeUrl))
