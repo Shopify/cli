@@ -5,16 +5,13 @@ import {AbortError} from './error.js'
 import {outputDebug, unstyled} from './output.js'
 import {formatJsonOutputTimestamp} from './json-output-schema.js'
 import {randomUUID} from './crypto.js'
-import {isProcessAlive, withDevInstanceStartupLock} from '../../private/node/dev-instance-lock.js'
 import lockfile from 'proper-lockfile'
 import fs, {createWriteStream, readFileSync, type WriteStream} from 'fs'
-import {writeFile as writeFileWithMode} from 'fs/promises'
+import {mkdir as mkdirExclusive, rmdir as removeEmptyDirectory, writeFile as writeFileWithMode} from 'fs/promises'
 import {Writable} from 'stream'
 import {finished} from 'stream/promises'
 import {StringDecoder} from 'string_decoder'
 import {once} from 'events'
-
-export {isProcessAlive} from '../../private/node/dev-instance-lock.js'
 
 /**
  * A stable error code for JSON consumers when a long-running command refuses to start because another instance of
@@ -132,8 +129,8 @@ export function devInstancePaths(identity: DevInstanceIdentity): DevInstancePath
  * Marks this process as the running instance of a long-running command for a project.
  *
  * Mutual exclusion uses `proper-lockfile`: an atomic `mkdir` lock whose mtime this process refreshes as a heartbeat.
- * Startup and abandoned-lock recovery are serialized separately. A live owner blocks takeover, including when
- * its heartbeat is stale. A lock without an owner record can be recovered after 30 seconds.
+ * An exclusive startup directory serializes abandoned-lock recovery. An interrupted startup requires explicit
+ * cleanup of that directory. A live owner blocks takeover, including when its heartbeat is stale.
  *
  * @param options - The instance identity, initial details.
  * @returns The acquired instance.
@@ -143,12 +140,27 @@ export async function acquireDevInstance(options: AcquireDevInstanceOptions): Pr
   const paths = devInstancePaths(options)
   await getOrCreateHiddenShopifyFolder(options.directory)
   await mkdir(paths.folder)
+  const startupLock = `${paths.lockFile}.acquire`
   try {
-    return await withDevInstanceStartupLock(paths.lockFile, () => createDevInstance(options, paths))
+    await mkdirExclusive(startupLock, {mode: 0o700})
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
+    const startupError = new AbortError(
+      `Another \`shopify ${options.command}\` is starting, or a previous startup was interrupted.`,
+      'Wait for other starts to finish. If none is running, remove the startup lock below and try again.',
+      [['Startup lock', {filePath: startupLock}]],
+    )
+    startupError.code = DEV_INSTANCE_ALREADY_RUNNING_CODE
+    throw startupError
+  }
+  try {
+    return await createDevInstance(options, paths)
   } catch (error) {
     if (!isLockedError(error)) throw error
     const existing = await readDevInstanceInfo(paths.infoFile)
     throw devInstanceAlreadyRunningError(options, existing && isProcessAlive(existing.pid) ? existing : undefined)
+  } finally {
+    await removeEmptyDirectory(startupLock)
   }
 }
 
@@ -202,24 +214,8 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
     },
   }
 
-  let releaseLock: () => Promise<void>
-  try {
-    releaseLock = await lockfile.lock(paths.infoFile, lockOptions)
-  } catch (error) {
-    if (!isLockedError(error)) throw error
-    const existing = await readDevInstanceInfo(paths.infoFile)
-    if (existing && isProcessAlive(existing.pid)) throw devInstanceAlreadyRunningError(options, existing)
-    if (!existing && (await lockIsFresh(paths))) {
-      // Another process holds the lock but hasn't described itself yet.
-      throw devInstanceAlreadyRunningError(options, undefined)
-    }
-    outputDebug(`Taking over an abandoned ${options.command} instance lock at ${paths.lockFile}`)
-    await rmdir(paths.lockFile, {force: true})
-    releaseLock = await lockfile.lock(paths.infoFile, lockOptions).catch((retryError: unknown) => {
-      if (isLockedError(retryError)) throw devInstanceAlreadyRunningError(options, undefined)
-      throw retryError
-    })
-  }
+  if (previous) await rmdir(paths.lockFile, {force: true})
+  const releaseLock = await lockfile.lock(paths.infoFile, lockOptions)
 
   const now = formatJsonOutputTimestamp(new Date())
   const info: DevInstanceInfo = {
@@ -400,6 +396,23 @@ export async function listDevInstances(directory: string): Promise<DevInstanceIn
     ),
   )
   return instances.filter((instance): instance is DevInstanceInfo => instance !== undefined)
+}
+
+/**
+ * Checks whether a process exists. A process owned by another user counts as alive.
+ *
+ * @param pid - The process ID.
+ * @returns True when the process exists.
+ */
+export function isProcessAlive(pid: number): boolean {
+  if (!Number.isInteger(pid) || pid <= 0) return false
+  try {
+    process.kill(pid, 0)
+    return true
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code === 'EPERM'
+  }
 }
 
 async function readLiveDevInstance(paths: DevInstancePaths): Promise<DevInstanceInfo | undefined> {

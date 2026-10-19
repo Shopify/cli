@@ -145,6 +145,25 @@ describe('acquireDevInstance', () => {
     })
   })
 
+  test('requires explicit cleanup of an interrupted startup', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const identity = {command: 'app dev', directory}
+      const paths = devInstancePaths(identity)
+      const startupLock = `${paths.lockFile}.acquire`
+      await mkdir(startupLock)
+      await expect(acquireDevInstance(identity)).rejects.toMatchObject({
+        code: DEV_INSTANCE_ALREADY_RUNNING_CODE,
+        message: expect.stringContaining('a previous startup was interrupted'),
+      })
+      await expect(fileExists(startupLock)).resolves.toBe(true)
+      await expect(fileExists(paths.lockFile)).resolves.toBe(false)
+      await rmdir(startupLock)
+      const instance = await acquireDevInstance(identity)
+      await instance.release()
+      await expect(fileExists(startupLock)).resolves.toBe(false)
+    })
+  })
+
   test('does not remove another session record or lock during release', async () => {
     await inTemporaryDirectory(async (directory) => {
       const instance = await acquireDevInstance({command: 'app dev', directory})
@@ -244,6 +263,7 @@ describe('acquireDevInstance', () => {
       const exitListeners = process.listenerCount('exit')
       await expect(acquireDevInstance({command: 'app dev', directory})).rejects.toThrow()
       await expect(fileExists(paths.lockFile)).resolves.toBe(false)
+      await expect(fileExists(`${paths.lockFile}.acquire`)).resolves.toBe(false)
       expect(process.listenerCount('exit')).toBe(exitListeners)
       await rmdir(paths[file])
       const restarted = await acquireDevInstance({command: 'app dev', directory})

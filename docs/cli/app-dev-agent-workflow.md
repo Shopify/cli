@@ -37,5 +37,10 @@ session can produce a large file.
    in the development store. Use a bounded wait and report errors or timeouts.
 
 Normal shutdown removes the instance record and retains the log until the next run.
-A crash can leave stale metadata or an incomplete log. Keep these local files out of
-commits and external reports; application output and local URLs can contain secrets.
+Crashes after startup recover automatically on the next start. If the CLI is killed during
+the short lock-acquisition step, a `.lock.acquire` directory can remain. The next start
+reports its path. Confirm that no other startup is running before removing that
+directory and trying again.
+
+A crash can leave stale metadata or an incomplete log. Keep these local files out
+of commits and external reports; application output and local URLs can contain secrets.
