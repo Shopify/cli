@@ -2,4 +2,4 @@
 '@shopify/cli': major
 ---
 
-Return store execute results as {data, extensions} and preserve response extensions in GraphQL error details.
+Preserve GraphQL extensions in `store execute --json` results and error details, plus partial data on failure. Query data moves from the root to `.data` when using `--json`, including with `--output-file`.

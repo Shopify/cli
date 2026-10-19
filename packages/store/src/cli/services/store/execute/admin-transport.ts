@@ -112,11 +112,13 @@ export async function runAdminStoreGraphQLOperation(input: {
     if (classified) throw classified
 
     if (isGraphQLClientErrorLike(error) && error.response.errors) {
+      const {errors, extensions, data} = error.response
       const details = {
-        errors: error.response.errors,
-        ...(error.response.extensions === undefined ? {} : {extensions: error.response.extensions}),
+        errors,
+        ...(extensions === undefined ? {} : {extensions}),
+        ...(data === undefined ? {} : {data}),
       }
-      const graphQLError = new AbortError('GraphQL operation failed.', JSON.stringify(details, null, 2))
+      const graphQLError = new AbortError('GraphQL operation failed.', JSON.stringify({errors}, null, 2))
       graphQLError.details = details
       throw graphQLError
     }

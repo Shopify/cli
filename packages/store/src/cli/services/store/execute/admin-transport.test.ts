@@ -62,7 +62,7 @@ describe('runAdminStoreGraphQLOperation', () => {
 
     const result = await runAdminStoreGraphQLOperation({context, request})
 
-    expect(result).toEqual({data: {shop: {name: 'Test shop'}}})
+    expect(result).toStrictEqual({data: {shop: {name: 'Test shop'}}})
     expect(adminUrl).toHaveBeenCalledWith(store, '2025-10', context.adminSession)
     expect(graphqlRequest).toHaveBeenCalledWith({
       query: 'query { shop { name } }',
@@ -180,7 +180,7 @@ describe('runAdminStoreGraphQLOperation', () => {
     expect(error).toBeInstanceOf(AbortError)
     expect(error).toMatchObject({
       message: 'GraphQL operation failed.',
-      tryMessage: JSON.stringify(details, null, 2),
+      tryMessage: JSON.stringify({errors}, null, 2),
       details,
     })
 
@@ -194,7 +194,7 @@ describe('runAdminStoreGraphQLOperation', () => {
         error: {
           type: 'abort',
           message: 'GraphQL operation failed.',
-          tryMessage: JSON.stringify(details, null, 2),
+          tryMessage: JSON.stringify({errors}, null, 2),
           details,
         },
       })
@@ -203,6 +203,26 @@ describe('runAdminStoreGraphQLOperation', () => {
       output.clear()
     }
   })
+
+  test.each([null, {shop: {name: 'Test shop'}, products: null}])(
+    'preserves GraphQL response data %j in JSON failures',
+    async (data) => {
+      const errors = [{message: 'Access denied', path: ['products']}]
+      const extensions = {cost: {actualQueryCost: 1}}
+      vi.mocked(graphqlRequest).mockRejectedValue({response: {errors, extensions, data, status: 200}})
+      const request = await prepareStoreExecuteRequest({
+        query: 'query { shop { name } products(first: 1) { nodes { id } } }',
+      })
+
+      const error: unknown = await runAdminStoreGraphQLOperation({context, request}).catch((error: unknown) => error)
+
+      expect(error).toBeInstanceOf(AbortError)
+      expect(error).toMatchObject({
+        tryMessage: JSON.stringify({errors}, null, 2),
+        details: {errors, extensions, data},
+      })
+    },
+  )
 
   test('maps a 402 ClientError to a store-unavailable AbortError even when the response also carries `errors`', async () => {
     // Branch-ordering regression check: a 402 response that also carries GraphQL `errors`

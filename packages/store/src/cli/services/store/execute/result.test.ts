@@ -13,18 +13,18 @@ describe('writeOrOutputStoreExecuteResult', () => {
     mockAndCaptureOutput().clear()
   })
 
-  test('writes results to a file when outputFile is provided', async () => {
+  test('writes raw query data to a file in text mode', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const outputPath = joinPath(tmpDir, 'results.json')
-      const result = {data: {shop: {name: 'Test shop'}}, extensions: {cost: {actualQueryCost: 2}}}
+      const result = {data: {extensions: {name: 'Test shop'}}, extensions: {cost: {actualQueryCost: 2}}}
 
       // When
       await writeOrOutputStoreExecuteResult(result, outputPath)
 
       // Then
       const content = await readFile(outputPath)
-      expect(JSON.parse(content)).toStrictEqual(result)
+      expect(content).toBe(JSON.stringify(result.data, null, 2))
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'Operation succeeded.',
         body: `Results written to ${outputPath}`,
@@ -32,13 +32,14 @@ describe('writeOrOutputStoreExecuteResult', () => {
     })
   })
 
-  test('writes results to stdout when no outputFile is provided', async () => {
+  test('writes raw query data to stdout in text mode', async () => {
     const output = mockAndCaptureOutput()
+    const result = {data: {extensions: {name: 'Test shop'}}, extensions: {cost: {actualQueryCost: 2}}}
 
-    await writeOrOutputStoreExecuteResult({data: {shop: {name: 'Test shop'}}})
+    await writeOrOutputStoreExecuteResult(result)
 
     expect(renderSuccess).toHaveBeenCalledWith({headline: 'Operation succeeded.'})
-    expect(output.output()).toContain('Test shop')
+    expect(output.output()).toBe(JSON.stringify(result.data, null, 2))
   })
 
   test('outputs the exact JSON result without a success message', async () => {
@@ -49,7 +50,6 @@ describe('writeOrOutputStoreExecuteResult', () => {
 
     expect(output.output()).toBe(JSON.stringify(result, null, 2))
     expect(renderSuccess).not.toHaveBeenCalled()
-    expect(JSON.parse(output.output())).toStrictEqual(result)
   })
 
   test.each([
@@ -94,7 +94,7 @@ describe('writeOrOutputStoreExecuteResult', () => {
     const output = mockAndCaptureOutput()
     await inTemporaryDirectory(async (directory) => {
       const path = joinPath(directory, 'result.json')
-      const result = {data: {shop: {name: 'Test shop'}, products: []}}
+      const result = {data: {shop: {name: 'Test shop'}, products: []}, extensions: {cost: {actualQueryCost: 2}}}
 
       await writeOrOutputStoreExecuteResult(result, path, 'json')
 
