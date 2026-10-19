@@ -10,6 +10,7 @@ import lockfile from 'proper-lockfile'
 import fs, {createWriteStream, readFileSync, type WriteStream} from 'fs'
 import {writeFile as writeFileWithMode} from 'fs/promises'
 import {Writable} from 'stream'
+import {finished} from 'stream/promises'
 import {StringDecoder} from 'string_decoder'
 
 export {isProcessAlive} from '../../private/node/dev-instance-lock.js'
@@ -93,12 +94,12 @@ export interface DevInstanceUpdate {
 export interface DevInstance {
   readonly info: DevInstanceInfo
   readonly paths: DevInstancePaths
-  /** Aborts when this session loses its lock. Consumers must stop their owned work. */
+  /** Aborts when this session loses its lock or output fails. Consumers must stop their owned work. */
   readonly abortSignal: AbortSignal
   /** Updates and persists the instance description. */
   update: (changes: DevInstanceUpdate) => Promise<void>
   /** Appends one entry to the JSON Lines log. */
-  log: (entry: Omit<DevInstanceLogEntry, 'sessionId' | 'timestamp'>) => void
+  log: (entry: Omit<DevInstanceLogEntry, 'sessionId' | 'timestamp'>) => Promise<void>
   /**
    * Wraps a stream so every line written to it is also appended to the log, without ANSI styling.
    * The returned stream forwards the original bytes to `target` unchanged.
@@ -236,11 +237,12 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
 
   // Each run starts a fresh log.
   const logStream: WriteStream = createWriteStream(paths.logFile, {flags: 'w', mode: 0o600})
-  logStream.on('error', (error) => outputDebug(`Failed to write the ${options.command} log: ${error.message}`))
+  logStream.on('error', (error) => abortController.abort(error))
 
   let updates = Promise.resolve()
-  const flushers = new Set<() => void>()
+  const outputs = new Set<Writable>()
   let released = false
+  let releasePromise: Promise<void> | undefined
   const removeInfoOnExit = () => {
     // Remove the lock before the live owner's record, so a new starter cannot enter during cleanup.
     if (!released && ownsInfo()) {
@@ -250,14 +252,14 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
   }
   process.once('exit', removeInfoOnExit)
 
-  const writeLogEntry = (entry: Omit<DevInstanceLogEntry, 'sessionId' | 'timestamp'>) => {
-    if (released || compromised || logStream.destroyed) return
+  const writeLogEntry = async (entry: Omit<DevInstanceLogEntry, 'sessionId' | 'timestamp'>) => {
+    if (released || compromised) return
     const line: DevInstanceLogEntry = {
       sessionId: info.sessionId,
       timestamp: formatJsonOutputTimestamp(new Date()),
       ...entry,
     }
-    logStream.write(`${JSON.stringify(line)}\n`)
+    await writeToStream(logStream, `${JSON.stringify(line)}\n`)
   }
 
   const instance: DevInstance = {
@@ -265,7 +267,7 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
     paths,
     abortSignal: abortController.signal,
     update: async (changes) => {
-      if (released || compromised) return
+      if (releasePromise || compromised) return
       if (changes.status) info.status = changes.status
       if (changes.details) info.details = {...info.details, ...changes.details}
       info.updatedAt = formatJsonOutputTimestamp(new Date())
@@ -280,47 +282,81 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
     tee: (target, {source, stream}) => {
       const decoder = new StringDecoder('utf8')
       let pending = ''
-      const flushLines = (text: string) => {
+      const flushLines = async (text: string) => {
         const lines = text.split(/\r?\n/)
         pending = lines.pop() ?? ''
-        for (const line of lines) {
-          const message = unstyled(line).trimEnd()
-          if (message.length > 0) writeLogEntry({source, stream, message})
-        }
+        await Promise.all(
+          lines.map(async (line) => {
+            const message = unstyled(line).trimEnd()
+            if (message.length > 0) await writeLogEntry({source, stream, message})
+          }),
+        )
       }
       const flush = () => flushLines(`${pending}${decoder.end()}\n`)
-      flushers.add(flush)
-      return new Writable({
+      const output = new Writable({
         write(chunk: Buffer | string, encoding, callback) {
-          target.write(chunk, encoding)
-          flushLines(pending + (typeof chunk === 'string' ? chunk : decoder.write(chunk)))
-          callback()
+          Promise.all([
+            writeToStream(target, chunk, encoding),
+            flushLines(pending + (typeof chunk === 'string' ? chunk : decoder.write(chunk))),
+          ])
+            .then(() => callback())
+            .catch(callback)
         },
         final(callback) {
           flush()
-          flushers.delete(flush)
-          callback()
+            .then(() => callback())
+            .catch(callback)
         },
       })
+      const onTargetError = (error: Error) => output.destroy(error)
+      target.on('error', onTargetError)
+      output.on('error', (error) => abortController.abort(error))
+      output.once('close', () => {
+        target.off('error', onTargetError)
+      })
+      outputs.add(output)
+      return output
     },
-    release: async () => {
-      if (released) return
-      flushers.forEach((flush) => flush())
-      released = true
-      process.removeListener('exit', removeInfoOnExit)
-      await updates.catch((error: Error) => outputDebug(`Failed to save dev status: ${error.message}`))
-      await new Promise<void>((resolve) => logStream.end(resolve))
-      const owned = ownsInfo()
-      await releaseLock().catch((error: Error) =>
-        outputDebug(`Failed to release the dev instance lock: ${error.message}`),
-      )
-      if (owned) await removeFile(paths.infoFile).catch(() => {})
+    release: () => {
+      releasePromise ??= (async () => {
+        try {
+          const results = await Promise.allSettled([...outputs].map((output) => endStream(output)))
+          const failure = results.find((result) => result.status === 'rejected')
+          if (failure?.status === 'rejected') throw failure.reason
+          await updates
+        } finally {
+          released = true
+          process.removeListener('exit', removeInfoOnExit)
+          try {
+            await endStream(logStream)
+          } finally {
+            const owned = ownsInfo()
+            await releaseLock().catch((error: Error) =>
+              outputDebug(`Failed to release the dev instance lock: ${error.message}`),
+            )
+            if (owned) await removeFile(paths.infoFile).catch(() => {})
+          }
+        }
+      })()
+      return releasePromise
     },
   }
 
   await writeDevInstanceInfo(paths.infoFile, info)
   published = true
   return instance
+}
+
+async function writeToStream(stream: Writable, chunk: Buffer | string, encoding: BufferEncoding = 'utf8') {
+  await new Promise<void>((resolve, reject) => {
+    stream.write(chunk, encoding, (error) => (error ? reject(error) : resolve()))
+  })
+}
+
+async function endStream(stream: Writable) {
+  const completed = finished(stream, {cleanup: true})
+  stream.end()
+  await completed
 }
 
 /**

@@ -357,7 +357,7 @@ async function launchDevProcesses({
       status: 'running',
       details: {...urls, preview: previewStatus(devSessionStatusManager.status)},
     })
-    devInstance.log({source: 'app dev', level: 'info', message: `Preview URL: ${previewUrl}`})
+    await devInstance.log({source: 'app dev', level: 'info', message: `Preview URL: ${previewUrl}`})
   }
 
   const developerPlatformClient = config.developerPlatformClient

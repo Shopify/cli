@@ -249,8 +249,8 @@ describe('DevInstance log', () => {
       // When
       stdout.write('\u001b[32mready\u001b[39m in 20ms\npartial ')
       stdout.write('line\n\n')
-      instance.log({source: 'app dev', level: 'info', message: 'Preview URL: https://preview'})
       await new Promise<void>((resolve) => stdout.end(resolve))
+      await instance.log({source: 'app dev', level: 'info', message: 'Preview URL: https://preview'})
       await instance.release()
 
       // Then
@@ -284,18 +284,75 @@ describe('DevInstance log', () => {
     await inTemporaryDirectory(async (directory) => {
       // Given
       const first = await acquireDevInstance({command: 'app dev', directory})
-      first.log({source: 'app dev', message: 'first run'})
+      await first.log({source: 'app dev', message: 'first run'})
       await first.release()
 
       // When
       const second = await acquireDevInstance({command: 'app dev', directory})
       expect(second.info.sessionId).not.toBe(first.info.sessionId)
-      second.log({source: 'app dev', message: 'second run'})
+      await second.log({source: 'app dev', message: 'second run'})
       await second.release()
 
       // Then
       const entries = await readLog(second.paths.logFile)
       expect(entries.map((entry) => entry.message)).toEqual(['second run'])
+    })
+  })
+
+  test('holds back the producer until the destination accepts its output', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const instance = await acquireDevInstance({command: 'app dev', directory})
+      let accept: () => void = () => {}
+      const target = new Writable({
+        write(_chunk, _encoding, callback) {
+          accept = () => {
+            accept = () => {}
+            callback()
+          }
+        },
+      })
+      const output = instance.tee(target, {source: 'web', stream: 'stdout'})
+      let written = false
+      const completed = new Promise<void>((resolve, reject) => {
+        const available = output.write(`${'x'.repeat(output.writableHighWaterMark)}\n`, (error) => {
+          if (error) return reject(error)
+          written = true
+          resolve()
+        })
+        expect(available).toBe(false)
+      })
+      try {
+        expect(written).toBe(false)
+        accept()
+        await completed
+        await instance.release()
+        await expect(readLog(instance.paths.logFile)).resolves.toHaveLength(1)
+        expect(target.listenerCount('error')).toBe(0)
+      } finally {
+        accept()
+        await instance.release()
+      }
+    })
+  })
+
+  test('reports destination errors and releases the instance after output fails', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const instance = await acquireDevInstance({command: 'app dev', directory})
+      const target = new Writable({
+        write(_chunk, _encoding, callback) {
+          callback(new Error('Output failed'))
+        },
+      })
+      const output = instance.tee(target, {source: 'web', stream: 'stdout'})
+      await expect(
+        new Promise<void>((resolve, reject) => {
+          output.write('message\n', (error) => (error ? reject(error) : resolve()))
+        }),
+      ).rejects.toThrow('Output failed')
+      await expect(instance.release()).rejects.toThrow('Output failed')
+      expect(instance.abortSignal.aborted).toBe(true)
+      await expect(fileExists(instance.paths.infoFile)).resolves.toBe(false)
+      await expect(fileExists(instance.paths.lockFile)).resolves.toBe(false)
     })
   })
 })
