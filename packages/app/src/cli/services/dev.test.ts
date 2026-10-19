@@ -92,12 +92,13 @@ describe('dev', () => {
 })
 
 describe('dev with a dev instance', () => {
-  test('tees process output into the instance log and records the session URLs', async () => {
+  test.each([false, true])('captures output and session URLs, stopping on lock loss: %s', async (loseLock) => {
     await inTemporaryDirectory(async (tmp) => {
       const store = testOrganizationStore({shopDomain: 'dev-store.myshopify.com'})
       const app = testAppLinked({directory: tmp})
       const manager = new DevSessionStatusManager()
       const devInstance = await acquireDevInstance({command: 'app dev', directory: tmp})
+      const ownership = new AbortController()
       const previewUrl = 'https://dev-store.myshopify.com/admin/apps/api-key'
       let infoWhileRunning: unknown
 
@@ -125,7 +126,7 @@ describe('dev with a dev instance', () => {
         devSessionStatusManager: manager,
       })
       const terminal = new Writable({write: (_chunk, _encoding, callback) => callback()})
-      vi.mocked(renderDev).mockImplementation(async ({processes}) => {
+      vi.mocked(renderDev).mockImplementation(async ({processes, abortController}) => {
         manager.updateStatus({isReady: true})
         manager.setMessage('BUILD_ERROR', ['discount: Invalid input'])
         await vi.waitFor(async () => {
@@ -133,9 +134,13 @@ describe('dev with a dev instance', () => {
           expect(infoWhileRunning).toHaveProperty('details.preview.errors', ['discount: Invalid input'])
         })
         await Promise.all(processes.map((process) => process.action(terminal, terminal, new AbortController().signal)))
+        if (loseLock) {
+          ownership.abort(new Error('Lock lost'))
+          expect(abortController.signal.aborted).toBe(true)
+        }
       })
 
-      await dev({
+      const running = dev({
         app,
         project: testProject({usesWorkspaces: true}),
         remoteApp: testOrganizationApp({apiKey: 'api-key'}),
@@ -148,8 +153,13 @@ describe('dev with a dev instance', () => {
         commandConfig: {} as any,
         skipDependenciesInstallation: true,
         tunnel: {mode: 'custom', url: 'https://localhost:3456'},
-        devInstance,
+        devInstance: {...devInstance, abortSignal: ownership.signal},
       })
+      if (loseLock) {
+        await expect(running).rejects.toThrow('Lock lost')
+      } else {
+        await running
+      }
       await devInstance.release()
 
       expect(infoWhileRunning).toMatchObject({

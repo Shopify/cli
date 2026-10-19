@@ -5,11 +5,14 @@ import {AbortError} from './error.js'
 import {outputDebug, unstyled} from './output.js'
 import {formatJsonOutputTimestamp} from './json-output-schema.js'
 import {randomUUID} from './crypto.js'
+import {isProcessAlive, withDevInstanceStartupLock} from '../../private/node/dev-instance-lock.js'
 import lockfile from 'proper-lockfile'
-import {createWriteStream, type WriteStream} from 'fs'
+import fs, {createWriteStream, readFileSync, type WriteStream} from 'fs'
 import {writeFile as writeFileWithMode} from 'fs/promises'
 import {Writable} from 'stream'
 import {StringDecoder} from 'string_decoder'
+
+export {isProcessAlive} from '../../private/node/dev-instance-lock.js'
 
 /**
  * A stable error code for JSON consumers when a long-running command refuses to start because another instance of
@@ -90,6 +93,8 @@ export interface DevInstanceUpdate {
 export interface DevInstance {
   readonly info: DevInstanceInfo
   readonly paths: DevInstancePaths
+  /** Aborts when this session loses its lock. Consumers must stop their owned work. */
+  readonly abortSignal: AbortSignal
   /** Updates and persists the instance description. */
   update: (changes: DevInstanceUpdate) => Promise<void>
   /** Appends one entry to the JSON Lines log. */
@@ -125,9 +130,8 @@ export function devInstancePaths(identity: DevInstanceIdentity): DevInstancePath
  * Marks this process as the running instance of a long-running command for a project.
  *
  * Mutual exclusion uses `proper-lockfile`: an atomic `mkdir` lock whose mtime this process refreshes as a heartbeat.
- * Node has no built-in `flock`, so liveness combines two checks that cover each other's gaps. A dead owner PID means
- * the lock is abandoned (crash, SIGKILL) and is taken over immediately. A live PID with no recent heartbeat means the
- * PID was reused or the owner is frozen, and the lock is taken over once it is older than 30 seconds.
+ * Startup and abandoned-lock recovery are serialized separately. A live owner blocks takeover, including when
+ * its heartbeat is stale. A lock without an owner record can be recovered after 30 seconds.
  *
  * @param options - The instance identity, initial details.
  * @returns The acquired instance.
@@ -137,8 +141,40 @@ export async function acquireDevInstance(options: AcquireDevInstanceOptions): Pr
   const paths = devInstancePaths(options)
   await getOrCreateHiddenShopifyFolder(options.directory)
   await mkdir(paths.folder)
+  try {
+    return await withDevInstanceStartupLock(paths.lockFile, () => createDevInstance(options, paths))
+  } catch (error) {
+    if (!isLockedError(error)) throw error
+    const existing = await readDevInstanceInfo(paths.infoFile)
+    throw devInstanceAlreadyRunningError(options, existing && isProcessAlive(existing.pid) ? existing : undefined)
+  }
+}
 
+async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevInstancePaths): Promise<DevInstance> {
+  const previous = await readDevInstanceInfo(paths.infoFile)
+  if (previous && isProcessAlive(previous.pid)) throw devInstanceAlreadyRunningError(options, previous)
+  const sessionId = randomUUID()
+  const abortController = new AbortController()
   let compromised = false
+  const ownsInfo = () => {
+    if (compromised) return false
+    try {
+      return (JSON.parse(readFileSync(paths.infoFile, 'utf8')) as DevInstanceInfo).sessionId === sessionId
+      // A missing or unreadable record does not authorize deleting another session's files.
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      return false
+    }
+  }
+  let published = false
+  const removeOwnedLockSync = (path: fs.PathLike) => {
+    if (published && !ownsInfo()) return
+    try {
+      fs.rmdirSync(path)
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+    }
+  }
   const lockOptions = {
     realpath: false,
     lockfilePath: paths.lockFile,
@@ -148,6 +184,19 @@ export async function acquireDevInstance(options: AcquireDevInstanceOptions): Pr
     onCompromised: (error: Error) => {
       compromised = true
       outputDebug(`The ${options.command} instance lock was compromised: ${error.message}`)
+      abortController.abort(
+        new AbortError(`The ${options.command} instance lost its lock.`, 'Start the command again.'),
+      )
+    },
+    fs: {
+      ...fs,
+      rmdir: (path: fs.PathLike, callback: fs.NoParamCallback) => {
+        if (published && !ownsInfo()) return callback(null)
+        // proper-lockfile requires the callback filesystem API.
+        // eslint-disable-next-line n/prefer-promises/fs
+        fs.rmdir(path, callback)
+      },
+      rmdirSync: removeOwnedLockSync,
     },
   }
 
@@ -173,7 +222,7 @@ export async function acquireDevInstance(options: AcquireDevInstanceOptions): Pr
   const now = formatJsonOutputTimestamp(new Date())
   const info: DevInstanceInfo = {
     schemaVersion: 1,
-    sessionId: randomUUID(),
+    sessionId,
     command: options.command,
     ...(options.key ? {key: options.key} : {}),
     pid: process.pid,
@@ -193,8 +242,11 @@ export async function acquireDevInstance(options: AcquireDevInstanceOptions): Pr
   const flushers = new Set<() => void>()
   let released = false
   const removeInfoOnExit = () => {
-    // Synchronous cleanup for exits that skip `release`. proper-lockfile removes its own lock on exit.
-    if (!released && !compromised) removeFileSync(paths.infoFile)
+    // Remove the lock before the live owner's record, so a new starter cannot enter during cleanup.
+    if (!released && ownsInfo()) {
+      removeOwnedLockSync(paths.lockFile)
+      removeFileSync(paths.infoFile)
+    }
   }
   process.once('exit', removeInfoOnExit)
 
@@ -211,6 +263,7 @@ export async function acquireDevInstance(options: AcquireDevInstanceOptions): Pr
   const instance: DevInstance = {
     info,
     paths,
+    abortSignal: abortController.signal,
     update: async (changes) => {
       if (released || compromised) return
       if (changes.status) info.status = changes.status
@@ -256,14 +309,16 @@ export async function acquireDevInstance(options: AcquireDevInstanceOptions): Pr
       process.removeListener('exit', removeInfoOnExit)
       await updates.catch((error: Error) => outputDebug(`Failed to save dev status: ${error.message}`))
       await new Promise<void>((resolve) => logStream.end(resolve))
-      if (!compromised) await removeFile(paths.infoFile).catch(() => {})
+      const owned = ownsInfo()
       await releaseLock().catch((error: Error) =>
         outputDebug(`Failed to release the dev instance lock: ${error.message}`),
       )
+      if (owned) await removeFile(paths.infoFile).catch(() => {})
     },
   }
 
   await writeDevInstanceInfo(paths.infoFile, info)
+  published = true
   return instance
 }
 
@@ -299,23 +354,6 @@ export async function listDevInstances(directory: string): Promise<DevInstanceIn
     ),
   )
   return instances.filter((instance): instance is DevInstanceInfo => instance !== undefined)
-}
-
-/**
- * Checks whether a process exists. A process owned by another user counts as alive.
- *
- * @param pid - The process ID.
- * @returns True when the process exists.
- */
-export function isProcessAlive(pid: number): boolean {
-  if (!Number.isInteger(pid) || pid <= 0) return false
-  try {
-    process.kill(pid, 0)
-    return true
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    return (error as NodeJS.ErrnoException).code === 'EPERM'
-  }
 }
 
 async function readLiveDevInstance(paths: DevInstancePaths): Promise<DevInstanceInfo | undefined> {

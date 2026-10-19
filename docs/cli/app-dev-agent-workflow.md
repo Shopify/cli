@@ -25,8 +25,9 @@ session can produce a large file.
 ## Agent workflow
 
 1. Find the instance file for the intended app configuration and check its app and
-   store details. Use the original PID and lock-heartbeat checks; a saved file alone
-   does not prove the process is alive. The stale interval is fixed at 30 seconds.
+   store details. Check the PID and lock heartbeat; a saved file alone does not prove
+   the process is alive. A live PID blocks takeover even after the fixed 30-second
+   stale interval. Stop an unresponsive owner before starting another instance.
 2. Reuse an existing session. If none is available, run `shopify app dev` through
    the agent's background terminal facility. Supply the app, configuration, and
    store flags and use `--no-input` when setup and authentication are available.

@@ -372,8 +372,11 @@ async function launchDevProcesses({
     })
   }
   if (devInstance) devSessionStatusManager.on('dev-session-update', persistStatus)
+  const stopOnLostLock = () => abortController.abort(devInstance?.abortSignal.reason)
   try {
-    return await renderDev({
+    devInstance?.abortSignal.throwIfAborted()
+    devInstance?.abortSignal.addEventListener('abort', stopOnLostLock, {once: true})
+    await renderDev({
       processes: processesForTaskRunner,
       previewUrl,
       graphiqlUrl,
@@ -387,7 +390,9 @@ async function launchDevProcesses({
       configPath: config.localApp.configPath,
       localURL: config.network.proxyUrl,
     })
+    devInstance?.abortSignal.throwIfAborted()
   } finally {
+    devInstance?.abortSignal.removeEventListener('abort', stopOnLostLock)
     if (devInstance) devSessionStatusManager.off('dev-session-update', persistStatus)
   }
 }

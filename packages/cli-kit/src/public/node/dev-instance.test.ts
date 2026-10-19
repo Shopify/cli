@@ -7,8 +7,8 @@ import {
   readDevInstance,
 } from './dev-instance.js'
 import {AbortError} from './error.js'
-import {fileExists, inTemporaryDirectory, mkdir, readFile, writeFile} from './fs.js'
-import {describe, expect, test} from 'vitest'
+import {fileExists, inTemporaryDirectory, mkdir, readFile, rmdir, writeFile} from './fs.js'
+import {describe, expect, test, vi} from 'vitest'
 import {Writable} from 'stream'
 import {utimes} from 'fs/promises'
 
@@ -107,9 +107,8 @@ describe('acquireDevInstance', () => {
     })
   })
 
-  test('takes over a lock without a recent heartbeat even when its PID is alive', async () => {
+  test('does not take over a live owner with a stale heartbeat', async () => {
     await inTemporaryDirectory(async (directory) => {
-      // Given a reused PID: the process exists, but nothing refreshes the lock.
       const paths = devInstancePaths({command: 'app dev', directory})
       await mkdir(paths.lockFile)
       const oneMinuteAgo = new Date(Date.now() - 60_000)
@@ -117,11 +116,43 @@ describe('acquireDevInstance', () => {
       await writeFile(paths.infoFile, JSON.stringify({pid: process.ppid, logFile: paths.logFile, details: {}}))
 
       // When
-      const instance = await acquireDevInstance({command: 'app dev', directory})
+      await expect(acquireDevInstance({command: 'app dev', directory})).rejects.toMatchObject({
+        code: DEV_INSTANCE_ALREADY_RUNNING_CODE,
+      })
+    })
+  })
 
-      // Then
-      expect(instance.info.pid).toBe(process.pid)
+  test('only one contender recovers an abandoned instance', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const paths = devInstancePaths({command: 'app dev', directory})
+      await mkdir(paths.lockFile)
+      await writeFile(paths.infoFile, JSON.stringify({pid: DEAD_PID, details: {}}))
+      const attempts = await Promise.allSettled(
+        Array.from({length: 8}, async () => acquireDevInstance({command: 'app dev', directory})),
+      )
+      const owners = attempts.flatMap((attempt) => (attempt.status === 'fulfilled' ? [attempt.value] : []))
+      try {
+        expect(owners).toHaveLength(1)
+        await expect(readDevInstance({command: 'app dev', directory})).resolves.toMatchObject({
+          sessionId: owners[0]?.info.sessionId,
+        })
+        for (const attempt of attempts) {
+          if (attempt.status === 'rejected') expect(attempt.reason.code).toBe(DEV_INSTANCE_ALREADY_RUNNING_CODE)
+        }
+      } finally {
+        await Promise.all(owners.map((owner) => owner.release()))
+      }
+    })
+  })
+
+  test('does not remove another session record or lock during release', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const instance = await acquireDevInstance({command: 'app dev', directory})
+      const replacement = {...instance.info, sessionId: 'replacement'}
+      await writeFile(instance.paths.infoFile, JSON.stringify(replacement))
       await instance.release()
+      expect(JSON.parse(await readFile(instance.paths.infoFile))).toEqual(replacement)
+      await expect(fileExists(instance.paths.lockFile)).resolves.toBe(true)
     })
   })
 
@@ -137,6 +168,22 @@ describe('acquireDevInstance', () => {
       // Then
       expect((error as AbortError).message).toContain('is starting for this project')
       expect((error as AbortError).code).toBe(DEV_INSTANCE_ALREADY_RUNNING_CODE)
+    })
+  })
+
+  test('aborts when its lock is removed', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      vi.useFakeTimers({toFake: ['setTimeout', 'clearTimeout']})
+      const instance = await acquireDevInstance({command: 'app dev', directory})
+      try {
+        await rmdir(instance.paths.lockFile)
+        await vi.advanceTimersByTimeAsync(15_000)
+        await vi.waitFor(() => expect(instance.abortSignal.aborted).toBe(true))
+        expect(instance.abortSignal.reason).toBeInstanceOf(AbortError)
+      } finally {
+        await instance.release()
+        vi.useRealTimers()
+      }
     })
   })
 
