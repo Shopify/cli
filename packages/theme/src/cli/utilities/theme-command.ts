@@ -741,18 +741,24 @@ export default abstract class ThemeCommand extends Command {
   private async logAnalyticsData(session?: AdminSession): Promise<void> {
     if (!session) return
 
-    const data = compileData()
-    await addPublicMetadata(() => ({
-      store_fqdn_hash: hashString(session.storeFqdn),
-      store_domain: session.storeFqdn,
+    try {
+      const data = compileData()
+      await addPublicMetadata(() => ({
+        store_fqdn_hash: hashString(session.storeFqdn),
+        store_domain: session.storeFqdn,
 
-      cmd_theme_timings: JSON.stringify(data.timings),
-      cmd_theme_errors: JSON.stringify(data.errors),
-      cmd_theme_retries: JSON.stringify(data.retries),
-      cmd_theme_events: JSON.stringify(data.events),
-    }))
-    await addSensitiveMetadata(() => ({
-      store_fqdn: session.storeFqdn,
-    }))
+        cmd_theme_timings: JSON.stringify(data.timings),
+        cmd_theme_errors: JSON.stringify(data.errors),
+        cmd_theme_retries: JSON.stringify(data.retries),
+        cmd_theme_events: JSON.stringify(data.events),
+      }))
+      await addSensitiveMetadata(() => ({
+        store_fqdn: session.storeFqdn,
+      }))
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      // Telemetry must not discard completed work or replace the command's original error.
+      outputDebug(`Unable to record theme analytics: ${error instanceof Error ? error.message : String(error)}`)
+    }
   }
 }
