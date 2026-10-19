@@ -219,6 +219,23 @@ describe('acquireDevInstance', () => {
       await instance.release()
     })
   })
+
+  test('can save status again after a write fails', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const instance = await acquireDevInstance({command: 'app dev', directory})
+      const temporaryFile = `${instance.paths.infoFile}.${instance.info.sessionId}.tmp`
+      try {
+        await mkdir(temporaryFile)
+        await expect(instance.update({details: {sequence: 1}})).rejects.toThrow()
+        await rmdir(temporaryFile)
+        await instance.update({details: {sequence: 2}})
+        expect(JSON.parse(await readFile(instance.paths.infoFile))).toHaveProperty('details.sequence', 2)
+      } finally {
+        await rmdir(temporaryFile, {force: true})
+        await instance.release()
+      }
+    })
+  })
 })
 
 describe('DevInstance log', () => {

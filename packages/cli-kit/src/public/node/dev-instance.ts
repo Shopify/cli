@@ -270,10 +270,11 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
       if (changes.details) info.details = {...info.details, ...changes.details}
       info.updatedAt = formatJsonOutputTimestamp(new Date())
       const snapshot = {...info, details: {...info.details}}
-      updates = updates.then(async () => {
+      const write = updates.then(async () => {
         if (!compromised) await writeDevInstanceInfo(paths.infoFile, snapshot)
       })
-      await updates
+      updates = write.catch(() => {})
+      await write
     },
     log: writeLogEntry,
     tee: (target, {source, stream}) => {
