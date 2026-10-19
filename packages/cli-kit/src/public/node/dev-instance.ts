@@ -12,6 +12,7 @@ import {writeFile as writeFileWithMode} from 'fs/promises'
 import {Writable} from 'stream'
 import {finished} from 'stream/promises'
 import {StringDecoder} from 'string_decoder'
+import {once} from 'events'
 
 export {isProcessAlive} from '../../private/node/dev-instance-lock.js'
 
@@ -342,9 +343,17 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
     },
   }
 
-  await writeDevInstanceInfo(paths.infoFile, info)
-  published = true
-  return instance
+  try {
+    await once(logStream, 'open')
+    await writeDevInstanceInfo(paths.infoFile, info)
+    published = true
+    return instance
+  } catch (error) {
+    // Closing an already failed log can reject too; preserve the original setup error.
+    await instance.release().catch((cleanupError: Error) => outputDebug(cleanupError.message))
+    await removeFile(`${paths.infoFile}.${sessionId}.tmp`)
+    throw error
+  }
 }
 
 async function writeToStream(stream: Writable, chunk: Buffer | string, encoding: BufferEncoding = 'utf8') {

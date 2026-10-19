@@ -236,6 +236,22 @@ describe('acquireDevInstance', () => {
       }
     })
   })
+
+  test.each(['infoFile', 'logFile'] as const)('releases startup resources when %s cannot be written', async (file) => {
+    await inTemporaryDirectory(async (directory) => {
+      const paths = devInstancePaths({command: 'app dev', directory})
+      await mkdir(paths[file])
+      const exitListeners = process.listenerCount('exit')
+      await expect(acquireDevInstance({command: 'app dev', directory})).rejects.toThrow()
+      await expect(fileExists(paths.lockFile)).resolves.toBe(false)
+      expect(process.listenerCount('exit')).toBe(exitListeners)
+      await rmdir(paths[file])
+      const restarted = await acquireDevInstance({command: 'app dev', directory})
+      await restarted.log({source: 'web', message: 'recovered'})
+      await restarted.release()
+      await expect(readLog(paths.logFile)).resolves.toEqual([expect.objectContaining({message: 'recovered'})])
+    })
+  })
 })
 
 describe('DevInstance log', () => {
