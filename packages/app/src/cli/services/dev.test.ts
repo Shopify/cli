@@ -2,6 +2,7 @@ import {dev, blockIfMigrationIncomplete} from './dev.js'
 import {setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {renderDev} from './dev/ui.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
+import {DevSessionStatusManager} from './dev/processes/dev-session/dev-session-status-manager.js'
 import {
   testAppLinked,
   testDeveloperPlatformClient,
@@ -19,6 +20,7 @@ import {acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
+vi.mock('./local-storage.js')
 vi.mock('./dev/fetch.js')
 vi.mock('./dev/processes/setup-dev-processes.js')
 vi.mock('./dev/ui.js')
@@ -94,6 +96,7 @@ describe('dev with a dev instance', () => {
     await inTemporaryDirectory(async (tmp) => {
       const store = testOrganizationStore({shopDomain: 'dev-store.myshopify.com'})
       const app = testAppLinked({directory: tmp})
+      const manager = new DevSessionStatusManager()
       const devInstance = await acquireDevInstance({command: 'app dev', directory: tmp})
       const previewUrl = 'https://dev-store.myshopify.com/admin/apps/api-key'
       let infoWhileRunning: unknown
@@ -119,11 +122,16 @@ describe('dev with a dev instance', () => {
         ],
         previewUrl,
         graphiqlUrl: undefined,
-        devSessionStatusManager: {} as any,
+        devSessionStatusManager: manager,
       })
       const terminal = new Writable({write: (_chunk, _encoding, callback) => callback()})
       vi.mocked(renderDev).mockImplementation(async ({processes}) => {
-        infoWhileRunning = JSON.parse(await readFile(devInstance.paths.infoFile))
+        manager.updateStatus({isReady: true})
+        manager.setMessage('BUILD_ERROR', ['discount: Invalid input'])
+        await vi.waitFor(async () => {
+          infoWhileRunning = JSON.parse(await readFile(devInstance.paths.infoFile))
+          expect(infoWhileRunning).toHaveProperty('details.preview.errors', ['discount: Invalid input'])
+        })
         await Promise.all(processes.map((process) => process.action(terminal, terminal, new AbortController().signal)))
       })
 
@@ -146,7 +154,11 @@ describe('dev with a dev instance', () => {
 
       expect(infoWhileRunning).toMatchObject({
         status: 'running',
-        details: {storeFqdn: 'dev-store.myshopify.com', previewUrl},
+        details: {
+          storeFqdn: 'dev-store.myshopify.com',
+          previewUrl,
+          preview: {state: 'error', errors: ['discount: Invalid input']},
+        },
       })
       const entries = (await readFile(devInstance.paths.logFile))
         .split('\n')

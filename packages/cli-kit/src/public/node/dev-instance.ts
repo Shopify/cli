@@ -4,10 +4,12 @@ import {fileExists, glob, mkdir, readFile, removeFile, removeFileSync, renameFil
 import {AbortError} from './error.js'
 import {outputDebug, unstyled} from './output.js'
 import {formatJsonOutputTimestamp} from './json-output-schema.js'
+import {randomUUID} from './crypto.js'
 import lockfile from 'proper-lockfile'
 import {createWriteStream, type WriteStream} from 'fs'
 import {writeFile as writeFileWithMode} from 'fs/promises'
 import {Writable} from 'stream'
+import {StringDecoder} from 'string_decoder'
 
 /**
  * A stable error code for JSON consumers when a long-running command refuses to start because another instance of
@@ -24,6 +26,8 @@ const DEFAULT_STALE_MS = 30_000
  */
 export interface DevInstanceInfo {
   schemaVersion: 1
+  /** Identifies this run, including when the OS reuses a PID. */
+  sessionId: string
   /** The command that owns the instance, for example `app dev`. */
   command: string
   /** Distinguishes instances of the same command in the same directory, for example the app configuration file. */
@@ -42,6 +46,7 @@ export interface DevInstanceInfo {
 
 /** One line of a dev instance's JSON Lines log. */
 export interface DevInstanceLogEntry {
+  sessionId: string
   timestamp: string
   /** What produced the line, for example a process prefix like `web` or `extensions`. */
   source: string
@@ -74,11 +79,6 @@ export interface DevInstanceIdentity {
 export interface AcquireDevInstanceOptions extends DevInstanceIdentity {
   /** Initial command-specific details. */
   details?: {[key: string]: unknown}
-  /**
-   * How long a lock can go without a heartbeat before another process may take it over.
-   * Only matters when the owner is alive but frozen, or its PID was reused: a dead owner is detected immediately.
-   */
-  staleMs?: number
 }
 
 export interface DevInstanceUpdate {
@@ -93,7 +93,7 @@ export interface DevInstance {
   /** Updates and persists the instance description. */
   update: (changes: DevInstanceUpdate) => Promise<void>
   /** Appends one entry to the JSON Lines log. */
-  log: (entry: Omit<DevInstanceLogEntry, 'timestamp'>) => void
+  log: (entry: Omit<DevInstanceLogEntry, 'sessionId' | 'timestamp'>) => void
   /**
    * Wraps a stream so every line written to it is also appended to the log, without ANSI styling.
    * The returned stream forwards the original bytes to `target` unchanged.
@@ -127,15 +127,14 @@ export function devInstancePaths(identity: DevInstanceIdentity): DevInstancePath
  * Mutual exclusion uses `proper-lockfile`: an atomic `mkdir` lock whose mtime this process refreshes as a heartbeat.
  * Node has no built-in `flock`, so liveness combines two checks that cover each other's gaps. A dead owner PID means
  * the lock is abandoned (crash, SIGKILL) and is taken over immediately. A live PID with no recent heartbeat means the
- * PID was reused or the owner is frozen, and the lock is taken over once it is older than `staleMs`.
+ * PID was reused or the owner is frozen, and the lock is taken over once it is older than 30 seconds.
  *
- * @param options - The instance identity, initial details and lock staleness.
+ * @param options - The instance identity, initial details.
  * @returns The acquired instance.
  * @throws AbortError with code {@link DEV_INSTANCE_ALREADY_RUNNING_CODE} when another live instance holds the lock.
  */
 export async function acquireDevInstance(options: AcquireDevInstanceOptions): Promise<DevInstance> {
   const paths = devInstancePaths(options)
-  const staleMs = options.staleMs ?? DEFAULT_STALE_MS
   await getOrCreateHiddenShopifyFolder(options.directory)
   await mkdir(paths.folder)
 
@@ -143,7 +142,7 @@ export async function acquireDevInstance(options: AcquireDevInstanceOptions): Pr
   const lockOptions = {
     realpath: false,
     lockfilePath: paths.lockFile,
-    stale: staleMs,
+    stale: DEFAULT_STALE_MS,
     retries: 0,
     // The default handler throws asynchronously and would crash the long-running command.
     onCompromised: (error: Error) => {
@@ -159,7 +158,7 @@ export async function acquireDevInstance(options: AcquireDevInstanceOptions): Pr
     if (!isLockedError(error)) throw error
     const existing = await readDevInstanceInfo(paths.infoFile)
     if (existing && isProcessAlive(existing.pid)) throw devInstanceAlreadyRunningError(options, existing)
-    if (!existing && (await lockIsFresh(paths, staleMs))) {
+    if (!existing && (await lockIsFresh(paths))) {
       // Another process holds the lock but hasn't described itself yet.
       throw devInstanceAlreadyRunningError(options, undefined)
     }
@@ -174,6 +173,7 @@ export async function acquireDevInstance(options: AcquireDevInstanceOptions): Pr
   const now = formatJsonOutputTimestamp(new Date())
   const info: DevInstanceInfo = {
     schemaVersion: 1,
+    sessionId: randomUUID(),
     command: options.command,
     ...(options.key ? {key: options.key} : {}),
     pid: process.pid,
@@ -189,6 +189,8 @@ export async function acquireDevInstance(options: AcquireDevInstanceOptions): Pr
   const logStream: WriteStream = createWriteStream(paths.logFile, {flags: 'w', mode: 0o600})
   logStream.on('error', (error) => outputDebug(`Failed to write the ${options.command} log: ${error.message}`))
 
+  let updates = Promise.resolve()
+  const flushers = new Set<() => void>()
   let released = false
   const removeInfoOnExit = () => {
     // Synchronous cleanup for exits that skip `release`. proper-lockfile removes its own lock on exit.
@@ -196,9 +198,13 @@ export async function acquireDevInstance(options: AcquireDevInstanceOptions): Pr
   }
   process.once('exit', removeInfoOnExit)
 
-  const writeLogEntry = (entry: Omit<DevInstanceLogEntry, 'timestamp'>) => {
-    if (released || logStream.destroyed) return
-    const line: DevInstanceLogEntry = {timestamp: formatJsonOutputTimestamp(new Date()), ...entry}
+  const writeLogEntry = (entry: Omit<DevInstanceLogEntry, 'sessionId' | 'timestamp'>) => {
+    if (released || compromised || logStream.destroyed) return
+    const line: DevInstanceLogEntry = {
+      sessionId: info.sessionId,
+      timestamp: formatJsonOutputTimestamp(new Date()),
+      ...entry,
+    }
     logStream.write(`${JSON.stringify(line)}\n`)
   }
 
@@ -206,14 +212,19 @@ export async function acquireDevInstance(options: AcquireDevInstanceOptions): Pr
     info,
     paths,
     update: async (changes) => {
-      if (released) return
+      if (released || compromised) return
       if (changes.status) info.status = changes.status
       if (changes.details) info.details = {...info.details, ...changes.details}
       info.updatedAt = formatJsonOutputTimestamp(new Date())
-      await writeDevInstanceInfo(paths.infoFile, info)
+      const snapshot = {...info, details: {...info.details}}
+      updates = updates.then(async () => {
+        if (!compromised) await writeDevInstanceInfo(paths.infoFile, snapshot)
+      })
+      await updates
     },
     log: writeLogEntry,
     tee: (target, {source, stream}) => {
+      const decoder = new StringDecoder('utf8')
       let pending = ''
       const flushLines = (text: string) => {
         const lines = text.split(/\r?\n/)
@@ -223,22 +234,27 @@ export async function acquireDevInstance(options: AcquireDevInstanceOptions): Pr
           if (message.length > 0) writeLogEntry({source, stream, message})
         }
       }
+      const flush = () => flushLines(`${pending}${decoder.end()}\n`)
+      flushers.add(flush)
       return new Writable({
         write(chunk: Buffer | string, encoding, callback) {
           target.write(chunk, encoding)
-          flushLines(pending + (typeof chunk === 'string' ? chunk : chunk.toString('utf8')))
+          flushLines(pending + (typeof chunk === 'string' ? chunk : decoder.write(chunk)))
           callback()
         },
         final(callback) {
-          flushLines(`${pending}\n`)
+          flush()
+          flushers.delete(flush)
           callback()
         },
       })
     },
     release: async () => {
       if (released) return
+      flushers.forEach((flush) => flush())
       released = true
       process.removeListener('exit', removeInfoOnExit)
+      await updates.catch((error: Error) => outputDebug(`Failed to save dev status: ${error.message}`))
       await new Promise<void>((resolve) => logStream.end(resolve))
       if (!compromised) await removeFile(paths.infoFile).catch(() => {})
       await releaseLock().catch((error: Error) =>
@@ -305,13 +321,17 @@ export function isProcessAlive(pid: number): boolean {
 async function readLiveDevInstance(paths: DevInstancePaths): Promise<DevInstanceInfo | undefined> {
   const info = await readDevInstanceInfo(paths.infoFile)
   if (!info || !isProcessAlive(info.pid)) return undefined
-  if (!(await lockIsFresh(paths, DEFAULT_STALE_MS))) return undefined
+  if (!(await lockIsFresh(paths))) return undefined
   return info
 }
 
-async function lockIsFresh(paths: DevInstancePaths, staleMs: number): Promise<boolean> {
+async function lockIsFresh(paths: DevInstancePaths): Promise<boolean> {
   try {
-    return await lockfile.check(paths.infoFile, {realpath: false, lockfilePath: paths.lockFile, stale: staleMs})
+    return await lockfile.check(paths.infoFile, {
+      realpath: false,
+      lockfilePath: paths.lockFile,
+      stale: DEFAULT_STALE_MS,
+    })
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false
@@ -330,7 +350,7 @@ async function readDevInstanceInfo(infoFile: string): Promise<DevInstanceInfo | 
 
 async function writeDevInstanceInfo(infoFile: string, info: DevInstanceInfo): Promise<void> {
   // Write then rename so readers never see a partial file. Details may hold local URLs with keys, so keep it private.
-  const temporaryFile = `${infoFile}.${process.pid}.tmp`
+  const temporaryFile = `${infoFile}.${info.sessionId}.tmp`
   await writeFileWithMode(temporaryFile, `${JSON.stringify(info, null, 2)}\n`, {mode: 0o600})
   await renameFile(temporaryFile, infoFile)
 }

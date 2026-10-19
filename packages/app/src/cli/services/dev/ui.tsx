@@ -81,9 +81,29 @@ async function renderDevNonInteractive({
     process.stdout.write(`GraphiQL URL (Admin API): ${graphiqlUrl}\n`)
   }
 
-  return Promise.all(
-    processes.map(async (concurrentProcess) => {
-      await concurrentProcess.action(process.stdout, process.stderr, abortController.signal)
-    }),
+  const {signal} = abortController
+  const stop = () => abortController.abort()
+  process.once('SIGINT', stop)
+  process.once('SIGTERM', stop)
+  let onAbort: () => void = () => {}
+  const stopped = new Promise<void>((resolve) => {
+    onAbort = resolve
+    signal.addEventListener('abort', onAbort, {once: true})
+    if (signal.aborted) resolve()
+  })
+  const running = processes.map(async (concurrentProcess) =>
+    concurrentProcess.action(process.stdout, process.stderr, signal),
   )
+  try {
+    // A watcher can finish setup while it continues serving. Keep the session registered until abort.
+    await Promise.all([...running, stopped])
+  } catch (error) {
+    if (!signal.aborted) throw error
+  } finally {
+    abortController.abort()
+    await Promise.allSettled(running)
+    signal.removeEventListener('abort', onAbort)
+    process.removeListener('SIGINT', stop)
+    process.removeListener('SIGTERM', stop)
+  }
 }

@@ -117,7 +117,7 @@ describe('acquireDevInstance', () => {
       await writeFile(paths.infoFile, JSON.stringify({pid: process.ppid, logFile: paths.logFile, details: {}}))
 
       // When
-      const instance = await acquireDevInstance({command: 'app dev', directory, staleMs: 5_000})
+      const instance = await acquireDevInstance({command: 'app dev', directory})
 
       // Then
       expect(instance.info.pid).toBe(process.pid)
@@ -161,7 +161,10 @@ describe('acquireDevInstance', () => {
       const instance = await acquireDevInstance({command: 'app dev', directory, details: {store: 'a'}})
 
       // When
-      await instance.update({status: 'running', details: {previewUrl: 'https://preview'}})
+      await Promise.all([
+        instance.update({status: 'running'}),
+        instance.update({details: {previewUrl: 'https://preview'}}),
+      ])
 
       // Then
       const info = await readDevInstance({command: 'app dev', directory})
@@ -189,12 +192,27 @@ describe('DevInstance log', () => {
       // Then
       expect(chunks.join('')).toBe('\u001b[32mready\u001b[39m in 20ms\npartial line\n\n')
       const entries = await readLog(instance.paths.logFile)
-      expect(entries).toEqual([
+      expect(entries.map(({sessionId, ...entry}) => entry)).toEqual([
         {timestamp: expect.any(String), source: 'web', stream: 'stdout', message: 'ready in 20ms'},
         {timestamp: expect.any(String), source: 'web', stream: 'stdout', message: 'partial line'},
         {timestamp: expect.any(String), source: 'app dev', level: 'info', message: 'Preview URL: https://preview'},
       ])
+      expect(entries.every((entry) => entry.sessionId === instance.info.sessionId)).toBe(true)
       expect(entries[0].timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/)
+    })
+  })
+
+  test('flushes a split UTF-8 line on release without requiring the source to end', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const instance = await acquireDevInstance({command: 'app dev', directory})
+      const output = instance.tee(collectingStream().stream, {source: 'web', stream: 'stdout'})
+      const bytes = Buffer.from('café')
+      output.write(bytes.subarray(0, 4))
+      output.write(bytes.subarray(4))
+      await instance.release()
+      await expect(readLog(instance.paths.logFile)).resolves.toEqual([
+        expect.objectContaining({sessionId: instance.info.sessionId, source: 'web', message: 'café'}),
+      ])
     })
   })
 
@@ -207,6 +225,7 @@ describe('DevInstance log', () => {
 
       // When
       const second = await acquireDevInstance({command: 'app dev', directory})
+      expect(second.info.sessionId).not.toBe(first.info.sessionId)
       second.log({source: 'app dev', message: 'second run'})
       await second.release()
 
