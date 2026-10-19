@@ -148,15 +148,13 @@ test.describe('App deploy', () => {
       })
       const linkOutput = linkResult.stdout + linkResult.stderr
       expect(linkResult.exitCode, `Step 4 - config link failed:\n${linkOutput}`).toBe(0)
-      expect(linkOutput, `Step 4 - missing "is now linked to \\"${secondaryAppName}\\""`).toContain(
-        `is now linked to "${secondaryAppName}"`,
-      )
       const secondaryTomlPath = path.join(appDir, `shopify.app.${secondaryConfig}.toml`)
       expect(
         fs.existsSync(secondaryTomlPath),
         `Step 4 - expected ${secondaryTomlPath} to exist after config link`,
       ).toBe(true)
       secondaryAppUrl = await devDashboardAppUrl({cli, appDir, orgId: env.orgId, configName: secondaryConfig})
+      expect(secondaryAppUrl, 'Step 4 - secondary config must link to a different app').not.toBe(primaryAppUrl)
 
       // Step 5: Deploy from primary dir to secondary app via --config secondary
       const secondaryVersionTag = `E2E-v2-${Date.now()}`
