@@ -50,6 +50,7 @@ describe('acquireDevInstance', () => {
       const info = JSON.parse(await readFile(paths.infoFile))
       expect(info).toMatchObject({
         schemaVersion: 1,
+        sessionId: instance.info.sessionId,
         command: 'app dev',
         key: 'shopify.app.toml',
         pid: process.pid,
@@ -292,12 +293,11 @@ describe('DevInstance log', () => {
       // Then
       expect(chunks.join('')).toBe('\u001b[32mready\u001b[39m in 20ms\npartial line\n\n')
       const entries = await readLog(instance.paths.logFile)
-      expect(entries.map(({sessionId, ...entry}) => entry)).toEqual([
+      expect(entries).toEqual([
         {timestamp: expect.any(String), source: 'web', stream: 'stdout', message: 'ready in 20ms'},
         {timestamp: expect.any(String), source: 'web', stream: 'stdout', message: 'partial line'},
         {timestamp: expect.any(String), source: 'app dev', level: 'info', message: 'Preview URL: https://preview'},
       ])
-      expect(entries.every((entry) => entry.sessionId === instance.info.sessionId)).toBe(true)
       expect(entries[0].timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/)
     })
   })
@@ -311,7 +311,7 @@ describe('DevInstance log', () => {
       output.write(bytes.subarray(4))
       await instance.release()
       await expect(readLog(instance.paths.logFile)).resolves.toEqual([
-        expect.objectContaining({sessionId: instance.info.sessionId, source: 'web', message: 'café'}),
+        {timestamp: expect.any(String), source: 'web', stream: 'stdout', message: 'café'},
       ])
     })
   })

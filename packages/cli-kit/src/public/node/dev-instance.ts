@@ -48,7 +48,6 @@ export interface DevInstanceInfo {
 
 /** One line of a dev instance's JSON Lines log. */
 export interface DevInstanceLogEntry {
-  sessionId: string
   timestamp: string
   /** What produced the line, for example a process prefix like `web` or `extensions`. */
   source: string
@@ -97,7 +96,7 @@ export interface DevInstance {
   /** Updates and persists the instance description. */
   update: (changes: DevInstanceUpdate) => Promise<void>
   /** Appends one entry to the JSON Lines log. */
-  log: (entry: Omit<DevInstanceLogEntry, 'sessionId' | 'timestamp'>) => Promise<void>
+  log: (entry: Omit<DevInstanceLogEntry, 'timestamp'>) => Promise<void>
   /**
    * Wraps a stream so every line written to it is also appended to the log, without ANSI styling.
    * The returned stream forwards the original bytes to `target` unchanged.
@@ -249,10 +248,9 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
   }
   process.once('exit', removeInfoOnExit)
 
-  const writeLogEntry = async (entry: Omit<DevInstanceLogEntry, 'sessionId' | 'timestamp'>) => {
+  const writeLogEntry = async (entry: Omit<DevInstanceLogEntry, 'timestamp'>) => {
     if (released || compromised) return
     const line: DevInstanceLogEntry = {
-      sessionId: info.sessionId,
       timestamp: formatJsonOutputTimestamp(new Date()),
       ...entry,
     }
