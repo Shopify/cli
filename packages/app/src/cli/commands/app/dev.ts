@@ -9,6 +9,8 @@ import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags, portFlag} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
+import {acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
+import {basename} from '@shopify/cli-kit/node/path'
 
 export default class Dev extends AppLinkedCommand {
   public static get requiresSyncAnalytics(): boolean {
@@ -142,35 +144,54 @@ export default class Dev extends AppLinkedCommand {
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
-    const store = await storeContext({
-      appContextResult,
-      storeFqdn: flags.store,
-      forceReselectStore: flags.reset,
-      storeCreationMode: 'selection-option',
+
+    // One `app dev` per app configuration: a second one reports the running instance and exits,
+    // so agents can discover a session started in another terminal and read its log.
+    const devInstance = await acquireDevInstance({
+      command: 'app dev',
+      directory: appContextResult.app.directory,
+      key: basename(appContextResult.app.configPath),
+      details: {
+        configPath: appContextResult.app.configPath,
+        appName: appContextResult.remoteApp.title,
+        clientId: appContextResult.remoteApp.apiKey,
+      },
     })
 
-    const devOptions: DevOptions = {
-      ...appContextResult,
-      store,
-      directory: flags.path,
-      update: !flags['no-update'],
-      unsafeValidation: flags['unsafe-validation'],
-      skipDependenciesInstallation: flags['skip-dependencies-installation'],
-      commandConfig: this.config,
-      subscriptionProductUrl: flags['subscription-product-url'],
-      checkoutCartUrl: flags['checkout-cart-url'],
-      theme: flags.theme,
-      themeExtensionPort: flags['theme-app-extension-port'],
-      storePassword: flags['store-password'],
-      notify: flags.notify,
-      graphiqlPort: flags['graphiql-port'],
-      graphiqlKey: flags['graphiql-key'],
-      // Must stay undefined when the flag is absent: generateCertificate() only prompts when this is nullish.
-      installMkcert: flags['install-mkcert'],
-      tunnel: tunnelMode,
-    }
+    try {
+      const store = await storeContext({
+        appContextResult,
+        storeFqdn: flags.store,
+        forceReselectStore: flags.reset,
+        storeCreationMode: 'selection-option',
+      })
 
-    await dev(devOptions)
+      const devOptions: DevOptions = {
+        ...appContextResult,
+        store,
+        directory: flags.path,
+        update: !flags['no-update'],
+        unsafeValidation: flags['unsafe-validation'],
+        skipDependenciesInstallation: flags['skip-dependencies-installation'],
+        commandConfig: this.config,
+        subscriptionProductUrl: flags['subscription-product-url'],
+        checkoutCartUrl: flags['checkout-cart-url'],
+        theme: flags.theme,
+        themeExtensionPort: flags['theme-app-extension-port'],
+        storePassword: flags['store-password'],
+        notify: flags.notify,
+        graphiqlPort: flags['graphiql-port'],
+        graphiqlKey: flags['graphiql-key'],
+        // Must stay undefined when the flag is absent: generateCertificate() only prompts when this is nullish.
+        installMkcert: flags['install-mkcert'],
+        tunnel: tunnelMode,
+        devInstance,
+      }
+
+      await dev(devOptions)
+    } finally {
+      await devInstance.release()
+    }
     return {app: appContextResult.app}
   }
 }

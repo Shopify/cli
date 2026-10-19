@@ -27,7 +27,8 @@ describe('ui', () => {
       }
       const abortController = new AbortController()
 
-      await renderDev({
+      const completed = vi.fn()
+      const running = renderDev({
         processes: [concurrentProcess],
         previewUrl: 'https://lala.cloudflare.io/',
         graphiqlUrl: 'https://lala.cloudflare.io/graphiql',
@@ -35,7 +36,12 @@ describe('ui', () => {
         abortController,
         shopFqdn: 'mystore.shopify.io',
         devSessionStatusManager,
-      })
+      }).then(completed)
+      await Promise.resolve()
+      await Promise.resolve()
+      expect(completed).not.toHaveBeenCalled()
+      abortController.abort()
+      await running
 
       expect(concurrentProcess.action).toHaveBeenNthCalledWith(
         1,
@@ -48,9 +54,12 @@ describe('ui', () => {
     test("shows preview and GraphiQL URLs when terminal doesn't support TTY", async () => {
       vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
       const write = vi.spyOn(process.stdout, 'write').mockImplementation(() => true)
+      const abortController = new AbortController()
       const concurrentProcess = {
         prefix: 'prefix',
-        action: vi.fn(async (_stdout, _stderr, _signal) => {}),
+        action: vi.fn(async () => {
+          abortController.abort()
+        }),
       }
 
       await renderDev({
@@ -58,7 +67,7 @@ describe('ui', () => {
         previewUrl: 'https://lala.cloudflare.io/',
         graphiqlUrl: 'https://lala.cloudflare.io/graphiql',
         app: {id: '123', developerPlatformClient},
-        abortController: new AbortController(),
+        abortController,
         shopFqdn: 'mystore.shopify.io',
         devSessionStatusManager,
       })
