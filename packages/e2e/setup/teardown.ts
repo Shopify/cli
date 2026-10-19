@@ -1,15 +1,14 @@
 import {uninstallAppWithAdminApi} from './admin-api.js'
 import {createLogger, e2eSection} from './env.js'
-import {findAppOnDevDashboard, deleteAppFromDevDashboard} from './app.js'
 import type {CLIProcess} from './cli.js'
-import type {Page} from '@playwright/test'
+import type {DevDashboardClient} from './dashboard.js'
 
 const log = createLogger('teardown')
 
 interface BaseTeardownCtx {
-  browserPage: Page
+  dashboard: Pick<DevDashboardClient, 'deleteApp'>
   appName: string
-  /** Direct dashboard URL for app cleanup. */
+  /** Expected app URL, checked against the app found by its exact name. */
   appUrl?: string
   /** Local app directory used to clean the preview and uninstall through the Admin API. */
   appDir?: string
@@ -41,10 +40,7 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
 
   e2eSection(wCtx, `Teardown: app ${ctx.appName}`)
   await attemptRemoteCleanup(ctx, 'app deletion', async () => {
-    const appUrl = ctx.appUrl ?? (await findAppOnDevDashboard(ctx.browserPage, ctx.appName, ctx.orgId))
-    if (appUrl && !(await deleteAppFromDevDashboard(ctx.browserPage, appUrl))) {
-      throw new Error('App deletion was not confirmed')
-    }
+    await ctx.dashboard.deleteApp({name: ctx.appName, url: ctx.appUrl})
     log.log(wCtx, 'app deletion confirmed')
   })
 }

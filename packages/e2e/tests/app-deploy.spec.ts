@@ -81,7 +81,7 @@ function assertActiveVersion(opts: {
 }
 
 test.describe('App deploy', () => {
-  test('init, deploy, versions list, config link, deploy to secondary', async ({cli, env, browserPage}) => {
+  test('init, deploy, versions list, config link, deploy to secondary', async ({cli, env, dashboard}) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
@@ -187,14 +187,14 @@ test.describe('App deploy', () => {
         fs.rmSync(parentDir, {recursive: true, force: true})
         // Neither app was installed on a store — delete the apps only (no uninstall)
         await teardownAll({
-          browserPage,
+          dashboard,
           appName,
           appUrl: primaryAppUrl,
           orgId: env.orgId,
           workerIndex: env.workerIndex,
         })
         await teardownAll({
-          browserPage,
+          dashboard,
           appName: secondaryAppName,
           appUrl: secondaryAppUrl,
           orgId: env.orgId,

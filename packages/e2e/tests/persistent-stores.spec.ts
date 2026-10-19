@@ -6,7 +6,6 @@ import {e2eRunSegment} from '../setup/env.js'
 import {teardownAll} from '../setup/teardown.js'
 import {devDashboardAppUrl} from '../setup/app.js'
 import {cleanupTemporaryStore} from '../setup/temporary-store.js'
-import {trackMainFrameStatus} from '../setup/browser.js'
 import {expect, test, type Page} from '@playwright/test'
 import {mkdtemp, rm, writeFile} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
@@ -272,11 +271,12 @@ for (const failure of ['none', 'preview', 'uninstall', 'deletion', 'all', 'proce
         appName: 'E2E-test-app',
         orgId: '123',
         storeFqdn: stores[0]!,
-        appUrl: 'https://dev.shopify.com/dashboard/123/apps/456',
-        browserPage: deletionPage(() => {
-          events.push('delete-app')
-          return fails('deletion') ? 500 : 404
-        }),
+        dashboard: {
+          async deleteApp() {
+            events.push('delete-app')
+            if (fails('deletion')) throw new Error('App deletion was rejected')
+          },
+        },
       }
       if (failure === 'process-stop') {
         await expect(teardownAll(ctx)).rejects.toThrow('Process did not stop')
@@ -311,21 +311,4 @@ for (const failure of ['none', 'preview', 'uninstall', 'deletion', 'all', 'proce
       await rm(appDir, {recursive: true, force: true})
     }
   })
-}
-
-function deletionPage(status: () => number): Page {
-  const frame = {}
-  let onResponse: (response: unknown) => void = () => {}
-  const page = {
-    on(_event: string, listener: (response: unknown) => void) {
-      onResponse = listener
-    },
-    mainFrame: () => frame,
-    async goto() {
-      onResponse({frame: () => frame, request: () => ({resourceType: () => 'document'}), status})
-    },
-    async waitForTimeout() {},
-  } as unknown as Page
-  trackMainFrameStatus(page)
-  return page
 }
