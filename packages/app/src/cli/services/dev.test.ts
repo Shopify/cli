@@ -2,6 +2,7 @@ import {dev, blockIfMigrationIncomplete} from './dev.js'
 import {setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {renderDev} from './dev/ui.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
+import {DevSessionStatusManager} from './dev/processes/dev-session/dev-session-status-manager.js'
 import {
   testAppLinked,
   testDeveloperPlatformClient,
@@ -15,7 +16,11 @@ import {describe, expect, test, vi} from 'vitest'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
+import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {Writable} from 'stream'
 
+vi.mock('./local-storage.js')
 vi.mock('./dev/fetch.js')
 vi.mock('./dev/processes/setup-dev-processes.js')
 vi.mock('./dev/ui.js')
@@ -83,6 +88,100 @@ describe('dev', () => {
 
     addPublicMetadata.mockRestore()
     addSensitiveMetadata.mockRestore()
+  })
+})
+
+describe('dev with a dev instance', () => {
+  test.each([false, true])('captures output and session URLs, stopping on lock loss: %s', async (loseLock) => {
+    await inTemporaryDirectory(async (tmp) => {
+      const store = testOrganizationStore({shopDomain: 'dev-store.myshopify.com'})
+      const app = testAppLinked({directory: tmp})
+      const manager = new DevSessionStatusManager()
+      const devInstance = await acquireDevInstance({command: 'app dev', directory: tmp})
+      const ownership = new AbortController()
+      const previewUrl = 'https://dev-store.myshopify.com/admin/apps/api-key'
+      let infoWhileRunning: unknown
+
+      vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue({
+        name: 'Remote app',
+        application_url: '',
+        embedded: true,
+      })
+      vi.mocked(getAvailableTCPPort).mockResolvedValue(3456)
+      vi.mocked(checkPortAvailability).mockResolvedValue(true)
+      vi.mocked(setupDevProcesses).mockResolvedValue({
+        processes: [
+          {
+            type: 'web',
+            prefix: 'web',
+            function: async ({stdout, stderr}: {stdout: Writable; stderr: Writable}) => {
+              stdout.write('Server listening on 3000\n')
+              stderr.write('Deprecation warning\n')
+            },
+            options: {},
+          } as any,
+        ],
+        previewUrl,
+        graphiqlUrl: undefined,
+        devSessionStatusManager: manager,
+      })
+      const terminal = new Writable({write: (_chunk, _encoding, callback) => callback()})
+      vi.mocked(renderDev).mockImplementation(async ({processes, abortController}) => {
+        manager.updateStatus({isReady: true})
+        manager.setMessage('BUILD_ERROR', ['discount: Invalid input'])
+        await vi.waitFor(async () => {
+          infoWhileRunning = JSON.parse(await readFile(devInstance.paths.infoFile))
+          expect(infoWhileRunning).toHaveProperty('details.preview.errors', ['discount: Invalid input'])
+        })
+        await Promise.all(processes.map((process) => process.action(terminal, terminal, new AbortController().signal)))
+        if (loseLock) {
+          ownership.abort(new Error('Lock lost'))
+          expect(abortController.signal.aborted).toBe(true)
+        }
+      })
+
+      const running = dev({
+        app,
+        project: testProject({usesWorkspaces: true}),
+        remoteApp: testOrganizationApp({apiKey: 'api-key'}),
+        organization: testOrganization(),
+        specifications: [],
+        developerPlatformClient: testDeveloperPlatformClient(),
+        store,
+        directory: app.directory,
+        update: false,
+        commandConfig: {} as any,
+        skipDependenciesInstallation: true,
+        tunnel: {mode: 'custom', url: 'https://localhost:3456'},
+        devInstance: {...devInstance, abortSignal: ownership.signal},
+      })
+      if (loseLock) {
+        await expect(running).rejects.toThrow('Lock lost')
+      } else {
+        await running
+      }
+      await devInstance.release()
+
+      expect(infoWhileRunning).toMatchObject({
+        status: 'running',
+        details: {
+          storeFqdn: 'dev-store.myshopify.com',
+          previewUrl,
+          preview: {state: 'error', errors: ['discount: Invalid input']},
+        },
+      })
+      const entries = (await readFile(devInstance.paths.logFile))
+        .split('\n')
+        .filter(Boolean)
+        .map((line) => JSON.parse(line))
+      expect(entries).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({source: 'app dev', message: `Preview URL: ${previewUrl}`}),
+          expect.objectContaining({source: 'web', stream: 'stdout', message: 'Server listening on 3000'}),
+          expect.objectContaining({source: 'web', stream: 'stderr', message: 'Deprecation warning'}),
+        ]),
+      )
+    })
   })
 })
 

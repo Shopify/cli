@@ -15,6 +15,7 @@ The list below contains valuable resources for people interested in contributing
 * [Designing for CLI](./cli/designing-for-cli.md)
 * [Conventions](./cli/conventions.md)
 * [JSON output contracts](./cli/json-output.md)
+* [App dev session files](./cli/app-dev-agent-workflow.md)
 * [Performance](./cli/performance.md)
 * [Debugging](./cli/debugging.md)
 * [ESLint rules](./cli/eslint-rules.md)

@@ -44,7 +44,8 @@ describe('DevSessionLogger', () => {
     output = []
     stdout = {
       write: (message: string) => {
-        output.push(message)
+        expect(message.endsWith('\n')).toBe(true)
+        output.push(message.slice(0, -1))
         return true
       },
     } as unknown as Writable
