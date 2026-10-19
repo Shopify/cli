@@ -11,7 +11,9 @@
     {
       "name": "@shopify/cli",
       "specifier": "./packages/eslint-plugin-cli/index.js"
-    }
+    },
+    "eslint-plugin-no-catch-all",
+    "eslint-plugin-tsdoc"
   ],
   "categories": {
     "correctness": "off"
@@ -104,9 +106,7 @@
     "**/bin/bundle.js",
     "**/*.d.ts",
     "**/*.cjs",
-    "packages/e2e/scripts/**",
-    "packages/ui-extensions-server-kit/**",
-    "packages/ui-extensions-test-utils/**"
+    "packages/e2e/scripts/**"
   ],
   "rules": {
     "array-callback-return": "error",
@@ -350,6 +350,8 @@
     "@shopify/cli/banner-headline-format": "error",
     "@shopify/cli/required-fields-when-loading-app": "error",
     "@shopify/cli/no-inline-graphql": "error",
+    "no-catch-all/no-catch-all": "error",
+    "tsdoc/syntax": "error",
     "typescript/consistent-return": "error",
     "typescript/dot-notation": [
       "error",
