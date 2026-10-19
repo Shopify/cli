@@ -102,9 +102,10 @@ export default abstract class ThemeCommand extends Command {
     const collectResults = hasExplicitEnvironment && this.collectsEnvironmentResults(flags)
 
     // Check if store flag is required by the command
-    const storeIsRequired =
-      requiredFlags !== null &&
-      requiredFlags.some((flag) => (Array.isArray(flag) ? flag.includes('store') : flag === 'store'))
+    const singleEnvironmentFlags = this.requiredFlagsForSingleEnvironment(requiredFlags ?? [])
+    const storeIsRequired = singleEnvironmentFlags.some((flag) =>
+      Array.isArray(flag) ? flag.includes('store') : flag === 'store',
+    )
 
     // Single environment or no environment
     if (environments.length <= 1 && !(environments.length > 0 && collectResults)) {
@@ -112,6 +113,7 @@ export default abstract class ThemeCommand extends Command {
         throw new AbortError(`Please provide a valid environment.`)
       }
 
+      this.validateCommandFlags(flags)
       const session = commandRequiresAuth ? await this.createSession(flags) : undefined
       const commandName = this.constructor.name.toLowerCase()
 
@@ -145,7 +147,7 @@ export default abstract class ThemeCommand extends Command {
     const environmentsMap = await this.loadEnvironments(environments, flags, flagsWithoutDefaults)
     const validationResults = await this.validateEnvironments(
       environmentsMap,
-      environments.length === 1 ? (requiredFlags ?? []).filter((flag) => flag !== 'password') : (requiredFlags ?? []),
+      environments.length === 1 ? singleEnvironmentFlags : (requiredFlags ?? []),
       commandRequiresAuth,
       collectResults,
     )
@@ -178,6 +180,14 @@ export default abstract class ThemeCommand extends Command {
       this.renderEnvironmentResults(entries)
       if (entries.some((entry) => 'error' in entry)) process.exitCode = 1
     }
+  }
+
+  protected validateCommandFlags(_flags: FlagValues): void {}
+
+  protected requiredFlagsForSingleEnvironment(
+    requiredFlags: Exclude<RequiredFlags, null>,
+  ): Exclude<RequiredFlags, null> {
+    return requiredFlags.filter((flag) => flag !== 'password')
   }
 
   protected collectsEnvironmentResults(flags: FlagValues): boolean {
@@ -357,6 +367,7 @@ export default abstract class ThemeCommand extends Command {
         continue
       }
       try {
+        this.validateCommandFlags(flags)
         super.validateNonTTYFlags(flags)
       } catch (error) {
         if (!collectResults) throw error
