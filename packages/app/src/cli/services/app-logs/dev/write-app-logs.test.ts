@@ -1,8 +1,8 @@
 import {writeAppLogsToFile} from './write-app-logs.js'
 import {AppLogData, AppLogPayload, FunctionRunLog} from '../types.js'
 import camelcaseKeys from '../camelcase-keys.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {readFile, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {isSubpath, joinPath} from '@shopify/cli-kit/node/path'
+import {readFile, readdir, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {formatLocalDate} from '@shopify/cli-kit/common/string'
 
@@ -98,6 +98,31 @@ describe('writeAppLogsToFile', () => {
       const writtenContent = await readFile(returnedPath.fullOutputPath)
       expect(writtenContent).toEqual(expectedLogData)
       expect(returnedPath.fullOutputPath).toEqual(expect.stringContaining(joinPath(tmpDir, fileName)))
+    })
+  })
+
+  test('writes inside the logs directory when the log source contains traversal segments', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const logsDir = joinPath(tmpDir, 'logs')
+      const traversingAppLog: AppLogData = {
+        ...APP_LOG,
+        source: '../../escaped',
+        source_namespace: '../extensions',
+      }
+
+      // When
+      const returnedPath = await writeAppLogsToFile({
+        appLog: traversingAppLog,
+        appLogPayload: new FunctionRunLog(camelcaseKeys(JSON.parse(traversingAppLog.payload))),
+        stdout,
+        storeName: STORE_NAME,
+        logsDir,
+      })
+
+      // Then
+      expect(isSubpath(logsDir, returnedPath.fullOutputPath)).toBe(true)
+      await expect(readdir(tmpDir)).resolves.toEqual(['logs'])
     })
   })
 })
