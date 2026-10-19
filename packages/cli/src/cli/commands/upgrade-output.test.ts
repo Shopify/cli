@@ -12,7 +12,7 @@ import {upgradeJsonOutputSchema} from '@shopify/cli-kit/node/upgrade/types'
 import {commandEventOutputSchema} from '@shopify/cli-kit/node/command-events'
 import {beforeEach, afterEach, expect, onTestFinished, test, vi} from 'vitest'
 // Vitest intercepts console.warn; exercise the real stderr writer.
-// eslint-disable-next-line n/prefer-global/console
+// eslint-disable-next-line compat/n-prefer-global-console
 import {Console} from 'node:console'
 // eslint-disable-next-line no-restricted-imports -- Verify native filesystem paths in JSON output.
 import {resolve} from 'node:path'
