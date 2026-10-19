@@ -105,7 +105,7 @@ test.describe('App deploy', () => {
       })
       expect(initResult.exitCode, `Step 1 - primary app init failed:\n${initResult.stderr}`).toBe(0)
       const appDir = initResult.appDir
-      primaryAppUrl = devDashboardAppUrl(appDir, env.orgId)
+      primaryAppUrl = await devDashboardAppUrl({cli, appDir, orgId: env.orgId})
 
       // Step 2: Deploy with a tagged version
       const versionTag = `E2E-v1-${Date.now()}`
@@ -156,7 +156,7 @@ test.describe('App deploy', () => {
         fs.existsSync(secondaryTomlPath),
         `Step 4 - expected ${secondaryTomlPath} to exist after config link`,
       ).toBe(true)
-      secondaryAppUrl = devDashboardAppUrl(appDir, env.orgId, secondaryConfig)
+      secondaryAppUrl = await devDashboardAppUrl({cli, appDir, orgId: env.orgId, configName: secondaryConfig})
 
       // Step 5: Deploy from primary dir to secondary app via --config secondary
       const secondaryVersionTag = `E2E-v2-${Date.now()}`

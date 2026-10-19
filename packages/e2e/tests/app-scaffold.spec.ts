@@ -33,7 +33,7 @@ test.describe('App scaffold', () => {
       const initOutput = initResult.stdout + initResult.stderr
       expect(initOutput).toContain('is ready for you to build!')
       const appDir = initResult.appDir
-      appUrl = devDashboardAppUrl(appDir, env.orgId)
+      appUrl = await devDashboardAppUrl({cli, appDir, orgId: env.orgId})
 
       // Step 2: Verify the app directory was created with expected files
       expect(fs.existsSync(appDir)).toBe(true)
@@ -81,7 +81,7 @@ test.describe('App scaffold', () => {
       expect(initResult.exitCode, `createApp failed:\nstdout: ${initResult.stdout}\nstderr: ${initResult.stderr}`).toBe(
         0,
       )
-      appUrl = devDashboardAppUrl(initResult.appDir, env.orgId)
+      appUrl = await devDashboardAppUrl({cli, appDir: initResult.appDir, orgId: env.orgId})
       expect(fs.existsSync(initResult.appDir)).toBe(true)
       expect(fs.existsSync(path.join(initResult.appDir, 'shopify.app.toml'))).toBe(true)
     } finally {
@@ -121,7 +121,7 @@ test.describe('App scaffold', () => {
         0,
       )
       const appDir = initResult.appDir
-      appUrl = devDashboardAppUrl(appDir, env.orgId)
+      appUrl = await devDashboardAppUrl({cli, appDir, orgId: env.orgId})
 
       const extensionConfigs = [
         {name: 'test-subscription-link', template: 'subscription_link_extension'},

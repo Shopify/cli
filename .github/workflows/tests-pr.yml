@@ -252,8 +252,14 @@ jobs:
     # Playwright — those failures belong to the build lane, not to E2E.
     needs: [type-check, bundle]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     continue-on-error: true
+    env:
+      E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
+      E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
+      E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
+      E2E_LOADTEST_HEADER: ${{ secrets.E2E_LOADTEST_HEADER }}
+      E2E_SHARD: ${{ matrix.shard }}
     strategy:
       fail-fast: false
       matrix:
@@ -276,13 +282,8 @@ jobs:
       - name: Rebuild node-pty
         run: pnpm rebuild node-pty
       - name: Run E2E tests
+        id: e2e
         working-directory: packages/e2e
-        env:
-          E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
-          E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
-          E2E_STORE_FQDN: ${{ secrets.E2E_STORE_FQDN }}
-          E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
-          E2E_LOADTEST_HEADER: ${{ secrets.E2E_LOADTEST_HEADER }}
         run: pnpm exec playwright test --project remote --shard ${{ matrix.shard }}
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
@@ -304,58 +305,12 @@ jobs:
             !packages/e2e/test-results/**/trace.zip
           retention-days: 14
 
-  e2e-cleanup:
-    name: 'Cleanup current-run E2E resources'
-    needs: e2e-tests
-    if: ${{ always() && needs.e2e-tests.result != 'skipped' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          repository: ${{ github.repository }}
-          ref: ${{ github.sha }}
-          fetch-depth: 1
-      - name: Setup deps
-        uses: ./.github/actions/setup-cli-deps
-        with:
-          node-version: ${{ env.PLAYWRIGHT_NODE_VERSION }}
-      - name: Install Playwright Chromium
-        run: pnpm exec playwright install chromium
-        working-directory: packages/e2e
-      - name: Build CLI for cleanup auth
-        run: pnpm nx run cli:build
-      - name: Prime cleanup auth state
-        continue-on-error: true
-        env:
-          E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
-          E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
-          E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
-          E2E_LOADTEST_HEADER: ${{ secrets.E2E_LOADTEST_HEADER }}
-        run: pnpm --filter e2e exec tsx scripts/prime-browser-auth.ts
       - name: Cleanup current-run E2E apps
-        if: ${{ always() }}
-        continue-on-error: true
-        env:
-          E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
-          E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
-          E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
-          E2E_LOADTEST_HEADER: ${{ secrets.E2E_LOADTEST_HEADER }}
+        if: ${{ always() && steps.e2e.outcome != 'skipped' }}
         run: |
           RUN_TOKEN=$(node -e "process.stdout.write(BigInt(process.env.GITHUB_RUN_ID).toString(36))")
-          pnpm --filter e2e exec tsx scripts/cleanup-apps.ts --pattern "r${RUN_TOKEN}"
-      - name: Cleanup current-run E2E stores
-        if: ${{ always() }}
-        continue-on-error: true
-        env:
-          E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
-          E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
-          E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
-          E2E_LOADTEST_HEADER: ${{ secrets.E2E_LOADTEST_HEADER }}
-        run: |
-          RUN_TOKEN=$(node -e "process.stdout.write(BigInt(process.env.GITHUB_RUN_ID).toString(36))")
-          pnpm --filter e2e exec tsx scripts/cleanup-stores.ts --pattern "r${RUN_TOKEN}"
+          SHARD_NUMBER=${E2E_SHARD%/*}
+          pnpm --filter e2e exec tsx scripts/cleanup-apps.ts --pattern "r${RUN_TOKEN}a${GITHUB_RUN_ATTEMPT}s${SHARD_NUMBER}-"
 
   type-diff:
     if: github.event.pull_request.head.repo.full_name == github.repository
