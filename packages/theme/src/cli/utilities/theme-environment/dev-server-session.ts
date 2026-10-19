@@ -4,7 +4,7 @@ import {getStorefrontSessionCookies, ShopifyEssentialError} from './storefront-s
 import {buildBaseStorefrontUrl} from './storefront-renderer.js'
 import {fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {recordError, recordEvent} from '@shopify/cli-kit/node/analytics'
 
@@ -59,7 +59,15 @@ export async function initializeDevServerSession(
     session
       .refresh()
       .then(() => outputDebug('Refreshed theme session via auto-refresher...'))
-      .catch(() => outputDebug('Session could not be refreshed.'))
+      .catch((error: unknown) => {
+        if (error instanceof AbortError) {
+          outputWarn(
+            'Theme dev could not refresh its Shopify session. Restart it in an interactive terminal to sign in again.',
+          )
+        } else {
+          outputDebug('Session could not be refreshed.')
+        }
+      })
   }, SESSION_TIMEOUT_IN_MS)
 
   return session
