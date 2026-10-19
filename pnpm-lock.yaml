@@ -448,6 +448,9 @@ importers:
       pathe:
         specifier: 1.1.2
         version: 1.1.2
+      proper-lockfile:
+        specifier: 4.1.2
+        version: 4.1.2
       react:
         specifier: 19.2.4
         version: 19.2.4
@@ -491,6 +494,9 @@ importers:
       '@types/lodash':
         specifier: 4.17.24
         version: 4.17.24
+      '@types/proper-lockfile':
+        specifier: 4.1.4
+        version: 4.1.4
       '@types/react':
         specifier: 18.3.12
         version: 18.3.12
