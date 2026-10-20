@@ -308,7 +308,9 @@ function retryAfterDelayMs(retryAfter: string | undefined): number | undefined {
     return Number.isFinite(seconds) && seconds >= 0 ? seconds * 1000 : undefined
   }
 
-  const retryAt = Date.parse(value)
+  // The asctime HTTP-date format omits a time zone but still uses UTC.
+  const isAsctimeDate = /^[A-Za-z]{3} [A-Za-z]{3} (?: \d|\d{2}) \d{2}:\d{2}:\d{2} \d{4}$/.test(value)
+  const retryAt = Date.parse(isAsctimeDate ? `${value} GMT` : value)
   return Number.isNaN(retryAt) ? undefined : Math.max(0, retryAt - Date.now())
 }
 

@@ -237,12 +237,16 @@ describe('retryAwareRequest', () => {
     {header: '0.25', delay: 250},
     {header: 'Tue, 20 Oct 2026 12:00:10 GMT', delay: 10_000},
     {header: 'Tue, 20 Oct 2026 11:59:59 GMT', delay: 0},
+    {header: 'Tuesday, 20-Oct-26 12:00:10 GMT', delay: 10_000},
+    {header: 'Tue Oct 20 12:00:10 2026', delay: 10_000},
+    {header: 'Tue Oct 20 11:59:59 2026', delay: 0},
+    {header: 'Tue Oct  6 12:00:10 2026', delay: 10_000, now: '2026-10-06T12:00:00Z'},
     {header: 'invalid', delay: 750},
     {header: '-1', delay: 750},
     {header: 'Infinity', delay: 750},
     {header: '   ', delay: 750},
-  ])('uses $delay milliseconds for Retry-After "$header"', async ({header, delay}) => {
-    vi.setSystemTime(new Date('2026-10-20T12:00:00Z'))
+  ])('uses $delay milliseconds for Retry-After "$header"', async ({header, delay, now}) => {
+    vi.setSystemTime(new Date(now ?? '2026-10-20T12:00:00Z'))
     const startedAt = Date.now()
     const success = {status: 200, headers: new Headers()}
     const request = vi
@@ -251,8 +255,7 @@ describe('retryAwareRequest', () => {
       .mockResolvedValue(success)
     const result = retryAwareRequest({request, url: 'https://example.com/graphql', useNetworkLevelRetry: false})
     const assertion = expect(result).resolves.toBe(success)
-    await vi.runAllTimersAsync()
-    await assertion
+    await Promise.all([vi.runAllTimersAsync(), assertion])
 
     expect(request).toHaveBeenCalledTimes(2)
     expect(Date.now() - startedAt).toBe(delay)
