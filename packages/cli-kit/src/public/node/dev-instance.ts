@@ -4,7 +4,6 @@ import {fileExists, glob, mkdir, readFile, removeFile, removeFileSync, renameFil
 import {AbortError} from './error.js'
 import {outputDebug, unstyled} from './output.js'
 import {defineJsonOutputSchema, formatJsonOutputTimestamp, jsonOutputTimestampSchema} from './json-output-schema.js'
-import {jsonErrorOutputSchema, JsonErrorSchema} from './error/schema.js'
 import {zod} from './schema.js'
 import {randomUUID} from './crypto.js'
 import {
@@ -61,10 +60,8 @@ export const devInstanceLogOutputSchema = defineJsonOutputSchema({
       source: zod.string().describe('What produced the line, for example a process prefix like web or extensions.'),
       level: zod.enum(['debug', 'info', 'warning', 'error']).optional(),
       message: zod.string(),
-      error: JsonErrorSchema.optional().describe('The shared CLI fatal error, included when the session fails.'),
     })
     .strict(),
-  definitions: jsonErrorOutputSchema.definitions,
 })
 
 /** One line of a dev instance's JSON Lines log. */
