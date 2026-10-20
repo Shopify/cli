@@ -1191,8 +1191,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Builds and previews your app on a dev store, and watches for changes. \"Read more about testing apps locally\" (https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).",
-      "descriptionWithMarkdown": "Builds and previews your app on a dev store, and watches for changes. [Read more about testing apps locally](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).",
+      "description": "Builds and previews your app on a dev store, and watches for changes. \"Read more about testing apps locally\" (https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).\n\nWith `--json`, streams diagnostic and progress events as JSON Lines to stdout until stopped. There is no final result. Fatal errors use the standard JSON error envelope. Setup prompts remain on stderr; use `--no-input` for unattended runs.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `CommandEvent` schema.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"$ref\": \"#/definitions/CommandDiagnosticEvent\"\n    },\n    {\n      \"$ref\": \"#/definitions/CommandProgressEvent\"\n    }\n  ],\n  \"title\": \"CommandEvent\",\n  \"definitions\": {\n    \"CommandDiagnosticEvent\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"type\": {\n          \"type\": \"string\",\n          \"const\": \"diagnostic\"\n        },\n        \"timestamp\": {\n          \"type\": \"string\",\n          \"format\": \"date-time\",\n          \"pattern\": \"^\\\\d{4}-\\\\d{2}-\\\\d{2}T\\\\d{2}:\\\\d{2}:\\\\d{2}Z$\",\n          \"description\": \"A UTC ISO 8601 instant with whole seconds and the Z timezone marker.\"\n        },\n        \"level\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"debug\",\n            \"info\",\n            \"warning\",\n            \"error\"\n          ]\n        },\n        \"message\": {\n          \"type\": \"string\"\n        },\n        \"code\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"description\": \"A stable diagnostic code, included only when known.\"\n        }\n      },\n      \"required\": [\n        \"type\",\n        \"timestamp\",\n        \"level\",\n        \"message\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"CommandProgressEvent\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"type\": {\n          \"type\": \"string\",\n          \"const\": \"progress\"\n        },\n        \"timestamp\": {\n          \"$ref\": \"#/definitions/CommandDiagnosticEvent/properties/timestamp\"\n        },\n        \"status\": {\n          \"type\": \"string\",\n          \"enum\": [\n            \"started\",\n            \"updated\",\n            \"retrying\",\n            \"completed\",\n            \"failed\"\n          ]\n        },\n        \"operation\": {\n          \"type\": \"string\"\n        },\n        \"message\": {\n          \"type\": \"string\"\n        },\n        \"current\": {\n          \"type\": \"integer\",\n          \"minimum\": 0\n        },\n        \"total\": {\n          \"type\": \"integer\",\n          \"minimum\": 0\n        }\n      },\n      \"required\": [\n        \"type\",\n        \"timestamp\",\n        \"status\",\n        \"operation\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "descriptionWithMarkdown": "Builds and previews your app on a dev store, and watches for changes. [Read more about testing apps locally](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).\n\nWith `--json`, streams diagnostic and progress events as JSON Lines to stdout until stopped. There is no final result. Fatal errors use the standard JSON error envelope. Setup prompts remain on stderr; use `--no-input` for unattended runs.",
       "flags": {
         "auth-alias": {
           "description": "Alias of the Shopify account to use for authentication.",
@@ -1255,6 +1255,15 @@
           "description": "Install and use mkcert to generate localhost certificates when --use-localhost is enabled without prompting.",
           "env": "SHOPIFY_FLAG_INSTALL_MKCERT",
           "name": "install-mkcert",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
           "type": "boolean"
         },
         "json-schema": {

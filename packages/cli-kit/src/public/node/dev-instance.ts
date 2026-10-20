@@ -85,6 +85,8 @@ export interface DevInstanceIdentity {
 export interface AcquireDevInstanceOptions extends DevInstanceIdentity {
   /** Initial command-specific details. */
   details?: {[key: string]: unknown}
+  /** Receives each entry after it is written to the session log. */
+  onLog?: (entry: DevInstanceLogEntry) => void
 }
 
 export interface DevInstanceUpdate {
@@ -268,6 +270,7 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
       ...entry,
     }
     await writeToStream(logStream, `${JSON.stringify(line)}\n`)
+    options.onLog?.(line)
   }
 
   const instance: DevInstance = {

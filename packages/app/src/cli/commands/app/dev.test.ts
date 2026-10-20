@@ -15,6 +15,12 @@ import {
   testProject,
 } from '../../models/app/app.test-data.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {commandEventOutputSchema, emitCommandEvent} from '@shopify/cli-kit/node/command-events'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputInfo} from '@shopify/cli-kit/node/output'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {isInputDisabled} from '@shopify/cli-kit/node/no-input'
 import {
   acquireDevInstance,
   DEV_INSTANCE_ALREADY_RUNNING_CODE,
@@ -63,6 +69,111 @@ describe('app dev command', () => {
 
     return {store}
   }
+
+  test('declares its streaming schema and retains inherited flags', () => {
+    expect(Dev.jsonOutputSchema).toBe(commandEventOutputSchema)
+    expect(Dev.flags.json.char).toBe('j')
+    expect(Dev.flags.json.env).toBe('SHOPIFY_FLAG_JSON')
+    expect(Dev.baseFlags).toHaveProperty('json-schema')
+    expect(Dev.baseFlags).toHaveProperty('auth-alias')
+    expect(Dev.descriptionForHelp()).toContain('CommandEvent')
+  })
+
+  test.each(['--json', '-j', 'env'])('%s streams shared events on stdout without a final result', async (source) => {
+    await inTemporaryDirectory(async (tmp) => {
+      const {store} = mockAppAndStore(tmp)
+      vi.mocked(getTunnelMode).mockResolvedValue({mode: 'auto'})
+      if (source === 'env') vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
+      vi.mocked(dev).mockImplementation(async ({devInstance}) => {
+        outputInfo('Starting dev')
+        emitCommandEvent({type: 'progress', operation: 'app-dev-preview', status: 'updated', message: 'Updated'})
+        await devInstance?.log({source: 'web', message: 'Server ready'})
+          await devInstance?.log({source: 'app dev', level: 'error', message: 'Build error'})
+      })
+      try {
+        await withCapturedStandardStreams(async ({stdout, stderr}) => {
+          await Dev.run(
+            ['--path', tmp, '--store', store.shopDomain, ...(source.startsWith('-') ? [source] : [])],
+            import.meta.url,
+          )
+          const events = stdout()
+            .trim()
+            .split('\n')
+            .map((line) => JSON.parse(line))
+          events.forEach((event) => expect(() => Dev.jsonOutputSchema.validate(event)).not.toThrow())
+          expect(events).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({type: 'diagnostic', message: 'Starting dev'}),
+              expect.objectContaining({type: 'progress', message: 'Updated'}),
+              expect.objectContaining({type: 'diagnostic', message: 'web: Server ready'}),
+                expect.objectContaining({type: 'diagnostic', level: 'error', message: 'Build error'}),
+            ]),
+          )
+          expect(stderr()).toBe('')
+        })
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    })
+  })
+
+  test.each([false, true])('JSON preserves the input policy with no-input=%s', async (noInput) => {
+    await inTemporaryDirectory(async (tmp) => {
+      const {store} = mockAppAndStore(tmp)
+      vi.mocked(getTunnelMode).mockResolvedValue({mode: 'auto'})
+      vi.stubEnv('CI', '')
+      vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', noInput ? '1' : '0')
+      const stdinIsTTY = process.stdin.isTTY
+      const stderrIsTTY = process.stderr.isTTY
+      Object.defineProperty(process.stdin, 'isTTY', {value: true, configurable: true})
+      Object.defineProperty(process.stderr, 'isTTY', {value: true, configurable: true})
+      vi.mocked(linkedAppContext).mockImplementation(async () => {
+        expect(isInputDisabled()).toBe(noInput)
+        expect(terminalSupportsPrompting()).toBe(!noInput)
+        throw new AbortError('Input policy checked')
+      })
+      try {
+        await withCapturedStandardStreams(async ({stdout}) => {
+          await expect(Dev.run(['--path', tmp, '--json'], import.meta.url)).rejects.toThrow()
+          expect(JSON.parse(stdout().trim().split('\n').at(-1)!)).toMatchObject({
+            error: {type: 'abort', message: 'Input policy checked'},
+          })
+        })
+      } finally {
+        Object.defineProperty(process.stdin, 'isTTY', {value: stdinIsTTY, configurable: true})
+        Object.defineProperty(process.stderr, 'isTTY', {value: stderrIsTTY, configurable: true})
+        vi.unstubAllEnvs()
+      }
+    })
+  })
+
+  test('a runtime failure ends the JSONL stream with the shared fatal error', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      const {store} = mockAppAndStore(tmp)
+      vi.mocked(getTunnelMode).mockResolvedValue({mode: 'auto'})
+      vi.mocked(dev).mockImplementation(async () => {
+        outputInfo('Starting dev')
+        throw new AbortError('Tunnel stopped')
+      })
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await expect(Dev.run(['--path', tmp, '--store', store.shopDomain, '--json'], import.meta.url)).rejects.toThrow()
+        expect(
+          stdout()
+            .trim()
+            .split('\n')
+            .map((line) => JSON.parse(line))
+            .slice(-2),
+        ).toEqual([
+          expect.objectContaining({type: 'diagnostic', message: 'Starting dev'}),
+          {error: {type: 'abort', message: 'Tunnel stopped'}},
+        ])
+        expect(stderr()).toBe('')
+      })
+      await expect(
+        readDevInstance({command: 'app dev', directory: tmp, key: 'shopify.app.toml'}),
+      ).resolves.toBeUndefined()
+    })
+  })
 
   test.each([
     ['app dev', Dev, dev],
@@ -157,9 +268,14 @@ describe('app dev command', () => {
     })
   })
 
-  test('requires --use-localhost when --install-mkcert is passed', async () => {
+  test.each([false, true])('requires --use-localhost when --install-mkcert is passed, json=%s', async (json) => {
     await inTemporaryDirectory(async (tmp) => {
-      await expect(Dev.run(['--path', tmp, '--install-mkcert'], import.meta.url)).rejects.toThrow()
+      await withCapturedStandardStreams(async ({stdout}) => {
+        await expect(
+          Dev.run(['--path', tmp, '--install-mkcert', ...(json ? ['--json'] : [])], import.meta.url),
+        ).rejects.toThrow()
+        if (json) expect(JSON.parse(stdout().trim().split('\n').at(-1)!)).toHaveProperty('error.type', 'abort')
+      })
 
       expect(dev).not.toHaveBeenCalled()
       expect(devClean).not.toHaveBeenCalled()
@@ -183,21 +299,36 @@ describe('app dev command', () => {
     })
   })
 
-  test('refuses to start when app dev is already running for the same configuration', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      const {store} = mockAppAndStore(tmp)
-      vi.mocked(getTunnelMode).mockResolvedValue({mode: 'auto'})
-      const running = await acquireDevInstance({command: 'app dev', directory: tmp, key: 'shopify.app.toml'})
+  test.each([false, true])(
+    'refuses to start when app dev is already running for the same configuration, json=%s',
+    async (json) => {
+      await inTemporaryDirectory(async (tmp) => {
+        const {store} = mockAppAndStore(tmp)
+        vi.mocked(getTunnelMode).mockResolvedValue({mode: 'auto'})
+        const running = await acquireDevInstance({command: 'app dev', directory: tmp, key: 'shopify.app.toml'})
 
-      // The command's error handler renders the AbortError and exits.
-      await expect(Dev.run(['--path', tmp, '--store', store.shopDomain], import.meta.url)).rejects.toThrow()
-      await expect(
-        acquireDevInstance({command: 'app dev', directory: tmp, key: 'shopify.app.toml'}),
-      ).rejects.toMatchObject({code: DEV_INSTANCE_ALREADY_RUNNING_CODE, details: {instance: running.info}})
+        // The command's error handler renders the AbortError and exits.
+        await withCapturedStandardStreams(async ({stdout}) => {
+          await expect(
+            Dev.run(['--path', tmp, '--store', store.shopDomain, ...(json ? ['--json'] : [])], import.meta.url),
+          ).rejects.toThrow()
+          if (json)
+            expect(JSON.parse(stdout().trim().split('\n').at(-1)!)).toMatchObject({
+              error: {
+                type: 'abort',
+                code: DEV_INSTANCE_ALREADY_RUNNING_CODE,
+                details: {instance: running.info},
+              },
+            })
+        })
+        await expect(
+          acquireDevInstance({command: 'app dev', directory: tmp, key: 'shopify.app.toml'}),
+        ).rejects.toMatchObject({code: DEV_INSTANCE_ALREADY_RUNNING_CODE, details: {instance: running.info}})
 
-      expect(storeContext).not.toHaveBeenCalled()
-      expect(dev).not.toHaveBeenCalled()
-      await running.release()
-    })
-  })
+        expect(storeContext).not.toHaveBeenCalled()
+        expect(dev).not.toHaveBeenCalled()
+        await running.release()
+      })
+    },
+  )
 })

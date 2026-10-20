@@ -3,9 +3,15 @@ import {DevSessionUI} from './ui/components/DevSessionUI.js'
 import {DevSessionStatusManager} from './processes/dev-session/dev-session-status-manager.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {commandEventOutputSchema, emitCommandEvent, runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
+import {outputResult} from '@shopify/cli-kit/node/output'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
+import {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('./ui/components/DevSessionUI.js')
@@ -19,6 +25,142 @@ afterEach(() => {
 
 describe('ui', () => {
   describe('renderDev', () => {
+    test('streams session output after setup, under load, and through shutdown with a TTY', async () => {
+      vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+      vi.mocked(DevSessionUI).mockClear()
+      await inTemporaryDirectory(async (directory) => {
+        await withCapturedStandardStreams(async ({stdout, stderr}) => {
+          await runWithCommandEvents(
+            {
+              outputMode: 'json',
+              sink: (event) => outputResult(JSON.stringify(commandEventOutputSchema.validate(event))),
+            },
+            async () => {
+              const instance = await acquireDevInstance({
+                command: 'app dev',
+                directory,
+                onLog: (entry) =>
+                  emitCommandEvent({type: 'diagnostic', level: 'info', message: `${entry.source}: ${entry.message}`}),
+              })
+              const abortController = new AbortController()
+              const completed = vi.fn()
+              const burstSize = 1000
+              let lateOutput: Writable | undefined
+              const running = renderDev({
+                processes: [
+                  {
+                    prefix: 'web',
+                    action: async (targetStdout, targetStderr) => {
+                      const childStdout = instance.tee(targetStdout, {
+                        source: 'web',
+                        stream: 'stdout',
+                        stringWritesAreMessages: true,
+                      })
+                      const childStderr = instance.tee(targetStderr, {
+                        source: 'web',
+                        stream: 'stderr',
+                        stringWritesAreMessages: true,
+                      })
+                      childStdout.write('Starting without a newline')
+                      useConcurrentOutputContext({outputPrefix: 'discount'}, () => {
+                        childStdout.write('\u001b[32mBuilding function\u001b[0m')
+                        childStdout.write('Building types')
+                      })
+                      const unicode = Buffer.from('éclair\r\n')
+                      childStderr.write(unicode.subarray(0, 1))
+                      childStderr.write(unicode.subarray(1))
+                      for (let index = 0; index < burstSize; index++) childStdout.write(Buffer.from(`line ${index}\n`))
+                      lateOutput = childStdout
+                    },
+                  },
+                ],
+                previewUrl: 'https://example.com',
+                app: {id: '123', developerPlatformClient},
+                abortController,
+                shopFqdn: 'dev-store.myshopify.com',
+                devSessionStatusManager: new DevSessionStatusManager(),
+              }).then(completed)
+              try {
+                await vi.waitFor(() => expect(stdout()).toContain(`web: line ${burstSize - 1}`))
+                expect(completed).not.toHaveBeenCalled()
+                lateOutput?.write('After setup')
+                await vi.waitFor(() => expect(stdout()).toContain('web: After setup'))
+                lateOutput?.write(Buffer.from('Last partial line'))
+                abortController.abort()
+                await running
+              } finally {
+                abortController.abort()
+                await running
+                await instance.release()
+              }
+              const events = stdout()
+                .trim()
+                .split('\n')
+                .map((line) => JSON.parse(line))
+              expect(events).toHaveLength(burstSize + 6)
+              const messages = events.map((event) => event.message)
+              expect(messages).toEqual(
+                expect.arrayContaining([
+                  'web: Starting without a newline',
+                  'discount: Building function',
+                  'discount: Building types',
+                  'web: éclair',
+                  'web: After setup',
+                  'web: Last partial line',
+                ]),
+              )
+              expect(messages.filter((message) => message.startsWith('web: line '))).toEqual(
+                Array.from({length: burstSize}, (_, index) => `web: line ${index}`),
+              )
+              expect(vi.mocked(DevSessionUI)).not.toHaveBeenCalled()
+              expect(stdout()).not.toContain('\u001b')
+              expect(stderr()).toBe('')
+            },
+          )
+        })
+      })
+    })
+
+    test('a JSON process failure aborts and waits for the other processes to stop', async () => {
+      const abortController = new AbortController()
+      const failure = new Error('Process failed')
+      let stopped = false
+      const signalListeners = process.listenerCount('SIGTERM')
+      await withCapturedStandardStreams(async () => {
+        await expect(
+          runWithCommandEvents({outputMode: 'json', sink: () => {}}, () =>
+            renderDev({
+              processes: [
+                {
+                  prefix: 'failed',
+                  action: async () => {
+                    throw failure
+                  },
+                },
+                {
+                  prefix: 'watcher',
+                  action: async (_stdout, _stderr, signal) => {
+                    await new Promise<void>((resolve) =>
+                      signal.addEventListener('abort', () => resolve(), {once: true}),
+                    )
+                    await new Promise((resolve) => setTimeout(resolve, 5))
+                    stopped = true
+                  },
+                },
+              ],
+              previewUrl: 'https://example.com',
+              app: {id: '123', developerPlatformClient},
+              abortController,
+              shopFqdn: 'dev-store.myshopify.com',
+              devSessionStatusManager: new DevSessionStatusManager(),
+            }),
+          ),
+        ).rejects.toBe(failure)
+      })
+      expect(stopped).toBe(true)
+      expect(process.listenerCount('SIGTERM')).toBe(signalListeners)
+    })
+
     test("doesn't use ink when terminal doesn't support TTY", async () => {
       vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
       const concurrentProcess = {

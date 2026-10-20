@@ -1887,7 +1887,7 @@ Run the app.
 ```
 USAGE
   $ shopify app dev [--auth-alias <value>] [--checkout-cart-url <value>] [--client-id <value>]
-    [--install-mkcert --use-localhost] [--json-schema] [--localhost-port <value>] [--no-color] [--no-input]
+    [--install-mkcert --use-localhost] [-j] [--json-schema] [--localhost-port <value>] [--no-color] [--no-input]
     [--no-update] [--notify <value>] [--path <value>] [--reset | -c <value>] [--skip-dependencies-installation] [-s
     <value>] [--store-password <value>] [--subscription-product-url <value>] [-t <value>] [--theme-app-extension-port
     <value>] [--tunnel-url <value> | ] [--unsafe-validation] [--verbose]
@@ -1896,6 +1896,10 @@ FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       Store URL. Must be an existing development or Shopify Plus sandbox store.
@@ -1993,6 +1997,113 @@ DESCRIPTION
 
   Builds and previews your app on a dev store, and watches for changes. "Read more about testing apps locally"
   (https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).
+
+  With `--json`, streams diagnostic and progress events as JSON Lines to stdout until stopped. There is no final result.
+  Fatal errors use the standard JSON error envelope. Setup prompts remain on stderr; use `--no-input` for unattended
+  runs.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `CommandEvent` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/CommandDiagnosticEvent"
+      },
+      {
+        "$ref": "#/definitions/CommandProgressEvent"
+      }
+    ],
+    "title": "CommandEvent",
+    "definitions": {
+      "CommandDiagnosticEvent": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "diagnostic"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          },
+          "level": {
+            "type": "string",
+            "enum": [
+              "debug",
+              "info",
+              "warning",
+              "error"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A stable diagnostic code, included only when known."
+          }
+        },
+        "required": [
+          "type",
+          "timestamp",
+          "level",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "CommandProgressEvent": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "progress"
+          },
+          "timestamp": {
+            "$ref": "#/definitions/CommandDiagnosticEvent/properties/timestamp"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "started",
+              "updated",
+              "retrying",
+              "completed",
+              "failed"
+            ]
+          },
+          "operation": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "current": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "type",
+          "timestamp",
+          "status",
+          "operation"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app dev clean`

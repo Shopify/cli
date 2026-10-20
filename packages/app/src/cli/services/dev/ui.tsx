@@ -6,6 +6,8 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import React from 'react'
 import {render} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {commandEventOutputMode} from '@shopify/cli-kit/node/command-events'
+import {Writable} from 'stream'
 
 interface DevProps {
   processes: OutputProcess[]
@@ -40,7 +42,7 @@ export async function renderDev({
   configPath?: string
   localURL?: string
 }) {
-  if (terminalSupportsPrompting()) {
+  if (commandEventOutputMode() !== 'json' && terminalSupportsPrompting()) {
     return render(
       <DevSessionUI
         processes={processes}
@@ -76,9 +78,10 @@ async function renderDevNonInteractive({
   graphiqlUrl,
   abortController,
 }: Pick<DevProps, 'processes' | 'previewUrl' | 'graphiqlUrl' | 'abortController'>) {
-  process.stdout.write(`\nPreview URL: ${previewUrl}\n`)
-  if (graphiqlUrl) {
-    process.stdout.write(`GraphiQL URL (Admin API): ${graphiqlUrl}\n`)
+  const json = commandEventOutputMode() === 'json'
+  if (!json) {
+    process.stdout.write(`\nPreview URL: ${previewUrl}\n`)
+    if (graphiqlUrl) process.stdout.write(`GraphiQL URL (Admin API): ${graphiqlUrl}\n`)
   }
 
   const {signal} = abortController
@@ -91,8 +94,10 @@ async function renderDevNonInteractive({
     signal.addEventListener('abort', onAbort, {once: true})
     if (signal.aborted) resolve()
   })
+  // JSON events come from the session log, including output written after a watcher finishes setup.
+  const terminalOutput = new Writable({write: (_chunk, _encoding, next) => next()})
   const running = processes.map(async (concurrentProcess) =>
-    concurrentProcess.action(process.stdout, process.stderr, signal),
+    concurrentProcess.action(json ? terminalOutput : process.stdout, json ? terminalOutput : process.stderr, signal),
   )
   try {
     // A watcher can finish setup while it continues serving. Keep the session registered until abort.

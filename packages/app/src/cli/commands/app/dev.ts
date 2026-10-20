@@ -7,10 +7,13 @@ import {storeContext} from '../../services/store-context.js'
 import {getTunnelMode} from '../../services/dev/tunnel-mode.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {globalFlags, portFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag, portFlag} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
 import {basename} from '@shopify/cli-kit/node/path'
+import {commandEventOutputSchema, emitCommandEvent, runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
+import {jsonOutputEnabled} from '@shopify/cli-kit/node/environment'
+import {outputResult} from '@shopify/cli-kit/node/output'
 
 export default class Dev extends AppLinkedCommand {
   public static get requiresSyncAnalytics(): boolean {
@@ -19,13 +22,20 @@ export default class Dev extends AppLinkedCommand {
 
   static summary = 'Run the app.'
 
-  static descriptionWithMarkdown = `Builds and previews your app on a dev store, and watches for changes. [Read more about testing apps locally](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).`
+  static descriptionWithMarkdown = `Builds and previews your app on a dev store, and watches for changes. [Read more about testing apps locally](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).
+
+With \`--json\`, streams diagnostic and progress events as JSON Lines to stdout until stopped. There is no final result. Fatal errors use the standard JSON error envelope. Setup prompts remain on stderr; use \`--no-input\` for unattended runs.`
+
+  static get jsonOutputSchema() {
+    return commandEventOutputSchema
+  }
 
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
     ...appFlags,
+    ...jsonFlag,
     // The selected configuration is used with the app identified by --client-id.
     'client-id': Flags.string({
       hidden: false,
@@ -156,6 +166,14 @@ export default class Dev extends AppLinkedCommand {
         appName: appContextResult.remoteApp.title,
         clientId: appContextResult.remoteApp.apiKey,
       },
+      onLog: flags.json
+        ? (entry) =>
+            emitCommandEvent({
+              type: 'diagnostic',
+              level: entry.level ?? 'info',
+              message: entry.source === 'app dev' ? entry.message : `${entry.source}: ${entry.message}`,
+            })
+        : undefined,
     })
 
     try {
@@ -193,5 +211,13 @@ export default class Dev extends AppLinkedCommand {
       await devInstance.release()
     }
     return {app: appContextResult.app}
+  }
+
+  protected async _run<T>(): Promise<T> {
+    if (!jsonOutputEnabled(process.env, this.argv)) return super._run<T>()
+    return runWithCommandEvents(
+      {outputMode: 'json', sink: (event) => outputResult(JSON.stringify(commandEventOutputSchema.validate(event)))},
+      () => super._run<T>(),
+    )
   }
 }

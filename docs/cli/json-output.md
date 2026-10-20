@@ -240,6 +240,19 @@ events from stderr; missing required input then produces a fatal error instead o
 
 ## Exempt only streaming commands
 
+`shopify app dev --json` streams compact JSON Lines on stdout for the lifetime of the dev session. Each line is a
+shared diagnostic or progress event, or the shared `{error: {...}}` envelope for a fatal failure. There is no final
+success result. Preview errors remain diagnostic events so that the developer can fix the app while dev keeps running.
+Process messages include their source prefix in `message`. The session's existing status and log files remain available.
+
+```jsonl
+{"type":"diagnostic","timestamp":"2026-10-20T09:00:00Z","level":"info","message":"web: Server listening on 3000"}
+{"type":"diagnostic","timestamp":"2026-10-20T09:00:01Z","level":"info","message":"Ready, watching for changes in your app"}
+```
+
+Setup prompts still use stderr. Use `--json --no-input` for unattended runs. `app dev --json-schema` describes the
+stream's event and fatal error formats. This streaming contract does not change the single-document rule for finite commands.
+
 Long-lived commands that produce an open-ended event stream don't have one finite result. Track these exemptions in
 `packages/eslint-plugin-cli/rules/json-output-command-exceptions.js`, in its streaming section. Add the command's
 repository-relative path:
