@@ -103,8 +103,9 @@ export async function cleanResultsDirectory(appDirectory: string, resultsKey: st
 }
 
 /**
- * Removes every results directory under `<app directory>/.shopify/app-security/` and returns their paths.
- * Files that sit directly in it are left alone. Nothing is removed if any entry is a symbolic link.
+ * Removes every results directory under `<app directory>/.shopify/app-security/` and returns their paths, sorted so
+ * that the order doesn't depend on the filesystem. Files that sit directly in it are left alone. Nothing is removed if
+ * any entry is a symbolic link.
  */
 export async function cleanAllResultsDirectories(appDirectory: string): Promise<string[]> {
   const directory = appSecurityDirectory(appDirectory)
@@ -113,7 +114,10 @@ export async function cleanAllResultsDirectories(appDirectory: string): Promise<
   const paths = (await readdir(directory)).map((entry) => joinPath(directory, entry))
   const entries = await Promise.all(paths.map(async (path) => ({path, stats: await lstat(path)})))
   entries.filter(({stats}) => stats.isSymbolicLink()).forEach(({path}) => refuseArtifactPath(path))
-  const resultsDirectories = entries.filter(({stats}) => stats.isDirectory()).map(({path}) => path)
+  const resultsDirectories = entries
+    .filter(({stats}) => stats.isDirectory())
+    .map(({path}) => path)
+    .sort()
 
   await Promise.all(resultsDirectories.map(removeResultsDirectory))
   return resultsDirectories

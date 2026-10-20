@@ -3,9 +3,10 @@ import {requireResultsDirectory} from '../../../services/app-security-results.js
 import {resolveAppDirectory, resolveAppSecuritySelection} from '../../../services/app-security-selection.js'
 import securityClean from '../../../services/security-clean.js'
 import {renderSecurityCleanResult} from '../../../services/security-clean/result.js'
+import {appSecurityCleanJsonOutputSchema} from '../../../services/security-clean/types.js'
 import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class SecurityClean extends BaseCommand {
   static summary = 'Remove local app security check results.'
@@ -14,11 +15,16 @@ export default class SecurityClean extends BaseCommand {
 
 Use \`--all\` to delete every results directory under \`.shopify/app-security/\` instead. \`--all\` takes neither \`--config\` nor \`--client-id\`, and with \`--without-app-config\` it doesn't need \`--client-id\`.`
 
+  static get jsonOutputSchema() {
+    return appSecurityCleanJsonOutputSchema
+  }
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
     ...appSecurityCleanSelectionFlags,
+    ...jsonFlag,
     // Destructive: must be typed, never inherited from the environment.
     // eslint-disable-next-line @shopify/cli/command-flags-with-env
     all: Flags.boolean({
@@ -42,7 +48,6 @@ Use \`--all\` to delete every results directory under \`.shopify/app-security/\`
     if (!options.all) await requireResultsDirectory(options.selection, flags.path)
 
     const result = await securityClean(options)
-    const appDirectory = options.all ? options.appDirectory : options.selection.appDirectory
-    renderSecurityCleanResult(result, appDirectory)
+    renderSecurityCleanResult(result, options, flags.json ? 'json' : 'text')
   }
 }

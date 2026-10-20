@@ -4371,7 +4371,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Deletes the results directory, `.shopify/app-security/<results key>/`, without asking. The results key is `--client-id` when you pass it, and otherwise the name of the app configuration file without `.toml`. Other results directories are left alone. Prints each removed path.\n\nUse `--all` to delete every results directory under `.shopify/app-security/` instead. `--all` takes neither `--config` nor `--client-id`, and with `--without-app-config` it doesn't need `--client-id`.",
+      "description": "Deletes the results directory, `.shopify/app-security/<results key>/`, without asking. The results key is `--client-id` when you pass it, and otherwise the name of the app configuration file without `.toml`. Other results directories are left alone. Prints each removed path.\n\nUse `--all` to delete every results directory under `.shopify/app-security/` instead. `--all` takes neither `--config` nor `--client-id`, and with `--without-app-config` it doesn't need `--client-id`.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppSecurityCleanResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"status\": {\n      \"type\": \"string\",\n      \"const\": \"success\"\n    },\n    \"changed\": {\n      \"type\": \"boolean\",\n      \"description\": \"Whether any results directory was removed.\"\n    },\n    \"app\": {\n      \"anyOf\": [\n        {\n          \"$ref\": \"#/definitions/AppSecurityApp\"\n        },\n        {\n          \"$ref\": \"#/definitions/AppSecurityCleanAllApp\"\n        }\n      ],\n      \"description\": \"The selected app. With --all, only its directory.\"\n    },\n    \"resultsDirectories\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"description\": \"The absolute paths of the removed results directories, sorted. Empty when there was nothing to remove.\"\n    }\n  },\n  \"required\": [\n    \"status\",\n    \"changed\",\n    \"app\",\n    \"resultsDirectories\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppSecurityCleanResult\",\n  \"definitions\": {\n    \"AppSecurityApp\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"directory\": {\n          \"type\": \"string\",\n          \"description\": \"The absolute app directory.\"\n        },\n        \"configurationPath\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"The absolute path of the selected app configuration file, or null with --without-app-config.\"\n        },\n        \"clientId\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"minLength\": 1\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"The --client-id value when passed, otherwise the app configuration's client_id. Null when the app configuration isn't linked.\"\n        }\n      },\n      \"required\": [\n        \"directory\",\n        \"configurationPath\",\n        \"clientId\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppSecurityCleanAllApp\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"directory\": {\n          \"type\": \"string\",\n          \"description\": \"The absolute app directory.\"\n        }\n      },\n      \"required\": [\n        \"directory\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Deletes the results directory, `.shopify/app-security/<results key>/`, without asking. The results key is `--client-id` when you pass it, and otherwise the name of the app configuration file without `.toml`. Other results directories are left alone. Prints each removed path.\n\nUse `--all` to delete every results directory under `.shopify/app-security/` instead. `--all` takes neither `--config` nor `--client-id`, and with `--without-app-config` it doesn't need `--client-id`.",
       "enableJsonFlag": false,
       "flags": {
@@ -4406,6 +4406,15 @@
           "multiple": false,
           "name": "config",
           "type": "option"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
         },
         "json-schema": {
           "allowNo": false,

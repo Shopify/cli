@@ -7,7 +7,7 @@ export interface SecurityCleanResult {
 }
 
 /** `all` removes every results directory under the app directory; otherwise only the selection's. */
-type SecurityCleanOptions = {all: true; appDirectory: string} | {all: false; selection: AppSecuritySelection}
+export type SecurityCleanOptions = {all: true; appDirectory: string} | {all: false; selection: AppSecuritySelection}
 
 export interface SecurityCleanDependencies {
   cleanResults(appDirectory: string, resultsKey: string): Promise<string[]>
