@@ -142,6 +142,19 @@ const agentFindings: AgentFindingsDocument = {
   ],
 }
 
+/** The deterministic document with line 0 on its first finding, as a hand edit could leave it. */
+function withZeroLine(document: DeterministicFindingsDocument): DeterministicFindingsDocument {
+  const [first, ...rest] = document.checks
+  const [finding, ...otherFindings] = first!.findings
+  return {
+    ...document,
+    checks: [
+      {...first!, findings: [{...finding!, location: {...finding!.location, line: 0}}, ...otherFindings]},
+      ...rest,
+    ],
+  }
+}
+
 interface ResultsFiles {
   deterministic?: unknown
   agent?: unknown
@@ -595,6 +608,59 @@ describe('app security review command boundary', () => {
         },
       })
       expect(result.stderr).toBe('')
+    })
+  })
+
+  test('--json with a hand-edited line 0 writes the invalid results file error document', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const appDirectory = await createApp(directory, {deterministic: withZeroLine(deterministicFindings)})
+
+      const result = await runJsonCommand(['--path', directory])
+
+      expect(result.exitCode).toBe(1)
+      expect(JSON.parse(result.stdout)).toStrictEqual({
+        error: {
+          type: 'abort',
+          message: 'The app security check results could not be loaded because a results file is invalid.',
+          code: 'results-file-invalid',
+          nextSteps: [
+            expect.stringMatching(
+              /^Run shopify app security check --path .+ to regenerate deterministic-findings\.json\.$/,
+            ),
+            expect.stringMatching(/^Or run shopify app security clean --path .+ to delete both results files/),
+          ],
+          customSections: [
+            {
+              title: renderedResultsPath(appDirectory, 'deterministic-findings.json'),
+              body: 'checks[0].findings[0].location.line: Number must be greater than 0',
+            },
+          ],
+          details: {
+            files: [
+              {
+                path: resultsPath(appDirectory, 'deterministic-findings.json'),
+                errors: ['checks[0].findings[0].location.line: Number must be greater than 0'],
+              },
+            ],
+          },
+        },
+      })
+      expect(result.stderr).toBe('')
+    })
+  })
+
+  test('without --json, a hand-edited line 0 renders the invalid results file error and exits 1', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory, {deterministic: withZeroLine(deterministicFindings)})
+
+      const result = await runCommand(['--path', directory])
+
+      expect(result.exitCode).toBe(1)
+      expect(result.stdout).toBe('')
+      const text = boxText(result.stderr)
+      expect(text).toContain('The app security check results could not be loaded because a results file is invalid.')
+      expect(text).toContain('checks[0].findings[0].location.line: Number must be greater than 0')
+      expect(text).toContain('Run `shopify app security check')
     })
   })
 

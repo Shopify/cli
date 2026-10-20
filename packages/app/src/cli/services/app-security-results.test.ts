@@ -298,6 +298,35 @@ describe('loadAppSecurityResults', () => {
       })
     })
 
+    test('rejects a hand-edited value that the CLI never writes, such as line 0', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const selection = await createApp(directory)
+        const paths = artifactPathsFor(selection)
+        const [first, ...rest] = agentFindingsDocument.checks
+        const [finding, ...otherFindings] = first!.findings
+        const document = {
+          ...agentFindingsDocument,
+          checks: [
+            {...first!, findings: [{...finding!, location: {...finding!.location, line: 0}}, ...otherFindings]},
+            ...rest,
+          ],
+        }
+        await writeInvalidFile(paths.agentFindingsPath, JSON.stringify(document))
+
+        const error = await loadError(selection)
+
+        expect(error.code).toBe('results-file-invalid')
+        expect(error.details).toStrictEqual({
+          files: [
+            {
+              path: resolve(paths.agentFindingsPath),
+              errors: ['checks[0].findings[0].location.line: Number must be greater than 0'],
+            },
+          ],
+        })
+      })
+    })
+
     test('lists every translation error of a file on its own line without repeating the path', async () => {
       await inTemporaryDirectory(async (directory) => {
         const selection = await createApp(directory)
