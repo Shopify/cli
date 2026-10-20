@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-imports -- integration coverage uses real temporary repositories */
 import {git, isolateGitConfig} from './git-test-helpers.js'
 import {scanAppDirectory as scanApp, scanDirectory as scan} from './scan-directory.js'
-import {securityExitCode} from '../../app-security-api.js'
+import {blockedCheckCount} from '../../app-security-api.js'
 import {formatJson} from '../output/format.js'
 import {getRegistry} from '../registry/index.js'
 import {DETERMINISTIC_CHECKS, scan as scanInput} from '../scanners/index.js'
@@ -115,9 +115,9 @@ describe('dependency automation scanner integration', () => {
           findings: [expect.objectContaining({location: {file: 'package.json'}})],
         }),
       )
-      expect(securityExitCode({...execution, elapsedMilliseconds: 0}, 'low')).toBe(1)
-      expect(securityExitCode({...execution, elapsedMilliseconds: 0}, 'medium')).toBe(0)
-      expect(securityExitCode({...execution, elapsedMilliseconds: 0}, 'none')).toBe(0)
+      expect(blockedCheckCount({...execution, elapsedMilliseconds: 0}, 'low')).toBe(1)
+      expect(blockedCheckCount({...execution, elapsedMilliseconds: 0}, 'medium')).toBe(0)
+      expect(blockedCheckCount({...execution, elapsedMilliseconds: 0}, 'none')).toBe(0)
     })
   })
 
@@ -140,7 +140,7 @@ describe('dependency automation scanner integration', () => {
           findings: 0,
           inspected_files: expectedFiles,
         })
-        expect(securityExitCode({...execution, elapsedMilliseconds: 0}, 'low')).toBe(0)
+        expect(blockedCheckCount({...execution, elapsedMilliseconds: 0}, 'low')).toBe(0)
         expect(JSON.stringify(execution.deterministicFindings)).not.toContain('local>org/renovate-config')
         // Outside any repository, gathering stops after asking whether the directory is ignored and probing for a repository.
         const untrusted = ['-c', 'core.fsmonitor=', '-c', 'safe.bareRepository=explicit', '-c', 'alias.remote-=']

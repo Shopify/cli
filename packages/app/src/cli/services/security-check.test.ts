@@ -1,113 +1,26 @@
-import securityCheck, {appSecurityInstructionsPrompt, literalGlobPattern} from './security-check.js'
-import {
-  formatAppSecurityCommand,
-  quoteShellArgument,
-  resolveAppSecurityCommands,
-  shellForPlatform,
-} from './app-security-commands.js'
+import securityCheck from './security-check.js'
+import {resolveAppSecurityCommands} from './app-security-commands.js'
 import {appSecurityArtifactPaths, writeCheckArtifacts} from './app-security-artifacts.js'
 import {resolveAppSecuritySelection} from './app-security-selection.js'
 import {validAppConfiguration} from './app-security-selection.test-data.js'
-import {listAppSecurityFiles} from './app-security-api.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {
-  fileExists,
-  fileRealPath,
-  inTemporaryDirectory,
-  matchGlob,
-  mkdir,
-  readFile,
-  writeFile,
-} from '@shopify/cli-kit/node/fs'
-import {cwd, joinPath, relativePath} from '@shopify/cli-kit/node/path'
-import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {afterEach, describe, expect, test, vi} from 'vitest'
-import {symlink} from 'node:fs/promises'
-import type {AppSecurityExecution} from './app-security-api.js'
-import type {AppSecuritySelection, AppSecuritySelectionOptions} from './app-security-selection.js'
-import type {AppSecurityInstructionsDestination} from './security-check.js'
-import type {
-  AgentChecks,
-  AppSecurityScope,
-  DeterministicFindingsDocument,
-  ScanResult,
-} from './app-security-engine/index.js'
-
-const scan: ScanResult = {
-  version: '0.1.0',
-  timestamp: '2026-08-24T00:00:00.000Z',
-  app: {name: 'Test', type: 'public'},
-  detection: {framework: 'none', surface: 'config_only', languages: []},
-  capabilities: {
-    theme_app_extension: false,
-    app_embed: false,
-    embedded_app: false,
-    script_tags: false,
-    webhooks: false,
-    app_proxy: false,
-    storefront_metafield_writes: false,
-    has_backend: false,
-    declared_ip_allowlist: false,
-    checkout_extension: false,
-  },
-  scan: {
-    timestamp: '2026-08-24T00:00:00.000Z',
-    security_version: '0.1.0',
-    files_scanned: 1,
-    rules_run: 1,
-    rules_skipped: 0,
-    files_skipped_count: 0,
-    coverage_gaps: [],
-    checks_executed: [],
-  },
-  issues: [],
-}
-
-const engine = {
-  name: 'shopify-app-security',
-  version: '1.2.3',
-  ruleset: '2026.08.28',
-}
-
-const deterministicFindings: DeterministicFindingsDocument = {
-  schema_version: 1,
-  source: 'deterministic',
-  engine: {name: 'shopify-app-security', version: '1.2.3', ruleset: '2026.08.28'},
-  generated_at: '2026-08-24T00:00:00.000Z',
-  detection: scan.detection,
-  coverage: {
-    files_scanned: 1,
-    files_skipped: [],
-    gaps: [],
-    scope: {include_dirs: [], excludes: [], no_git_ignore: false},
-    scan_directories: [{directory: '.', origin: 'app_directory'}],
-  },
-  checks: [],
-}
-
-const agentChecks: AgentChecks = {
-  schema_version: 1,
-  engine: {name: 'shopify-app-security', version: '1.2.3'},
-  generated_at: '2026-08-24T00:00:00.000Z',
-  checks: Array.from({length: 31}, (_, index) => ({
-    id: `CHECK_${index}`,
-    version: 1,
-    prompt: 'prompt',
-    severity: 'medium' as const,
-    docs_url: `https://shopify.dev/docs/apps/build/security/app-security-checks/check-${index}`,
-  })),
-  instructions: 'review',
-}
-
-const scanExecution: AppSecurityExecution = {
-  scan,
-  ignoredScanDirectories: [],
-  otherAppDirectories: [],
-  deterministicFindings,
   agentChecks,
-  engine,
-  elapsedMilliseconds: 12,
-}
+  committedSecretIssue,
+  deterministicFindings,
+  scanExecution,
+  scan,
+} from './security-check.test-data.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {fileExists, fileRealPath, inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {cwd, joinPath, relativePath} from '@shopify/cli-kit/node/path'
+import {afterEach, describe, expect, test, vi} from 'vitest'
+import type {AppSecurityExecution} from './app-security-api.js'
+import type {
+  AppSecuritySelection,
+  AppSecuritySelectionOptions,
+  DeclinedAppSecuritySelection,
+} from './app-security-selection.js'
+import type {AppSecurityScope, DeterministicFindingsDocument} from './app-security-engine/index.js'
 
 const artifacts = {
   deterministicFindingsPath: '/tmp/unlinked-app/.shopify/app-security/deterministic-findings.json',
@@ -141,62 +54,9 @@ function stagingSelection(): AppSecuritySelection {
   }
 }
 
-describe('literalGlobPattern', () => {
-  afterEach(() => {
-    vi.unstubAllEnvs()
-  })
-
-  test.each([
-    ['apps/[child]', 'apps/c'],
-    ['apps/{a,b}', 'apps/a'],
-    ['apps/a*b', 'apps/aXb'],
-    ['apps/x?y', 'apps/xzy'],
-    ['#child', 'child'],
-    ['!child', 'src'],
-  ])('gives a glob that matches %s and not %s', (directory, sibling) => {
-    const pattern = literalGlobPattern(directory)
-
-    expect(matchGlob(directory, pattern)).toBe(true)
-    expect(matchGlob(sibling, pattern)).toBe(false)
-  })
-
-  test('gives an --exclude that removes only that directory from the gathered files', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const root = await fileRealPath(directory)
-      await Promise.all(['!child', '[child]', 'c', 'src'].map((name) => mkdir(joinPath(root, name))))
-      await Promise.all([
-        writeFile(joinPath(root, 'shopify.app.toml'), validAppConfiguration()),
-        writeFile(joinPath(root, '!child', 'shopify.app.toml'), 'name = "Negated"\n'),
-        writeFile(joinPath(root, '[child]', 'shopify.app.toml'), 'name = "Bracketed"\n'),
-        writeFile(joinPath(root, 'c', 'index.ts'), 'export const c = true\n'),
-        writeFile(joinPath(root, 'src', 'index.ts'), 'export const src = true\n'),
-      ])
-      vi.stubEnv('INIT_CWD', root)
-
-      const gathered = await listAppSecurityFiles({
-        appDirectory: root,
-        scanDirectories: [root],
-        requestedScanDirectories: [root],
-        excludePatterns: ['!child', '[child]'].map(literalGlobPattern),
-      })
-
-      expect(gathered.paths).toEqual(['c/index.ts', 'shopify.app.toml', 'src/index.ts'])
-      expect(gathered.otherAppDirectories).toEqual([])
-    })
-  })
-})
-
-/** The warning for a directory that holds another app configuration, quoted for the shell the tests run in. */
-function otherAppWarning(displayPath: string, excludePattern = displayPath) {
-  return {
-    headline: `${displayPath} holds another app's configuration, so its files are scanned as part of this app.`,
-    body: ['Use', {command: `--exclude ${quoteShellArgument(excludePattern, shellForPlatform())}`}, 'to leave it out.'],
-  }
-}
-
 function testDependencies(
   execution: AppSecurityExecution = scanExecution,
-  selection: AppSecuritySelection = configSelection,
+  selection: AppSecuritySelection | DeclinedAppSecuritySelection = configSelection,
 ) {
   return {
     resolveSelection: vi.fn(async () => selection),
@@ -208,13 +68,6 @@ function testDependencies(
     })),
     writeArtifacts: vi.fn(async () => artifacts),
     canPrompt: vi.fn(() => false),
-    selectInstructionsDestination: vi.fn(async (): Promise<AppSecurityInstructionsDestination> => 'nothing'),
-    deliverInstructions: vi.fn(async () => {}),
-    output: vi.fn(),
-    renderInfo: vi.fn(),
-    renderWarning: vi.fn(),
-    renderReport: vi.fn(),
-    setExitCode: vi.fn(),
     recordMetadata: vi.fn(async () => {}),
   }
 }
@@ -223,10 +76,7 @@ function testOptions() {
   return {
     directory: appDirectory,
     withoutAppConfig: false,
-    verbose: false,
     blocking: 'none' as const,
-    printInstructions: false,
-    skipInstructions: false,
     includeDirs: [],
     excludePatterns: [],
     noGitIgnore: false,
@@ -239,10 +89,10 @@ describe('securityCheck', () => {
     vi.unstubAllEnvs()
   })
 
-  test('executes, writes artifacts, then renders a report', async () => {
+  test('executes, writes artifacts, then returns the scan', async () => {
     const dependencies = testDependencies()
 
-    await securityCheck({...testOptions(), verbose: true, blocking: 'high'}, dependencies)
+    const check = await securityCheck({...testOptions(), blocking: 'high'}, dependencies)
 
     expect(dependencies.resolveSelection).toHaveBeenCalledWith({
       path: appDirectory,
@@ -267,33 +117,29 @@ describe('securityCheck', () => {
       deterministicFindings,
       agentChecks,
     })
-    expect(dependencies.renderReport).toHaveBeenCalledWith({
-      scan,
+    expect(check).toEqual({
+      kind: 'scanned',
       selection: configSelection,
-      scanDirectories,
-      engine,
-      verbose: true,
-      elapsedMilliseconds: 12,
+      resultsKey: 'shopify.app',
       commands: commandsFor(),
-      deterministicFindingsPath: artifacts.deterministicFindingsPath,
-      agentChecksPath: artifacts.agentChecksPath,
-      agentCheckCount: 31,
+      scope: noScope,
+      scanDirectories,
+      execution: scanExecution,
+      artifacts,
+      blocking: {level: 'high', blockedChecks: 0},
     })
-    expect(dependencies.output).not.toHaveBeenCalled()
   })
 
   test('forwards the config name and includes --config in generated commands', async () => {
     const dependencies = testDependencies(scanExecution, stagingSelection())
 
-    await securityCheck({...testOptions(), configName: 'staging'}, dependencies)
+    const check = await securityCheck({...testOptions(), configName: 'staging'}, dependencies)
 
     expect(dependencies.resolveSelection).toHaveBeenCalledWith(expect.objectContaining({config: 'staging'}))
     expect(dependencies.execute).toHaveBeenCalledWith(
       expect.objectContaining({appConfigFilePath: `${appDirectory}/shopify.app.staging.toml`}),
     )
-    expect(dependencies.renderReport).toHaveBeenCalledWith(
-      expect.objectContaining({commands: commandsFor(stagingSelection())}),
-    )
+    expect(check).toMatchObject({commands: commandsFor(stagingSelection())})
   })
 
   test('scans with the --client-id override as the effective client ID', async () => {
@@ -305,20 +151,18 @@ describe('securityCheck', () => {
     expect(dependencies.execute).toHaveBeenCalledWith(expect.objectContaining({clientId: 'flag-client-id'}))
   })
 
-  test('forwards the scope flags to the scan and repeats them in generated commands and instructions', async () => {
+  test('forwards the scope flags to the scan and repeats them in generated commands', async () => {
     const dependencies = testDependencies()
-    dependencies.canPrompt.mockReturnValue(true)
-    dependencies.selectInstructionsDestination.mockResolvedValue('print')
     const excludePatterns = ['generated', '../shared/**']
 
-    await securityCheck({...testOptions(), excludePatterns, noGitIgnore: true}, dependencies)
+    const check = await securityCheck({...testOptions(), excludePatterns, noGitIgnore: true}, dependencies)
 
-    const commands = commandsFor(configSelection, {include_dirs: [], excludes: excludePatterns, no_git_ignore: true})
+    const scope = {include_dirs: [], excludes: excludePatterns, no_git_ignore: true}
+    const commands = commandsFor(configSelection, scope)
     expect(commands.scan.args).toContainEqual({flag: '--exclude', value: 'generated'})
     expect(commands.scan.args).toContain('--no-git-ignore')
     expect(dependencies.execute).toHaveBeenCalledWith(expect.objectContaining({excludePatterns, noGitIgnore: true}))
-    expect(dependencies.renderReport).toHaveBeenCalledWith(expect.objectContaining({commands}))
-    expect(dependencies.deliverInstructions).toHaveBeenCalledWith(expect.objectContaining({commands}))
+    expect(check).toMatchObject({commands, scope})
   })
 
   test('scans each --include-dir after the app directory, reports it, and repeats it before --exclude', async () => {
@@ -327,11 +171,9 @@ describe('securityCheck', () => {
       vi.stubEnv('INIT_CWD', directory)
       const backend = await fileRealPath(joinPath(directory, 'backend'))
       const dependencies = testDependencies()
-      dependencies.canPrompt.mockReturnValue(true)
-      dependencies.selectInstructionsDestination.mockResolvedValue('print')
       const options = {...testOptions(), includeDirs: ['backend', './backend'], excludePatterns: ['generated']}
 
-      await securityCheck(options, dependencies)
+      const check = await securityCheck(options, dependencies)
 
       expect(dependencies.execute).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -339,26 +181,21 @@ describe('securityCheck', () => {
           requestedScanDirectories: [appDirectory, backend],
         }),
       )
-      const commands = commandsFor(configSelection, {
-        include_dirs: ['backend', './backend'],
-        excludes: ['generated'],
-        no_git_ignore: false,
-      })
+      const scope = {include_dirs: ['backend', './backend'], excludes: ['generated'], no_git_ignore: false}
+      const commands = commandsFor(configSelection, scope)
       expect(commands.scan.args.slice(-3)).toEqual([
         {flag: '--include-dir', value: 'backend'},
         {flag: '--include-dir', value: './backend'},
         {flag: '--exclude', value: 'generated'},
       ])
-      expect(dependencies.renderReport).toHaveBeenCalledWith(
-        expect.objectContaining({
-          commands,
-          scanDirectories: [
-            {directory: appDirectory, origin: 'app_directory'},
-            {directory: backend, origin: 'include_dir'},
-          ],
-        }),
-      )
-      expect(dependencies.deliverInstructions).toHaveBeenCalledWith(expect.objectContaining({commands}))
+      expect(check).toMatchObject({
+        commands,
+        scope,
+        scanDirectories: [
+          {directory: appDirectory, origin: 'app_directory'},
+          {directory: backend, origin: 'include_dir'},
+        ],
+      })
     })
   })
 
@@ -370,7 +207,7 @@ describe('securityCheck', () => {
       const sharedTheme = '/tmp/shared/theme'
       const dependencies = testDependencies(scanExecution, {...configSelection, appConfigDirectories: [sharedTheme]})
 
-      const resolution = await securityCheck({...testOptions(), includeDirs: ['backend']}, dependencies)
+      const check = await securityCheck({...testOptions(), includeDirs: ['backend']}, dependencies)
 
       expect(dependencies.execute).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -379,18 +216,14 @@ describe('securityCheck', () => {
           appConfigDirectories: [sharedTheme],
         }),
       )
-      expect(dependencies.renderReport).toHaveBeenCalledWith(
-        expect.objectContaining({
-          scanDirectories: [
-            {directory: appDirectory, origin: 'app_directory'},
-            {directory: backend, origin: 'include_dir'},
-            {directory: sharedTheme, origin: 'app_config_directory'},
-          ],
-        }),
-      )
-      expect(resolution.commands).toEqual(
-        commandsFor(configSelection, {include_dirs: ['backend'], excludes: [], no_git_ignore: false}),
-      )
+      expect(check).toMatchObject({
+        scanDirectories: [
+          {directory: appDirectory, origin: 'app_directory'},
+          {directory: backend, origin: 'include_dir'},
+          {directory: sharedTheme, origin: 'app_config_directory'},
+        ],
+        commands: commandsFor(configSelection, {include_dirs: ['backend'], excludes: [], no_git_ignore: false}),
+      })
     })
   })
 
@@ -426,86 +259,20 @@ describe('securityCheck', () => {
     })
   })
 
-  test('warns once for each scan directory that Git ignores, relative to the working directory', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const realDirectory = await fileRealPath(directory)
-      vi.stubEnv('INIT_CWD', directory)
-      const dependencies = testDependencies({
-        ...scanExecution,
-        ignoredScanDirectories: [joinPath(realDirectory, 'unlinked-app'), realDirectory],
-      })
+  test('returns the scan directories that Git ignores and the directories that hold another app configuration', async () => {
+    const execution = {
+      ...scanExecution,
+      ignoredScanDirectories: [joinPath(appDirectory, 'vendor')],
+      otherAppDirectories: [joinPath(appDirectory, 'apps', 'child')],
+    }
+    const dependencies = testDependencies(execution)
 
-      await securityCheck(testOptions(), dependencies)
+    const check = await securityCheck(testOptions(), dependencies)
 
-      expect(dependencies.renderWarning).toHaveBeenCalledTimes(2)
-      expect(dependencies.renderWarning).toHaveBeenNthCalledWith(1, {
-        headline: 'unlinked-app is ignored by Git, so only the files Git tracks in it are scanned.',
-        body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
-      })
-      expect(dependencies.renderWarning).toHaveBeenNthCalledWith(2, {
-        headline: '. is ignored by Git, so only the files Git tracks in it are scanned.',
-        body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
-      })
-    })
+    expect(check).toMatchObject({kind: 'scanned', execution})
   })
 
-  test('warns once for each directory that holds another app configuration, with the --exclude that leaves it out', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const realDirectory = await fileRealPath(directory)
-      vi.stubEnv('INIT_CWD', directory)
-      const dependencies = testDependencies({
-        ...scanExecution,
-        otherAppDirectories: [joinPath(realDirectory, 'apps', 'child'), joinPath(realDirectory, '..', 'backend')],
-      })
-
-      await securityCheck(testOptions(), dependencies)
-
-      expect(dependencies.renderWarning).toHaveBeenCalledTimes(2)
-      expect(dependencies.renderWarning).toHaveBeenNthCalledWith(1, otherAppWarning('apps/child'))
-      expect(dependencies.renderWarning).toHaveBeenNthCalledWith(2, otherAppWarning('../backend'))
-    })
-  })
-
-  test('escapes and quotes a directory name that is glob and shell syntax', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      vi.stubEnv('INIT_CWD', directory)
-      const dependencies = testDependencies({
-        ...scanExecution,
-        otherAppDirectories: [joinPath(await fileRealPath(directory), 'apps', '$(touch PWNED)')],
-      })
-
-      await securityCheck(testOptions(), dependencies)
-
-      expect(dependencies.renderWarning).toHaveBeenCalledWith(
-        otherAppWarning('apps/$(touch PWNED)', 'apps/$\\(touch PWNED\\)'),
-      )
-    })
-  })
-
-  test('shows warnings relative to the real working directory when it is reached through a symbolic link', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const app = joinPath(await fileRealPath(directory), 'app')
-      await mkdir(app)
-      const link = joinPath(directory, 'linked-app')
-      await symlink(app, link, 'dir')
-      vi.stubEnv('INIT_CWD', link)
-      const dependencies = testDependencies({...scanExecution, otherAppDirectories: [joinPath(app, 'apps', 'child')]})
-
-      await securityCheck(testOptions(), dependencies)
-
-      expect(dependencies.renderWarning).toHaveBeenCalledWith(otherAppWarning('apps/child'))
-    })
-  })
-
-  test('does not warn when no scan directory is ignored', async () => {
-    const dependencies = testDependencies()
-
-    await securityCheck(testOptions(), dependencies)
-
-    expect(dependencies.renderWarning).not.toHaveBeenCalled()
-  })
-
-  test('re-scanning overwrites the check artifacts without prompting and leaves agent findings untouched', async () => {
+  test('re-scanning overwrites the check artifacts and leaves agent findings untouched', async () => {
     await inTemporaryDirectory(async (appRoot) => {
       const paths = appSecurityArtifactPaths(appRoot, 'shopify.app')
       await mkdir(paths.resultsDirectory)
@@ -528,30 +295,27 @@ describe('securityCheck', () => {
         canPrompt: vi.fn(() => true),
       }
 
-      await securityCheck({...testOptions(), directory: appRoot, skipInstructions: true}, dependencies)
+      const check = await securityCheck({...testOptions(), directory: appRoot}, dependencies)
 
       expect(JSON.parse(await readFile(paths.deterministicFindingsPath))).toEqual(rescanFindings)
       expect(JSON.parse(await readFile(paths.agentChecksPath))).toEqual(agentChecks)
       await expect(readFile(paths.agentFindingsPath)).resolves.toBe(agentFindings)
-      expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
-      expect(dependencies.renderReport).toHaveBeenCalledWith(
-        expect.objectContaining({
-          deterministicFindingsPath: paths.deterministicFindingsPath,
-          agentChecksPath: paths.agentChecksPath,
-        }),
-      )
-      expect(dependencies.setExitCode).not.toHaveBeenCalled()
+      expect(check).toMatchObject({
+        kind: 'scanned',
+        artifacts: {deterministicFindingsPath: paths.deterministicFindingsPath, agentChecksPath: paths.agentChecksPath},
+        blocking: {level: 'none', blockedChecks: 0},
+      })
     })
   })
 
   test('allows prompts only in an interactive terminal', async () => {
     const interactive = testDependencies()
     interactive.canPrompt.mockReturnValue(true)
-    await securityCheck({...testOptions(), skipInstructions: true}, interactive)
+    await securityCheck(testOptions(), interactive)
     expect(interactive.resolveSelection).toHaveBeenCalledWith(expect.objectContaining({allowPrompts: true}))
 
     const nonInteractive = testDependencies()
-    await securityCheck({...testOptions(), skipInstructions: true}, nonInteractive)
+    await securityCheck(testOptions(), nonInteractive)
     expect(nonInteractive.resolveSelection).toHaveBeenCalledWith(expect.objectContaining({allowPrompts: false}))
   })
 
@@ -564,9 +328,10 @@ describe('securityCheck', () => {
     }
     const dependencies = testDependencies(scanExecution, selection)
     dependencies.canPrompt.mockReturnValue(true)
+    const onSelectionPrompted = vi.fn()
 
-    await securityCheck(
-      {...testOptions(), withoutAppConfig: true, clientId: 'flag-client-id', skipInstructions: true},
+    const check = await securityCheck(
+      {...testOptions(), withoutAppConfig: true, clientId: 'flag-client-id', onSelectionPrompted},
       dependencies,
     )
 
@@ -585,11 +350,11 @@ describe('securityCheck', () => {
       noGitIgnore: false,
     })
     expect(dependencies.writeArtifacts).toHaveBeenCalledWith(appDirectory, 'flag-client-id', expect.anything())
-    expect(dependencies.renderInfo).not.toHaveBeenCalled()
-    expect(dependencies.renderReport).toHaveBeenCalledWith(expect.objectContaining({commands: commandsFor(selection)}))
+    expect(onSelectionPrompted).not.toHaveBeenCalled()
+    expect(check).toMatchObject({commands: commandsFor(selection)})
   })
 
-  test('shows the generated check command after the no-TOML prompt flow', async () => {
+  test('passes the generated check command on after the no-TOML prompt flow, before scanning', async () => {
     const selection: AppSecuritySelection = {
       kind: 'no-config',
       appDirectory,
@@ -598,21 +363,22 @@ describe('securityCheck', () => {
     }
     const dependencies = testDependencies(scanExecution, selection)
     dependencies.canPrompt.mockReturnValue(true)
+    const onSelectionPrompted = vi.fn()
 
-    await securityCheck({...testOptions(), skipInstructions: true}, dependencies)
+    await securityCheck({...testOptions(), onSelectionPrompted}, dependencies)
 
-    const {scan} = commandsFor(selection)
-    expect(scan.args.slice(-2)).toEqual([{flag: '--client-id', value: 'picked-client-id'}, '--without-app-config'])
-    expect(dependencies.renderInfo).toHaveBeenCalledWith({
-      headline: 'To skip these prompts next time, run:',
-      body: [{command: formatAppSecurityCommand(scan)}],
-    })
-    expect(dependencies.renderInfo.mock.invocationCallOrder[0]).toBeLessThan(
+    const commands = commandsFor(selection)
+    expect(commands.scan.args.slice(-2)).toEqual([
+      {flag: '--client-id', value: 'picked-client-id'},
+      '--without-app-config',
+    ])
+    expect(onSelectionPrompted).toHaveBeenCalledExactlyOnceWith(commands)
+    expect(onSelectionPrompted.mock.invocationCallOrder[0]).toBeLessThan(
       dependencies.execute.mock.invocationCallOrder[0]!,
     )
   })
 
-  test('shows the generated check command, with --config, after asking which TOML to scan', async () => {
+  test('passes the generated check command, with --config, on after asking which TOML to scan', async () => {
     const selection: AppSecuritySelection = {
       kind: 'config',
       appDirectory,
@@ -622,23 +388,36 @@ describe('securityCheck', () => {
     }
     const dependencies = testDependencies(scanExecution, selection)
     dependencies.canPrompt.mockReturnValue(true)
+    const onSelectionPrompted = vi.fn()
 
-    await securityCheck({...testOptions(), skipInstructions: true}, dependencies)
+    await securityCheck({...testOptions(), onSelectionPrompted}, dependencies)
 
-    const {scan} = commandsFor(selection)
-    expect(scan.args).toContainEqual({flag: '--config', value: 'staging'})
-    expect(dependencies.renderInfo).toHaveBeenCalledWith({
-      headline: 'To skip these prompts next time, run:',
-      body: [{command: formatAppSecurityCommand(scan)}],
-    })
+    const commands = commandsFor(selection)
+    expect(commands.scan.args).toContainEqual({flag: '--config', value: 'staging'})
+    expect(onSelectionPrompted).toHaveBeenCalledExactlyOnceWith(commands)
   })
 
-  test('does not show the prompt-flow command when a TOML was found', async () => {
+  test('does not pass the generated check command on when a TOML was found', async () => {
     const dependencies = testDependencies()
+    const onSelectionPrompted = vi.fn()
 
-    await securityCheck(testOptions(), dependencies)
+    await securityCheck({...testOptions(), onSelectionPrompted}, dependencies)
 
-    expect(dependencies.renderInfo).not.toHaveBeenCalled()
+    expect(onSelectionPrompted).not.toHaveBeenCalled()
+  })
+
+  test('returns a cancellation, without scanning or writing anything, when scanning without app configuration is declined', async () => {
+    const dependencies = testDependencies(scanExecution, {kind: 'declined'})
+    dependencies.canPrompt.mockReturnValue(true)
+    const onSelectionPrompted = vi.fn()
+
+    const check = await securityCheck({...testOptions(), onSelectionPrompted}, dependencies)
+
+    expect(check).toEqual({kind: 'cancelled'})
+    expect(onSelectionPrompted).not.toHaveBeenCalled()
+    expect(dependencies.execute).not.toHaveBeenCalled()
+    expect(dependencies.writeArtifacts).not.toHaveBeenCalled()
+    expect(dependencies.recordMetadata).not.toHaveBeenCalled()
   })
 
   test('does not write artifacts when the scan fails', async () => {
@@ -650,174 +429,21 @@ describe('securityCheck', () => {
     expect(dependencies.writeArtifacts).not.toHaveBeenCalled()
   })
 
-  test('does not offer coding-agent instructions in CI or another non-interactive environment', async () => {
-    const dependencies = testDependencies()
+  test('counts the checks that breach --blocking', async () => {
+    const dependencies = testDependencies({...scanExecution, scan: {...scan, issues: [committedSecretIssue]}})
 
-    await securityCheck(testOptions(), dependencies)
+    const check = await securityCheck({...testOptions(), blocking: 'high'}, dependencies)
 
-    expect(dependencies.canPrompt).toHaveBeenCalledOnce()
-    expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
-    expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
+    expect(check).toMatchObject({blocking: {level: 'high', blockedChecks: 1}})
   })
 
-  test('prioritizes copying instructions that start from the scan results', async () => {
-    const dependencies = testDependencies()
-    dependencies.canPrompt.mockReturnValue(true)
-    dependencies.selectInstructionsDestination.mockResolvedValue('copy')
-
-    await securityCheck(testOptions(), dependencies)
-
-    expect(appSecurityInstructionsPrompt(31)).toEqual({
-      message:
-        '31 recommended agent checks available to complete your scan. How do you want to pass that prompt to your agent?',
-      choices: [
-        {label: 'Copy instructions to the clipboard', value: 'copy'},
-        {label: 'Print instructions to the terminal', value: 'print'},
-        {label: 'Nothing', value: 'nothing'},
-      ],
-      defaultValue: 'copy',
-    })
-    expect(dependencies.selectInstructionsDestination).toHaveBeenCalledOnce()
-    expect(dependencies.selectInstructionsDestination).toHaveBeenCalledWith(31)
-    expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
-      appDirectory,
-      resultsKey: 'shopify.app',
-      copy: true,
-      scanScope: noScope,
-      commands: commandsFor(),
-    })
-  })
-
-  test('names a single recommended agent check in the singular', () => {
-    expect(appSecurityInstructionsPrompt(1).message).toBe(
-      '1 recommended agent check available to complete your scan. How do you want to pass that prompt to your agent?',
-    )
-  })
-
-  test('gives the instructions the exact scope of the run, as typed', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      await mkdir(joinPath(directory, 'backend'))
-      vi.stubEnv('INIT_CWD', directory)
-      const dependencies = testDependencies()
-
-      await securityCheck(
-        {
-          ...testOptions(),
-          printInstructions: true,
-          includeDirs: ['backend', './backend/'],
-          excludePatterns: ['**/generated', '!keep'],
-          noGitIgnore: true,
-        },
-        dependencies,
-      )
-
-      const scope = {
-        include_dirs: ['backend', './backend/'],
-        excludes: ['**/generated', '!keep'],
-        no_git_ignore: true,
-      }
-      expect(dependencies.deliverInstructions).toHaveBeenCalledWith(
-        expect.objectContaining({scanScope: scope, commands: commandsFor(configSelection, scope)}),
-      )
-      expect(dependencies.execute).toHaveBeenCalledWith(
-        expect.objectContaining({includeDirs: ['backend', './backend/']}),
-      )
-    })
-  })
-
-  test('prints post-scan instructions when selected', async () => {
-    const dependencies = testDependencies()
-    dependencies.canPrompt.mockReturnValue(true)
-    dependencies.selectInstructionsDestination.mockResolvedValue('print')
-
-    await securityCheck(testOptions(), dependencies)
-
-    expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
-      appDirectory,
-      resultsKey: 'shopify.app',
-      copy: false,
-      scanScope: noScope,
-      commands: commandsFor(),
-    })
-  })
-
-  test('does nothing when selected', async () => {
-    const dependencies = testDependencies()
-    dependencies.canPrompt.mockReturnValue(true)
-
-    await securityCheck(testOptions(), dependencies)
-
-    expect(dependencies.selectInstructionsDestination).toHaveBeenCalledOnce()
-    expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
-  })
-
-  test.each([false, true])(
-    '--print-instructions prints without a delivery prompt and preserves app selection prompts (interactive=%s)',
-    async (interactive) => {
-      const dependencies = testDependencies()
-      dependencies.canPrompt.mockReturnValue(interactive)
-
-      await securityCheck({...testOptions(), printInstructions: true}, dependencies)
-
-      expect(dependencies.resolveSelection).toHaveBeenCalledWith(expect.objectContaining({allowPrompts: interactive}))
-      expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
-      expect(dependencies.deliverInstructions).toHaveBeenCalledWith({
-        appDirectory,
-        resultsKey: 'shopify.app',
-        copy: false,
-        scanScope: noScope,
-        commands: commandsFor(),
-      })
-    },
-  )
-
-  test('--skip-instructions never offers instructions', async () => {
-    const dependencies = testDependencies()
-    dependencies.canPrompt.mockReturnValue(true)
-
-    await securityCheck({...testOptions(), skipInstructions: true}, dependencies)
-
-    expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
-    expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
-  })
-
-  test('sets a blocking exit code from the execution result', async () => {
+  test('records the number of deterministic issues in the command metadata', async () => {
     const dependencies = testDependencies({
       ...scanExecution,
       scan: {
         ...scan,
-        issues: [
-          {
-            id: 'COMMITTED_SECRET',
-            severity: 'high',
-            points: -25,
-            title: 'Secret',
-            message: 'secret',
-            location: {file: 'app/routes/index.ts'},
-            fix: {automated: false, description: 'remove it'},
-          },
-        ],
+        issues: [committedSecretIssue, {...committedSecretIssue, location: {file: 'app/routes/other.ts'}}],
       },
-    })
-
-    await securityCheck({...testOptions(), blocking: 'high'}, dependencies)
-
-    expect(dependencies.setExitCode).toHaveBeenCalledWith(1)
-  })
-
-  test('records the number of deterministic issues in the command metadata', async () => {
-    const issue = {
-      id: 'COMMITTED_SECRET',
-      severity: 'high' as const,
-      points: -25,
-      title: 'Secret',
-      message: 'secret',
-      location: {file: 'app/routes/index.ts'},
-      fix: {automated: false, description: 'remove it'},
-    }
-    const dependencies = testDependencies({
-      ...scanExecution,
-      scan: {...scan, issues: [issue, {...issue, location: {file: 'app/routes/other.ts'}}]},
     })
 
     await securityCheck(testOptions(), dependencies)
@@ -833,12 +459,12 @@ describe('securityCheck', () => {
     expect(dependencies.recordMetadata).toHaveBeenCalledWith({num_security_findings: 0})
   })
 
-  test('keeps the default exit code when no finding reaches the blocking level', async () => {
+  test('counts no blocked checks when no finding reaches the blocking level', async () => {
     const dependencies = testDependencies()
 
-    await securityCheck({...testOptions(), blocking: 'low'}, dependencies)
+    const check = await securityCheck({...testOptions(), blocking: 'low'}, dependencies)
 
-    expect(dependencies.setExitCode).not.toHaveBeenCalled()
+    expect(check).toMatchObject({blocking: {level: 'low', blockedChecks: 0}})
   })
 })
 
@@ -849,34 +475,31 @@ describe('securityCheck --list-files', () => {
     vi.unstubAllEnvs()
   })
 
-  test('prints each gathered path on its own line and does nothing else', async () => {
+  test('returns each gathered path and does nothing else', async () => {
     const dependencies = testDependencies()
-    dependencies.listFiles.mockResolvedValue({
+    const listing = {
       paths: ['../backend/server.ts', 'app/routes/index.ts', 'shopify.app.toml'],
-      ignoredScanDirectories: [],
-      otherAppDirectories: [],
+      ignoredScanDirectories: [joinPath(appDirectory, 'vendor')],
+      otherAppDirectories: [joinPath(appDirectory, 'apps', 'child')],
+    }
+    dependencies.listFiles.mockResolvedValue(listing)
+    const onSelectionPrompted = vi.fn()
+
+    const check = await securityCheck({...listFilesOptions, onSelectionPrompted}, dependencies)
+
+    expect(check).toEqual({
+      kind: 'listed',
+      selection: configSelection,
+      resultsKey: 'shopify.app',
+      commands: commandsFor(),
+      scope: noScope,
+      scanDirectories,
+      ...listing,
     })
-
-    await securityCheck(listFilesOptions, dependencies)
-
-    expect(dependencies.output).toHaveBeenCalledOnce()
-    expect(dependencies.output).toHaveBeenCalledWith('../backend/server.ts\napp/routes/index.ts\nshopify.app.toml')
     expect(dependencies.execute).not.toHaveBeenCalled()
     expect(dependencies.writeArtifacts).not.toHaveBeenCalled()
-    expect(dependencies.renderReport).not.toHaveBeenCalled()
-    expect(dependencies.renderInfo).not.toHaveBeenCalled()
-    expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
-    expect(dependencies.deliverInstructions).not.toHaveBeenCalled()
-    expect(dependencies.setExitCode).not.toHaveBeenCalled()
-  })
-
-  test('prints nothing when no path is gathered', async () => {
-    const dependencies = testDependencies()
-    dependencies.listFiles.mockResolvedValue({paths: [], ignoredScanDirectories: [], otherAppDirectories: []})
-
-    await securityCheck(listFilesOptions, dependencies)
-
-    expect(dependencies.output).not.toHaveBeenCalled()
+    expect(dependencies.recordMetadata).not.toHaveBeenCalled()
+    expect(onSelectionPrompted).not.toHaveBeenCalled()
   })
 
   test('resolves without prompts, even in an interactive terminal', async () => {
@@ -920,64 +543,33 @@ describe('securityCheck --list-files', () => {
     })
   })
 
-  test('warns about an ignored scan directory through renderWarning', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const dependencies = testDependencies()
-      dependencies.listFiles.mockResolvedValue({
-        paths: ['shopify.app.toml'],
-        ignoredScanDirectories: [joinPath(await fileRealPath(directory), 'unlinked-app')],
-        otherAppDirectories: [],
-      })
-      vi.stubEnv('INIT_CWD', directory)
-
-      await securityCheck(listFilesOptions, dependencies)
-
-      expect(dependencies.renderWarning).toHaveBeenCalledWith({
-        headline: 'unlinked-app is ignored by Git, so only the files Git tracks in it are scanned.',
-        body: ['Use', {command: '--no-git-ignore'}, 'to scan everything in it.'],
-      })
-      expect(dependencies.output).toHaveBeenCalledWith('shopify.app.toml')
-    })
-  })
-
-  test('warns about a directory that holds another app configuration through renderWarning', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const dependencies = testDependencies()
-      dependencies.listFiles.mockResolvedValue({
-        paths: ['apps/child/shopify.app.toml', 'shopify.app.toml'],
-        ignoredScanDirectories: [],
-        otherAppDirectories: [joinPath(await fileRealPath(directory), 'apps', 'child')],
-      })
-      vi.stubEnv('INIT_CWD', directory)
-
-      await securityCheck(listFilesOptions, dependencies)
-
-      expect(dependencies.renderWarning).toHaveBeenCalledWith(otherAppWarning('apps/child'))
-      expect(dependencies.output).toHaveBeenCalledWith('apps/child/shopify.app.toml\nshopify.app.toml')
-    })
-  })
-
   test('returns the selection, the results key and the generated check command', async () => {
     const dependencies = testDependencies()
 
-    const resolution = await securityCheck(
+    const check = await securityCheck(
       {...listFilesOptions, includeDirs: [], excludePatterns: ['generated'], noGitIgnore: true},
       dependencies,
     )
 
-    expect(resolution.selection).toBe(configSelection)
-    expect(resolution.resultsKey).toBe('shopify.app')
-    expect(resolution.commands.scan.args).toEqual([
-      'app',
-      'security',
-      'check',
-      {flag: '--path', value: relativePath(cwd(), appDirectory)},
-      {flag: '--exclude', value: 'generated'},
-      '--no-git-ignore',
-    ])
+    expect(check).toMatchObject({
+      selection: configSelection,
+      resultsKey: 'shopify.app',
+      commands: {
+        scan: {
+          args: [
+            'app',
+            'security',
+            'check',
+            {flag: '--path', value: relativePath(cwd(), appDirectory)},
+            {flag: '--exclude', value: 'generated'},
+            '--no-git-ignore',
+          ],
+        },
+      },
+    })
   })
 
-  test('lists the real files, one path per line, and writes no results', async () => {
+  test('lists the real files and writes no results', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await fileRealPath(directory)
       await mkdir(joinPath(appRoot, 'app'))
@@ -987,20 +579,14 @@ describe('securityCheck --list-files', () => {
       await writeFile(joinPath(appRoot, 'generated', 'out.ts'), 'export {}\n')
       vi.stubEnv('INIT_CWD', appRoot)
 
-      const {stdout, resolution} = await withCapturedStandardStreams(async ({stdout: captured}) => {
-        const result = await securityCheck({
-          ...listFilesOptions,
-          directory: appRoot,
-          excludePatterns: ['**/generated'],
-        })
-        return {stdout: captured(), resolution: result}
-      })
+      const check = await securityCheck({...listFilesOptions, directory: appRoot, excludePatterns: ['**/generated']})
 
       // Outside a repository, the `.shopify` files that resolving the selection writes are gathered too.
-      expect(stdout).toBe(
-        ['.shopify/.gitignore', '.shopify/project.json', 'app/index.ts', 'shopify.app.toml'].join('\n').concat('\n'),
-      )
-      expect(resolution.resultsKey).toBe('shopify.app')
+      expect(check).toMatchObject({
+        kind: 'listed',
+        resultsKey: 'shopify.app',
+        paths: ['.shopify/.gitignore', '.shopify/project.json', 'app/index.ts', 'shopify.app.toml'],
+      })
       await expect(fileExists(joinPath(appRoot, '.shopify', 'app-security'))).resolves.toBe(false)
     })
   })
@@ -1067,7 +653,6 @@ describe('securityCheck --client-id lookup', () => {
         expect(dependencies.listFiles).not.toHaveBeenCalled()
         expect(dependencies.execute).not.toHaveBeenCalled()
         expect(dependencies.recordMetadata).not.toHaveBeenCalled()
-        expect(dependencies.output).not.toHaveBeenCalled()
         await expect(fileExists(joinPath(appRoot, '.shopify', 'app-security'))).resolves.toBe(false)
       })
     },
