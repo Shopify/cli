@@ -1,6 +1,10 @@
 import {appSecuritySelectionFlags} from './selection-flags.js'
 import {resolveAppSecurityCommands} from '../../../services/app-security-commands.js'
-import deliverAppSecurityInstructions from '../../../services/app-security-instructions.js'
+import {
+  appSecurityInstructions,
+  deliverAppSecurityInstructions,
+  renderAppSecurityInstructions,
+} from '../../../services/app-security-instructions.js'
 import {resolveAppSecuritySelection, resultsKey} from '../../../services/app-security-selection.js'
 import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
@@ -43,12 +47,13 @@ By default, the instructions are printed to stdout. Use \`--copy\` to copy them 
       withoutAppConfig: flags['without-app-config'],
       allowPrompts: false,
     })
-    await deliverAppSecurityInstructions({
+    const instructions = appSecurityInstructions({
       appDirectory: selection.appDirectory,
       resultsKey: resultsKey(selection),
       commands: resolveAppSecurityCommands(selection, flags.path),
-      copy: flags.copy,
-      writePath: flags.write,
     })
+    const delivery = {copy: flags.copy, writePath: flags.write}
+    await deliverAppSecurityInstructions(instructions, delivery)
+    renderAppSecurityInstructions(instructions, delivery)
   }
 }

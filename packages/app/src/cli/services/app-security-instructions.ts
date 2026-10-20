@@ -147,30 +147,20 @@ function fillTemplate(template: string, values: {[placeholder: string]: string})
   )
 }
 
-interface AppSecurityInstructionsOptions {
-  appDirectory: string
-  resultsKey: string
+/** How the instructions reach the agent: copied to the clipboard, written to `writePath`, or else printed. */
+export interface AppSecurityInstructionsDelivery {
   copy: boolean
   writePath?: string
-  commands: AppSecurityCommands
-  /** Present when `check` has just run in this process. */
-  scanScope?: AppSecurityScope
 }
 
 interface AppSecurityInstructionsDependencies {
   copyToClipboard(content: string): Promise<void>
   writeToFile(path: string, content: string): Promise<void>
-  output(content: string): void
-  outputConfirmation(content: string): void
 }
 
 const defaultDependencies: AppSecurityInstructionsDependencies = {
   copyToClipboard: (content) => clipboard.write(content),
   writeToFile: writeFile,
-  output: outputResult,
-  outputConfirmation: (content) => {
-    renderSuccess({headline: content})
-  },
 }
 
 export function appSecurityInstructions(options: {
@@ -201,24 +191,28 @@ export function appSecurityInstructions(options: {
   }).trimEnd()
 }
 
-export default async function deliverAppSecurityInstructions(
-  options: AppSecurityInstructionsOptions,
+/** Copies the instructions to the clipboard or writes them to a file. Printed instructions need no delivery. */
+export async function deliverAppSecurityInstructions(
+  instructions: string,
+  delivery: AppSecurityInstructionsDelivery,
   dependencies: AppSecurityInstructionsDependencies = defaultDependencies,
 ): Promise<void> {
-  const instructions = appSecurityInstructions({
-    appDirectory: options.appDirectory,
-    resultsKey: options.resultsKey,
-    commands: options.commands,
-    scanScope: options.scanScope,
-  })
-
-  if (options.copy) {
+  if (delivery.copy) {
     await dependencies.copyToClipboard(instructions)
-    dependencies.outputConfirmation('Copied app security check instructions to the clipboard')
-  } else if (options.writePath) {
-    await dependencies.writeToFile(options.writePath, `${instructions}\n`)
-    dependencies.outputConfirmation(`Wrote app security check instructions to ${options.writePath}`)
+  } else if (delivery.writePath) {
+    await dependencies.writeToFile(delivery.writePath, `${instructions}\n`)
+  }
+}
+
+/** Prints the instructions, or confirms in the terminal that they were copied or written. */
+export function renderAppSecurityInstructions(instructions: string, delivery: AppSecurityInstructionsDelivery): void {
+  if (delivery.copy) {
+    // No trailing period, like the write confirmation, whose file path a period would run into.
+    // eslint-disable-next-line @shopify/cli/banner-headline-format
+    renderSuccess({headline: 'Copied app security check instructions to the clipboard'})
+  } else if (delivery.writePath) {
+    renderSuccess({headline: `Wrote app security check instructions to ${delivery.writePath}`})
   } else {
-    dependencies.output(instructions)
+    outputResult(instructions)
   }
 }
