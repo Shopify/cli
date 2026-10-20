@@ -159,3 +159,9 @@ ${outputToken.json(error.response.errors)}
     }
   }
 }
+
+export function extractGraphQLErrors(error: unknown): NonNullable<ClientError['response']['errors']> {
+  if (error instanceof ClientError) return Array.isArray(error.response.errors) ? error.response.errors : []
+  if (error instanceof GraphQLClientError) return Array.isArray(error.errors) ? error.errors : []
+  return []
+}

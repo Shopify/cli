@@ -16,10 +16,11 @@ import {
   UNPUBLISHED_THEME_ROLE,
   promptThemeName,
 } from '@shopify/cli-kit/node/themes/utils'
-import {renderConfirmationPrompt, renderError} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Severity, SourceCodeType} from '@shopify/theme-check-node'
 import {outputResult} from '@shopify/cli-kit/node/output'
+import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 
 vi.mock('../utilities/theme-uploader.js')
 vi.mock('../utilities/theme-store.js')
@@ -44,13 +45,14 @@ const defaultFlags: PullFlags = {
   ignore: [],
   force: false,
 }
-const adminSession = {token: '', storeFqdn: ''}
+const adminSession = {token: '', storeFqdn: 'example.myshopify.com'}
 
 describe('push', () => {
   beforeEach(() => {
     vi.mocked(uploadTheme).mockReturnValue({
       workPromise: Promise.resolve(),
       uploadResults: new Map(),
+      hasChanges: false,
       renderThemeSyncProgress: () => Promise.resolve(),
     })
     vi.mocked(ensureThemeStore).mockReturnValue('example.myshopify.com')
@@ -95,6 +97,7 @@ describe('push', () => {
     vi.mocked(uploadTheme).mockReturnValue({
       workPromise: Promise.resolve(),
       uploadResults,
+      hasChanges: true,
       renderThemeSyncProgress: () => Promise.resolve(),
     })
 
@@ -102,23 +105,13 @@ describe('push', () => {
     await push({...defaultFlags, json: true}, adminSession)
 
     // Then
-    expect(outputResult).toHaveBeenCalledWith(
-      JSON.stringify({
-        theme: {
-          id: 1,
-          name: 'Theme',
-          role: 'development',
-          shop: '',
-          editor_url: 'https:///admin/themes/1/editor',
-          preview_url: 'https://?preview_theme_id=1',
-          warning: "The theme 'Theme' was pushed with errors",
-          errors: {
-            'assets/theme.css': ['Invalid CSS syntax at line 42'],
-            'layout/theme.liquid': ['Missing endif tag'],
-          },
-        },
-      }),
-    )
+    const result = JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)
+    expect(result).toMatchObject({
+      status: 'partial',
+      changed: true,
+      theme: {id: '1', storeDomain: 'example.myshopify.com'},
+      issues: [{message: 'Invalid CSS syntax at line 42'}, {message: 'Missing endif tag'}],
+    })
   })
 
   describe('strict mode', () => {
@@ -245,20 +238,16 @@ describe('push', () => {
   })
 
   test('passes listing flag to file system when provided', async () => {
-    // Given
-    const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
-    vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+    await inTemporaryDirectory(async (themePath) => {
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+      const actual = await vi.importActual<typeof import('../utilities/theme-fs.js')>('../utilities/theme-fs.js')
+      vi.mocked(mountThemeFileSystem).mockImplementationOnce(actual.mountThemeFileSystem)
 
-    // When
-    await push({...defaultFlags, listing: 'my-preset'})
+      await push({...defaultFlags, path: themePath, listing: 'my-preset'})
 
-    // Then
-    expect(mountThemeFileSystem).toHaveBeenCalledWith(
-      path,
-      expect.objectContaining({
-        listing: 'my-preset',
-      }),
-    )
+      expect(mountThemeFileSystem).toHaveBeenCalledWith(themePath, expect.objectContaining({listing: 'my-preset'}))
+    })
   })
 })
 
@@ -274,7 +263,7 @@ describe('createOrSelectTheme', async () => {
     const theme = await createOrSelectTheme(adminSession, flags)
 
     // Then
-    expect(theme).toMatchObject({role: UNPUBLISHED_THEME_ROLE})
+    expect(theme).toMatchObject({role: UNPUBLISHED_THEME_ROLE, createdAtRuntime: true})
     expect(setDevelopmentTheme).not.toHaveBeenCalled()
   })
 
@@ -288,7 +277,7 @@ describe('createOrSelectTheme', async () => {
     const theme = await createOrSelectTheme(adminSession, flags)
 
     // Then
-    expect(theme).toMatchObject({role: DEVELOPMENT_THEME_ROLE})
+    expect(theme).toMatchObject({role: DEVELOPMENT_THEME_ROLE, createdAtRuntime: true})
     expect(setDevelopmentTheme).toHaveBeenCalled()
   })
 
@@ -302,7 +291,7 @@ describe('createOrSelectTheme', async () => {
     const theme = await createOrSelectTheme(adminSession, flags)
 
     // Then
-    expect(theme).toMatchObject({role: DEVELOPMENT_THEME_ROLE, name: 'Custom name'})
+    expect(theme).toMatchObject({role: DEVELOPMENT_THEME_ROLE, name: 'Custom name', createdAtRuntime: true})
     expect(setDevelopmentTheme).toHaveBeenCalled()
   })
 
@@ -403,17 +392,7 @@ describe('createOrSelectTheme', async () => {
       const flags: PushFlags = {live: true, environment: ['production']}
 
       // When
-      const theme = await createOrSelectTheme(adminSession, flags, true)
-
-      // Then
-      expect(theme).toBeUndefined()
-      expect(renderError).toHaveBeenCalledWith({
-        headline: 'Environment: production',
-        body: [
-          `Can't push theme files to the live theme on ${adminSession.storeFqdn}`,
-          'Use the --allow-live flag to push to a live theme.',
-        ],
-      })
+      await expect(createOrSelectTheme(adminSession, flags, true)).rejects.toBeInstanceOf(AbortError)
     })
   })
 })

@@ -972,12 +972,16 @@ Fetch your app configuration from the Developer Dashboard.
 ```
 USAGE
   $ shopify app config link [--auth-alias <value>] [--client-id <value>] [--force [--file-name <value> | -c <value>]]
-    [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
+    [-j] [--json-schema] [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the local app configuration to read and overwrite. Use --file-name instead when specifying --client-id.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -1028,6 +1032,105 @@ DESCRIPTION
 
   For more information on the format of the created TOML configuration file, refer to the "App configuration"
   (https://shopify.dev/docs/apps/tools/cli/configuration) page.
+
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppConfigLinkResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string"
+      },
+      "app": {
+        "$ref": "#/definitions/LinkedApp"
+      }
+    },
+    "required": [
+      "path",
+      "app"
+    ],
+    "additionalProperties": false,
+    "title": "AppConfigLinkResult",
+    "definitions": {
+      "LinkedApp": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The upstream non-GID app identifier, or null when the platform supplies a GID."
+          },
+          "gid": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^gid:\\/\\/shopify\\/App\\/[^\\s/]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Shopify App GID, or null when the platform supplies another identifier."
+          },
+          "name": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The public OAuth client identifier."
+          },
+          "organizationId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The upstream non-GID organization identifier, or null when unavailable."
+          },
+          "organizationGid": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^gid:\\/\\/shopify\\/Organization\\/[^\\s/]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Shopify Organization GID, or null when unavailable."
+          }
+        },
+        "required": [
+          "id",
+          "gid",
+          "name",
+          "clientId",
+          "organizationId",
+          "organizationGid"
+        ],
+        "additionalProperties": false,
+        "description": "The linked app identity. Read the file at path for its configuration."
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app config pull`
@@ -1036,13 +1139,17 @@ Refresh an already-linked app configuration without prompts.
 
 ```
 USAGE
-  $ shopify app config pull [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--path <value>] [--reset | ] [--verbose]
+  $ shopify app config pull [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -1083,6 +1190,104 @@ DESCRIPTION
 
   This command reuses the existing linked app and organization and skips all interactive prompts. Use `--config` to
   target a specific configuration file, or omit it to use the default one.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppConfigPullResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string"
+      },
+      "app": {
+        "$ref": "#/definitions/LinkedApp"
+      }
+    },
+    "required": [
+      "path",
+      "app"
+    ],
+    "additionalProperties": false,
+    "title": "AppConfigPullResult",
+    "definitions": {
+      "LinkedApp": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The upstream non-GID app identifier, or null when the platform supplies a GID."
+          },
+          "gid": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^gid:\\/\\/shopify\\/App\\/[^\\s/]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Shopify App GID, or null when the platform supplies another identifier."
+          },
+          "name": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The public OAuth client identifier."
+          },
+          "organizationId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The upstream non-GID organization identifier, or null when unavailable."
+          },
+          "organizationGid": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^gid:\\/\\/shopify\\/Organization\\/[^\\s/]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Shopify Organization GID, or null when unavailable."
+          }
+        },
+        "required": [
+          "id",
+          "gid",
+          "name",
+          "clientId",
+          "organizationId",
+          "organizationGid"
+        ],
+        "additionalProperties": false,
+        "description": "The linked app identity. Read the file at path for its configuration."
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app config use [config] [flags]`
@@ -1097,6 +1302,10 @@ ARGUMENTS
   [CONFIG]  The name of the app configuration. Can be 'shopify.app.staging.toml' or simply 'staging'.
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
@@ -1134,6 +1343,58 @@ DESCRIPTION
 
   Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll
   be prompted to choose from the configuration files in your project.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppConfigUseResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "changed": {
+        "type": "boolean",
+        "description": "Whether the preferred configuration changed."
+      },
+      "path": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "The preferred configuration file, or null after clearing the preference."
+      },
+      "clientId": {
+        "anyOf": [
+          {
+            "type": "string",
+            "minLength": 1
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "The public OAuth client identifier, or null after clearing the preference."
+      }
+    },
+    "required": [
+      "status",
+      "changed",
+      "path",
+      "clientId"
+    ],
+    "additionalProperties": false,
+    "title": "AppConfigUseResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app config validate`
@@ -1191,6 +1452,93 @@ DESCRIPTION
 
   Validates the selected app configuration file and all extension configurations against their schemas and reports any
   errors found.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppConfigValidateResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string"
+      },
+      "valid": {
+        "type": "boolean"
+      },
+      "issues": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/ValidationIssue"
+        }
+      }
+    },
+    "required": [
+      "path",
+      "valid",
+      "issues"
+    ],
+    "additionalProperties": false,
+    "title": "AppConfigValidateResult",
+    "definitions": {
+      "ValidationIssue": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "fieldPath": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  ]
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The upstream validation code, or null when unavailable."
+          }
+        },
+        "required": [
+          "filePath",
+          "message",
+          "fieldPath",
+          "code"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app deploy`
@@ -2182,13 +2530,17 @@ Compile a function to wasm.
 
 ```
 USAGE
-  $ shopify app function build [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--path <value>] [--reset | ] [--verbose]
+  $ shopify app function build [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -2226,6 +2578,72 @@ DESCRIPTION
   Compile a function to wasm.
 
   Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `FunctionBuildResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "function": {
+        "$ref": "#/definitions/FunctionBuild"
+      }
+    },
+    "required": [
+      "status",
+      "function"
+    ],
+    "additionalProperties": false,
+    "title": "FunctionBuildResult",
+    "definitions": {
+      "FunctionBuild": {
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Null when the extension does not configure a handle."
+          },
+          "name": {
+            "type": "string"
+          },
+          "directory": {
+            "type": "string",
+            "pattern": "^(?:\\/|[a-zA-Z]:[\\\\/]|\\\\\\\\)",
+            "description": "An absolute native filesystem path."
+          },
+          "wasmPath": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/FunctionBuild/properties/directory"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The built Wasm file, or null when the build produced no file."
+          }
+        },
+        "required": [
+          "handle",
+          "name",
+          "directory",
+          "wasmPath"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app function info`
@@ -2290,6 +2708,129 @@ DESCRIPTION
   - The schema path
   - The WASM path
   - The function runner path
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `FunctionInfoResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "function": {
+        "$ref": "#/definitions/FunctionInfo"
+      }
+    },
+    "required": [
+      "function"
+    ],
+    "additionalProperties": false,
+    "title": "FunctionInfoResult",
+    "definitions": {
+      "FunctionInfo": {
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Null when the extension does not configure a handle."
+          },
+          "name": {
+            "type": "string"
+          },
+          "apiVersion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The configured API version, or null when unavailable."
+          },
+          "directory": {
+            "type": "string",
+            "pattern": "^(?:\\/|[a-zA-Z]:[\\\\/]|\\\\\\\\)",
+            "description": "An absolute native filesystem path."
+          },
+          "targets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/FunctionTarget"
+            },
+            "description": "All configured targets; empty when none are configured."
+          },
+          "schemaPath": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/FunctionInfo/properties/directory"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when a GraphQL schema is unavailable."
+          },
+          "wasmPath": {
+            "$ref": "#/definitions/FunctionInfo/properties/directory"
+          },
+          "functionRunnerPath": {
+            "$ref": "#/definitions/FunctionInfo/properties/directory"
+          }
+        },
+        "required": [
+          "handle",
+          "name",
+          "apiVersion",
+          "directory",
+          "targets",
+          "schemaPath",
+          "wasmPath",
+          "functionRunnerPath"
+        ],
+        "additionalProperties": false
+      },
+      "FunctionTarget": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string",
+            "minLength": 1
+          },
+          "inputQueryPath": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/FunctionInfo/properties/directory"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when no input query is configured."
+          },
+          "export": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when no WebAssembly export is configured."
+          }
+        },
+        "required": [
+          "target",
+          "inputQueryPath",
+          "export"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app function replay`
@@ -2357,6 +2898,62 @@ DESCRIPTION
   Runs the function from your current directory for "testing purposes"
   (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when
   errors occur, refer to "Shopify Functions error handling" (https://shopify.dev/docs/api/functions/errors).
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `FunctionRunResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "size": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "Module size in kilobytes, as reported by Function runner."
+      },
+      "memory_usage": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "Linear memory usage in kilobytes, as reported by Function runner."
+      },
+      "instructions": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "logs": {
+        "type": "string"
+      },
+      "input": {
+        "description": "Native Function input; query keys and values are preserved."
+      },
+      "output": {
+        "description": "Native Function output, including the runner-specific invalid-output representation."
+      },
+      "success": {
+        "type": "boolean",
+        "description": "False for a completed Function execution that failed; the command exits nonzero."
+      }
+    },
+    "required": [
+      "name",
+      "size",
+      "memory_usage",
+      "instructions",
+      "logs",
+      "input",
+      "output",
+      "success"
+    ],
+    "additionalProperties": true,
+    "description": "The native JSON object produced by Function runner 7.x and 9.x. Extra upstream fields are preserved.",
+    "title": "FunctionRunResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app function run`
@@ -2427,6 +3024,62 @@ DESCRIPTION
   Runs the function from your current directory for "testing purposes"
   (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when
   errors occur, refer to "Shopify Functions error handling" (https://shopify.dev/docs/api/functions/errors).
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `FunctionRunResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string"
+      },
+      "size": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "Module size in kilobytes, as reported by Function runner."
+      },
+      "memory_usage": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "Linear memory usage in kilobytes, as reported by Function runner."
+      },
+      "instructions": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "logs": {
+        "type": "string"
+      },
+      "input": {
+        "description": "Native Function input; query keys and values are preserved."
+      },
+      "output": {
+        "description": "Native Function output, including the runner-specific invalid-output representation."
+      },
+      "success": {
+        "type": "boolean",
+        "description": "False for a completed Function execution that failed; the command exits nonzero."
+      }
+    },
+    "required": [
+      "name",
+      "size",
+      "memory_usage",
+      "instructions",
+      "logs",
+      "input",
+      "output",
+      "success"
+    ],
+    "additionalProperties": true,
+    "description": "The native JSON object produced by Function runner 7.x and 9.x. Extra upstream fields are preserved.",
+    "title": "FunctionRunResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app function schema`
@@ -2435,13 +3088,17 @@ Fetch the latest GraphQL schema for a function.
 
 ```
 USAGE
-  $ shopify app function schema [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--path <value>] [--reset | ] [--stdout] [--verbose]
+  $ shopify app function schema [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--stdout] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -2487,6 +3144,60 @@ DESCRIPTION
 
   This command uses the API type and version of your function, as defined in your extension TOML file, to generate the
   latest GraphQL schema. The schema is written to the `schema.graphql` file.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `FunctionSchemaResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/FunctionSchemaFile"
+      },
+      {
+        "$ref": "#/definitions/FunctionSchemaContent"
+      }
+    ],
+    "title": "FunctionSchemaResult",
+    "definitions": {
+      "FunctionSchemaFile": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^(?:\\/|[a-zA-Z]:[\\\\/]|\\\\\\\\)",
+            "description": "An absolute native filesystem path."
+          },
+          "format": {
+            "type": "string",
+            "const": "graphql",
+            "description": "The file contains native GraphQL SDL with the API-version header."
+          }
+        },
+        "required": [
+          "path",
+          "format"
+        ],
+        "additionalProperties": false
+      },
+      "FunctionSchemaContent": {
+        "type": "object",
+        "properties": {
+          "schema": {
+            "type": "string",
+            "description": "Native GraphQL SDL with the API-version header, returned with --stdout --json."
+          }
+        },
+        "required": [
+          "schema"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app function typegen`
@@ -2495,13 +3206,17 @@ Generate GraphQL types for a function.
 
 ```
 USAGE
-  $ shopify app function typegen [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--path <value>] [--reset | ] [--verbose]
+  $ shopify app function typegen [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--reset | ] [--verbose]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
@@ -2540,6 +3255,60 @@ DESCRIPTION
 
   Creates GraphQL types based on your "input query" (https://shopify.dev/docs/apps/functions/input-output#input) for a
   function. Supports JavaScript functions out of the box, or any language via the `build.typegen_command` configuration.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `FunctionTypegenResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "function": {
+        "$ref": "#/definitions/Function"
+      }
+    },
+    "required": [
+      "status",
+      "function"
+    ],
+    "additionalProperties": false,
+    "title": "FunctionTypegenResult",
+    "definitions": {
+      "Function": {
+        "type": "object",
+        "properties": {
+          "handle": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Null when the extension does not configure a handle."
+          },
+          "name": {
+            "type": "string"
+          },
+          "directory": {
+            "type": "string",
+            "pattern": "^(?:\\/|[a-zA-Z]:[\\\\/]|\\\\\\\\)",
+            "description": "An absolute native filesystem path."
+          }
+        },
+        "required": [
+          "handle",
+          "name",
+          "directory"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app generate extension`
@@ -11102,15 +11871,30 @@ DESCRIPTION
 
   ```json
   {
-    "anyOf": [
-      {
-        "type": "object",
-        "additionalProperties": {}
+    "type": "object",
+    "properties": {
+      "data": {
+        "anyOf": [
+          {
+            "type": "object",
+            "additionalProperties": {}
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "GraphQL response data, preserving query fields and aliases."
       },
-      {
-        "type": "null"
+      "extensions": {
+        "type": "object",
+        "additionalProperties": {},
+        "description": "Response-level GraphQL metadata, when returned by the API."
       }
+    },
+    "required": [
+      "data"
     ],
+    "additionalProperties": false,
     "title": "StoreExecuteResult",
     "$schema": "http://json-schema.org/draft-07/schema#"
   }
@@ -11563,8 +12347,8 @@ Validate the theme.
 ```
 USAGE
   $ shopify theme check [--auth-alias <value>] [-a] [-C <value>] [-e <value>...] [--fail-level
-    crash|error|suggestion|style|warning|info] [--init] [--json-schema] [--list] [--no-color] [--no-input] [-o
-    text|json] [--path <value>] [--print] [--verbose] [-v]
+    crash|error|suggestion|style|warning|info] [-j | --init | -v | --print | --list] [--json-schema] [--no-color]
+    [--no-input] [-o text|json] [--path <value>] [--verbose]
 
 FLAGS
   -C, --config=<value>
@@ -11581,6 +12365,10 @@ FLAGS
   -e, --environment=<value>...
       The environment to apply to the current command.
       [env: SHOPIFY_FLAG_ENVIRONMENT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -o, --output=<option>
       [default: text] The output format to use
@@ -11638,6 +12426,322 @@ DESCRIPTION
   Calls and runs "Theme Check" (https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors
   and to ensure that it follows theme and Liquid best practices. "Learn more about the checks that Theme Check runs."
   (https://shopify.dev/docs/themes/tools/theme-check/checks)
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeCheckResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeCheckResult",
+    "definitions": {
+      "ThemeCheckIssue": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "The absolute native path of the file."
+          },
+          "check": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "info"
+            ]
+          },
+          "startRow": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The zero-based starting line."
+          },
+          "startColumn": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The zero-based starting column."
+          },
+          "endRow": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The zero-based ending line."
+          },
+          "endColumn": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The zero-based ending column."
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "filePath",
+          "check",
+          "severity",
+          "startRow",
+          "startColumn",
+          "endRow",
+          "endColumn",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "valid": {
+                        "type": "boolean",
+                        "description": "Whether the validation passes the selected blocking policy."
+                      },
+                      "issues": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/definitions/ThemeCheckIssue"
+                        }
+                      },
+                      "errorCount": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "warningCount": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "infoCount": {
+                        "type": "integer",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "valid",
+                      "issues",
+                      "errorCount",
+                      "warningCount",
+                      "infoCount"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {
+                        "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme console`
@@ -11710,7 +12814,7 @@ Delete remote themes from the connected store. This command can't be undone.
 
 ```
 USAGE
-  $ shopify theme delete [--auth-alias <value>] [-d] [-e <value>...] [-f] [--json-schema] [--no-color]
+  $ shopify theme delete [--auth-alias <value>] [-d] [-e <value>...] [-f] [-j] [--json-schema] [--no-color]
     [--no-input] [--password <value>] [--path <value>] [-a] [-s <value>] [-t <value>...] [--verbose]
 
 FLAGS
@@ -11730,6 +12834,10 @@ FLAGS
   -f, --force
       Skip confirmation. Required if non interactive.
       [env: SHOPIFY_FLAG_FORCE]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
@@ -11778,6 +12886,346 @@ DESCRIPTION
 
   You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this
   confirmation using the `--force` flag.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeDeleteResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeDeleteResult",
+    "definitions": {
+      "Theme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "The decimal Online Store theme ID, not a Shopify GID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "description": "The upstream theme role; known values include live, unpublished, and development."
+          },
+          "storeDomain": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "processing": {
+            "type": "boolean"
+          },
+          "sourceUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "storeDomain",
+          "processing",
+          "sourceUrl"
+        ],
+        "additionalProperties": false,
+        "description": "The selected theme projection; sourceUrl is null when the upstream source URL is unavailable."
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "success",
+                          "partial"
+                        ]
+                      },
+                      "changed": {
+                        "type": "boolean"
+                      },
+                      "themes": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/definitions/Theme"
+                        }
+                      },
+                      "errors": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "themeId": {
+                              "type": "string",
+                              "pattern": "^\\d+$"
+                            },
+                            "error": {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "const": "abort"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "message"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "themeId",
+                            "error"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "status",
+                      "changed",
+                      "themes"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {
+                        "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme dev`
@@ -12016,24 +13464,322 @@ DESCRIPTION
   If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a
   machine-readable input for scripts or continuous integration.
 
-  Sample JSON output:
+  Successful JSON results include `status`, `changed`, and explicit `originalTheme` and `theme` resources with decimal
+  string IDs. Failures use the shared `{error}` document.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeDuplicateResult` schema.
 
   ```json
   {
-    "theme": {
-      "id": 108267175958,
-      "name": "A Duplicated Theme",
-      "role": "unpublished",
-      "shop": "mystore.myshopify.com"
-    }
-  }
-  ```
-
-  ```json
-  {
-    "message": "The theme 'Summer Edition' could not be duplicated due to errors",
-    "errors": ["Maximum number of themes reached"],
-    "requestId": "12345-abcde-67890"
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeDuplicateResult",
+    "definitions": {
+      "Theme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "The decimal Online Store theme ID, not a Shopify GID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "description": "The upstream theme role; known values include live, unpublished, and development."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "success"
+                      },
+                      "changed": {
+                        "type": "boolean"
+                      },
+                      "originalTheme": {
+                        "$ref": "#/definitions/Theme"
+                      },
+                      "theme": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "$ref": "#/definitions/Theme/properties/id"
+                          },
+                          "name": {
+                            "$ref": "#/definitions/Theme/properties/name"
+                          },
+                          "role": {
+                            "$ref": "#/definitions/Theme/properties/role"
+                          },
+                          "storeDomain": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "previewUrl": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "uri"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "role",
+                          "storeDomain",
+                          "previewUrl"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "status",
+                      "changed",
+                      "originalTheme",
+                      "theme"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {
+                        "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
   }
   ```
 ```
@@ -12100,6 +13846,354 @@ FLAGS
 DESCRIPTION
   Displays information about your theme environment, including your current store. Can also retrieve information about a
   specific theme.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeInfoResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeInfoResult",
+    "definitions": {
+      "Theme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "The decimal Online Store theme ID, not a Shopify GID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "description": "The upstream theme role; known values include live, unpublished, and development."
+          },
+          "storeDomain": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "previewUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "editorUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "storeDomain",
+          "previewUrl",
+          "editorUrl"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeEnvironmentInfo": {
+        "type": "object",
+        "properties": {
+          "storeDomain": {
+            "$ref": "#/definitions/Theme/properties/storeDomain"
+          },
+          "developmentThemeId": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/Theme/properties/id"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The decimal Online Store theme ID, not a Shopify GID."
+          },
+          "cliVersion": {
+            "type": "string"
+          },
+          "os": {
+            "type": "string"
+          },
+          "shell": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nodeVersion": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "storeDomain",
+          "developmentThemeId",
+          "cliVersion",
+          "os",
+          "shell",
+          "nodeVersion"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "theme": {
+                            "$ref": "#/definitions/Theme"
+                          }
+                        },
+                        "required": [
+                          "theme"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "$ref": "#/definitions/ThemeEnvironmentInfo"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {
+                        "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme init [name] [flags]`
@@ -12114,6 +14208,10 @@ ARGUMENTS
   [NAME]  Name of the new theme
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   -l, --latest
       Downloads the latest release of the `clone-url`
       [env: SHOPIFY_FLAG_LATEST]
@@ -12159,6 +14257,97 @@ DESCRIPTION
   > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting
   point. However, the theme that you submit needs to be "substantively different from existing themes"
   (https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.
+
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeInitResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "enum": [
+          "success",
+          "partial"
+        ]
+      },
+      "changed": {
+        "type": "boolean",
+        "const": true
+      },
+      "directory": {
+        "$ref": "#/definitions/AbsolutePath"
+      },
+      "repoUrl": {
+        "type": "string",
+        "minLength": 1,
+        "description": "The source Git remote (including HTTPS, SSH, or SCP-style Git URLs)."
+      },
+      "latest": {
+        "type": "boolean"
+      },
+      "aiInstructions": {
+        "anyOf": [
+          {
+            "type": "string",
+            "enum": [
+              "all",
+              "github",
+              "cursor",
+              "claude"
+            ]
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "instructionFilePaths": {
+        "anyOf": [
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AbsolutePath"
+            }
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "Created instruction files, or null when setup failed before their completion could be established."
+      },
+      "reason": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "The reason for incomplete setup, or null when setup completed."
+      }
+    },
+    "required": [
+      "status",
+      "changed",
+      "directory",
+      "repoUrl",
+      "latest",
+      "aiInstructions",
+      "instructionFilePaths",
+      "reason"
+    ],
+    "additionalProperties": false,
+    "title": "ThemeInitResult",
+    "definitions": {
+      "AbsolutePath": {
+        "type": "string",
+        "description": "An absolute native filesystem path."
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme language-server`
@@ -12263,6 +14452,293 @@ FLAGS
 
 DESCRIPTION
   Lists the themes in your store, along with their IDs and statuses.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeListResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeListResult",
+    "definitions": {
+      "Theme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "The decimal Online Store theme ID, not a Shopify GID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "description": "The upstream theme role; known values include live, unpublished, and development."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "themes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "$ref": "#/definitions/Theme/properties/id"
+                            },
+                            "name": {
+                              "$ref": "#/definitions/Theme/properties/name"
+                            },
+                            "role": {
+                              "$ref": "#/definitions/Theme/properties/role"
+                            },
+                            "processing": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "role",
+                            "processing"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "themes"
+                    ],
+                    "additionalProperties": false,
+                    "description": "The complete theme library after applying the requested filters."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {
+                        "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme metafields pull`
@@ -12271,13 +14747,17 @@ Download metafields definitions from your shop into a local file.
 
 ```
 USAGE
-  $ shopify theme metafields pull [--auth-alias <value>] [-e <value>...] [--json-schema] [--no-color] [--no-input]
+  $ shopify theme metafields pull [--auth-alias <value>] [-e <value>...] [-j] [--json-schema] [--no-color] [--no-input]
     [--password <value>] [--path <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
       The environment to apply to the current command.
       [env: SHOPIFY_FLAG_ENVIRONMENT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
@@ -12318,6 +14798,348 @@ DESCRIPTION
   Retrieves metafields from Shopify Admin.
 
   If the metafields file already exists, it will be overwritten.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeMetafieldsPullResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeMetafieldsPullResult",
+    "definitions": {
+      "MetafieldDefinition": {
+        "type": "object",
+        "properties": {
+          "ownerType": {
+            "type": "string",
+            "description": "The upstream owner type, such as PRODUCT or COMPANY_LOCATION."
+          },
+          "key": {
+            "type": "string"
+          },
+          "namespace": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The upstream metafield type, such as single_line_text_field."
+              },
+              "category": {
+                "type": "string",
+                "description": "The upstream metafield category."
+              }
+            },
+            "required": [
+              "name",
+              "category"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "ownerType",
+          "key",
+          "namespace",
+          "name",
+          "description",
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "success",
+                              "partial"
+                            ]
+                          },
+                          "changed": {
+                            "type": "boolean",
+                            "const": true
+                          },
+                          "path": {
+                            "type": "string",
+                            "description": "The absolute path of the native language-server metafields JSON artifact."
+                          },
+                          "definitions": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/definitions/MetafieldDefinition"
+                            },
+                            "description": "All fetched definitions, flattened across owner types."
+                          },
+                          "failedOwnerTypes": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Upstream owner types whose fetch failed."
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "changed",
+                          "path",
+                          "definitions",
+                          "failedOwnerTypes"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "const": "skipped"
+                          },
+                          "reason": {
+                            "type": "string",
+                            "const": "not-a-theme"
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {
+                        "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme open`
@@ -12326,7 +15148,7 @@ Opens the preview of your remote theme.
 
 ```
 USAGE
-  $ shopify theme open [--auth-alias <value>] [-d] [-E] [-e <value>...] [--json-schema] [-l] [--no-color]
+  $ shopify theme open [--auth-alias <value>] [-d] [-E] [-e <value>...] [-j] [--json-schema] [-l] [--no-color]
     [--no-input] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
@@ -12341,6 +15163,10 @@ FLAGS
   -e, --environment=<value>...
       The environment to apply to the current command.
       [env: SHOPIFY_FLAG_ENVIRONMENT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -l, --live
       Open your live (published) theme. Use --development, --live, or --theme in non-interactive environments.
@@ -12395,6 +15221,323 @@ DESCRIPTION
 
   If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your
   store.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeOpenResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeOpenResult",
+    "definitions": {
+      "Theme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "The decimal Online Store theme ID, not a Shopify GID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "description": "The upstream theme role; known values include live, unpublished, and development."
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "theme": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "$ref": "#/definitions/Theme/properties/id"
+                          },
+                          "name": {
+                            "$ref": "#/definitions/Theme/properties/name"
+                          },
+                          "role": {
+                            "$ref": "#/definitions/Theme/properties/role"
+                          },
+                          "storeDomain": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "previewUrl": {
+                            "type": "string",
+                            "format": "uri"
+                          },
+                          "editorUrl": {
+                            "type": "string",
+                            "format": "uri"
+                          },
+                          "processing": {
+                            "type": "boolean"
+                          },
+                          "sourceUrl": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "uri"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "role",
+                          "storeDomain",
+                          "previewUrl",
+                          "editorUrl",
+                          "processing",
+                          "sourceUrl"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "theme"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {
+                        "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme package`
@@ -12403,10 +15546,14 @@ Package your theme into a .zip file, ready to upload to the Online Store.
 
 ```
 USAGE
-  $ shopify theme package [--auth-alias <value>] [--json-schema] [--no-color] [--no-input] [--path <value>]
+  $ shopify theme package [--auth-alias <value>] [-j] [--json-schema] [--no-color] [--no-input] [--path <value>]
     [--verbose]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
@@ -12445,6 +15592,28 @@ DESCRIPTION
 
   The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your "settings_schema.json"
   (https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemePackageResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "path": {
+        "type": "string",
+        "description": "The absolute native path of the ZIP archive."
+      }
+    },
+    "required": [
+      "path"
+    ],
+    "additionalProperties": false,
+    "title": "ThemePackageResult",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme preview`
@@ -12453,8 +15622,8 @@ Applies JSON overrides to a theme and returns a preview URL.
 
 ```
 USAGE
-  $ shopify theme preview --overrides <value> -t <value> [--auth-alias <value>] [-e <value>...] [--json]
-    [--json-schema] [--no-color] [--no-input] [--open] [--password <value>] [--path <value>] [--preview-id <value>] [-s
+  $ shopify theme preview [--auth-alias <value>] [-e <value>...] [-j] [--json-schema] [--no-color] [--no-input]
+    [--open] [--overrides <value>] [--password <value>] [--path <value>] [--preview-id <value>] [-s <value>] [-t
     <value>] [--verbose]
 
 FLAGS
@@ -12462,22 +15631,22 @@ FLAGS
       The environment to apply to the current command.
       [env: SHOPIFY_FLAG_ENVIRONMENT]
 
+  -j, --json
+      Output the preview URL and identifier as JSON.
+      [env: SHOPIFY_FLAG_JSON]
+
   -s, --store=<value>
       Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
       https://example.myshopify.com).
       [env: SHOPIFY_FLAG_STORE]
 
   -t, --theme=<value>
-      (required) Theme ID or name of the remote theme.
+      Theme ID or name of the remote theme.
       [env: SHOPIFY_FLAG_THEME_ID]
 
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
-
-  --json
-      Output the preview URL and identifier as JSON.
-      [env: SHOPIFY_FLAG_JSON]
 
   --json-schema
       Print the command's JSON schemas.
@@ -12496,7 +15665,7 @@ FLAGS
       [env: SHOPIFY_FLAG_OPEN]
 
   --overrides=<value>
-      (required) Path to a JSON overrides file.
+      Path to a JSON overrides file.
       [env: SHOPIFY_FLAG_OVERRIDES]
 
   --password=<value>
@@ -12522,6 +15691,269 @@ DESCRIPTION
 
   The command returns a preview URL and a preview identifier. You can reuse the preview identifier with `--preview-id`
   to update an existing preview instead of creating a new one.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemePreviewResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemePreviewResult",
+    "definitions": {
+      "ThemePreview": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The opaque Storefront preview identifier, not a theme ID or Shopify GID."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          }
+        },
+        "required": [
+          "id",
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "success"
+                      },
+                      "preview": {
+                        "$ref": "#/definitions/ThemePreview"
+                      }
+                    },
+                    "required": [
+                      "status",
+                      "preview"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {
+                        "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme profile`
@@ -12594,6 +16026,424 @@ DESCRIPTION
 
   This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given
   page.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeProfileResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeProfileResult",
+    "definitions": {
+      "ProfileFrame": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string"
+          },
+          "line": {
+            "type": "number"
+          },
+          "col": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "additionalProperties": true
+      },
+      "ProfileEvent": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "O",
+              "C"
+            ]
+          },
+          "at": {
+            "type": "number"
+          },
+          "frame": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "type",
+          "at",
+          "frame"
+        ],
+        "additionalProperties": true
+      },
+      "ProfileShared": {
+        "type": "object",
+        "properties": {
+          "frames": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ProfileFrame"
+            }
+          }
+        },
+        "required": [
+          "frames"
+        ],
+        "additionalProperties": true
+      },
+      "EventedProfile": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "bytes",
+              "microseconds",
+              "milliseconds",
+              "nanoseconds",
+              "none",
+              "seconds"
+            ]
+          },
+          "startValue": {
+            "type": "number"
+          },
+          "endValue": {
+            "type": "number"
+          },
+          "type": {
+            "type": "string",
+            "const": "evented"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ProfileEvent"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "unit",
+          "startValue",
+          "endValue",
+          "type",
+          "events"
+        ],
+        "additionalProperties": true
+      },
+      "SampledProfile": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "$ref": "#/definitions/EventedProfile/properties/name"
+          },
+          "unit": {
+            "$ref": "#/definitions/EventedProfile/properties/unit"
+          },
+          "startValue": {
+            "$ref": "#/definitions/EventedProfile/properties/startValue"
+          },
+          "endValue": {
+            "$ref": "#/definitions/EventedProfile/properties/endValue"
+          },
+          "type": {
+            "type": "string",
+            "const": "sampled"
+          },
+          "samples": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          "weights": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "unit",
+          "startValue",
+          "endValue",
+          "type",
+          "samples",
+          "weights"
+        ],
+        "additionalProperties": true
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "$schema": {
+                        "type": "string",
+                        "const": "https://www.speedscope.app/file-format-schema.json"
+                      },
+                      "shared": {
+                        "$ref": "#/definitions/ProfileShared"
+                      },
+                      "profiles": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "$ref": "#/definitions/EventedProfile"
+                            },
+                            {
+                              "$ref": "#/definitions/SampledProfile"
+                            }
+                          ]
+                        }
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "exporter": {
+                        "type": "string"
+                      },
+                      "activeProfileIndex": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "$schema",
+                      "shared",
+                      "profiles"
+                    ],
+                    "additionalProperties": true,
+                    "description": "The native Speedscope file format, defined by its $schema URL. Original keys and extension fields are preserved."
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {
+                        "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme publish`
@@ -12602,8 +16452,8 @@ Set a remote theme as the live theme.
 
 ```
 USAGE
-  $ shopify theme publish [--auth-alias <value>] [-e <value>...] [-f] [--json-schema] [--no-color] [--no-input]
-    [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
+  $ shopify theme publish [--auth-alias <value>] [-e <value>...] [-f] [-j] [--json-schema] [--no-color]
+    [--no-input] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
@@ -12613,6 +16463,10 @@ FLAGS
   -f, --force
       Skip confirmation. Required if non interactive.
       [env: SHOPIFY_FLAG_FORCE]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
@@ -12664,6 +16518,306 @@ DESCRIPTION
 
   If you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that
   you want to publish the specified theme. You can skip this confirmation using the `--force` flag.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemePublishResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemePublishResult",
+    "definitions": {
+      "Theme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "The decimal Online Store theme ID, not a Shopify GID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "description": "The upstream theme role; known values include live, unpublished, and development."
+          },
+          "storeDomain": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "processing": {
+            "type": "boolean"
+          },
+          "sourceUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "storeDomain",
+          "processing",
+          "sourceUrl"
+        ],
+        "additionalProperties": false,
+        "description": "The selected theme projection; sourceUrl is null when the upstream source URL is unavailable."
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "success"
+                      },
+                      "changed": {
+                        "type": "boolean"
+                      },
+                      "theme": {
+                        "$ref": "#/definitions/Theme"
+                      }
+                    },
+                    "required": [
+                      "status",
+                      "changed",
+                      "theme"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {
+                        "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme pull`
@@ -12672,7 +16826,7 @@ Download your remote theme files locally.
 
 ```
 USAGE
-  $ shopify theme pull [--auth-alias <value>] [-d] [-e <value>...] [-x <value>...] [--json-schema] [-l]
+  $ shopify theme pull [--auth-alias <value>] [-d] [-e <value>...] [-x <value>...] [-j] [--json-schema] [-l]
     [--no-color] [--no-input] [-n] [-o <value>...] [--password <value>] [--path <value>] [-s <value>] [-t <value>]
     [--verbose]
 
@@ -12685,6 +16839,10 @@ FLAGS
   -e, --environment=<value>...
       The environment to apply to the current command.
       [env: SHOPIFY_FLAG_ENVIRONMENT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -l, --live
       Pull theme files from your remote live theme. Use --development, --live, or --theme in non-interactive environments.
@@ -12747,6 +16905,355 @@ DESCRIPTION
   Retrieves theme files from Shopify.
 
   If no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemePullResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemePullResult",
+    "definitions": {
+      "ThemePullTheme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "The decimal Online Store theme ID, not a Shopify GID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "description": "The upstream theme role; known values include live, unpublished, and development."
+          },
+          "storeDomain": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "previewUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "editorUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "processing": {
+            "type": "boolean"
+          },
+          "sourceUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "storeDomain",
+          "previewUrl",
+          "editorUrl",
+          "processing",
+          "sourceUrl"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "const": "success"
+                          },
+                          "changed": {
+                            "type": "boolean"
+                          },
+                          "directory": {
+                            "type": "string"
+                          },
+                          "theme": {
+                            "$ref": "#/definitions/ThemePullTheme"
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "changed",
+                          "directory",
+                          "theme"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "const": "skipped"
+                          },
+                          "reason": {
+                            "type": "string",
+                            "const": "unsafe-directory"
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {
+                        "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme push`
@@ -12880,16 +17387,372 @@ DESCRIPTION
 
     ```json
     {
+      "status": "success",
+      "changed": true,
+      "issues": [],
       "theme": {
-        "id": 108267175958,
+        "id": "108267175958",
         "name": "MyTheme",
         "role": "unpublished",
-        "shop": "mystore.myshopify.com",
-        "editor_url": "https://mystore.myshopify.com/admin/themes/108267175958/editor",
-        "preview_url": "https://mystore.myshopify.com/?preview_theme_id=108267175958"
+        "storeDomain": "mystore.myshopify.com",
+        "editorUrl": "https://mystore.myshopify.com/admin/themes/108267175958/editor",
+        "previewUrl": "https://mystore.myshopify.com/?preview_theme_id=108267175958"
       }
     }
     ```
+
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemePushJsonResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemePushJsonResult",
+    "definitions": {
+      "ThemePushTheme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "The decimal Online Store theme ID, not a Shopify GID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "description": "The upstream theme role; known values include live, unpublished, and development."
+          },
+          "storeDomain": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "previewUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "editorUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "storeDomain",
+          "previewUrl",
+          "editorUrl"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "success",
+                              "partial"
+                            ]
+                          },
+                          "changed": {
+                            "type": "boolean"
+                          },
+                          "theme": {
+                            "$ref": "#/definitions/ThemePushTheme"
+                          },
+                          "issues": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "filePath": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "filePath",
+                                "message"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "changed",
+                          "theme",
+                          "issues"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "const": "skipped"
+                          },
+                          "reason": {
+                            "type": "string",
+                            "const": "unsafe-directory"
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {
+                        "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme rename`
@@ -12898,7 +17761,7 @@ Renames an existing theme.
 
 ```
 USAGE
-  $ shopify theme rename [--auth-alias <value>] [-d] [-e <value>...] [--json-schema] [-l] [-n <value>]
+  $ shopify theme rename [--auth-alias <value>] [-d] [-e <value>...] [-j] [--json-schema] [-l] [-n <value>]
     [--no-color] [--no-input] [--password <value>] [--path <value>] [-s <value>] [-t <value>] [--verbose]
 
 FLAGS
@@ -12909,6 +17772,10 @@ FLAGS
   -e, --environment=<value>...
       The environment to apply to the current command.
       [env: SHOPIFY_FLAG_ENVIRONMENT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -l, --live
       Rename your remote live theme. Use --development, --live, or --theme in non-interactive environments.
@@ -12962,6 +17829,311 @@ DESCRIPTION
 
   If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in
   your store.
+
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeRenameResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeRenameResult",
+    "definitions": {
+      "Theme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "The decimal Online Store theme ID, not a Shopify GID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "description": "The upstream theme role; known values include live, unpublished, and development."
+          },
+          "storeDomain": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "processing": {
+            "type": "boolean"
+          },
+          "sourceUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "storeDomain",
+          "processing",
+          "sourceUrl"
+        ],
+        "additionalProperties": false,
+        "description": "The selected theme projection; sourceUrl is null when the upstream source URL is unavailable."
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "success"
+                      },
+                      "changed": {
+                        "type": "boolean"
+                      },
+                      "originalName": {
+                        "type": "string"
+                      },
+                      "theme": {
+                        "$ref": "#/definitions/Theme"
+                      }
+                    },
+                    "required": [
+                      "status",
+                      "changed",
+                      "originalName",
+                      "theme"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {
+                        "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme share`
@@ -12970,13 +18142,17 @@ Creates a shareable, unpublished, and new theme on your theme library with a ran
 
 ```
 USAGE
-  $ shopify theme share [--auth-alias <value>] [-e <value>...] [--json-schema] [--listing <value>] [--no-color]
-    [--no-input] [--password <value>] [--path <value>] [-s <value>] [--verbose]
+  $ shopify theme share [--auth-alias <value>] [-e <value>...] [-j] [--json-schema] [--listing <value>]
+    [--no-color] [--no-input] [--password <value>] [--path <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...
       The environment to apply to the current command.
       [env: SHOPIFY_FLAG_ENVIRONMENT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
@@ -13023,6 +18199,358 @@ DESCRIPTION
   This command returns a "preview link"
   (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can
   share with others.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeShareResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeShareResult",
+    "definitions": {
+      "ThemePushTheme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^\\d+$",
+            "description": "The decimal Online Store theme ID, not a Shopify GID."
+          },
+          "name": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "description": "The upstream theme role; known values include live, unpublished, and development."
+          },
+          "storeDomain": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "previewUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "editorUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "storeDomain",
+          "previewUrl",
+          "editorUrl"
+        ],
+        "additionalProperties": false
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "success",
+                              "partial"
+                            ]
+                          },
+                          "changed": {
+                            "type": "boolean"
+                          },
+                          "theme": {
+                            "$ref": "#/definitions/ThemePushTheme"
+                          },
+                          "issues": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "filePath": {
+                                  "type": "string"
+                                },
+                                "message": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "filePath",
+                                "message"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "changed",
+                          "theme",
+                          "issues"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "status": {
+                            "type": "string",
+                            "const": "skipped"
+                          },
+                          "reason": {
+                            "type": "string",
+                            "const": "unsafe-directory"
+                          }
+                        },
+                        "required": [
+                          "status",
+                          "reason"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {
+                        "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ThemeEnvironment/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify upgrade`

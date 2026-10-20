@@ -1,29 +1,34 @@
+import {ThemeDeleteResult} from './delete/types.js'
 import {removeDevelopmentTheme} from './local-storage.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
-import {themeComponent, themesComponent} from '../utilities/theme-ui.js'
+import {themeComponent} from '../utilities/theme-ui.js'
 import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
 import {themeDelete} from '@shopify/cli-kit/node/themes/api'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {
   renderConfirmationPrompt,
   RenderConfirmationPromptOptions,
-  renderSuccess,
   InlineToken,
   LinkToken,
 } from '@shopify/cli-kit/node/ui'
 import {pluralize} from '@shopify/cli-kit/common/string'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {isDevelopmentTheme} from '@shopify/cli-kit/node/themes/utils'
+import {AbortError, FatalError} from '@shopify/cli-kit/node/error'
+import {outputWarn} from '@shopify/cli-kit/node/output'
 
 interface DeleteOptions {
   selectTheme: boolean
-  environment?: string[]
   development: boolean
   force: boolean
   themes: string[]
 }
 
-export async function themesDelete(adminSession: AdminSession, options: DeleteOptions, multiEnvironment?: boolean) {
+export async function themesDelete(
+  adminSession: AdminSession,
+  options: DeleteOptions,
+  multiEnvironment?: boolean,
+): Promise<ThemeDeleteResult | undefined> {
   let themeIds = options.themes
   if (options.development) {
     const theme = await new DevelopmentThemeManager(adminSession).find()
@@ -37,24 +42,42 @@ export async function themesDelete(adminSession: AdminSession, options: DeleteOp
     return
   }
 
-  await Promise.all(
-    themes.map((theme) => {
-      if (isDevelopmentTheme(theme)) {
-        removeDevelopmentTheme()
-      }
-      return themeDelete(theme.id, adminSession)
+  const deletions = await Promise.allSettled(
+    themes.map(async (theme) => {
+      await themeDelete(theme.id, adminSession)
+      return {...theme, shop: store}
     }),
   )
-
-  const environment = options.environment ? [{subdued: `Environment: ${options.environment}\n\n`}] : []
-
-  renderSuccess({
-    body: pluralize(
-      themes,
-      (themes) => [...environment, `The following themes were deleted from ${store}:`, themesComponent(themes)],
-      (theme) => [...environment, 'The theme', ...themeComponent(theme), `was deleted from ${store}.`],
-    ),
+  const deletedThemes = deletions.flatMap((deletion) => (deletion.status === 'fulfilled' ? [deletion.value] : []))
+  for (const theme of deletedThemes) {
+    if (!isDevelopmentTheme(theme)) continue
+    try {
+      removeDevelopmentTheme()
+      // eslint-disable-next-line no-catch-all/no-catch-all -- Local cleanup cannot undo a completed remote deletion.
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      outputWarn(
+        `Theme #${theme.id} was deleted, but its local development theme reference could not be removed: ${message}`,
+      )
+    }
+  }
+  const errors = deletions.flatMap((deletion, index) => {
+    if (deletion.status === 'fulfilled') return []
+    const error: unknown = deletion.reason
+    return [{themeId: themes[index]!.id, message: error instanceof Error ? error.message : String(error)}]
   })
+  if (errors.length > 0 && deletedThemes.length === 0) {
+    const firstError: unknown = deletions.find((deletion) => deletion.status === 'rejected')?.reason
+    if (firstError instanceof FatalError) throw firstError
+    const error = new AbortError(errors[0]!.message)
+    error.details = {errors: errors.map(({themeId, message}) => ({themeId: String(themeId), message}))}
+    throw error
+  }
+  return {
+    status: errors.length > 0 ? 'partial' : 'success',
+    themes: deletedThemes,
+    ...(errors.length > 0 ? {errors} : {}),
+  }
 }
 
 async function findThemesByDeleteOptions(adminSession: AdminSession, options: DeleteOptions) {

@@ -114,7 +114,7 @@ export function newThemeOption(session: AdminSession): {
         throw new AbortError('The theme could not be created.')
       }
 
-      return theme
+      return {...theme, createdAtRuntime: true}
     },
     label: '[Create a new theme]',
     group: capitalize(UNPUBLISHED_THEME_ROLE),

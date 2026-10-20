@@ -1,15 +1,24 @@
 import Validate from './validate.js'
+import {appConfigValidateJsonOutputSchema} from '../../../services/validate/types.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {validateApp} from '../../../services/validate.js'
 import {testAppLinked} from '../../../models/app/app.test-data.js'
+import {AppConfigurationValidationError, loadAppFromContext} from '../../../models/app/loader.js'
 import {Project} from '../../../models/project/project.js'
 import {selectActiveConfig} from '../../../models/project/active-config.js'
 import {errorsForConfig} from '../../../models/project/config-selection.js'
 import metadata from '../../../metadata.js'
-import {outputResult} from '@shopify/cli-kit/node/output'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputResult, stringifyMessage} from '@shopify/cli-kit/node/output'
+import * as output from '@shopify/cli-kit/node/output'
+import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {describe, expect, test, vi} from 'vitest'
+import {Config} from '@oclif/core'
+// eslint-disable-next-line no-restricted-imports
+import {resolve} from 'node:path'
 
 vi.mock('../../../services/app-context.js')
 vi.mock('../../../services/validate.js')
@@ -29,6 +38,36 @@ async function expectValidationMetadataCalls(...expectedMetadata: Record<string,
   await expect(Promise.all(metadataCalls.map((getMetadata) => getMetadata()))).resolves.toEqual(expectedMetadata)
 }
 
+async function expectFlushedSilentExit(run: () => Promise<unknown>) {
+  let finishFlush!: () => void
+  const pendingFlush = new Promise<void>((resolve) => {
+    finishFlush = resolve
+  })
+  let signalFlush!: () => void
+  const flushing = new Promise<void>((resolve) => {
+    signalFlush = resolve
+  })
+  const flush = vi.spyOn(output, 'flushStdout').mockImplementation(async () => {
+    signalFlush()
+    await pendingFlush
+  })
+  let settled = false
+  const outcome = run().finally(() => {
+    settled = true
+  })
+  const rejection = expect(outcome).rejects.toBeInstanceOf(AbortSilentError)
+  try {
+    await Promise.race([flushing, rejection])
+    await new Promise<void>((resolve) => setImmediate(resolve))
+    expect(flush).toHaveBeenCalledExactlyOnceWith()
+    expect(settled).toBe(false)
+  } finally {
+    finishFlush()
+    flush.mockRestore()
+    await rejection
+  }
+}
+
 function mockHealthyProject() {
   vi.mocked(Project.load).mockResolvedValue({errors: []} as unknown as Project)
   vi.mocked(selectActiveConfig).mockResolvedValue({file: new TomlFile('shopify.app.toml', {})} as any)
@@ -40,39 +79,80 @@ describe('app config validate command', () => {
     expect(Validate.flags['client-id']?.exclusive).toEqual(['config'])
   })
 
-  test('calls validateApp with json: false by default', async () => {
+  test('returns validation facts and presents text by default', async () => {
     const app = testAppLinked()
     mockHealthyProject()
     vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
-    vi.mocked(validateApp).mockResolvedValue()
+    vi.mocked(validateApp).mockResolvedValue({path: resolve(app.configPath), valid: true, issues: []})
 
     await Validate.run([], import.meta.url)
 
-    expect(validateApp).toHaveBeenCalledWith(app, {json: false})
+    expect(validateApp).toHaveBeenCalledWith(app)
+    expect(renderSuccess).toHaveBeenCalledWith({headline: "App configuration 'shopify.app.toml' is valid."})
+    expect(outputResult).not.toHaveBeenCalled()
     await expectValidationMetadataCalls({cmd_app_validate_json: false})
   })
 
-  test('calls validateApp with json: true when --json flag is passed', async () => {
+  test('encodes validation facts when --json is passed', async () => {
     const app = testAppLinked()
     mockHealthyProject()
     vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
-    vi.mocked(validateApp).mockResolvedValue()
+    vi.mocked(validateApp).mockResolvedValue({path: resolve(app.configPath), valid: true, issues: []})
 
     await Validate.run(['--json'], import.meta.url)
 
-    expect(validateApp).toHaveBeenCalledWith(app, {json: true})
+    expect(validateApp).toHaveBeenCalledWith(app)
+    expect(outputResult).toHaveBeenCalledWith(
+      appConfigValidateJsonOutputSchema.encode({path: resolve(app.configPath), valid: true, issues: []}),
+    )
+    expect(renderSuccess).not.toHaveBeenCalled()
     await expectValidationMetadataCalls({cmd_app_validate_json: true})
   })
 
-  test('calls validateApp with json: true when -j flag is passed', async () => {
+  test('outputs the encoded invalid payload and aborts when validation fails with --json', async () => {
     const app = testAppLinked()
     mockHealthyProject()
     vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
-    vi.mocked(validateApp).mockResolvedValue()
+    const issues = [{filePath: '/app/shopify.app.toml', message: 'Required', fieldPath: ['name'], code: 'invalid_type'}]
+    vi.mocked(validateApp).mockResolvedValue({path: resolve(app.configPath), valid: false, issues})
+
+    const command = new Validate(['--json'], await Config.load())
+    await expectFlushedSilentExit(() => command.run())
+
+    expect(outputResult).toHaveBeenCalledWith(
+      appConfigValidateJsonOutputSchema.encode({path: resolve(app.configPath), valid: false, issues}),
+    )
+    expect(renderError).not.toHaveBeenCalled()
+  })
+
+  test('renders validation errors and aborts when validation fails in text mode', async () => {
+    const app = testAppLinked()
+    mockHealthyProject()
+    vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
+    vi.mocked(validateApp).mockResolvedValue({
+      path: resolve(app.configPath),
+      valid: false,
+      issues: [{filePath: '/app/shopify.app.toml', message: 'client_id is required', fieldPath: null, code: null}],
+    })
+
+    await expect(Validate.run([], import.meta.url)).rejects.toThrow()
+
+    expect(renderError).toHaveBeenCalledWith({
+      headline: 'Validation errors found.',
+      body: expect.stringContaining('client_id is required'),
+    })
+    expect(outputResult).not.toHaveBeenCalled()
+  })
+
+  test('accepts the -j alias', async () => {
+    const app = testAppLinked()
+    mockHealthyProject()
+    vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
+    vi.mocked(validateApp).mockResolvedValue({path: resolve(app.configPath), valid: true, issues: []})
 
     await Validate.run(['-j'], import.meta.url)
 
-    expect(validateApp).toHaveBeenCalledWith(app, {json: true})
+    expect(validateApp).toHaveBeenCalledWith(app)
     await expectValidationMetadataCalls({cmd_app_validate_json: true})
   })
 
@@ -83,7 +163,7 @@ describe('app config validate command', () => {
       file: new TomlFile('shopify.app.staging.toml', {}),
     } as any)
     vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
-    vi.mocked(validateApp).mockResolvedValue()
+    vi.mocked(validateApp).mockResolvedValue({path: resolve(app.configPath), valid: true, issues: []})
 
     await Validate.run(['--client-id', 'api-key'], import.meta.url)
 
@@ -98,7 +178,7 @@ describe('app config validate command', () => {
       userProvidedConfigName: 'shopify.app.staging.toml',
       unsafeTolerateErrors: true,
     })
-    expect(validateApp).toHaveBeenCalledWith(app, {json: false})
+    expect(validateApp).toHaveBeenCalledWith(app)
     await expectValidationMetadataCalls({cmd_app_validate_json: false})
   })
 
@@ -106,7 +186,7 @@ describe('app config validate command', () => {
     const app = testAppLinked()
     mockHealthyProject()
     vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
-    vi.mocked(validateApp).mockResolvedValue()
+    vi.mocked(validateApp).mockResolvedValue({path: resolve(app.configPath), valid: true, issues: []})
 
     await Validate.run([], import.meta.url)
 
@@ -114,7 +194,7 @@ describe('app config validate command', () => {
       clientId: undefined,
       skipPrompts: false,
     })
-    expect(validateApp).toHaveBeenCalledWith(app, {json: false})
+    expect(validateApp).toHaveBeenCalledWith(app)
     await expectValidationMetadataCalls({cmd_app_validate_json: false})
   })
 
@@ -125,7 +205,8 @@ describe('app config validate command', () => {
       {path: '/app/shopify.app.toml', message: 'Unexpected character at row 1, col 5'} as any,
     ])
 
-    await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow()
+    const command = new Validate(['--json'], await Config.load())
+    await expectFlushedSilentExit(() => command.run())
 
     expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"valid": false'))
     expect(linkedAppContext).not.toHaveBeenCalled()
@@ -160,46 +241,40 @@ describe('app config validate command', () => {
     )
   })
 
-  test('records failure metadata when Project.load fails with --json', async () => {
+  test('keeps project setup failures fatal with --json', async () => {
     vi.mocked(Project.load).mockRejectedValue(new AbortError('Could not find app configuration'))
 
     await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow()
 
-    expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"valid": false'))
-    expect(selectActiveConfig).not.toHaveBeenCalled()
-    await expectValidationMetadataCalls(
-      {cmd_app_validate_json: true},
-      {
-        cmd_app_validate_valid: false,
-        cmd_app_validate_issue_count: 1,
-        cmd_app_validate_file_count: 1,
-      },
+    expect(outputResult).toHaveBeenCalledExactlyOnceWith(
+      JSON.stringify({error: {type: 'abort', message: 'Could not find app configuration'}}),
     )
+    expect(selectActiveConfig).not.toHaveBeenCalled()
+    await expectValidationMetadataCalls({cmd_app_validate_json: true})
   })
 
-  test('records failure metadata when selectActiveConfig fails with --json', async () => {
+  test('keeps config selection failures fatal with --json', async () => {
     vi.mocked(Project.load).mockResolvedValue({errors: []} as unknown as Project)
     vi.mocked(selectActiveConfig).mockRejectedValue(new AbortError('No config found'))
 
     await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow()
 
-    expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"valid": false'))
-    expect(linkedAppContext).not.toHaveBeenCalled()
-    await expectValidationMetadataCalls(
-      {cmd_app_validate_json: true},
-      {
-        cmd_app_validate_valid: false,
-        cmd_app_validate_issue_count: 1,
-        cmd_app_validate_file_count: 1,
-      },
+    expect(outputResult).toHaveBeenCalledExactlyOnceWith(
+      JSON.stringify({error: {type: 'abort', message: 'No config found'}}),
     )
+    expect(linkedAppContext).not.toHaveBeenCalled()
+    await expectValidationMetadataCalls({cmd_app_validate_json: true})
   })
 
   test('records failure metadata when linkedAppContext throws a validation error with --json', async () => {
     vi.mocked(Project.load).mockResolvedValue({errors: []} as unknown as Project)
     vi.mocked(selectActiveConfig).mockResolvedValue({file: new TomlFile('shopify.app.toml', {})} as any)
     vi.mocked(errorsForConfig).mockReturnValue([])
-    vi.mocked(linkedAppContext).mockRejectedValue(new AbortError('Validation errors in /app/shopify.app.toml'))
+    vi.mocked(linkedAppContext).mockRejectedValue(
+      new AppConfigurationValidationError('/app/shopify.app.toml', [
+        {file: '/app/shopify.app.toml', message: 'Required'},
+      ]),
+    )
 
     await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow()
 
@@ -213,4 +288,82 @@ describe('app config validate command', () => {
       },
     )
   })
+
+  test('reports the failing config path when --reset selects a different config', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const initialPath = joinPath(directory, 'shopify.app.toml')
+      const linkedPath = joinPath(directory, 'shopify.app.staging.toml')
+      await writeFile(initialPath, 'client_id = "initial-client"')
+      await writeFile(linkedPath, 'client_id = 123\n[build]\nautomatically_update_urls_on_dev = "yes"')
+      const {Project: RealProject} = await vi.importActual<typeof import('../../../models/project/project.js')>(
+        '../../../models/project/project.js',
+      )
+      const project = await RealProject.load(directory)
+      mockHealthyProject()
+      vi.mocked(selectActiveConfig).mockResolvedValue({
+        file: await TomlFile.read(initialPath),
+        source: 'default',
+        isLinked: true,
+        hiddenConfig: {},
+      })
+      vi.mocked(linkedAppContext).mockImplementation(async () => {
+        await loadAppFromContext({
+          project,
+          activeConfig: {
+            file: await TomlFile.read(linkedPath),
+            source: 'flag',
+            isLinked: true,
+            hiddenConfig: {},
+          },
+          specifications: [],
+        })
+        throw new Error('Expected invalid configuration to fail loading')
+      })
+
+      const command = new Validate(['--path', directory, '--reset', '--json'], await Config.load())
+      await expect(command.run()).rejects.toThrow(AbortSilentError)
+
+      expect(linkedAppContext).toHaveBeenCalledWith(expect.objectContaining({forceRelink: true}))
+      expect(outputResult).toHaveBeenCalledOnce()
+      expect(JSON.parse(stringifyMessage(vi.mocked(outputResult).mock.calls[0]![0]))).toEqual({
+        path: resolve(linkedPath),
+        valid: false,
+        issues: [
+          {
+            filePath: resolve(linkedPath),
+            message: expect.any(String),
+            fieldPath: ['client_id'],
+            code: 'invalid_type',
+          },
+          {
+            filePath: resolve(linkedPath),
+            message: expect.any(String),
+            fieldPath: ['build', 'automatically_update_urls_on_dev'],
+            code: 'invalid_type',
+          },
+        ],
+      })
+      expect(validateApp).not.toHaveBeenCalled()
+      await expectValidationMetadataCalls(
+        {cmd_app_validate_json: true},
+        {cmd_app_validate_valid: false, cmd_app_validate_issue_count: 2, cmd_app_validate_file_count: 1},
+      )
+    })
+  })
+})
+
+test('exposes the validation schema and JSON flag', () => {
+  expect(Validate.jsonOutputSchema).toBe(appConfigValidateJsonOutputSchema)
+  expect(Validate.flags.json).toBeDefined()
+  expect(Validate.description).toContain('AppConfigValidateResult')
+})
+
+test('does not convert authentication failures into validation results', async () => {
+  mockHealthyProject()
+  vi.mocked(linkedAppContext).mockRejectedValue(new AbortError('Authentication failed'))
+  await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow()
+  expect(outputResult).toHaveBeenCalledExactlyOnceWith(
+    JSON.stringify({error: {type: 'abort', message: 'Authentication failed'}}),
+  )
+  await expectValidationMetadataCalls({cmd_app_validate_json: true})
 })
