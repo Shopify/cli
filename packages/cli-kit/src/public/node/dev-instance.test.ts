@@ -104,7 +104,7 @@ describe('acquireDevInstance', () => {
 
       // Then
       const paths = devInstancePaths({command: 'app dev', directory, key: 'shopify.app.toml'})
-      expect(paths.infoFile).toMatch(/\.shopify\/dev\/app-dev-shopify\.app\.toml\.json$/)
+      expect(paths.infoFile).toMatch(/\.shopify\/dev\/app-dev-shopify\.app\.toml-[a-f0-9]{12}\.json$/)
       const info = JSON.parse(await readFile(paths.infoFile))
       expect(info).toMatchObject({
         schemaVersion: 1,
@@ -147,6 +147,40 @@ describe('acquireDevInstance', () => {
       expect((error as AbortError).code).toBe(DEV_INSTANCE_ALREADY_RUNNING_CODE)
       expect((error as AbortError).details).toEqual({instance: running.info})
       await running.release()
+    })
+  })
+
+  test.each([
+    [
+      {command: 'app dev', key: 'shopify.app.Production.toml'},
+      {command: 'app dev', key: 'shopify.app.production.toml'},
+    ],
+    [
+      {command: 'app dev', key: 'store:one'},
+      {command: 'app dev', key: 'store/one'},
+    ],
+    [
+      {command: 'app dev-one', key: 'two'},
+      {command: 'app dev', key: 'one-two'},
+    ],
+  ])('keeps normalized identities separate: %j and %j', async (firstIdentity, secondIdentity) => {
+    await inTemporaryDirectory(async (directory) => {
+      const first = await acquireDevInstance({...firstIdentity, directory})
+      try {
+        const second = await acquireDevInstance({...secondIdentity, directory})
+        try {
+          expect(first.paths.infoFile).not.toBe(second.paths.infoFile)
+          await first.log({source: 'web', message: 'First session'})
+          await second.log({source: 'web', message: 'Second session'})
+          expect((await readLog(first.paths.logFile)).map(({message}) => message)).toEqual(['First session'])
+          expect((await readLog(second.paths.logFile)).map(({message}) => message)).toEqual(['Second session'])
+          await expect(listDevInstances(directory)).resolves.toHaveLength(2)
+        } finally {
+          await second.release()
+        }
+      } finally {
+        await first.release()
+      }
     })
   })
 
@@ -562,12 +596,14 @@ describe('DevInstance log', () => {
     })
   })
 
-  test('reports destination errors and releases the instance after output fails', async () => {
+  test('drains queued status updates before releasing ownership after output fails', async () => {
     await inTemporaryDirectory(async (directory) => {
       const instance = await acquireDevInstance({command: 'app dev', directory})
+      const updates = Array.from({length: 500}, (_, sequence) => instance.update({details: {sequence}}))
+      const failure = new Error('Output failed')
       const target = new Writable({
         write(_chunk, _encoding, callback) {
-          callback(new Error('Output failed'))
+          callback(failure)
         },
       })
       const output = instance.tee(target, {source: 'web'})
@@ -575,11 +611,14 @@ describe('DevInstance log', () => {
         new Promise<void>((resolve, reject) => {
           output.write('message\n', (error) => (error ? reject(error) : resolve()))
         }),
-      ).rejects.toThrow('Output failed')
-      await expect(instance.release()).rejects.toThrow('Output failed')
+      ).rejects.toBe(failure)
+      await expect(instance.release()).rejects.toBe(failure)
+      await Promise.all(updates)
       expect(instance.abortSignal.aborted).toBe(true)
       await expect(fileExists(instance.paths.infoFile)).resolves.toBe(false)
       await expect(fileExists(instance.paths.lockFile)).resolves.toBe(false)
+      const restarted = await acquireDevInstance({command: 'app dev', directory})
+      await restarted.release()
     })
   })
 })

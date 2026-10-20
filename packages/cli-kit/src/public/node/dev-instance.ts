@@ -5,7 +5,7 @@ import {AbortError} from './error.js'
 import {outputDebug, unstyled} from './output.js'
 import {defineJsonOutputSchema, formatJsonOutputTimestamp, jsonOutputTimestampSchema} from './json-output-schema.js'
 import {zod} from './schema.js'
-import {randomUUID} from './crypto.js'
+import {hashString, randomUUID} from './crypto.js'
 import {
   ConcurrentOutputContext,
   getConcurrentOutputContext,
@@ -356,8 +356,8 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
         try {
           const results = await Promise.allSettled([...outputs].map((output) => endStream(output)))
           const failure = results.find((result) => result.status === 'rejected')
-          if (failure?.status === 'rejected') throw failure.reason
           await updates
+          if (failure?.status === 'rejected') throw failure.reason
         } finally {
           released = true
           process.removeListener('exit', removeInfoOnExit)
@@ -534,12 +534,15 @@ function isLockedError(error: unknown): boolean {
 }
 
 function devInstanceSlug({command, key}: DevInstanceIdentity): string {
-  return [command, key]
+  const slug = [command, key]
     .filter(Boolean)
     .join('-')
     .toLowerCase()
     .replace(/[^a-z0-9._-]+/g, '-')
     .replace(/^-+|-+$/g, '')
+  // Normalization can merge distinct identities, so hash the original command/key pair.
+  const identityHash = hashString(JSON.stringify([command, key ?? ''])).slice(0, 12)
+  return `${slug}-${identityHash}`
 }
 
 function devInstanceAlreadyRunningError(
