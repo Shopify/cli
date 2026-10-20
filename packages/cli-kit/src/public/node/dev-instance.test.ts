@@ -104,7 +104,7 @@ describe('acquireDevInstance', () => {
 
       // Then
       const paths = devInstancePaths({command: 'app dev', directory, key: 'shopify.app.toml'})
-      expect(paths.infoFile).toMatch(/\.shopify\/dev\/app-dev-shopify\.app\.toml\.json$/)
+      expect(paths.infoFile).toMatch(/\.shopify\/dev\/app-dev-shopify\.app\.toml-[a-f0-9]{12}\.json$/)
       const info = JSON.parse(await readFile(paths.infoFile))
       expect(info).toMatchObject({
         schemaVersion: 1,
@@ -147,6 +147,40 @@ describe('acquireDevInstance', () => {
       expect((error as AbortError).code).toBe(DEV_INSTANCE_ALREADY_RUNNING_CODE)
       expect((error as AbortError).details).toEqual({instance: running.info})
       await running.release()
+    })
+  })
+
+  test.each([
+    [
+      {command: 'app dev', key: 'shopify.app.Production.toml'},
+      {command: 'app dev', key: 'shopify.app.production.toml'},
+    ],
+    [
+      {command: 'app dev', key: 'store:one'},
+      {command: 'app dev', key: 'store/one'},
+    ],
+    [
+      {command: 'app dev-one', key: 'two'},
+      {command: 'app dev', key: 'one-two'},
+    ],
+  ])('keeps normalized identities separate: %j and %j', async (firstIdentity, secondIdentity) => {
+    await inTemporaryDirectory(async (directory) => {
+      const first = await acquireDevInstance({...firstIdentity, directory})
+      try {
+        const second = await acquireDevInstance({...secondIdentity, directory})
+        try {
+          expect(first.paths.infoFile).not.toBe(second.paths.infoFile)
+          await first.log({source: 'web', message: 'First session'})
+          await second.log({source: 'web', message: 'Second session'})
+          expect((await readLog(first.paths.logFile)).map(({message}) => message)).toEqual(['First session'])
+          expect((await readLog(second.paths.logFile)).map(({message}) => message)).toEqual(['Second session'])
+          await expect(listDevInstances(directory)).resolves.toHaveLength(2)
+        } finally {
+          await second.release()
+        }
+      } finally {
+        await first.release()
+      }
     })
   })
 
