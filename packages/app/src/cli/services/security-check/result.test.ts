@@ -402,13 +402,30 @@ describe('renderSecurityCheckResult for a scan', () => {
     expect(stdout).toBe('')
   })
 
-  test('aborts when the instructions cannot be copied', async () => {
-    vi.mocked(clipboard.write).mockRejectedValue(new Error('Command failed with ENOENT: pbcopy'))
+  test.each([
+    {level: 'none', blockedChecks: 0, exitCode: undefined},
+    {level: 'high', blockedChecks: 1, exitCode: 1},
+  ] as const)(
+    'warns instead of aborting when the instructions cannot be copied, and exits as --blocking $level requires',
+    async ({level, blockedChecks, exitCode}) => {
+      process.exitCode = undefined
+      vi.mocked(clipboard.write).mockRejectedValue(new Error('Command failed with ENOENT: pbcopy'))
+      const execution = {...scanExecution, scan: {...scan, issues: [committedSecretIssue]}}
+      const check = scanned({execution, blocking: {level, blockedChecks}})
 
-    await expect(present(scanned(), {}, testDependencies('copy', true))).rejects.toMatchObject({
-      code: 'clipboard-unavailable',
-    })
-  })
+      const {stdout, stderr} = await present(check, {}, testDependencies('copy', true))
+
+      const warning = boxText(stderr)
+      expect(warning).toContain(
+        "Couldn't copy the app security check instructions to the clipboard: Command failed with ENOENT: pbcopy",
+      )
+      expect(warning).toContain('Run the check again with `--print-instructions` to print them.')
+      expect(warning.indexOf('1 security issue found.')).toBeLessThan(warning.indexOf("Couldn't copy"))
+      expect(warning).not.toContain('Copied app security check instructions')
+      expect(stdout).toBe('')
+      expect(process.exitCode).toBe(exitCode)
+    },
+  )
 
   test('sets exit code 1 after the output when the scan breaches --blocking', async () => {
     process.exitCode = undefined

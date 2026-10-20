@@ -1,5 +1,6 @@
 import {
   appSecurityInstructions,
+  ClipboardUnavailableError,
   deliverAppSecurityInstructions,
   renderAppSecurityInstructions,
 } from '../app-security-instructions.js'
@@ -95,12 +96,32 @@ export async function renderSecurityCheckResult(
       commands: check.commands,
       scanScope: check.scope,
     })
-    const delivery = {copy: destination === 'copy'}
-    await deliverAppSecurityInstructions(instructions, delivery)
-    renderAppSecurityInstructions(instructions, delivery)
+    if (destination === 'print') {
+      renderAppSecurityInstructions(instructions, {copy: false})
+    } else if (await copyInstructions(instructions)) {
+      renderAppSecurityInstructions(instructions, {copy: true})
+    }
   }
 
   if (check.blocking.blockedChecks > 0) process.exitCode = 1
+}
+
+/**
+ * Copies the instructions to the clipboard, and returns whether they're on it. The scan has already finished and its
+ * report is shown, so a clipboard that isn't available only warns.
+ */
+async function copyInstructions(instructions: string): Promise<boolean> {
+  try {
+    await deliverAppSecurityInstructions(instructions, {copy: true})
+    return true
+  } catch (error) {
+    if (!(error instanceof ClipboardUnavailableError)) throw error
+    renderWarning({
+      headline: error.message,
+      body: ['Run the check again with', {command: '--print-instructions'}, 'to print them.'],
+    })
+    return false
+  }
 }
 
 async function instructionsDestination(

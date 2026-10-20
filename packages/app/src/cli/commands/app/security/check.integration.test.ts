@@ -8,6 +8,8 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, fileRealPath, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
+import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import clipboard from 'clipboardy'
 import {describe, expect, test, vi} from 'vitest'
 import {mkdir, readFile, writeFile} from 'node:fs/promises'
 // eslint-disable-next-line n/prefer-global/console
@@ -33,6 +35,13 @@ vi.mock('../../../services/context.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../services/context.js')>()),
   appFromIdentifiers: vi.fn(),
 }))
+// Tests answer the prompts. How a real terminal draws them is checked by hand.
+vi.mock('@shopify/cli-kit/node/ui', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@shopify/cli-kit/node/ui')>()),
+  renderSelectPrompt: vi.fn(),
+}))
+// Tests must not replace the clipboard of the machine that runs them.
+vi.mock('clipboardy', () => ({default: {write: vi.fn()}}))
 
 async function createApp(directory: string): Promise<{nestedDirectory: string}> {
   const routesDirectory = joinPath(directory, 'app', 'routes')
@@ -45,6 +54,13 @@ async function createApp(directory: string): Promise<{nestedDirectory: string}> 
   await writeFile(joinPath(directory, 'app', 'shopify.server.ts'), 'export const shopify = {}\n')
   await writeFile(joinPath(routesDirectory, 'index.ts'), 'export const loader = () => ({ok: true})')
   return {nestedDirectory: routesDirectory}
+}
+
+/** An app whose source holds a Shopify access token, which the deterministic scan reports as a high finding. */
+async function createAppWithSecret(directory: string): Promise<void> {
+  await createApp(directory)
+  const testToken = ['shpat', '0123456789abcdef0123456789abcdef'].join('_')
+  await writeFile(joinPath(directory, 'app', 'routes', 'index.ts'), `const access_token = "${testToken}"\n`)
 }
 
 async function readJson(path: string): Promise<unknown> {
@@ -93,6 +109,31 @@ async function runCommand(argv: string[]) {
     err.mockRestore()
     exit.mockRestore()
     process.exitCode = previousExitCode
+  }
+}
+
+/**
+ * Runs the command as if stdin and stderr were a terminal, where it prompts unless `--no-input` is passed. CLI Kit reads
+ * `--no-input` from the process arguments, not from the arguments given to `run`, so the environment sets it as well.
+ */
+async function runInTerminal(argv: string[], {noInput = false} = {}) {
+  vi.stubEnv('CI', '')
+  if (noInput) vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', '1')
+  const streams = [process.stdin, process.stderr]
+  const descriptors = streams.map((stream) => Object.getOwnPropertyDescriptor(stream, 'isTTY'))
+  for (const stream of streams) Object.defineProperty(stream, 'isTTY', {value: true, configurable: true})
+  try {
+    return await runCommand(noInput ? [...argv, '--no-input'] : argv)
+  } finally {
+    streams.forEach((stream, index) => {
+      const descriptor = descriptors[index]
+      if (descriptor) {
+        Object.defineProperty(stream, 'isTTY', descriptor)
+      } else {
+        Reflect.deleteProperty(stream, 'isTTY')
+      }
+    })
+    vi.unstubAllEnvs()
   }
 }
 
@@ -335,6 +376,32 @@ describe('app security check command boundary', () => {
       expect(result.stdout).toBe('')
     })
   })
+
+  test.each([
+    {blocking: 'none', exitCode: 0},
+    {blocking: 'high', exitCode: 1},
+  ])(
+    'warns when the instructions cannot be copied, after the report, and exits as --blocking $blocking requires',
+    async ({blocking, exitCode}) => {
+      await inTemporaryDirectory(async (directory) => {
+        await createAppWithSecret(directory)
+        vi.mocked(renderSelectPrompt).mockResolvedValue('copy')
+        vi.mocked(clipboard.write).mockRejectedValue(new Error('Command failed with ENOENT: pbcopy'))
+
+        const result = await runInTerminal(['--path', directory, '--blocking', blocking])
+
+        expect(result.exitCode).toBe(exitCode)
+        expect(result.stdout).toBe('')
+        const stderr = boxText(result.stderr)
+        expect(stderr).toContain(
+          "Couldn't copy the app security check instructions to the clipboard: Command failed with ENOENT: pbcopy",
+        )
+        expect(stderr).toContain('Run the check again with `--print-instructions` to print them.')
+        expect(stderr.indexOf('Config file shopify.app.toml')).toBeLessThan(stderr.indexOf("Couldn't copy"))
+        expect(clipboard.write).toHaveBeenCalledOnce()
+      })
+    },
+  )
 
   test('looks up --client-id, not the TOML client ID', async () => {
     await inTemporaryDirectory(async (directory) => {
