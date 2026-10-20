@@ -5,7 +5,6 @@ const commandExceptions = [
 
   // App Security commands, launched before adopting typed JSON output. Remove entries as they adopt it.
   'packages/app/src/cli/commands/app/security/check.ts',
-  'packages/app/src/cli/commands/app/security/instructions.ts',
   'packages/app/src/cli/commands/app/security/review.ts',
 
   // Streaming commands without a single finite result.

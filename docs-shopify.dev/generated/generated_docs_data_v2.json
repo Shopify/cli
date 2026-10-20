@@ -3574,7 +3574,7 @@
           "syntaxKind": "PropertySignature",
           "name": "--copy",
           "value": "''",
-          "description": "Copy the instructions to the clipboard instead of printing them.",
+          "description": "Copy the instructions to the clipboard instead of printing them. With --json, the result still includes them.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_COPY"
         },
@@ -3637,7 +3637,7 @@
           "syntaxKind": "PropertySignature",
           "name": "--write <value>",
           "value": "string",
-          "description": "Write the instructions to a file instead of printing them.",
+          "description": "Write the instructions to a file instead of printing them. With --json, stdout contains only the absolute path and Markdown format of the written file.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_WRITE"
         },
@@ -3649,9 +3649,18 @@
           "description": "The name of the app configuration.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_APP_CONFIG"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/app-security-instructions.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface appsecurityinstructions {\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Copy the instructions to the clipboard instead of printing them.\n   * @environment SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_COPY\n   */\n  '--copy'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.\n   * @environment SHOPIFY_FLAG_WITHOUT_APP_CONFIG\n   */\n  '--without-app-config'?: ''\n\n  /**\n   * Write the instructions to a file instead of printing them.\n   * @environment SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_WRITE\n   */\n  '--write <value>'?: string\n}"
+      "value": "export interface appsecurityinstructions {\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Copy the instructions to the clipboard instead of printing them. With --json, the result still includes them.\n   * @environment SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_COPY\n   */\n  '--copy'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Scan --path as an app with no app configuration file. Config checks are skipped. Requires --client-id.\n   * @environment SHOPIFY_FLAG_WITHOUT_APP_CONFIG\n   */\n  '--without-app-config'?: ''\n\n  /**\n   * Write the instructions to a file instead of printing them. With --json, stdout contains only the absolute path and Markdown format of the written file.\n   * @environment SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_WRITE\n   */\n  '--write <value>'?: string\n}"
     }
   },
   "appsecurityrecord": {
