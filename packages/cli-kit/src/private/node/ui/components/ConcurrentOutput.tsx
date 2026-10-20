@@ -57,6 +57,11 @@ function useConcurrentOutputContext<T>(context: ConcurrentOutputContext, callbac
   return outputContextStore.run(context, callback)
 }
 
+/** Returns the source and styling context for the current output write. */
+export function getConcurrentOutputContext(): ConcurrentOutputContext | undefined {
+  return outputContextStore.getStore()
+}
+
 /** Runs finite processes concurrently and routes their output through the shared diagnostic context. */
 export async function runConcurrentProcessesForJson({
   processes,

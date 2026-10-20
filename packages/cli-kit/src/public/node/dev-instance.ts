@@ -5,10 +5,15 @@ import {AbortError} from './error.js'
 import {outputDebug, unstyled} from './output.js'
 import {formatJsonOutputTimestamp} from './json-output-schema.js'
 import {randomUUID} from './crypto.js'
+import {
+  ConcurrentOutputContext,
+  getConcurrentOutputContext,
+  useConcurrentOutputContext,
+} from '../../private/node/ui/components/ConcurrentOutput.js'
 import lockfile from 'proper-lockfile'
 import fs, {createWriteStream, readFileSync, type WriteStream} from 'fs'
 import {mkdir as mkdirExclusive, rmdir as removeEmptyDirectory, writeFile as writeFileWithMode} from 'fs/promises'
-import {Writable} from 'stream'
+import {Writable, type WritableOptions} from 'stream'
 import {finished} from 'stream/promises'
 import {StringDecoder} from 'string_decoder'
 import {once} from 'events'
@@ -277,20 +282,25 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
     tee: (target, {source, stream}) => {
       const decoder = new StringDecoder('utf8')
       let pending = ''
+      let currentSource = source
       const flushLines = async (text: string) => {
         const lines = text.split(/\r?\n/)
         pending = lines.pop() ?? ''
         await Promise.all(
           lines.map(async (line) => {
             const message = unstyled(line).trimEnd()
-            if (message.length > 0) await writeLogEntry({source, stream, message})
+            if (message.length > 0) await writeLogEntry({source: currentSource, stream, message})
           }),
         )
       }
       const flush = () => flushLines(`${pending}${decoder.end()}\n`)
-      const output = new Writable({
+      const output = new DevInstanceOutput({
         write(chunk: Buffer | string, encoding, callback) {
+          const nextSource = getConcurrentOutputContext()?.outputPrefix ?? source
+          const previous = nextSource === currentSource ? Promise.resolve() : flush()
+          currentSource = nextSource
           Promise.all([
+            previous,
             writeToStream(target, chunk, encoding),
             flushLines(pending + (typeof chunk === 'string' ? chunk : decoder.write(chunk))),
           ])
@@ -347,6 +357,42 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
     await instance.release().catch((cleanupError: Error) => outputDebug(cleanupError.message))
     await removeFile(`${paths.infoFile}.${sessionId}.tmp`)
     throw error
+  }
+}
+
+// Writable processes queued chunks in an earlier write's context. Capture context when each chunk is submitted.
+class DevInstanceOutput extends Writable {
+  private readonly contexts: (ConcurrentOutputContext | undefined)[] = []
+
+  constructor(options: WritableOptions & {write: NonNullable<WritableOptions['write']>}) {
+    super({
+      ...options,
+      write: (chunk, encoding, callback) => {
+        useConcurrentOutputContext(this.contexts.shift() ?? {}, () =>
+          options.write.call(this, chunk, encoding, callback),
+        )
+      },
+    })
+  }
+
+  write(
+    chunk: string | Uint8Array,
+    encoding?: BufferEncoding | ((error?: Error | null) => void),
+    callback?: (error?: Error | null) => void,
+  ): boolean {
+    this.contexts.push(getConcurrentOutputContext())
+    return typeof encoding === 'string' ? super.write(chunk, encoding, callback) : super.write(chunk, encoding)
+  }
+
+  end(
+    chunk?: string | Uint8Array | null | (() => void),
+    encoding?: BufferEncoding | (() => void),
+    callback?: () => void,
+  ): this {
+    if (chunk !== undefined && chunk !== null && typeof chunk !== 'function')
+      this.contexts.push(getConcurrentOutputContext())
+    if (typeof chunk === 'function') return super.end(chunk)
+    return typeof encoding === 'string' ? super.end(chunk, encoding, callback) : super.end(chunk, encoding)
   }
 }
 
