@@ -2,12 +2,14 @@ import {test, expect} from 'vitest'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import {fileExists, inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {devInstancePaths} from '@shopify/cli-kit/node/dev-instance'
+import {fileURLToPath} from 'url'
 
 const bootstrapUrl = new URL('../../../../../cli/src/bootstrap.ts', import.meta.url).href
 const serviceUrl = new URL('../dev.ts', import.meta.url).href
 const uiUrl = new URL('./ui.tsx', import.meta.url).href
 const statusUrl = new URL('./processes/dev-session/dev-session-status-manager.ts', import.meta.url).href
-const sourceLoaderUrl = new URL('../../../../../cli-kit/test/fixtures/cli-kit-source-loader.js', import.meta.url).href
+const sourceLoaderUrl = new URL('../../../../test/fixtures/app-source-loader.js', import.meta.url).href
+const tsconfigPath = fileURLToPath(new URL('../../../../test/fixtures/tsconfig.json', import.meta.url))
 
 test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
   '%s keeps the default bootstrap exit when no dev session is running',
@@ -21,7 +23,7 @@ test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
     const result = await captureOutputWithExitCode(
       process.execPath,
       ['--loader', 'ts-node/esm', '--loader', sourceLoaderUrl, '--input-type=module', '--eval', script],
-      {env: {...process.env, NODE_NO_WARNINGS: '1', SHOPIFY_CLI_ENV: 'development'}},
+      {env: {...process.env, NODE_NO_WARNINGS: '1', SHOPIFY_CLI_ENV: 'development', TS_NODE_PROJECT: tsconfigPath}},
     )
     expect(result.exitCode, result.stderr).toBe(1)
     expect(result.stderr).toBe('')
@@ -66,7 +68,15 @@ test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
       const result = await captureOutputWithExitCode(
         process.execPath,
         ['--loader', 'ts-node/esm', '--loader', sourceLoaderUrl, '--input-type=module', '--eval', script],
-        {env: {...process.env, NODE_NO_WARNINGS: '1', SHOPIFY_CLI_ENV: 'development', SHOPIFY_CLI_NO_ANALYTICS: '1'}},
+        {
+          env: {
+            ...process.env,
+            NODE_NO_WARNINGS: '1',
+            SHOPIFY_CLI_ENV: 'development',
+            SHOPIFY_CLI_NO_ANALYTICS: '1',
+            TS_NODE_PROJECT: tsconfigPath,
+          },
+        },
       )
       expect(result.exitCode, result.stderr).toBe(0)
       expect(result.stdout).toContain('Session cleaned up')
