@@ -1,18 +1,16 @@
 import {encodedArtifactSize, MAX_ARTIFACT_FILE_SIZE_BYTES, writeAgentFindings} from './app-security-artifacts.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from './app-security-commands.js'
-import {countLabel} from './app-security-format.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
 import {getEngineVersion, recordAgentFindings, type AgentFindingsDocument} from './app-security-engine/index.js'
 import {resultsKey, type AppSecuritySelection} from './app-security-selection.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readStdinString} from '@shopify/cli-kit/node/system'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import type {AppSecurityCommands} from './app-security-commands.js'
 
 const MAX_FINDINGS_DOCUMENT_BYTES = 5_000_000
 
 /** A recorded findings document: where it was written and what it holds. */
-interface SecurityRecordResult {
+export interface SecurityRecordResult {
   path: string
   checks: number
   findings: number
@@ -124,21 +122,4 @@ export default async function securityRecord(
   const findings = recorded.document.checks.reduce((total, check) => total + check.findings.length, 0)
   await dependencies.recordMetadata({num_security_findings: findings})
   return {path, checks: recorded.document.checks.length, findings}
-}
-
-/** Presents a recorded document in the terminal. */
-export function renderSecurityRecordResult(
-  result: SecurityRecordResult,
-  selection: AppSecuritySelection,
-  path: string,
-): void {
-  const commands = resolveAppSecurityCommands(selection, path)
-  renderSuccess({
-    headline: 'Agent findings recorded.',
-    body: [
-      `Recorded ${countLabel(result.checks, 'check')} and ${countLabel(result.findings, 'finding')} in`,
-      {filePath: result.path},
-    ],
-    nextSteps: [['Run', {command: formatAppSecurityCommand(commands.review)}, 'to see the results.']],
-  })
 }

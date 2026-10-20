@@ -1,7 +1,8 @@
 import {appSecuritySelectionFlags} from './selection-flags.js'
 import {requireResultsDirectory} from '../../../services/app-security-results.js'
 import {resolveAppSecuritySelection} from '../../../services/app-security-selection.js'
-import securityRecord, {renderSecurityRecordResult} from '../../../services/security-record.js'
+import securityRecord from '../../../services/security-record.js'
+import {renderSecurityRecordResult} from '../../../services/security-record/result.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 

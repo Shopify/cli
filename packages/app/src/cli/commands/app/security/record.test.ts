@@ -4,7 +4,8 @@ import {appFlags} from '../../../flags.js'
 import {appSecurityArtifactPaths} from '../../../services/app-security-artifacts.js'
 import {resolveAppSecuritySelection} from '../../../services/app-security-selection.js'
 import {validAppConfiguration} from '../../../services/app-security-selection.test-data.js'
-import securityRecord, {renderSecurityRecordResult} from '../../../services/security-record.js'
+import securityRecord from '../../../services/security-record.js'
+import {renderSecurityRecordResult} from '../../../services/security-record/result.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -14,6 +15,7 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/security-record.js')
+vi.mock('../../../services/security-record/result.js')
 vi.mock('../../../services/app-security-selection.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../services/app-security-selection.js')>()),
   resolveAppSecuritySelection: vi.fn(),
