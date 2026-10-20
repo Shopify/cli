@@ -7,6 +7,8 @@ type LiquidVariableOutput = Extract<LiquidHtmlNode, {type: 'LiquidVariableOutput
 type AttributeNode = Extract<LiquidHtmlNode, {type: `Attr${string}`}>
 type LiquidVariableMarkup = Exclude<LiquidVariableOutput['markup'], string>
 type LiquidFilterArgument = LiquidVariableMarkup['filters'][number]['args'][number]
+type LiquidTag = Extract<LiquidHtmlNode, {type: 'LiquidTag'}>
+type LiquidAst = Exclude<ReturnType<typeof toLiquidHTMLAST>, Error>
 
 interface LiquidScanResult {
   issues: Issue[]
@@ -33,8 +35,10 @@ export function scanLiquidSecurity(files: SourceFile[]): LiquidScanResult {
       continue
     }
     // In an app block, `block.settings` is described by the file's own schema, but `section.settings` belongs to
-    // the host theme section, so only app block files can exempt settings.
-    const schemaSettings = APP_BLOCK_FILE.test(file.path) ? extractSchemaSettings(file.content) : undefined
+    // the host theme section, so only app block files can exempt settings. If the file rebinds `block`, a
+    // `block.settings` lookup may no longer refer to the schema-owning block, so the whole file loses the exemption.
+    const schemaSettings =
+      APP_BLOCK_FILE.test(file.path) && !rebindsBlock(ast) ? extractSchemaSettings(file.content) : undefined
     issues.push(...visit<SourceCodeType.LiquidHtml, Issue>(ast, liquidUnsafeRenderVisitor(file, schemaSettings)))
     issues.push(...visit<SourceCodeType.LiquidHtml, Issue>(ast, liquidExecutableContextVisitor(file)))
   }
@@ -46,7 +50,30 @@ interface SchemaSetting {
   options?: unknown
 }
 
-const URL_ATTRIBUTE_NAMES = new Set(['href', 'src', 'action', 'formaction', 'poster', 'cite', 'xlink:href'])
+// Attributes whose value the browser treats as plain text. Every other attribute (URLs such as href, src, srcset,
+// object data, or formaction; event handlers; style; srcdoc; data-*; unknown names) keeps the finding, because an
+// inert-looking value can still be a URL or code there.
+const INERT_ATTRIBUTE_NAMES = new Set(['class', 'id', 'title', 'alt', 'role', 'width', 'height', 'lang', 'dir'])
+const INERT_ARIA_ATTRIBUTE = /^aria-[a-z]+$/
+// Argument-less filters whose output stays within INERT_OPTION_VALUE when their input does. Decoding, lookup, and
+// markup-producing filters (url_decode, t, script_tag, link_to, ...) are not listed, so they keep the finding.
+const INERT_FILTER_NAMES = new Set([
+  'downcase',
+  'upcase',
+  'capitalize',
+  'strip',
+  'lstrip',
+  'rstrip',
+  'strip_newlines',
+  'handleize',
+  'handle',
+  'escape',
+  'escape_once',
+])
+// Tags that bind a variable name in the current scope.
+const BINDING_TAG_NAMES = new Set(['assign', 'capture', 'for', 'tablerow', 'increment', 'decrement'])
+// No markup, quote, whitespace, `=`, or `&` characters. `%` is allowed: no exempt destination percent-decodes,
+// because URL attributes and decoding filters such as url_decode keep the finding.
 const INERT_OPTION_VALUE = /^[A-Za-z0-9\-._~:/?#@!$()*+,;%]*$/
 const APP_BLOCK_FILE = /(?:^|[\\/])blocks[\\/][^\\/]+$/
 
@@ -84,8 +111,9 @@ function isSchemaExemptSetting(
 ): boolean {
   if (!schemaSettings || typeof node.markup === 'string') return false
   const {expression, filters} = node.markup
-  // Filter arguments are rendered too (for example `default: block.settings.title`), so only literals are allowed.
-  if (!filters.every((filter) => filter.args.every(isLiteralFilterArgument))) return false
+  // A filter can turn an inert value into markup (`url_decode`, `script_tag`) or replace it (`t`), and its arguments
+  // are rendered too, so only filters that keep the output in the inert charset are allowed.
+  if (!filters.every(isInertFilter)) return false
   const settingId = blockSettingId(expression)
   if (settingId === undefined) return false
   const setting = schemaSettings.get(settingId)
@@ -112,9 +140,39 @@ function blockSettingId(expression: LiquidVariableMarkup['expression']): string 
   return id.value
 }
 
-function isLiteralFilterArgument(argument: LiquidFilterArgument): boolean {
+function isInertFilter(filter: LiquidVariableMarkup['filters'][number]): boolean {
+  // `default` renders its fallback argument, so that argument must itself be an inert literal.
+  if (filter.name === 'default') return filter.args.every(isInertLiteralArgument)
+  return INERT_FILTER_NAMES.has(filter.name) && filter.args.length === 0
+}
+
+function isInertLiteralArgument(argument: LiquidFilterArgument): boolean {
   const value = argument.type === 'NamedArgument' ? argument.value : argument
-  return value.type === 'String' || value.type === 'Number' || value.type === 'LiquidLiteral'
+  if (value.type === 'String') return INERT_OPTION_VALUE.test(value.value)
+  return value.type === 'Number' || value.type === 'LiquidLiteral'
+}
+
+/** True when the file binds the name `block` itself with assign, capture, for, tablerow, increment, or decrement. */
+function rebindsBlock(ast: LiquidAst): boolean {
+  const bindings = visit<SourceCodeType.LiquidHtml, true>(ast, {
+    LiquidTag(node: LiquidTag): true[] | undefined {
+      return BINDING_TAG_NAMES.has(node.name) && bindsBlock(node.markup) ? [true] : undefined
+    },
+  })
+  return bindings.length > 0
+}
+
+function bindsBlock(markup: unknown): boolean {
+  // Unparsed tag markup fails closed on any mention of `block`.
+  if (typeof markup === 'string') return /\bblock\b/.test(markup)
+  if (!markup || typeof markup !== 'object') return false
+  const {type, name, value, variableName} = markup as {
+    type?: unknown
+    name?: unknown
+    value?: unknown
+    variableName?: unknown
+  }
+  return name === 'block' || variableName === 'block' || (type === 'String' && value === 'block')
 }
 
 function liquidUnsafeRenderVisitor(file: SourceFile, schemaSettings?: Map<string, SchemaSetting>) {
@@ -126,7 +184,8 @@ function liquidUnsafeRenderVisitor(file: SourceFile, schemaSettings?: Map<string
       const context = liquidOutputContext(ancestors)
       if (isSafelyRendered(filters, context)) return undefined
       if (
-        (context === 'html_text' || (context === 'html_attribute' && !isUrlAttributeContext(ancestors))) &&
+        (context === 'html_text' || context === 'html_attribute') &&
+        isInertOutputPosition(node, ancestors) &&
         isSchemaExemptSetting(node, schemaSettings)
       )
         return undefined
@@ -202,10 +261,51 @@ function liquidOutputContext(ancestors: LiquidHtmlNode[]): LiquidOutputContext {
   return 'html_attribute'
 }
 
-function isUrlAttributeContext(ancestors: LiquidHtmlNode[]): boolean {
-  const attribute = ancestors.find((ancestor): ancestor is AttributeNode => ancestor.type.startsWith('Attr'))
-  if (!attribute) return false
-  return URL_ATTRIBUTE_NAMES.has(attributeName(attribute).toLowerCase())
+/**
+ * True when the output lands in element text content or in a quoted value of a statically named inert attribute.
+ * Output in a tag name, directly in an attribute list (where it can supply an attribute name), in an unquoted or
+ * dynamically named attribute, or inside raw-text elements such as script or style is not inert.
+ */
+function isInertOutputPosition(node: LiquidVariableOutput, ancestors: LiquidHtmlNode[]): boolean {
+  const path: LiquidHtmlNode[] = [...ancestors, node]
+  let position: 'content' | 'attributes' | 'attribute_value' = 'content'
+  for (let index = 0; index < ancestors.length; index++) {
+    const parent = path[index]!
+    const child = path[index + 1]!
+    if (
+      parent.type === 'HtmlElement' ||
+      parent.type === 'HtmlVoidElement' ||
+      parent.type === 'HtmlSelfClosingElement'
+    ) {
+      if (staticName(parent.name) === undefined) return false
+      if ('children' in parent && contains(parent.children, child)) position = 'content'
+      else if (contains(parent.attributes, child)) position = 'attributes'
+      else return false
+    } else if (parent.type === 'AttrDoubleQuoted' || parent.type === 'AttrSingleQuoted') {
+      const name = staticName(parent.name)?.toLowerCase()
+      if (position !== 'attributes' || !contains(parent.value, child) || name === undefined) return false
+      if (!INERT_ATTRIBUTE_NAMES.has(name) && !INERT_ARIA_ATTRIBUTE.test(name)) return false
+      position = 'attribute_value'
+    } else if (parent.type.startsWith('Html') || parent.type.startsWith('Attr')) {
+      // Raw-text elements (script, style), unquoted attributes, and any other HTML node.
+      return false
+    }
+  }
+  return position !== 'attributes'
+}
+
+function contains(list: unknown, child: LiquidHtmlNode): boolean {
+  return Array.isArray(list) && list.includes(child)
+}
+
+/** The name made only of text parts, or undefined when any part is Liquid. */
+function staticName(name: unknown): string | undefined {
+  if (typeof name === 'string') return name
+  if (!Array.isArray(name) || name.length === 0) return undefined
+  const parts = name.map((part: {type?: unknown; value?: unknown}) =>
+    part.type === 'TextNode' && typeof part.value === 'string' ? part.value : undefined,
+  )
+  return parts.every((part) => part !== undefined) ? parts.join('') : undefined
 }
 
 function attributeName(attribute: AttributeNode): string {

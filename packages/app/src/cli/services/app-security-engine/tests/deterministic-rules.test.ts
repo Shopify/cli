@@ -388,7 +388,7 @@ describe('Liquid AST mode', () => {
     )
   })
 
-  test('exempts filtered inert settings only when every filter argument is a literal', () => {
+  test('exempts filtered inert settings only through inert filters with inert literal arguments', () => {
     const schema = `{% schema %}{"settings":[{"type":"checkbox","id":"show"},{"type":"text","id":"title"}]}{% endschema %}`
     const liquid = (output: string) =>
       scanLiquidSecurity([source(`${output}${schema}`, 'extensions/theme/blocks/a.liquid')]).issues.map(
@@ -396,11 +396,31 @@ describe('Liquid AST mode', () => {
       )
 
     expect(liquid('{{ block.settings.show | downcase }}')).not.toContain('LIQUID_UNSAFE_RENDER')
-    expect(liquid("{{ block.settings.show | default: 'x' }}")).not.toContain('LIQUID_UNSAFE_RENDER')
-    expect(liquid("{{ block.settings.show | default: 'x', allow_false: true }}")).not.toContain('LIQUID_UNSAFE_RENDER')
-    expect(liquid("{{ block.settings.show | replace: 'true', 'on' | append: 1 | prepend: nil }}")).not.toContain(
+    expect(liquid('{{ block.settings.show | strip | upcase | handleize | capitalize }}')).not.toContain(
       'LIQUID_UNSAFE_RENDER',
     )
+    expect(liquid("{{ block.settings.show | default: 'x' }}")).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid("{{ block.settings.show | default: 'x', allow_false: true }}")).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid('{{ block.settings.show | default: 3 }}')).not.toContain('LIQUID_UNSAFE_RENDER')
+    // Filters that are not proven inert keep the finding, even with literal or no arguments.
+    for (const filter of [
+      'url_decode',
+      'base64_decode',
+      't',
+      'script_tag',
+      'stylesheet_tag',
+      'img_tag',
+      "link_to: 'x'",
+      "replace: 'true', 'on'",
+      "append: 'x'",
+      'prepend: nil',
+      "downcase: 'x'",
+    ]) {
+      expect(liquid(`{{ block.settings.show | ${filter} }}`)).toContain('LIQUID_UNSAFE_RENDER')
+    }
+    // A `default` fallback is rendered, so it must be an inert literal.
+    expect(liquid("{{ block.settings.show | default: '<b>' }}")).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid("{{ block.settings.show | default: 'a b' }}")).toContain('LIQUID_UNSAFE_RENDER')
     // A setting or variable in any filter argument can render a free-text value.
     expect(liquid('{{ block.settings.show | default: block.settings.title }}')).toContain('LIQUID_UNSAFE_RENDER')
     expect(liquid('{{ block.settings.show | append: block.settings.title }}')).toContain('LIQUID_UNSAFE_RENDER')
@@ -413,5 +433,97 @@ describe('Liquid AST mode', () => {
     )
     expect(liquid('{{ block.settings.show | downcase | append: title }}')).toContain('LIQUID_UNSAFE_RENDER')
     expect(liquid("{{ block.settings.show | default: 'x', allow_false: title }}")).toContain('LIQUID_UNSAFE_RENDER')
+  })
+
+  test('keeps decoding and markup filters flagged for percent-encoded select values', () => {
+    const schema = `{% schema %}{"settings":[{"type":"select","id":"layout","options":[{"value":"%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E"},{"value":"left"}]}]}{% endschema %}`
+    const liquid = (output: string) =>
+      scanLiquidSecurity([source(`${output}${schema}`, 'extensions/theme/blocks/a.liquid')]).issues.map(
+        (finding) => finding.id,
+      )
+
+    // Percent-encoded text is inert until something decodes it.
+    expect(liquid('{{ block.settings.layout }}')).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid('{{ block.settings.layout | url_decode }}')).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid('{{ block.settings.layout | t }}')).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid('{{ block.settings.layout | script_tag }}')).toContain('LIQUID_UNSAFE_RENDER')
+  })
+
+  test('exempts inert settings only in quoted values of statically named inert attributes', () => {
+    const schema =
+      '{% schema %}{"settings":[{"type":"select","id":"layout","options":[{"value":"left"},{"value":"onclick"}]}]}{% endschema %}'
+    const liquid = (content: string) =>
+      scanLiquidSecurity([source(`${content}${schema}`, 'extensions/theme/blocks/a.liquid')]).issues.map(
+        (finding) => finding.id,
+      )
+    const output = '{{ block.settings.layout }}'
+
+    for (const attribute of ['class', 'id', 'title', 'alt', 'role', 'width', 'height', 'lang', 'dir', 'aria-label']) {
+      expect(liquid(`<div ${attribute}="${output}"></div>`)).not.toContain('LIQUID_UNSAFE_RENDER')
+    }
+    expect(liquid(`<img alt='x ${output}'>`)).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<p>{% if true %}${output}{% endif %}</p>`)).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<div {% if true %}class="${output}"{% endif %}></div>`)).not.toContain('LIQUID_UNSAFE_RENDER')
+
+    // URL, script, style, data-*, and unknown attributes keep the finding.
+    for (const markup of [
+      `<object data="${output}"></object>`,
+      `<img srcset="${output}">`,
+      `<link imagesrcset="${output}">`,
+      `<img src="${output}">`,
+      `<a href="${output}">x</a>`,
+      `<button formaction="${output}"></button>`,
+      `<form action="${output}"></form>`,
+      `<video poster="${output}"></video>`,
+      `<table background="${output}"></table>`,
+      `<a ping="${output}">x</a>`,
+      `<blockquote cite="${output}"></blockquote>`,
+      `<svg><a xlink:href="${output}"></a></svg>`,
+      `<object codebase="${output}"></object>`,
+      `<html manifest="${output}"></html>`,
+      `<iframe srcdoc="${output}"></iframe>`,
+      `<div style="${output}"></div>`,
+      `<div onclick="${output}"></div>`,
+      `<div data-layout="${output}"></div>`,
+      `<div x-layout="${output}"></div>`,
+    ]) {
+      expect(liquid(markup)).toContain('LIQUID_UNSAFE_RENDER')
+    }
+
+    // Output that can supply an attribute or tag name, unquoted values, and raw-text elements keep the finding.
+    expect(liquid(`<button ${output}="alert(1)"></button>`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<div ${output}></div>`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<div {% if true %}${output}{% endif %}></div>`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<div data-${output}="1"></div>`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<div class=${output}></div>`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<${output}>x</${output}>`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<style>.a { color: ${output}; }</style>`)).toContain('LIQUID_UNSAFE_RENDER')
+  })
+
+  test('disables the exemption in files that rebind block', () => {
+    const schema = '{% schema %}{"settings":[{"type":"range","id":"size"}]}{% endschema %}'
+    const liquid = (content: string) =>
+      scanLiquidSecurity([source(`${content}${schema}`, 'extensions/theme/blocks/a.liquid')]).issues.map(
+        (finding) => finding.id,
+      )
+    const output = '{{ block.settings.size }}'
+
+    expect(liquid(`{% assign item = section %}${output}`)).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`{% for item in section.blocks %}{% endfor %}${output}`)).not.toContain('LIQUID_UNSAFE_RENDER')
+
+    for (const binding of [
+      '{% assign block = section %}',
+      '{% for block in section.blocks %}{% endfor %}',
+      '{% tablerow block in section.blocks %}{% endtablerow %}',
+      '{% capture block %}x{% endcapture %}',
+      '{% increment block %}',
+      '{% decrement block %}',
+      '{% liquid\n  assign block = section\n%}',
+    ]) {
+      expect(liquid(`${binding}${output}`)).toContain('LIQUID_UNSAFE_RENDER')
+      // The binding disables the exemption for the whole file, including output before it.
+      expect(liquid(`${output}${binding}`)).toContain('LIQUID_UNSAFE_RENDER')
+    }
+    expect(liquid(`{% for block in section.blocks %}${output}{% endfor %}`)).toContain('LIQUID_UNSAFE_RENDER')
   })
 })
