@@ -10,6 +10,7 @@ import {
   resolveAppSecurityCommands,
   type AppSecurityCommands,
 } from './app-security-commands.js'
+import {projectAppSecurityPath} from './app-security-json-output.js'
 import {resultsKey, type AppSecuritySelection} from './app-security-selection.js'
 import {
   combineFindings,
@@ -107,7 +108,8 @@ function presentSource<TDocument>(loaded: LoadedSource<TDocument>): {path: strin
 
 /**
  * Aborts with one error for every invalid file: a next step per file with the command that regenerates it, `clean` as
- * the way to start over, and a section per file listing the reader's messages under the file's path.
+ * the way to start over, and a section per file listing the reader's messages under the file's path. `details.files`
+ * repeats each file's absolute path and messages for JSON output.
  */
 function abortInvalidResults(invalidFiles: InvalidResultsFile[], commands: AppSecurityCommands): never {
   const message =
@@ -118,7 +120,10 @@ function abortInvalidResults(invalidFiles: InvalidResultsFile[], commands: AppSe
     ...invalidFiles.map((file) => regenerateResultsFileStep(file.source, commands, `${basename(file.path)}.`)),
     ['Or run', {command: formatAppSecurityCommand(commands.clean)}, 'to delete both results files and start over.'],
   ]
-  throw new AbortError(message, null, nextSteps, invalidFiles.map(invalidFileSection))
+  const error = new AbortError(message, null, nextSteps, invalidFiles.map(invalidFileSection))
+  error.code = 'results-file-invalid'
+  error.details = {files: invalidFiles.map(({path, errors}) => ({path: projectAppSecurityPath(path), errors}))}
+  throw error
 }
 
 /**

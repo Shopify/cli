@@ -134,6 +134,8 @@ describe('reviewAppSecurityResults', () => {
       )
 
       expect(abort.message).toBe('Unknown check ID: NOT_A_CHECK.')
+      expect(abort.code).toBe('unknown-check-id')
+      expect(abort.details).toStrictEqual({checkIds: ['NOT_A_CHECK']})
       expect(abort.customSections).toEqual([
         {
           title: 'Available check IDs',
@@ -151,8 +153,11 @@ describe('reviewAppSecurityResults', () => {
       ])
     })
 
-    test('pluralizes the error for several unknown IDs', () => {
-      expect(() => review(both, {checkIds: ['A', 'B']})).toThrow('Unknown check IDs: A, B.')
+    test('pluralizes the error for several unknown IDs, and lists only those in its details', async () => {
+      const abort = await captureError(() => review(both, {checkIds: ['A', 'OPEN_REDIRECT', 'B']}))
+
+      expect(abort.message).toBe('Unknown check IDs: A, B.')
+      expect(abort.details).toStrictEqual({checkIds: ['A', 'B']})
     })
 
     test('skips the unknown-ID check when no file is present, echoing the filter with no checks', () => {
@@ -248,12 +253,17 @@ describe('securityReview', () => {
     })
   })
 
-  test('returns the reviewed results and the commands to run next', async () => {
+  test('returns the selection, the reviewed results and the commands to run next', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, both)
 
       const review = await securityReview({directory: appRoot, checkIds: [], blocking: 'none'}, testDependencies())
 
+      expect(review.selection).toStrictEqual({
+        kind: 'config',
+        appDirectory: appRoot,
+        appConfigFilePath: joinPath(appRoot, 'shopify.app.toml'),
+      })
       expect(review.commands.scan.args).toContainEqual({flag: '--path', value: relativePath(cwd(), appRoot)})
       expect(review.result.resultsDirectory).toBe(appSecurityArtifactPaths(appRoot, RESULTS_KEY).resultsDirectory)
       expect(review.result.sources.deterministic?.path).toBe(

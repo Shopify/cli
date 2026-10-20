@@ -40,8 +40,9 @@ export interface SecurityReviewResult {
   }
 }
 
-/** What `securityReview` returns: the reviewed results, and the commands that the review suggests running next. */
+/** What `securityReview` returns: the selected app, its reviewed results, and the commands to run next. */
 export interface ReviewedAppSecurityResults {
+  selection: AppSecuritySelection
   result: SecurityReviewResult
   commands: AppSecurityCommands
 }
@@ -107,12 +108,15 @@ function assertKnownCheckIds(checkIds: string[], checks: CombinedCheck[]): void 
   if (unknownIds.length === 0) return
 
   const label = unknownIds.length === 1 ? 'check ID' : 'check IDs'
-  throw new AbortError(
+  const error = new AbortError(
     `Unknown ${label}: ${unknownIds.join(', ')}.`,
     'Pass --check-id with one of the checks in the results files.',
     [],
     [{title: 'Available check IDs', body: {list: {items: checks.map((check) => check.id)}}}],
   )
+  error.code = 'unknown-check-id'
+  error.details = {checkIds: unknownIds}
+  throw error
 }
 
 /**
@@ -147,6 +151,7 @@ export default async function securityReview(
   }
 
   return {
+    selection,
     result,
     // The latest scan's scope, so running `check` again gathers the same files.
     commands: resolveAppSecurityCommands(

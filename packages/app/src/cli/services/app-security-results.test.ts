@@ -12,6 +12,8 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
+// eslint-disable-next-line no-restricted-imports -- Verify native filesystem paths in JSON error details.
+import {resolve} from 'node:path'
 import type {DeterministicFindingsDocument} from './app-security-engine/index.js'
 
 type FileState = 'present' | 'missing' | 'invalid'
@@ -247,6 +249,10 @@ describe('loadAppSecurityResults', () => {
             {title: invalidPath, body: {list: {items: [expect.stringContaining('Could not parse JSON')]}}},
           ])
           expect(JSON.stringify(error.customSections)).not.toContain(validPath)
+          expect(error.code).toBe('results-file-invalid')
+          expect(error.details).toStrictEqual({
+            files: [{path: resolve(invalidPath), errors: [expect.stringContaining('Could not parse JSON')]}],
+          })
         })
       },
     )
@@ -279,6 +285,16 @@ describe('loadAppSecurityResults', () => {
           },
           {title: paths.agentFindingsPath, body: {list: {items: [expect.stringContaining('Could not parse JSON')]}}},
         ])
+        expect(error.code).toBe('results-file-invalid')
+        expect(error.details).toStrictEqual({
+          files: [
+            {
+              path: resolve(paths.deterministicFindingsPath),
+              errors: ['source is "agent", but this file must hold "deterministic" findings.'],
+            },
+            {path: resolve(paths.agentFindingsPath), errors: [expect.stringContaining('Could not parse JSON')]},
+          ],
+        })
       })
     })
 
