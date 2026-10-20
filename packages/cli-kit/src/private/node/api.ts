@@ -7,6 +7,7 @@ import {recordRetry} from '../../public/node/analytics.js'
 
 import {Headers} from 'form-data'
 import {ClientError} from 'graphql-request'
+import {getOperationAST, GraphQLError, parse} from 'graphql'
 
 import {performance} from 'perf_hooks'
 
@@ -276,9 +277,9 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
   }
 }
 
-// Partial data can include a successful mutation. Only retry fully rejected requests.
+// Partial mutation data can include a successful write. Read queries are safe to repeat.
 function isThrottled(error: ClientError): boolean {
-  if (error.response.data != null) return false
+  if (error.response.data != null && !isReadOnlyQuery(error.request.query)) return false
   const httpRateLimited = error.response.status === 429
   const errors = error.response.errors
   if (!Array.isArray(errors) || errors.length === 0) return httpRateLimited
@@ -286,6 +287,16 @@ function isThrottled(error: ClientError): boolean {
     const codes = graphQLErrorCodes([entry])
     return (codes.length > 0 || httpRateLimited) && codes.every(isRateLimitCode)
   })
+}
+
+function isReadOnlyQuery(query: string | string[]): boolean {
+  if (typeof query !== 'string') return false
+  try {
+    return getOperationAST(parse(query))?.operation === 'query'
+  } catch (error) {
+    if (error instanceof GraphQLError) return false
+    throw error
+  }
 }
 
 function retryAfterDelayMs(retryAfter: string | undefined): number | undefined {

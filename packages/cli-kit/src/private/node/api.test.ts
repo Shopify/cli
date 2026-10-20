@@ -378,6 +378,36 @@ describe('retryAwareRequest', () => {
     expect(scheduleDelay).not.toHaveBeenCalled()
   })
 
+  test.each([
+    {name: 'an invalid document', query: 'not graphql'},
+    {
+      name: 'an ambiguous document',
+      query: 'query Read { app { id } } mutation Create { appCreate { id } }',
+    },
+    {name: 'a batch', query: ['query Read { app { id } }', 'mutation Create { appCreate { id } }']},
+  ])('does not retry partial data for $name', async ({query}) => {
+    const error = new ClientError(
+      {
+        status: 200,
+        data: {createdVersion: {id: '123'}},
+        errors: [new GraphQLError('Throttled', {extensions: {code: 'THROTTLED'}})],
+        headers: new Headers(),
+      },
+      {query},
+    )
+    const request = vi.fn().mockRejectedValue(error)
+    const scheduleDelay = vi.fn()
+
+    await expect(
+      retryAwareRequest({request, url: 'https://example.com/graphql', useNetworkLevelRetry: false}, undefined, {
+        scheduleDelay,
+      }),
+    ).rejects.toBe(error)
+
+    expect(request).toHaveBeenCalledTimes(1)
+    expect(scheduleDelay).not.toHaveBeenCalled()
+  })
+
   test('fails after too many retries', async () => {
     // This test gives a false warning from vitest if fake timers are used. It thinks the exception is uncaught.
     vi.useRealTimers()

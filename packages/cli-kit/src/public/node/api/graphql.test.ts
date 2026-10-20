@@ -13,6 +13,7 @@ import * as system from '../system.js'
 import {test, vi, describe, expect, beforeEach, beforeAll, afterAll, afterEach} from 'vitest'
 
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
+import {parse} from 'graphql'
 import {setupServer} from 'msw/node'
 import {graphql, HttpResponse} from 'msw'
 
@@ -131,6 +132,36 @@ afterEach(() => {
 })
 
 describe('graphqlRequest', () => {
+  test.each([false, true])('retries a throttled nullable query (typed document: %s)', async (useTypedDocument) => {
+    const receivedVariables: unknown[] = []
+    const data = {appsConnection: {edges: [{node: {id: 'app-123'}}]}}
+    server.use(
+      mockApi.query('ListApps', ({variables}) => {
+        receivedVariables.push(variables)
+        if (receivedVariables.length === 1) {
+          return HttpResponse.json(
+            {
+              data: {appsConnection: null},
+              errors: [{message: 'Throttled', path: ['appsConnection'], extensions: {code: 'THROTTLED'}}],
+            },
+            {headers: {'Retry-After': '0'}},
+          )
+        }
+        return HttpResponse.json({data})
+      }),
+    )
+    const query =
+      'query ListApps($query: String) { appsConnection(query: $query, first: 50) { edges { node { id } } } }'
+    const variables = {query: 'title:example'}
+    const options = {api: 'mockApi', url: mockedAddress, variables}
+    const result = useTypedDocument
+      ? await graphqlRequestDoc({...options, query: parse(query)})
+      : await graphqlRequest({...options, query})
+
+    expect(result).toEqual(data)
+    expect(receivedVariables).toEqual([variables, variables])
+  })
+
   test('retries only the throttled mutation request with its original variables', async () => {
     const receivedVariables: unknown[] = []
     server.use(
