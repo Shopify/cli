@@ -1,6 +1,7 @@
 import {
   acquireDevInstance,
   DEV_INSTANCE_ALREADY_RUNNING_CODE,
+  devInstanceLogOutputSchema,
   devInstancePaths,
   isProcessAlive,
   listDevInstances,
@@ -38,6 +39,17 @@ async function readLog(path: string) {
 }
 
 describe('acquireDevInstance', () => {
+  test('does not include CLI fatal errors in the session log schema', () => {
+    expect(() =>
+      devInstanceLogOutputSchema.validate({
+        timestamp: '2026-10-20T09:00:00Z',
+        source: 'app dev',
+        message: 'Command failed',
+        error: {type: 'abort', message: 'Command failed'},
+      }),
+    ).toThrow()
+  })
+
   test('writes identical JSONL bytes to the log and an output stream without changing supplied timestamps', async () => {
     await inTemporaryDirectory(async (directory) => {
       const output = collectingStream()
