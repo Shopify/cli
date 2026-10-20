@@ -19,9 +19,7 @@ export default class Dev extends AppLinkedCommand {
 
   static summary = 'Run the app.'
 
-  static descriptionWithMarkdown = `Builds and previews your app on a dev store, and watches for changes. [Read more about testing apps locally](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).
-
-With \`--json\`, streams the exact JSON Lines written to the session log until stopped. There is no final result. Setup messages are buffered until the app configuration is selected and the session log is acquired. Runtime failures include the shared CLI error in the final log record; failures before a session is acquired use the standard JSON error envelope. Setup prompts remain on stderr; use \`--no-input\` for unattended runs.`
+  static descriptionWithMarkdown = `Builds and previews your app on a dev store, and watches for changes. [Read more about testing apps locally](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).`
 
   static get jsonOutputSchema() {
     return devInstanceLogOutputSchema
