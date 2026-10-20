@@ -25,6 +25,7 @@ type TeardownCtx = BaseTeardownCtx &
 export async function teardownAll(ctx: TeardownCtx): Promise<void> {
   const wCtx = {workerIndex: ctx.workerIndex ?? 0}
   await ctx.cli?.stopAll()
+  let uninstallConfirmed = false
 
   if (ctx.storeFqdn && ctx.appDir) {
     const {cli, appDir, storeFqdn} = ctx
@@ -35,12 +36,15 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
         throw new Error(`Failed to clean the dev preview:\n${result.stdout}\n${result.stderr}`)
       }
     })
-    await attemptRemoteCleanup(ctx, 'app uninstall', () => uninstallAppWithAdminApi({cli, appDir, storeFqdn}))
+    await attemptRemoteCleanup(ctx, 'app uninstall', async () => {
+      await uninstallAppWithAdminApi({cli, appDir, storeFqdn})
+      uninstallConfirmed = true
+    })
   }
 
   e2eSection(wCtx, `Teardown: app ${ctx.appName}`)
   await attemptRemoteCleanup(ctx, 'app deletion', async () => {
-    await ctx.dashboard.deleteApp({name: ctx.appName, url: ctx.appUrl})
+    await ctx.dashboard.deleteApp({name: ctx.appName, url: ctx.appUrl, uninstallConfirmed})
     log.log(wCtx, 'app deletion confirmed')
   })
 }

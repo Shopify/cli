@@ -1,4 +1,5 @@
 import {DevDashboardClient} from '../setup/dashboard.js'
+import {CLI_TIMEOUT} from '../setup/constants.js'
 import {expect, test, type APIRequestContext, type APIResponse} from '@playwright/test'
 
 const appsUrl = 'https://dev.shopify.com/dashboard/123/apps'
@@ -104,15 +105,107 @@ test('rejects unsafe app names and organization URLs before making requests', as
 })
 
 test('does not treat the remaining-installs redirect as deletion success', async () => {
+  let deletionRequests = 0
   const http = {
     async get() {
       return response(200, csrf + appLink)
     },
     async delete() {
+      deletionRequests++
       return response(303, '', {location: `${appUrl}/settings`})
     },
   }
   await expect(new DevDashboardClient(http, '123').deleteApp({name: appName})).rejects.toThrow('deletion was rejected')
+  expect(deletionRequests).toBe(1)
+})
+
+test('retries a stale installation count after confirmed uninstall and refreshes CSRF', async () => {
+  let deletionRequests = 0
+  const http = {
+    async get(url: string) {
+      if (url.includes('search_term=')) return response(200, csrf + appLink)
+      if (deletionRequests === 2) return response(404)
+      return response(200, `<meta name="csrf-token" content="token-${deletionRequests}">`)
+    },
+    async delete(url: string, options: Parameters<APIRequestContext['delete']>[1]) {
+      expect(url).toBe(appUrl)
+      expect(options?.headers?.['X-CSRF-Token']).toBe(`token-${deletionRequests}`)
+      deletionRequests++
+      return response(303, '', {location: deletionRequests === 1 ? `${appUrl}/settings` : appsUrl})
+    },
+  }
+  await new DevDashboardClient(http, '123').deleteApp({name: appName, url: appUrl, uninstallConfirmed: true})
+  expect(deletionRequests).toBe(2)
+})
+
+for (const [status, location] of [
+  [302, `${appUrl}/settings`],
+  [503, `${appUrl}/settings`],
+  [303, `${appsUrl}/789/settings`],
+  [303, 'https://example.com/dashboard/123/apps/456/settings'],
+  [303, 'https://accounts.shopify.com/lookup?token=secret-query#secret-fragment'],
+  [303, ''],
+  [303, 'http://[invalid'],
+] as const) {
+  test(`does not retry an unexpected deletion response after uninstall (${status}, ${location})`, async () => {
+    let deletionRequests = 0
+    const http = {
+      async get() {
+        return response(200, csrf + appLink)
+      },
+      async delete() {
+        deletionRequests++
+        return response(status, '', {location})
+      },
+    }
+    const deletion = new DevDashboardClient(http, '123').deleteApp({name: appName, uninstallConfirmed: true})
+    await expect(deletion).rejects.toThrow('deletion was rejected')
+    await expect(deletion).rejects.not.toThrow('secret-query')
+    await expect(deletion).rejects.not.toThrow('secret-fragment')
+    expect(deletionRequests).toBe(1)
+  })
+}
+
+test('stops retrying when the installation count does not settle within the deadline', async () => {
+  const originalNow = Date.now
+  let now = originalNow()
+  let deletionRequests = 0
+  try {
+    Date.now = () => now
+    const http = {
+      async get() {
+        return response(200, csrf + appLink)
+      },
+      async delete() {
+        deletionRequests++
+        now += CLI_TIMEOUT.short
+        return response(303, '', {location: `${appUrl}/settings`})
+      },
+    }
+    await expect(
+      new DevDashboardClient(http, '123').deleteApp({name: appName, uninstallConfirmed: true}),
+    ).rejects.toThrow('timed out waiting for the dashboard installation count to reach zero')
+    expect(deletionRequests).toBe(1)
+  } finally {
+    Object.defineProperty(Date, 'now', {value: originalNow})
+  }
+})
+
+test('stops retrying if the dashboard session is lost after an installation-count redirect', async () => {
+  let deletionRequests = 0
+  const http = {
+    async get() {
+      return deletionRequests === 0 ? response(200, csrf + appLink) : response(302)
+    },
+    async delete() {
+      deletionRequests++
+      return response(303, '', {location: `${appUrl}/settings`})
+    },
+  }
+  await expect(
+    new DevDashboardClient(http, '123').deleteApp({name: appName, uninstallConfirmed: true}),
+  ).rejects.toThrow('Check the E2E session')
+  expect(deletionRequests).toBe(1)
 })
 
 test('follows pagination and rejects repeated cursors', async () => {

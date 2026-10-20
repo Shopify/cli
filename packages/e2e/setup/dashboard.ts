@@ -24,7 +24,16 @@ export class DevDashboardClient {
     this.appsUrl = `${DASHBOARD_ORIGIN}/dashboard/${orgId}/apps`
   }
 
-  async deleteApp({name, url}: {name: string; url?: string}): Promise<void> {
+  async deleteApp({
+    name,
+    url,
+    uninstallConfirmed = false,
+  }: {
+    name: string
+    url?: string
+    /** Allow the dashboard installation count to settle after a successful uninstall. */
+    uninstallConfirmed?: boolean
+  }): Promise<void> {
     if (!name.startsWith('E2E-')) throw new Error(`Refusing to delete non-E2E app ${name}.`)
     if (url) this.requireAppUrl(url)
 
@@ -37,23 +46,39 @@ export class DevDashboardClient {
     }
     if (url && url !== appUrl) throw new Error(`App ${name} has an unexpected dashboard ID.`)
 
-    const settings = await this.http.get(`${appUrl}/settings`)
-    const document = await readDashboardPage(settings)
-    const csrfToken = readCsrfToken(document)
-    const deleted = await this.http.delete(appUrl, {
-      headers: {'X-CSRF-Token': csrfToken, Origin: DASHBOARD_ORIGIN, Referer: `${appUrl}/settings`},
-    })
-    const location = deleted.headers().location
-    if (deleted.status() !== 303 || !location || new URL(location, DASHBOARD_ORIGIN).href !== this.appsUrl) {
-      throw new Error(`App ${name} deletion was rejected (HTTP ${deleted.status()}). Check for remaining installs.`)
+    const deadline = Date.now() + CLI_TIMEOUT.short
+    let deletionAccepted = false
+    do {
+      const settings = await this.http.get(`${appUrl}/settings`, {timeout: Math.max(1, deadline - Date.now())})
+      const document = await readDashboardPage(settings)
+      const csrfToken = readCsrfToken(document)
+      const deleted = await this.http.delete(appUrl, {
+        timeout: Math.max(1, deadline - Date.now()),
+        headers: {'X-CSRF-Token': csrfToken, Origin: DASHBOARD_ORIGIN, Referer: `${appUrl}/settings`},
+      })
+      const location = deleted.headers().location
+      const redirect =
+        location && URL.canParse(location, DASHBOARD_ORIGIN) ? new URL(location, DASHBOARD_ORIGIN) : undefined
+      if (deleted.status() === 303 && redirect?.href === this.appsUrl) {
+        deletionAccepted = true
+        break
+      }
+      if (!uninstallConfirmed || deleted.status() !== 303 || redirect?.href !== `${appUrl}/settings`) {
+        const target = redirect ? `${redirect.origin}${redirect.pathname}` : 'missing or invalid'
+        throw new Error(`App ${name} deletion was rejected (HTTP ${deleted.status()}, redirect: ${target}).`)
+      }
+      // The dashboard guards deletion with a search index that can lag behind a successful uninstall.
+      await delay(Math.min(1000, Math.max(0, deadline - Date.now())))
+    } while (Date.now() < deadline)
+    if (!deletionAccepted) {
+      throw new Error(`App ${name} deletion timed out waiting for the dashboard installation count to reach zero.`)
     }
 
-    const deadline = Date.now() + CLI_TIMEOUT.short
     do {
-      const response = await this.http.get(`${appUrl}/settings`)
+      const response = await this.http.get(`${appUrl}/settings`, {timeout: Math.max(1, deadline - Date.now())})
       if (response.status() === 404) return
       await readDashboardPage(response)
-      await delay(1000)
+      await delay(Math.min(1000, Math.max(0, deadline - Date.now())))
     } while (Date.now() < deadline)
     throw new Error(`Deletion of app ${name} was not confirmed.`)
   }

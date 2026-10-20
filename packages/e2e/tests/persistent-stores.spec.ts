@@ -272,8 +272,9 @@ for (const failure of ['none', 'preview', 'uninstall', 'deletion', 'all', 'proce
         orgId: '123',
         storeFqdn: stores[0]!,
         dashboard: {
-          async deleteApp() {
+          async deleteApp({uninstallConfirmed}: {uninstallConfirmed?: boolean}) {
             events.push('delete-app')
+            expect(uninstallConfirmed).toBe(!fails('uninstall'))
             if (fails('deletion')) throw new Error('App deletion was rejected')
           },
         },
