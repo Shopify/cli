@@ -740,33 +740,64 @@ export async function renderDangerousConfirmationPrompt(
   })
 }
 
-/** Waits for any key to be pressed except Ctrl+C which will terminate the process. */
+interface KeypressOptions {
+  /**
+   * The keys that end the wait, for example `['\r']` for Enter. Other keys are ignored.
+   * Without this option, any key ends the wait.
+   */
+  keys?: string[]
+}
 
-export const keypress = async (stdin = process.stdin, uiDebugOptions: UIDebugOptions = defaultUIDebugOptions) => {
+/**
+ * Waits for a key to be pressed. Ctrl+C rejects with AbortSilentError, which terminates the process.
+ *
+ * Raw mode is set back to the state it had before the call. A command that keeps stdin raw for
+ * its own single-key shortcuts (for example `theme dev`) keeps them.
+ *
+ * Chunks are read as text: an active Ink renderer calls `stdin.setEncoding('utf8')`, and then
+ * stdin emits strings instead of Buffers.
+ *
+ * @param stdin - The stream to read from.
+ * @param uiDebugOptions - Debug options; `skipTTYCheck` allows a non-TTY stdin.
+ * @param options - The keys that end the wait.
+ * @returns A promise that resolves when an accepted key is pressed.
+ */
+export const keypress = async (
+  stdin = process.stdin,
+  uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
+  {keys}: KeypressOptions = {},
+) => {
   throwInNonTTY({message: 'Press any key'}, uiDebugOptions)
 
   return runWithTimer('cmd_all_timing_prompts_ms')(() => {
-    return new Promise((resolve, reject) => {
-      const handler = (buffer: Buffer) => {
-        stdin.setRawMode(false)
+    const {promise, resolve, reject} = Promise.withResolvers<void>()
+    const stdinWasRaw = stdin.isRaw === true
 
-        const bytes = Array.from(buffer)
+    const stopListening = () => {
+      stdin.off('data', handler)
+      if (!stdinWasRaw) stdin.setRawMode(false)
+      stdin.unref()
+    }
 
-        if (bytes.length && bytes[0] === 3) {
-          outputDebug('Canceled keypress, User pressed CTRL+C')
-          reject(new AbortSilentError())
-        }
-        stdin.unref()
+    const handler = (chunk: Buffer | string) => {
+      const text = chunk.toString()
+      if (text.includes('\u0003')) {
+        stopListening()
+        outputDebug('Canceled keypress, User pressed CTRL+C')
+        reject(new AbortSilentError())
+      } else if (!keys || [...text].some((character) => keys.includes(character))) {
+        stopListening()
         process.nextTick(resolve)
       }
+    }
 
-      stdin.setRawMode(true)
-      stdin.once('data', handler)
+    if (!stdinWasRaw) stdin.setRawMode(true)
+    stdin.on('data', handler)
 
-      // We want to indicate that we're still using stdin, so that the process
-      // doesn't exit early.
-      stdin.ref()
-    })
+    // We want to indicate that we're still using stdin, so that the process
+    // doesn't exit early.
+    stdin.ref()
+    return promise
   })
 }
 

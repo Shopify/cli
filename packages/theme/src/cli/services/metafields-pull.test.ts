@@ -85,7 +85,7 @@ describe('metafields-pull', () => {
     expect(capturedOutput.error()).toBeFalsy()
   })
 
-  test('should output to debug if some metafield definitions are not found', async () => {
+  test('warns about partial downloads and identifies failed owner types', async () => {
     // Given
     vi.mocked(metafieldDefinitionsByOwnerType).mockImplementation((type: any, _session: AdminSession) => {
       if (type === 'PRODUCT') return Promise.reject(new Error(`Failed to fetch metafield definitions for ${type}`))
@@ -120,7 +120,10 @@ describe('metafields-pull', () => {
           2,
         ),
       )
-      expect(capturedOutput.info()).toContain('Metafield definitions have been successfully downloaded.')
+      expect(capturedOutput.info()).not.toContain('Metafield definitions have been successfully downloaded.')
+      expect(capturedOutput.warn()).toContain('Metafield definitions were partially downloaded.')
+      expect(capturedOutput.warn()).toContain('Failed owner types:')
+      expect(capturedOutput.warn()).toContain('PRODUCT.')
       expect(capturedOutput.debug()).toContain('Failed to fetch metafield definitions for the following owner types')
       expect(capturedOutput.error()).toBeFalsy()
     })
@@ -169,5 +172,22 @@ describe('metafields-pull', () => {
       expect(capturedOutput.info()).toBeFalsy()
       expect(capturedOutput.error()).toBeFalsy()
     })
+  })
+})
+
+test.each([true, false])('keeps the theme dev caller silent when all requests fail=%s', async (fail) => {
+  vi.mocked(ensureThemeStore).mockReturnValue('example.myshopify.com')
+  vi.mocked(ensureAuthenticatedThemes).mockResolvedValue({token: '', storeFqdn: 'example.myshopify.com'})
+  vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(true)
+  vi.mocked(metafieldDefinitionsByOwnerType).mockImplementation(async () => {
+    if (fail) throw new Error('Unavailable')
+    return []
+  })
+  const output = mockAndCaptureOutput()
+  await inTemporaryDirectory(async (path) => {
+    await metafieldsPull({path, silent: true})
+    await expect(fileExists(metafieldDefinitionPath(path))).resolves.toBe(!fail)
+    expect(output.info()).toBe('')
+    expect(output.error()).toBe('')
   })
 })

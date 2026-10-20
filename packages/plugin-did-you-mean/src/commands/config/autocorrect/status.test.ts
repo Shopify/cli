@@ -1,20 +1,28 @@
 import AutocorrectStatus from './status.js'
 import {isAutocorrectEnabled} from '../../../services/conf.js'
-import {Config} from '@oclif/core'
 import {describe, expect, vi, test} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('../../../services/conf.js')
 
 describe('Autocorrect Status', () => {
+  test.each([true, false])('returns JSON when autocorrect is %s', async (enabled) => {
+    vi.mocked(isAutocorrectEnabled).mockReturnValue(enabled)
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await AutocorrectStatus.run(['--json'], import.meta.url)
+
+      expect(stdout()).toBe(`${JSON.stringify({enabled}, null, 2)}\n`)
+      expect(stderr()).toBe('')
+    })
+  })
+
   test('Displays autocorrect off message if Autocorrect is off', async () => {
     // Given
     vi.mocked(isAutocorrectEnabled).mockReturnValue(false)
-    const config = new Config({root: __dirname})
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
     // When
-    await new AutocorrectStatus([], config).run()
+    await AutocorrectStatus.run([], import.meta.url)
 
     // Then
     expect(outputMock.info()).toMatchInlineSnapshot(`
@@ -30,11 +38,10 @@ describe('Autocorrect Status', () => {
   test('Displays autocorrect on message if Autocorrect is on', async () => {
     // Given
     vi.mocked(isAutocorrectEnabled).mockReturnValue(true)
-    const config = new Config({root: __dirname})
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
     // When
-    await new AutocorrectStatus([], config).run()
+    await AutocorrectStatus.run([], import.meta.url)
 
     // Then
     expect(outputMock.info()).toMatchInlineSnapshot(`

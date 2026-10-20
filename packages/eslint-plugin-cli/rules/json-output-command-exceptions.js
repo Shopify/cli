@@ -2,16 +2,6 @@
 const commandExceptions = [
   // Existing finite commands awaiting migration. Remove entries as they adopt typed JSON output.
   // Do not add new finite commands to this section.
-  'packages/plugin-did-you-mean/src/commands/config/autocorrect/off.ts',
-  'packages/plugin-did-you-mean/src/commands/config/autocorrect/on.ts',
-  'packages/plugin-did-you-mean/src/commands/config/autocorrect/status.ts',
-  'packages/theme/src/cli/commands/theme/check.ts',
-  'packages/theme/src/cli/commands/theme/init.ts',
-  'packages/theme/src/cli/commands/theme/metafields/pull.ts',
-  'packages/theme/src/cli/commands/theme/package.ts',
-  'packages/theme/src/cli/commands/theme/preview.ts',
-  'packages/theme/src/cli/commands/theme/profile.ts',
-  'packages/theme/src/cli/commands/theme/share.ts',
 
   // App Security commands, launched before adopting typed JSON output. Remove entries as they adopt it.
   'packages/app/src/cli/commands/app/security/check.ts',

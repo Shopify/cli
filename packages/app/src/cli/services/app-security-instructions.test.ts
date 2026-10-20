@@ -78,6 +78,15 @@ describe('embedded instructions', () => {
     )
     expect(getAgentInstructions()).toBe(source)
   })
+
+  test('investigating checks is static only', () => {
+    expect(getAgentInstructions()).toContain('This review is static only: verify by reading code.')
+    expect(getAgentInstructions()).toContain('Do not execute app, SDK, test, or repro code')
+    expect(getAgentInstructions()).toContain('do not make network calls or probe live stores or services')
+    expect(getAgentInstructions()).toContain(
+      'record the check as unresolved naming the candidate instead of running it',
+    )
+  })
 })
 
 describe('shellQuote', () => {

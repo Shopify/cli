@@ -156,8 +156,8 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     target: 'secrets',
     runner: (context) => scanCommittedSecrets(context.sensitiveFiles, context.appRoot, context.gitIgnoreListing),
   },
-  jsCheck('CREDENTIAL_LOG_LEAKAGE', (context) => scanCredentialLogLeakage(context.sourceFiles), 'source', 2),
-  jsCheck('CREDENTIAL_BROWSER_LEAKAGE', (context) => scanCredentialBrowserLeakage(context.sourceFiles), 'source', 2),
+  jsCheck('CREDENTIAL_LOG_LEAKAGE', (context) => scanCredentialLogLeakage(context.sourceFiles), 'source', 3),
+  jsCheck('CREDENTIAL_BROWSER_LEAKAGE', (context) => scanCredentialBrowserLeakage(context.sourceFiles), 'source', 3),
   {
     id: 'LIQUID_UNSAFE_RENDER',
     version: 2,
@@ -169,7 +169,7 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     runner: (context) => liquidRunner(context, 'LIQUID_UNSAFE_RENDER'),
   },
   {
-    ...jsCheck('UNSAFE_INNERHTML', unsafeInnerHtmlRunner, 'source_and_theme', 3),
+    ...jsCheck('UNSAFE_INNERHTML', unsafeInnerHtmlRunner, 'source_and_theme', 4),
     analysisMode: 'regex',
     extensions: [...JAVASCRIPT_EXTENSIONS, '.liquid', '.html'],
   },

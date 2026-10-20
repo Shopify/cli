@@ -5109,9 +5109,45 @@
           "description": "Print the command's JSON schemas.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_JSON_SCHEMA"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/config-autocorrect-off.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/config-autocorrect-off.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/config-autocorrect-off.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/config-autocorrect-off.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface configautocorrectoff {\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n}"
+      "value": "export interface configautocorrectoff {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "configautocorrecton": {
@@ -5129,9 +5165,45 @@
           "description": "Print the command's JSON schemas.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_JSON_SCHEMA"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/config-autocorrect-on.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/config-autocorrect-on.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/config-autocorrect-on.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/config-autocorrect-on.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface configautocorrecton {\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n}"
+      "value": "export interface configautocorrecton {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "configautocorrectstatus": {
@@ -5149,9 +5221,45 @@
           "description": "Print the command's JSON schemas.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_JSON_SCHEMA"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/config-autocorrect-status.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/config-autocorrect-status.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/config-autocorrect-status.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/config-autocorrect-status.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface configautocorrectstatus {\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n}"
+      "value": "export interface configautocorrectstatus {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "configautoupgradeoff": {
@@ -8484,6 +8592,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-o, --output <value>",
           "value": "string",
           "description": "The output format to use",
@@ -8500,7 +8617,7 @@
           "environmentValue": "SHOPIFY_FLAG_VERSION"
         }
       ],
-      "value": "export interface themecheck {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * Automatically fix offenses\n   * @environment SHOPIFY_FLAG_AUTO_CORRECT\n   */\n  '-a, --auto-correct'?: ''\n\n  /**\n   * Use the config provided, overriding .theme-check.yml if present\n      Supports all theme-check: config values, e.g., theme-check:theme-app-extension,\n      theme-check:recommended, theme-check:all\n      For backwards compatibility, :theme_app_extension is also supported \n   * @environment SHOPIFY_FLAG_CONFIG\n   */\n  '-C, --config <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Minimum severity for exit with error code\n   * @environment SHOPIFY_FLAG_FAIL_LEVEL\n   */\n  '--fail-level <value>'?: string\n\n  /**\n   * Generate a .theme-check.yml file\n   * @environment SHOPIFY_FLAG_INIT\n   */\n  '--init'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * List enabled checks\n   * @environment SHOPIFY_FLAG_LIST\n   */\n  '--list'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The output format to use\n   * @environment SHOPIFY_FLAG_OUTPUT\n   */\n  '-o, --output <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Output active config to STDOUT\n   * @environment SHOPIFY_FLAG_PRINT\n   */\n  '--print'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Print Theme Check version\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '-v, --version'?: ''\n}"
+      "value": "export interface themecheck {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * Automatically fix offenses\n   * @environment SHOPIFY_FLAG_AUTO_CORRECT\n   */\n  '-a, --auto-correct'?: ''\n\n  /**\n   * Use the config provided, overriding .theme-check.yml if present\n      Supports all theme-check: config values, e.g., theme-check:theme-app-extension,\n      theme-check:recommended, theme-check:all\n      For backwards compatibility, :theme_app_extension is also supported \n   * @environment SHOPIFY_FLAG_CONFIG\n   */\n  '-C, --config <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Minimum severity for exit with error code\n   * @environment SHOPIFY_FLAG_FAIL_LEVEL\n   */\n  '--fail-level <value>'?: string\n\n  /**\n   * Generate a .theme-check.yml file\n   * @environment SHOPIFY_FLAG_INIT\n   */\n  '--init'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * List enabled checks\n   * @environment SHOPIFY_FLAG_LIST\n   */\n  '--list'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The output format to use\n   * @environment SHOPIFY_FLAG_OUTPUT\n   */\n  '-o, --output <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Output active config to STDOUT\n   * @environment SHOPIFY_FLAG_PRINT\n   */\n  '--print'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Print Theme Check version\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '-v, --version'?: ''\n}"
     }
   },
   "themeconsole": {
@@ -9288,6 +9405,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/theme-init.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/theme-init.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-l, --latest",
           "value": "''",
           "description": "Downloads the latest release of the `clone-url`",
@@ -9304,7 +9430,7 @@
           "environmentValue": "SHOPIFY_FLAG_CLONE_URL"
         }
       ],
-      "value": "export interface themeinit {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Git URL to clone from. Defaults to Shopify's Skeleton theme.\n   * @environment SHOPIFY_FLAG_CLONE_URL\n   */\n  '-u, --clone-url <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Downloads the latest release of the `clone-url`\n   * @environment SHOPIFY_FLAG_LATEST\n   */\n  '-l, --latest'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface themeinit {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The Git URL to clone from. Defaults to Shopify's Skeleton theme.\n   * @environment SHOPIFY_FLAG_CLONE_URL\n   */\n  '-u, --clone-url <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Downloads the latest release of the `clone-url`\n   * @environment SHOPIFY_FLAG_LATEST\n   */\n  '-l, --latest'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "themelanguageserver": {
@@ -9573,6 +9699,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/theme-metafields-pull.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/theme-metafields-pull.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-s, --store <value>",
           "value": "string",
           "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
@@ -9580,7 +9715,7 @@
           "environmentValue": "SHOPIFY_FLAG_STORE"
         }
       ],
-      "value": "export interface thememetafieldspull {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface thememetafieldspull {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "themeopen": {
@@ -9780,9 +9915,18 @@
           "description": "Increase the verbosity of the output. May include sensitive data.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/theme-package.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface themepackage {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface themepackage {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "themepreview": {
@@ -9800,15 +9944,6 @@
           "description": "Alias of the Shopify account to use for authentication.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_AUTH_ALIAS"
-        },
-        {
-          "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
-          "syntaxKind": "PropertySignature",
-          "name": "--json",
-          "value": "''",
-          "description": "Output the preview URL and identifier as JSON.",
-          "isOptional": true,
-          "environmentValue": "SHOPIFY_FLAG_JSON"
         },
         {
           "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
@@ -9852,6 +9987,7 @@
           "name": "--overrides <value>",
           "value": "string",
           "description": "Path to a JSON overrides file.",
+          "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_OVERRIDES"
         },
         {
@@ -9902,6 +10038,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the preview URL and identifier as JSON.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-s, --store <value>",
           "value": "string",
           "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
@@ -9914,10 +10059,11 @@
           "name": "-t, --theme <value>",
           "value": "string",
           "description": "Theme ID or name of the remote theme.",
+          "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_THEME_ID"
         }
       ],
-      "value": "export interface themepreview {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Output the preview URL and identifier as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '--json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Automatically launch the theme preview in your default web browser.\n   * @environment SHOPIFY_FLAG_OPEN\n   */\n  '--open'?: ''\n\n  /**\n   * Path to a JSON overrides file.\n   * @environment SHOPIFY_FLAG_OVERRIDES\n   */\n  '--overrides <value>': string\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * An existing preview identifier to update instead of creating a new preview.\n   * @environment SHOPIFY_FLAG_PREVIEW_ID\n   */\n  '--preview-id <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>': string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface themepreview {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Output the preview URL and identifier as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Automatically launch the theme preview in your default web browser.\n   * @environment SHOPIFY_FLAG_OPEN\n   */\n  '--open'?: ''\n\n  /**\n   * Path to a JSON overrides file.\n   * @environment SHOPIFY_FLAG_OVERRIDES\n   */\n  '--overrides <value>'?: string\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * An existing preview identifier to update instead of creating a new preview.\n   * @environment SHOPIFY_FLAG_PREVIEW_ID\n   */\n  '--preview-id <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "themeprofile": {
@@ -10759,6 +10905,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/theme-share.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/theme-share.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-s, --store <value>",
           "value": "string",
           "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
@@ -10766,7 +10921,7 @@
           "environmentValue": "SHOPIFY_FLAG_STORE"
         }
       ],
-      "value": "export interface themeshare {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.\n   * @environment SHOPIFY_FLAG_LISTING\n   */\n  '--listing <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface themeshare {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.\n   * @environment SHOPIFY_FLAG_LISTING\n   */\n  '--listing <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "upgrade": {

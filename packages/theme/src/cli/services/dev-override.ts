@@ -1,8 +1,6 @@
-import {openURLSafely} from './dev.js'
+import {type ThemePreviewResult} from './dev-override/types.js'
 import {fetchDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {createThemePreview, updateThemePreview} from '../utilities/theme-previews/preview.js'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {outputInfo} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
@@ -16,16 +14,14 @@ interface DevWithOverrideFileOptions {
   overrideJson: string
   themeId: string
   previewIdentifier?: string
-  open: boolean
   password?: string
-  json?: boolean
 }
 
 /**
  * Reads a JSON overrides file and creates or updates a Storefront preview.
- * The resulting preview URL is displayed to the user.
+ * Returns the preview URL and identifier.
  */
-export async function devWithOverrideFile(options: DevWithOverrideFileOptions) {
+export async function devWithOverrideFile(options: DevWithOverrideFileOptions): Promise<ThemePreviewResult> {
   if (!fileExistsSync(options.overrideJson)) {
     throw new AbortError(`Override file not found: ${options.overrideJson}`)
   }
@@ -42,35 +38,16 @@ export async function devWithOverrideFile(options: DevWithOverrideFileOptions) {
   const session = await fetchDevServerSession(options.themeId, options.adminSession, options.password)
   const overridesContent = JSON.stringify(overrides)
 
-  const preview = options.previewIdentifier
-    ? await updateThemePreview({
+  return options.previewIdentifier
+    ? updateThemePreview({
         session,
         overridesContent,
         themeId: options.themeId,
         previewIdentifier: options.previewIdentifier,
       })
-    : await createThemePreview({
+    : createThemePreview({
         session,
         overridesContent,
         themeId: options.themeId,
       })
-
-  if (options.json) {
-    outputInfo(JSON.stringify({url: preview.url, preview_identifier: preview.preview_identifier}))
-  } else {
-    renderSuccess({
-      body: [
-        {
-          list: {
-            title: options.previewIdentifier ? 'Preview updated' : 'Preview is ready',
-            items: [{link: {url: preview.url}}, `Preview ID: ${preview.preview_identifier}`],
-          },
-        },
-      ],
-    })
-  }
-
-  if (options.open) {
-    openURLSafely(preview.url, 'theme preview')
-  }
 }
