@@ -35,7 +35,7 @@ standard JSON error output on stdout and are not added to the session log.
 
 1. Find the instance file for the intended app configuration and check its app and
    store details. Check the PID and lock heartbeat; a saved file alone does not prove
-   the process is alive. A live PID blocks takeover even after the fixed 30-second
+   the process is alive. A live PID blocks takeover even after the fixed 15-second
    stale interval. Stop an unresponsive owner before starting another instance.
 2. Reuse an existing session. If none is available, run `shopify app dev` through
    the agent's background terminal facility. Supply the app, configuration, and
