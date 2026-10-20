@@ -30,6 +30,11 @@ async function createApp(directory: string): Promise<string> {
   return fileRealPath(directory)
 }
 
+// Boxes wrap text across lines and draw borders, so compare their text with the borders and line breaks removed.
+function boxText(output: string): string {
+  return unstyled(output).replaceAll('│', '').replace(/\s+/g, ' ')
+}
+
 async function runCommand(argv: string[]) {
   const previousExitCode = process.exitCode
   process.exitCode = 0
@@ -135,16 +140,42 @@ describe('app security instructions command boundary', () => {
     })
   })
 
-  test('--copy --json writes one error document and no result when the clipboard fails', async () => {
+  test('--copy --json writes one error document with its code and no result when the clipboard fails', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
-      vi.mocked(clipboard.write).mockRejectedValue(new Error('No clipboard is available.'))
+      vi.mocked(clipboard.write).mockRejectedValue(new Error('Command failed with ENOENT: pbcopy'))
 
       const result = await runJsonCommand(['--path', directory, '--copy'])
 
       expect(result.exitCode).toBe(1)
-      expect(JSON.parse(result.stdout)).toMatchObject({error: {message: 'No clipboard is available.'}})
+      expect(JSON.parse(result.stdout)).toStrictEqual({
+        error: {
+          type: 'abort',
+          message:
+            "Couldn't copy the app security check instructions to the clipboard: Command failed with ENOENT: pbcopy",
+          code: 'clipboard-unavailable',
+          nextSteps: [
+            'Run the command without --copy to print the instructions, or with --write <file> to write them to a file.',
+          ],
+        },
+      })
       expect(result.stderr).toBe('')
+    })
+  })
+
+  test('--copy without --json shows the error on stderr, prints nothing on stdout and exits 1', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      vi.mocked(clipboard.write).mockRejectedValue(new Error('Command failed with ENOENT: pbcopy'))
+
+      const result = await runCommand(['--path', directory, '--copy'])
+
+      expect(result.exitCode).toBe(1)
+      expect(result.stdout).toBe('')
+      expect(boxText(result.stderr)).toContain(
+        "Couldn't copy the app security check instructions to the clipboard: Command failed with ENOENT: pbcopy",
+      )
+      expect(boxText(result.stderr)).toContain('Run the command without `--copy` to print the instructions')
     })
   })
 

@@ -9,6 +9,7 @@ import {
   type AppSecurityShell,
 } from './app-security-commands.js'
 import {getAgentInstructions, type AppSecurityScope} from './app-security-engine/index.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {cwd} from '@shopify/cli-kit/node/path'
@@ -153,6 +154,23 @@ export interface AppSecurityInstructionsDelivery {
   writePath?: string
 }
 
+/** The instructions couldn't be copied, for example because the system has no clipboard tool. */
+export class ClipboardUnavailableError extends AbortError {
+  constructor(cause: unknown) {
+    const message = cause instanceof Error ? cause.message : String(cause)
+    super(`Couldn't copy the app security check instructions to the clipboard: ${message}`, null, [
+      [
+        'Run the command without',
+        {command: '--copy'},
+        'to print the instructions, or with',
+        {command: '--write <file>'},
+        'to write them to a file.',
+      ],
+    ])
+    this.code = 'clipboard-unavailable'
+  }
+}
+
 interface AppSecurityInstructionsDependencies {
   copyToClipboard(content: string): Promise<void>
   writeToFile(path: string, content: string): Promise<void>
@@ -191,14 +209,21 @@ export function appSecurityInstructions(options: {
   }).trimEnd()
 }
 
-/** Copies the instructions to the clipboard or writes them to a file. Printed instructions need no delivery. */
+/**
+ * Copies the instructions to the clipboard or writes them to a file. Printed instructions need no delivery.
+ * A failed copy throws a {@link ClipboardUnavailableError}.
+ */
 export async function deliverAppSecurityInstructions(
   instructions: string,
   delivery: AppSecurityInstructionsDelivery,
   dependencies: AppSecurityInstructionsDependencies = defaultDependencies,
 ): Promise<void> {
   if (delivery.copy) {
-    await dependencies.copyToClipboard(instructions)
+    try {
+      await dependencies.copyToClipboard(instructions)
+    } catch (error) {
+      throw new ClipboardUnavailableError(error)
+    }
   } else if (delivery.writePath) {
     await dependencies.writeToFile(delivery.writePath, `${instructions}\n`)
   }

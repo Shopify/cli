@@ -1,5 +1,6 @@
 import {
   appSecurityInstructions as instructionsFor,
+  ClipboardUnavailableError,
   deliverAppSecurityInstructions,
   renderAppSecurityInstructions,
   shellQuote,
@@ -461,5 +462,33 @@ describe('deliverAppSecurityInstructions and renderAppSecurityInstructions', () 
       expect(output.stderr).toContain('Wrote app security check instructions to')
       expect(output.stderr).toContain('handoff.md')
     })
+  })
+})
+
+describe('deliverAppSecurityInstructions', () => {
+  test('raises ClipboardUnavailableError with its code and the clipboard error when copying fails', async () => {
+    const dependencies = testDependencies()
+    dependencies.copyToClipboard.mockRejectedValue(new Error('Command failed with ENOENT: pbcopy'))
+
+    const error = await deliverAppSecurityInstructions('# Instructions', {copy: true}, dependencies).catch(
+      (error: unknown) => error,
+    )
+
+    expect(error).toBeInstanceOf(ClipboardUnavailableError)
+    const abort = error as ClipboardUnavailableError
+    expect(abort.message).toBe(
+      "Couldn't copy the app security check instructions to the clipboard: Command failed with ENOENT: pbcopy",
+    )
+    expect(abort.code).toBe('clipboard-unavailable')
+    expect(abort.details).toBeUndefined()
+    expect(abort.nextSteps).toStrictEqual([
+      [
+        'Run the command without',
+        {command: '--copy'},
+        'to print the instructions, or with',
+        {command: '--write <file>'},
+        'to write them to a file.',
+      ],
+    ])
   })
 })
