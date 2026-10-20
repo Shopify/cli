@@ -1,6 +1,5 @@
-import {appSecurityDirectory, cleanAllResultsDirectories, cleanResultsDirectory} from './app-security-artifacts.js'
+import {cleanAllResultsDirectories, cleanResultsDirectory} from './app-security-artifacts.js'
 import {resultsKey, type AppSecuritySelection} from './app-security-selection.js'
-import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
 
 /** The results directories that were removed. */
 export interface SecurityCleanResult {
@@ -29,19 +28,4 @@ export default async function securityClean(
     ? await dependencies.cleanAllResults(options.appDirectory)
     : await dependencies.cleanResults(options.selection.appDirectory, resultsKey(options.selection))
   return {removed}
-}
-
-/** Presents a clean result in the terminal. */
-export function renderSecurityCleanResult(result: SecurityCleanResult, appDirectory: string): void {
-  if (result.removed.length === 0) {
-    renderInfo({
-      headline: 'No app security check results to remove.',
-      body: ['Nothing was found in', {filePath: appSecurityDirectory(appDirectory)}],
-    })
-  } else {
-    renderSuccess({
-      headline: 'App security check results removed.',
-      body: {list: {items: result.removed.map((path) => ({filePath: path}))}},
-    })
-  }
 }
