@@ -3,9 +3,6 @@ const commandExceptions = [
   // Existing finite commands awaiting migration. Remove entries as they adopt typed JSON output.
   // Do not add new finite commands to this section.
 
-  // App Security commands, launched before adopting typed JSON output. Remove entries as they adopt it.
-  'packages/app/src/cli/commands/app/security/check.ts',
-
   // Streaming commands without a single finite result.
   'packages/app/src/cli/commands/app/dev.ts',
   'packages/app/src/cli/commands/app/graphiql.ts',

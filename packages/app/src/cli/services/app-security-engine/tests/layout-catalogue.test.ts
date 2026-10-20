@@ -115,12 +115,11 @@ async function checkListFiles(temporaryDirectory: string, workingDirectory: stri
       listFiles: true,
       blocking: 'none',
     })
-    await renderSecurityCheckResult(resolution, {
-      directory,
-      verbose: false,
-      printInstructions: false,
-      skipInstructions: false,
-    })
+    await renderSecurityCheckResult(
+      resolution,
+      {directory, verbose: false, printInstructions: false, skipInstructions: false},
+      'text',
+    )
     if (resolution.kind !== 'listed') throw new Error(`Expected listed files, got ${resolution.kind}`)
     return {resolution, stdout: stdout(), stderr: stderr()}
   })

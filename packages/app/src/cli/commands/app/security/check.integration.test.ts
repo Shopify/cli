@@ -8,12 +8,13 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists, fileRealPath, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
-import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import clipboard from 'clipboardy'
 import {describe, expect, test, vi} from 'vitest'
-import {mkdir, readFile, writeFile} from 'node:fs/promises'
-// eslint-disable-next-line n/prefer-global/console
-import {Console} from 'node:console'
+import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {mkdir, readFile, rm, writeFile} from 'node:fs/promises'
+// eslint-disable-next-line no-restricted-imports -- Verify native filesystem paths in JSON output.
+import {resolve} from 'node:path'
 
 // Exercise actual stdout/stderr instead of CLI-kit's unit-test log collector.
 vi.mock('@shopify/cli-kit/node/context/local', async (importOriginal) => ({
@@ -38,6 +39,7 @@ vi.mock('../../../services/context.js', async (importOriginal) => ({
 // Tests answer the prompts. How a real terminal draws them is checked by hand.
 vi.mock('@shopify/cli-kit/node/ui', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@shopify/cli-kit/node/ui')>()),
+  renderConfirmationPrompt: vi.fn(),
   renderSelectPrompt: vi.fn(),
 }))
 // Tests must not replace the clipboard of the machine that runs them.
@@ -78,52 +80,55 @@ function expectMentionsPath(message: string, path: string): void {
 }
 
 async function runCommand(argv: string[]) {
-  let stdout = ''
-  let stderr = ''
   const previousExitCode = process.exitCode
   process.exitCode = 0
-  const out = vi.spyOn(process.stdout, 'write').mockImplementation((chunk) => {
-    stdout += chunk.toString()
-    return true
-  })
-  const err = vi.spyOn(process.stderr, 'write').mockImplementation((chunk) => {
-    stderr += chunk.toString()
-    return true
-  })
-  // Vitest intercepts console.warn; use Node's console to exercise the captured streams.
-  const warn = vi.spyOn(console, 'warn').mockImplementation(new Console(process.stdout, process.stderr).warn)
   // Observe the real Oclif error handler's requested exit without terminating the test worker.
   const exit = vi.spyOn(process, 'exit').mockImplementation((code) => {
     process.exitCode = code ?? 0
     return undefined as never
   })
   try {
-    const config = await Config.load(import.meta.url)
-    // This test invokes the app command directly, not as a separately installed CLI plugin.
-    config.plugins.clear()
-    await SecurityCheck.run(argv, config)
-    return {stdout, stderr, exitCode: process.exitCode}
+    const output = await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      const config = await Config.load(import.meta.url)
+      // This test invokes the app command directly, not as a separately installed CLI plugin.
+      config.plugins.clear()
+      await SecurityCheck.run(argv, config)
+      return {stdout: stdout(), stderr: stderr()}
+    })
+    return {...output, exitCode: process.exitCode}
   } finally {
-    warn.mockRestore()
-    out.mockRestore()
-    err.mockRestore()
     exit.mockRestore()
     process.exitCode = previousExitCode
   }
 }
 
 /**
- * Runs the command as if stdin and stderr were a terminal, where it prompts unless `--no-input` is passed. CLI Kit reads
- * `--no-input` from the process arguments, not from the arguments given to `run`, so the environment sets it as well.
+ * Runs the command with --json. CLI Kit's error handler reads --json from the process arguments, not from the
+ * arguments given to `run`, so the environment sets it as well.
  */
-async function runInTerminal(argv: string[], {noInput = false} = {}) {
+async function runJsonCommand(argv: string[]) {
+  vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
+  try {
+    return await runCommand([...argv, '--json'])
+  } finally {
+    vi.unstubAllEnvs()
+  }
+}
+
+/**
+ * Runs the command as if stdin and stderr were a terminal, where it prompts unless `--no-input` is passed. CLI Kit reads
+ * `--no-input` and `--json` from the process arguments, not from the arguments given to `run`, so the environment sets
+ * them as well.
+ */
+async function runInTerminal(argv: string[], {noInput = false, json = false} = {}) {
   vi.stubEnv('CI', '')
   if (noInput) vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', '1')
+  if (json) vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
   const streams = [process.stdin, process.stderr]
   const descriptors = streams.map((stream) => Object.getOwnPropertyDescriptor(stream, 'isTTY'))
   for (const stream of streams) Object.defineProperty(stream, 'isTTY', {value: true, configurable: true})
   try {
-    return await runCommand(noInput ? [...argv, '--no-input'] : argv)
+    return await runCommand([...argv, ...(noInput ? ['--no-input'] : []), ...(json ? ['--json'] : [])])
   } finally {
     streams.forEach((stream, index) => {
       const descriptor = descriptors[index]
@@ -414,4 +419,397 @@ describe('app security check command boundary', () => {
       expect(appFromIdentifiers).toHaveBeenCalledWith({apiKey: 'other-client-id', offerReset: false})
     })
   })
+})
+
+/** The JSON stderr events of a run, one per line. */
+function jsonEvents(stderr: string): {type: string; level: string; message: string}[] {
+  return stderr
+    .split('\n')
+    .filter((line) => line !== '')
+    .map((line) => JSON.parse(line))
+}
+
+/** The result of scanning the app that `createApp` writes, written out independently of the codec. */
+async function scanResult(appDirectory: string) {
+  const resultsDirectory = resolve(appDirectory, '.shopify', 'app-security', 'shopify.app')
+  const agentChecks = (await readJson(resolve(resultsDirectory, 'agent-checks.json'))) as {checks: unknown[]}
+  return {
+    status: 'success',
+    valid: true,
+    app: {
+      directory: resolve(appDirectory),
+      configurationPath: resolve(appDirectory, 'shopify.app.toml'),
+      clientId: 'test-client-id',
+    },
+    resultsDirectory,
+    deterministicFindingsPath: resolve(resultsDirectory, 'deterministic-findings.json'),
+    agentChecksPath: resolve(resultsDirectory, 'agent-checks.json'),
+    scope: {includeDirs: [], excludes: [], noGitIgnore: false},
+    scanDirectories: [{directory: resolve(appDirectory), origin: 'app-directory'}],
+    agentCheckCount: agentChecks.checks.length,
+    blocking: {level: 'none', blockedCheckCount: 0},
+  }
+}
+
+describe('app security check --json command boundary', () => {
+  test('writes one result with the app, the files the scan wrote and its scope, without instructions or a report', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const appDirectory = await fileRealPath(directory)
+
+      const result = await runJsonCommand(['--path', directory])
+
+      expect(result.exitCode).toBe(0)
+      expect(JSON.parse(result.stdout)).toStrictEqual(await scanResult(appDirectory))
+      expect(result.stderr).toBe('')
+      expect(renderSelectPrompt).not.toHaveBeenCalled()
+    })
+  })
+
+  test('--skip-instructions writes the same result', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const appDirectory = await fileRealPath(directory)
+
+      const result = await runJsonCommand(['--path', directory, '--skip-instructions'])
+
+      expect(result.exitCode).toBe(0)
+      expect(JSON.parse(result.stdout)).toStrictEqual(await scanResult(appDirectory))
+      expect(result.stderr).toBe('')
+    })
+  })
+
+  test('--print-instructions includes the instructions that the command prints without --json', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const appDirectory = await fileRealPath(directory)
+      const printed = await runCommand(['--path', directory, '--print-instructions'])
+
+      const result = await runJsonCommand(['--path', directory, '--print-instructions'])
+
+      expect(result.exitCode).toBe(0)
+      expect(JSON.parse(result.stdout)).toStrictEqual({
+        ...(await scanResult(appDirectory)),
+        instructions: {content: printed.stdout.replace(/\n$/, ''), copied: false},
+      })
+      expect(printed.stdout).toContain('### 1. Use the existing scan results')
+      expect(result.stderr).toBe('')
+      expect(clipboard.write).not.toHaveBeenCalled()
+    })
+  })
+
+  test('--list-files writes one result with each gathered file as an absolute native path', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const appDirectory = await fileRealPath(directory)
+      const listed = await runCommand(['--path', directory, '--list-files'])
+
+      const result = await runJsonCommand(['--path', directory, '--list-files'])
+
+      expect(result.exitCode).toBe(0)
+      expect(JSON.parse(result.stdout)).toStrictEqual({
+        status: 'success',
+        app: {
+          directory: resolve(appDirectory),
+          configurationPath: resolve(appDirectory, 'shopify.app.toml'),
+          clientId: 'test-client-id',
+        },
+        scope: {includeDirs: [], excludes: [], noGitIgnore: false},
+        scanDirectories: [{directory: resolve(appDirectory), origin: 'app-directory'}],
+        files: [
+          {path: resolve(appDirectory, '.shopify', '.gitignore')},
+          {path: resolve(appDirectory, '.shopify', 'project.json')},
+          {path: resolve(appDirectory, 'app', 'routes', 'index.ts')},
+          {path: resolve(appDirectory, 'app', 'shopify.server.ts')},
+          {path: resolve(appDirectory, 'package.json')},
+          {path: resolve(appDirectory, 'shopify.app.toml')},
+        ],
+      })
+      // Without --json, the same files are listed relative to the app directory.
+      expect(listed.stdout).toBe(
+        '.shopify/.gitignore\n.shopify/project.json\napp/routes/index.ts\napp/shopify.server.ts\npackage.json\nshopify.app.toml\n',
+      )
+      expect(result.stderr).toBe('')
+      await expect(fileExists(appSecurityArtifactPaths(appDirectory, 'shopify.app').resultsDirectory)).resolves.toBe(
+        false,
+      )
+    })
+  })
+
+  test('reports a --blocking breach as invalid in the result, and exits 1', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createAppWithSecret(directory)
+
+      const result = await runJsonCommand(['--path', directory, '--blocking', 'high'])
+
+      expect(result.exitCode).toBe(1)
+      expect(JSON.parse(result.stdout)).toMatchObject({
+        status: 'success',
+        valid: false,
+        blocking: {level: 'high', blockedCheckCount: 1},
+      })
+    })
+  })
+
+  test('reports the same findings as valid with --blocking none, and exits 0', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createAppWithSecret(directory)
+
+      const result = await runJsonCommand(['--path', directory, '--blocking', 'none'])
+
+      expect(result.exitCode).toBe(0)
+      expect(JSON.parse(result.stdout)).toMatchObject({valid: true, blocking: {level: 'none', blockedCheckCount: 0}})
+    })
+  })
+
+  test('reports gathering warnings as events on stderr', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      await mkdir(joinPath(directory, 'apps', 'child'), {recursive: true})
+      await writeFile(joinPath(directory, 'apps', 'child', 'shopify.app.toml'), 'name = "Child"\n')
+      vi.stubEnv('INIT_CWD', await fileRealPath(directory))
+
+      const result = await runJsonCommand(['--path', directory, '--list-files'])
+
+      expect(result.exitCode).toBe(0)
+      expect(JSON.parse(result.stdout)).toMatchObject({status: 'success', files: expect.any(Array)})
+      expect(jsonEvents(result.stderr)).toEqual([
+        {
+          type: 'diagnostic',
+          timestamp: expect.any(String),
+          level: 'warning',
+          message: expect.stringContaining("apps/child holds another app's configuration"),
+        },
+      ])
+    })
+  })
+
+  test('aborts with one error document when there is no app configuration and prompts are off', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const result = await runJsonCommand(['--path', directory])
+
+      expect(result.exitCode).toBe(1)
+      expect(JSON.parse(result.stdout)).toMatchObject({
+        error: {type: 'abort', message: `No app configuration found at or above ${directory}.`},
+      })
+    })
+  })
+})
+
+describe('app security check prompts', () => {
+  /** An app with two configurations and none selected, so the check asks which one to scan. */
+  async function createAppWithTwoConfigurations(directory: string): Promise<void> {
+    await createApp(directory)
+    await writeFile(joinPath(directory, 'shopify.app.production.toml'), validAppConfiguration('production-client-id'))
+    await writeFile(joinPath(directory, 'shopify.app.staging.toml'), validAppConfiguration('staging-client-id'))
+    await rm(joinPath(directory, 'shopify.app.toml'))
+  }
+
+  describe.each([{json: false}, {json: true}])('with json: $json', ({json}) => {
+    test.each([
+      {answer: 'copy', copied: true},
+      {answer: 'print', copied: false},
+    ] as const)('delivers the instructions when $answer is chosen', async ({answer, copied}) => {
+      await inTemporaryDirectory(async (directory) => {
+        await createApp(directory)
+        vi.mocked(renderSelectPrompt).mockResolvedValue(answer)
+
+        const result = await runInTerminal(['--path', directory], {json})
+
+        expect(result.exitCode).toBe(0)
+        expect(renderSelectPrompt).toHaveBeenCalledExactlyOnceWith(
+          expect.objectContaining({
+            choices: json
+              ? [
+                  {label: 'Include instructions in the JSON output and copy them to the clipboard', value: 'copy'},
+                  {label: 'Include instructions in the JSON output', value: 'print'},
+                  {label: 'Nothing', value: 'nothing'},
+                ]
+              : [
+                  {label: 'Copy instructions to the clipboard', value: 'copy'},
+                  {label: 'Print instructions to the terminal', value: 'print'},
+                  {label: 'Nothing', value: 'nothing'},
+                ],
+          }),
+        )
+        expect(vi.mocked(clipboard.write).mock.calls).toHaveLength(copied ? 1 : 0)
+        const instructions = copied ? vi.mocked(clipboard.write).mock.calls[0]![0] : undefined
+        if (json) {
+          const output = JSON.parse(result.stdout)
+          expect(output.instructions).toEqual({content: expect.stringContaining('### 1. Use the existing'), copied})
+          if (copied) expect(output.instructions.content).toBe(instructions)
+          expect(result.stderr).toBe('')
+        } else if (copied) {
+          expect(result.stdout).toBe('')
+          expect(unstyled(result.stderr)).toContain('Copied app security check instructions to the clipboard')
+        } else {
+          expect(result.stdout).toContain('### 1. Use the existing scan results')
+        }
+      })
+    })
+
+    test('gives nothing when Nothing is chosen', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        await createApp(directory)
+        vi.mocked(renderSelectPrompt).mockResolvedValue('nothing')
+
+        const result = await runInTerminal(['--path', directory], {json})
+
+        expect(result.exitCode).toBe(0)
+        expect(renderSelectPrompt).toHaveBeenCalledOnce()
+        expect(clipboard.write).not.toHaveBeenCalled()
+        if (json) {
+          expect(JSON.parse(result.stdout)).toStrictEqual(await scanResult(await fileRealPath(directory)))
+        } else {
+          expect(result.stdout).toBe('')
+        }
+      })
+    })
+
+    test('offers no instructions with --no-input', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        await createApp(directory)
+
+        const result = await runInTerminal(['--path', directory], {json, noInput: true})
+
+        expect(result.exitCode).toBe(0)
+        expect(renderSelectPrompt).not.toHaveBeenCalled()
+        if (json) {
+          expect(JSON.parse(result.stdout)).toStrictEqual(await scanResult(await fileRealPath(directory)))
+        } else {
+          expect(result.stdout).toBe('')
+        }
+      })
+    })
+
+    test('scans without app configuration when that is accepted, after showing how to skip the prompt', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+        vi.mocked(renderSelectPrompt).mockResolvedValue('nothing')
+
+        const result = await runInTerminal(['--path', directory, '--client-id', 'flag-client-id'], {json})
+
+        expect(result.exitCode).toBe(0)
+        expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
+        if (json) {
+          expect(JSON.parse(result.stdout)).toMatchObject({
+            status: 'success',
+            app: {
+              directory: resolve(await fileRealPath(directory)),
+              configurationPath: null,
+              clientId: 'flag-client-id',
+            },
+          })
+          expect(jsonEvents(result.stderr)).toEqual([
+            {
+              type: 'diagnostic',
+              timestamp: expect.any(String),
+              level: 'info',
+              message: expect.stringMatching(
+                /^To skip these prompts next time, run:\n\nshopify app security check .* --client-id ["']?flag-client-id["']? --without-app-config$/,
+              ),
+            },
+          ])
+        } else {
+          expect(result.stdout).toBe('')
+          expect(boxText(result.stderr)).toContain('To skip these prompts next time, run:')
+          expect(boxText(result.stderr)).toContain('Config file none')
+        }
+      })
+    })
+
+    test('scans nothing when scanning without app configuration is declined', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+
+        const result = await runInTerminal(['--path', directory], {json})
+
+        expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
+        expect(renderSelectPrompt).not.toHaveBeenCalled()
+        if (json) {
+          expect(result.exitCode).toBe(0)
+          expect(JSON.parse(result.stdout)).toStrictEqual({status: 'cancelled'})
+          expect(result.stderr).toBe('')
+        } else {
+          expect(result.exitCode).toBe(1)
+          expect(result.stdout).toBe('')
+          expect(boxText(result.stderr)).toContain('No app configuration found at or above')
+          expect(boxText(result.stderr)).toContain('--without-app-config --client-id <client-id>')
+        }
+        await expect(fileExists(joinPath(directory, '.shopify', 'app-security'))).resolves.toBe(false)
+      })
+    })
+
+    test('aborts without asking when there is no app configuration and --no-input is passed', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const result = await runInTerminal(['--path', directory], {json, noInput: true})
+
+        expect(result.exitCode).toBe(1)
+        expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+        if (json) {
+          expect(JSON.parse(result.stdout)).toMatchObject({
+            error: {type: 'abort', message: `No app configuration found at or above ${directory}.`},
+          })
+        } else {
+          expect(result.stdout).toBe('')
+          expect(boxText(result.stderr)).toContain('No app configuration found at or above')
+        }
+      })
+    })
+  })
+
+  test('--json shows how to skip the prompts as an event after asking which configuration to scan', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createAppWithTwoConfigurations(directory)
+      vi.mocked(renderSelectPrompt).mockResolvedValueOnce('shopify.app.staging.toml').mockResolvedValueOnce('nothing')
+
+      const result = await runInTerminal(['--path', directory], {json: true})
+
+      expect(result.exitCode).toBe(0)
+      expect(JSON.parse(result.stdout)).toMatchObject({
+        app: {configurationPath: resolve(await fileRealPath(directory), 'shopify.app.staging.toml')},
+      })
+      expect(jsonEvents(result.stderr)).toEqual([
+        {
+          type: 'diagnostic',
+          timestamp: expect.any(String),
+          level: 'info',
+          message: expect.stringMatching(
+            /^To skip these prompts next time, run:\n\nshopify app security check .* --config ["']?staging["']?$/,
+          ),
+        },
+      ])
+    })
+  })
+
+  test.each([
+    {blocking: 'none', valid: true, exitCode: 0},
+    {blocking: 'high', valid: false, exitCode: 1},
+  ])(
+    '--json warns on stderr when the instructions cannot be copied, still includes them, and exits as --blocking $blocking requires',
+    async ({blocking, valid, exitCode}) => {
+      await inTemporaryDirectory(async (directory) => {
+        await createAppWithSecret(directory)
+        vi.mocked(renderSelectPrompt).mockResolvedValue('copy')
+        vi.mocked(clipboard.write).mockRejectedValue(new Error('Command failed with ENOENT: pbcopy'))
+
+        const result = await runInTerminal(['--path', directory, '--blocking', blocking], {json: true})
+
+        expect(result.exitCode).toBe(exitCode)
+        expect(JSON.parse(result.stdout)).toMatchObject({
+          valid,
+          instructions: {content: expect.stringContaining('### 1. Use the existing'), copied: false},
+        })
+        expect(jsonEvents(result.stderr)).toEqual([
+          {
+            type: 'diagnostic',
+            timestamp: expect.any(String),
+            level: 'warning',
+            message:
+              "Couldn't copy the app security check instructions to the clipboard: Command failed with ENOENT: pbcopy\n\nThe result still includes them.",
+          },
+        ])
+      })
+    },
+  )
 })

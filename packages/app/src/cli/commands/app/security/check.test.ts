@@ -66,6 +66,7 @@ describe('app security check command', () => {
       'config',
       'exclude',
       'include-dir',
+      'json',
       'list-files',
       'no-git-ignore',
       'path',
@@ -97,12 +98,25 @@ describe('app security check command', () => {
       listFiles: false,
       onSelectionPrompted: renderSecurityCheckPromptsTip,
     })
-    expect(renderSecurityCheckResult).toHaveBeenCalledWith(check, {
-      directory: resolvePath('./fixtures/unlinked-app'),
-      verbose: true,
-      printInstructions: false,
-      skipInstructions: true,
-    })
+    expect(renderSecurityCheckResult).toHaveBeenCalledWith(
+      check,
+      {
+        directory: resolvePath('./fixtures/unlinked-app'),
+        verbose: true,
+        printInstructions: false,
+        skipInstructions: true,
+      },
+      'text',
+    )
+  })
+
+  test('presents the outcome as JSON with --json', async () => {
+    const check = {kind: 'cancelled'} as const
+    vi.mocked(securityCheck).mockResolvedValue(check)
+
+    await SecurityCheck.run(['--json'], import.meta.url)
+
+    expect(renderSecurityCheckResult).toHaveBeenCalledWith(check, expect.anything(), 'json')
   })
 
   test('forwards repeated --exclude globs exactly as typed, in command-line order', async () => {
@@ -385,7 +399,7 @@ describe('app security check command', () => {
 
   test('describes the artifacts it writes and how agent results are recorded', () => {
     expect(SecurityCheck.flags['print-instructions'].description).toBe(
-      'Print coding-agent instructions without prompting for how to deliver them.',
+      'Print coding-agent instructions without prompting for how to deliver them. With --json, the instructions are included in the result.',
     )
     expect(SecurityCheck.flags['skip-instructions'].description).toBe(
       "Don't offer the coding-agent instructions after the scan. Use it when you want only the deterministic scan results.",

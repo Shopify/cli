@@ -16,6 +16,7 @@ import {
 import {appSecurityInstructions} from '../app-security-instructions.js'
 import {validAppConfiguration} from '../app-security-selection.test-data.js'
 import {committedSecretIssue, scan, scanExecution} from '../security-check.test-data.js'
+import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath, inTemporaryDirectory, matchGlob, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {unstyled} from '@shopify/cli-kit/node/output'
@@ -52,15 +53,16 @@ const selection: AppSecuritySelection = {
 const noScope: AppSecurityScope = {include_dirs: [], excludes: [], no_git_ignore: false}
 
 function scanned(overrides: Partial<ScannedSecurityCheck> = {}): ScannedSecurityCheck {
+  const checkSelection = overrides.selection ?? selection
   const scope = overrides.scope ?? noScope
-  const paths = appSecurityArtifactPaths(appDirectory, 'shopify.app')
+  const paths = appSecurityArtifactPaths(checkSelection.appDirectory, 'shopify.app')
   return {
     kind: 'scanned',
-    selection,
+    selection: checkSelection,
     resultsKey: 'shopify.app',
-    commands: resolveAppSecurityCommands(selection, appDirectory, scope),
+    commands: resolveAppSecurityCommands(checkSelection, checkSelection.appDirectory, scope),
     scope,
-    scanDirectories: [{directory: appDirectory, origin: 'app_directory'}],
+    scanDirectories: [{directory: checkSelection.appDirectory, origin: 'app_directory'}],
     execution: scanExecution,
     artifacts: {deterministicFindingsPath: paths.deterministicFindingsPath, agentChecksPath: paths.agentChecksPath},
     blocking: {level: 'none', blockedChecks: 0},
@@ -69,13 +71,14 @@ function scanned(overrides: Partial<ScannedSecurityCheck> = {}): ScannedSecurity
 }
 
 function listed(overrides: Partial<ListedSecurityCheck> = {}): ListedSecurityCheck {
+  const checkSelection = overrides.selection ?? selection
   return {
     kind: 'listed',
-    selection,
+    selection: checkSelection,
     resultsKey: 'shopify.app',
-    commands: resolveAppSecurityCommands(selection, appDirectory, noScope),
+    commands: resolveAppSecurityCommands(checkSelection, checkSelection.appDirectory, noScope),
     scope: noScope,
-    scanDirectories: [{directory: appDirectory, origin: 'app_directory'}],
+    scanDirectories: [{directory: checkSelection.appDirectory, origin: 'app_directory'}],
     paths: ['shopify.app.toml'],
     ignoredScanDirectories: [],
     otherAppDirectories: [],
@@ -114,8 +117,29 @@ async function present(
   dependencies = testDependencies(),
 ) {
   return withCapturedStandardStreams(async ({stdout, stderr}) => {
-    await renderSecurityCheckResult(check, {...presentationOptions, ...options}, dependencies)
+    await renderSecurityCheckResult(check, {...presentationOptions, ...options}, 'text', dependencies)
     return {stdout: unstyled(stdout()), stderr: unstyled(stderr())}
+  })
+}
+
+/**
+ * Presents the outcome as JSON, as a command with `--json` does, and returns the parsed result and the stderr events.
+ * Parsing fails unless stdout holds exactly one JSON document.
+ */
+async function presentJson(
+  check: SecurityCheckOutcome,
+  options: Partial<typeof presentationOptions> = {},
+  dependencies = testDependencies(),
+) {
+  return withCapturedStandardStreams(async ({stdout, stderr}) => {
+    await runWithCommandEventsForCommand(['--json'], () =>
+      renderSecurityCheckResult(check, {...presentationOptions, ...options}, 'json', dependencies),
+    )
+    const events = stderr()
+      .split('\n')
+      .filter((line) => line !== '')
+      .map((line) => JSON.parse(line) as {type: string; level: string; message: string})
+    return {result: JSON.parse(stdout()) as unknown, events}
   })
 }
 
@@ -311,11 +335,11 @@ describe('renderSecurityCheckResult for a scan', () => {
         stderrWhenPrompted = unstyled(stderr())
         return 'nothing'
       })
-      await renderSecurityCheckResult(scanned(), presentationOptions, dependencies)
+      await renderSecurityCheckResult(scanned(), presentationOptions, 'text', dependencies)
       return {stdout: stdout()}
     })
 
-    expect(appSecurityInstructionsPrompt(31)).toEqual({
+    expect(appSecurityInstructionsPrompt(31, 'text')).toEqual({
       message:
         '31 recommended agent checks available to complete your scan. How do you want to pass that prompt to your agent?',
       choices: [
@@ -326,7 +350,7 @@ describe('renderSecurityCheckResult for a scan', () => {
       defaultValue: 'copy',
     })
     expect(dependencies.selectInstructionsDestination).toHaveBeenCalledExactlyOnceWith(
-      appSecurityInstructionsPrompt(31),
+      appSecurityInstructionsPrompt(31, 'text'),
     )
     expect(boxText(stderrWhenPrompted)).toContain('No security issues found.')
     expect(stdout).toBe('')
@@ -334,7 +358,7 @@ describe('renderSecurityCheckResult for a scan', () => {
   })
 
   test('names a single recommended agent check in the singular', () => {
-    expect(appSecurityInstructionsPrompt(1).message).toBe(
+    expect(appSecurityInstructionsPrompt(1, 'text').message).toBe(
       '1 recommended agent check available to complete your scan. How do you want to pass that prompt to your agent?',
     )
   })
@@ -478,5 +502,293 @@ describe('renderSecurityCheckResult when scanning without app configuration was 
     expect((error as AbortError).tryMessage).toBe(
       'Pass `--path` to your app directory, or scan without app configuration with `--without-app-config --client-id <client-id>`.',
     )
+  })
+})
+
+// Selections hold the app directory's real path and paths joined from it with forward slashes, even on Windows.
+const onWindows = process.platform === 'win32'
+const nativeAppDirectory = onWindows ? 'C:\\apps\\my-app' : '/apps/my-app'
+const nativeSelection: AppSecuritySelection = {
+  kind: 'config',
+  appDirectory: nativeAppDirectory,
+  appConfigFilePath: `${nativeAppDirectory}/shopify.app.toml`,
+  configClientId: 'toml-client-id',
+}
+
+/** The absolute native path of a file below `/apps`, written out independently of the codec. */
+function nativePath(relativePath: string): string {
+  return onWindows ? `C:\\apps\\${relativePath.replaceAll('/', '\\')}` : `/apps/${relativePath}`
+}
+
+const nativeResultsDirectory = nativePath('my-app/.shopify/app-security/shopify.app')
+
+/** The result of a scan of `nativeSelection` without findings or instructions. */
+const scanResult = {
+  status: 'success',
+  valid: true,
+  app: {
+    directory: nativeAppDirectory,
+    configurationPath: nativePath('my-app/shopify.app.toml'),
+    clientId: 'toml-client-id',
+  },
+  resultsDirectory: nativeResultsDirectory,
+  deterministicFindingsPath: nativePath('my-app/.shopify/app-security/shopify.app/deterministic-findings.json'),
+  agentChecksPath: nativePath('my-app/.shopify/app-security/shopify.app/agent-checks.json'),
+  scope: {includeDirs: [], excludes: [], noGitIgnore: false},
+  scanDirectories: [{directory: nativeAppDirectory, origin: 'app-directory'}],
+  agentCheckCount: 31,
+  blocking: {level: 'none', blockedCheckCount: 0},
+}
+
+describe('renderSecurityCheckResult --json for a scan', () => {
+  test('prints one result with the app, the files the scan wrote and its scope, and no report', async () => {
+    process.exitCode = undefined
+
+    const {result, events} = await presentJson(scanned({selection: nativeSelection}), {verbose: true})
+
+    expect(result).toStrictEqual(scanResult)
+    expect(events).toEqual([])
+    expect(process.exitCode).toBeUndefined()
+  })
+
+  test('shows the scope as typed and each scan directory with its absolute path and origin', async () => {
+    const scope = {include_dirs: ['../backend'], excludes: ['**/generated'], no_git_ignore: true}
+    const check = scanned({
+      selection: nativeSelection,
+      scope,
+      scanDirectories: [
+        {directory: nativeAppDirectory, origin: 'app_directory'},
+        {directory: onWindows ? 'C:\\apps\\backend' : '/apps/backend', origin: 'include_dir'},
+        {directory: onWindows ? 'C:\\apps\\shared\\theme' : '/apps/shared/theme', origin: 'app_config_directory'},
+      ],
+    })
+
+    const {result} = await presentJson(check)
+
+    expect(result).toMatchObject({
+      scope: {includeDirs: ['../backend'], excludes: ['**/generated'], noGitIgnore: true},
+      scanDirectories: [
+        {directory: nativeAppDirectory, origin: 'app-directory'},
+        {directory: nativePath('backend'), origin: 'include-dir'},
+        {directory: nativePath('shared/theme'), origin: 'app-config-directory'},
+      ],
+    })
+  })
+
+  test('shows a scan without app configuration with a null configuration path', async () => {
+    const noConfig: AppSecuritySelection = {
+      kind: 'no-config',
+      appDirectory: nativeAppDirectory,
+      clientId: 'flag-client-id',
+      clientIdSource: 'flag',
+    }
+
+    const {result} = await presentJson({...scanned({selection: noConfig}), resultsKey: 'flag-client-id'})
+
+    expect(result).toMatchObject({
+      app: {directory: nativeAppDirectory, configurationPath: null, clientId: 'flag-client-id'},
+      resultsDirectory: nativePath('my-app/.shopify/app-security/flag-client-id'),
+    })
+  })
+
+  test('reports a --blocking breach as invalid, and sets exit code 1 after the result', async () => {
+    process.exitCode = undefined
+    const execution = {...scanExecution, scan: {...scan, issues: [committedSecretIssue]}}
+
+    const {result} = await presentJson(
+      scanned({selection: nativeSelection, execution, blocking: {level: 'high', blockedChecks: 1}}),
+    )
+
+    expect(result).toMatchObject({valid: false, blocking: {level: 'high', blockedCheckCount: 1}})
+    expect(process.exitCode).toBe(1)
+  })
+
+  test('reports findings below --blocking, or --blocking none, as valid', async () => {
+    process.exitCode = undefined
+    const execution = {...scanExecution, scan: {...scan, issues: [committedSecretIssue]}}
+
+    const {result} = await presentJson(scanned({execution, blocking: {level: 'none', blockedChecks: 0}}))
+
+    expect(result).toMatchObject({valid: true, blocking: {level: 'none', blockedCheckCount: 0}})
+    expect(process.exitCode).toBeUndefined()
+  })
+
+  test('--print-instructions includes the instructions in the result, without prompting or copying', async () => {
+    const check = scanned({selection: nativeSelection})
+    const dependencies = testDependencies('copy', true)
+
+    const {result, events} = await presentJson(check, {printInstructions: true}, dependencies)
+
+    expect(result).toStrictEqual({...scanResult, instructions: {content: scanInstructions(check), copied: false}})
+    expect(events).toEqual([])
+    expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
+    expect(clipboard.write).not.toHaveBeenCalled()
+  })
+
+  test('offers to include the instructions in the result, and to copy them as well by default', async () => {
+    const dependencies = testDependencies('nothing', true)
+
+    await presentJson(scanned(), {}, dependencies)
+
+    expect(appSecurityInstructionsPrompt(31, 'json')).toEqual({
+      message:
+        '31 recommended agent checks available to complete your scan. How do you want to pass that prompt to your agent?',
+      choices: [
+        {label: 'Include instructions in the JSON output and copy them to the clipboard', value: 'copy'},
+        {label: 'Include instructions in the JSON output', value: 'print'},
+        {label: 'Nothing', value: 'nothing'},
+      ],
+      defaultValue: 'copy',
+    })
+    expect(dependencies.selectInstructionsDestination).toHaveBeenCalledExactlyOnceWith(
+      appSecurityInstructionsPrompt(31, 'json'),
+    )
+  })
+
+  test.each([
+    {destination: 'copy', copied: true},
+    {destination: 'print', copied: false},
+  ] as const)(
+    'includes the instructions when $destination is chosen, with copied $copied',
+    async ({destination, copied}) => {
+      const check = scanned({selection: nativeSelection})
+
+      const {result, events} = await presentJson(check, {}, testDependencies(destination, true))
+
+      expect(result).toStrictEqual({...scanResult, instructions: {content: scanInstructions(check), copied}})
+      expect(events).toEqual([])
+      expect(vi.mocked(clipboard.write).mock.calls).toEqual(copied ? [[scanInstructions(check)]] : [])
+    },
+  )
+
+  test.each([
+    ['Nothing is chosen', {}, testDependencies('nothing', true)],
+    ['--skip-instructions is passed', {skipInstructions: true}, testDependencies('copy', true)],
+    ['the terminal cannot prompt', {}, testDependencies('copy', false)],
+  ])('leaves the instructions out when %s', async (_description, options, dependencies) => {
+    const {result} = await presentJson(scanned({selection: nativeSelection}), options, dependencies)
+
+    expect(result).toStrictEqual(scanResult)
+    expect(clipboard.write).not.toHaveBeenCalled()
+  })
+
+  test.each([
+    {level: 'none', blockedChecks: 0, valid: true, exitCode: undefined},
+    {level: 'high', blockedChecks: 1, valid: false, exitCode: 1},
+  ] as const)(
+    'warns on stderr when the instructions cannot be copied, still includes them, and exits as --blocking $level requires',
+    async ({level, blockedChecks, valid, exitCode}) => {
+      process.exitCode = undefined
+      vi.mocked(clipboard.write).mockRejectedValue(new Error('Command failed with ENOENT: pbcopy'))
+      const execution = {...scanExecution, scan: {...scan, issues: [committedSecretIssue]}}
+      const check = scanned({execution, blocking: {level, blockedChecks}})
+
+      const {result, events} = await presentJson(check, {}, testDependencies('copy', true))
+
+      expect(result).toMatchObject({valid, instructions: {content: scanInstructions(check), copied: false}})
+      expect(events).toEqual([
+        {
+          type: 'diagnostic',
+          timestamp: expect.any(String),
+          level: 'warning',
+          message:
+            "Couldn't copy the app security check instructions to the clipboard: Command failed with ENOENT: pbcopy\n\nThe result still includes them.",
+        },
+      ])
+      expect(process.exitCode).toBe(exitCode)
+    },
+  )
+
+  test('reports gathering warnings as events on stderr', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const realDirectory = await fileRealPath(directory)
+      vi.stubEnv('INIT_CWD', directory)
+      const execution = {
+        ...scanExecution,
+        ignoredScanDirectories: [joinPath(realDirectory, 'vendor')],
+        otherAppDirectories: [joinPath(realDirectory, 'apps', 'child')],
+      }
+
+      const {events} = await presentJson(scanned({execution}))
+
+      expect(events).toEqual([
+        {
+          type: 'diagnostic',
+          timestamp: expect.any(String),
+          level: 'warning',
+          message:
+            'vendor is ignored by Git, so only the files Git tracks in it are scanned.\n\nUse --no-git-ignore to scan everything in it.',
+        },
+        {
+          type: 'diagnostic',
+          timestamp: expect.any(String),
+          level: 'warning',
+          message: `apps/child holds another app's configuration, so its files are scanned as part of this app.\n\nUse --exclude ${quoteShellArgument('apps/child', shellForPlatform())} to leave it out.`,
+        },
+      ])
+    })
+  })
+})
+
+describe('renderSecurityCheckPromptsTip --json', () => {
+  test('shows the command that repeats the run without prompts as an event on stderr', async () => {
+    const commands = resolveAppSecurityCommands(selection, appDirectory, noScope)
+
+    const {stdout, stderr} = await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runWithCommandEventsForCommand(['--json'], async () => renderSecurityCheckPromptsTip(commands))
+      return {stdout: stdout(), stderr: stderr()}
+    })
+
+    expect(stdout).toBe('')
+    expect(JSON.parse(stderr)).toEqual({
+      type: 'diagnostic',
+      timestamp: expect.any(String),
+      level: 'info',
+      message: `To skip these prompts next time, run:\n\n${formatAppSecurityCommand(commands.scan)}`,
+    })
+  })
+})
+
+describe('renderSecurityCheckResult --json for --list-files', () => {
+  test('prints one result with each gathered file as an absolute native path', async () => {
+    const check = listed({
+      selection: nativeSelection,
+      paths: ['../backend/server.ts', 'app/routes/index.ts', 'shopify.app.toml'],
+    })
+    const dependencies = testDependencies('copy', true)
+
+    const {result, events} = await presentJson(check, {}, dependencies)
+
+    expect(result).toStrictEqual({
+      status: 'success',
+      app: scanResult.app,
+      scope: {includeDirs: [], excludes: [], noGitIgnore: false},
+      scanDirectories: [{directory: nativeAppDirectory, origin: 'app-directory'}],
+      files: [
+        {path: nativePath('backend/server.ts')},
+        {path: nativePath('my-app/app/routes/index.ts')},
+        {path: nativePath('my-app/shopify.app.toml')},
+      ],
+    })
+    expect(events).toEqual([])
+    expect(dependencies.selectInstructionsDestination).not.toHaveBeenCalled()
+  })
+
+  test('prints a result with no files when none is gathered', async () => {
+    const {result} = await presentJson(listed({paths: []}))
+
+    expect(result).toMatchObject({files: []})
+  })
+})
+
+describe('renderSecurityCheckResult --json when scanning without app configuration was declined', () => {
+  test('prints a cancelled result and leaves the exit code alone', async () => {
+    process.exitCode = undefined
+
+    const {result, events} = await presentJson({kind: 'cancelled'})
+
+    expect(result).toStrictEqual({status: 'cancelled'})
+    expect(events).toEqual([])
+    expect(process.exitCode).toBeUndefined()
   })
 })
