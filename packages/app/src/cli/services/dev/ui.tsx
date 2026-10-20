@@ -40,34 +40,40 @@ export async function renderDev({
   configPath?: string
   localURL?: string
 }) {
-  if (terminalSupportsPrompting()) {
-    return render(
-      <DevSessionUI
-        processes={processes}
-        abortController={abortController}
-        devSessionStatusManager={devSessionStatusManager}
-        shopFqdn={shopFqdn}
-        appURL={appURL}
-        appName={appName}
-        organizationName={organizationName}
-        configPath={configPath}
-        localURL={localURL}
-        onAbort={async () => {
-          await app.developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn})
-        }}
-      />,
-      {
-        exitOnCtrlC: false,
-      },
-    )
-  }
+  const stop = () => abortController.abort()
+  process.on('shopify:signal', stop)
+  try {
+    if (terminalSupportsPrompting()) {
+      return await render(
+        <DevSessionUI
+          processes={processes}
+          abortController={abortController}
+          devSessionStatusManager={devSessionStatusManager}
+          shopFqdn={shopFqdn}
+          appURL={appURL}
+          appName={appName}
+          organizationName={organizationName}
+          configPath={configPath}
+          localURL={localURL}
+          onAbort={async () => {
+            await app.developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn})
+          }}
+        />,
+        {
+          exitOnCtrlC: false,
+        },
+      )
+    }
 
-  await renderDevNonInteractive({
-    processes,
-    previewUrl,
-    graphiqlUrl,
-    abortController,
-  })
+    await renderDevNonInteractive({
+      processes,
+      previewUrl,
+      graphiqlUrl,
+      abortController,
+    })
+  } finally {
+    process.removeListener('shopify:signal', stop)
+  }
 }
 
 async function renderDevNonInteractive({
