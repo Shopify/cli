@@ -131,6 +131,57 @@ afterEach(() => {
 })
 
 describe('graphqlRequest', () => {
+  test('retries only the throttled mutation request with its original variables', async () => {
+    const receivedVariables: unknown[] = []
+    server.use(
+      mockApi.mutation('CreateAppVersion', ({variables}) => {
+        receivedVariables.push(variables)
+        if (receivedVariables.length === 1) {
+          return HttpResponse.json(
+            {errors: [{message: 'Throttled', extensions: {code: 'THROTTLED'}}]},
+            {headers: {'Retry-After': '0'}},
+          )
+        }
+        return HttpResponse.json({data: {appVersionCreate: {version: {id: 'created-version'}}}})
+      }),
+    )
+    const variables = {appId: 'test-app'}
+    const result = await graphqlRequest({
+      api: 'mockApi',
+      url: mockedAddress,
+      query: 'mutation CreateAppVersion($appId: ID!) { appVersionCreate(appId: $appId) { version { id } } }',
+      variables,
+    })
+
+    expect(result).toEqual({appVersionCreate: {version: {id: 'created-version'}}})
+    expect(receivedVariables).toEqual([variables, variables])
+  })
+
+  test('does not repeat a mutation when a throttled response contains partial data', async () => {
+    let requestCount = 0
+    server.use(
+      mockApi.mutation('CreateAppVersion', () => {
+        requestCount++
+        return HttpResponse.json(
+          {
+            data: {appVersionCreate: {version: {id: 'created-version'}}},
+            errors: [{message: 'Throttled', extensions: {code: 'THROTTLED'}}],
+          },
+          {headers: {'Retry-After': '0'}},
+        )
+      }),
+    )
+    await expect(
+      graphqlRequest({
+        api: 'mockApi',
+        url: mockedAddress,
+        query: 'mutation CreateAppVersion { appVersionCreate { version { id } } }',
+      }),
+    ).rejects.toThrow('Throttled')
+
+    expect(requestCount).toBe(1)
+  })
+
   test('calls debugLogRequestInfo once', async () => {
     let headers: any
     server.events.on('request:start', ({request}) => {

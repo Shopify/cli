@@ -1,7 +1,9 @@
 import {retryAwareRequest, isNetworkError, isTransientNetworkError} from './api.js'
 import {recordRetry} from '../../public/node/analytics.js'
 import {ClientError} from 'graphql-request'
+import {GraphQLError} from 'graphql'
 import {describe, test, vi, expect, beforeEach, afterEach} from 'vitest'
+import {performance} from 'perf_hooks'
 
 vi.mock('../../public/node/analytics.js', () => ({
   recordRetry: vi.fn(),
@@ -10,6 +12,8 @@ vi.mock('../../public/node/analytics.js', () => ({
 describe('retryAwareRequest', () => {
   beforeEach(() => {
     vi.useFakeTimers()
+    vi.spyOn(performance, 'now').mockImplementation(() => Date.now())
+    vi.spyOn(Math, 'random').mockReturnValue(0.5)
   })
 
   afterEach(() => {
@@ -28,7 +32,7 @@ describe('retryAwareRequest', () => {
         } as any,
       ],
       headers: new Headers({
-        'retry-after': '200',
+        'retry-after': '0.2',
       }),
     }
 
@@ -89,7 +93,7 @@ describe('retryAwareRequest', () => {
     expect(mockRequestFn).toHaveBeenCalledTimes(4)
     expect(mockScheduleDelayFn).toHaveBeenCalledTimes(2)
     expect(mockScheduleDelayFn).toHaveBeenNthCalledWith(1, expect.anything(), 200)
-    expect(mockScheduleDelayFn).toHaveBeenNthCalledWith(2, expect.anything(), 500)
+    expect(mockScheduleDelayFn).toHaveBeenNthCalledWith(2, expect.anything(), 750)
   })
 
   test('retries THROTTLED GraphQL errors that carry no 429 status or code', async () => {
@@ -143,7 +147,7 @@ describe('retryAwareRequest', () => {
     })
 
     expect(mockRequestFn).toHaveBeenCalledTimes(2)
-    expect(mockScheduleDelayFn).toHaveBeenCalledWith(expect.anything(), 500)
+    expect(mockScheduleDelayFn).toHaveBeenCalledWith(expect.anything(), 375)
   })
 
   test('does not retry errors whose message says Throttled without a rate-limit code', async () => {
@@ -184,6 +188,194 @@ describe('retryAwareRequest', () => {
 
     expect(mockRequestFn).toHaveBeenCalledTimes(1)
     expect(mockScheduleDelayFn).not.toHaveBeenCalled()
+  })
+
+  test('backs off with jitter and recovers when the API needs 20 seconds to refill', async () => {
+    const startedAt = Date.now()
+    const success = {status: 200, headers: new Headers(), data: {version: 'created'}}
+    const request = vi.fn(async () => {
+      if (Date.now() - startedAt < 20_000) throw throttledError()
+      return success
+    })
+    const scheduleDelay = vi.fn((fn, delay) => setTimeout(fn, delay))
+    const result = retryAwareRequest(
+      {request, url: 'https://example.com/graphql', useNetworkLevelRetry: false},
+      undefined,
+      {scheduleDelay},
+    )
+    const assertion = expect(result).resolves.toBe(success)
+    await vi.runAllTimersAsync()
+    await assertion
+
+    expect(scheduleDelay.mock.calls.map(([, delay]) => delay)).toEqual([750, 1500, 3000, 6000, 6000, 6000])
+    expect(request).toHaveBeenCalledTimes(7)
+    expect(Date.now() - startedAt).toBe(23_250)
+  })
+
+  test('spreads concurrent callers across different retry times', async () => {
+    vi.mocked(Math.random).mockReturnValueOnce(0).mockReturnValueOnce(0.999)
+    const scheduleDelay = vi.fn((fn, delay) => setTimeout(fn, delay))
+    const requests = [0, 1].map(() =>
+      vi.fn().mockRejectedValueOnce(throttledError()).mockResolvedValue({status: 200, headers: new Headers()}),
+    )
+    const result = Promise.all(
+      requests.map((request) =>
+        retryAwareRequest({request, url: 'https://example.com/graphql', useNetworkLevelRetry: false}, undefined, {
+          scheduleDelay,
+        }),
+      ),
+    )
+    await vi.runAllTimersAsync()
+    await result
+
+    expect(scheduleDelay.mock.calls.map(([, delay]) => delay)).toEqual([500, 999])
+    for (const request of requests) expect(request).toHaveBeenCalledTimes(2)
+  })
+
+  test.each([
+    {header: '2', delay: 2000},
+    {header: '0.25', delay: 250},
+    {header: 'Tue, 20 Oct 2026 12:00:10 GMT', delay: 10_000},
+    {header: 'Tue, 20 Oct 2026 11:59:59 GMT', delay: 0},
+    {header: 'invalid', delay: 750},
+    {header: '-1', delay: 750},
+    {header: 'Infinity', delay: 750},
+    {header: '   ', delay: 750},
+  ])('uses $delay milliseconds for Retry-After "$header"', async ({header, delay}) => {
+    vi.setSystemTime(new Date('2026-10-20T12:00:00Z'))
+    const startedAt = Date.now()
+    const success = {status: 200, headers: new Headers()}
+    const request = vi
+      .fn()
+      .mockRejectedValueOnce(new ClientError({status: 429, headers: new Headers({'retry-after': header})}, {query: ''}))
+      .mockResolvedValue(success)
+    const result = retryAwareRequest({request, url: 'https://example.com/graphql', useNetworkLevelRetry: false})
+    const assertion = expect(result).resolves.toBe(success)
+    await vi.runAllTimersAsync()
+    await assertion
+
+    expect(request).toHaveBeenCalledTimes(2)
+    expect(Date.now() - startedAt).toBe(delay)
+  })
+
+  test('stops scheduling retries within 30 seconds and preserves the last error', async () => {
+    const startedAt = Date.now()
+    let lastError: ClientError
+    const request = vi.fn(async () => {
+      lastError = throttledError()
+      throw lastError
+    })
+    const result = retryAwareRequest({request, url: 'https://example.com/graphql', useNetworkLevelRetry: false})
+    const assertion = expect(result).rejects.toBeInstanceOf(ClientError)
+    await vi.runAllTimersAsync()
+    await assertion
+
+    await expect(result).rejects.toBe(lastError!)
+    expect(request).toHaveBeenCalledTimes(8)
+    expect(Date.now() - startedAt).toBe(29_250)
+  })
+
+  test('does not shorten a server delay that exceeds the remaining retry budget', async () => {
+    const error = throttledError({'retry-after': '60', 'x-request-id': 'throttled-request'})
+    const request = vi.fn().mockRejectedValue(error)
+    const scheduleDelay = vi.fn()
+    const finalError = new Error('Rate limit could not recover')
+    const errorHandler = vi.fn(() => finalError)
+
+    await expect(
+      retryAwareRequest({request, url: 'https://example.com/graphql', useNetworkLevelRetry: false}, errorHandler, {
+        scheduleDelay,
+      }),
+    ).rejects.toBe(finalError)
+
+    expect(request).toHaveBeenCalledTimes(1)
+    expect(scheduleDelay).not.toHaveBeenCalled()
+    expect(errorHandler).toHaveBeenCalledWith(error, 'throttled-request')
+  })
+
+  test('does not start a retry when its timer fires after the deadline', async () => {
+    const error = throttledError()
+    const request = vi.fn().mockRejectedValue(error)
+    const scheduleDelay = vi.fn((fn) => setTimeout(fn, 30_000))
+    const result = retryAwareRequest(
+      {request, url: 'https://example.com/graphql', useNetworkLevelRetry: false},
+      undefined,
+      {scheduleDelay},
+    )
+    const assertion = expect(result).rejects.toBe(error)
+    await vi.runAllTimersAsync()
+    await assertion
+
+    expect(request).toHaveBeenCalledTimes(1)
+    expect(scheduleDelay).toHaveBeenCalledTimes(1)
+  })
+
+  test('includes time spent on retried requests in the retry budget', async () => {
+    const error = throttledError()
+    const request = vi
+      .fn()
+      .mockRejectedValueOnce(error)
+      .mockImplementation(async () => {
+        vi.advanceTimersByTime(30_000)
+        throw error
+      })
+    const result = retryAwareRequest({request, url: 'https://example.com/graphql', useNetworkLevelRetry: false})
+    const assertion = expect(result).rejects.toBe(error)
+    await vi.runAllTimersAsync()
+    await assertion
+
+    expect(request).toHaveBeenCalledTimes(2)
+  })
+
+  test.each([
+    {
+      name: 'partial mutation data',
+      status: 200,
+      data: {createdVersion: {id: '123'}},
+      errors: [{message: 'Throttled', extensions: {code: 'THROTTLED'}}],
+    },
+    {
+      name: 'mixed permission and throttle errors',
+      status: 200,
+      data: undefined,
+      errors: [
+        {message: 'Throttled', extensions: {code: 'THROTTLED'}},
+        {message: 'Access denied', extensions: {code: 'ACCESS_DENIED'}},
+      ],
+    },
+    {
+      name: 'an unrelated error without a code',
+      status: 200,
+      data: undefined,
+      errors: [{message: 'Throttled', extensions: {code: 'THROTTLED'}}, {message: 'Invalid version'}],
+    },
+    {
+      name: 'an HTTP 429 with permission errors',
+      status: 429,
+      data: undefined,
+      errors: [{message: 'Access denied', extensions: {code: 'ACCESS_DENIED'}}],
+    },
+  ])('does not replay a response with $name', async ({status, data, errors}) => {
+    const error = new ClientError(
+      {
+        status,
+        data,
+        errors: errors.map(({message, extensions}) => new GraphQLError(message, {extensions})),
+        headers: new Headers(),
+      },
+      {query: ''},
+    )
+    const request = vi.fn().mockRejectedValue(error)
+    const scheduleDelay = vi.fn()
+
+    await expect(
+      retryAwareRequest({request, url: 'https://example.com/graphql', useNetworkLevelRetry: false}, undefined, {
+        scheduleDelay,
+      }),
+    ).rejects.toBe(error)
+
+    expect(request).toHaveBeenCalledTimes(1)
+    expect(scheduleDelay).not.toHaveBeenCalled()
   })
 
   test('fails after too many retries', async () => {
@@ -484,7 +676,7 @@ describe('retryAwareRequest', () => {
           },
         } as any,
       ],
-      headers: new Headers({'retry-after': '100'}),
+      headers: new Headers({'retry-after': '0.1'}),
     }
 
     const successResponse = {
@@ -697,6 +889,17 @@ describe('retryAwareRequest', () => {
     expect(recordRetry).toHaveBeenCalledWith('https://themes.example.com/auth', 'http-retry-1:can-retry:')
   })
 })
+
+function throttledError(headers: Record<string, string> = {}): ClientError {
+  return new ClientError(
+    {
+      status: 200,
+      errors: [new GraphQLError('Throttled', {extensions: {code: 'THROTTLED'}})],
+      headers: new Headers(headers),
+    },
+    {query: ''},
+  )
+}
 
 describe('isTransientNetworkError', () => {
   test('identifies transient network errors that should be retried', () => {
