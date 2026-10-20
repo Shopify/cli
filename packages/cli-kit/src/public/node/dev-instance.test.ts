@@ -8,6 +8,10 @@ import {
 } from './dev-instance.js'
 import {AbortError} from './error.js'
 import {fileExists, inTemporaryDirectory, mkdir, readFile, rmdir, writeFile} from './fs.js'
+import {
+  getConcurrentOutputContext,
+  useConcurrentOutputContext,
+} from '../../private/node/ui/components/ConcurrentOutput.js'
 import {describe, expect, test, vi} from 'vitest'
 import {Writable} from 'stream'
 import {utimes} from 'fs/promises'
@@ -276,6 +280,61 @@ describe('acquireDevInstance', () => {
 })
 
 describe('DevInstance log', () => {
+  test('preserves extension sources in queued terminal writes and log records', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const instance = await acquireDevInstance({command: 'app dev', directory})
+      const terminal: {source: string | undefined; message: string}[] = []
+      let resume: () => void = () => {}
+      const target = new Writable({
+        write(chunk, _encoding, callback) {
+          terminal.push({source: getConcurrentOutputContext()?.outputPrefix, message: chunk.toString()})
+          if (terminal.length === 1) resume = callback
+          else callback()
+        },
+      })
+      const output = instance.tee(target, {source: 'app-preview', stream: 'stdout'})
+      try {
+        useConcurrentOutputContext({outputPrefix: 'discount'}, () => {
+          output.write('Building discount...\n')
+          output.write('Finished discount\n')
+        })
+        useConcurrentOutputContext({outputPrefix: 'admin-action'}, () => output.write('Bundling action...\n'))
+        useConcurrentOutputContext({outputPrefix: 'app-config'}, () => output.end('Configuration accepted'))
+        resume()
+        await instance.release()
+        expect(terminal).toEqual([
+          {source: 'discount', message: 'Building discount...\n'},
+          {source: 'discount', message: 'Finished discount\n'},
+          {source: 'admin-action', message: 'Bundling action...\n'},
+          {source: 'app-config', message: 'Configuration accepted'},
+        ])
+        const entries = await readLog(instance.paths.logFile)
+        expect(entries.map(({source, message}) => ({source, message}))).toEqual([
+          {source: 'discount', message: 'Building discount...'},
+          {source: 'discount', message: 'Finished discount'},
+          {source: 'admin-action', message: 'Bundling action...'},
+          {source: 'app-config', message: 'Configuration accepted'},
+        ])
+      } finally {
+        await instance.release()
+      }
+    })
+  })
+
+  test('keeps incomplete messages from different sources separate', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const instance = await acquireDevInstance({command: 'app dev', directory})
+      const output = instance.tee(collectingStream().stream, {source: 'app-preview', stream: 'stdout'})
+      useConcurrentOutputContext({outputPrefix: 'discount'}, () => output.write('first'))
+      useConcurrentOutputContext({outputPrefix: 'admin-action'}, () => output.write('second'))
+      await instance.release()
+      expect((await readLog(instance.paths.logFile)).map(({source, message}) => ({source, message}))).toEqual([
+        {source: 'discount', message: 'first'},
+        {source: 'admin-action', message: 'second'},
+      ])
+    })
+  })
+
   test('tees process output into a JSON Lines log without ANSI styling', async () => {
     await inTemporaryDirectory(async (directory) => {
       // Given
