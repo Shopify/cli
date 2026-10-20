@@ -16,6 +16,7 @@ import DocSearch from './cli/commands/doc/search.js'
 import DocsGenerate from './cli/commands/docs/generate.js'
 import HelpCommand from './cli/commands/help.js'
 import {renderUncaughtError} from './uncaught-error-handler.js'
+import {withFetchProxy} from './proxy.js'
 import List from './cli/commands/notifications/list.js'
 import Generate from './cli/commands/notifications/generate.js'
 import ClearCache from './cli/commands/cache/clear.js'
@@ -78,10 +79,12 @@ interface RunShopifyCLIOptions {
 }
 
 async function runShopifyCLI({development}: RunShopifyCLIOptions) {
-  await runCLI({
-    moduleURL: import.meta.url,
-    development,
-  })
+  await withFetchProxy(() =>
+    runCLI({
+      moduleURL: import.meta.url,
+      development,
+    }),
+  )
 }
 
 // Hide plugins command

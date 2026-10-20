@@ -7,6 +7,7 @@
  */
 import {loadCommand} from './command-registry.js'
 import {renderUncaughtError} from './uncaught-error-handler.js'
+import {withFetchProxy} from './proxy.js'
 import {createGlobalProxyAgent} from 'global-agent'
 import {runCLI} from '@shopify/cli-kit/node/cli'
 
@@ -47,11 +48,13 @@ interface RunShopifyCLIOptions {
 }
 
 async function runShopifyCLI({development}: RunShopifyCLIOptions) {
-  await runCLI({
-    moduleURL: import.meta.url,
-    development,
-    lazyCommandLoader: loadCommand,
-  })
+  await withFetchProxy(() =>
+    runCLI({
+      moduleURL: import.meta.url,
+      development,
+      lazyCommandLoader: loadCommand,
+    }),
+  )
 }
 
 export default runShopifyCLI

@@ -24,7 +24,6 @@ describe('common API methods', () => {
     const version = CLI_KIT_VERSION
     expect(headers).toEqual({
       'Content-Type': 'application/json',
-      'Keep-Alive': 'timeout=30',
       'X-Shopify-Access-Token': 'Bearer my-token',
       'User-Agent': `Shopify CLI; v=${version}`,
       authorization: 'Bearer my-token',
@@ -45,7 +44,6 @@ describe('common API methods', () => {
       const version = CLI_KIT_VERSION
       expect(headers).toEqual({
         'Content-Type': 'application/json',
-        'Keep-Alive': 'timeout=30',
         'X-Shopify-Access-Token': token,
         'User-Agent': `Shopify CLI; v=${version}`,
         authorization: token,

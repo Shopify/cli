@@ -19,6 +19,7 @@ describe('retryAwareRequest', () => {
   test('handles retries', async () => {
     // First give a network error; then a rate limit with an explicit retry; then an unknown rate limit; then a successful call
     const rateLimitedResponseWithRetry = {
+      body: '',
       status: 200,
       errors: [
         {
@@ -33,6 +34,7 @@ describe('retryAwareRequest', () => {
     }
 
     const rateLimitedResponse = {
+      body: '',
       status: 200,
       errors: [
         {
@@ -97,6 +99,7 @@ describe('retryAwareRequest', () => {
     // whose GraphQL error has extensions.code "THROTTLED" — no 429 status, no
     // retry-after header.
     const throttledResponse = {
+      body: '',
       status: 200,
       errors: [
         {
@@ -152,6 +155,7 @@ describe('retryAwareRequest', () => {
     // This test gives a false warning from vitest if fake timers are used. It thinks the exception is uncaught.
     vi.useRealTimers()
     const messageOnlyResponse = {
+      body: '',
       status: 200,
       errors: [
         {
@@ -190,6 +194,7 @@ describe('retryAwareRequest', () => {
     // This test gives a false warning from vitest if fake timers are used. It thinks the exception is uncaught.
     vi.useRealTimers()
     const rateLimitedResponse = {
+      body: '',
       status: 200,
       errors: [
         {
@@ -476,6 +481,7 @@ describe('retryAwareRequest', () => {
 
   test('records retry events when recordRetries is enabled', async () => {
     const rateLimitedResponse = {
+      body: '',
       status: 200,
       errors: [
         {
@@ -531,6 +537,7 @@ describe('retryAwareRequest', () => {
 
   test('does not record retry events when recordRetries is disabled', async () => {
     const rateLimitedResponse = {
+      body: '',
       status: 200,
       errors: [
         {
@@ -585,6 +592,7 @@ describe('retryAwareRequest', () => {
 
   test('records multiple retry events with correct attempt numbers', async () => {
     const rateLimitedResponse = {
+      body: '',
       status: 200,
       errors: [
         {
@@ -644,6 +652,7 @@ describe('retryAwareRequest', () => {
 
   test('records retry events for too many requests status', async () => {
     const rateLimitedResponse = {
+      body: '',
       status: 200,
       errors: [
         {
@@ -699,6 +708,19 @@ describe('retryAwareRequest', () => {
 })
 
 describe('isTransientNetworkError', () => {
+  test.each([
+    Object.assign(new Error('read ECONNRESET'), {code: 'ECONNRESET'}),
+    Object.assign(new Error('other side closed'), {code: 'UND_ERR_SOCKET'}),
+    new AggregateError([Object.assign(new Error('connect failed'), {code: 'ECONNREFUSED'})]),
+  ])('recognizes native fetch network causes: %s', (cause) => {
+    expect(isTransientNetworkError(new TypeError('fetch failed', {cause}))).toBe(true)
+  })
+
+  test('does not retry native fetch configuration errors', () => {
+    const cause = Object.assign(new Error('invalid keep-alive header'), {code: 'UND_ERR_INVALID_ARG'})
+    expect(isTransientNetworkError(new TypeError('fetch failed', {cause}))).toBe(false)
+  })
+
   test('identifies transient network errors that should be retried', () => {
     const transientErrors = [
       'socket hang up',
@@ -770,6 +792,12 @@ describe('isTransientNetworkError', () => {
 })
 
 describe('isNetworkError', () => {
+  test('recognizes native fetch certificate errors without retrying them', () => {
+    const error = new TypeError('fetch failed', {cause: new Error('self-signed certificate')})
+    expect(isNetworkError(error)).toBe(true)
+    expect(isTransientNetworkError(error)).toBe(false)
+  })
+
   test('identifies all transient network errors', () => {
     const transientErrors = ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'socket hang up', 'premature close']
 

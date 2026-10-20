@@ -55,7 +55,8 @@
     "@ast-grep/napi": "0.43.0",
     "clipboardy": "4.0.0",
     "esbuild": "0.28.1",
-    "global-agent": "3.0.0"
+    "global-agent": "3.0.0",
+    "undici": "7.28.0"
   },
   "devDependencies": {
     "@oclif/core": "4.8.3",

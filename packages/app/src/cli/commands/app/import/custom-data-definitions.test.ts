@@ -68,7 +68,7 @@ async function withApp(run: (directory: string) => Promise<void>) {
           metafieldDefinitions: {
             pageInfo: {hasNextPage: false, endCursor: null},
             nodes:
-              variables?.ownerType === 'PRODUCT'
+              variables && 'ownerType' in variables && variables.ownerType === 'PRODUCT'
                 ? [
                     {
                       key: 'color',
@@ -127,7 +127,13 @@ test.each([
 test.each([false, true])('distinguishes an empty conversion from denied scope: %s', async (scopeDenied) => {
   await withApp(async (directory) => {
     vi.mocked(adminAsAppRequestDoc).mockImplementation(async ({query, variables}) => {
-      if (scopeDenied && query === MetafieldDefinitions && variables?.ownerType === 'PRODUCT') {
+      if (
+        scopeDenied &&
+        query === MetafieldDefinitions &&
+        variables &&
+        'ownerType' in variables &&
+        variables.ownerType === 'PRODUCT'
+      ) {
         throw new Error('ACCESS_DENIED: Missing access scope')
       }
       return {

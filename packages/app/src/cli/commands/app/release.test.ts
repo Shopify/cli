@@ -108,6 +108,7 @@ describe('app release command', () => {
     rawRequest.mockRejectedValueOnce(
       new ClientError(
         {
+          body: '',
           status: 200,
           headers: new Headers(),
           errors: [
@@ -172,7 +173,12 @@ describe('app release command', () => {
     const releaseRequest = vi.spyOn(client, 'release')
     rawRequest.mockRejectedValueOnce(
       new ClientError(
-        {status, headers: new Headers({'x-request-id': 'lookup-request-id'}), errors: [new GraphQLError(message)]},
+        {
+          status,
+          headers: new Headers({'x-request-id': 'lookup-request-id'}),
+          body: '',
+          errors: [new GraphQLError(message)],
+        },
         {query: 'query AppVersionByTag { versionByTag { id } }'},
       ),
     )

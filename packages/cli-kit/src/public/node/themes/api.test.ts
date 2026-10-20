@@ -129,6 +129,8 @@ describe('fetchTheme', () => {
 
   test('returns undefined when a theme is not found', async () => {
     const errorResponse = {
+      headers: new Headers(),
+      body: '',
       status: 200,
       errors: [{message: 'Tema não existe'} as any],
     }
@@ -210,6 +212,8 @@ describe('findDevelopmentThemeByName', () => {
 
   test('returns undefined when the query errors', async () => {
     const errorResponse = {
+      headers: new Headers(),
+      body: '',
       status: 200,
       errors: [{message: 'Theme not found'} as any],
     }
@@ -887,6 +891,8 @@ function themeAccessDeniedError(requiredAccess?: string, field = 'themes'): Clie
 
   return new ClientError(
     {
+      headers: new Headers(),
+      body: '',
       status: 200,
       errors: [
         {

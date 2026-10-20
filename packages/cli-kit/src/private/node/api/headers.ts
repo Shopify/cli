@@ -56,7 +56,6 @@ export function buildHeaders(token?: string): Record<string, string> {
 
   const headers: Record<string, string> = {
     'User-Agent': userAgent,
-    'Keep-Alive': 'timeout=30',
     // 'Sec-CH-UA': secCHUA, This header requires the Git sha.
     'Sec-CH-UA-PLATFORM': process.platform,
     'Content-Type': 'application/json',
