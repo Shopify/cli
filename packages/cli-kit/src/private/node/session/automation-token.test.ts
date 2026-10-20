@@ -1,4 +1,9 @@
-import {automationTokenVariable, automationTokenVariablesProblem} from './automation-token.js'
+import {
+  automationTokenAuthMethod,
+  automationTokenVariable,
+  automationTokenVariablesProblem,
+  deprecatedAutomationTokenVariable,
+} from './automation-token.js'
 import {environmentVariables} from '../constants.js'
 import {describe, expect, test} from 'vitest'
 
@@ -25,6 +30,40 @@ describe('automationTokenVariable', () => {
     },
   ])('selects $name', ({env, expected}) => {
     expect(automationTokenVariable(env)).toBe(expected)
+  })
+})
+
+describe('automationTokenAuthMethod', () => {
+  test.each([
+    {name: 'the service account variable', env: {[SERVICE_ACCOUNT]: 's'}, expected: 'service_account_token'},
+    {name: 'the app variable', env: {[APP]: 'a'}, expected: 'partners_token'},
+    {name: 'the Partners variable', env: {[PARTNERS]: 'p'}, expected: 'partners_token'},
+    {
+      name: 'the service account variable over another one',
+      env: {[SERVICE_ACCOUNT]: 's', [APP]: 'a'},
+      expected: 'service_account_token',
+    },
+  ])('reports $expected for $name', ({env, expected}) => {
+    expect(automationTokenAuthMethod(env)).toBe(expected)
+  })
+})
+
+describe('deprecatedAutomationTokenVariable', () => {
+  test.each([
+    {name: 'the app variable', env: {[APP]: 'a'}, expected: APP},
+    {name: 'the app variable over the Partners variable', env: {[APP]: 'a', [PARTNERS]: 'p'}, expected: APP},
+    {name: 'the Partners variable', env: {[PARTNERS]: 'p'}, expected: PARTNERS},
+    {name: 'no automation token variable', env: {}, expected: undefined},
+    {name: 'the service account variable', env: {[SERVICE_ACCOUNT]: 's'}, expected: undefined},
+    {name: 'an empty app variable', env: {[APP]: ''}, expected: undefined},
+    {name: 'an empty Partners variable', env: {[PARTNERS]: ''}, expected: undefined},
+    {
+      name: 'the app variable set together with the service account variable',
+      env: {[SERVICE_ACCOUNT]: 's', [APP]: 'a'},
+      expected: undefined,
+    },
+  ])('returns $expected for $name', ({env, expected}) => {
+    expect(deprecatedAutomationTokenVariable(env)).toBe(expected)
   })
 })
 

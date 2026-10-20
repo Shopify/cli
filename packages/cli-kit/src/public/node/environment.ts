@@ -20,7 +20,7 @@ export function getEnvironmentVariables(): NodeJS.ProcessEnv {
 
 /**
  * Returns the automation token the CLI authenticates with, from the first of these variables that is set:
- * SHOPIFY_SERVICE_ACCOUNT_TOKEN, SHOPIFY_APP_AUTOMATION_TOKEN, or the deprecated SHOPIFY_CLI_PARTNERS_TOKEN.
+ * SHOPIFY_SERVICE_ACCOUNT_TOKEN, or the deprecated SHOPIFY_APP_AUTOMATION_TOKEN and SHOPIFY_CLI_PARTNERS_TOKEN.
  *
  * Returns undefined when the variables can't be used (an empty value, or the service account variable set alongside
  * another one). Callers then fall back to the login flow, which reports the problem instead of logging in.

@@ -23,6 +23,39 @@ export function automationTokenVariable(env: NodeJS.ProcessEnv = process.env): s
 }
 
 /**
+ * Returns the `env_auth_method` analytics value for the automation token variable the CLI authenticates with:
+ * `service_account_token` for SHOPIFY_SERVICE_ACCOUNT_TOKEN, and `partners_token` for SHOPIFY_APP_AUTOMATION_TOKEN and
+ * SHOPIFY_CLI_PARTNERS_TOKEN, which existing dashboards already expect.
+ *
+ * The value tells which variable held the token, not which kind of token it is: the CLI can't tell tokens apart, and
+ * any of them works in any of the variables. It shows how much usage has moved to SHOPIFY_SERVICE_ACCOUNT_TOKEN.
+ *
+ * @param env - Environment variables to read.
+ * @returns The auth method to report.
+ */
+export function automationTokenAuthMethod(
+  env: NodeJS.ProcessEnv = process.env,
+): 'service_account_token' | 'partners_token' {
+  return automationTokenVariable(env) === SERVICE_ACCOUNT_TOKEN ? 'service_account_token' : 'partners_token'
+}
+
+/**
+ * Returns the deprecated automation token variable the CLI authenticates with: SHOPIFY_APP_AUTOMATION_TOKEN or
+ * SHOPIFY_CLI_PARTNERS_TOKEN. Both are deprecated in favor of SHOPIFY_SERVICE_ACCOUNT_TOKEN, which takes the same
+ * tokens.
+ *
+ * Returns undefined when the variables can't be used, since the CLI reports that problem instead.
+ *
+ * @param env - Environment variables to read.
+ * @returns The deprecated variable in use, or undefined.
+ */
+export function deprecatedAutomationTokenVariable(env: NodeJS.ProcessEnv = process.env): string | undefined {
+  if (automationTokenVariablesProblem(env)) return undefined
+  const variable = automationTokenVariable(env)
+  return variable === APP_TOKEN || variable === PARTNERS_TOKEN ? variable : undefined
+}
+
+/**
  * Explains why the automation token variables can't be used, so a misconfigured environment fails instead of
  * falling back to the logged-in user.
  *

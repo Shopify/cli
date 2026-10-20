@@ -4,296 +4,147 @@ import {
   cloneRepo,
   createAIInstructions,
   createAIInstructionFiles,
+  SKELETON_THEME_URL,
 } from './init.js'
-import {describe, expect, vi, test, beforeEach} from 'vitest'
+import {describe, expect, vi, test} from 'vitest'
 import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/node/git'
-import {rmdir, fileExists, readFile, writeFile, symlink} from '@shopify/cli-kit/node/fs'
+import {fileExists, readFile, writeFile, mkdir, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {getLatestGitHubRelease, type GithubRelease} from '@shopify/cli-kit/node/github'
+import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
+import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/git')
 vi.mock('@shopify/cli-kit/node/github')
-vi.mock('@shopify/cli-kit/node/fs', async () => {
-  const actual = await vi.importActual('@shopify/cli-kit/node/fs')
-  return {
-    ...actual,
-    fileExists: vi.fn(),
-    rmdir: vi.fn(),
-    readFile: vi.fn(),
-    writeFile: vi.fn(),
-    symlink: vi.fn(),
-    inTemporaryDirectory: vi.fn(async (callback) => {
-      // eslint-disable-next-line n/no-callback-literal
-      return callback('/tmp')
-    }),
-  }
-})
-vi.mock('@shopify/cli-kit/node/http')
-vi.mock('@shopify/cli-kit/node/path')
-vi.mock('@shopify/cli-kit/node/ui', async () => {
-  const actual = await vi.importActual('@shopify/cli-kit/node/ui')
-  return {
-    ...actual,
-    renderSelectPrompt: vi.fn(),
-    renderTasks: vi.fn(async (tasks: any[]) => {
-      for (const task of tasks) {
+
+describe.each([cloneRepo, cloneRepoAndCheckoutLatestTag])('%s', (clone) => {
+  test.each([SKELETON_THEME_URL, 'https://github.com/Shopify/dawn.git'])('clones and cleans up %s', async (repoUrl) => {
+    await inTemporaryDirectory(async (destination) => {
+      await Promise.all(['.github', '.cursor', '.claude', '.git'].map((name) => mkdir(joinPath(destination, name))))
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        const result = await runWithCommandEventsForCommand(['--json'], () => clone(repoUrl, destination))
+        expect(result).toEqual({
+          path: destination,
+          repoUrl,
+          latest: clone === cloneRepoAndCheckoutLatestTag,
+          aiInstructions: null,
+          instructionFiles: [],
+        })
+        expect(stdout()).toBe('')
+        expect(stderr()).toContain('progress')
+      })
+      expect(downloadGitRepository).toHaveBeenCalledWith({
+        repoUrl,
+        destination,
+        latestTag: clone === cloneRepoAndCheckoutLatestTag ? true : undefined,
+        shallow: clone !== cloneRepoAndCheckoutLatestTag,
+      })
+      expect(removeGitRemote).toHaveBeenCalledWith(destination)
+      for (const name of ['.github', '.cursor', '.claude', '.git']) {
         // eslint-disable-next-line no-await-in-loop
-        await task.task({}, task)
+        await expect(fileExists(joinPath(destination, name))).resolves.toBe(repoUrl !== SKELETON_THEME_URL)
       }
-      return {}
-    }),
-  }
-})
-
-describe('cloneRepoAndCheckoutLatestTag()', async () => {
-  beforeEach(() => {
-    vi.mocked(fileExists).mockResolvedValue(true)
-    vi.mocked(joinPath).mockImplementation((...paths) => paths.join('/'))
-  })
-
-  test('calls downloadRepository function from git service to clone a repo with latest tag', async () => {
-    // Given
-    const repoUrl = 'https://github.com/Shopify/dawn.git'
-    const destination = 'destination'
-    const latestTag = true
-    const shallow = false
-
-    // When
-    await cloneRepoAndCheckoutLatestTag(repoUrl, destination)
-
-    // Then
-    expect(downloadGitRepository).toHaveBeenCalledWith({repoUrl, destination, latestTag, shallow})
-  })
-
-  test('removes git remote after cloning', async () => {
-    // Given
-    const repoUrl = 'https://github.com/Shopify/dawn.git'
-    const destination = 'destination'
-
-    // When
-    await cloneRepoAndCheckoutLatestTag(repoUrl, destination)
-
-    // Then
-    expect(removeGitRemote).toHaveBeenCalledWith(destination)
-  })
-
-  test('removes .github directory from skeleton theme after cloning when it exists', async () => {
-    // Given
-    const repoUrl = 'https://github.com/Shopify/skeleton-theme.git'
-    const destination = 'destination'
-    vi.mocked(fileExists).mockResolvedValue(true)
-
-    // When
-    await cloneRepoAndCheckoutLatestTag(repoUrl, destination)
-
-    // Then
-    expect(fileExists).toHaveBeenCalledWith('destination/.github')
-    expect(rmdir).toHaveBeenCalledWith('destination/.github')
-  })
-
-  test('doesnt remove .github directory from non-skeleton theme after cloning when it exists', async () => {
-    // Given
-    const repoUrl = 'https://github.com/Shopify/dawn.git'
-    const destination = 'destination'
-    vi.mocked(fileExists).mockResolvedValue(true)
-
-    // When
-    await cloneRepoAndCheckoutLatestTag(repoUrl, destination)
-
-    // Then
-    expect(rmdir).not.toHaveBeenCalledWith('destination/.github')
+    })
   })
 })
 
-describe('cloneLatestStableSkeletonTheme()', () => {
-  beforeEach(() => {
-    vi.mocked(fileExists).mockResolvedValue(true)
-    vi.mocked(joinPath).mockImplementation((...paths) => paths.join('/'))
+test.each(['cursor', 'github', 'claude', 'all'] as const)(
+  'creates the requested %s instruction files',
+  async (choice) => {
+    vi.mocked(downloadGitRepository).mockImplementation(async ({destination}) => {
+      await mkdir(joinPath(destination, 'ai/github'))
+      await writeFile(joinPath(destination, 'ai/github/copilot-instructions.md'), 'AI instructions')
+    })
+    await inTemporaryDirectory(async (destination) => {
+      await withCapturedStandardStreams(async () => {
+        const result = await runWithCommandEventsForCommand(['--json'], () => createAIInstructions(destination, choice))
+        const names = ['AGENTS.md']
+        if (choice === 'github' || choice === 'all') names.push('copilot-instructions.md')
+        if (choice === 'claude' || choice === 'all') names.push('CLAUDE.md')
+        expect(result.files).toEqual(names.map((name) => joinPath(destination, name)))
+        for (const path of result.files) {
+          // eslint-disable-next-line no-await-in-loop
+          await expect(readFile(path)).resolves.toBe('# AGENTS.md\n\nAI instructions')
+        }
+      })
+    })
+  },
+)
+
+test.each(['github', 'claude'] as const)(
+  'falls back to copying %s when a symlink cannot be created',
+  async (choice) => {
+    await inTemporaryDirectory(async (directory) => {
+      const agentsPath = joinPath(directory, 'AGENTS.md')
+      const filename = choice === 'github' ? 'copilot-instructions.md' : 'CLAUDE.md'
+      await writeFile(agentsPath, 'Instructions')
+      // An existing file prevents symlink creation on every platform.
+      await writeFile(joinPath(directory, filename), 'Old instructions')
+      await expect(createAIInstructionFiles(directory, agentsPath, choice)).resolves.toEqual({copiedFile: filename})
+      await expect(readFile(joinPath(directory, filename))).resolves.toBe('Instructions')
+    })
+  },
+)
+
+test('preserves the error when instruction source files are missing', async () => {
+  await inTemporaryDirectory(async (directory) => {
+    await withCapturedStandardStreams(async () => {
+      await expect(
+        runWithCommandEventsForCommand(['--json'], () => createAIInstructions(directory, 'cursor')),
+      ).rejects.toThrow('Failed to create AI instructions')
+    })
   })
+})
 
-  test('clones the latest published stable release and removes Skeleton theme development files', async () => {
-    vi.mocked(getLatestGitHubRelease).mockResolvedValue({tag_name: 'v1.0.0'} as GithubRelease)
+test('propagates clone failures', async () => {
+  vi.mocked(downloadGitRepository).mockRejectedValue(new Error('Clone failed'))
+  await inTemporaryDirectory(async (directory) => {
+    await withCapturedStandardStreams(async ({stdout}) => {
+      await expect(runWithCommandEventsForCommand(['--json'], () => cloneRepo('repo', directory))).rejects.toThrow(
+        'Clone failed',
+      )
+      expect(stdout()).toBe('')
+    })
+  })
+})
 
-    await cloneLatestStableSkeletonTheme('destination')
-
-    expect(getLatestGitHubRelease).toHaveBeenCalledWith('Shopify', 'skeleton-theme', {filter: expect.any(Function)})
-    const filter = vi.mocked(getLatestGitHubRelease).mock.calls[0]![2]!.filter
-    expect(filter({draft: false, prerelease: false} as GithubRelease)).toBe(true)
-    expect(filter({draft: false, prerelease: true} as GithubRelease)).toBe(false)
-    expect(filter({draft: true, prerelease: false} as GithubRelease)).toBe(false)
+test('returns stable Skeleton clone metadata and removes development files', async () => {
+  vi.mocked(getLatestGitHubRelease).mockResolvedValue({tag_name: 'v1.0.0'} as GithubRelease)
+  await inTemporaryDirectory(async (destination) => {
+    await Promise.all(['.github', '.cursor', '.claude', '.git'].map((name) => mkdir(joinPath(destination, name))))
+    await withCapturedStandardStreams(async () => {
+      const result = await runWithCommandEventsForCommand(['--json'], () => cloneLatestStableSkeletonTheme(destination))
+      expect(result).toEqual({
+        path: destination,
+        repoUrl: SKELETON_THEME_URL,
+        latest: true,
+        aiInstructions: null,
+        instructionFiles: [],
+      })
+    })
     expect(downloadGitRepository).toHaveBeenCalledWith({
-      repoUrl: 'https://github.com/Shopify/skeleton-theme.git#v1.0.0',
-      destination: 'destination',
+      repoUrl: `${SKELETON_THEME_URL}#v1.0.0`,
+      destination,
       latestTag: undefined,
       shallow: true,
     })
-    expect(rmdir).toHaveBeenCalledWith('destination/.git')
+    for (const name of ['.github', '.cursor', '.claude', '.git']) {
+      // eslint-disable-next-line no-await-in-loop
+      await expect(fileExists(joinPath(destination, name))).resolves.toBe(false)
+    }
   })
+  const filter = vi.mocked(getLatestGitHubRelease).mock.calls[0]![2]!.filter
+  expect(filter({draft: false, prerelease: false} as GithubRelease)).toBe(true)
+  expect(filter({draft: false, prerelease: true} as GithubRelease)).toBe(false)
+  expect(filter({draft: true, prerelease: false} as GithubRelease)).toBe(false)
+})
 
-  test('fails when no stable release is available', async () => {
-    vi.mocked(getLatestGitHubRelease).mockResolvedValue(undefined as unknown as GithubRelease)
-
-    await expect(cloneLatestStableSkeletonTheme('destination')).rejects.toThrow(
+test('fails without cloning when no stable Skeleton release exists', async () => {
+  vi.mocked(getLatestGitHubRelease).mockResolvedValue(undefined as unknown as GithubRelease)
+  await inTemporaryDirectory(async (destination) => {
+    await expect(cloneLatestStableSkeletonTheme(destination)).rejects.toThrow(
       "Couldn't find a stable Skeleton theme release",
     )
     expect(downloadGitRepository).not.toHaveBeenCalled()
-  })
-})
-
-describe('cloneRepo()', async () => {
-  beforeEach(() => {
-    vi.mocked(fileExists).mockResolvedValue(true)
-    vi.mocked(joinPath).mockImplementation((...paths) => paths.join('/'))
-  })
-
-  test('calls downloadRepository function from git service to clone a repo without branch', async () => {
-    // Given
-    const repoUrl = 'https://github.com/Shopify/dawn.git'
-    const destination = 'destination'
-    const shallow = true
-    // When
-    await cloneRepo(repoUrl, destination)
-
-    // Then
-    expect(downloadGitRepository).toHaveBeenCalledWith({repoUrl, destination, shallow})
-  })
-
-  test('removes git remote after cloning', async () => {
-    // Given
-    const repoUrl = 'https://github.com/Shopify/dawn.git'
-    const destination = 'destination'
-
-    // When
-    await cloneRepo(repoUrl, destination)
-
-    // Then
-    expect(removeGitRemote).toHaveBeenCalledWith(destination)
-  })
-
-  test('removes .github directory from skeleton theme after cloning when it exists', async () => {
-    // Given
-    const repoUrl = 'https://github.com/Shopify/skeleton-theme.git'
-    const destination = 'destination'
-    vi.mocked(fileExists).mockResolvedValue(true)
-
-    // When
-    await cloneRepo(repoUrl, destination)
-
-    // Then
-    expect(fileExists).toHaveBeenCalledWith('destination/.github')
-    expect(rmdir).toHaveBeenCalledWith('destination/.github')
-  })
-
-  test('doesnt remove .github directory from non-skeleton theme after cloning when it exists', async () => {
-    // Given
-    const repoUrl = 'https://github.com/Shopify/dawn.git'
-    const destination = 'destination'
-    vi.mocked(fileExists).mockResolvedValue(true)
-
-    // When
-    await cloneRepo(repoUrl, destination)
-
-    // Then
-    expect(rmdir).not.toHaveBeenCalledWith('destination/.github')
-  })
-})
-
-describe('createAIInstructions()', () => {
-  const destination = '/path/to/theme'
-
-  beforeEach(() => {
-    vi.mocked(joinPath).mockImplementation((...paths) => paths.join('/'))
-    vi.mocked(readFile).mockResolvedValue('Sample AI instructions content' as any)
-    vi.mocked(writeFile).mockResolvedValue()
-    vi.mocked(symlink).mockResolvedValue()
-  })
-
-  test('creates AI instructions for a single instruction type', async () => {
-    // Given
-    vi.mocked(downloadGitRepository).mockResolvedValue()
-
-    // When
-    await createAIInstructions(destination, 'cursor')
-
-    // Then
-    expect(downloadGitRepository).toHaveBeenCalled()
-    expect(readFile).toHaveBeenCalledWith('/tmp/ai/github/copilot-instructions.md')
-    expect(writeFile).toHaveBeenCalledWith('/path/to/theme/AGENTS.md', expect.stringContaining('# AGENTS.md'))
-    expect(symlink).not.toHaveBeenCalled()
-  })
-
-  test('creates AI instructions for all instruction types when "all" is selected', async () => {
-    // Given
-    vi.mocked(downloadGitRepository).mockResolvedValue()
-
-    // When
-    await createAIInstructions(destination, 'all')
-
-    // Then
-    expect(downloadGitRepository).toHaveBeenCalled()
-    expect(readFile).toHaveBeenCalledTimes(1)
-    expect(writeFile).toHaveBeenCalledTimes(1)
-    expect(symlink).toHaveBeenCalledTimes(2)
-    expect(symlink).toHaveBeenCalledWith('/path/to/theme/AGENTS.md', '/path/to/theme/copilot-instructions.md')
-    expect(symlink).toHaveBeenCalledWith('/path/to/theme/AGENTS.md', '/path/to/theme/CLAUDE.md')
-  })
-
-  test('throws an error when file operations fail', async () => {
-    // Given
-    vi.mocked(downloadGitRepository).mockResolvedValue()
-    vi.mocked(readFile).mockRejectedValue(new Error('File not found'))
-
-    await expect(createAIInstructions(destination, 'cursor')).rejects.toThrow('Failed to create AI instructions')
-  })
-})
-
-describe('createAIInstructionFiles()', () => {
-  const themeRoot = '/path/to/theme'
-  const agentsPath = '/path/to/theme/AGENTS.md'
-
-  beforeEach(() => {
-    vi.mocked(joinPath).mockImplementation((...paths) => paths.join('/'))
-    vi.mocked(readFile).mockResolvedValue('AI instruction content' as any)
-    vi.mocked(writeFile).mockResolvedValue()
-    vi.mocked(symlink).mockResolvedValue()
-  })
-
-  test('creates symlink for github instruction', async () => {
-    // Givin/When
-    await createAIInstructionFiles(themeRoot, agentsPath, 'github')
-
-    // Then
-    expect(symlink).toHaveBeenCalledWith('/path/to/theme/AGENTS.md', '/path/to/theme/copilot-instructions.md')
-  })
-
-  test('does not create symlink for cursor instruction (uses AGENTS.md natively)', async () => {
-    // When
-    await createAIInstructionFiles(themeRoot, agentsPath, 'cursor')
-
-    // Then
-    expect(symlink).not.toHaveBeenCalled()
-  })
-
-  test('creates symlink for claude instruction', async () => {
-    // When
-    await createAIInstructionFiles(themeRoot, agentsPath, 'claude')
-
-    // Then
-    expect(symlink).toHaveBeenCalledWith('/path/to/theme/AGENTS.md', '/path/to/theme/CLAUDE.md')
-  })
-
-  test('falls back to copying file when symlink fails with EPERM', async () => {
-    // Given
-    vi.mocked(symlink).mockRejectedValue(new Error('EPERM: operation not permitted'))
-    vi.mocked(readFile).mockResolvedValue('AGENTS.md content' as any)
-
-    // When
-    const result = await createAIInstructionFiles(themeRoot, agentsPath, 'github')
-
-    // Then
-    expect(symlink).toHaveBeenCalled()
-    expect(readFile).toHaveBeenCalledWith(agentsPath)
-    expect(writeFile).toHaveBeenCalledWith('/path/to/theme/copilot-instructions.md', 'AGENTS.md content')
-    expect(result.copiedFile).toBe('copilot-instructions.md')
   })
 })
