@@ -46,6 +46,7 @@ standard JSON error output on stdout and are not added to the session log.
    in the development store. Use a bounded wait and report errors or timeouts.
 
 Normal shutdown removes the instance record and retains the log until the next run.
+SIGINT and SIGTERM cancel active dev work and wait for queued log writes before shutdown.
 Crashes after startup recover automatically on the next start. If the CLI is killed during
 the short lock-acquisition step, a `.lock.acquire` directory can remain. The next start
 reports its path. Confirm that no other startup is running before removing that
