@@ -22,6 +22,10 @@ Wait for an incomplete final line to finish. If `sessionId` in the instance JSON
 changes, reset the offset: each new run clears the log. Logs have no size limit or
 rotation, so a long session can produce a large file.
 
+Process messages keep their terminal source, including extension handles. Changes
+to the status message also produce a log record with source `app dev`. Terminal
+colors, spinners, and screen redraws are not included.
+
 ## Agent workflow
 
 1. Find the instance file for the intended app configuration and check its app and

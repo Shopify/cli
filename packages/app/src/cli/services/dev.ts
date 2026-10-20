@@ -337,8 +337,12 @@ async function launchDevProcesses({
       prefix: process.prefix,
       action: async (stdout, stderr, signal) => {
         const fn = process.function as DevProcessFunction<typeof process.options>
-        const processStdout = devInstance ? devInstance.tee(stdout, {source: process.prefix, stream: 'stdout'}) : stdout
-        const processStderr = devInstance ? devInstance.tee(stderr, {source: process.prefix, stream: 'stderr'}) : stderr
+        const processStdout = devInstance
+          ? devInstance.tee(stdout, {source: process.prefix, stream: 'stdout', stringWritesAreMessages: true})
+          : stdout
+        const processStderr = devInstance
+          ? devInstance.tee(stderr, {source: process.prefix, stream: 'stderr', stringWritesAreMessages: true})
+          : stderr
         return fn({stdout: processStdout, stderr: processStderr, abortSignal: signal}, process.options)
       },
     }
@@ -358,6 +362,9 @@ async function launchDevProcesses({
       details: {...urls, preview: previewStatus(devSessionStatusManager.status)},
     })
     await devInstance.log({source: 'app dev', level: 'info', message: `Preview URL: ${previewUrl}`})
+    if (graphiqlUrl) {
+      await devInstance.log({source: 'app dev', level: 'info', message: `GraphiQL URL (Admin API): ${graphiqlUrl}`})
+    }
   }
 
   const developerPlatformClient = config.developerPlatformClient
@@ -366,12 +373,28 @@ async function launchDevProcesses({
     developerPlatformClient,
   }
 
+  let lastStatusMessage: DevSessionStatus['statusMessage']
   const persistStatus = (status: DevSessionStatus) => {
-    devInstance?.update({details: {preview: previewStatus(status)}}).catch((error: Error) => {
+    const writes = [devInstance?.update({details: {preview: previewStatus(status)}})]
+    const message = status.statusMessage
+    if (message && (message.message !== lastStatusMessage?.message || message.type !== lastStatusMessage?.type)) {
+      writes.push(
+        devInstance?.log({
+          source: 'app dev',
+          level: message.type === 'error' ? 'error' : 'info',
+          message: message.message,
+        }),
+      )
+    }
+    lastStatusMessage = message
+    Promise.all(writes).catch((error: Error) => {
       outputDebug(`Failed to save dev status: ${error.message}`)
     })
   }
-  if (devInstance) devSessionStatusManager.on('dev-session-update', persistStatus)
+  if (devInstance) {
+    devSessionStatusManager.on('dev-session-update', persistStatus)
+    persistStatus(devSessionStatusManager.status)
+  }
   const stopOnLostLock = () => abortController.abort(devInstance?.abortSignal.reason)
   try {
     devInstance?.abortSignal.throwIfAborted()

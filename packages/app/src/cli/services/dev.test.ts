@@ -3,6 +3,7 @@ import {setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {renderDev} from './dev/ui.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
 import {DevSessionStatusManager} from './dev/processes/dev-session/dev-session-status-manager.js'
+import {DevSessionLogger} from './dev/processes/dev-session/dev-session-logger.js'
 import {
   testAppLinked,
   testDeveloperPlatformClient,
@@ -18,6 +19,7 @@ import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {Writable} from 'stream'
 
 vi.mock('./local-storage.js')
@@ -96,10 +98,14 @@ describe('dev with a dev instance', () => {
     await inTemporaryDirectory(async (tmp) => {
       const store = testOrganizationStore({shopDomain: 'dev-store.myshopify.com'})
       const app = testAppLinked({directory: tmp})
-      const manager = new DevSessionStatusManager()
+      const manager = new DevSessionStatusManager({
+        isReady: false,
+        statusMessage: {type: 'loading', message: 'Preparing dev preview'},
+      })
       const devInstance = await acquireDevInstance({command: 'app dev', directory: tmp})
       const ownership = new AbortController()
       const previewUrl = 'https://dev-store.myshopify.com/admin/apps/api-key'
+      const graphiqlUrl = 'http://localhost:3456/graphiql'
       let infoWhileRunning: unknown
 
       vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue({
@@ -117,18 +123,27 @@ describe('dev with a dev instance', () => {
             function: async ({stdout, stderr}: {stdout: Writable; stderr: Writable}) => {
               stdout.write('Server listening on 3000\n')
               stderr.write('Deprecation warning\n')
+              useConcurrentOutputContext({outputPrefix: 'discount'}, () => {
+                stdout.write('Building function discount...')
+                stdout.write('Building GraphQL types...\n')
+              })
+              await new DevSessionLogger(stdout).info('Update accepted')
             },
             options: {},
           } as any,
         ],
         previewUrl,
-        graphiqlUrl: undefined,
+        graphiqlUrl,
         devSessionStatusManager: manager,
       })
       const terminal = new Writable({write: (_chunk, _encoding, callback) => callback()})
       vi.mocked(renderDev).mockImplementation(async ({processes, abortController}) => {
+        manager.updateStatus({previewURL: previewUrl})
+        manager.setMessage('READY')
+        manager.setMessage('CHANGE_DETECTED')
         manager.updateStatus({isReady: true})
         manager.setMessage('BUILD_ERROR', ['discount: Invalid input'])
+        manager.updateStatus({graphiqlURL: graphiqlUrl})
         await vi.waitFor(async () => {
           infoWhileRunning = JSON.parse(await readFile(devInstance.paths.infoFile))
           expect(infoWhileRunning).toHaveProperty('details.preview.errors', ['discount: Invalid input'])
@@ -177,10 +192,25 @@ describe('dev with a dev instance', () => {
       expect(entries).toEqual(
         expect.arrayContaining([
           expect.objectContaining({source: 'app dev', message: `Preview URL: ${previewUrl}`}),
+          expect.objectContaining({source: 'app dev', message: `GraphiQL URL (Admin API): ${graphiqlUrl}`}),
           expect.objectContaining({source: 'web', stream: 'stdout', message: 'Server listening on 3000'}),
           expect.objectContaining({source: 'web', stream: 'stderr', message: 'Deprecation warning'}),
+          expect.objectContaining({source: 'discount', message: 'Building function discount...'}),
+          expect.objectContaining({source: 'discount', message: 'Building GraphQL types...'}),
+          expect.objectContaining({source: 'app-preview', message: 'Update accepted'}),
         ]),
       )
+      expect(
+        entries
+          .filter(({source, stream}) => source === 'app dev' && !stream)
+          .filter(({message}) => !message.startsWith('Preview URL:') && !message.startsWith('GraphiQL URL'))
+          .map(({level, message}) => ({level, message})),
+      ).toEqual([
+        {level: 'info', message: 'Preparing dev preview'},
+        {level: 'info', message: 'Ready, watching for changes in your app'},
+        {level: 'info', message: 'Change detected, updating dev preview'},
+        {level: 'error', message: 'Build error. Please review your code and try again'},
+      ])
     })
   })
 })
