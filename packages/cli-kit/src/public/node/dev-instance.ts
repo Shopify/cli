@@ -106,7 +106,15 @@ export interface DevInstance {
    * Wraps a stream so every line written to it is also appended to the log, without ANSI styling.
    * The returned stream forwards the original bytes to `target` unchanged.
    */
-  tee: (target: Writable, options: {source: string; stream: 'stdout' | 'stderr'}) => Writable
+  tee: (
+    target: Writable,
+    options: {
+      source: string
+      stream: 'stdout' | 'stderr'
+      /** Treat each string write as a complete message. Byte writes remain buffered into lines. */
+      stringWritesAreMessages?: boolean
+    },
+  ) => Writable
   /** Closes the log, removes the instance description and releases the lock. Safe to call more than once. */
   release: () => Promise<void>
 }
@@ -279,7 +287,7 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
       await write
     },
     log: writeLogEntry,
-    tee: (target, {source, stream}) => {
+    tee: (target, {source, stream, stringWritesAreMessages = false}) => {
       const decoder = new StringDecoder('utf8')
       let pending = ''
       let currentSource = source
@@ -295,14 +303,18 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
       }
       const flush = () => flushLines(`${pending}${decoder.end()}\n`)
       const output = new DevInstanceOutput({
+        decodeStrings: !stringWritesAreMessages,
         write(chunk: Buffer | string, encoding, callback) {
           const nextSource = getConcurrentOutputContext()?.outputPrefix ?? source
-          const previous = nextSource === currentSource ? Promise.resolve() : flush()
+          const completeMessage = stringWritesAreMessages && typeof chunk === 'string'
+          const previous = nextSource !== currentSource || completeMessage ? flush() : Promise.resolve()
           currentSource = nextSource
           Promise.all([
             previous,
             writeToStream(target, chunk, encoding),
-            flushLines(pending + (typeof chunk === 'string' ? chunk : decoder.write(chunk))),
+            flushLines(
+              pending + (typeof chunk === 'string' ? chunk : decoder.write(chunk)) + (completeMessage ? '\n' : ''),
+            ),
           ])
             .then(() => callback())
             .catch(callback)

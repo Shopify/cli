@@ -280,6 +280,43 @@ describe('acquireDevInstance', () => {
 })
 
 describe('DevInstance log', () => {
+  test('records complete string messages immediately while assembling byte output into lines', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const instance = await acquireDevInstance({command: 'app dev', directory})
+      const chunks: Buffer[] = []
+      const target = new Writable({
+        write(chunk, _encoding, callback) {
+          chunks.push(Buffer.from(chunk))
+          callback()
+        },
+      })
+      const output = instance.tee(target, {source: 'web', stream: 'stdout', stringWritesAreMessages: true})
+      const write = (chunk: string | Buffer) =>
+        new Promise<void>((resolve, reject) => {
+          output.write(chunk, (error) => (error ? reject(error) : resolve()))
+        })
+      try {
+        await write('Bundling extension...')
+        await expect(readLog(instance.paths.logFile)).resolves.toEqual([
+          {timestamp: expect.any(String), source: 'web', stream: 'stdout', message: 'Bundling extension...'},
+        ])
+        await write('Extension built')
+        const bytes = Buffer.from('café\n')
+        await write(bytes.subarray(0, 4))
+        await write(bytes.subarray(4))
+        await instance.release()
+        expect(Buffer.concat(chunks).toString()).toBe('Bundling extension...Extension builtcafé\n')
+        expect((await readLog(instance.paths.logFile)).map(({message}) => message)).toEqual([
+          'Bundling extension...',
+          'Extension built',
+          'café',
+        ])
+      } finally {
+        await instance.release()
+      }
+    })
+  })
+
   test('preserves extension sources in queued terminal writes and log records', async () => {
     await inTemporaryDirectory(async (directory) => {
       const instance = await acquireDevInstance({command: 'app dev', directory})
