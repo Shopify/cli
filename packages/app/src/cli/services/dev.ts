@@ -36,13 +36,11 @@ import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
-import {OutputProcess, outputDebug, outputResult} from '@shopify/cli-kit/node/output'
+import {OutputProcess, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {acquireDevInstance, type DevInstance, type DevInstanceLogEntry} from '@shopify/cli-kit/node/dev-instance'
+import {acquireDevInstance, type DevInstance} from '@shopify/cli-kit/node/dev-instance'
 import {basename} from '@shopify/cli-kit/node/path'
-import {runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
-import {errorToJson} from '@shopify/cli-kit/node/error/serialization'
 
 export interface DevOptions {
   app: AppLinkedInterface
@@ -71,43 +69,9 @@ export interface DevOptions {
   devInstance?: DevInstance
 }
 
-/** Owns the dev instance across setup, execution, error rendering, and cleanup. */
+/** Owns the dev instance across setup, execution, and cleanup. */
 export class DevSession {
-  private instance?: DevInstance
-  private startupLogs: DevInstanceLogEntry[] = []
-
   constructor(private readonly json: boolean) {}
-
-  async run<T>(execute: () => Promise<T>): Promise<T> {
-    const run = async () => {
-      try {
-        return await execute()
-      } finally {
-        await this.instance?.release()
-      }
-    }
-    if (!this.json) return run()
-    return runWithCommandEvents(
-      {
-        outputMode: 'json',
-        sink: (event) => {
-          const entry: DevInstanceLogEntry = {
-            timestamp: event.timestamp,
-            source: 'app dev',
-            level: event.type === 'diagnostic' ? event.level : 'info',
-            message: event.message ?? (event.type === 'progress' ? event.operation : ''),
-          }
-          if (event.type === 'progress' && event.status === 'failed') entry.level = 'error'
-          if (this.instance) {
-            this.instance.log(entry).catch(() => {})
-          } else {
-            this.startupLogs.push(entry)
-          }
-        },
-      },
-      run,
-    )
-  }
 
   async start<T>(
     {app, remoteApp}: Pick<DevOptions, 'app' | 'remoteApp'>,
@@ -120,28 +84,10 @@ export class DevSession {
       details: {configPath: app.configPath, appName: remoteApp.title, clientId: remoteApp.apiKey},
       logOutput: this.json ? process.stdout : undefined,
     })
-    this.instance = instance
-    await Promise.all(this.startupLogs.map((entry) => instance.log(entry)))
-    this.startupLogs = []
-    return execute(instance)
-  }
-
-  async handleError(error: Error, config: Config, handleDefault: () => Promise<void>): Promise<void> {
-    const instance = this.instance
     try {
-      if (!instance || !this.json) {
-        for (const entry of this.startupLogs) outputResult(JSON.stringify(entry))
-        await instance?.release()
-        return handleDefault()
-      }
-      const {errorHandler} = await import('@shopify/cli-kit/node/error-handler')
-      await errorHandler(error, config, async (mappedError) => {
-        const jsonError = errorToJson(mappedError)
-        await instance.log({source: 'app dev', level: 'error', message: jsonError.message, error: jsonError})
-      })
+      return await execute(instance)
     } finally {
-      // Oclif can exit immediately after handling even a silent error, without unwinding the outer lifecycle.
-      await instance?.release()
+      await instance.release()
     }
   }
 }

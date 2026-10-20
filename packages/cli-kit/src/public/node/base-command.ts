@@ -87,18 +87,14 @@ abstract class BaseCommand extends Command {
   async catch(error: Error & {skipOclifErrorHandling: boolean}): Promise<void> {
     const handleError = async () => {
       error.skipOclifErrorHandling = true
-      await this.handleError(error)
+      const {errorHandler} = await import('./error-handler.js')
+      await errorHandler(error, this.config)
       return Errors.handle(error)
     }
     if (this.jsonOutputFromFlags && commandEventOutputMode() !== 'json') {
       return runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, handleError)
     }
     return handleError()
-  }
-
-  protected async handleError(error: Error): Promise<void> {
-    const {errorHandler} = await import('./error-handler.js')
-    await errorHandler(error, this.config)
   }
 
   protected async _run<T>(): Promise<T> {

@@ -40,7 +40,6 @@ function sliceNameFromStartCommand(startCommand: string | undefined): string {
 export async function errorHandler(
   error: Error & {exitCode?: number | undefined},
   config?: Interfaces.Config,
-  renderError: typeof handler = handler,
 ): Promise<void> {
   if (error instanceof CancelExecution) {
     if (error.message && error.message !== '') {
@@ -54,7 +53,7 @@ export async function errorHandler(
   }
 
   const mappedError = await errorMapper(error)
-  await renderError(mappedError)
+  await handler(mappedError)
   await reportError(mappedError, config)
 }
 

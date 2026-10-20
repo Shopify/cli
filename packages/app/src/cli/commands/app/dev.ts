@@ -186,12 +186,4 @@ export default class Dev extends AppLinkedCommand {
       return {app: appContextResult.app}
     })
   }
-
-  protected async handleError(error: Error): Promise<void> {
-    return this.session.handleError(error, this.config, () => super.handleError(error))
-  }
-
-  protected async _run<T>(): Promise<T> {
-    return this.session.run(() => super._run<T>())
-  }
 }

@@ -1,4 +1,4 @@
-import {dev, blockIfMigrationIncomplete, DevSession} from './dev.js'
+import {dev, blockIfMigrationIncomplete} from './dev.js'
 import {setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {renderDev} from './dev/ui.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
@@ -17,10 +17,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
-import {acquireDevInstance, readDevInstance} from '@shopify/cli-kit/node/dev-instance'
-import {AbortSilentError, CancelExecution} from '@shopify/cli-kit/node/error'
-import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {Config} from '@oclif/core'
+import {acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {Writable} from 'stream'
@@ -35,28 +32,6 @@ vi.mock('@shopify/cli-kit/node/tcp')
 vi.mock('../utilities/mkcert.js')
 
 describe('dev', () => {
-  test.each(['silent', 'cancel'])('releases the service-owned instance before exit for a %s error', async (kind) => {
-    await inTemporaryDirectory(async (directory) => {
-      const app = testAppLinked({directory})
-      const session = new DevSession(true)
-      await withCapturedStandardStreams(async ({stdout, stderr}) => {
-        await session.run(async () => {
-          const logFile = await session.start({app, remoteApp: testOrganizationApp()}, async (instance) => {
-            await instance.log({source: 'app dev', message: 'Starting dev'})
-            return instance.paths.logFile
-          })
-          const error = kind === 'silent' ? new AbortSilentError() : new CancelExecution('Stopped')
-          await session.handleError(error, {} as Config, async () => {})
-          await expect(
-            readDevInstance({command: 'app dev', directory, key: 'shopify.app.toml'}),
-          ).resolves.toBeUndefined()
-          expect(stdout()).toBe(await readFile(logFile))
-          expect(stderr()).toBe('')
-        })
-      })
-    })
-  })
-
   test('logs store domain metadata when launching dev', async () => {
     const store = testOrganizationStore({shopDomain: 'dev-store.myshopify.com'})
     const app = testAppLinked()
