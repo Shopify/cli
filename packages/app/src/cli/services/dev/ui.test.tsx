@@ -128,45 +128,49 @@ describe('ui', () => {
       })
     })
 
-    test('a JSON process failure aborts and waits for the other processes to stop', async () => {
-      const abortController = new AbortController()
-      const failure = new Error('Process failed')
-      let stopped = false
-      const signalListeners = process.listenerCount('SIGTERM')
-      await withCapturedStandardStreams(async () => {
-        await expect(
-          runWithCommandEvents({outputMode: 'json', sink: () => {}}, () =>
-            renderDev({
-              processes: [
-                {
-                  prefix: 'failed',
-                  action: async () => {
-                    throw failure
+    test.each(['text', 'json'] as const)(
+      'a %s process failure aborts and waits for the other processes to stop',
+      async (mode) => {
+        vi.mocked(terminalSupportsPrompting).mockReturnValue(mode === 'json')
+        const abortController = new AbortController()
+        const failure = new Error('Process failed')
+        let stopped = false
+        const signalListeners = process.listenerCount('SIGTERM')
+        await withCapturedStandardStreams(async () => {
+          await expect(
+            runWithCommandEvents({outputMode: mode, sink: () => {}}, () =>
+              renderDev({
+                processes: [
+                  {
+                    prefix: 'failed',
+                    action: async () => {
+                      throw failure
+                    },
                   },
-                },
-                {
-                  prefix: 'watcher',
-                  action: async (_stdout, _stderr, signal) => {
-                    await new Promise<void>((resolve) =>
-                      signal.addEventListener('abort', () => resolve(), {once: true}),
-                    )
-                    await new Promise((resolve) => setTimeout(resolve, 5))
-                    stopped = true
+                  {
+                    prefix: 'watcher',
+                    action: async (_stdout, _stderr, signal) => {
+                      await new Promise<void>((resolve) =>
+                        signal.addEventListener('abort', () => resolve(), {once: true}),
+                      )
+                      await new Promise((resolve) => setTimeout(resolve, 5))
+                      stopped = true
+                    },
                   },
-                },
-              ],
-              previewUrl: 'https://example.com',
-              app: {id: '123', developerPlatformClient},
-              abortController,
-              shopFqdn: 'dev-store.myshopify.com',
-              devSessionStatusManager: new DevSessionStatusManager(),
-            }),
-          ),
-        ).rejects.toBe(failure)
-      })
-      expect(stopped).toBe(true)
-      expect(process.listenerCount('SIGTERM')).toBe(signalListeners)
-    })
+                ],
+                previewUrl: 'https://example.com',
+                app: {id: '123', developerPlatformClient},
+                abortController,
+                shopFqdn: 'dev-store.myshopify.com',
+                devSessionStatusManager: new DevSessionStatusManager(),
+              }),
+            ),
+          ).rejects.toBe(failure)
+        })
+        expect(stopped).toBe(true)
+        expect(process.listenerCount('SIGTERM')).toBe(signalListeners)
+      },
+    )
 
     test("doesn't use ink when terminal doesn't support TTY", async () => {
       vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
