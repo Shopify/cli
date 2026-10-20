@@ -26,7 +26,7 @@ import {once} from 'events'
 export const DEV_INSTANCE_ALREADY_RUNNING_CODE = 'dev_instance_already_running'
 
 const DEV_INSTANCES_FOLDER = 'dev'
-const DEFAULT_STALE_MS = 30_000
+const DEFAULT_STALE_MS = 15_000
 
 /**
  * Describes a running instance of a long-running command such as `app dev` or `theme dev`.
