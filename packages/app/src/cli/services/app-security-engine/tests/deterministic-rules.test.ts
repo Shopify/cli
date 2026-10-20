@@ -368,6 +368,20 @@ describe('Liquid AST mode', () => {
     // Missing or unparseable schema stays flagged.
     expect(liquid('{{ block.settings.layout }}')).toContain('LIQUID_UNSAFE_RENDER')
     expect(liquid('{{ block.settings.layout }}{% schema %}not-json{% endschema %}')).toContain('LIQUID_UNSAFE_RENDER')
+    // Duplicate schema blocks, duplicate setting ids, and empty options stay flagged.
+    expect(liquid(`{{ block.settings.layout }}${select}${select}`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(
+      liquid(`{{ block.settings.layout }}${schema('{"type":"text","id":"layout"},{"type":"checkbox","id":"layout"}')}`),
+    ).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`{{ block.settings.layout }}${schema('{"type":"select","id":"layout","options":[]}')}`)).toContain(
+      'LIQUID_UNSAFE_RENDER',
+    )
+    // Inert radio is clean.
+    expect(
+      liquid(
+        `{{ block.settings.layout }}${schema('{"type":"radio","id":"layout","options":[{"value":"a"},{"value":"b"}]}')}`,
+      ),
+    ).not.toContain('LIQUID_UNSAFE_RENDER')
   })
 
   test('exempts only block settings in app block files, never the host section settings', () => {
