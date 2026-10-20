@@ -328,7 +328,9 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
             previous,
             writeToStream(target, chunk, encoding),
             flushLines(
-              pending + (typeof chunk === 'string' ? chunk : decoder.write(chunk)) + (completeMessage ? '\n' : ''),
+              pending +
+                decoder.write(typeof chunk === 'string' ? Buffer.from(chunk, encoding) : chunk) +
+                (completeMessage ? '\n' : ''),
             ),
           ])
             .then(() => callback())
@@ -410,7 +412,9 @@ class DevInstanceOutput extends Writable {
     callback?: (error?: Error | null) => void,
   ): boolean {
     this.contexts.push(getConcurrentOutputContext())
-    return typeof encoding === 'string' ? super.write(chunk, encoding, callback) : super.write(chunk, encoding)
+    return typeof encoding === 'string'
+      ? super.write(chunk, encoding, callback)
+      : super.write(chunk, encoding ?? callback)
   }
 
   end(
@@ -421,7 +425,7 @@ class DevInstanceOutput extends Writable {
     if (chunk !== undefined && chunk !== null && typeof chunk !== 'function')
       this.contexts.push(getConcurrentOutputContext())
     if (typeof chunk === 'function') return super.end(chunk)
-    return typeof encoding === 'string' ? super.end(chunk, encoding, callback) : super.end(chunk, encoding)
+    return typeof encoding === 'string' ? super.end(chunk, encoding, callback) : super.end(chunk, encoding ?? callback)
   }
 }
 
