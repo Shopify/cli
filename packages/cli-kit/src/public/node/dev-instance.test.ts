@@ -15,6 +15,7 @@ import {
 } from '../../private/node/ui/components/ConcurrentOutput.js'
 import {describe, expect, test, vi} from 'vitest'
 import {Writable} from 'stream'
+import {finished} from 'stream/promises'
 import {utimes} from 'fs/promises'
 
 const DEAD_PID = 2 ** 22 + 12345
@@ -333,6 +334,47 @@ describe('acquireDevInstance', () => {
 })
 
 describe('DevInstance log', () => {
+  test.each([false, true])('calls write and end callbacks with undefined encoding, messages=%s', async (messages) => {
+    await inTemporaryDirectory(async (directory) => {
+      const instance = await acquireDevInstance({command: 'app dev', directory})
+      const target = collectingStream()
+      const output = instance.tee(target.stream, {source: 'web', stringWritesAreMessages: messages})
+      const onWrite = vi.fn()
+      const onEnd = vi.fn()
+      try {
+        // Node accepts an undefined encoding at runtime, but its type overload requires a string.
+        Reflect.apply(output.write, output, ['First line\n', undefined, onWrite])
+        Reflect.apply(output.end, output, ['Last line\n', undefined, onEnd])
+        await finished(output, {cleanup: true})
+        expect([onWrite.mock.calls.length, onEnd.mock.calls.length]).toEqual([1, 1])
+        expect(target.chunks.join('')).toBe('First line\nLast line\n')
+        expect((await readLog(instance.paths.logFile)).map(({message}) => message)).toEqual(['First line', 'Last line'])
+      } finally {
+        await instance.release()
+      }
+    })
+  })
+
+  test.each([
+    {encoding: 'hex', chunk: '636166c3a90a'},
+    {encoding: 'base64', chunk: 'Y2Fmw6kK'},
+  ] as const)('logs decoded $encoding string messages from write and end', async ({encoding, chunk}) => {
+    await inTemporaryDirectory(async (directory) => {
+      const instance = await acquireDevInstance({command: 'app dev', directory})
+      const target = collectingStream()
+      const output = instance.tee(target.stream, {source: 'web', stringWritesAreMessages: true})
+      try {
+        output.write(chunk, encoding)
+        output.end(chunk, encoding)
+        await finished(output, {cleanup: true})
+        expect(target.chunks.join('')).toBe('café\ncafé\n')
+        expect((await readLog(instance.paths.logFile)).map(({message}) => message)).toEqual(['café', 'café'])
+      } finally {
+        await instance.release()
+      }
+    })
+  })
+
   test('records complete string messages immediately while assembling byte output into lines', async () => {
     await inTemporaryDirectory(async (directory) => {
       const instance = await acquireDevInstance({command: 'app dev', directory})
