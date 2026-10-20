@@ -20,7 +20,11 @@ import {ApplicationToken, IdentityToken, Sessions} from './session/schema.js'
 import {validateSession} from './session/validate.js'
 import {applicationId} from './session/identity.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
-import {automationTokenVariable, automationTokenVariablesProblem} from './session/automation-token.js'
+import {
+  automationTokenAuthMethod,
+  automationTokenVariable,
+  automationTokenVariablesProblem,
+} from './session/automation-token.js'
 import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
 import * as fqdnModule from '../../public/node/context/fqdn.js'
 import {themeToken} from '../../public/node/context/local.js'
@@ -660,6 +664,7 @@ describe('getLastSeenAuthMethod', () => {
   test('returns partners_token if there is a partners token in the environment', async () => {
     // Given
     vi.mocked(getAppAutomationToken).mockReturnValue('partners-token-456')
+    vi.mocked(automationTokenAuthMethod).mockReturnValue('partners_token')
 
     // When
     const method = await getLastSeenAuthMethod()
@@ -667,6 +672,18 @@ describe('getLastSeenAuthMethod', () => {
     // Then
     expect(method).toBe('partners_token')
     expect(getCurrentSessionId).toHaveBeenCalledOnce()
+  })
+
+  test('returns service_account_token if the service account token is in the environment', async () => {
+    // Given
+    vi.mocked(getAppAutomationToken).mockReturnValue('service-account-token-789')
+    vi.mocked(automationTokenAuthMethod).mockReturnValue('service_account_token')
+
+    // When
+    const method = await getLastSeenAuthMethod()
+
+    // Then
+    expect(method).toBe('service_account_token')
   })
 
   test('returns custom_app_token if there is a theme token in the environment and doesnt start with shptka_', async () => {

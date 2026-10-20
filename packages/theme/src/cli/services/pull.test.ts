@@ -23,7 +23,10 @@ vi.mock('../utilities/theme-selector.js')
 vi.mock('../utilities/theme-store.js')
 vi.mock('../utilities/theme-fs.js')
 vi.mock('../utilities/theme-downloader.js')
-vi.mock('../utilities/theme-ui.js')
+vi.mock('../utilities/theme-ui.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../utilities/theme-ui.js')>()),
+  ensureDirectoryConfirmed: vi.fn(),
+}))
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/themes/api')
@@ -56,7 +59,6 @@ describe('pull', () => {
     vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(adminSession)
     vi.mocked(mountThemeFileSystem).mockReturnValue(localThemeFileSystem)
     vi.mocked(fetchChecksums).mockResolvedValue([])
-    vi.mocked(themeComponent).mockReturnValue([])
     findDevelopmentThemeSpy.mockClear()
     fetchDevelopmentThemeSpy.mockClear()
   })

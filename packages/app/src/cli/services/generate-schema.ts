@@ -1,3 +1,4 @@
+import {type GeneratedFunctionSchema} from './generate-schema/types.js'
 import {prependSchemaVersionHeader} from './function/schema-version.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {SchemaDefinitionByApiTypeQueryVariables} from '../api/graphql/functions/generated/schema-definition-by-api-type.js'
@@ -6,20 +7,18 @@ import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../models/extensions/specifications/function.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputInfo, outputResult} from '@shopify/cli-kit/node/output'
-import {writeFile} from '@shopify/cli-kit/node/fs'
+import {outputContent} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 interface GenerateSchemaOptions {
   app: AppLinkedInterface
   extension: ExtensionInstance<FunctionConfigType>
-  stdout: boolean
   developerPlatformClient: DeveloperPlatformClient
   orgId: string
 }
 
-export async function generateSchemaService(options: GenerateSchemaOptions) {
-  const {extension, stdout, developerPlatformClient, app, orgId} = options
+export async function generateSchemaService(options: GenerateSchemaOptions): Promise<GeneratedFunctionSchema> {
+  const {extension, developerPlatformClient, app, orgId} = options
   const apiKey = app.configuration.client_id
   const {api_version: version, type, targeting} = extension.configuration
   const usingTargets = Boolean(targeting?.length)
@@ -44,12 +43,10 @@ export async function generateSchemaService(options: GenerateSchemaOptions) {
 
   const definition = prependSchemaVersionHeader(fetchedDefinition, version)
 
-  if (stdout) {
-    outputResult(definition)
-  } else {
-    const outputPath = joinPath(extension.directory, 'schema.graphql')
-    await writeFile(outputPath, definition)
-    outputInfo(`GraphQL Schema for ${extension.localIdentifier} written to ${outputPath}`)
+  return {
+    definition,
+    path: joinPath(extension.directory, 'schema.graphql'),
+    localIdentifier: extension.localIdentifier,
   }
 }
 

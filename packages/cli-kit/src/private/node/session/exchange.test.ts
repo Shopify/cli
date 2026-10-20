@@ -18,7 +18,7 @@ import {AbortError} from '../../../public/node/error.js'
 import {outputDebug} from '../../../public/node/output.js'
 import {err, ok} from '../../../public/node/result.js'
 
-import {describe, test, expect, vi, afterAll, beforeEach} from 'vitest'
+import {describe, test, expect, vi, afterAll, afterEach, beforeEach} from 'vitest'
 import {Response} from 'node-fetch'
 
 const currentDate = new Date(2022, 1, 1, 10)
@@ -275,6 +275,10 @@ describe.each(tokenExchangeMethods)(
     const grantType = 'urn:ietf:params:oauth:grant-type:token-exchange'
     const accessTokenType = 'urn:ietf:params:oauth:token-type:access_token'
 
+    afterEach(() => {
+      vi.unstubAllEnvs()
+    })
+
     test(`Executing ${tokenExchangeMethod.name} returns access token and user ID for a valid CLI token`, async () => {
       // Given
       let capturedUrl = ''
@@ -323,6 +327,20 @@ describe.each(tokenExchangeMethods)(
       expect(params.get('audience')).toBe(expectedApi)
       expect(params.get('scope')).toBe(expectedScopes.join(' '))
       expect(params.get('subject_token')).toBe(automationToken)
+    })
+
+    test(`Executing ${tokenExchangeMethod.name} reports service_account_token when SHOPIFY_SERVICE_ACCOUNT_TOKEN is used`, async () => {
+      // Given
+      vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', automationToken)
+      vi.mocked(shopifyFetch).mockResolvedValue(
+        new Response(JSON.stringify({access_token: 'expected_access_token', expires_in: 300, scope: 'scope'})),
+      )
+
+      // When
+      await tokenExchangeMethod(automationToken)
+
+      // Then
+      await expect(getLastSeenAuthMethod()).resolves.toBe('service_account_token')
     })
 
     test(`Executing ${tokenExchangeMethod.name} throws AbortError and logs the caught error if an error is caught`, async () => {

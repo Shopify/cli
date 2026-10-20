@@ -1,6 +1,7 @@
 import {ApplicationToken, IdentityToken} from './schema.js'
 import {applicationId, clientId as getIdentityClientId} from './identity.js'
 import {tokenExchangeScopes} from './scopes.js'
+import {automationTokenAuthMethod} from './automation-token.js'
 import {API} from '../api.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
@@ -89,7 +90,7 @@ async function exchangeAppAutomationTokenForAccessToken(
     const accessToken = newToken[appId]!.accessToken
     const userId = nonRandomUUID(token)
     setLastSeenUserIdAfterAuth(userId)
-    setLastSeenAuthMethod('partners_token')
+    setLastSeenAuthMethod(automationTokenAuthMethod())
     return {accessToken, userId}
   } catch (error) {
     const prettyName = apiName.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())

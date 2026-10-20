@@ -8,5 +8,5 @@ import type {LifecycleStep, BuildContext} from '../client-steps.js'
  * applying wasm-opt and trampoline as configured.
  */
 export async function executeBuildFunctionStep(_step: LifecycleStep, context: BuildContext): Promise<void> {
-  return buildFunctionExtension(context.extension, context.options)
+  await buildFunctionExtension(context.extension, context.options)
 }

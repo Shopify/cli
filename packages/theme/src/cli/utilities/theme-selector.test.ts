@@ -103,7 +103,7 @@ describe('findOrSelectTheme', () => {
 
     // Then
     expect(themeCreate).toBeCalledWith({name: 'my new theme', role: 'unpublished'}, session)
-    expect(actualTheme).toBe(expectedTheme)
+    expect(actualTheme).toEqual({...expectedTheme, createdAtRuntime: true})
   })
 })
 
