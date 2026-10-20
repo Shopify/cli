@@ -39,7 +39,8 @@ import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {DevInstance} from '@shopify/cli-kit/node/dev-instance'
+import {acquireDevInstance, type DevInstance} from '@shopify/cli-kit/node/dev-instance'
+import {basename} from '@shopify/cli-kit/node/path'
 
 export interface DevOptions {
   app: AppLinkedInterface
@@ -66,6 +67,26 @@ export interface DevOptions {
   installMkcert?: boolean
   /** The running-instance record for this session: its log receives every process's output. */
   devInstance?: DevInstance
+}
+
+/** Owns the dev instance across setup, execution, and cleanup. */
+export class DevSession {
+  async start<T>(
+    {app, remoteApp}: Pick<DevOptions, 'app' | 'remoteApp'>,
+    execute: (instance: DevInstance) => Promise<T>,
+  ): Promise<T> {
+    const instance = await acquireDevInstance({
+      command: 'app dev',
+      directory: app.directory,
+      key: basename(app.configPath),
+      details: {configPath: app.configPath, appName: remoteApp.title, clientId: remoteApp.apiKey},
+    })
+    try {
+      return await execute(instance)
+    } finally {
+      await instance.release()
+    }
+  }
 }
 
 export async function dev(commandOptions: DevOptions) {
