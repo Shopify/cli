@@ -25,6 +25,7 @@ import {
   ClientError,
 } from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
+import nodeFetch, {AbortError as FetchAbortError} from 'node-fetch'
 
 // to replace TVariable type when there graphql query has no variables
 export type Exact<T extends Record<string, unknown>> = {[K in keyof T]: T[K]}
@@ -114,7 +115,12 @@ async function createGraphQLClient({
     ...addedHeaders,
     ...buildHeaders(token),
   }
-  const clientOptions = {agent: await httpsAgent(), headers}
+  const clientOptions = {
+    agent: await httpsAgent(),
+    headers,
+    // graphql-request types fetch as the browser API, but passes a URL and JSON request options here.
+    fetch: nodeFetch as unknown as GraphQLClient['requestConfig']['fetch'],
+  }
 
   return {
     client: new GraphQLClient(url, clientOptions),
@@ -142,7 +148,10 @@ async function runSingleRawGraphQLRequest<TResult>(
   // there is a errorPolicy option which returns rather than throwing on errors, but we _do_ ultimately want to
   // throw.
   try {
-    client.setAbortSignal(abortSignalFromRequestBehaviour(behaviour))
+    const signal = abortSignalFromRequestBehaviour(behaviour)
+    // node-fetch can emit an unhandled body-stream error when a POST starts with an aborted signal.
+    if (signal?.aborted) throw new FetchAbortError('The operation was aborted.')
+    client.setAbortSignal(signal)
     fullResponse = await client.rawRequest(queryAsString, variables)
     await logLastRequestIdFromResponse(fullResponse)
 
