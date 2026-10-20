@@ -23,7 +23,7 @@ Do not substitute one review for the other. If the user asks for both, run and r
 
 ## Full review workflow
 
-{{WORKING_DIRECTORY_LINE}}
+{{WORKING_DIRECTORY_LINE}} The workflow's commands pass `--json --no-input`, so they don't prompt, and each prints one JSON object on stdout: its result, or an `error`. Warnings go to stderr.
 
 {{SCAN_CONTEXT}}
 
@@ -103,7 +103,7 @@ Pipe the document to `record` on stdin:
 
 {{RECORD_COMMAND}}
 
-`record` validates the whole document, all or nothing. If it rejects the document, it writes nothing and prints every error. Fix every reported error and run `record` again with the full document. Don't ignore rejections.
+`record` validates the whole document, all or nothing. If it rejects the document, it writes nothing and prints an `error` whose `code` is `findings-document-rejected` and whose `details.errors` lists every error. Fix every reported error and run `record` again with the full document. Don't ignore rejections.
 
 When the document is accepted, `record` replaces {{AGENT_FINDINGS_PATH}} with its contents. Every run replaces the previous results, so always record the full set of checks.
 
@@ -115,11 +115,11 @@ Show the combined results:
 {{REVIEW_COMMAND}}
 ```
 
-It combines {{DETERMINISTIC_FINDINGS_PATH}} with {{AGENT_FINDINGS_PATH}} into one result per check. Each check with findings gets its own box, most severe first, listing every finding with its file, line and source (deterministic or agent). A summary box follows with the checks with findings, the other checks (passed, not applicable or unresolved), deterministic coverage, the results files with their ages and versions, and next steps. Add `--check-id <ID>` (repeatable) to narrow the review to specific checks, and `--verbose` for full reasoning, evidence and suppressed findings. `review` is the only combined view: it applies check precedence, suppressions and result ages. Report from its output; don't combine the results files yourself. Its boxes wrap long paths and commands across lines, so rejoin them before using them. Report:
+It combines {{DETERMINISTIC_FINDINGS_PATH}} with {{AGENT_FINDINGS_PATH}} into one result per check. `checks` lists every check, most severe first, with its `severity`, `status`, `docsUrl` and `findings`. Each finding has its `source` (`deterministic` or `agent`), `location`, `message` and `evidence`. Locations have an absolute `filePath` and a one-based `line` and `column`, as recorded, or `null` when there is none. Only findings whose `disposition` is `active` count; `suppressed` and `superseded` ones don't. `coverage` describes what the latest scan covered, including `filesSkipped` and `gaps`. `resultsFiles` gives each results file's `generatedAt` and `engine` (the CLI and ruleset versions), and `scopeDiffers` is `true` when the agent recorded its findings for another scope than the latest scan. Add `--check-id <ID>` (repeatable) to narrow the review to specific checks. `review` is the only combined view: it applies check precedence, suppressions and result ages. Report from its result; don't combine the results files yourself. Report:
 
 - CLI and ruleset versions;
 - finding counts per check, grouped by severity and source;
-- each verified finding's impact and concise file/line evidence, with a link to its check's `docs_url`;
+- each verified finding's impact and concise file/line evidence, with a link to its check's `docsUrl`;
 - skipped or incomplete coverage and unresolved checks;
 - prioritized remediation steps.
 
@@ -150,7 +150,7 @@ Run it only when the user wants the local results removed.
 When the user explicitly wants a fast local or CI scan without semantic investigation, run:
 
 ```bash
-{{SCAN_COMMAND}}
+{{DETERMINISTIC_SCAN_COMMAND}}
 ```
 
 For a pass/fail gate, add `--blocking <severity>`: the command exits 1 when a check with findings is at or above that severity. Do not describe a deterministic-only scan as the full app security check.
