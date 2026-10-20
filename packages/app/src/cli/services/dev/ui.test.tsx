@@ -25,6 +25,7 @@ describe('ui', () => {
       const failure = new Error('Process failed')
       let stopped = false
       const signalListeners = process.listenerCount('SIGTERM')
+      const shutdownListeners = process.listenerCount('shopify:signal')
       await withCapturedStandardStreams(async () => {
         await expect(
           renderDev({
@@ -54,6 +55,7 @@ describe('ui', () => {
       })
       expect(stopped).toBe(true)
       expect(process.listenerCount('SIGTERM')).toBe(signalListeners)
+      expect(process.listenerCount('shopify:signal')).toBe(shutdownListeners)
     })
 
     test("doesn't use ink when terminal doesn't support TTY", async () => {
