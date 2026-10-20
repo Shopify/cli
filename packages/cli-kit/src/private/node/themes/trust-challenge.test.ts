@@ -1,17 +1,15 @@
 import {TrustChallengeError, trustChallengeUrl, withTrustChallengeRetry} from './trust-challenge.js'
 import {GraphQLClientError} from '../api/headers.js'
 import {commandEventOutputMode} from '../command-event-context.js'
-import {waitForEnter} from '../ui/wait-for-enter.js'
 import {recordEvent} from '../../../public/node/analytics.js'
 import {adminFqdn} from '../../../public/node/context/fqdn.js'
 import {AbortError, AbortSilentError} from '../../../public/node/error.js'
 import {isCI, openURL} from '../../../public/node/system.js'
-import {isTTY, renderInfo, renderSuccess} from '../../../public/node/ui.js'
+import {isTTY, keypress, renderInfo, renderSuccess} from '../../../public/node/ui.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {ClientError} from 'graphql-request'
 
 vi.mock('../command-event-context.js')
-vi.mock('../ui/wait-for-enter.js')
 vi.mock('../../../public/node/analytics.js')
 vi.mock('../../../public/node/context/fqdn.js')
 vi.mock('../../../public/node/output.js')
@@ -26,7 +24,7 @@ beforeEach(() => {
   vi.mocked(isCI).mockReturnValue(false)
   vi.mocked(isTTY).mockReturnValue(true)
   vi.mocked(openURL).mockResolvedValue(true)
-  vi.mocked(waitForEnter).mockResolvedValue(undefined)
+  vi.mocked(keypress).mockResolvedValue(undefined)
 })
 
 describe('trustChallengeUrl', () => {
@@ -94,7 +92,7 @@ describe('withTrustChallengeRetry', () => {
 
     expect(request).toHaveBeenCalledTimes(1)
     expect(openURL).not.toHaveBeenCalled()
-    expect(waitForEnter).not.toHaveBeenCalled()
+    expect(keypress).not.toHaveBeenCalled()
   })
 
   test('rethrows an error that is not a trust challenge without prompting', async () => {
@@ -114,7 +112,8 @@ describe('withTrustChallengeRetry', () => {
 
     expect(request).toHaveBeenCalledTimes(2)
     expect(openURL).toHaveBeenCalledWith(challengeUrl)
-    expect(waitForEnter).toHaveBeenCalledTimes(1)
+    // Only Enter or Space answer the prompt: `theme dev` binds other keys, such as `t`, on the same stdin.
+    expect(keypress).toHaveBeenCalledExactlyOnceWith(process.stdin, undefined, {keys: ['\r', '\n', ' ']})
     expect(renderInfo).toHaveBeenCalledWith(
       expect.objectContaining({
         headline: 'Verify your identity to continue.',
@@ -152,7 +151,7 @@ describe('withTrustChallengeRetry', () => {
       nextSteps: [expect.arrayContaining([{link: {url: challengeUrl}}])],
     })
     expect(request).toHaveBeenCalledTimes(2)
-    expect(waitForEnter).toHaveBeenCalledTimes(1)
+    expect(keypress).toHaveBeenCalledTimes(1)
     expect(recordEvent).toHaveBeenCalledWith('theme-api:trust-challenge:retry-challenged')
   })
 
@@ -192,7 +191,7 @@ describe('withTrustChallengeRetry', () => {
     })
     expect(request).toHaveBeenCalledTimes(1)
     expect(openURL).not.toHaveBeenCalled()
-    expect(waitForEnter).not.toHaveBeenCalled()
+    expect(keypress).not.toHaveBeenCalled()
     expect(recordEvent).toHaveBeenCalledWith('theme-api:trust-challenge:non-interactive')
   })
 
@@ -202,7 +201,7 @@ describe('withTrustChallengeRetry', () => {
 
     await expect(withTrustChallengeRetry(request)).rejects.toBeInstanceOf(AbortError)
 
-    expect(waitForEnter).not.toHaveBeenCalled()
+    expect(keypress).not.toHaveBeenCalled()
   })
 
   test('shares a single prompt across concurrent requests that are challenged together', async () => {
@@ -217,7 +216,7 @@ describe('withTrustChallengeRetry', () => {
       .mockResolvedValueOnce('second')
 
     const results = Promise.all([withTrustChallengeRetry(firstRequest), withTrustChallengeRetry(secondRequest)])
-    await vi.waitFor(() => expect(waitForEnter).toHaveBeenCalledTimes(1))
+    await vi.waitFor(() => expect(keypress).toHaveBeenCalledTimes(1))
     enter.press()
 
     await expect(results).resolves.toEqual(['first', 'second'])
@@ -236,7 +235,7 @@ describe('withTrustChallengeRetry', () => {
     const laterRequest = vi.fn().mockResolvedValue('later')
 
     const challengedResult = withTrustChallengeRetry(challengedRequest)
-    await vi.waitFor(() => expect(waitForEnter).toHaveBeenCalledTimes(1))
+    await vi.waitFor(() => expect(keypress).toHaveBeenCalledTimes(1))
 
     const laterResult = withTrustChallengeRetry(laterRequest)
     await Promise.resolve()
@@ -263,7 +262,7 @@ describe('withTrustChallengeRetry', () => {
 
     const firstResult = withTrustChallengeRetry(firstRequest)
     const secondResult = withTrustChallengeRetry(secondRequest)
-    await vi.waitFor(() => expect(waitForEnter).toHaveBeenCalledTimes(1))
+    await vi.waitFor(() => expect(keypress).toHaveBeenCalledTimes(1))
     enter.press()
     await expect(firstResult).resolves.toBe('first')
 
@@ -271,14 +270,14 @@ describe('withTrustChallengeRetry', () => {
 
     await expect(secondResult).resolves.toBe('second')
     expect(secondRequest).toHaveBeenCalledTimes(2)
-    expect(waitForEnter).toHaveBeenCalledTimes(1)
+    expect(keypress).toHaveBeenCalledTimes(1)
     expect(openURL).toHaveBeenCalledTimes(1)
   })
 
   test('waits for a newer open prompt before retrying a request that was in flight during an earlier verification', async () => {
     const firstEnter = Promise.withResolvers<void>()
     const secondEnter = Promise.withResolvers<void>()
-    vi.mocked(waitForEnter).mockReturnValueOnce(firstEnter.promise).mockReturnValueOnce(secondEnter.promise)
+    vi.mocked(keypress).mockReturnValueOnce(firstEnter.promise).mockReturnValueOnce(secondEnter.promise)
     const secondResponse = Promise.withResolvers<string>()
     const firstRequest = vi
       .fn()
@@ -292,12 +291,12 @@ describe('withTrustChallengeRetry', () => {
 
     const firstResult = withTrustChallengeRetry(firstRequest)
     const secondResult = withTrustChallengeRetry(secondRequest)
-    await vi.waitFor(() => expect(waitForEnter).toHaveBeenCalledTimes(1))
+    await vi.waitFor(() => expect(keypress).toHaveBeenCalledTimes(1))
     firstEnter.resolve()
     await expect(firstResult).resolves.toBe('first')
 
     const thirdResult = withTrustChallengeRetry(thirdRequest)
-    await vi.waitFor(() => expect(waitForEnter).toHaveBeenCalledTimes(2))
+    await vi.waitFor(() => expect(keypress).toHaveBeenCalledTimes(2))
 
     secondResponse.reject(challengeClientError(challengeUrl))
     // No timer is involved: the mocks resolve at once, so one event-loop turn runs the
@@ -309,7 +308,7 @@ describe('withTrustChallengeRetry', () => {
 
     await expect(Promise.all([secondResult, thirdResult])).resolves.toEqual(['second', 'third'])
     expect(secondRequest).toHaveBeenCalledTimes(2)
-    expect(waitForEnter).toHaveBeenCalledTimes(2)
+    expect(keypress).toHaveBeenCalledTimes(2)
   })
 
   test('rejects requests waiting on a pending challenge when the prompt is cancelled with Ctrl+C', async () => {
@@ -318,7 +317,7 @@ describe('withTrustChallengeRetry', () => {
     const laterRequest = vi.fn().mockResolvedValue('later')
 
     const challengedResult = withTrustChallengeRetry(challengedRequest)
-    await vi.waitFor(() => expect(waitForEnter).toHaveBeenCalledTimes(1))
+    await vi.waitFor(() => expect(keypress).toHaveBeenCalledTimes(1))
     const laterResult = withTrustChallengeRetry(laterRequest)
 
     enter.cancel()
@@ -333,7 +332,7 @@ describe('withTrustChallengeRetry', () => {
 function deferredEnter(): {press: () => void; cancel: () => void} {
   let press!: () => void
   let cancel!: () => void
-  vi.mocked(waitForEnter).mockReturnValue(
+  vi.mocked(keypress).mockReturnValue(
     new Promise<void>((resolve, reject) => {
       press = resolve
       cancel = () => reject(new AbortSilentError())

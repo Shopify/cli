@@ -33,8 +33,7 @@ import {adminRequestDoc, supportedApiVersions} from '../api/admin.js'
 import {AbortError} from '../error.js'
 import {adminFqdn} from '../context/fqdn.js'
 import {openURL} from '../system.js'
-import {isTTY} from '../ui.js'
-import {waitForEnter} from '../../../private/node/ui/wait-for-enter.js'
+import {isTTY, keypress} from '../ui.js'
 
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 import {ClientError} from 'graphql-request'
@@ -42,7 +41,6 @@ import {ClientError} from 'graphql-request'
 vi.mock('../api/admin.js')
 vi.mock('../context/fqdn.js')
 vi.mock('../ui.js')
-vi.mock('../../../private/node/ui/wait-for-enter.js')
 vi.mock('@shopify/cli-kit/node/system')
 vi.stubGlobal('fetch', vi.fn())
 
@@ -576,7 +574,7 @@ describe('trust challenges', () => {
     vi.mocked(adminFqdn).mockResolvedValue('admin.shopify.com')
     vi.mocked(isTTY).mockReturnValue(true)
     vi.mocked(openURL).mockResolvedValue(true)
-    vi.mocked(waitForEnter).mockResolvedValue(undefined)
+    vi.mocked(keypress).mockResolvedValue(undefined)
   })
 
   test('themePublish opens the challenge in the browser and retries after the user completes it', async () => {
@@ -596,7 +594,7 @@ describe('trust challenges', () => {
 
     // Then
     expect(openURL).toHaveBeenCalledWith(challengeUrl)
-    expect(waitForEnter).toHaveBeenCalledTimes(1)
+    expect(keypress).toHaveBeenCalledTimes(1)
     expect(adminRequestDoc).toHaveBeenCalledTimes(2)
     expect(theme!.id).toEqual(id)
   })
@@ -620,7 +618,7 @@ describe('trust challenges', () => {
     )
 
     // Then
-    expect(waitForEnter).toHaveBeenCalledTimes(1)
+    expect(keypress).toHaveBeenCalledTimes(1)
     expect(adminRequestDoc).toHaveBeenCalledTimes(2)
     expect(results).toEqual([
       {key: 'snippets/product-variant-picker.liquid', success: true, operation: Operation.Upload},

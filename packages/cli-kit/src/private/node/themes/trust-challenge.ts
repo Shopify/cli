@@ -1,14 +1,15 @@
 import {extractGraphQLErrors} from '../api/graphql.js'
 import {commandEventOutputMode} from '../command-event-context.js'
-import {waitForEnter} from '../ui/wait-for-enter.js'
 import {recordEvent} from '../../../public/node/analytics.js'
 import {adminFqdn} from '../../../public/node/context/fqdn.js'
 import {AbortError} from '../../../public/node/error.js'
 import {outputDebug} from '../../../public/node/output.js'
 import {isCI, openURL} from '../../../public/node/system.js'
-import {isTTY, renderInfo, renderSuccess} from '../../../public/node/ui.js'
+import {isTTY, keypress, renderInfo, renderSuccess} from '../../../public/node/ui.js'
 
 const TRUST_CHALLENGE_ERROR_CODE = 'CHALLENGE_REQUIRED'
+// Enter or Space. `theme dev` binds other single keys on the same stdin to its own shortcuts.
+const CONTINUE_KEYS = ['\r', '\n', ' ']
 
 /**
  * The abort that ends a Trust Battery challenge: the session cannot answer it, or
@@ -36,26 +37,34 @@ export async function withTrustChallengeRetry<T>(request: () => Promise<T>): Pro
   if (pendingChallenge) await pendingChallenge
   const completedChallengesAtStart = completedChallenges
 
+  const attempt = await attemptRequest(request)
+  if (!attempt.challenged) return attempt.result
+
+  const verifiedSinceStart = completedChallenges > completedChallengesAtStart
+  if (pendingChallenge || !verifiedSinceStart) await completeTrustChallenge(attempt.challengeUrl)
+
+  const retry = await attemptRequest(request)
+  if (!retry.challenged) return retry.result
+
+  recordEvent('theme-api:trust-challenge:retry-challenged')
+  throw new TrustChallengeError('Shopify still needs to verify your identity before it can continue.', undefined, [
+    ['Complete the verification at', {link: {url: retry.challengeUrl}}, 'then run the command again.'],
+  ])
+}
+
+type RequestAttempt<T> = {challenged: false; result: T} | {challenged: true; challengeUrl: string}
+
+/**
+ * Runs the request once. A Trust Battery challenge becomes a result with the challenge URL;
+ * any other error is thrown.
+ */
+async function attemptRequest<T>(request: () => Promise<T>): Promise<RequestAttempt<T>> {
   try {
-    return await request()
+    return {challenged: false, result: await request()}
   } catch (error) {
     const challengeUrl = await trustChallengeUrl(error)
     if (!challengeUrl) throw error
-
-    const verifiedSinceStart = completedChallenges > completedChallengesAtStart
-    if (pendingChallenge || !verifiedSinceStart) await completeTrustChallenge(challengeUrl)
-  }
-
-  try {
-    return await request()
-  } catch (error) {
-    const challengeUrl = await trustChallengeUrl(error)
-    if (!challengeUrl) throw error
-
-    recordEvent('theme-api:trust-challenge:retry-challenged')
-    throw new TrustChallengeError('Shopify still needs to verify your identity before it can continue.', undefined, [
-      ['Complete the verification at', {link: {url: challengeUrl}}, 'then run the command again.'],
-    ])
+    return {challenged: true, challengeUrl}
   }
 }
 
@@ -141,7 +150,7 @@ async function promptForTrustChallenge(challengeUrl: string): Promise<void> {
     orderedNextSteps: true,
   })
 
-  await waitForEnter()
+  await keypress(process.stdin, undefined, {keys: CONTINUE_KEYS})
 
   recordEvent('theme-api:trust-challenge:acknowledged')
   renderSuccess({headline: 'Continuing.'})
