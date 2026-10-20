@@ -1998,43 +1998,109 @@ DESCRIPTION
   Builds and previews your app on a dev store, and watches for changes. "Read more about testing apps locally"
   (https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).
 
-  With `--json`, streams diagnostic and progress events as JSON Lines to stdout until stopped. There is no final result.
-  Fatal errors use the standard JSON error envelope. Setup prompts remain on stderr; use `--no-input` for unattended
-  runs.
+  With `--json`, streams the exact JSON Lines written to the session log until stopped. There is no final result. Setup
+  messages are buffered until the app configuration is selected and the session log is acquired. Runtime failures
+  include the shared CLI error in the final log record; failures before a session is acquired use the standard JSON
+  error envelope. Setup prompts remain on stderr; use `--no-input` for unattended runs.
 
   Use `--json-schema` to print the result, error, and event schemas.
 
-  Output from `--json` conforms to the `AppDevEvent` schema.
+  Output from `--json` conforms to the `DevInstanceLogEntry` schema.
 
   ```json
   {
-    "anyOf": [
-      {
-        "$ref": "#/definitions/AppDevDiagnostic"
+    "type": "object",
+    "properties": {
+      "timestamp": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+        "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
       },
-      {
-        "$ref": "#/definitions/AppDevProgress"
+      "source": {
+        "type": "string",
+        "description": "What produced the line, for example a process prefix like web or extensions."
+      },
+      "stream": {
+        "type": "string",
+        "enum": [
+          "stdout",
+          "stderr"
+        ],
+        "description": "The stream the line was written to, when it comes from a process."
+      },
+      "level": {
+        "type": "string",
+        "enum": [
+          "debug",
+          "info",
+          "warning",
+          "error"
+        ]
+      },
+      "message": {
+        "type": "string"
+      },
+      "error": {
+        "$ref": "#/definitions/JsonError",
+        "description": "The shared CLI fatal error, included when the session fails."
       }
+    },
+    "required": [
+      "timestamp",
+      "source",
+      "message"
     ],
-    "title": "AppDevEvent",
+    "additionalProperties": false,
+    "title": "DevInstanceLogEntry",
     "definitions": {
-      "AppDevDiagnostic": {
+      "JsonError": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/JsonAbortError"
+          },
+          {
+            "$ref": "#/definitions/JsonBugError"
+          },
+          {
+            "$ref": "#/definitions/JsonExternalError"
+          }
+        ]
+      },
+      "JsonErrorCustomSection": {
         "type": "object",
         "properties": {
-          "timestamp": {
-            "type": "string",
-            "format": "date-time",
-            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
-            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          "title": {
+            "type": "string"
           },
-          "level": {
-            "type": "string",
-            "enum": [
-              "debug",
-              "info",
-              "warning",
-              "error"
+          "body": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
             ]
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "additionalProperties": false
+      },
+      "JsonAbortError": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "abort"
           },
           "message": {
             "type": "string"
@@ -2042,51 +2108,108 @@ DESCRIPTION
           "code": {
             "type": "string",
             "minLength": 1,
-            "description": "A stable diagnostic code, included only when known."
+            "description": "A stable error code, included only when known."
+          },
+          "tryMessage": {
+            "type": "string"
+          },
+          "nextSteps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "customSections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/JsonErrorCustomSection"
+            }
+          },
+          "details": {
+            "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
           }
         },
         "required": [
-          "timestamp",
-          "level",
+          "type",
           "message"
         ],
         "additionalProperties": false
       },
-      "AppDevProgress": {
+      "JsonBugError": {
         "type": "object",
         "properties": {
-          "timestamp": {
-            "$ref": "#/definitions/AppDevDiagnostic/properties/timestamp"
-          },
-          "status": {
+          "type": {
             "type": "string",
-            "enum": [
-              "started",
-              "updated",
-              "retrying",
-              "completed",
-              "failed"
-            ]
-          },
-          "operation": {
-            "type": "string"
+            "const": "bug"
           },
           "message": {
+            "$ref": "#/definitions/JsonAbortError/properties/message"
+          },
+          "code": {
+            "$ref": "#/definitions/JsonAbortError/properties/code"
+          },
+          "tryMessage": {
+            "$ref": "#/definitions/JsonAbortError/properties/tryMessage"
+          },
+          "nextSteps": {
+            "$ref": "#/definitions/JsonAbortError/properties/nextSteps"
+          },
+          "customSections": {
+            "$ref": "#/definitions/JsonAbortError/properties/customSections"
+          },
+          "details": {
+            "$ref": "#/definitions/JsonAbortError/properties/details"
+          },
+          "stack": {
             "type": "string"
-          },
-          "current": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "total": {
-            "type": "integer",
-            "minimum": 0
           }
         },
         "required": [
-          "timestamp",
-          "status",
-          "operation"
+          "type",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "JsonExternalError": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "external"
+          },
+          "message": {
+            "$ref": "#/definitions/JsonAbortError/properties/message"
+          },
+          "code": {
+            "$ref": "#/definitions/JsonAbortError/properties/code"
+          },
+          "tryMessage": {
+            "$ref": "#/definitions/JsonAbortError/properties/tryMessage"
+          },
+          "nextSteps": {
+            "$ref": "#/definitions/JsonAbortError/properties/nextSteps"
+          },
+          "customSections": {
+            "$ref": "#/definitions/JsonAbortError/properties/customSections"
+          },
+          "details": {
+            "$ref": "#/definitions/JsonAbortError/properties/details"
+          },
+          "command": {
+            "type": "string"
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "message",
+          "command",
+          "args"
         ],
         "additionalProperties": false
       }

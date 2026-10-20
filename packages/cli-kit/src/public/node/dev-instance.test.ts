@@ -38,6 +38,47 @@ async function readLog(path: string) {
 }
 
 describe('acquireDevInstance', () => {
+  test('writes identical JSONL bytes to the log and an output stream without changing supplied timestamps', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const output = collectingStream()
+      const instance = await acquireDevInstance({command: 'app dev', directory, logOutput: output.stream})
+      await Promise.all([
+        instance.log({timestamp: '2026-10-20T09:00:00Z', source: 'app dev', level: 'info', message: 'Setup'}),
+        instance.log({source: 'web', stream: 'stderr', message: 'Warning'}),
+      ])
+      await instance.release()
+      expect(output.chunks.join('')).toBe(await readFile(instance.paths.logFile))
+      expect(JSON.parse(output.chunks[0]!)).toEqual({
+        timestamp: '2026-10-20T09:00:00Z',
+        source: 'app dev',
+        level: 'info',
+        message: 'Setup',
+      })
+      expect(output.stream.writableEnded).toBe(false)
+    })
+  })
+
+  test('aborts and releases ownership when the mirror fails', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      let finishWrite: ((error?: Error | null) => void) | undefined
+      const output = new Writable({
+        write: (_chunk, _encoding, callback) => {
+          finishWrite = callback
+        },
+      })
+      const instance = await acquireDevInstance({command: 'app dev', directory, logOutput: output})
+      const failure = new Error('Output failed')
+      const writing = instance.log({source: 'web', message: 'Server ready'})
+      const rejected = expect(writing).rejects.toBe(failure)
+      await vi.waitFor(() => expect(finishWrite).toBeDefined())
+      finishWrite?.(failure)
+      await rejected
+      expect(instance.abortSignal.aborted).toBe(true)
+      await instance.release()
+      await expect(readDevInstance({command: 'app dev', directory})).resolves.toBeUndefined()
+    })
+  })
+
   test('describes the instance in .shopify/dev and releases it', async () => {
     await inTemporaryDirectory(async (directory) => {
       // When

@@ -4,16 +4,21 @@ import {ciPlatform, cloudEnvironment, isUnitTest, macAddress} from './context/lo
 import {mockAndCaptureOutput} from './testing/output.js'
 import * as error from './error.js'
 import {hashString} from './crypto.js'
+import {LocalStorage} from './local-storage.js'
+import {joinPath} from './path.js'
 import {isLocalEnvironment} from '../../private/node/context/service.js'
 import {getLastSeenUserIdAfterAuth} from '../../private/node/session.js'
 import {GraphQLClientError} from '../../private/node/api/headers.js'
-
+import * as confStore from '../../private/node/conf-store.js'
 import {settings} from '@oclif/core'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {mkdtemp, rm} from 'fs/promises'
+import {tmpdir} from 'os'
 
 const onNotify = vi.fn()
 const capturedEventHandler = vi.fn()
 let lastBugsnagEvent: {addMetadata: ReturnType<typeof vi.fn>; groupingHash?: string} | undefined
+const runWithRateLimit = confStore.runWithRateLimit
 
 vi.mock('process')
 vi.mock('@bugsnag/js', () => {
@@ -51,7 +56,12 @@ vi.mock('@oclif/core', async (importOriginal) => ({
   Interfaces: {},
 }))
 
-beforeEach(() => {
+beforeEach(async () => {
+  const directory = await mkdtemp(joinPath(tmpdir(), 'shopify-error-handler-'))
+  const storage = new LocalStorage<confStore.ConfSchema>({cwd: directory})
+  const rateLimit = vi
+    .spyOn(confStore, 'runWithRateLimit')
+    .mockImplementation((options) => runWithRateLimit(options, storage))
   vi.mocked(ciPlatform).mockReturnValue({isCI: true, name: 'vitest', metadata: {}})
   vi.mocked(macAddress).mockResolvedValue('macAddress')
   vi.mocked(cloudEnvironment).mockReturnValue({platform: 'localhost', editor: false})
@@ -63,9 +73,21 @@ beforeEach(() => {
   vi.mocked(settings).debug = false
   vi.mocked(isLocalEnvironment).mockReturnValue(false)
   vi.mocked(getLastSeenUserIdAfterAuth).mockResolvedValue('test-user-id-123')
+  return async () => {
+    rateLimit.mockRestore()
+    await rm(directory, {recursive: true, force: true})
+  }
 })
 
 describe('errorHandler', async () => {
+  test('reports errors when a command supplies its own renderer', async () => {
+    const failure = new error.BugError('Watcher failed')
+    const renderError = vi.fn().mockResolvedValue(undefined)
+    await errorHandler(failure, undefined, renderError)
+    expect(renderError).toHaveBeenCalledWith(failure)
+    expect(onNotify).toHaveBeenCalledTimes(1)
+  })
+
   test('finishes the execution without exiting the proccess when cancel execution exception is raised', async () => {
     // Given
     vi.spyOn(process, 'exit').mockResolvedValue(null as never)

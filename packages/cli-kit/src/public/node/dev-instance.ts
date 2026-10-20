@@ -3,7 +3,9 @@ import {joinPath} from './path.js'
 import {fileExists, glob, mkdir, readFile, removeFile, removeFileSync, renameFile, rmdir} from './fs.js'
 import {AbortError} from './error.js'
 import {outputDebug, unstyled} from './output.js'
-import {formatJsonOutputTimestamp} from './json-output-schema.js'
+import {defineJsonOutputSchema, formatJsonOutputTimestamp, jsonOutputTimestampSchema} from './json-output-schema.js'
+import {jsonErrorOutputSchema, JsonErrorSchema} from './error/schema.js'
+import {zod} from './schema.js'
 import {randomUUID} from './crypto.js'
 import {
   ConcurrentOutputContext,
@@ -51,16 +53,26 @@ export interface DevInstanceInfo {
   details: {[key: string]: unknown}
 }
 
+export const devInstanceLogOutputSchema = defineJsonOutputSchema({
+  name: 'DevInstanceLogEntry',
+  schema: zod
+    .object({
+      timestamp: jsonOutputTimestampSchema,
+      source: zod.string().describe('What produced the line, for example a process prefix like web or extensions.'),
+      stream: zod
+        .enum(['stdout', 'stderr'])
+        .optional()
+        .describe('The stream the line was written to, when it comes from a process.'),
+      level: zod.enum(['debug', 'info', 'warning', 'error']).optional(),
+      message: zod.string(),
+      error: JsonErrorSchema.optional().describe('The shared CLI fatal error, included when the session fails.'),
+    })
+    .strict(),
+  definitions: jsonErrorOutputSchema.definitions,
+})
+
 /** One line of a dev instance's JSON Lines log. */
-export interface DevInstanceLogEntry {
-  timestamp: string
-  /** What produced the line, for example a process prefix like `web` or `extensions`. */
-  source: string
-  /** The stream the line was written to, when it comes from a process. */
-  stream?: 'stdout' | 'stderr'
-  level?: 'debug' | 'info' | 'warning' | 'error'
-  message: string
-}
+export type DevInstanceLogEntry = zod.infer<typeof devInstanceLogOutputSchema.schema>
 
 export interface DevInstancePaths {
   /** The folder that holds every dev instance of the project: `.shopify/dev`. */
@@ -85,8 +97,8 @@ export interface DevInstanceIdentity {
 export interface AcquireDevInstanceOptions extends DevInstanceIdentity {
   /** Initial command-specific details. */
   details?: {[key: string]: unknown}
-  /** Receives each entry after it is written to the session log. */
-  onLog?: (entry: DevInstanceLogEntry) => void
+  /** Receives the exact JSONL bytes written to the session log. The caller owns this stream. */
+  logOutput?: Writable
 }
 
 export interface DevInstanceUpdate {
@@ -103,7 +115,7 @@ export interface DevInstance {
   /** Updates and persists the instance description. */
   update: (changes: DevInstanceUpdate) => Promise<void>
   /** Appends one entry to the JSON Lines log. */
-  log: (entry: Omit<DevInstanceLogEntry, 'timestamp'>) => Promise<void>
+  log: (entry: Omit<DevInstanceLogEntry, 'timestamp'> & {timestamp?: string}) => Promise<void>
   /**
    * Wraps a stream so every line written to it is also appended to the log, without ANSI styling.
    * The returned stream forwards the original bytes to `target` unchanged.
@@ -248,7 +260,9 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
 
   // Each run starts a fresh log.
   const logStream: WriteStream = createWriteStream(paths.logFile, {flags: 'w', mode: 0o600})
-  logStream.on('error', (error) => abortController.abort(error))
+  const onOutputError = (error: Error) => abortController.abort(error)
+  logStream.on('error', onOutputError)
+  options.logOutput?.on('error', onOutputError)
 
   let updates = Promise.resolve()
   const outputs = new Set<Writable>()
@@ -263,14 +277,20 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
   }
   process.once('exit', removeInfoOnExit)
 
-  const writeLogEntry = async (entry: Omit<DevInstanceLogEntry, 'timestamp'>) => {
+  const writeLogEntry: DevInstance['log'] = async (entry) => {
     if (released || compromised) return
-    const line: DevInstanceLogEntry = {
-      timestamp: formatJsonOutputTimestamp(new Date()),
+    const record = devInstanceLogOutputSchema.validate({
       ...entry,
+      timestamp: entry.timestamp ?? formatJsonOutputTimestamp(new Date()),
+    })
+    const line = `${JSON.stringify(record)}\n`
+    try {
+      await writeToStream(logStream, line)
+      if (options.logOutput) await writeToStream(options.logOutput, line)
+    } catch (error) {
+      abortController.abort(error)
+      throw error
     }
-    await writeToStream(logStream, `${JSON.stringify(line)}\n`)
-    options.onLog?.(line)
   }
 
   const instance: DevInstance = {
@@ -349,7 +369,9 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
           process.removeListener('exit', removeInfoOnExit)
           try {
             await endStream(logStream)
+            if (options.logOutput && !options.logOutput.destroyed) await writeToStream(options.logOutput, '')
           } finally {
+            options.logOutput?.off('error', onOutputError)
             const owned = ownsInfo()
             await releaseLock().catch((error: Error) =>
               outputDebug(`Failed to release the dev instance lock: ${error.message}`),

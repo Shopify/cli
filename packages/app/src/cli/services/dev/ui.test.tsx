@@ -1,16 +1,14 @@
 import {renderDev} from './ui.js'
 import {DevSessionUI} from './ui/components/DevSessionUI.js'
 import {DevSessionStatusManager} from './processes/dev-session/dev-session-status-manager.js'
-import {appDevJsonOutputSchema} from './types.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
-import {emitCommandEvent, runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
-import {outputResult} from '@shopify/cli-kit/node/output'
+import {runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
 import {Writable} from 'stream'
 
@@ -34,14 +32,13 @@ describe('ui', () => {
           await runWithCommandEvents(
             {
               outputMode: 'json',
-              sink: ({type: _, ...entry}) => outputResult(JSON.stringify(appDevJsonOutputSchema.validate(entry))),
+              sink: () => {},
             },
             async () => {
               const instance = await acquireDevInstance({
                 command: 'app dev',
                 directory,
-                onLog: (entry) =>
-                  emitCommandEvent({type: 'diagnostic', level: 'info', message: `${entry.source}: ${entry.message}`}),
+                logOutput: process.stdout,
               })
               const abortController = new AbortController()
               const completed = vi.fn()
@@ -82,10 +79,10 @@ describe('ui', () => {
                 devSessionStatusManager: new DevSessionStatusManager(),
               }).then(completed)
               try {
-                await vi.waitFor(() => expect(stdout()).toContain(`web: line ${burstSize - 1}`))
+                await vi.waitFor(() => expect(stdout()).toContain(`line ${burstSize - 1}`))
                 expect(completed).not.toHaveBeenCalled()
                 lateOutput?.write('After setup')
-                await vi.waitFor(() => expect(stdout()).toContain('web: After setup'))
+                await vi.waitFor(() => expect(stdout()).toContain('After setup'))
                 lateOutput?.write(Buffer.from('Last partial line'))
                 abortController.abort()
                 await running
@@ -94,6 +91,7 @@ describe('ui', () => {
                 await running
                 await instance.release()
               }
+              expect(stdout()).toBe(await readFile(instance.paths.logFile))
               const events = stdout()
                 .trim()
                 .split('\n')
@@ -103,16 +101,22 @@ describe('ui', () => {
               const messages = events.map((event) => event.message)
               expect(messages).toEqual(
                 expect.arrayContaining([
-                  'web: Starting without a newline',
-                  'discount: Building function',
-                  'discount: Building types',
-                  'web: éclair',
-                  'web: After setup',
-                  'web: Last partial line',
+                  'Starting without a newline',
+                  'Building function',
+                  'Building types',
+                  'éclair',
+                  'After setup',
+                  'Last partial line',
                 ]),
               )
-              expect(messages.filter((message) => message.startsWith('web: line '))).toEqual(
-                Array.from({length: burstSize}, (_, index) => `web: line ${index}`),
+              expect(messages.filter((message) => message.startsWith('line '))).toEqual(
+                Array.from({length: burstSize}, (_, index) => `line ${index}`),
+              )
+              expect(events).toEqual(
+                expect.arrayContaining([
+                  expect.objectContaining({source: 'discount', stream: 'stdout', message: 'Building function'}),
+                  expect.objectContaining({source: 'web', stream: 'stderr', message: 'éclair'}),
+                ]),
               )
               expect(vi.mocked(DevSessionUI)).not.toHaveBeenCalled()
               expect(stdout()).not.toContain('\u001b')

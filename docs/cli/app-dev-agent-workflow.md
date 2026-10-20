@@ -26,6 +26,12 @@ Process messages keep their terminal source, including extension handles. Change
 to the status message also produce a log record with source `app dev`. Terminal
 colors, spinners, and screen redraws are not included.
 
+With `--json`, stdout and the session log contain identical JSONL bytes. Setup
+messages wait until the command acquires its session log, then retain their original
+timestamps in both outputs. Runtime failures include the shared CLI error under
+`error` in the final record. A startup failure before log acquisition uses the
+standard JSON error output and does not change another process's log.
+
 ## Agent workflow
 
 1. Find the instance file for the intended app configuration and check its app and

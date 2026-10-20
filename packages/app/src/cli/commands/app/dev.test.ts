@@ -5,7 +5,6 @@ import {dev} from '../../services/dev.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
 import {getTunnelMode} from '../../services/dev/tunnel-mode.js'
-import {appDevJsonOutputSchema} from '../../services/dev/types.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import {
   testAppLinked,
@@ -15,7 +14,7 @@ import {
   testOrganizationStore,
   testProject,
 } from '../../models/app/app.test-data.js'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {emitCommandEvent} from '@shopify/cli-kit/node/command-events'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -24,6 +23,8 @@ import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {isInputDisabled} from '@shopify/cli-kit/node/no-input'
 import {
   acquireDevInstance,
+  devInstanceLogOutputSchema,
+  devInstancePaths,
   DEV_INSTANCE_ALREADY_RUNNING_CODE,
   readDevInstance,
 } from '@shopify/cli-kit/node/dev-instance'
@@ -72,62 +73,73 @@ describe('app dev command', () => {
   }
 
   test('declares its streaming schema and retains inherited flags', () => {
-    expect(Dev.jsonOutputSchema).toBe(appDevJsonOutputSchema)
+    expect(Dev.jsonOutputSchema).toBe(devInstanceLogOutputSchema)
     expect(Dev.flags.json.char).toBe('j')
     expect(Dev.flags.json.env).toBe('SHOPIFY_FLAG_JSON')
     expect(Dev.baseFlags).toHaveProperty('json-schema')
     expect(Dev.baseFlags).toHaveProperty('auth-alias')
-    expect(Dev.descriptionForHelp()).toContain('AppDevEvent')
+    expect(Dev.descriptionForHelp()).toContain('DevInstanceLogEntry')
   })
 
   test.each([
-    {timestamp: '2026-10-20T09:00:00Z', level: 'info', message: 'Starting dev'},
-    {timestamp: '2026-10-20T09:00:00Z', operation: 'app-dev-preview', status: 'updated', message: 'Updated'},
+    {timestamp: '2026-10-20T09:00:00Z', source: 'app dev', level: 'info', message: 'Starting dev'},
+    {timestamp: '2026-10-20T09:00:00Z', source: 'web', stream: 'stdout', message: 'Server ready'},
   ] as const)('the stream schema accepts records without type and rejects extra type fields: %j', (entry) => {
-    expect(JSON.parse(appDevJsonOutputSchema.encode(entry))).toEqual(entry)
-    expect(() => appDevJsonOutputSchema.validate({...entry, type: 'diagnostic'})).toThrow()
+    expect(JSON.parse(devInstanceLogOutputSchema.encode(entry))).toEqual(entry)
+    expect(() => devInstanceLogOutputSchema.validate({...entry, type: 'diagnostic'})).toThrow()
   })
 
-  test.each(['--json', '-j', 'env'])('%s streams shared events on stdout without a final result', async (source) => {
-    await inTemporaryDirectory(async (tmp) => {
-      const {store} = mockAppAndStore(tmp)
-      vi.mocked(getTunnelMode).mockResolvedValue({mode: 'auto'})
-      if (source === 'env') vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-      vi.mocked(dev).mockImplementation(async ({devInstance}) => {
-        outputInfo('Starting dev')
-        emitCommandEvent({type: 'progress', operation: 'app-dev-preview', status: 'updated', message: 'Updated'})
-        await devInstance?.log({source: 'web', message: 'Server ready'})
-        await devInstance?.log({source: 'app dev', level: 'error', message: 'Build error'})
-      })
-      try {
-        await withCapturedStandardStreams(async ({stdout, stderr}) => {
-          await Dev.run(
-            ['--path', tmp, '--store', store.shopDomain, ...(source.startsWith('-') ? [source] : [])],
-            import.meta.url,
-          )
-          const events = stdout()
-            .trim()
-            .split('\n')
-            .map((line) => JSON.parse(line))
-          events.forEach((event) => {
-            expect(() => Dev.jsonOutputSchema.validate(event)).not.toThrow()
-            expect(event).not.toHaveProperty('type')
-          })
-          expect(events).toEqual(
-            expect.arrayContaining([
-              expect.objectContaining({level: 'info', message: 'Starting dev'}),
-              expect.objectContaining({status: 'updated', operation: 'app-dev-preview', message: 'Updated'}),
-              expect.objectContaining({level: 'info', message: 'web: Server ready'}),
-              expect.objectContaining({level: 'error', message: 'Build error'}),
-            ]),
-          )
-          expect(stderr()).toBe('')
+  test.each(['--json', '-j', 'env'])(
+    '%s writes identical startup, progress, and process records to stdout and the file',
+    async (source) => {
+      await inTemporaryDirectory(async (tmp) => {
+        const {store} = mockAppAndStore(tmp)
+        vi.mocked(getTunnelMode).mockImplementation(async () => {
+          outputInfo('Resolving app setup')
+          return {mode: 'auto'}
         })
-      } finally {
-        vi.unstubAllEnvs()
-      }
-    })
-  })
+        if (source === 'env') vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
+        let logFile: string | undefined
+        vi.mocked(dev).mockImplementation(async ({devInstance}) => {
+          logFile = devInstance?.paths.logFile
+          outputInfo('Starting dev')
+          emitCommandEvent({type: 'progress', operation: 'app-dev-preview', status: 'updated', message: 'Updated'})
+          await devInstance?.log({source: 'web', message: 'Server ready'})
+          await devInstance?.log({source: 'app dev', level: 'error', message: 'Build error'})
+        })
+        try {
+          await withCapturedStandardStreams(async ({stdout, stderr}) => {
+            await Dev.run(
+              ['--path', tmp, '--store', store.shopDomain, ...(source.startsWith('-') ? [source] : [])],
+              import.meta.url,
+            )
+            const events = stdout()
+              .trim()
+              .split('\n')
+              .map((line) => JSON.parse(line))
+            events.forEach((event) => {
+              expect(() => Dev.jsonOutputSchema.validate(event)).not.toThrow()
+              expect(event).not.toHaveProperty('type')
+            })
+            expect(events).toEqual(
+              expect.arrayContaining([
+                expect.objectContaining({source: 'app dev', level: 'info', message: 'Resolving app setup'}),
+                expect.objectContaining({source: 'app dev', level: 'info', message: 'Starting dev'}),
+                expect.objectContaining({source: 'app dev', level: 'info', message: 'Updated'}),
+                expect.objectContaining({source: 'web', message: 'Server ready'}),
+                expect.objectContaining({level: 'error', message: 'Build error'}),
+              ]),
+            )
+            expect(logFile).toBeDefined()
+            expect(stdout()).toBe(await readFile(logFile!))
+            expect(stderr()).toBe('')
+          })
+        } finally {
+          vi.unstubAllEnvs()
+        }
+      })
+    },
+  )
 
   test.each([false, true])('JSON preserves the input policy with no-input=%s', async (noInput) => {
     await inTemporaryDirectory(async (tmp) => {
@@ -159,33 +171,48 @@ describe('app dev command', () => {
     })
   })
 
-  test('a runtime failure ends the JSONL stream with the shared fatal error', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      const {store} = mockAppAndStore(tmp)
-      vi.mocked(getTunnelMode).mockResolvedValue({mode: 'auto'})
-      vi.mocked(dev).mockImplementation(async () => {
-        outputInfo('Starting dev')
-        throw new AbortError('Tunnel stopped')
+  test.each([false, true])(
+    'a failure during store selection=%s writes the same final error record to both outputs',
+    async (duringSetup) => {
+      await inTemporaryDirectory(async (tmp) => {
+        const {store} = mockAppAndStore(tmp)
+        vi.mocked(getTunnelMode).mockResolvedValue({mode: 'auto'})
+        const logFile = devInstancePaths({command: 'app dev', directory: tmp, key: 'shopify.app.toml'}).logFile
+        const fail = async () => {
+          outputInfo('Starting dev')
+          throw new AbortError('Dev failed')
+        }
+        vi.mocked(dev).mockImplementation(fail)
+        if (duringSetup) vi.mocked(storeContext).mockImplementation(fail)
+        await withCapturedStandardStreams(async ({stdout, stderr}) => {
+          await expect(
+            Dev.run(['--path', tmp, '--store', store.shopDomain, '--json'], import.meta.url),
+          ).rejects.toThrow()
+          expect(
+            stdout()
+              .trim()
+              .split('\n')
+              .map((line) => JSON.parse(line))
+              .slice(-2),
+          ).toEqual([
+            expect.objectContaining({level: 'info', message: 'Starting dev'}),
+            expect.objectContaining({
+              source: 'app dev',
+              level: 'error',
+              message: 'Dev failed',
+              error: {type: 'abort', message: 'Dev failed'},
+            }),
+          ])
+          expect(logFile).toBeDefined()
+          expect(stdout()).toBe(await readFile(logFile))
+          expect(stderr()).toBe('')
+        })
+        await expect(
+          readDevInstance({command: 'app dev', directory: tmp, key: 'shopify.app.toml'}),
+        ).resolves.toBeUndefined()
       })
-      await withCapturedStandardStreams(async ({stdout, stderr}) => {
-        await expect(Dev.run(['--path', tmp, '--store', store.shopDomain, '--json'], import.meta.url)).rejects.toThrow()
-        expect(
-          stdout()
-            .trim()
-            .split('\n')
-            .map((line) => JSON.parse(line))
-            .slice(-2),
-        ).toEqual([
-          expect.objectContaining({level: 'info', message: 'Starting dev'}),
-          {error: {type: 'abort', message: 'Tunnel stopped'}},
-        ])
-        expect(stderr()).toBe('')
-      })
-      await expect(
-        readDevInstance({command: 'app dev', directory: tmp, key: 'shopify.app.toml'}),
-      ).resolves.toBeUndefined()
-    })
-  })
+    },
+  )
 
   test.each([
     ['app dev', Dev, dev],
@@ -319,6 +346,9 @@ describe('app dev command', () => {
         vi.mocked(getTunnelMode).mockResolvedValue({mode: 'auto'})
         const running = await acquireDevInstance({command: 'app dev', directory: tmp, key: 'shopify.app.toml'})
 
+        await running.log({source: 'app dev', message: 'Existing session'})
+        const existingLog = await readFile(running.paths.logFile)
+
         // The command's error handler renders the AbortError and exits.
         await withCapturedStandardStreams(async ({stdout}) => {
           await expect(
@@ -337,6 +367,7 @@ describe('app dev command', () => {
           acquireDevInstance({command: 'app dev', directory: tmp, key: 'shopify.app.toml'}),
         ).rejects.toMatchObject({code: DEV_INSTANCE_ALREADY_RUNNING_CODE, details: {instance: running.info}})
 
+        await expect(readFile(running.paths.logFile)).resolves.toBe(existingLog)
         expect(storeContext).not.toHaveBeenCalled()
         expect(dev).not.toHaveBeenCalled()
         await running.release()

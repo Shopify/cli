@@ -5,14 +5,18 @@ import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-link
 import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
 import {getTunnelMode} from '../../services/dev/tunnel-mode.js'
-import {appDevJsonOutputSchema} from '../../services/dev/types.js'
-import {Flags} from '@oclif/core'
+import {Errors, Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags, jsonFlag, portFlag} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
-import {acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
+import {
+  acquireDevInstance,
+  devInstanceLogOutputSchema,
+  type DevInstance,
+  type DevInstanceLogEntry,
+} from '@shopify/cli-kit/node/dev-instance'
 import {basename} from '@shopify/cli-kit/node/path'
-import {emitCommandEvent, runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
+import {runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
 import {jsonOutputEnabled} from '@shopify/cli-kit/node/environment'
 import {outputResult} from '@shopify/cli-kit/node/output'
 
@@ -25,10 +29,10 @@ export default class Dev extends AppLinkedCommand {
 
   static descriptionWithMarkdown = `Builds and previews your app on a dev store, and watches for changes. [Read more about testing apps locally](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).
 
-With \`--json\`, streams diagnostic and progress events as JSON Lines to stdout until stopped. There is no final result. Fatal errors use the standard JSON error envelope. Setup prompts remain on stderr; use \`--no-input\` for unattended runs.`
+With \`--json\`, streams the exact JSON Lines written to the session log until stopped. There is no final result. Setup messages are buffered until the app configuration is selected and the session log is acquired. Runtime failures include the shared CLI error in the final log record; failures before a session is acquired use the standard JSON error envelope. Setup prompts remain on stderr; use \`--no-input\` for unattended runs.`
 
   static get jsonOutputSchema() {
-    return appDevJsonOutputSchema
+    return devInstanceLogOutputSchema
   }
 
   static description = this.descriptionForHelp()
@@ -130,6 +134,30 @@ With \`--json\`, streams diagnostic and progress events as JSON Lines to stdout 
     return 'app dev stop'
   }
 
+  private devInstance?: DevInstance
+  private startupLogs: DevInstanceLogEntry[] = []
+
+  async catch(error: Error & {skipOclifErrorHandling: boolean}): Promise<void> {
+    const instance = this.devInstance
+    if (!instance || !jsonOutputEnabled(process.env, this.argv)) {
+      for (const entry of this.startupLogs) outputResult(JSON.stringify(entry))
+      await instance?.release()
+      return super.catch(error)
+    }
+    error.skipOclifErrorHandling = true
+    const {errorHandler} = await import('@shopify/cli-kit/node/error-handler')
+    const {errorToJson} = await import('@shopify/cli-kit/node/error/serialization')
+    try {
+      await errorHandler(error, this.config, async (mappedError) => {
+        const jsonError = errorToJson(mappedError)
+        await instance.log({source: 'app dev', level: 'error', message: jsonError.message, error: jsonError})
+      })
+    } finally {
+      await instance.release()
+    }
+    return Errors.handle(error)
+  }
+
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Dev)
 
@@ -167,61 +195,73 @@ With \`--json\`, streams diagnostic and progress events as JSON Lines to stdout 
         appName: appContextResult.remoteApp.title,
         clientId: appContextResult.remoteApp.apiKey,
       },
-      onLog: flags.json
-        ? (entry) =>
-            emitCommandEvent({
-              type: 'diagnostic',
-              level: entry.level ?? 'info',
-              message: entry.source === 'app dev' ? entry.message : `${entry.source}: ${entry.message}`,
-            })
-        : undefined,
+      logOutput: flags.json ? process.stdout : undefined,
+    })
+    this.devInstance = devInstance
+    await Promise.all(this.startupLogs.map((entry) => devInstance.log(entry)))
+    this.startupLogs = []
+
+    const store = await storeContext({
+      appContextResult,
+      storeFqdn: flags.store,
+      forceReselectStore: flags.reset,
+      storeCreationMode: 'selection-option',
     })
 
-    try {
-      const store = await storeContext({
-        appContextResult,
-        storeFqdn: flags.store,
-        forceReselectStore: flags.reset,
-        storeCreationMode: 'selection-option',
-      })
-
-      const devOptions: DevOptions = {
-        ...appContextResult,
-        store,
-        directory: flags.path,
-        update: !flags['no-update'],
-        unsafeValidation: flags['unsafe-validation'],
-        skipDependenciesInstallation: flags['skip-dependencies-installation'],
-        commandConfig: this.config,
-        subscriptionProductUrl: flags['subscription-product-url'],
-        checkoutCartUrl: flags['checkout-cart-url'],
-        theme: flags.theme,
-        themeExtensionPort: flags['theme-app-extension-port'],
-        storePassword: flags['store-password'],
-        notify: flags.notify,
-        graphiqlPort: flags['graphiql-port'],
-        graphiqlKey: flags['graphiql-key'],
-        // Must stay undefined when the flag is absent: generateCertificate() only prompts when this is nullish.
-        installMkcert: flags['install-mkcert'],
-        tunnel: tunnelMode,
-        devInstance,
-      }
-
-      await dev(devOptions)
-    } finally {
-      await devInstance.release()
+    const devOptions: DevOptions = {
+      ...appContextResult,
+      store,
+      directory: flags.path,
+      update: !flags['no-update'],
+      unsafeValidation: flags['unsafe-validation'],
+      skipDependenciesInstallation: flags['skip-dependencies-installation'],
+      commandConfig: this.config,
+      subscriptionProductUrl: flags['subscription-product-url'],
+      checkoutCartUrl: flags['checkout-cart-url'],
+      theme: flags.theme,
+      themeExtensionPort: flags['theme-app-extension-port'],
+      storePassword: flags['store-password'],
+      notify: flags.notify,
+      graphiqlPort: flags['graphiql-port'],
+      graphiqlKey: flags['graphiql-key'],
+      // Must stay undefined when the flag is absent: generateCertificate() only prompts when this is nullish.
+      installMkcert: flags['install-mkcert'],
+      tunnel: tunnelMode,
+      devInstance,
     }
+
+    await dev(devOptions)
     return {app: appContextResult.app}
   }
 
   protected async _run<T>(): Promise<T> {
-    if (!jsonOutputEnabled(process.env, this.argv)) return super._run<T>()
+    const execute = async () => {
+      try {
+        return await super._run<T>()
+      } finally {
+        await this.devInstance?.release()
+      }
+    }
+    if (!jsonOutputEnabled(process.env, this.argv)) return execute()
     return runWithCommandEvents(
       {
         outputMode: 'json',
-        sink: ({type: _, ...entry}) => outputResult(JSON.stringify(appDevJsonOutputSchema.validate(entry))),
+        sink: (event) => {
+          const entry: DevInstanceLogEntry = {
+            timestamp: event.timestamp,
+            source: 'app dev',
+            level: event.type === 'diagnostic' ? event.level : 'info',
+            message: event.message ?? (event.type === 'progress' ? event.operation : ''),
+          }
+          if (event.type === 'progress' && event.status === 'failed') entry.level = 'error'
+          if (this.devInstance) {
+            this.devInstance.log(entry).catch(() => {})
+          } else {
+            this.startupLogs.push(entry)
+          }
+        },
       },
-      () => super._run<T>(),
+      execute,
     )
   }
 }
