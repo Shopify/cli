@@ -2,12 +2,14 @@ import SecurityReview from './review.js'
 import SecurityCheck from './check.js'
 import {appFlags} from '../../../flags.js'
 import securityReview from '../../../services/security-review.js'
+import {renderSecurityReviewResult} from '../../../services/security-review/result.js'
 import AppLinkedCommand from '../../../utilities/app-linked-command.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/security-review.js')
+vi.mock('../../../services/security-review/result.js')
 
 describe('app security review command', () => {
   test('documents command-specific telemetry and links to usage reporting', () => {
@@ -54,10 +56,21 @@ describe('app security review command', () => {
       configName: undefined,
       clientId: undefined,
       withoutAppConfig: false,
-      verbose: false,
       checkIds: [],
       blocking: 'none',
     })
+  })
+
+  test.each([
+    ['without --verbose', [], false],
+    ['with --verbose', ['--verbose'], true],
+  ])('presents the reviewed results %s', async (_description, argv, verbose) => {
+    const review = {} as Awaited<ReturnType<typeof securityReview>>
+    vi.mocked(securityReview).mockResolvedValue(review)
+
+    await SecurityReview.run(argv, import.meta.url)
+
+    expect(renderSecurityReviewResult).toHaveBeenCalledWith(review, {verbose})
   })
 
   test('forwards --path, --config, --client-id and --without-app-config', async () => {
@@ -79,7 +92,7 @@ describe('app security review command', () => {
     expect(securityReview).toHaveBeenLastCalledWith(expect.objectContaining({configName: 'staging'}))
   })
 
-  test('forwards --path, --verbose, every --check-id and --blocking', async () => {
+  test('forwards --path, every --check-id and --blocking', async () => {
     await SecurityReview.run(
       [
         '--path',
@@ -100,7 +113,6 @@ describe('app security review command', () => {
       configName: undefined,
       clientId: undefined,
       withoutAppConfig: false,
-      verbose: true,
       checkIds: ['OPEN_REDIRECT', 'EOL_API_VERSION'],
       blocking: 'medium',
     })

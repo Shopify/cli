@@ -1,6 +1,7 @@
 import {appSecurityBlockingFlag} from './blocking-flag.js'
 import {appSecuritySelectionFlags} from './selection-flags.js'
 import securityReview from '../../../services/security-review.js'
+import {renderSecurityReviewResult} from '../../../services/security-review/result.js'
 import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -32,14 +33,14 @@ Reports the number of findings to Shopify as usage telemetry, but not finding de
   public async run(): Promise<void> {
     const {flags} = await this.parse(SecurityReview)
 
-    await securityReview({
+    const review = await securityReview({
       directory: flags.path,
       configName: flags.config,
       clientId: flags['client-id'],
       withoutAppConfig: Boolean(flags['without-app-config']),
-      verbose: Boolean(flags.verbose),
       checkIds: flags['check-id'] ?? [],
       blocking: flags.blocking,
     })
+    renderSecurityReviewResult(review, {verbose: Boolean(flags.verbose)})
   }
 }

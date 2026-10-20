@@ -1,5 +1,5 @@
 import {appSecurityArtifactPaths} from './app-security-artifacts.js'
-import {resolveAppSecurityCommands} from './app-security-commands.js'
+import {resolveAppSecurityCommands, type AppSecurityCommands} from './app-security-commands.js'
 import {
   resolveAppSecuritySelection,
   resultsKey,
@@ -7,7 +7,6 @@ import {
   type AppSecuritySelectionOptions,
 } from './app-security-selection.js'
 import {loadAppSecurityResults, type AppSecurityResults} from './app-security-results.js'
-import {renderSecurityReview, type SecurityReviewPresenterInput} from './security-review-output.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
 import {activeFindings, SEVERITY_RANK, type CombinedCheck} from './app-security-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -18,7 +17,6 @@ interface SecurityReviewOptions {
   configName?: string
   clientId?: string
   withoutAppConfig?: boolean
-  verbose: boolean
   /** Exact check IDs from `--check-id`; empty means every check. */
   checkIds: string[]
   blocking: AppSecurityBlockingLevel
@@ -42,28 +40,22 @@ export interface SecurityReviewResult {
   }
 }
 
+/** What `securityReview` returns: the reviewed results, and the commands that the review suggests running next. */
+export interface ReviewedAppSecurityResults {
+  result: SecurityReviewResult
+  commands: AppSecurityCommands
+}
+
 export interface SecurityReviewDependencies {
   resolveSelection(options: AppSecuritySelectionOptions): Promise<AppSecuritySelection>
   loadResults(selection: AppSecuritySelection, path: string): Promise<AppSecurityResults>
-  render(input: SecurityReviewPresenterInput): void
-  now(): Date
-  setExitCode(exitCode: number): void
   recordMetadata(fields: AppSecurityMetadata): Promise<void>
 }
 
 const defaultDependencies: SecurityReviewDependencies = {
   resolveSelection: resolveAppSecuritySelection,
   loadResults: loadAppSecurityResults,
-  render: renderSecurityReview,
-  now: () => new Date(),
-  setExitCode: (exitCode) => {
-    process.exitCode = exitCode
-  },
   recordMetadata: recordAppSecurityMetadata,
-}
-
-function isBlockingBreached(result: SecurityReviewResult): boolean {
-  return result.blocking.blockedChecks > 0
 }
 
 /**
@@ -124,14 +116,14 @@ function assertKnownCheckIds(checkIds: string[], checks: CombinedCheck[]): void 
 }
 
 /**
- * Shows the combined app security check results (§9). Loads both result files, narrows them with `--check-id`, then
- * renders the review to stderr. A `--blocking` breach sets the exit code after the
- * output; an error exits 1 and everything else, including missing files, exits 0.
+ * Reviews the combined app security check results (§9). Loads both result files and narrows them with `--check-id`.
+ * Prints nothing: an error aborts, and everything else, including missing files, returns the reviewed results for
+ * the presenter.
  */
 export default async function securityReview(
   options: SecurityReviewOptions,
   dependencies: SecurityReviewDependencies = defaultDependencies,
-): Promise<void> {
+): Promise<ReviewedAppSecurityResults> {
   const selection = await dependencies.resolveSelection({
     path: options.directory,
     config: options.configName,
@@ -154,17 +146,13 @@ export default async function securityReview(
     await dependencies.recordMetadata({num_security_findings: findings})
   }
 
-  dependencies.render({
+  return {
     result,
-    verbose: options.verbose,
-    now: dependencies.now(),
     // The latest scan's scope, so running `check` again gathers the same files.
     commands: resolveAppSecurityCommands(
       selection,
       options.directory,
       results.sources.deterministic?.document.coverage.scope,
     ),
-  })
-
-  if (isBlockingBreached(result)) dependencies.setExitCode(1)
+  }
 }
