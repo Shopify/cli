@@ -1,5 +1,6 @@
 import AutocorrectStatus from './status.js'
 import AutocorrectOn from './on.js'
+import AutocorrectOff from './off.js'
 import {isAutocorrectEnabled, setAutocorrect} from '../../../services/conf.js'
 import {autocorrectJsonOutputSchema} from '../../../services/autocorrect/types.js'
 import {launchCLI} from '@shopify/cli-kit/node/cli-launcher'
@@ -23,6 +24,7 @@ afterEach(() => {
 const commands = [
   {name: 'status', command: AutocorrectStatus, enabled: false},
   {name: 'on', command: AutocorrectOn, enabled: true},
+  {name: 'off', command: AutocorrectOff, enabled: false},
 ]
 
 test.each(commands)('$name exposes the result schema and JSON flags in help', ({command}) => {
