@@ -1,12 +1,13 @@
 import {renderDev} from './ui.js'
 import {DevSessionUI} from './ui/components/DevSessionUI.js'
 import {DevSessionStatusManager} from './processes/dev-session/dev-session-status-manager.js'
+import {appDevJsonOutputSchema} from './types.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
-import {commandEventOutputSchema, emitCommandEvent, runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
+import {emitCommandEvent, runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -33,7 +34,7 @@ describe('ui', () => {
           await runWithCommandEvents(
             {
               outputMode: 'json',
-              sink: (event) => outputResult(JSON.stringify(commandEventOutputSchema.validate(event))),
+              sink: ({type: _, ...entry}) => outputResult(JSON.stringify(appDevJsonOutputSchema.validate(entry))),
             },
             async () => {
               const instance = await acquireDevInstance({
@@ -97,6 +98,7 @@ describe('ui', () => {
                 .trim()
                 .split('\n')
                 .map((line) => JSON.parse(line))
+              events.forEach((event) => expect(event).not.toHaveProperty('type'))
               expect(events).toHaveLength(burstSize + 6)
               const messages = events.map((event) => event.message)
               expect(messages).toEqual(

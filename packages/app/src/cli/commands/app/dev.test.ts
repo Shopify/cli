@@ -5,6 +5,7 @@ import {dev} from '../../services/dev.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
 import {getTunnelMode} from '../../services/dev/tunnel-mode.js'
+import {appDevJsonOutputSchema} from '../../services/dev/types.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import {
   testAppLinked,
@@ -16,7 +17,7 @@ import {
 } from '../../models/app/app.test-data.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {commandEventOutputSchema, emitCommandEvent} from '@shopify/cli-kit/node/command-events'
+import {emitCommandEvent} from '@shopify/cli-kit/node/command-events'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
@@ -71,12 +72,20 @@ describe('app dev command', () => {
   }
 
   test('declares its streaming schema and retains inherited flags', () => {
-    expect(Dev.jsonOutputSchema).toBe(commandEventOutputSchema)
+    expect(Dev.jsonOutputSchema).toBe(appDevJsonOutputSchema)
     expect(Dev.flags.json.char).toBe('j')
     expect(Dev.flags.json.env).toBe('SHOPIFY_FLAG_JSON')
     expect(Dev.baseFlags).toHaveProperty('json-schema')
     expect(Dev.baseFlags).toHaveProperty('auth-alias')
-    expect(Dev.descriptionForHelp()).toContain('CommandEvent')
+    expect(Dev.descriptionForHelp()).toContain('AppDevEvent')
+  })
+
+  test.each([
+    {timestamp: '2026-10-20T09:00:00Z', level: 'info', message: 'Starting dev'},
+    {timestamp: '2026-10-20T09:00:00Z', operation: 'app-dev-preview', status: 'updated', message: 'Updated'},
+  ] as const)('the stream schema accepts records without type and rejects extra type fields: %j', (entry) => {
+    expect(JSON.parse(appDevJsonOutputSchema.encode(entry))).toEqual(entry)
+    expect(() => appDevJsonOutputSchema.validate({...entry, type: 'diagnostic'})).toThrow()
   })
 
   test.each(['--json', '-j', 'env'])('%s streams shared events on stdout without a final result', async (source) => {
@@ -88,7 +97,7 @@ describe('app dev command', () => {
         outputInfo('Starting dev')
         emitCommandEvent({type: 'progress', operation: 'app-dev-preview', status: 'updated', message: 'Updated'})
         await devInstance?.log({source: 'web', message: 'Server ready'})
-          await devInstance?.log({source: 'app dev', level: 'error', message: 'Build error'})
+        await devInstance?.log({source: 'app dev', level: 'error', message: 'Build error'})
       })
       try {
         await withCapturedStandardStreams(async ({stdout, stderr}) => {
@@ -100,13 +109,16 @@ describe('app dev command', () => {
             .trim()
             .split('\n')
             .map((line) => JSON.parse(line))
-          events.forEach((event) => expect(() => Dev.jsonOutputSchema.validate(event)).not.toThrow())
+          events.forEach((event) => {
+            expect(() => Dev.jsonOutputSchema.validate(event)).not.toThrow()
+            expect(event).not.toHaveProperty('type')
+          })
           expect(events).toEqual(
             expect.arrayContaining([
-              expect.objectContaining({type: 'diagnostic', message: 'Starting dev'}),
-              expect.objectContaining({type: 'progress', message: 'Updated'}),
-              expect.objectContaining({type: 'diagnostic', message: 'web: Server ready'}),
-                expect.objectContaining({type: 'diagnostic', level: 'error', message: 'Build error'}),
+              expect.objectContaining({level: 'info', message: 'Starting dev'}),
+              expect.objectContaining({status: 'updated', operation: 'app-dev-preview', message: 'Updated'}),
+              expect.objectContaining({level: 'info', message: 'web: Server ready'}),
+              expect.objectContaining({level: 'error', message: 'Build error'}),
             ]),
           )
           expect(stderr()).toBe('')
@@ -164,7 +176,7 @@ describe('app dev command', () => {
             .map((line) => JSON.parse(line))
             .slice(-2),
         ).toEqual([
-          expect.objectContaining({type: 'diagnostic', message: 'Starting dev'}),
+          expect.objectContaining({level: 'info', message: 'Starting dev'}),
           {error: {type: 'abort', message: 'Tunnel stopped'}},
         ])
         expect(stderr()).toBe('')

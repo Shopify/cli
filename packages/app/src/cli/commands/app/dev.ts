@@ -5,13 +5,14 @@ import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-link
 import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
 import {getTunnelMode} from '../../services/dev/tunnel-mode.js'
+import {appDevJsonOutputSchema} from '../../services/dev/types.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags, jsonFlag, portFlag} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
 import {basename} from '@shopify/cli-kit/node/path'
-import {commandEventOutputSchema, emitCommandEvent, runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
+import {emitCommandEvent, runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
 import {jsonOutputEnabled} from '@shopify/cli-kit/node/environment'
 import {outputResult} from '@shopify/cli-kit/node/output'
 
@@ -27,7 +28,7 @@ export default class Dev extends AppLinkedCommand {
 With \`--json\`, streams diagnostic and progress events as JSON Lines to stdout until stopped. There is no final result. Fatal errors use the standard JSON error envelope. Setup prompts remain on stderr; use \`--no-input\` for unattended runs.`
 
   static get jsonOutputSchema() {
-    return commandEventOutputSchema
+    return appDevJsonOutputSchema
   }
 
   static description = this.descriptionForHelp()
@@ -216,7 +217,10 @@ With \`--json\`, streams diagnostic and progress events as JSON Lines to stdout 
   protected async _run<T>(): Promise<T> {
     if (!jsonOutputEnabled(process.env, this.argv)) return super._run<T>()
     return runWithCommandEvents(
-      {outputMode: 'json', sink: (event) => outputResult(JSON.stringify(commandEventOutputSchema.validate(event)))},
+      {
+        outputMode: 'json',
+        sink: ({type: _, ...entry}) => outputResult(JSON.stringify(appDevJsonOutputSchema.validate(entry))),
+      },
       () => super._run<T>(),
     )
   }

@@ -2004,27 +2004,23 @@ DESCRIPTION
 
   Use `--json-schema` to print the result, error, and event schemas.
 
-  Output from `--json` conforms to the `CommandEvent` schema.
+  Output from `--json` conforms to the `AppDevEvent` schema.
 
   ```json
   {
     "anyOf": [
       {
-        "$ref": "#/definitions/CommandDiagnosticEvent"
+        "$ref": "#/definitions/AppDevDiagnostic"
       },
       {
-        "$ref": "#/definitions/CommandProgressEvent"
+        "$ref": "#/definitions/AppDevProgress"
       }
     ],
-    "title": "CommandEvent",
+    "title": "AppDevEvent",
     "definitions": {
-      "CommandDiagnosticEvent": {
+      "AppDevDiagnostic": {
         "type": "object",
         "properties": {
-          "type": {
-            "type": "string",
-            "const": "diagnostic"
-          },
           "timestamp": {
             "type": "string",
             "format": "date-time",
@@ -2050,22 +2046,17 @@ DESCRIPTION
           }
         },
         "required": [
-          "type",
           "timestamp",
           "level",
           "message"
         ],
         "additionalProperties": false
       },
-      "CommandProgressEvent": {
+      "AppDevProgress": {
         "type": "object",
         "properties": {
-          "type": {
-            "type": "string",
-            "const": "progress"
-          },
           "timestamp": {
-            "$ref": "#/definitions/CommandDiagnosticEvent/properties/timestamp"
+            "$ref": "#/definitions/AppDevDiagnostic/properties/timestamp"
           },
           "status": {
             "type": "string",
@@ -2093,7 +2084,6 @@ DESCRIPTION
           }
         },
         "required": [
-          "type",
           "timestamp",
           "status",
           "operation"
