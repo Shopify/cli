@@ -23,7 +23,10 @@ import {
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
-vi.mock('../../services/dev.js')
+vi.mock('../../services/dev.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/dev.js')>()),
+  dev: vi.fn(),
+}))
 vi.mock('../../services/dev-clean.js')
 vi.mock('../../services/app-context.js')
 vi.mock('../../services/store-context.js')

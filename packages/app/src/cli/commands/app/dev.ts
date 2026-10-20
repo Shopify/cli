@@ -1,5 +1,5 @@
 import {appFlags} from '../../flags.js'
-import {dev, DevOptions} from '../../services/dev.js'
+import {dev, DevOptions, DevSession} from '../../services/dev.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
@@ -9,8 +9,6 @@ import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags, portFlag} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
-import {acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
-import {basename} from '@shopify/cli-kit/node/path'
 
 export default class Dev extends AppLinkedCommand {
   public static get requiresSyncAnalytics(): boolean {
@@ -119,6 +117,8 @@ export default class Dev extends AppLinkedCommand {
     return 'app dev stop'
   }
 
+  private readonly session = new DevSession()
+
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Dev)
 
@@ -145,20 +145,7 @@ export default class Dev extends AppLinkedCommand {
       userProvidedConfigName: flags.config,
     })
 
-    // One `app dev` per app configuration: a second one reports the running instance and exits,
-    // so agents can discover a session started in another terminal and read its log.
-    const devInstance = await acquireDevInstance({
-      command: 'app dev',
-      directory: appContextResult.app.directory,
-      key: basename(appContextResult.app.configPath),
-      details: {
-        configPath: appContextResult.app.configPath,
-        appName: appContextResult.remoteApp.title,
-        clientId: appContextResult.remoteApp.apiKey,
-      },
-    })
-
-    try {
+    return this.session.start(appContextResult, async (devInstance) => {
       const store = await storeContext({
         appContextResult,
         storeFqdn: flags.store,
@@ -189,9 +176,7 @@ export default class Dev extends AppLinkedCommand {
       }
 
       await dev(devOptions)
-    } finally {
-      await devInstance.release()
-    }
-    return {app: appContextResult.app}
+      return {app: appContextResult.app}
+    })
   }
 }

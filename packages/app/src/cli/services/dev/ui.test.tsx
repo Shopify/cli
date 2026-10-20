@@ -3,7 +3,7 @@ import {DevSessionUI} from './ui/components/DevSessionUI.js'
 import {DevSessionStatusManager} from './processes/dev-session/dev-session-status-manager.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 
@@ -19,6 +19,43 @@ afterEach(() => {
 
 describe('ui', () => {
   describe('renderDev', () => {
+    test('a process failure aborts and waits for the other processes to stop', async () => {
+      vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+      const abortController = new AbortController()
+      const failure = new Error('Process failed')
+      let stopped = false
+      const signalListeners = process.listenerCount('SIGTERM')
+      await withCapturedStandardStreams(async () => {
+        await expect(
+          renderDev({
+            processes: [
+              {
+                prefix: 'failed',
+                action: async () => {
+                  throw failure
+                },
+              },
+              {
+                prefix: 'watcher',
+                action: async (_stdout, _stderr, signal) => {
+                  await new Promise<void>((resolve) => signal.addEventListener('abort', () => resolve(), {once: true}))
+                  await new Promise((resolve) => setTimeout(resolve, 5))
+                  stopped = true
+                },
+              },
+            ],
+            previewUrl: 'https://example.com',
+            app: {id: '123', developerPlatformClient},
+            abortController,
+            shopFqdn: 'dev-store.myshopify.com',
+            devSessionStatusManager: new DevSessionStatusManager(),
+          }),
+        ).rejects.toBe(failure)
+      })
+      expect(stopped).toBe(true)
+      expect(process.listenerCount('SIGTERM')).toBe(signalListeners)
+    })
+
     test("doesn't use ink when terminal doesn't support TTY", async () => {
       vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
       const concurrentProcess = {
