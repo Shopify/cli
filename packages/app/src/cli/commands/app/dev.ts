@@ -1,24 +1,16 @@
 import {appFlags} from '../../flags.js'
-import {dev, DevOptions} from '../../services/dev.js'
+import {dev, DevOptions, DevSession} from '../../services/dev.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
 import {getTunnelMode} from '../../services/dev/tunnel-mode.js'
-import {Errors, Flags} from '@oclif/core'
+import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags, jsonFlag, portFlag} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
-import {
-  acquireDevInstance,
-  devInstanceLogOutputSchema,
-  type DevInstance,
-  type DevInstanceLogEntry,
-} from '@shopify/cli-kit/node/dev-instance'
-import {basename} from '@shopify/cli-kit/node/path'
-import {runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
+import {devInstanceLogOutputSchema} from '@shopify/cli-kit/node/dev-instance'
 import {jsonOutputEnabled} from '@shopify/cli-kit/node/environment'
-import {outputResult} from '@shopify/cli-kit/node/output'
 
 export default class Dev extends AppLinkedCommand {
   public static get requiresSyncAnalytics(): boolean {
@@ -134,29 +126,7 @@ With \`--json\`, streams the exact JSON Lines written to the session log until s
     return 'app dev stop'
   }
 
-  private devInstance?: DevInstance
-  private startupLogs: DevInstanceLogEntry[] = []
-
-  async catch(error: Error & {skipOclifErrorHandling: boolean}): Promise<void> {
-    const instance = this.devInstance
-    if (!instance || !jsonOutputEnabled(process.env, this.argv)) {
-      for (const entry of this.startupLogs) outputResult(JSON.stringify(entry))
-      await instance?.release()
-      return super.catch(error)
-    }
-    error.skipOclifErrorHandling = true
-    const {errorHandler} = await import('@shopify/cli-kit/node/error-handler')
-    const {errorToJson} = await import('@shopify/cli-kit/node/error/serialization')
-    try {
-      await errorHandler(error, this.config, async (mappedError) => {
-        const jsonError = errorToJson(mappedError)
-        await instance.log({source: 'app dev', level: 'error', message: jsonError.message, error: jsonError})
-      })
-    } finally {
-      await instance.release()
-    }
-    return Errors.handle(error)
-  }
+  private readonly session = new DevSession(jsonOutputEnabled(process.env, this.argv))
 
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Dev)
@@ -184,84 +154,46 @@ With \`--json\`, streams the exact JSON Lines written to the session log until s
       userProvidedConfigName: flags.config,
     })
 
-    // One `app dev` per app configuration: a second one reports the running instance and exits,
-    // so agents can discover a session started in another terminal and read its log.
-    const devInstance = await acquireDevInstance({
-      command: 'app dev',
-      directory: appContextResult.app.directory,
-      key: basename(appContextResult.app.configPath),
-      details: {
-        configPath: appContextResult.app.configPath,
-        appName: appContextResult.remoteApp.title,
-        clientId: appContextResult.remoteApp.apiKey,
-      },
-      logOutput: flags.json ? process.stdout : undefined,
+    return this.session.start(appContextResult, async (devInstance) => {
+      const store = await storeContext({
+        appContextResult,
+        storeFqdn: flags.store,
+        forceReselectStore: flags.reset,
+        storeCreationMode: 'selection-option',
+      })
+
+      const devOptions: DevOptions = {
+        ...appContextResult,
+        store,
+        directory: flags.path,
+        update: !flags['no-update'],
+        unsafeValidation: flags['unsafe-validation'],
+        skipDependenciesInstallation: flags['skip-dependencies-installation'],
+        commandConfig: this.config,
+        subscriptionProductUrl: flags['subscription-product-url'],
+        checkoutCartUrl: flags['checkout-cart-url'],
+        theme: flags.theme,
+        themeExtensionPort: flags['theme-app-extension-port'],
+        storePassword: flags['store-password'],
+        notify: flags.notify,
+        graphiqlPort: flags['graphiql-port'],
+        graphiqlKey: flags['graphiql-key'],
+        // Must stay undefined when the flag is absent: generateCertificate() only prompts when this is nullish.
+        installMkcert: flags['install-mkcert'],
+        tunnel: tunnelMode,
+        devInstance,
+      }
+
+      await dev(devOptions)
+      return {app: appContextResult.app}
     })
-    this.devInstance = devInstance
-    await Promise.all(this.startupLogs.map((entry) => devInstance.log(entry)))
-    this.startupLogs = []
+  }
 
-    const store = await storeContext({
-      appContextResult,
-      storeFqdn: flags.store,
-      forceReselectStore: flags.reset,
-      storeCreationMode: 'selection-option',
-    })
-
-    const devOptions: DevOptions = {
-      ...appContextResult,
-      store,
-      directory: flags.path,
-      update: !flags['no-update'],
-      unsafeValidation: flags['unsafe-validation'],
-      skipDependenciesInstallation: flags['skip-dependencies-installation'],
-      commandConfig: this.config,
-      subscriptionProductUrl: flags['subscription-product-url'],
-      checkoutCartUrl: flags['checkout-cart-url'],
-      theme: flags.theme,
-      themeExtensionPort: flags['theme-app-extension-port'],
-      storePassword: flags['store-password'],
-      notify: flags.notify,
-      graphiqlPort: flags['graphiql-port'],
-      graphiqlKey: flags['graphiql-key'],
-      // Must stay undefined when the flag is absent: generateCertificate() only prompts when this is nullish.
-      installMkcert: flags['install-mkcert'],
-      tunnel: tunnelMode,
-      devInstance,
-    }
-
-    await dev(devOptions)
-    return {app: appContextResult.app}
+  protected async handleError(error: Error): Promise<void> {
+    return this.session.handleError(error, this.config, () => super.handleError(error))
   }
 
   protected async _run<T>(): Promise<T> {
-    const execute = async () => {
-      try {
-        return await super._run<T>()
-      } finally {
-        await this.devInstance?.release()
-      }
-    }
-    if (!jsonOutputEnabled(process.env, this.argv)) return execute()
-    return runWithCommandEvents(
-      {
-        outputMode: 'json',
-        sink: (event) => {
-          const entry: DevInstanceLogEntry = {
-            timestamp: event.timestamp,
-            source: 'app dev',
-            level: event.type === 'diagnostic' ? event.level : 'info',
-            message: event.message ?? (event.type === 'progress' ? event.operation : ''),
-          }
-          if (event.type === 'progress' && event.status === 'failed') entry.level = 'error'
-          if (this.devInstance) {
-            this.devInstance.log(entry).catch(() => {})
-          } else {
-            this.startupLogs.push(entry)
-          }
-        },
-      },
-      execute,
-    )
+    return this.session.run(() => super._run<T>())
   }
 }
