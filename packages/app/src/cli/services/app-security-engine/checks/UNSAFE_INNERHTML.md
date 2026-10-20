@@ -43,8 +43,9 @@ a concrete trust-boundary violation, not merely a raw-rendering API.
      `metafield.namespace.key`, `metafieldsSet` responses
      — these are merchant-writable, so they are user-controlled even
      though they look like app config. Outside the app-owned namespace
-     (`$app`, `app--…`, or `app.metafields` in Liquid), any other installed
-     app with write access to that resource can also write them. A
+     (`$app`, `$app:<sub-namespace>`, `app--…`, or `app.metafields`; in
+     Liquid, for example `product.metafields["$app:custom"]`), any other
+     installed app with write access to that resource can also write them. A
      compromised app is a lower-trust writer: HTML or script stored in a
      shared namespace is not trusted author content, even if this app is
      the usual writer

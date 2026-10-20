@@ -52,7 +52,9 @@ because the HTML is rendered server-side or in Liquid, not via
    - If the value is stored in a metafield that the merchant can edit — user-controlled
    - If the value comes from a product/customer metafield — user-controlled
    - If the value is stored in a metafield or metaobject outside the app-owned
-     namespace (`$app`, `app--…`, or `app.metafields` in Liquid) —
+     namespace (`$app`, `$app:<sub-namespace>`, `app--…`, or
+     `app.metafields`; in Liquid, for example
+     `product.metafields["$app:custom"]`) —
      user-controlled. The merchant and any other installed app with write
      access to that resource can overwrite it, and a compromised app is a
      lower-trust writer. HTML or script stored there is not trusted author

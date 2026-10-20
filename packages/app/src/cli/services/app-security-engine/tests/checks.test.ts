@@ -219,6 +219,7 @@ describe('agent checks', () => {
       expect(check.prompt, id).toMatch(/other\s+(installed\s+)?app/)
       expect(check.prompt, id).toMatch(/write\s+access\s+to\s+that\s+resource/)
       expect(check.prompt, id).toMatch(/lower-trust\s+writer/)
+      expect(check.prompt, id).toContain('$app')
     }
 
     const crossSiteScripting = checks.get('CROSS_SITE_SCRIPTING')!.prompt

@@ -14,7 +14,7 @@ Trace every metafield or metaobject value the app reads to where it is output: L
 
 Decide ownership from the namespace or type prefix in the code. Don't look up definitions in `shopify.app.toml`.
 
-- App-owned: `$app`, `$app:<sub-namespace>`, a literal `app--…` namespace, Liquid `app.metafields.…`, and `<resource>.metafields['app--…']`. For metaobjects, a `$app:` type.
+- App-owned: `$app`, `$app:<sub-namespace>`, a literal `app--…` namespace, or `app.metafields`. In Liquid, for example `product.metafields["$app:custom"]`, `app.metafields.…` and `<resource>.metafields['app--…']`. For metaobjects, a `$app:` type.
 - Shared: every other literal namespace or type, such as `custom`, `reviews` or `specs`. Treat `shopify--` namespaces and standard definitions as shared too: Shopify controls their structure, but merchants and apps can write their values.
 - Unresolved: a namespace built at runtime, such as `product.metafields[ns]` or a `namespace` variable passed to a query. Name the candidate; don't guess its ownership.
 

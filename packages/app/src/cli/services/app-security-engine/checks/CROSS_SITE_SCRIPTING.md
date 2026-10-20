@@ -23,8 +23,10 @@ not a finding.
    and `postMessage` data after examining sender/origin validation. A database
    read, authenticated route, or Shopify API response does not by itself make
    the contained user-authored data trusted.
-   Metafields and metaobjects outside the app-owned namespace can be written by
-   the merchant and by any other installed app with write access to that
+   Metafields and metaobjects outside the app-owned namespace (`$app`,
+   `$app:<sub-namespace>`, `app--…`, or `app.metafields`; in Liquid, for
+   example `product.metafields["$app:custom"]`) can be written by the
+   merchant and by any other installed app with write access to that
    resource. A compromised or malicious app is a lower-trust writer, so their
    values are lower-trust input even when this app is the usual writer.
 
@@ -82,9 +84,10 @@ not a finding.
    metaobject is not author-controlled content, even if this app is the usual
    writer: any other installed app with write access to that resource can
    overwrite it, and a compromised app is a lower-trust writer that reaches
-   every viewer of the output. Only the app-owned namespace (`$app`, `app--…`,
-   or `app.metafields` in Liquid) keeps other apps out, and the merchant can
-   still edit it when its definition allows.
+   every viewer of the output. Only the app-owned namespace (`$app`,
+   `$app:<sub-namespace>`, `app--…`, or `app.metafields`; in Liquid, for
+   example `product.metafields["$app:custom"]`) keeps other apps out, and the
+   merchant can still edit it when its definition allows.
 
 ## Coordinate with existing checks
 
