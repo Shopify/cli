@@ -17,7 +17,7 @@ specific edit has reached the store. Check new output and test the behaviour bef
 claiming success. Web-server and browser health require their own checks.
 
 Each complete JSONL line contains `timestamp`, `source`, and `message`,
-with `stream` or `level` where available. Keep a byte offset to read new lines.
+with `level` where available. Keep a byte offset to read new lines.
 Wait for an incomplete final line to finish. If `sessionId` in the instance JSON
 changes, reset the offset: each new run clears the log. Logs have no size limit or
 rotation, so a long session can produce a large file.

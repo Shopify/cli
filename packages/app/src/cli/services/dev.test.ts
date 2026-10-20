@@ -189,12 +189,13 @@ describe('dev with a dev instance', () => {
         .split('\n')
         .filter(Boolean)
         .map((line) => JSON.parse(line))
+      entries.forEach((entry) => expect(entry).not.toHaveProperty('stream'))
       expect(entries).toEqual(
         expect.arrayContaining([
           expect.objectContaining({source: 'app dev', message: `Preview URL: ${previewUrl}`}),
           expect.objectContaining({source: 'app dev', message: `GraphiQL URL (Admin API): ${graphiqlUrl}`}),
-          expect.objectContaining({source: 'web', stream: 'stdout', message: 'Server listening on 3000'}),
-          expect.objectContaining({source: 'web', stream: 'stderr', message: 'Deprecation warning'}),
+          expect.objectContaining({source: 'web', message: 'Server listening on 3000'}),
+          expect.objectContaining({source: 'web', message: 'Deprecation warning'}),
           expect.objectContaining({source: 'discount', message: 'Building function discount...'}),
           expect.objectContaining({source: 'discount', message: 'Building GraphQL types...'}),
           expect.objectContaining({source: 'app-preview', message: 'Update accepted'}),
@@ -202,7 +203,7 @@ describe('dev with a dev instance', () => {
       )
       expect(
         entries
-          .filter(({source, stream}) => source === 'app dev' && !stream)
+          .filter(({source}) => source === 'app dev')
           .filter(({message}) => !message.startsWith('Preview URL:') && !message.startsWith('GraphiQL URL'))
           .map(({level, message}) => ({level, message})),
       ).toEqual([
