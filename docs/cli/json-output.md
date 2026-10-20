@@ -241,7 +241,7 @@ events from stderr; missing required input then produces a fatal error instead o
 ## Exempt only streaming commands
 
 `shopify app dev --json` writes the exact same JSONL bytes to stdout and the session log. Each record has `timestamp`,
-`source`, and `message`, with `stream` or `level` when available. There is no final success result. Preview errors are
+`source`, and `message`, with `level` when available. There is no final success result. Preview errors are
 log records so that the developer can fix the app while dev keeps running. A fatal runtime failure adds the shared
 CLI error under `error` in the final log record, then exits nonzero.
 
@@ -250,7 +250,7 @@ Their original timestamps are retained. If startup fails before acquiring a sess
 standard `{error: {...}}` envelope go to stdout; another process's session log is never changed.
 
 ```jsonl
-{"timestamp":"2026-10-20T09:00:00Z","source":"web","stream":"stdout","message":"Server listening on 3000"}
+{"timestamp":"2026-10-20T09:00:00Z","source":"web","message":"Server listening on 3000"}
 {"timestamp":"2026-10-20T09:00:01Z","source":"app dev","level":"info","message":"Ready, watching for changes in your app"}
 ```
 

@@ -51,12 +51,10 @@ describe('ui', () => {
                     action: async (targetStdout, targetStderr) => {
                       const childStdout = instance.tee(targetStdout, {
                         source: 'web',
-                        stream: 'stdout',
                         stringWritesAreMessages: true,
                       })
                       const childStderr = instance.tee(targetStderr, {
                         source: 'web',
-                        stream: 'stderr',
                         stringWritesAreMessages: true,
                       })
                       childStdout.write('Starting without a newline')
@@ -96,7 +94,10 @@ describe('ui', () => {
                 .trim()
                 .split('\n')
                 .map((line) => JSON.parse(line))
-              events.forEach((event) => expect(event).not.toHaveProperty('type'))
+              events.forEach((event) => {
+                expect(event).not.toHaveProperty('type')
+                expect(event).not.toHaveProperty('stream')
+              })
               expect(events).toHaveLength(burstSize + 6)
               const messages = events.map((event) => event.message)
               expect(messages).toEqual(
@@ -114,8 +115,8 @@ describe('ui', () => {
               )
               expect(events).toEqual(
                 expect.arrayContaining([
-                  expect.objectContaining({source: 'discount', stream: 'stdout', message: 'Building function'}),
-                  expect.objectContaining({source: 'web', stream: 'stderr', message: 'éclair'}),
+                  expect.objectContaining({source: 'discount', message: 'Building function'}),
+                  expect.objectContaining({source: 'web', message: 'éclair'}),
                 ]),
               )
               expect(vi.mocked(DevSessionUI)).not.toHaveBeenCalled()

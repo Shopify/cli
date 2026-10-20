@@ -2021,14 +2021,6 @@ DESCRIPTION
         "type": "string",
         "description": "What produced the line, for example a process prefix like web or extensions."
       },
-      "stream": {
-        "type": "string",
-        "enum": [
-          "stdout",
-          "stderr"
-        ],
-        "description": "The stream the line was written to, when it comes from a process."
-      },
       "level": {
         "type": "string",
         "enum": [

@@ -83,11 +83,15 @@ describe('app dev command', () => {
 
   test.each([
     {timestamp: '2026-10-20T09:00:00Z', source: 'app dev', level: 'info', message: 'Starting dev'},
-    {timestamp: '2026-10-20T09:00:00Z', source: 'web', stream: 'stdout', message: 'Server ready'},
-  ] as const)('the stream schema accepts records without type and rejects extra type fields: %j', (entry) => {
-    expect(JSON.parse(devInstanceLogOutputSchema.encode(entry))).toEqual(entry)
-    expect(() => devInstanceLogOutputSchema.validate({...entry, type: 'diagnostic'})).toThrow()
-  })
+    {timestamp: '2026-10-20T09:00:00Z', source: 'web', message: 'Server ready'},
+  ] as const)(
+    'the stream schema accepts records without type or stream and rejects these extra fields: %j',
+    (entry) => {
+      expect(JSON.parse(devInstanceLogOutputSchema.encode(entry))).toEqual(entry)
+      expect(() => devInstanceLogOutputSchema.validate({...entry, type: 'diagnostic'})).toThrow()
+      expect(() => devInstanceLogOutputSchema.validate({...entry, stream: 'stdout'})).toThrow()
+    },
+  )
 
   test.each(['--json', '-j', 'env'])(
     '%s writes identical startup, progress, and process records to stdout and the file',
@@ -120,6 +124,7 @@ describe('app dev command', () => {
             events.forEach((event) => {
               expect(() => Dev.jsonOutputSchema.validate(event)).not.toThrow()
               expect(event).not.toHaveProperty('type')
+              expect(event).not.toHaveProperty('stream')
             })
             expect(events).toEqual(
               expect.arrayContaining([

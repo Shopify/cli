@@ -59,10 +59,6 @@ export const devInstanceLogOutputSchema = defineJsonOutputSchema({
     .object({
       timestamp: jsonOutputTimestampSchema,
       source: zod.string().describe('What produced the line, for example a process prefix like web or extensions.'),
-      stream: zod
-        .enum(['stdout', 'stderr'])
-        .optional()
-        .describe('The stream the line was written to, when it comes from a process.'),
       level: zod.enum(['debug', 'info', 'warning', 'error']).optional(),
       message: zod.string(),
       error: JsonErrorSchema.optional().describe('The shared CLI fatal error, included when the session fails.'),
@@ -124,7 +120,6 @@ export interface DevInstance {
     target: Writable,
     options: {
       source: string
-      stream: 'stdout' | 'stderr'
       /** Treat each string write as a complete message. Byte writes remain buffered into lines. */
       stringWritesAreMessages?: boolean
     },
@@ -310,7 +305,7 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
       await write
     },
     log: writeLogEntry,
-    tee: (target, {source, stream, stringWritesAreMessages = false}) => {
+    tee: (target, {source, stringWritesAreMessages = false}) => {
       const decoder = new StringDecoder('utf8')
       let pending = ''
       let currentSource = source
@@ -320,7 +315,7 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
         await Promise.all(
           lines.map(async (line) => {
             const message = unstyled(line).trimEnd()
-            if (message.length > 0) await writeLogEntry({source: currentSource, stream, message})
+            if (message.length > 0) await writeLogEntry({source: currentSource, message})
           }),
         )
       }

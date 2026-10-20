@@ -44,7 +44,7 @@ describe('acquireDevInstance', () => {
       const instance = await acquireDevInstance({command: 'app dev', directory, logOutput: output.stream})
       await Promise.all([
         instance.log({timestamp: '2026-10-20T09:00:00Z', source: 'app dev', level: 'info', message: 'Setup'}),
-        instance.log({source: 'web', stream: 'stderr', message: 'Warning'}),
+        instance.log({source: 'web', message: 'Warning'}),
       ])
       await instance.release()
       expect(output.chunks.join('')).toBe(await readFile(instance.paths.logFile))
@@ -331,7 +331,7 @@ describe('DevInstance log', () => {
           callback()
         },
       })
-      const output = instance.tee(target, {source: 'web', stream: 'stdout', stringWritesAreMessages: true})
+      const output = instance.tee(target, {source: 'web', stringWritesAreMessages: true})
       const write = (chunk: string | Buffer) =>
         new Promise<void>((resolve, reject) => {
           output.write(chunk, (error) => (error ? reject(error) : resolve()))
@@ -339,7 +339,7 @@ describe('DevInstance log', () => {
       try {
         await write('Bundling extension...')
         await expect(readLog(instance.paths.logFile)).resolves.toEqual([
-          {timestamp: expect.any(String), source: 'web', stream: 'stdout', message: 'Bundling extension...'},
+          {timestamp: expect.any(String), source: 'web', message: 'Bundling extension...'},
         ])
         await write('Extension built')
         const bytes = Buffer.from('café\n')
@@ -370,7 +370,7 @@ describe('DevInstance log', () => {
           else callback()
         },
       })
-      const output = instance.tee(target, {source: 'app-preview', stream: 'stdout'})
+      const output = instance.tee(target, {source: 'app-preview'})
       try {
         useConcurrentOutputContext({outputPrefix: 'discount'}, () => {
           output.write('Building discount...\n')
@@ -402,7 +402,7 @@ describe('DevInstance log', () => {
   test('keeps incomplete messages from different sources separate', async () => {
     await inTemporaryDirectory(async (directory) => {
       const instance = await acquireDevInstance({command: 'app dev', directory})
-      const output = instance.tee(collectingStream().stream, {source: 'app-preview', stream: 'stdout'})
+      const output = instance.tee(collectingStream().stream, {source: 'app-preview'})
       useConcurrentOutputContext({outputPrefix: 'discount'}, () => output.write('first'))
       useConcurrentOutputContext({outputPrefix: 'admin-action'}, () => output.write('second'))
       await instance.release()
@@ -418,7 +418,7 @@ describe('DevInstance log', () => {
       // Given
       const instance = await acquireDevInstance({command: 'app dev', directory})
       const {stream: target, chunks} = collectingStream()
-      const stdout = instance.tee(target, {source: 'web', stream: 'stdout'})
+      const stdout = instance.tee(target, {source: 'web'})
 
       // When
       stdout.write('\u001b[32mready\u001b[39m in 20ms\npartial ')
@@ -431,8 +431,8 @@ describe('DevInstance log', () => {
       expect(chunks.join('')).toBe('\u001b[32mready\u001b[39m in 20ms\npartial line\n\n')
       const entries = await readLog(instance.paths.logFile)
       expect(entries).toEqual([
-        {timestamp: expect.any(String), source: 'web', stream: 'stdout', message: 'ready in 20ms'},
-        {timestamp: expect.any(String), source: 'web', stream: 'stdout', message: 'partial line'},
+        {timestamp: expect.any(String), source: 'web', message: 'ready in 20ms'},
+        {timestamp: expect.any(String), source: 'web', message: 'partial line'},
         {timestamp: expect.any(String), source: 'app dev', level: 'info', message: 'Preview URL: https://preview'},
       ])
       expect(entries[0].timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/)
@@ -442,13 +442,13 @@ describe('DevInstance log', () => {
   test('flushes a split UTF-8 line on release without requiring the source to end', async () => {
     await inTemporaryDirectory(async (directory) => {
       const instance = await acquireDevInstance({command: 'app dev', directory})
-      const output = instance.tee(collectingStream().stream, {source: 'web', stream: 'stdout'})
+      const output = instance.tee(collectingStream().stream, {source: 'web'})
       const bytes = Buffer.from('café')
       output.write(bytes.subarray(0, 4))
       output.write(bytes.subarray(4))
       await instance.release()
       await expect(readLog(instance.paths.logFile)).resolves.toEqual([
-        {timestamp: expect.any(String), source: 'web', stream: 'stdout', message: 'café'},
+        {timestamp: expect.any(String), source: 'web', message: 'café'},
       ])
     })
   })
@@ -484,7 +484,7 @@ describe('DevInstance log', () => {
           }
         },
       })
-      const output = instance.tee(target, {source: 'web', stream: 'stdout'})
+      const output = instance.tee(target, {source: 'web'})
       let written = false
       const completed = new Promise<void>((resolve, reject) => {
         const available = output.write(`${'x'.repeat(output.writableHighWaterMark)}\n`, (error) => {
@@ -516,7 +516,7 @@ describe('DevInstance log', () => {
           callback(new Error('Output failed'))
         },
       })
-      const output = instance.tee(target, {source: 'web', stream: 'stdout'})
+      const output = instance.tee(target, {source: 'web'})
       await expect(
         new Promise<void>((resolve, reject) => {
           output.write('message\n', (error) => (error ? reject(error) : resolve()))
