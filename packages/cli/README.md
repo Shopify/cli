@@ -5883,13 +5883,17 @@ Record agent findings from an app security check.
 
 ```
 USAGE
-  $ shopify app security record [--json-schema] [--no-color] [--no-input] [--path <value>] [--verbose]
+  $ shopify app security record [-j] [--json-schema] [--no-color] [--no-input] [--path <value>] [--verbose]
     [--without-app-config [--client-id <value> | -c <value>]]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --client-id=<value>
       The Client ID of your app.
@@ -5935,6 +5939,94 @@ DESCRIPTION
 
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppSecurityRecordResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "app": {
+        "$ref": "#/definitions/AppSecurityApp"
+      },
+      "resultsDirectory": {
+        "type": "string",
+        "description": "The absolute path of the results directory."
+      },
+      "path": {
+        "type": "string",
+        "description": "The absolute path of the agent-findings.json file that was written."
+      },
+      "checkCount": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "The number of checks recorded."
+      },
+      "findingCount": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "The number of findings recorded, across every check."
+      }
+    },
+    "required": [
+      "status",
+      "app",
+      "resultsDirectory",
+      "path",
+      "checkCount",
+      "findingCount"
+    ],
+    "additionalProperties": false,
+    "title": "AppSecurityRecordResult",
+    "definitions": {
+      "AppSecurityApp": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The absolute app directory."
+          },
+          "configurationPath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The absolute path of the selected app configuration file, or null with --without-app-config."
+          },
+          "clientId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The --client-id value when passed, otherwise the app configuration's client_id. Null when the app configuration isn't linked."
+          }
+        },
+        "required": [
+          "directory",
+          "configurationPath",
+          "clientId"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app security review`

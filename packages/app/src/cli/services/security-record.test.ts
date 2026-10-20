@@ -110,6 +110,8 @@ async function expectRejected(stdin: string | undefined, expectedErrors: unknown
 
     expect(error.message).toBe(REJECTED_MESSAGE)
     expect(error.customSections).toEqual(errorsSection(expectedErrors))
+    expect(error.code).toBe('findings-document-rejected')
+    expect(error.details).toEqual({errors: expectedErrors})
     expect(dependencies.writeAgentFindings).not.toHaveBeenCalled()
     expect(dependencies.recordMetadata).not.toHaveBeenCalled()
     await expect(fileExists(artifactPaths(appRoot).agentFindingsPath)).resolves.toBe(false)
@@ -223,6 +225,8 @@ describe('securityRecord', () => {
       ]
       expect(error.message).toBe(REJECTED_MESSAGE)
       expect(error.customSections).toStrictEqual(errorsSection(errors))
+      expect(error.code).toBe('findings-document-rejected')
+      expect(error.details).toStrictEqual({errors})
       expect(error.nextSteps).toStrictEqual([
         ['Fix every error, then run', {command: recordCommand(appRoot)}, 'again.'],
       ])
@@ -361,6 +365,17 @@ describe('securityRecord', () => {
         }
       })
     })
+
+    test('in the error details', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+
+        const error = await recordError(appRoot, testDependencies(documentWithSecrets))
+
+        expect(error.details).toStrictEqual({errors: redactedErrors})
+        expect(JSON.stringify(error.details)).not.toContain(FAKE_SHOPIFY_TOKEN)
+      })
+    })
   })
 
   test('fails when nothing is piped on stdin', async () => {
@@ -371,6 +386,8 @@ describe('securityRecord', () => {
       const error = await recordError(appRoot, dependencies)
 
       expect(error.message).toBe('No findings document was piped on stdin.')
+      expect(error.code).toBe('findings-document-missing')
+      expect(error.details).toBeUndefined()
       expect(error.nextSteps).toStrictEqual([
         ['Pipe the findings document on stdin:', {command: recordCommand(appRoot)}],
       ])
@@ -392,6 +409,8 @@ describe('securityRecord', () => {
 
       expect(error.message).toBe(REJECTED_MESSAGE)
       expect(error.customSections).toStrictEqual(errorsSection(['Stdin input exceeded the maximum allowed size.']))
+      expect(error.code).toBe('findings-document-rejected')
+      expect(error.details).toStrictEqual({errors: ['Stdin input exceeded the maximum allowed size.']})
       await expect(fileExists(artifactPaths(appRoot).agentFindingsPath)).resolves.toBe(false)
     })
   })

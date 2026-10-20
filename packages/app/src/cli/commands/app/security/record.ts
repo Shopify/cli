@@ -3,8 +3,9 @@ import {requireResultsDirectory} from '../../../services/app-security-results.js
 import {resolveAppSecuritySelection} from '../../../services/app-security-selection.js'
 import securityRecord from '../../../services/security-record.js'
 import {renderSecurityRecordResult} from '../../../services/security-record/result.js'
+import {appSecurityRecordJsonOutputSchema} from '../../../services/security-record/types.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class SecurityRecord extends BaseCommand {
   static summary = 'Record agent findings from an app security check.'
@@ -17,11 +18,16 @@ The document is recorded all or nothing: if anything is invalid, the command fai
 
 Reports the number of findings to Shopify as usage telemetry, but not finding details. See [usage reporting](https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.`
 
+  static get jsonOutputSchema() {
+    return appSecurityRecordJsonOutputSchema
+  }
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
     ...appSecuritySelectionFlags,
+    ...jsonFlag,
   }
 
   public async run(): Promise<void> {
@@ -36,7 +42,8 @@ Reports the number of findings to Shopify as usage telemetry, but not finding de
       validateClientIdFlag: true,
     })
     await requireResultsDirectory(selection, flags.path)
-    const result = await securityRecord({selection, path: flags.path})
-    renderSecurityRecordResult(result, selection, flags.path)
+    const options = {selection, path: flags.path}
+    const result = await securityRecord(options)
+    renderSecurityRecordResult(result, options, flags.json ? 'json' : 'text')
   }
 }

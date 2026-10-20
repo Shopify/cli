@@ -16,7 +16,7 @@ export interface SecurityRecordResult {
   findings: number
 }
 
-interface SecurityRecordOptions {
+export interface SecurityRecordOptions {
   selection: AppSecuritySelection
   /** The `--path` value that was typed. */
   path: string
@@ -42,12 +42,15 @@ function recordCommand(commands: AppSecurityCommands): string {
 
 /** Rejects a document that fails validation, listing every error so an agent can fix them all at once. */
 function abortRejectedDocument(errors: string[], commands: AppSecurityCommands): never {
-  throw new AbortError(
+  const error = new AbortError(
     'The findings document was rejected. Nothing was recorded.',
     null,
     [['Fix every error, then run', {command: recordCommand(commands)}, 'again.']],
     [{title: 'Errors', body: {list: {items: errors}}}],
   )
+  error.code = 'findings-document-rejected'
+  error.details = {errors}
+  throw error
 }
 
 async function readStdinDocument(
@@ -70,9 +73,11 @@ async function readInputDocument(
 ): Promise<unknown> {
   const input = await readStdinDocument(commands, dependencies)
   if (input === undefined) {
-    throw new AbortError('No findings document was piped on stdin.', null, [
+    const error = new AbortError('No findings document was piped on stdin.', null, [
       ['Pipe the findings document on stdin:', {command: recordCommand(commands)}],
     ])
+    error.code = 'findings-document-missing'
+    throw error
   }
 
   const size = Buffer.byteLength(input, 'utf8')
