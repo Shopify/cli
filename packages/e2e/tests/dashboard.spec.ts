@@ -1,5 +1,4 @@
 import {DevDashboardClient} from '../setup/dashboard.js'
-import {CLI_TIMEOUT} from '../setup/constants.js'
 import {expect, test, type APIRequestContext, type APIResponse} from '@playwright/test'
 
 const appsUrl = 'https://dev.shopify.com/dashboard/123/apps'
@@ -166,7 +165,7 @@ for (const [status, location] of [
   })
 }
 
-test('stops retrying when the installation count does not settle within the deadline', async () => {
+test('stops retrying when the installation count has not settled after 15 seconds', async () => {
   const originalNow = Date.now
   let now = originalNow()
   let deletionRequests = 0
@@ -178,7 +177,7 @@ test('stops retrying when the installation count does not settle within the dead
       },
       async delete() {
         deletionRequests++
-        now += CLI_TIMEOUT.short
+        now += 15_000
         return response(303, '', {location: `${appUrl}/settings`})
       },
     }

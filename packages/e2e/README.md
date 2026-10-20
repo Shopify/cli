@@ -56,7 +56,7 @@ pnpm --filter e2e exec playwright test tests/store-lifecycle.spec.ts --project r
 
 Remote app cleanup failures produce warnings with the app name, store, failed step, and recovery command. Each later cleanup step is still attempted. These warnings do not fail an otherwise successful test or block the store from subsequent tests. Failure to stop a CLI process remains an error because the process can hold ports and keep making requests.
 
-After a successful uninstall, app deletion retries the dashboard's remaining-installs redirect for up to one minute. The dashboard installation count can lag behind the uninstall. Other deletion errors fail immediately, and deletion still requires a confirmed missing app.
+After a successful uninstall, app deletion retries the dashboard's remaining-installs redirect for up to 15 seconds. The dashboard installation count can lag behind the uninstall. Other deletion errors fail immediately, and deletion still requires a confirmed missing app.
 
 Recover leftover apps with `cleanup-apps.ts --pattern <run-attempt-shard>` or uninstall them in the store admin. Use the exact run marker from the failed run's app names and confirm that the run has stopped. Store reuse does not wait for this recovery.
 

@@ -2,13 +2,13 @@
 import {authFixture} from './auth.js'
 import {authStatePaths} from './auth-state.js'
 import {requireEnv} from './env.js'
-import {CLI_TIMEOUT} from './constants.js'
 import {loadtestHeaderRecord} from '../helpers/loadtest-header.js'
 import {request, type APIRequestContext, type APIResponse} from '@playwright/test'
 import {parse, type DefaultTreeAdapterTypes} from 'parse5'
 import {setTimeout as delay} from 'node:timers/promises'
 
 const DASHBOARD_ORIGIN = 'https://dev.shopify.com'
+const APP_DELETION_TIMEOUT_MS = 15_000
 type HtmlNode = DefaultTreeAdapterTypes.Node
 type HtmlElement = DefaultTreeAdapterTypes.Element
 
@@ -46,7 +46,7 @@ export class DevDashboardClient {
     }
     if (url && url !== appUrl) throw new Error(`App ${name} has an unexpected dashboard ID.`)
 
-    const deadline = Date.now() + CLI_TIMEOUT.short
+    const deadline = Date.now() + APP_DELETION_TIMEOUT_MS
     let deletionAccepted = false
     do {
       const settings = await this.http.get(`${appUrl}/settings`, {timeout: Math.max(1, deadline - Date.now())})
