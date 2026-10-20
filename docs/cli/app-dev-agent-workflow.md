@@ -3,6 +3,7 @@
 `shopify app dev` writes one instance JSON file and one JSONL log under
 `<app>/.shopify/dev/` for each app configuration. Agents can read these files when
 dev was started in another terminal. There is no IPC endpoint or extra command.
+Use the instance JSON's `logFile` field to find the log; filenames include an identity hash.
 
 The instance JSON includes the PID, `sessionId`, URLs, `logFile`, and
 `details.preview`. The preview contains:
