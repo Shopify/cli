@@ -348,7 +348,7 @@ describe('Liquid AST mode', () => {
     expect(liquid(`{{ block.settings.show }}${schema('{"type":"checkbox","id":"show"}')}`)).not.toContain(
       'LIQUID_UNSAFE_RENDER',
     )
-    expect(liquid(`{{ section.settings.size }}${schema('{"type":"range","id":"size"}')}`)).not.toContain(
+    expect(liquid(`{{ block.settings.size }}${schema('{"type":"range","id":"size"}')}`)).not.toContain(
       'LIQUID_UNSAFE_RENDER',
     )
     // Bad option, free-text types, property access, JS/executable and URL contexts still flagged.
@@ -368,5 +368,50 @@ describe('Liquid AST mode', () => {
     // Missing or unparseable schema stays flagged.
     expect(liquid('{{ block.settings.layout }}')).toContain('LIQUID_UNSAFE_RENDER')
     expect(liquid('{{ block.settings.layout }}{% schema %}not-json{% endschema %}')).toContain('LIQUID_UNSAFE_RENDER')
+  })
+
+  test('exempts only block settings in app block files, never the host section settings', () => {
+    const schema = (settings: string) => `{% schema %}{"settings":[${settings}]}{% endschema %}`
+    const range = schema('{"type":"range","id":"size"}')
+    const select = schema('{"type":"select","id":"layout","options":[{"value":"left"},{"value":"right"}]}')
+    const liquid = (content: string, path = 'extensions/theme/blocks/a.liquid') =>
+      scanLiquidSecurity([source(content, path)]).issues.map((finding) => finding.id)
+
+    expect(liquid(`{{ block.settings.layout }}${select}`)).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`{{ block.settings.size }}${range}`)).not.toContain('LIQUID_UNSAFE_RENDER')
+    // `section.settings` in an app block is the host section's, which this file's schema doesn't describe.
+    expect(liquid(`{{ section.settings.size }}${range}`)).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid(`<div class="{{ section.settings.layout }}"></div>${select}`)).toContain('LIQUID_UNSAFE_RENDER')
+    // Outside app blocks, no setting is exempt.
+    expect(liquid(`{{ block.settings.layout }}${select}`, 'extensions/theme/snippets/a.liquid')).toContain(
+      'LIQUID_UNSAFE_RENDER',
+    )
+  })
+
+  test('exempts filtered inert settings only when every filter argument is a literal', () => {
+    const schema = `{% schema %}{"settings":[{"type":"checkbox","id":"show"},{"type":"text","id":"title"}]}{% endschema %}`
+    const liquid = (output: string) =>
+      scanLiquidSecurity([source(`${output}${schema}`, 'extensions/theme/blocks/a.liquid')]).issues.map(
+        (finding) => finding.id,
+      )
+
+    expect(liquid('{{ block.settings.show | downcase }}')).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid("{{ block.settings.show | default: 'x' }}")).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid("{{ block.settings.show | default: 'x', allow_false: true }}")).not.toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid("{{ block.settings.show | replace: 'true', 'on' | append: 1 | prepend: nil }}")).not.toContain(
+      'LIQUID_UNSAFE_RENDER',
+    )
+    // A setting or variable in any filter argument can render a free-text value.
+    expect(liquid('{{ block.settings.show | default: block.settings.title }}')).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid('{{ block.settings.show | append: block.settings.title }}')).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid('{{ block.settings.show | prepend: section.settings.title }}')).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid("{{ block.settings.show | replace: 'true', block.settings.title }}")).toContain(
+      'LIQUID_UNSAFE_RENDER',
+    )
+    expect(liquid('{{ block.settings.show | default: product.metafields.app.title }}')).toContain(
+      'LIQUID_UNSAFE_RENDER',
+    )
+    expect(liquid('{{ block.settings.show | downcase | append: title }}')).toContain('LIQUID_UNSAFE_RENDER')
+    expect(liquid("{{ block.settings.show | default: 'x', allow_false: title }}")).toContain('LIQUID_UNSAFE_RENDER')
   })
 })
