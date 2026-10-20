@@ -104,7 +104,7 @@ describe('acquireDevInstance', () => {
 
       // Then
       const paths = devInstancePaths({command: 'app dev', directory, key: 'shopify.app.toml'})
-      expect(paths.infoFile).toMatch(/\.shopify\/dev\/app-dev-shopify\.app\.toml-[a-f0-9]{12}\.json$/)
+      expect(paths.infoFile).toMatch(/\.shopify\/dev\/app-dev-shopify\.app\.toml-[a-f0-9]{4}\.json$/)
       const info = JSON.parse(await readFile(paths.infoFile))
       expect(info).toMatchObject({
         schemaVersion: 1,

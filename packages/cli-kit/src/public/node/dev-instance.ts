@@ -541,7 +541,7 @@ function devInstanceSlug({command, key}: DevInstanceIdentity): string {
     .replace(/[^a-z0-9._-]+/g, '-')
     .replace(/^-+|-+$/g, '')
   // Normalization can merge distinct identities, so hash the original command/key pair.
-  const identityHash = hashString(JSON.stringify([command, key ?? ''])).slice(0, 12)
+  const identityHash = hashString(JSON.stringify([command, key ?? ''])).slice(0, 4)
   return `${slug}-${identityHash}`
 }
 
