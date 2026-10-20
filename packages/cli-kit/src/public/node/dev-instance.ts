@@ -356,8 +356,8 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
         try {
           const results = await Promise.allSettled([...outputs].map((output) => endStream(output)))
           const failure = results.find((result) => result.status === 'rejected')
-          if (failure?.status === 'rejected') throw failure.reason
           await updates
+          if (failure?.status === 'rejected') throw failure.reason
         } finally {
           released = true
           process.removeListener('exit', removeInfoOnExit)
