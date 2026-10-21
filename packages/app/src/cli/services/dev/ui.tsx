@@ -107,8 +107,8 @@ async function renderDevNonInteractive({
     // Tees attach error listeners, so each process needs its own discard stream.
     const terminalOutput = new Writable({write: (_chunk, _encoding, next) => next()})
     return concurrentProcess.action(
-      json ? terminalOutput : process.stdout,
-      json ? terminalOutput : process.stderr,
+      json ? terminalOutput : createTextOutputStream(process.stdout),
+      json ? terminalOutput : createTextOutputStream(process.stderr),
       signal,
     )
   })
@@ -124,4 +124,16 @@ async function renderDevNonInteractive({
     process.removeListener('SIGINT', stop)
     process.removeListener('SIGTERM', stop)
   }
+}
+
+function createTextOutputStream(target: Writable): Writable {
+  return new Writable({
+    decodeStrings: false,
+    write(chunk: string | Buffer, encoding, callback) {
+      // CLI string writes are complete messages; subprocess byte chunks can contain partial lines.
+      const output = typeof chunk === 'string' ? Buffer.from(chunk, encoding) : chunk
+      const needsNewline = typeof chunk === 'string' && output.length > 0 && output[output.length - 1] !== 10
+      target.write(needsNewline ? Buffer.concat([output, Buffer.from('\n')]) : output, callback)
+    },
+  })
 }

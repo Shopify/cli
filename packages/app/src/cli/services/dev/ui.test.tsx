@@ -6,6 +6,7 @@ import {afterEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {outputWarn, unstyled} from '@shopify/cli-kit/node/output'
 import {runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
@@ -25,6 +26,45 @@ afterEach(() => {
 
 describe('ui', () => {
   describe('renderDev', () => {
+    test('separates CLI messages while preserving line endings and subprocess bytes', async () => {
+      vi.mocked(terminalSupportsPrompting).mockReturnValue(false)
+      const abortController = new AbortController()
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await renderDev({
+          processes: [
+            {
+              prefix: 'app-logs',
+              action: async (output, errorOutput) => {
+                await Promise.all(
+                  [output, errorOutput].map(async (stream) => {
+                    stream.write('')
+                    outputWarn('Error while polling app logs.', stream)
+                    outputWarn('Retrying in 5 seconds.', stream)
+                    stream.write('Existing line ending\r\n')
+                    stream.write('636166c3a9', 'hex')
+                    const unicode = Buffer.from('éclair\n')
+                    stream.write(unicode.subarray(0, 1))
+                    await new Promise<void>((resolve, reject) =>
+                      stream.write(unicode.subarray(1), (error) => (error ? reject(error) : resolve())),
+                    )
+                  }),
+                )
+                abortController.abort()
+              },
+            },
+          ],
+          previewUrl: 'https://example.com',
+          app: {id: '123', developerPlatformClient},
+          abortController,
+          shopFqdn: 'dev-store.myshopify.com',
+          devSessionStatusManager: new DevSessionStatusManager(),
+        })
+        const expected = 'Error while polling app logs.\nRetrying in 5 seconds.\nExisting line ending\r\ncafé\néclair\n'
+        expect(unstyled(stdout())).toBe(`\nPreview URL: https://example.com\n${expected}`)
+        expect(unstyled(stderr())).toBe(expected)
+      })
+    })
+
     test('streams many JSON processes without exceeding target listener limits and removes listeners on release', async () => {
       await inTemporaryDirectory(async (directory) => {
         await withCapturedStandardStreams(async ({stdout, stderr}) => {
@@ -253,8 +293,8 @@ describe('ui', () => {
 
       expect(concurrentProcess.action).toHaveBeenNthCalledWith(
         1,
-        process.stdout,
-        process.stderr,
+        expect.any(Writable),
+        expect.any(Writable),
         abortController.signal,
       )
     })
