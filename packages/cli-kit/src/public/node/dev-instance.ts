@@ -2,22 +2,14 @@ import {getOrCreateHiddenShopifyFolder} from './hidden-folder.js'
 import {joinPath} from './path.js'
 import {fileExists, glob, mkdir, readFile, removeFile, removeFileSync, renameFile, rmdir} from './fs.js'
 import {AbortError} from './error.js'
-import {outputDebug, unstyled} from './output.js'
-import {defineJsonOutputSchema, formatJsonOutputTimestamp, jsonOutputTimestampSchema} from './json-output-schema.js'
-import {zod} from './schema.js'
+import {outputDebug} from './output.js'
+import {formatJsonOutputTimestamp} from './json-output-schema.js'
 import {hashString, randomUUID} from './crypto.js'
-import {
-  ConcurrentOutputContext,
-  getConcurrentOutputContext,
-  useConcurrentOutputContext,
-} from '../../private/node/ui/components/ConcurrentOutput.js'
+import {createDevInstanceOutput, type DevInstanceLogEntry} from '../../private/node/dev-instance-output.js'
 import lockfile from 'proper-lockfile'
-import fs, {createWriteStream, readFileSync, type WriteStream} from 'fs'
+import fs, {readFileSync} from 'fs'
 import {mkdir as mkdirExclusive, rmdir as removeEmptyDirectory, writeFile as writeFileWithMode} from 'fs/promises'
-import {Writable, type WritableOptions} from 'stream'
-import {finished} from 'stream/promises'
-import {StringDecoder} from 'string_decoder'
-import {once} from 'events'
+import {Writable} from 'stream'
 
 /**
  * A stable error code for JSON consumers when a long-running command refuses to start because another instance of
@@ -52,20 +44,7 @@ export interface DevInstanceInfo {
   details: {[key: string]: unknown}
 }
 
-export const devInstanceLogOutputSchema = defineJsonOutputSchema({
-  name: 'DevInstanceLogEntry',
-  schema: zod
-    .object({
-      timestamp: jsonOutputTimestampSchema,
-      source: zod.string().describe('What produced the line, for example a process prefix like web or extensions.'),
-      level: zod.enum(['debug', 'info', 'warning', 'error']).optional(),
-      message: zod.string(),
-    })
-    .strict(),
-})
-
-/** One line of a dev instance's JSON Lines log. */
-export type DevInstanceLogEntry = zod.infer<typeof devInstanceLogOutputSchema.schema>
+export {devInstanceLogOutputSchema, type DevInstanceLogEntry} from '../../private/node/dev-instance-output.js'
 
 export interface DevInstancePaths {
   /** The folder that holds every dev instance of the project: `.shopify/dev`. */
@@ -182,6 +161,25 @@ export async function acquireDevInstance(options: AcquireDevInstanceOptions): Pr
   }
 }
 
+/**
+ * Acquires a dev instance and releases it after the callback completes or throws.
+ *
+ * @param options - The command, project and output options for the instance.
+ * @param execute - The work to run while the instance is owned.
+ * @returns The callback's result after instance cleanup completes.
+ */
+export async function withDevInstance<T>(
+  options: AcquireDevInstanceOptions,
+  execute: (instance: DevInstance) => T | Promise<T>,
+): Promise<T> {
+  const instance = await acquireDevInstance(options)
+  try {
+    return await execute(instance)
+  } finally {
+    await instance.release()
+  }
+}
+
 async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevInstancePaths): Promise<DevInstance> {
   const previous = await readDevInstanceInfo(paths.infoFile)
   if (previous && isProcessAlive(previous.pid)) throw devInstanceAlreadyRunningError(options, previous)
@@ -250,15 +248,14 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
     details: {...(options.details ?? {})},
   }
 
-  // Each run starts a fresh log.
-  const logStream: WriteStream = createWriteStream(paths.logFile, {flags: 'w', mode: 0o600})
-  const onOutputError = (error: Error) => abortController.abort(error)
-  logStream.on('error', onOutputError)
-  options.logOutput?.on('error', onOutputError)
-
   let updates = Promise.resolve()
-  const outputs = new Set<Writable>()
   let released = false
+  const output = createDevInstanceOutput({
+    logFile: paths.logFile,
+    logOutput: options.logOutput,
+    isActive: () => !released && !compromised,
+    onError: (error) => abortController.abort(error),
+  })
   let releasePromise: Promise<void> | undefined
   const removeInfoOnExit = () => {
     // Remove the lock before the live owner's record, so a new starter cannot enter during cleanup.
@@ -268,22 +265,6 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
     }
   }
   process.once('exit', removeInfoOnExit)
-
-  const writeLogEntry: DevInstance['log'] = async (entry) => {
-    if (released || compromised) return
-    const record = devInstanceLogOutputSchema.validate({
-      ...entry,
-      timestamp: entry.timestamp ?? formatJsonOutputTimestamp(new Date()),
-    })
-    const line = `${JSON.stringify(record)}\n`
-    try {
-      await writeToStream(logStream, line)
-      if (options.logOutput) await writeToStream(options.logOutput, line)
-    } catch (error) {
-      abortController.abort(error)
-      throw error
-    }
-  }
 
   const instance: DevInstance = {
     info,
@@ -301,60 +282,12 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
       updates = write.catch(() => {})
       await write
     },
-    log: writeLogEntry,
-    tee: (target, {source, stringWritesAreMessages = false}) => {
-      const decoder = new StringDecoder('utf8')
-      let pending = ''
-      let currentSource = source
-      const flushLines = async (text: string) => {
-        const lines = text.split(/\r?\n/)
-        pending = lines.pop() ?? ''
-        await Promise.all(
-          lines.map(async (line) => {
-            const message = unstyled(line).trimEnd()
-            if (message.length > 0) await writeLogEntry({source: currentSource, message})
-          }),
-        )
-      }
-      const flush = () => flushLines(`${pending}${decoder.end()}\n`)
-      const output = new DevInstanceOutput({
-        decodeStrings: !stringWritesAreMessages,
-        write(chunk: Buffer | string, encoding, callback) {
-          const nextSource = getConcurrentOutputContext()?.outputPrefix ?? source
-          const completeMessage = stringWritesAreMessages && typeof chunk === 'string'
-          const previous = nextSource !== currentSource || completeMessage ? flush() : Promise.resolve()
-          currentSource = nextSource
-          Promise.all([
-            previous,
-            writeToStream(target, chunk, encoding),
-            flushLines(
-              pending +
-                decoder.write(typeof chunk === 'string' ? Buffer.from(chunk, encoding) : chunk) +
-                (completeMessage ? '\n' : ''),
-            ),
-          ])
-            .then(() => callback())
-            .catch(callback)
-        },
-        final(callback) {
-          flush()
-            .then(() => callback())
-            .catch(callback)
-        },
-      })
-      const onTargetError = (error: Error) => output.destroy(error)
-      target.on('error', onTargetError)
-      output.on('error', (error) => abortController.abort(error))
-      output.once('close', () => {
-        target.off('error', onTargetError)
-      })
-      outputs.add(output)
-      return output
-    },
+    log: output.log,
+    tee: output.tee,
     release: () => {
       releasePromise ??= (async () => {
         try {
-          const results = await Promise.allSettled([...outputs].map((output) => endStream(output)))
+          const results = await output.flush()
           const failure = results.find((result) => result.status === 'rejected')
           await updates
           if (failure?.status === 'rejected') throw failure.reason
@@ -362,10 +295,8 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
           released = true
           process.removeListener('exit', removeInfoOnExit)
           try {
-            await endStream(logStream)
-            if (options.logOutput && !options.logOutput.destroyed) await writeToStream(options.logOutput, '')
+            await output.close()
           } finally {
-            options.logOutput?.off('error', onOutputError)
             const owned = ownsInfo()
             await releaseLock().catch((error: Error) =>
               outputDebug(`Failed to release the dev instance lock: ${error.message}`),
@@ -379,7 +310,7 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
   }
 
   try {
-    await once(logStream, 'open')
+    await output.opened
     await writeDevInstanceInfo(paths.infoFile, info)
     published = true
     return instance
@@ -389,56 +320,6 @@ async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevI
     await removeFile(`${paths.infoFile}.${sessionId}.tmp`)
     throw error
   }
-}
-
-// Writable processes queued chunks in an earlier write's context. Capture context when each chunk is submitted.
-class DevInstanceOutput extends Writable {
-  private readonly contexts: (ConcurrentOutputContext | undefined)[] = []
-
-  constructor(options: WritableOptions & {write: NonNullable<WritableOptions['write']>}) {
-    super({
-      ...options,
-      write: (chunk, encoding, callback) => {
-        useConcurrentOutputContext(this.contexts.shift() ?? {}, () =>
-          options.write.call(this, chunk, encoding, callback),
-        )
-      },
-    })
-  }
-
-  write(
-    chunk: string | Uint8Array,
-    encoding?: BufferEncoding | ((error?: Error | null) => void),
-    callback?: (error?: Error | null) => void,
-  ): boolean {
-    this.contexts.push(getConcurrentOutputContext())
-    return typeof encoding === 'string'
-      ? super.write(chunk, encoding, callback)
-      : super.write(chunk, encoding ?? callback)
-  }
-
-  end(
-    chunk?: string | Uint8Array | null | (() => void),
-    encoding?: BufferEncoding | (() => void),
-    callback?: () => void,
-  ): this {
-    if (chunk !== undefined && chunk !== null && typeof chunk !== 'function')
-      this.contexts.push(getConcurrentOutputContext())
-    if (typeof chunk === 'function') return super.end(chunk)
-    return typeof encoding === 'string' ? super.end(chunk, encoding, callback) : super.end(chunk, encoding ?? callback)
-  }
-}
-
-async function writeToStream(stream: Writable, chunk: Buffer | string, encoding: BufferEncoding = 'utf8') {
-  await new Promise<void>((resolve, reject) => {
-    stream.write(chunk, encoding, (error) => (error ? reject(error) : resolve()))
-  })
-}
-
-async function endStream(stream: Writable) {
-  const completed = finished(stream, {cleanup: true})
-  stream.end()
-  await completed
 }
 
 /**

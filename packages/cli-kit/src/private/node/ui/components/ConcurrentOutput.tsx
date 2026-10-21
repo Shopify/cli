@@ -1,3 +1,4 @@
+import {ConcurrentOutputContext, getConcurrentOutputContext, useConcurrentOutputContext} from '../../output-context.js'
 import {outputInfo, type OutputProcess} from '../../../../public/node/output.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import {useComplete} from '../../ui.js'
@@ -7,7 +8,6 @@ import figures from 'figures'
 import stripAnsi from 'strip-ansi'
 
 import {Writable} from 'stream'
-import {AsyncLocalStorage} from 'node:async_hooks'
 import {StringDecoder} from 'node:string_decoder'
 
 export interface ConcurrentOutputProps {
@@ -45,23 +45,6 @@ function currentTime() {
   return `${hours}:${minutes}:${seconds}`
 }
 
-interface ConcurrentOutputContext {
-  outputPrefix?: string
-  /** Controls ANSI stripping for terminal output. JSON diagnostics are always unstyled. */
-  stripAnsi?: boolean
-}
-
-const outputContextStore = new AsyncLocalStorage<ConcurrentOutputContext>()
-
-function useConcurrentOutputContext<T>(context: ConcurrentOutputContext, callback: () => T): T {
-  return outputContextStore.run(context, callback)
-}
-
-/** Returns the source and styling context for the current output write. */
-export function getConcurrentOutputContext(): ConcurrentOutputContext | undefined {
-  return outputContextStore.getStore()
-}
-
 /** Runs finite processes concurrently and routes their output through the shared diagnostic context. */
 export async function runConcurrentProcessesForJson({
   processes,
@@ -84,7 +67,7 @@ export async function runConcurrentProcessesForJson({
               next()
               return
             }
-            const currentPrefix = outputContextStore.getStore()?.outputPrefix ?? process.prefix
+            const currentPrefix = getConcurrentOutputContext()?.outputPrefix ?? process.prefix
             if (!hasPendingLine) prefix = currentPrefix
             const lines = (pending + decoder.write(chunk)).split(/\r?\n/)
             pending = lines.pop() ?? ''
@@ -202,7 +185,7 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     (process: OutputProcess, prefixes: string[]) => {
       return new Writable({
         write(chunk, _encoding, next) {
-          const context = outputContextStore.getStore()
+          const context = getConcurrentOutputContext()
           const prefix = context?.outputPrefix ?? process.prefix
           const shouldStripAnsi = context?.stripAnsi ?? true
           const log = chunk.toString('utf8').replace(/(\n)$/, '')
@@ -296,4 +279,4 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     </Static>
   )
 }
-export {ConcurrentOutput, ConcurrentOutputContext, useConcurrentOutputContext}
+export {ConcurrentOutput, ConcurrentOutputContext, getConcurrentOutputContext, useConcurrentOutputContext}

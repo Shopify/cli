@@ -6,6 +6,7 @@ import {
   isProcessAlive,
   listDevInstances,
   readDevInstance,
+  withDevInstance,
 } from './dev-instance.js'
 import {AbortError} from './error.js'
 import {fileExists, inTemporaryDirectory, mkdir, readFile, rmdir, writeFile} from './fs.js'
@@ -38,6 +39,34 @@ async function readLog(path: string) {
     .filter(Boolean)
     .map((line) => JSON.parse(line))
 }
+
+describe('withDevInstance', () => {
+  test.each([false, true])('flushes output and releases ownership when the callback throws: %s', async (throws) => {
+    await inTemporaryDirectory(async (directory) => {
+      const identity = {command: 'app dev', directory}
+      const failure = new Error('Dev failed')
+      const result = withDevInstance(identity, async (instance) => {
+        expect((await readDevInstance(identity))?.sessionId).toBe(instance.info.sessionId)
+        instance.tee(collectingStream().stream, {source: 'web'}).write('Final partial line')
+        if (throws) throw failure
+        return 'Dev finished'
+      })
+      if (throws) {
+        await expect(result).rejects.toBe(failure)
+      } else {
+        await expect(result).resolves.toBe('Dev finished')
+      }
+      const paths = devInstancePaths(identity)
+      await expect(readDevInstance(identity)).resolves.toBeUndefined()
+      await expect(fileExists(paths.lockFile)).resolves.toBe(false)
+      await expect(readLog(paths.logFile)).resolves.toEqual([
+        expect.objectContaining({source: 'web', message: 'Final partial line'}),
+      ])
+      const restarted = await acquireDevInstance(identity)
+      await restarted.release()
+    })
+  })
+})
 
 describe('acquireDevInstance', () => {
   test('does not include CLI fatal errors in the session log schema', () => {
