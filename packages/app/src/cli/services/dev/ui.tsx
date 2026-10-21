@@ -101,10 +101,15 @@ async function renderDevNonInteractive({
     if (signal.aborted) resolve()
   })
   // JSON events come from the session log, including output written after a watcher finishes setup.
-  const terminalOutput = new Writable({write: (_chunk, _encoding, next) => next()})
-  const running = processes.map(async (concurrentProcess) =>
-    concurrentProcess.action(json ? terminalOutput : process.stdout, json ? terminalOutput : process.stderr, signal),
-  )
+  const running = processes.map(async (concurrentProcess) => {
+    // Tees attach error listeners, so each process needs its own discard stream.
+    const terminalOutput = new Writable({write: (_chunk, _encoding, next) => next()})
+    return concurrentProcess.action(
+      json ? terminalOutput : process.stdout,
+      json ? terminalOutput : process.stderr,
+      signal,
+    )
+  })
   try {
     // A watcher can finish setup while it continues serving. Keep the session registered until abort.
     await Promise.all([...running, stopped])

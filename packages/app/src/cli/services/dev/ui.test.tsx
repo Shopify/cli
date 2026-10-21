@@ -24,6 +24,58 @@ afterEach(() => {
 
 describe('ui', () => {
   describe('renderDev', () => {
+    test('streams many JSON processes without exceeding target listener limits and removes listeners on release', async () => {
+      await inTemporaryDirectory(async (directory) => {
+        await withCapturedStandardStreams(async ({stdout, stderr}) => {
+          await runWithCommandEvents({outputMode: 'json', sink: () => {}}, async () => {
+            const instance = await acquireDevInstance({command: 'app dev', directory, logOutput: process.stdout})
+            const abortController = new AbortController()
+            const targets = new Set<Writable>()
+            const sources = Array.from({length: 20}, (_, index) => `process-${index}`)
+            const running = renderDev({
+              processes: sources.map((source) => ({
+                prefix: source,
+                action: async (targetStdout, targetStderr) => {
+                  targets.add(targetStdout)
+                  targets.add(targetStderr)
+                  instance.tee(targetStdout, {source}).write('stdout message\n')
+                  instance.tee(targetStderr, {source}).write('stderr message\n')
+                },
+              })),
+              previewUrl: 'https://example.com',
+              app: {id: '123', developerPlatformClient},
+              abortController,
+              shopFqdn: 'dev-store.myshopify.com',
+              devSessionStatusManager: new DevSessionStatusManager(),
+            })
+            try {
+              for (const target of targets) {
+                expect(target.listenerCount('error')).toBeLessThanOrEqual(target.getMaxListeners())
+              }
+            } finally {
+              abortController.abort()
+              await running
+              await instance.release()
+            }
+            for (const target of targets) expect(target.listenerCount('error')).toBe(0)
+            expect(stdout()).toBe(await readFile(instance.paths.logFile))
+            const events = stdout()
+              .trim()
+              .split('\n')
+              .map((line) => JSON.parse(line))
+            expect(events).toHaveLength(sources.length * 2)
+            for (const source of sources) {
+              expect(events.filter((event) => event.source === source).map((event) => event.message)).toEqual([
+                'stdout message',
+                'stderr message',
+              ])
+            }
+            expect(stderr()).toBe('')
+          })
+        })
+      })
+    })
+
     test('streams session output after setup, under load, and through shutdown with a TTY', async () => {
       vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
       vi.mocked(DevSessionUI).mockClear()
