@@ -70,6 +70,7 @@ test('records theme messages, task progress, sync errors, and late HTTP request 
       expect(messages).not.toContain('Outside the dev session')
       expect(log).not.toContain('\u001b')
       expect(log).not.toContain('sessionId')
+      expect(log).not.toContain('"source"')
     })
   })
 })

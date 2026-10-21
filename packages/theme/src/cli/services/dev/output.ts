@@ -9,7 +9,6 @@ const themeDevOutput = new AsyncLocalStorage<Writable>()
 
 export async function withThemeDevOutput<T>(instance: DevInstance, run: () => Promise<T>): Promise<T> {
   const output = instance.tee(new Writable({write: (_chunk, _encoding, next) => next()}), {
-    source: 'theme dev',
     stringWritesAreMessages: true,
   })
   const originalWarn = console.warn
