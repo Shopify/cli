@@ -31,10 +31,15 @@ test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
   },
 )
 
-test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
-  '%s flushes queued output and exits with background work after the postrun hook',
+test.skipIf(process.platform === 'win32').each([
+  ['SIGINT', 'text'],
+  ['SIGTERM', 'text'],
+  ['SIGINT', 'json'],
+  ['SIGTERM', 'json'],
+])(
+  '%s in %s mode flushes queued output and exits with background work after the postrun hook',
   {timeout: 20000},
-  async (signal) => {
+  async (signal, mode) => {
     await inTemporaryDirectory(async (directory) => {
       const script = `
         await import(${JSON.stringify(bootstrapUrl)})
@@ -42,7 +47,8 @@ test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
         const {renderDev} = await import(${JSON.stringify(uiUrl)})
         const {DevSessionStatusManager} = await import(${JSON.stringify(statusUrl)})
         const {hook} = await import(${JSON.stringify(postrunUrl)})
-        await new DevSession().start({
+        const {runWithCommandEvents} = await import('@shopify/cli-kit/node/command-events')
+        await runWithCommandEvents({outputMode: ${JSON.stringify(mode)}, sink: () => {}}, () => new DevSession(${mode === 'json'}).start({
           app: {directory: ${JSON.stringify(directory)}, configPath: 'shopify.app.toml'},
           remoteApp: {title: 'Local fixture', apiKey: 'fixture'},
         }, async (instance) => {
@@ -65,16 +71,17 @@ test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
             shopFqdn: 'fixture.myshopify.com',
             devSessionStatusManager: new DevSessionStatusManager(),
           })
-        })
-        process.stdout.write('Session cleaned up\\n')
+        }))
+        process.stderr.write('Session cleaned up\\n')
         await hook.call({}, {config: {}, Command: {id: 'app:dev'}})
-        process.stdout.write('Postrun completed\\n')
+        process.stderr.write('Postrun completed\\n')
         setTimeout(() => process.exit(2), 5000)
       `
       const result = await captureOutputWithExitCode(
         process.execPath,
         ['--loader', 'ts-node/esm', '--loader', sourceLoaderUrl, '--input-type=module', '--eval', script],
         {
+          stripFinalNewline: false,
           env: {
             ...process.env,
             NODE_NO_WARNINGS: '1',
@@ -87,10 +94,12 @@ test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
         },
       )
       expect(result.exitCode, result.stderr).toBe(0)
-      expect(result.stdout).toContain('Session cleaned up')
-      expect(result.stdout).toContain('Postrun completed')
+      expect(result.stderr).toContain('Session cleaned up')
+      expect(result.stderr).toContain('Postrun completed')
       const paths = devInstancePaths({command: 'app dev', directory, key: 'shopify.app.toml'})
-      const records = (await readFile(paths.logFile))
+      const log = await readFile(paths.logFile)
+      if (mode === 'json') expect(result.stdout).toBe(log)
+      const records = log
         .trim()
         .split('\n')
         .map((line) => JSON.parse(line))
