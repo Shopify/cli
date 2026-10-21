@@ -14,7 +14,9 @@ import {test, vi, describe, expect, beforeEach, beforeAll, afterAll, afterEach} 
 
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {setupServer} from 'msw/node'
-import {graphql, HttpResponse} from 'msw'
+import {graphql, http, HttpResponse} from 'msw'
+import {ClientError} from 'graphql-request'
+import url from 'node:url'
 
 let mockedRequestId = 'request-id-123'
 
@@ -131,6 +133,59 @@ afterEach(() => {
 })
 
 describe('graphqlRequest', () => {
+  test.each([401, 403, 503])('preserves HTTP %i errors with a non-GraphQL response body', async (status) => {
+    server.use(
+      http.post(
+        mockedAddress,
+        () =>
+          new HttpResponse('Service unavailable', {
+            status,
+            headers: {'Content-Type': 'text/plain', 'x-request-id': 'http-error-request'},
+          }),
+      ),
+    )
+
+    const request = graphqlRequest({
+      api: 'mockApi',
+      url: mockedAddress,
+      query: 'query { ok }',
+      responseOptions: {handleErrors: false},
+      preferredBehaviour: 'non-blocking',
+    })
+    await expect(request).rejects.toBeInstanceOf(ClientError)
+    await expect(request).rejects.toMatchObject({response: {status, body: 'Service unavailable'}})
+    expect(requestIdsCollection.getRequestIds()).toContain('http-error-request')
+  })
+
+  test('does not use the deprecated URL parser', async () => {
+    // Dependencies can retain url.parse, so observe the legacy parser through its prototype.
+    const parse = vi.spyOn(Reflect.get(url, 'Url').prototype, 'parse')
+
+    try {
+      await expect(
+        graphqlRequest({query: 'query QueryName { example }', api: 'mockApi', url: mockedAddress}),
+      ).resolves.toEqual({QueryName: {example: 'hello'}})
+      expect(parse).not.toHaveBeenCalled()
+    } finally {
+      parse.mockRestore()
+    }
+  })
+
+  test('rejects an already aborted request without starting it', async () => {
+    const onRequest = vi.fn()
+    server.events.on('request:start', onRequest)
+
+    await expect(
+      graphqlRequest({
+        query: 'query QueryName { example }',
+        api: 'mockApi',
+        url: mockedAddress,
+        preferredBehaviour: {useNetworkLevelRetry: false, useAbortSignal: AbortSignal.abort()},
+      }),
+    ).rejects.toMatchObject({name: 'AbortError'})
+    expect(onRequest).not.toHaveBeenCalled()
+  })
+
   test('calls debugLogRequestInfo once', async () => {
     let headers: any
     server.events.on('request:start', ({request}) => {
@@ -155,14 +210,9 @@ describe('graphqlRequest', () => {
     const {'user-agent': userAgent, 'sec-ch-ua-platform': _platform, ...otherHeaders} = headers
     expect(otherHeaders).toMatchInlineSnapshot(`
       {
-        "accept": "*/*",
-        "accept-encoding": "gzip,deflate",
+        "accept": "application/graphql-response+json, application/json",
         "authorization": "Bearer token",
-        "connection": "close",
-        "content-length": "100",
         "content-type": "application/json",
-        "host": "shopify.example",
-        "keep-alive": "timeout=30",
         "some": "header",
         "x-shopify-access-token": "Bearer token",
       }

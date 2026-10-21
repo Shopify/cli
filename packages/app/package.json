@@ -69,7 +69,7 @@
     "csv-parse": "7.0.2",
     "diff": "5.2.2",
     "esbuild": "0.28.1",
-    "graphql-request": "6.1.0",
+    "graphql-request": "7.4.0",
     "h3": "1.15.11",
     "http-proxy-node16": "1.0.6",
     "ignore": "6.0.2",

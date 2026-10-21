@@ -203,7 +203,7 @@ describe('executeOperation', () => {
     const data = {store: {name: 'Test Shop'}, value: null, enabled: false}
     const extensions = {cost: {requestedQueryCost: 2}}
     vi.mocked(adminRequestDoc).mockImplementation(async ({responseOptions}) => {
-      responseOptions?.onResponse?.({data, extensions, status: 200, headers: new Headers()})
+      responseOptions?.onResponse?.({data, extensions, status: 200, headers: new Headers(), body: ''})
       return data
     })
 
@@ -220,6 +220,8 @@ describe('executeOperation', () => {
 
   test('retains partial query data and native error extensions', async () => {
     const response = {
+      headers: new Headers(),
+      body: '',
       errors: [new GraphQLError('Access denied', {extensions: {code: 'ACCESS_DENIED'}})],
       data: {shop: null},
       extensions: {cost: {actualQueryCost: 1}},

@@ -102,8 +102,9 @@ export function isTransientNetworkError(error: unknown): boolean {
       'timeout',
       'premature close',
       'getaddrinfo',
+      'und_err_socket',
     ]
-    const errorMessage = error.message.toLowerCase()
+    const errorMessage = networkErrorMessage(error)
     const anyMatches = transientErrorMessages.some((issueMessage) => errorMessage.includes(issueMessage))
     const missingReason = /^request to .* failed, reason:\s*$/.test(errorMessage)
     return anyMatches || missingReason
@@ -131,11 +132,23 @@ export function isNetworkError(error: unknown): boolean {
   // Then check for permanent network errors (SSL/TLS/certificate issues)
   if (error instanceof Error) {
     const permanentNetworkErrorMessages = ['certificate', 'cert', 'tls', 'ssl', 'altnames']
-    const errorMessage = error.message.toLowerCase()
+    const errorMessage = networkErrorMessage(error)
     return permanentNetworkErrorMessages.some((issueMessage) => errorMessage.includes(issueMessage))
   }
 
   return false
+}
+
+function networkErrorMessage(error: Error): string {
+  // Native fetch wraps connection and TLS failures in TypeError("fetch failed").
+  const cause =
+    error instanceof TypeError && error.message === 'fetch failed' && error.cause instanceof Error ? error.cause : error
+  const errors = cause instanceof AggregateError ? cause.errors : [cause]
+  return errors
+    .filter((entry): entry is Error => entry instanceof Error)
+    .map((entry) => `${entry.message} ${'code' in entry ? entry.code : ''}`)
+    .join(' ')
+    .toLowerCase()
 }
 
 /**

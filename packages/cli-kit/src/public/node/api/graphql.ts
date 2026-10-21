@@ -1,4 +1,4 @@
-import {buildHeaders, httpsAgent} from '../../../private/node/api/headers.js'
+import {buildHeaders} from '../../../private/node/api/headers.js'
 import {debugLogRequestInfo, errorHandler} from '../../../private/node/api/graphql.js'
 import {addPublicMetadata, runWithTimer} from '../metadata.js'
 import {retryAwareRequest} from '../../../private/node/api.js'
@@ -16,14 +16,7 @@ import {abortSignalFromRequestBehaviour, RequestBehaviour, requestMode, RequestM
 import {CLI_KIT_VERSION} from '../../common/version.js'
 import {sleep} from '../system.js'
 import {outputContent, outputDebug} from '../output.js'
-import {
-  GraphQLClient,
-  rawRequest,
-  RequestDocument,
-  resolveRequestDocument,
-  Variables,
-  ClientError,
-} from 'graphql-request'
+import {GraphQLClient, rawRequest, RequestDocument, analyzeDocument, Variables, ClientError} from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 
 // to replace TVariable type when there graphql query has no variables
@@ -101,7 +94,7 @@ export interface GraphQLResponseOptions<T> {
 
 const MAX_RATE_LIMIT_RESTORE_DELAY_SECONDS = 0.3
 
-async function createGraphQLClient({
+function createGraphQLClient({
   url,
   addedHeaders,
   token,
@@ -114,10 +107,8 @@ async function createGraphQLClient({
     ...addedHeaders,
     ...buildHeaders(token),
   }
-  const clientOptions = {agent: await httpsAgent(), headers}
-
   return {
-    client: new GraphQLClient(url, clientOptions),
+    client: new GraphQLClient(url, {headers}),
     headers,
   }
 }
@@ -176,7 +167,7 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
   } = options
   const behaviour = requestMode(options.preferredBehaviour ?? 'default')
 
-  let {headers, client} = await createGraphQLClient({url, addedHeaders, token})
+  let {headers, client} = createGraphQLClient({url, addedHeaders, token})
   debugLogRequestInfo(api, queryAsString, url, variables, headers)
 
   const rawGraphQLRequest = async () => {
@@ -201,7 +192,7 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
     ? async () => {
         const refreshTokenResult = await tokenRefreshHandler()
         if (refreshTokenResult.token) {
-          const {client: newClient, headers: newHeaders} = await createGraphQLClient({
+          const {client: newClient, headers: newHeaders} = createGraphQLClient({
             url,
             addedHeaders,
             token: refreshTokenResult.token,
@@ -315,6 +306,6 @@ export async function graphqlRequestDoc<TResult, TVariables extends Variables>(
 ): Promise<TResult> {
   return performGraphQLRequest<TResult>({
     ...options,
-    queryAsString: resolveRequestDocument(options.query).query,
+    queryAsString: analyzeDocument(options.query).expression,
   })
 }

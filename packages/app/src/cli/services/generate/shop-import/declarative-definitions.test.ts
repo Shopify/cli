@@ -1176,7 +1176,12 @@ describe('importDeclarativeDefinitions', () => {
     })
 
     vi.mocked(adminAsAppRequestDoc).mockImplementation(async ({query, variables}) => {
-      if (query === MetafieldDefinitions && variables?.ownerType === 'PRODUCT') {
+      if (
+        query === MetafieldDefinitions &&
+        variables &&
+        'ownerType' in variables &&
+        variables.ownerType === 'PRODUCT'
+      ) {
         return {
           metafieldDefinitions: {
             pageInfo: {hasNextPage: false, endCursor: null},

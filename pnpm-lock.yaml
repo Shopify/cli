@@ -207,8 +207,8 @@ importers:
         specifier: 0.28.1
         version: 0.28.1
       graphql-request:
-        specifier: 6.1.0
-        version: 6.1.0(graphql@16.14.2)
+        specifier: 7.4.0
+        version: 7.4.0(graphql@16.14.2)
       h3:
         specifier: 1.15.11
         version: 1.15.11
@@ -270,6 +270,9 @@ importers:
       global-agent:
         specifier: 3.0.0
         version: 3.0.0
+      undici:
+        specifier: 7.28.0
+        version: 7.28.0
     devDependencies:
       '@oclif/core':
         specifier: 4.8.3
@@ -410,8 +413,8 @@ importers:
         specifier: 16.14.2
         version: 16.14.2
       graphql-request:
-        specifier: 6.1.0
-        version: 6.1.0(graphql@16.14.2)
+        specifier: 7.4.0
+        version: 7.4.0(graphql@16.14.2)
       h3:
         specifier: 1.15.11
         version: 1.15.11
@@ -5969,11 +5972,6 @@ packages:
     peerDependenciesMeta:
       cosmiconfig-toml-loader:
         optional: true
-
-  graphql-request@6.1.0:
-    resolution: {integrity: sha512-p+XPfS4q7aIpKVcgmnZKhMNqhltk20hfXtkaIkTfjjmiKMJ5xrt5c743cL03y/K7y1rg3WrIC49xGiEQ4mxdNw==, tarball: https://registry.npmjs.org/graphql-request/-/graphql-request-6.1.0.tgz}
-    peerDependencies:
-      graphql: 16.14.2
 
   graphql-request@7.4.0:
     resolution: {integrity: sha512-xfr+zFb/QYbs4l4ty0dltqiXIp07U6sl+tOKAb0t50/EnQek6CVVBLjETXi+FghElytvgaAWtIOt3EV7zLzIAQ==, tarball: https://registry.npmjs.org/graphql-request/-/graphql-request-7.4.0.tgz}
@@ -15223,14 +15221,6 @@ snapshots:
       - utf-8-validate
     optional: true
 
-  graphql-request@6.1.0(graphql@16.14.2):
-    dependencies:
-      '@graphql-typed-document-node/core': 3.2.0(graphql@16.14.2)
-      cross-fetch: 3.2.0
-      graphql: 16.14.2
-    transitivePeerDependencies:
-      - encoding
-
   graphql-request@7.4.0(graphql@16.14.2):
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.14.2)
@@ -18000,8 +17990,7 @@ snapshots:
     dependencies:
       '@fastify/busboy': 2.1.1
 
-  undici@7.28.0:
-    optional: true
+  undici@7.28.0: {}
 
   unicode-canonical-property-names-ecmascript@2.0.1: {}
 

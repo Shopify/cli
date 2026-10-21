@@ -74,7 +74,7 @@ test('preserves native GraphQL aliases, order, and UTF-8 on stdout and in output
   expect(response.errors).toBeUndefined()
   const extensions = JSON.parse('{"__proto__":{"trace":"preserved"},"constructor":false,"nullable":null,"empty":[]}')
   vi.mocked(adminRequestDoc).mockImplementation(async ({responseOptions}) => {
-    responseOptions?.onResponse?.({data: response.data, extensions, status: 200, headers: new Headers()})
+    responseOptions?.onResponse?.({data: response.data, extensions, status: 200, headers: new Headers(), body: ''})
     return response.data
   })
   const json = JSON.stringify({data: response.data, extensions}, null, 2)
@@ -126,7 +126,9 @@ test('uses one shared fatal error document and preserves an existing output file
       data: {shop: null},
       extensions: {cost: {actualQueryCost: 1}},
     }
-    vi.mocked(adminRequestDoc).mockRejectedValue(new ClientError({...details, status: 200}, {query}))
+    vi.mocked(adminRequestDoc).mockRejectedValue(
+      new ClientError({...details, status: 200, headers: new Headers(), body: ''}, {query}),
+    )
     vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
       await runCommand(['--json', '--output-file', outputFile]).catch(handler)
@@ -141,7 +143,9 @@ test('uses one shared fatal error document and preserves an existing output file
 
 test('preserves the text error banner without a fatal error for a GraphQL failure', async () => {
   const errors = [new GraphQLError('Field invalidField does not exist')]
-  vi.mocked(adminRequestDoc).mockRejectedValue(new ClientError({errors, status: 200}, {query}))
+  vi.mocked(adminRequestDoc).mockRejectedValue(
+    new ClientError({errors, status: 200, headers: new Headers(), body: ''}, {query}),
+  )
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await expect(runCommand([])).resolves.toEqual({app})
     expect(stdout()).toBe('')
