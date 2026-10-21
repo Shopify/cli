@@ -27,13 +27,15 @@ import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
 import {OnlineStorePasswordProtection} from '../../../cli/api/graphql/admin/generated/online_store_password_protection.js'
+import {extractGraphQLErrors} from '../../../private/node/api/graphql.js'
+import {TrustChallengeError, withTrustChallengeRetry} from '../../../private/node/themes/trust-challenge.js'
 import {RequestModeInput} from '../http.js'
 import {adminRequestDoc, type AdminRequestOptions} from '../api/admin.js'
 import {AdminSession} from '../session.js'
 import {AbortError} from '../error.js'
 import {outputDebug} from '../output.js'
 import {recordTiming, recordEvent, recordError} from '../analytics.js'
-import {ClientError, type Variables} from 'graphql-request'
+import {type Variables} from 'graphql-request'
 import type {InlineToken, TokenItem} from '../ui.js'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
@@ -242,7 +244,7 @@ export async function deleteThemeAssets(id: number, filenames: Key[], session: A
   for (let i = 0; i < filenames.length; i += batchSize) {
     const batch = filenames.slice(i, i + batchSize)
     // eslint-disable-next-line no-await-in-loop
-    const {themeFilesDelete} = await adminRequestDoc({
+    const {themeFilesDelete} = await requestThemeAdminDoc({
       query: ThemeFilesDelete,
       session,
       variables: {
@@ -332,7 +334,7 @@ async function uploadFiles(
   files: {filename: string; body: {type: OnlineStoreThemeFileBodyInputType; value: string}}[],
   session: AdminSession,
 ): Promise<ThemeFilesUpsertMutation> {
-  return adminRequestDoc({
+  return requestThemeAdminDoc({
     query: ThemeFilesUpsert,
     session,
     variables: {themeId: themeGid(themeId), files},
@@ -420,7 +422,7 @@ export async function themeUpdate(id: number, params: ThemeParams, session: Admi
   }
   recordEvent('theme-api:update-theme')
 
-  const {themeUpdate} = await adminRequestDoc({
+  const {themeUpdate} = await requestThemeAdminDoc({
     query: ThemeUpdate,
     session,
     variables: {id: composeThemeGid(id), input},
@@ -451,7 +453,7 @@ export async function themeUpdate(id: number, params: ThemeParams, session: Admi
 
 export async function themePublish(id: number, session: AdminSession): Promise<Theme | undefined> {
   recordEvent('theme-api:publish-theme')
-  const {themePublish} = await adminRequestDoc({
+  const {themePublish} = await requestThemeAdminDoc({
     query: ThemePublish,
     session,
     variables: {id: composeThemeGid(id)},
@@ -482,7 +484,7 @@ export async function themePublish(id: number, session: AdminSession): Promise<T
 
 export async function themeDelete(id: number, session: AdminSession): Promise<boolean | undefined> {
   recordEvent('theme-api:delete-theme')
-  const {themeDelete} = await adminRequestDoc({
+  const {themeDelete} = await requestThemeAdminDoc({
     query: ThemeDelete,
     session,
     variables: {id: composeThemeGid(id)},
@@ -521,7 +523,7 @@ export async function themeDuplicate(
   let requestId: string | undefined
   recordEvent('theme-api:duplicate-theme')
 
-  const {themeDuplicate} = await adminRequestDoc({
+  const {themeDuplicate} = await requestThemeAdminDoc({
     query: ThemeDuplicate,
     session,
     variables: {id: composeThemeGid(id), name},
@@ -624,11 +626,23 @@ function unexpectedGraphQLError(message: string): never {
   throw recordError(new AbortError(message))
 }
 
+/**
+ * Whether the error ends a Trust Battery challenge on a theme request. A caller that
+ * retries theme requests must rethrow it, or the user is asked to verify again for
+ * each attempt.
+ *
+ * @param error - The error to check.
+ * @returns True when the error ends a Trust Battery challenge.
+ */
+export function isTrustChallengeError(error: unknown): boolean {
+  return error instanceof TrustChallengeError
+}
+
 async function requestThemeAdminDoc<TResult, TVariables extends Variables>(
   options: AdminRequestOptions<TResult, TVariables>,
 ): Promise<TResult> {
   try {
-    const response = await adminRequestDoc(options)
+    const response = await withTrustChallengeRetry(() => adminRequestDoc(options))
     return response
   } catch (error) {
     abortIfMissingThemeAccessScope(error)
@@ -637,8 +651,6 @@ async function requestThemeAdminDoc<TResult, TVariables extends Variables>(
 }
 
 function abortIfMissingThemeAccessScope(error: unknown): void {
-  if (!(error instanceof ClientError)) return
-
   const requiredAccess = getThemeAccessRequirementForAccessDeniedError(error)
   if (!requiredAccess) return
 
@@ -663,8 +675,17 @@ function abortIfMissingThemeAccessScope(error: unknown): void {
     [
       'For',
       {command: 'theme push'},
-      'and',
+      {char: ','},
       {command: 'theme dev'},
+      {char: ','},
+      {command: 'theme publish'},
+      {char: ','},
+      {command: 'theme delete'},
+      {char: ','},
+      {command: 'theme rename'},
+      {char: ','},
+      'and',
+      {command: 'theme duplicate'},
       {char: ','},
       'add both the',
       {command: 'read_themes'},
@@ -687,11 +708,10 @@ function abortIfMissingThemeAccessScope(error: unknown): void {
   )
 }
 
-function getThemeAccessRequirementForAccessDeniedError(error: ClientError): string | undefined {
-  const graphQLErrors = error.response.errors
-  if (!Array.isArray(graphQLErrors)) return undefined
-
-  const accessDeniedError = graphQLErrors.find((graphQLError) => graphQLError.extensions?.code === 'ACCESS_DENIED')
+function getThemeAccessRequirementForAccessDeniedError(error: unknown): string | undefined {
+  const accessDeniedError = extractGraphQLErrors(error).find(
+    (graphQLError) => graphQLError.extensions?.code === 'ACCESS_DENIED',
+  )
   if (!accessDeniedError) return undefined
 
   const requiredAccess = accessDeniedError.extensions?.requiredAccess

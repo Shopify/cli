@@ -2,9 +2,6 @@
 const commandExceptions = [
   // Existing finite commands awaiting migration. Remove entries as they adopt typed JSON output.
   // Do not add new finite commands to this section.
-  'packages/plugin-did-you-mean/src/commands/config/autocorrect/off.ts',
-  'packages/plugin-did-you-mean/src/commands/config/autocorrect/on.ts',
-  'packages/plugin-did-you-mean/src/commands/config/autocorrect/status.ts',
 
   // App Security commands, launched before adopting typed JSON output. Remove entries as they adopt it.
   'packages/app/src/cli/commands/app/security/check.ts',

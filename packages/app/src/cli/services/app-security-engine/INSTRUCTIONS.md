@@ -36,6 +36,7 @@ Use separate sub-agents or isolated evaluation passes when available so each che
 ### 3. Investigate each check
 
 For each check:
+This review is static only: verify by reading code. Do not execute app, SDK, test, or repro code, and do not make network calls or probe live stores or services to prove a finding. If a candidate can't be proved from code, record the check as unresolved naming the candidate instead of running it.
 
 1. Follow its prompt exactly.
 2. Trace relevant request, authentication, authorization, data-flow, configuration, and rendering paths far enough to verify the behavior.
@@ -122,7 +123,7 @@ It combines {{DETERMINISTIC_FINDINGS_PATH}} with {{AGENT_FINDINGS_PATH}} into on
 - skipped or incomplete coverage and unresolved checks;
 - prioritized remediation steps.
 
-Make clear that the results are informational; they are not proof of App Store approval. If the user asks for fixes, make the smallest safe changes and avoid weakening security controls or hiding findings. Use a finding's `suppression` only when the user has an explicit, justified false positive or accepted risk; never drop a verified finding silently.
+Make clear that the results are informational; they are not proof of App Store approval. If the user asks for fixes, make the smallest safe changes and avoid weakening security controls or hiding findings. When you fix a verified finding, add or update a deterministic regression test that reproduces it where the app has a suitable test setup, and run that test after the fix. Use a finding's `suppression` only when the user has an explicit, justified false positive or accepted risk; never drop a verified finding silently.
 
 ### 7. Check again after changes
 

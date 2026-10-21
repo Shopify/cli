@@ -1,6 +1,7 @@
 import {waitForThemeToBeProcessed} from './host-theme-watcher.js'
 import {HostThemeManager, DEFAULT_THEME_ZIP, FALLBACK_THEME_ZIP} from './host-theme-manager.js'
-import {themeCreate} from '@shopify/cli-kit/node/themes/api'
+import {isTrustChallengeError, themeCreate} from '@shopify/cli-kit/node/themes/api'
+import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -178,6 +179,46 @@ describe('HostThemeManager', () => {
         'Could not create theme with name "App Ext. Host Name" and role "development"',
       )
       expect(themeCreate).toHaveBeenCalledTimes(4)
+    })
+
+    test('stops retrying when the Trust Battery prompt is cancelled with Ctrl+C', async () => {
+      // Given
+      vi.mocked(themeCreate).mockRejectedValue(new AbortSilentError())
+
+      // When
+      // Then
+      await expect(themeManager.findOrCreate()).rejects.toBeInstanceOf(AbortSilentError)
+      expect(themeCreate).toHaveBeenCalledTimes(1)
+    })
+
+    test('stops retrying when a Trust Battery challenge ends the request', async () => {
+      // Given
+      const challengeError = new AbortError('Shopify still needs to verify your identity before it can continue.')
+      vi.mocked(themeCreate).mockRejectedValue(challengeError)
+      vi.mocked(isTrustChallengeError).mockImplementation((error) => error === challengeError)
+
+      // When
+      // Then
+      await expect(themeManager.findOrCreate()).rejects.toBe(challengeError)
+      expect(themeCreate).toHaveBeenCalledTimes(1)
+    })
+
+    test('keeps retrying a theme creation abort that is not a Trust Battery challenge', async () => {
+      // Given
+      vi.mocked(themeCreate).mockRejectedValueOnce(new AbortError('Source is empty')).mockResolvedValueOnce({
+        id: 12345,
+        name: 'Theme',
+        role: 'development',
+        createdAtRuntime: true,
+        processing: true,
+      })
+      vi.mocked(isTrustChallengeError).mockReturnValue(false)
+
+      // When
+      await themeManager.findOrCreate()
+
+      // Then
+      expect(themeCreate).toHaveBeenCalledTimes(2)
     })
   })
 })

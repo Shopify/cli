@@ -33,6 +33,7 @@ const DOCS_PAGE_SLUGS = [
   'scope-over-request',
   'script-tag-url-injection',
   'session-lifecycle-and-replay',
+  'shared-namespace-metafield-render',
   'sql-injection',
   'ssrf-request-forgery',
   'static-frame-ancestors',

@@ -6013,15 +6013,47 @@
       "args": {
       },
       "customPluginName": "@shopify/plugin-did-you-mean",
-      "description": "Disable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
+      "description": "Disable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AutocorrectResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"enabled\": {\n      \"type\": \"boolean\"\n    }\n  },\n  \"required\": [\n    \"enabled\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AutocorrectResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Disable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "enableJsonFlag": false,
       "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
         "json-schema": {
           "allowNo": false,
           "description": "Print the command's JSON schemas.",
           "env": "SHOPIFY_FLAG_JSON_SCHEMA",
           "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "no-input": {
+          "allowNo": false,
+          "description": "Disable interactive prompts and browser authentication.",
+          "env": "SHOPIFY_FLAG_NO_INPUT",
+          "name": "no-input",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
           "type": "boolean"
         }
       },
@@ -6041,15 +6073,47 @@
       "args": {
       },
       "customPluginName": "@shopify/plugin-did-you-mean",
-      "description": "Enable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
+      "description": "Enable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AutocorrectResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"enabled\": {\n      \"type\": \"boolean\"\n    }\n  },\n  \"required\": [\n    \"enabled\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AutocorrectResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Enable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "enableJsonFlag": false,
       "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
         "json-schema": {
           "allowNo": false,
           "description": "Print the command's JSON schemas.",
           "env": "SHOPIFY_FLAG_JSON_SCHEMA",
           "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "no-input": {
+          "allowNo": false,
+          "description": "Disable interactive prompts and browser authentication.",
+          "env": "SHOPIFY_FLAG_NO_INPUT",
+          "name": "no-input",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
           "type": "boolean"
         }
       },
@@ -6069,15 +6133,47 @@
       "args": {
       },
       "customPluginName": "@shopify/plugin-did-you-mean",
-      "description": "Check whether autocorrect is enabled or disabled. On by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
+      "description": "Check whether autocorrect is enabled or disabled. On by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AutocorrectResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"enabled\": {\n      \"type\": \"boolean\"\n    }\n  },\n  \"required\": [\n    \"enabled\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AutocorrectResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Check whether autocorrect is enabled or disabled. On by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "enableJsonFlag": false,
       "flags": {
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
         "json-schema": {
           "allowNo": false,
           "description": "Print the command's JSON schemas.",
           "env": "SHOPIFY_FLAG_JSON_SCHEMA",
           "name": "json-schema",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "no-input": {
+          "allowNo": false,
+          "description": "Disable interactive prompts and browser authentication.",
+          "env": "SHOPIFY_FLAG_NO_INPUT",
+          "name": "no-input",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
           "type": "boolean"
         }
       },
@@ -10020,7 +10116,7 @@
       "args": {
       },
       "customPluginName": "@shopify/store",
-      "description": "Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.\n\nRun `shopify store auth` first to create stored auth for the store.\n\nMutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `StoreExecuteResult` schema.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"type\": \"object\",\n      \"additionalProperties\": {}\n    },\n    {\n      \"type\": \"null\"\n    }\n  ],\n  \"title\": \"StoreExecuteResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
+      "description": "Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.\n\nRun `shopify store auth` first to create stored auth for the store.\n\nMutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `StoreExecuteResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"data\": {\n      \"anyOf\": [\n        {\n          \"type\": \"object\",\n          \"additionalProperties\": {}\n        },\n        {\n          \"type\": \"null\"\n        }\n      ],\n      \"description\": \"GraphQL response data, preserving query fields and aliases.\"\n    },\n    \"extensions\": {\n      \"type\": \"object\",\n      \"additionalProperties\": {},\n      \"description\": \"Response-level GraphQL metadata, when returned by the API.\"\n    }\n  },\n  \"required\": [\n    \"data\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"StoreExecuteResult\",\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.\n\nRun `shopify store auth` first to create stored auth for the store.\n\nMutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.",
       "examples": [
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --query \"query { shop { name } }\"",

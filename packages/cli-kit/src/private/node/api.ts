@@ -1,12 +1,13 @@
 import {sanitizedHeadersOutput} from './api/headers.js'
 import {sanitizeURL} from './api/urls.js'
-import {hasRateLimitCode} from './analytics/graphql-error-codes.js'
+import {graphQLErrorCodes, isRateLimitCode} from './analytics/graphql-error-codes.js'
 import {sleepWithBackoffUntil} from './sleep-with-backoff.js'
 import {outputDebug} from '../../public/node/output.js'
 import {recordRetry} from '../../public/node/analytics.js'
 
 import {Headers} from 'form-data'
 import {ClientError} from 'graphql-request'
+import {getOperationAST, GraphQLError, parse} from 'graphql'
 
 import {performance} from 'perf_hooks'
 
@@ -16,6 +17,8 @@ export const allAPIs: API[] = ['admin', 'storefront-renderer', 'partners', 'busi
 
 const DEFAULT_RETRY_DELAY_MS = 1000
 const DEFAULT_RETRY_LIMIT = 10
+const MAX_THROTTLE_RETRY_DELAY_MS = 8000
+const MAX_THROTTLE_RETRY_TIME_MS = 30_000
 
 export type NetworkRetryBehaviour =
   | {
@@ -223,14 +226,6 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
       const sanitizedHeaders = sanitizedHeadersOutput(responseHeaders)
 
       if (isThrottled(err)) {
-        let delayMs: number | undefined
-
-        try {
-          delayMs = responseHeaders['retry-after'] ? Number.parseInt(responseHeaders['retry-after'], 10) : undefined
-          // eslint-disable-next-line no-catch-all/no-catch-all
-        } catch {
-          // ignore errors in extracting retry-after header
-        }
         return {
           status: 'can-retry',
           clientError: err,
@@ -238,7 +233,7 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
           sanitizedHeaders,
           sanitizedUrl,
           requestId: responseHeaders['x-request-id'],
-          delayMs,
+          delayMs: retryAfterDelayMs(responseHeaders['retry-after']),
         }
       } else if (err.response.status === 401) {
         return {
@@ -282,15 +277,41 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
   }
 }
 
-// Shopify GraphQL APIs signal rate limiting with `extensions.code` set to
-// `THROTTLED` (often on a 200 response) or `429` — the same codes that
-// crash-report suppression and analytics grouping already treat as rate
-// limiting via this shared helper.
+// Partial mutation data can include a successful write. Read queries are safe to repeat.
 function isThrottled(error: ClientError): boolean {
-  if (error.response.status === 429) {
-    return true
+  if (error.response.data != null && !isReadOnlyQuery(error.request.query)) return false
+  const httpRateLimited = error.response.status === 429
+  const errors = error.response.errors
+  if (!Array.isArray(errors) || errors.length === 0) return httpRateLimited
+  return errors.every((entry) => {
+    const codes = graphQLErrorCodes([entry])
+    return (codes.length > 0 || httpRateLimited) && codes.every(isRateLimitCode)
+  })
+}
+
+function isReadOnlyQuery(query: string | string[]): boolean {
+  if (typeof query !== 'string') return false
+  try {
+    return getOperationAST(parse(query))?.operation === 'query'
+  } catch (error) {
+    if (error instanceof GraphQLError) return false
+    throw error
   }
-  return hasRateLimitCode(error.response.errors)
+}
+
+function retryAfterDelayMs(retryAfter: string | undefined): number | undefined {
+  const value = retryAfter?.trim()
+  if (!value) return undefined
+
+  const seconds = Number(value)
+  if (!Number.isNaN(seconds)) {
+    return Number.isFinite(seconds) && seconds >= 0 ? seconds * 1000 : undefined
+  }
+
+  // The asctime HTTP-date format omits a time zone but still uses UTC.
+  const isAsctimeDate = /^[A-Za-z]{3} [A-Za-z]{3} (?: \d|\d{2}) \d{2}:\d{2}:\d{2} \d{4}$/.test(value)
+  const retryAt = Date.parse(isAsctimeDate ? `${value} GMT` : value)
+  return Number.isNaN(retryAt) ? undefined : Math.max(0, retryAt - Date.now())
 }
 
 export async function simpleRequestWithDebugLog<T extends {headers: Headers; status: number}>(
@@ -343,6 +364,8 @@ ${result.sanitizedHeaders}
  * Makes a HTTP request to some API, retrying if response headers indicate a retryable error.
  *
  * If a request fails with a 429, the retry-after header determines a delay before an automatic retry is performed.
+ * Without a valid header, rate-limit retries use exponential backoff with jitter, capped at 8 seconds per delay.
+ * No new rate-limit retry starts after 30 seconds. A server-requested delay beyond that budget is not shortened.
  *
  * If unauthorizedHandler is provided, then it will be called in the case of a 401 and a retry performed. This allows
  * for a token refresh for instance.
@@ -371,6 +394,7 @@ export async function retryAwareRequest<T extends {headers: Headers; status: num
   const limitRetriesTo = retryOptions.limitRetriesTo ?? DEFAULT_RETRY_LIMIT
 
   let result = await makeVerboseRequest(requestOptions)
+  const retryDeadline = performance.now() + MAX_THROTTLE_RETRY_TIME_MS
 
   outputDebug(`Request to ${result.sanitizedUrl} completed in ${result.duration} ms
 With response headers:
@@ -399,8 +423,15 @@ ${result.sanitizedHeaders}
       throw result.clientError
     }
 
-    if (limitRetriesTo <= retriesUsed) {
-      outputDebug(`${limitRetriesTo} retries exhausted for request to ${result.sanitizedUrl}`)
+    const maximumDelayMs = Math.min(
+      (retryOptions.defaultDelayMs ?? DEFAULT_RETRY_DELAY_MS) * 2 ** retriesUsed,
+      MAX_THROTTLE_RETRY_DELAY_MS,
+    )
+    const retryDelayMs = result.delayMs ?? Math.floor(maximumDelayMs * (0.5 + Math.random() / 2))
+    if (limitRetriesTo <= retriesUsed || retryDelayMs >= retryDeadline - performance.now()) {
+      outputDebug(
+        `Rate-limit retry budget exhausted after ${retriesUsed} retries for request to ${result.sanitizedUrl}`,
+      )
       if (errorHandler) {
         throw errorHandler(result.clientError, result.requestId)
       } else {
@@ -414,14 +445,13 @@ ${result.sanitizedHeaders}
       recordRetry(requestOptions.url, `http-retry-${retriesUsed}:${result.status}:`)
     }
 
-    // prefer to wait based on a header if given; the caller's preference if not; and a default if neither.
-    const retryDelayMs = result.delayMs ?? retryOptions.defaultDelayMs ?? DEFAULT_RETRY_DELAY_MS
     outputDebug(`Scheduling retry request #${retriesUsed} to ${result.sanitizedUrl} in ${retryDelayMs} ms`)
 
+    const previousResult = result
     // eslint-disable-next-line no-await-in-loop
     result = await new Promise<VerboseResponse<T>>((resolve) => {
       retryOptions.scheduleDelay(() => {
-        resolve(makeVerboseRequest(requestOptions))
+        resolve(performance.now() < retryDeadline ? makeVerboseRequest(requestOptions) : previousResult)
       }, retryDelayMs)
     })
   }
