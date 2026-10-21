@@ -32,7 +32,7 @@ Progress and diagnostics use JSON side events on stderr.
 | Shared meanings | Use `name`, `clientId`, `previousVersion`, and distinct `planHandle`/`planName`. Resource URL names and placement agree across commands. Different projections may expose different fields, but a shared field keeps its meaning. |
 | Numbers and enums | Bulk `objectCount` is a nonnegative decimal string; reject unsafe numeric inputs. Bounded counts and positions are nonnegative integers; money uses strings. CLI-owned enums are closed, with kebab-case multiword values. Upstream enums remain extensible strings with documented known values. |
 | Files | Use absolute native filesystem paths: `path` for the primary artifact, `directory` for a project directory, descriptive `...Path` fields for additional files. Relative route names stay route names. |
-| Diagnostics | Use `filePath` for filesystem paths and array-valued `fieldPath` for configuration fields. JSON line/column positions are zero-based; text presenters can convert them. |
+| Diagnostics | Use `filePath` for filesystem paths and array-valued `fieldPath` for configuration fields. JSON line/column positions are one-based, matching human-readable output. |
 | Pagination | Use `pageInfo` when results are capped, retain totals already fetched, and distinguish unknown values from `false` or zero. Do not invent a cursor. Document whether the list is complete or one page. |
 | Versioning | Version CLI result contracts with the CLI release. Independently versioned artifact formats keep their own versions; do not introduce a command-specific result version field. |
 
