@@ -38,11 +38,11 @@ test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
     await inTemporaryDirectory(async (directory) => {
       const script = `
         await import(${JSON.stringify(bootstrapUrl)})
-        const {DevSession} = await import(${JSON.stringify(serviceUrl)})
+        const {withDevSession} = await import(${JSON.stringify(serviceUrl)})
         const {renderDev} = await import(${JSON.stringify(uiUrl)})
         const {DevSessionStatusManager} = await import(${JSON.stringify(statusUrl)})
         const {hook} = await import(${JSON.stringify(postrunUrl)})
-        await new DevSession().start({
+        await withDevSession({
           app: {directory: ${JSON.stringify(directory)}, configPath: 'shopify.app.toml'},
           remoteApp: {title: 'Local fixture', apiKey: 'fixture'},
         }, async (instance) => {
