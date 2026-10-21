@@ -1,5 +1,5 @@
 import {deleteDevStoreJsonOutputSchema} from './types.js'
-import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
+import {businessPlatformTokenRefreshHandler, storeManagementRequestDoc} from '../business-platform.js'
 import {fetchOptionalOrganizationShop} from '../../../utilities/store-lookup/organization-shop.js'
 import {DeleteAppDevelopmentStore} from '../../../api/graphql/business-platform-organizations/generated/delete_app_development_store.js'
 import {
@@ -8,7 +8,6 @@ import {
   type OrganizationAccessibleShopQueryVariables,
 } from '../../../api/graphql/business-platform-organizations/generated/organization_accessible_shop.js'
 import {type Organization} from '@shopify/organizations'
-import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {type UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {renderSingleTask, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
@@ -39,7 +38,7 @@ export async function deleteDevStore(options: DeleteDevStoreOptions): Promise<vo
   const unauthorizedHandler = businessPlatformTokenRefreshHandler()
   let shopifyShopId = await fetchShopifyShopId({store, organizationId: org.id, token})
 
-  const mutationResult = await businessPlatformOrganizationsRequestDoc({
+  const mutationResult = await storeManagementRequestDoc({
     query: DeleteAppDevelopmentStore,
     token,
     organizationId: org.id,
@@ -123,7 +122,7 @@ async function waitForStoreDeletionConfirmation(options: StoreDeletionConfirmati
         }
 
         // eslint-disable-next-line no-await-in-loop
-        const pollResult = await businessPlatformOrganizationsRequestDoc<
+        const pollResult = await storeManagementRequestDoc<
           OrganizationAccessibleShopQuery,
           OrganizationAccessibleShopQueryVariables
         >({

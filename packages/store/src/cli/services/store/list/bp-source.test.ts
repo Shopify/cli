@@ -1,6 +1,6 @@
 import {listBusinessPlatformStores} from './bp-source.js'
 import {type ListAccessibleShopsQuery} from '../../../api/graphql/business-platform-organizations/generated/list_accessible_shops.js'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
@@ -275,3 +275,26 @@ describe('listBusinessPlatformStores', () => {
     })
   })
 })
+
+describe('listBusinessPlatformStores with a token that lacks Dev store management', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test('explains that the token lacks Dev store management instead of showing the raw 401', async () => {
+    vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'app-only-token')
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockRejectedValue(unauthorizedClientErrorLike())
+
+    await expect(listBusinessPlatformStores({token: 'bp-token', organization})).rejects.toThrow(
+      "This token can't manage dev stores.",
+    )
+  })
+})
+
+// Structural fake of graphql-request's `ClientError`, as cli-kit rethrows it when a 401 survives the refresh retry.
+function unauthorizedClientErrorLike(): Error {
+  return Object.assign(new Error('GraphQL Error (Code: 401)'), {
+    response: {status: 401, headers: {}},
+    request: {query: 'query ListAccessibleShops'},
+  })
+}
