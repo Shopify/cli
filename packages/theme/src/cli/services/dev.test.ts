@@ -13,7 +13,14 @@ import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {getAvailableTCPPort, checkPortAvailability} from '@shopify/cli-kit/node/tcp'
 import {Config} from '@oclif/core'
+import {readDevInstance, devInstancePaths, acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
+import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
+import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {outputInfo} from '@shopify/cli-kit/node/output'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import readline from 'readline'
+import {mkdtemp, rm} from 'node:fs/promises'
+import {tmpdir} from 'node:os'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/colors', () => ({
@@ -64,6 +71,7 @@ vi.mock('../utilities/theme-environment/crawler-signature.js', async (realImport
   }
 })
 
+const processEvents: NodeJS.EventEmitter = process
 const store = 'my-store.myshopify.com'
 const theme = buildTheme({id: 123, name: 'My Theme', role: DEVELOPMENT_THEME_ROLE})!
 const crawlerSignatureHeaders = {
@@ -314,7 +322,8 @@ describe('dev() Ctrl-C analytics', () => {
     only: [],
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    baseOptions.directory = await mkdtemp(joinPath(tmpdir(), 'theme-dev-test-'))
     vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(true)
     vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(false)
     vi.mocked(fetchOrCreateCrawlerSignatureHeaders).mockResolvedValue(crawlerSignatureHeaders)
@@ -330,24 +339,26 @@ describe('dev() Ctrl-C analytics', () => {
     })
     vi.mocked(setupDevServer).mockReturnValue({
       serverStart: vi.fn().mockResolvedValue(undefined),
+      serverStop: vi.fn().mockResolvedValue(undefined),
+      workPromise: Promise.resolve(),
       renderDevSetupProgress: vi.fn().mockResolvedValue(undefined),
       backgroundJobPromise,
       resolveBackgroundJob: resolveBackgroundJob!,
-      dispatchEvent: vi.fn(),
+      dispatchEvent: vi.fn(async () => undefined),
     } as any)
 
     exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
   })
 
-  afterEach(() => {
+  afterEach(async () => {
     exitSpy.mockRestore()
+    await rm(baseOptions.directory, {recursive: true, force: true})
   })
 
   test('Ctrl-C path: reports analytics once, even if reportDevAnalytics is invoked again', async () => {
     const devPromise = dev(baseOptions)
 
-    // Flush microtasks so the Promise.all is awaiting backgroundJobPromise.
-    await new Promise((resolve) => setImmediate(resolve))
+    await vi.waitFor(() => expect(setupDevServer).toHaveBeenCalled())
 
     // Simulate Ctrl-C by resolving the background job.
     resolveBackgroundJob()
@@ -378,7 +389,7 @@ describe('dev() Ctrl-C analytics', () => {
   test('enables the standard events dev bundle by default', async () => {
     const devPromise = dev({...baseOptions, 'standard-events-inspector': false})
 
-    await new Promise((resolve) => setImmediate(resolve))
+    await vi.waitFor(() => expect(setupDevServer).toHaveBeenCalled())
 
     resolveBackgroundJob()
     await devPromise
@@ -397,7 +408,7 @@ describe('dev() Ctrl-C analytics', () => {
   test('propagates the inspector option to the dev server context', async () => {
     const devPromise = dev({...baseOptions, 'standard-events-inspector': true})
 
-    await new Promise((resolve) => setImmediate(resolve))
+    await vi.waitFor(() => expect(setupDevServer).toHaveBeenCalled())
 
     resolveBackgroundJob()
     await devPromise
@@ -413,7 +424,9 @@ describe('dev() Ctrl-C analytics', () => {
     )
   })
 
-  test('does not configure stdin when input is unavailable', async () => {
+  test.each([false, true])('restores stdin after stopping with input available: %s', async (acceptsInput) => {
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(acceptsInput)
+    const listenerCount = process.stdin.listenerCount('keypress')
     const emitKeypressEventsSpy = vi.spyOn(readline, 'emitKeypressEvents')
     const stdinOnSpy = vi.spyOn(process.stdin, 'on')
     const originalSetRawModeDescriptor = Object.getOwnPropertyDescriptor(process.stdin, 'setRawMode')
@@ -423,14 +436,25 @@ describe('dev() Ctrl-C analytics', () => {
     try {
       const devPromise = dev(baseOptions)
 
-      await new Promise((resolve) => setImmediate(resolve))
+      await vi.waitFor(() => expect(setupDevServer).toHaveBeenCalled())
 
-      resolveBackgroundJob()
+      if (acceptsInput) {
+        await vi.waitFor(() => expect(setRawMode).toHaveBeenCalledWith(true))
+        process.stdin.emit('keypress', '\u0003', {ctrl: true, name: 'c'})
+      } else {
+        resolveBackgroundJob()
+      }
       await devPromise
 
-      expect(emitKeypressEventsSpy).not.toHaveBeenCalled()
-      expect(stdinOnSpy).not.toHaveBeenCalledWith('keypress', expect.any(Function))
-      expect(setRawMode).not.toHaveBeenCalled()
+      if (acceptsInput) {
+        expect(emitKeypressEventsSpy).toHaveBeenCalled()
+        expect(setRawMode.mock.calls).toEqual([[true], [false]])
+      } else {
+        expect(emitKeypressEventsSpy).not.toHaveBeenCalled()
+        expect(stdinOnSpy).not.toHaveBeenCalledWith('keypress', expect.any(Function))
+        expect(setRawMode).not.toHaveBeenCalled()
+      }
+      expect(process.stdin.listenerCount('keypress')).toBe(listenerCount)
     } finally {
       if (originalSetRawModeDescriptor) {
         Object.defineProperty(process.stdin, 'setRawMode', originalSetRawModeDescriptor)
@@ -438,6 +462,127 @@ describe('dev() Ctrl-C analytics', () => {
         Reflect.deleteProperty(process.stdin, 'setRawMode')
       }
     }
+  })
+
+  test.each(['SIGINT', 'SIGTERM', 'shopify:signal'])(
+    '%s drains output, closes the server, and releases ownership',
+    async (event) => {
+      await withCapturedStandardStreams(async () => {
+        const identity = {
+          command: 'theme dev',
+          directory: baseOptions.directory,
+          key: `${baseOptions.store}:${theme.id}`,
+        }
+        const paths = devInstancePaths(identity)
+        const listenerCounts = ['SIGINT', 'SIGTERM', 'shopify:signal'].map((name) => process.listenerCount(name))
+        const {promise: sendOutput, resolve: continueOutput} = Promise.withResolvers<void>()
+        const serverStop = vi.fn(async () => {
+          await expect(fileExists(paths.infoFile)).resolves.toBe(true)
+          outputInfo('Stopped')
+        })
+        vi.mocked(setupDevServer).mockImplementationOnce(() => {
+          const backgroundJobPromise = (async () => {
+            await sendOutput
+            for (let index = 0; index < 1000; index++) outputInfo(`Synced file ${index}`)
+            const stop = processEvents.listeners(event).at(-1)!
+            stop()
+          })()
+          return {
+            serverStart: vi.fn().mockResolvedValue(undefined),
+            serverStop,
+            workPromise: Promise.resolve(),
+            renderDevSetupProgress: vi.fn().mockResolvedValue(undefined),
+            backgroundJobPromise,
+            resolveBackgroundJob: vi.fn(),
+            dispatchEvent: vi.fn(async () => undefined),
+          }
+        })
+        const running = dev(baseOptions)
+        try {
+          await vi.waitFor(async () => {
+            const info = await readDevInstance(identity)
+            expect(info?.status).toBe('running')
+            expect(info?.details).toMatchObject({
+              store: baseOptions.store,
+              themeId: theme.id,
+              themeName: theme.name,
+              host: '127.0.0.1',
+              port: 9292,
+              urls: {
+                local: 'http://127.0.0.1:9292',
+                preview: `https://${baseOptions.store}/?preview_theme_id=${theme.id}`,
+              },
+            })
+          })
+          await expect(dev(baseOptions)).rejects.toMatchObject({code: 'dev_instance_already_running'})
+          expect(setupDevServer).toHaveBeenCalledTimes(1)
+        } finally {
+          continueOutput()
+          await running
+        }
+        expect(serverStop).toHaveBeenCalledOnce()
+        expect(exitSpy).toHaveBeenCalledWith(0)
+        await expect(fileExists(paths.infoFile)).resolves.toBe(false)
+        await expect(fileExists(paths.lockFile)).resolves.toBe(false)
+        const records = (await readFile(paths.logFile))
+          .trim()
+          .split('\n')
+          .map((line) => JSON.parse(line))
+        expect(records.map(({message}) => message)).toEqual([
+          ...Array.from({length: 1000}, (_, index) => `Synced file ${index}`),
+          'Stopped',
+        ])
+        expect(['SIGINT', 'SIGTERM', 'shopify:signal'].map((name) => process.listenerCount(name))).toEqual(
+          listenerCounts,
+        )
+      })
+    },
+  )
+
+  test('releases ownership after setup failure without recording a fatal CLI error', async () => {
+    const serverStop = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(setupDevServer).mockReturnValueOnce({
+      serverStart: vi.fn().mockRejectedValue(new Error('Cannot start server')),
+      serverStop,
+      workPromise: Promise.resolve(),
+      renderDevSetupProgress: vi.fn().mockResolvedValue(undefined),
+      backgroundJobPromise: new Promise(() => {}),
+      resolveBackgroundJob: vi.fn(),
+      dispatchEvent: vi.fn(async () => undefined),
+    })
+    await expect(dev(baseOptions)).rejects.toThrow('Cannot start server')
+    const identity = {command: 'theme dev', directory: baseOptions.directory, key: `${baseOptions.store}:${theme.id}`}
+    expect(serverStop).toHaveBeenCalledOnce()
+    await expect(readDevInstance(identity)).resolves.toBeUndefined()
+    await expect(readFile(devInstancePaths(identity).logFile)).resolves.toBe('')
+    const nextInstance = await acquireDevInstance(identity)
+    await nextInstance.release()
+  })
+
+  test('stops during setup and does not start a server when the pending work later completes', async () => {
+    const {promise: progress, resolve: finishProgress} = Promise.withResolvers<void>()
+    const serverStart = vi.fn().mockResolvedValue(undefined)
+    const serverStop = vi.fn().mockResolvedValue(undefined)
+    vi.mocked(setupDevServer).mockReturnValueOnce({
+      serverStart,
+      serverStop,
+      workPromise: Promise.resolve(),
+      renderDevSetupProgress: () => progress,
+      backgroundJobPromise: new Promise(() => {}),
+      resolveBackgroundJob: vi.fn(),
+      dispatchEvent: vi.fn(async () => undefined),
+    })
+    const running = dev(baseOptions)
+    await vi.waitFor(() => expect(setupDevServer).toHaveBeenCalled())
+    const identity = {command: 'theme dev', directory: baseOptions.directory, key: `${baseOptions.store}:${theme.id}`}
+    expect((await readDevInstance(identity))?.status).toBe('starting')
+    processEvents.emit('shopify:signal')
+    await running
+    finishProgress()
+    await new Promise((resolve) => setImmediate(resolve))
+    expect(serverStop).toHaveBeenCalledOnce()
+    expect(serverStart).not.toHaveBeenCalled()
+    await expect(readDevInstance(identity)).resolves.toBeUndefined()
   })
 })
 
@@ -465,7 +610,8 @@ describe('dev() port validation', () => {
     only: [],
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    baseOptions.directory = await mkdtemp(joinPath(tmpdir(), 'theme-dev-test-'))
     vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(true)
     vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(false)
     vi.mocked(fetchOrCreateCrawlerSignatureHeaders).mockResolvedValue(crawlerSignatureHeaders)
@@ -481,17 +627,20 @@ describe('dev() port validation', () => {
     })
     vi.mocked(setupDevServer).mockReturnValue({
       serverStart: vi.fn().mockResolvedValue(undefined),
+      serverStop: vi.fn().mockResolvedValue(undefined),
+      workPromise: Promise.resolve(),
       renderDevSetupProgress: vi.fn().mockResolvedValue(undefined),
       backgroundJobPromise,
       resolveBackgroundJob: resolveBackgroundJob!,
-      dispatchEvent: vi.fn(),
+      dispatchEvent: vi.fn(async () => undefined),
     } as any)
 
     exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never)
   })
 
-  afterEach(() => {
+  afterEach(async () => {
     exitSpy.mockRestore()
+    await rm(baseOptions.directory, {recursive: true, force: true})
   })
 
   test('accepts a valid port and calls checkPortAvailability with it', async () => {
@@ -499,7 +648,7 @@ describe('dev() port validation', () => {
 
     const devPromise = dev({...baseOptions, port: 9293})
 
-    await new Promise((resolve) => setImmediate(resolve))
+    await vi.waitFor(() => expect(setupDevServer).toHaveBeenCalled())
 
     resolveBackgroundJob()
     await devPromise

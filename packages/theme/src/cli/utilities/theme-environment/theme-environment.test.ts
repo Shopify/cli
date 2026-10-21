@@ -18,6 +18,7 @@ import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {createEvent} from 'h3'
 import * as output from '@shopify/cli-kit/node/output'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
+import {getAvailableTCPPort, checkPortAvailability} from '@shopify/cli-kit/node/tcp'
 
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
@@ -174,6 +175,26 @@ describe('setupDevServer', () => {
   afterEach(() => {
     localThemeFileSystem.uploadErrors.clear()
     localThemeFileSystem.unsyncedFileKeys.clear()
+  })
+
+  test('closes the listening server and releases its port when the dev session stops', async () => {
+    const controller = new AbortController()
+    const port = await getAvailableTCPPort()
+    const server = setupDevServer(developmentTheme, {
+      ...defaultServerContext,
+      signal: controller.signal,
+      options: {...defaultServerContext.options, host: 'localhost', port},
+    })
+    try {
+      await server.workPromise
+      await server.serverStart()
+      await expect(checkPortAvailability(port)).resolves.toBe(false)
+      controller.abort()
+    } finally {
+      controller.abort()
+      await server.serverStop()
+    }
+    await expect(checkPortAvailability(port)).resolves.toBe(true)
   })
 
   test('should upload the development theme to remote', async () => {

@@ -34,6 +34,7 @@ export function setupDevServer(theme: Theme, ctx: DevServerContext) {
   return {
     workPromise,
     serverStart: server.start,
+    serverStop: server.close,
     dispatchEvent: server.dispatch,
     renderDevSetupProgress: envSetup.renderProgress,
     backgroundJobPromise,
@@ -47,7 +48,7 @@ function ensureThemeEnvironmentSetup(
   rejectBackgroundJob: (reason?: unknown) => void,
 ) {
   const abort = (error: Error): never => {
-    renderThrownError('Failed to perform the initial theme synchronization.', error)
+    if (!ctx.signal?.aborted) renderThrownError('Failed to perform the initial theme synchronization.', error)
     rejectBackgroundJob(error)
     // Return a never-resolving promise to stop this promise chain without throwing.
     // Throwing would trigger catch handlers and continue execution. This stops the
@@ -57,12 +58,14 @@ function ensureThemeEnvironmentSetup(
 
   const remoteChecksumsPromise = fetchChecksums(theme.id, ctx.session)
 
-  const reconcilePromise = remoteChecksumsPromise.then((remoteChecksums) =>
-    handleThemeEditorSync(theme, ctx, remoteChecksums, rejectBackgroundJob),
-  )
+  const reconcilePromise = remoteChecksumsPromise.then((remoteChecksums) => {
+    ctx.signal?.throwIfAborted()
+    return handleThemeEditorSync(theme, ctx, remoteChecksums, rejectBackgroundJob)
+  })
 
   const uploadPromise = reconcilePromise.then(async ({updatedRemoteChecksumsPromise}) => {
     const updatedRemoteChecksums = await updatedRemoteChecksumsPromise
+    ctx.signal?.throwIfAborted()
     return uploadTheme(theme, ctx.session, updatedRemoteChecksums, ctx.localThemeFileSystem, {
       nodelete: ctx.options.noDelete,
       deferPartialWork: true,
@@ -114,6 +117,7 @@ function handleThemeEditorSync(
         ignore: ctx.options.ignore,
         only: ctx.options.only,
         reconciliationStrategy: ctx.options.reconciliationStrategy,
+        signal: ctx.signal,
       },
       rejectBackgroundJob,
     )
@@ -170,23 +174,22 @@ function createDevelopmentServer(theme: Theme, ctx: DevServerContext, initialWor
 
   const server = createServer(toNodeListener(app))
 
+  const close = async () => {
+    server.closeAllConnections()
+    await new Promise<void>((resolve) => server.close(() => resolve()))
+  }
   return {
     dispatch: app.handler.bind(app),
+    close,
     start: async (): Promise<DevelopmentServerInstance> => {
-      return new Promise((resolve) =>
-        server.listen({port: ctx.options.port, host: ctx.options.host}, () =>
-          resolve({
-            close: async () => {
-              await Promise.all([
-                new Promise((resolve) => {
-                  server.closeAllConnections()
-                  server.close(resolve)
-                }),
-              ])
-            },
-          }),
-        ),
-      )
+      ctx.signal?.throwIfAborted()
+      return new Promise((resolve, reject) => {
+        server.once('error', reject)
+        server.listen({port: ctx.options.port, host: ctx.options.host, signal: ctx.signal}, () => {
+          server.off('error', reject)
+          resolve({close})
+        })
+      })
     },
   }
 }

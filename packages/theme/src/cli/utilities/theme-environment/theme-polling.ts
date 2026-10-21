@@ -7,12 +7,14 @@ import {outputDebug, outputInfo, outputContent, outputToken} from '@shopify/cli-
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {setTimeout} from 'node:timers/promises'
 
 const POLLING_INTERVAL = 3000
 class PollingError extends Error {}
 
 export interface PollingOptions {
   noDelete: boolean
+  signal?: AbortSignal
 }
 
 export function pollThemeEditorChanges(
@@ -33,7 +35,8 @@ export function pollThemeEditorChanges(
   const poll = async () => {
     // Asynchronously wait for the polling interval, similar to a setInterval
     // but ensure the polling work is done before starting the next interval.
-    await new Promise((resolve) => setTimeout(resolve, POLLING_INTERVAL))
+    await setTimeout(POLLING_INTERVAL, undefined, {signal: options.signal})
+    if (options.signal?.aborted) return
 
     // eslint-disable-next-line require-atomic-updates
     latestChecksums = await pollRemoteJsonChanges(targetTheme, session, latestChecksums, localFileSystem, options)
@@ -64,12 +67,15 @@ export function pollThemeEditorChanges(
       })
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  setTimeout(async () => {
-    while (true) {
+  const run = async () => {
+    while (!options.signal?.aborted) {
       // eslint-disable-next-line no-await-in-loop
       await poll()
+      if (failedPollingAttempts >= maxPollingAttempts) break
     }
+  }
+  return run().catch((error: unknown) => {
+    if (!options.signal?.aborted) rejectBackgroundJob(error)
   })
 }
 

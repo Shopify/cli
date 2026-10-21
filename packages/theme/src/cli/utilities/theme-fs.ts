@@ -59,7 +59,10 @@ const THEME_PARTITION_REGEX = {
   staticAssetRegex: /^assets\/(?!.*\.liquid$)/,
 }
 
-export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOptions): ThemeFileSystem {
+export function mountThemeFileSystem(
+  root: string,
+  options?: ThemeFileSystemOptions & {signal?: AbortSignal},
+): ThemeFileSystem {
   if (options?.listing !== undefined) validateListingName(options.listing)
 
   const files = new Map<string, ThemeAsset>()
@@ -329,6 +332,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     },
     startWatcher: async (themeId: string, adminSession: AdminSession) => {
       const {default: chokidar} = await import('chokidar')
+      if (options?.signal?.aborted) return
 
       const watcher = chokidar.watch([...directoriesToWatch], {
         ignored: DEFAULT_IGNORE_PATTERNS,
@@ -338,8 +342,16 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
 
       // Debounce file events per-file and per-event-type
       const pendingEvents = new Map<string, NodeJS.Timeout>()
+      const stop = () => {
+        for (const timeout of pendingEvents.values()) clearTimeout(timeout)
+        pendingEvents.clear()
+        watcher.close().catch((error: Error) => outputWarn(`Error closing file watcher: ${error.message}`))
+      }
+      options?.signal?.addEventListener('abort', stop, {once: true})
+      watcher.once('close', () => options?.signal?.removeEventListener('abort', stop))
 
       const queueFsEvent = (eventName: 'add' | 'change' | 'unlink', filePath: string) => {
+        if (options?.signal?.aborted) return
         const fileKey = getKey(filePath)
         const eventKey = `${fileKey}:${eventName}`
 
