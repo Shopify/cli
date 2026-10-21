@@ -59,7 +59,7 @@ describe('withDevInstance', () => {
       const paths = devInstancePaths(identity)
       await expect(readDevInstance(identity)).resolves.toBeUndefined()
       await expect(fileExists(paths.lockFile)).resolves.toBe(false)
-      expect(await readLog(paths.logFile)).toEqual([
+      await expect(readLog(paths.logFile)).resolves.toEqual([
         expect.objectContaining({source: 'web', message: 'Final partial line'}),
       ])
       const restarted = await acquireDevInstance(identity)
