@@ -182,6 +182,25 @@ export async function acquireDevInstance(options: AcquireDevInstanceOptions): Pr
   }
 }
 
+/**
+ * Acquires a dev instance and releases it after the callback completes or throws.
+ *
+ * @param options - The command, project and output options for the instance.
+ * @param execute - The work to run while the instance is owned.
+ * @returns The callback's result after instance cleanup completes.
+ */
+export async function withDevInstance<T>(
+  options: AcquireDevInstanceOptions,
+  execute: (instance: DevInstance) => T | Promise<T>,
+): Promise<T> {
+  const instance = await acquireDevInstance(options)
+  try {
+    return await execute(instance)
+  } finally {
+    await instance.release()
+  }
+}
+
 async function createDevInstance(options: AcquireDevInstanceOptions, paths: DevInstancePaths): Promise<DevInstance> {
   const previous = await readDevInstanceInfo(paths.infoFile)
   if (previous && isProcessAlive(previous.pid)) throw devInstanceAlreadyRunningError(options, previous)
