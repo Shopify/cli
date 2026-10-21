@@ -3,6 +3,7 @@ import {appTestFixture} from './app.js'
 import {isVisibleWithin} from './browser.js'
 import {BROWSER_TIMEOUT, CLI_TIMEOUT} from './constants.js'
 import {createLogger, e2eRunSegment, e2eSection, requireEnv} from './env.js'
+import {isProtectedStore, readPersistentStores} from './persistent-stores.js'
 import type {CLIProcess, ExecResult} from './cli.js'
 import type {Locator, Page} from '@playwright/test'
 
@@ -54,10 +55,20 @@ export async function deleteDevStoreWithCli(options: {
   storeFqdn: string
   orgId: string
 }): Promise<boolean> {
-  const result = await options.cli.exec(
-    ['store', 'delete', '--store', options.storeFqdn, '--organization-id', options.orgId, '--force', '--json'],
-    {timeout: CLI_TIMEOUT.store},
-  )
+  if (isProtectedStore(options.storeFqdn, readPersistentStores(process.env, false))) {
+    throw new Error(`Refusing to delete persistent E2E store ${options.storeFqdn}.`)
+  }
+  const args = [
+    'store',
+    'delete',
+    '--store',
+    options.storeFqdn,
+    '--organization-id',
+    options.orgId,
+    '--force',
+    '--json',
+  ]
+  const result = await options.cli.exec(args, {timeout: CLI_TIMEOUT.store})
   assertCommandSucceeded('delete development store', result)
 
   const output = parseJsonOutput(result, 'delete development store')
@@ -162,7 +173,9 @@ export async function uninstallAppFromStore(page: Page, storeSlug: string, appNa
 
     // Force a DOM click to bypass Playwright actionability (the button can read as
     // disabled mid-transition).
-    await confirmBtn.evaluate((button) => button.click())
+    await confirmBtn.evaluate((button) => {
+      if ('click' in button && typeof button.click === 'function') button.click()
+    })
     await page.waitForTimeout(BROWSER_TIMEOUT.medium)
   }
 
@@ -250,13 +263,7 @@ async function dismissOpenPopover(page: Page, modal: Locator): Promise<void> {
 
 /** Check if the current page shows the empty state (zero apps installed). Caller must navigate first. */
 export async function isStoreAppsEmpty(page: Page): Promise<boolean> {
-  // "Add apps to your store" empty state is the definitive zero-apps signal
-  const emptyState = page.locator('text=Add apps to your store')
-  if (await isVisibleWithin(emptyState, BROWSER_TIMEOUT.medium)) return true
-
-  // Fallback: no "More actions" menu buttons in the app list
-  const menuButtons = await page.locator('.Polaris-Layout__Section button[aria-label="More actions"]').all()
-  return menuButtons.length === 0
+  return isVisibleWithin(page.locator('text=Add apps to your store'), BROWSER_TIMEOUT.medium)
 }
 
 // ---------------------------------------------------------------------------

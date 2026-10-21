@@ -95,6 +95,8 @@ For Vitest problems, see [our troubleshooting page](troubleshooting.md) or the [
 
 End-to-end tests live under `packages/e2e` and are implemented using [Playwright](https://playwright.dev/). They test full user journeys by invoking the CLI and verifying outputs. Run them with `pnpm test:e2e`.
 
+See the [E2E setup guide](../../packages/e2e/README.md) for legacy resource cleanup.
+
 ## GitHub Actions
 
 Use [the PR workflow](../../.github/workflows/tests-pr.yml) and [CLI pre-submit CI guide](../../.agents/skills/cli-pre-submit-ci/SKILL.md) to choose local checks and generated files. Follow the check requirements of the active automation task.
