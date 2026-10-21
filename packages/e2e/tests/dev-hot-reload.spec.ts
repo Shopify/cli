@@ -1,10 +1,9 @@
 /* eslint-disable no-console */
 /* eslint-disable no-restricted-imports */
-import {createApp, devDashboardAppUrl, injectFixtureToml} from '../setup/app.js'
+import {appTestFixture as test, createApp, devDashboardAppUrl, injectFixtureToml} from '../setup/app.js'
 import {teardownAll} from '../setup/teardown.js'
-import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
+import {E2E_STORES, CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
 import {e2eAppName, requireEnv} from '../setup/env.js'
-import {storeTestFixture as test} from '../setup/store.js'
 import {updateTomlValues} from '@shopify/toml-patch'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
@@ -39,7 +38,8 @@ description = "E2E test trigger"
 }
 
 test.describe('Dev hot reload', () => {
-  test('editing app config TOML triggers reload', async ({cli, env, browserPage, storeFqdn}) => {
+  test('editing app config TOML triggers reload', async ({cli, env, browserPage}) => {
+    const storeFqdn = env.storeFqdn || E2E_STORES.configReload
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
@@ -52,7 +52,7 @@ test.describe('Dev hot reload', () => {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
       expect(initResult.exitCode, `createApp failed:\nstderr: ${initResult.stderr}`).toBe(0)
       appDir = initResult.appDir
-      appUrl = devDashboardAppUrl(appDir, env.orgId)
+      appUrl = await devDashboardAppUrl({cli, appDir, orgId: env.orgId})
 
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
 
@@ -104,7 +104,8 @@ test.describe('Dev hot reload', () => {
     }
   })
 
-  test('creating a new extension mid-dev is detected', async ({cli, env, browserPage, storeFqdn}) => {
+  test('creating a new extension mid-dev is detected', async ({cli, env, browserPage}) => {
+    const storeFqdn = env.storeFqdn || E2E_STORES.extensionCreation
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
@@ -117,7 +118,7 @@ test.describe('Dev hot reload', () => {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
       expect(initResult.exitCode, `createApp failed:\nstderr: ${initResult.stderr}`).toBe(0)
       appDir = initResult.appDir
-      appUrl = devDashboardAppUrl(appDir, env.orgId)
+      appUrl = await devDashboardAppUrl({cli, appDir, orgId: env.orgId})
 
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
 
@@ -162,7 +163,8 @@ test.describe('Dev hot reload', () => {
     }
   })
 
-  test('deleting an extension mid-dev is detected', async ({cli, env, browserPage, storeFqdn}) => {
+  test('deleting an extension mid-dev is detected', async ({cli, env, browserPage}) => {
+    const storeFqdn = env.storeFqdn || E2E_STORES.extensionDeletion
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
@@ -175,7 +177,7 @@ test.describe('Dev hot reload', () => {
       const initResult = await createApp({cli, parentDir, name: appName, template: 'none', orgId: env.orgId})
       expect(initResult.exitCode, `createApp failed:\nstderr: ${initResult.stderr}`).toBe(0)
       appDir = initResult.appDir
-      appUrl = devDashboardAppUrl(appDir, env.orgId)
+      appUrl = await devDashboardAppUrl({cli, appDir, orgId: env.orgId})
 
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
 

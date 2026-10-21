@@ -1,14 +1,14 @@
-import {createApp, devDashboardAppUrl} from '../setup/app.js'
+import {createApp, devDashboardAppUrl, appTestFixture as test} from '../setup/app.js'
 import {teardownAll} from '../setup/teardown.js'
-import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
+import {E2E_STORES, CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
 import {e2eAppName, requireEnv} from '../setup/env.js'
-import {storeTestFixture as test} from '../setup/store.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
 import * as path from 'path' // eslint-disable-line no-restricted-imports
 
 test.describe('App dev server', () => {
-  test('dev starts, shows ready message, and quits with q', async ({cli, env, browserPage, storeFqdn}) => {
+  test('dev starts, shows ready message, and quits with q', async ({cli, env, browserPage}) => {
+    const storeFqdn = env.storeFqdn || E2E_STORES.devServer
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
@@ -31,7 +31,7 @@ test.describe('App dev server', () => {
         0,
       )
       appDir = initResult.appDir
-      appUrl = devDashboardAppUrl(appDir, env.orgId)
+      appUrl = await devDashboardAppUrl({cli, appDir, orgId: env.orgId})
 
       // Step 2: Start dev server via PTY, targeting the worker's store
       const dev = await cli.spawn(['app', 'dev', '--path', appDir], {

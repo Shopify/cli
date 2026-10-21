@@ -111,10 +111,22 @@ export function extractClientId(appDir: string, configName?: string): string {
 }
 
 /**
- * Build the direct Dev Dashboard URL for an app from its local TOML client_id.
+ * Resolve the numeric app ID used by Dev Dashboard routes, which differ from client IDs.
  */
-export function devDashboardAppUrl(appDir: string, orgId: string, configName?: string): string {
-  return `https://dev.shopify.com/dashboard/${orgId}/apps/${extractClientId(appDir, configName)}`
+export async function devDashboardAppUrl(ctx: {
+  cli: Pick<CLIProcess, 'exec'>
+  appDir: string
+  orgId: string
+  configName?: string
+}): Promise<string> {
+  const args = ['app', 'info', '--json', '--path', ctx.appDir]
+  if (ctx.configName) args.push('--config', ctx.configName)
+  const result = await ctx.cli.exec(args, {quiet: true})
+  if (result.exitCode !== 0) throw new Error(`Can't resolve the app's dashboard URL: ${result.stderr}`)
+  const info = JSON.parse(result.stdout) as {remoteApp?: {id?: string}}
+  const appId = info.remoteApp?.id?.match(/^(?:gid:\/\/shopify\/App\/)?(\d+)$/)?.[1]
+  if (!appId) throw new Error("app info didn't return a valid numeric app ID")
+  return `https://dev.shopify.com/dashboard/${ctx.orgId}/apps/${appId}`
 }
 
 /**
@@ -328,7 +340,7 @@ export async function findAppOnDevDashboard(page: Page, appName: string, orgId?:
   const org = orgId ?? (process.env.E2E_ORG_ID ?? '').trim()
   const email = process.env.E2E_ACCOUNT_EMAIL
 
-  await navigateToDashboard({browserPage: page, email, orgId: org})
+  await navigateToDashboard({browserPage: page, email, orgId: org, searchTerm: appName})
 
   // Scan current page + pagination for the app
   while (true) {
