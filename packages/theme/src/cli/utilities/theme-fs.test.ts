@@ -147,6 +147,32 @@ describe('theme-fs', () => {
       })
     })
 
+    test('closes the watcher and cancels pending file changes when the dev session stops', async () => {
+      await inTemporaryDirectory(async (root) => {
+        await copyDirectoryContents(joinPath(locationOfThisFile, 'fixtures/theme'), root)
+        const watcher = Object.assign(new EventEmitter(), {close: vi.fn(async () => {})})
+        vi.spyOn(chokidar, 'watch').mockReturnValue(watcher as unknown as ReturnType<typeof chokidar.watch>)
+        const controller = new AbortController()
+        const fileSystem = mountThemeFileSystem(root, {signal: controller.signal})
+        await fileSystem.ready()
+        await fileSystem.startWatcher('123', {token: 'token', storeFqdn: 'store.myshopify.com'})
+        vi.useFakeTimers()
+        try {
+          watcher.emit('change', joinPath(root, 'assets/base.css'))
+          expect(vi.getTimerCount()).toBe(1)
+          controller.abort()
+          expect(watcher.close).toHaveBeenCalledOnce()
+          expect(vi.getTimerCount()).toBe(0)
+          watcher.emit('change', joinPath(root, 'assets/base.css'))
+          await vi.runAllTimersAsync()
+          expect(bulkUploadThemeAssets).not.toHaveBeenCalled()
+        } finally {
+          vi.useRealTimers()
+          controller.abort()
+        }
+      })
+    })
+
     test('includes listing directory in watched directories when listing is specified', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given

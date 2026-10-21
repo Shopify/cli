@@ -226,6 +226,25 @@ describe('dev server session', async () => {
       )
     })
 
+    test('clears the session refresh timer on shutdown', async () => {
+      vi.useFakeTimers()
+      try {
+        vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront_token')
+        vi.mocked(getStorefrontSessionCookies).mockResolvedValue({_shopify_essential: 'cookie'})
+        vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(adminSession)
+        const controller = new AbortController()
+        const timerCount = vi.getTimerCount()
+        await initializeDevServerSession(themeId, adminSession, undefined, undefined, undefined, controller.signal)
+        expect(vi.getTimerCount()).toBe(timerCount + 1)
+        controller.abort()
+        expect(vi.getTimerCount()).toBe(timerCount)
+        await vi.advanceTimersByTimeAsync(30 * 60 * 1000)
+        expect(ensureAuthenticatedThemes).toHaveBeenCalledOnce()
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+
     test('returns a refreshable session', async () => {
       // Given
       for (const index of [1, 2, 3]) {

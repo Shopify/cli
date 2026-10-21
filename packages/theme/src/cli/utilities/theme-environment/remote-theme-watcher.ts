@@ -23,6 +23,7 @@ export async function reconcileAndPollThemeEditorChanges(
     ignore: string[]
     only: string[]
     reconciliationStrategy?: ReconciliationStrategy
+    signal?: AbortSignal
   },
   rejectBackgroundJob: (reason?: unknown) => void,
 ): Promise<{
@@ -36,7 +37,9 @@ export async function reconcileAndPollThemeEditorChanges(
 
   const updatedRemoteChecksumsPromise = workPromise.then(async () => {
     const updatedRemoteChecksums = await fetchChecksums(targetTheme.id, session)
-    pollThemeEditorChanges(
+    // Polling handles its own errors and runs until cancellation.
+    // eslint-disable-next-line no-void
+    void pollThemeEditorChanges(
       targetTheme,
       session,
       updatedRemoteChecksums,

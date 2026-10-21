@@ -1,4 +1,4 @@
-import {PollingOptions, pollRemoteJsonChanges, deleteRemovedAssets} from './theme-polling.js'
+import {PollingOptions, pollRemoteJsonChanges, deleteRemovedAssets, pollThemeEditorChanges} from './theme-polling.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {fetchChecksums, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
@@ -318,4 +318,21 @@ describe('pollRemoteJsonChanges', async () => {
       expect(deleteSpy).not.toHaveBeenCalled()
     })
   })
+})
+
+test('cancels the polling timer when the dev session stops', async () => {
+  const controller = new AbortController()
+  const onError = vi.fn()
+  const polling = pollThemeEditorChanges(
+    buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE})!,
+    {token: '', storeFqdn: ''},
+    [],
+    fakeThemeFileSystem('tmp', new Map()),
+    {noDelete: false, signal: controller.signal},
+    onError,
+  )
+  controller.abort()
+  await polling
+  expect(fetchChecksums).not.toHaveBeenCalled()
+  expect(onError).not.toHaveBeenCalled()
 })
