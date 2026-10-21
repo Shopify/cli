@@ -19,7 +19,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const FIXTURE_TOML = fs.readFileSync(path.join(__dirname, '../data/valid-app/shopify.app.toml'), 'utf8')
 
 test.describe('Multi-config dev', () => {
-  test('dev with -c flag loads the named config', async ({cli, env, browserPage}) => {
+  test('dev with -c flag loads the named config', async ({cli, env, dashboard}) => {
     const storeFqdn = env.storeFqdn || E2E_STORES.namedConfig
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
@@ -100,7 +100,7 @@ extensions_summary = "E2E staging app extensions"
       if (!process.env.E2E_SKIP_TEARDOWN) {
         await teardownAll({
           cli,
-          browserPage,
+          dashboard,
           appName,
           appUrl,
           appDir,
@@ -113,7 +113,7 @@ extensions_summary = "E2E staging app extensions"
     }
   })
 
-  test('dev without -c flag uses default config', async ({cli, env, browserPage}) => {
+  test('dev without -c flag uses default config', async ({cli, env, dashboard}) => {
     const storeFqdn = env.storeFqdn || E2E_STORES.defaultConfig
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
@@ -182,7 +182,7 @@ extensions_summary = "E2E staging app extensions"
       if (!process.env.E2E_SKIP_TEARDOWN) {
         await teardownAll({
           cli,
-          browserPage,
+          dashboard,
           appName,
           appUrl,
           appDir,

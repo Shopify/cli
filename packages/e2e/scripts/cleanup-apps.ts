@@ -28,7 +28,7 @@ import {fileURLToPath} from 'url'
 import {chromium} from '@playwright/test'
 import {BROWSER_TIMEOUT} from '../setup/constants.js'
 import {getLastPageStatus, navigateToDashboard, refreshIfPageError, trackMainFrameStatus} from '../setup/browser.js'
-import {deleteAppFromDevDashboard} from '../setup/app.js'
+import {createDashboardRequest, DevDashboardClient} from '../setup/dashboard.js'
 import {uninstallAppFromStore} from '../setup/store.js'
 import {completeLogin} from '../helpers/browser-login.js'
 import {addLoadtestHeader} from '../helpers/loadtest-header.js'
@@ -205,7 +205,7 @@ async function cleanupAppsPageByPage(opts: {
   page: Page
   mode: CleanupMode
   pattern: string
-  email: string
+  email?: string
   orgId: string
   stats: CleanupStats
 }): Promise<void> {
@@ -274,7 +274,7 @@ async function cleanupAppsInParallel(opts: {
   dashboardPage: Page
   mode: CleanupMode
   apps: DashboardApp[]
-  email: string
+  email?: string
   orgId: string
   matchOffset: number
   foundCount: number
@@ -319,7 +319,7 @@ async function cleanupApp(opts: {
   page: Page
   mode: CleanupMode
   app: DashboardApp
-  email: string
+  email?: string
   orgId: string
   workerNumber: number
   appNumber: number
@@ -365,8 +365,12 @@ async function cleanupApp(opts: {
           break
         }
         console.log(`${tag}: Deleting...`)
-        const deleted = await deleteAppFromDevDashboard(page, app.url)
-        if (!deleted) throw new Error('App deletion could not be verified')
+        const http = await createDashboardRequest(await page.context().storageState())
+        try {
+          await new DevDashboardClient(http, orgId).deleteApp({name: app.name, url: app.url})
+        } finally {
+          await http.dispose()
+        }
         console.log(`${tag}: Deleted`)
       }
 

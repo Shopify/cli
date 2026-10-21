@@ -32,6 +32,8 @@ export default defineConfig({
         'tests/fixture-toml.spec.ts',
         'tests/auth-diagnostics.spec.ts',
         'tests/persistent-stores.spec.ts',
+        'tests/dashboard.spec.ts',
+        'tests/toml-syntax.spec.ts',
       ],
     },
     {
@@ -47,6 +49,8 @@ export default defineConfig({
         'tests/fixture-toml.spec.ts',
         'tests/auth-diagnostics.spec.ts',
         'tests/persistent-stores.spec.ts',
+        'tests/dashboard.spec.ts',
+        'tests/toml-syntax.spec.ts',
       ],
       dependencies: ['remote-auth'],
     },

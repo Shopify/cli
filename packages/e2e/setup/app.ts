@@ -1,12 +1,10 @@
-/* eslint-disable no-restricted-imports, no-await-in-loop */
-import {authFixture} from './auth.js'
-import {getLastPageStatus, isVisibleWithin, navigateToDashboard, refreshIfPageError} from './browser.js'
-import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
+/* eslint-disable no-restricted-imports */
+import {dashboardFixture} from './dashboard.js'
+import {CLI_TIMEOUT} from './constants.js'
 import * as toml from '@iarna/toml'
 import * as path from 'path'
 import * as fs from 'fs'
 import type {CLIContext, CLIProcess, ExecResult} from './cli.js'
-import type {Page} from '@playwright/test'
 
 /**
  * Race the given promise builders. When the winner resolves, losers are
@@ -332,103 +330,10 @@ export async function configLink(
 }
 
 // ---------------------------------------------------------------------------
-// Dev dashboard browser actions — find and delete apps
-// ---------------------------------------------------------------------------
-
-/** Search dev dashboard for an app by name. Returns the app URL or null. */
-export async function findAppOnDevDashboard(page: Page, appName: string, orgId?: string): Promise<string | null> {
-  const org = orgId ?? (process.env.E2E_ORG_ID ?? '').trim()
-  const email = process.env.E2E_ACCOUNT_EMAIL
-
-  await navigateToDashboard({browserPage: page, email, orgId: org, searchTerm: appName})
-
-  // Scan current page + pagination for the app
-  while (true) {
-    const allLinks = await page.locator('a[href*="/apps/"]').all()
-    for (const link of allLinks) {
-      const text = (await link.textContent()) ?? ''
-      if (text.includes(appName)) {
-        const href = await link.getAttribute('href')
-        if (href) return href.startsWith('http') ? href : `https://dev.shopify.com${href}`
-      }
-    }
-
-    // Check for next page
-    const nextLink = page.locator('a[href*="next_cursor"]').first()
-    if (!(await isVisibleWithin(nextLink, BROWSER_TIMEOUT.medium))) break
-    const nextHref = await nextLink.getAttribute('href')
-    if (!nextHref) break
-    const nextUrl = nextHref.startsWith('http') ? nextHref : `https://dev.shopify.com${nextHref}`
-    await page.goto(nextUrl, {waitUntil: 'domcontentloaded'})
-    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-    await refreshIfPageError(page)
-  }
-
-  return null
-}
-
-/**
- * Delete an app from its dev dashboard settings page. Returns true if deleted.
- *
- * Single attempt — caller owns the retry loop.
- *
- * Fail-fast on STILL_HAS_INSTALLS: the Delete button stays disabled while
- * installs exist, so we throw to let the caller skip instead of spinning.
- */
-export async function deleteAppFromDevDashboard(page: Page, appUrl: string): Promise<boolean> {
-  // Step 1: Navigate to the app's settings page. 404 → already deleted. 5xx → throw for retry.
-  await page.goto(`${appUrl}/settings`, {waitUntil: 'domcontentloaded'})
-  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-  const gotoStatus = getLastPageStatus(page)
-  if (gotoStatus === 404) return true
-  if (gotoStatus !== undefined && gotoStatus >= 500) {
-    throw new Error(`Server error loading app settings page (status ${gotoStatus})`)
-  }
-
-  // Step 2: Click "Delete app" to open the confirmation modal.
-  // Button can be below the fold, and takes ~1-2s to enable after uninstall (one reload covers propagation lag).
-  // If it stays disabled after reload, installs remain — fail fast for caller.
-  const deleteBtn = page.locator('button:has-text("Delete app")').first()
-  await deleteBtn.scrollIntoViewIfNeeded({timeout: BROWSER_TIMEOUT.long})
-  if (!(await deleteBtn.isEnabled())) {
-    await page.reload({waitUntil: 'domcontentloaded'})
-    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-    await deleteBtn.scrollIntoViewIfNeeded({timeout: BROWSER_TIMEOUT.long})
-    if (!(await deleteBtn.isEnabled())) throw new Error('STILL_HAS_INSTALLS')
-  }
-  await deleteBtn.click({timeout: 2 * BROWSER_TIMEOUT.long})
-  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-
-  // Step 3: Some confirmation modals require typing "DELETE". Fill if the input is present.
-  const confirmInput = page.locator('input[type="text"]').last()
-  if (await isVisibleWithin(confirmInput, BROWSER_TIMEOUT.medium)) {
-    await confirmInput.fill('DELETE')
-    await page.waitForTimeout(BROWSER_TIMEOUT.short)
-  }
-
-  // Step 4: Click the confirm button (second "Delete app" button on the page, inside the modal).
-  const confirmBtn = page.locator('button:has-text("Delete app")').last()
-  await confirmBtn.click({timeout: BROWSER_TIMEOUT.long})
-  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-
-  // Step 5: Reload the settings page to confirm deletion.
-  // Success → 404.
-  // Failure → same settings page.
-  await page.goto(`${appUrl}/settings`, {waitUntil: 'domcontentloaded'})
-  await page.waitForTimeout(BROWSER_TIMEOUT.short)
-  const afterStatus = getLastPageStatus(page)
-  if (afterStatus === 404) return true
-  if (afterStatus !== undefined && afterStatus >= 500) {
-    throw new Error(`Server error verifying app deletion (status ${afterStatus})`)
-  }
-  return false
-}
-
-// ---------------------------------------------------------------------------
 // Fixture — ensures auth runs before tests. Tests use helper functions directly.
 // ---------------------------------------------------------------------------
 
-export const appTestFixture = authFixture.extend<{authReady: void}>({
+export const appTestFixture = dashboardFixture.extend<{authReady: void}>({
   // Auto-trigger authLogin so the OAuth session is available for all app tests
   authReady: [
     async ({authLogin: _authLogin}: {authLogin: void}, use: () => Promise<void>) => {

@@ -13,7 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const FIXTURE_TOML = fs.readFileSync(path.join(__dirname, '../data/valid-app/shopify.app.toml'), 'utf8')
 
 test.describe('TOML config regression', () => {
-  test('deploy succeeds with fully populated toml', async ({cli, env, browserPage}) => {
+  test('deploy succeeds with fully populated toml', async ({cli, env, dashboard}) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
@@ -40,7 +40,7 @@ test.describe('TOML config regression', () => {
       if (!process.env.E2E_SKIP_TEARDOWN) {
         fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
-          browserPage,
+          dashboard,
           appName,
           appUrl,
           orgId: env.orgId,
@@ -50,7 +50,7 @@ test.describe('TOML config regression', () => {
     }
   })
 
-  test('dev starts with fully populated toml', async ({cli, env, browserPage}) => {
+  test('dev starts with fully populated toml', async ({cli, env, dashboard}) => {
     const storeFqdn = env.storeFqdn || E2E_STORES.fullConfig
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
@@ -87,7 +87,7 @@ test.describe('TOML config regression', () => {
       if (!process.env.E2E_SKIP_TEARDOWN) {
         await teardownAll({
           cli,
-          browserPage,
+          dashboard,
           appName,
           appUrl,
           appDir,

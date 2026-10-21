@@ -1,15 +1,14 @@
 import {uninstallAppWithAdminApi} from './admin-api.js'
 import {createLogger, e2eSection} from './env.js'
-import {findAppOnDevDashboard, deleteAppFromDevDashboard} from './app.js'
 import type {CLIProcess} from './cli.js'
-import type {Page} from '@playwright/test'
+import type {DevDashboardClient} from './dashboard.js'
 
 const log = createLogger('teardown')
 
 interface BaseTeardownCtx {
-  browserPage: Page
+  dashboard: Pick<DevDashboardClient, 'deleteApp'>
   appName: string
-  /** Direct dashboard URL for app cleanup. */
+  /** Expected app URL, checked against the app found by its exact name. */
   appUrl?: string
   /** Local app directory used to clean the preview and uninstall through the Admin API. */
   appDir?: string
@@ -26,6 +25,7 @@ type TeardownCtx = BaseTeardownCtx &
 export async function teardownAll(ctx: TeardownCtx): Promise<void> {
   const wCtx = {workerIndex: ctx.workerIndex ?? 0}
   await ctx.cli?.stopAll()
+  let uninstallConfirmed = false
 
   if (ctx.storeFqdn && ctx.appDir) {
     const {cli, appDir, storeFqdn} = ctx
@@ -36,15 +36,15 @@ export async function teardownAll(ctx: TeardownCtx): Promise<void> {
         throw new Error(`Failed to clean the dev preview:\n${result.stdout}\n${result.stderr}`)
       }
     })
-    await attemptRemoteCleanup(ctx, 'app uninstall', () => uninstallAppWithAdminApi({cli, appDir, storeFqdn}))
+    await attemptRemoteCleanup(ctx, 'app uninstall', async () => {
+      await uninstallAppWithAdminApi({cli, appDir, storeFqdn})
+      uninstallConfirmed = true
+    })
   }
 
   e2eSection(wCtx, `Teardown: app ${ctx.appName}`)
   await attemptRemoteCleanup(ctx, 'app deletion', async () => {
-    const appUrl = ctx.appUrl ?? (await findAppOnDevDashboard(ctx.browserPage, ctx.appName, ctx.orgId))
-    if (appUrl && !(await deleteAppFromDevDashboard(ctx.browserPage, appUrl))) {
-      throw new Error('App deletion was not confirmed')
-    }
+    await ctx.dashboard.deleteApp({name: ctx.appName, url: ctx.appUrl, uninstallConfirmed})
     log.log(wCtx, 'app deletion confirmed')
   })
 }

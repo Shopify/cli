@@ -38,7 +38,7 @@ description = "E2E test trigger"
 }
 
 test.describe('Dev hot reload', () => {
-  test('editing app config TOML triggers reload', async ({cli, env, browserPage}) => {
+  test('editing app config TOML triggers reload', async ({cli, env, dashboard}) => {
     const storeFqdn = env.storeFqdn || E2E_STORES.configReload
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
@@ -91,7 +91,7 @@ test.describe('Dev hot reload', () => {
       if (!process.env.E2E_SKIP_TEARDOWN) {
         await teardownAll({
           cli,
-          browserPage,
+          dashboard,
           appName,
           appUrl,
           appDir,
@@ -104,7 +104,7 @@ test.describe('Dev hot reload', () => {
     }
   })
 
-  test('creating a new extension mid-dev is detected', async ({cli, env, browserPage}) => {
+  test('creating a new extension mid-dev is detected', async ({cli, env, dashboard}) => {
     const storeFqdn = env.storeFqdn || E2E_STORES.extensionCreation
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
@@ -150,7 +150,7 @@ test.describe('Dev hot reload', () => {
       if (!process.env.E2E_SKIP_TEARDOWN) {
         await teardownAll({
           cli,
-          browserPage,
+          dashboard,
           appName,
           appUrl,
           appDir,
@@ -163,7 +163,7 @@ test.describe('Dev hot reload', () => {
     }
   })
 
-  test('deleting an extension mid-dev is detected', async ({cli, env, browserPage}) => {
+  test('deleting an extension mid-dev is detected', async ({cli, env, dashboard}) => {
     const storeFqdn = env.storeFqdn || E2E_STORES.extensionDeletion
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
@@ -215,7 +215,7 @@ test.describe('Dev hot reload', () => {
       if (!process.env.E2E_SKIP_TEARDOWN) {
         await teardownAll({
           cli,
-          browserPage,
+          dashboard,
           appName,
           appUrl,
           appDir,

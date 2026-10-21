@@ -20,7 +20,11 @@ Concurrent runs can use the same stores because each test creates a separate app
 
 ## Browser use
 
-Shared authentication and app deletion use the browser. Dev tests do not check store emptiness. App uninstall uses the Admin API. The legacy bulk cleanup scripts still use browser discovery, uninstall, and store-emptiness checks before store deletion.
+Shared authentication uses Chromium once per shard. The E2E test cases do not launch a browser after authentication. App lookup and deletion use authenticated HTTP requests to the Dev Dashboard with CSRF protection, exact name and organization checks, and deletion confirmation. These HTTP routes still depend on the dashboard's HTML contract.
+
+Dev tests do not check store emptiness. They clean only their own app and preview; app uninstall uses the Admin API. The legacy bulk cleanup scripts still use browser discovery, uninstall, and store-emptiness checks before store deletion.
+
+Malformed TOML is checked by the local project without authentication. Schema validation still needs remote specifications.
 
 ## CI setup
 
@@ -51,6 +55,8 @@ pnpm --filter e2e exec playwright test tests/store-lifecycle.spec.ts --project r
 ## Failed or cancelled runs
 
 Remote app cleanup failures produce warnings with the app name, store, failed step, and recovery command. Each later cleanup step is still attempted. These warnings do not fail an otherwise successful test or block the store from subsequent tests. Failure to stop a CLI process remains an error because the process can hold ports and keep making requests.
+
+After a successful uninstall, app deletion retries the dashboard's remaining-installs redirect for up to 15 seconds. The dashboard installation count can lag behind the uninstall. Other deletion errors fail immediately, and deletion still requires a confirmed missing app.
 
 Recover leftover apps with `cleanup-apps.ts --pattern <run-attempt-shard>` or uninstall them in the store admin. Use the exact run marker from the failed run's app names and confirm that the run has stopped. Store reuse does not wait for this recovery.
 

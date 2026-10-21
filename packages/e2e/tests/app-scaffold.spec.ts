@@ -8,7 +8,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 test.describe('App scaffold', () => {
-  test('init creates a react-router app and builds', async ({cli, env, browserPage}) => {
+  test('init creates a react-router app and builds', async ({cli, env, dashboard}) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
@@ -51,7 +51,7 @@ test.describe('App scaffold', () => {
       if (!process.env.E2E_SKIP_TEARDOWN) {
         fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
-          browserPage,
+          dashboard,
           appName,
           appUrl,
           orgId: env.orgId,
@@ -61,7 +61,7 @@ test.describe('App scaffold', () => {
     }
   })
 
-  test('init creates an extension-only app', async ({cli, env, browserPage}) => {
+  test('init creates an extension-only app', async ({cli, env, dashboard}) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
@@ -89,7 +89,7 @@ test.describe('App scaffold', () => {
       if (!process.env.E2E_SKIP_TEARDOWN) {
         fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
-          browserPage,
+          dashboard,
           appName,
           appUrl,
           orgId: env.orgId,
@@ -99,7 +99,7 @@ test.describe('App scaffold', () => {
     }
   })
 
-  test('generates extensions and builds', async ({cli, env, browserPage}) => {
+  test('generates extensions and builds', async ({cli, env, dashboard}) => {
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
@@ -147,7 +147,7 @@ test.describe('App scaffold', () => {
       if (!process.env.E2E_SKIP_TEARDOWN) {
         fs.rmSync(parentDir, {recursive: true, force: true})
         await teardownAll({
-          browserPage,
+          dashboard,
           appName,
           appUrl,
           orgId: env.orgId,

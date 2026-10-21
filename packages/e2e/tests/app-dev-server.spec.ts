@@ -7,7 +7,7 @@ import * as fs from 'fs'
 import * as path from 'path' // eslint-disable-line no-restricted-imports
 
 test.describe('App dev server', () => {
-  test('dev starts, shows ready message, and quits with q', async ({cli, env, browserPage}) => {
+  test('dev starts, shows ready message, and quits with q', async ({cli, env, dashboard}) => {
     const storeFqdn = env.storeFqdn || E2E_STORES.devServer
     test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
@@ -56,7 +56,7 @@ test.describe('App dev server', () => {
       if (!process.env.E2E_SKIP_TEARDOWN) {
         await teardownAll({
           cli,
-          browserPage,
+          dashboard,
           appName,
           appUrl,
           appDir,
