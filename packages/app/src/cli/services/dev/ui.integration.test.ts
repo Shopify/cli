@@ -33,7 +33,8 @@ test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
 
 test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
   '%s flushes queued output and exits with background work after the postrun hook',
-  {timeout: 20000},
+  // Source loading has its own allowance; the child separately bounds shutdown after the signal.
+  {timeout: 60000},
   async (signal) => {
     await inTemporaryDirectory(async (directory) => {
       const script = `
@@ -56,6 +57,10 @@ test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
                 output.write('Stopped\\n')
                 resolve()
               }, {once: true}))
+              setTimeout(() => {
+                process.stderr.write('Dev shutdown timed out\\n')
+                process.exit(2)
+              }, 20000)
               process.kill(process.pid, ${JSON.stringify(signal)})
               await stopped
             }}],
