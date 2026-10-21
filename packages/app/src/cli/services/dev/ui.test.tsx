@@ -13,6 +13,7 @@ import {acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
 import {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/hooks/postrun', () => ({waitForPostRunHookAndExit: vi.fn()}))
 vi.mock('./ui/components/DevSessionUI.js')
 
 const developerPlatformClient = testDeveloperPlatformClient()

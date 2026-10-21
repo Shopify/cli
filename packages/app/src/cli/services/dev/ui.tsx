@@ -6,6 +6,7 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import React from 'react'
 import {render} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {waitForPostRunHookAndExit} from '@shopify/cli-kit/node/hooks/postrun'
 import {commandEventOutputMode} from '@shopify/cli-kit/node/command-events'
 import {Writable} from 'stream'
 
@@ -73,6 +74,7 @@ export async function renderDev({
       graphiqlUrl,
       abortController,
     })
+    waitForPostRunHookAndExit()
   } finally {
     process.removeListener('shopify:signal', stop)
   }
