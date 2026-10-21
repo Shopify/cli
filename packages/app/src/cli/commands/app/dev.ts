@@ -1,5 +1,5 @@
 import {appFlags} from '../../flags.js'
-import {dev, DevOptions, DevSession} from '../../services/dev.js'
+import {dev, DevOptions, withDevSession} from '../../services/dev.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
@@ -10,7 +10,6 @@ import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags, jsonFlag, portFlag} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {devInstanceLogOutputSchema} from '@shopify/cli-kit/node/dev-instance'
-import {jsonOutputEnabled} from '@shopify/cli-kit/node/environment'
 
 export default class Dev extends AppLinkedCommand {
   public static get requiresSyncAnalytics(): boolean {
@@ -124,8 +123,6 @@ export default class Dev extends AppLinkedCommand {
     return 'app dev stop'
   }
 
-  private readonly session = new DevSession(jsonOutputEnabled(process.env, this.argv))
-
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Dev)
 
@@ -152,7 +149,7 @@ export default class Dev extends AppLinkedCommand {
       userProvidedConfigName: flags.config,
     })
 
-    return this.session.start(appContextResult, async (devInstance) => {
+    return withDevSession({...appContextResult, json: flags.json}, async (devInstance) => {
       const store = await storeContext({
         appContextResult,
         storeFqdn: flags.store,

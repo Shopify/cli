@@ -39,7 +39,7 @@ import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, outputDebug} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {acquireDevInstance, type DevInstance} from '@shopify/cli-kit/node/dev-instance'
+import {withDevInstance, type DevInstance} from '@shopify/cli-kit/node/dev-instance'
 import {basename} from '@shopify/cli-kit/node/path'
 
 export interface DevOptions {
@@ -69,27 +69,21 @@ export interface DevOptions {
   devInstance?: DevInstance
 }
 
-/** Owns the dev instance across setup, execution, and cleanup. */
-export class DevSession {
-  constructor(private readonly json: boolean) {}
-
-  async start<T>(
-    {app, remoteApp}: Pick<DevOptions, 'app' | 'remoteApp'>,
-    execute: (instance: DevInstance) => Promise<T>,
-  ): Promise<T> {
-    const instance = await acquireDevInstance({
+/** Runs app development while the configuration's dev instance is owned. */
+export function withDevSession<T>(
+  {app, remoteApp, json = false}: Pick<DevOptions, 'app' | 'remoteApp'> & {json?: boolean},
+  execute: (instance: DevInstance) => T | Promise<T>,
+): Promise<T> {
+  return withDevInstance(
+    {
       command: 'app dev',
       directory: app.directory,
       key: basename(app.configPath),
       details: {configPath: app.configPath, appName: remoteApp.title, clientId: remoteApp.apiKey},
-      logOutput: this.json ? process.stdout : undefined,
-    })
-    try {
-      return await execute(instance)
-    } finally {
-      await instance.release()
-    }
-  }
+      logOutput: json ? process.stdout : undefined,
+    },
+    execute,
+  )
 }
 
 export async function dev(commandOptions: DevOptions) {

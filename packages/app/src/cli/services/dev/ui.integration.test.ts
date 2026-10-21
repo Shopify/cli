@@ -43,12 +43,13 @@ test.skipIf(process.platform === 'win32').each([
     await inTemporaryDirectory(async (directory) => {
       const script = `
         await import(${JSON.stringify(bootstrapUrl)})
-        const {DevSession} = await import(${JSON.stringify(serviceUrl)})
+        const {withDevSession} = await import(${JSON.stringify(serviceUrl)})
         const {renderDev} = await import(${JSON.stringify(uiUrl)})
         const {DevSessionStatusManager} = await import(${JSON.stringify(statusUrl)})
         const {hook} = await import(${JSON.stringify(postrunUrl)})
         const {runWithCommandEvents} = await import('@shopify/cli-kit/node/command-events')
-        await runWithCommandEvents({outputMode: ${JSON.stringify(mode)}, sink: () => {}}, () => new DevSession(${mode === 'json'}).start({
+        await runWithCommandEvents({outputMode: ${JSON.stringify(mode)}, sink: () => {}}, () => withDevSession({
+          json: ${mode === 'json'},
           app: {directory: ${JSON.stringify(directory)}, configPath: 'shopify.app.toml'},
           remoteApp: {title: 'Local fixture', apiKey: 'fixture'},
         }, async (instance) => {
