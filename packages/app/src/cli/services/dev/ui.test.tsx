@@ -8,6 +8,7 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 
 vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/hooks/postrun', () => ({waitForPostRunHookAndExit: vi.fn()}))
 vi.mock('./ui/components/DevSessionUI.js')
 
 const developerPlatformClient = testDeveloperPlatformClient()
