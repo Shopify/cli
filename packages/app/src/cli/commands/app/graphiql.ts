@@ -3,15 +3,22 @@ import {openAppGraphiQL} from '../../services/app/graphiql.js'
 import {prepareAppStoreContext} from '../../utilities/execute-command-helpers.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {globalFlags, portFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag, portFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
+import {graphiqlJsonOutputSchema} from '@shopify/cli-kit/node/graphiql/schema'
 
 export default class AppGraphiQL extends AppLinkedCommand {
   static summary = 'Open a local GraphiQL UI for your app and store.'
 
   static descriptionWithMarkdown = `Opens an authenticated Admin API GraphiQL UI for your app and selected store.
 
-The app must be installed on the store.`
+The app must be installed on the store.
+
+With \`--json\`, stdout is a JSONL stream of starting, ready, and stopped lifecycle records. Diagnostics use stderr; fatal errors use the standard error envelope on stdout. There is no final success result. Use \`--no-input\` to skip opening the browser; it does not select JSON output.`
+
+  static get jsonOutputSchema() {
+    return graphiqlJsonOutputSchema
+  }
 
   static description = this.descriptionForHelp()
 
@@ -22,6 +29,7 @@ The app must be installed on the store.`
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     ...appFlags,
     store: Flags.string({
       char: 's',
@@ -47,16 +55,19 @@ The app must be installed on the store.`
 
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(AppGraphiQL)
-    const {appContextResult, store} = await prepareAppStoreContext(flags)
+    return this.runWithParsedOutput(flags, async () => {
+      const {appContextResult, store} = await prepareAppStoreContext(flags)
 
-    await openAppGraphiQL({
-      remoteApp: appContextResult.remoteApp,
-      store: store.shopDomain,
-      port: flags.port,
-      variables: flags.variables,
-      apiVersion: flags.version,
+      await openAppGraphiQL({
+        remoteApp: appContextResult.remoteApp,
+        store: store.shopDomain,
+        port: flags.port,
+        variables: flags.variables,
+        apiVersion: flags.version,
+        outputFormat: flags.json ? 'json' : 'text',
+      })
+
+      return {app: appContextResult.app}
     })
-
-    return {app: appContextResult.app}
   }
 }

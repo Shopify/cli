@@ -1,8 +1,9 @@
 import {openStoreGraphiQL} from '../../services/store/graphiql.js'
 import StoreCommand from '../../utilities/store-command.js'
 import {storeFlags} from '../../flags.js'
-import {globalFlags, portFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag, portFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
+import {graphiqlJsonOutputSchema} from '@shopify/cli-kit/node/graphiql/schema'
 
 export default class StoreGraphiQL extends StoreCommand {
   static summary = 'Open a local GraphiQL UI for a store.'
@@ -11,7 +12,13 @@ export default class StoreGraphiQL extends StoreCommand {
 
 Run \`shopify store auth\` first to create stored auth for the store.
 
-Mutations are disabled by default. Re-run with \`--allow-mutations\` if you intend to modify store data.`
+Mutations are disabled by default. Re-run with \`--allow-mutations\` if you intend to modify store data.
+
+With \`--json\`, stdout is a JSONL stream of starting, ready, and stopped lifecycle records. Diagnostics use stderr; fatal errors use the standard error envelope on stdout. There is no final success result. Use \`--no-input\` to skip opening the browser; it does not select JSON output.`
+
+  static get jsonOutputSchema() {
+    return graphiqlJsonOutputSchema
+  }
 
   static description = this.descriptionForHelp()
 
@@ -23,6 +30,7 @@ Mutations are disabled by default. Re-run with \`--allow-mutations\` if you inte
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     store: storeFlags.store,
     port: portFlag({
       description: 'Local port for the GraphiQL server.',
@@ -46,13 +54,15 @@ Mutations are disabled by default. Re-run with \`--allow-mutations\` if you inte
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(StoreGraphiQL)
-
-    await openStoreGraphiQL({
-      store: flags.store,
-      port: flags.port,
-      allowMutations: flags['allow-mutations'],
-      variables: flags.variables,
-      apiVersion: flags.version,
+    return this.runWithParsedOutput(flags, async () => {
+      await openStoreGraphiQL({
+        store: flags.store,
+        port: flags.port,
+        allowMutations: flags['allow-mutations'],
+        variables: flags.variables,
+        apiVersion: flags.version,
+        outputFormat: flags.json ? 'json' : 'text',
+      })
     })
   }
 }

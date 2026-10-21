@@ -3462,14 +3462,18 @@ Open a local GraphiQL UI for your app and store.
 
 ```
 USAGE
-  $ shopify app graphiql [--auth-alias <value>] [--client-id <value> | -c <value>] [--json-schema] [--no-color]
-    [--no-input] [--path <value>] [--port <value>] [--reset | ] [-s <value>] [-v <value>] [--verbose] [--version
-    <value>]
+  $ shopify app graphiql [--auth-alias <value>] [--client-id <value> | -c <value>] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--port <value>] [--reset | ] [-s <value>] [-v <value>] [--verbose]
+    [--version <value>]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -s, --store=<value>
       The myshopify.com domain of the store to open GraphiQL against. The app must be installed on the store. If not
@@ -3526,6 +3530,152 @@ DESCRIPTION
   Opens an authenticated Admin API GraphiQL UI for your app and selected store.
 
   The app must be installed on the store.
+
+  With `--json`, stdout is a JSONL stream of starting, ready, and stopped lifecycle records. Diagnostics use stderr;
+  fatal errors use the standard error envelope on stdout. There is no final success result. Use `--no-input` to skip
+  opening the browser; it does not select JSON output.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `GraphiQLRecord` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "starting"
+          },
+          "timestamp": {
+            "$ref": "#/definitions/GraphiQLTimestamp"
+          },
+          "storeDomain": {
+            "$ref": "#/definitions/GraphiQLStoreDomain"
+          }
+        },
+        "required": [
+          "type",
+          "timestamp",
+          "storeDomain"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "ready"
+          },
+          "timestamp": {
+            "$ref": "#/definitions/GraphiQLTimestamp"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Local browser URL, including the session authentication key."
+          },
+          "storeDomain": {
+            "$ref": "#/definitions/GraphiQLStoreDomain"
+          },
+          "api": {
+            "type": "string",
+            "const": "admin"
+          },
+          "apiVersion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Requested API version; null uses the latest stable version."
+          },
+          "mutationsAllowed": {
+            "type": "boolean"
+          },
+          "app": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "name",
+                  "url"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "timestamp",
+          "url",
+          "storeDomain",
+          "api",
+          "apiVersion",
+          "mutationsAllowed",
+          "app"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "stopped"
+          },
+          "timestamp": {
+            "$ref": "#/definitions/GraphiQLTimestamp"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "cancelled",
+              "sigint",
+              "sigterm",
+              "sigquit"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "timestamp",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "GraphiQLRecord",
+    "definitions": {
+      "GraphiQLTimestamp": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+        "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+      },
+      "GraphiQLStoreDomain": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   $ shopify app graphiql --store shop.myshopify.com
@@ -12030,10 +12180,14 @@ Open a local GraphiQL UI for a store.
 
 ```
 USAGE
-  $ shopify store graphiql -s <value> [--allow-mutations] [--json-schema] [--no-color] [--no-input] [--port <value>]
-    [-v <value>] [--verbose] [--version <value>]
+  $ shopify store graphiql -s <value> [--allow-mutations] [-j] [--json-schema] [--no-color] [--no-input] [--port
+    <value>] [-v <value>] [--verbose] [--version <value>]
 
 FLAGS
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   -s, --store=<value>
       (required) The myshopify.com domain of the store.
       [env: SHOPIFY_FLAG_STORE]
@@ -12078,6 +12232,152 @@ DESCRIPTION
   Run `shopify store auth` first to create stored auth for the store.
 
   Mutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.
+
+  With `--json`, stdout is a JSONL stream of starting, ready, and stopped lifecycle records. Diagnostics use stderr;
+  fatal errors use the standard error envelope on stdout. There is no final success result. Use `--no-input` to skip
+  opening the browser; it does not select JSON output.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `GraphiQLRecord` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "starting"
+          },
+          "timestamp": {
+            "$ref": "#/definitions/GraphiQLTimestamp"
+          },
+          "storeDomain": {
+            "$ref": "#/definitions/GraphiQLStoreDomain"
+          }
+        },
+        "required": [
+          "type",
+          "timestamp",
+          "storeDomain"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "ready"
+          },
+          "timestamp": {
+            "$ref": "#/definitions/GraphiQLTimestamp"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Local browser URL, including the session authentication key."
+          },
+          "storeDomain": {
+            "$ref": "#/definitions/GraphiQLStoreDomain"
+          },
+          "api": {
+            "type": "string",
+            "const": "admin"
+          },
+          "apiVersion": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Requested API version; null uses the latest stable version."
+          },
+          "mutationsAllowed": {
+            "type": "boolean"
+          },
+          "app": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "name",
+                  "url"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "timestamp",
+          "url",
+          "storeDomain",
+          "api",
+          "apiVersion",
+          "mutationsAllowed",
+          "app"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "stopped"
+          },
+          "timestamp": {
+            "$ref": "#/definitions/GraphiQLTimestamp"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "cancelled",
+              "sigint",
+              "sigterm",
+              "sigquit"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "timestamp",
+          "reason"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "GraphiQLRecord",
+    "definitions": {
+      "GraphiQLTimestamp": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+        "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+      },
+      "GraphiQLStoreDomain": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   $ shopify store graphiql --store shop.myshopify.com

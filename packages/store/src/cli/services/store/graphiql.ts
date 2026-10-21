@@ -12,9 +12,9 @@ interface OpenStoreGraphiQLOptions {
   query?: string
   variables?: string
   apiVersion?: string
+  outputFormat?: 'text' | 'json'
   /**
-   * Test-only seam: aborts the server-running loop without requiring a real SIGINT.
-   * In production, the command itself listens for SIGINT and exits.
+   * Stops the session and closes its server when aborted.
    */
   abortSignal?: AbortSignal
 }
@@ -39,6 +39,7 @@ export async function openStoreGraphiQL(options: OpenStoreGraphiQLOptions): Prom
     query: options.query,
     variables: options.variables,
     apiVersion: options.apiVersion,
+    outputFormat: options.outputFormat,
     additionalReadyMessages: [
       outputContent`Mutations are ${options.allowMutations ? outputToken.green('allowed') : outputToken.yellow('blocked')}.`,
     ],

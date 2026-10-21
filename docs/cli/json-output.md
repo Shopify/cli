@@ -238,6 +238,51 @@ When a JSON command prompts, stderr also contains human-readable UI and terminal
 interactive mode, stderr is not a pure JSONL stream. For automation, use `--json --no-input` to capture JSON side
 events from stderr; missing required input then produces a fatal error instead of a prompt.
 
+## GraphiQL streaming commands
+
+`shopify app graphiql --json` and `shopify store graphiql --json` use the following command-specific streaming
+contract. The broader streaming investigation is still open; this does not define the contract for other commands.
+
+Each stdout line is one compact JSON object followed by a newline. Lifecycle records conform to `GraphiQLRecord`,
+available through either command's `--json-schema`. All timestamps use whole-second UTC instants.
+
+| Record | Meaning |
+| --- | --- |
+| `starting` | Local server startup has begun. Includes `storeDomain`; authentication and app/store selection can precede this record. |
+| `ready` | The HTTP server is listening. Includes the authenticated local `url`, `storeDomain`, `api: "admin"`, requested `apiVersion`, `mutationsAllowed`, and `app`. |
+| `stopped` | Cancellation has completed and the server's connections have closed. `reason` is `cancelled`, `sigint`, `sigterm`, or `sigquit`. |
+
+`ready.apiVersion` is `null` when the browser chooses the latest stable API version. It is the requested version,
+not a live report of the version selected in the browser. `ready.app` is `{name, url}` for app GraphiQL and `null`
+for store GraphiQL. The local URL includes its authentication key, just as the text output does; app secrets and
+Admin API access tokens are never included in these records.
+
+There is no final success result, heartbeat, request-result stream, or session file. Consumers must also handle
+process exit: hard termination cannot guarantee a `stopped` record. A fatal startup or server failure closes owned
+resources, writes one standard `{error: {...}}` envelope as the final stdout line, and exits nonzero without `stopped`.
+Earlier lifecycle lines remain valid. Startup can fail before `starting`, for example during authentication.
+SIGINT, SIGTERM, and SIGQUIT exit with 130, 143, and 131 respectively after cleanup. A caller-supplied abort signal
+completes normally.
+
+Setup messages, browser warnings, debug logs, and recoverable request failures use the existing diagnostic events
+on stderr. Recoverable request failures have code `graphiql-request-failed` and leave the server running. Native
+GraphQL responses, including errors and partial data, remain HTTP responses to the browser; they are not copied to
+stdout. Interactive prompts can still add terminal UI to stderr.
+
+`--json` does not disable browser opening or authenticated app/store selection. `--no-input` skips browser opening
+in either format and requires any input otherwise obtained through prompts. Store mutations remain blocked unless
+`--allow-mutations` is supplied. Existing text messages and HTTP payloads are preserved; signal cleanup and skipping
+the browser with `--no-input` apply to both output formats.
+
+For example, after `shopify store auth`, capture the two streams independently:
+
+```sh
+shopify store graphiql --store example.myshopify.com --json --no-input >graphiql.jsonl 2>diagnostics.jsonl
+```
+
+Stop the process with Ctrl+C or SIGTERM. The stdout file contains `starting`, `ready`, and `stopped` records;
+diagnostics remain in the stderr file.
+
 ## Exempt only streaming commands
 
 Long-lived commands that produce an open-ended event stream don't have one finite result. Track these exemptions in
