@@ -108,23 +108,21 @@ export async function pollRemoteJsonChanges(
   return latestChecksums
 }
 
+function checksumsByKey(checksums: Checksum[]): Map<string, Checksum> {
+  return new Map(checksums.map((checksum) => [checksum.key, checksum]))
+}
+
 function getAssetsDeletedFromRemote(latestChecksums: Checksum[], previousChecksums: Checksum[]) {
-  const latestChecksumsMap = new Map(latestChecksums.map((checksum) => [checksum.key, checksum]))
-  const assetsDeletedFromRemote = previousChecksums.filter((previousChecksum) => {
-    return latestChecksumsMap.get(previousChecksum.key) === undefined
-  })
-  return assetsDeletedFromRemote
+  const latestChecksumsByKey = checksumsByKey(latestChecksums)
+  return previousChecksums.filter((previousChecksum) => !latestChecksumsByKey.has(previousChecksum.key))
 }
 
 function getAssetsChangedOnRemote(previousChecksums: Checksum[], latestChecksums: Checksum[]) {
-  const previousChecksumsMap = new Map(previousChecksums.map((checksum) => [checksum.key, checksum]))
-  const assetsChangedOnRemote = latestChecksums.filter((latestAsset) => {
-    const previousAsset = previousChecksumsMap.get(latestAsset.key)
-    if (!previousAsset || previousAsset.checksum !== latestAsset.checksum) {
-      return true
-    }
+  const previousChecksumsByKey = checksumsByKey(previousChecksums)
+  return latestChecksums.filter((latestAsset) => {
+    const previousAsset = previousChecksumsByKey.get(latestAsset.key)
+    return !previousAsset || previousAsset.checksum !== latestAsset.checksum
   })
-  return assetsChangedOnRemote
 }
 
 async function syncChangedAssets(
