@@ -238,6 +238,25 @@ When a JSON command prompts, stderr also contains human-readable UI and terminal
 interactive mode, stderr is not a pure JSONL stream. For automation, use `--json --no-input` to capture JSON side
 events from stderr; missing required input then produces a fatal error instead of a prompt.
 
+## Finite Liquid console execution
+
+`shopify theme console --json` requires either repeatable `--input` flags or `--input-file`. These input flags select
+finite execution in both text and JSON modes. Without input flags, the command remains an interactive text REPL.
+Use `--no-input` as well to prevent authentication and storefront-password prompts.
+
+Input files contain one console command per line. Blank lines are ignored, and LF and CRLF line endings are supported.
+Inline inputs and input files are mutually exclusive. Commands run sequentially in one session, so assignments are
+available to subsequent expressions.
+
+JSON stdout contains one `ThemeConsoleResult` document with `status` and an ordered `results` array. Each result has
+the original `input` and a `status`: `success` includes the native Liquid `value`, `failed` includes the shared `error`
+fields, and `skipped` includes `reason: "previous-input-failed"`. Liquid objects retain their original keys; assignments
+return a null value. Evaluation stops at the first failure and the remaining inputs are skipped. Completed results
+are retained, the overall status is `partial`, and the command exits nonzero. A successful batch has `status: "success"`.
+Session setup and authentication failures use the fatal error envelope. Evaluation failures, including transport
+failures during a command, are retained in the batch. Welcome text and readline prompts are absent from JSON stdout.
+Explicit theme environments use the ordinary `{environments: [...]}` wrapper.
+
 ## Exempt only streaming commands
 
 Long-lived commands that produce an open-ended event stream don't have one finite result. Track these exemptions in
