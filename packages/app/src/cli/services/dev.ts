@@ -355,10 +355,10 @@ async function launchDevProcesses({
       action: async (stdout, stderr, signal) => {
         const fn = process.function as DevProcessFunction<typeof process.options>
         const processStdout = devInstance
-          ? devInstance.tee(stdout, {source: process.prefix, stream: 'stdout', stringWritesAreMessages: true})
+          ? devInstance.tee(stdout, {source: process.prefix, stringWritesAreMessages: true})
           : stdout
         const processStderr = devInstance
-          ? devInstance.tee(stderr, {source: process.prefix, stream: 'stderr', stringWritesAreMessages: true})
+          ? devInstance.tee(stderr, {source: process.prefix, stringWritesAreMessages: true})
           : stderr
         return fn({stdout: processStdout, stderr: processStderr, abortSignal: signal}, process.options)
       },
