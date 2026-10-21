@@ -7,6 +7,7 @@ import React from 'react'
 import {render} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {waitForPostRunHookAndExit} from '@shopify/cli-kit/node/hooks/postrun'
+import {Writable} from 'stream'
 
 interface DevProps {
   processes: OutputProcess[]
@@ -100,7 +101,7 @@ async function renderDevNonInteractive({
     if (signal.aborted) resolve()
   })
   const running = processes.map(async (concurrentProcess) =>
-    concurrentProcess.action(process.stdout, process.stderr, signal),
+    concurrentProcess.action(createTextOutputStream(process.stdout), createTextOutputStream(process.stderr), signal),
   )
   try {
     // A watcher can finish setup while it continues serving. Keep the session registered until abort.
@@ -114,4 +115,16 @@ async function renderDevNonInteractive({
     process.removeListener('SIGINT', stop)
     process.removeListener('SIGTERM', stop)
   }
+}
+
+function createTextOutputStream(target: Writable): Writable {
+  return new Writable({
+    decodeStrings: false,
+    write(chunk: string | Buffer, encoding, callback) {
+      // CLI string writes are complete messages; subprocess byte chunks can contain partial lines.
+      const output = typeof chunk === 'string' ? Buffer.from(chunk, encoding) : chunk
+      const needsNewline = typeof chunk === 'string' && output.length > 0 && output[output.length - 1] !== 10
+      target.write(needsNewline ? Buffer.concat([output, Buffer.from('\n')]) : output, callback)
+    },
+  })
 }
