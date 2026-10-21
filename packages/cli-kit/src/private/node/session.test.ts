@@ -13,6 +13,7 @@ import {
   exchangeCustomPartnerToken,
   refreshAccessToken,
   InvalidGrantError,
+  InvalidRequestError,
 } from './session/exchange.js'
 import {allDefaultScopes} from './session/scopes.js'
 import {store as storeSessions, fetch as fetchSessions, remove as secureRemove} from './session/store.js'
@@ -204,6 +205,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     expect(refreshAccessToken).not.toBeCalled()
     expect(businessPlatformRequest).toHaveBeenCalled()
     expect(storeSessions).toHaveBeenCalledOnce()
+    expect(setCurrentSessionId).toHaveBeenCalledWith(userId)
     expect(got).toEqual(validTokens)
 
     // Verify the session was stored with email as alias
@@ -216,7 +218,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     expect(fetchSessions).toHaveBeenCalledOnce()
   })
 
-  test('throws an error and logs out if there is no session and prompting is disabled,', async () => {
+  test('throws an error without removing saved accounts when prompting is disabled', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
     vi.mocked(fetchSessions).mockResolvedValue(undefined)
@@ -228,7 +230,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
 
 The CLI is currently unable to prompt for reauthentication.`,
     )
-    expect(secureRemove).toHaveBeenCalled()
+    expect(secureRemove).not.toHaveBeenCalled()
 
     // Then
     await expect(getLastSeenAuthMethod()).resolves.toEqual('none')
@@ -439,13 +441,68 @@ describe('when existing session is valid', () => {
 
     // Then
     expect(refreshAccessToken).toHaveBeenCalled()
-    expect(storeSessions).toHaveBeenCalledWith(sessions)
+    expect(storeSessions).toHaveBeenCalledWith({[fqdn]: {[selectedUserId]: sessions[fqdn]![selectedUserId]}})
     expect(setCurrentSessionId).not.toHaveBeenCalled()
     expect(got).toEqual({...validTokens, userId: selectedUserId})
   })
 })
 
 describe('when existing session is expired', () => {
+  test.each([
+    ['invalid_grant', InvalidGrantError],
+    ['invalid_request', InvalidRequestError],
+  ] as const)(
+    'preserves all saved accounts when a background refresh fails with %s',
+    async (_errorName, ErrorClass) => {
+      vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
+      vi.mocked(fetchSessions).mockResolvedValue({
+        ...validSessions,
+        [fqdn]: {
+          ...validSessions[fqdn],
+          'another-user': {identity: {...validIdentityToken, userId: 'another-user'}, applications: {}},
+        },
+      })
+      vi.mocked(refreshAccessToken).mockRejectedValueOnce(new ErrorClass())
+
+      await expect(ensureAuthenticated(defaultApplications, process.env, {noPrompt: true})).rejects.toThrow()
+
+      expect(secureRemove).not.toHaveBeenCalled()
+      expect(storeSessions).not.toHaveBeenCalled()
+      expect(setCurrentSessionId).not.toHaveBeenCalled()
+      expect(requestDeviceAuthorization).not.toHaveBeenCalled()
+    },
+  )
+
+  test('preserves saved accounts when an interactive refresh returns invalid_request', async () => {
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
+    vi.mocked(fetchSessions).mockResolvedValue(validSessions)
+    vi.mocked(refreshAccessToken).mockRejectedValueOnce(new InvalidRequestError())
+
+    await expect(ensureAuthenticated(defaultApplications)).rejects.toThrow('Error validating auth session')
+
+    expect(secureRemove).not.toHaveBeenCalled()
+    expect(storeSessions).not.toHaveBeenCalled()
+  })
+
+  test('saves only the refreshed account without changing the selected account', async () => {
+    const otherSession = {identity: {...validIdentityToken, userId: 'another-user'}, applications: {}}
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
+    vi.mocked(fetchSessions).mockResolvedValue({
+      [fqdn]: {...validSessions[fqdn], 'another-user': otherSession},
+    })
+    vi.mocked(getCurrentSessionId).mockReturnValue(userId)
+    vi.mocked(refreshAccessToken).mockImplementationOnce(async () => {
+      vi.mocked(getCurrentSessionId).mockReturnValue('another-user')
+      return validIdentityToken
+    })
+
+    await ensureAuthenticated(defaultApplications)
+
+    expect(storeSessions).toHaveBeenCalledWith(validSessions)
+    expect(setCurrentSessionId).not.toHaveBeenCalled()
+    expect(getCurrentSessionId()).toBe('another-user')
+  })
+
   test('refreshes the tokens', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
