@@ -252,7 +252,8 @@ jobs:
     # Playwright — those failures belong to the build lane, not to E2E.
     needs: [type-check, bundle]
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # Leave room for setup, reports, and cleanup after Playwright's global timeout.
+    timeout-minutes: 30
     continue-on-error: true
     env:
       E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
@@ -307,6 +308,7 @@ jobs:
 
       - name: Cleanup current-run E2E apps
         if: ${{ always() && steps.e2e.outcome != 'skipped' }}
+        timeout-minutes: 5
         run: |
           RUN_TOKEN=$(node -e "process.stdout.write(BigInt(process.env.GITHUB_RUN_ID).toString(36))")
           SHARD_NUMBER=${E2E_SHARD%/*}
