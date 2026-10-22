@@ -14,6 +14,11 @@ import {describe, expect, test, vi} from 'vitest'
 
 import React from 'react'
 
+vi.mock('../../conf-store.js', async () => {
+  const actual = await vi.importActual('../../conf-store.js')
+  return {...actual, getMouseEnabled: vi.fn(() => true)}
+})
+
 const render = (element: React.ReactElement) => renderUI(<MouseProvider>{element}</MouseProvider>, {stdoutIsTTY: true})
 
 const ARROW_UP = '\u001B[A'

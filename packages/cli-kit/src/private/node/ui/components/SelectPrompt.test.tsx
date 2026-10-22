@@ -8,6 +8,11 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import React from 'react'
 import {useStdout} from 'ink'
 
+vi.mock('../../conf-store.js', async () => {
+  const actual = await vi.importActual('../../conf-store.js')
+  return {...actual, getMouseEnabled: vi.fn(() => true)}
+})
+
 vi.mock('ink', async () => {
   const original: any = await vi.importActual('ink')
   return {

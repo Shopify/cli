@@ -14,6 +14,11 @@ import {unstyled} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 
+vi.mock('../../../../../../../cli-kit/src/private/node/conf-store.js', async () => {
+  const actual = await vi.importActual('../../../../../../../cli-kit/src/private/node/conf-store.js')
+  return {...actual, getMouseEnabled: vi.fn(() => true)}
+})
+
 vi.mock('@shopify/cli-kit/node/system', async () => {
   const actual: any = await vi.importActual('@shopify/cli-kit/node/system')
   return {

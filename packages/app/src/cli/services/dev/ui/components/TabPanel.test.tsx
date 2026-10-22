@@ -11,6 +11,11 @@ import {describe, expect, test, vi} from 'vitest'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {MouseProvider, Text} from '@shopify/cli-kit/node/ink'
 
+vi.mock('../../../../../../../cli-kit/src/private/node/conf-store.js', async () => {
+  const actual = await vi.importActual('../../../../../../../cli-kit/src/private/node/conf-store.js')
+  return {...actual, getMouseEnabled: vi.fn(() => true)}
+})
+
 const render = (element: React.ReactElement) => renderUI(<MouseProvider>{element}</MouseProvider>, {stdoutIsTTY: true})
 
 function mouseClick(column: number, row: number): [string, string] {

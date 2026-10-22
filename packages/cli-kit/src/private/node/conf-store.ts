@@ -288,12 +288,12 @@ export function setAutoUpgradeEnabled(enabled: boolean, config: LocalStorage<Con
 
 /**
  * Get mouse interaction preference.
- * Defaults to true if the preference has never been explicitly set.
+ * Defaults to false if the preference has never been explicitly set.
  *
  * @returns Whether mouse interactions are enabled.
  */
 export function getMouseEnabled(config: LocalStorage<ConfSchema> = cliKitStore()): boolean {
-  return config.get('mouseEnabled') ?? true
+  return config.get('mouseEnabled') ?? false
 }
 
 /**

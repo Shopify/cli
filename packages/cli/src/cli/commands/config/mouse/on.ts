@@ -11,7 +11,7 @@ export default class MouseOn extends Command {
 
   static descriptionWithMarkdown = `Enable mouse interactions in Shopify CLI.
 
-  Mouse interactions are enabled by default and allow you to click prompt options and app dev tabs. To select text while they are enabled, hold Option in iTerm2 or Shift in most other terminals while dragging.
+  Mouse interactions are disabled by default. Enable them to click prompt options and app dev tabs. To select text while they are enabled, hold Option in iTerm2 or Shift in most other terminals while dragging.
 
   To restore standard terminal text selection and scrolling, run \`shopify config mouse off\`.
 `

@@ -78,17 +78,17 @@ describe('removeSession', () => {
 })
 
 describe('mouse preference', () => {
-  test('is enabled by default and persists an explicit preference', async () => {
+  test('is disabled by default and persists an explicit preference', async () => {
     await inTemporaryDirectory(async (cwd) => {
       const config = new LocalStorage<ConfSchema>({cwd})
 
-      expect(getMouseEnabled(config)).toBe(true)
-
-      setMouseEnabled(false, config)
       expect(getMouseEnabled(config)).toBe(false)
 
       setMouseEnabled(true, config)
       expect(getMouseEnabled(config)).toBe(true)
+
+      setMouseEnabled(false, config)
+      expect(getMouseEnabled(config)).toBe(false)
     })
   })
 })
