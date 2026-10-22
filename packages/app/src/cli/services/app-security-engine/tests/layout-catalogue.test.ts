@@ -1,6 +1,7 @@
 /* eslint-disable no-restricted-imports -- layouts are real temporary repositories and directories */
 import {git, isolateGitConfig} from './git-test-helpers.js'
 import securityCheck from '../../security-check.js'
+import {renderSecurityCheckResult} from '../../security-check/result.js'
 import {mergeScanDirectories, resolveIncludeDirectories} from '../../app-security-selection.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {unstyled} from '@shopify/cli-kit/node/output'
@@ -93,7 +94,10 @@ async function inLayout(layout: Layout, run: (temporaryDirectory: string) => Pro
   }
 }
 
-/** Runs `check --list-files` from `workingDirectory` (relative to `T`), the way the command calls the service. */
+/**
+ * Runs `check --list-files` from `workingDirectory` (relative to `T`), the way the command calls the service and
+ * presents its outcome.
+ */
 async function checkListFiles(temporaryDirectory: string, workingDirectory: string, flags: CheckFlags = {}) {
   const absoluteWorkingDirectory = resolve(temporaryDirectory, workingDirectory)
   vi.stubEnv('INIT_CWD', absoluteWorkingDirectory)
@@ -109,11 +113,14 @@ async function checkListFiles(temporaryDirectory: string, workingDirectory: stri
       excludePatterns: flags.excludes ?? [],
       noGitIgnore: flags.noGitIgnore ?? false,
       listFiles: true,
-      verbose: false,
       blocking: 'none',
-      printInstructions: false,
-      skipInstructions: false,
     })
+    await renderSecurityCheckResult(
+      resolution,
+      {directory, verbose: false, printInstructions: false, skipInstructions: false},
+      'text',
+    )
+    if (resolution.kind !== 'listed') throw new Error(`Expected listed files, got ${resolution.kind}`)
     return {resolution, stdout: stdout(), stderr: stderr()}
   })
 }

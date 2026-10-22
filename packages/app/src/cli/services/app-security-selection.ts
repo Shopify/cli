@@ -50,6 +50,11 @@ export type AppSecuritySelection =
       clientIdSource: 'flag' | 'picker'
     }
 
+/** The answer was no when `check` asked whether to scan without app configuration. */
+export interface DeclinedAppSecuritySelection {
+  kind: 'declined'
+}
+
 /** A directory that is walked. */
 export interface AppSecurityScanDirectory {
   /** Absolute; the real path. */
@@ -133,14 +138,27 @@ export async function resolveAppDirectory(
     return await fileRealPath((await Project.load(options.path)).directory)
   } catch (error) {
     if (!(error instanceof NoAppConfigurationFoundError)) throw error
-    abortNoAppConfigurationFound(options.path)
+    throw new MissingAppConfigurationError(options.path)
   }
 }
 
+/**
+ * Resolves the app that a command works on. Without prompts, a selection always results or the command aborts. With
+ * prompts, `check` can also offer to scan without app configuration, and declining that is an outcome rather than an
+ * error, so `--json` can report it.
+ */
+export async function resolveAppSecuritySelection(
+  options: AppSecuritySelectionOptions & {allowPrompts: false},
+  dependencies?: AppSecuritySelectionDependencies,
+): Promise<AppSecuritySelection>
+export async function resolveAppSecuritySelection(
+  options: AppSecuritySelectionOptions,
+  dependencies?: AppSecuritySelectionDependencies,
+): Promise<AppSecuritySelection | DeclinedAppSecuritySelection>
 export async function resolveAppSecuritySelection(
   options: AppSecuritySelectionOptions,
   dependencies: AppSecuritySelectionDependencies = defaultDependencies,
-): Promise<AppSecuritySelection> {
+): Promise<AppSecuritySelection | DeclinedAppSecuritySelection> {
   if (options.withoutAppConfig) {
     if (!options.clientId) throw new AbortError('--without-app-config requires --client-id.')
     const appDirectory = await realDirectory(options.path)
@@ -210,13 +228,13 @@ async function configFileWhenNoneIsSelected(
 async function resolveWithoutAppConfigurationFile(
   options: AppSecuritySelectionOptions,
   dependencies: AppSecuritySelectionDependencies,
-): Promise<AppSecuritySelection> {
-  if (!options.allowPrompts) abortNoAppConfigurationFound(options.path)
+): Promise<AppSecuritySelection | DeclinedAppSecuritySelection> {
+  if (!options.allowPrompts) throw new MissingAppConfigurationError(options.path)
 
   const appDirectory = await realDirectory(options.path)
   // Before the prompt, so a mistyped client ID fails without asking anything first.
   await lookUpClientIdFlag(options, dependencies)
-  if (!(await dependencies.confirmScanWithoutAppConfig(options.path))) abortNoAppConfigurationFound(options.path)
+  if (!(await dependencies.confirmScanWithoutAppConfig(options.path))) return {kind: 'declined'}
 
   if (options.clientId) return {kind: 'no-config', appDirectory, clientId: options.clientId, clientIdSource: 'flag'}
   return {
@@ -340,11 +358,20 @@ export function mergeScanDirectories(
   }
 }
 
-function abortNoAppConfigurationFound(directory: string): never {
-  throw new AbortError(
-    `No app configuration found at or above ${directory}.`,
-    'Pass `--path` to your app directory, or scan without app configuration with `--without-app-config --client-id <client-id>`.',
-  )
+/** That there's no app configuration at or above `directory`, and how to scan anyway. */
+export function missingAppConfigurationMessage(directory: string): {headline: string; nextStep: string} {
+  return {
+    headline: `No app configuration found at or above ${directory}.`,
+    nextStep:
+      'Pass `--path` to your app directory, or scan without app configuration with `--without-app-config --client-id <client-id>`.',
+  }
+}
+
+class MissingAppConfigurationError extends AbortError {
+  constructor(directory: string) {
+    const {headline, nextStep} = missingAppConfigurationMessage(directory)
+    super(headline, nextStep)
+  }
 }
 
 function abortNoAppConfigurationSelected(directory: string, fileNames: string[], clientId?: string): never {

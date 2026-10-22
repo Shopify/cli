@@ -5532,7 +5532,7 @@ Check an app for Shopify-specific security issues and write deterministic-findin
 
 ```
 USAGE
-  $ shopify app security check [--exclude <value>...] [--include-dir <value>...] [--json-schema] [--list-files |
+  $ shopify app security check [--exclude <value>...] [--include-dir <value>...] [-j] [--json-schema] [--list-files |
     --print-instructions | --skip-instructions | --blocking high|medium|low|none] [--no-color] [--no-git-ignore]
     [--no-input] [--path <value>] [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
 
@@ -5540,6 +5540,10 @@ FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --blocking=<option>
       [default: none] The minimum finding severity that causes a non-zero exit code: high, medium, or low. Defaults to
@@ -5565,7 +5569,7 @@ FLAGS
 
   --list-files
       Print the files the check would gather, one path per line, and stop. Nothing is scanned, no results are written, and
-      nothing is prompted for.
+      nothing is prompted for. With --json, the result lists them with absolute paths.
       [env: SHOPIFY_FLAG_LIST_FILES]
 
   --no-color
@@ -5586,7 +5590,8 @@ FLAGS
       [env: SHOPIFY_FLAG_PATH]
 
   --print-instructions
-      Print coding-agent instructions without prompting for how to deliver them.
+      Print coding-agent instructions without prompting for how to deliver them. With --json, the instructions are
+      included in the result.
       [env: SHOPIFY_FLAG_APP_SECURITY_PRINT_INSTRUCTIONS]
 
   --skip-instructions
@@ -5631,15 +5636,300 @@ DESCRIPTION
 
   Use `--list-files` to check the scope before scanning: it prints the files the check would gather, one path per line
   and relative to the app directory, and then stops. It writes no results and never prompts. `--client-id` is still
-  checked, but doesn't change the list.
+  checked, but doesn't change the list. With `--json`, the result lists the files with absolute paths.
 
   In interactive terminals, the command offers to copy the coding-agent instructions, print them, or choose nothing;
   copying is the default. In CI and other non-interactive environments, instructions aren't offered unless you pass
   `--print-instructions`, which prints them. You can also run `shopify app security instructions` to print, copy, or
-  write them later.
+  write them later. With `--json`, the command offers to include the instructions in the result, with or without copying
+  them, and `--print-instructions` includes them.
+
+  With `--json`, the result describes the scan and the files it wrote, and whether `--blocking` passed, but not the
+  findings: run `shopify app security review --json` for those.
 
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppSecurityCheckResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "valid": {
+            "type": "boolean",
+            "description": "Whether --blocking passed: no finding of the scan has its own severity at or above the level. blocking.blockedCheckCount counts the checks with such findings, and --blocking none always passes. Run review --json for the findings."
+          },
+          "app": {
+            "$ref": "#/definitions/AppSecurityApp"
+          },
+          "resultsDirectory": {
+            "type": "string",
+            "description": "The absolute path of the results directory that holds the files the scan wrote."
+          },
+          "deterministicFindingsPath": {
+            "type": "string",
+            "description": "The absolute path of deterministic-findings.json, which the scan replaced."
+          },
+          "agentChecksPath": {
+            "type": "string",
+            "description": "The absolute path of agent-checks.json, which the scan replaced."
+          },
+          "scope": {
+            "$ref": "#/definitions/AppSecurityScope"
+          },
+          "scanDirectories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppSecurityScanDirectory"
+            },
+            "description": "The directories that the scan walked."
+          },
+          "agentCheckCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of checks in agent-checks.json for a coding agent to investigate."
+          },
+          "blocking": {
+            "$ref": "#/definitions/AppSecurityBlocking"
+          },
+          "instructions": {
+            "$ref": "#/definitions/AppSecurityInstructions",
+            "description": "The coding-agent instructions for this scan, with --print-instructions or when chosen at the prompt. Left out otherwise."
+          }
+        },
+        "required": [
+          "status",
+          "valid",
+          "app",
+          "resultsDirectory",
+          "deterministicFindingsPath",
+          "agentChecksPath",
+          "scope",
+          "scanDirectories",
+          "agentCheckCount",
+          "blocking"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "$ref": "#/definitions/AppSecurityCheckFileList"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "cancelled"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false,
+        "description": "Asked whether to scan without app configuration, the user declined. Nothing was scanned or written."
+      }
+    ],
+    "description": "The scan and the files it wrote. With --list-files, the files that a scan would gather.",
+    "title": "AppSecurityCheckResult",
+    "definitions": {
+      "AppSecurityApp": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The absolute app directory."
+          },
+          "configurationPath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The absolute path of the selected app configuration file, or null with --without-app-config."
+          },
+          "clientId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The --client-id value when passed, otherwise the app configuration's client_id. Null when the app configuration isn't linked."
+          }
+        },
+        "required": [
+          "directory",
+          "configurationPath",
+          "clientId"
+        ],
+        "additionalProperties": false
+      },
+      "AppSecurityScope": {
+        "type": "object",
+        "properties": {
+          "includeDirs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The --include-dir values."
+          },
+          "excludes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The --exclude globs."
+          },
+          "noGitIgnore": {
+            "type": "boolean",
+            "description": "Whether --no-git-ignore was passed."
+          }
+        },
+        "required": [
+          "includeDirs",
+          "excludes",
+          "noGitIgnore"
+        ],
+        "additionalProperties": false,
+        "description": "The check flags that chose which files were gathered, exactly as typed."
+      },
+      "AppSecurityScanDirectory": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The absolute path of the directory."
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "app-directory",
+              "include-dir",
+              "app-config-directory"
+            ],
+            "description": "Why it was scanned: it is the app directory, an --include-dir value, or an extension or web directory of the app configuration."
+          }
+        },
+        "required": [
+          "directory",
+          "origin"
+        ],
+        "additionalProperties": false,
+        "description": "A directory that check scanned."
+      },
+      "AppSecurityBlocking": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low",
+              "none"
+            ],
+            "description": "The --blocking severity."
+          },
+          "blockedCheckCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of checks with findings at or above that severity. Always 0 for none."
+          }
+        },
+        "required": [
+          "level",
+          "blockedCheckCount"
+        ],
+        "additionalProperties": false,
+        "description": "The --blocking policy and the checks that fail it."
+      },
+      "AppSecurityInstructions": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The instructions in Markdown, as printed without --json."
+          },
+          "copied": {
+            "type": "boolean",
+            "description": "Whether the instructions were also copied to the clipboard."
+          }
+        },
+        "required": [
+          "content",
+          "copied"
+        ],
+        "additionalProperties": false
+      },
+      "AppSecurityCheckFileList": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "app": {
+            "$ref": "#/definitions/AppSecurityApp"
+          },
+          "scope": {
+            "$ref": "#/definitions/AppSecurityScope"
+          },
+          "scanDirectories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppSecurityScanDirectory"
+            },
+            "description": "The directories that a scan would walk."
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "The absolute path of the file."
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "additionalProperties": false
+            },
+            "description": "The files that a scan would gather, ordered by their paths relative to the app directory, as listed without --json."
+          }
+        },
+        "required": [
+          "status",
+          "app",
+          "scope",
+          "scanDirectories",
+          "files"
+        ],
+        "additionalProperties": false,
+        "description": "With --list-files, the files that a scan would gather. Nothing is scanned or written."
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 
 EXAMPLES
   $ shopify app security check

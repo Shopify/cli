@@ -359,7 +359,8 @@ describe('securityReview --client-id lookup', () => {
   function lookUpDependencies(lookUpApp: (clientId: string) => Promise<void>) {
     return {
       ...testDependencies(),
-      resolveSelection: (options: AppSecuritySelectionOptions) =>
+      // Review never prompts, so the selection is never declined.
+      resolveSelection: (options: AppSecuritySelectionOptions & {allowPrompts: false}) =>
         resolveAppSecuritySelection(options, {
           confirmScanWithoutAppConfig: async () => true,
           pickClientId: async () => 'picked-client-id',
