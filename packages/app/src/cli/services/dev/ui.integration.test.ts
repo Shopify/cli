@@ -44,6 +44,11 @@ test.each(shutdownCases)(
   async ({signal, delivery}) => {
     await inTemporaryDirectory(async (directory) => {
       const script = `
+        const originalKill = process.kill.bind(process)
+        process.kill = (...args) => {
+          process.stderr.write(JSON.stringify({kill: args, pid: process.pid, stack: new Error().stack}) + '\\n')
+          return originalKill(...args)
+        }
         const childProcess = (await import('node:child_process')).default
         const originalSpawn = childProcess.spawn
         childProcess.spawn = (...args) => {
