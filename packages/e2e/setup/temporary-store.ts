@@ -4,6 +4,7 @@ import {e2eRunSegment, requireEnv} from './env.js'
 import {isProtectedStore, readPersistentStores} from './persistent-stores.js'
 import {deleteDevStoreWithCli} from './store.js'
 import {randomUUID} from 'node:crypto'
+import {setTimeout as delay} from 'node:timers/promises'
 import type {CLIProcess} from './cli.js'
 
 interface TemporaryStore {
@@ -54,9 +55,23 @@ export async function cleanupTemporaryStore(options: {
   cli: Pick<CLIProcess, 'exec'>
   orgId: string
   name: string
+  /** Wait for provisioning after a failed test before treating an absent store as unresolved cleanup. */
+  creationTimeoutMs?: number
 }): Promise<void> {
-  const store = await findTemporaryStore(options)
-  if (!store) return
+  const deadline = Date.now() + (options.creationTimeoutMs ?? 0)
+  let store = await findTemporaryStore(options)
+  while (!store && Date.now() < deadline) {
+    // eslint-disable-next-line no-await-in-loop
+    await delay(Math.min(5000, Math.max(0, deadline - Date.now())))
+    // eslint-disable-next-line no-await-in-loop
+    store = await findTemporaryStore(options)
+  }
+  if (!store) {
+    if (options.creationTimeoutMs) {
+      throw new Error(`Temporary store ${options.name} did not appear before cleanup timed out; cleanup is unresolved.`)
+    }
+    return
+  }
   const confirmed = await deleteDevStoreWithCli({...options, storeFqdn: store.store})
   if (!confirmed) throw new Error(`Deletion of temporary store ${store.store} was not confirmed.`)
 }
@@ -72,9 +87,14 @@ export const temporaryStoreFixture = authFixture.extend<{temporaryStoreName: str
         await use(name)
       } finally {
         // Creation can succeed remotely before the CLI returns its domain.
-        await cleanupTemporaryStore({cli, orgId: env.orgId, name})
+        await cleanupTemporaryStore({
+          cli,
+          orgId: env.orgId,
+          name,
+          creationTimeoutMs: testInfo.status === 'passed' ? 0 : CLI_TIMEOUT.short,
+        })
       }
     },
-    {timeout: CLI_TIMEOUT.store + CLI_TIMEOUT.short},
+    {timeout: CLI_TIMEOUT.store + 2 * CLI_TIMEOUT.short},
   ],
 })
