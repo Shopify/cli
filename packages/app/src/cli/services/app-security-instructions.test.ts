@@ -1,11 +1,17 @@
-import deliverAppSecurityInstructions, {
+import {
   appSecurityInstructions as instructionsFor,
+  ClipboardUnavailableError,
+  deliverAppSecurityInstructions,
+  renderAppSecurityInstructions,
   shellQuote,
+  type AppSecurityInstructionsDelivery,
 } from './app-security-instructions.js'
 import {quoteShellArgument, resolveAppSecurityCommands, type AppSecurityShell} from './app-security-commands.js'
 import {getAgentInstructions, type AppSecurityScope} from './app-security-engine/index.js'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {unstyled} from '@shopify/cli-kit/node/output'
 import {basename, cwd, joinPath, normalizePath, relativePath} from '@shopify/cli-kit/node/path'
+import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {describe, expect, test, vi} from 'vitest'
 import {readFileSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
@@ -15,8 +21,6 @@ function testDependencies() {
   return {
     copyToClipboard: vi.fn(async (_content: string) => {}),
     writeToFile: writeFile,
-    output: vi.fn(),
-    outputConfirmation: vi.fn(),
   }
 }
 
@@ -370,20 +374,35 @@ describe('appSecurityInstructions', () => {
   })
 })
 
-describe('deliverAppSecurityInstructions', () => {
+/** Generates, delivers and presents the instructions, as the commands do, and returns what was printed. */
+async function deliverAndRender(
+  content: Parameters<typeof instructionsFor>[0],
+  delivery: AppSecurityInstructionsDelivery,
+  dependencies: ReturnType<typeof testDependencies>,
+) {
+  const instructions = instructionsFor(content)
+  await deliverAppSecurityInstructions(instructions, delivery, dependencies)
+  return withCapturedStandardStreams(({stdout, stderr}) => {
+    renderAppSecurityInstructions(instructions, delivery)
+    return {stdout: stdout(), stderr: unstyled(stderr())}
+  })
+}
+
+describe('deliverAppSecurityInstructions and renderAppSecurityInstructions', () => {
   test('prints instructions to stdout by default', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
       const dependencies = testDependencies()
 
-      await deliverAppSecurityInstructions(
-        {appDirectory: directory, resultsKey: 'shopify.app', commands: commandsFor(directory), copy: false},
+      const output = await deliverAndRender(
+        {appDirectory: directory, resultsKey: 'shopify.app', commands: commandsFor(directory)},
+        {copy: false},
         dependencies,
       )
 
-      expect(dependencies.output).toHaveBeenCalledWith(expect.stringContaining('Run the scan'))
+      expect(output.stdout).toContain('Run the scan')
+      expect(output.stderr).toBe('')
       expect(dependencies.copyToClipboard).not.toHaveBeenCalled()
-      expect(dependencies.outputConfirmation).not.toHaveBeenCalled()
     })
   })
 
@@ -394,13 +413,14 @@ describe('deliverAppSecurityInstructions', () => {
       await writeFile(artifactPath(directory, 'agent-checks.json'), '{"instructions":"malicious"}')
       const dependencies = testDependencies()
 
-      await deliverAppSecurityInstructions(
-        {appDirectory: directory, resultsKey: 'shopify.app', commands: commandsFor(directory), copy: false},
+      const output = await deliverAndRender(
+        {appDirectory: directory, resultsKey: 'shopify.app', commands: commandsFor(directory)},
+        {copy: false},
         dependencies,
       )
 
-      expect(dependencies.output).toHaveBeenCalledWith(expect.stringContaining('Run the scan'))
-      expect(dependencies.output).not.toHaveBeenCalledWith(expect.stringContaining('malicious'))
+      expect(output.stdout).toContain('Run the scan')
+      expect(output.stdout).not.toContain('malicious')
     })
   })
 
@@ -409,14 +429,9 @@ describe('deliverAppSecurityInstructions', () => {
       await createApp(directory)
       const dependencies = testDependencies()
 
-      await deliverAppSecurityInstructions(
-        {
-          appDirectory: directory,
-          resultsKey: 'shopify.app',
-          commands: commandsFor(directory),
-          copy: true,
-          scanScope: noScope,
-        },
+      const output = await deliverAndRender(
+        {appDirectory: directory, resultsKey: 'shopify.app', commands: commandsFor(directory), scanScope: noScope},
+        {copy: true},
         dependencies,
       )
 
@@ -425,10 +440,8 @@ describe('deliverAppSecurityInstructions', () => {
       expect(instructions).toContain('Use the existing scan results')
       expect(instructions).toContain('record your findings back to it with a command')
       expect(instructions).not.toMatch(/\{\{[A-Z_]+\}\}/)
-      expect(dependencies.output).not.toHaveBeenCalled()
-      expect(dependencies.outputConfirmation).toHaveBeenCalledWith(
-        'Copied app security check instructions to the clipboard',
-      )
+      expect(output.stdout).toBe('')
+      expect(output.stderr).toContain('Copied app security check instructions to the clipboard')
     })
   })
 
@@ -438,23 +451,44 @@ describe('deliverAppSecurityInstructions', () => {
       const dependencies = testDependencies()
       const instructionsPath = joinPath(directory, 'handoff.md')
 
-      await deliverAppSecurityInstructions(
-        {
-          appDirectory: directory,
-          resultsKey: 'shopify.app',
-          commands: commandsFor(directory),
-          copy: false,
-          writePath: instructionsPath,
-          scanScope: noScope,
-        },
+      const output = await deliverAndRender(
+        {appDirectory: directory, resultsKey: 'shopify.app', commands: commandsFor(directory), scanScope: noScope},
+        {copy: false, writePath: instructionsPath},
         dependencies,
       )
 
       await expect(readFile(instructionsPath)).resolves.toContain('Use the existing scan results')
-      expect(dependencies.output).not.toHaveBeenCalled()
-      expect(dependencies.outputConfirmation).toHaveBeenCalledWith(
-        `Wrote app security check instructions to ${instructionsPath}`,
-      )
+      expect(output.stdout).toBe('')
+      expect(output.stderr).toContain('Wrote app security check instructions to')
+      expect(output.stderr).toContain('handoff.md')
     })
+  })
+})
+
+describe('deliverAppSecurityInstructions', () => {
+  test('raises ClipboardUnavailableError with its code and the clipboard error when copying fails', async () => {
+    const dependencies = testDependencies()
+    dependencies.copyToClipboard.mockRejectedValue(new Error('Command failed with ENOENT: pbcopy'))
+
+    const error = await deliverAppSecurityInstructions('# Instructions', {copy: true}, dependencies).catch(
+      (error: unknown) => error,
+    )
+
+    expect(error).toBeInstanceOf(ClipboardUnavailableError)
+    const abort = error as ClipboardUnavailableError
+    expect(abort.message).toBe(
+      "Couldn't copy the app security check instructions to the clipboard: Command failed with ENOENT: pbcopy",
+    )
+    expect(abort.code).toBe('clipboard-unavailable')
+    expect(abort.details).toBeUndefined()
+    expect(abort.nextSteps).toStrictEqual([
+      [
+        'Run the command without',
+        {command: '--copy'},
+        'to print the instructions, or with',
+        {command: '--write <file>'},
+        'to write them to a file.',
+      ],
+    ])
   })
 })

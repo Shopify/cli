@@ -1,6 +1,10 @@
 import {securityExitCode, executeAppSecurity, listAppSecurityFiles} from './app-security-api.js'
 import {writeCheckArtifacts} from './app-security-artifacts.js'
-import deliverAppSecurityInstructions from './app-security-instructions.js'
+import {
+  appSecurityInstructions,
+  deliverAppSecurityInstructions,
+  renderAppSecurityInstructions,
+} from './app-security-instructions.js'
 import {
   formatAppSecurityCommand,
   quoteShellArgument,
@@ -63,6 +67,14 @@ interface SecurityCheckResolution {
 
 export type AppSecurityInstructionsDestination = 'copy' | 'print' | 'nothing'
 
+interface ScanInstructionsOptions {
+  appDirectory: string
+  resultsKey: string
+  copy: boolean
+  scanScope: AppSecurityScope
+  commands: AppSecurityCommands
+}
+
 interface SecurityDependencies {
   resolveSelection(options: AppSecuritySelectionOptions): Promise<AppSecuritySelection>
   execute(options: ScanInput & Required<ScanOptions>): Promise<AppSecurityExecution>
@@ -76,13 +88,7 @@ interface SecurityDependencies {
   ): Promise<CheckArtifactPaths>
   canPrompt(): boolean
   selectInstructionsDestination(agentCheckCount: number): Promise<AppSecurityInstructionsDestination>
-  deliverInstructions(options: {
-    appDirectory: string
-    resultsKey: string
-    copy: boolean
-    scanScope: AppSecurityScope
-    commands: AppSecurityCommands
-  }): Promise<void>
+  deliverInstructions(options: ScanInstructionsOptions): Promise<void>
   output(content: string): void
   renderInfo(options: RenderAlertOptions): void
   renderWarning(options: RenderAlertOptions): void
@@ -105,6 +111,13 @@ export function appSecurityInstructionsPrompt(
   }
 }
 
+/** Generates the instructions for the scan that just finished, then copies or prints them. */
+async function deliverScanInstructions({copy, ...options}: ScanInstructionsOptions): Promise<void> {
+  const instructions = appSecurityInstructions(options)
+  await deliverAppSecurityInstructions(instructions, {copy})
+  renderAppSecurityInstructions(instructions, {copy})
+}
+
 const defaultDependencies: SecurityDependencies = {
   resolveSelection: resolveAppSecuritySelection,
   execute: executeAppSecurity,
@@ -113,7 +126,7 @@ const defaultDependencies: SecurityDependencies = {
   canPrompt: terminalSupportsPrompting,
   selectInstructionsDestination: (agentCheckCount) =>
     renderSelectPrompt(appSecurityInstructionsPrompt(agentCheckCount)),
-  deliverInstructions: deliverAppSecurityInstructions,
+  deliverInstructions: deliverScanInstructions,
   output: outputResult,
   renderInfo,
   renderWarning,

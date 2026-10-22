@@ -1,4 +1,10 @@
-import {appSecurityAppSchema, projectAppSecurityApp, projectAppSecurityPath} from './app-security-json-output.js'
+import {
+  appSecurityAppSchema,
+  appSecurityInstructionsSchema,
+  projectAppSecurityApp,
+  projectAppSecurityInstructions,
+  projectAppSecurityPath,
+} from './app-security-json-output.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 import type {AppSecuritySelection} from './app-security-selection.js'
@@ -78,5 +84,34 @@ describe('appSecurityAppSchema', () => {
     ['an empty client ID', {...app, clientId: ''}],
   ])('rejects %s', (_description, value) => {
     expect(appSecurityAppSchema.safeParse(value).success).toBe(false)
+  })
+})
+
+describe('projectAppSecurityInstructions', () => {
+  test.each([
+    ['printed', {copy: false}, false],
+    ['copied to the clipboard', {copy: true}, true],
+  ])('projects instructions that were %s', (_description, delivery, copied) => {
+    expect(projectAppSecurityInstructions('# Instructions', delivery)).toStrictEqual({
+      content: '# Instructions',
+      copied,
+    })
+  })
+})
+
+describe('appSecurityInstructionsSchema', () => {
+  const instructions = {content: '# Instructions', copied: true}
+
+  test('accepts projected instructions', () => {
+    expect(appSecurityInstructionsSchema.parse(instructions)).toStrictEqual(instructions)
+  })
+
+  test.each([
+    ['an extra field', {...instructions, path: '/apps/my-app/instructions.md'}],
+    ['a missing field', {content: instructions.content}],
+    ['empty content', {...instructions, content: ''}],
+    ['a copied flag that is not a boolean', {...instructions, copied: 'true'}],
+  ])('rejects %s', (_description, value) => {
+    expect(appSecurityInstructionsSchema.safeParse(value).success).toBe(false)
   })
 })

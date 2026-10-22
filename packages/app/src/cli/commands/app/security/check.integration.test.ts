@@ -126,6 +126,21 @@ describe('app security check command boundary', () => {
     })
   })
 
+  test('--print-instructions prints only the instructions for the scan that just ran on stdout', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      const appDirectory = await fileRealPath(directory)
+
+      const result = await runCommand(['--path', directory, '--print-instructions'])
+
+      expect(result.exitCode).toBe(0)
+      expect(result.stdout).toMatch(/^The app security check is Shopify's local security review workflow/)
+      expect(result.stdout).toContain('### 1. Use the existing scan results')
+      expect(result.stdout).toContain(appSecurityArtifactPaths(appDirectory, 'shopify.app').agentChecksPath)
+      expect(boxText(result.stderr)).toContain('Config file shopify.app.toml')
+    })
+  })
+
   test('scans an extension directory that the TOML adds outside the app directory and records it in coverage', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = joinPath(directory, 'app')

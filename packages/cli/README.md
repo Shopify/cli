@@ -5823,20 +5823,24 @@ Provide app security check instructions to a coding agent.
 
 ```
 USAGE
-  $ shopify app security instructions [--copy | --write <value>] [--json-schema] [--no-color] [--no-input] [--path <value>]
-    [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
+  $ shopify app security instructions [--copy | --write <value>] [-j] [--json-schema] [--no-color] [--no-input] [--path
+    <value>] [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
 
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   --client-id=<value>
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
 
   --copy
-      Copy the instructions to the clipboard instead of printing them.
+      Copy the instructions to the clipboard instead of printing them. With --json, the result still includes them.
       [env: SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_COPY]
 
   --json-schema
@@ -5864,7 +5868,8 @@ FLAGS
       [env: SHOPIFY_FLAG_WITHOUT_APP_CONFIG]
 
   --write=<value>
-      Write the instructions to a file instead of printing them.
+      Write the instructions to a file instead of printing them. With --json, stdout contains only the absolute path and
+      Markdown format of the written file.
       [env: SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_WRITE]
 
 DESCRIPTION
@@ -5875,6 +5880,127 @@ DESCRIPTION
   By default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write
   them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's
   generated review pack is trusted as workflow input.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppSecurityInstructionsResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "success"
+          },
+          "app": {
+            "$ref": "#/definitions/AppSecurityApp"
+          },
+          "resultsDirectory": {
+            "type": "string",
+            "description": "The absolute path of the results directory that the instructions use. It may not exist yet: the instructions start by running check, which creates it."
+          },
+          "instructions": {
+            "$ref": "#/definitions/AppSecurityInstructions"
+          }
+        },
+        "required": [
+          "status",
+          "app",
+          "resultsDirectory",
+          "instructions"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "$ref": "#/definitions/AppSecurityInstructionsFile"
+      }
+    ],
+    "description": "The instructions and the app they are for. With --write, only the file they were written to.",
+    "title": "AppSecurityInstructionsResult",
+    "definitions": {
+      "AppSecurityApp": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The absolute app directory."
+          },
+          "configurationPath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The absolute path of the selected app configuration file, or null with --without-app-config."
+          },
+          "clientId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The --client-id value when passed, otherwise the app configuration's client_id. Null when the app configuration isn't linked."
+          }
+        },
+        "required": [
+          "directory",
+          "configurationPath",
+          "clientId"
+        ],
+        "additionalProperties": false
+      },
+      "AppSecurityInstructions": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The instructions in Markdown, as printed without --json."
+          },
+          "copied": {
+            "type": "boolean",
+            "description": "Whether the instructions were also copied to the clipboard."
+          }
+        },
+        "required": [
+          "content",
+          "copied"
+        ],
+        "additionalProperties": false
+      },
+      "AppSecurityInstructionsFile": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The absolute path of the file that the instructions were written to."
+          },
+          "format": {
+            "type": "string",
+            "const": "markdown",
+            "description": "The file holds the instructions in Markdown, not a JSON result."
+          }
+        },
+        "required": [
+          "path",
+          "format"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app security record`

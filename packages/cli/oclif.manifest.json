@@ -4313,7 +4313,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Prints the complete workflow that a coding agent should follow to review app security check results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's generated review pack is trusted as workflow input.",
+      "description": "Prints the complete workflow that a coding agent should follow to review app security check results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's generated review pack is trusted as workflow input.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppSecurityInstructionsResult` schema.\n\n```json\n{\n  \"anyOf\": [\n    {\n      \"type\": \"object\",\n      \"properties\": {\n        \"status\": {\n          \"type\": \"string\",\n          \"const\": \"success\"\n        },\n        \"app\": {\n          \"$ref\": \"#/definitions/AppSecurityApp\"\n        },\n        \"resultsDirectory\": {\n          \"type\": \"string\",\n          \"description\": \"The absolute path of the results directory that the instructions use. It may not exist yet: the instructions start by running check, which creates it.\"\n        },\n        \"instructions\": {\n          \"$ref\": \"#/definitions/AppSecurityInstructions\"\n        }\n      },\n      \"required\": [\n        \"status\",\n        \"app\",\n        \"resultsDirectory\",\n        \"instructions\"\n      ],\n      \"additionalProperties\": false\n    },\n    {\n      \"$ref\": \"#/definitions/AppSecurityInstructionsFile\"\n    }\n  ],\n  \"description\": \"The instructions and the app they are for. With --write, only the file they were written to.\",\n  \"title\": \"AppSecurityInstructionsResult\",\n  \"definitions\": {\n    \"AppSecurityApp\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"directory\": {\n          \"type\": \"string\",\n          \"description\": \"The absolute app directory.\"\n        },\n        \"configurationPath\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\"\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"The absolute path of the selected app configuration file, or null with --without-app-config.\"\n        },\n        \"clientId\": {\n          \"anyOf\": [\n            {\n              \"type\": \"string\",\n              \"minLength\": 1\n            },\n            {\n              \"type\": \"null\"\n            }\n          ],\n          \"description\": \"The --client-id value when passed, otherwise the app configuration's client_id. Null when the app configuration isn't linked.\"\n        }\n      },\n      \"required\": [\n        \"directory\",\n        \"configurationPath\",\n        \"clientId\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppSecurityInstructions\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"content\": {\n          \"type\": \"string\",\n          \"minLength\": 1,\n          \"description\": \"The instructions in Markdown, as printed without --json.\"\n        },\n        \"copied\": {\n          \"type\": \"boolean\",\n          \"description\": \"Whether the instructions were also copied to the clipboard.\"\n        }\n      },\n      \"required\": [\n        \"content\",\n        \"copied\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"AppSecurityInstructionsFile\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"path\": {\n          \"type\": \"string\",\n          \"description\": \"The absolute path of the file that the instructions were written to.\"\n        },\n        \"format\": {\n          \"type\": \"string\",\n          \"const\": \"markdown\",\n          \"description\": \"The file holds the instructions in Markdown, not a JSON result.\"\n        }\n      },\n      \"required\": [\n        \"path\",\n        \"format\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
       "descriptionWithMarkdown": "Prints the complete workflow that a coding agent should follow to review app security check results.\n\nBy default, the instructions are printed to stdout. Use `--copy` to copy them to the clipboard or `--write` to write them to a file. Standalone instructions always start by running `shopify app security check`; only that invocation's generated review pack is trusted as workflow input.",
       "enableJsonFlag": false,
       "flags": {
@@ -4341,12 +4341,21 @@
         },
         "copy": {
           "allowNo": false,
-          "description": "Copy the instructions to the clipboard instead of printing them.",
+          "description": "Copy the instructions to the clipboard instead of printing them. With --json, the result still includes them.",
           "env": "SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_COPY",
           "exclusive": [
             "write"
           ],
           "name": "copy",
+          "type": "boolean"
+        },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
           "type": "boolean"
         },
         "json-schema": {
@@ -4402,7 +4411,7 @@
           "type": "boolean"
         },
         "write": {
-          "description": "Write the instructions to a file instead of printing them.",
+          "description": "Write the instructions to a file instead of printing them. With --json, stdout contains only the absolute path and Markdown format of the written file.",
           "env": "SHOPIFY_FLAG_APP_SECURITY_INSTRUCTIONS_WRITE",
           "exclusive": [
             "copy"

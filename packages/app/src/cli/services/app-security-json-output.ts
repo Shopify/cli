@@ -3,6 +3,7 @@ import {isAbsolutePath} from '@shopify/cli-kit/node/path'
 import {zod} from '@shopify/cli-kit/node/schema'
 // eslint-disable-next-line no-restricted-imports -- JSON file paths use native platform separators.
 import {resolve} from 'node:path'
+import type {AppSecurityInstructionsDelivery} from './app-security-instructions.js'
 
 /**
  * The parts of the app security commands' JSON output that several commands share, and the codecs that map the
@@ -36,6 +37,16 @@ export const appSecurityAppSchema = zod
 
 type AppSecurityApp = zod.infer<typeof appSecurityAppSchema>
 
+/** The coding-agent instructions, which a JSON result includes instead of printing them. */
+export const appSecurityInstructionsSchema = zod
+  .object({
+    content: zod.string().min(1).describe('The instructions in Markdown, as printed without --json.'),
+    copied: zod.boolean().describe('Whether the instructions were also copied to the clipboard.'),
+  })
+  .strict()
+
+type AppSecurityInstructions = zod.infer<typeof appSecurityInstructionsSchema>
+
 /** CLI Kit joins paths with forward slashes, even on Windows. JSON output shows them absolute, with native separators. */
 export function projectAppSecurityPath(path: string): string {
   return resolve(path)
@@ -47,4 +58,12 @@ export function projectAppSecurityApp(selection: AppSecuritySelection): AppSecur
     configurationPath: selection.kind === 'config' ? projectAppSecurityPath(selection.appConfigFilePath) : null,
     clientId: effectiveClientId(selection) ?? null,
   }
+}
+
+/** Projects delivered instructions: `delivery.copy` means that they're on the clipboard. */
+export function projectAppSecurityInstructions(
+  instructions: string,
+  delivery: AppSecurityInstructionsDelivery,
+): AppSecurityInstructions {
+  return {content: instructions, copied: delivery.copy}
 }
