@@ -57,12 +57,7 @@ test('records theme messages, task progress, sync errors, and late HTTP request 
         .split('\n')
         .map((line) => JSON.parse(line).message)
         .join('\n')
-      for (const text of [
-        'Synced » update assets/base.css',
-        'A dev warning',
-        'Invalid CSS',
-        '/products/test',
-      ]) {
+      for (const text of ['Synced » update assets/base.css', 'A dev warning', 'Invalid CSS', '/products/test']) {
         expect(messages).toContain(text)
         expect(stderr()).toContain(text)
       }
