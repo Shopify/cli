@@ -1,7 +1,7 @@
-import {test, expect} from 'vitest'
+import {test, expect, vi} from 'vitest'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import {fileExists, inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
-import {devInstancePaths} from '@shopify/cli-kit/node/dev-instance'
+import {devInstancePaths, isProcessAlive} from '@shopify/cli-kit/node/dev-instance'
 import {fileURLToPath} from 'url'
 
 const bootstrapUrl = new URL('../../../../../cli/src/bootstrap.ts', import.meta.url).href
@@ -49,6 +49,7 @@ test.each(shutdownCases)(
         const {renderDev} = await import(${JSON.stringify(uiUrl)})
         const {DevSessionStatusManager} = await import(${JSON.stringify(statusUrl)})
         const {hook} = await import(${JSON.stringify(postrunUrl)})
+        const {spawn} = await import('node:child_process')
         await withDevSession({
           app: {directory: ${JSON.stringify(directory)}, configPath: 'shopify.app.toml'},
           remoteApp: {title: 'Local fixture', apiKey: 'fixture'},
@@ -57,6 +58,8 @@ test.each(shutdownCases)(
           await renderDev({
             processes: [{prefix: 'web', action: async (stdout, _stderr, signal) => {
               setInterval(() => {}, 1000)
+              const child = spawn(process.execPath, ['--eval', 'setInterval(() => {}, 1000); setTimeout(() => process.exit(2), 30000)'], {stdio: 'ignore'})
+              process.stderr.write('Background PID: ' + child.pid + '\\n')
               const output = instance.tee(stdout, {source: 'web'})
               for (let index = 0; index < 1000; index++) output.write('line ' + index + '\\n')
               const stopped = new Promise((resolve) => signal.addEventListener('abort', () => {
@@ -97,6 +100,9 @@ test.each(shutdownCases)(
           },
         },
       )
+      const childPid = Number(result.stderr.match(/Background PID: (\d+)/)?.[1])
+      expect(childPid).toBeGreaterThan(0)
+      await vi.waitFor(() => expect(isProcessAlive(childPid)).toBe(false))
       expect(result.exitCode, result.stderr).toBe(0)
       expect(result.stdout).toContain('Session cleaned up')
       expect(result.stdout).toContain('Postrun completed')
