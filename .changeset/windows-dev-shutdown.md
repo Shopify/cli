@@ -1,5 +1,6 @@
 ---
 '@shopify/cli-kit': patch
+'@shopify/cli': patch
 ---
 
-Preserve the CLI process while stopping child processes during graceful shutdown on Windows.
+Preserve graceful shutdown and child-process cleanup on Windows.

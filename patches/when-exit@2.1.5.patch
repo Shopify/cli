@@ -1,0 +1,13 @@
+diff --git a/dist/node/interceptor.js b/dist/node/interceptor.js
+index a0be92635ade17f6fd5ca75c441179d82e455dd9..72d1b4114cc80d6ae00b58c4b8198cfef9463b61 100644
+--- a/dist/node/interceptor.js
++++ b/dist/node/interceptor.js
+@@ -17,7 +17,7 @@ class Interceptor {
+             for (const callback of this.callbacks) {
+                 callback();
+             }
+-            if (signal) {
++            if (signal && process.listenerCount(signal) === 0) {
+                 if (IS_WINDOWS && (signal !== 'SIGINT' && signal !== 'SIGTERM' && signal !== 'SIGKILL')) { // Windows doesn't support POSIX signals, but Node emulates these 3 signals for us
+                     process.kill(process.pid, 'SIGTERM');
+                 }
