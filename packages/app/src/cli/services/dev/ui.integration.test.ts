@@ -44,19 +44,6 @@ test.each(shutdownCases)(
   async ({signal, delivery}) => {
     await inTemporaryDirectory(async (directory) => {
       const script = `
-        const originalKill = process.kill.bind(process)
-        process.kill = (...args) => {
-          process.stderr.write(JSON.stringify({kill: args, pid: process.pid, stack: new Error().stack}) + '\\n')
-          return originalKill(...args)
-        }
-        const childProcess = (await import('node:child_process')).default
-        const originalSpawn = childProcess.spawn
-        childProcess.spawn = (...args) => {
-          process.stderr.write(JSON.stringify({spawn: args[0], args: args[1], pid: process.pid}) + '\\n')
-          return originalSpawn(...args)
-        }
-        (await import('node:module')).syncBuiltinESMExports()
-        process.once('exit', (code) => process.stderr.write('Exit status: ' + code + '\\n' + new Error().stack + '\\n'))
         await import(${JSON.stringify(bootstrapUrl)})
         const {withDevSession} = await import(${JSON.stringify(serviceUrl)})
         const {renderDev} = await import(${JSON.stringify(uiUrl)})
@@ -116,7 +103,7 @@ test.each(shutdownCases)(
       const childPid = Number(result.stderr.match(/Background PID: (\d+)/)?.[1])
       expect(childPid).toBeGreaterThan(0)
       await vi.waitFor(() => expect(isProcessAlive(childPid)).toBe(false))
-      expect(result.exitCode, JSON.stringify({...result, stdout: result.stdout.slice(-500)})).toBe(0)
+      expect(result.exitCode, result.stderr).toBe(0)
       expect(result.stdout).toContain('Session cleaned up')
       expect(result.stdout).toContain('Postrun completed')
       const paths = devInstancePaths({command: 'app dev', directory, key: 'shopify.app.toml'})
