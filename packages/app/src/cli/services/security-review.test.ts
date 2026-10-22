@@ -15,8 +15,6 @@ import {describe, expect, test, vi} from 'vitest'
 import type {AppSecurityBlockingLevel} from './app-security-api.js'
 import type {AgentFindingsDocument, DeterministicFindingsDocument} from './app-security-engine/index.js'
 
-const now = new Date('2026-09-01T12:30:00.000Z')
-
 // The results key of `createApp`'s shopify.app.toml.
 const RESULTS_KEY = 'shopify.app'
 
@@ -43,9 +41,6 @@ function testDependencies() {
         appConfigFilePath: joinPath(path, 'shopify.app.toml'),
       }) as const,
     loadResults: loadAppSecurityResults,
-    render: vi.fn(),
-    now: () => now,
-    setExitCode: vi.fn(),
     recordMetadata: vi.fn(async () => {}),
   } satisfies SecurityReviewDependencies
   return dependencies
@@ -139,6 +134,8 @@ describe('reviewAppSecurityResults', () => {
       )
 
       expect(abort.message).toBe('Unknown check ID: NOT_A_CHECK.')
+      expect(abort.code).toBe('unknown-check-id')
+      expect(abort.details).toStrictEqual({checkIds: ['NOT_A_CHECK']})
       expect(abort.customSections).toEqual([
         {
           title: 'Available check IDs',
@@ -156,8 +153,11 @@ describe('reviewAppSecurityResults', () => {
       ])
     })
 
-    test('pluralizes the error for several unknown IDs', () => {
-      expect(() => review(both, {checkIds: ['A', 'B']})).toThrow('Unknown check IDs: A, B.')
+    test('pluralizes the error for several unknown IDs, and lists only those in its details', async () => {
+      const abort = await captureError(() => review(both, {checkIds: ['A', 'OPEN_REDIRECT', 'B']}))
+
+      expect(abort.message).toBe('Unknown check IDs: A, B.')
+      expect(abort.details).toStrictEqual({checkIds: ['A', 'B']})
     })
 
     test('skips the unknown-ID check when no file is present, echoing the filter with no checks', () => {
@@ -232,11 +232,8 @@ describe('securityReview', () => {
       const unfiltered = testDependencies()
       const filtered = testDependencies()
 
-      await securityReview({directory: appRoot, verbose: false, checkIds: [], blocking: 'none'}, unfiltered)
-      await securityReview(
-        {directory: appRoot, verbose: false, checkIds: ['OPEN_REDIRECT'], blocking: 'none'},
-        filtered,
-      )
+      await securityReview({directory: appRoot, checkIds: [], blocking: 'none'}, unfiltered)
+      await securityReview({directory: appRoot, checkIds: ['OPEN_REDIRECT'], blocking: 'none'}, filtered)
 
       // Six recorded findings: two deterministic ones superseded by a prefer-agent check and one suppressed by the agent.
       // OPEN_REDIRECT has none, so the filtered run would record zero if it counted only the selected checks.
@@ -250,30 +247,30 @@ describe('securityReview', () => {
       const appRoot = await createApp(directory, {})
       const dependencies = testDependencies()
 
-      await securityReview({directory: appRoot, verbose: false, checkIds: [], blocking: 'none'}, dependencies)
+      await securityReview({directory: appRoot, checkIds: [], blocking: 'none'}, dependencies)
 
       expect(dependencies.recordMetadata).not.toHaveBeenCalled()
     })
   })
 
-  test('renders the review to the terminal and exits 0 by default', async () => {
+  test('returns the selection, the reviewed results and the commands to run next', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, both)
-      const dependencies = testDependencies()
 
-      await securityReview({directory: appRoot, verbose: true, checkIds: [], blocking: 'none'}, dependencies)
+      const review = await securityReview({directory: appRoot, checkIds: [], blocking: 'none'}, testDependencies())
 
-      expect(dependencies.setExitCode).not.toHaveBeenCalled()
-      expect(dependencies.render).toHaveBeenCalledTimes(1)
-      const input = dependencies.render.mock.calls[0]![0]
-      expect(input.verbose).toBe(true)
-      expect(input.now).toBe(now)
-      expect(input.commands.scan.args).toContainEqual({flag: '--path', value: relativePath(cwd(), appRoot)})
-      expect(input.result.resultsDirectory).toBe(appSecurityArtifactPaths(appRoot, RESULTS_KEY).resultsDirectory)
-      expect(input.result.sources.deterministic?.path).toBe(
+      expect(review.selection).toStrictEqual({
+        kind: 'config',
+        appDirectory: appRoot,
+        appConfigFilePath: joinPath(appRoot, 'shopify.app.toml'),
+      })
+      expect(review.commands.scan.args).toContainEqual({flag: '--path', value: relativePath(cwd(), appRoot)})
+      expect(review.result.resultsDirectory).toBe(appSecurityArtifactPaths(appRoot, RESULTS_KEY).resultsDirectory)
+      expect(review.result.sources.deterministic?.path).toBe(
         appSecurityArtifactPaths(appRoot, RESULTS_KEY).deterministicFindingsPath,
       )
-      expect(input.result.checks).toHaveLength(6)
+      expect(review.result.checks).toHaveLength(6)
+      expect(review.result.blocking).toEqual({level: 'none', blockedChecks: 0})
     })
   })
 
@@ -285,12 +282,10 @@ describe('securityReview', () => {
         coverage: {...deterministicFindingsDocument.coverage, scope},
       }
       const appRoot = await createApp(directory, {deterministic})
-      const dependencies = testDependencies()
 
-      await securityReview({directory: appRoot, verbose: false, checkIds: [], blocking: 'none'}, dependencies)
+      const review = await securityReview({directory: appRoot, checkIds: [], blocking: 'none'}, testDependencies())
 
-      const input = dependencies.render.mock.calls[0]![0]
-      expect(input.commands.scan.args.slice(-3)).toEqual([
+      expect(review.commands.scan.args.slice(-3)).toEqual([
         {flag: '--include-dir', value: '../backend'},
         {flag: '--exclude', value: 'vendor/**'},
         '--no-git-ignore',
@@ -298,49 +293,39 @@ describe('securityReview', () => {
     })
   })
 
-  test('sets exit code 1 after the output when --blocking is breached', async () => {
+  test('returns the blocked checks when --blocking is breached', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, both)
-      const dependencies = testDependencies()
-      const order: string[] = []
-      dependencies.render.mockImplementation(() => order.push('render'))
-      dependencies.setExitCode.mockImplementation((code) => order.push(`exit ${code}`))
 
-      await securityReview({directory: appRoot, verbose: false, checkIds: [], blocking: 'high'}, dependencies)
+      const review = await securityReview({directory: appRoot, checkIds: [], blocking: 'high'}, testDependencies())
 
-      expect(order).toEqual(['render', 'exit 1'])
+      expect(review.result.blocking).toEqual({level: 'high', blockedChecks: 2})
     })
   })
 
-  test('exits 0 with missing files, even with --check-id and --blocking', async () => {
+  test('blocks no check with missing files, even with --check-id and --blocking', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, {})
-      const dependencies = testDependencies()
 
-      await securityReview(
-        {directory: appRoot, verbose: false, checkIds: ['NOT_A_CHECK'], blocking: 'high'},
-        dependencies,
+      const review = await securityReview(
+        {directory: appRoot, checkIds: ['NOT_A_CHECK'], blocking: 'high'},
+        testDependencies(),
       )
 
-      expect(dependencies.setExitCode).not.toHaveBeenCalled()
-      const input = dependencies.render.mock.calls[0]![0]
-      expect(input.result.sources).toEqual({deterministic: null, agent: null})
-      expect(input.result.checks).toEqual([])
-      expect(input.result.filter).toEqual({checkIds: ['NOT_A_CHECK']})
+      expect(review.result.blocking).toEqual({level: 'high', blockedChecks: 0})
+      expect(review.result.sources).toEqual({deterministic: null, agent: null})
+      expect(review.result.checks).toEqual([])
+      expect(review.result.filter).toEqual({checkIds: ['NOT_A_CHECK']})
     })
   })
 
-  test('aborts on an unknown --check-id without rendering or setting the exit code', async () => {
+  test('aborts on an unknown --check-id', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, both)
-      const dependencies = testDependencies()
 
       await expect(
-        securityReview({directory: appRoot, verbose: false, checkIds: ['NOT_A_CHECK'], blocking: 'none'}, dependencies),
+        securityReview({directory: appRoot, checkIds: ['NOT_A_CHECK'], blocking: 'none'}, testDependencies()),
       ).rejects.toThrow('Unknown check ID: NOT_A_CHECK.')
-
-      expect(dependencies.render).not.toHaveBeenCalled()
-      expect(dependencies.setExitCode).not.toHaveBeenCalled()
     })
   })
 
@@ -348,33 +333,27 @@ describe('securityReview', () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory, {deterministic: deterministicFindingsDocument})
       await writeFile(appSecurityArtifactPaths(appRoot, RESULTS_KEY).agentFindingsPath, '{not json')
-      const dependencies = testDependencies()
 
       await expect(
-        securityReview({directory: appRoot, verbose: false, checkIds: [], blocking: 'none'}, dependencies),
+        securityReview({directory: appRoot, checkIds: [], blocking: 'none'}, testDependencies()),
       ).rejects.toThrow('The app security check results could not be loaded because a results file is invalid.')
-
-      expect(dependencies.render).not.toHaveBeenCalled()
     })
   })
 
   test('aborts with "No results found" when the results directory does not exist', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await fileRealPath(directory)
-      const dependencies = testDependencies()
 
       await expect(
-        securityReview({directory: appRoot, verbose: false, checkIds: [], blocking: 'none'}, dependencies),
+        securityReview({directory: appRoot, checkIds: [], blocking: 'none'}, testDependencies()),
       ).rejects.toMatchObject({message: `No app security check results for ${RESULTS_KEY} in ${appRoot}.`})
-
-      expect(dependencies.render).not.toHaveBeenCalled()
     })
   })
 })
 
 describe('securityReview --client-id lookup', () => {
   const unknownClientId = new AbortError('No app with client ID unknown-client-id found')
-  const reviewOptions = {verbose: false, checkIds: [], blocking: 'none' as const}
+  const reviewOptions = {checkIds: [], blocking: 'none' as const}
 
   /** The real selection resolver, with the client ID lookup replaced, and a spy on the results loader. */
   function lookUpDependencies(lookUpApp: (clientId: string) => Promise<void>) {
@@ -412,7 +391,6 @@ describe('securityReview --client-id lookup', () => {
         expect.objectContaining({clientIdOverride: 'flag-client-id'}),
         appRoot,
       )
-      expect(dependencies.render).toHaveBeenCalled()
     })
   })
 
@@ -428,7 +406,6 @@ describe('securityReview --client-id lookup', () => {
       ).rejects.toBe(unknownClientId)
 
       expect(dependencies.loadResults).not.toHaveBeenCalled()
-      expect(dependencies.render).not.toHaveBeenCalled()
       expect(dependencies.recordMetadata).not.toHaveBeenCalled()
     })
   })

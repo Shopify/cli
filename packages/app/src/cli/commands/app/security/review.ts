@@ -1,9 +1,11 @@
 import {appSecurityBlockingFlag} from './blocking-flag.js'
 import {appSecuritySelectionFlags} from './selection-flags.js'
 import securityReview from '../../../services/security-review.js'
+import {renderSecurityReviewResult} from '../../../services/security-review/result.js'
+import {appSecurityReviewJsonOutputSchema} from '../../../services/security-review/types.js'
 import {Flags} from '@oclif/core'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class SecurityReview extends BaseCommand {
   static summary = 'Show the combined app security check results.'
@@ -12,9 +14,13 @@ export default class SecurityReview extends BaseCommand {
 
 The summary shows the scan directories and the scope of the latest scan, and the scope the agent reported. It notes when the agent findings were recorded for a different scope than the latest scan; that doesn't change the exit code.
 
-The agent results are optional. Use \`--check-id\` to narrow the review to specific checks, \`--verbose\` for full reasoning, evidence and suppressed findings, and \`--blocking\` to exit with code 1 when a check with findings is at or above a severity.
+The agent results are optional. Use \`--check-id\` to narrow the review to specific checks, \`--verbose\` for full reasoning, evidence and suppressed findings, and \`--blocking\` to exit with code 1 when a check with findings is at or above a severity. With \`--json\`, the result always includes every finding in full.
 
 Reports the number of findings to Shopify as usage telemetry, but not finding details. See [usage reporting](https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.`
+
+  static get jsonOutputSchema() {
+    return appSecurityReviewJsonOutputSchema
+  }
 
   static description = this.descriptionForHelp()
 
@@ -27,19 +33,20 @@ Reports the number of findings to Shopify as usage telemetry, but not finding de
       multiple: true,
     }),
     ...appSecurityBlockingFlag,
+    ...jsonFlag,
   }
 
   public async run(): Promise<void> {
     const {flags} = await this.parse(SecurityReview)
 
-    await securityReview({
+    const review = await securityReview({
       directory: flags.path,
       configName: flags.config,
       clientId: flags['client-id'],
       withoutAppConfig: Boolean(flags['without-app-config']),
-      verbose: Boolean(flags.verbose),
       checkIds: flags['check-id'] ?? [],
       blocking: flags.blocking,
     })
+    renderSecurityReviewResult(review, {verbose: Boolean(flags.verbose)}, flags.json ? 'json' : 'text')
   }
 }

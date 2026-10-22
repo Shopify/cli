@@ -6161,13 +6161,17 @@ Show the combined app security check results.
 
 ```
 USAGE
-  $ shopify app security review [--blocking high|medium|low|none] [--check-id <value>...] [--json-schema] [--no-color]
-    [--no-input] [--path <value>] [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
+  $ shopify app security review [--blocking high|medium|low|none] [--check-id <value>...] [-j] [--json-schema]
+    [--no-color] [--no-input] [--path <value>] [--verbose] [--without-app-config [--client-id <value> | -c <value>]]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --blocking=<option>
       [default: none] The minimum finding severity that causes a non-zero exit code: high, medium, or low. Defaults to
@@ -6221,10 +6225,1018 @@ DESCRIPTION
 
   The agent results are optional. Use `--check-id` to narrow the review to specific checks, `--verbose` for full
   reasoning, evidence and suppressed findings, and `--blocking` to exit with code 1 when a check with findings is at or
-  above a severity.
+  above a severity. With `--json`, the result always includes every finding in full.
 
   Reports the number of findings to Shopify as usage telemetry, but not finding details. See "usage reporting"
   (https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppSecurityReviewResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "valid": {
+        "type": "boolean",
+        "description": "Whether --blocking passed: no check in checks has an active finding and a severity at or above the level. Unresolved checks never fail it, and --blocking none always passes."
+      },
+      "app": {
+        "$ref": "#/definitions/AppSecurityApp"
+      },
+      "resultsDirectory": {
+        "type": "string",
+        "description": "The absolute path of the results directory."
+      },
+      "resultsFiles": {
+        "type": "object",
+        "properties": {
+          "deterministic": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/AppSecurityDeterministicResultsFile"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "deterministic-findings.json, which check writes, with the scope of the scan."
+          },
+          "agent": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/AppSecurityAgentResultsFile"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "agent-findings.json, which record writes, with the scope that the agent reported."
+          }
+        },
+        "required": [
+          "deterministic",
+          "agent"
+        ],
+        "additionalProperties": false,
+        "description": "The results files that the review combines. Null when a file does not exist."
+      },
+      "detection": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/AppSecurityDetection"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "What the latest check detected in the app, or null without deterministic-findings.json."
+      },
+      "coverage": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/AppSecurityCoverage"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "What the latest check covered, or null without deterministic-findings.json."
+      },
+      "scopeDiffers": {
+        "type": "boolean",
+        "description": "Whether the agent reported another scope than the latest scan used. False unless both results files exist."
+      },
+      "checks": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/AppSecurityCheck"
+        },
+        "description": "The checks after --check-id, most severe first, then by ID. Empty when no results file exists."
+      },
+      "blocking": {
+        "$ref": "#/definitions/AppSecurityBlocking"
+      }
+    },
+    "required": [
+      "status",
+      "valid",
+      "app",
+      "resultsDirectory",
+      "resultsFiles",
+      "detection",
+      "coverage",
+      "scopeDiffers",
+      "checks",
+      "blocking"
+    ],
+    "additionalProperties": false,
+    "description": "The combined results of the app security check.",
+    "title": "AppSecurityReviewResult",
+    "definitions": {
+      "AppSecurityApp": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The absolute app directory."
+          },
+          "configurationPath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The absolute path of the selected app configuration file, or null with --without-app-config."
+          },
+          "clientId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The --client-id value when passed, otherwise the app configuration's client_id. Null when the app configuration isn't linked."
+          }
+        },
+        "required": [
+          "directory",
+          "configurationPath",
+          "clientId"
+        ],
+        "additionalProperties": false
+      },
+      "AppSecurityScope": {
+        "type": "object",
+        "properties": {
+          "includeDirs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The --include-dir values."
+          },
+          "excludes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The --exclude globs."
+          },
+          "noGitIgnore": {
+            "type": "boolean",
+            "description": "Whether --no-git-ignore was passed."
+          }
+        },
+        "required": [
+          "includeDirs",
+          "excludes",
+          "noGitIgnore"
+        ],
+        "additionalProperties": false,
+        "description": "The check flags that chose which files were gathered, exactly as typed."
+      },
+      "AppSecurityScanDirectory": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The absolute path of the directory."
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "app-directory",
+              "include-dir",
+              "app-config-directory"
+            ],
+            "description": "Why it was scanned: it is the app directory, an --include-dir value, or an extension or web directory of the app configuration."
+          }
+        },
+        "required": [
+          "directory",
+          "origin"
+        ],
+        "additionalProperties": false,
+        "description": "A directory that check scanned."
+      },
+      "AppSecurityBlocking": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low",
+              "none"
+            ],
+            "description": "The --blocking severity."
+          },
+          "blockedCheckCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of checks with findings at or above that severity. Always 0 for none."
+          }
+        },
+        "required": [
+          "level",
+          "blockedCheckCount"
+        ],
+        "additionalProperties": false,
+        "description": "The --blocking policy and the checks that fail it."
+      },
+      "AppSecurityDeterministicResultsFile": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The absolute path of deterministic-findings.json."
+          },
+          "generatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+                "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When check wrote the file, or null when the recorded time is not a valid instant."
+          },
+          "engine": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              },
+              "ruleset": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "version",
+              "ruleset"
+            ],
+            "additionalProperties": false
+          },
+          "scope": {
+            "$ref": "#/definitions/AppSecurityScope"
+          }
+        },
+        "required": [
+          "path",
+          "generatedAt",
+          "engine",
+          "scope"
+        ],
+        "additionalProperties": false,
+        "description": "deterministic-findings.json, which check writes, with the scope of the scan."
+      },
+      "AppSecurityAgentResultsFile": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The absolute path of agent-findings.json."
+          },
+          "generatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+                "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When record wrote the file, or null when the recorded time is not a valid instant."
+          },
+          "engine": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "version"
+            ],
+            "additionalProperties": false
+          },
+          "scope": {
+            "$ref": "#/definitions/AppSecurityScope"
+          }
+        },
+        "required": [
+          "path",
+          "generatedAt",
+          "engine",
+          "scope"
+        ],
+        "additionalProperties": false,
+        "description": "agent-findings.json, which record writes, with the scope that the agent reported."
+      },
+      "AppSecurityDetection": {
+        "type": "object",
+        "properties": {
+          "framework": {
+            "type": "string",
+            "enum": [
+              "react-router",
+              "none",
+              "unknown",
+              "mixed"
+            ]
+          },
+          "surface": {
+            "type": "string",
+            "enum": [
+              "react-router",
+              "theme-app-extension",
+              "config-only",
+              "unknown",
+              "mixed"
+            ]
+          },
+          "languages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The language, such as typescript."
+                },
+                "support": {
+                  "type": "string",
+                  "enum": [
+                    "supported",
+                    "unsupported"
+                  ],
+                  "description": "Whether the deterministic checks analyze it."
+                },
+                "files": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "path"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "name",
+                "support",
+                "files"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "framework",
+          "surface",
+          "languages"
+        ],
+        "additionalProperties": false,
+        "description": "What the latest check detected in the app."
+      },
+      "AppSecurityCoverage": {
+        "type": "object",
+        "properties": {
+          "filesScanned": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "The number of files scanned."
+          },
+          "filesSkipped": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string",
+                  "enum": [
+                    "too-large",
+                    "unreadable"
+                  ]
+                },
+                "sizeBytes": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The file size, or null when unknown."
+                },
+                "detail": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Why the file was unreadable, or null when none is recorded."
+                }
+              },
+              "required": [
+                "path",
+                "reason",
+                "sizeBytes",
+                "detail"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "gaps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "enum": [
+                    "skipped-file",
+                    "unsupported-framework",
+                    "unsupported-language",
+                    "unresolved-check"
+                  ]
+                },
+                "message": {
+                  "type": "string"
+                },
+                "checkId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The check that the gap concerns, or null."
+                },
+                "filePath": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The file that the gap concerns, or null."
+                }
+              },
+              "required": [
+                "code",
+                "message",
+                "checkId",
+                "filePath"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "scanDirectories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppSecurityScanDirectory"
+            }
+          }
+        },
+        "required": [
+          "filesScanned",
+          "filesSkipped",
+          "gaps",
+          "scanDirectories"
+        ],
+        "additionalProperties": false,
+        "description": "What the latest check covered."
+      },
+      "AppSecurityCheck": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The check ID, such as CREDENTIAL_LOG_LEAKAGE."
+          },
+          "title": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "high",
+              "medium",
+              "low"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "guide": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A guide to the check, or null when none is recorded."
+          },
+          "docsUrl": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The check's page on shopify.dev, or null when the results files predate it."
+          },
+          "precedence": {
+            "type": "string",
+            "enum": [
+              "union",
+              "prefer-agent"
+            ],
+            "description": "How the sources combine: union keeps both sources' findings; prefer-agent lets the agent result replace the deterministic one."
+          },
+          "appliedPrecedence": {
+            "type": "string",
+            "enum": [
+              "union",
+              "prefer-agent"
+            ],
+            "description": "The precedence that applied: union when a prefer-agent agent result is older than the deterministic one."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed",
+              "not-applicable",
+              "unresolved"
+            ],
+            "description": "The combined status. Under union, executed when either source executed the check."
+          },
+          "bySource": {
+            "type": "object",
+            "properties": {
+              "deterministic": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/AppSecuritySourceResult"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "One source's own result for a check."
+              },
+              "agent": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/AppSecuritySourceResult"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "One source's own result for a check."
+              }
+            },
+            "required": [
+              "deterministic",
+              "agent"
+            ],
+            "additionalProperties": false,
+            "description": "Each source's own result, or null when that source didn't record the check."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppSecurityFinding"
+            },
+            "description": "Every finding of both sources, including suppressed and superseded ones, whatever --verbose. Sorted by file, line, then source."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "severity",
+          "description",
+          "guide",
+          "docsUrl",
+          "precedence",
+          "appliedPrecedence",
+          "status",
+          "bySource",
+          "findings"
+        ],
+        "additionalProperties": false,
+        "description": "One check, combined from both results files."
+      },
+      "AppSecuritySourceResult": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "description": "The check version: the catalog version for deterministic results, the one the agent claimed for agent results."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "executed",
+              "not-applicable",
+              "unresolved"
+            ],
+            "description": "The source's own status for the check."
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "A short code. Agent codes are free-form. Deterministic codes: capability_absent, no_relevant_files, unsupported_framework, unsupported_language, parser_unavailable, agent_investigation_required, input_rejected."
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "message"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why the check is unresolved or not applicable, or null when none is recorded."
+          },
+          "analysisMode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "regex",
+                  "structured-config",
+                  "ast"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How the deterministic check analyzed the files. Null for agent results."
+          },
+          "generatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+                "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the source recorded the check, or null when the recorded time is not a valid instant."
+          }
+        },
+        "required": [
+          "version",
+          "status",
+          "reason",
+          "analysisMode",
+          "generatedAt"
+        ],
+        "additionalProperties": false,
+        "description": "One source's own result for a check."
+      },
+      "AppSecurityFinding": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/AppSecurityDeterministicFinding"
+          },
+          {
+            "$ref": "#/definitions/AppSecurityAgentFinding"
+          }
+        ]
+      },
+      "AppSecurityDeterministicFinding": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "const": "deterministic"
+          },
+          "disposition": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suppressed",
+              "superseded"
+            ],
+            "description": "Whether the finding counts: active; suppressed by the agent; or superseded, a deterministic finding that a check's prefer-agent agent result replaces."
+          },
+          "location": {
+            "$ref": "#/definitions/AppSecurityLocation"
+          },
+          "message": {
+            "type": "string",
+            "description": "What the finding is, redacted."
+          },
+          "snippet": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The flagged code, redacted, or null when none is recorded."
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppSecurityEvidence"
+            }
+          },
+          "fix": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string"
+                  },
+                  "guide": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "A guide to the fix, or null when none is recorded."
+                  },
+                  "automated": {
+                    "type": "boolean",
+                    "description": "Whether the fix can be applied automatically."
+                  }
+                },
+                "required": [
+                  "description",
+                  "guide",
+                  "automated"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How to fix the finding, or null when none is recorded."
+          }
+        },
+        "required": [
+          "source",
+          "disposition",
+          "location",
+          "message",
+          "snippet",
+          "evidence",
+          "fix"
+        ],
+        "additionalProperties": false,
+        "description": "A finding from deterministic-findings.json."
+      },
+      "AppSecurityAgentFinding": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "const": "agent"
+          },
+          "disposition": {
+            "type": "string",
+            "enum": [
+              "active",
+              "suppressed",
+              "superseded"
+            ],
+            "description": "Whether the finding counts: active; suppressed by the agent; or superseded, a deterministic finding that a check's prefer-agent agent result replaces."
+          },
+          "location": {
+            "$ref": "#/definitions/AppSecurityLocation"
+          },
+          "message": {
+            "type": "string",
+            "description": "What the finding is, redacted."
+          },
+          "snippet": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The flagged code, redacted, or null when none is recorded."
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/AppSecurityEvidence"
+            }
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "high",
+                  "medium",
+                  "low"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The agent's confidence, or null when it didn't report one."
+          },
+          "reasoning": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The agent's reasoning, redacted, or null when none is recorded."
+          },
+          "suppression": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "justification": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "justification"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Why the agent suppressed the finding, or null when it is not suppressed."
+          }
+        },
+        "required": [
+          "source",
+          "disposition",
+          "location",
+          "message",
+          "snippet",
+          "evidence",
+          "confidence",
+          "reasoning",
+          "suppression"
+        ],
+        "additionalProperties": false,
+        "description": "A finding from agent-findings.json."
+      },
+      "AppSecurityLocation": {
+        "type": "object",
+        "properties": {
+          "filePath": {
+            "type": "string",
+            "description": "The absolute path of the file."
+          },
+          "line": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The one-based line, or null for the whole file."
+          },
+          "column": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The one-based column, or null when none is recorded."
+          }
+        },
+        "required": [
+          "filePath",
+          "line",
+          "column"
+        ],
+        "additionalProperties": false,
+        "description": "A place in a file."
+      },
+      "AppSecurityEvidence": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "$ref": "#/definitions/AppSecurityLocation"
+          },
+          "quote": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The quoted source, redacted, or null when none is recorded."
+          }
+        },
+        "required": [
+          "location",
+          "quote"
+        ],
+        "additionalProperties": false,
+        "description": "Source that supports a finding."
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app subscription-migrations cancel`

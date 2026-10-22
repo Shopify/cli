@@ -1,9 +1,16 @@
 import {
   appSecurityAppSchema,
+  appSecurityBlockingSchema,
   appSecurityInstructionsSchema,
+  appSecurityScanDirectorySchema,
+  appSecurityScopeSchema,
   projectAppSecurityApp,
+  projectAppSecurityBlocking,
   projectAppSecurityInstructions,
   projectAppSecurityPath,
+  projectAppSecurityRelativePath,
+  projectAppSecurityScanDirectory,
+  projectAppSecurityScope,
 } from './app-security-json-output.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
@@ -27,6 +34,21 @@ describe('projectAppSecurityPath', () => {
         ? 'C:\\apps\\my-app\\.shopify\\app-security\\shopify.app'
         : '/apps/my-app/.shopify/app-security/shopify.app',
     )
+  })
+})
+
+describe('projectAppSecurityRelativePath', () => {
+  test.each([
+    [
+      'a file in the app directory',
+      'app/routes/orders.tsx',
+      onWindows ? 'C:\\apps\\my-app\\app\\routes\\orders.tsx' : '/apps/my-app/app/routes/orders.tsx',
+    ],
+    ['the app directory', '.', appDirectory],
+    ['a directory beside the app directory', '../backend', onWindows ? 'C:\\apps\\backend' : '/apps/backend'],
+    ['an absolute path', onWindows ? 'D:/shared' : '/shared', onWindows ? 'D:\\shared' : '/shared'],
+  ])('resolves %s against the app directory, with native separators', (_description, path, expected) => {
+    expect(projectAppSecurityRelativePath(appDirectory, path)).toBe(expected)
   })
 })
 
@@ -113,5 +135,95 @@ describe('appSecurityInstructionsSchema', () => {
     ['a copied flag that is not a boolean', {...instructions, copied: 'true'}],
   ])('rejects %s', (_description, value) => {
     expect(appSecurityInstructionsSchema.safeParse(value).success).toBe(false)
+  })
+})
+
+describe('projectAppSecurityScope', () => {
+  test('keeps the values exactly as typed', () => {
+    expect(
+      projectAppSecurityScope({include_dirs: ['../backend', 'web/'], excludes: ['vendor/**'], no_git_ignore: true}),
+    ).toStrictEqual({includeDirs: ['../backend', 'web/'], excludes: ['vendor/**'], noGitIgnore: true})
+  })
+})
+
+describe('appSecurityScopeSchema', () => {
+  const scope = {includeDirs: ['../backend'], excludes: [], noGitIgnore: false}
+
+  test('accepts a projected scope', () => {
+    expect(appSecurityScopeSchema.parse(scope)).toStrictEqual(scope)
+  })
+
+  test.each([
+    ['an extra field', {...scope, include_dirs: []}],
+    ['a missing field', {includeDirs: [], excludes: []}],
+  ])('rejects %s', (_description, value) => {
+    expect(appSecurityScopeSchema.safeParse(value).success).toBe(false)
+  })
+})
+
+describe('projectAppSecurityScanDirectory', () => {
+  test.each([
+    ['app_directory', '.', 'app-directory', appDirectory],
+    ['include_dir', '../backend', 'include-dir', onWindows ? 'C:\\apps\\backend' : '/apps/backend'],
+    [
+      'app_config_directory',
+      'extensions/theme',
+      'app-config-directory',
+      onWindows ? 'C:\\apps\\my-app\\extensions\\theme' : '/apps/my-app/extensions/theme',
+    ],
+  ] as const)('projects a %s directory', (origin, directory, expectedOrigin, expectedDirectory) => {
+    expect(projectAppSecurityScanDirectory(appDirectory, {directory, origin})).toStrictEqual({
+      directory: expectedDirectory,
+      origin: expectedOrigin,
+    })
+  })
+
+  test('keeps an absolute directory', () => {
+    const directory = onWindows ? 'C:/apps/my-app/web' : '/apps/my-app/web'
+
+    expect(projectAppSecurityScanDirectory(appDirectory, {directory, origin: 'app_config_directory'})).toStrictEqual({
+      directory: onWindows ? 'C:\\apps\\my-app\\web' : '/apps/my-app/web',
+      origin: 'app-config-directory',
+    })
+  })
+})
+
+describe('appSecurityScanDirectorySchema', () => {
+  const scanDirectory = {directory: appDirectory, origin: 'app-directory'}
+
+  test('accepts a projected scan directory', () => {
+    expect(appSecurityScanDirectorySchema.parse(scanDirectory)).toStrictEqual(scanDirectory)
+  })
+
+  test.each([
+    ['an extra field', {...scanDirectory, path: appDirectory}],
+    ['a relative directory', {...scanDirectory, directory: '.'}],
+    ['a stored origin', {...scanDirectory, origin: 'app_directory'}],
+  ])('rejects %s', (_description, value) => {
+    expect(appSecurityScanDirectorySchema.safeParse(value).success).toBe(false)
+  })
+})
+
+describe('projectAppSecurityBlocking', () => {
+  test.each([
+    ['high', 2],
+    ['none', 0],
+  ] as const)('projects the %s level and its blocked checks', (level, blockedChecks) => {
+    expect(projectAppSecurityBlocking({level, blockedChecks})).toStrictEqual({level, blockedCheckCount: blockedChecks})
+  })
+})
+
+describe('appSecurityBlockingSchema', () => {
+  test.each(['high', 'medium', 'low', 'none'])('accepts the %s level', (level) => {
+    expect(appSecurityBlockingSchema.parse({level, blockedCheckCount: 0})).toStrictEqual({level, blockedCheckCount: 0})
+  })
+
+  test.each([
+    ['an extra field', {level: 'high', blockedCheckCount: 1, blockedChecks: 1}],
+    ['an unknown level', {level: 'critical', blockedCheckCount: 1}],
+    ['a negative count', {level: 'high', blockedCheckCount: -1}],
+    ['a fractional count', {level: 'high', blockedCheckCount: 0.5}],
+  ])('rejects %s', (_description, value) => {
+    expect(appSecurityBlockingSchema.safeParse(value).success).toBe(false)
   })
 })
