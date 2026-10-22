@@ -12,14 +12,20 @@ const postrunUrl = new URL('../../../../../cli-kit/src/public/node/hooks/postrun
 const sourceLoaderUrl = new URL('../../../../test/fixtures/app-source-loader.js', import.meta.url).href
 const tsconfigPath = fileURLToPath(new URL('../../../../test/fixtures/tsconfig.json', import.meta.url))
 
-test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
-  '%s keeps the default bootstrap exit when no dev session is running',
+// Windows process.kill() terminates immediately instead of delivering a catchable signal.
+// Exercise handlers on every platform and OS signal delivery where it is supported.
+const shutdownCases = ['SIGINT', 'SIGTERM'].flatMap((signal) =>
+  (process.platform === 'win32' ? ['emit'] : ['emit', 'kill']).map((delivery) => ({signal, delivery})),
+)
+
+test.each(shutdownCases)(
+  '$delivery $signal keeps the default bootstrap exit when no dev session is running',
   {timeout: 20000},
-  async (signal) => {
+  async ({signal, delivery}) => {
     const script = `
       await import(${JSON.stringify(bootstrapUrl)})
       setInterval(() => {}, 1000)
-      process.kill(process.pid, ${JSON.stringify(signal)})
+      process.${delivery}(${delivery === 'kill' ? 'process.pid, ' : ''}${JSON.stringify(signal)})
     `
     const result = await captureOutputWithExitCode(
       process.execPath,
@@ -31,11 +37,11 @@ test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
   },
 )
 
-test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
-  '%s flushes queued output and exits with background work after the postrun hook',
+test.each(shutdownCases)(
+  '$delivery $signal flushes queued output and exits with background work after the postrun hook',
   // Source loading has its own allowance; the child separately bounds shutdown after the signal.
   {timeout: 60000},
-  async (signal) => {
+  async ({signal, delivery}) => {
     await inTemporaryDirectory(async (directory) => {
       const script = `
         await import(${JSON.stringify(bootstrapUrl)})
@@ -61,7 +67,7 @@ test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
                 process.stderr.write('Dev shutdown timed out\\n')
                 process.exit(2)
               }, 20000)
-              process.kill(process.pid, ${JSON.stringify(signal)})
+              process.${delivery}(${delivery === 'kill' ? 'process.pid, ' : ''}${JSON.stringify(signal)})
               await stopped
             }}],
             previewUrl: 'https://example.com',
