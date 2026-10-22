@@ -11,6 +11,8 @@ const statusUrl = new URL('./processes/dev-session/dev-session-status-manager.ts
 const postrunUrl = new URL('../../../../../cli-kit/src/public/node/hooks/postrun.ts', import.meta.url).href
 const sourceLoaderUrl = new URL('../../../../test/fixtures/app-source-loader.js', import.meta.url).href
 const tsconfigPath = fileURLToPath(new URL('../../../../test/fixtures/tsconfig.json', import.meta.url))
+// Windows starts PowerShell to enumerate and stop the remaining child processes.
+const postrunExitTimeoutMs = process.platform === 'win32' ? 15000 : 5000
 
 // Windows process.kill() terminates immediately instead of delivering a catchable signal.
 // Exercise handlers on every platform and OS signal delivery where it is supported.
@@ -83,7 +85,10 @@ test.each(shutdownCases)(
         process.stdout.write('Session cleaned up\\n')
         await hook.call({}, {config: {}, Command: {id: 'app:dev'}})
         process.stdout.write('Postrun completed\\n')
-        setTimeout(() => process.exit(2), 5000)
+        setTimeout(() => {
+          process.stderr.write('Postrun shutdown timed out\\n')
+          process.exit(2)
+        }, ${postrunExitTimeoutMs})
       `
       const result = await captureOutputWithExitCode(
         process.execPath,
