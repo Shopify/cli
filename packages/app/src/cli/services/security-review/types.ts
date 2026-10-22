@@ -4,7 +4,7 @@ import {
   appSecurityScanDirectorySchema,
   appSecurityScopeSchema,
   createAbsolutePathSchema,
-} from '../app-security-json-output.js'
+} from '../app-security/types.js'
 import {
   defineJsonOutputSchema,
   jsonOutputTimestampSchema,

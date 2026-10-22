@@ -14,7 +14,7 @@ import {
   projectAppSecurityRelativePath,
   projectAppSecurityScanDirectory,
   projectAppSecurityScope,
-} from '../app-security-json-output.js'
+} from '../app-security/result.js'
 import {
   formatAppSecurityCommand,
   quoteShellArgument,

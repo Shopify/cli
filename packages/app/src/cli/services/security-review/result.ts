@@ -6,7 +6,7 @@ import {
   projectAppSecurityRelativePath,
   projectAppSecurityScanDirectory,
   projectAppSecurityScope,
-} from '../app-security-json-output.js'
+} from '../app-security/result.js'
 import {renderSecurityReview} from '../security-review-output.js'
 import {formatJsonOutputTimestamp, jsonOutputTimestampSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {outputResult} from '@shopify/cli-kit/node/output'

@@ -1,11 +1,7 @@
 import {appSecurityInstructionsJsonOutputSchema, type AppSecurityInstructionsResult} from './types.js'
 import {appSecurityArtifactPaths} from '../app-security-artifacts.js'
 import {renderAppSecurityInstructions, type AppSecurityInstructionsDelivery} from '../app-security-instructions.js'
-import {
-  projectAppSecurityApp,
-  projectAppSecurityInstructions,
-  projectAppSecurityPath,
-} from '../app-security-json-output.js'
+import {projectAppSecurityApp, projectAppSecurityInstructions, projectAppSecurityPath} from '../app-security/result.js'
 import {resultsKey, type AppSecuritySelection} from '../app-security-selection.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 

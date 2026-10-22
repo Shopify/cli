@@ -1,6 +1,6 @@
 import {appSecurityCleanJsonOutputSchema, type AppSecurityCleanResult} from './types.js'
 import {appSecurityDirectory} from '../app-security-artifacts.js'
-import {projectAppSecurityApp, projectAppSecurityPath} from '../app-security-json-output.js'
+import {projectAppSecurityApp, projectAppSecurityPath} from '../app-security/result.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
 import type {SecurityCleanOptions, SecurityCleanResult} from '../security-clean.js'

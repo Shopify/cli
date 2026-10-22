@@ -2,7 +2,7 @@ import {appSecurityRecordJsonOutputSchema, type AppSecurityRecordResult} from '.
 import {appSecurityArtifactPaths} from '../app-security-artifacts.js'
 import {formatAppSecurityCommand, resolveAppSecurityCommands} from '../app-security-commands.js'
 import {countLabel} from '../app-security-format.js'
-import {projectAppSecurityApp, projectAppSecurityPath} from '../app-security-json-output.js'
+import {projectAppSecurityApp, projectAppSecurityPath} from '../app-security/result.js'
 import {resultsKey} from '../app-security-selection.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
