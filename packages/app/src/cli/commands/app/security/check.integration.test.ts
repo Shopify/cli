@@ -718,7 +718,7 @@ describe('app security check prompts', () => {
       })
     })
 
-    test('scans nothing when scanning without app configuration is declined', async () => {
+    test('scans nothing and exits 0 when scanning without app configuration is declined', async () => {
       await inTemporaryDirectory(async (directory) => {
         vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
 
@@ -726,12 +726,11 @@ describe('app security check prompts', () => {
 
         expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
         expect(renderSelectPrompt).not.toHaveBeenCalled()
+        expect(result.exitCode).toBe(0)
         if (json) {
-          expect(result.exitCode).toBe(0)
           expect(JSON.parse(result.stdout)).toStrictEqual({status: 'cancelled'})
           expect(result.stderr).toBe('')
         } else {
-          expect(result.exitCode).toBe(1)
           expect(result.stdout).toBe('')
           expect(boxText(result.stderr)).toContain('No app configuration found at or above')
           expect(boxText(result.stderr)).toContain('--without-app-config --client-id <client-id>')

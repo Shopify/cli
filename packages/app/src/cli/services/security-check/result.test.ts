@@ -17,7 +17,6 @@ import {appSecurityInstructions} from '../app-security-instructions.js'
 import {validAppConfiguration} from '../app-security-selection.test-data.js'
 import {committedSecretIssue, scan, scanExecution} from '../security-check.test-data.js'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileRealPath, inTemporaryDirectory, matchGlob, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {unstyled} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -494,14 +493,17 @@ describe('renderSecurityCheckResult for --list-files', () => {
 })
 
 describe('renderSecurityCheckResult when scanning without app configuration was declined', () => {
-  test('aborts as when no app configuration is found', async () => {
-    const error: unknown = await present({kind: 'cancelled'}).catch((caught: unknown) => caught)
+  test('shows that no app configuration was found, with the next step, and leaves the exit code alone', async () => {
+    process.exitCode = undefined
 
-    expect(error).toBeInstanceOf(AbortError)
-    expect((error as AbortError).message).toBe(`No app configuration found at or above ${appDirectory}.`)
-    expect((error as AbortError).tryMessage).toBe(
+    const {stdout, stderr} = await present({kind: 'cancelled'})
+
+    expect(stdout).toBe('')
+    expect(boxText(stderr)).toContain(`No app configuration found at or above ${appDirectory}.`)
+    expect(boxText(stderr)).toContain(
       'Pass `--path` to your app directory, or scan without app configuration with `--without-app-config --client-id <client-id>`.',
     )
+    expect(process.exitCode).toBeUndefined()
   })
 })
 

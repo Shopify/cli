@@ -358,13 +358,19 @@ export function mergeScanDirectories(
   }
 }
 
-/** No app configuration at or above `directory`. In the terminal, declining to scan without one ends with it too. */
-export class MissingAppConfigurationError extends AbortError {
-  constructor(directory: string) {
-    super(
-      `No app configuration found at or above ${directory}.`,
+/** That there's no app configuration at or above `directory`, and how to scan anyway. */
+export function missingAppConfigurationMessage(directory: string): {headline: string; nextStep: string} {
+  return {
+    headline: `No app configuration found at or above ${directory}.`,
+    nextStep:
       'Pass `--path` to your app directory, or scan without app configuration with `--without-app-config --client-id <client-id>`.',
-    )
+  }
+}
+
+class MissingAppConfigurationError extends AbortError {
+  constructor(directory: string) {
+    const {headline, nextStep} = missingAppConfigurationMessage(directory)
+    super(headline, nextStep)
   }
 }
 

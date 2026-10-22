@@ -21,7 +21,7 @@ import {
   shellForPlatform,
   type AppSecurityCommands,
 } from '../app-security-commands.js'
-import {MissingAppConfigurationError} from '../app-security-selection.js'
+import {missingAppConfigurationMessage} from '../app-security-selection.js'
 import {renderSecurityReport} from '../security-output.js'
 import {fileRealPath} from '@shopify/cli-kit/node/fs'
 import {outputResult} from '@shopify/cli-kit/node/output'
@@ -93,8 +93,8 @@ export function renderSecurityCheckPromptsTip(commands: AppSecurityCommands): vo
  * Presents the outcome of `securityCheck` as JSON, or in the terminal. Gathering warnings come first, on stderr. Then
  * the listed files, or the scan: in the terminal, its report followed by the coding-agent instructions; as JSON, the
  * instructions prompt followed by the result. Either way, sets exit code 1 after the output when the scan breaches
- * `--blocking`. Declining to scan without app configuration is a cancelled result as JSON. In the terminal it aborts,
- * as when there is no app configuration and prompts are off.
+ * `--blocking`. Declining to scan without app configuration exits 0: as JSON, it's a cancelled result. In the
+ * terminal, it shows the message that aborts the command when there's no app configuration and prompts are off.
  */
 export async function renderSecurityCheckResult(
   check: SecurityCheckOutcome,
@@ -103,8 +103,12 @@ export async function renderSecurityCheckResult(
   dependencies: SecurityCheckPresenterDependencies = defaultDependencies,
 ): Promise<void> {
   if (check.kind === 'cancelled') {
-    if (format === 'text') throw new MissingAppConfigurationError(options.directory)
-    outputResult(appSecurityCheckJsonOutputSchema.encode({status: 'cancelled'}))
+    if (format === 'json') {
+      outputResult(appSecurityCheckJsonOutputSchema.encode({status: 'cancelled'}))
+    } else {
+      const {headline, nextStep} = missingAppConfigurationMessage(options.directory)
+      renderInfo({headline, body: nextStep})
+    }
     return
   }
 
