@@ -12,9 +12,7 @@ export default class AppGraphiQL extends AppLinkedCommand {
 
   static descriptionWithMarkdown = `Opens an authenticated Admin API GraphiQL UI for your app and selected store.
 
-The app must be installed on the store.
-
-With \`--json\`, stdout is a JSONL stream of starting, ready, and stopped lifecycle records. Diagnostics use stderr; fatal errors use the standard error envelope on stdout. There is no final success result. Use \`--no-input\` to skip opening the browser; it does not select JSON output.`
+The app must be installed on the store.`
 
   static get jsonOutputSchema() {
     return graphiqlJsonOutputSchema

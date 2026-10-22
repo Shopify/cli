@@ -3531,10 +3531,6 @@ DESCRIPTION
 
   The app must be installed on the store.
 
-  With `--json`, stdout is a JSONL stream of starting, ready, and stopped lifecycle records. Diagnostics use stderr;
-  fatal errors use the standard error envelope on stdout. There is no final success result. Use `--no-input` to skip
-  opening the browser; it does not select JSON output.
-
   Use `--json-schema` to print the result, error, and event schemas.
 
   Output from `--json` conforms to the `GraphiQLRecord` schema.
@@ -12232,10 +12228,6 @@ DESCRIPTION
   Run `shopify store auth` first to create stored auth for the store.
 
   Mutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.
-
-  With `--json`, stdout is a JSONL stream of starting, ready, and stopped lifecycle records. Diagnostics use stderr;
-  fatal errors use the standard error envelope on stdout. There is no final success result. Use `--no-input` to skip
-  opening the browser; it does not select JSON output.
 
   Use `--json-schema` to print the result, error, and event schemas.
 
