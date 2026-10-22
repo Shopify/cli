@@ -32,7 +32,7 @@ export interface CapturedStandardStreams {
  *
  * The callback receives accessors instead of the function returning captured output so that
  * assertions remain possible when the callback throws (for example commands that abort).
- * Streams, console.warn and unit-test detection are restored afterwards.
+ * Streams, console and unit-test detection are restored afterwards.
  * Not safe for concurrent tests.
  *
  * @param run - Callback receiving accessors for the captured stdout and stderr.
@@ -64,7 +64,7 @@ function setUnitTestVariable(value: string | undefined): void {
 }
 
 /**
- * Captures writes to stdout and stderr, including console warnings intercepted by Vitest.
+ * Captures writes to stdout and stderr, including console output intercepted by Vitest.
  * Call restore in a finally block. This replaces process globals and must not be used in concurrent tests.
  * Prefer withCapturedStandardStreams, which also disables unit-test output suppression while it runs.
  *
@@ -73,18 +73,15 @@ function setUnitTestVariable(value: string | undefined): void {
 export function mockAndCaptureStandardStreams(): StandardStreamsMock {
   const stdout = captureStream(process.stdout)
   const stderr = captureStream(process.stderr)
-  // Vitest intercepts console.warn before it reaches stderr; use Node's console to exercise the writer.
-  // eslint-disable-next-line no-console
-  const originalWarn = console.warn
-  // eslint-disable-next-line no-console
-  console.warn = new Console(process.stdout, process.stderr).warn
+  // Vitest intercepts console output before it reaches the streams; use Node's console to exercise the writers.
+  const originalConsole = globalThis.console
+  globalThis.console = Object.assign(new Console(process.stdout, process.stderr), {Console})
 
   return {
     stdout: stdout.output,
     stderr: stderr.output,
     restore: () => {
-      // eslint-disable-next-line no-console
-      console.warn = originalWarn
+      globalThis.console = originalConsole
       stdout.restore()
       stderr.restore()
     },
@@ -94,6 +91,7 @@ export function mockAndCaptureStandardStreams(): StandardStreamsMock {
 function captureStream(stream: NodeJS.WriteStream) {
   const chunks: Buffer[] = []
   const originalWrite = stream.write
+  const originalDrainListeners = new Set(stream.rawListeners('drain'))
   stream.write = (
     chunk: string | Uint8Array,
     encodingOrCallback?: BufferEncoding | ((error?: Error | null) => void),
@@ -110,6 +108,10 @@ function captureStream(stream: NodeJS.WriteStream) {
     output: () => Buffer.concat(chunks).toString('utf8'),
     restore: () => {
       stream.write = originalWrite
+      // Captured writes always succeed, so Oclif's flush listener never receives a drain event.
+      for (const listener of stream.rawListeners('drain')) {
+        if (!originalDrainListeners.has(listener)) stream.removeListener('drain', listener as () => void)
+      }
     },
   }
 }

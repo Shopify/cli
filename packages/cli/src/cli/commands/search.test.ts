@@ -1,10 +1,10 @@
 import Search from './search.js'
+import * as searchServices from '../services/commands/search/index.js'
 import {searchJsonOutputSchema} from '../services/commands/search/types.js'
 import {openURL} from '@shopify/cli-kit/node/system'
-import {launchCLI} from '@shopify/cli-kit/node/cli-launcher'
-import {ShopifyConfig} from '@shopify/cli-kit/node/custom-oclif-loader'
 import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {afterEach, describe, expect, test, vi} from 'vitest'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
+import {afterEach, describe, expect, test, vi, type MockInstance} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/system', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@shopify/cli-kit/node/system')>()),
@@ -16,10 +16,40 @@ afterEach(() => {
   mockAndCaptureOutput().clear()
 })
 
+let searchService: MockInstance<typeof searchServices.searchService>
+const queryURL = 'https://shopify.dev/docs?search=deploy+app'
+
+describeJsonCommand({
+  command: Search,
+  commandId: 'search',
+  moduleURL: import.meta.url,
+  args: ['deploy app'],
+  expectedResult: {url: queryURL},
+  expectedSchema: {
+    type: 'object',
+    properties: {url: {type: 'string', format: 'uri'}},
+    required: ['url'],
+  },
+  setup: () => {
+    searchService = vi.spyOn(searchServices, 'searchService')
+    return () => searchService.mockRestore()
+  },
+  assertExecuted: (format) => {
+    expect(searchService).toHaveBeenCalledExactlyOnceWith('deploy app')
+    if (format === 'text') expect(openURL).toHaveBeenCalledExactlyOnceWith(queryURL)
+    else expect(openURL).not.toHaveBeenCalled()
+  },
+  assertNotExecuted: () => {
+    expect(searchService).not.toHaveBeenCalled()
+    expect(openURL).not.toHaveBeenCalled()
+  },
+  textOutput: {stdout: '', stderr: ''},
+})
+
 describe('search command', () => {
   test.each(['deploy app', ''])('opens the browser without printing a result in text mode for %j', async (query) => {
     const output = mockAndCaptureOutput()
-    const url = query ? 'https://shopify.dev/docs?search=deploy+app' : 'https://shopify.dev/docs?search='
+    const url = query ? queryURL : 'https://shopify.dev/docs?search='
 
     await Search.run(query ? [query] : [], import.meta.url)
 
@@ -28,54 +58,18 @@ describe('search command', () => {
     expect(output.warn()).toBe('')
   })
 
-  test.each(['deploy app', ''])(
-    'prints the search URL without opening the browser in JSON mode for %j',
-    async (query) => {
-      const output = mockAndCaptureOutput()
-      const url = query ? 'https://shopify.dev/docs?search=deploy+app' : 'https://shopify.dev/docs?search='
+  test('prints the empty search URL without opening the browser in JSON mode', async () => {
+    vi.stubEnv('CI', '1')
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await Search.run(['--json'], import.meta.url)
 
-      await Search.run([...(query ? [query] : []), '--json'], import.meta.url)
-
-      expect(openURL).not.toHaveBeenCalled()
-      expect(output.output()).toBe(JSON.stringify({url}, null, 2))
-      expect(output.warn()).toBe('')
-    },
-  )
-
-  test('exposes the result schema in help', () => {
-    expect(Search.jsonOutputSchema).toBe(searchJsonOutputSchema)
-    expect(Search.description).toContain('Output from `--json` conforms to the `SearchResult` schema.')
+      expect(stdout()).toBe(`${JSON.stringify({url: 'https://shopify.dev/docs?search='}, null, 2)}\n`)
+      expect(stderr()).toBe('')
+    })
+    expect(openURL).not.toHaveBeenCalled()
   })
 
   test.each([{}, {url: 123}, {url: 'not a URL'}])('rejects an invalid result: %j', (result) => {
     expect(() => searchJsonOutputSchema.validate(result)).toThrow()
-  })
-
-  test.each(['--json', '--json-schema'])('writes one document with %s through the launcher', async (flag) => {
-    // Keep upgrade checks and other lifecycle hooks out of output assertions.
-    vi.spyOn(ShopifyConfig.prototype, 'runHook').mockResolvedValue({successes: [], failures: []})
-    vi.stubEnv('CI', '1')
-    vi.stubEnv('SHOPIFY_CLI_NO_ANALYTICS', '1')
-
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await launchCLI({
-        moduleURL: import.meta.url,
-        argv: ['search', 'deploy app', flag],
-        lazyCommandLoader: async () => Search,
-      })
-
-      expect(openURL).not.toHaveBeenCalled()
-      expect(stderr()).toBe('')
-      const document = JSON.parse(stdout())
-      if (flag === '--json') {
-        expect(document).toEqual({url: 'https://shopify.dev/docs?search=deploy+app'})
-      } else {
-        expect(document.definitions.Result).toMatchObject({
-          type: 'object',
-          properties: {url: {type: 'string', format: 'uri'}},
-          required: ['url'],
-        })
-      }
-    })
   })
 })
