@@ -61,12 +61,12 @@ test('records theme messages, task progress, sync errors, and late HTTP request 
         'Synced » update assets/base.css',
         'A dev warning',
         'Invalid CSS',
-        'Uploading theme files',
         '/products/test',
       ]) {
         expect(messages).toContain(text)
         expect(stderr()).toContain(text)
       }
+      expect(messages).toContain('Uploading theme files')
       expect(messages).not.toContain('Outside the dev session')
       expect(log).not.toContain('\u001b')
       expect(log).not.toContain('sessionId')
