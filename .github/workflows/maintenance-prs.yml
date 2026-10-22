@@ -56,7 +56,7 @@ jobs:
         if: steps.schedule.outputs.run == 'true'
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: '26.1.0'
+          node-version: '26.12.1'
 
       - name: Create maintenance branch
         if: steps.schedule.outputs.run == 'true'

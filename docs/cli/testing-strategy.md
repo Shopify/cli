@@ -95,7 +95,7 @@ For Vitest problems, see [our troubleshooting page](troubleshooting.md) or the [
 
 End-to-end tests live under `packages/e2e` and are implemented using [Playwright](https://playwright.dev/). They test full user journeys by invoking the CLI and verifying outputs. Run them with `pnpm test:e2e`.
 
-See the [E2E setup guide](../../packages/e2e/README.md) for legacy resource cleanup.
+See the [E2E setup guide](../../packages/e2e/README.md) for persistent store configuration, CI isolation, and cleanup.
 
 ## GitHub Actions
 
