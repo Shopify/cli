@@ -29,6 +29,10 @@ let standardOutput: ReturnType<typeof captureStandardOutput>
 
 function captureStandardOutput() {
   const chunks: (string | Uint8Array)[] = []
+  const originalIsTTY = process.stdout.isTTY
+  const originalColumns = process.stdout.columns
+  process.stdout.isTTY = true
+  process.stdout.columns = 80
   const write = vi.spyOn(process.stdout, 'write').mockImplementation(((
     chunk: string | Uint8Array,
     encodingOrCallback?: unknown,
@@ -43,7 +47,11 @@ function captureStandardOutput() {
   return {
     output: () => chunks.map((chunk) => (typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString())).join(''),
     write,
-    restore: () => write.mockRestore(),
+    restore: () => {
+      write.mockRestore()
+      process.stdout.isTTY = originalIsTTY
+      process.stdout.columns = originalColumns
+    },
   }
 }
 
@@ -402,12 +410,76 @@ describe('ui', () => {
         expect.objectContaining({exitOnCtrlC: false, stdout: expect.anything()}),
       )
       expect(concurrentProcess.action).not.toHaveBeenCalled()
+      expect(standardOutput.output()).toBe(
+        '\u001B[?1049h\u001B[?1007s\u001B[?1007h\u001B[?1007l\u001B[?1007r\u001B[?1049l',
+      )
 
       standardOutput.write.mockClear()
       const renderOptions = vi.mocked(render).mock.calls[0]?.[1]
       renderOptions?.stdout?.write('before\u001B[2J\u001B[3J\u001B[Hfirst\nsecond')
       expect(standardOutput.write).toHaveBeenCalledWith('before\u001B[H\u001B[2Kfirst\n\u001B[2Ksecond')
     })
+
+    test.each([false, true])(
+      'anchors the log viewport right edge when clearing the screen is %s',
+      async (clearScreen) => {
+        vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+
+        await renderDev({
+          processes: [],
+          previewUrl: '',
+          app: {id: '123', developerPlatformClient},
+          abortController: new AbortController(),
+          shopFqdn: 'mystore.shopify.io',
+          devSessionStatusManager,
+        })
+
+        standardOutput.write.mockClear()
+        const stdout = vi.mocked(render).mock.calls[0]?.[1]?.stdout
+        const bottomPanel = [
+          `╭${'─'.repeat(38)}╮ ╭─ Filter logs ─╮ ╭─ Quit ─╮`,
+          `│${' Ready, watching for changes'.padEnd(38)}│`,
+          `│${' '.repeat(38)}│`,
+          `│${' Open app preview'.padEnd(38)}│      Shopify CLI`,
+          `╰${'─'.repeat(38)}╯`,
+        ].join('\n')
+        const frame = [
+          `╭${'─'.repeat(78)}╮`,
+          `│⚠️ Warning${' '.repeat(67)}△│`,
+          `│plain line${' '.repeat(67)}││`,
+          `│✅ Ready${' '.repeat(69)}║│`,
+          `│last line${' '.repeat(68)}▽│`,
+          `╰${'─'.repeat(78)}╯`,
+          bottomPanel,
+        ].join('\n')
+
+        stdout?.write(`${clearScreen ? '\u001B[2J\u001B[3J\u001B[H' : ''}${frame}`)
+
+        const alignedFrame = [
+          `╭${'─'.repeat(78)}╮`,
+          `│⚠️ Warning${' '.repeat(67)}\u001B[79G△│`,
+          `│plain line${' '.repeat(67)}\u001B[79G││`,
+          `│✅ Ready${' '.repeat(69)}\u001B[79G║│`,
+          `│last line${' '.repeat(68)}\u001B[79G▽│`,
+          `╰${'─'.repeat(78)}╯`,
+          ...bottomPanel.split('\n'),
+        ].join(clearScreen ? '\n\u001B[2K' : '\n')
+        expect(standardOutput.write).toHaveBeenLastCalledWith(
+          `${clearScreen ? '\u001B[H\u001B[2K' : ''}${alignedFrame}`,
+        )
+
+        standardOutput.write.mockClear()
+        process.stdout.columns = 100
+        stdout?.write(
+          [`╭${'─'.repeat(98)}╮`, `│⚠️ Warning${' '.repeat(88)}│`, `╰${'─'.repeat(98)}╯`, bottomPanel].join('\n'),
+        )
+        expect(standardOutput.write).toHaveBeenLastCalledWith(
+          [`╭${'─'.repeat(98)}╮`, `│⚠️ Warning${' '.repeat(88)}\u001B[100G│`, `╰${'─'.repeat(98)}╯`, bottomPanel].join(
+            '\n',
+          ),
+        )
+      },
+    )
 
     test('prints the complete log history before the persistent preview notice', async () => {
       vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
@@ -431,7 +503,9 @@ describe('ui', () => {
 
       const output = standardOutput.output()
       const expectedHistory = logLines.map((line) => `12:34:56 │ ${'backend'.padStart(25)} │ ${line}`).join('\n')
-      expect(output).toBe(`\u001B[H\u001B[0J${expectedHistory}\n`)
+      expect(output).toBe(
+        `\u001B[?1049h\u001B[?1007s\u001B[?1007h\u001B[?1007l\u001B[?1007r\u001B[?1049l${expectedHistory}\n`,
+      )
       expect(renderInfo).toHaveBeenCalledWith({
         headline: 'A preview of your development changes is still available on mystore.shopify.io.',
         body: ['Run', {command: 'shopify app dev clean'}, 'to restore the latest released version of your app.'],
@@ -440,9 +514,49 @@ describe('ui', () => {
           url: 'https://shopify.dev/beta/developer-dashboard/shopify-app-dev',
         },
       })
-      expect(standardOutput.write.mock.invocationCallOrder[0]).toBeLessThan(
+      expect(standardOutput.write.mock.invocationCallOrder[1]).toBeLessThan(
         vi.mocked(renderInfo).mock.invocationCallOrder[0]!,
       )
+    })
+
+    test('enables alternate scrolling before rendering and restores the screen when rendering fails', async () => {
+      vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+      const error = new Error('Rendering failed')
+      vi.mocked(render).mockImplementation(async () => {
+        expect(standardOutput.output()).toBe('\u001B[?1049h\u001B[?1007s\u001B[?1007h')
+        throw error
+      })
+
+      await expect(
+        renderDev({
+          processes: [],
+          previewUrl: '',
+          app: {id: '123', developerPlatformClient},
+          abortController: new AbortController(),
+          shopFqdn: 'mystore.shopify.io',
+          devSessionStatusManager,
+        }),
+      ).rejects.toThrow(error)
+
+      expect(standardOutput.output()).toBe(
+        '\u001B[?1049h\u001B[?1007s\u001B[?1007h\u001B[?1007l\u001B[?1007r\u001B[?1049l',
+      )
+    })
+
+    test('does not switch screens when standard output is redirected', async () => {
+      vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+      process.stdout.isTTY = false
+
+      await renderDev({
+        processes: [],
+        previewUrl: '',
+        app: {id: '123', developerPlatformClient},
+        abortController: new AbortController(),
+        shopFqdn: 'mystore.shopify.io',
+        devSessionStatusManager,
+      })
+
+      expect(standardOutput.output()).toBe('\u001B[H\u001B[0J')
     })
 
     test('calls devSessionDelete when DevSessionUI aborts', async () => {

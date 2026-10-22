@@ -302,7 +302,7 @@ describe('ConcurrentOutput', () => {
     gate.resolve()
   })
 
-  test('renders output in a bounded viewport and scrolls with arrow and page keys', async () => {
+  test.each([true, false])('scrolls with keyboard input when mouseEnabled is %s', async (mouseEnabled) => {
     const outputSync = new Synchronizer()
     const gate = new Synchronizer()
     const process = {
@@ -315,7 +315,7 @@ describe('ConcurrentOutput', () => {
     }
 
     const renderInstance = render(
-      <MouseProvider>
+      <MouseProvider mouseEnabled={mouseEnabled}>
         <Box height={6}>
           <ConcurrentOutput
             processes={[process]}
@@ -408,7 +408,7 @@ describe('ConcurrentOutput', () => {
       },
     }
     const renderInstance = render(
-      <MouseProvider>
+      <MouseProvider mouseEnabled>
         <Box height={6}>
           <ConcurrentOutput
             processes={[process]}

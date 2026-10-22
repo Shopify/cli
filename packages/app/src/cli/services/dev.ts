@@ -532,7 +532,6 @@ async function updateDevInstance(
       await devInstance.log({source: 'app dev', level: 'info', message: `GraphiQL URL (Admin API): ${graphiqlUrl}`})
     }
   }
-
 }
 
 function previewStatus({isReady, statusMessage, errors}: DevSessionStatus) {

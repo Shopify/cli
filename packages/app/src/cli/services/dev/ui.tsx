@@ -16,14 +16,36 @@ const CLEAR_TERMINAL = '\u001B[2J\u001B[3J\u001B[H'
 const CURSOR_HOME = '\u001B[H'
 const ERASE_LINE = '\u001B[2K'
 const ERASE_FROM_CURSOR_TO_END = '\u001B[0J'
+const ENTER_ALTERNATE_SCREEN = '\u001B[?1049h'
+const LEAVE_ALTERNATE_SCREEN = '\u001B[?1049l'
+const ENABLE_ALTERNATE_SCROLL = '\u001B[?1007s\u001B[?1007h'
+// Reset first so terminals without mode save/restore also release alternate scrolling.
+const RESTORE_ALTERNATE_SCROLL = '\u001B[?1007l\u001B[?1007r'
 const MAX_PREFIX_COLUMN_SIZE = 25
 
-function redrawCurrentViewport(chunk: string): string {
-  const redrawIndex = chunk.indexOf(CLEAR_TERMINAL)
-  if (redrawIndex === -1) return chunk
+function alignLogViewportRightEdge(chunk: string, columns: number): string {
+  if (!columns || columns < 3) return chunk
 
-  const chunkBeforeRedraw = chunk.slice(0, redrawIndex)
-  const frame = chunk.slice(redrawIndex + CLEAR_TERMINAL.length)
+  const horizontalBorder = '─'.repeat(columns - 2)
+  const viewportPattern = new RegExp(`(╭${horizontalBorder}╮\n)([\\s\\S]*?)(\n╰${horizontalBorder}╯)`, 'gu')
+
+  // Terminals can disagree with Ink about emoji widths. Position the log viewport's
+  // scrollbar and right border explicitly so they stay aligned on those rows.
+  return chunk.replace(viewportPattern, (_viewport, topBorder: string, content: string, bottomBorder: string) => {
+    const alignedContent = content.replace(/^│(.*?)([△▽║│]?│)$/gmu, (_line, rowContent: string, rightEdge: string) => {
+      return `│${rowContent}\u001B[${columns - rightEdge.length + 1}G${rightEdge}`
+    })
+    return `${topBorder}${alignedContent}${bottomBorder}`
+  })
+}
+
+function redrawCurrentViewport(chunk: string, columns: number): string {
+  const alignedChunk = alignLogViewportRightEdge(chunk, columns)
+  const redrawIndex = alignedChunk.indexOf(CLEAR_TERMINAL)
+  if (redrawIndex === -1) return alignedChunk
+
+  const chunkBeforeRedraw = alignedChunk.slice(0, redrawIndex)
+  const frame = alignedChunk.slice(redrawIndex + CLEAR_TERMINAL.length)
   const erasedFrame = frame.split('\n').join(`\n${ERASE_LINE}`)
   return `${chunkBeforeRedraw}${CURSOR_HOME}${ERASE_LINE}${erasedFrame}`
 }
@@ -33,7 +55,7 @@ function stdoutWithInPlaceRedraw(stdout: NodeJS.WriteStream): NodeJS.WriteStream
     get(target, property) {
       if (property === 'write') {
         return (chunk: string | Uint8Array, ...args: unknown[]) => {
-          const preservedChunk = typeof chunk === 'string' ? redrawCurrentViewport(chunk) : chunk
+          const preservedChunk = typeof chunk === 'string' ? redrawCurrentViewport(chunk, target.columns) : chunk
           return Reflect.apply(target.write, target, [preservedChunk, ...args])
         }
       }
@@ -50,8 +72,7 @@ function formatLogHistory(chunks: ConcurrentOutputChunk[]): string {
     return lines.map((line) => `${timestamp} │ ${formattedPrefix} │ ${line}`)
   })
 
-  const history = formattedLines.length === 0 ? '' : `${formattedLines.join('\n')}\n`
-  return `${CURSOR_HOME}${ERASE_FROM_CURSOR_TO_END}${history}`
+  return formattedLines.length === 0 ? '' : `${formattedLines.join('\n')}\n`
 }
 
 async function writeToStdout(content: string): Promise<void> {
@@ -107,8 +128,13 @@ export async function renderDev({
   try {
     if (commandEventOutputMode() !== 'json' && terminalSupportsPrompting()) {
       const outputChunks: ConcurrentOutputChunk[] = []
+      const alternateScreenEnabled = Boolean(process.stdout.isTTY)
 
       try {
+        if (alternateScreenEnabled) {
+          // Alternate scrolling turns wheel events into arrow keys without capturing text selection.
+          await writeToStdout(`${ENTER_ALTERNATE_SCREEN}${ENABLE_ALTERNATE_SCROLL}`)
+        }
         await render(
           <DevSessionUI
             processes={processes}
@@ -131,14 +157,17 @@ export async function renderDev({
           {
             exitOnCtrlC: false,
             // Ink clears a full-height layout by saving each previous frame to scrollback.
-            // Redraw each line in place so only the final frame remains with earlier commands.
+            // Redraw each line in place to preserve the normal screen's scrollback.
             stdout: stdoutWithInPlaceRedraw(process.stdout),
           },
         )
       } finally {
         // Ink must release the terminal before normal output is restored, otherwise its cursor
         // controls can overwrite log lines or interleave with the persistent preview notice.
-        await writeToStdout(formatLogHistory(outputChunks))
+        const restoreScreen = alternateScreenEnabled
+          ? `${RESTORE_ALTERNATE_SCROLL}${LEAVE_ALTERNATE_SCREEN}`
+          : `${CURSOR_HOME}${ERASE_FROM_CURSOR_TO_END}`
+        await writeToStdout(`${restoreScreen}${formatLogHistory(outputChunks)}`)
         if (devSessionStatusManager.status.isReady) {
           renderInfo(devPreviewInfo(shopFqdn))
         }

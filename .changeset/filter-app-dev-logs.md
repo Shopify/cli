@@ -4,4 +4,4 @@
 '@shopify/cli-kit': minor
 ---
 
-Full-screen layout for `shopify app dev`, including a log filter.
+Full-screen layout for `shopify app dev`, including log filtering and scrolling with mouse support disabled.
