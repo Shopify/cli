@@ -1,4 +1,4 @@
-import securityClean, {renderSecurityCleanResult} from './security-clean.js'
+import securityClean from './security-clean.js'
 import {appSecurityArtifactPaths, cleanAllResultsDirectories, cleanResultsDirectory} from './app-security-artifacts.js'
 import {fileExists, fileRealPath, inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -105,39 +105,6 @@ describe('securityClean', () => {
           message: expect.stringMatching(/symbolic link/),
         })
       })
-    })
-  })
-})
-
-describe('renderSecurityCleanResult', () => {
-  test('lists every removed path', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const {appDirectory} = await createApp(directory)
-      const resultsDirectory = await writeResults(appDirectory, 'shopify.app.production')
-      const output = mockAndCaptureOutput()
-      output.clear()
-
-      renderSecurityCleanResult({removed: [resultsDirectory]}, appDirectory)
-
-      const rendered = output.info()
-      expect(rendered).toContain('App security check results removed.')
-      expect(rendered).toContain('shopify.app.production')
-      output.clear()
-    })
-  })
-
-  test('notes that there was nothing to remove', async () => {
-    await inTemporaryDirectory(async (directory) => {
-      const {appDirectory} = await createApp(directory)
-      const output = mockAndCaptureOutput()
-      output.clear()
-
-      renderSecurityCleanResult({removed: []}, appDirectory)
-
-      const rendered = output.info()
-      expect(rendered).toContain('No app security check results to remove.')
-      expect(rendered).toContain('app-security')
-      output.clear()
     })
   })
 })

@@ -49,10 +49,12 @@ export async function requireResultsDirectory(selection: AppSecuritySelection, p
   if (await resultsDirectoryExists(selection.appDirectory, key)) return
 
   const {scan} = resolveAppSecurityCommands(selection, path)
-  throw new AbortError(
+  const error = new AbortError(
     `No app security check results for ${key} in ${selection.appDirectory}.`,
     `Run \`${formatAppSecurityCommand(scan)}\`.`,
   )
+  error.code = 'results-directory-not-found'
+  throw error
 }
 
 /**

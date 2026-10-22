@@ -5663,13 +5663,17 @@ Remove local app security check results.
 
 ```
 USAGE
-  $ shopify app security clean [--all | -c <value> | --client-id <value>] [--json-schema] [--no-color] [--no-input]
+  $ shopify app security clean [--all | -c <value> | --client-id <value>] [-j] [--json-schema] [--no-color] [--no-input]
     [--path <value>] [--verbose] [--without-app-config | ]
 
 FLAGS
   -c, --config=<value>
       The name of the app configuration.
       [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   --all
       Delete every results directory under .shopify/app-security/, not only the selected one.
@@ -5711,6 +5715,106 @@ DESCRIPTION
 
   Use `--all` to delete every results directory under `.shopify/app-security/` instead. `--all` takes neither `--config`
   nor `--client-id`, and with `--without-app-config` it doesn't need `--client-id`.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppSecurityCleanResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "changed": {
+        "type": "boolean",
+        "description": "Whether any results directory was removed."
+      },
+      "app": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/AppSecurityApp"
+          },
+          {
+            "$ref": "#/definitions/AppSecurityCleanAllApp"
+          }
+        ],
+        "description": "The selected app. With --all, only its directory."
+      },
+      "resultsDirectories": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "The absolute paths of the removed results directories, sorted. Empty when there was nothing to remove."
+      }
+    },
+    "required": [
+      "status",
+      "changed",
+      "app",
+      "resultsDirectories"
+    ],
+    "additionalProperties": false,
+    "title": "AppSecurityCleanResult",
+    "definitions": {
+      "AppSecurityApp": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The absolute app directory."
+          },
+          "configurationPath": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The absolute path of the selected app configuration file, or null with --without-app-config."
+          },
+          "clientId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The --client-id value when passed, otherwise the app configuration's client_id. Null when the app configuration isn't linked."
+          }
+        },
+        "required": [
+          "directory",
+          "configurationPath",
+          "clientId"
+        ],
+        "additionalProperties": false
+      },
+      "AppSecurityCleanAllApp": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The absolute app directory."
+          }
+        },
+        "required": [
+          "directory"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify app security instructions`

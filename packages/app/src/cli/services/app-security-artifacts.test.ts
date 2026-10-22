@@ -456,6 +456,22 @@ describe('cleanAllResultsDirectories', () => {
     })
   })
 
+  test('returns the removed paths sorted by results key', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await writeEveryArtifact(directory, 'shopify.app.staging')
+      await writeEveryArtifact(directory, 'abc')
+      await writeEveryArtifact(directory, 'shopify.app')
+
+      const removed = await cleanAllResultsDirectories(directory)
+
+      expect(removed).toEqual([
+        joinPath(directory, '.shopify', 'app-security', 'abc'),
+        joinPath(directory, '.shopify', 'app-security', 'shopify.app'),
+        joinPath(directory, '.shopify', 'app-security', 'shopify.app.staging'),
+      ])
+    })
+  })
+
   test('returns an empty list without creating anything when app-security does not exist', async () => {
     await inTemporaryDirectory(async (directory) => {
       await expect(cleanAllResultsDirectories(directory)).resolves.toEqual([])

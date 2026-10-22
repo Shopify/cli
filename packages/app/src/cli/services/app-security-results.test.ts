@@ -68,7 +68,7 @@ describe('requireResultsDirectory', () => {
     })
   })
 
-  test('throws "No results found" with the check command as the next step', async () => {
+  test('throws "No results found" with a stable code and the check command as the next step', async () => {
     await inTemporaryDirectory(async (directory) => {
       const selection = await createApp(directory)
 
@@ -78,6 +78,8 @@ describe('requireResultsDirectory', () => {
       expect((error as AbortError).message).toBe(
         `No app security check results for shopify.app in ${selection.appDirectory}.`,
       )
+      expect((error as AbortError).code).toBe('results-directory-not-found')
+      expect((error as AbortError).details).toBeUndefined()
       expect((error as AbortError).tryMessage).toBe(`Run \`${command(selection, 'scan')}\`.`)
     })
   })
