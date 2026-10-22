@@ -1,6 +1,6 @@
 import {ThemeCheckResult} from './check/types.js'
 import {withThemeCheckDiagnostics} from './check/diagnostics.js'
-import {fileExists, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, fileRealPath, isDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputResult, outputInfo, outputSuccess, outputDebug} from '@shopify/cli-kit/node/output'
 import {joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
@@ -12,6 +12,7 @@ import {
   applyFixToString,
   autofix,
   loadConfig,
+  ModernIdentifiers,
   type FixApplicator,
   type Offense,
   type Theme,
@@ -43,10 +44,28 @@ function isMissingThemeCheckConfigFile(error: unknown, configPath: string) {
   )
 }
 
+/**
+ * Theme Check reads the config with `readFile`, which fails with an EISDIR error that often has no `path`,
+ * so a directory is detected before loading instead of being matched after the failure.
+ */
+async function assertThemeCheckConfigIsNotDirectory(configPath: string | undefined) {
+  if (configPath === undefined || ModernIdentifiers.some((identifier) => identifier === configPath)) return
+  // isDirectory throws on a missing path, so missing files are left to the not-found handling.
+  if (!(await fileExists(configPath))) return
+  // isDirectory doesn't follow symlinks, so resolve them first.
+  if (!(await isDirectory(await fileRealPath(configPath)))) return
+
+  throw new AbortError(
+    `Theme Check config must be a file, but ${configPath} is a directory.`,
+    'Pass the path to a .theme-check.yml file to --config, or omit --config to use the .theme-check.yml in your theme root. To choose the theme directory, use --path.',
+  )
+}
+
 async function withThemeCheckConfigErrorHandling<T>(
   configPath: string | undefined,
   operation: () => Promise<T>,
 ): Promise<T> {
+  await assertThemeCheckConfigIsNotDirectory(configPath)
   try {
     return await operation()
   } catch (error) {

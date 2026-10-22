@@ -9,7 +9,7 @@ import {
   renderOffensesText,
   sortOffenses,
 } from './check.js'
-import {fileExists, writeFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, isDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
@@ -25,6 +25,8 @@ import {beforeEach, describe, expect, test, vi, type Mock} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/fs', async () => ({
   fileExists: vi.fn(),
+  fileRealPath: vi.fn(async (path: string) => path),
+  isDirectory: vi.fn(),
   writeFile: vi.fn(),
 }))
 
@@ -449,6 +451,28 @@ describe('outputActiveConfig', () => {
     await expect(result).rejects.toBeInstanceOf(AbortError)
     await expect(result).rejects.toThrowError(`Theme Check config file not found: ${configPath}`)
   })
+
+  test('reports a directory passed as the config as an expected error', async () => {
+    vi.mocked(fileExists).mockResolvedValue(true)
+    vi.mocked(isDirectory).mockResolvedValue(true)
+
+    const result = outputActiveConfig('/my-theme', '.')
+
+    await expect(result).rejects.toBeInstanceOf(AbortError)
+    await expect(result).rejects.toThrowError('Theme Check config must be a file, but . is a directory.')
+    expect(loadConfig).not.toHaveBeenCalled()
+  })
+
+  test('does not check whether modern identifiers are directories', async () => {
+    vi.mocked(fileExists).mockResolvedValue(true)
+    vi.mocked(isDirectory).mockResolvedValue(true)
+    vi.mocked(loadConfig).mockResolvedValue({settings: {}, ignore: []} as any)
+
+    await outputActiveConfig('/my-theme', 'theme-check:recommended')
+
+    expect(isDirectory).not.toHaveBeenCalled()
+    expect(loadConfig).toHaveBeenCalledWith('theme-check:recommended', '/my-theme')
+  })
 })
 
 describe('outputActiveChecks', () => {
@@ -464,5 +488,27 @@ describe('outputActiveChecks', () => {
 
     await expect(result).rejects.toBeInstanceOf(AbortError)
     await expect(result).rejects.toThrowError(`Theme Check config file not found: ${configPath}`)
+  })
+
+  test('reports a directory passed as the config as an expected error', async () => {
+    vi.mocked(fileExists).mockResolvedValue(true)
+    vi.mocked(isDirectory).mockResolvedValue(true)
+
+    const result = outputActiveChecks('/my-theme', '.')
+
+    await expect(result).rejects.toBeInstanceOf(AbortError)
+    await expect(result).rejects.toThrowError('Theme Check config must be a file, but . is a directory.')
+    expect(loadConfig).not.toHaveBeenCalled()
+  })
+
+  test('does not check whether modern identifiers are directories', async () => {
+    vi.mocked(fileExists).mockResolvedValue(true)
+    vi.mocked(isDirectory).mockResolvedValue(true)
+    vi.mocked(loadConfig).mockResolvedValue({settings: {}, ignore: [], checks: []} as any)
+
+    await outputActiveChecks('/my-theme', 'theme-check:recommended')
+
+    expect(isDirectory).not.toHaveBeenCalled()
+    expect(loadConfig).toHaveBeenCalledWith('theme-check:recommended', '/my-theme')
   })
 })

@@ -12404,7 +12404,8 @@ USAGE
 
 FLAGS
   -C, --config=<value>
-      Use the config provided, overriding .theme-check.yml if present
+      Path to a config file to use, overriding .theme-check.yml if present
+      Use --path to set the theme directory
       Supports all theme-check: config values, e.g., theme-check:theme-app-extension,
       theme-check:recommended, theme-check:all
       For backwards compatibility, :theme_app_extension is also supported
