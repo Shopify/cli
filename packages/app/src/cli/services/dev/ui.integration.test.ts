@@ -1,7 +1,7 @@
-import {test, expect} from 'vitest'
+import {test, expect, vi} from 'vitest'
 import {captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import {fileExists, inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
-import {devInstancePaths} from '@shopify/cli-kit/node/dev-instance'
+import {devInstancePaths, isProcessAlive} from '@shopify/cli-kit/node/dev-instance'
 import {fileURLToPath} from 'url'
 
 const bootstrapUrl = new URL('../../../../../cli/src/bootstrap.ts', import.meta.url).href
@@ -12,14 +12,20 @@ const postrunUrl = new URL('../../../../../cli-kit/src/public/node/hooks/postrun
 const sourceLoaderUrl = new URL('../../../../test/fixtures/app-source-loader.js', import.meta.url).href
 const tsconfigPath = fileURLToPath(new URL('../../../../test/fixtures/tsconfig.json', import.meta.url))
 
-test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
-  '%s keeps the default bootstrap exit when no dev session is running',
+// Windows process.kill() terminates immediately instead of delivering a catchable signal.
+// Exercise handlers on every platform and OS signal delivery where it is supported.
+const shutdownCases = ['SIGINT', 'SIGTERM'].flatMap((signal) =>
+  (process.platform === 'win32' ? ['emit'] : ['emit', 'kill']).map((delivery) => ({signal, delivery})),
+)
+
+test.each(shutdownCases)(
+  '$delivery $signal keeps the default bootstrap exit when no dev session is running',
   {timeout: 20000},
-  async (signal) => {
+  async ({signal, delivery}) => {
     const script = `
       await import(${JSON.stringify(bootstrapUrl)})
       setInterval(() => {}, 1000)
-      process.kill(process.pid, ${JSON.stringify(signal)})
+      process.${delivery}(${delivery === 'kill' ? 'process.pid, ' : ''}${JSON.stringify(signal)})
     `
     const result = await captureOutputWithExitCode(
       process.execPath,
@@ -31,16 +37,11 @@ test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
   },
 )
 
-test.skipIf(process.platform === 'win32').each([
-  ['SIGINT', 'text'],
-  ['SIGTERM', 'text'],
-  ['SIGINT', 'json'],
-  ['SIGTERM', 'json'],
-])(
-  '%s in %s mode flushes queued output and exits with background work after the postrun hook',
+test.each(shutdownCases.flatMap((entry) => ['text', 'json'].map((mode) => ({...entry, mode}))))(
+  '$delivery $signal in $mode mode flushes queued output and exits with background work after the postrun hook',
   // Source loading has its own allowance; the child separately bounds shutdown after the signal.
   {timeout: 60000},
-  async (signal, mode) => {
+  async ({signal, delivery, mode}) => {
     await inTemporaryDirectory(async (directory) => {
       const script = `
         await import(${JSON.stringify(bootstrapUrl)})
@@ -48,6 +49,7 @@ test.skipIf(process.platform === 'win32').each([
         const {renderDev} = await import(${JSON.stringify(uiUrl)})
         const {DevSessionStatusManager} = await import(${JSON.stringify(statusUrl)})
         const {hook} = await import(${JSON.stringify(postrunUrl)})
+        const {spawn} = await import('node:child_process')
         const {runWithCommandEvents} = await import('@shopify/cli-kit/node/command-events')
         await runWithCommandEvents({outputMode: ${JSON.stringify(mode)}, sink: () => {}}, () => withDevSession({
           json: ${mode === 'json'},
@@ -58,6 +60,8 @@ test.skipIf(process.platform === 'win32').each([
           await renderDev({
             processes: [{prefix: 'web', action: async (stdout, _stderr, signal) => {
               setInterval(() => {}, 1000)
+              const child = spawn(process.execPath, ['--eval', 'setInterval(() => {}, 1000); setTimeout(() => process.exit(2), 30000)'], {stdio: 'ignore'})
+              process.stderr.write('Background PID: ' + child.pid + '\\n')
               const output = instance.tee(stdout, {source: 'web'})
               for (let index = 0; index < 1000; index++) output.write('line ' + index + '\\n')
               const stopped = new Promise((resolve) => signal.addEventListener('abort', () => {
@@ -68,7 +72,7 @@ test.skipIf(process.platform === 'win32').each([
                 process.stderr.write('Dev shutdown timed out\\n')
                 process.exit(2)
               }, 20000)
-              process.kill(process.pid, ${JSON.stringify(signal)})
+              process.${delivery}(${delivery === 'kill' ? 'process.pid, ' : ''}${JSON.stringify(signal)})
               await stopped
             }}],
             previewUrl: 'https://example.com',
@@ -99,6 +103,9 @@ test.skipIf(process.platform === 'win32').each([
           },
         },
       )
+      const childPid = Number(result.stderr.match(/Background PID: (\d+)/)?.[1])
+      expect(childPid).toBeGreaterThan(0)
+      await vi.waitFor(() => expect(isProcessAlive(childPid)).toBe(false))
       expect(result.exitCode, result.stderr).toBe(0)
       expect(result.stderr).toContain('Session cleaned up')
       expect(result.stderr).toContain('Postrun completed')
