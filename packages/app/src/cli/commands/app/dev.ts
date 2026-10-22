@@ -1,5 +1,6 @@
 import {appFlags} from '../../flags.js'
 import {dev, DevOptions, withDevSession} from '../../services/dev.js'
+import {appDevOutputSchema} from '../../services/dev/schema.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
@@ -7,7 +8,7 @@ import {storeContext} from '../../services/store-context.js'
 import {getTunnelMode} from '../../services/dev/tunnel-mode.js'
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {globalFlags, portFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag, portFlag} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 export default class Dev extends AppLinkedCommand {
@@ -19,11 +20,16 @@ export default class Dev extends AppLinkedCommand {
 
   static descriptionWithMarkdown = `Builds and previews your app on a dev store, and watches for changes. [Read more about testing apps locally](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).`
 
+  static get jsonOutputSchema() {
+    return appDevOutputSchema
+  }
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
     ...appFlags,
+    ...jsonFlag,
     // The selected configuration is used with the app identified by --client-id.
     'client-id': Flags.string({
       hidden: false,
@@ -143,7 +149,7 @@ export default class Dev extends AppLinkedCommand {
       userProvidedConfigName: flags.config,
     })
 
-    return withDevSession(appContextResult, async (devInstance) => {
+    return withDevSession({...appContextResult, json: flags.json}, async (devInstance) => {
       const store = await storeContext({
         appContextResult,
         storeFqdn: flags.store,

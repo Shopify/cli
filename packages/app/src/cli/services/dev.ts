@@ -71,7 +71,7 @@ export interface DevOptions {
 
 /** Runs app development while the configuration's dev instance is owned. */
 export function withDevSession<T>(
-  {app, remoteApp}: Pick<DevOptions, 'app' | 'remoteApp'>,
+  {app, remoteApp, json = false}: Pick<DevOptions, 'app' | 'remoteApp'> & {json?: boolean},
   execute: (instance: DevInstance) => T | Promise<T>,
 ): Promise<T> {
   return withDevInstance(
@@ -80,6 +80,7 @@ export function withDevSession<T>(
       directory: app.directory,
       key: basename(app.configPath),
       details: {configPath: app.configPath, appName: remoteApp.title, clientId: remoteApp.apiKey},
+      logOutput: json ? process.stdout : undefined,
     },
     execute,
   )

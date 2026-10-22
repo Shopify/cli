@@ -177,7 +177,10 @@ describe('doc search command', () => {
       })
       const schema = JSON.parse(stdout())
       expect(schema.definitions.Result.required).toEqual(['results', 'pageInfo'])
-      expect(schema.definitions.Result.properties.results.items.properties.domain.type).toEqual(['string', 'null'])
+      expect(schema.definitions.Result.properties.results.items).toEqual({
+        $ref: '#/definitions/DocumentationSearchEntry',
+      })
+      expect(schema.definitions.DocumentationSearchEntry.properties.domain.type).toEqual(['string', 'null'])
       expect(schema.definitions.Result.additionalProperties).toBe(false)
       expect(stderr()).toBe('')
       expect(shopifyFetch).not.toHaveBeenCalled()

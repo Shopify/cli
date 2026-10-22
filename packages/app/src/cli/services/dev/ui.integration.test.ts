@@ -39,11 +39,11 @@ test.each(shutdownCases)(
   },
 )
 
-test.each(shutdownCases)(
-  '$delivery $signal flushes queued output and exits with background work after the postrun hook',
+test.each(shutdownCases.flatMap((entry) => ['text', 'json'].map((mode) => ({...entry, mode}))))(
+  '$delivery $signal in $mode mode flushes queued output and exits with background work after the postrun hook',
   // Source loading has its own allowance; the child separately bounds shutdown after the signal.
   {timeout: 60000},
-  async ({signal, delivery}) => {
+  async ({signal, delivery, mode}) => {
     await inTemporaryDirectory(async (directory) => {
       const script = `
         await import(${JSON.stringify(bootstrapUrl)})
@@ -52,7 +52,9 @@ test.each(shutdownCases)(
         const {DevSessionStatusManager} = await import(${JSON.stringify(statusUrl)})
         const {hook} = await import(${JSON.stringify(postrunUrl)})
         const {spawn} = await import('node:child_process')
-        await withDevSession({
+        const {runWithCommandEvents} = await import('@shopify/cli-kit/node/command-events')
+        await runWithCommandEvents({outputMode: ${JSON.stringify(mode)}, sink: () => {}}, () => withDevSession({
+          json: ${mode === 'json'},
           app: {directory: ${JSON.stringify(directory)}, configPath: 'shopify.app.toml'},
           remoteApp: {title: 'Local fixture', apiKey: 'fixture'},
         }, async (instance) => {
@@ -81,10 +83,10 @@ test.each(shutdownCases)(
             shopFqdn: 'fixture.myshopify.com',
             devSessionStatusManager: new DevSessionStatusManager(),
           })
-        })
-        process.stdout.write('Session cleaned up\\n')
+        }))
+        process.stderr.write('Session cleaned up\\n')
         await hook.call({}, {config: {}, Command: {id: 'app:dev'}})
-        process.stdout.write('Postrun completed\\n')
+        process.stderr.write('Postrun completed\\n')
         setTimeout(() => {
           process.stderr.write('Postrun shutdown timed out\\n')
           process.exit(2)
@@ -94,6 +96,7 @@ test.each(shutdownCases)(
         process.execPath,
         ['--loader', 'ts-node/esm', '--loader', sourceLoaderUrl, '--input-type=module', '--eval', script],
         {
+          stripFinalNewline: false,
           env: {
             ...process.env,
             NODE_NO_WARNINGS: '1',
@@ -109,10 +112,12 @@ test.each(shutdownCases)(
       expect(childPid).toBeGreaterThan(0)
       await vi.waitFor(() => expect(isProcessAlive(childPid)).toBe(false))
       expect(result.exitCode, result.stderr).toBe(0)
-      expect(result.stdout).toContain('Session cleaned up')
-      expect(result.stdout).toContain('Postrun completed')
+      expect(result.stderr).toContain('Session cleaned up')
+      expect(result.stderr).toContain('Postrun completed')
       const paths = devInstancePaths({command: 'app dev', directory, key: 'shopify.app.toml'})
-      const records = (await readFile(paths.logFile))
+      const log = await readFile(paths.logFile)
+      if (mode === 'json') expect(result.stdout).toBe(log)
+      const records = log
         .trim()
         .split('\n')
         .map((line) => JSON.parse(line))

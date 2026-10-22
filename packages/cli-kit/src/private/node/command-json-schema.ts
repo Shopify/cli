@@ -34,6 +34,7 @@ export async function printCommandJsonSchema(
     name: 'CommandOutput',
     schema: zod.union([outputSchema.schema, jsonErrorOutputSchema.schema, commandEventOutputSchema.schema]),
     definitions: {
+      ...outputSchema.definitions,
       Result: outputSchema.schema,
       Error: jsonErrorOutputSchema.schema,
       Event: commandEventOutputSchema.schema,

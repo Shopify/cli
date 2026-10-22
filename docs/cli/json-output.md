@@ -240,6 +240,23 @@ events from stderr; missing required input then produces a fatal error instead o
 
 ## Exempt only streaming commands
 
+`shopify app dev --json` writes dev stream records as identical JSONL bytes to stdout and the session log. Each record
+has `timestamp`, `source`, and `message`, with `level` when available. The log contains process output, preview URLs,
+and session status messages. There is no final success result. Preview errors remain log records so that the
+developer can fix the app while dev keeps running.
+
+CLI setup messages and other diagnostics use stderr. Fatal CLI failures use the standard `{error: {...}}` envelope
+on stdout and exit nonzero. These failures are not added to the session log. A second invocation that cannot acquire
+the session never changes the running process's log.
+
+```jsonl
+{"timestamp":"2026-10-20T09:00:00Z","source":"web","message":"Server listening on 3000"}
+{"timestamp":"2026-10-20T09:00:01Z","source":"app dev","level":"info","message":"Ready, watching for changes in your app"}
+```
+
+Setup prompts still use stderr. Use `--json --no-input` for unattended runs. `app dev --json-schema` describes the
+stream's event and fatal error formats. This streaming contract does not change the single-document rule for finite commands.
+
 Long-lived commands that produce an open-ended event stream don't have one finite result. Track these exemptions in
 `packages/eslint-plugin-cli/rules/json-output-command-exceptions.js`, in its streaming section. Add the command's
 repository-relative path:
