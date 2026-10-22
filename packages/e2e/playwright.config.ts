@@ -12,7 +12,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: isCI,
   retries: 0,
-  workers: 10,
+  workers: 4,
   maxFailures: isCI ? 3 : 0, // Stop early in CI after 3 failures
   reporter: isCI ? [['html', {open: 'never'}], ['list']] : [['list']],
   timeout: TEST_TIMEOUT.default, // Heavy tests override via test.setTimeout()
@@ -32,6 +32,8 @@ export default defineConfig({
         'tests/fixture-toml.spec.ts',
         'tests/auth-diagnostics.spec.ts',
         'tests/persistent-stores.spec.ts',
+        'tests/dashboard.spec.ts',
+        'tests/toml-syntax.spec.ts',
       ],
     },
     {
@@ -47,6 +49,8 @@ export default defineConfig({
         'tests/fixture-toml.spec.ts',
         'tests/auth-diagnostics.spec.ts',
         'tests/persistent-stores.spec.ts',
+        'tests/dashboard.spec.ts',
+        'tests/toml-syntax.spec.ts',
       ],
       dependencies: ['remote-auth'],
     },

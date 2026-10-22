@@ -3810,39 +3810,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "\n  Opens a real-time stream of detailed app logs from the selected app and store.\n  Use the `--source` argument to limit output to a particular log source, such as a specific Shopify Function handle. Use the `shopify app logs sources` command to view a list of sources.\n  Use the `--status` argument to filter on status, either `success` or `failure`.\n  ```\n  shopify app logs --status=success --source=extension.discount-function\n  ```\n  ",
-      "descriptionWithMarkdown": "\n  Opens a real-time stream of detailed app logs from the selected app and store.\n  Use the `--source` argument to limit output to a particular log source, such as a specific Shopify Function handle. Use the `shopify app logs sources` command to view a list of sources.\n  Use the `--status` argument to filter on status, either `success` or `failure`.\n  ```\n  shopify app logs --status=success --source=extension.discount-function\n  ```\n  ",
+      "enableJsonFlag": false,
       "flags": {
-        "auth-alias": {
-          "description": "Alias of the Shopify account to use for authentication.",
-          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "auth-alias",
-          "type": "option"
-        },
-        "client-id": {
-          "description": "The Client ID of your app.",
-          "env": "SHOPIFY_FLAG_CLIENT_ID",
-          "exclusive": [
-            "config"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "client-id",
-          "type": "option"
-        },
-        "config": {
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "env": "SHOPIFY_FLAG_APP_CONFIG",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "config",
-          "type": "option"
-        },
         "json": {
           "allowNo": false,
           "char": "j",
@@ -3874,55 +3843,6 @@
           "name": "no-input",
           "type": "boolean"
         },
-        "path": {
-          "description": "The path to your app directory.",
-          "env": "SHOPIFY_FLAG_PATH",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "path",
-          "noCacheDefault": true,
-          "type": "option"
-        },
-        "reset": {
-          "allowNo": false,
-          "description": "Reset all your settings.",
-          "env": "SHOPIFY_FLAG_RESET",
-          "exclusive": [
-            "config"
-          ],
-          "hidden": false,
-          "name": "reset",
-          "type": "boolean"
-        },
-        "source": {
-          "description": "Filters output to the specified log source.",
-          "env": "SHOPIFY_FLAG_SOURCE",
-          "hasDynamicHelp": false,
-          "multiple": true,
-          "name": "source",
-          "type": "option"
-        },
-        "status": {
-          "description": "Filters output to the specified status (success or failure).",
-          "env": "SHOPIFY_FLAG_STATUS",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "status",
-          "options": [
-            "success",
-            "failure"
-          ],
-          "type": "option"
-        },
-        "store": {
-          "char": "s",
-          "description": "Store URL. Must be an existing development or Shopify Plus sandbox store.",
-          "env": "SHOPIFY_FLAG_STORE",
-          "hasDynamicHelp": false,
-          "multiple": true,
-          "name": "store",
-          "type": "option"
-        },
         "verbose": {
           "allowNo": false,
           "description": "Increase the verbosity of the output. May include sensitive data.",
@@ -3933,123 +3853,15 @@
         }
       },
       "hasDynamicHelp": false,
+      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "app:logs",
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": true,
-      "summary": "Stream detailed logs for your Shopify app."
-    },
-    "app:logs:sources": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "customPluginName": "@shopify/app",
-      "description": "The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently only function extensions are supported as sources.\n\nUse `--json-schema` to print the result, error, and event schemas.\n\nOutput from `--json` conforms to the `AppLogSourcesResult` schema.\n\n```json\n{\n  \"type\": \"object\",\n  \"properties\": {\n    \"sources\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"$ref\": \"#/definitions/AppLogSource\"\n      }\n    }\n  },\n  \"required\": [\n    \"sources\"\n  ],\n  \"additionalProperties\": false,\n  \"title\": \"AppLogSourcesResult\",\n  \"definitions\": {\n    \"AppLogSource\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"source\": {\n          \"type\": \"string\"\n        },\n        \"namespace\": {\n          \"type\": \"string\",\n          \"const\": \"extensions\"\n        },\n        \"handle\": {\n          \"type\": \"string\"\n        },\n        \"name\": {\n          \"type\": \"string\"\n        },\n        \"type\": {\n          \"type\": \"string\"\n        },\n        \"externalType\": {\n          \"type\": \"string\"\n        },\n        \"humanName\": {\n          \"type\": \"string\"\n        },\n        \"uid\": {\n          \"type\": \"string\"\n        },\n        \"directory\": {\n          \"type\": \"string\"\n        },\n        \"configurationPath\": {\n          \"type\": \"string\"\n        },\n        \"configuration\": {\n          \"type\": \"object\",\n          \"additionalProperties\": {}\n        },\n        \"entrySourceFilePath\": {\n          \"type\": \"string\"\n        },\n        \"outputPath\": {\n          \"type\": \"string\"\n        },\n        \"surface\": {\n          \"type\": \"string\"\n        },\n        \"features\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"dependency\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"source\",\n        \"namespace\",\n        \"handle\",\n        \"name\",\n        \"type\",\n        \"externalType\",\n        \"humanName\",\n        \"uid\",\n        \"directory\",\n        \"configurationPath\",\n        \"configuration\",\n        \"entrySourceFilePath\",\n        \"outputPath\",\n        \"surface\",\n        \"features\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"$schema\": \"http://json-schema.org/draft-07/schema#\"\n}\n```",
-      "descriptionWithMarkdown": "The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently only function extensions are supported as sources.",
-      "flags": {
-        "auth-alias": {
-          "description": "Alias of the Shopify account to use for authentication.",
-          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "auth-alias",
-          "type": "option"
-        },
-        "client-id": {
-          "description": "The Client ID of your app.",
-          "env": "SHOPIFY_FLAG_CLIENT_ID",
-          "exclusive": [
-            "config"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "client-id",
-          "type": "option"
-        },
-        "config": {
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "env": "SHOPIFY_FLAG_APP_CONFIG",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "config",
-          "type": "option"
-        },
-        "json": {
-          "allowNo": false,
-          "char": "j",
-          "description": "Output the result as JSON. Automatically disables color output.",
-          "env": "SHOPIFY_FLAG_JSON",
-          "hidden": false,
-          "name": "json",
-          "type": "boolean"
-        },
-        "json-schema": {
-          "allowNo": false,
-          "description": "Print the command's JSON schemas.",
-          "env": "SHOPIFY_FLAG_JSON_SCHEMA",
-          "name": "json-schema",
-          "type": "boolean"
-        },
-        "no-color": {
-          "allowNo": false,
-          "description": "Disable color output.",
-          "env": "SHOPIFY_FLAG_NO_COLOR",
-          "hidden": false,
-          "name": "no-color",
-          "type": "boolean"
-        },
-        "no-input": {
-          "allowNo": false,
-          "description": "Disable interactive prompts and browser authentication.",
-          "env": "SHOPIFY_FLAG_NO_INPUT",
-          "name": "no-input",
-          "type": "boolean"
-        },
-        "path": {
-          "description": "The path to your app directory.",
-          "env": "SHOPIFY_FLAG_PATH",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "path",
-          "noCacheDefault": true,
-          "type": "option"
-        },
-        "reset": {
-          "allowNo": false,
-          "description": "Reset all your settings.",
-          "env": "SHOPIFY_FLAG_RESET",
-          "exclusive": [
-            "config"
-          ],
-          "hidden": false,
-          "name": "reset",
-          "type": "boolean"
-        },
-        "verbose": {
-          "allowNo": false,
-          "description": "Increase the verbosity of the output. May include sensitive data.",
-          "env": "SHOPIFY_FLAG_VERBOSE",
-          "hidden": false,
-          "name": "verbose",
-          "type": "boolean"
-        }
-      },
-      "hasDynamicHelp": false,
-      "hiddenAliases": [
-      ],
-      "id": "app:logs:sources",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true,
-      "summary": "Print out a list of sources that may be used with the logs command."
+      "strict": false,
+      "summary": "App logs were removed in Shopify CLI 5.0."
     },
     "app:release": {
       "aliases": [

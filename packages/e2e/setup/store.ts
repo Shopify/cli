@@ -1,52 +1,19 @@
 /* eslint-disable no-await-in-loop */
-import {appTestFixture} from './app.js'
 import {isVisibleWithin} from './browser.js'
 import {BROWSER_TIMEOUT, CLI_TIMEOUT} from './constants.js'
-import {createLogger, e2eRunSegment, e2eSection, requireEnv} from './env.js'
 import {isProtectedStore, readPersistentStores} from './persistent-stores.js'
 import type {CLIProcess, ExecResult} from './cli.js'
 import type {Locator, Page} from '@playwright/test'
 
-const log = createLogger('cli')
-
 // ---------------------------------------------------------------------------
-// Dev store provisioning
+// Legacy store cleanup
 // ---------------------------------------------------------------------------
-
-/** Generate a unique store name for a worker. */
-export function generateStoreName(workerIndex: number): string {
-  const timestampSegment = Date.now().toString(36)
-  return `e2e-w${workerIndex}-${e2eRunSegment()}-${timestampSegment}`
-}
-
-interface WorkerCtx {
-  workerIndex: number
-}
 
 interface StoreCommandJson {
   store?: {
-    domain?: unknown
     deletionRequested?: unknown
     deletionConfirmed?: unknown
   }
-}
-
-/** Create a development store with the CLI and return its FQDN. */
-export async function createDevStoreWithCli(
-  ctx: WorkerCtx & {cli: CLIProcess; storeName: string; orgId: string},
-): Promise<string> {
-  e2eSection(ctx, `Setup: store ${ctx.storeName}`)
-  log.log(ctx, 'creating store')
-
-  const result = await ctx.cli.exec(
-    ['store', 'create', 'dev', '--name', ctx.storeName, '--organization-id', ctx.orgId, '--plan', 'basic', '--json'],
-    {timeout: CLI_TIMEOUT.store},
-  )
-  assertCommandSucceeded('create development store', result)
-
-  const storeFqdn = parseStoreDomain(result, 'create development store')
-  log.log(ctx, `store created ${storeFqdn}`)
-  return storeFqdn
 }
 
 /** Request development store deletion with the CLI and report whether the CLI confirmed it. */
@@ -84,15 +51,6 @@ function assertCommandSucceeded(action: string, result: ExecResult): void {
       `Failed to ${action} (exit code ${result.exitCode}):\nstdout: ${result.stdout}\nstderr: ${result.stderr}`,
     )
   }
-}
-
-function parseStoreDomain(result: ExecResult, action: string): string {
-  const output = parseJsonOutput(result, action)
-  const domain = output.store?.domain
-  if (typeof domain !== 'string' || !domain.endsWith('.myshopify.com')) {
-    throw new Error(`CLI returned an invalid store domain:\n${result.stdout}`)
-  }
-  return domain
 }
 
 function parseJsonOutput(result: ExecResult, action: string): StoreCommandJson {
@@ -265,37 +223,3 @@ async function dismissOpenPopover(page: Page, modal: Locator): Promise<void> {
 export async function isStoreAppsEmpty(page: Page): Promise<boolean> {
   return isVisibleWithin(page.locator('text=Add apps to your store'), BROWSER_TIMEOUT.medium)
 }
-
-// ---------------------------------------------------------------------------
-// Fixture — per-test dev store for tests that need `app dev`
-// ---------------------------------------------------------------------------
-
-/**
- * Test-scoped fixture that creates a fresh dev store per test.
- *
- * Each test gets its own isolated store — no shared state between tests.
- * Store + app cleanup is handled by teardownAll() in the test's finally block.
- *
- * Fixture chain: envFixture → cliFixture → browserFixture → authFixture → appTestFixture → storeTestFixture
- *
- * Tests that need a dev store (app dev, hot reload, multi-config dev) use this fixture.
- * Tests that don't (scaffold, deploy, commands, smoke) stay on appTestFixture.
- */
-export const storeTestFixture = appTestFixture.extend<{storeFqdn: string}>({
-  storeFqdn: async ({cli, env}, use) => {
-    requireEnv(env, 'orgId')
-    const wi = env.workerIndex
-
-    // Unique ports per worker to avoid EADDRINUSE when running in parallel
-    const portBase = 3457 + wi * 10
-    env.processEnv.SHOPIFY_FLAG_GRAPHIQL_PORT = String(portBase)
-    env.processEnv.SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT = String(portBase + 2)
-
-    const storeName = generateStoreName(wi)
-    const fqdn = await createDevStoreWithCli({cli, workerIndex: wi, storeName, orgId: env.orgId})
-
-    env.processEnv.SHOPIFY_FLAG_STORE = fqdn // eslint-disable-line require-atomic-updates
-
-    await use(fqdn)
-  },
-})
