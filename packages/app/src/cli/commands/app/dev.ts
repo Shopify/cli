@@ -1,5 +1,6 @@
 import {appFlags} from '../../flags.js'
 import {dev, DevOptions, withDevSession} from '../../services/dev.js'
+import {appDevOutputSchema} from '../../services/dev/schema.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
@@ -9,7 +10,6 @@ import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {globalFlags, jsonFlag, portFlag} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
-import {devInstanceLogOutputSchema} from '@shopify/cli-kit/node/dev-instance'
 
 export default class Dev extends AppLinkedCommand {
   public static get requiresSyncAnalytics(): boolean {
@@ -21,7 +21,7 @@ export default class Dev extends AppLinkedCommand {
   static descriptionWithMarkdown = `Builds and previews your app on a dev store, and watches for changes. [Read more about testing apps locally](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).`
 
   static get jsonOutputSchema() {
-    return devInstanceLogOutputSchema
+    return appDevOutputSchema
   }
 
   static description = this.descriptionForHelp()

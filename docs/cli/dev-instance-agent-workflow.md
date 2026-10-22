@@ -53,12 +53,13 @@ of commits and external reports; output and local URLs can contain secrets.
 ## App dev
 
 `shopify app dev` owns one session per app configuration. The instance details
-include the app configuration, app identity, store, URLs, and `preview`:
+include the app configuration, app identity, store, URLs, and `preview`.
 
-- `state`: `starting`, `updating`, `ready`, or `error`.
-- `message`: the current CLI status message, or `null` before one is available.
-- `errors`: the current reported errors. Errors remain during retries and clear
-  when the CLI reports success.
+Use `shopify app dev --json-schema` to inspect the contract. `definitions.DevInstance`
+describes the saved instance JSON, and `definitions.DevPreview` describes
+`details.preview`. `definitions.Result` describes each JSONL stream record.
+The instance metadata is stored in the file; it is not added to the JSONL stream.
+Preview errors remain during retries and clear when the CLI reports success.
 
 Process messages keep their terminal source, including extension handles.
 Changes to the status message also produce a log record with source `app dev`.

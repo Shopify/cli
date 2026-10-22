@@ -1,7 +1,8 @@
 import Dev from './dev.js'
 import DevClean from './dev/clean.js'
 import {devClean} from '../../services/dev-clean.js'
-import {dev} from '../../services/dev.js'
+import {dev, withDevSession} from '../../services/dev.js'
+import {appDevOutputSchema} from '../../services/dev/schema.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
 import {getTunnelMode} from '../../services/dev/tunnel-mode.js'
@@ -16,6 +17,7 @@ import {
 } from '../../models/app/app.test-data.js'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {launchCLI} from '@shopify/cli-kit/node/cli-launcher'
 import {emitCommandEvent} from '@shopify/cli-kit/node/command-events'
 import {AbortError, AbortSilentError, CancelExecution} from '@shopify/cli-kit/node/error'
 import {outputInfo} from '@shopify/cli-kit/node/output'
@@ -76,12 +78,62 @@ describe('app dev command', () => {
   }
 
   test('declares its streaming schema and retains inherited flags', () => {
-    expect(Dev.jsonOutputSchema).toBe(devInstanceLogOutputSchema)
+    expect(Dev.jsonOutputSchema).toBe(appDevOutputSchema)
+    expect(Dev.jsonOutputSchema.schema).toBe(devInstanceLogOutputSchema.schema)
     expect(Dev.flags.json.char).toBe('j')
     expect(Dev.flags.json.env).toBe('SHOPIFY_FLAG_JSON')
     expect(Dev.baseFlags).toHaveProperty('json-schema')
     expect(Dev.baseFlags).toHaveProperty('auth-alias')
     expect(Dev.descriptionForHelp()).toContain('DevInstanceLogEntry')
+  })
+
+  test('prints instance and preview schemas before loading an app or starting dev', async () => {
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await launchCLI({
+        moduleURL: new URL('../../../../../cli/package.json', import.meta.url).href,
+        argv: ['app', 'dev', '--json-schema'],
+        lazyCommandLoader: async (id) => (id === 'app:dev' ? Dev : undefined),
+      })
+      const {definitions, anyOf} = JSON.parse(stdout())
+      expect(definitions.DevInstance.properties.details.properties.preview.$ref).toBe('#/definitions/DevPreview')
+      expect(definitions.DevPreview.properties.state.enum).toEqual(['starting', 'updating', 'ready', 'error'])
+      expect(definitions.DevPreview.required).toEqual(['state', 'message', 'errors'])
+      expect(anyOf).not.toContainEqual({$ref: '#/definitions/DevInstance'})
+      expect(stderr()).toBe('')
+      expect(linkedAppContext).not.toHaveBeenCalled()
+      expect(dev).not.toHaveBeenCalled()
+    })
+  })
+
+  test('the instance schema accepts saved startup and preview metadata', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await withDevSession({app: testAppLinked({directory}), remoteApp: testOrganizationApp()}, async (instance) => {
+        const schema = appDevOutputSchema.definitions.DevInstance!
+        const startup = JSON.parse(await readFile(instance.paths.infoFile))
+        expect(schema.parse(startup)).toEqual(startup)
+        await instance.update({
+          status: 'running',
+          details: {
+            preview: {state: 'error', message: 'Build failed', errors: ['Invalid extension']},
+          },
+        })
+        const running = JSON.parse(await readFile(instance.paths.infoFile))
+        expect(schema.parse(running)).toEqual(running)
+        expect(
+          schema.safeParse({
+            ...running,
+            details: {
+              ...running.details,
+              preview: {
+                state: 'unknown',
+                message: null,
+                errors: [],
+              },
+            },
+          }).success,
+        ).toBe(false)
+      })
+    })
   })
 
   test.each([

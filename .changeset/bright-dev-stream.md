@@ -2,4 +2,4 @@
 '@shopify/cli': minor
 ---
 
-Add `app dev --json` to stream development output as JSON Lines.
+Add `app dev --json` streaming and expose session-file schemas with `--json-schema`.

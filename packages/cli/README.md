@@ -2007,10 +2007,7 @@ DESCRIPTION
     "type": "object",
     "properties": {
       "timestamp": {
-        "type": "string",
-        "format": "date-time",
-        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
-        "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+        "$ref": "#/definitions/DevInstance/properties/startedAt"
       },
       "source": {
         "type": "string",
@@ -2036,6 +2033,139 @@ DESCRIPTION
     ],
     "additionalProperties": false,
     "title": "DevInstanceLogEntry",
+    "definitions": {
+      "DevInstance": {
+        "type": "object",
+        "properties": {
+          "schemaVersion": {
+            "type": "number",
+            "const": 1
+          },
+          "sessionId": {
+            "type": "string"
+          },
+          "command": {
+            "type": "string",
+            "const": "app dev"
+          },
+          "key": {
+            "type": "string"
+          },
+          "pid": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "starting",
+              "running"
+            ]
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+            "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+          },
+          "updatedAt": {
+            "$ref": "#/definitions/DevInstance/properties/startedAt"
+          },
+          "directory": {
+            "type": "string"
+          },
+          "logFile": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "properties": {
+              "configPath": {
+                "type": "string"
+              },
+              "appName": {
+                "type": "string"
+              },
+              "clientId": {
+                "type": "string"
+              },
+              "storeFqdn": {
+                "type": "string"
+              },
+              "previewUrl": {
+                "type": "string"
+              },
+              "graphiqlUrl": {
+                "type": "string"
+              },
+              "appUrl": {
+                "type": "string"
+              },
+              "localUrl": {
+                "type": "string"
+              },
+              "preview": {
+                "$ref": "#/definitions/DevPreview",
+                "description": "The CLI-reported preview state in the instance file; this is not a health check."
+              }
+            },
+            "required": [
+              "configPath",
+              "appName",
+              "clientId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "sessionId",
+          "command",
+          "pid",
+          "status",
+          "startedAt",
+          "updatedAt",
+          "directory",
+          "logFile",
+          "details"
+        ],
+        "additionalProperties": false,
+        "description": "The instance JSON file under .shopify/dev/. This object is not emitted to stdout."
+      },
+      "DevPreview": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "starting",
+              "updating",
+              "ready",
+              "error"
+            ]
+          },
+          "message": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "state",
+          "message",
+          "errors"
+        ],
+        "additionalProperties": false,
+        "description": "The CLI-reported preview state in the instance file; this is not a health check."
+      }
+    },
     "$schema": "http://json-schema.org/draft-07/schema#"
   }
   ```
