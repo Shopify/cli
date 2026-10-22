@@ -27,6 +27,7 @@ const CODE_FENCE_LANGUAGES: {[shell in AppSecurityShell]: string} = {
 interface AppSecurityInstructionPaths {
   commands: AppSecurityCommands
   scanCommand: string
+  deterministicScanCommand: string
   recordInstructions: string
   reviewCommand: string
   cleanCommand: string
@@ -51,6 +52,11 @@ function markdownPath(value: string): string {
 
 function codeBlock(content: string, shell: AppSecurityShell): string {
   return `\`\`\`${CODE_FENCE_LANGUAGES[shell]}\n${content}\n\`\`\``
+}
+
+/** The agent reads the workflow's results, so its commands print JSON and never wait for input. */
+function nonInteractiveJsonCommand(command: AppSecurityCommand): AppSecurityCommand {
+  return {...command, args: [...command.args, '--json', '--no-input']}
 }
 
 /** Shows only the stdin form that works in the agent's shell, so the agent doesn't have to translate it. */
@@ -96,10 +102,12 @@ function instructionPaths(
   )
   return {
     commands,
-    scanCommand: formatAppSecurityCommand(commands.scan, shell),
-    recordInstructions: recordInstructions(commands.record, shell),
-    reviewCommand: formatAppSecurityCommand(commands.review, shell),
-    cleanCommand: formatAppSecurityCommand(commands.clean, shell),
+    scanCommand: formatAppSecurityCommand(nonInteractiveJsonCommand(commands.scan), shell),
+    // A deterministic-only scan is read from its terminal report: `check --json` has no findings.
+    deterministicScanCommand: formatAppSecurityCommand(commands.scan, shell),
+    recordInstructions: recordInstructions(nonInteractiveJsonCommand(commands.record), shell),
+    reviewCommand: formatAppSecurityCommand(nonInteractiveJsonCommand(commands.review), shell),
+    cleanCommand: formatAppSecurityCommand(nonInteractiveJsonCommand(commands.clean), shell),
     deterministicFindingsPath,
     agentChecksPath,
     agentFindingsPath,
@@ -110,7 +118,7 @@ function instructionPaths(
 function initialScanInstructions(paths: AppSecurityInstructionPaths): string {
   return `### 1. Run the scan
 
-Decide what to scan before running the check. By default, \`check\` scans the app directory. If the app's code also lives elsewhere (a backend, a shared library, another repository), add each of those directories with \`--include-dir\`. Skip paths with \`--exclude\`. Use \`--no-git-ignore\` only if Git-ignored files must be scanned. Include only directories relevant to the app. Check the scope with ${markdownPath(`${paths.scanCommand} --list-files`)} and adjust the flags until the list is right. Then run \`check\` with the same flags, and use the same flags every time you run \`check\` again.`
+Decide what to scan before running the check. By default, \`check\` scans the app directory. If the app's code also lives elsewhere (a backend, a shared library, another repository), add each of those directories with \`--include-dir\`. Skip paths with \`--exclude\`. Use \`--no-git-ignore\` only if Git-ignored files must be scanned. Include only directories relevant to the app. Check the scope with ${markdownPath(`${paths.scanCommand} --list-files`)} and adjust the flags until its \`files\` list is right. Then run \`check\` with the same flags, and use the same flags every time you run \`check\` again.`
 }
 
 function completedScanInstructions(paths: AppSecurityInstructionPaths): string {
@@ -200,6 +208,7 @@ export function appSecurityInstructions(options: {
     '{{SCOPE_JSON}}': scope.json,
     '{{SCOPE_GUIDANCE}}': scope.guidance,
     '{{SCAN_COMMAND}}': paths.scanCommand,
+    '{{DETERMINISTIC_SCAN_COMMAND}}': paths.deterministicScanCommand,
     '{{RECORD_COMMAND}}': paths.recordInstructions,
     '{{REVIEW_COMMAND}}': paths.reviewCommand,
     '{{CLEAN_COMMAND}}': paths.cleanCommand,

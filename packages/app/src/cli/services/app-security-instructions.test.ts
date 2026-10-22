@@ -74,6 +74,14 @@ function codeBlock(language: string, ...lines: string[]): string {
   return ['```'.concat(language), ...lines, '```'].join('\n')
 }
 
+/** The section that starts with `heading`, up to the next heading. */
+function sectionText(instructions: string, heading: string): string {
+  const start = instructions.indexOf(heading)
+  if (start === -1) throw new Error(`The instructions have no section ${heading}`)
+  const end = instructions.indexOf('\n#', start + heading.length)
+  return instructions.slice(start, end === -1 ? undefined : end)
+}
+
 describe('embedded instructions', () => {
   test('matches INSTRUCTIONS.md', () => {
     const source = readFileSync(
@@ -121,7 +129,7 @@ describe('appSecurityInstructions', () => {
       expect(instructions).toContain('### 1. Run the scan')
       expect(instructions).toContain(`shopify app security check --path ${shellQuote(renderedPath(appRoot))}`)
       expect(instructions).toContain(
-        `\`shopify app security check --path ${shellQuote(renderedPath(appRoot))} --list-files\``,
+        `\`shopify app security check --path ${shellQuote(renderedPath(appRoot))} --json --no-input --list-files\``,
       )
       expect(instructions).toContain('Decide what to scan before running the check.')
       expect(instructions).not.toMatch(/shopify app security check --path .+ --config/)
@@ -243,17 +251,87 @@ describe('appSecurityInstructions', () => {
       expect(instructions).toContain('`not_applicable` and `unresolved` require a `reason`')
       expect(instructions).toContain('Fix every reported error and run `record` again with the full document.')
       expect(instructions).toContain(
-        codeBlock('bash', `shopify app security review --path ${quoteShellArgument(renderedPath(appRoot), 'posix')}`),
+        codeBlock(
+          'bash',
+          `shopify app security review --path ${quoteShellArgument(renderedPath(appRoot), 'posix')} --json --no-input`,
+        ),
       )
       expect(instructions).toContain(`\`${artifactPath(appRoot, 'agent-findings.json')}\` wholesale`)
     })
   })
 
+  test.each<AppSecurityShell>(['posix', 'powershell', 'cmd'])(
+    'runs the workflow commands with --json --no-input, and the deterministic-only scan without them (%s shell)',
+    async (shell) => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false, shell})
+        const pathFlag = `--path ${quoteShellArgument(renderedPath(appRoot), shell)}`
+
+        expect(instructions).toContain(
+          "The workflow's commands pass `--json --no-input`, so they don't prompt, and each prints one JSON object on stdout: its result, or an `error`. Warnings go to stderr.",
+        )
+        expect(sectionText(instructions, '### 1. Run the scan')).toContain(
+          `\`shopify app security check ${pathFlag} --json --no-input --list-files\` and adjust the flags until its \`files\` list is right.`,
+        )
+        expect(sectionText(instructions, '### 6. Review, explain, and help fix')).toContain(
+          codeBlock('bash', `shopify app security review ${pathFlag} --json --no-input`),
+        )
+        expect(sectionText(instructions, '### 7. Check again after changes')).toContain(
+          codeBlock('bash', `shopify app security check ${pathFlag} --json --no-input`),
+        )
+        expect(sectionText(instructions, '## Removing local artifacts')).toContain(
+          codeBlock('bash', `shopify app security clean ${pathFlag} --json --no-input`),
+        )
+        // `check --json` has no findings, so a deterministic-only scan is read from its terminal report.
+        const deterministicOnly = sectionText(instructions, '## Deterministic-only mode')
+        expect(deterministicOnly).toContain(codeBlock('bash', `shopify app security check ${pathFlag}`))
+        expect(deterministicOnly).not.toContain('--json')
+      })
+    },
+  )
+
+  test.each<AppSecurityShell>(['posix', 'powershell'])(
+    'tells the agent which fields of the record and review results to read (%s shell)',
+    async (shell) => {
+      await inTemporaryDirectory(async (directory) => {
+        const appRoot = await createApp(directory)
+        const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false, shell})
+        const record = sectionText(instructions, '### 5. Record the findings with Shopify CLI')
+        const review = sectionText(instructions, '### 6. Review, explain, and help fix')
+
+        expect(record).toContain(
+          'it writes nothing and prints an `error` whose `code` is `findings-document-rejected` and whose `details.errors` lists every error.',
+        )
+        expect(review).toContain(
+          '`checks` lists every check, most severe first, with its `severity`, `status`, `docsUrl` and `findings`.',
+        )
+        expect(review).toContain(
+          'Locations have an absolute `filePath` and a one-based `line` and `column`, as recorded, or `null` when there is none.',
+        )
+        expect(review).toContain(
+          "Only findings whose `disposition` is `active` count; `suppressed` and `superseded` ones don't.",
+        )
+        expect(review).toContain(
+          '`coverage` describes what the latest scan covered, including `filesSkipped` and `gaps`.',
+        )
+        expect(review).toContain(
+          "`resultsFiles` gives each results file's `generatedAt` and `engine` (the CLI and ruleset versions)",
+        )
+        expect(review).toContain(
+          '`scopeDiffers` is `true` when the agent recorded its findings for another scope than the latest scan.',
+        )
+        expect(review).toContain("with a link to its check's `docsUrl`;")
+        expect(review).not.toMatch(/box|rejoin|--verbose|docs_url/)
+      })
+    },
+  )
+
   test('pipes findings to record through a quoted heredoc in POSIX shells', async () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false, shell: 'posix'})
-      const record = `shopify app security record --path ${quoteShellArgument(renderedPath(appRoot), 'posix')}`
+      const record = `shopify app security record --path ${quoteShellArgument(renderedPath(appRoot), 'posix')} --json --no-input`
 
       expect(instructions).toContain(
         codeBlock('bash', `${record} <<'EOF'`, '<the findings document from step 4>', 'EOF'),
@@ -268,7 +346,7 @@ describe('appSecurityInstructions', () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false, shell: 'powershell'})
-      const record = `shopify app security record --path ${quoteShellArgument(renderedPath(appRoot), 'powershell')}`
+      const record = `shopify app security record --path ${quoteShellArgument(renderedPath(appRoot), 'powershell')} --json --no-input`
 
       expect(instructions).toContain(
         codeBlock('powershell', "@'", '<the findings document from step 4>', `'@ | ${record}`),
@@ -288,7 +366,7 @@ describe('appSecurityInstructions', () => {
     await inTemporaryDirectory(async (directory) => {
       const appRoot = await createApp(directory)
       const instructions = appSecurityInstructions({directory: appRoot, scanComplete: false, shell: 'cmd'})
-      const record = `shopify app security record --path ${quoteShellArgument(renderedPath(appRoot), 'cmd')}`
+      const record = `shopify app security record --path ${quoteShellArgument(renderedPath(appRoot), 'cmd')} --json --no-input`
 
       expect(instructions).toContain("cmd.exe can't pipe multi-line text inline")
       expect(instructions).toContain(codeBlock('bat', `${record} < <findings.json>`))
@@ -304,7 +382,10 @@ describe('appSecurityInstructions', () => {
 
       expect(instructions).toContain('To delete these local app security check results, run:')
       expect(instructions).toContain(
-        codeBlock('bash', `shopify app security clean --path ${quoteShellArgument(renderedPath(appRoot), 'posix')}`),
+        codeBlock(
+          'bash',
+          `shopify app security clean --path ${quoteShellArgument(renderedPath(appRoot), 'posix')} --json --no-input`,
+        ),
       )
     })
   })
