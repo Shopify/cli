@@ -10,7 +10,7 @@ import {
   resolveAppSecurityCommands,
   type AppSecurityCommands,
 } from './app-security-commands.js'
-import {projectAppSecurityPath} from './app-security-json-output.js'
+import {projectAppSecurityPath} from './app-security/result.js'
 import {resultsKey, type AppSecuritySelection} from './app-security-selection.js'
 import {
   combineFindings,

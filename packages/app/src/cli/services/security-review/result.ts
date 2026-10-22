@@ -6,16 +6,14 @@ import {
   projectAppSecurityRelativePath,
   projectAppSecurityScanDirectory,
   projectAppSecurityScope,
-} from '../app-security-json-output.js'
+} from '../app-security/result.js'
 import {renderSecurityReview} from '../security-review-output.js'
 import {formatJsonOutputTimestamp, jsonOutputTimestampSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import type {
-  CheckPrecedence,
   CombinedCheck,
   CombinedFinding,
   DeterministicFindingsDocument,
-  Severity,
   SourceCheckResult,
   StoredCheckStatus,
   StoredEvidence,
@@ -25,7 +23,6 @@ import type {ReviewedAppSecurityResults, SecurityReviewResult} from '../security
 
 type AppSecurityCheck = AppSecurityReviewResult['checks'][number]
 type AppSecurityFinding = AppSecurityCheck['findings'][number]
-type AppSecurityAgentFinding = Extract<AppSecurityFinding, {source: 'agent'}>
 type AppSecuritySourceResult = NonNullable<AppSecurityCheck['bySource']['deterministic']>
 type AppSecurityLocation = AppSecurityFinding['location']
 type AppSecurityDetection = NonNullable<AppSecurityReviewResult['detection']>
@@ -36,28 +33,15 @@ type StoredDetection = DeterministicFindingsDocument['detection']
 type StoredCoverage = DeterministicFindingsDocument['coverage']
 
 /*
- * The stored values of each closed enum, mapped to their public values. A new stored value fails to compile until
- * it is mapped.
+ * The closed enums whose stored values have a different public spelling, each stored value mapped to its public one.
+ * A new stored value fails to compile until it is mapped. Enums with the same spelling are assigned directly, and
+ * type-check rejects a stored value that the public schema doesn't allow.
  */
-const SEVERITIES: Record<Severity, AppSecurityCheck['severity']> = {high: 'high', medium: 'medium', low: 'low'}
 const CHECK_STATUSES: Record<StoredCheckStatus, AppSecurityCheck['status']> = {
   executed: 'executed',
   not_applicable: 'not-applicable',
   unresolved: 'unresolved',
 }
-const PRECEDENCES: Record<CheckPrecedence, AppSecurityCheck['precedence']> = {
-  union: 'union',
-  'prefer-agent': 'prefer-agent',
-}
-const DISPOSITIONS: Record<CombinedFinding['disposition'], AppSecurityFinding['disposition']> = {
-  active: 'active',
-  suppressed: 'suppressed',
-  superseded: 'superseded',
-}
-const CONFIDENCES: Record<
-  NonNullable<StoredFinding['confidence']>,
-  NonNullable<AppSecurityAgentFinding['confidence']>
-> = {high: 'high', medium: 'medium', low: 'low'}
 const ANALYSIS_MODES: Record<
   NonNullable<SourceCheckResult['analysis_mode']>,
   NonNullable<AppSecuritySourceResult['analysisMode']>
@@ -75,10 +59,6 @@ const SURFACES: Record<StoredDetection['surface'], AppSecurityDetection['surface
   unknown: 'unknown',
   mixed: 'mixed',
 }
-const LANGUAGE_SUPPORT: Record<
-  StoredDetection['languages'][number]['support'],
-  AppSecurityDetection['languages'][number]['support']
-> = {supported: 'supported', unsupported: 'unsupported'}
 const SKIPPED_FILE_REASONS: Record<
   StoredCoverage['files_skipped'][number]['reason'],
   AppSecurityCoverage['filesSkipped'][number]['reason']
@@ -185,7 +165,7 @@ function projectDetection(detection: StoredDetection, appDirectory: string): App
     surface: SURFACES[detection.surface],
     languages: detection.languages.map((language) => ({
       name: language.name,
-      support: LANGUAGE_SUPPORT[language.support],
+      support: language.support,
       files: language.files.map((file) => ({path: projectAppSecurityRelativePath(appDirectory, file)})),
     })),
   }
@@ -216,12 +196,12 @@ function projectCheck(check: CombinedCheck, appDirectory: string): AppSecurityCh
   return {
     id: check.id,
     title: check.title,
-    severity: SEVERITIES[check.severity],
+    severity: check.severity,
     description: check.description,
     guide: projectOptionalText(check.guide),
     docsUrl: check.docs_url ?? null,
-    precedence: PRECEDENCES[check.precedence],
-    appliedPrecedence: PRECEDENCES[check.applied_precedence],
+    precedence: check.precedence,
+    appliedPrecedence: check.applied_precedence,
     status: CHECK_STATUSES[check.status],
     bySource: {
       deterministic: check.by_source.deterministic ? projectSourceResult(check.by_source.deterministic) : null,
@@ -244,7 +224,7 @@ function projectSourceResult(result: SourceCheckResult): AppSecuritySourceResult
 /** Each source's finding has only its own fields: the stored format allows the other source's too. */
 function projectFinding(finding: CombinedFinding, appDirectory: string): AppSecurityFinding {
   const common = {
-    disposition: DISPOSITIONS[finding.disposition],
+    disposition: finding.disposition,
     location: projectLocation(finding.location, appDirectory),
     message: finding.message,
     snippet: projectOptionalText(finding.snippet),
@@ -266,7 +246,7 @@ function projectFinding(finding: CombinedFinding, appDirectory: string): AppSecu
   return {
     source: 'agent',
     ...common,
-    confidence: finding.confidence ? CONFIDENCES[finding.confidence] : null,
+    confidence: finding.confidence ?? null,
     reasoning: projectOptionalText(finding.reasoning),
     suppression: finding.suppression ? {justification: finding.suppression.justification} : null,
   }

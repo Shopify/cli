@@ -5,7 +5,7 @@ import {
   appSecurityScanDirectorySchema,
   appSecurityScopeSchema,
   createAbsolutePathSchema,
-} from '../app-security-json-output.js'
+} from '../app-security/types.js'
 import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 
