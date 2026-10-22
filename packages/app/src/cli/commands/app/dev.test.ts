@@ -15,10 +15,18 @@ import {
   testProject,
 } from '../../models/app/app.test-data.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {
+  acquireDevInstance,
+  DEV_INSTANCE_ALREADY_RUNNING_CODE,
+  readDevInstance,
+} from '@shopify/cli-kit/node/dev-instance'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
-vi.mock('../../services/dev.js')
+vi.mock('../../services/dev.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../services/dev.js')>()),
+  dev: vi.fn(),
+}))
 vi.mock('../../services/dev-clean.js')
 vi.mock('../../services/app-context.js')
 vi.mock('../../services/store-context.js')
@@ -158,6 +166,41 @@ describe('app dev command', () => {
 
       expect(dev).not.toHaveBeenCalled()
       expect(devClean).not.toHaveBeenCalled()
+    })
+  })
+  test('records the running instance while dev runs and releases it afterwards', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      const {store} = mockAppAndStore(tmp)
+      vi.mocked(getTunnelMode).mockResolvedValue({mode: 'auto'})
+      const identity = {command: 'app dev', directory: tmp, key: 'shopify.app.toml'}
+      let instanceWhileRunning: Awaited<ReturnType<typeof readDevInstance>>
+      vi.mocked(dev).mockImplementation(async () => {
+        instanceWhileRunning = await readDevInstance(identity)
+      })
+
+      await Dev.run(['--path', tmp, '--store', store.shopDomain], import.meta.url)
+
+      expect(instanceWhileRunning).toMatchObject({command: 'app dev', key: 'shopify.app.toml', pid: process.pid})
+      expect(dev).toHaveBeenCalledWith(expect.objectContaining({devInstance: expect.any(Object)}))
+      await expect(readDevInstance(identity)).resolves.toBeUndefined()
+    })
+  })
+
+  test('refuses to start when app dev is already running for the same configuration', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      const {store} = mockAppAndStore(tmp)
+      vi.mocked(getTunnelMode).mockResolvedValue({mode: 'auto'})
+      const running = await acquireDevInstance({command: 'app dev', directory: tmp, key: 'shopify.app.toml'})
+
+      // The command's error handler renders the AbortError and exits.
+      await expect(Dev.run(['--path', tmp, '--store', store.shopDomain], import.meta.url)).rejects.toThrow()
+      await expect(
+        acquireDevInstance({command: 'app dev', directory: tmp, key: 'shopify.app.toml'}),
+      ).rejects.toMatchObject({code: DEV_INSTANCE_ALREADY_RUNNING_CODE, details: {instance: running.info}})
+
+      expect(storeContext).not.toHaveBeenCalled()
+      expect(dev).not.toHaveBeenCalled()
+      await running.release()
     })
   })
 })

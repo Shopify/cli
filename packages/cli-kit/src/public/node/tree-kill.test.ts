@@ -92,6 +92,25 @@ describe('treeKill', () => {
     })
   })
 
+  test('win32: preserves the root process when killRoot is false', async () => {
+    vi.stubGlobal('process', {...process, platform: 'win32'})
+    vi.mocked(spawn).mockReturnValue(createMockProcess({exitCode: 0}) as any)
+
+    await new Promise<void>((resolve) => {
+      treeKill('1234', 'SIGINT', false, (error) => {
+        expect(error).toBeUndefined()
+        resolve()
+      })
+    })
+
+    expect(spawn).toHaveBeenCalledWith('powershell.exe', [
+      '-NoProfile',
+      '-NonInteractive',
+      '-Command',
+      'Get-CimInstance Win32_Process -Filter "ParentProcessId = 1234 AND ProcessId <> $PID" -ErrorAction Stop | ForEach-Object { taskkill /pid $_.ProcessId /T /F | Out-Null }',
+    ])
+  })
+
   test('darwin: recursively builds process tree and kills all processes', async () => {
     vi.stubGlobal('process', {...process, platform: 'darwin'})
     const killSpy = vi.spyOn(process, 'kill').mockImplementation(() => true)

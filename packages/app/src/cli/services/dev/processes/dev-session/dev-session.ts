@@ -162,6 +162,10 @@ export class DevSession {
   private async onStart(event: AppEvent) {
     const errors = this.parseBuildErrors(event)
     if (errors.length) {
+      this.statusManager.setMessage(
+        'BUILD_ERROR',
+        errors.map(({prefix, error}) => `${prefix}: ${error}`),
+      )
       await this.logger.logMultipleErrors(errors)
       await setImmediate(() => {
         const affected = errors.map((err) => err.prefix)
@@ -193,7 +197,10 @@ export class DevSession {
     const errors = this.parseBuildErrors(event)
     if (errors.length) {
       await this.logger.logMultipleErrors(errors)
-      this.statusManager.setMessage('BUILD_ERROR')
+      this.statusManager.setMessage(
+        'BUILD_ERROR',
+        errors.map(({prefix, error}) => `${prefix}: ${error}`),
+      )
       return false
     }
 
@@ -215,7 +222,10 @@ export class DevSession {
   private parseBuildErrors(event: AppEvent) {
     const buildErrors = event.extensionEvents.filter((eve) => eve.buildResult?.status === 'error')
     return buildErrors.map((error) => ({
-      error: 'Build error. Please review your code and try again.',
+      error:
+        error.buildResult?.status === 'error'
+          ? error.buildResult.error || 'Build error. Please review your code and try again.'
+          : 'Build error. Please review your code and try again.',
       prefix: error.extension.handle,
     }))
   }
@@ -237,12 +247,13 @@ export class DevSession {
       await this.logger.logExtensionUpdateMessages(event, result)
       this.statusManager.setMessage('READY')
     } else if (result.status === 'remote-error' || result.status === 'unknown-error') {
+      const errors = result.error instanceof Error ? [result.error.message] : result.error.map((error) => error.message)
       await this.logger.logUserErrors(result.error, event?.app.allExtensions ?? [])
       if (result.error instanceof Error && (result.error as Error & {cause?: string}).cause === 'validation-error') {
-        this.statusManager.setMessage('VALIDATION_ERROR')
+        this.statusManager.setMessage('VALIDATION_ERROR', errors)
       } else {
         if (event) this.failedEvents.push(event)
-        this.statusManager.setMessage('REMOTE_ERROR')
+        this.statusManager.setMessage('REMOTE_ERROR', errors)
       }
     }
 

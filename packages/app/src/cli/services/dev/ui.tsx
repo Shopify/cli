@@ -6,6 +6,8 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import React from 'react'
 import {render} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {waitForPostRunHookAndExit} from '@shopify/cli-kit/node/hooks/postrun'
+import {Writable} from 'stream'
 
 interface DevProps {
   processes: OutputProcess[]
@@ -40,34 +42,41 @@ export async function renderDev({
   configPath?: string
   localURL?: string
 }) {
-  if (terminalSupportsPrompting()) {
-    return render(
-      <DevSessionUI
-        processes={processes}
-        abortController={abortController}
-        devSessionStatusManager={devSessionStatusManager}
-        shopFqdn={shopFqdn}
-        appURL={appURL}
-        appName={appName}
-        organizationName={organizationName}
-        configPath={configPath}
-        localURL={localURL}
-        onAbort={async () => {
-          await app.developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn})
-        }}
-      />,
-      {
-        exitOnCtrlC: false,
-      },
-    )
-  }
+  const stop = () => abortController.abort()
+  process.on('shopify:signal', stop)
+  try {
+    if (terminalSupportsPrompting()) {
+      return await render(
+        <DevSessionUI
+          processes={processes}
+          abortController={abortController}
+          devSessionStatusManager={devSessionStatusManager}
+          shopFqdn={shopFqdn}
+          appURL={appURL}
+          appName={appName}
+          organizationName={organizationName}
+          configPath={configPath}
+          localURL={localURL}
+          onAbort={async () => {
+            await app.developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn})
+          }}
+        />,
+        {
+          exitOnCtrlC: false,
+        },
+      )
+    }
 
-  await renderDevNonInteractive({
-    processes,
-    previewUrl,
-    graphiqlUrl,
-    abortController,
-  })
+    await renderDevNonInteractive({
+      processes,
+      previewUrl,
+      graphiqlUrl,
+      abortController,
+    })
+    waitForPostRunHookAndExit()
+  } finally {
+    process.removeListener('shopify:signal', stop)
+  }
 }
 
 async function renderDevNonInteractive({
@@ -81,9 +90,41 @@ async function renderDevNonInteractive({
     process.stdout.write(`GraphiQL URL (Admin API): ${graphiqlUrl}\n`)
   }
 
-  return Promise.all(
-    processes.map(async (concurrentProcess) => {
-      await concurrentProcess.action(process.stdout, process.stderr, abortController.signal)
-    }),
+  const {signal} = abortController
+  const stop = () => abortController.abort()
+  process.once('SIGINT', stop)
+  process.once('SIGTERM', stop)
+  let onAbort: () => void = () => {}
+  const stopped = new Promise<void>((resolve) => {
+    onAbort = resolve
+    signal.addEventListener('abort', onAbort, {once: true})
+    if (signal.aborted) resolve()
+  })
+  const running = processes.map(async (concurrentProcess) =>
+    concurrentProcess.action(createTextOutputStream(process.stdout), createTextOutputStream(process.stderr), signal),
   )
+  try {
+    // A watcher can finish setup while it continues serving. Keep the session registered until abort.
+    await Promise.all([...running, stopped])
+  } catch (error) {
+    if (!signal.aborted) throw error
+  } finally {
+    abortController.abort()
+    await Promise.allSettled(running)
+    signal.removeEventListener('abort', onAbort)
+    process.removeListener('SIGINT', stop)
+    process.removeListener('SIGTERM', stop)
+  }
+}
+
+function createTextOutputStream(target: Writable): Writable {
+  return new Writable({
+    decodeStrings: false,
+    write(chunk: string | Buffer, encoding, callback) {
+      // CLI string writes are complete messages; subprocess byte chunks can contain partial lines.
+      const output = typeof chunk === 'string' ? Buffer.from(chunk, encoding) : chunk
+      const needsNewline = typeof chunk === 'string' && output.length > 0 && output[output.length - 1] !== 10
+      target.write(needsNewline ? Buffer.concat([output, Buffer.from('\n')]) : output, callback)
+    },
+  })
 }

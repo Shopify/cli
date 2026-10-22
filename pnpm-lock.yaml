@@ -34,6 +34,11 @@ overrides:
   nanoid: 3.3.8
   graphql: 16.14.2
 
+patchedDependencies:
+  when-exit@2.1.5:
+    hash: dd8a5ad3c180e5b767f6050ad69222568dd4f0111de3769c24841d0caa8f26f7
+    path: patches/when-exit@2.1.5.patch
+
 importers:
 
   .:
@@ -13399,7 +13404,7 @@ snapshots:
   atomically@2.1.1:
     dependencies:
       stubborn-fs: 2.0.0
-      when-exit: 2.1.5
+      when-exit: 2.1.5(patch_hash=dd8a5ad3c180e5b767f6050ad69222568dd4f0111de3769c24841d0caa8f26f7)
 
   auto-bind@4.0.0: {}
 
@@ -18223,7 +18228,7 @@ snapshots:
       tr46: 5.1.1
       webidl-conversions: 7.0.0
 
-  when-exit@2.1.5: {}
+  when-exit@2.1.5(patch_hash=dd8a5ad3c180e5b767f6050ad69222568dd4f0111de3769c24841d0caa8f26f7): {}
 
   which-boxed-primitive@1.1.1:
     dependencies:
