@@ -10557,7 +10557,7 @@
         },
         "config": {
           "char": "C",
-          "description": "Use the config provided, overriding .theme-check.yml if present\n      Supports all theme-check: config values, e.g., theme-check:theme-app-extension,\n      theme-check:recommended, theme-check:all\n      For backwards compatibility, :theme_app_extension is also supported ",
+          "description": "Path to a config file to use, overriding .theme-check.yml if present\n      Use --path to set the theme directory\n      Supports all theme-check: config values, e.g., theme-check:theme-app-extension,\n      theme-check:recommended, theme-check:all\n      For backwards compatibility, :theme_app_extension is also supported ",
           "env": "SHOPIFY_FLAG_CONFIG",
           "hasDynamicHelp": false,
           "multiple": false,
