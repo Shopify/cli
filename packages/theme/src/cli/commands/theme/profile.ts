@@ -37,7 +37,8 @@ export default class Profile extends ThemeCommand {
       env: 'SHOPIFY_FLAG_THEME_ID',
     }),
     url: Flags.string({
-      description: 'The url to be used as context',
+      description:
+        'The path of the page to profile, with an optional query string. For a full URL, only the path and query string are used.',
       env: 'SHOPIFY_FLAG_URL',
       default: '/',
     }),

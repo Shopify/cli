@@ -17689,7 +17689,8 @@ FLAGS
       [env: SHOPIFY_FLAG_STORE_PASSWORD]
 
   --url=<value>
-      [default: /] The url to be used as context
+      [default: /] The path of the page to profile, with an optional query string. For a full URL, only the path and query
+      string are used.
       [env: SHOPIFY_FLAG_URL]
 
   --verbose
