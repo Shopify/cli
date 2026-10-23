@@ -72,7 +72,6 @@ export interface OutputContextOptions {
 export class FileWatcher {
   private currentEvents: WatcherEvent[] = []
   private extensionPaths: string[] = []
-  private functionOutputDirectories: string[] = []
   private app: AppLinkedInterface
   private readonly options: OutputContextOptions
   private onChangeCallback?: (events: WatcherEvent[]) => void
@@ -143,9 +142,11 @@ export class FileWatcher {
         ...ALWAYS_IGNORED_PATHS,
         (path: string) => {
           const normalizedPath = normalizePath(path)
-          const isFunctionOutput = this.functionOutputDirectories.some(
-            (directory) => normalizedPath === directory || normalizedPath.startsWith(`${directory}/`),
-          )
+          const isFunctionOutput = this.app.realExtensions.some((extension) => {
+            if (!extension.isFunctionExtension) return false
+            const directory = normalizePath(joinPath(extension.directory, dirname(extension.outputRelativePath)))
+            return normalizedPath === directory || normalizedPath.startsWith(`${directory}/`)
+          })
           return isFunctionOutput || isInCargoTargetDirectory(normalizedPath, cargoProjects)
         },
       ],
@@ -161,9 +162,6 @@ export class FileWatcher {
 
   updateApp(app: AppLinkedInterface) {
     this.app = app
-    this.functionOutputDirectories = app.nonConfigExtensions
-      .filter((extension) => extension.isFunctionExtension)
-      .map((extension) => normalizePath(joinPath(extension.directory, dirname(extension.outputRelativePath))))
     this.extensionPaths = this.app.nonConfigExtensions
       .map((ext) => normalizePath(ext.directory))
       .filter((dir) => dir !== this.app.directory)
