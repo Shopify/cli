@@ -420,13 +420,22 @@ export async function readThemeFile(root: string, path: Key): Promise<string | B
   const options: ReadOptions = isTextFile(path) ? {encoding: 'utf8'} : {}
   const absolutePath = await resolveThemeFilePath(root, path)
 
-  const themeFileExists = await fileExists(absolutePath)
-  if (!themeFileExists) {
-    outputDebug(`File ${absolutePath} can't be read because it doesn't exist...`)
-    return
+  try {
+    return await readFile(absolutePath, options)
+  } catch (error) {
+    // A missing file is expected, so detect it from the failed read instead of
+    // paying for a separate existence check on every file we do read.
+    if (isMissingFileError(error)) {
+      outputDebug(`File ${absolutePath} can't be read because it doesn't exist...`)
+      return
+    }
+    throw error
   }
+}
 
-  return readFile(absolutePath, options)
+function isMissingFileError(error: unknown): boolean {
+  const code = (error as NodeJS.ErrnoException | null)?.code
+  return code === 'ENOENT' || code === 'ENOTDIR'
 }
 
 async function readThemeFileWithListing(
