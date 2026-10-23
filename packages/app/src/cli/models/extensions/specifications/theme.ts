@@ -79,7 +79,7 @@ const ThemeCapabilitiesSchema = CapabilitiesSchema.extend({
   ),
 })
 
-export const ThemeSchema = BaseSchema.extend({
+const ThemeSchema = BaseSchema.extend({
   capabilities: ThemeCapabilitiesSchema.optional(),
 })
 
