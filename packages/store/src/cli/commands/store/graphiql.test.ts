@@ -68,7 +68,7 @@ describe('store graphiql command', () => {
 
   test('exposes the lifecycle schema in command help', () => {
     expect(StoreGraphiQL.jsonOutputSchema.name).toBe('GraphiQLRecord')
-    expect(StoreGraphiQL.description).toContain('JSONL stream')
+    expect(StoreGraphiQL.description).toContain('Output from `--json` conforms to the `GraphiQLRecord` schema.')
   })
 
   test('discovers the schema without starting or authenticating GraphiQL', async () => {

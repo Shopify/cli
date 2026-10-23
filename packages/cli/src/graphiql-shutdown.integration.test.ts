@@ -43,6 +43,8 @@ describe('GraphiQL shutdown through the CLI bootstrap', () => {
           ...process.env,
           FORCE_COLOR: '0',
           NODE_NO_WARNINGS: '1',
+          // Unit-test CI has no built workspace declarations; runtime imports still resolve through the source loader.
+          TS_NODE_IGNORE_DIAGNOSTICS: '2307',
           SHOPIFY_UNIT_TEST: 'false',
           SHOPIFY_FLAG_NO_INPUT: '1',
         },
