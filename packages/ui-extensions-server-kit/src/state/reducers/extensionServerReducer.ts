@@ -4,15 +4,19 @@ import type {ExtensionPayload} from '../../types'
 
 import type {ExtensionServerState} from './types'
 
+function withAssetURLs(extensions: ExtensionPayload[] | undefined) {
+  return (extensions ?? []).map((extension) => {
+    Object.keys(extension.assets).forEach(
+      (asset) => (extension.assets[asset].url = assetToString(extension.assets[asset])),
+    )
+    return extension
+  })
+}
+
 export function extensionServerReducer(state: ExtensionServerState, action: ExtensionServerActions) {
   switch (action.type) {
     case 'connected': {
-      const extensions = (action.payload.extensions ?? []).map((extension) => {
-        Object.keys(extension.assets).forEach(
-          (asset) => (extension.assets[asset].url = assetToString(extension.assets[asset])),
-        )
-        return extension
-      })
+      const extensions = withAssetURLs(action.payload.extensions)
       return {
         ...state,
         store: action.payload.store,
@@ -22,12 +26,7 @@ export function extensionServerReducer(state: ExtensionServerState, action: Exte
     }
 
     case 'update': {
-      const extensions = (action.payload.extensions ?? []).map((extension) => {
-        Object.keys(extension.assets).forEach(
-          (asset) => (extension.assets[asset].url = assetToString(extension.assets[asset])),
-        )
-        return extension
-      })
+      const extensions = withAssetURLs(action.payload.extensions)
       return {
         ...state,
         app: {...(state.app ?? {}), ...(action.payload.app ?? {})},
