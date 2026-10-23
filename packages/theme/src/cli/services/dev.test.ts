@@ -422,7 +422,12 @@ describe('dev() Ctrl-C analytics', () => {
     )
   })
 
-  test.each([false, true])('restores stdin after stopping with input available: %s', async (acceptsInput) => {
+  test.each([
+    {acceptsInput: false, json: false},
+    {acceptsInput: true, json: false},
+    {acceptsInput: true, json: true},
+  ])('restores stdin with input=$acceptsInput and json=$json', async ({acceptsInput, json}) => {
+    const usesInput = acceptsInput && !json
     vi.mocked(terminalSupportsPrompting).mockReturnValue(acceptsInput)
     const listenerCount = process.stdin.listenerCount('keypress')
     const emitKeypressEventsSpy = vi.spyOn(readline, 'emitKeypressEvents')
@@ -432,11 +437,11 @@ describe('dev() Ctrl-C analytics', () => {
     Object.defineProperty(process.stdin, 'setRawMode', {configurable: true, value: setRawMode})
 
     try {
-      const devPromise = dev(baseOptions)
+      const devPromise = dev({...baseOptions, json})
 
       await vi.waitFor(() => expect(setupDevServer).toHaveBeenCalled())
 
-      if (acceptsInput) {
+      if (usesInput) {
         await vi.waitFor(() => expect(setRawMode).toHaveBeenCalledWith(true))
         process.stdin.emit('keypress', '\u0003', {ctrl: true, name: 'c'})
       } else {
@@ -444,7 +449,7 @@ describe('dev() Ctrl-C analytics', () => {
       }
       await devPromise
 
-      if (acceptsInput) {
+      if (usesInput) {
         expect(emitKeypressEventsSpy).toHaveBeenCalled()
         expect(setRawMode.mock.calls).toEqual([[true], [false]])
       } else {

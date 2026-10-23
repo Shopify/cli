@@ -6,7 +6,8 @@ import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {metafieldsPull} from '../../services/metafields-pull.js'
 import {ensureLiveThemeConfirmed} from '../../utilities/theme-ui.js'
 import {Flags} from '@oclif/core'
-import {globalFlags, portFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag, portFlag} from '@shopify/cli-kit/node/cli'
+import {devInstanceLogOutputSchema} from '@shopify/cli-kit/node/dev-instance'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -45,11 +46,16 @@ Development themes are deleted when you run \`shopify auth logout\`. If you need
 
 You can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).`
 
+  static get jsonOutputSchema() {
+    return devInstanceLogOutputSchema
+  }
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
     ...themeFlags,
+    ...jsonFlag,
     host: Flags.string({
       description: 'Set which network interface the web server listens on. The default value is 127.0.0.1.',
       env: 'SHOPIFY_FLAG_HOST',
@@ -197,6 +203,7 @@ You can run this command only in a directory that matches the [default Shopify t
       ignore,
       only,
       notify: flags.notify,
+      json: flags.json,
     })
 
     await metafieldsPull({
@@ -208,5 +215,10 @@ You can run this command only in a directory that matches the [default Shopify t
       noColor: flags['no-color'],
       silent: true,
     })
+  }
+
+  protected collectsEnvironmentResults(): boolean {
+    // A dev session streams records instead of returning an environment batch.
+    return false
   }
 }
