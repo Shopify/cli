@@ -12,6 +12,7 @@ describe('GraphiQL shutdown through the CLI bootstrap', () => {
   ])('flushes lifecycle records and closes the server after %s', {timeout: 20000}, async (signal, reason, exitCode) => {
     const script = `
       await import(${JSON.stringify(bootstrapUrl)})
+      const signalHandler = process.listeners(${JSON.stringify(signal)}).at(-1)
       const {runGraphiQLSession} = await import(${JSON.stringify(sessionUrl)})
       const write = process.stdout.write.bind(process.stdout)
       let url
@@ -19,7 +20,7 @@ describe('GraphiQL shutdown through the CLI bootstrap', () => {
         const result = write(chunk, ...args)
         if (String(chunk).includes('"type":"ready"')) {
           url = JSON.parse(String(chunk)).url
-          setImmediate(() => process.emit(${JSON.stringify(signal)}))
+          setImmediate(() => signalHandler())
         }
         return result
       }
