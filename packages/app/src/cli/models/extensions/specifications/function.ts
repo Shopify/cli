@@ -2,6 +2,7 @@ import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {ExtensionInstance} from '../extension-instance.js'
+import {prepareVariablesErrors} from '../../../services/function/prepare-variables.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
@@ -194,6 +195,15 @@ const functionSpec = createExtensionSpecification({
       throw new AbortError(
         outputContent`The function extension "${extension.handle}" hasn't compiled the wasm in the expected path: ${extension.outputPath}`,
         `Make sure the build command outputs the wasm in the expected directory.`,
+      )
+    }
+
+    if (!extension.isJavaScript) return
+    const errors = await prepareVariablesErrors(extension)
+    if (errors.length > 0) {
+      throw new AbortError(
+        outputContent`The function extension "${extension.handle}" returns prepare variables its run query doesn't accept`,
+        errors.join('\n'),
       )
     }
   },
