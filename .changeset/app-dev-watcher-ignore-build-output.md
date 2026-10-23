@@ -2,4 +2,4 @@
 '@shopify/app': patch
 ---
 
-Reduce `app dev` file watching by excluding Rust function build output, `.shopify` files, and editor temporary files.
+Reduce `app dev` file watching by excluding Cargo `target` directories, Function build output, `.shopify` files, and editor temporary files.

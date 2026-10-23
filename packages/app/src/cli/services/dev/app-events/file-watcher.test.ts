@@ -231,6 +231,7 @@ describe('file-watcher events', () => {
           '**/*.swp',
           '**/*.swo',
           '**/*~',
+          expect.any(Function),
         ],
         ignoreInitial: true,
         persistent: true,
@@ -734,6 +735,14 @@ describe('file-watcher events', () => {
         'extensions/rust-function/target/wasm32-wasip1/release/rust-function.wasm',
         'extensions/rust-function/target/wasm32-wasi/release/rust-function.wasm',
         'extensions/rust-function/target/rust-analyzer/flycheck0/stdout',
+        'extensions/rust-function/target/.rustc_info.json',
+        'extensions/rust-function/target/custom-profile/output.wasm',
+        'extensions/rust-function/target/aarch64-unknown-linux-gnu/debug/output.rlib',
+        'extensions/js-function/src/index.js',
+        'extensions/js-function/dist/function.js',
+        'extensions/js-function/dist/index.wasm',
+        'workspace/Cargo.toml',
+        'workspace/target/custom-profile/output.wasm',
         // UI extension: a source folder named target, and dist, stay watched
         'extensions/ui-extension/src/target/index.js',
         'extensions/ui-extension/src/target/debug/index.js',
@@ -758,10 +767,15 @@ describe('file-watcher events', () => {
       await writeFile(configPath, '')
 
       const rustFunction = await testFunctionExtension({dir: joinPath(dir, 'extensions/rust-function')})
+      const jsFunction = await testFunctionExtension({dir: joinPath(dir, 'extensions/js-function')})
       const uiExtension = await testUIExtension({directory: joinPath(dir, 'extensions/ui-extension')})
-      mockExtensionWatchedFiles(uiExtension, [joinPath(dir, 'shared/target/release/index.js')])
+      mockExtensionWatchedFiles(uiExtension, [
+        joinPath(dir, 'shared/target/release/index.js'),
+        joinPath(dir, 'workspace/Cargo.toml'),
+        joinPath(dir, 'workspace/target/custom-profile/output.wasm'),
+      ])
       const app = testAppLinked({
-        allExtensions: [rustFunction, uiExtension],
+        allExtensions: [rustFunction, jsFunction, uiExtension],
         directory: dir,
         configPath,
       })
@@ -800,6 +814,8 @@ describe('file-watcher events', () => {
           expect.arrayContaining([
             'extensions/rust-function/Cargo.toml',
             'extensions/rust-function/src/main.rs',
+            'extensions/js-function/src/index.js',
+            'workspace/Cargo.toml',
             'extensions/ui-extension/src/target/index.js',
             'extensions/ui-extension/src/target/debug/index.js',
             'extensions/ui-extension/target/release/index.js',
@@ -810,11 +826,9 @@ describe('file-watcher events', () => {
           ]),
         )
         for (const ignored of [
-          'extensions/rust-function/target/debug',
-          'extensions/rust-function/target/release',
-          'extensions/rust-function/target/wasm32-wasip1',
-          'extensions/rust-function/target/wasm32-wasi',
-          'extensions/rust-function/target/rust-analyzer',
+          'extensions/rust-function/target',
+          'extensions/js-function/dist',
+          'workspace/target',
           'extensions/ui-extension/.DS_Store',
           'extensions/ui-extension/src/index.js.swp',
           'extensions/ui-extension/src/index.js.swo',
@@ -826,6 +840,46 @@ describe('file-watcher events', () => {
       } finally {
         abortController.abort()
         await watcher?.close()
+      }
+    })
+  })
+
+  test('app reloads refresh Function output ignores without restarting the watcher', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const existingFunction = await testFunctionExtension({dir: joinPath(directory, 'extensions/existing-function')})
+      const newFunction = await testFunctionExtension({dir: joinPath(directory, 'extensions/new-function')})
+      const app = testAppLinked({
+        allExtensions: [existingFunction],
+        directory,
+        configPath: joinPath(directory, 'shopify.app.toml'),
+      })
+      const mockWatcher = {
+        on: vi.fn().mockReturnThis(),
+        close: vi.fn().mockResolvedValue(undefined),
+      }
+      const watchSpy = vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+      const abortController = new AbortController()
+      const fileWatcher = new FileWatcher(app, {...outputOptions, signal: abortController.signal})
+
+      try {
+        await fileWatcher.start()
+        const ignoredPaths = watchSpy.mock.calls[0]![1]!.ignored as (string | ((path: string) => boolean))[]
+        const ignoreBuildOutput = ignoredPaths.find((pattern) => typeof pattern === 'function') as (
+          path: string,
+        ) => boolean
+        const existingOutput = joinPath(existingFunction.directory, 'dist/function.js')
+        const newOutput = joinPath(newFunction.directory, 'dist/function.js')
+        expect(ignoreBuildOutput(existingOutput)).toBe(true)
+        expect(ignoreBuildOutput(newOutput)).toBe(false)
+
+        fileWatcher.updateApp(testAppLinked({...app, allExtensions: [newFunction]}))
+
+        expect(ignoreBuildOutput(newOutput)).toBe(true)
+        expect(ignoreBuildOutput(existingOutput)).toBe(false)
+        expect(ignoreBuildOutput(joinPath(newFunction.directory, 'src/index.js'))).toBe(false)
+        expect(watchSpy).toHaveBeenCalledTimes(1)
+      } finally {
+        abortController.abort()
       }
     })
   })

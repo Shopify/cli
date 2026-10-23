@@ -35,8 +35,6 @@ const ALWAYS_IGNORED_PATHS = [
   '**/*~',
 ]
 
-const CARGO_BUILD_DIRECTORIES = ['debug', 'release', 'wasm32-wasip1', 'wasm32-wasi', 'rust-analyzer']
-
 /**
  * Event emitted by the file watcher
  *
@@ -74,6 +72,7 @@ export interface OutputContextOptions {
 export class FileWatcher {
   private currentEvents: WatcherEvent[] = []
   private extensionPaths: string[] = []
+  private functionOutputDirectories: string[] = []
   private app: AppLinkedInterface
   private readonly options: OutputContextOptions
   private onChangeCallback?: (events: WatcherEvent[]) => void
@@ -134,22 +133,22 @@ export class FileWatcher {
     const allWatchedFiles = this.getAllWatchedFiles()
     watchPaths.push(...allWatchedFiles)
 
-    // Anchor Cargo output patterns to Rust function roots so source and imported
-    // paths such as src/target/debug remain watched.
-    const cargoIgnoredPaths = this.app.realExtensions
-      .filter(
-        (extension) => extension.isFunctionExtension && fileExistsSync(joinPath(extension.directory, 'Cargo.toml')),
-      )
-      .flatMap((extension) =>
-        CARGO_BUILD_DIRECTORIES.map((directory) => joinPath(extension.directory, 'target', directory, '**')),
-      )
-
     this.close()
 
     // Create new watcher
     const {default: chokidar} = await import('chokidar')
+    const cargoProjects = new Map<string, boolean>()
     this.watcher = chokidar.watch(watchPaths, {
-      ignored: [...ALWAYS_IGNORED_PATHS, ...cargoIgnoredPaths],
+      ignored: [
+        ...ALWAYS_IGNORED_PATHS,
+        (path: string) => {
+          const normalizedPath = normalizePath(path)
+          const isFunctionOutput = this.functionOutputDirectories.some(
+            (directory) => normalizedPath === directory || normalizedPath.startsWith(`${directory}/`),
+          )
+          return isFunctionOutput || isInCargoTargetDirectory(normalizedPath, cargoProjects)
+        },
+      ],
       persistent: true,
       ignoreInitial: true,
     })
@@ -162,6 +161,9 @@ export class FileWatcher {
 
   updateApp(app: AppLinkedInterface) {
     this.app = app
+    this.functionOutputDirectories = app.nonConfigExtensions
+      .filter((extension) => extension.isFunctionExtension)
+      .map((extension) => normalizePath(joinPath(extension.directory, dirname(extension.outputRelativePath))))
     this.extensionPaths = this.app.nonConfigExtensions
       .map((ext) => normalizePath(ext.directory))
       .filter((dir) => dir !== this.app.directory)
@@ -459,4 +461,23 @@ export class FileWatcher {
       .filter((pattern) => pattern !== '' && !pattern.startsWith('#'))
     return ignore.default().add(gitIgnoreContent)
   }
+}
+
+/**
+ * Match Cargo output even when a descendant is supplied as an explicit watch path.
+ * A sibling Cargo.toml distinguishes build output from source folders named target.
+ */
+function isInCargoTargetDirectory(path: string, cargoProjects: Map<string, boolean>): boolean {
+  const segments = path.split('/')
+  for (let index = segments.length - 1; index > 0; index--) {
+    if (segments[index] !== 'target') continue
+    const projectDirectory = segments.slice(0, index).join('/')
+    let isCargoProject = cargoProjects.get(projectDirectory)
+    if (isCargoProject === undefined) {
+      isCargoProject = fileExistsSync(joinPath(projectDirectory, 'Cargo.toml'))
+      cargoProjects.set(projectDirectory, isCargoProject)
+    }
+    if (isCargoProject) return true
+  }
+  return false
 }
