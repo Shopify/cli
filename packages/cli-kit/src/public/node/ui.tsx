@@ -286,8 +286,7 @@ export interface RenderSelectPromptOptions<T> extends Omit<SelectPromptProps<T>,
  *       seventh
  *       tenth
  *
- *    Press ↑↓ arrows to select, enter to confirm, or click an
- *    option.
+ *    Press ↑↓ arrows to select, enter to confirm.
  *
  */
 
@@ -341,8 +340,8 @@ export interface RenderConfirmationPromptOptions extends Pick<
  * >  (y) Yes, confirm changes
  *    (n) Cancel
  *
- *    Use ↑↓ to select; press enter, use a shortcut, or click
- *    an option.
+ *    Press ↑↓ arrows to select, enter or a shortcut to
+ *    confirm.
  *
  */
 export async function renderConfirmationPrompt({
@@ -422,8 +421,7 @@ export interface RenderAutocompleteOptions<T> extends PartialBy<
  *    twenty-fourth
  *    twenty-fifth
  *
- *    Press ↑↓ arrows to select, enter to confirm, or click an
- *    option.
+ *    Press ↑↓ arrows to select, enter to confirm.
  *
  */
 
