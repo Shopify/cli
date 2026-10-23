@@ -11,12 +11,10 @@ const commandExceptions = [
   'packages/app/src/cli/commands/app/security/review.ts',
 
   // Streaming commands without a single finite result.
-  'packages/app/src/cli/commands/app/dev.ts',
   'packages/app/src/cli/commands/app/graphiql.ts',
   'packages/app/src/cli/commands/app/logs.ts',
   'packages/store/src/cli/commands/store/graphiql.ts',
   'packages/theme/src/cli/commands/theme/console.ts',
-  'packages/theme/src/cli/commands/theme/dev.ts',
   'packages/theme/src/cli/commands/theme/language-server.ts',
 ]
 

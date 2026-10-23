@@ -13286,10 +13286,10 @@ Uploads the current theme as a development theme to the connected store, then pr
 ```
 USAGE
   $ shopify theme dev [-a] [--auth-alias <value>] [-e <value>...] [--error-overlay silent|default] [--host
-    <value>] [-x <value>...] [--json-schema] [--listing <value>] [--live-reload hot-reload|full-page|off] [--no-color]
-    [--no-input] [-n] [--notify <value>] [-o <value>...] [--open] [--password <value>] [--path <value>] [--port <value>]
-    [--reconciliation-strategy keep-local|keep-remote|abort --theme-editor-sync] [--standard-events-inspector] [-s
-    <value>] [--store-password <value>] [-t <value>] [--verbose]
+    <value>] [-x <value>...] [-j] [--json-schema] [--listing <value>] [--live-reload hot-reload|full-page|off]
+    [--no-color] [--no-input] [-n] [--notify <value>] [-o <value>...] [--open] [--password <value>] [--path <value>]
+    [--port <value>] [--reconciliation-strategy keep-local|keep-remote|abort --theme-editor-sync]
+    [--standard-events-inspector] [-s <value>] [--store-password <value>] [-t <value>] [--verbose]
 
 FLAGS
   -a, --allow-live
@@ -13299,6 +13299,10 @@ FLAGS
   -e, --environment=<value>...
       The environment to apply to the current command.
       [env: SHOPIFY_FLAG_ENVIRONMENT]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
 
   -n, --nodelete
       Prevents files from being deleted in the remote theme when a file has been deleted locally. This applies to files
@@ -13438,6 +13442,47 @@ DESCRIPTION
 
   You can run this command only in a directory that matches the "default Shopify theme folder structure"
   (https://shopify.dev/docs/themes/tools/cli#directory-structure).
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `DevInstanceLogEntry` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "timestamp": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+        "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+      },
+      "source": {
+        "type": "string",
+        "description": "What produced the line, for example a process prefix like web or extensions, when needed."
+      },
+      "level": {
+        "type": "string",
+        "enum": [
+          "debug",
+          "info",
+          "warning",
+          "error"
+        ]
+      },
+      "message": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "timestamp",
+      "message"
+    ],
+    "additionalProperties": false,
+    "title": "DevInstanceLogEntry",
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme duplicate`
