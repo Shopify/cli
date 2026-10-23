@@ -6,10 +6,11 @@ const sessionUrl = new URL('../../cli-kit/src/public/node/graphiql/session.ts', 
 const sourceLoaderUrl = new URL('../../cli-kit/test/fixtures/cli-kit-source-loader.js', import.meta.url).href
 
 describe('GraphiQL shutdown through the CLI bootstrap', () => {
+  // A fresh TypeScript subprocess needs extra startup time on loaded Windows runners.
   test.each([
     ['SIGINT', 'sigint', 130],
     ['SIGTERM', 'sigterm', 143],
-  ])('flushes lifecycle records and closes the server after %s', {timeout: 20000}, async (signal, reason, exitCode) => {
+  ])('flushes lifecycle records and closes the server after %s', {timeout: 60000}, async (signal, reason, exitCode) => {
     const script = `
       await import(${JSON.stringify(bootstrapUrl)})
       const signalHandler = process.listeners(${JSON.stringify(signal)}).at(-1)
