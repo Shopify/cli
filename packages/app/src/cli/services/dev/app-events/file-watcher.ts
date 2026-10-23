@@ -18,6 +18,26 @@ const EXTENSION_CREATION_CHECK_INTERVAL_IN_MS = 200
 const FILE_DELETE_TIMEOUT_IN_MS = 500
 
 /**
+ * Paths chokidar never watches, whatever extensions the app has. None of them is ever
+ * an extension's source or a file an extension imports. Skipping them here, rather than
+ * dropping their events afterwards, stops chokidar crawling them and, when it falls
+ * back to polling, polling them.
+ */
+const ALWAYS_IGNORED_PATHS = [
+  // Dependencies and version control
+  '**/node_modules/**',
+  '**/.git/**',
+  // Files the CLI writes itself: dev and deploy bundles, certificates, app security results
+  '**/.shopify/**',
+  // macOS Finder metadata
+  '**/.DS_Store',
+  // Editor swap and backup files
+  '**/*.swp',
+  '**/*.swo',
+  '**/*~',
+]
+
+/**
  * Event emitted by the file watcher
  *
  * Includes the type of the event, the path of the file that triggered the event and the extension handle that owns the file.
@@ -119,7 +139,7 @@ export class FileWatcher {
     // Create new watcher
     const {default: chokidar} = await import('chokidar')
     this.watcher = chokidar.watch(watchPaths, {
-      ignored: ['**/node_modules/**', '**/.git/**'],
+      ignored: [...ALWAYS_IGNORED_PATHS, buildOutputMatcher(this.app)],
       persistent: true,
       ignoreInitial: true,
     })
@@ -429,4 +449,49 @@ export class FileWatcher {
       .filter((pattern) => pattern !== '' && !pattern.startsWith('#'))
     return ignore.default().add(gitIgnoreContent)
   }
+}
+
+/**
+ * Returns a chokidar matcher for build output, which is never source: every function's
+ * output directory (`dist` by default) and every Cargo `target` directory. A Rust
+ * function's `target` directory can hold tens of thousands of files.
+ */
+function buildOutputMatcher(app: AppLinkedInterface): (path: string) => boolean {
+  const functionOutputDirectories = app.nonConfigExtensions.flatMap((extension) => {
+    const outputDirectory = dirname(extension.outputRelativePath)
+    if (!extension.isFunctionExtension || outputDirectory === '.' || outputDirectory === '') return []
+    return [normalizePath(joinPath(extension.directory, outputDirectory))]
+  })
+  const cargoProjects = new Map<string, boolean>()
+
+  return (path: string) => {
+    const normalizedPath = normalizePath(path)
+    const isFunctionOutput = functionOutputDirectories.some(
+      (directory) => normalizedPath === directory || normalizedPath.startsWith(`${directory}/`),
+    )
+    return isFunctionOutput || isInCargoTargetDirectory(normalizedPath, cargoProjects)
+  }
+}
+
+/**
+ * Whether a path is inside a Cargo build directory: a `target` directory next to a
+ * `Cargo.toml`. Requiring the `Cargo.toml` keeps source folders that happen to be
+ * called `target` watched.
+ *
+ * @param path - Normalized path to check.
+ * @param cargoProjects - Cache of whether a directory holds a `Cargo.toml`, keyed by directory.
+ */
+function isInCargoTargetDirectory(path: string, cargoProjects: Map<string, boolean>): boolean {
+  const segments = path.split('/')
+  for (let index = segments.length - 1; index > 0; index--) {
+    if (segments[index] !== 'target') continue
+    const projectDirectory = segments.slice(0, index).join('/')
+    let isCargoProject = cargoProjects.get(projectDirectory)
+    if (isCargoProject === undefined) {
+      isCargoProject = fileExistsSync(joinPath(projectDirectory, 'Cargo.toml'))
+      cargoProjects.set(projectDirectory, isCargoProject)
+    }
+    if (isCargoProject) return true
+  }
+  return false
 }
