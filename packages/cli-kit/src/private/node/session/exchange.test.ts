@@ -424,8 +424,13 @@ describe.each(tokenExchangeMethods)(
 
       // Then
       await expect(result).rejects.toThrowError(/^The token in SHOPIFY_APP_AUTOMATION_TOKEN doesn't have /)
+      // Tells them to move to the new variable and to unset the old one, which would otherwise conflict.
       await expect(result).rejects.toMatchObject({
-        tryMessage: expect.arrayContaining([{command: 'SHOPIFY_SERVICE_ACCOUNT_TOKEN'}]),
+        tryMessage: expect.arrayContaining([
+          {command: 'SHOPIFY_SERVICE_ACCOUNT_TOKEN'},
+          'and unset',
+          {command: 'SHOPIFY_APP_AUTOMATION_TOKEN'},
+        ]),
       })
     })
 

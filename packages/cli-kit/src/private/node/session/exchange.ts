@@ -96,13 +96,17 @@ function automationTokenExchangeMessages(
           ],
         }
       }
+      // Setting the new variable beside the old one is refused as a conflict, so say to unset it too.
       return {
         message: `The token in ${variable} doesn't have ${access}.`,
         tryMessage: [
           'Use a service account token that has it: create one',
           ...admin,
-          'and set it in',
+          {char: ','},
+          'set it in',
           {command: environmentVariables.serviceAccountToken},
+          'and unset',
+          {command: variable},
           {char: '.'},
         ],
       }
