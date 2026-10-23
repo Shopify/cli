@@ -18,6 +18,26 @@ const EXTENSION_CREATION_CHECK_INTERVAL_IN_MS = 200
 const FILE_DELETE_TIMEOUT_IN_MS = 500
 
 /**
+ * Exclude these paths before chokidar traverses them to avoid allocating watchers
+ * or polling files whose events would be discarded later.
+ */
+const ALWAYS_IGNORED_PATHS = [
+  // Dependencies and version control
+  '**/node_modules/**',
+  '**/.git/**',
+  // Files the CLI writes itself: dev and deploy bundles, certificates, app security results
+  '**/.shopify/**',
+  // macOS Finder metadata
+  '**/.DS_Store',
+  // Editor swap and backup files
+  '**/*.swp',
+  '**/*.swo',
+  '**/*~',
+]
+
+const CARGO_BUILD_DIRECTORIES = ['debug', 'release', 'wasm32-wasip1', 'wasm32-wasi', 'rust-analyzer']
+
+/**
  * Event emitted by the file watcher
  *
  * Includes the type of the event, the path of the file that triggered the event and the extension handle that owns the file.
@@ -114,12 +134,22 @@ export class FileWatcher {
     const allWatchedFiles = this.getAllWatchedFiles()
     watchPaths.push(...allWatchedFiles)
 
+    // Anchor Cargo output patterns to Rust function roots so source and imported
+    // paths such as src/target/debug remain watched.
+    const cargoIgnoredPaths = this.app.realExtensions
+      .filter(
+        (extension) => extension.isFunctionExtension && fileExistsSync(joinPath(extension.directory, 'Cargo.toml')),
+      )
+      .flatMap((extension) =>
+        CARGO_BUILD_DIRECTORIES.map((directory) => joinPath(extension.directory, 'target', directory, '**')),
+      )
+
     this.close()
 
     // Create new watcher
     const {default: chokidar} = await import('chokidar')
     this.watcher = chokidar.watch(watchPaths, {
-      ignored: ['**/node_modules/**', '**/.git/**'],
+      ignored: [...ALWAYS_IGNORED_PATHS, ...cargoIgnoredPaths],
       persistent: true,
       ignoreInitial: true,
     })
