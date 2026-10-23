@@ -167,6 +167,17 @@ describe('errors', () => {
       expect(info.status).toBe(502)
       expect(info.statusText).toBe('Bad Gateway')
       expect(info.body).toBe(error.stack)
+      expect(info.causeCode).toBeUndefined()
+    })
+
+    test('surfaces the code of a nested cause', () => {
+      const rootCause = Object.assign(new Error('Headers Overflow Error'), {code: 'UND_ERR_HEADERS_OVERFLOW'})
+      const fetchError = createFetchError(new TypeError('fetch failed', {cause: rootCause}), 'https://test.com')
+
+      const info = extractFetchErrorInfo(fetchError, 'Failed to render storefront')
+
+      expect(info.causeCode).toBe('UND_ERR_HEADERS_OVERFLOW')
+      expect(info.headline).toContain('Cause: UND_ERR_HEADERS_OVERFLOW')
     })
   })
 })
