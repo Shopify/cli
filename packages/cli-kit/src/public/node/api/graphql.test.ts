@@ -90,6 +90,15 @@ const handlers = [
       },
     )
   }),
+  mockApi.query('FailsWithUnauthorizedAndNoBody', () => {
+    // A gateway's 401 has no GraphQL body, so the typed `HttpResponse.json` doesn't fit here.
+    return new HttpResponse(null, {
+      status: 401,
+      headers: {
+        'x-request-id': 'unauthorized-request-id',
+      },
+    })
+  }),
   mockApi.query('FailsWithBadRequest', () => {
     return HttpResponse.json(
       {
@@ -388,6 +397,70 @@ describe('graphqlRequest', () => {
 
     await expect(res).rejects.toThrow('not authorized')
     expect(requestCount).toBe(2)
+  })
+
+  describe('a 401 that survives the token refresh', () => {
+    const query = 'query FailsWithUnauthorizedAndNoBody { example(secret: $secret) }'
+    const variables = {secret: 'do-not-print-me'}
+
+    test('reports the status without the request when no token refresh function is provided', async () => {
+      const res = graphqlRequest({query, api: 'mockApi', url: mockedAddress, token: mockToken, variables})
+
+      await expect(res).rejects.toMatchObject({
+        statusCode: 401,
+        message:
+          'The mockApi GraphQL API responded unsuccessfully with the HTTP status 401.\n\nRequest ID: unauthorized-request-id',
+      })
+      await expect(res).rejects.not.toThrow(/do-not-print-me|example\(secret/)
+    })
+
+    test('reports the status without the request when the token cannot be refreshed', async () => {
+      const res = graphqlRequest({
+        query,
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        variables,
+        unauthorizedHandler: {type: 'token_refresh', handler: async () => ({token: undefined})},
+      })
+
+      await expect(res).rejects.toMatchObject({statusCode: 401})
+      await expect(res).rejects.not.toThrow(/do-not-print-me|example\(secret/)
+    })
+
+    test('reports the status without the request when the refreshed token is rejected too', async () => {
+      const res = graphqlRequest({
+        query,
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        variables,
+        unauthorizedHandler: {type: 'token_refresh', handler: async () => ({token: 'refreshed-token'})},
+      })
+
+      let requestCount = 0
+      server.events.on('request:start', () => {
+        requestCount++
+      })
+
+      await expect(res).rejects.toMatchObject({statusCode: 401})
+      await expect(res).rejects.not.toThrow(/do-not-print-me|example\(secret/)
+      expect(requestCount).toBe(2)
+    })
+
+    test('keeps the raw error when the caller handles errors itself', async () => {
+      const res = graphqlRequest({
+        query,
+        api: 'mockApi',
+        url: mockedAddress,
+        token: mockToken,
+        variables,
+        responseOptions: {handleErrors: false},
+        unauthorizedHandler: {type: 'token_refresh', handler: async () => ({token: 'refreshed-token'})},
+      })
+
+      await expect(res).rejects.toMatchObject({response: {status: 401}})
+    })
   })
 
   test('Fails without retry when bad request when unauthorized handler is provided', async () => {

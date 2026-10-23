@@ -134,7 +134,12 @@ describe('getStoreInfo', () => {
 
     expect(getCurrentStoredStoreAppSession).toHaveBeenCalledWith(SHOP)
     expect(fetchDestinationsContext).toHaveBeenCalledWith({store: SHOP, noPrompt: false})
-    expect(fetchOrganizationShop).toHaveBeenCalledWith({store: SHOP, organizationId: '149572536', noPrompt: false})
+    expect(fetchOrganizationShop).toHaveBeenCalledWith({
+      store: SHOP,
+      organizationId: '149572536',
+      organizationName: 'Acme Holdings',
+      noPrompt: false,
+    })
     expect(loadStoredStoreSession).not.toHaveBeenCalled()
     expect(graphqlRequest).not.toHaveBeenCalled()
     expect(getPreviewStore).not.toHaveBeenCalled()
@@ -337,7 +342,12 @@ describe('getStoreInfo', () => {
     const result = await getStoreInfo({store: SHOP})
 
     expect(fetchDestinationsContext).toHaveBeenCalledWith({store: SHOP, noPrompt: true})
-    expect(fetchOrganizationShop).toHaveBeenCalledWith({store: SHOP, organizationId: '149572536', noPrompt: true})
+    expect(fetchOrganizationShop).toHaveBeenCalledWith({
+      store: SHOP,
+      organizationId: '149572536',
+      organizationName: 'Acme Holdings',
+      noPrompt: true,
+    })
     expect(loadStoredStoreSession).not.toHaveBeenCalled()
     expect(graphqlRequest).not.toHaveBeenCalled()
     expect(result).toEqual({
