@@ -1,5 +1,5 @@
 import {deleteDevStoreJsonOutputSchema} from './types.js'
-import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
+import {businessPlatformTokenRefreshHandler, withOrganizationStoreAccess} from '../business-platform.js'
 import {fetchOptionalOrganizationShop} from '../../../utilities/store-lookup/organization-shop.js'
 import {DeleteAppDevelopmentStore} from '../../../api/graphql/business-platform-organizations/generated/delete_app_development_store.js'
 import {
@@ -37,15 +37,19 @@ export async function deleteDevStore(options: DeleteDevStoreOptions): Promise<vo
   const {organization: org, store} = options
   const token = await ensureAuthenticatedBusinessPlatform([], {allowAutomationToken: true})
   const unauthorizedHandler = businessPlatformTokenRefreshHandler()
-  let shopifyShopId = await fetchShopifyShopId({store, organizationId: org.id, token})
+  let shopifyShopId = await withOrganizationStoreAccess(org, () =>
+    fetchShopifyShopId({store, organizationId: org.id, token}),
+  )
 
-  const mutationResult = await businessPlatformOrganizationsRequestDoc({
-    query: DeleteAppDevelopmentStore,
-    token,
-    organizationId: org.id,
-    variables: {storeFqdn: store},
-    unauthorizedHandler,
-  })
+  const mutationResult = await withOrganizationStoreAccess(org, () =>
+    businessPlatformOrganizationsRequestDoc({
+      query: DeleteAppDevelopmentStore,
+      token,
+      organizationId: org.id,
+      variables: {storeFqdn: store},
+      unauthorizedHandler,
+    }),
+  )
 
   const deleteAppDevelopmentStore = mutationResult.deleteAppDevelopmentStore
   if (!deleteAppDevelopmentStore) {

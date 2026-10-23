@@ -6,7 +6,7 @@ import {
   PollStoreCreationQuery,
 } from '../../api/graphql/business-platform-organizations/generated/poll_store_creation.js'
 import {Organization} from '../../models/organization.js'
-import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
+import {businessPlatformTokenRefreshHandler, withOrganizationStoreAccess} from '../business-platform.js'
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputResult} from '@shopify/cli-kit/node/output'
@@ -60,19 +60,21 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<st
   const token = await ensureAuthenticatedBusinessPlatform([], {allowAutomationToken: true})
   const unauthorizedHandler = businessPlatformTokenRefreshHandler()
 
-  const mutationResult = await businessPlatformOrganizationsRequestDoc({
-    query: CreateAppDevelopmentStore,
-    token,
-    organizationId: org.id,
-    variables: {
-      shopName: name,
-      priceLookupKey: DEV_STORE_PLANS[plan],
-      prepopulateTestData: options.withDemoData ?? false,
-      developerPreviewHandle: options.featurePreview,
-      country: options.country,
-    },
-    unauthorizedHandler,
-  })
+  const mutationResult = await withOrganizationStoreAccess(org, () =>
+    businessPlatformOrganizationsRequestDoc({
+      query: CreateAppDevelopmentStore,
+      token,
+      organizationId: org.id,
+      variables: {
+        shopName: name,
+        priceLookupKey: DEV_STORE_PLANS[plan],
+        prepopulateTestData: options.withDemoData ?? false,
+        developerPreviewHandle: options.featurePreview,
+        country: options.country,
+      },
+      unauthorizedHandler,
+    }),
+  )
 
   const createAppDevelopmentStore = mutationResult.createAppDevelopmentStore
   if (!createAppDevelopmentStore) {

@@ -1,6 +1,6 @@
 import {STORE_LIST_LIMIT} from './constants.js'
 import {type StoreListEntry} from './types.js'
-import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
+import {businessPlatformTokenRefreshHandler, withOrganizationStoreAccess} from '../business-platform.js'
 import {planHandle} from '../plan.js'
 import {storeTypeFilterValue, storeTypeHandle, type StoreTypeFilter} from '../store-type.js'
 import {
@@ -44,13 +44,15 @@ async function fetchOrganizationStores(
 ): Promise<{entries: StoreListEntry[]; hasMore: boolean}> {
   const unauthorizedHandler = businessPlatformTokenRefreshHandler()
 
-  const result = await businessPlatformOrganizationsRequestDoc({
-    query: ListAccessibleShops,
-    token,
-    organizationId: organization.id,
-    variables: {first: STORE_LIST_LIMIT, filters: shopFilters(storeType)},
-    unauthorizedHandler,
-  })
+  const result = await withOrganizationStoreAccess(organization, () =>
+    businessPlatformOrganizationsRequestDoc({
+      query: ListAccessibleShops,
+      token,
+      organizationId: organization.id,
+      variables: {first: STORE_LIST_LIMIT, filters: shopFilters(storeType)},
+      unauthorizedHandler,
+    }),
+  )
 
   const accessibleShops = result.organization?.accessibleShops
   if (!accessibleShops) return {entries: [], hasMore: false}
