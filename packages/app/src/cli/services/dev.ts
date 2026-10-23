@@ -443,7 +443,9 @@ async function renderDevProcesses({
   const abortController = new AbortController()
   const devInstance = config.commandOptions.devInstance
 
-  await updateDevInstance(config, previewUrl, graphiqlUrl, devSessionStatusManager)
+  if (devInstance && previewUrl) {
+    await updateDevInstance(config, previewUrl, graphiqlUrl, devSessionStatusManager)
+  }
 
   const developerPlatformClient = config.developerPlatformClient
   const app = {
