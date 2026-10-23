@@ -14151,23 +14151,23 @@ DESCRIPTION
           },
           "startRow": {
             "type": "integer",
-            "minimum": 0,
-            "description": "The zero-based starting line."
+            "exclusiveMinimum": 0,
+            "description": "The one-based starting line."
           },
           "startColumn": {
             "type": "integer",
-            "minimum": 0,
-            "description": "The zero-based starting column."
+            "exclusiveMinimum": 0,
+            "description": "The one-based starting column."
           },
           "endRow": {
             "type": "integer",
-            "minimum": 0,
-            "description": "The zero-based ending line."
+            "exclusiveMinimum": 0,
+            "description": "The one-based ending line."
           },
           "endColumn": {
             "type": "integer",
-            "minimum": 0,
-            "description": "The zero-based ending column."
+            "exclusiveMinimum": 0,
+            "description": "The one-based ending column."
           },
           "message": {
             "type": "string"

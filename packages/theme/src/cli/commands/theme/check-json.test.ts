@@ -34,10 +34,10 @@ const invalidResult = {
       filePath: resolvePath(pathUtils.fsPath(offense.uri)),
       check: 'ExampleCheck',
       severity: 'error',
-      startRow: 0,
-      startColumn: 0,
-      endRow: 0,
-      endColumn: 1,
+      startRow: 1,
+      startColumn: 1,
+      endRow: 1,
+      endColumn: 2,
       message: 'Example offense',
     },
   ],
@@ -53,7 +53,7 @@ async function configuration() {
   return config
 }
 
-test('projects the service model to flat issues with strict zero-based positions and counts', async () => {
+test('projects the service model to flat issues with strict one-based positions and counts', async () => {
   expect(Check.jsonOutputSchema).toBe(themeCheckJsonOutputSchema)
   vi.mocked(themeCheckRun).mockResolvedValue({offenses: [offense], theme: [], config: {} as never})
   const {result} = await checkTheme('/theme')
@@ -63,14 +63,36 @@ test('projects the service model to flat issues with strict zero-based positions
   expect(() => themeCheckJsonOutputSchema.validate({...invalidResult, errorCount: '1'})).toThrow()
   expect(() => themeCheckJsonOutputSchema.validate({...invalidResult, extra: true})).toThrow()
   expect(() =>
-    themeCheckJsonOutputSchema.validate({...invalidResult, issues: [{...invalidResult.issues[0], startRow: -1}]}),
-  ).toThrow()
-  expect(() =>
     themeCheckJsonOutputSchema.validate({
       ...invalidResult,
       issues: [{...invalidResult.issues[0], filePath: 'index.liquid'}],
     }),
   ).toThrow()
+})
+
+test('converts multiline ranges to one-based positions', () => {
+  const multilineOffense = {
+    ...offense,
+    start: {index: 14, line: 2, character: 4},
+    end: {index: 35, line: 5, character: 0},
+  }
+  const result = formatOffensesJson(sortOffenses([multilineOffense]))
+
+  expect(JSON.parse(encodeThemeCheckResult(result))).toEqual({
+    ...invalidResult,
+    issues: [{...invalidResult.issues[0], startRow: 3, startColumn: 5, endRow: 6, endColumn: 1}],
+  })
+})
+
+test.each(['startRow', 'startColumn', 'endRow', 'endColumn'])('requires a positive integer for %s', (position) => {
+  for (const value of [0, -1, 1.5]) {
+    expect(() =>
+      themeCheckJsonOutputSchema.validate({
+        ...invalidResult,
+        issues: [{...invalidResult.issues[0], [position]: value}],
+      }),
+    ).toThrow()
+  }
 })
 
 test.each(['--json', '--output=json'])('writes one validation result and exits nonzero for %s', async (flag) => {
