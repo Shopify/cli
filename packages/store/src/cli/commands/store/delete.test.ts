@@ -2,6 +2,7 @@ import StoreDelete from './delete.js'
 import {deleteDevStoreJsonOutputSchema} from '../../services/store/delete/types.js'
 import {deleteDevStore} from '../../services/store/delete/dev.js'
 import {resolveOrganizationForStore} from '../../utilities/store-lookup/organization.js'
+import {OrganizationStoreAccessError} from '@shopify/organizations'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {isTTY, renderDangerousConfirmationPrompt} from '@shopify/cli-kit/node/ui'
@@ -170,6 +171,33 @@ describe('store delete command', () => {
     expect(mockExit).toHaveBeenCalledWith(1)
 
     mockExit.mockRestore()
+  })
+
+  test('includes how to grant a service account dev store access in the --json error', async () => {
+    vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'service-account-token')
+    vi.mocked(deleteDevStore).mockRejectedValueOnce(new OrganizationStoreAccessError(defaultOrg))
+    const mockExit = vi.spyOn(process, 'exit').mockImplementation((() => {
+      throw new Error('process.exit')
+    }) as never)
+
+    await expect(
+      StoreDelete.run(['--store', 'my-store.myshopify.com', '--organization-id', '12345', '--json', '--force']),
+    ).rejects.toThrow('process.exit')
+
+    const parsed = JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string)
+    expect(deleteDevStoreJsonOutputSchema.validate(parsed)).toEqual(parsed)
+    expect(parsed).toEqual({
+      error: true,
+      message: "This service account can't manage dev stores in Test Org.",
+      nextSteps: [
+        'Give the service account Dev store management access in the Shopify admin under Settings > Users > Security.',
+        'Or use a token from a service account that has that access.',
+      ],
+      exitCode: 1,
+    })
+
+    mockExit.mockRestore()
+    vi.unstubAllEnvs()
   })
 
   test('outputs structured JSON error when --json is active and organization resolution throws AbortError', async () => {

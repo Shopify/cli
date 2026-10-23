@@ -5,10 +5,10 @@ export type {Organization, OrganizationWithDetails, OrganizationStatus} from './
 export {organizationStatusValues} from './cli/models/organization.js'
 export {
   businessPlatformTokenRefreshHandler,
-  isOrganizationAccessError,
   OrganizationStoreAccessError,
-  withOrganizationStoreAccess,
+  organizationStoresRequestDoc,
 } from './cli/services/business-platform.js'
+export type {OrganizationReference} from './cli/services/business-platform.js'
 export {createDevStore, devStorePlanHandles} from './cli/services/dev/create-dev-store.js'
 export type {CreateDevStoreOptions, DevStorePlan} from './cli/services/dev/create-dev-store.js'
 export {devStoreNamePrompt, devStorePlanPrompt, devStoreDemoDataPrompt} from './cli/prompts/dev.js'

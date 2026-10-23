@@ -186,7 +186,12 @@ async function safeFetchOrganizationShop(
     return undefined
   }
   try {
-    return await fetchOrganizationShop({store, organizationId: ctx.owningOrg.id, noPrompt: options.noPrompt})
+    return await fetchOrganizationShop({
+      store,
+      organizationId: ctx.owningOrg.id,
+      organizationName: ctx.owningOrg.name,
+      noPrompt: options.noPrompt,
+    })
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     outputDebug(`BP Organizations shop lookup failed: ${error instanceof Error ? error.message : String(error)}`)

@@ -1,14 +1,16 @@
 import {
   isOrganizationAccessError,
   OrganizationStoreAccessError,
-  withOrganizationStoreAccess,
+  organizationStoresRequestDoc,
 } from './business-platform.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
+import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {getAppAutomationToken} from '@shopify/cli-kit/node/environment'
 import {isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/environment')
+vi.mock('@shopify/cli-kit/node/api/business-platform')
 vi.mock('@shopify/cli-kit/node/session')
 
 const organization = {id: '299069', businessName: 'A Better Looking Shop'}
@@ -56,8 +58,12 @@ describe('OrganizationStoreAccessError', () => {
 
     expect(error).toBeInstanceOf(AbortError)
     expect(error.message).toBe("This service account can't manage dev stores in A Better Looking Shop.")
-    expect(JSON.stringify(error.tryMessage)).toContain('Dev store management')
-    expect(JSON.stringify(error.tryMessage)).toContain('Settings > Users > Security')
+    // The guidance lives in nextSteps, the field the store commands' --json output carries.
+    expect(error.tryMessage).toBeNull()
+    expect(error.nextSteps).toEqual([
+      'Give the service account Dev store management access in the Shopify admin under Settings > Users > Security.',
+      'Or use a token from a service account that has that access.',
+    ])
   })
 
   test('points a legacy automation token at service accounts', () => {
@@ -66,38 +72,54 @@ describe('OrganizationStoreAccessError', () => {
     const error = new OrganizationStoreAccessError(organization)
 
     expect(error.message).toBe("This automation token can't manage dev stores in A Better Looking Shop.")
-    expect(JSON.stringify(error.tryMessage)).toContain('SHOPIFY_SERVICE_ACCOUNT_TOKEN')
+    expect(error.nextSteps?.join(' ')).toContain('SHOPIFY_SERVICE_ACCOUNT_TOKEN')
   })
 
   test('talks about permission for a logged-in user', () => {
     const error = new OrganizationStoreAccessError(organization)
 
     expect(error.message).toBe("You don't have permission to manage dev stores in A Better Looking Shop.")
+    expect(error.nextSteps).toEqual([
+      "Check that you're logged in to the right account.",
+      'Or ask an organization admin for access.',
+    ])
+  })
+
+  test('falls back to the organization ID when the name is unknown', () => {
+    const error = new OrganizationStoreAccessError({id: '299069'})
+
+    expect(error.message).toBe("You don't have permission to manage dev stores in organization 299069.")
   })
 })
 
-describe('withOrganizationStoreAccess', () => {
-  test('returns the request result', async () => {
-    await expect(withOrganizationStoreAccess(organization, async () => 'ok')).resolves.toBe('ok')
+describe('organizationStoresRequestDoc', () => {
+  const request = {
+    query: {} as never,
+    token: 'token',
+    variables: {first: 1},
+    unauthorizedHandler: {type: 'token_refresh' as const, handler: async () => ({token: 'refreshed'})},
+  }
+
+  test("sends the request to the organization's Organizations API and returns the result", async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValue({ok: true})
+
+    await expect(organizationStoresRequestDoc(organization, request)).resolves.toEqual({ok: true})
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledWith({...request, organizationId: '299069'})
   })
 
   test('replaces a refused request with the access error', async () => {
     vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockRejectedValue(handledClientError(401))
 
-    const result = withOrganizationStoreAccess(organization, async () => {
-      throw handledClientError(401)
-    })
-
-    await expect(result).rejects.toThrow("This service account can't manage dev stores in A Better Looking Shop.")
+    await expect(organizationStoresRequestDoc(organization, request)).rejects.toThrow(
+      "This service account can't manage dev stores in A Better Looking Shop.",
+    )
   })
 
   test('rethrows every other error unchanged', async () => {
-    const boom = new Error('boom')
+    const notFound = handledClientError(404)
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockRejectedValue(notFound)
 
-    await expect(
-      withOrganizationStoreAccess(organization, async () => {
-        throw boom
-      }),
-    ).rejects.toBe(boom)
+    await expect(organizationStoresRequestDoc(organization, request)).rejects.toBe(notFound)
   })
 })
