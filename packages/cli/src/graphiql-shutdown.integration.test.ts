@@ -51,7 +51,7 @@ describe('GraphiQL shutdown through the CLI bootstrap', () => {
       },
     )
 
-    expect(result.exitCode, result.stderr).toBe(exitCode)
+    expect(result.exitCode, JSON.stringify(result)).toBe(exitCode)
     expect(result.stderr).toBe('')
     const records = result.stdout
       .trim()
