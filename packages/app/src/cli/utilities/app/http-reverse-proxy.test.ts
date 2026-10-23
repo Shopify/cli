@@ -8,6 +8,7 @@ import https from 'https'
 import net from 'net'
 
 const each = ['http', 'https'] as const
+const authorizedOrigin = 'https://app.example'
 
 describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
   const test = getTestReverseProxy(protocol)
@@ -55,8 +56,25 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
     })
   })
 
-  test('responds to CORS preflight OPTIONS with default headers', {retry: 2}, async ({setup}) => {
+  test('forwards the CORS preflight to the target and keeps its credentials decision', {retry: 2}, async ({setup}) => {
     const response = await fetch(`${protocol}://localhost:${setup.proxyPort}/path1/test`, {
+      method: 'OPTIONS',
+      headers: {
+        Origin: authorizedOrigin,
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'Content-Type',
+      },
+      agent,
+    })
+    expect(response.status).toBe(204)
+    expect(response.headers.get('access-control-allow-origin')).toBe(authorizedOrigin)
+    expect(response.headers.get('access-control-allow-credentials')).toBe('true')
+    expect(response.headers.get('access-control-allow-methods')).toBe('POST')
+    expect(response.headers.get('access-control-allow-headers')).toBe('Content-Type')
+  })
+
+  test('responds to the preflight when the target has no OPTIONS handler', {retry: 2}, async ({setup}) => {
+    const response = await fetch(`${protocol}://localhost:${setup.proxyPort}/path2/test`, {
       method: 'OPTIONS',
       headers: {
         Origin: 'https://extensions.shopifycdn.com',
@@ -70,10 +88,46 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
     expect(response.headers.get('access-control-allow-methods')).toBe('GET')
     expect(response.headers.get('access-control-allow-headers')).toBe('Authorization')
     expect(response.headers.get('access-control-max-age')).toBe('86400')
+    expect(response.headers.get('access-control-allow-credentials')).toBeNull()
   })
 
-  test('responds to CORS preflight OPTIONS with defaults when no request headers', {retry: 2}, async ({setup}) => {
+  test('keeps the target response when it does not authorize the origin', {retry: 2}, async ({setup}) => {
     const response = await fetch(`${protocol}://localhost:${setup.proxyPort}/path1/test`, {
+      method: 'OPTIONS',
+      headers: {Origin: 'https://evil.example', 'Access-Control-Request-Method': 'POST'},
+      agent,
+    })
+    expect(response.status).toBe(204)
+    expect(response.headers.get('access-control-allow-origin')).toBeNull()
+    expect(response.headers.get('access-control-allow-credentials')).toBeNull()
+  })
+
+  for (const status of [404, 403]) {
+    test(`responds to the preflight when the target answers ${status}`, {retry: 2}, async ({setup}) => {
+      const response = await fetch(`${protocol}://localhost:${setup.proxyPort}/path2/status-${status}`, {
+        method: 'OPTIONS',
+        headers: {Origin: 'https://evil.example', 'Access-Control-Request-Method': 'POST'},
+        agent,
+      })
+      expect(response.status).toBe(204)
+      expect(response.headers.get('access-control-allow-origin')).toBe('https://evil.example')
+      expect(response.headers.get('access-control-allow-credentials')).toBeNull()
+    })
+  }
+
+  test('responds to the preflight when the target is unreachable', {retry: 2}, async ({setup}) => {
+    const response = await fetch(`${protocol}://localhost:${setup.proxyPort}/unreachable/test`, {
+      method: 'OPTIONS',
+      headers: {Origin: 'https://extensions.shopifycdn.com', 'Access-Control-Request-Method': 'GET'},
+      agent,
+    })
+    expect(response.status).toBe(204)
+    expect(response.headers.get('access-control-allow-origin')).toBe('https://extensions.shopifycdn.com')
+    expect(response.headers.get('access-control-allow-credentials')).toBeNull()
+  })
+
+  test('responds to the preflight with defaults when no request headers', {retry: 2}, async ({setup}) => {
+    const response = await fetch(`${protocol}://localhost:${setup.proxyPort}/path2/test`, {
       method: 'OPTIONS',
       agent,
     })
@@ -81,6 +135,7 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
     expect(response.headers.get('access-control-allow-origin')).toBe('*')
     expect(response.headers.get('access-control-allow-methods')).toBe('GET, POST, PUT, DELETE, PATCH, OPTIONS')
     expect(response.headers.get('access-control-allow-headers')).toBe('Content-Type, Authorization')
+    expect(response.headers.get('access-control-allow-credentials')).toBeNull()
   })
 
   test('closes the server when aborted', async ({setup}) => {
@@ -113,11 +168,31 @@ function getTestReverseProxy(protocol: 'http' | 'https') {
     // eslint-disable-next-line no-empty-pattern
     setup: async ({}, use) => {
       const targetServer1 = http.createServer((req, res) => {
+        if (req.method === 'OPTIONS') {
+          const origin = req.headers.origin
+          // Like a backend with an origin allowlist: only trusted origins get CORS headers.
+          res.writeHead(
+            204,
+            origin === authorizedOrigin
+              ? {
+                  'Access-Control-Allow-Origin': origin,
+                  'Access-Control-Allow-Credentials': 'true',
+                  'Access-Control-Allow-Methods': req.headers['access-control-request-method'] ?? '',
+                  'Access-Control-Allow-Headers': req.headers['access-control-request-headers'] ?? '',
+                }
+              : {},
+          )
+          return res.end()
+        }
         res.writeHead(200, {'Content-Type': 'text/plain'})
         res.end('Response from target server 1')
       })
 
       const targetServer2 = http.createServer((req, res) => {
+        if (req.method === 'OPTIONS') {
+          res.writeHead(Number(/status-(\d+)/.exec(req.url ?? '')?.[1] ?? 405))
+          return res.end()
+        }
         res.writeHead(200, {'Content-Type': 'text/plain'})
         res.end('Response from target server 2')
       })
@@ -131,11 +206,18 @@ function getTestReverseProxy(protocol: 'http' | 'https') {
       const targetPort1 = (targetServer1.address() as net.AddressInfo).port
       const targetPort2 = (targetServer2.address() as net.AddressInfo).port
 
+      // A port that was free a moment ago and has nothing listening on it.
+      const closedServer = http.createServer()
+      await new Promise<void>((resolve) => closedServer.listen(0, 'localhost', resolve))
+      const closedPort = (closedServer.address() as net.AddressInfo).port
+      await new Promise<void>((resolve) => closedServer.close(() => resolve()))
+
       const abortController = new AbortController()
       const {server: proxyServer} = await getProxyingWebServer(
         {
           '/path1': `http://localhost:${targetPort1}`,
           '/path2': `http://localhost:${targetPort2}`,
+          '/unreachable': `http://localhost:${closedPort}`,
           default: `http://localhost:${targetPort1}`,
         },
         abortController.signal,

@@ -26,6 +26,7 @@ export async function getProxyingWebServer(
   // to block the loading of the ESM module graph.
   const httpProxy = await import('http-proxy-node16')
   const proxy = httpProxy.default.createProxyServer()
+  proxy.on('proxyRes', handlePreflightResponse)
 
   const requestListener = getProxyServerRequestListener(rules, proxy, stdout)
 
@@ -70,27 +71,14 @@ function getProxyServerRequestListener(
   return function (req, res) {
     const target = match(rules, req)
     if (target) {
-      // Handle CORS preflight requests directly
-      // The proxy does not forward OPTIONS reliably, so we respond here
-      // using the headers requested by the client.
-      if (req.method === 'OPTIONS') {
-        res.writeHead(204, {
-          'Access-Control-Allow-Origin': req.headers.origin ?? '*',
-          'Access-Control-Allow-Methods':
-            req.headers['access-control-request-method'] ?? 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-          'Access-Control-Allow-Headers':
-            req.headers['access-control-request-headers'] ?? 'Content-Type, Authorization',
-          'Access-Control-Max-Age': '86400',
-        })
-        return res.end()
-      }
-      return proxy.web(req, res, {target}, (err) => {
+      return proxy.web(req, res, {target, selfHandleResponse: isPreflight(req)}, (err) => {
         useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
           const lastError = isAggregateError(err) ? err.errors[err.errors.length - 1] : undefined
           const error = lastError ?? err
           outputWarn(`Error forwarding web request: ${error.message}`, stdout)
           outputWarn(`└  Unreachable target "${target}" for path: "${req.url}"`, stdout)
         })
+        if (isPreflight(req) && !res.headersSent) respondToPreflight(req, res)
       })
     }
 
@@ -103,6 +91,63 @@ ${outputToken.json(JSON.stringify(rules))}
     res.statusCode = 500
     res.end(`Invalid path ${req.url}`)
   }
+}
+
+// Headers that only apply to a single connection and must not be relayed when we write the response ourselves.
+const HOP_BY_HOP_HEADERS = new Set([
+  'connection',
+  'keep-alive',
+  'proxy-authenticate',
+  'proxy-authorization',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
+])
+
+function isPreflight(req: http.IncomingMessage) {
+  return req.method === 'OPTIONS'
+}
+
+/**
+ * CORS preflights are answered by the target app, which is the only one that knows which origins to trust
+ * (including whether to allow credentials).
+ *
+ * Dev servers that don't implement OPTIONS (4xx/5xx) or can't be reached get a response from the proxy instead,
+ * reflecting the request. This also replaces a deliberate rejection from the target, which is acceptable for local
+ * development. Credentials are never granted here, as that would authorize any origin.
+ */
+function handlePreflightResponse(
+  targetResponse: http.IncomingMessage,
+  req: http.IncomingMessage,
+  res: http.ServerResponse,
+) {
+  if (!isPreflight(req)) return
+
+  const statusCode = targetResponse.statusCode ?? 500
+  if (statusCode >= 400) {
+    targetResponse.resume()
+    respondToPreflight(req, res)
+    return
+  }
+
+  const headers = Object.fromEntries(
+    Object.entries(targetResponse.headers).filter(([name]) => !HOP_BY_HOP_HEADERS.has(name)),
+  )
+  res.writeHead(statusCode, headers)
+  targetResponse.on('error', () => res.destroy())
+  targetResponse.pipe(res)
+}
+
+function respondToPreflight(req: http.IncomingMessage, res: http.ServerResponse) {
+  res.writeHead(204, {
+    'Access-Control-Allow-Origin': req.headers.origin ?? '*',
+    'Access-Control-Allow-Methods':
+      req.headers['access-control-request-method'] ?? 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+    'Access-Control-Allow-Headers': req.headers['access-control-request-headers'] ?? 'Content-Type, Authorization',
+    'Access-Control-Max-Age': '86400',
+  })
+  res.end()
 }
 
 function match(rules: {[key: string]: string}, req: http.IncomingMessage, websocket = false) {
