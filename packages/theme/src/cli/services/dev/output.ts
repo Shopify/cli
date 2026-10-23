@@ -8,7 +8,7 @@ import {format} from 'node:util'
 
 const themeDevOutput = new AsyncLocalStorage<Writable>()
 
-export async function withThemeDevOutput<T>(instance: DevInstance, run: () => Promise<T>): Promise<T> {
+export async function withThemeDevOutput<T>(instance: DevInstance, run: () => Promise<T>, json = false): Promise<T> {
   const output = instance.tee(new Writable({write: (_chunk, _encoding, next) => next()}), {
     stringWritesAreMessages: true,
   })
@@ -22,10 +22,10 @@ export async function withThemeDevOutput<T>(instance: DevInstance, run: () => Pr
       useConcurrentOutputContext({consoleWarn: writeMessage}, () =>
         runWithCommandEvents(
           {
-            outputMode: 'text',
+            outputMode: json ? 'json' : 'text',
             sink: (event, options) => {
-              if (active && event.type === 'progress' && event.message) output.write(event.message)
-              if (!options?.alreadyRendered) renderCommandEvent(event)
+              if (active && event.message && (json || event.type === 'progress')) output.write(event.message)
+              if (!json && !options?.alreadyRendered) renderCommandEvent(event)
             },
           },
           run,
@@ -51,6 +51,7 @@ export async function withThemeDevOutput<T>(instance: DevInstance, run: () => Pr
 
   function writeMessage(message: string) {
     if (active) output.write(message)
+    if (active && json) return
     // Ink can replace the console method while a progress view is active.
     const warn = console.warn === captureWarn ? originalWarn : console.warn
     warn(message)
