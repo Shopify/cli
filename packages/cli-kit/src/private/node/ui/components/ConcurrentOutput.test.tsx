@@ -356,6 +356,75 @@ describe('ConcurrentOutput', () => {
     gate.resolve()
   })
 
+  test.each([
+    {chunkSizes: [10_000]},
+    {chunkSizes: [10_001]},
+    {chunkSizes: [6_000, 4_000, 4]},
+    {chunkSizes: [2, 9_999, 3]},
+  ])('retains only the latest 10,000 lines for chunk sizes $chunkSizes', async ({chunkSizes}) => {
+    const outputSync = new Synchronizer()
+    const gate = new Synchronizer()
+    const onOutputHistoryChange = vi.fn()
+    const totalLines = chunkSizes.reduce((total, size) => total + size, 0)
+    const message = (index: number) => `message:${String(index).padStart(5, '0')}`
+    let writeLine = (_message: string) => {}
+    const processes = [
+      {
+        prefix: 'backend',
+        action: async (stdout: Writable) => {
+          writeLine = (line) => stdout.write(line)
+          let lineIndex = 0
+          for (const size of chunkSizes) {
+            const firstLineIndex = lineIndex
+            stdout.write(Array.from({length: size}, (_, index) => message(firstLineIndex + index + 1)).join('\n'))
+            lineIndex += size
+          }
+          outputSync.resolve()
+          await gate.promise
+        },
+      },
+    ]
+    const abortSignal = new AbortController().signal
+    const renderOutput = (outputFilter?: (prefix: string) => boolean) => (
+      <MouseProvider mouseEnabled={false}>
+        <Box height={6}>
+          <ConcurrentOutput
+            processes={processes}
+            abortSignal={abortSignal}
+            scrollable
+            outputFilter={outputFilter}
+            onOutputHistoryChange={onOutputHistoryChange}
+          />
+        </Box>
+      </MouseProvider>
+    )
+    const renderInstance = render(renderOutput())
+
+    try {
+      await outputSync.promise
+      await waitForContent(renderInstance, message(totalLines))
+      const history = onOutputHistoryChange.mock.lastCall![0]
+      const retainedLines = history.flatMap(({lines}: {lines: string[]}) => lines)
+      expect(retainedLines).toHaveLength(10_000)
+      expect(retainedLines[0]).toBe(message(totalLines - 9_999))
+      expect(retainedLines.at(-1)).toBe(message(totalLines))
+
+      writeLine(message(totalLines + 1))
+      await waitForContent(renderInstance, message(totalLines + 1))
+      const updatedLines = onOutputHistoryChange.mock.lastCall![0].flatMap(({lines}: {lines: string[]}) => lines)
+      expect(updatedLines).toHaveLength(10_000)
+      expect(updatedLines[0]).toBe(message(totalLines - 9_998))
+      expect(updatedLines.at(-1)).toBe(message(totalLines + 1))
+
+      renderInstance.rerender(renderOutput((prefix) => prefix === 'backend'))
+      await waitForContent(renderInstance, message(totalLines - 9_998))
+      expect(unstyled(renderInstance.lastFrame()!)).not.toContain(message(totalLines - 9_999))
+    } finally {
+      gate.resolve()
+      renderInstance.unmount()
+    }
+  })
+
   test('wraps long output and leaves timestamp and prefix columns blank on continuation rows', async () => {
     const outputSync = new Synchronizer()
     const gate = new Synchronizer()

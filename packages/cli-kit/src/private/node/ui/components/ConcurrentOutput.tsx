@@ -31,6 +31,8 @@ export interface ConcurrentOutputProps {
   onOutputPrefix?: (prefix: string) => void
   /** Called with every output chunk after ANSI control sequences are normalized for display. */
   onOutput?: (chunk: ConcurrentOutputChunk) => void
+  /** Called with the retained history used by the view, capped at 10,000 lines when scrollable. */
+  onOutputHistoryChange?: (chunks: ReadonlyArray<ConcurrentOutputChunk>) => void
   /** Adds this output once after the first click or drag inside the scrollable output viewport. */
   mouseInteractionHint?: {
     message: string
@@ -85,6 +87,7 @@ function addPrefix(prefix: string, prefixes: string[]) {
 }
 
 const LOG_SCROLL_STEP = 3
+const MAX_SCROLLBACK_LINES = 10_000
 const VIEWPORT_BORDER_WIDTH = 2
 const SCROLLBAR_WIDTH = 1
 const COLUMN_SEPARATOR_WIDTH = 3
@@ -200,6 +203,23 @@ function wrapOutputLines(outputLines: OutputLine[], messageWidth: number): Outpu
       isContinuation: index > 0,
     })),
   )
+}
+
+function limitScrollback(chunks: Chunk[]): Chunk[] {
+  let remainingLines = MAX_SCROLLBACK_LINES
+  let firstChunkIndex = chunks.length
+
+  while (firstChunkIndex > 0 && remainingLines > 0) {
+    firstChunkIndex -= 1
+    remainingLines -= chunks[firstChunkIndex]!.lines.length
+  }
+
+  const retainedChunks = chunks.slice(firstChunkIndex)
+  if (remainingLines < 0) {
+    const firstChunk = retainedChunks[0]!
+    retainedChunks[0] = {...firstChunk, lines: firstChunk.lines.slice(-remainingLines)}
+  }
+  return retainedChunks
 }
 
 interface ScrollableConcurrentOutputProps {
@@ -451,14 +471,20 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   outputFilter,
   onOutputPrefix,
   onOutput,
+  onOutputHistoryChange,
   mouseInteractionHint,
 }) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
+  const processOutputRef = useRef(processOutput)
+  const scrollableRef = useRef(scrollable)
+  scrollableRef.current = scrollable
   const [completionResult, setCompletionResult] = useState<{error?: Error} | null>(null)
   const onOutputPrefixRef = useRef(onOutputPrefix)
   onOutputPrefixRef.current = onOutputPrefix
   const onOutputRef = useRef(onOutput)
   onOutputRef.current = onOutput
+  const onOutputHistoryChangeRef = useRef(onOutputHistoryChange)
+  onOutputHistoryChangeRef.current = onOutputHistoryChange
   const prefixesRef = useRef<string[]>([])
   const mouseInteractionHintShownRef = useRef(false)
   const complete = useComplete()
@@ -502,7 +528,11 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
 
       onOutputPrefixRef.current?.(prefix)
       onOutputRef.current?.({lines: outputChunk.lines, prefix, timestamp: outputChunk.timestamp})
-      setProcessOutput((previousProcessOutput) => [...previousProcessOutput, outputChunk])
+      const chunks = [...processOutputRef.current, outputChunk]
+      const retainedChunks = scrollableRef.current ? limitScrollback(chunks) : chunks
+      processOutputRef.current = retainedChunks
+      setProcessOutput(retainedChunks)
+      onOutputHistoryChangeRef.current?.(retainedChunks)
     },
     [lineColor],
   )

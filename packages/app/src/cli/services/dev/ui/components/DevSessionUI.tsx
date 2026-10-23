@@ -59,6 +59,7 @@ interface DevSesionUIProps {
   localhostPortUnavailable?: number
   onAbort: () => Promise<void>
   onOutput?: (chunk: ConcurrentOutputChunk) => void
+  onOutputHistoryChange?: (chunks: ReadonlyArray<ConcurrentOutputChunk>) => void
 }
 
 const FullScreenLayout: FunctionComponent<React.PropsWithChildren> = ({children}) => {
@@ -95,6 +96,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
   localhostPortUnavailable,
   onAbort,
   onOutput,
+  onOutputHistoryChange,
 }) => {
   const {isRawModeSupported: canUseShortcuts} = useStdin()
   const mouseEnabled = getMouseEnabled()
@@ -363,6 +365,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
         outputFilter={canUseShortcuts ? filterOutputByPrefix : undefined}
         onOutputPrefix={canUseShortcuts ? addAvailableLogPrefix : undefined}
         onOutput={onOutput}
+        onOutputHistoryChange={onOutputHistoryChange}
         mouseInteractionHint={
           mouseEnabled
             ? {

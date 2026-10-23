@@ -66,7 +66,7 @@ function stdoutWithInPlaceRedraw(stdout: NodeJS.WriteStream): NodeJS.WriteStream
   })
 }
 
-function formatLogHistory(chunks: ConcurrentOutputChunk[]): string {
+function formatLogHistory(chunks: ReadonlyArray<ConcurrentOutputChunk>): string {
   const formattedLines = chunks.flatMap(({lines, prefix, timestamp}) => {
     const formattedPrefix = prefix.slice(0, MAX_PREFIX_COLUMN_SIZE).padStart(MAX_PREFIX_COLUMN_SIZE)
     return lines.map((line) => `${timestamp} │ ${formattedPrefix} │ ${line}`)
@@ -127,7 +127,7 @@ export async function renderDev({
   process.on('shopify:signal', stop)
   try {
     if (commandEventOutputMode() !== 'json' && terminalSupportsPrompting()) {
-      const outputChunks: ConcurrentOutputChunk[] = []
+      let outputChunks: ReadonlyArray<ConcurrentOutputChunk> = []
       const alternateScreenEnabled = Boolean(process.stdout.isTTY)
 
       try {
@@ -152,7 +152,9 @@ export async function renderDev({
             onAbort={async () => {
               await app.developerPlatformClient.devSessionDelete({appId: app.id, shopFqdn})
             }}
-            onOutput={(chunk) => outputChunks.push(chunk)}
+            onOutputHistoryChange={(chunks) => {
+              outputChunks = chunks
+            }}
           />,
           {
             exitOnCtrlC: false,

@@ -481,15 +481,18 @@ describe('ui', () => {
       },
     )
 
-    test('prints the complete log history before the persistent preview notice', async () => {
+    test('prints only the retained log history before the persistent preview notice', async () => {
       vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
       devSessionStatusManager.updateStatus({isReady: true})
       const logLines = Array.from({length: 100}, (_, index) => `unique log ${index + 1}`)
       vi.mocked(render).mockImplementation(async (element) => {
         const devSessionElement = element as ReactElement<{
-          onOutput: (chunk: {lines: string[]; prefix: string; timestamp: string}) => void
+          onOutputHistoryChange: (chunks: {lines: string[]; prefix: string; timestamp: string}[]) => void
         }>
-        devSessionElement.props.onOutput({lines: logLines, prefix: 'backend', timestamp: '12:34:56'})
+        devSessionElement.props.onOutputHistoryChange([
+          {lines: ['discarded log'], prefix: 'backend', timestamp: '12:34:55'},
+        ])
+        devSessionElement.props.onOutputHistoryChange([{lines: logLines, prefix: 'backend', timestamp: '12:34:56'}])
       })
 
       await renderDev({

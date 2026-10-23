@@ -149,12 +149,12 @@ describe('DevSessionUI', () => {
     renderInstance.unmount()
   })
 
-  test('reports all normalized output for rendering after exit', async () => {
+  test('shares the retained normalized history for rendering after exit', async () => {
     let outputReadyResolve = () => {}
     const outputReady = new Promise<void>((resolve) => {
       outputReadyResolve = resolve
     })
-    const onOutput = vi.fn()
+    const onOutputHistoryChange = vi.fn()
     const process = {
       prefix: 'backend',
       action: async (stdout: Writable) => {
@@ -170,18 +170,20 @@ describe('DevSessionUI', () => {
         devSessionStatusManager={devSessionStatusManager}
         shopFqdn="mystore.myshopify.com"
         onAbort={onAbort}
-        onOutput={onOutput}
+        onOutputHistoryChange={onOutputHistoryChange}
       />,
     )
 
     await outputReady
     await waitForContent(renderInstance, 'second line')
 
-    expect(onOutput).toHaveBeenCalledWith({
-      lines: ['first line', 'second line'],
-      prefix: 'backend',
-      timestamp: expect.stringMatching(/^\d{2}:\d{2}:\d{2}$/),
-    })
+    expect(onOutputHistoryChange).toHaveBeenCalledWith([
+      expect.objectContaining({
+        lines: ['first line', 'second line'],
+        prefix: 'backend',
+        timestamp: expect.stringMatching(/^\d{2}:\d{2}:\d{2}$/),
+      }),
+    ])
 
     renderInstance.unmount()
   })
