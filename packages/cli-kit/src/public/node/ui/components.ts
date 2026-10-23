@@ -1,6 +1,7 @@
 export {
   ConcurrentOutput,
   ConcurrentOutputContext,
+  type ConcurrentOutputChunk,
   useConcurrentOutputContext,
 } from '../../../private/node/ui/components/ConcurrentOutput.js'
 export {Alert} from '../../../private/node/ui/components/Alert.js'
