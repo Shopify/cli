@@ -60,6 +60,9 @@ jobs:
           POOL_OPTIONS: ${{ matrix.os == 'macos-latest' && '--pool forks' || '' }}
           VITEST_MIN_THREADS: "1"
           VITEST_MAX_THREADS: "4"
+      - name: Bin script tests
+        run: pnpm test:bin
+        if: ${{ matrix.os == 'ubuntu-latest' }}
       - name: Send Slack notification on failure
         uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844 # v1.23.0
         if: ${{ failure() && !cancelled() }}
