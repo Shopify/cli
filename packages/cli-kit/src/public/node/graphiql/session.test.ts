@@ -1,27 +1,55 @@
 import {buildGraphiQLUrl, generateRandomGraphiQLKey, runGraphiQLSession, waitForGraphiQLAbort} from './session.js'
-import {setupGraphiQLServer} from './server.js'
+import {graphiqlJsonOutputSchema} from './schema.js'
+import {MUTATIONS_BLOCKED_MESSAGE, setupGraphiQLServer} from './server.js'
+import {runWithCommandEventsForCommand} from '../command-events.js'
+import {withCapturedStandardStreams} from '../testing/output.js'
 import {AbortController} from '../abort.js'
 import {openURL} from '../system.js'
 import {getAvailableTCPPort} from '../tcp.js'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {fetch as shopifyFetch} from '../http.js'
+import {supportedApiVersions} from '../api/admin.js'
+import {describe, expect, test, vi} from 'vitest'
+import {createServer} from 'node:http'
 
+vi.mock('../system.js', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../system.js')>()
+  return {...original, openURL: vi.fn(async () => true)}
+})
 vi.mock('./server.js', async (importOriginal) => {
   const original = await importOriginal<typeof import('./server.js')>()
-  return {
-    ...original,
-    setupGraphiQLServer: vi.fn(),
-  }
+  return {...original, setupGraphiQLServer: vi.fn(original.setupGraphiQLServer)}
 })
-vi.mock('../tcp.js')
-vi.mock('../system.js')
+vi.mock('../tcp.js', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../tcp.js')>()
+  return {...original, getAvailableTCPPort: vi.fn(original.getAvailableTCPPort)}
+})
+vi.mock('../http.js', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../http.js')>()
+  return {...original, fetch: vi.fn(original.fetch)}
+})
+vi.mock('../api/admin.js', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../api/admin.js')>()
+  return {...original, supportedApiVersions: vi.fn(original.supportedApiVersions)}
+})
 
-const mockedSetupGraphiQLServer = vi.mocked(setupGraphiQLServer)
-const mockedGetAvailableTCPPort = vi.mocked(getAvailableTCPPort)
-const mockedOpenURL = vi.mocked(openURL)
+const options = {
+  storeFqdn: 'shop.myshopify.com',
+  tokenProvider: {getToken: async () => 'token'},
+  key: 'key',
+  outputFormat: 'json' as const,
+}
 
-function abortAfter(controller: AbortController) {
-  setImmediate(() => controller.abort())
-  return controller.signal
+function records(stdout: string) {
+  return stdout
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => graphiqlJsonOutputSchema.validate(JSON.parse(line)))
+}
+
+function listeners() {
+  const processEvents: NodeJS.EventEmitter = process
+  return ['SIGINT', 'SIGTERM', 'SIGQUIT', 'shopify:signal'].map((name) => processEvents.listeners(name))
 }
 
 describe('buildGraphiQLUrl', () => {
@@ -51,70 +79,258 @@ describe('generateRandomGraphiQLKey', () => {
 })
 
 describe('runGraphiQLSession', () => {
-  beforeEach(() => {
-    mockedGetAvailableTCPPort.mockResolvedValue(4567)
-    mockedOpenURL.mockResolvedValue(true)
-    mockedSetupGraphiQLServer.mockReturnValue({close: vi.fn()} as unknown as ReturnType<typeof setupGraphiQLServer>)
-  })
+  test.each(['shop.myshopify.com', 'shop.myshopify.io', 'shop.my.shop.dev'])(
+    'writes lifecycle records for %s only after listening and closes its real server',
+    async (storeFqdn) => {
+      const controller = new AbortController()
+      const before = listeners()
+      let url = ''
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        vi.mocked(openURL).mockImplementationOnce(async (readyUrl) => {
+          url = readyUrl
+          const response = await fetch(new URL('/graphiql/ping', readyUrl))
+          await expect(response.text()).resolves.toBe('pong')
+          expect(records(stdout()).map((record) => record.type)).toEqual(['starting', 'ready'])
+          controller.abort()
+          return true
+        })
+        await runWithCommandEventsForCommand(['--json'], () =>
+          runGraphiQLSession({
+            ...options,
+            storeFqdn,
+            abortSignal: controller.signal,
+            protectMutations: true,
+            apiVersion: '2024-10',
+            appContext: {appName: 'Test App', appUrl: 'https://example.com/app', apiSecret: 'secret'},
+          }),
+        )
+        expect(records(stdout())).toEqual([
+          {type: 'starting', storeDomain: storeFqdn, timestamp: expect.any(String)},
+          {
+            type: 'ready',
+            timestamp: expect.any(String),
+            url,
+            storeDomain: storeFqdn,
+            api: 'admin',
+            apiVersion: '2024-10',
+            mutationsAllowed: false,
+            app: {name: 'Test App', url: 'https://example.com/app'},
+          },
+          {type: 'stopped', timestamp: expect.any(String), reason: 'cancelled'},
+        ])
+        expect(stdout()).not.toContain('secret')
+        expect(stderr()).toBe('')
+      })
+      await expect(fetch(new URL('/graphiql/ping', url))).rejects.toThrow()
+      expect(listeners()).toEqual(before)
+    },
+  )
 
-  test('starts the server, opens the keyed URL, waits for abort, and closes the server', async () => {
+  test('keeps repeated recoverable request failures on stderr and native responses over HTTP', async () => {
     const controller = new AbortController()
-    const tokenProvider = {getToken: async () => 'token'}
-    const server = {close: vi.fn()}
-    mockedSetupGraphiQLServer.mockReturnValueOnce(server as unknown as ReturnType<typeof setupGraphiQLServer>)
-
-    await runGraphiQLSession({
-      storeFqdn: 'shop.myshopify.com',
-      tokenProvider,
-      key: 'key',
-      port: 1234,
-      query: 'query { shop { name } }',
-      variables: '{"id":1}',
-      apiVersion: '2024-10',
-      protectMutations: true,
-      appContext: {
-        appName: 'Test App',
-        appUrl: 'https://admin.shopify.com/store/shop/apps/api-key?dev-console=show',
-        apiSecret: 'secret',
-      },
-      abortSignal: abortAfter(controller),
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      vi.mocked(openURL).mockImplementationOnce(async (url) => {
+        await Promise.all(
+          Array.from({length: 2}, async () => {
+            const response = await fetch(new URL('/graphiql/graphql.json?key=key&api_version=2024-10', url), {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({query: 'mutation { shopUpdate(input: {}) { shop { id } } }'}),
+            })
+            expect(response.status).toBe(400)
+            await expect(response.json()).resolves.toEqual({errors: [{message: MUTATIONS_BLOCKED_MESSAGE}]})
+          }),
+        )
+        await expect((await fetch(new URL('/graphiql/ping', url))).text()).resolves.toBe('pong')
+        controller.abort()
+        return true
+      })
+      await runWithCommandEventsForCommand(['--json'], () =>
+        runGraphiQLSession({
+          ...options,
+          protectMutations: true,
+          abortSignal: controller.signal,
+        }),
+      )
+      expect(records(stdout()).map((record) => record.type)).toEqual(['starting', 'ready', 'stopped'])
+      const diagnostics = stderr()
+        .trim()
+        .split('\n')
+        .map((line) => JSON.parse(line))
+      expect(diagnostics).toHaveLength(2)
+      expect(diagnostics).toEqual(
+        Array.from({length: 2}, () => ({
+          type: 'diagnostic',
+          level: 'error',
+          code: 'graphiql-request-failed',
+          message: MUTATIONS_BLOCKED_MESSAGE,
+          timestamp: expect.any(String),
+        })),
+      )
     })
-
-    expect(mockedGetAvailableTCPPort).toHaveBeenCalledWith(1234)
-    expect(mockedSetupGraphiQLServer).toHaveBeenCalledWith(
-      expect.objectContaining({
-        stdout: process.stdout,
-        port: 4567,
-        storeFqdn: 'shop.myshopify.com',
-        tokenProvider,
-        key: 'key',
-        protectMutations: true,
-        appContext: {
-          appName: 'Test App',
-          appUrl: 'https://admin.shopify.com/store/shop/apps/api-key?dev-console=show',
-          apiSecret: 'secret',
-        },
-      }),
-    )
-    expect(mockedOpenURL).toHaveBeenCalledWith(
-      'http://localhost:4567/graphiql?key=key&query=query+%7B+shop+%7B+name+%7D+%7D&variables=%7B%22id%22%3A1%7D&api_version=2024-10',
-    )
-    expect(server.close).toHaveBeenCalled()
   })
 
-  test('closes the server when opening the browser fails', async () => {
-    const server = {close: vi.fn()}
-    mockedSetupGraphiQLServer.mockReturnValueOnce(server as unknown as ReturnType<typeof setupGraphiQLServer>)
-    mockedOpenURL.mockRejectedValueOnce(new Error('failed to open'))
+  test('rejects bind failures without emitting ready or stopped records and releases listeners', async () => {
+    const port = await getAvailableTCPPort()
+    const blocker = createServer()
+    await new Promise<void>((resolve) => blocker.listen(port, 'localhost', resolve))
+    const before = listeners()
+    try {
+      vi.mocked(getAvailableTCPPort).mockResolvedValueOnce(port)
+      await withCapturedStandardStreams(async ({stdout}) => {
+        await expect(runGraphiQLSession(options)).rejects.toThrow(/EADDRINUSE/)
+        expect(records(stdout()).map((record) => record.type)).toEqual(['starting'])
+      })
+      expect(openURL).not.toHaveBeenCalled()
+      expect(listeners()).toEqual(before)
+    } finally {
+      await new Promise<void>((resolve) => blocker.close(() => resolve()))
+    }
+  })
 
-    await expect(
-      runGraphiQLSession({
-        storeFqdn: 'shop.myshopify.com',
-        tokenProvider: {getToken: async () => 'token'},
-        key: 'key',
-      }),
-    ).rejects.toThrow('failed to open')
-    expect(server.close).toHaveBeenCalled()
+  test('encodes HTTP handler failures as diagnostics without H3 terminal logs', async () => {
+    const controller = new AbortController()
+    vi.mocked(supportedApiVersions).mockRejectedValueOnce(new Error('upstream failed'))
+    vi.mocked(openURL).mockImplementationOnce(async (url) => {
+      const response = await fetch(url)
+      expect(response.status).toBe(500)
+      await expect(response.json()).resolves.toMatchObject({statusCode: 500, stack: []})
+      controller.abort()
+      return true
+    })
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runWithCommandEventsForCommand(['--json'], () =>
+        runGraphiQLSession({...options, abortSignal: controller.signal}),
+      )
+      expect(records(stdout()).map((record) => record.type)).toEqual(['starting', 'ready', 'stopped'])
+      expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', code: 'graphiql-request-failed'})
+    })
+  })
+
+  test('aborts an outstanding upstream request and closes active browser connections on cancellation', async () => {
+    const controller = new AbortController()
+    let upstreamAborted = false
+    let requested: () => void
+    const upstreamStarted = new Promise<void>((resolve) => {
+      requested = resolve
+    })
+    vi.mocked(shopifyFetch).mockImplementationOnce(async (_url, request) => {
+      requested()
+      return new Promise((_resolve, reject) => {
+        request?.signal?.addEventListener('abort', () => {
+          upstreamAborted = true
+          reject(new Error('aborted'))
+        })
+      })
+    })
+    let browserRequest: Promise<unknown> | undefined
+    vi.mocked(openURL).mockImplementationOnce(async (url) => {
+      browserRequest = fetch(new URL('/graphiql/graphql.json?key=key&api_version=2024-10', url), {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({query: '{ shop { name } }'}),
+      }).catch((error: unknown) => error)
+      await upstreamStarted
+      controller.abort()
+      return true
+    })
+    await withCapturedStandardStreams(async ({stdout}) => {
+      await runGraphiQLSession({...options, abortSignal: controller.signal})
+      expect(records(stdout()).at(-1)).toMatchObject({type: 'stopped'})
+      expect(upstreamAborted).toBe(true)
+      await expect(browserRequest).resolves.toBeInstanceOf(Error)
+    })
+  })
+
+  test.each(['browser', 'server', 'close'])('closes the server after a fatal %s failure', async (failure) => {
+    const before = listeners()
+    const original = await vi.importActual<typeof import('./server.js')>('./server.js')
+    let runningServer: ReturnType<typeof setupGraphiQLServer> | undefined
+    let url = ''
+    vi.mocked(setupGraphiQLServer).mockImplementationOnce((serverOptions) => {
+      runningServer = original.setupGraphiQLServer(serverOptions)
+      return runningServer
+    })
+    vi.mocked(openURL).mockImplementationOnce(async (readyUrl) => {
+      url = readyUrl
+      if (failure === 'browser') throw new Error('browser failed')
+      if (failure === 'server') runningServer!.emit('error', new Error('server failed'))
+      if (failure === 'close') runningServer!.close()
+      return true
+    })
+    await withCapturedStandardStreams(async ({stdout}) => {
+      await expect(runGraphiQLSession(options)).rejects.toThrow(failure === 'close' ? 'closed unexpectedly' : 'failed')
+      expect(records(stdout()).map((record) => record.type)).toEqual(['starting', 'ready'])
+    })
+    await expect(fetch(new URL('/graphiql/ping', url))).rejects.toThrow()
+    expect(listeners()).toEqual(before)
+  })
+
+  test.each([
+    ['SIGINT', 'sigint', 130],
+    ['SIGTERM', 'sigterm', 143],
+    ['SIGQUIT', 'sigquit', 131],
+  ] as const)('handles delegated %s and emits stopped after cleanup', async (signal, reason, exitCode) => {
+    const originalExitCode = process.exitCode
+    const before = listeners()
+    let url = ''
+    vi.mocked(openURL).mockImplementationOnce(async (readyUrl) => {
+      url = readyUrl
+      const processEvents: NodeJS.EventEmitter = process
+      processEvents.emit('shopify:signal', signal)
+      processEvents.emit('shopify:signal', signal)
+      return true
+    })
+    try {
+      await withCapturedStandardStreams(async ({stdout}) => {
+        await runGraphiQLSession(options)
+        expect(records(stdout()).at(-1)).toMatchObject({type: 'stopped', reason})
+      })
+      expect(process.exitCode).toBe(exitCode)
+      await expect(fetch(new URL('/graphiql/ping', url))).rejects.toThrow()
+      expect(listeners()).toEqual(before)
+    } finally {
+      // eslint-disable-next-line require-atomic-updates -- This test owns and restores the process exit code.
+      process.exitCode = originalExitCode
+    }
+  })
+
+  test.each(['text', 'json'] as const)(
+    'supports --no-input with %s output without opening a browser',
+    async (outputFormat) => {
+      vi.stubEnv('SHOPIFY_FLAG_NO_INPUT', '1')
+      const controller = new AbortController()
+      const original = await vi.importActual<typeof import('./server.js')>('./server.js')
+      vi.mocked(setupGraphiQLServer).mockImplementationOnce((serverOptions) => {
+        const server = original.setupGraphiQLServer(serverOptions)
+        server.once('listening', () => setImmediate(() => controller.abort()))
+        return server
+      })
+      try {
+        await withCapturedStandardStreams(async ({stdout, stderr}) => {
+          await runGraphiQLSession({...options, outputFormat, abortSignal: controller.signal})
+          if (outputFormat === 'json') {
+            expect(records(stdout()).map((record) => record.type)).toEqual(['starting', 'ready', 'stopped'])
+          } else {
+            expect(stdout()).toContain('GraphiQL server started on port')
+            expect(stderr()).toContain('Press Ctrl+C to stop.')
+          }
+        })
+        expect(openURL).not.toHaveBeenCalled()
+      } finally {
+        vi.unstubAllEnvs()
+      }
+    },
+  )
+
+  test('does not acquire a port for an already cancelled session', async () => {
+    const controller = new AbortController()
+    controller.abort()
+    await withCapturedStandardStreams(async ({stdout}) => {
+      await runGraphiQLSession({...options, abortSignal: controller.signal})
+      expect(records(stdout()).map((record) => record.type)).toEqual(['stopped'])
+    })
+    expect(getAvailableTCPPort).not.toHaveBeenCalled()
   })
 })
 

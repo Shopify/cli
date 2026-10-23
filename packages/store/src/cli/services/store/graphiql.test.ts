@@ -85,6 +85,7 @@ describe('openStoreGraphiQL', () => {
       query: 'query { shop { name } }',
       variables: '{"id":1}',
       apiVersion: '2024-10',
+      outputFormat: 'json',
     })
 
     expect(mockedRunGraphiQLSession).toHaveBeenCalledWith(
@@ -92,6 +93,7 @@ describe('openStoreGraphiQL', () => {
         query: 'query { shop { name } }',
         variables: '{"id":1}',
         apiVersion: '2024-10',
+        outputFormat: 'json',
       }),
     )
   })
