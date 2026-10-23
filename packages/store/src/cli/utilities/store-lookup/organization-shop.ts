@@ -1,7 +1,6 @@
-import {businessPlatformTokenRefreshHandler} from '../../services/store/business-platform.js'
+import {businessPlatformTokenRefreshHandler, storeManagementRequestDoc} from '../../services/store/business-platform.js'
 import {StoreInfoShop} from '../../api/graphql/business-platform-organizations/generated/store-info-shop.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {extractHost} from '@shopify/cli-kit/common/url'
 import type {
@@ -38,7 +37,7 @@ export async function fetchOptionalOrganizationShop(
     (await ensureAuthenticatedBusinessPlatform([], {noPrompt: options.noPrompt, allowAutomationToken: true}))
   const unauthorizedHandler = businessPlatformTokenRefreshHandler({noPrompt: options.noPrompt})
 
-  const response = await businessPlatformOrganizationsRequestDoc<StoreInfoShopQuery, StoreInfoShopQueryVariables>({
+  const response = await storeManagementRequestDoc<StoreInfoShopQuery, StoreInfoShopQueryVariables>({
     query: StoreInfoShop,
     token,
     organizationId: options.organizationId,

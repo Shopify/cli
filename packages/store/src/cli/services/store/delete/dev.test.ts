@@ -5,7 +5,7 @@ import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session
 import {renderSingleTask, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {sleep} from '@shopify/cli-kit/node/system'
-import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/api/business-platform', () => ({
   businessPlatformOrganizationsRequestDoc: vi.fn(),
@@ -319,4 +319,29 @@ function requestsWithVariable(variableName: string) {
     .mocked(businessPlatformOrganizationsRequestDoc)
     .mock.calls.map(([request]) => request)
     .filter((request) => variableName in (request.variables as Record<string, unknown>))
+}
+
+describe('deleteDevStore with a token that lacks Dev store management', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test('explains that the token lacks Dev store management before requesting deletion', async () => {
+    vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'app-only-token')
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockRejectedValue(unauthorizedClientErrorLike())
+
+    await expect(deleteDevStore(defaultOptions)).rejects.toThrow("This token can't manage dev stores.")
+
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledOnce()
+    expect(requestsWithVariable('storeFqdn')).toHaveLength(0)
+    expect(renderSuccess).not.toHaveBeenCalled()
+  })
+})
+
+// Structural fake of graphql-request's `ClientError`, as cli-kit rethrows it when a 401 survives the refresh retry.
+function unauthorizedClientErrorLike(): Error {
+  return Object.assign(new Error('GraphQL Error (Code: 401)'), {
+    response: {status: 401, headers: {}},
+    request: {query: 'query StoreInfoShop'},
+  })
 }

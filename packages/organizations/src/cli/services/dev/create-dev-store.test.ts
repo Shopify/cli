@@ -1,6 +1,6 @@
 import {createDevStoreJsonOutputSchema} from './types.js'
 import {createDevStore} from './create-dev-store.js'
-import {describe, expect, test, vi, beforeEach} from 'vitest'
+import {describe, expect, test, vi, afterEach, beforeEach} from 'vitest'
 
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
@@ -115,3 +115,30 @@ test.each([undefined, null, 'https://admin.shopify.com/store/test-store'])(
     expect(renderSuccess).not.toHaveBeenCalled()
   },
 )
+
+describe('createDevStore with a token that lacks Dev store management', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  test('explains that the token lacks Dev store management instead of showing the raw 401', async () => {
+    vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', 'app-only-token')
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockRejectedValue(unauthorizedClientErrorLike())
+
+    await expect(
+      createDevStore({name: 'App-only store', organization: defaultOrg, plan: 'basic', json: false}),
+    ).rejects.toThrow("This token can't manage dev stores.")
+
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledOnce()
+    expect(renderSingleTask).not.toHaveBeenCalled()
+    expect(renderSuccess).not.toHaveBeenCalled()
+  })
+})
+
+// Structural fake of graphql-request's `ClientError`, as cli-kit rethrows it when a 401 survives the refresh retry.
+function unauthorizedClientErrorLike(): Error {
+  return Object.assign(new Error('GraphQL Error (Code: 401)'), {
+    response: {status: 401, headers: {}},
+    request: {query: 'mutation CreateAppDevelopmentStore'},
+  })
+}

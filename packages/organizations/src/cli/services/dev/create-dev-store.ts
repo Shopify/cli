@@ -6,8 +6,7 @@ import {
   PollStoreCreationQuery,
 } from '../../api/graphql/business-platform-organizations/generated/poll_store_creation.js'
 import {Organization} from '../../models/organization.js'
-import {businessPlatformTokenRefreshHandler} from '../business-platform.js'
-import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
+import {businessPlatformTokenRefreshHandler, storeManagementRequestDoc} from '../business-platform.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputResult} from '@shopify/cli-kit/node/output'
 import {sleep} from '@shopify/cli-kit/node/system'
@@ -60,7 +59,7 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<st
   const token = await ensureAuthenticatedBusinessPlatform([], {allowAutomationToken: true})
   const unauthorizedHandler = businessPlatformTokenRefreshHandler()
 
-  const mutationResult = await businessPlatformOrganizationsRequestDoc({
+  const mutationResult = await storeManagementRequestDoc({
     query: CreateAppDevelopmentStore,
     token,
     organizationId: org.id,
@@ -99,7 +98,7 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<st
         }
 
         // eslint-disable-next-line no-await-in-loop
-        const pollResult = await businessPlatformOrganizationsRequestDoc({
+        const pollResult = await storeManagementRequestDoc({
           query: PollStoreCreation,
           token,
           organizationId: org.id,
