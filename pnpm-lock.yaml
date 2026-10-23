@@ -289,8 +289,8 @@ importers:
         specifier: 4.9.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 13.0.6
-        version: 13.0.6(@graphql-codegen/cli@6.3.1(@parcel/watcher@2.5.6)(@types/node@22.20.1)(crossws@0.3.5)(graphql@16.14.2)(typescript@5.9.3))(graphql-config@5.1.6(@types/node@26.1.1)(crossws@0.3.5)(graphql@16.14.2)(typescript@5.9.3))(graphql@16.14.2)(react-dom@19.2.4(react@18.3.1))(react@18.3.1)(vite@6.4.3(@types/node@26.1.1)(jiti@2.6.1)(sass@1.100.0)(tsx@4.23.1)(yaml@2.9.0))
+        specifier: 13.1.0
+        version: 13.1.0(@graphql-codegen/cli@6.3.1(@parcel/watcher@2.5.6)(@types/node@22.20.1)(crossws@0.3.5)(graphql@16.14.2)(typescript@5.9.3))(graphql-config@5.1.6(@types/node@26.1.1)(crossws@0.3.5)(graphql@16.14.2)(typescript@5.9.3))(graphql@16.14.2)(react-dom@19.2.4(react@18.3.1))(react@18.3.1)(vite@6.4.3(@types/node@26.1.1)(jiti@2.6.1)(sass@1.100.0)(tsx@4.23.1)(yaml@2.9.0))
       '@shopify/cli-kit':
         specifier: 4.9.0
         version: link:../cli-kit
@@ -3041,10 +3041,6 @@ packages:
   '@nx/workspace@22.7.7':
     resolution: {integrity: sha512-tDSOWUEjTyEjoUKGSFyUGrFaCpScoFa8lRR0jorM169a3dA4iqwgkppcltR/uwklLw/aNSSW6J92DAzSRuOLnA==, tarball: https://registry.npmjs.org/@nx/workspace/-/workspace-22.7.7.tgz}
 
-  '@oclif/core@3.26.5':
-    resolution: {integrity: sha512-uRmAujGJjLhhgpLylbiuHuPt9Ec7u6aJ72utuSPNTRw47+W5vbQSGnLGPiil1Mt5YDL+zFOyTVH6Uv3NSP2SaQ==, tarball: https://registry.npmjs.org/@oclif/core/-/core-3.26.5.tgz}
-    engines: {node: '>=18.0.0'}
-
   '@oclif/core@4.11.14':
     resolution: {integrity: sha512-cZ5Ktd+rT0PO+o7KBH4vRFTgg+xMLf8F41WK39p8MkXEViZA/Qqe+4lzZT6102zgUxMORET1HtF9t5w8CB3tnQ==, tarball: https://registry.npmjs.org/@oclif/core/-/core-4.11.14.tgz}
     engines: {node: '>=18.0.0'}
@@ -3676,15 +3672,15 @@ packages:
   '@shikijs/vscode-textmate@10.0.2':
     resolution: {integrity: sha512-83yeghZ2xxin3Nj8z1NMd/NCuca+gsYXswywDy5bHvwlWL8tpTQmzGeUuHd9FC3E/SBEMvzJRwWEOz5gGes9Qg==, tarball: https://registry.npmjs.org/@shikijs/vscode-textmate/-/vscode-textmate-10.0.2.tgz}
 
-  '@shopify/cli-hydrogen@13.0.6':
-    resolution: {integrity: sha512-2NC0BMbgIFwObxMahJLWAwGTd2K/PxE4xe4ycb032GjbtPC2IhP1bOlNZK42IouvSDsQLco5pdxt9TXamifC2g==, tarball: https://registry.npmjs.org/@shopify/cli-hydrogen/-/cli-hydrogen-13.0.6.tgz}
+  '@shopify/cli-hydrogen@13.1.0':
+    resolution: {integrity: sha512-b50fhNdsIuENIO6UX+HEqwv2kGNvu4LQqhqhOzYyWtY5mv4DHIa/pwsvAC3TYxAoReQ5f7ld2h5h4UMUg9LNYQ==, tarball: https://registry.npmjs.org/@shopify/cli-hydrogen/-/cli-hydrogen-13.1.0.tgz}
     engines: {node: ^22 || ^24}
     hasBin: true
     peerDependencies:
       '@graphql-codegen/cli': ^5.0.2
       '@react-router/dev': ~7.16.0
       '@shopify/hydrogen-codegen': 0.3.3
-      '@shopify/mini-oxygen': 4.2.3
+      '@shopify/mini-oxygen': ^3.1.0 || ^4.2.3
       graphql-config: ^5.0.3
       vite: 6.4.3
     peerDependenciesMeta:
@@ -3922,9 +3918,6 @@ packages:
 
   '@types/chai@5.2.3':
     resolution: {integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==, tarball: https://registry.npmjs.org/@types/chai/-/chai-5.2.3.tgz}
-
-  '@types/cli-progress@3.11.6':
-    resolution: {integrity: sha512-cE3+jb9WRlu+uOSAugewNpITJDt1VF8dHOopPO4IABFc3SXYL5WE/+PTz/FCdZRRfIujiWW3n3aMbv1eIGVRWA==, tarball: https://registry.npmjs.org/@types/cli-progress/-/cli-progress-3.11.6.tgz}
 
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==, tarball: https://registry.npmjs.org/@types/deep-eql/-/deep-eql-4.0.2.tgz}
@@ -4353,9 +4346,6 @@ packages:
     resolution: {integrity: sha512-4Dj6M28JB+oAH8kFkTLUo+a2jwOFkuqb3yucU0CANcRRUbxS0cP0nZYCGjcc3BNXwRIsUVmDGgzawme7zvJHvg==, tarball: https://registry.npmjs.org/ansi-styles/-/ansi-styles-6.2.3.tgz}
     engines: {node: '>=12'}
 
-  ansicolors@0.3.2:
-    resolution: {integrity: sha512-QXu7BPrP29VllRxH8GwB7x5iX5qWKAAMLqKQGWTeLWVlNHNOpVMJ91dsxQAIWXpjuW5wqvxu3Jd/nRjrJ+0pqg==, tarball: https://registry.npmjs.org/ansicolors/-/ansicolors-0.3.2.tgz}
-
   ansis@3.17.0:
     resolution: {integrity: sha512-0qWUglt9JEqLFr3w1I1pbrChn1grhaiAR2ocX1PP/flRmxgtwTzPFFFnfIlD6aMOLQZgSuCRlidD70lvx8yhzg==, tarball: https://registry.npmjs.org/ansis/-/ansis-3.17.0.tgz}
     engines: {node: '>=14'}
@@ -4452,10 +4442,6 @@ packages:
 
   ast-types-flow@0.0.8:
     resolution: {integrity: sha512-OH/2E5Fg20h2aPrbe+QL8JZQFko0YZaF+j4mnQ7BGhfavO7OpSLa8a0y9sBwomHdSbkhTS8TQNayBfnW5DwbvQ==, tarball: https://registry.npmjs.org/ast-types-flow/-/ast-types-flow-0.0.8.tgz}
-
-  astral-regex@2.0.0:
-    resolution: {integrity: sha512-Z7tMw1ytTXt5jqMcOP+OQteU1VuNK9Y02uuJtKQ1Sv69jXQKKg5cibLwGJow8yzZP+eAc18EmLGPal0bp36rvQ==, tarball: https://registry.npmjs.org/astral-regex/-/astral-regex-2.0.0.tgz}
-    engines: {node: '>=8'}
 
   async-function@1.0.0:
     resolution: {integrity: sha512-hsU18Ae8CDTR6Kgu9DYf0EbCr/a5iGL0rytQDobUcdpYOKokk8LEjVphnXkDkgpi0wYVsqrXuP0bZxJaTqdgoA==, tarball: https://registry.npmjs.org/async-function/-/async-function-1.0.0.tgz}
@@ -4675,10 +4661,6 @@ packages:
   capital-case@1.0.4:
     resolution: {integrity: sha512-ds37W8CytHgwnhGGTi88pcPyR15qoNkOpYwmMMfnWqqWgESapLqvDx6huFjQ5vqWSn2Z06173XNA7LtMOeUh1A==, tarball: https://registry.npmjs.org/capital-case/-/capital-case-1.0.4.tgz}
 
-  cardinal@2.1.1:
-    resolution: {integrity: sha512-JSr5eOgoEymtYHBjNWyjrMqet9Am2miJhlfKNdqLp6zoeAh0KN5dRAcxlecj5mAJrmQomgiOBj35xHLrFjqBpw==, tarball: https://registry.npmjs.org/cardinal/-/cardinal-2.1.1.tgz}
-    hasBin: true
-
   chai@6.2.2:
     resolution: {integrity: sha512-NUPRluOfOiTKBKvWPtSD4PhFvWCqOi0BGStNWs57X9js7XGTprSmFoz5F0tWhR4WPjNeR9jXqdC7/UpSJTnlRg==, tarball: https://registry.npmjs.org/chai/-/chai-6.2.2.tgz}
     engines: {node: '>=18'}
@@ -4742,10 +4724,6 @@ packages:
     resolution: {integrity: sha512-aCj4O5wKyszjMmDT4tZj93kxyydN/K5zPWSCe6/0AV/AA1pqe5ZBIw0a2ZfPQV7lL5/yb5HsUreJ6UFAF1tEQw==, tarball: https://registry.npmjs.org/cli-cursor/-/cli-cursor-5.0.0.tgz}
     engines: {node: '>=18'}
 
-  cli-progress@3.12.0:
-    resolution: {integrity: sha512-tRkV3HJ1ASwm19THiiLIXLO7Im7wlTuKnvkYaTkyoAPefqjNg7W7DHKUlGRxy9vxDvbyCYQkQozvptuMkGCg8A==, tarball: https://registry.npmjs.org/cli-progress/-/cli-progress-3.12.0.tgz}
-    engines: {node: '>=4'}
-
   cli-spinners@2.6.1:
     resolution: {integrity: sha512-x/5fWmGMnbKQAaNwN+UZlV79qBLM9JFnJuJ03gIi5whrob0xV0ofNVHy9DhwGdsMJQc2OKv0oGmLzvaqvAVv+g==, tarball: https://registry.npmjs.org/cli-spinners/-/cli-spinners-2.6.1.tgz}
     engines: {node: '>=6'}
@@ -4800,13 +4778,6 @@ packages:
 
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==, tarball: https://registry.npmjs.org/color-name/-/color-name-1.1.4.tgz}
-
-  color-string@1.9.1:
-    resolution: {integrity: sha512-shrVawQFojnZv6xM40anx4CkoDP+fZsw/ZerEMsW/pyzsRbElpsL/DBVW7q3ExxwusdNXI3lXpuhEZkzs8p5Eg==, tarball: https://registry.npmjs.org/color-string/-/color-string-1.9.1.tgz}
-
-  color@4.2.3:
-    resolution: {integrity: sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A==, tarball: https://registry.npmjs.org/color/-/color-4.2.3.tgz}
-    engines: {node: '>=12.5.0'}
 
   colorette@2.0.20:
     resolution: {integrity: sha512-IfEDxwoWIjkeXL1eXcDiow4UbKjhLdq6/EuSVR9GMN7KVH3r9gQ83e73hsz1Nd1T3ijd5xv1wcWRYO+D6kCI2w==, tarball: https://registry.npmjs.org/colorette/-/colorette-2.0.20.tgz}
@@ -6109,10 +6080,6 @@ packages:
     resolution: {integrity: sha512-AXcZb6vzzrFAUE61HnN4mpLqd/cSIwNQjtNWR0euPm6y0iqx3G4gOXaIDdtdDwZmhwe82LA6+zinmW4UBWVePQ==, tarball: https://registry.npmjs.org/human-signals/-/human-signals-5.0.0.tgz}
     engines: {node: '>=16.17.0'}
 
-  hyperlinker@1.0.0:
-    resolution: {integrity: sha512-Ty8UblRWFEcfSuIaajM34LdPXIhbs1ajEX/BBPv24J+enSVaEVY63xQ6lTO9VRYS5LAoghIG0IDJ+p+IPzKUQQ==, tarball: https://registry.npmjs.org/hyperlinker/-/hyperlinker-1.0.0.tgz}
-    engines: {node: '>=4'}
-
   iconv-lite@0.6.3:
     resolution: {integrity: sha512-4fCk79wshMdzMp2rH06qWrJE4iolqLhCUH+OiuIgU++RB0+94NlDL81atO7GX55uUKueo0txHNtvEyI6D7WdMw==, tarball: https://registry.npmjs.org/iconv-lite/-/iconv-lite-0.6.3.tgz}
     engines: {node: '>=0.10.0'}
@@ -6230,9 +6197,6 @@ packages:
 
   is-arrayish@0.2.1:
     resolution: {integrity: sha512-zz06S8t0ozoDXMG+ube26zeCTNXcKIPJZJi8hBrF4idCLms4CG9QtK7qBl1boi5ODzFpjswb5JPmHCbMpjaYzg==, tarball: https://registry.npmjs.org/is-arrayish/-/is-arrayish-0.2.1.tgz}
-
-  is-arrayish@0.3.4:
-    resolution: {integrity: sha512-m6UrgzFVUYawGBh1dUsWR5M2Clqic9RVXC/9f8ceNlv2IcO9j9J/z8UoCLPqtsPBFNzEpfR3xftohbfqDx8EQA==, tarball: https://registry.npmjs.org/is-arrayish/-/is-arrayish-0.3.4.tgz}
 
   is-async-function@2.1.1:
     resolution: {integrity: sha512-9dgM/cZBnNvjzaMYHVoxxfPj2QXt22Ev7SuuPrs+xav0ukGB0S6d4ydZdEiM48kLx5kDV+QBPrpVnFyefL8kkQ==, tarball: https://registry.npmjs.org/is-async-function/-/is-async-function-2.1.1.tgz}
@@ -6989,9 +6953,6 @@ packages:
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==, tarball: https://registry.npmjs.org/natural-compare/-/natural-compare-1.4.0.tgz}
 
-  natural-orderby@2.0.3:
-    resolution: {integrity: sha512-p7KTHxU0CUrcOXe62Zfrb5Z13nLvPhSWR/so3kFulUQU0sgUll2Z0LwpsLN351eOOD+hRGu/F1g+6xDfPeD++Q==, tarball: https://registry.npmjs.org/natural-orderby/-/natural-orderby-2.0.3.tgz}
-
   natural-orderby@3.0.2:
     resolution: {integrity: sha512-x7ZdOwBxZCEm9MM7+eQCjkrNLrW3rkBKNHVr78zbtqnMGVNlnDi6C/eUEYgxHNrcbu0ymvjzcwIL/6H1iHri9g==, tarball: https://registry.npmjs.org/natural-orderby/-/natural-orderby-3.0.2.tgz}
     engines: {node: '>=18'}
@@ -7180,10 +7141,6 @@ packages:
     resolution: {integrity: sha512-NuAESUOUMrlIXOfHKzD6bpPu3tYt3xvjNdRIQ+FeT0lNb4K8WR70CaDxhuNguS2XG+GjkyMwOzsN5ZktImfhLA==, tarball: https://registry.npmjs.org/object-keys/-/object-keys-1.1.1.tgz}
     engines: {node: '>= 0.4'}
 
-  object-treeify@1.1.33:
-    resolution: {integrity: sha512-EFVjAYfzWqWsBMRHPMAXLCDIJnpMhdWAqR7xG6M6a2cs6PMFpl/+Z20w9zDW4vkxOFfddegBKq9Rehd0bxWE7A==, tarball: https://registry.npmjs.org/object-treeify/-/object-treeify-1.1.33.tgz}
-    engines: {node: '>= 10'}
-
   object-treeify@4.0.1:
     resolution: {integrity: sha512-Y6tg5rHfsefSkfKujv2SwHulInROy/rCL5F4w0QOWxut8AnxYxf0YmNhTh95Zfyxpsudo66uqkux0ACFnyMSgQ==, tarball: https://registry.npmjs.org/object-treeify/-/object-treeify-4.0.1.tgz}
     engines: {node: '>= 16'}
@@ -7342,9 +7299,6 @@ packages:
 
   pascal-case@3.1.2:
     resolution: {integrity: sha512-uWlGT3YSnK9x3BQJaOdcZwrnV6hPpd8jFH1/ucpiLRPh/2zCVJKS19E4GvYHvaCcACn3foXZ0cLB9Wrx1KGe5g==, tarball: https://registry.npmjs.org/pascal-case/-/pascal-case-3.1.2.tgz}
-
-  password-prompt@1.1.3:
-    resolution: {integrity: sha512-HkrjG2aJlvF0t2BMH0e2LB/EHf3Lcq3fNMzy4GYHcQblAvOl+QQji1Lx7WRBMqpVK8p+KR7bCg7oqAMXtdgqyw==, tarball: https://registry.npmjs.org/password-prompt/-/password-prompt-1.1.3.tgz}
 
   patch-console@2.0.0:
     resolution: {integrity: sha512-0YNdUceMdaQwoKce1gatDScmMo5pu/tfABfnzEqeG0gtTmd7mh/WcwgUjtAeOU7N8nFFlbQBnFK2gXW5fGvmMA==, tarball: https://registry.npmjs.org/patch-console/-/patch-console-2.0.0.tgz}
@@ -7661,9 +7615,6 @@ packages:
     resolution: {integrity: sha512-6tDA8g98We0zd0GvVeMT9arEOnTw9qM03L9cJXaCjrip1OO764RDBLBfrB4cwzNGDj5OA5ioymC9GkizgWJDUg==, tarball: https://registry.npmjs.org/redent/-/redent-3.0.0.tgz}
     engines: {node: '>=8'}
 
-  redeyed@2.1.1:
-    resolution: {integrity: sha512-FNpGGo1DycYAdnrKFxCMmKYgo/mILAqtRYbkdQD8Ep/Hk2PQ5+aEAEx+IU713RTDmuBaH0c8P5ZozurNu5ObRQ==, tarball: https://registry.npmjs.org/redeyed/-/redeyed-2.1.1.tgz}
-
   reduce-flatten@2.0.0:
     resolution: {integrity: sha512-EJ4UNY/U1t2P/2k6oqotuX2Cc3T6nxJwsM0N0asT7dhrtH1ltUxDn4NalSYmPE2rCkVpcf/X6R0wDwcFpzhd4w==, tarball: https://registry.npmjs.org/reduce-flatten/-/reduce-flatten-2.0.0.tgz}
     engines: {node: '>=6'}
@@ -7960,16 +7911,9 @@ packages:
   simple-git@3.36.0:
     resolution: {integrity: sha512-cGQjLjK8bxJw4QuYT7gxHw3/IouVESbhahSsHrX97MzCL1gu2u7oy38W6L2ZIGECEfIBG4BabsWDPjBxJENv9Q==, tarball: https://registry.npmjs.org/simple-git/-/simple-git-3.36.0.tgz}
 
-  simple-swizzle@0.2.4:
-    resolution: {integrity: sha512-nAu1WFPQSMNr2Zn9PGSZK9AGn4t/y97lEm+MXTtUDwfP0ksAIX4nO+6ruD9Jwut4C49SB1Ws+fbXsm/yScWOHw==, tarball: https://registry.npmjs.org/simple-swizzle/-/simple-swizzle-0.2.4.tgz}
-
   slash@3.0.0:
     resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==, tarball: https://registry.npmjs.org/slash/-/slash-3.0.0.tgz}
     engines: {node: '>=8'}
-
-  slice-ansi@4.0.0:
-    resolution: {integrity: sha512-qMCMfhY040cVHT43K9BFygqYbUPFZKHOg7K73mtTWJRb8pyP3fzf4Ixd5SzdEJQ6MRUg/WBnOLxghZtKKurENQ==, tarball: https://registry.npmjs.org/slice-ansi/-/slice-ansi-4.0.0.tgz}
-    engines: {node: '>=10'}
 
   slice-ansi@5.0.0:
     resolution: {integrity: sha512-FC+lgizVPfie0kkhqUScwRu1O/lF6NOgJmlCgK+/LYxDCTk8sGelYaHDhFcDN+Sn3Cv+3VSa4Byeo+IMCzpMgQ==, tarball: https://registry.npmjs.org/slice-ansi/-/slice-ansi-5.0.0.tgz}
@@ -11743,37 +11687,6 @@ snapshots:
       - '@swc/core'
       - debug
 
-  '@oclif/core@3.26.5':
-    dependencies:
-      '@types/cli-progress': 3.11.6
-      ansi-escapes: 4.3.2
-      ansi-styles: 4.3.0
-      cardinal: 2.1.1
-      chalk: 4.1.2
-      clean-stack: 3.0.1
-      cli-progress: 3.12.0
-      color: 4.2.3
-      debug: 4.4.3(supports-color@8.1.1)
-      ejs: 3.1.10
-      get-package-type: 0.1.0
-      globby: 11.1.0
-      hyperlinker: 1.0.0
-      indent-string: 4.0.0
-      is-wsl: 2.2.0
-      js-yaml: 3.15.0
-      minimatch: 9.0.9
-      natural-orderby: 2.0.3
-      object-treeify: 1.1.33
-      password-prompt: 1.1.3
-      slice-ansi: 4.0.0
-      string-width: 4.2.3
-      strip-ansi: 6.0.1
-      supports-color: 8.1.1
-      supports-hyperlinks: 3.2.0
-      widest-line: 3.1.0
-      wordwrap: 1.0.0
-      wrap-ansi: 7.0.0
-
   '@oclif/core@4.11.14':
     dependencies:
       ansi-escapes: 4.3.2
@@ -12392,13 +12305,12 @@ snapshots:
 
   '@shikijs/vscode-textmate@10.0.2': {}
 
-  '@shopify/cli-hydrogen@13.0.6(@graphql-codegen/cli@6.3.1(@parcel/watcher@2.5.6)(@types/node@22.20.1)(crossws@0.3.5)(graphql@16.14.2)(typescript@5.9.3))(graphql-config@5.1.6(@types/node@26.1.1)(crossws@0.3.5)(graphql@16.14.2)(typescript@5.9.3))(graphql@16.14.2)(react-dom@19.2.4(react@18.3.1))(react@18.3.1)(vite@6.4.3(@types/node@26.1.1)(jiti@2.6.1)(sass@1.100.0)(tsx@4.23.1)(yaml@2.9.0))':
+  '@shopify/cli-hydrogen@13.1.0(@graphql-codegen/cli@6.3.1(@parcel/watcher@2.5.6)(@types/node@22.20.1)(crossws@0.3.5)(graphql@16.14.2)(typescript@5.9.3))(graphql-config@5.1.6(@types/node@26.1.1)(crossws@0.3.5)(graphql@16.14.2)(typescript@5.9.3))(graphql@16.14.2)(react-dom@19.2.4(react@18.3.1))(react@18.3.1)(vite@6.4.3(@types/node@26.1.1)(jiti@2.6.1)(sass@1.100.0)(tsx@4.23.1)(yaml@2.9.0))':
     dependencies:
       '@ast-grep/napi': 0.34.1
-      '@oclif/core': 3.26.5
+      '@oclif/core': 4.8.3
       '@shopify/cli-kit': link:packages/cli-kit
-      '@shopify/oxygen-cli': 4.6.18(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)(graphql@16.14.2)
-      '@shopify/plugin-cloudflare': link:packages/plugin-cloudflare
+      '@shopify/oxygen-cli': 4.6.18(@oclif/core@4.8.3)(@shopify/cli-kit@packages+cli-kit)(graphql@16.14.2)
       ansi-escapes: 6.2.1
       chokidar: 3.5.3
       cli-truncate: 4.0.0
@@ -12500,12 +12412,12 @@ snapshots:
     dependencies:
       line-column: 1.0.2
 
-  '@shopify/oxygen-cli@4.6.18(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)(graphql@16.14.2)':
+  '@shopify/oxygen-cli@4.6.18(@oclif/core@4.8.3)(@shopify/cli-kit@packages+cli-kit)(graphql@16.14.2)':
     dependencies:
       '@bugsnag/core': 8.9.0
       '@bugsnag/js': 8.9.0
       '@bugsnag/node': 8.9.0
-      '@oclif/core': 3.26.5
+      '@oclif/core': 4.8.3
       '@shopify/cli-kit': link:packages/cli-kit
       async: 3.2.6
       graphql-request: 7.4.0(graphql@16.14.2)
@@ -12805,10 +12717,6 @@ snapshots:
     dependencies:
       '@types/deep-eql': 4.0.2
       assertion-error: 2.0.1
-
-  '@types/cli-progress@3.11.6':
-    dependencies:
-      '@types/node': 22.20.1
 
   '@types/deep-eql@4.0.2': {}
 
@@ -13253,8 +13161,6 @@ snapshots:
 
   ansi-styles@6.2.3: {}
 
-  ansicolors@0.3.2: {}
-
   ansis@3.17.0: {}
 
   anymatch@3.1.3:
@@ -13388,8 +13294,6 @@ snapshots:
   assertion-error@2.0.1: {}
 
   ast-types-flow@0.0.8: {}
-
-  astral-regex@2.0.0: {}
 
   async-function@1.0.0: {}
 
@@ -13635,11 +13539,6 @@ snapshots:
       tslib: 2.8.1
       upper-case-first: 2.0.2
 
-  cardinal@2.1.1:
-    dependencies:
-      ansicolors: 0.3.2
-      redeyed: 2.1.1
-
   chai@6.2.2: {}
 
   chalk@2.4.2:
@@ -13736,10 +13635,6 @@ snapshots:
     dependencies:
       restore-cursor: 5.1.0
 
-  cli-progress@3.12.0:
-    dependencies:
-      string-width: 4.2.3
-
   cli-spinners@2.6.1: {}
 
   cli-spinners@2.9.2: {}
@@ -13789,16 +13684,6 @@ snapshots:
   color-name@1.1.3: {}
 
   color-name@1.1.4: {}
-
-  color-string@1.9.1:
-    dependencies:
-      color-name: 1.1.4
-      simple-swizzle: 0.2.4
-
-  color@4.2.3:
-    dependencies:
-      color-convert: 2.0.1
-      color-string: 1.9.1
 
   colorette@2.0.20: {}
 
@@ -15357,8 +15242,6 @@ snapshots:
 
   human-signals@5.0.0: {}
 
-  hyperlinker@1.0.0: {}
-
   iconv-lite@0.6.3:
     dependencies:
       safer-buffer: 2.1.2
@@ -15499,8 +15382,6 @@ snapshots:
       get-intrinsic: 1.3.0
 
   is-arrayish@0.2.1: {}
-
-  is-arrayish@0.3.4: {}
 
   is-async-function@2.1.1:
     dependencies:
@@ -16272,8 +16153,6 @@ snapshots:
 
   natural-compare@1.4.0: {}
 
-  natural-orderby@2.0.3: {}
-
   natural-orderby@3.0.2: {}
 
   no-case@3.0.4:
@@ -16491,8 +16370,6 @@ snapshots:
   object-inspect@1.13.4: {}
 
   object-keys@1.1.1: {}
-
-  object-treeify@1.1.33: {}
 
   object-treeify@4.0.1: {}
 
@@ -16730,11 +16607,6 @@ snapshots:
     dependencies:
       no-case: 3.0.4
       tslib: 2.8.1
-
-  password-prompt@1.1.3:
-    dependencies:
-      ansi-escapes: 4.3.2
-      cross-spawn: 7.0.6
 
   patch-console@2.0.0: {}
 
@@ -17062,10 +16934,6 @@ snapshots:
     dependencies:
       indent-string: 4.0.0
       strip-indent: 3.0.0
-
-  redeyed@2.1.1:
-    dependencies:
-      esprima: 4.0.1
 
   reduce-flatten@2.0.0: {}
 
@@ -17408,17 +17276,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  simple-swizzle@0.2.4:
-    dependencies:
-      is-arrayish: 0.3.4
-
   slash@3.0.0: {}
-
-  slice-ansi@4.0.0:
-    dependencies:
-      ansi-styles: 4.3.0
-      astral-regex: 2.0.0
-      is-fullwidth-code-point: 3.0.0
 
   slice-ansi@5.0.0:
     dependencies:
