@@ -5536,6 +5536,24 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -5554,14 +5572,32 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--watch",
           "value": "''",
           "description": "Watches for changes and rebuilds the project writing output to disk.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_WATCH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface hydrogenbuild {\n  /**\n   * Show a bundle size summary after building. Defaults to true, use `--no-bundle-stats` to disable.\n   *\n   */\n  '--bundle-stats'?: ''\n\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   *\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   *\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Disables any warnings about missing standard routes.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DISABLE_ROUTE_WARNING\n   */\n  '--disable-route-warning'?: ''\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Client sourcemapping is avoided by default because it makes backend code visible in the browser. Use this flag to force enabling it.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE_CLIENT_SOURCEMAP\n   */\n  '--force-client-sourcemap'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_LOCKFILE_CHECK\n   */\n  '--lockfile-check'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Controls whether server sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_SOURCEMAP\n   */\n  '--sourcemap'?: ''\n\n  /**\n   * Watches for changes and rebuilds the project writing output to disk.\n   * @environment SHOPIFY_HYDROGEN_FLAG_WATCH\n   */\n  '--watch'?: ''\n}"
+      "value": "export interface hydrogenbuild {\n  /**\n   * Show a bundle size summary after building. Defaults to true, use `--no-bundle-stats` to disable.\n   *\n   */\n  '--bundle-stats'?: ''\n\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   *\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   *\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Disables any warnings about missing standard routes.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DISABLE_ROUTE_WARNING\n   */\n  '--disable-route-warning'?: ''\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Client sourcemapping is avoided by default because it makes backend code visible in the browser. Use this flag to force enabling it.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE_CLIENT_SOURCEMAP\n   */\n  '--force-client-sourcemap'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_LOCKFILE_CHECK\n   */\n  '--lockfile-check'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Controls whether server sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_SOURCEMAP\n   */\n  '--sourcemap'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Watches for changes and rebuilds the project writing output to disk.\n   * @environment SHOPIFY_HYDROGEN_FLAG_WATCH\n   */\n  '--watch'?: ''\n}"
     }
   },
   "hydrogencheck": {
@@ -5583,14 +5619,50 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-check.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-check.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-check.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-check.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-check.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface hydrogencheck {\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n}"
+      "value": "export interface hydrogencheck {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogencodegen": {
@@ -5620,6 +5692,24 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-codegen.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-codegen.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-codegen.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -5629,13 +5719,31 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-codegen.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-codegen.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--watch",
           "value": "''",
           "description": "Watch the project for changes to update types on file save.",
           "isOptional": true
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-codegen.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface hydrogencodegen {\n  /**\n   * Specify a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if it exists.\n   *\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Watch the project for changes to update types on file save.\n   *\n   */\n  '--watch'?: ''\n}"
+      "value": "export interface hydrogencodegen {\n  /**\n   * Specify a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if it exists.\n   *\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Watch the project for changes to update types on file save.\n   *\n   */\n  '--watch'?: ''\n}"
     }
   },
   "hydrogencustomeraccountpush": {
@@ -5672,6 +5780,24 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -5701,9 +5827,27 @@
           "value": "string",
           "description": "The id of the storefront the configuration should be pushed to. Must start with 'gid://shopify/HydrogenStorefront/'",
           "isOptional": true
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface hydrogencustomeraccountpush {\n  /**\n   * The development domain of your application.\n   *\n   */\n  '--dev-origin <value>': string\n\n  /**\n   * The origin to register as the allowed JavaScript origin for the Customer Account API OAuth flow. Defaults to --dev-origin. Must not include a port (Shopify rejects origins with ports); use this to register a portless origin while keeping a portful --dev-origin.\n   *\n   */\n  '--javascript-origin <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * The relative url of allowed url that will be redirected to post-logout for Customer Account API OAuth flow. Default to nothing.\n   *\n   */\n  '--relative-logout-uri <value>'?: string\n\n  /**\n   * The relative url of allowed callback url for Customer Account API OAuth flow. Default is '/account/authorize'\n   *\n   */\n  '--relative-redirect-uri <value>'?: string\n\n  /**\n   * The id of the storefront the configuration should be pushed to. Must start with 'gid://shopify/HydrogenStorefront/'\n   *\n   */\n  '--storefront-id <value>'?: string\n}"
+      "value": "export interface hydrogencustomeraccountpush {\n  /**\n   * The development domain of your application.\n   *\n   */\n  '--dev-origin <value>': string\n\n  /**\n   * The origin to register as the allowed JavaScript origin for the Customer Account API OAuth flow. Defaults to --dev-origin. Must not include a port (Shopify rejects origins with ports); use this to register a portless origin while keeping a portful --dev-origin.\n   *\n   */\n  '--javascript-origin <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * The relative url of allowed url that will be redirected to post-logout for Customer Account API OAuth flow. Default to nothing.\n   *\n   */\n  '--relative-logout-uri <value>'?: string\n\n  /**\n   * The relative url of allowed callback url for Customer Account API OAuth flow. Default is '/account/authorize'\n   *\n   */\n  '--relative-redirect-uri <value>'?: string\n\n  /**\n   * The id of the storefront the configuration should be pushed to. Must start with 'gid://shopify/HydrogenStorefront/'\n   *\n   */\n  '--storefront-id <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogendebugcpu": {
@@ -5734,6 +5878,24 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-debug-cpu.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-debug-cpu.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-debug-cpu.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--output <value>",
           "value": "string",
           "description": "Specify a path to generate the profile file. Defaults to \"startup.cpuprofile\".",
@@ -5747,9 +5909,18 @@
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-debug-cpu.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
         }
       ],
-      "value": "export interface hydrogendebugcpu {\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Specify a path to generate the profile file. Defaults to \"startup.cpuprofile\".\n   *\n   */\n  '--output <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n}"
+      "value": "export interface hydrogendebugcpu {\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Specify a path to generate the profile file. Defaults to \"startup.cpuprofile\".\n   *\n   */\n  '--output <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogendeploy": {
@@ -5884,6 +6055,24 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--no-verify",
           "value": "''",
           "description": "Skip the routability verification step after deployment.",
@@ -5909,6 +6098,15 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--worker-dir <value>",
           "value": "string",
           "description": "Directory containing the Oxygen worker entry point (`index.js` or `index.mjs`), relative to the project root. Defaults to the detected Vite server output directory, then falls back to `dist/server`.",
@@ -5923,6 +6121,15 @@
           "description": "Forces a deployment to proceed if there are uncommitted changes in its Git repository, and skips confirmation prompts for non-preview environments.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         },
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
@@ -5943,7 +6150,7 @@
           "environmentValue": "SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN"
         }
       ],
-      "value": "export interface hydrogendeploy {\n  /**\n   * Directory containing the client assets to deploy, relative to the project root. Defaults to the detected Vite client output directory, then falls back to `dist/client`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ASSETS_DIR\n   */\n  '--assets-dir <value>'?: string\n\n  /**\n   * Generate an authentication bypass token, which can be used to perform end-to-end tests against the deployment.\n   * @environment AUTH_BYPASS_TOKEN\n   */\n  '--auth-bypass-token'?: ''\n\n  /**\n   * Specify the duration (in hours) up to 12 hours for the authentication bypass token. Defaults to `2`\n   * @environment AUTH_BYPASS_TOKEN_DURATION\n   */\n  '--auth-bypass-token-duration <value>'?: string\n\n  /**\n   * Specify a build command to run before deploying. If not specified, the Hydrogen build pipeline will be used. When custom output directories are configured, defaults to `node --run build`.\n   *\n   */\n  '--build-command <value>'?: string\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables for the deployment.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Forces a deployment to proceed if there are uncommitted changes in its Git repository, and skips confirmation prompts for non-preview environments.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Client sourcemapping is avoided by default because it makes backend code visible in the browser. Use this flag to force enabling it.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE_CLIENT_SOURCEMAP\n   */\n  '--force-client-sourcemap'?: ''\n\n  /**\n   * Create a JSON file containing the deployment details in CI environments. Defaults to true, use `--no-json-output` to disable.\n   *\n   */\n  '--json-output'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_LOCKFILE_CHECK\n   */\n  '--lockfile-check'?: ''\n\n  /**\n   * Description of the changes in the deployment. Defaults to the commit message of the latest commit if there are no uncommitted changes.\n   * @environment SHOPIFY_HYDROGEN_FLAG_METADATA_DESCRIPTION\n   */\n  '--metadata-description <value>'?: string\n\n  /**\n   * User that initiated the deployment. Will be saved and displayed in the Shopify admin\n   * @environment SHOPIFY_HYDROGEN_FLAG_METADATA_USER\n   */\n  '--metadata-user <value>'?: string\n\n  /**\n   * Skip the routability verification step after deployment.\n   *\n   */\n  '--no-verify'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Deploys to the Preview environment.\n   *\n   */\n  '--preview'?: ''\n\n  /**\n   * Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).\n   * @environment SHOPIFY_SHOP\n   */\n  '-s, --shop <value>'?: string\n\n  /**\n   * Oxygen deployment token. Defaults to the linked storefront's token if available.\n   * @environment SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN\n   */\n  '-t, --token <value>'?: string\n\n  /**\n   * Directory containing the Oxygen worker entry point (`index.js` or `index.mjs`), relative to the project root. Defaults to the detected Vite server output directory, then falls back to `dist/server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_WORKER_DIR\n   */\n  '--worker-dir <value>'?: string\n}"
+      "value": "export interface hydrogendeploy {\n  /**\n   * Directory containing the client assets to deploy, relative to the project root. Defaults to the detected Vite client output directory, then falls back to `dist/client`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ASSETS_DIR\n   */\n  '--assets-dir <value>'?: string\n\n  /**\n   * Generate an authentication bypass token, which can be used to perform end-to-end tests against the deployment.\n   * @environment AUTH_BYPASS_TOKEN\n   */\n  '--auth-bypass-token'?: ''\n\n  /**\n   * Specify the duration (in hours) up to 12 hours for the authentication bypass token. Defaults to `2`\n   * @environment AUTH_BYPASS_TOKEN_DURATION\n   */\n  '--auth-bypass-token-duration <value>'?: string\n\n  /**\n   * Specify a build command to run before deploying. If not specified, the Hydrogen build pipeline will be used. When custom output directories are configured, defaults to `node --run build`.\n   *\n   */\n  '--build-command <value>'?: string\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables for the deployment.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Forces a deployment to proceed if there are uncommitted changes in its Git repository, and skips confirmation prompts for non-preview environments.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Client sourcemapping is avoided by default because it makes backend code visible in the browser. Use this flag to force enabling it.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE_CLIENT_SOURCEMAP\n   */\n  '--force-client-sourcemap'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Create a JSON file containing the deployment details in CI environments. Defaults to true, use `--no-json-output` to disable.\n   *\n   */\n  '--json-output'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_LOCKFILE_CHECK\n   */\n  '--lockfile-check'?: ''\n\n  /**\n   * Description of the changes in the deployment. Defaults to the commit message of the latest commit if there are no uncommitted changes.\n   * @environment SHOPIFY_HYDROGEN_FLAG_METADATA_DESCRIPTION\n   */\n  '--metadata-description <value>'?: string\n\n  /**\n   * User that initiated the deployment. Will be saved and displayed in the Shopify admin\n   * @environment SHOPIFY_HYDROGEN_FLAG_METADATA_USER\n   */\n  '--metadata-user <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Skip the routability verification step after deployment.\n   *\n   */\n  '--no-verify'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Deploys to the Preview environment.\n   *\n   */\n  '--preview'?: ''\n\n  /**\n   * Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).\n   * @environment SHOPIFY_SHOP\n   */\n  '-s, --shop <value>'?: string\n\n  /**\n   * Oxygen deployment token. Defaults to the linked storefront's token if available.\n   * @environment SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN\n   */\n  '-t, --token <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Directory containing the Oxygen worker entry point (`index.js` or `index.mjs`), relative to the project root. Defaults to the detected Vite server output directory, then falls back to `dist/server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_WORKER_DIR\n   */\n  '--worker-dir <value>'?: string\n}"
     }
   },
   "hydrogendev": {
@@ -6076,6 +6283,24 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -6101,7 +6326,7 @@
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_VERBOSE"
         }
       ],
-      "value": "export interface hydrogendev {\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   *\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   *\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Use tunneling for local development and push the tunneling domain to admin. Required to use Customer Account API's OAuth flow\n   * @environment SHOPIFY_HYDROGEN_FLAG_CUSTOMER_ACCOUNT_PUSH\n   */\n  '--customer-account-push'?: ''\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DEBUG\n   */\n  '--debug'?: ''\n\n  /**\n   * Disable adding dependencies to Vite's `ssr.optimizeDeps.include` automatically\n   * @environment SHOPIFY_HYDROGEN_FLAG_DISABLE_DEPS_OPTIMIZER\n   */\n  '--disable-deps-optimizer'?: ''\n\n  /**\n   * Skip the version check when running `hydrogen dev`\n   *\n   */\n  '--disable-version-check'?: ''\n\n  /**\n   * Disable rendering fallback routes when a route file doesn't exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DISABLE_VIRTUAL_ROUTES\n   */\n  '--disable-virtual-routes'?: ''\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Expose the server to the local network\n   *\n   */\n  '--host'?: ''\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * Outputs more information about the command's execution.\n   * @environment SHOPIFY_HYDROGEN_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface hydrogendev {\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   *\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   *\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Use tunneling for local development and push the tunneling domain to admin. Required to use Customer Account API's OAuth flow\n   * @environment SHOPIFY_HYDROGEN_FLAG_CUSTOMER_ACCOUNT_PUSH\n   */\n  '--customer-account-push'?: ''\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DEBUG\n   */\n  '--debug'?: ''\n\n  /**\n   * Disable adding dependencies to Vite's `ssr.optimizeDeps.include` automatically\n   * @environment SHOPIFY_HYDROGEN_FLAG_DISABLE_DEPS_OPTIMIZER\n   */\n  '--disable-deps-optimizer'?: ''\n\n  /**\n   * Skip the version check when running `hydrogen dev`\n   *\n   */\n  '--disable-version-check'?: ''\n\n  /**\n   * Disable rendering fallback routes when a route file doesn't exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DISABLE_VIRTUAL_ROUTES\n   */\n  '--disable-virtual-routes'?: ''\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Expose the server to the local network\n   *\n   */\n  '--host'?: ''\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * Outputs more information about the command's execution.\n   * @environment SHOPIFY_HYDROGEN_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogenenvlist": {
@@ -6123,14 +6348,50 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-list.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-list.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-list.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-list.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-list.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface hydrogenenvlist {\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n}"
+      "value": "export interface hydrogenenvlist {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogenenvpull": {
@@ -6177,6 +6438,24 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -6186,14 +6465,32 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-f, --force",
           "value": "''",
           "description": "Overwrites the destination directory and files if they already exist.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface hydrogenenvpull {\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n}"
+      "value": "export interface hydrogenenvpull {\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogenenvpush": {
@@ -6240,6 +6537,24 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-push.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-push.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-push.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -6249,14 +6564,32 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-push.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-push.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-f, --force",
           "value": "''",
           "description": "Push environment variable changes without confirmation.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-push.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface hydrogenenvpush {\n  /**\n   * Preview environment variable changes without pushing them.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DRY_RUN\n   */\n  '--dry-run'?: ''\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Push environment variable changes without confirmation.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n}"
+      "value": "export interface hydrogenenvpush {\n  /**\n   * Preview environment variable changes without pushing them.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DRY_RUN\n   */\n  '--dry-run'?: ''\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Push environment variable changes without confirmation.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogengenerateroute": {
@@ -6296,6 +6629,24 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -6314,14 +6665,32 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-f, --force",
           "value": "''",
           "description": "Overwrites the destination directory and files if they already exist.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface hydrogengenerateroute {\n  /**\n   * React Router adapter used in the route. The default is `react-router`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--adapter <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--locale-param <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Generate TypeScript files\n   * @environment SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT\n   */\n  '--typescript'?: ''\n}"
+      "value": "export interface hydrogengenerateroute {\n  /**\n   * React Router adapter used in the route. The default is `react-router`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--adapter <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--locale-param <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Generate TypeScript files\n   * @environment SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT\n   */\n  '--typescript'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogengenerateroutes": {
@@ -6361,6 +6730,24 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -6379,14 +6766,32 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-f, --force",
           "value": "''",
           "description": "Overwrites the destination directory and files if they already exist.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface hydrogengenerateroutes {\n  /**\n   * React Router adapter used in the route. The default is `react-router`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--adapter <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--locale-param <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Generate TypeScript files\n   * @environment SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT\n   */\n  '--typescript'?: ''\n}"
+      "value": "export interface hydrogengenerateroutes {\n  /**\n   * React Router adapter used in the route. The default is `react-router`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--adapter <value>'?: string\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The param name in Remix routes for the i18n locale, if any. Example: `locale` becomes ($locale).\n   * @environment SHOPIFY_HYDROGEN_FLAG_ADAPTER\n   */\n  '--locale-param <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Generate TypeScript files\n   * @environment SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT\n   */\n  '--typescript'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogeninit": {
@@ -6453,6 +6858,24 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the new Hydrogen storefront.",
@@ -6498,14 +6921,32 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-f, --force",
           "value": "''",
           "description": "Overwrites the destination directory and files if they already exist.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface hydrogeninit {\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Init Git and create initial commits.\n   * @environment SHOPIFY_HYDROGEN_FLAG_GIT\n   */\n  '--git'?: ''\n\n  /**\n   * Auto installs dependencies using the active package manager.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS\n   */\n  '--install-deps'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Sets the template language to use. One of `js` or `ts`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_LANGUAGE\n   */\n  '--language <value>'?: string\n\n  /**\n   * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_I18N\n   */\n  '--markets <value>'?: string\n\n  /**\n   * Use mock.shop as the data source for the storefront.\n   * @environment SHOPIFY_HYDROGEN_FLAG_MOCK_DATA\n   */\n  '--mock-shop'?: ''\n\n  /**\n   * The path to the directory of the new Hydrogen storefront.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Scaffolds a new Hydrogen project with a set of sensible defaults. Equivalent to `shopify hydrogen init --path hydrogen-quickstart --mock-shop --language js --shortcut --markets none`\n   * @environment SHOPIFY_HYDROGEN_FLAG_QUICKSTART\n   */\n  '--quickstart'?: ''\n\n  /**\n   * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_SHORTCUT\n   */\n  '--shortcut'?: ''\n\n  /**\n   * Sets the styling strategy to use. One of `tailwind`, `vanilla-extract`, `css-modules`, `postcss`, `none`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_STYLING\n   */\n  '--styling <value>'?: string\n\n  /**\n   * Scaffolds project based on a template: `skeleton` (the default), `demo-store` or a URL to a git repository.\n   * @environment SHOPIFY_HYDROGEN_FLAG_TEMPLATE\n   */\n  '--template <value>'?: string\n}"
+      "value": "export interface hydrogeninit {\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Init Git and create initial commits.\n   * @environment SHOPIFY_HYDROGEN_FLAG_GIT\n   */\n  '--git'?: ''\n\n  /**\n   * Auto installs dependencies using the active package manager.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS\n   */\n  '--install-deps'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Sets the template language to use. One of `js` or `ts`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_LANGUAGE\n   */\n  '--language <value>'?: string\n\n  /**\n   * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_I18N\n   */\n  '--markets <value>'?: string\n\n  /**\n   * Use mock.shop as the data source for the storefront.\n   * @environment SHOPIFY_HYDROGEN_FLAG_MOCK_DATA\n   */\n  '--mock-shop'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the new Hydrogen storefront.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Scaffolds a new Hydrogen project with a set of sensible defaults. Equivalent to `shopify hydrogen init --path hydrogen-quickstart --mock-shop --language js --shortcut --markets none`\n   * @environment SHOPIFY_HYDROGEN_FLAG_QUICKSTART\n   */\n  '--quickstart'?: ''\n\n  /**\n   * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_SHORTCUT\n   */\n  '--shortcut'?: ''\n\n  /**\n   * Sets the styling strategy to use. One of `tailwind`, `vanilla-extract`, `css-modules`, `postcss`, `none`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_STYLING\n   */\n  '--styling <value>'?: string\n\n  /**\n   * Scaffolds project based on a template: `skeleton` (the default), `demo-store` or a URL to a git repository.\n   * @environment SHOPIFY_HYDROGEN_FLAG_TEMPLATE\n   */\n  '--template <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogenlink": {
@@ -6545,6 +6986,24 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -6563,11 +7022,29 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-f, --force",
           "value": "''",
           "description": "Overwrites the destination directory and files if they already exist.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         },
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
@@ -6579,7 +7056,7 @@
           "environmentValue": "SHOPIFY_SHOP"
         }
       ],
-      "value": "export interface hydrogenlink {\n  /**\n   * Create a new Hydrogen storefront.\n   * @environment SHOPIFY_HYDROGEN_FLAG_CREATE_STOREFRONT\n   */\n  '--create-storefront'?: ''\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The name to use when creating a new Hydrogen storefront.\n   * @environment SHOPIFY_HYDROGEN_FLAG_NAME\n   */\n  '--name <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).\n   * @environment SHOPIFY_SHOP\n   */\n  '-s, --shop <value>'?: string\n\n  /**\n   * The name of a Hydrogen Storefront (e.g. \"Jane's Apparel\")\n   * @environment SHOPIFY_HYDROGEN_STOREFRONT\n   */\n  '--storefront <value>'?: string\n}"
+      "value": "export interface hydrogenlink {\n  /**\n   * Create a new Hydrogen storefront.\n   * @environment SHOPIFY_HYDROGEN_FLAG_CREATE_STOREFRONT\n   */\n  '--create-storefront'?: ''\n\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The name to use when creating a new Hydrogen storefront.\n   * @environment SHOPIFY_HYDROGEN_FLAG_NAME\n   */\n  '--name <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).\n   * @environment SHOPIFY_SHOP\n   */\n  '-s, --shop <value>'?: string\n\n  /**\n   * The name of a Hydrogen Storefront (e.g. \"Jane's Apparel\")\n   * @environment SHOPIFY_HYDROGEN_STOREFRONT\n   */\n  '--storefront <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogenlist": {
@@ -6601,14 +7078,50 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-list.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-list.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-list.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-list.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-list.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface hydrogenlist {\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n}"
+      "value": "export interface hydrogenlist {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogenlogin": {
@@ -6630,11 +7143,47 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-login.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-login.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-login.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-login.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-login.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         },
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-login.interface.ts",
@@ -6646,7 +7195,7 @@
           "environmentValue": "SHOPIFY_SHOP"
         }
       ],
-      "value": "export interface hydrogenlogin {\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).\n   * @environment SHOPIFY_SHOP\n   */\n  '-s, --shop <value>'?: string\n}"
+      "value": "export interface hydrogenlogin {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Shop URL. It can be the shop prefix (janes-apparel) or the full myshopify.com URL (janes-apparel.myshopify.com, https://janes-apparel.myshopify.com).\n   * @environment SHOPIFY_SHOP\n   */\n  '-s, --shop <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogenlogout": {
@@ -6668,14 +7217,50 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-logout.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-logout.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-logout.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-logout.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-logout.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface hydrogenlogout {\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n}"
+      "value": "export interface hydrogenlogout {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogenpreview": {
@@ -6773,6 +7358,24 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -6806,7 +7409,7 @@
           "isOptional": true
         }
       ],
-      "value": "export interface hydrogenpreview {\n  /**\n   * Builds the app before starting the preview server.\n   *\n   */\n  '--build'?: ''\n\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   *\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   *\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DEBUG\n   */\n  '--debug'?: ''\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * Outputs more information about the command's execution.\n   * @environment SHOPIFY_HYDROGEN_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Watches for changes and rebuilds the project.\n   *\n   */\n  '--watch'?: ''\n}"
+      "value": "export interface hydrogenpreview {\n  /**\n   * Builds the app before starting the preview server.\n   *\n   */\n  '--build'?: ''\n\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   *\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   *\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DEBUG\n   */\n  '--debug'?: ''\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * Outputs more information about the command's execution.\n   * @environment SHOPIFY_HYDROGEN_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Watches for changes and rebuilds the project.\n   *\n   */\n  '--watch'?: ''\n}"
     }
   },
   "hydrogensetupcss": {
@@ -6837,6 +7440,24 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-css.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-css.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-css.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -6846,14 +7467,32 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-css.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-css.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-f, --force",
           "value": "''",
           "description": "Overwrites the destination directory and files if they already exist.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-css.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface hydrogensetupcss {\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Auto installs dependencies using the active package manager.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS\n   */\n  '--install-deps'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n}"
+      "value": "export interface hydrogensetupcss {\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Auto installs dependencies using the active package manager.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS\n   */\n  '--install-deps'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogensetupmarkets": {
@@ -6875,14 +7514,50 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-markets.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-markets.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-markets.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-markets.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-markets.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface hydrogensetupmarkets {\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n}"
+      "value": "export interface hydrogensetupmarkets {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogensetupvite": {
@@ -6904,14 +7579,50 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-vite.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-vite.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-vite.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-vite.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-vite.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface hydrogensetupvite {\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n}"
+      "value": "export interface hydrogensetupvite {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogensetup": {
@@ -6951,6 +7662,24 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -6969,14 +7698,32 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-f, --force",
           "value": "''",
           "description": "Overwrites the destination directory and files if they already exist.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface hydrogensetup {\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Auto installs dependencies using the active package manager.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS\n   */\n  '--install-deps'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_I18N\n   */\n  '--markets <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_SHORTCUT\n   */\n  '--shortcut'?: ''\n}"
+      "value": "export interface hydrogensetup {\n  /**\n   * Overwrites the destination directory and files if they already exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Auto installs dependencies using the active package manager.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS\n   */\n  '--install-deps'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_I18N\n   */\n  '--markets <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_SHORTCUT\n   */\n  '--shortcut'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogenshortcut": {
@@ -6994,9 +7741,45 @@
           "description": "Print the command's JSON schemas.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_JSON_SCHEMA"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-shortcut.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-shortcut.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-shortcut.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-shortcut.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface hydrogenshortcut {\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n}"
+      "value": "export interface hydrogenshortcut {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogenunlink": {
@@ -7018,14 +7801,50 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-unlink.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-unlink.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-unlink.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-unlink.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-unlink.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
         }
       ],
-      "value": "export interface hydrogenunlink {\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n}"
+      "value": "export interface hydrogenunlink {\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "hydrogenupgrade": {
@@ -7047,11 +7866,38 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-upgrade.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "--no-color",
+          "value": "''",
+          "description": "Disable color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-upgrade.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--no-input",
+          "value": "''",
+          "description": "Disable interactive prompts and browser authentication.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_NO_INPUT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-upgrade.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "--path <value>",
           "value": "string",
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_HYDROGEN_FLAG_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-upgrade.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--verbose",
+          "value": "''",
+          "description": "Increase the verbosity of the output. May include sensitive data.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_VERBOSE"
         },
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-upgrade.interface.ts",
@@ -7065,13 +7911,22 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-upgrade.interface.ts",
           "syntaxKind": "PropertySignature",
+          "name": "-j, --json",
+          "value": "''",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_JSON"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-upgrade.interface.ts",
+          "syntaxKind": "PropertySignature",
           "name": "-v, --version <value>",
           "value": "string",
           "description": "A target hydrogen version to update to",
           "isOptional": true
         }
       ],
-      "value": "export interface hydrogenupgrade {\n  /**\n   * Ignore warnings and force the upgrade to the target version\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * A target hydrogen version to update to\n   *\n   */\n  '-v, --version <value>'?: string\n}"
+      "value": "export interface hydrogenupgrade {\n  /**\n   * Ignore warnings and force the upgrade to the target version\n   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * A target hydrogen version to update to\n   *\n   */\n  '-v, --version <value>'?: string\n}"
     }
   },
   "organizationlist": {
