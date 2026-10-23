@@ -1,5 +1,21 @@
 # @shopify/cli-kit
 
+## 5.0.0
+
+### Minor Changes
+
+- 62d961a: Improve `app security check` accuracy and safely scan untrusted repositories; add `--print-instructions`, deprecate `--yes`, and require Git 2.38.0 or later for Git operations.
+- 730d051: Add `SHOPIFY_SERVICE_ACCOUNT_TOKEN` for app, store, and organization automation; it replaces the deprecated `SHOPIFY_APP_AUTOMATION_TOKEN` and `SHOPIFY_CLI_PARTNERS_TOKEN`, which remain supported.
+- 62d961a: Fix development theme previews on stores with market subfolders when using account authentication, improve Theme Access authentication, keep pulled files inside the theme directory, and support browser identity verification.
+- 62d961a: Add typed JSON output across CLI commands; update scripts for the new schemas with `--json-schema`, read `store execute` query results from `.data`, and use `--no-watch` with `app function replay --json`.
+
+### Patch Changes
+
+- 62d961a: Retry throttled API requests, report process failures correctly, and keep login available when the browser cannot open.
+- 62d961a: Protect webhook secrets in debug output, prevent GraphQL cache reuse across tokens, and harden GraphiQL and local command execution.
+- bcbaec8: Explain which access is missing when a token can't manage dev stores, instead of printing a raw GraphQL 401 with the query and a stack trace.
+- 349478a: Preserve graceful shutdown and child-process cleanup on Windows.
+
 ## 4.9.0
 
 ### Minor Changes

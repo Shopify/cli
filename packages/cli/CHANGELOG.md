@@ -1,5 +1,29 @@
 # @shopify/cli
 
+## 5.0.0
+
+### Major Changes
+
+- 62d961a: Add typed JSON output across CLI commands; update scripts for the new schemas with `--json-schema`, read `store execute` query results from `.data`, and use `--no-watch` with `app function replay --json`.
+
+### Minor Changes
+
+- 62d961a: Improve `app security check` accuracy and safely scan untrusted repositories; add `--print-instructions`, deprecate `--yes`, and require Git 2.38.0 or later for Git operations.
+- e71ac0e: Add typed JSON output to `app security` commands.
+- 6ef6660: Add `app dev --json` streaming and expose session-file schemas with `--json-schema`.
+- 604a2ce: Update cli-hydrogen 13.1.0, adding typed JSON output to Hydrogen commands
+
+### Patch Changes
+
+- 62d961a: Fix lost Shop scopes in `app config link`, legacy Checkout and POS extension migration detection, and UI extension builds with multiple `should_render` targets.
+- adb6a43: Have coding agents run `app security` commands with `--json --no-input` and read their results instead of parsing terminal output.
+- 12cc647: Exit 0 instead of failing when you decline to scan without app configuration in `app security check`.
+- 525289f: Report clipboard failures in `app security instructions --copy` as errors, and in `app security check` as warnings, instead of crashing.
+- e3d8ebb: Report app security results files with out-of-range values as invalid.
+- 62d961a: Protect webhook secrets in debug output, prevent GraphQL cache reuse across tokens, and harden GraphiQL and local command execution.
+- bcbaec8: Explain which access is missing when a token can't manage dev stores, instead of printing a raw GraphQL 401 with the query and a stack trace.
+- 349478a: Preserve graceful shutdown and child-process cleanup on Windows.
+
 ## 4.9.0
 
 ### Minor Changes
