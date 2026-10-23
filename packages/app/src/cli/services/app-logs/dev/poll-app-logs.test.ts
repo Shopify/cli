@@ -439,7 +439,29 @@ describe('pollAppLogs', () => {
     })
 
     // Then
-    expect(outputWarnSpy).toHaveBeenCalledWith('Error while polling app logs.', stdout)
+    expect(outputWarnSpy).toHaveBeenCalledWith('Error while polling app logs (HTTP 500): errorMessage.', stdout)
+    expect(vi.getTimerCount()).toEqual(1)
+  })
+
+  test('displays the API error when app log polling fails', async () => {
+    const outputWarnSpy = vi.spyOn(output, 'outputWarn')
+    const response = {errors: ['Malformed JWT'], status: 400}
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
+      appLogs: vi.fn().mockResolvedValue(response),
+    })
+
+    await pollAppLogs({
+      stdout,
+      appLogsFetchInput: {jwtToken: JWT_TOKEN},
+      developerPlatformClient: mockedDeveloperPlatformClient,
+      resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
+      storeName: 'storeName',
+      organizationId: 'organizationId',
+      logsDir: TEST_LOGS_DIR,
+    })
+
+    expect(outputWarnSpy).toHaveBeenCalledWith('Error while polling app logs (HTTP 400): Malformed JWT.', stdout)
+    expect(outputWarnSpy).toHaveBeenCalledWith('Retrying in 5 seconds.', stdout)
     expect(vi.getTimerCount()).toEqual(1)
   })
 
