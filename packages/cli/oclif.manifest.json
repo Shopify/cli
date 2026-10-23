@@ -11136,14 +11136,6 @@
           "noCacheDefault": true,
           "type": "option"
         },
-        "poll": {
-          "allowNo": false,
-          "description": "Force polling to detect file changes.",
-          "env": "SHOPIFY_FLAG_POLL",
-          "hidden": true,
-          "name": "poll",
-          "type": "boolean"
-        },
         "port": {
           "description": "Local port to serve theme preview from. Must be between 1 and 65535.",
           "env": "SHOPIFY_FLAG_PORT",
