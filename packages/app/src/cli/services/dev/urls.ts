@@ -126,27 +126,16 @@ async function pollTunnelURL(tunnelClient: TunnelClient): Promise<string> {
   })
 }
 
+const DEFAULT_AUTH_CALLBACK_PATHS = ['/auth/callback', '/auth/shopify/callback', '/api/auth/callback']
+
 export function generateApplicationURLs(
   baseURL: string,
   authCallbackPath?: string | string[],
   proxyFields?: CurrentAppConfiguration['app_proxy'],
 ): ApplicationURLs {
-  let redirectUrlWhitelist: string[]
-  if (authCallbackPath && authCallbackPath.length > 0) {
-    const authCallbackPaths = Array.isArray(authCallbackPath) ? authCallbackPath : [authCallbackPath]
-    redirectUrlWhitelist = authCallbackPaths.reduce<string[]>((acc, path) => {
-      if (path && path.length > 0) {
-        acc.push(`${baseURL}${path}`)
-      }
-      return acc
-    }, [])
-  } else {
-    redirectUrlWhitelist = [
-      `${baseURL}/auth/callback`,
-      `${baseURL}/auth/shopify/callback`,
-      `${baseURL}/api/auth/callback`,
-    ]
-  }
+  const authCallbackPaths =
+    authCallbackPath && authCallbackPath.length > 0 ? [authCallbackPath].flat() : DEFAULT_AUTH_CALLBACK_PATHS
+  const redirectUrlWhitelist = authCallbackPaths.filter(Boolean).map((path) => `${baseURL}${path}`)
 
   const appProxy = proxyFields
     ? {
