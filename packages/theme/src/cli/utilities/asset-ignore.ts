@@ -1,4 +1,5 @@
 import {uniqBy} from '@shopify/cli-kit/common/array'
+import {partition} from '@shopify/cli-kit/common/collection'
 import {fileExists, readFile, matchGlob as originalMatchGlob} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -16,9 +17,9 @@ export function applyIgnoreFilters<T extends {key: string}>(
   const ignoreOptions = options.ignore ?? []
   const onlyOptions = options.only ?? []
 
-  const [normalShopifyPatterns = [], negatedShopifyPatterns = []] = filterRegexValues(shopifyIgnore)
-  const [normalIgnorePatterns = [], negatedIgnorePatterns = []] = filterRegexValues(ignoreOptions)
-  const [normalOnlyPatterns = [], negatedOnlyPatterns = []] = filterRegexValues(onlyOptions)
+  const [normalShopifyPatterns, negatedShopifyPatterns] = filterRegexValues(shopifyIgnore)
+  const [normalIgnorePatterns, negatedIgnorePatterns] = filterRegexValues(ignoreOptions)
+  const [normalOnlyPatterns, negatedOnlyPatterns] = filterRegexValues(onlyOptions)
 
   let filteredFiles = files.filter(filterBy(normalShopifyPatterns, '.shopifyignore'))
   filteredFiles = filteredFiles.filter(filterBy(normalIgnorePatterns, '--ignore'))
@@ -70,13 +71,10 @@ export async function getPatternsFromShopifyIgnore(root: string) {
     .filter((line) => line && !line.startsWith('#'))
 }
 
-function filterRegexValues(regexList: string[]) {
-  const negatedPatterns = regexList
-    .filter((regexList) => regexList.startsWith('!'))
-    .map((regexList) => regexList.slice(1))
-  const normalPatterns = regexList.filter((regexList) => !regexList.startsWith('!'))
+function filterRegexValues(regexList: string[]): [string[], string[]] {
+  const [negatedPatterns, normalPatterns] = partition(regexList, (pattern) => pattern.startsWith('!'))
 
-  return [normalPatterns, negatedPatterns]
+  return [normalPatterns, negatedPatterns.map((pattern) => pattern.slice(1))]
 }
 
 function matchGlob(key: string, pattern: string) {
