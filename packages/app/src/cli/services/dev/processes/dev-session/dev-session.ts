@@ -334,8 +334,10 @@ export class DevSession {
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
+      // cli-kit reports a 401 that survives the token refresh with its `statusCode`; a raw graphql-request error
+      // carries the status on its response.
       if (error.statusCode === 401) {
-        throw new Error('Unauthorized')
+        throw new AbortError('Auth session expired. Please run `shopify app dev` again.')
       } else if (error instanceof ClientError) {
         if (error.response.status === 401 || error.response.status === 403) {
           throw new AbortError('Auth session expired. Please run `shopify app dev` again.')
