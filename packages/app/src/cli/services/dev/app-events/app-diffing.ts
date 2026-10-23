@@ -20,17 +20,20 @@ interface AppExtensionsDiff {
  */
 export function appDiff(app: AppInterface, newApp: AppInterface, includeUpdated = true): AppExtensionsDiff {
   const oldExtensions = app.realExtensions
-  const oldExtensionsUids = oldExtensions.map((ext) => ext.uid)
   const newExtensions = newApp.realExtensions
-  const newExtensionsUids = newExtensions.map((ext) => ext.uid)
 
-  const createdExtensions = newExtensions.filter((ext) => !oldExtensionsUids.includes(ext.uid))
-  const deletedExtensions = oldExtensions.filter((ext) => !newExtensionsUids.includes(ext.uid))
+  // Indexing by uid keeps every lookup below O(1). The previous implementation scanned the opposite
+  // array for each extension, which is O(n²) on a path that runs on every file change during `app dev`.
+  const oldExtensionsByUid = new Map(oldExtensions.map((ext) => [ext.uid, ext]))
+  const newExtensionsUids = new Set(newExtensions.map((ext) => ext.uid))
+
+  const createdExtensions = newExtensions.filter((ext) => !oldExtensionsByUid.has(ext.uid))
+  const deletedExtensions = oldExtensions.filter((ext) => !newExtensionsUids.has(ext.uid))
 
   let updatedExtensions
   if (includeUpdated) {
     updatedExtensions = newExtensions.filter((ext) => {
-      const oldExtension = oldExtensions.find((oldExt) => oldExt.uid === ext.uid)
+      const oldExtension = oldExtensionsByUid.get(ext.uid)
       if (!oldExtension) return false
       const configChanged = JSON.stringify(oldExtension.configuration) !== JSON.stringify(ext.configuration)
       const extensionPathChanged = oldExtension.configurationPath !== ext.configurationPath
