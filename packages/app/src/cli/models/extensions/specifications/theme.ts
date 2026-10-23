@@ -57,7 +57,7 @@ const AllowedSourcesSchema = zod
     if (invalid.length > 0) {
       ctx.addIssue({
         code: zod.ZodIssueCode.custom,
-        message: `Invalid allowed_sources: ${invalid.map((source) => JSON.stringify(source)).join(', ')}. Use HTTPS origins with no path, query or fragment, like "https://api.example.com" or "https://*.example-cdn.com".`,
+        message: `Invalid allowed_sources: ${invalid.map((source) => JSON.stringify(source)).join(', ')}. Use HTTPS origins with no path, query or fragment, like "https://api.example.com" or "https://*.cdn.example.com".`,
       })
     }
   })

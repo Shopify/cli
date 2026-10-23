@@ -496,7 +496,7 @@ describe('load', () => {
       type = "theme"
 
       [capabilities.network_access]
-      allowed_sources = ["https://API.example.com/", "https://*.example-cdn.com"]
+      allowed_sources = ["https://API.example.com/", "https://*.cdn.example.com"]
       `
     await writeBlockConfig({blockConfiguration, name: 'my-extension'})
     await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
@@ -509,7 +509,7 @@ describe('load', () => {
     const extension = getRealExtensions(app)[0]!
     await expect(extension.deployConfig({apiKey: 'api-key', appConfiguration: app.configuration})).resolves.toEqual({
       theme_extension: {files: {}},
-      capabilities: {network_access: {allowed_sources: ['https://api.example.com', 'https://*.example-cdn.com']}},
+      capabilities: {network_access: {allowed_sources: ['https://api.example.com', 'https://*.cdn.example.com']}},
     })
   })
 

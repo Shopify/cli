@@ -24,7 +24,7 @@ describe('theme', () => {
       const result = parseSources([
         'https://api.example.com',
         ' HTTPS://CDN.Example.com/ ',
-        'https://*.example-cdn.com',
+        'https://*.cdn.example.com',
         'https://api.example.com:443',
         'https://api.example.com:8443',
       ])
@@ -34,7 +34,7 @@ describe('theme', () => {
         allowed_sources: [
           'https://api.example.com',
           'https://cdn.example.com',
-          'https://*.example-cdn.com',
+          'https://*.cdn.example.com',
           'https://api.example.com:8443',
         ],
       })
@@ -95,10 +95,14 @@ describe('theme', () => {
       ['credentials', 'https://user@api.example.com'],
       ['a bare wildcard', '*'],
       ['a wildcard on a top-level domain', 'https://*.com'],
+      ['a wildcard on a single label', 'https://*.example'],
       ['a wildcard that is not the leading label', 'https://api.*.example.com'],
       ['a single-label host', 'https://localhost'],
       ['an IP address', 'https://127.0.0.1'],
       ['an invalid label', 'https://-api.example.com'],
+      ['an empty label', 'https://api..example.com'],
+      ['a trailing dot', 'https://api.example.com./'],
+      ['a newline', 'https://api.example.com\nhttps://other.example.com'],
       ['port 0', 'https://api.example.com:0'],
       ['a port above 65535', 'https://api.example.com:65536'],
       ['a CSP keyword', "'self'"],
@@ -110,7 +114,7 @@ describe('theme', () => {
       expect(errorMessages(result)).toEqual([
         `Invalid allowed_sources: ${JSON.stringify(
           source,
-        )}. Use HTTPS origins with no path, query or fragment, like "https://api.example.com" or "https://*.example-cdn.com".`,
+        )}. Use HTTPS origins with no path, query or fragment, like "https://api.example.com" or "https://*.cdn.example.com".`,
       ])
     })
 
@@ -152,11 +156,11 @@ describe('theme', () => {
     })
 
     test('sends the normalized allowed sources when they are declared', async () => {
-      const config = parseSources(['https://API.example.com/', 'https://*.example-cdn.com']).data!
+      const config = parseSources(['https://API.example.com/', 'https://*.cdn.example.com']).data!
 
       await expect(themeSpec.deployConfig?.(config, '', '', undefined)).resolves.toEqual({
         theme_extension: {files: {}},
-        capabilities: {network_access: {allowed_sources: ['https://api.example.com', 'https://*.example-cdn.com']}},
+        capabilities: {network_access: {allowed_sources: ['https://api.example.com', 'https://*.cdn.example.com']}},
       })
     })
 
