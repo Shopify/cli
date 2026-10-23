@@ -11,12 +11,12 @@ import {
   ConcurrentOutputProps,
   runConcurrentProcessesForJson,
 } from '../../private/node/ui/components/ConcurrentOutput.js'
-import {handleCtrlC, render, renderOnce} from '../../private/node/ui.js'
+import {handleCtrlC, render, renderOnce, Stdout} from '../../private/node/ui.js'
 import {alert, AlertOptions} from '../../private/node/ui/alert.js'
 import {CustomSection} from '../../private/node/ui/components/Alert.js'
 import {FatalError} from '../../private/node/ui/components/FatalError.js'
 import ScalarDict from '../../private/node/ui/components/Table/ScalarDict.js'
-import {Table, TableColumn, TableProps} from '../../private/node/ui/components/Table/Table.js'
+import {Table, TableColumn, TableProps, tableWidth} from '../../private/node/ui/components/Table/Table.js'
 import {
   tokenItemToString,
   type InlineToken,
@@ -489,8 +489,22 @@ interface RenderTableOptions<T extends ScalarDict> extends TableProps<T> {
  * 3   John Smith  jon@smith.com
  */
 export function renderTable<T extends ScalarDict>({renderOptions, ...props}: RenderTableOptions<T>) {
-  return renderOnce(<Table {...props} />, {renderOptions})
+  return renderOnce(<Table {...props} />, {renderOptions: tableRenderOptions(props, renderOptions)})
 }
+
+// Output that isn't a terminal (a pipe, a file, a CI log) has no width, and Ink then lays the table out in 80
+// columns, squeezing headers to "Typ" and wrapping cells onto extra lines. Give the table the width it needs
+// instead; a terminal keeps its own width.
+function tableRenderOptions<T extends ScalarDict>(
+  props: TableProps<T>,
+  renderOptions: RenderOptions | undefined,
+): RenderOptions | undefined {
+  if (renderOptions?.stdout || process.stdout.columns !== undefined) return renderOptions
+  const columns = Math.max(DEFAULT_OUTPUT_COLUMNS, tableWidth(props))
+  return {...renderOptions, stdout: new Stdout({columns}) as unknown as NodeJS.WriteStream}
+}
+
+const DEFAULT_OUTPUT_COLUMNS = 80
 
 interface RenderTasksOptions {
   renderOptions?: RenderOptions

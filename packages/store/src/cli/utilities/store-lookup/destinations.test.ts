@@ -1,6 +1,6 @@
 import {fetchDestinationsContext} from './destinations.js'
 import {businessPlatformRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
-import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {ensureAuthenticatedBusinessPlatform, isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
@@ -31,6 +31,19 @@ describe('fetchDestinationsContext', () => {
     const err = await fetchDestinationsContext({store: SHOP}).catch((error: unknown) => error)
     expect(err).toBeInstanceOf(AbortError)
     expect((err as AbortError).message).toContain(SHOP)
+    expect((err as AbortError).tryMessage).toContain("you're logged in to an account with access to the store")
+  })
+
+  test("advises on the service account's access, not a login, when a service account token is set", async () => {
+    vi.mocked(isServiceAccountTokenSet).mockReturnValue(true)
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValueOnce({
+      currentUserAccount: {destinations: {nodes: []}},
+    } as never)
+
+    const err = await fetchDestinationsContext({store: SHOP}).catch((error: unknown) => error)
+    expect(err).toBeInstanceOf(AbortError)
+    expect((err as AbortError).tryMessage).toContain('the service account has access to the store')
+    expect((err as AbortError).tryMessage).not.toContain('logged in')
   })
 
   test('throws AbortError when domain match is missing from results', async () => {
