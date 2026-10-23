@@ -79,48 +79,52 @@ describe('generateRandomGraphiQLKey', () => {
 })
 
 describe('runGraphiQLSession', () => {
-  test('writes lifecycle records only after listening and closes its real server', async () => {
-    const controller = new AbortController()
-    const before = listeners()
-    let url = ''
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      vi.mocked(openURL).mockImplementationOnce(async (readyUrl) => {
-        url = readyUrl
-        const response = await fetch(new URL('/graphiql/ping', readyUrl))
-        await expect(response.text()).resolves.toBe('pong')
-        expect(records(stdout()).map((record) => record.type)).toEqual(['starting', 'ready'])
-        controller.abort()
-        return true
+  test.each(['shop.myshopify.com', 'shop.myshopify.io', 'shop.my.shop.dev'])(
+    'writes lifecycle records for %s only after listening and closes its real server',
+    async (storeFqdn) => {
+      const controller = new AbortController()
+      const before = listeners()
+      let url = ''
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        vi.mocked(openURL).mockImplementationOnce(async (readyUrl) => {
+          url = readyUrl
+          const response = await fetch(new URL('/graphiql/ping', readyUrl))
+          await expect(response.text()).resolves.toBe('pong')
+          expect(records(stdout()).map((record) => record.type)).toEqual(['starting', 'ready'])
+          controller.abort()
+          return true
+        })
+        await runWithCommandEventsForCommand(['--json'], () =>
+          runGraphiQLSession({
+            ...options,
+            storeFqdn,
+            abortSignal: controller.signal,
+            protectMutations: true,
+            apiVersion: '2024-10',
+            appContext: {appName: 'Test App', appUrl: 'https://example.com/app', apiSecret: 'secret'},
+          }),
+        )
+        expect(records(stdout())).toEqual([
+          {type: 'starting', storeDomain: storeFqdn, timestamp: expect.any(String)},
+          {
+            type: 'ready',
+            timestamp: expect.any(String),
+            url,
+            storeDomain: storeFqdn,
+            api: 'admin',
+            apiVersion: '2024-10',
+            mutationsAllowed: false,
+            app: {name: 'Test App', url: 'https://example.com/app'},
+          },
+          {type: 'stopped', timestamp: expect.any(String), reason: 'cancelled'},
+        ])
+        expect(stdout()).not.toContain('secret')
+        expect(stderr()).toBe('')
       })
-      await runWithCommandEventsForCommand(['--json'], () =>
-        runGraphiQLSession({
-          ...options,
-          abortSignal: controller.signal,
-          protectMutations: true,
-          apiVersion: '2024-10',
-          appContext: {appName: 'Test App', appUrl: 'https://example.com/app', apiSecret: 'secret'},
-        }),
-      )
-      expect(records(stdout())).toEqual([
-        {type: 'starting', storeDomain: options.storeFqdn, timestamp: expect.any(String)},
-        {
-          type: 'ready',
-          timestamp: expect.any(String),
-          url,
-          storeDomain: options.storeFqdn,
-          api: 'admin',
-          apiVersion: '2024-10',
-          mutationsAllowed: false,
-          app: {name: 'Test App', url: 'https://example.com/app'},
-        },
-        {type: 'stopped', timestamp: expect.any(String), reason: 'cancelled'},
-      ])
-      expect(stdout()).not.toContain('secret')
-      expect(stderr()).toBe('')
-    })
-    await expect(fetch(new URL('/graphiql/ping', url))).rejects.toThrow()
-    expect(listeners()).toEqual(before)
-  })
+      await expect(fetch(new URL('/graphiql/ping', url))).rejects.toThrow()
+      expect(listeners()).toEqual(before)
+    },
+  )
 
   test('keeps repeated recoverable request failures on stderr and native responses over HTTP', async () => {
     const controller = new AbortController()

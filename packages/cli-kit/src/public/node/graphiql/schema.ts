@@ -1,7 +1,10 @@
 import {defineJsonOutputSchema, jsonOutputTimestampSchema, type InferJsonOutputSchema} from '../json-output-schema.js'
 import {zod} from '../schema.js'
 
-const storeDomain = zod.string().regex(/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/)
+const storeDomain = zod
+  .string()
+  .regex(/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/)
+  .describe('Normalized store hostname, including local development domains.')
 const timestamp = jsonOutputTimestampSchema
 
 /** Lifecycle records written as JSONL by the standalone GraphiQL commands. */

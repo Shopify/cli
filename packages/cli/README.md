@@ -3666,7 +3666,8 @@ DESCRIPTION
       },
       "GraphiQLStoreDomain": {
         "type": "string",
-        "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+        "pattern": "^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$",
+        "description": "Normalized store hostname, including local development domains."
       }
     },
     "$schema": "http://json-schema.org/draft-07/schema#"
@@ -12364,7 +12365,8 @@ DESCRIPTION
       },
       "GraphiQLStoreDomain": {
         "type": "string",
-        "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+        "pattern": "^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$",
+        "description": "Normalized store hostname, including local development domains."
       }
     },
     "$schema": "http://json-schema.org/draft-07/schema#"
