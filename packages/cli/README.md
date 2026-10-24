@@ -16580,6 +16580,10 @@ FLAGS
       The environment to apply to the current command.
       [env: SHOPIFY_FLAG_ENVIRONMENT]
 
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
   -s, --store=<value>
       Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com,
       https://example.myshopify.com).
@@ -16588,6 +16592,14 @@ FLAGS
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --input=<value>...
+      Liquid command to evaluate. Repeat to run commands in order and exit.
+      [env: SHOPIFY_FLAG_INPUT]
+
+  --input-file=<value>
+      File containing one Liquid command per line. Evaluates the commands and exits.
+      [env: SHOPIFY_FLAG_INPUT_FILE]
 
   --json-schema
       Print the command's JSON schemas.
@@ -16627,7 +16639,391 @@ DESCRIPTION
   Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for
   evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.
 
-  You can also provide context to the console using a URL, as some Liquid objects are context-specific
+  You can also provide context to the console using a URL, as some Liquid objects are context-specific.
+
+  Use repeatable `--input` flags or `--input-file` to evaluate commands sequentially in one session and exit. Input
+  files contain one console command per line; blank lines are ignored. Stop at the first error and skip remaining
+  commands.
+
+  `--json` requires `--input` or `--input-file` and returns one object with ordered results. Use `--no-input` as well to
+  prevent authentication and password prompts.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeConsoleResult` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/ThemeEnvironment/anyOf/0/properties/result"
+      },
+      {
+        "type": "object",
+        "properties": {
+          "environments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/ThemeEnvironment"
+            }
+          }
+        },
+        "required": [
+          "environments"
+        ],
+        "additionalProperties": false
+      }
+    ],
+    "title": "ThemeConsoleResult",
+    "definitions": {
+      "ConsoleInputResult": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "input": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "const": "success"
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/definitions/LiquidValue"
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/definitions/LiquidValue"
+                    }
+                  }
+                ],
+                "description": "The native Liquid value. Assignments return null."
+              }
+            },
+            "required": [
+              "input",
+              "status",
+              "value"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "input": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "const": "failed"
+              },
+              "error": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "abort"
+                      },
+                      "message": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "A stable error code, included only when known."
+                      },
+                      "tryMessage": {
+                        "type": "string"
+                      },
+                      "nextSteps": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "customSections": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "body": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "body"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "details": {
+                        "description": "Selected domain details, preserving native API payloads such as GraphQL errors, extensions, and data."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "bug"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ConsoleInputResult/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ConsoleInputResult/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ConsoleInputResult/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ConsoleInputResult/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ConsoleInputResult/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ConsoleInputResult/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "stack": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "external"
+                      },
+                      "message": {
+                        "$ref": "#/definitions/ConsoleInputResult/anyOf/1/properties/error/anyOf/0/properties/message"
+                      },
+                      "code": {
+                        "$ref": "#/definitions/ConsoleInputResult/anyOf/1/properties/error/anyOf/0/properties/code"
+                      },
+                      "tryMessage": {
+                        "$ref": "#/definitions/ConsoleInputResult/anyOf/1/properties/error/anyOf/0/properties/tryMessage"
+                      },
+                      "nextSteps": {
+                        "$ref": "#/definitions/ConsoleInputResult/anyOf/1/properties/error/anyOf/0/properties/nextSteps"
+                      },
+                      "customSections": {
+                        "$ref": "#/definitions/ConsoleInputResult/anyOf/1/properties/error/anyOf/0/properties/customSections"
+                      },
+                      "details": {
+                        "$ref": "#/definitions/ConsoleInputResult/anyOf/1/properties/error/anyOf/0/properties/details"
+                      },
+                      "command": {
+                        "type": "string"
+                      },
+                      "args": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "message",
+                      "command",
+                      "args"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "input",
+              "status",
+              "error"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "input": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "const": "skipped"
+              },
+              "reason": {
+                "type": "string",
+                "const": "previous-input-failed"
+              }
+            },
+            "required": [
+              "input",
+              "status",
+              "reason"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "LiquidValue": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/LiquidValue"
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/definitions/LiquidValue"
+            }
+          }
+        ]
+      },
+      "ThemeEnvironment": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "result": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "success",
+                          "partial"
+                        ]
+                      },
+                      "results": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/definitions/ConsoleInputResult"
+                        }
+                      }
+                    },
+                    "required": [
+                      "status",
+                      "results"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "status": {
+                        "type": "string",
+                        "const": "cancelled"
+                      }
+                    },
+                    "required": [
+                      "status"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "required": [
+              "environment",
+              "result"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "environment": {
+                "type": "string"
+              },
+              "error": {
+                "$ref": "#/definitions/ConsoleInputResult/anyOf/1/properties/error"
+              }
+            },
+            "required": [
+              "environment",
+              "error"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+
+EXAMPLES
+  $ shopify theme console --store example --input "shop.name" --input "shop.currency" --json --no-input
+
+  $ shopify theme console --store example --input-file ./commands.txt --json --no-input
 ```
 
 ## `shopify theme delete`
