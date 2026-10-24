@@ -1,3 +1,4 @@
+import {withThemeDevOutput} from './dev/output.js'
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
@@ -24,6 +25,7 @@ import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import chalk from '@shopify/cli-kit/node/colors'
+import {withDevInstance, type DevInstance} from '@shopify/cli-kit/node/dev-instance'
 import {Config} from '@oclif/core'
 
 import readline from 'readline'
@@ -88,6 +90,45 @@ export async function dev(options: DevOptions) {
     await ensureListingExists(options.directory, options.listing)
   }
 
+  await withDevInstance(
+    {
+      command: 'theme dev',
+      directory: options.directory,
+      key: `${options.store}:${options.theme.id}`,
+      details: {
+        store: options.store,
+        themeId: options.theme.id,
+        themeName: options.theme.name,
+        listing: options.listing,
+      },
+    },
+    async (instance) => {
+      const controller = new AbortController()
+      const stop = () => controller.abort()
+      const onInstanceError = () => controller.abort(instance.abortSignal.reason)
+      process.on('shopify:signal', stop)
+      process.on('SIGINT', stop)
+      process.on('SIGTERM', stop)
+      instance.abortSignal.addEventListener('abort', onInstanceError, {once: true})
+      try {
+        await withThemeDevOutput(instance, () => runDev(options, instance, controller))
+        instance.abortSignal.throwIfAborted()
+      } finally {
+        controller.abort()
+        process.off('shopify:signal', stop)
+        process.off('SIGINT', stop)
+        process.off('SIGTERM', stop)
+        instance.abortSignal.removeEventListener('abort', onInstanceError)
+      }
+    },
+  )
+
+  await reportDevAnalytics(options.commandConfig, options.adminSession)
+  process.exit(0)
+}
+
+async function runDev(options: DevOptions, instance: DevInstance, controller: AbortController) {
+  const {signal} = controller
   const [crawlerSignatureHeaders, isPasswordProtected] = await Promise.all([
     fetchOrCreateCrawlerSignatureHeaders(options.adminSession),
     isStorefrontPasswordProtected(options.adminSession),
@@ -96,12 +137,15 @@ export async function dev(options: DevOptions) {
     ? await ensureValidPassword(options.storePassword, options.adminSession.storeFqdn, crawlerSignatureHeaders)
     : undefined
 
+  if (signal.aborted) return
+
   const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const localThemeFileSystem = mountThemeFileSystem(options.directory, {
     filters: options,
     listing: options.listing,
     noDelete: options.noDelete,
     notify: options.notify,
+    signal,
   })
 
   const host = options.host ?? DEFAULT_HOST
@@ -124,14 +168,20 @@ export async function dev(options: DevOptions) {
     preview: `https://${options.store}/?preview_theme_id=${options.theme.id}`,
   }
 
+  await instance.update({details: {host, port, urls}})
+
   const session = await initializeDevServerSession(
     options.theme.id.toString(),
     options.adminSession,
     options.password,
     storefrontPassword,
     crawlerSignatureHeaders,
+    signal,
   )
+  if (signal.aborted) return
+
   const ctx: DevServerContext = {
+    signal,
     session,
     localThemeFileSystem,
     localThemeExtensionFileSystem,
@@ -154,36 +204,43 @@ export async function dev(options: DevOptions) {
     },
   }
 
-  const {serverStart, renderDevSetupProgress, backgroundJobPromise, resolveBackgroundJob} = setupDevServer(
+  const {serverStart, serverStop, workPromise, renderDevSetupProgress, backgroundJobPromise} = setupDevServer(
     options.theme,
     ctx,
   )
-
   const acceptsInput = terminalSupportsPrompting()
-  if (acceptsInput) {
-    readline.emitKeypressEvents(process.stdin)
-    const keypressHandler = createKeypressHandler(urls, ctx, resolveBackgroundJob)
-    process.stdin.on('keypress', keypressHandler)
+  const keypressHandler = createKeypressHandler(urls, ctx, () => controller.abort())
+  const {promise: stopped, resolve: resolveStopped} = Promise.withResolvers<void>()
+  const onAbort = () => resolveStopped()
+  signal.addEventListener('abort', onAbort, {once: true})
+
+  try {
+    if (acceptsInput) {
+      readline.emitKeypressEvents(process.stdin)
+      process.stdin.on('keypress', keypressHandler)
+    }
+
+    const start = async () => {
+      await renderDevSetupProgress()
+      if (signal.aborted) return
+      await serverStart()
+      if (signal.aborted) return
+      if (acceptsInput) process.stdin.setRawMode(true)
+      renderLinks(urls)
+      if (options.open) openURLSafely(urls.local, 'development server')
+      await workPromise
+      if (signal.aborted) return
+      await instance.update({status: 'running'})
+    }
+
+    await Promise.race([Promise.all([backgroundJobPromise, start()]), stopped])
+  } finally {
+    controller.abort()
+    signal.removeEventListener('abort', onAbort)
+    process.stdin.off('keypress', keypressHandler)
+    if (acceptsInput) process.stdin.setRawMode(false)
+    await serverStop()
   }
-
-  await Promise.all([
-    backgroundJobPromise,
-    renderDevSetupProgress()
-      .then(serverStart)
-      .then(() => {
-        if (acceptsInput) {
-          process.stdin.setRawMode(true)
-        }
-        renderLinks(urls)
-        if (options.open) {
-          openURLSafely(urls.local, 'development server')
-        }
-      }),
-  ])
-
-  await reportDevAnalytics(options.commandConfig, options.adminSession)
-
-  process.exit(0)
 }
 
 export async function reportDevAnalytics(config: Config, session: AdminSession): Promise<void> {
