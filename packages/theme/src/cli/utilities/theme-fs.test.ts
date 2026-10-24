@@ -22,7 +22,7 @@ import {
 } from '@shopify/cli-kit/node/fs'
 import * as fsKit from '@shopify/cli-kit/node/fs'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
-import chokidar from 'chokidar'
+import chokidar, {FSWatcher} from 'chokidar'
 import {bulkUploadThemeAssets, deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {renderError} from '@shopify/cli-kit/node/ui'
 import {Operation, type Checksum, type ThemeAsset} from '@shopify/cli-kit/node/themes/types'
@@ -66,6 +66,38 @@ describe('theme-fs', () => {
   })
 
   describe('mountThemeFileSystem', async () => {
+    test.each([
+      {value: 'true', usePolling: true},
+      {value: '1', usePolling: true},
+      {value: 'TrUe', usePolling: true},
+      {value: 'on', usePolling: true},
+      {value: 'false', usePolling: false},
+      {value: '0', usePolling: false},
+      {value: undefined, usePolling: false},
+    ])('selects the watcher backend for CHOKIDAR_USEPOLLING=$value', async ({value, usePolling}) => {
+      await inTemporaryDirectory(async (directory) => {
+        vi.stubEnv('CHOKIDAR_USEPOLLING', value)
+        let watcher: FSWatcher | undefined
+        // Use the real backend selection without starting OS watchers.
+        vi.spyOn(chokidar, 'watch').mockImplementation((_, options) => {
+          watcher = new FSWatcher(options)
+          return watcher
+        })
+
+        try {
+          const fileSystem = mountThemeFileSystem(directory)
+          await fileSystem.ready()
+          await fileSystem.startWatcher('123', {token: 'token'} as AdminSession)
+
+          expect(Boolean(watcher!.options.usePolling)).toBe(usePolling)
+          expect(watcher!.options.useFsEvents).toBe(!usePolling && process.platform === 'darwin')
+        } finally {
+          vi.unstubAllEnvs()
+          await watcher?.close()
+        }
+      })
+    })
+
     test('mounts the local theme file system when the directory is valid', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given

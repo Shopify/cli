@@ -1,5 +1,7 @@
 import {mountThemeExtensionFileSystem} from './theme-ext-fs.js'
-import {test, describe, expect} from 'vitest'
+import {test, describe, expect, vi} from 'vitest'
+import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import chokidar, {FSWatcher} from 'chokidar'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {fileURLToPath} from 'node:url'
 import type {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
@@ -8,6 +10,38 @@ describe('theme-ext-fs', () => {
   const locationOfThisFile = dirname(fileURLToPath(import.meta.url))
 
   describe('mountThemeExtensionFileSystem', async () => {
+    test.each([
+      {value: 'true', usePolling: true},
+      {value: '1', usePolling: true},
+      {value: 'TrUe', usePolling: true},
+      {value: 'on', usePolling: true},
+      {value: 'false', usePolling: false},
+      {value: '0', usePolling: false},
+      {value: undefined, usePolling: false},
+    ])('selects the watcher backend for CHOKIDAR_USEPOLLING=$value', async ({value, usePolling}) => {
+      await inTemporaryDirectory(async (directory) => {
+        vi.stubEnv('CHOKIDAR_USEPOLLING', value)
+        let watcher: FSWatcher | undefined
+        // Use the real backend selection without starting OS watchers.
+        vi.spyOn(chokidar, 'watch').mockImplementation((_, options) => {
+          watcher = new FSWatcher(options)
+          return watcher
+        })
+
+        try {
+          const fileSystem = mountThemeExtensionFileSystem(directory)
+          await fileSystem.ready()
+          await fileSystem.startWatcher()
+
+          expect(Boolean(watcher!.options.usePolling)).toBe(usePolling)
+          expect(watcher!.options.useFsEvents).toBe(!usePolling && process.platform === 'darwin')
+        } finally {
+          vi.unstubAllEnvs()
+          await watcher?.close()
+        }
+      })
+    })
+
     test('mounts the local theme file system when the directory is valid', async () => {
       // Given
       const root = joinPath(locationOfThisFile, '../fixtures/theme-ext')

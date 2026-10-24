@@ -114,11 +114,14 @@ export function mountThemeExtensionFileSystem(root: string): ThemeExtensionFileS
     },
     startWatcher: async () => {
       const {default: chokidar} = await import('chokidar')
+      const pollingOverride = process.env.CHOKIDAR_USEPOLLING?.toLowerCase()
 
       const watcher = chokidar.watch([...directoriesToWatch], {
         ignored: DEFAULT_IGNORE_PATTERNS,
         persistent: !process.env.SHOPIFY_UNIT_TEST,
         ignoreInitial: true,
+        // Chokidar selects FSEvents before it reads the environment override.
+        usePolling: pollingOverride ? !['false', '0'].includes(pollingOverride) : undefined,
       })
 
       watcher

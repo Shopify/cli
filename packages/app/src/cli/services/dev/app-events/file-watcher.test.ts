@@ -235,7 +235,46 @@ describe('file-watcher events', () => {
         ],
         ignoreInitial: true,
         persistent: true,
+        usePolling: undefined,
       })
+    })
+  })
+
+  test.each([
+    {value: 'true', usePolling: true},
+    {value: '1', usePolling: true},
+    {value: 'TrUe', usePolling: true},
+    {value: 'on', usePolling: true},
+    {value: 'false', usePolling: false},
+    {value: '0', usePolling: false},
+    {value: undefined, usePolling: false},
+  ])('selects the watcher backend for CHOKIDAR_USEPOLLING=$value', async ({value, usePolling}) => {
+    await inTemporaryDirectory(async (directory) => {
+      vi.stubEnv('CHOKIDAR_USEPOLLING', value)
+      const abortController = new AbortController()
+      let watcher: FSWatcher | undefined
+      // Use the real backend selection without starting OS watchers.
+      vi.spyOn(chokidar, 'watch').mockImplementation((_, options) => {
+        watcher = new FSWatcher(options)
+        return watcher
+      })
+      const app = testAppLinked({
+        directory,
+        configPath: joinPath(directory, 'shopify.app.toml'),
+        allExtensions: [],
+      })
+      const fileWatcher = new FileWatcher(app, {...outputOptions, signal: abortController.signal})
+
+      try {
+        await fileWatcher.start()
+
+        expect(Boolean(watcher!.options.usePolling)).toBe(usePolling)
+        expect(watcher!.options.useFsEvents).toBe(!usePolling && process.platform === 'darwin')
+      } finally {
+        abortController.abort()
+        vi.unstubAllEnvs()
+        await watcher?.close()
+      }
     })
   })
 

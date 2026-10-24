@@ -315,6 +315,10 @@ importers:
       esbuild-plugin-copy:
         specifier: ^2.1.1
         version: 2.1.1(esbuild@0.28.1)
+    optionalDependencies:
+      fsevents:
+        specifier: 2.3.3
+        version: 2.3.3
 
   packages/cli-kit:
     dependencies:

@@ -24,6 +24,9 @@ const external = [
   '@ast-grep/napi',
   // clipboardy ships platform-specific fallback binaries that need to remain beside the package source.
   'clipboardy',
+  // fsevents is a macOS-only native module that chokidar loads at runtime. It ships as an optional
+  // dependency so chokidar uses native FSEvents instead of falling back to polling on macOS.
+  'fsevents',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
