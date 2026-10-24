@@ -7,7 +7,7 @@ import {format} from 'node:util'
 
 const themeDevOutput = new AsyncLocalStorage<Writable>()
 
-export async function withThemeDevOutput<T>(instance: DevInstance, run: () => Promise<T>): Promise<T> {
+export async function withThemeDevOutput<T>(instance: DevInstance, run: () => Promise<T>, json = false): Promise<T> {
   const output = instance.tee(new Writable({write: (_chunk, _encoding, next) => next()}), {
     stringWritesAreMessages: true,
   })
@@ -16,17 +16,22 @@ export async function withThemeDevOutput<T>(instance: DevInstance, run: () => Pr
   // Ink writes progress frames directly to stderr. Capture messages before presentation,
   // and record task events separately so screen redraws do not enter the session log.
   console.warn = (...args: unknown[]) => {
-    if (active && themeDevOutput.getStore() === output) output.write(format(...args))
+    if (active && themeDevOutput.getStore() === output) {
+      output.write(format(...args))
+      if (json) return
+    }
     originalWarn(...args)
   }
   try {
     return await themeDevOutput.run(output, () =>
       runWithCommandEvents(
         {
-          outputMode: 'text',
+          outputMode: json ? 'json' : 'text',
           sink: (event, options) => {
-            if (active && event.type === 'progress' && event.message) output.write(event.message)
-            if (!options?.alreadyRendered) renderCommandEvent(event)
+            if (active && event.message && (json || event.type === 'progress')) {
+              output.write(event.message)
+            }
+            if (!json && !options?.alreadyRendered) renderCommandEvent(event)
           },
         },
         run,
