@@ -111,6 +111,8 @@ const themeSpec = createExtensionSpecification({
     }
   },
   preDeployValidation: async (extension) => {
+    // Undeclared network origins are only a build warning for now (see build-theme-step.ts). Once storefronts enforce
+    // allowed_sources, deploys can fail here using the same detector (utilities/extensions/theme-egress.ts).
     return validateThemeExtension(extension)
   },
 })

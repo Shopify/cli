@@ -38,6 +38,7 @@ const DOCS_PAGE_SLUGS = [
   'ssrf-request-forgery',
   'static-frame-ancestors',
   'text-setting-html-smuggling',
+  'theme-extension-undeclared-egress',
   'theme-extension-xss',
   'unauthenticated-endpoint',
   'unsafe-innerhtml',

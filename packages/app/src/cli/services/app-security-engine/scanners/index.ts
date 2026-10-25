@@ -28,6 +28,7 @@ import {
   scanUnsafeInnerHTML,
 } from '../rules/js-rules.js'
 import {scanLiquidSecurity} from '../rules/liquid-rules.js'
+import {scanThemeExtensionUndeclaredEgress, THEME_EGRESS_FILE_EXTENSIONS} from '../rules/theme-egress-rules.js'
 import {redactText, scanCommittedSecrets} from '../rules/secret-rules.js'
 import {scanDeprecatedScriptTagApi} from '../rules/shopify-rules.js'
 import {missingComplianceWebhooks, scanEolApiVersions} from '../rules/compliance-rules.js'
@@ -167,6 +168,16 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
     requires: 'theme_app_extension',
     extensions: ['.liquid', '.html'],
     runner: (context) => liquidRunner(context, 'LIQUID_UNSAFE_RENDER'),
+  },
+  {
+    id: 'THEME_EXTENSION_UNDECLARED_EGRESS',
+    version: 1,
+    lifecycle: 'active',
+    analysisMode: 'regex',
+    target: 'theme',
+    requires: 'theme_app_extension',
+    extensions: THEME_EGRESS_FILE_EXTENSIONS,
+    runner: (context) => scanThemeExtensionUndeclaredEgress(context),
   },
   {
     ...jsCheck('UNSAFE_INNERHTML', unsafeInnerHtmlRunner, 'source_and_theme', 4),

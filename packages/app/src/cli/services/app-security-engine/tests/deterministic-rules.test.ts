@@ -29,6 +29,7 @@ const ACTIVE_IDS = [
   'UNSAFE_INNERHTML',
   'APP_PROXY_LIQUID_INJECTION',
   'STATIC_FRAME_ANCESTORS',
+  'THEME_EXTENSION_UNDECLARED_EGRESS',
 ].sort()
 
 const source = (content: string, path = 'app/routes/example.tsx'): SourceFile => ({
@@ -61,6 +62,7 @@ describe('deterministic rules product contract', () => {
     expect(DETERMINISTIC_CHECKS.get('LIQUID_UNSAFE_RENDER')?.version).toBe(2)
     expect(DETERMINISTIC_CHECKS.get('STATIC_FRAME_ANCESTORS')?.version).toBe(2)
     expect(DETERMINISTIC_CHECKS.get('MISSING_DEPENDENCY_SECURITY_AUTOMATION')?.version).toBe(2)
+    expect(DETERMINISTIC_CHECKS.get('THEME_EXTENSION_UNDECLARED_EGRESS')?.version).toBe(1)
   })
 
   test('extracts security fields from parsed TOML without source regexes', () => {

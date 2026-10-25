@@ -60,6 +60,17 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     docsUrl: `${CHECK_DOCS_BASE_URL}/liquid-unsafe-render`,
   },
   {
+    id: 'THEME_EXTENSION_UNDECLARED_EGRESS',
+    title: 'Theme app extension contacts an undeclared origin',
+    severity: 'medium',
+    points: -10,
+    description:
+      'Detects literal origins that theme app extensions load from or send requests to without declaring them in network_access allowed_sources.',
+    fix: 'Declare the HTTPS origins the extension needs in capabilities.network_access.allowed_sources, or remove the requests.',
+    requires: 'theme_app_extension',
+    docsUrl: `${CHECK_DOCS_BASE_URL}/theme-extension-undeclared-egress`,
+  },
+  {
     id: 'INSECURE_WEBHOOK_URL',
     title: 'Configured callback URL is not HTTPS',
     severity: 'high',

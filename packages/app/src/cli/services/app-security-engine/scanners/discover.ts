@@ -408,6 +408,7 @@ export function findExtensions(appRoot: string, repositoryFiles: ReadonlyArray<s
       const raw = decodeToml(content) as Record<string, unknown>
       const type = raw.type as string
       const files = findAppSourceFiles(appRoot, sourcePathsByDirectory.get(dirname(tomlPath)) ?? [])
+      if (type === 'theme') files.push(...findThemeOnlySourceFiles(appRoot, repositoryFiles, dirname(tomlPath)))
       return [{path: tomlPath, type, content, files}]
       // Invalid repository TOML is a coverage gap, not a scanner crash.
       // eslint-disable-next-line no-catch-all/no-catch-all
@@ -724,7 +725,37 @@ export function findSourceCandidates(repositoryFiles: ReadonlyArray<string>): So
 
 /** Find and read only source languages supported by non-secret deterministic scanners. */
 export function findAppSourceFiles(appRoot: string, repositoryFiles: ReadonlyArray<string>): SourceFile[] {
-  return repositoryFiles.filter(hasSupportedSourceExtension).map((path) => {
+  return readSourceFiles(appRoot, repositoryFiles.filter(hasSupportedSourceExtension))
+}
+
+// Theme app extensions can contact other origins from CSS (`url()` and `@import`), so their CSS is read too. It isn't
+// app source, so it stays out of the language inventory and the app source checks.
+const THEME_ONLY_SOURCE_EXTENSIONS = new Set(['.css'])
+
+function findThemeOnlySourceFiles(
+  appRoot: string,
+  repositoryFiles: ReadonlyArray<string>,
+  extensionDirectory: string,
+): SourceFile[] {
+  return readSourceFiles(
+    appRoot,
+    repositoryFiles.filter(
+      (path) => THEME_ONLY_SOURCE_EXTENSIONS.has(extname(path)) && isInDirectory(path, extensionDirectory),
+    ),
+  )
+}
+
+function isInDirectory(path: string, directory: string): boolean {
+  let ancestor = dirname(path)
+  while (ancestor !== '.') {
+    if (ancestor === directory) return true
+    ancestor = dirname(ancestor)
+  }
+  return directory === '.'
+}
+
+function readSourceFiles(appRoot: string, paths: ReadonlyArray<string>): SourceFile[] {
+  return paths.map((path) => {
     const absolutePath = joinPath(appRoot, path)
     const result = readRepositoryFile(absolutePath)
     return {
