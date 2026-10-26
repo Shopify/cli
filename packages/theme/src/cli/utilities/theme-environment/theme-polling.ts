@@ -4,6 +4,7 @@ import {MAX_GRAPHQL_THEME_FILES, timestampDateFormat} from '../../constants.js'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {outputDebug, outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {commandEventOutputMode} from '@shopify/cli-kit/node/command-events'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -160,9 +161,11 @@ async function syncChangedAssets(
           if (asset) {
             await localFileSystem.write(asset)
             outputInfo(
-              outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw(
-                '»',
-              )} ${outputToken.gray(`download ${asset.key} from remote theme`)}`,
+              commandEventOutputMode() === 'json'
+                ? `Synced download ${asset.key} from remote theme`
+                : outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw(
+                    '»',
+                  )} ${outputToken.gray(`download ${asset.key} from remote theme`)}`,
             )
           }
         }),
@@ -185,9 +188,11 @@ export async function deleteRemovedAssets(
         if (localFileSystem.files.get(file.key)) {
           return localFileSystem.delete(file.key).then(() => {
             outputInfo(
-              outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw(
-                '»',
-              )} ${outputToken.gray(`remove ${file.key} from local theme`)}`,
+              commandEventOutputMode() === 'json'
+                ? `Synced remove ${file.key} from local theme`
+                : outputContent`• ${timestampDateFormat.format(new Date())} Synced ${outputToken.raw(
+                    '»',
+                  )} ${outputToken.gray(`remove ${file.key} from local theme`)}`,
             )
           })
         }
