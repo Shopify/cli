@@ -1,3 +1,4 @@
+import {languageServerJsonOutputSchema} from '../../services/json-output/language-server.js'
 import {expect, test} from 'vitest'
 // The protocol test needs bidirectional pipes and the native process exit code.
 // eslint-disable-next-line no-restricted-imports
@@ -94,6 +95,9 @@ test('preserves native LSP framing, IDs, errors, cancellation notifications, and
     server.send({jsonrpc: '2.0', method: 'exit'})
     await expect(server.exited).resolves.toBe(0)
     expect(server.messages.map(({id}) => id)).toEqual(['initialize-1', 2, 'hover-3', 4])
+    for (const message of server.messages) {
+      expect(languageServerJsonOutputSchema.validate(message)).toEqual(message)
+    }
     expect(server.remaining()).toHaveLength(0)
     expect(server.stderr()).toContain('LSP started')
   } finally {

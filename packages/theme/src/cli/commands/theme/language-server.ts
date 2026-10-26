@@ -1,4 +1,5 @@
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
+import {languageServerJsonOutputSchema} from '../../services/json-output/language-server.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {FlagOutput} from '@shopify/cli-kit/node/base-command'
 import {renderCommandEvent, runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
@@ -6,18 +7,23 @@ import {startServer} from '@shopify/theme-language-server-node'
 import {Flags} from '@oclif/core'
 
 export default class LanguageServer extends ThemeCommand {
+  static get jsonOutputSchema() {
+    return languageServerJsonOutputSchema
+  }
+
   static summary = 'Start a Language Server Protocol server.'
 
   static descriptionWithMarkdown = `Starts the [Language Server](https://shopify.dev/docs/themes/tools/cli/language-server).
 
 Communicates using Language Server Protocol (LSP) JSON-RPC messages on stdin and stdout, framed with Content-Length headers. CLI diagnostics use stderr.
 
---json is accepted for consistency with other commands. The server already uses JSON, so --json and SHOPIFY_FLAG_JSON preserve the native LSP transport and CLI diagnostics. --json-schema is a separate inspection command and reports that no CLI JSON output schema is defined without starting the server. --no-input does not change the LSP transport.`
+--json is accepted for consistency with other commands. The server already uses JSON, so --json and SHOPIFY_FLAG_JSON preserve the native LSP transport and CLI diagnostics. --json-schema prints the JSON-RPC message body schema without starting the server; method-specific payloads follow the LSP specification. --no-input does not change the LSP transport.`
 
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     json: Flags.boolean({
       ...jsonFlag.json,
       description: 'Use native LSP JSON-RPC output (already enabled by default).',

@@ -18214,8 +18214,202 @@ DESCRIPTION
   headers. CLI diagnostics use stderr.
 
   --json is accepted for consistency with other commands. The server already uses JSON, so --json and SHOPIFY_FLAG_JSON
-  preserve the native LSP transport and CLI diagnostics. --json-schema is a separate inspection command and reports that
-  no CLI JSON output schema is defined without starting the server. --no-input does not change the LSP transport.
+  preserve the native LSP transport and CLI diagnostics. --json-schema prints the JSON-RPC message body schema without
+  starting the server; method-specific payloads follow the LSP specification. --no-input does not change the LSP
+  transport.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `ThemeLanguageServerMessage` schema.
+
+  ```json
+  {
+    "anyOf": [
+      {
+        "$ref": "#/definitions/LspRequest"
+      },
+      {
+        "$ref": "#/definitions/LspNotification"
+      },
+      {
+        "$ref": "#/definitions/LspSuccessResponse"
+      },
+      {
+        "$ref": "#/definitions/LspErrorResponse"
+      }
+    ],
+    "description": "The JSON body of one native LSP message, framed with Content-Length headers on stdout. Method-specific params, results, and error data follow the Language Server Protocol specification.",
+    "title": "ThemeLanguageServerMessage",
+    "definitions": {
+      "LspValue": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "type": "array",
+            "items": {
+              "$ref": "#/definitions/LspValue"
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/definitions/LspValue"
+            }
+          }
+        ]
+      },
+      "LspRequest": {
+        "type": "object",
+        "properties": {
+          "jsonrpc": {
+            "type": "string",
+            "const": "2.0"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": -2147483648,
+                "maximum": 2147483647
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "method": {
+            "type": "string"
+          },
+          "params": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/definitions/LspValue"
+                }
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/LspValue"
+                }
+              }
+            ]
+          }
+        },
+        "required": [
+          "jsonrpc",
+          "id",
+          "method"
+        ],
+        "additionalProperties": false
+      },
+      "LspNotification": {
+        "type": "object",
+        "properties": {
+          "jsonrpc": {
+            "$ref": "#/definitions/LspRequest/properties/jsonrpc"
+          },
+          "method": {
+            "$ref": "#/definitions/LspRequest/properties/method"
+          },
+          "params": {
+            "$ref": "#/definitions/LspRequest/properties/params"
+          }
+        },
+        "required": [
+          "jsonrpc",
+          "method"
+        ],
+        "additionalProperties": false
+      },
+      "LspSuccessResponse": {
+        "type": "object",
+        "properties": {
+          "jsonrpc": {
+            "type": "string",
+            "const": "2.0"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/LspRequest/properties/id"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "result": {
+            "$ref": "#/definitions/LspValue"
+          }
+        },
+        "required": [
+          "jsonrpc",
+          "id",
+          "result"
+        ],
+        "additionalProperties": false
+      },
+      "LspErrorResponse": {
+        "type": "object",
+        "properties": {
+          "jsonrpc": {
+            "type": "string",
+            "const": "2.0"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/LspRequest/properties/id"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "$ref": "#/definitions/LspRequest/properties/id/anyOf/0"
+              },
+              "message": {
+                "type": "string"
+              },
+              "data": {
+                "$ref": "#/definitions/LspValue"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "jsonrpc",
+          "id",
+          "error"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
 ```
 
 ## `shopify theme list`
