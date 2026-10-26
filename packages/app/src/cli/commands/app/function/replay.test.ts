@@ -5,6 +5,9 @@ import {testAppLinked, testFunctionExtension} from '../../../models/app/app.test
 import {renderReplay} from '../../../services/function/ui.js'
 import {selectFunctionRunPrompt} from '../../../prompts/function/replay.js'
 import {functionRunJsonOutputSchema} from '../../../services/function/runner/types.js'
+import {functionReplayJsonOutputSchema} from '../../../services/function/replay/types.js'
+import {watchReplay} from '../../../services/function/replay/watch.js'
+import {AppEventWatcher} from '../../../services/dev/app-events/app-event-watcher.js'
 import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
 import {captureOutputWithExitCode, exec, terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
@@ -17,6 +20,7 @@ import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 vi.mock('../../../services/app-context.js')
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../../../services/function/ui.js')
+vi.mock('../../../services/function/replay/watch.js')
 vi.mock('../../../prompts/function/replay.js')
 vi.mock('../../../services/function/common.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../services/function/common.js')>()),
@@ -96,14 +100,15 @@ test('preserves native numeric tokens in finite replay output', async () => {
 })
 
 test.each([{argv: ['--json', '--log', 'abcdef']}, {argv: ['--json', '--watch', '--log', 'abcdef']}])(
-  'rejects JSON watch mode before linking the app: $argv',
+  'streams JSON watch mode: $argv',
   async ({argv}) => {
-    const instance = new FunctionReplay(argv, await Config.load())
-    await withCapturedStandardStreams(async ({stdout}) => {
-      await expect(instance.run()).rejects.toThrow('Use --no-watch with --json')
-      expect(stdout()).toBe('')
+    await inTemporaryDirectory(async (directory) => {
+      const instance = await command(argv, directory)
+      await instance.run()
+      expect(watchReplay).toHaveBeenCalledOnce()
+      expect(renderReplay).not.toHaveBeenCalled()
+      expect(captureOutputWithExitCode).not.toHaveBeenCalled()
     })
-    expect(linkedAppContext).not.toHaveBeenCalled()
   },
 )
 
@@ -115,6 +120,49 @@ test('keeps the default text watch workflow', async () => {
     expect(captureOutputWithExitCode).not.toHaveBeenCalled()
   })
 })
+
+test.each([
+  {signal: 'SIGINT' as const, exitCode: 130},
+  {signal: 'SIGTERM' as const, exitCode: 143},
+])(
+  'writes watch records and cleans up on $signal through the command and real output writer',
+  async ({signal, exitCode}) => {
+    await inTemporaryDirectory(async (directory) => {
+      const {watchReplay: realWatchReplay} = await vi.importActual<
+        typeof import('../../../services/function/replay/watch.js')
+      >('../../../services/function/replay/watch.js')
+      vi.mocked(watchReplay).mockImplementation(realWatchReplay)
+      vi.spyOn(AppEventWatcher.prototype, 'start').mockResolvedValue(undefined)
+      vi.mocked(captureOutputWithExitCode).mockImplementation(async () => {
+        setImmediate(() => process.emit(signal))
+        return {stdout: JSON.stringify(nativeResult), stderr: 'Runner warning', exitCode: 0}
+      })
+      const previousExitCode = process.exitCode
+      const instance = await command(['--json', '--no-input', '--log', 'abcdef'], directory)
+      try {
+        await withCapturedStandardStreams(async ({stdout, stderr}) => {
+          await runWithCommandEventsForCommand(instance.argv, () => instance.run())
+          expect(
+            stdout()
+              .trim()
+              .split('\n')
+              .map((line) => JSON.parse(line)),
+          ).toEqual([
+            expect.objectContaining({type: 'status', status: 'watching'}),
+            expect.objectContaining({type: 'execution', result: nativeResult, exitCode: 0}),
+            expect.objectContaining({type: 'status', status: 'cancelled'}),
+          ])
+          expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', message: 'Runner warning'})
+          expect(process.exitCode).toBe(exitCode)
+        })
+      } finally {
+        // The signal handler runs inside this test; restore the worker's exit status.
+        // eslint-disable-next-line require-atomic-updates
+        process.exitCode = previousExitCode
+      }
+    })
+  },
+)
 
 test('captures finite text replay and preserves native output', async () => {
   await inTemporaryDirectory(async (directory) => {
@@ -174,8 +222,11 @@ test('requires --log when --no-input is enabled', async () => {
   expect(selectFunctionRunPrompt).not.toHaveBeenCalled()
 })
 
-test('shares the native runner schema and preserves synchronous analytics', () => {
-  expect(FunctionReplay.jsonOutputSchema).toBe(functionRunJsonOutputSchema)
+test('discovers finite and streaming schemas and preserves synchronous analytics', () => {
+  expect(FunctionReplay.jsonOutputSchema).toBe(functionReplayJsonOutputSchema)
+  expect(functionReplayJsonOutputSchema.validate(nativeResult)).toEqual(
+    functionRunJsonOutputSchema.validate(nativeResult),
+  )
   expect(FunctionReplay.descriptionForHelp()).toContain('FunctionRunResult')
   expect(FunctionReplay.requiresSyncAnalytics).toBe(true)
 })

@@ -170,6 +170,14 @@ export class FileWatcher {
     })
   }
 
+  /** Stops watching and waits for the underlying watcher to close. */
+  async stop(): Promise<void> {
+    this.options.signal.removeEventListener('abort', this.close)
+    await this.watcher?.close()
+    this.watcher = undefined
+    this.currentEvents = []
+  }
+
   private addAbortListener() {
     this.options.signal.removeEventListener('abort', this.close)
     this.options.signal.addEventListener('abort', this.close)

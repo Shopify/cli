@@ -3073,58 +3073,160 @@ DESCRIPTION
   (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when
   errors occur, refer to "Shopify Functions error handling" (https://shopify.dev/docs/api/functions/errors).
 
+  Watch mode is enabled by default. With --json, writes one JSONL record per lifecycle update, rebuild, and execution.
+  Execution records preserve the native Function runner result under result. Diagnostics and prompts use stderr.
+  Recoverable build and Function execution failures keep watching; fatal CLI failures end the stream with the standard
+  error document. Ctrl-C stops watching and exits with code 130. Use --no-input for unattended replay.
+
+  With --no-watch --json, writes one native Function runner result and exits, preserving the finite result contract.
+
   Use `--json-schema` to print the result, error, and event schemas.
 
-  Output from `--json` conforms to the `FunctionRunResult` schema.
+  Output from `--json` conforms to the `FunctionReplayOutput` schema.
 
   ```json
   {
-    "type": "object",
-    "properties": {
-      "name": {
-        "type": "string"
+    "anyOf": [
+      {
+        "$ref": "#/definitions/FunctionRunResult"
       },
-      "size": {
-        "type": "integer",
-        "minimum": 0,
-        "description": "Module size in kilobytes, as reported by Function runner."
+      {
+        "$ref": "#/definitions/FunctionReplayEvent"
+      }
+    ],
+    "title": "FunctionReplayOutput",
+    "definitions": {
+      "FunctionRunResult": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Module size in kilobytes, as reported by Function runner."
+          },
+          "memory_usage": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Linear memory usage in kilobytes, as reported by Function runner."
+          },
+          "instructions": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "logs": {
+            "type": "string"
+          },
+          "input": {
+            "description": "Native Function input; query keys and values are preserved."
+          },
+          "output": {
+            "description": "Native Function output, including the runner-specific invalid-output representation."
+          },
+          "success": {
+            "type": "boolean",
+            "description": "False for a completed Function execution that failed; the command exits nonzero."
+          }
+        },
+        "required": [
+          "name",
+          "size",
+          "memory_usage",
+          "instructions",
+          "logs",
+          "input",
+          "output",
+          "success"
+        ],
+        "additionalProperties": true,
+        "description": "The native JSON object produced by Function runner 7.x and 9.x. Extra upstream fields are preserved."
       },
-      "memory_usage": {
-        "type": "integer",
-        "minimum": 0,
-        "description": "Linear memory usage in kilobytes, as reported by Function runner."
-      },
-      "instructions": {
-        "type": "integer",
-        "minimum": 0
-      },
-      "logs": {
-        "type": "string"
-      },
-      "input": {
-        "description": "Native Function input; query keys and values are preserved."
-      },
-      "output": {
-        "description": "Native Function output, including the runner-specific invalid-output representation."
-      },
-      "success": {
-        "type": "boolean",
-        "description": "False for a completed Function execution that failed; the command exits nonzero."
+      "FunctionReplayEvent": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "status"
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$",
+                "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "watching",
+                  "cancelled"
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "timestamp",
+              "status"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "build"
+              },
+              "timestamp": {
+                "$ref": "#/definitions/FunctionReplayEvent/anyOf/0/properties/timestamp"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "success",
+                  "failed"
+                ]
+              }
+            },
+            "required": [
+              "type",
+              "timestamp",
+              "status"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "const": "execution"
+              },
+              "timestamp": {
+                "$ref": "#/definitions/FunctionReplayEvent/anyOf/0/properties/timestamp"
+              },
+              "result": {
+                "$ref": "#/definitions/FunctionRunResult"
+              },
+              "exitCode": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "type",
+              "timestamp",
+              "result",
+              "exitCode"
+            ],
+            "additionalProperties": false
+          }
+        ]
       }
     },
-    "required": [
-      "name",
-      "size",
-      "memory_usage",
-      "instructions",
-      "logs",
-      "input",
-      "output",
-      "success"
-    ],
-    "additionalProperties": true,
-    "description": "The native JSON object produced by Function runner 7.x and 9.x. Extra upstream fields are preserved.",
-    "title": "FunctionRunResult",
     "$schema": "http://json-schema.org/draft-07/schema#"
   }
   ```

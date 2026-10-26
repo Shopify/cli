@@ -47,6 +47,7 @@ export interface ExecOptions {
 interface BuildExecOptions {
   /** Whether to throw on non-zero exit codes (default: true). */
   reject?: boolean
+  signal?: AbortSignal
 }
 
 /**
@@ -146,7 +147,7 @@ export async function captureOutputWithExitCode(
   args: string[],
   options?: ExecOptions,
 ): Promise<CaptureOutputResult> {
-  const result = await buildExec(command, args, options, {reject: false})
+  const result = await buildExec(command, args, options, {reject: false, signal: options?.signal})
   if (result.exitCode === undefined) {
     throw new ExternalError(
       result instanceof Error ? result.message : 'Command terminated without an exit code.',
