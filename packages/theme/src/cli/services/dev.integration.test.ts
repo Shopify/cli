@@ -9,10 +9,15 @@ const serviceUrl = new URL('./dev.ts', import.meta.url).href
 const loaderUrl = new URL('../../../test/fixtures/dev-instance-loader.js', import.meta.url).href
 const tsconfigPath = fileURLToPath(new URL('../../../../app/test/fixtures/tsconfig.json', import.meta.url))
 
-test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
-  '%s with bootstrap flushes theme output and exits on the first signal',
+test.skipIf(process.platform === 'win32').each([
+  {signal: 'SIGINT', stage: 'running'},
+  {signal: 'SIGTERM', stage: 'running'},
+  {signal: 'SIGINT', stage: 'crawler'},
+  {signal: 'SIGTERM', stage: 'session'},
+])(
+  '$signal during $stage exits on the first signal and releases ownership',
   {timeout: 60000},
-  async (signal) => {
+  async ({signal, stage}) => {
     await inTemporaryDirectory(async (directory) => {
       const script = `
         await import(${JSON.stringify(bootstrapUrl)})
@@ -39,6 +44,7 @@ test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
             CI: '1',
             TS_NODE_PROJECT: tsconfigPath,
             THEME_DEV_TEST_SIGNAL: signal,
+            THEME_DEV_TEST_STAGE: stage,
           },
         },
       )
@@ -47,11 +53,12 @@ test.skipIf(process.platform === 'win32').each(['SIGINT', 'SIGTERM'])(
       const messages = (await readFile(paths.logFile))
         .trim()
         .split('\n')
+        .filter(Boolean)
         .map((line) => JSON.parse(line).message)
       expect(messages.filter((message: string) => message.startsWith('line '))).toEqual(
-        Array.from({length: 1000}, (_, index) => `line ${index}`),
+        stage === 'running' ? Array.from({length: 1000}, (_, index) => `line ${index}`) : [],
       )
-      expect(messages.at(-1)).toBe('Stopped')
+      if (stage === 'running') expect(messages.at(-1)).toBe('Stopped')
       await expect(fileExists(paths.infoFile)).resolves.toBe(false)
       await expect(fileExists(paths.lockFile)).resolves.toBe(false)
     })
