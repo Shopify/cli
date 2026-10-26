@@ -6,25 +6,40 @@ import {withDevInstance} from '@shopify/cli-kit/node/dev-instance'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {expect, test} from 'vitest'
+import {afterEach, expect, test, vi} from 'vitest'
 import {createEvent} from 'h3'
 import {IncomingMessage, ServerResponse, createServer} from 'node:http'
 import {Socket} from 'node:net'
 import {type AddressInfo} from 'node:net'
+// Vitest omits the console constructor that Ink uses to patch console methods.
+// eslint-disable-next-line n/prefer-global/console
+import {Console} from 'node:console'
+import {setImmediate} from 'node:timers/promises'
+
+afterEach(() => vi.unstubAllGlobals())
 
 test('records theme messages, task progress, sync errors, and late HTTP request output', async () => {
+  vi.stubGlobal('console', {...console, Console})
   await inTemporaryDirectory(async (directory) => {
     await withCapturedStandardStreams(async ({stderr}) => {
       let logFile = ''
       await withDevInstance({command: 'theme dev', directory}, async (instance) => {
         logFile = instance.paths.logFile
         await withThemeDevOutput(instance, async () => {
-          outputInfo('Synced » update assets/base.css')
-          renderWarning({body: 'A dev warning'})
-          renderThrownError('Failed to upload assets/base.css.', new Error('Invalid CSS'))
-          await renderTasks([{title: 'Uploading theme files', task: async () => {}}], {
-            renderOptions: {patchConsole: false},
-          })
+          await renderTasks(
+            [
+              {
+                title: 'Uploading theme files',
+                task: async () => {
+                  await setImmediate()
+                  outputInfo('Synced » update assets/base.css')
+                  renderWarning({body: 'A dev warning'})
+                  renderThrownError('Failed to upload assets/base.css.', new Error('Invalid CSS'))
+                },
+              },
+            ],
+            {renderOptions: {patchConsole: true}},
+          )
 
           // HTTP callbacks must retain the session context after setup has returned.
           const server = createServer((_request, response) => {
