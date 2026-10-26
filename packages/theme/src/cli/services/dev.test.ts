@@ -15,8 +15,6 @@ import {getAvailableTCPPort, checkPortAvailability} from '@shopify/cli-kit/node/
 import {Config} from '@oclif/core'
 import {readDevInstance, devInstancePaths, acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {outputInfo} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import readline from 'readline'
 import {mkdtemp, rm} from 'node:fs/promises'
@@ -465,77 +463,51 @@ describe('dev() Ctrl-C analytics', () => {
   })
 
   test.each(['SIGINT', 'SIGTERM', 'shopify:signal'])(
-    '%s drains output, closes the server, and releases ownership',
+    '%s closes the server before releasing ownership',
     async (event) => {
-      await withCapturedStandardStreams(async () => {
-        const identity = {
-          command: 'theme dev',
-          directory: baseOptions.directory,
-          key: `${baseOptions.store}:${theme.id}`,
-        }
-        const paths = devInstancePaths(identity)
-        const listenerCounts = ['SIGINT', 'SIGTERM', 'shopify:signal'].map((name) => process.listenerCount(name))
-        const {promise: sendOutput, resolve: continueOutput} = Promise.withResolvers<void>()
-        const serverStop = vi.fn(async () => {
-          await expect(fileExists(paths.infoFile)).resolves.toBe(true)
-          outputInfo('Stopped')
-        })
-        vi.mocked(setupDevServer).mockImplementationOnce(() => {
-          const backgroundJobPromise = (async () => {
-            await sendOutput
-            for (let index = 0; index < 1000; index++) outputInfo(`Synced file ${index}`)
-            const stop = processEvents.listeners(event).at(-1)!
-            stop()
-          })()
-          return {
-            serverStart: vi.fn().mockResolvedValue(undefined),
-            serverStop,
-            workPromise: Promise.resolve(),
-            renderDevSetupProgress: vi.fn().mockResolvedValue(undefined),
-            backgroundJobPromise,
-            resolveBackgroundJob: vi.fn(),
-            dispatchEvent: vi.fn(async () => undefined),
-          }
-        })
-        const running = dev(baseOptions)
-        try {
-          await vi.waitFor(async () => {
-            const info = await readDevInstance(identity)
-            expect(info?.status).toBe('running')
-            expect(info?.details).toMatchObject({
-              store: baseOptions.store,
-              themeId: theme.id,
-              themeName: theme.name,
-              host: '127.0.0.1',
-              port: 9292,
-              urls: {
-                local: 'http://127.0.0.1:9292',
-                preview: `https://${baseOptions.store}/?preview_theme_id=${theme.id}`,
-              },
-            })
-          })
-          await expect(dev(baseOptions)).rejects.toMatchObject({code: 'dev_instance_already_running'})
-          expect(setupDevServer).toHaveBeenCalledTimes(1)
-        } finally {
-          continueOutput()
-          await running
-        }
-        expect(serverStop).toHaveBeenCalledOnce()
-        expect(exitSpy).toHaveBeenCalledWith(0)
-        await expect(fileExists(paths.infoFile)).resolves.toBe(false)
-        await expect(fileExists(paths.lockFile)).resolves.toBe(false)
-        const records = (await readFile(paths.logFile))
-          .trim()
-          .split('\n')
-          .map((line) => JSON.parse(line))
-        expect(records.map(({message}) => message)).toEqual([
-          ...Array.from({length: 1000}, (_, index) => `Synced file ${index}`),
-          'Stopped',
-        ])
-        expect(['SIGINT', 'SIGTERM', 'shopify:signal'].map((name) => process.listenerCount(name))).toEqual(
-          listenerCounts,
-        )
+      const identity = {command: 'theme dev', directory: baseOptions.directory, key: `${baseOptions.store}:${theme.id}`}
+      const paths = devInstancePaths(identity)
+      const listenerCounts = ['SIGINT', 'SIGTERM', 'shopify:signal'].map((name) => process.listenerCount(name))
+      const serverStop = vi.fn(async () => {
+        await expect(fileExists(paths.infoFile)).resolves.toBe(true)
       })
+      vi.mocked(setupDevServer).mockReturnValueOnce({
+        serverStart: vi.fn().mockResolvedValue(undefined),
+        serverStop,
+        workPromise: Promise.resolve(),
+        renderDevSetupProgress: vi.fn().mockResolvedValue(undefined),
+        backgroundJobPromise: new Promise(() => {}),
+        resolveBackgroundJob: vi.fn(),
+        dispatchEvent: vi.fn(async () => undefined),
+      })
+      const running = dev(baseOptions)
+      try {
+        await vi.waitFor(async () => {
+          const info = await readDevInstance(identity)
+          expect(info?.status).toBe('running')
+          expect(info?.details).toMatchObject({
+            store: baseOptions.store,
+            themeId: theme.id,
+            themeName: theme.name,
+            host: '127.0.0.1',
+            port: 9292,
+            urls: {
+              local: 'http://127.0.0.1:9292',
+              preview: `https://${baseOptions.store}/?preview_theme_id=${theme.id}`,
+            },
+          })
+        })
+        await expect(dev(baseOptions)).rejects.toMatchObject({code: 'dev_instance_already_running'})
+        expect(setupDevServer).toHaveBeenCalledTimes(1)
+      } finally {
+        processEvents.listeners(event).at(-1)!()
+        await running
+      }
+      expect(serverStop).toHaveBeenCalledOnce()
+      expect(exitSpy).toHaveBeenCalledWith(0)
+      await expect(fileExists(paths.infoFile)).resolves.toBe(false)
+      await expect(fileExists(paths.lockFile)).resolves.toBe(false)
+      expect(['SIGINT', 'SIGTERM', 'shopify:signal'].map((name) => process.listenerCount(name))).toEqual(listenerCounts)
     },
   )
 

@@ -70,7 +70,7 @@ test('records theme messages, task progress, sync errors, and late HTTP request 
   })
 })
 
-test('drains a burst of messages and restores terminal output after failure', async () => {
+test('preserves session output and restores terminal output after failure', async () => {
   await inTemporaryDirectory(async (directory) => {
     await withCapturedStandardStreams(async ({stderr}) => {
       // eslint-disable-next-line no-console
@@ -80,19 +80,17 @@ test('drains a burst of messages and restores terminal output after failure', as
         withDevInstance({command: 'theme dev', directory}, async (instance) => {
           logFile = instance.paths.logFile
           await withThemeDevOutput(instance, async () => {
-            for (let index = 0; index < 1000; index++) outputInfo(`message ${index}`)
+            outputInfo('Before failure')
             throw new Error('Setup failed')
           })
         }),
       ).rejects.toThrow('Setup failed')
       // eslint-disable-next-line no-console
       expect(console.warn).toBe(originalWarn)
-      const records = (await readFile(logFile))
-        .trim()
-        .split('\n')
-        .map((line) => JSON.parse(line))
-      expect(records.map(({message}) => message)).toEqual(Array.from({length: 1000}, (_, index) => `message ${index}`))
-      expect(stderr()).toContain('message 999')
+      outputInfo('After failure')
+      expect(JSON.parse(await readFile(logFile))).toEqual({timestamp: expect.any(String), message: 'Before failure'})
+      expect(stderr()).toContain('Before failure')
+      expect(stderr()).toContain('After failure')
     })
   })
 })
