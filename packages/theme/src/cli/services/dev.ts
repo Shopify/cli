@@ -111,7 +111,11 @@ export async function dev(options: DevOptions) {
       process.on('SIGTERM', stop)
       instance.abortSignal.addEventListener('abort', onInstanceError, {once: true})
       try {
-        await withThemeDevOutput(instance, () => runDev(options, instance, controller))
+        await withThemeDevOutput(instance, () =>
+          runDev(options, instance, controller).catch((error: unknown) => {
+            if (!controller.signal.aborted || error !== controller.signal.reason) throw error
+          }),
+        )
         instance.abortSignal.throwIfAborted()
       } finally {
         controller.abort()
@@ -129,12 +133,18 @@ export async function dev(options: DevOptions) {
 
 async function runDev(options: DevOptions, instance: DevInstance, controller: AbortController) {
   const {signal} = controller
-  const [crawlerSignatureHeaders, isPasswordProtected] = await Promise.all([
-    fetchOrCreateCrawlerSignatureHeaders(options.adminSession),
-    isStorefrontPasswordProtected(options.adminSession),
-  ])
+  const [crawlerSignatureHeaders, isPasswordProtected] = await waitForStartup(
+    Promise.all([
+      fetchOrCreateCrawlerSignatureHeaders(options.adminSession),
+      isStorefrontPasswordProtected(options.adminSession),
+    ]),
+    signal,
+  )
   const storefrontPassword = isPasswordProtected
-    ? await ensureValidPassword(options.storePassword, options.adminSession.storeFqdn, crawlerSignatureHeaders)
+    ? await waitForStartup(
+        ensureValidPassword(options.storePassword, options.adminSession.storeFqdn, crawlerSignatureHeaders),
+        signal,
+      )
     : undefined
 
   if (signal.aborted) return
@@ -151,14 +161,14 @@ async function runDev(options: DevOptions, instance: DevInstance, controller: Ab
   const host = options.host ?? DEFAULT_HOST
   let port: number
   if (options.port) {
-    if (!(await checkPortAvailability(options.port))) {
+    if (!(await waitForStartup(checkPortAvailability(options.port), signal))) {
       throw new AbortError(
         `Port ${options.port} is not available. Try a different port or remove the --port flag to use an available port.`,
       )
     }
     port = options.port
   } else {
-    port = await getAvailableTCPPort(DEFAULT_PORT)
+    port = await waitForStartup(getAvailableTCPPort(DEFAULT_PORT), signal)
   }
 
   const urls = {
@@ -169,13 +179,17 @@ async function runDev(options: DevOptions, instance: DevInstance, controller: Ab
   }
 
   await instance.update({details: {host, port, urls}})
+  signal.throwIfAborted()
 
-  const session = await initializeDevServerSession(
-    options.theme.id.toString(),
-    options.adminSession,
-    options.password,
-    storefrontPassword,
-    crawlerSignatureHeaders,
+  const session = await waitForStartup(
+    initializeDevServerSession(
+      options.theme.id.toString(),
+      options.adminSession,
+      options.password,
+      storefrontPassword,
+      crawlerSignatureHeaders,
+      signal,
+    ),
     signal,
   )
   if (signal.aborted) return
@@ -241,6 +255,14 @@ async function runDev(options: DevOptions, instance: DevInstance, controller: Ab
     if (acceptsInput) process.stdin.setRawMode(false)
     await serverStop()
   }
+}
+
+function waitForStartup<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
+  const {promise: cancelled, reject} = Promise.withResolvers<never>()
+  const onAbort = () => reject(signal.reason)
+  signal.addEventListener('abort', onAbort, {once: true})
+  if (signal.aborted) onAbort()
+  return Promise.race([work, cancelled]).finally(() => signal.removeEventListener('abort', onAbort))
 }
 
 export async function reportDevAnalytics(config: Config, session: AdminSession): Promise<void> {

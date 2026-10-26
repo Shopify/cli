@@ -9,9 +9,23 @@ export const mountThemeFileSystem = () => ({})
 export const emptyThemeExtFileSystem = () => ({})
 export const isStorefrontPasswordProtected = async () => false
 export const ensureValidPassword = async () => undefined
-export const initializeDevServerSession = async () => ({storeFqdn: 'fixture.myshopify.com', token: 'fixture'})
-export const fetchOrCreateCrawlerSignatureHeaders = async () => undefined
+export const initializeDevServerSession = async () => {
+  await pauseStartup('session')
+  return {storeFqdn: 'fixture.myshopify.com', token: 'fixture'}
+}
+export const fetchOrCreateCrawlerSignatureHeaders = async () => pauseStartup('crawler')
 export const ensureListingExists = async () => {}
+
+function pauseStartup(stage) {
+  if (process.env.THEME_DEV_TEST_STAGE !== stage) return
+  setInterval(() => {}, 1000)
+  setTimeout(() => {
+    process.stderr.write('Startup did not stop after the signal\n')
+    process.exit(2)
+  }, 5000)
+  process.kill(process.pid, process.env.THEME_DEV_TEST_SIGNAL)
+  return new Promise(() => {})
+}
 
 export function setupDevServer(theme, ctx) {
   return {
