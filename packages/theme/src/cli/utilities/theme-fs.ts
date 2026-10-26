@@ -10,6 +10,7 @@ import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} f
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
 import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
+import {commandEventOutputMode} from '@shopify/cli-kit/node/command-events'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {recordError} from '@shopify/cli-kit/node/analytics'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -601,7 +602,9 @@ function dirPath(filePath: string) {
 
 function outputSyncResult(action: 'update' | 'delete', fileKey: string): void {
   outputInfo(
-    outputContent`• ${timestampDateFormat.format(new Date())}  Synced ${outputToken.raw('»')} ${action} ${fileKey}`,
+    commandEventOutputMode() === 'json'
+      ? `Synced ${action} ${fileKey}`
+      : outputContent`• ${timestampDateFormat.format(new Date())}  Synced ${outputToken.raw('»')} ${action} ${fileKey}`,
   )
 }
 
