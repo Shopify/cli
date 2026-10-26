@@ -17,6 +17,7 @@ vi.mock('../../services/dev.js')
 vi.mock('../../services/metafields-pull.js')
 vi.mock('../../utilities/theme-selector.js')
 vi.mock('../../utilities/theme-ui.js')
+vi.mock('../../utilities/theme-store.js', () => ({ensureThemeStore: ({store}: {store: string}) => store}))
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/environments')
 
