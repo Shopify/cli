@@ -28,50 +28,64 @@ afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-test.each([false, true])('keeps diagnostics off the protocol with global JSON=%s', async (json) => {
-  vi.stubEnv('SHOPIFY_FLAG_JSON', json ? '1' : '0')
-  const instance = new TestLanguageServer(['--no-input'], await Config.load())
+test.each([
+  {argv: ['--no-input'], json: '0'},
+  {argv: ['--no-input'], json: '1'},
+  {argv: ['--json', '--no-input'], json: '0'},
+  {argv: ['-j', '--no-input'], json: '0'},
+])('preserves LSP output and diagnostics with $argv and global JSON=$json', async ({argv, json}) => {
+  vi.stubEnv('SHOPIFY_FLAG_JSON', json)
+  const instance = new TestLanguageServer(argv, await Config.load())
+  const frame = 'Content-Length: 38\r\n\r\n{"jsonrpc":"2.0","id":2,"result":null}'
   vi.mocked(startServer).mockImplementation(() => {
+    process.stdout.write(frame)
     outputWarn('Language server diagnostic')
   })
 
   await withCapturedStandardStreams(async ({stdout, stderr}) => {
     await runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, () => instance.execute())
-    expect(stdout()).toBe('')
+    expect(stdout()).toBe(frame)
     expect(stderr()).toContain('Language server diagnostic')
     expect(stderr()).not.toContain('"type":"diagnostic"')
   })
   expect(startServer).toHaveBeenCalledExactlyOnceWith()
 })
 
-test('keeps fatal startup errors on stderr with global JSON enabled', async () => {
-  vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
-  const instance = new TestLanguageServer([], await Config.load())
-  vi.mocked(startServer).mockImplementation(() => {
-    throw new AbortError('Language server startup failed')
-  })
+test.each([{argv: []}, {argv: ['--json']}, {argv: ['-j']}])(
+  'keeps fatal startup errors on stderr with $argv',
+  async ({argv}) => {
+    vi.stubEnv('SHOPIFY_FLAG_JSON', '1')
+    const instance = new TestLanguageServer(argv, await Config.load())
+    vi.mocked(startServer).mockImplementation(() => {
+      throw new AbortError('Language server startup failed')
+    })
 
-  await withCapturedStandardStreams(async ({stdout, stderr}) => {
-    await expect(instance.execute()).rejects.toThrow('Language server startup failed')
-    expect(stdout()).toBe('')
-    expect(stderr()).toContain('Language server startup failed')
-  })
-})
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await expect(instance.execute()).rejects.toThrow('Language server startup failed')
+      expect(stdout()).toBe('')
+      expect(stderr()).toContain('Language server startup failed')
+      expect(stderr()).not.toContain('"error":')
+    })
+  },
+)
 
-test('rejects --json on stderr before starting the server', async () => {
-  const instance = new TestLanguageServer(['--json'], await Config.load())
+test.each([{argv: []}, {argv: ['--json']}, {argv: ['-j']}])(
+  'keeps argument errors on stderr with $argv',
+  async ({argv}) => {
+    const instance = new TestLanguageServer([...argv, '--invalid'], await Config.load())
 
-  await withCapturedStandardStreams(async ({stdout, stderr}) => {
-    await expect(instance.execute()).rejects.toThrow('Nonexistent flag: --json')
-    expect(stdout()).toBe('')
-    expect(stderr()).toContain('--json')
-  })
-  expect(startServer).not.toHaveBeenCalled()
-})
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await expect(instance.execute()).rejects.toThrow('Nonexistent flag: --invalid')
+      expect(stdout()).toBe('')
+      expect(stderr()).toContain('--invalid')
+    })
+    expect(startServer).not.toHaveBeenCalled()
+  },
+)
 
 test('documents the native protocol and JSON flag policy', () => {
   expect(LanguageServer.jsonOutputSchema).toBeUndefined()
-  expect(LanguageServer.flags).not.toHaveProperty('json')
+  expect(LanguageServer.flags).toHaveProperty('json')
   expect(LanguageServer.descriptionForHelp()).toContain('Content-Length')
   expect(LanguageServer.descriptionForHelp()).toContain('SHOPIFY_FLAG_JSON')
 })

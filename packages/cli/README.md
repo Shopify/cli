@@ -18178,9 +18178,13 @@ Start a Language Server Protocol server.
 
 ```
 USAGE
-  $ shopify theme language-server [--auth-alias <value>] [--json-schema] [--no-color] [--no-input] [--verbose]
+  $ shopify theme language-server [--auth-alias <value>] [-j] [--json-schema] [--no-color] [--no-input] [--verbose]
 
 FLAGS
+  -j, --json
+      Use native LSP JSON-RPC output (already enabled by default).
+      [env: SHOPIFY_FLAG_JSON]
+
   --auth-alias=<value>
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
@@ -18209,9 +18213,9 @@ DESCRIPTION
   Communicates using Language Server Protocol (LSP) JSON-RPC messages on stdin and stdout, framed with Content-Length
   headers. CLI diagnostics use stderr.
 
-  The server does not support --json. SHOPIFY_FLAG_JSON does not change the protocol or CLI diagnostics. --json-schema
-  is a separate inspection command and reports that no CLI JSON output schema is defined without starting the server.
-  --no-input does not change the LSP transport.
+  --json is accepted for consistency with other commands. The server already uses JSON, so --json and SHOPIFY_FLAG_JSON
+  preserve the native LSP transport and CLI diagnostics. --json-schema is a separate inspection command and reports that
+  no CLI JSON output schema is defined without starting the server. --no-input does not change the LSP transport.
 ```
 
 ## `shopify theme list`

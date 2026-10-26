@@ -1,6 +1,6 @@
 ---
-'@shopify/cli': patch
+'@shopify/cli': minor
 '@shopify/cli-kit': patch
 ---
 
-Keep language server CLI errors on stderr when JSON output is enabled globally.
+Accept `theme language-server --json` with native LSP output and keep CLI errors on stderr.
