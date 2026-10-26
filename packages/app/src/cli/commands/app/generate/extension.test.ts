@@ -81,6 +81,18 @@ test('declares the domain schema and keeps app and inherited flags', () => {
   expect(AppGenerateExtension.descriptionForHelp()).toContain('AppGenerateExtensionResult')
 })
 
+test.each([{flags: ['--flavor', 'preact']}, {flags: ['--flavor=preact']}])(
+  'accepts an explicit Preact flavor non-interactively with $flags',
+  async ({flags}) => {
+    await withApp(async (directory) => {
+      await withCapturedStandardStreams(async () => {
+        await runCommand(directory, ['--no-input', ...flags])
+      })
+      expect(generate).toHaveBeenCalledWith(expect.objectContaining({flavor: 'preact'}))
+    })
+  },
+)
+
 test.each([
   {flags: ['--json'], environment: false},
   {flags: ['-j'], environment: false},

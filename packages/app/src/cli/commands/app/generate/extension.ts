@@ -54,7 +54,7 @@ export default class AppGenerateExtension extends AppLinkedCommand {
       hidden: false,
       description:
         'Choose a starting template for your extension, where applicable. Required if non interactive when the selected extension template supports multiple flavors.',
-      options: ['vanilla-js', 'react', 'typescript', 'typescript-react', 'wasm', 'rust'],
+      options: ['vanilla-js', 'preact', 'react', 'typescript', 'typescript-react', 'wasm', 'rust'],
       env: 'SHOPIFY_FLAG_FLAVOR',
     }),
   }
