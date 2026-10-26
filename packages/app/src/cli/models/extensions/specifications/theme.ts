@@ -7,6 +7,8 @@ import {dirname, relativePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {safeParseURL} from '@shopify/cli-kit/common/url'
+import {isIP} from 'node:net'
 
 export const MAX_ALLOWED_SOURCES = 20
 const MAX_HOST_LENGTH = 253
@@ -34,8 +36,8 @@ export function normalizeAllowedSource(source: string): string | undefined {
 
   const labels = host.split('.')
   if (labels.length < 2 || !labels.every((label) => HOST_LABEL_PATTERN.test(label))) return undefined
-  // A numeric last label means an IP address (or a TLD that doesn't exist).
-  if (/^\d+$/.test(labels[labels.length - 1]!)) return undefined
+  const parsedOrigin = safeParseURL(`https://${host}`)
+  if (!parsedOrigin || isIP(parsedOrigin.hostname) !== 0) return undefined
 
   let portSuffix = ''
   if (port !== undefined) {
