@@ -1,5 +1,9 @@
-import {ExtensionInstance} from '../extension-instance.js'
-import {placeholderAppConfiguration, testDeveloperPlatformClient, testOrganizationApp} from '../../app/app.test-data.js'
+import {
+  unwrapExtensionInstance,
+  placeholderAppConfiguration,
+  testDeveloperPlatformClient,
+  testOrganizationApp,
+} from '../../app/app.test-data.js'
 import {RemoteSpecification} from '../../../api/graphql/extension_specifications.js'
 import {fetchSpecifications} from '../../../services/generate/fetch-extension-specifications.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -46,13 +50,14 @@ describe('flow_trigger_lifecycle_callback', () => {
         throw new Error("Couldn't parse configuration")
       }
 
-      const extension = new ExtensionInstance({
-        configuration: parsed.data,
-        directory: tmpDir,
-        specification,
-        configurationPath: joinPath(tmpDir, 'shopify.extension.toml'),
-        entryPath: '',
-      })
+      const extension = unwrapExtensionInstance(
+        await specification.createInstance({
+          configurationObject: parsed.data,
+          directory: tmpDir,
+          configurationPath: joinPath(tmpDir, 'shopify.extension.toml'),
+          entryPath: '',
+        }),
+      )
 
       const deployConfig = await extension.deployConfig({
         apiKey: 'apiKey',

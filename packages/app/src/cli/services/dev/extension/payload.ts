@@ -4,7 +4,8 @@ import {getExtensionPointTargetSurface} from './utilities.js'
 import {ExtensionsPayloadStoreOptions} from './payload/store.js'
 import {getUIExtensionResourceURL} from '../../../utilities/extensions/configuration.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
-import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../../models/extensions/extension-instance.js'
+import {BaseConfigType} from '../../../models/extensions/schemas.js'
 import {fileExists, fileLastUpdatedTimestamp, readFile} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {basename, dirname, extname, joinPath} from '@shopify/cli-kit/node/path'
@@ -48,13 +49,13 @@ interface MappingContext {
   target: string
   extensionPoint: DevNewExtensionPointSchema
   url: string
-  extension: ExtensionInstance
+  extension: ExtensionInstanceRuntime
   buildDirectory: string
   resolver?: AssetResolver
 }
 
 export async function getUIExtensionPayload(
-  extension: ExtensionInstance,
+  extension: ExtensionInstanceRuntime<BaseConfigType>,
   bundlePath: string,
   options: GetUIExtensionPayloadOptions,
   resolver?: AssetResolver,
@@ -145,7 +146,7 @@ export async function getUIExtensionPayload(
 }
 
 async function getExtensionPoints(
-  extension: ExtensionInstance,
+  extension: ExtensionInstanceRuntime,
   url: string,
   buildDirectory: string,
   resolver?: AssetResolver,
@@ -345,7 +346,7 @@ async function builtAssetMapper(
 async function registerSourceMap(
   target: string,
   filepath: string,
-  extension: ExtensionInstance,
+  extension: ExtensionInstanceRuntime,
   resolver?: AssetResolver,
 ): Promise<void> {
   if (!resolver) return
@@ -433,7 +434,7 @@ async function getAssetPayload(
   urlSubpath: string,
   filepath: string,
   url: string,
-  extension: ExtensionInstance,
+  extension: ExtensionInstanceRuntime,
   resolver?: AssetResolver,
   sourcePath?: string,
 ) {

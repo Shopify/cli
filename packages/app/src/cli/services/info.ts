@@ -3,8 +3,8 @@ import {logMetadataForLoadedContext} from './context.js'
 import {AppLinkedInterface, getAppScopes} from '../models/app/app.js'
 import {Project} from '../models/project/project.js'
 import {Organization, OrganizationApp} from '../models/organization.js'
-import {ExtensionInstance} from '../models/extensions/extension-instance.js'
-import {ExtensionSpecification} from '../models/extensions/specification.js'
+import {ExtensionInstanceRuntime} from '../models/extensions/extension-instance.js'
+import {ExtensionSpecificationRuntime} from '../models/extensions/specification.js'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
@@ -58,7 +58,7 @@ export async function info(
   return appInfoJsonOutputSchema.validate(result)
 }
 
-function specificationInfo(specification: ExtensionSpecification) {
+function specificationInfo(specification: ExtensionSpecificationRuntime) {
   return {
     identifier: specification.identifier,
     externalIdentifier: specification.externalIdentifier,
@@ -81,7 +81,7 @@ function configFileInfo({path, content, errors}: TomlFile) {
   return {path, content, errors: errors.map(({path, message}) => ({path, message}))}
 }
 
-function withPurgedSchemas(extensions: ExtensionInstance[]): object[] {
+function withPurgedSchemas(extensions: ExtensionInstanceRuntime[]): object[] {
   return extensions.map((extension) => ({
     ...extension,
     name: extension.name,

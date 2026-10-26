@@ -1,5 +1,5 @@
 import {themeExtensionFiles, parseIgnoreFile} from './theme.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {unwrapExtensionInstance} from '../../models/app/app.test-data.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
@@ -11,16 +11,17 @@ describe('themeExtensionConfig', () => {
       // Given
       const allSpecs = await loadLocalExtensionsSpecifications()
       const specification = allSpecs.find((spec) => spec.identifier === 'theme')!
-      const themeExtension = new ExtensionInstance({
-        configuration: {
-          name: 'theme extension name',
-          type: 'theme' as const,
-          metafields: [],
-        },
-        configurationPath: '',
-        directory: tmpDir,
-        specification,
-      })
+      const themeExtension = unwrapExtensionInstance(
+        await specification.createInstance({
+          configurationObject: {
+            name: 'theme extension name',
+            type: 'theme' as const,
+            metafields: [],
+          },
+          configurationPath: '',
+          directory: tmpDir,
+        }),
+      )
 
       await mkdir(joinPath(tmpDir, 'blocks'))
       // Testing standard filenames, files with leading dots, ignored directories.

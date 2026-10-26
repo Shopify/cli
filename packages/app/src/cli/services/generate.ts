@@ -14,7 +14,7 @@ import generateExtensionPrompts, {
 } from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
 import {ExtensionTemplate} from '../models/app/template.js'
-import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
+import {ExtensionSpecificationRuntime, RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {OrganizationApp} from '../models/organization.js'
 import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -69,7 +69,7 @@ async function generate(options: GenerateOptions): Promise<GenerateExtensionResu
 async function buildPromptOptions(
   extensionTemplates: ExtensionTemplate[],
   groupOrder: string[],
-  specifications: ExtensionSpecification[],
+  specifications: ExtensionSpecificationRuntime[],
   app: AppInterface,
   options: GenerateOptions,
 ): Promise<GenerateExtensionPromptOptions> {
@@ -93,7 +93,7 @@ async function buildPromptOptions(
 
 function checkLimits(
   extensionTemplates: ExtensionTemplate[],
-  specifications: ExtensionSpecification[],
+  specifications: ExtensionSpecificationRuntime[],
   app: AppInterface,
 ) {
   const iterateeFunction = (template: ExtensionTemplate) => {
@@ -103,7 +103,7 @@ function checkLimits(
   return groupBy(extensionTemplates, iterateeFunction)
 }
 
-function limitReached(app: AppInterface, specifications: ExtensionSpecification[], template: ExtensionTemplate) {
+function limitReached(app: AppInterface, specifications: ExtensionSpecificationRuntime[], template: ExtensionTemplate) {
   const type = template.type
   const specification = specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
   const existingExtensions = app.extensionsForType({identifier: type, externalIdentifier: type})
@@ -152,7 +152,7 @@ async function handleTypeParameter(
   typeFlag: string | undefined,
   app: AppInterface,
   extensionTemplates: ExtensionTemplate[],
-  specifications: ExtensionSpecification[],
+  specifications: ExtensionSpecificationRuntime[],
 ): Promise<ExtensionTemplate | undefined> {
   if (!typeFlag) return
 

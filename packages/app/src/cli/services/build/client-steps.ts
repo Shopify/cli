@@ -1,6 +1,6 @@
 import {executeStepByType} from './steps/index.js'
 import type {IncludeAssetsConfig} from './steps/include-assets-step.js'
-import type {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import type {ExtensionInstanceRuntime} from '../../models/extensions/extension-instance.js'
 import type {ExtensionBuildOptions} from './extension.js'
 
 /** Common fields shared by all lifecycle steps. */
@@ -65,7 +65,7 @@ export type ClientSteps = ReadonlyArray<ClientLifecycleGroup>
  * Each step can read from and write to the context.
  */
 export interface BuildContext {
-  readonly extension: ExtensionInstance
+  readonly extension: ExtensionInstanceRuntime
   readonly options: ExtensionBuildOptions
   readonly stepResults: Map<string, StepResult>
 }

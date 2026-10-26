@@ -1,8 +1,8 @@
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../models/extensions/extension-instance.js'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 
-export async function addUidToTomlsIfNecessary(extensions: ExtensionInstance[]) {
+export async function addUidToTomlsIfNecessary(extensions: ExtensionInstanceRuntime[]) {
   // We can't update the TOML files in parallel because some extensions might share the same file
   for (const extension of extensions) {
     // eslint-disable-next-line no-await-in-loop
@@ -10,11 +10,11 @@ export async function addUidToTomlsIfNecessary(extensions: ExtensionInstance[]) 
   }
 }
 
-async function addUidToToml(extension: ExtensionInstance) {
+async function addUidToToml(extension: ExtensionInstanceRuntime) {
   if (!extension.isUUIDStrategyExtension || extension.configuration.uid) return
 
   const file = await TomlFile.read(extension.configurationPath)
-  const extensionsArray = getPathValue(file.content, 'extensions') as ExtensionInstance[]
+  const extensionsArray = getPathValue(file.content, 'extensions') as ExtensionInstanceRuntime[]
 
   if ('uid' in file.content) return
   if (extensionsArray) {

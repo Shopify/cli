@@ -8,7 +8,7 @@ import {
   testSingleWebhookSubscriptionExtension,
   testUIExtension,
 } from '../../../models/app/app.test-data.js'
-import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../../models/extensions/extension-instance.js'
 import {loadApp, reloadApp} from '../../../models/app/loader.js'
 import {AppLinkedInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {AppAccessSpecIdentifier} from '../../../models/extensions/specifications/app_config_app_access.js'
@@ -112,8 +112,8 @@ async function waitForWatcherEvent(emitSpy: EmitSpy, timeoutMs = 3000): Promise<
 interface TestCase {
   name: string
   fileWatchEvent: WatcherEvent
-  initialExtensions: ExtensionInstance[]
-  finalExtensions: ExtensionInstance[]
+  initialExtensions: ExtensionInstanceRuntime[]
+  finalExtensions: ExtensionInstanceRuntime[]
   extensionEvents: ExtensionEvent[]
   needsAppReload?: boolean
 }

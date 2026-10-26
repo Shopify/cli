@@ -2,7 +2,7 @@ import {executeBundleUIStep} from './bundle-ui-step.js'
 import * as generateManifest from './include-assets/generate-manifest.js'
 import * as buildExtension from '../extension.js'
 import {BundleUIStep, BuildContext} from '../client-steps.js'
-import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../../models/extensions/extension-instance.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -20,7 +20,7 @@ describe('executeBundleUIStep', () => {
         directory: '/test/extension',
         outputPath: '/test/extension/dist/handle.js',
         configuration: {},
-      } as ExtensionInstance,
+      } as ExtensionInstanceRuntime,
       options: {
         stdout: {write: vi.fn()} as any,
         stderr: {write: vi.fn()} as any,
@@ -97,11 +97,11 @@ describe('executeBundleUIStep', () => {
       }
       mockContext.extension.directory = extensionDir
       mockContext.extension.outputPath = joinPath(extensionDir, '.', 'dist', 'handle.js')
-      mockContext.extension.configuration = {
+      Object.assign(mockContext.extension.configuration, {
         extension_points: [
           {target: 'admin.product-details.action.render', build_manifest: {assets: {main: {filepath: 'main.js'}}}},
         ],
-      } as ExtensionInstance['configuration']
+      } as ExtensionInstanceRuntime['configuration'])
       vi.mocked(buildExtension.buildUIExtension).mockResolvedValue(joinPath(localOutputDir, 'handle.js'))
 
       // When

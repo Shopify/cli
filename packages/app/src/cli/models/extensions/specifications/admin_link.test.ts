@@ -1,7 +1,6 @@
 import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
-import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
-import {placeholderAppConfiguration} from '../../app/app.test-data.js'
+import {unwrapExtensionInstance, placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
@@ -16,13 +15,14 @@ describe('admin_link', async () => {
       throw new Error("Couldn't parse configuration")
     }
 
-    return new ExtensionInstance({
-      configuration: parsed.data,
-      directory,
-      specification,
-      configurationPath,
-      entryPath: '',
-    })
+    return unwrapExtensionInstance(
+      await specification.createInstance({
+        configurationObject: parsed.data,
+        directory,
+        configurationPath,
+        entryPath: '',
+      }),
+    )
   }
 
   test('has the correct identifier', async () => {

@@ -3,7 +3,7 @@ import {formatAppEnvShowText} from '../app/env/show/result.js'
 import {AppLinkedInterface, getAppScopes} from '../../models/app/app.js'
 import {Project} from '../../models/project/project.js'
 import {configurationFileNames} from '../../constants.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../models/extensions/extension-instance.js'
 import {Organization, OrganizationApp} from '../../models/organization.js'
 import {isServiceAccount, isUserAccount, AccountInfo} from '@shopify/cli-kit/node/session'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
@@ -177,7 +177,9 @@ class AppInfo {
     const extensions = this.app.allExtensions.filter((ext) => ext.isReturnedAsInfo())
     const types = uniq(extensions.map((ext) => ext.type))
     const sections = types.map((extensionType: string): AlertCustomSection | undefined => {
-      const relevantExtensions = extensions.filter((extension: ExtensionInstance) => extension.type === extensionType)
+      const relevantExtensions = extensions.filter(
+        (extension: ExtensionInstanceRuntime) => extension.type === extensionType,
+      )
       if (relevantExtensions[0]) {
         return this.subtableSection(
           relevantExtensions[0].externalType,
@@ -188,7 +190,7 @@ class AppInfo {
     return getArrayRejectingUndefined(sections)
   }
 
-  extensionSubSection(extension: ExtensionInstance): InlineToken[][] {
+  extensionSubSection(extension: ExtensionInstanceRuntime): InlineToken[][] {
     const config = extension.configuration
     const details: InlineToken[][] = [
       [`📂 ${extension.handle || NOT_LOADED_TEXT}`, {filePath: relativePath(this.app.directory, extension.directory)}],

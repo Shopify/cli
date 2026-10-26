@@ -2,7 +2,7 @@ import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-sp
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   createContractBasedModuleSpecification,
-  ExtensionSpecification,
+  ExtensionSpecificationRuntime,
   RemoteAwareExtensionSpecification,
 } from '../../models/extensions/specification.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
@@ -61,7 +61,7 @@ export async function fetchSpecifications({
 }
 
 async function mergeLocalAndRemoteSpecs(
-  local: ExtensionSpecification[],
+  local: ExtensionSpecificationRuntime[],
   remote: RemoteSpecification[],
 ): Promise<RemoteAwareExtensionSpecification[]> {
   // Iterate over the remote specs and merge them with the local ones
@@ -117,7 +117,7 @@ async function mergeLocalAndRemoteSpecs(
 }
 
 function mergeLocalAndRemoteSpec(
-  localSpec: ExtensionSpecification,
+  localSpec: ExtensionSpecificationRuntime,
   remoteSpec: RemoteSpecification,
 ): RemoteAwareExtensionSpecification {
   const merged: RemoteAwareExtensionSpecification = {

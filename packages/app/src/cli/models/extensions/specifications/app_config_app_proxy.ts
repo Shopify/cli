@@ -1,11 +1,7 @@
 import {prependApplicationUrl} from './validation/url_prepender.js'
 import {removeTrailingSlash} from './validation/common.js'
 import {validateRelativeUrl} from '../../app/validation/common.js'
-import {
-  ExtensionSpecification,
-  CustomTransformationConfig,
-  createConfigExtensionSpecification,
-} from '../specification.js'
+import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {BaseSchemaWithoutHandle} from '../schemas.js'
 import {CurrentAppConfiguration} from '../../app/app.js'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -57,7 +53,7 @@ const AppProxyTransformConfig: CustomTransformationConfig = {
   },
 }
 
-const appProxySpec: ExtensionSpecification = createConfigExtensionSpecification({
+const appProxySpec = createConfigExtensionSpecification({
   identifier: AppProxySpecIdentifier,
   schema: AppProxySchema,
   transformConfig: AppProxyTransformConfig,

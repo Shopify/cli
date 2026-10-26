@@ -12,7 +12,7 @@ import {
   testUIExtension,
   testProject,
 } from '../models/app/app.test-data.js'
-import {ExtensionInstance} from '../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../models/extensions/extension-instance.js'
 import generateExtensionPrompts from '../prompts/generate/extension.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
@@ -270,7 +270,7 @@ describe('generate', () => {
   })
 })
 
-async function mockSuccessfulCommandExecution(identifier: string, existingExtensions: ExtensionInstance[] = []) {
+async function mockSuccessfulCommandExecution(identifier: string, existingExtensions: ExtensionInstanceRuntime[] = []) {
   const appRoot = '/'
   const app = testAppWithConfig({
     app: {
