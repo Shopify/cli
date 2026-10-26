@@ -1,5 +1,6 @@
-import themeSpec, {MAX_ALLOWED_SOURCES, normalizeAllowedSource} from './theme.js'
+import themeSpec from './theme.js'
 import {UIExtensionSchema} from './ui_extension.js'
+import {MAX_ALLOWED_SOURCES, normalizeAllowedSource} from '../network-access.js'
 import {describe, expect, test} from 'vitest'
 
 function parse(capabilities?: object) {
@@ -201,17 +202,6 @@ describe('theme', () => {
 
       expect(result.success).toBe(true)
       expect(result.data?.capabilities?.network_access).toBe(networkAccess)
-    })
-
-    test('reject a network_access table', () => {
-      const result = UIExtensionSchema.safeParse({
-        name: 'ui extension',
-        type: 'ui_extension',
-        extension_points: [],
-        capabilities: {network_access: {allowed_sources: ['https://api.example.com']}},
-      })
-
-      expect(result.success).toBe(false)
     })
   })
 })

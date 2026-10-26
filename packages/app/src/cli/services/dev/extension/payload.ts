@@ -5,6 +5,7 @@ import {ExtensionsPayloadStoreOptions} from './payload/store.js'
 import {getUIExtensionResourceURL} from '../../../utilities/extensions/configuration.js'
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {isNetworkAccessEnabled} from '../../../models/extensions/network-access.js'
 import {fileExists, fileLastUpdatedTimestamp, readFile} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {basename, dirname, extname, joinPath} from '@shopify/cli-kit/node/path'
@@ -98,7 +99,7 @@ export async function getUIExtensionPayload(
       },
       capabilities: {
         blockProgress: extension.configuration.capabilities?.block_progress ?? false,
-        networkAccess: extension.configuration.capabilities?.network_access ?? false,
+        networkAccess: isNetworkAccessEnabled(extension.configuration.capabilities?.network_access),
         apiAccess: extension.configuration.capabilities?.api_access ?? false,
         collectBuyerConsent: {
           smsMarketing: extension.configuration.capabilities?.collect_buyer_consent?.sms_marketing ?? false,

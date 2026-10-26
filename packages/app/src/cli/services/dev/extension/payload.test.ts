@@ -876,6 +876,37 @@ describe('getUIExtensionPayload', () => {
     })
   })
 
+  test('returns networkAccess true when network_access is an allowed_sources table', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const parsed = specification.parseConfigurationObject({
+        name: 'UI Extension',
+        type: 'ui_extension',
+        handle: 'ui-extension',
+        targeting: [{target: 'purchase.checkout.block.render', module: './src/index.js'}],
+        capabilities: {network_access: {allowed_sources: ['https://api.example.com']}},
+      })
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse ui_extension configuration")
+      }
+      const uiExtension = new ExtensionInstance({
+        configuration: parsed.data,
+        directory: tmpDir,
+        specification,
+        configurationPath: joinPath(tmpDir, 'shopify.extension.toml'),
+        entryPath: '',
+      })
+
+      const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
+        ...({} as ExtensionsPayloadStoreOptions),
+        currentDevelopmentPayload: {},
+      })
+
+      expect(got.capabilities?.networkAccess).toBe(true)
+    })
+  })
+
   describe('supportedFeatures', () => {
     test('returns runsOffline true when runs_offline is enabled', async () => {
       await inTemporaryDirectory(async (tmpDir) => {

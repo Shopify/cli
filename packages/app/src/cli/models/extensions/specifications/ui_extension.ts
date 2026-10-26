@@ -12,7 +12,14 @@ import {
   ToolsFileSchema,
 } from './type-generation.js'
 import {AssetIdentifier, BuildAsset, ExtensionFeature, createExtensionSpecification} from '../specification.js'
-import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema, MetafieldSchema} from '../schemas.js'
+import {
+  NewExtensionPointSchemaType,
+  NewExtensionPointsSchema,
+  BaseSchema,
+  CapabilitiesSchema,
+  MetafieldSchema,
+} from '../schemas.js'
+import {AllowedSourcesSchema, NetworkAccess} from '../network-access.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {ExtensionInstance} from '../extension-instance.js'
@@ -43,6 +50,43 @@ type GeneratedIntentTypeDefinition = Parameters<typeof createIntentsTypeDefiniti
 
 const missingExtensionPointsMessage = 'No extension targets defined, add a `targeting` field to your configuration'
 
+const UINetworkAccessTableSchema = zod.object({allowed_sources: AllowedSourcesSchema})
+
+// Branching on the value's type, instead of a union, keeps the table's own errors. A union reports whichever form
+// the error parser guesses the developer meant.
+const UINetworkAccessSchema = zod.unknown().transform((networkAccess, ctx): NetworkAccess => {
+  if (typeof networkAccess === 'boolean') return networkAccess
+  if (typeof networkAccess !== 'object' || networkAccess === null || Array.isArray(networkAccess)) {
+    ctx.addIssue({
+      code: zod.ZodIssueCode.custom,
+      message: 'network_access must be true, false or a table with an allowed_sources list',
+    })
+    return zod.NEVER
+  }
+
+  const unexpectedKeys = Object.keys(networkAccess).filter((key) => key !== 'allowed_sources')
+  if (unexpectedKeys.length > 0) {
+    ctx.addIssue({
+      code: zod.ZodIssueCode.custom,
+      message: `unexpected keys: ${unexpectedKeys.join(', ')}. Only allowed_sources should be provided.`,
+    })
+  }
+
+  const table = UINetworkAccessTableSchema.safeParse(networkAccess)
+  if (!table.success) {
+    for (const issue of table.error.issues) {
+      ctx.addIssue({code: zod.ZodIssueCode.custom, message: issue.message, path: issue.path})
+    }
+    return zod.NEVER
+  }
+
+  return unexpectedKeys.length > 0 ? zod.NEVER : table.data
+})
+
+const UICapabilitiesSchema = CapabilitiesSchema.extend({
+  network_access: UINetworkAccessSchema.optional(),
+})
+
 type UIExtensionConfigType = zod.infer<typeof UIExtensionSchema>
 export const UIExtensionSchema = BaseSchema.extend({
   name: zod.string(),
@@ -50,6 +94,7 @@ export const UIExtensionSchema = BaseSchema.extend({
   extension_points: NewExtensionPointsSchema.optional(),
   targeting: NewExtensionPointsSchema.optional(),
   metafields: zod.array(MetafieldSchema).optional(),
+  capabilities: UICapabilitiesSchema.optional(),
 })
   .refine((config) => validatePoints(config), missingExtensionPointsMessage)
   .transform((config) => {
@@ -542,7 +587,7 @@ async function validateUIExtensionPointConfig(
 }
 
 function isRemoteDomExtension(
-  config: ExtensionInstance['configuration'],
+  config: Pick<ExtensionInstance['configuration'], 'api_version'>,
 ): config is ExtensionInstance<{api_version: string}>['configuration'] {
   const apiVersion = config.api_version
   if (!apiVersion) {

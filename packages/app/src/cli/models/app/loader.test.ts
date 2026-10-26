@@ -513,6 +513,79 @@ describe('load', () => {
     })
   })
 
+  test('loads network_access allowed_sources for UI extensions', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    const blockConfiguration = `
+      api_version = "2026-10"
+
+      [[extensions]]
+      name = "My checkout extension"
+      handle = "checkout-ui"
+      type = "ui_extension"
+
+        [[extensions.targeting]]
+        target = "purchase.checkout.block.render"
+        module = "./src/index.js"
+
+        [extensions.capabilities.network_access]
+        allowed_sources = ["https://API.example.com/", "https://*.cdn.example.com"]
+      `
+    await writeBlockConfig({blockConfiguration, name: 'checkout-ui'})
+    await mkdir(joinPath(blockPath('checkout-ui'), 'src'))
+    await writeFile(joinPath(blockPath('checkout-ui'), 'src', 'index.js'), '')
+
+    // When
+    const app = await loadTestingApp()
+
+    // Then
+    expect(app.errors.getErrors()).toEqual([])
+    const extension = getRealExtensions(app)[0]!
+    const deployConfig = await extension.deployConfig({apiKey: 'api-key', appConfiguration: app.configuration})
+    expect(deployConfig?.capabilities).toEqual({
+      network_access: {allowed_sources: ['https://api.example.com', 'https://*.cdn.example.com']},
+    })
+  })
+
+  test('reports invalid network_access allowed_sources for UI extensions', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    const blockConfiguration = `
+      api_version = "2026-10"
+
+      [[extensions]]
+      name = "My checkout extension"
+      handle = "checkout-ui"
+      type = "ui_extension"
+
+        [[extensions.targeting]]
+        target = "purchase.checkout.block.render"
+        module = "./src/index.js"
+
+        [extensions.capabilities.network_access]
+        allowed_sources = ["http://api.example.com"]
+        enabled = true
+      `
+    await writeBlockConfig({blockConfiguration, name: 'checkout-ui'})
+    await mkdir(joinPath(blockPath('checkout-ui'), 'src'))
+    await writeFile(joinPath(blockPath('checkout-ui'), 'src', 'index.js'), '')
+
+    // When
+    const app = await loadTestingApp()
+
+    // Then
+    expect(app.errors.getErrors()).toEqual([
+      expect.objectContaining({
+        path: ['capabilities', 'network_access'],
+        message: 'unexpected keys: enabled. Only allowed_sources should be provided.',
+      }),
+      expect.objectContaining({
+        path: ['capabilities', 'network_access', 'allowed_sources'],
+        message: expect.stringContaining('Invalid allowed_sources: "http://api.example.com".'),
+      }),
+    ])
+  })
+
   test('reports error for duplicated handles when ignoreUnknownExtensions is true', async () => {
     // Given
     await writeConfig(appConfiguration)

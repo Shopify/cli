@@ -1,4 +1,5 @@
-import {getShouldRenderTarget} from './ui_extension.js'
+import uiExtensionSpec, {getShouldRenderTarget} from './ui_extension.js'
+import {MAX_ALLOWED_SOURCES} from '../network-access.js'
 import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
@@ -3115,6 +3116,212 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         // Sanity: the value type is not the `unknown` fallback used when no schema is provided.
         expect(typeDefinition).not.toContain('type EditShopifyProductIntentValue = unknown')
       })
+    })
+  })
+})
+
+describe('ui_extension capabilities.network_access', () => {
+  function parse(networkAccess?: unknown) {
+    return uiExtensionSpec.parseConfigurationObject({
+      name: 'UI Extension',
+      type: 'ui_extension',
+      handle: 'ui-extension',
+      api_version: '2026-10',
+      targeting: [{target: 'purchase.checkout.block.render', module: './src/index.js'}],
+      ...(networkAccess === undefined ? {} : {capabilities: {network_access: networkAccess}}),
+    })
+  }
+
+  function parseSources(allowedSources: unknown) {
+    return parse({allowed_sources: allowedSources})
+  }
+
+  function errors(result: ReturnType<typeof parse>) {
+    return result.state === 'error' ? result.errors.map(({path, message}) => ({path, message})) : []
+  }
+
+  const invalidSourcesHint =
+    'Use HTTPS origins with no path, query or fragment, like "https://api.example.com" or "https://*.cdn.example.com".'
+
+  test.each([true, false])('accepts a boolean network_access of %s', (networkAccess) => {
+    const result = parse(networkAccess)
+
+    expect(result.state).toBe('ok')
+    expect(result.data?.capabilities?.network_access).toBe(networkAccess)
+  })
+
+  test('leaves network_access undefined when it is omitted', () => {
+    const result = parse()
+
+    expect(result.state).toBe('ok')
+    expect(result.data?.capabilities?.network_access).toBeUndefined()
+  })
+
+  test('accepts an allowed_sources table and normalizes it', () => {
+    const result = parseSources([
+      ' HTTPS://API.Example.com/ ',
+      'https://*.cdn.example.com',
+      'https://api.example.com:443',
+      'https://jplhomer.org:8443',
+    ])
+
+    expect(result.state).toBe('ok')
+    expect(result.data?.capabilities?.network_access).toEqual({
+      allowed_sources: ['https://api.example.com', 'https://*.cdn.example.com', 'https://jplhomer.org:8443'],
+    })
+  })
+
+  test('accepts an empty list', () => {
+    const result = parseSources([])
+
+    expect(result.state).toBe('ok')
+    expect(result.data?.capabilities?.network_access).toEqual({allowed_sources: []})
+  })
+
+  test('keeps the other capabilities next to the table', () => {
+    const result = uiExtensionSpec.parseConfigurationObject({
+      name: 'UI Extension',
+      type: 'ui_extension',
+      handle: 'ui-extension',
+      targeting: [{target: 'purchase.checkout.block.render', module: './src/index.js'}],
+      capabilities: {
+        api_access: true,
+        block_progress: true,
+        network_access: {allowed_sources: ['https://api.example.com']},
+      },
+    })
+
+    expect(result.state).toBe('ok')
+    expect(result.data?.capabilities).toEqual({
+      api_access: true,
+      block_progress: true,
+      network_access: {allowed_sources: ['https://api.example.com']},
+    })
+  })
+
+  test('requires allowed_sources when the network_access table is declared', () => {
+    expect(errors(parse({}))).toEqual([
+      {
+        path: ['capabilities', 'network_access', 'allowed_sources'],
+        message: 'allowed_sources is required. Use an empty list if your extension contacts no other origins.',
+      },
+    ])
+  })
+
+  test('rejects unexpected keys in the table and names each of them', () => {
+    const result = parse({allowed_sources: ['https://api.example.com'], enabled: true, sources: []})
+
+    expect(errors(result)).toEqual([
+      {
+        path: ['capabilities', 'network_access'],
+        message: 'unexpected keys: enabled, sources. Only allowed_sources should be provided.',
+      },
+    ])
+  })
+
+  test('reports unexpected keys together with invalid allowed_sources', () => {
+    const result = parse({allowed_sources: ['http://api.example.com', 'https://api.example.com/v1'], enabled: true})
+
+    expect(errors(result)).toEqual([
+      {
+        path: ['capabilities', 'network_access'],
+        message: 'unexpected keys: enabled. Only allowed_sources should be provided.',
+      },
+      {
+        path: ['capabilities', 'network_access', 'allowed_sources'],
+        message: `Invalid allowed_sources: "http://api.example.com", "https://api.example.com/v1". ${invalidSourcesHint}`,
+      },
+    ])
+  })
+
+  test('rejects a value that is not a list', () => {
+    expect(errors(parseSources('https://api.example.com'))).toEqual([
+      {
+        path: ['capabilities', 'network_access', 'allowed_sources'],
+        message: 'allowed_sources must be a list of HTTPS origins, like ["https://api.example.com"]',
+      },
+    ])
+  })
+
+  test.each([
+    ['an http origin', 'http://api.example.com'],
+    ['a path', 'https://api.example.com/v1'],
+    ['a query', 'https://api.example.com?a=b'],
+    ['a wildcard that is not the leading label', 'https://api.*.example.com'],
+    ['a single-label host', 'https://localhost'],
+    ['an IP address', 'https://127.0.0.1'],
+    ['an IP address in hexadecimal notation', 'https://0x7f.0x1'],
+    ['a CSP keyword', "'self'"],
+  ])('rejects %s', (_description, source) => {
+    expect(errors(parseSources(['https://ok.example.com', source]))).toEqual([
+      {
+        path: ['capabilities', 'network_access', 'allowed_sources'],
+        message: `Invalid allowed_sources: ${JSON.stringify(source)}. ${invalidSourcesHint}`,
+      },
+    ])
+  })
+
+  test(`accepts up to ${MAX_ALLOWED_SOURCES} origins after removing duplicates`, () => {
+    const sources = Array.from({length: MAX_ALLOWED_SOURCES}, (_, index) => `https://api${index}.example.com`)
+
+    expect(parseSources([...sources, 'HTTPS://API0.EXAMPLE.COM']).state).toBe('ok')
+  })
+
+  test(`rejects more than ${MAX_ALLOWED_SOURCES} origins`, () => {
+    const sources = Array.from({length: MAX_ALLOWED_SOURCES + 1}, (_, index) => `https://api${index}.example.com`)
+
+    expect(errors(parseSources(sources))).toEqual([
+      {
+        path: ['capabilities', 'network_access', 'allowed_sources'],
+        message: `allowed_sources can list up to ${MAX_ALLOWED_SOURCES} origins`,
+      },
+    ])
+  })
+
+  test.each([
+    ['a string', 'https://api.example.com'],
+    ['a list', ['https://api.example.com']],
+  ])('rejects a network_access value that is %s', (_description, networkAccess) => {
+    expect(errors(parse(networkAccess))).toEqual([
+      {
+        path: ['capabilities', 'network_access'],
+        message: 'network_access must be true, false or a table with an allowed_sources list',
+      },
+    ])
+  })
+
+  describe('deployConfig()', () => {
+    test('sends the normalized allowed_sources table', async () => {
+      vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue({})
+      const config = parseSources([
+        'https://API.example.com/',
+        'https://*.cdn.example.com',
+        'https://api.example.com',
+      ]).data!
+
+      const deployConfig = await uiExtensionSpec.deployConfig?.(config, '', '', undefined)
+
+      expect(deployConfig?.capabilities).toStrictEqual({
+        network_access: {allowed_sources: ['https://api.example.com', 'https://*.cdn.example.com']},
+      })
+    })
+
+    test('sends an empty allowed_sources list', async () => {
+      vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue({})
+      const config = parseSources([]).data!
+
+      const deployConfig = await uiExtensionSpec.deployConfig?.(config, '', '', undefined)
+
+      expect(deployConfig?.capabilities).toStrictEqual({network_access: {allowed_sources: []}})
+    })
+
+    test('sends a boolean network_access unchanged', async () => {
+      vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue({})
+      const config = parse(true).data!
+
+      const deployConfig = await uiExtensionSpec.deployConfig?.(config, '', '', undefined)
+
+      expect(deployConfig?.capabilities).toStrictEqual({network_access: true})
     })
   })
 })
