@@ -21,11 +21,8 @@ const IframeCapabilitySchema = zod.object({
   sources: zod.array(zod.string()).optional(),
 })
 
-export const CapabilitiesSchema = zod.object({
-  // Theme app extensions declare `network_access` as a table that lists the origins they contact (see the theme
-  // specification). Every other extension declares a boolean, which is all this shared schema accepts. The wider
-  // type lets the theme specification reuse `BaseConfigType`.
-  network_access: zod.boolean().optional() as ZodSchemaType<boolean | {allowed_sources: string[]} | undefined>,
+const CapabilitiesSchema = zod.object({
+  network_access: zod.boolean().optional(),
   block_progress: zod.boolean().optional(),
   api_access: zod.boolean().optional(),
   collect_buyer_consent: CollectBuyerConsentCapabilitySchema.optional(),
@@ -157,5 +154,7 @@ export const UnifiedSchema = zod.object({
 
 export type NewExtensionPointSchemaType = zod.infer<typeof NewExtensionPointSchema>
 
-// Base config type that all config schemas must extend.
 export type BaseConfigType = zod.infer<typeof BaseSchema>
+
+// Base config type that all config schemas must extend.
+export type BaseExtensionConfigType = Omit<BaseConfigType, 'capabilities'>

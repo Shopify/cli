@@ -37,7 +37,7 @@ export async function executeBuildThemeStep(_step: LifecycleStep, context: Build
 async function warnAboutUndeclaredOrigins({extension, options}: BuildContext): Promise<void> {
   try {
     const allowedSources = declaredAllowedSources(extension.configuration.capabilities)
-    const paths = (await themeExtensionFiles(extension)).filter((path) =>
+    const paths = (await themeExtensionFiles(extension.directory)).filter((path) =>
       EGRESS_SCANNED_FILE_EXTENSIONS.some((fileExtension) => path.endsWith(fileExtension)),
     )
     const files = await Promise.all(

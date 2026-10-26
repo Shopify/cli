@@ -1,12 +1,13 @@
 import {createExtensionSpecification} from '../specification.js'
-import {BaseSchema, CapabilitiesSchema} from '../schemas.js'
+import {BaseSchema} from '../schemas.js'
 import {themeExtensionFiles} from '../../../utilities/extensions/theme.js'
-import {ExtensionInstance} from '../extension-instance.js'
 import {fileSize} from '@shopify/cli-kit/node/fs'
 import {dirname, relativePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {safeParseURL} from '@shopify/cli-kit/common/url'
+import {isIP} from 'node:net'
 
 export const MAX_ALLOWED_SOURCES = 20
 const MAX_HOST_LENGTH = 253
@@ -34,8 +35,8 @@ export function normalizeAllowedSource(source: string): string | undefined {
 
   const labels = host.split('.')
   if (labels.length < 2 || !labels.every((label) => HOST_LABEL_PATTERN.test(label))) return undefined
-  // A numeric last label means an IP address (or a TLD that doesn't exist).
-  if (/^\d+$/.test(labels[labels.length - 1]!)) return undefined
+  const parsedOrigin = safeParseURL(`https://${host}`)
+  if (!parsedOrigin || isIP(parsedOrigin.hostname) !== 0) return undefined
 
   let portSuffix = ''
   if (port !== undefined) {
@@ -71,12 +72,8 @@ const ThemeNetworkAccessSchema = zod.object(
   {invalid_type_error: 'network_access must be a table with an allowed_sources list for theme app extensions'},
 )
 
-const ThemeCapabilitiesSchema = CapabilitiesSchema.extend({
-  // A boolean `network_access` (used by UI extensions) never had an effect on theme app extensions. Keep ignoring it.
-  network_access: zod.preprocess(
-    (value) => (typeof value === 'boolean' ? undefined : value),
-    ThemeNetworkAccessSchema.optional(),
-  ),
+const ThemeCapabilitiesSchema = zod.object({
+  network_access: ThemeNetworkAccessSchema.optional(),
 })
 
 const ThemeSchema = BaseSchema.extend({
@@ -103,7 +100,7 @@ const themeSpec = createExtensionSpecification({
   deployConfig: async (config) => {
     const networkAccess = config.capabilities?.network_access
     // Only send capabilities when they're declared, so existing payloads stay the same.
-    if (typeof networkAccess !== 'object') return {theme_extension: {files: {}}}
+    if (!networkAccess) return {theme_extension: {files: {}}}
 
     return {
       theme_extension: {files: {}},
@@ -113,7 +110,7 @@ const themeSpec = createExtensionSpecification({
   preDeployValidation: async (extension) => {
     // Undeclared network origins are only a build warning for now (see build-theme-step.ts). Once storefronts enforce
     // allowed_sources, deploys can fail here using the same detector (utilities/extensions/theme-egress.ts).
-    return validateThemeExtension(extension)
+    return validateThemeExtension(extension.directory)
   },
 })
 
@@ -157,13 +154,13 @@ const SUPPORTED_EXTS: {[dirname: string]: FilenameValidation} = {
 }
 const SUPPORTED_BUCKETS = Object.keys(SUPPORTED_EXTS)
 
-async function validateThemeExtension(extension: ExtensionInstance): Promise<void> {
-  const themeFiles = await themeExtensionFiles(extension)
+async function validateThemeExtension(extensionDirectory: string): Promise<void> {
+  const themeFiles = await themeExtensionFiles(extensionDirectory)
   const liquidBytes: number[] = []
   const extensionBytes: number[] = []
   await Promise.all(
     themeFiles.map(async (filepath) => {
-      const relativePathName = relativePath(extension.directory, filepath)
+      const relativePathName = relativePath(extensionDirectory, filepath)
       const directoryName = dirname(relativePathName)
       validateFile(relativePathName, directoryName)
       const filesize = await fileSize(filepath)

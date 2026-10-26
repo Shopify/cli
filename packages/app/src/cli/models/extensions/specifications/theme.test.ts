@@ -52,11 +52,20 @@ describe('theme', () => {
       expect(parse({}).data?.capabilities?.network_access).toBeUndefined()
     })
 
-    test('ignores a boolean network_access, as before', () => {
-      const result = parse({network_access: true})
+    test.each([true, false])('rejects a boolean network_access of %s', (networkAccess) => {
+      const result = parse({network_access: networkAccess})
+
+      expect(result.state).toBe('error')
+      expect(errorMessages(result)).toEqual([
+        'network_access must be a table with an allowed_sources list for theme app extensions',
+      ])
+    })
+
+    test('ignores capabilities that do not apply to theme extensions', () => {
+      const result = parse({network_access: {allowed_sources: []}, api_access: true, block_progress: true})
 
       expect(result.state).toBe('ok')
-      expect(result.data?.capabilities?.network_access).toBeUndefined()
+      expect(result.data?.capabilities).toEqual({network_access: {allowed_sources: []}})
     })
 
     test('requires allowed_sources when the network_access table is declared', () => {
@@ -77,7 +86,7 @@ describe('theme', () => {
       ])
     })
 
-    test('rejects a network_access value that is neither a table nor a boolean', () => {
+    test('rejects a network_access value that is not a table', () => {
       const result = parse({network_access: 'https://api.example.com'})
 
       expect(result.state).toBe('error')
@@ -99,6 +108,13 @@ describe('theme', () => {
       ['a wildcard that is not the leading label', 'https://api.*.example.com'],
       ['a single-label host', 'https://localhost'],
       ['an IP address', 'https://127.0.0.1'],
+      ['an IP address with a hexadecimal final label', 'https://127.0.0x1'],
+      ['an IP address in hexadecimal notation', 'https://0x7f.0x1'],
+      ['a link-local IP address in hexadecimal notation', 'https://0xa9.0xfe.0xa9.0xfe'],
+      ['a wildcard on an IP address', 'https://*.127.0.0.1'],
+      ['a wildcard on an IP address in hexadecimal notation', 'https://*.0x7f.0x1'],
+      ['a host that cannot be parsed as a URL', 'https://example.0xabc'],
+      ['a wildcard on a host that cannot be parsed as a URL', 'https://*.example.0xabc'],
       ['an invalid label', 'https://-api.example.com'],
       ['an empty label', 'https://api..example.com'],
       ['a trailing dot', 'https://api.example.com./'],
@@ -149,8 +165,8 @@ describe('theme', () => {
       await expect(themeSpec.deployConfig?.(config, '', '', undefined)).resolves.toEqual({theme_extension: {files: {}}})
     })
 
-    test('sends only the theme extension files when network_access is a boolean', async () => {
-      const config = parse({network_access: true, block_progress: true}).data!
+    test('sends only the theme extension files when other capabilities are declared', async () => {
+      const config = parse({api_access: true, block_progress: true}).data!
 
       await expect(themeSpec.deployConfig?.(config, '', '', undefined)).resolves.toEqual({theme_extension: {files: {}}})
     })
@@ -175,16 +191,16 @@ describe('theme', () => {
   })
 
   describe('UI extensions', () => {
-    test('still accept a boolean network_access', () => {
+    test.each([true, false])('still accept a boolean network_access of %s', (networkAccess) => {
       const result = UIExtensionSchema.safeParse({
         name: 'ui extension',
         type: 'ui_extension',
         extension_points: [],
-        capabilities: {network_access: true},
+        capabilities: {network_access: networkAccess},
       })
 
       expect(result.success).toBe(true)
-      expect(result.data?.capabilities?.network_access).toBe(true)
+      expect(result.data?.capabilities?.network_access).toBe(networkAccess)
     })
 
     test('reject a network_access table', () => {

@@ -78,7 +78,7 @@ export async function bundleThemeExtension(
   options: ExtensionBuildOptions,
 ): Promise<void> {
   options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
-  const files = await themeExtensionFiles(extension)
+  const files = await themeExtensionFiles(extension.directory)
 
   await Promise.all(
     files.map(function (filepath) {
