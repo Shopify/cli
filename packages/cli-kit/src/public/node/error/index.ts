@@ -151,7 +151,7 @@ export async function handler(error: unknown): Promise<unknown> {
 
   const {jsonOutputEnabled} = await import('../environment.js')
   const {commandEventOutputMode} = await import('../../../private/node/command-event-context.js')
-  if (jsonOutputEnabled() || commandEventOutputMode() === 'json') {
+  if ((commandEventOutputMode() ?? (jsonOutputEnabled() ? 'json' : 'text')) === 'json') {
     const {renderFatalErrorAsJson} = await import('../../../private/node/json-error.js')
     renderFatalErrorAsJson(fatal)
     await flushStdout()

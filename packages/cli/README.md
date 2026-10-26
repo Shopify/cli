@@ -18205,6 +18205,13 @@ DESCRIPTION
   Start a Language Server Protocol server.
 
   Starts the "Language Server" (https://shopify.dev/docs/themes/tools/cli/language-server).
+
+  Communicates using Language Server Protocol (LSP) JSON-RPC messages on stdin and stdout, framed with Content-Length
+  headers. CLI diagnostics use stderr.
+
+  The server does not support --json. SHOPIFY_FLAG_JSON does not change the protocol or CLI diagnostics. --json-schema
+  is a separate inspection command and reports that no CLI JSON output schema is defined without starting the server.
+  --no-input does not change the LSP transport.
 ```
 
 ## `shopify theme list`

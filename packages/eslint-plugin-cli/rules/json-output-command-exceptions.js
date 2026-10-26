@@ -10,6 +10,7 @@ const commandExceptions = [
   'packages/store/src/cli/commands/store/graphiql.ts',
   'packages/theme/src/cli/commands/theme/console.ts',
   'packages/theme/src/cli/commands/theme/dev.ts',
+  // Native LSP JSON-RPC owns stdin/stdout framing, IDs, notifications, cancellation, and shutdown.
   'packages/theme/src/cli/commands/theme/language-server.ts',
 ]
 
