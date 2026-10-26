@@ -270,27 +270,6 @@ The lint rule only exempts paths in that list; a `jsonOutputSupport` property al
 This exemption is only for commands whose lifetime or output is inherently streaming. A finite operation remains a
 finite command even when it emits progress events, writes a file, or has no interesting return value.
 
-### Theme language server: native LSP
-
-`shopify theme language-server` delegates to `@shopify/theme-language-server-node` and speaks Language Server
-Protocol over stdin/stdout. Each JSON-RPC 2.0 message uses an LSP `Content-Length` header (UTF-8 byte length), a
-`\r\n\r\n` separator, and a JSON body. This is neither a finite CLI JSON document nor a JSONL stream.
-
-The native server owns initialization, capabilities, request IDs, responses, notifications, protocol errors,
-`$/cancelRequest`, and the `shutdown` request followed by the `exit` notification. Cancellation is advisory: an
-already completed request can still return its normal response. A normal shutdown exits zero; `exit` without
-`shutdown` exits nonzero. CLI code must not wrap, re-encode, or insert messages into this transport.
-
-`--json` (or `-j`) is accepted for consistency with other commands. The server already uses JSON, so ordinary
-invocation, `--json`, and `SHOPIFY_FLAG_JSON=1` all preserve the same native LSP transport. CLI diagnostics and
-startup/argument errors use stderr in every mode; JSON flags do not enable CLI JSON events or error documents
-for this command. `--no-input` controls CLI interactivity and does not change LSP behavior.
-
-`--json-schema` (or `SHOPIFY_FLAG_JSON_SCHEMA=1`) is a separate CLI inspection invocation: it exits without starting
-the server and reports that no CLI JSON output schema is defined. The native LSP implementation owns the method-specific
-message contracts and initialization capabilities. Keep the streaming lint exemption because the command runs an
-ongoing, bidirectional protocol rather than returning one finite CLI result.
-
 ## Plugin authors
 
 ### Enable the JSON output lint rule
