@@ -346,6 +346,7 @@ describe('dev proxy', () => {
       ['a relative path', '/foo?_fd=0&pb=0&bar=1', '/foo?bar=1'],
       ['the store domain over http', 'http://my-store.myshopify.com/foo?pb=0', '/foo'],
       ['an uppercase store domain', 'https://MY-STORE.myshopify.com/foo', '/foo'],
+      ['a protocol-relative store domain', '//my-store.myshopify.com/foo?_fd=0&bar=1', '/foo?bar=1'],
     ])('rewrites a Location header with %s to a local path', async (_, location, expected) => {
       const redirectResponse = new Response(null, {status: 302, headers: {Location: location}})
 
@@ -358,7 +359,6 @@ describe('dev proxy', () => {
       ['another site', 'https://example.com/path?_fd=0&pb=0&q=1'],
       ['another site on a subdomain', 'https://checkout.jplhomer.org/'],
       ['a host that starts with the store domain', 'https://my-store.myshopify.com.example.com/foo'],
-      ['a protocol-relative URL to another site', '//example.com/foo'],
       ['a store checkout', 'https://my-store.myshopify.com/checkouts/cn/abc123'],
     ])('keeps a Location header to %s unchanged', async (_, location) => {
       const redirectResponse = new Response(null, {status: 302, headers: {Location: location}})
@@ -367,6 +367,18 @@ describe('dev proxy', () => {
 
       expect(patchedResponse.status).toBe(302)
       expect(patchedResponse.headers.get('Location')).toBe(location)
+    })
+
+    test.each([
+      ['//example.com/foo', 'https://example.com/foo'],
+      ['//checkout.jplhomer.org/path?_fd=0&pb=0&q=1', 'https://checkout.jplhomer.org/path?_fd=0&pb=0&q=1'],
+    ])('makes a protocol-relative Location header to another site HTTPS (%s)', async (location, expected) => {
+      const redirectResponse = new Response(null, {status: 302, headers: {Location: location}})
+
+      const patchedResponse = await patchRenderingResponse(ctx, redirectResponse)
+
+      expect(patchedResponse.status).toBe(302)
+      expect(patchedResponse.headers.get('Location')).toBe(expected)
     })
 
     test('returns 3xx responses without reading or patching the body', async () => {

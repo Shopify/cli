@@ -286,10 +286,14 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Respons
   if (locationHeader) {
     const storeOrigin = `https://${ctx.session.storeFqdn}`
     const url = new URL(locationHeader, storeOrigin)
-    if (url.host === new URL(storeOrigin).host && !CHECKOUT_PATTERN.test(url.pathname)) {
+    const isStoreHost = url.host === new URL(storeOrigin).host
+    if (isStoreHost && !CHECKOUT_PATTERN.test(url.pathname)) {
       url.searchParams.delete('_fd')
       url.searchParams.delete('pb')
       response.headers.set('Location', url.href.replace(url.origin, ''))
+    } else if (!isStoreHost && locationHeader.startsWith('//')) {
+      // Browsers resolve protocol-relative URLs against the local HTTP server, so make them absolute HTTPS URLs:
+      response.headers.set('Location', url.href)
     }
   }
 
