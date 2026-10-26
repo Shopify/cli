@@ -1,4 +1,4 @@
-import {languageServerJsonOutputSchema} from './language-server.js'
+import {languageServerJsonOutputSchema} from './types.js'
 import {jsonSchemaValidate} from '@shopify/cli-kit/node/json-schema'
 import {expect, test} from 'vitest'
 

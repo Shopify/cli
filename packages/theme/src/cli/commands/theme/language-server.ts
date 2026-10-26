@@ -1,5 +1,5 @@
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
-import {languageServerJsonOutputSchema} from '../../services/json-output/language-server.js'
+import {languageServerJsonOutputSchema} from '../../services/language-server/types.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {FlagOutput} from '@shopify/cli-kit/node/base-command'
 import {renderCommandEvent, runWithCommandEvents} from '@shopify/cli-kit/node/command-events'

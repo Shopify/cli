@@ -1,4 +1,4 @@
-import {languageServerJsonOutputSchema} from '../../services/json-output/language-server.js'
+import {languageServerJsonOutputSchema} from '../../services/language-server/types.js'
 import {expect, test} from 'vitest'
 // The protocol test needs bidirectional pipes and the native process exit code.
 // eslint-disable-next-line no-restricted-imports
