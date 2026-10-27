@@ -3,13 +3,10 @@ name: maintenance-prs
 on:
   workflow_dispatch:
   schedule:
-    # Monday–Friday at 00:00 UTC
-    - cron: '0 0 * * 1-5'
+    # Mondays at 00:00 UTC
+    - cron: '0 0 * * 1'
 
-permissions:
-  contents: write
-  issues: read
-  pull-requests: write
+permissions: {}
 
 env:
   PNPM_VERSION: '10.11.1'
@@ -22,10 +19,14 @@ jobs:
     if: github.repository == 'Shopify/cli'
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    # Pushes and PRs use SHOPIFY_GH_ACCESS_TOKEN, because CI does not run on PRs opened with GITHUB_TOKEN.
+    permissions:
+      contents: read
+      pull-requests: read
     strategy:
       fail-fast: false
       matrix:
-        task: [refactor, tests, performance, security]
+        task: [tests, security]
     concurrency:
       group: maintenance-prs-${{ matrix.task }}
       cancel-in-progress: false
@@ -33,49 +34,63 @@ jobs:
       MAINTENANCE_TASK: ${{ matrix.task }}
       MAINTENANCE_BRANCH: ${{ matrix.task }}-maintenance-${{ github.run_id }}
     steps:
-      - name: Check task schedule
-        id: schedule
+      - name: Check open PR cap
+        id: cap
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          MAX_OPEN_PRS: 2
         run: |
-          if [[ "$GITHUB_EVENT_NAME" == 'workflow_dispatch' ||
-                "$MAINTENANCE_TASK" == 'refactor' ||
-                "$MAINTENANCE_TASK" == 'tests' ||
-                "$(date -u +%u)" == '1' ]]; then
-            echo 'run=true' >> "$GITHUB_OUTPUT"
-          else
+          open_prs=$(gh pr list --state open --limit 200 --json headRefName \
+            --jq '[.[] | select(.headRefName | startswith($ENV.MAINTENANCE_TASK + "-maintenance-"))] | length')
+          if (( open_prs >= MAX_OPEN_PRS )); then
             echo 'run=false' >> "$GITHUB_OUTPUT"
-            echo "Skipping $MAINTENANCE_TASK until Monday."
+            echo "Skipping: $open_prs open $MAINTENANCE_TASK PRs (cap $MAX_OPEN_PRS)"
+          else
+            echo 'run=true' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check GitHub token
+        if: steps.cap.outputs.run == 'true'
+        env:
+          MAINTENANCE_GH_TOKEN: ${{ secrets.SHOPIFY_GH_ACCESS_TOKEN }}
+        run: |
+          if [[ -z "$MAINTENANCE_GH_TOKEN" ]]; then
+            echo '::error::SHOPIFY_GH_ACCESS_TOKEN is not set. Maintenance PRs need a token other than GITHUB_TOKEN, or CI does not run on them.'
+            exit 1
           fi
 
       - uses: actions/checkout@v6
-        if: steps.schedule.outputs.run == 'true'
+        if: steps.cap.outputs.run == 'true'
         with:
+          # Later pushes reuse this token, so they trigger the PR's CI.
+          token: ${{ secrets.SHOPIFY_GH_ACCESS_TOKEN }}
           # Include remote branches and history for the prompts' duplicate checks.
           fetch-depth: 0
 
       - name: Setup deps
-        if: steps.schedule.outputs.run == 'true'
+        if: steps.cap.outputs.run == 'true'
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: '26.12.1'
 
       - name: Create maintenance branch
-        if: steps.schedule.outputs.run == 'true'
+        if: steps.cap.outputs.run == 'true'
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git checkout -b "$MAINTENANCE_BRANCH"
 
       - name: Run maintenance task
-        id: maintenance
-        if: steps.schedule.outputs.run == 'true'
-        uses: anthropics/claude-code-action@36a69b6a90b850823f86de06fdfd56264772ad98 # v1
+        if: steps.cap.outputs.run == 'true'
+        uses: anthropics/claude-code-action@8041f1d17e0e7d2f2cfe35002962e9f26237c0bb # v1.0.263
         env:
           ANTHROPIC_BASE_URL: ${{ secrets.ANTHROPIC_BASE_URL }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.SHOPIFY_GH_ACCESS_TOKEN }}
           CLAUDE_BRANCH: ${{ env.MAINTENANCE_BRANCH }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.SHOPIFY_GH_ACCESS_TOKEN }}
           # Scheduled runs can inherit the merge queue bot as their actor.
           allowed_bots: github-merge-queue
           bot_name: 'github-actions[bot]'
@@ -86,9 +101,10 @@ jobs:
             before choosing a change. Carefully follow every phase and boundary in the task file.
 
             Work on the existing branch `${{ env.MAINTENANCE_BRANCH }}`. It already has
-            the required task prefix. Create at most ONE draft PR against the repository's
-            default branch. Use `gh pr create --draft` and the PR template exactly as instructed.
-            Never merge, approve, or mark a PR ready for review.
+            the required task prefix. Create at most ONE PR against the repository's
+            default branch. Use `gh pr create` without `--draft`, so the PR is ready for review,
+            and use the PR template exactly as instructed. Never merge or approve a PR.
+            Do not add labels or request reviewers; CODEOWNERS requests the review.
 
             For duplicate checks, inspect remote branches and search open, merged, and closed
             PRs with `gh pr list --state all`, then read the bodies and diffs of related PRs.
@@ -99,15 +115,37 @@ jobs:
             Dependencies are installed. Run all verification required by the task before
             opening the PR. Do not open a PR if the required checks fail.
             Keep duplicate-check notes out of the PR body and all template checkboxes unchecked.
-            Do not post to Slack; the workflow will announce the PR after it exists.
+            Do not post to Slack; the workflow will announce the PR after its required CI passes.
           claude_args: |
             --model claude-opus-latest
             --allowedTools Read,Glob,Grep,Edit,Write,Bash
 
+  announce:
+    name: Announce - ${{ matrix.task }}
+    needs: maintenance
+    # Claude may create a PR before a later step in its session fails.
+    if: ${{ !cancelled() && github.repository == 'Shopify/cli' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      actions: read
+      checks: read
+      statuses: read
+      # Close a PR whose CI fails and delete its branch.
+      contents: write
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        task: [tests, security]
+    env:
+      # Same branch name as the maintenance job, so no job outputs are needed to find the PR.
+      MAINTENANCE_BRANCH: ${{ matrix.task }}-maintenance-${{ github.run_id }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
       - name: Find the created PR
         id: pull-request
-        # Claude may create a PR before a later step in its session fails.
-        if: ${{ !cancelled() && steps.maintenance.outcome != 'skipped' }}
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           script: |
@@ -128,17 +166,76 @@ jobs:
               .replaceAll('<', '&lt;')
               .replaceAll('>', '&gt;');
 
+            core.setOutput('number', pullRequest.number);
+            core.setOutput('head-sha', pullRequest.head.sha);
             core.setOutput('payload', JSON.stringify({
               channel: 'C0ARV62K59C', // #devtools-gardener-backlog
-              text: `CLI maintenance PR: <${pullRequest.html_url}|${pullRequestTitle}>`,
+              text: `CLI maintenance · <${pullRequest.html_url}|${pullRequestTitle}> · CI green · Needs: review + merge from the Dev Exp gardener`,
               unfurl_links: false,
               unfurl_media: false,
             }));
 
+      - name: Wait for required CI
+        id: ci
+        if: steps.pull-request.outputs.number != ''
+        env:
+          PR_NUMBER: ${{ steps.pull-request.outputs.number }}
+          HEAD_SHA: ${{ steps.pull-request.outputs.head-sha }}
+        run: |
+          for attempt in {1..20}; do
+            gh pr checks "$PR_NUMBER" --required --json name > /dev/null 2>&1 && break
+            if (( attempt == 20 )); then
+              echo '::warning::Required checks did not register within 10 minutes.'
+              echo 'green=false' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 30
+          done
+
+          # Jobs that need other jobs, such as the required "Unit tests" gate, only register
+          # after those jobs finish, so wait for every workflow run on the PR's head commit
+          # instead of trusting `gh pr checks --watch`.
+          ci_finished() {
+            local unfinished_runs
+            unfinished_runs=$(gh run list --commit "$HEAD_SHA" --json status \
+              --jq 'map(select(.status != "completed")) | length') || return 1
+            [[ "$unfinished_runs" == 0 ]]
+          }
+          deadline=$((SECONDS + 70 * 60))
+          until ci_finished; do
+            if (( SECONDS >= deadline )); then
+              echo '::warning::CI did not finish within 70 minutes.'
+              echo 'green=false' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 60
+          done
+
+          if gh pr checks "$PR_NUMBER" --required; then
+            echo 'green=true' >> "$GITHUB_OUTPUT"
+          else
+            echo '::warning::Required checks did not pass.'
+            echo 'green=false' >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Post PR to gardener backlog
-        if: ${{ !cancelled() && steps.pull-request.outputs.payload != '' }}
+        if: steps.ci.outputs.green == 'true'
         uses: slackapi/slack-github-action@b0fa283ad8fea605de13dc3f449259339835fc52 # v2.1.0
         with:
           method: chat.postMessage
           token: ${{ secrets.SLACK_GARDENER_BOT_TOKEN }}
           payload: ${{ steps.pull-request.outputs.payload }}
+
+      - name: Close PR that failed CI
+        if: steps.ci.outputs.green == 'false'
+        env:
+          PR_NUMBER: ${{ steps.pull-request.outputs.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          failed_checks=$(gh pr checks "$PR_NUMBER" --required --json name,bucket,link \
+            --jq '.[] | select(.bucket != "pass" and .bucket != "skipping") | "- [\(.name)](\(.link))"' || true)
+          comment="Closing automatically: required CI did not pass in time, so this PR was not announced. See the [maintenance-prs run]($RUN_URL)."
+          if [[ -n "$failed_checks" ]]; then
+            comment+=$'\n\n'"$failed_checks"
+          fi
+          gh pr close "$PR_NUMBER" --delete-branch --comment "$comment"
