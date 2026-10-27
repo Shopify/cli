@@ -136,7 +136,7 @@ function buildGenerateOptions(
 }
 
 function validateExtensionFlavor(extensionTemplates: ExtensionTemplate[], flavor?: string) {
-  if (!flavor) return
+  if (flavor === undefined) return
 
   const possibleFlavors: string[] = [
     ...new Set(extensionTemplates.flatMap((template) => template.supportedFlavors.map((flavor) => flavor.value))),

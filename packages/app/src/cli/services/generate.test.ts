@@ -273,8 +273,14 @@ describe('generate', () => {
   })
 
   test.each([
+    {template: 'cart_checkout_validation', flavor: '', possibleFlavors: 'rust'},
     {template: 'cart_checkout_validation', flavor: 'unknown', possibleFlavors: 'rust'},
     {template: 'cart_checkout_validation', flavor: 'react', possibleFlavors: 'rust'},
+    {
+      template: undefined,
+      flavor: '',
+      possibleFlavors: 'rust, wasm, vanilla-js, react, typescript-react, typescript, liquid',
+    },
     {
       template: undefined,
       flavor: 'unknown',
