@@ -5,7 +5,7 @@ import {
 } from '../../utilities/theme-environment/dev-server-session.js'
 import {render} from '../../utilities/theme-environment/storefront-renderer.js'
 import {replLoop} from '../../utilities/repl/repl.js'
-import {expect, test, vi} from 'vitest'
+import {afterEach, expect, test, vi} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 
@@ -15,6 +15,8 @@ vi.mock('../../utilities/repl/repl.js', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../utilities/repl/repl.js')>()),
   replLoop: vi.fn(),
 }))
+
+afterEach(() => vi.unstubAllGlobals())
 
 const options = {
   adminSession: {storeFqdn: 'shop.myshopify.com', token: 'token'},
@@ -105,13 +107,49 @@ test('reports invalid delimiters without making an evaluation request', async ()
   expect(render).not.toHaveBeenCalled()
 })
 
-test('reports an evaluation transport failure and skips subsequent inputs', async () => {
+test('reports an expired session and skips subsequent inputs', async () => {
   vi.mocked(render).mockRejectedValue(new AbortError('Session expired'))
   const result = await evaluateConsoleInputs({...options, inputs: ['shop.name', 'shop.currency']})
   expect(result.results).toEqual([
     {input: 'shop.name', status: 'failed', error: {type: 'abort', message: 'Session expired'}},
     {input: 'shop.currency', status: 'skipped', reason: 'previous-input-failed'},
   ])
+})
+
+test('retains completed results and skips subsequent inputs when a storefront request fails', async () => {
+  const {render: renderStorefront} = await vi.importActual<
+    typeof import('../../utilities/theme-environment/storefront-renderer.js')
+  >('../../utilities/theme-environment/storefront-renderer.js')
+  vi.mocked(render).mockImplementation(renderStorefront)
+  vi.mocked(fetchDevServerSession).mockResolvedValue({
+    ...options.adminSession,
+    storefrontToken: 'token',
+    sessionCookies: {},
+  })
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValueOnce(displayResponse('Shop'))
+    .mockRejectedValueOnce(new TypeError('fetch failed', {cause: {code: 'ECONNRESET'}}))
+  vi.stubGlobal('fetch', fetchMock)
+
+  const result = await evaluateConsoleInputs({...options, inputs: ['shop.name', 'shop.currency', 'shop.id']})
+
+  expect(result).toEqual({
+    status: 'partial',
+    results: [
+      {input: 'shop.name', status: 'success', value: 'Shop'},
+      {
+        input: 'shop.currency',
+        status: 'failed',
+        error: {
+          type: 'abort',
+          message: expect.stringContaining('Liquid evaluation failed with status 502 (Bad Gateway).'),
+        },
+      },
+      {input: 'shop.id', status: 'skipped', reason: 'previous-input-failed'},
+    ],
+  })
+  expect(fetchMock).toHaveBeenCalledTimes(2)
 })
 
 test('propagates session setup failures', async () => {

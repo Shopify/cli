@@ -6,10 +6,12 @@ import {DELIMITER_WARNING, hasDelimiter, replLoop} from '../utilities/repl/repl.
 import {evaluate, SessionItem} from '../utilities/repl/evaluator.js'
 import {hasJsonError, JSON_ERROR_MESSAGE} from '../utilities/repl/presenter.js'
 import {fetchDevServerSession, initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
+import {extractFetchErrorInfo} from '../utilities/errors.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {errorToJson} from '@shopify/cli-kit/node/error/serialization'
+import {isError as isH3Error} from 'h3'
 
 export async function ensureReplEnv(adminSession: AdminSession, storePasswordFlag?: string) {
   const themeId = await findOrCreateReplTheme(adminSession)
@@ -74,9 +76,12 @@ export async function evaluateConsoleInputs(options: {
       if (hasJsonError(value)) throw new AbortError(JSON_ERROR_MESSAGE)
       results.push({input, status: 'success', value: value ?? null})
     } catch (error) {
-      if (!(error instanceof AbortError)) throw error
+      if (!(error instanceof AbortError) && !isH3Error(error)) throw error
+      const evaluationError = isH3Error(error)
+        ? new AbortError(extractFetchErrorInfo(error, 'Liquid evaluation failed').headline)
+        : error
       failed = true
-      results.push({input, status: 'failed', error: errorToJson(error)})
+      results.push({input, status: 'failed', error: errorToJson(evaluationError)})
     }
   }
 
