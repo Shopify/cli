@@ -28,13 +28,13 @@ export default class Console extends ThemeCommand {
 
 You can also provide context to the console using a URL, as some Liquid objects are context-specific.
 
-Use repeatable \`--input\` flags or \`--input-file\` to evaluate commands sequentially in one session and exit. Input files contain one console command per line; blank lines are ignored. Stop at the first error and skip remaining commands.
+Use repeatable \`--script\` flags or \`--script-file\` to evaluate commands sequentially in one session and exit. Script files contain one console command per line; blank lines are ignored. Stop at the first error and skip remaining commands.
 
-\`--json\` requires \`--input\` or \`--input-file\` and returns one object with ordered results. Use \`--no-input\` as well to prevent authentication and password prompts.`
+\`--json\` requires \`--script\` or \`--script-file\` and returns one object with ordered results. Use \`--no-input\` as well to prevent authentication and password prompts.`
 
   static examples = [
-    '<%= config.bin %> <%= command.id %> --store example --input "shop.name" --input "shop.currency" --json --no-input',
-    '<%= config.bin %> <%= command.id %> --store example --input-file ./commands.txt --json --no-input',
+    '<%= config.bin %> <%= command.id %> --store example --script "shop.name" --script "shop.currency" --json --no-input',
+    '<%= config.bin %> <%= command.id %> --store example --script-file ./commands.txt --json --no-input',
   ]
 
   static description = this.descriptionForHelp()
@@ -43,17 +43,17 @@ Use repeatable \`--input\` flags or \`--input-file\` to evaluate commands sequen
     ...globalFlags,
     ...jsonFlag,
     ...themeFlags,
-    input: Flags.string({
+    script: Flags.string({
       description: 'Liquid command to evaluate. Repeat to run commands in order and exit.',
       multiple: true,
       multipleNonGreedy: true,
-      exclusive: ['input-file'],
-      env: 'SHOPIFY_FLAG_INPUT',
+      exclusive: ['script-file'],
+      env: 'SHOPIFY_FLAG_SCRIPT',
     }),
-    'input-file': Flags.string({
+    'script-file': Flags.string({
       description: 'File containing one Liquid command per line. Evaluates the commands and exits.',
-      exclusive: ['input'],
-      env: 'SHOPIFY_FLAG_INPUT_FILE',
+      exclusive: ['script'],
+      env: 'SHOPIFY_FLAG_SCRIPT_FILE',
     }),
     url: Flags.string({
       description: 'The url to be used as context',
@@ -70,7 +70,7 @@ Use repeatable \`--input\` flags or \`--input-file\` to evaluate commands sequen
 
   async command(flags: ConsoleFlags, adminSession: AdminSession, multiEnvironment = false) {
     const {url, password: themeAccessPassword} = flags
-    const inputs = await loadConsoleInputs(flags.input, flags['input-file'])
+    const inputs = await loadConsoleInputs(flags.script, flags['script-file'])
 
     const {themeId, storePassword} = await ensureReplEnv(adminSession, flags['store-password'])
 
@@ -102,11 +102,11 @@ Use repeatable \`--input\` flags or \`--input-file\` to evaluate commands sequen
   }
 
   protected validateCommandFlags(flags: ConsoleFlags): void {
-    if (flags.json && !flags.input?.length && !flags['input-file']) {
-      throw new AbortError('Use --input or --input-file with --json to supply Liquid commands.')
+    if (flags.json && !flags.script?.length && !flags['script-file']) {
+      throw new AbortError('Use --script or --script-file with --json to supply Liquid commands.')
     }
-    if (flags.input?.some((input) => input.trim().length === 0)) {
-      throw new AbortError('Each --input must contain a Liquid command.')
+    if (flags.script?.some((input) => input.trim().length === 0)) {
+      throw new AbortError('Each --script must contain a Liquid command.')
     }
   }
 }

@@ -12885,14 +12885,6 @@ FLAGS
       Alias of the Shopify account to use for authentication.
       [env: SHOPIFY_FLAG_AUTH_ALIAS]
 
-  --input=<value>...
-      Liquid command to evaluate. Repeat to run commands in order and exit.
-      [env: SHOPIFY_FLAG_INPUT]
-
-  --input-file=<value>
-      File containing one Liquid command per line. Evaluates the commands and exits.
-      [env: SHOPIFY_FLAG_INPUT_FILE]
-
   --json-schema
       Print the command's JSON schemas.
       [env: SHOPIFY_FLAG_JSON_SCHEMA]
@@ -12912,6 +12904,14 @@ FLAGS
   --path=<value>
       The path where you want to run the command. Defaults to the current working directory.
       [env: SHOPIFY_FLAG_PATH]
+
+  --script=<value>...
+      Liquid command to evaluate. Repeat to run commands in order and exit.
+      [env: SHOPIFY_FLAG_SCRIPT]
+
+  --script-file=<value>
+      File containing one Liquid command per line. Evaluates the commands and exits.
+      [env: SHOPIFY_FLAG_SCRIPT_FILE]
 
   --store-password=<value>
       The password for storefronts with password protection.
@@ -12933,12 +12933,12 @@ DESCRIPTION
 
   You can also provide context to the console using a URL, as some Liquid objects are context-specific.
 
-  Use repeatable `--input` flags or `--input-file` to evaluate commands sequentially in one session and exit. Input
+  Use repeatable `--script` flags or `--script-file` to evaluate commands sequentially in one session and exit. Script
   files contain one console command per line; blank lines are ignored. Stop at the first error and skip remaining
   commands.
 
-  `--json` requires `--input` or `--input-file` and returns one object with ordered results. Use `--no-input` as well to
-  prevent authentication and password prompts.
+  `--json` requires `--script` or `--script-file` and returns one object with ordered results. Use `--no-input` as well
+  to prevent authentication and password prompts.
 
   Use `--json-schema` to print the result, error, and event schemas.
 
@@ -13313,9 +13313,9 @@ DESCRIPTION
   ```
 
 EXAMPLES
-  $ shopify theme console --store example --input "shop.name" --input "shop.currency" --json --no-input
+  $ shopify theme console --store example --script "shop.name" --script "shop.currency" --json --no-input
 
-  $ shopify theme console --store example --input-file ./commands.txt --json --no-input
+  $ shopify theme console --store example --script-file ./commands.txt --json --no-input
 ```
 
 ## `shopify theme delete`

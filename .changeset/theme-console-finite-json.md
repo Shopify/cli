@@ -2,4 +2,4 @@
 '@shopify/cli': minor
 ---
 
-Add finite Liquid console execution with repeated inputs, input files, and JSON output.
+Add finite Liquid console execution with repeated scripts, script files, and JSON output.

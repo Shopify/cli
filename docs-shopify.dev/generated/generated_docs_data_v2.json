@@ -8639,24 +8639,6 @@
         {
           "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
           "syntaxKind": "PropertySignature",
-          "name": "--input <value>",
-          "value": "string",
-          "description": "Liquid command to evaluate. Repeat to run commands in order and exit.",
-          "isOptional": true,
-          "environmentValue": "SHOPIFY_FLAG_INPUT"
-        },
-        {
-          "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
-          "syntaxKind": "PropertySignature",
-          "name": "--input-file <value>",
-          "value": "string",
-          "description": "File containing one Liquid command per line. Evaluates the commands and exits.",
-          "isOptional": true,
-          "environmentValue": "SHOPIFY_FLAG_INPUT_FILE"
-        },
-        {
-          "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
-          "syntaxKind": "PropertySignature",
           "name": "--json-schema",
           "value": "''",
           "description": "Print the command's JSON schemas.",
@@ -8698,6 +8680,24 @@
           "description": "The path where you want to run the command. Defaults to the current working directory.",
           "isOptional": true,
           "environmentValue": "SHOPIFY_FLAG_PATH"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--script <value>",
+          "value": "string",
+          "description": "Liquid command to evaluate. Repeat to run commands in order and exit.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_SCRIPT"
+        },
+        {
+          "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
+          "syntaxKind": "PropertySignature",
+          "name": "--script-file <value>",
+          "value": "string",
+          "description": "File containing one Liquid command per line. Evaluates the commands and exits.",
+          "isOptional": true,
+          "environmentValue": "SHOPIFY_FLAG_SCRIPT_FILE"
         },
         {
           "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
@@ -8754,7 +8754,7 @@
           "environmentValue": "SHOPIFY_FLAG_STORE"
         }
       ],
-      "value": "export interface themeconsole {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Liquid command to evaluate. Repeat to run commands in order and exit.\n   * @environment SHOPIFY_FLAG_INPUT\n   */\n  '--input <value>'?: string\n\n  /**\n   * File containing one Liquid command per line. Evaluates the commands and exits.\n   * @environment SHOPIFY_FLAG_INPUT_FILE\n   */\n  '--input-file <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The password for storefronts with password protection.\n   * @environment SHOPIFY_FLAG_STORE_PASSWORD\n   */\n  '--store-password <value>'?: string\n\n  /**\n   * The url to be used as context\n   * @environment SHOPIFY_FLAG_URL\n   */\n  '--url <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+      "value": "export interface themeconsole {\n  /**\n   * Alias of the Shopify account to use for authentication.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--auth-alias <value>'?: string\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Print the command's JSON schemas.\n   * @environment SHOPIFY_FLAG_JSON_SCHEMA\n   */\n  '--json-schema'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Disable interactive prompts and browser authentication.\n   * @environment SHOPIFY_FLAG_NO_INPUT\n   */\n  '--no-input'?: ''\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Liquid command to evaluate. Repeat to run commands in order and exit.\n   * @environment SHOPIFY_FLAG_SCRIPT\n   */\n  '--script <value>'?: string\n\n  /**\n   * File containing one Liquid command per line. Evaluates the commands and exits.\n   * @environment SHOPIFY_FLAG_SCRIPT_FILE\n   */\n  '--script-file <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * The password for storefronts with password protection.\n   * @environment SHOPIFY_FLAG_STORE_PASSWORD\n   */\n  '--store-password <value>'?: string\n\n  /**\n   * The url to be used as context\n   * @environment SHOPIFY_FLAG_URL\n   */\n  '--url <value>'?: string\n\n  /**\n   * Increase the verbosity of the output. May include sensitive data.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
     }
   },
   "themedelete": {

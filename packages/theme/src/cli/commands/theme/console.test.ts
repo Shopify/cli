@@ -31,23 +31,23 @@ async function runConsole(argv: string[]) {
 test.each([{flags: []}, {flags: ['--no-input']}])(
   'rejects JSON without supplied commands before authentication: $flags',
   async ({flags}) => {
-    await expect(runConsole(['--json', ...flags])).rejects.toThrow('Use --input or --input-file with --json')
+    await expect(runConsole(['--json', ...flags])).rejects.toThrow('Use --script or --script-file with --json')
     expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
     expect(ensureReplEnv).not.toHaveBeenCalled()
   },
 )
 
-test('rejects conflicting input flags before authentication', async () => {
-  await expect(runConsole(['--input', 'shop.name', '--input-file', 'commands.txt', '--json'])).rejects.toThrow()
+test('rejects conflicting script flags before authentication', async () => {
+  await expect(runConsole(['--script', 'shop.name', '--script-file', 'commands.txt', '--json'])).rejects.toThrow()
   expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
 })
 
 test.each(['', '  '])('rejects blank inline commands: %j', async (input) => {
-  await expect(runConsole(['--input', input, '--json'])).rejects.toThrow('Each --input must contain a Liquid command')
+  await expect(runConsole(['--script', input, '--json'])).rejects.toThrow('Each --script must contain a Liquid command')
   expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
 })
 
-test.each([false, true])('writes one document for repeated inputs with no-input=%s', async (noInput) => {
+test.each([false, true])('writes one document for repeated scripts with no-input=%s', async (noInput) => {
   const result = {
     status: 'success' as const,
     results: [
@@ -58,7 +58,7 @@ test.each([false, true])('writes one document for repeated inputs with no-input=
   vi.mocked(evaluateConsoleInputs).mockResolvedValue(result)
 
   await withCapturedStandardStreams(async (streams) => {
-    await runConsole(['--input', 'shop.name', '--input', 'false', '--json', ...(noInput ? ['--no-input'] : [])])
+    await runConsole(['--script', 'shop.name', '--script', 'false', '--json', ...(noInput ? ['--no-input'] : [])])
     expect(JSON.parse(streams.stdout())).toEqual(result)
     expect(streams.stderr()).toBe('')
     expect(streams.stdout()).not.toContain('Welcome')
@@ -77,16 +77,16 @@ test.each([false, true])('writes one document for repeated inputs with no-input=
 test('reads commands from a real file before setting up the console session', async () => {
   vi.mocked(evaluateConsoleInputs).mockResolvedValue({status: 'success', results: []})
   await inTemporaryDirectory(async (directory) => {
-    const inputFile = joinPath(directory, 'commands.txt')
-    await writeFile(inputFile, 'shop.name\r\nshop.currency\r\n')
-    await runConsole(['--input-file', inputFile, '--json'])
+    const scriptFile = joinPath(directory, 'commands.txt')
+    await writeFile(scriptFile, 'shop.name\r\nshop.currency\r\n')
+    await runConsole(['--script-file', scriptFile, '--json'])
   })
   expect(evaluateConsoleInputs).toHaveBeenCalledWith(expect.objectContaining({inputs: ['shop.name', 'shop.currency']}))
 })
 
 test('rejects a missing file before creating the REPL theme', async () => {
   await inTemporaryDirectory(async (directory) => {
-    await expect(runConsole(['--input-file', joinPath(directory, 'missing.txt'), '--json'])).rejects.toThrow()
+    await expect(runConsole(['--script-file', joinPath(directory, 'missing.txt'), '--json'])).rejects.toThrow()
   })
   expect(ensureReplEnv).not.toHaveBeenCalled()
 })
@@ -97,14 +97,14 @@ test('runs supplied commands in text mode without starting the REPL', async () =
     results: [{input: 'shop.name', status: 'success', value: 'Test shop'}],
   })
   await withCapturedStandardStreams(async (streams) => {
-    await runConsole(['--input', 'shop.name', '--no-input'])
+    await runConsole(['--script', 'shop.name', '--no-input'])
     expect(streams.stderr()).toContain('"Test shop"')
     expect(streams.stdout()).toBe('')
   })
   expect(initializeRepl).not.toHaveBeenCalled()
 })
 
-test('keeps the interactive console when inputs are omitted', async () => {
+test('keeps the interactive console when scripts are omitted', async () => {
   await runConsole([])
   expect(initializeRepl).toHaveBeenCalledWith(
     {storeFqdn: 'shop.myshopify.com', token: 'token'},
@@ -127,7 +127,7 @@ test('returns failed results with a nonzero exit code', async () => {
   const previousExitCode = process.exitCode
   try {
     await withCapturedStandardStreams(async (streams) => {
-      await runConsole(['--input', 'invalid', '--json'])
+      await runConsole(['--script', 'invalid', '--json'])
       expect(JSON.parse(streams.stdout())).toEqual(result)
       expect(process.exitCode).toBe(1)
     })
@@ -139,7 +139,7 @@ test('returns failed results with a nonzero exit code', async () => {
 test('does not write a result when session setup fails', async () => {
   vi.mocked(evaluateConsoleInputs).mockRejectedValue(new AbortError('Session expired'))
   await withCapturedStandardStreams(async (streams) => {
-    await expect(runConsole(['--input', 'shop.name', '--json'])).rejects.toThrow('Session expired')
+    await expect(runConsole(['--script', 'shop.name', '--json'])).rejects.toThrow('Session expired')
     expect(streams.stdout()).toBe('')
   })
 })
@@ -152,7 +152,7 @@ test('wraps a named environment in the theme environment contract', async () => 
   vi.mocked(loadEnvironment).mockResolvedValue({store: 'shop.myshopify.com', password: 'token'})
   vi.mocked(evaluateConsoleInputs).mockResolvedValue(result)
   await withCapturedStandardStreams(async (streams) => {
-    await runConsole(['--environment', 'development', '--input', 'shop.name', '--json'])
+    await runConsole(['--environment', 'development', '--script', 'shop.name', '--json'])
     expect(JSON.parse(streams.stdout())).toEqual({environments: [{environment: 'development', result}]})
   })
 })

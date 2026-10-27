@@ -10,23 +10,26 @@ test('keeps inline inputs in order and distinguishes interactive execution', asy
 
 test.each(['\n', '\r\n'])('reads one command per line with %j line endings', async (newline) => {
   await inTemporaryDirectory(async (directory) => {
-    const inputFile = joinPath(directory, 'commands.txt')
-    await writeFile(inputFile, ['assign name = shop.name', '', '  ', 'name | upcase', ''].join(newline))
+    const scriptFile = joinPath(directory, 'commands.txt')
+    await writeFile(scriptFile, ['assign name = shop.name', '', '  ', 'name | upcase', ''].join(newline))
 
-    await expect(loadConsoleInputs(undefined, inputFile)).resolves.toEqual(['assign name = shop.name', 'name | upcase'])
+    await expect(loadConsoleInputs(undefined, scriptFile)).resolves.toEqual([
+      'assign name = shop.name',
+      'name | upcase',
+    ])
   })
 })
 
-test('rejects an empty input file', async () => {
+test('rejects an empty script file', async () => {
   await inTemporaryDirectory(async (directory) => {
-    const inputFile = joinPath(directory, 'commands.txt')
-    await writeFile(inputFile, '\n \r\n')
+    const scriptFile = joinPath(directory, 'commands.txt')
+    await writeFile(scriptFile, '\n \r\n')
 
-    await expect(loadConsoleInputs(undefined, inputFile)).rejects.toThrow('at least one Liquid command')
+    await expect(loadConsoleInputs(undefined, scriptFile)).rejects.toThrow('at least one Liquid command')
   })
 })
 
-test('rejects an unreadable input file', async () => {
+test('rejects an unreadable script file', async () => {
   await inTemporaryDirectory(async (directory) => {
     await expect(loadConsoleInputs(undefined, joinPath(directory, 'missing.txt'))).rejects.toThrow()
   })
