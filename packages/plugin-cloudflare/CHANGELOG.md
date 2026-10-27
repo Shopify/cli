@@ -1,5 +1,12 @@
 # @shopify/plugin-cloudflare
 
+## 4.9.5
+
+### Patch Changes
+
+- 5acaa4d: Upgrade cloudflared to 2026.10.3
+  - @shopify/cli-kit@4.9.5
+
 ## 4.9.4
 
 ### Patch Changes
