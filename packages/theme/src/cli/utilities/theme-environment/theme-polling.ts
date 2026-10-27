@@ -1,5 +1,5 @@
 import {renderThrownError} from '../errors.js'
-import {batchedRequests} from '../batching.js'
+import {batchedRequests, waitForAll} from '../batching.js'
 import {MAX_GRAPHQL_THEME_FILES, timestampDateFormat} from '../../constants.js'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
@@ -47,6 +47,7 @@ export function pollThemeEditorChanges(
         return checksums
       })
       .catch((error: Error) => {
+        if (options.signal?.aborted) return latestChecksums
         failedPollingAttempts++
 
         if (error.message !== lastError) {
@@ -86,6 +87,7 @@ export async function pollRemoteJsonChanges(
   localFileSystem: ThemeFileSystem,
   options: PollingOptions,
 ): Promise<Checksum[]> {
+  options.signal?.throwIfAborted()
   /*
    * Capture the current set of unsynced file keys to ensure
    * consistent filtering between previousChecksums and
@@ -102,13 +104,15 @@ export async function pollRemoteJsonChanges(
   const latestChecksums = await fetchChecksums(targetTheme.id, currentSession).then((checksums) =>
     applyFileFilters(checksums, localFileSystem, currentUnsyncedKeys),
   )
+  options.signal?.throwIfAborted()
 
   const changedAssets = getAssetsChangedOnRemote(previousChecksums, latestChecksums)
   const deletedAssets = getAssetsDeletedFromRemote(latestChecksums, previousChecksums)
 
   await abortIfMultipleSourcesChange(localFileSystem, changedAssets)
+  options.signal?.throwIfAborted()
 
-  await syncChangedAssets(targetTheme, currentSession, localFileSystem, changedAssets)
+  await syncChangedAssets(targetTheme, currentSession, localFileSystem, changedAssets, options.signal)
   await deleteRemovedAssets(localFileSystem, deletedAssets, options)
 
   return latestChecksums
@@ -138,6 +142,7 @@ async function syncChangedAssets(
   currentSession: AdminSession,
   localFileSystem: ThemeFileSystem,
   assetsChangedOnRemote: Checksum[],
+  signal?: AbortSignal,
 ) {
   const filesToGet = assetsChangedOnRemote.filter(
     (file) => localFileSystem.files.get(file.key)?.checksum !== file.checksum,
@@ -149,7 +154,8 @@ async function syncChangedAssets(
       chunk.map((file) => file.key),
       currentSession,
     ).then((assets) => {
-      return Promise.all(
+      signal?.throwIfAborted()
+      return waitForAll(
         assets.map(async (asset) => {
           if (asset) {
             await localFileSystem.write(asset)
@@ -164,16 +170,17 @@ async function syncChangedAssets(
     })
   })
 
-  await Promise.all(chunks)
+  await waitForAll(chunks)
 }
 
 export async function deleteRemovedAssets(
   localFileSystem: ThemeFileSystem,
   assetsDeletedFromRemote: Checksum[],
-  options: {noDelete: boolean},
+  options: PollingOptions,
 ) {
+  options.signal?.throwIfAborted()
   if (!options.noDelete) {
-    return Promise.all(
+    return waitForAll(
       assetsDeletedFromRemote.map((file) => {
         if (localFileSystem.files.get(file.key)) {
           return localFileSystem.delete(file.key).then(() => {
@@ -184,6 +191,7 @@ export async function deleteRemovedAssets(
             )
           })
         }
+        return Promise.resolve()
       }),
     )
   }
