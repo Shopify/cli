@@ -356,24 +356,82 @@ describe.each(tokenExchangeMethods)(
       expect(outputDebug).toHaveBeenCalledWith(`Token exchange for the ${expectedErrorName} API failed: BAD ERROR`)
     })
 
-    test(`Executing ${tokenExchangeMethod.name} logs the error and description returned by Identity in verbose output`, async () => {
+    test(`Executing ${tokenExchangeMethod.name} says the token was rejected when Identity refuses the subject token`, async () => {
       // Given
+      vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', automationToken)
       const identityError = {
         error: 'invalid_request',
         error_description: "Invalid 'subject_token' value: invalid",
       }
       vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(identityError), {status: 400}))
 
-      // When/Then: the reason returned by Identity reaches the debug log, never the error message.
+      // When/Then: Identity's wording stays in the debug log; the user gets what it means for their token.
       await expect(tokenExchangeMethod(automationToken)).rejects.toThrowError(
-        new AbortError(
-          `The custom token provided can't be used for the ${expectedErrorName} API.`,
-          'Ensure the token is correct and not expired.',
-        ),
+        "The token in SHOPIFY_SERVICE_ACCOUNT_TOKEN was rejected: it has been revoked, has expired, or isn't a valid token.",
       )
       expect(outputDebug).toHaveBeenCalledWith(
         "Token request to Identity failed with status 400: invalid_request - Invalid 'subject_token' value: invalid",
       )
+    })
+
+    test(`Executing ${tokenExchangeMethod.name} says the token was rejected when Identity reports it inactive`, async () => {
+      // Given: a revoked token answers 401 with this description once Identity's flag is on.
+      vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', automationToken)
+      const identityError = {
+        error: 'invalid_request',
+        error_description: "Invalid 'subject_token' value: inactive",
+      }
+      vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(identityError), {status: 401}))
+
+      // When/Then
+      await expect(tokenExchangeMethod(automationToken)).rejects.toThrowError(
+        "The token in SHOPIFY_SERVICE_ACCOUNT_TOKEN was rejected: it has been revoked, has expired, or isn't a valid token.",
+      )
+    })
+
+    test(`Executing ${tokenExchangeMethod.name} names the missing access when the token lacks a requested scope`, async () => {
+      // Given: Identity refuses an exchange that asks for a scope the token doesn't hold.
+      vi.stubEnv('SHOPIFY_SERVICE_ACCOUNT_TOKEN', automationToken)
+      const identityError = {
+        error: 'invalid_request',
+        error_description: "Invalid 'scope' value: new scopes must not be specified",
+      }
+      vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(identityError), {status: 400}))
+
+      // When
+      const result = tokenExchangeMethod(automationToken)
+
+      // Then: the token is valid, so the message is about access, named the way the admin names it.
+      const access =
+        expectedApi === 'app-management' ? 'App development access' : `the access the ${expectedErrorName} API needs`
+      await expect(result).rejects.toThrowError(
+        `The service account behind SHOPIFY_SERVICE_ACCOUNT_TOKEN doesn't have ${access}.`,
+      )
+      await expect(result).rejects.not.toThrowError(/expired/)
+    })
+
+    test(`Executing ${tokenExchangeMethod.name} points a legacy automation token at service accounts when it lacks a scope`, async () => {
+      // Given
+      vi.stubEnv('SHOPIFY_APP_AUTOMATION_TOKEN', automationToken)
+      const identityError = {
+        error: 'invalid_request',
+        error_description: "Invalid 'scope' value: no useable scope on target application",
+      }
+      vi.mocked(shopifyFetch).mockResolvedValue(new Response(JSON.stringify(identityError), {status: 400}))
+
+      // When
+      const result = tokenExchangeMethod(automationToken)
+
+      // Then
+      await expect(result).rejects.toThrowError(/^The token in SHOPIFY_APP_AUTOMATION_TOKEN doesn't have /)
+      // Tells them to move to the new variable and to unset the old one, which would otherwise conflict.
+      await expect(result).rejects.toMatchObject({
+        tryMessage: expect.arrayContaining([
+          {command: 'SHOPIFY_SERVICE_ACCOUNT_TOKEN'},
+          'and unset',
+          {command: 'SHOPIFY_APP_AUTOMATION_TOKEN'},
+        ]),
+      })
     })
 
     test(`Executing ${tokenExchangeMethod.name} logs unknown_error when the response has no error field`, async () => {
