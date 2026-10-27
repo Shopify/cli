@@ -21,7 +21,11 @@ let themeIdMismatchRedirects = 0
 /** The maximum number of consecutive theme ID mismatch redirects before aborting */
 const MAX_THEME_ID_MISMATCH_REDIRECTS = 5
 
-export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandler {
+export function getHtmlHandler(
+  theme: Theme,
+  ctx: DevServerContext,
+  onFatalError?: (error: AbortError) => void,
+): EventHandler {
   return defineEventHandler((event) => {
     const [browserPathname = '/', browserSearch = ''] = event.path.split('?')
 
@@ -94,7 +98,12 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
           if (ctx.session.refresh) {
             themeIdMismatchRedirects++
             if (themeIdMismatchRedirects > MAX_THEME_ID_MISMATCH_REDIRECTS) {
-              renderFatalError(new AbortError(error.getMessage()))
+              const fatalError = new AbortError(error.getMessage())
+              if (onFatalError) {
+                onFatalError(fatalError)
+                return new Response(fatalError.message, {status: 502})
+              }
+              renderFatalError(fatalError)
               process.exit(1)
             }
 
