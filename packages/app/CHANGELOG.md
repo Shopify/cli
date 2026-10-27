@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 4.9.5
+
+### Patch Changes
+
+- Updated dependencies [5acaa4d]
+  - @shopify/plugin-cloudflare@4.9.5
+  - @shopify/organizations@4.9.5
+  - @shopify/cli-kit@4.9.5
+  - @shopify/theme@4.9.5
+
 ## 4.9.4
 
 ### Patch Changes
