@@ -74,7 +74,7 @@ async function buildPromptOptions(
   options: GenerateOptions,
 ): Promise<GenerateExtensionPromptOptions> {
   const extensionTemplate = await handleTypeParameter(options.template, app, extensionTemplates, specifications)
-  validateExtensionFlavor(extensionTemplate, options.flavor)
+  validateExtensionFlavor(extensionTemplate ? [extensionTemplate] : extensionTemplates, options.flavor)
 
   const {validTemplates, templatesOverlimit} = checkLimits(extensionTemplates, specifications, app)
 
@@ -135,15 +135,17 @@ function buildGenerateOptions(
   }
 }
 
-function validateExtensionFlavor(extensionTemplate?: ExtensionTemplate, flavor?: string) {
-  if (!flavor || !extensionTemplate) return
+function validateExtensionFlavor(extensionTemplates: ExtensionTemplate[], flavor?: string) {
+  if (!flavor) return
 
-  const possibleFlavors: string[] = extensionTemplate.supportedFlavors.map((flavor) => flavor.value as string)
+  const possibleFlavors: string[] = [
+    ...new Set(extensionTemplates.flatMap((template) => template.supportedFlavors.map((flavor) => flavor.value))),
+  ]
 
   if (!possibleFlavors.includes(flavor)) {
     throw new AbortError(
-      'Invalid template for extension type',
-      `Expected template to be one of the following: ${possibleFlavors.join(', ')}.`,
+      'Invalid extension flavor',
+      `Expected flavor to be one of the following: ${possibleFlavors.join(', ')}.`,
     )
   }
 }

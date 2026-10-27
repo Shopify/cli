@@ -53,8 +53,7 @@ export default class AppGenerateExtension extends AppLinkedCommand {
     flavor: Flags.string({
       hidden: false,
       description:
-        'Choose a starting template for your extension, where applicable. Required if non interactive when the selected extension template supports multiple flavors.',
-      options: ['vanilla-js', 'preact', 'react', 'typescript', 'typescript-react', 'wasm', 'rust'],
+        'Choose a starting template for your extension, where applicable. Supported flavors depend on the selected extension template. Required if non interactive when the selected extension template supports multiple flavors.',
       env: 'SHOPIFY_FLAG_FLAVOR',
     }),
   }

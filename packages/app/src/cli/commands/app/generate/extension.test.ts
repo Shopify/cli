@@ -93,6 +93,26 @@ test.each([{flags: ['--flavor', 'preact']}, {flags: ['--flavor=preact']}])(
   },
 )
 
+test.each(['liquid', 'config-only', 'future-flavor'])('delegates validation of %s to the generator', async (flavor) => {
+  await withApp(async (directory) => {
+    await withCapturedStandardStreams(async () => {
+      await runCommand(directory, ['--no-input', '--flavor', flavor])
+      await runCommand(directory, ['--no-input', `--flavor=${flavor}`])
+    })
+    expect(generate).toHaveBeenCalledWith(expect.objectContaining({flavor}))
+  })
+})
+
+test('delegates validation of a flavor from the environment to the generator', async () => {
+  vi.stubEnv('SHOPIFY_FLAG_FLAVOR', 'future-flavor')
+  await withApp(async (directory) => {
+    await withCapturedStandardStreams(async () => {
+      await runCommand(directory, ['--no-input'])
+    })
+    expect(generate).toHaveBeenCalledWith(expect.objectContaining({flavor: 'future-flavor'}))
+  })
+})
+
 test.each([
   {flags: ['--json'], environment: false},
   {flags: ['-j'], environment: false},

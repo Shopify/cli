@@ -3491,9 +3491,8 @@ Generate a new app Extension.
 
 ```
 USAGE
-  $ shopify app generate extension [--auth-alias <value>] [--client-id <value> | -c <value>] [--flavor
-    vanilla-js|preact|react|typescript|typescript-react|wasm|rust] [-j] [--json-schema] [-n <value>] [--no-color]
-    [--no-input] [--path <value>] [--reset | ] [-t <value>] [--verbose]
+  $ shopify app generate extension [--auth-alias <value>] [--client-id <value> | -c <value>] [--flavor <value>] [-j]
+    [--json-schema] [-n <value>] [--no-color] [--no-input] [--path <value>] [--reset | ] [-t <value>] [--verbose]
 
 FLAGS
   -c, --config=<value>
@@ -3520,11 +3519,10 @@ FLAGS
       The Client ID of your app.
       [env: SHOPIFY_FLAG_CLIENT_ID]
 
-  --flavor=<option>
-      Choose a starting template for your extension, where applicable. Required if non interactive when the selected
-      extension template supports multiple flavors.
+  --flavor=<value>
+      Choose a starting template for your extension, where applicable. Supported flavors depend on the selected extension
+      template. Required if non interactive when the selected extension template supports multiple flavors.
       [env: SHOPIFY_FLAG_FLAVOR]
-      <options: vanilla-js|preact|react|typescript|typescript-react|wasm|rust>
 
   --json-schema
       Print the command's JSON schemas.
