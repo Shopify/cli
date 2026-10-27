@@ -5,13 +5,19 @@ import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export const hasRequiredThemeDirectories = async () => true
 export const ensureDirectoryConfirmed = async () => true
-export const mountThemeFileSystem = () => ({})
-export const emptyThemeExtFileSystem = () => ({})
+export {mountThemeFileSystem} from '../../src/cli/utilities/theme-fs.js'
+export {emptyThemeExtFileSystem} from '../../src/cli/utilities/theme-fs-empty.js'
 export const isStorefrontPasswordProtected = async () => false
 export const ensureValidPassword = async () => undefined
 export const initializeDevServerSession = async () => {
   await pauseStartup('session')
-  return {storeFqdn: 'fixture.myshopify.com', token: 'fixture'}
+  return {
+    storeFqdn: 'fixture.myshopify.com',
+    token: 'fixture',
+    storefrontToken: '',
+    sessionCookies: {},
+    refresh: async () => {},
+  }
 }
 export const fetchOrCreateCrawlerSignatureHeaders = async () => pauseStartup('crawler')
 export const ensureListingExists = async () => {}
