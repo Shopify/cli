@@ -16,7 +16,7 @@ import {pipeline} from 'stream'
 // eslint-disable-next-line no-restricted-imports
 import {execSync, execFileSync} from 'child_process'
 
-export const CURRENT_CLOUDFLARE_VERSION = '2024.8.2'
+export const CURRENT_CLOUDFLARE_VERSION = '2026.10.3'
 const CLOUDFLARE_REPO = `https://github.com/cloudflare/cloudflared/releases/download/${CURRENT_CLOUDFLARE_VERSION}/`
 
 const LINUX_URL: Record<string, string> = {
