@@ -7,6 +7,7 @@ import {ensureAuthenticatedBusinessPlatform, isServiceAccountTokenSet} from '@sh
 import {renderSingleTask, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {sleep} from '@shopify/cli-kit/node/system'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/api/business-platform', () => ({
   businessPlatformOrganizationsRequestDoc: vi.fn(),
@@ -77,6 +78,69 @@ describe('createDevStore', () => {
     )
     expect(renderSuccess).not.toHaveBeenCalled()
     expect(outputResult).not.toHaveBeenCalled()
+  })
+
+  test('keeps polling while the store creation status is missing from a lagging read', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce(defaultMutationResult)
+      .mockResolvedValueOnce({organization: {id: '123', storeCreation: null}})
+      .mockResolvedValueOnce({organization: null})
+      .mockResolvedValueOnce({organization: {id: '123', storeCreation: {status: 'AWAITING_CORE_STORE_READY'}}})
+      .mockResolvedValueOnce({organization: {id: '123', storeCreation: {status: 'COMPLETE'}}})
+
+    const domain = await createDevStore({
+      name: 'test-store',
+      organization: defaultOrg,
+      plan: 'plus',
+      json: false,
+      summary: false,
+    })
+
+    expect(domain).toBe('test-store.myshopify.com')
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledTimes(5)
+    expect(sleep).toHaveBeenCalledTimes(3)
+  })
+
+  test('still fails on a terminal status reported after a missing read', async () => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce(defaultMutationResult)
+      .mockResolvedValueOnce({organization: {id: '123', storeCreation: null}})
+      .mockResolvedValueOnce({organization: {id: '123', storeCreation: {status: 'FAILED'}}})
+
+    await expect(
+      createDevStore({name: 'test-store', organization: defaultOrg, plan: 'plus', json: false, summary: false}),
+    ).rejects.toThrow('Store creation failed with status: FAILED')
+  })
+
+  test('times out with next steps when no store creation status is ever reported', async () => {
+    let clock = 0
+    const now = vi.spyOn(Date, 'now').mockImplementation(() => clock)
+    vi.mocked(sleep).mockImplementation(async (seconds) => {
+      clock += seconds * 1000
+    })
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce(defaultMutationResult)
+      .mockResolvedValue({organization: {id: '123', storeCreation: null}})
+
+    try {
+      const error = await createDevStore({
+        name: 'test-store',
+        organization: defaultOrg,
+        plan: 'plus',
+        json: false,
+        summary: false,
+      }).catch((caught: unknown) => caught)
+
+      expect(error).toBeInstanceOf(AbortError)
+      expect((error as AbortError).message).toBe('Store creation timed out after 5 minutes without reporting a status.')
+      expect((error as AbortError).nextSteps).toEqual([
+        'Check whether test-store.myshopify.com was created with `shopify store list` before trying again.',
+      ])
+      // The mutation, then one poll every 2 seconds for the full 5 minutes.
+      expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledTimes(1 + 151)
+    } finally {
+      now.mockRestore()
+    }
   })
 
   test('explains the missing dev store access when the Organizations API refuses a service account', async () => {
