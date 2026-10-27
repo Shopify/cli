@@ -2715,6 +2715,7 @@
           "name": "flavor",
           "options": [
             "vanilla-js",
+            "preact",
             "react",
             "typescript",
             "typescript-react",
