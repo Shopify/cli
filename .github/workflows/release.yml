@@ -317,7 +317,7 @@ jobs:
           echo "Created branch $BRANCH"
 
       - name: Create GitHub release
-        if: steps.changesets.outputs.hasChangesets == 'false' && vars.HOLD_GITHUB_RELEASES != 'true'
+        if: steps.changesets.outputs.hasChangesets == 'false' && !endsWith(steps.version.outputs.version, '.0.0')
         env:
           TAG: ${{ steps.version.outputs.version }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
