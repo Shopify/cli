@@ -801,6 +801,48 @@ describe('getUIExtensionPayload', () => {
     })
   })
 
+  test('serves the bundled preview module as the preview point main asset (admin_link)', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const adminLinkExtension = await testAdminLink(
+        tmpDir,
+        {
+          name: 'test-admin-link',
+          targeting: [
+            {target: 'admin.app.intent.link', url: '/editor', tools: './tools.json'},
+            {target: 'admin.app.intent-preview.render', module: './src/preview.jsx'},
+          ],
+        },
+        {devUUID: 'devUUID'},
+      )
+
+      await setupBuildOutput(
+        adminLinkExtension,
+        tmpDir,
+        {
+          'admin.app.intent.link': {tools: 'tools.json'},
+          'admin.app.intent-preview.render': {main: 'dist/my-link.js'},
+        },
+        {'tools.json': '{"tools": []}', 'src/preview.jsx': 'export default function Preview() {}'},
+      )
+
+      const got = await getUIExtensionPayload(adminLinkExtension, tmpDir, {
+        ...createMockOptions(tmpDir, [adminLinkExtension]),
+        currentDevelopmentPayload: {hidden: true, status: 'success'},
+      })
+
+      expect(got.extensionPoints).toHaveLength(2)
+      expect((got.extensionPoints as any[])[1]).toMatchObject({
+        target: 'admin.app.intent-preview.render',
+        assets: {
+          main: {
+            name: 'main',
+            url: 'http://tunnel-url.com/extensions/devUUID/assets/admin.app.intent-preview.render/main.js',
+          },
+        },
+      })
+    })
+  })
+
   test('returns the right payload for post-purchase extensions', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const outputPath = joinPath(tmpDir, 'test-post-purchase-extension.js')

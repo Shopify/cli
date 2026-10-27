@@ -47,7 +47,7 @@ describe('admin_link', async () => {
     })
   })
 
-  test('has include_assets client step with generatesAssetsManifest enabled', async () => {
+  test('has a bundle_ui step before the include_assets step with generatesAssetsManifest enabled', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const extension = await getTestAdminLink(tmpDir)
       const clientSteps = extension.specification.clientSteps!
@@ -55,8 +55,14 @@ describe('admin_link', async () => {
       expect(clientSteps[0]!.lifecycle).toBe('deploy')
 
       const steps = clientSteps[0]!.steps
-      expect(steps).toHaveLength(1)
+      expect(steps).toHaveLength(2)
       expect(steps[0]).toMatchObject({
+        id: 'bundle-admin-link-preview',
+        name: 'Bundle Admin Link Preview',
+        type: 'bundle_ui',
+        config: {generatesAssetsManifest: true, bundleFolder: 'dist/'},
+      })
+      expect(steps[1]).toMatchObject({
         id: 'include-admin-link-assets',
         name: 'Include Admin Link Assets',
         type: 'include_assets',
@@ -69,6 +75,61 @@ describe('admin_link', async () => {
           ],
         },
       })
+    })
+  })
+
+  test('has an empty output relative path without a preview', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extension = await getTestAdminLink(tmpDir, {
+        name: 'My Admin Link',
+        handle: 'my-link',
+        targeting: [{url: 'https://example.com', target: 'admin.app.intent.link'}],
+      })
+      expect(extension.outputRelativePath).toBe('')
+    })
+  })
+
+  test('has a bundle output relative path when a preview is declared', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extension = await getTestAdminLink(tmpDir, {
+        name: 'My Admin Link',
+        handle: 'my-link',
+        targeting: [
+          {url: 'https://example.com', target: 'admin.app.intent.link'},
+          {target: 'admin.app.intent-preview.render', module: './src/preview.jsx'},
+        ],
+      })
+      expect(extension.outputRelativePath).toBe('my-link.js')
+    })
+  })
+
+  test('registers preview modules through shopify.extend in the bundle stdin', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extension = await getTestAdminLink(tmpDir, {
+        name: 'My Admin Link',
+        handle: 'my-link',
+        targeting: [
+          {url: 'https://example.com', target: 'admin.app.intent.link'},
+          {target: 'admin.app.intent-preview.render', module: './src/preview.jsx'},
+        ],
+      })
+
+      const {main} = extension.getBundleExtensionStdinContent()
+      expect(main).toBe(
+        `import Target_0 from './src/preview.jsx';shopify.extend('admin.app.intent-preview.render', (...args) => Target_0(...args));`,
+      )
+    })
+  })
+
+  test('has empty bundle stdin content without a preview', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extension = await getTestAdminLink(tmpDir, {
+        name: 'My Admin Link',
+        handle: 'my-link',
+        targeting: [{url: 'https://example.com', target: 'admin.app.intent.link'}],
+      })
+
+      expect(extension.getBundleExtensionStdinContent().main).toBe('')
     })
   })
 

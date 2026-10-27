@@ -145,4 +145,63 @@ describe('executeBundleUIStep', () => {
       )
     })
   })
+
+  describe('admin_link previews', () => {
+    const adminLinkStep: BundleUIStep = {
+      id: 'bundle-admin-link-preview',
+      name: 'Bundle Admin Link Preview',
+      type: 'bundle_ui',
+      config: {generatesAssetsManifest: true, bundleFolder: 'dist/'},
+    }
+
+    test('no-ops for a plain admin link without preview modules', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const extensionDir = joinPath(tmpDir, 'extension')
+        mockContext.extension.directory = extensionDir
+        mockContext.extension.outputPath = extensionDir
+        mockContext.extension.configuration = {
+          targeting: [{url: 'https://example.com', target: 'admin.app.intent.link'}],
+        } as ExtensionInstance['configuration']
+
+        // When
+        await executeBundleUIStep(adminLinkStep, mockContext)
+
+        // Then
+        expect(buildExtension.buildUIExtension).not.toHaveBeenCalled()
+        expect(generateManifest.createOrUpdateManifestFile).not.toHaveBeenCalled()
+      })
+    })
+
+    test('writes the preview target manifest entry from the declared module', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const extensionDir = joinPath(tmpDir, 'extension')
+        const localOutputDir = joinPath(extensionDir, 'dist')
+        const bundleOutputDir = joinPath(tmpDir, 'bundle', 'handle', 'dist')
+        await mkdir(localOutputDir)
+        await writeFile(joinPath(localOutputDir, 'my-link.js'), 'console.log("preview")')
+
+        mockContext.extension.directory = extensionDir
+        mockContext.extension.outputPath = joinPath(tmpDir, 'bundle', 'handle', 'my-link.js')
+        ;(mockContext.extension as {outputRelativePath: string}).outputRelativePath = 'my-link.js'
+        mockContext.extension.configuration = {
+          targeting: [
+            {url: 'https://example.com', target: 'admin.app.intent.link'},
+            {target: 'admin.app.intent-preview.render', module: './src/preview.jsx'},
+          ],
+        } as ExtensionInstance['configuration']
+        vi.mocked(buildExtension.buildUIExtension).mockResolvedValue(joinPath(localOutputDir, 'my-link.js'))
+
+        // When
+        await executeBundleUIStep(adminLinkStep, mockContext)
+
+        // Then
+        await expect(fileExists(joinPath(bundleOutputDir, 'my-link.js'))).resolves.toBe(true)
+        expect(generateManifest.createOrUpdateManifestFile).toHaveBeenCalledWith(mockContext, {
+          'admin.app.intent-preview.render': {main: 'dist/my-link.js'},
+        })
+      })
+    })
+  })
 })

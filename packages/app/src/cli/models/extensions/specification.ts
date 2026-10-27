@@ -339,6 +339,8 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     | 'experience'
     | 'transformRemoteToLocal'
     | 'devSessionWatchConfig'
+    | 'getOutputRelativePath'
+    | 'getBundleExtensionStdinContent'
   >,
 ) {
   const appRelativeUrlFields = spec.appRelativeUrlFields
@@ -352,6 +354,8 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     uidStrategy: spec.uidStrategy,
     transformRemoteToLocal: spec.transformRemoteToLocal,
     devSessionWatchConfig: spec.devSessionWatchConfig,
+    getOutputRelativePath: spec.getOutputRelativePath,
+    getBundleExtensionStdinContent: spec.getBundleExtensionStdinContent,
     appRelativeUrlFields,
     patchWithAppDevURLs: appRelativeUrlFields?.length
       ? (config, urls) => {
