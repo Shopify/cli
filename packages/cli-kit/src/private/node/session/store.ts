@@ -12,6 +12,13 @@ import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import lockfile from 'proper-lockfile'
 import type {Session, Sessions} from './schema.js'
 
+const SESSION_STORE_LOCK_RETRIES = {
+  retries: 360,
+  factor: 1.2,
+  minTimeout: 25,
+  maxTimeout: 500,
+}
+
 export interface LockedSessionStore {
   fetch(): Promise<Sessions | undefined>
   store(sessions: Sessions): Promise<void>
@@ -32,9 +39,8 @@ export async function withSessionStoreLock<T>(
   operation: (store: LockedSessionStore) => Promise<T>,
   lockPath = getSessionStoreLockPath(),
 ): Promise<T> {
-  const release = await lockfile.lock(lockPath, {
-    retries: {retries: 20, factor: 1.2, minTimeout: 25, maxTimeout: 500},
-  })
+  // Refreshes hold this lock while auth and application-token requests use their own timeout and retry budgets.
+  const release = await lockfile.lock(lockPath, {retries: SESSION_STORE_LOCK_RETRIES})
 
   let result: T
   try {

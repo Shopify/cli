@@ -44,6 +44,36 @@ describe('withSessionStoreLock', () => {
     })
   })
 
+  test('waits for a session operation that outlasts the default lock retry window', async () => {
+    await inTemporaryDirectory(async (lockPath) => {
+      // Given
+      const firstEntered = deferred()
+      const releaseFirst = deferred()
+      const events: string[] = []
+
+      // When
+      const first = withSessionStoreLock(async () => {
+        events.push('first:start')
+        firstEntered.resolve()
+        await releaseFirst.promise
+        events.push('first:end')
+      }, lockPath)
+
+      await firstEntered.promise
+      const second = withSessionStoreLock(async () => {
+        events.push('second:start')
+        events.push('second:end')
+      }, lockPath)
+
+      await new Promise((resolve) => setTimeout(resolve, 5000))
+      releaseFirst.resolve()
+      await Promise.all([first, second])
+
+      // Then
+      expect(events).toEqual(['first:start', 'first:end', 'second:start', 'second:end'])
+    })
+  }, 10_000)
+
   test('releases the lock when the operation fails', async () => {
     await inTemporaryDirectory(async (lockPath) => {
       // Given
