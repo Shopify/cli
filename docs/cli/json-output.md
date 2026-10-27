@@ -270,43 +270,6 @@ The lint rule only exempts paths in that list; a `jsonOutputSupport` property al
 This exemption is only for commands whose lifetime or output is inherently streaming. A finite operation remains a
 finite command even when it emits progress events, writes a file, or has no interesting return value.
 
-### Function replay watch stream
-
-`shopify app function replay --json` uses watch mode by default. Stdout is UTF-8 JSONL: each line is one complete
-record followed by a newline. `--json-schema` describes both these records and the existing finite native result.
-
-| Record | Fields | Meaning |
-| --- | --- | --- |
-| `status` | `timestamp`, `status: "watching" \| "cancelled"` | The watcher is ready, or cancellation and cleanup have finished. |
-| `build` | `timestamp`, `status: "success" \| "failed"` | A watched Function rebuild completed. |
-| `execution` | `timestamp`, `result`, `exitCode` | An initial or repeated native Function execution completed. |
-
-Records have a `type` discriminator. Timestamps use whole-second UTC ISO 8601. `result` preserves the Function
-runner 7.x/9.x payload, including upstream keys, additional fields, arbitrary input/output, numeric tokens, and
-escaped strings. Framing whitespace is compacted to keep each record on one line. Existing native files are
-unchanged; the watch stream does not create another output artifact.
-
-```jsonl
-{"type":"status","timestamp":"2026-10-26T09:00:00Z","status":"watching"}
-{"type":"execution","timestamp":"2026-10-26T09:00:00Z","result":{"name":"function.wasm","size":1,"memory_usage":64,"instructions":1000,"logs":"","input":{},"output":{"operations":[]},"success":true},"exitCode":0}
-{"type":"build","timestamp":"2026-10-26T09:00:01Z","status":"success"}
-```
-
-Build output, runner diagnostics, and CLI progress use stderr. Failed rebuilds emit a `build` record with
-`status: "failed"` and diagnostics on stderr, then keep watching. A completed Function failure remains a native
-`execution` result with `success: false` and a nonzero record `exitCode`; it does not end the session or set the
-session exit code. Later edits can recover. Execution requests are serialized.
-
-Setup, watcher, and runner infrastructure failures stop the watcher, await work already in progress, emit the
-standard fatal `{error: {...}}` document as the last stdout line, and exit nonzero. There is no final success
-document. SIGINT cancels the runner and builds, closes the watcher, emits `status: "cancelled"`, and exits 130;
-SIGTERM follows the same cleanup and exits 143. Process signal listeners are removed on every completion path.
-
-`--json` does not disable log selection prompts; prompts use stderr. Use `--json --no-input --log <identifier>` for
-unattended replay. Text watch mode retains its terminal UI. `--no-watch --json` retains the single native runner
-result and its existing failure/exit behavior, without stream wrappers. JSON watch mode is newly supported; no
-existing finite JSON fields or native file formats change.
-
 ## Plugin authors
 
 ### Enable the JSON output lint rule
