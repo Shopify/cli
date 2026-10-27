@@ -16,7 +16,7 @@ describe('GitHub Actions pinning', () => {
     const allActions: string[] = []
     for (const file of workflowFiles) {
       const content = await fs.readFile(file, 'utf-8')
-      const matches = content.match(/uses:\s+\S+/g) ?? []
+      const matches = content.match(/\buses:\s+\S+/g) ?? []
       allActions.push(...matches.map((match) => match.split(/\s+/)[1]!))
     }
 
