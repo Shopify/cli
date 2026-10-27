@@ -3,7 +3,7 @@ import {StoreInfoDestinations} from '../../api/graphql/business-platform-destina
 import {StoreInfoOwningOrg} from '../../api/graphql/business-platform-destinations/generated/store-info-owning-org.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {businessPlatformRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
-import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {ensureAuthenticatedBusinessPlatform, isServiceAccountTokenSet} from '@shopify/cli-kit/node/session'
 import {numericIdFromEncodedGid} from '@shopify/cli-kit/common/gid'
 import {extractHost} from '@shopify/cli-kit/common/url'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -59,13 +59,23 @@ export async function fetchDestinationsContext(options: FetchDestinationsContext
   if (!matchedNode) {
     throw new StoreLookupStoreNotFoundError(
       `Couldn't find a store with domain ${options.store} for the current account.`,
-      'Verify the domain (must be the canonical `myshopify.com` FQDN) and that you are signed in to an account with access to the store. Inactive shops are not searchable.',
+      storeNotFoundAdvice(),
     )
   }
 
   const owningOrg = await fetchOwningOrg(String(matchedNode.publicId), token, unauthorizedHandler)
 
   return {...(owningOrg ? {owningOrg} : {})}
+}
+
+// A token isn't "signed in", and the account behind it is a service account whose store access is set in the
+// Shopify admin, so the advice names that instead of a login.
+function storeNotFoundAdvice(): string {
+  const domain = 'Check the domain (it must be the permanent `myshopify.com` domain)'
+  if (isServiceAccountTokenSet()) {
+    return `${domain} and that the service account has access to the store: it can open the stores it created, or any store in an organization where it has Dev store management access. Inactive stores aren't searchable.`
+  }
+  return `${domain} and that you're logged in to an account with access to the store. Inactive stores aren't searchable.`
 }
 
 async function fetchOwningOrg(

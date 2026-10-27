@@ -11,6 +11,7 @@ import {
   renderAutocompletePrompt,
   renderTextPrompt,
   renderDangerousConfirmationPrompt,
+  renderTable,
   Task,
 } from './ui.js'
 import {AbortSignal} from './abort.js'
@@ -182,6 +183,67 @@ describe('renderInfo', async () => {
       [2] https://shopify.com
       "
     `)
+  })
+})
+
+describe('renderTable', async () => {
+  const rows = [
+    {
+      subdomain: 'parimi-photography-dev-test-store',
+      name: 'Parimi photography dev test store',
+      type: 'Dev',
+      plan: 'Plus',
+      created: 'Apr 01, 2026',
+    },
+  ]
+  const columns = {
+    subdomain: {header: 'Subdomain'},
+    name: {header: 'Name'},
+    type: {header: 'Type'},
+    plan: {header: 'Plan'},
+    created: {header: 'Created'},
+  }
+
+  test('gives a table wider than 80 columns the room it needs when the output is not a terminal', async () => {
+    // Given: piped output has no column count.
+    const mockOutput = mockAndCaptureOutput()
+    const stdoutColumns = Object.getOwnPropertyDescriptor(process.stdout, 'columns')
+    Object.defineProperty(process.stdout, 'columns', {value: undefined, configurable: true})
+
+    try {
+      // When
+      renderTable({rows, columns})
+    } finally {
+      if (stdoutColumns) Object.defineProperty(process.stdout, 'columns', stdoutColumns)
+      else delete (process.stdout as {columns?: number}).columns
+    }
+
+    // Then: one line per row, with every header and cell whole.
+    expect(unstyled(mockOutput.info())).toMatchInlineSnapshot(`
+      "Subdomain                          Name                               Type  Plan  Created
+      ─────────────────────────────────  ─────────────────────────────────  ────  ────  ────────────
+      parimi-photography-dev-test-store  Parimi photography dev test store  Dev   Plus  Apr 01, 2026"
+    `)
+  })
+
+  test("keeps a terminal's own width", async () => {
+    // Given: a terminal 80 columns wide.
+    const mockOutput = mockAndCaptureOutput()
+    const stdoutColumns = Object.getOwnPropertyDescriptor(process.stdout, 'columns')
+    Object.defineProperty(process.stdout, 'columns', {value: 80, configurable: true})
+
+    try {
+      // When
+      renderTable({rows, columns})
+    } finally {
+      if (stdoutColumns) Object.defineProperty(process.stdout, 'columns', stdoutColumns)
+      else delete (process.stdout as {columns?: number}).columns
+    }
+
+    // Then: Ink fits the table to the terminal, as before.
+    const lines = unstyled(mockOutput.info()).split('\n')
+    expect(Math.max(...lines.map((line) => line.length))).toBeLessThanOrEqual(80)
+    expect(lines.length).toBeGreaterThan(3)
   })
 })
 
