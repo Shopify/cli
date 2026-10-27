@@ -29,26 +29,30 @@ export async function reconcileAndPollThemeEditorChanges(
 ): Promise<{
   updatedRemoteChecksumsPromise: Promise<Checksum[]>
   workPromise: Promise<void>
+  pollingPromise: Promise<void>
 }> {
   outputDebug('Initiating theme asset reconciliation process')
   await localThemeFileSystem.ready()
+  options.signal?.throwIfAborted()
 
   const {workPromise} = await reconcileJsonFiles(targetTheme, session, remoteChecksums, localThemeFileSystem, options)
 
   const updatedRemoteChecksumsPromise = workPromise.then(async () => {
+    options.signal?.throwIfAborted()
     const updatedRemoteChecksums = await fetchChecksums(targetTheme.id, session)
-    // Polling handles its own errors and runs until cancellation.
-    // eslint-disable-next-line no-void
-    void pollThemeEditorChanges(
+    options.signal?.throwIfAborted()
+    return updatedRemoteChecksums
+  })
+  const pollingPromise = updatedRemoteChecksumsPromise.then((updatedRemoteChecksums) =>
+    pollThemeEditorChanges(
       targetTheme,
       session,
       updatedRemoteChecksums,
       localThemeFileSystem,
       options,
       rejectBackgroundJob,
-    )
-    return updatedRemoteChecksums
-  })
+    ),
+  )
 
-  return {updatedRemoteChecksumsPromise, workPromise}
+  return {updatedRemoteChecksumsPromise, workPromise, pollingPromise}
 }

@@ -34,7 +34,10 @@ export function setupDevServer(theme: Theme, ctx: DevServerContext) {
   return {
     workPromise,
     serverStart: server.start,
-    serverStop: server.close,
+    serverStop: async () => {
+      await server.close()
+      await envSetup.stopPromise
+    },
     dispatchEvent: server.dispatch,
     renderDevSetupProgress: envSetup.renderProgress,
     backgroundJobPromise,
@@ -74,9 +77,13 @@ function ensureThemeEnvironmentSetup(
   })
 
   const workPromise = uploadPromise.then((result) => result.workPromise).catch(abort)
+  const stopPromise = reconcilePromise
+    .then(({workPromise, pollingPromise}) => Promise.allSettled([workPromise, pollingPromise]))
+    .catch(() => {})
 
   return {
     workPromise,
+    stopPromise,
     renderProgress: async () => {
       if (ctx.options.themeEditorSync) {
         const {workPromise} = await reconcilePromise
@@ -105,6 +112,7 @@ function handleThemeEditorSync(
 ): Promise<{
   updatedRemoteChecksumsPromise: Promise<Checksum[]>
   workPromise: Promise<void>
+  pollingPromise: Promise<void>
 }> {
   if (ctx.options.themeEditorSync) {
     return reconcileAndPollThemeEditorChanges(
@@ -125,6 +133,7 @@ function handleThemeEditorSync(
     return Promise.resolve({
       updatedRemoteChecksumsPromise: Promise.resolve(remoteChecksums),
       workPromise: Promise.resolve(),
+      pollingPromise: Promise.resolve(),
     })
   }
 }
