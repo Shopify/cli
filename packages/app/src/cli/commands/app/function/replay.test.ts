@@ -124,6 +124,7 @@ test('keeps the default text watch workflow', async () => {
 test.each([
   {signal: 'SIGINT' as const, exitCode: 130},
   {signal: 'SIGTERM' as const, exitCode: 143},
+  {signal: 'SIGQUIT' as const, exitCode: 131},
 ])(
   'writes watch records and cleans up on $signal through the command and real output writer',
   async ({signal, exitCode}) => {
@@ -133,8 +134,9 @@ test.each([
       >('../../../services/function/replay/watch.js')
       vi.mocked(watchReplay).mockImplementation(realWatchReplay)
       vi.spyOn(AppEventWatcher.prototype, 'start').mockResolvedValue(undefined)
+      const processEvents: NodeJS.EventEmitter = process
       vi.mocked(captureOutputWithExitCode).mockImplementation(async () => {
-        setImmediate(() => process.emit(signal))
+        setImmediate(() => processEvents.emit('shopify:signal', signal))
         return {stdout: JSON.stringify(nativeResult), stderr: 'Runner warning', exitCode: 0}
       })
       const previousExitCode = process.exitCode

@@ -77,16 +77,11 @@ export async function watchReplay({selectedRun, app, extension, abortController}
       })
     return executions
   }
-  const onInterrupt = () => {
-    process.exitCode = 130
+  const onSignal = (receivedSignal: 'SIGINT' | 'SIGTERM' | 'SIGQUIT') => {
+    process.exitCode = {SIGINT: 130, SIGTERM: 143, SIGQUIT: 131}[receivedSignal]
     abortController.abort()
   }
-  const onTerminate = () => {
-    process.exitCode = 143
-    abortController.abort()
-  }
-  process.once('SIGINT', onInterrupt)
-  process.once('SIGTERM', onTerminate)
+  process.on('shopify:signal', onSignal)
   watcher.onError(fail)
   watcher.onEvent((event) => {
     if (signal.aborted) return
@@ -118,8 +113,7 @@ export async function watchReplay({selectedRun, app, extension, abortController}
     } finally {
       await executions
       diagnostics.end()
-      process.removeListener('SIGINT', onInterrupt)
-      process.removeListener('SIGTERM', onTerminate)
+      process.removeListener('shopify:signal', onSignal)
     }
   }
   if (failure) throw failure

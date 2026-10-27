@@ -69,8 +69,7 @@ function records(stdout: string) {
 test('streams startup, rebuilds, native results, and cancellation separately from diagnostics', async () => {
   await inTemporaryDirectory(async (directory) => {
     const context = await fixture(directory)
-    const previousInterruptListeners = process.listenerCount('SIGINT')
-    const previousTerminateListeners = process.listenerCount('SIGTERM')
+    const previousSignalListeners = process.listenerCount('shopify:signal')
     vi.mocked(captureFunctionRun).mockResolvedValue(execution())
 
     await withCapturedStandardStreams(async ({stdout, stderr}) => {
@@ -100,8 +99,38 @@ test('streams startup, rebuilds, native results, and cancellation separately fro
     })
     expect(context.stop).toHaveBeenCalledOnce()
     expect(context.watcher().listenerCount('all')).toBe(0)
-    expect(process.listenerCount('SIGINT')).toBe(previousInterruptListeners)
-    expect(process.listenerCount('SIGTERM')).toBe(previousTerminateListeners)
+    expect(process.listenerCount('shopify:signal')).toBe(previousSignalListeners)
+  })
+})
+
+test.each([
+  {signal: 'SIGINT', exitCode: 130},
+  {signal: 'SIGTERM', exitCode: 143},
+  {signal: 'SIGQUIT', exitCode: 131},
+])('handles the CLI shutdown event for $signal and releases its listener', async ({signal, exitCode}) => {
+  await inTemporaryDirectory(async (directory) => {
+    const context = await fixture(directory)
+    vi.mocked(captureFunctionRun).mockResolvedValue(execution())
+    const previousExitCode = process.exitCode
+    const previousListeners = process.listenerCount('shopify:signal')
+    const processEvents: NodeJS.EventEmitter = process
+    await withCapturedStandardStreams(async ({stdout}) => {
+      const running = context.start()
+      try {
+        await flushPromises()
+        expect(processEvents.emit('shopify:signal', signal)).toBe(true)
+        await running
+        expect(context.stop).toHaveBeenCalledOnce()
+        expect(records(stdout()).at(-1)).toMatchObject({type: 'status', status: 'cancelled'})
+        expect(process.exitCode).toBe(exitCode)
+        expect(process.listenerCount('shopify:signal')).toBe(previousListeners)
+      } finally {
+        context.abortController.abort()
+        await running
+        // eslint-disable-next-line require-atomic-updates
+        process.exitCode = previousExitCode
+      }
+    })
   })
 })
 
