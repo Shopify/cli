@@ -145,7 +145,9 @@ async function performAutoUpgrade(newerVersion: string): Promise<void> {
   }
 
   try {
-    await runCLIUpgrade({autoupgrade: true})
+    // Install exactly the version that passed the gates above, not `latest`: the cached
+    // version can lag the registry, so `latest` may already be a new major version.
+    await runCLIUpgrade({autoupgrade: true, version: newerVersion})
     await metadata.addPublicMetadata(() => ({env_auto_upgrade_success: true}))
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {

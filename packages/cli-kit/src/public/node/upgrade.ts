@@ -29,19 +29,21 @@ export {getAutoUpgradeEnabled, setAutoUpgradeEnabled}
  * Utility function for generating an install command for the user to run
  * to install an updated version of Shopify CLI.
  *
+ * @param version - The version or dist-tag to install. Defaults to `latest`. Homebrew can't
+ * install a specific version, so it always upgrades to the formula's current version.
  * @returns A string with the command to run, or undefined if the package manager cannot be determined.
  */
-export function cliInstallCommand(): string | undefined {
+export function cliInstallCommand(version = 'latest'): string | undefined {
   const packageManager = inferPackageManagerForGlobalCLI()
   if (!packageManager || packageManager === 'unknown') return undefined
 
   if (packageManager === 'homebrew') {
     return 'brew upgrade shopify-cli'
   } else if (packageManager === 'yarn') {
-    return `${packageManager} global add @shopify/cli@latest`
+    return `${packageManager} global add @shopify/cli@${version}`
   } else {
     const verb = packageManager === 'pnpm' ? 'add' : 'install'
-    return `${packageManager} ${verb} -g @shopify/cli@latest`
+    return `${packageManager} ${verb} -g @shopify/cli@${version}`
   }
 }
 
@@ -56,6 +58,14 @@ export interface RunCLIUpgradeOptions {
    * their `package.json` / lockfile in the background.
    */
   autoupgrade?: boolean
+
+  /**
+   * The exact version to install. The auto-upgrade hook passes the version it already
+   * vetted, such as one that isn't a major version change, so the install can't drift to
+   * whatever `latest` points at by the time the package manager runs. When omitted, the
+   * CLI installs `latest`.
+   */
+  version?: string
 }
 
 /**
@@ -100,7 +110,7 @@ export async function upgradeCLI(options: RunCLIUpgradeOptions = {}): Promise<Up
   // Generate the install command for the global CLI and execute it
   if (isGlobal) {
     const packageManager = inferPackageManagerForGlobalCLI()
-    const installCommand = cliInstallCommand()
+    const installCommand = cliInstallCommand(options.version)
     if (!installCommand || packageManager === 'unknown') {
       throw new Error('Could not determine the package manager')
     }
@@ -108,9 +118,10 @@ export async function upgradeCLI(options: RunCLIUpgradeOptions = {}): Promise<Up
     if (!command) {
       throw new Error('Could not determine the command to run')
     }
-    // Cache lookup — already populated by versionToAutoUpgrade() upstream, so this
-    // is just a synchronous cache read, no extra network call.
-    const newerVersion = checkForCachedNewVersion('@shopify/cli', CLI_KIT_VERSION)
+    // Prefer the version the caller asked for: re-reading the cache here can return a
+    // different value than the caller vetted, because the prerun hook refreshes it in the
+    // background. Otherwise fall back to the cached newer version (a synchronous read).
+    const newerVersion = options.version ?? checkForCachedNewVersion('@shopify/cli', CLI_KIT_VERSION)
     const headline = newerVersion
       ? `✨ New version of Shopify CLI available! (${CLI_KIT_VERSION} → ${newerVersion})`
       : '✨ New version of Shopify CLI available!'
