@@ -88,13 +88,14 @@ class TokenRefreshError extends AbortError {
  * - `getToken` may return a cached token; the proxy calls it for every request.
  * - `refreshToken` (optional) is invoked when the upstream Admin API returns 401.
  * When omitted, the proxy falls back to calling `getToken` again on 401.
+ * - Both operations receive a cancellation signal to pass to token requests.
  *
  * Implementations must throw `TokenRefreshError` (or any thrown error) when the
  * token cannot be obtained; the proxy renders the unauthorized template in that case.
  */
 export interface TokenProvider {
-  getToken: () => Promise<string>
-  refreshToken?: () => Promise<string>
+  getToken: (signal?: AbortSignal) => Promise<string>
+  refreshToken?: (signal?: AbortSignal) => Promise<string>
 }
 
 /**
@@ -151,6 +152,7 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
   const key = resolveGraphiQLServerKey(providedKey, appContext, storeFqdn)
   const debug = (message: string) => (options.json ? outputDebug(message) : outputDebug(message, stdout))
   const requests = new AbortController()
+  const requestSignal = () => AbortSignal.any([requests.signal, AbortSignal.timeout(maxRequestTimeForNetworkCallsMs())])
   const reportRequestError = (message: string) => {
     if (!requests.signal.aborted) options.onRequestError?.(message)
   }
@@ -170,7 +172,7 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
     requests.signal.throwIfAborted()
     try {
       debug('refreshing token')
-      return await (tokenProvider.refreshToken ?? tokenProvider.getToken)()
+      return await (tokenProvider.refreshToken ?? tokenProvider.getToken)(requestSignal())
     } catch (_error) {
       throw new TokenRefreshError()
     }
@@ -179,7 +181,7 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
   const currentToken = async (): Promise<string> => {
     requests.signal.throwIfAborted()
     try {
-      return await tokenProvider.getToken()
+      return await tokenProvider.getToken(requestSignal())
     } catch (_error) {
       throw new TokenRefreshError()
     }
@@ -192,8 +194,7 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
           {storeFqdn, token: await currentToken()},
           {
             ...requestMode(),
-            useAbortSignal: () =>
-              AbortSignal.any([requests.signal, AbortSignal.timeout(maxRequestTimeForNetworkCallsMs())]),
+            useAbortSignal: requestSignal,
           },
         ),
       refreshUpstreamToken,
@@ -353,7 +354,7 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
             method: 'POST',
             headers,
             body: reqBody,
-            signal: AbortSignal.any([requests.signal, AbortSignal.timeout(maxRequestTimeForNetworkCallsMs())]),
+            signal: requestSignal(),
           })
         }
 

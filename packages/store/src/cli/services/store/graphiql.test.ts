@@ -69,15 +69,19 @@ describe('openStoreGraphiQL', () => {
     expect(mockedRunGraphiQLSession).not.toHaveBeenCalled()
   })
 
-  test('uses a TokenProvider backed by loadStoredStoreSession', async () => {
-    await openStoreGraphiQL({
-      store: 'shop.myshopify.com',
-    })
+  test.each(['getToken', 'refreshToken'] as const)(
+    'passes %s cancellation to the stored session loader',
+    async (operation) => {
+      await openStoreGraphiQL({
+        store: 'shop.myshopify.com',
+      })
 
-    const tokenProvider = mockedRunGraphiQLSession.mock.calls[0]![0].tokenProvider
-    await expect(tokenProvider.getToken()).resolves.toBe('stored-token')
-    expect(mockedLoadSession).toHaveBeenCalledWith('shop.myshopify.com')
-  })
+      const tokenProvider = mockedRunGraphiQLSession.mock.calls[0]![0].tokenProvider
+      const signal = new AbortController().signal
+      await expect(tokenProvider[operation]!(signal)).resolves.toBe('stored-token')
+      expect(mockedLoadSession).toHaveBeenCalledWith('shop.myshopify.com', signal)
+    },
+  )
 
   test('passes prefilled query, variables, and apiVersion to the shared session runner', async () => {
     await openStoreGraphiQL({

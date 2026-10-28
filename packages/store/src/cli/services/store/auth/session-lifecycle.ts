@@ -45,7 +45,8 @@ function buildRefreshedStoredSession(
   }
 }
 
-export async function loadStoredStoreSession(store: string): Promise<StoredStoreAppSession> {
+export async function loadStoredStoreSession(store: string, signal?: AbortSignal): Promise<StoredStoreAppSession> {
+  signal?.throwIfAborted()
   let session = getCurrentStoredStoreAppSession(store)
 
   if (!session) {
@@ -72,12 +73,14 @@ export async function loadStoredStoreSession(store: string): Promise<StoredStore
   const refreshInput = {
     store: session.store,
     refreshToken: session.refreshToken,
+    ...(signal ? {signal} : {}),
   }
 
   let refreshed
   try {
     refreshed = await refreshStoreAccessToken(refreshInput)
   } catch (error) {
+    if (signal?.aborted) throw error
     clearStoredStoreAppSession(session.store, session.userId)
 
     if (error instanceof AbortError && error.message.startsWith(`Token refresh failed for ${session.store} (HTTP `)) {

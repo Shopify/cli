@@ -49,7 +49,7 @@ export async function openStoreGraphiQL(options: OpenStoreGraphiQLOptions): Prom
 
 function createStoredSessionTokenProvider(store: string): TokenProvider {
   return {
-    getToken: async () => (await loadStoredStoreSession(store)).accessToken,
-    refreshToken: async () => (await loadStoredStoreSession(store)).accessToken,
+    getToken: async (signal) => (await loadStoredStoreSession(store, signal)).accessToken,
+    refreshToken: async (signal) => (await loadStoredStoreSession(store, signal)).accessToken,
   }
 }

@@ -1,12 +1,12 @@
 import {buildGraphiQLUrl, generateRandomGraphiQLKey, runGraphiQLSession, waitForGraphiQLAbort} from './session.js'
 import {graphiqlJsonOutputSchema} from './schema.js'
-import {MUTATIONS_BLOCKED_MESSAGE, setupGraphiQLServer} from './server.js'
+import {MUTATIONS_BLOCKED_MESSAGE, setupGraphiQLServer, TokenProvider} from './server.js'
 import {runWithCommandEventsForCommand} from '../command-events.js'
 import {withCapturedStandardStreams} from '../testing/output.js'
 import {AbortController} from '../abort.js'
 import {openURL} from '../system.js'
 import {getAvailableTCPPort} from '../tcp.js'
-import {fetch as shopifyFetch} from '../http.js'
+import {fetch as shopifyFetch, Response} from '../http.js'
 import {supportedApiVersions} from '../api/admin.js'
 import {describe, expect, test, vi} from 'vitest'
 import {createServer} from 'node:http'
@@ -252,6 +252,75 @@ describe('runGraphiQLSession', () => {
       expect(supportedApiVersions).toHaveBeenCalledTimes(1)
     },
   )
+
+  test.each([
+    ['/graphiql?key=key', 'getToken'],
+    ['/graphiql/status', 'getToken'],
+    ['/graphiql/graphql.json?key=key&api_version=2024-10', 'getToken'],
+    ['/graphiql?key=key', 'refreshToken'],
+    ['/graphiql/status', 'refreshToken'],
+    ['/graphiql/graphql.json?key=key&api_version=2024-10', 'refreshToken'],
+  ] as const)('cancels requests to %s during %s on shutdown', async (path, operation) => {
+    const controller = new AbortController()
+    const tokenProvider: TokenProvider = {
+      getToken: vi.fn(async () => 'token'),
+      refreshToken: vi.fn(async () => 'refreshed-token'),
+    }
+    let tokenAborted = false
+    let requested: () => void
+    const tokenStarted = new Promise<void>((resolve) => {
+      requested = resolve
+    })
+    const pendingToken = vi.fn(async (signal?: AbortSignal) => {
+      return new Promise<string>((_resolve, reject) => {
+        signal?.addEventListener(
+          'abort',
+          () => {
+            tokenAborted = true
+            reject(new DOMException('The operation was aborted.', 'AbortError'))
+          },
+          {once: true},
+        )
+        requested()
+      })
+    })
+    tokenProvider[operation] = pendingToken
+    const graphql = path.includes('graphql.json')
+    if (operation === 'refreshToken') {
+      if (graphql) {
+        vi.mocked(shopifyFetch).mockResolvedValueOnce(new Response(null, {status: 401}))
+      } else {
+        vi.mocked(supportedApiVersions).mockRejectedValueOnce(new Error('Token expired'))
+      }
+    }
+    let browserRequest: Promise<unknown> | undefined
+    vi.mocked(openURL).mockImplementationOnce(async (url) => {
+      browserRequest = fetch(
+        new URL(path, url),
+        graphql
+          ? {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({query: '{ shop { name } }'}),
+            }
+          : undefined,
+      ).catch((error: unknown) => error)
+      await tokenStarted
+      controller.abort()
+      return true
+    })
+
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runGraphiQLSession({...options, tokenProvider, abortSignal: controller.signal})
+      await expect(browserRequest).resolves.toBeInstanceOf(Error)
+      expect(tokenAborted).toBe(true)
+      expect(records(stdout()).map((record) => record.type)).toEqual(['starting', 'ready', 'stopped'])
+      expect(stderr()).toBe('')
+    })
+    expect(pendingToken).toHaveBeenCalledTimes(1)
+    expect(tokenProvider.getToken).toHaveBeenCalledTimes(1)
+    expect(tokenProvider.refreshToken).toHaveBeenCalledTimes(operation === 'refreshToken' ? 1 : 0)
+  })
 
   test('aborts an outstanding upstream request and closes active browser connections on cancellation', async () => {
     const controller = new AbortController()
