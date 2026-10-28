@@ -155,7 +155,7 @@ export async function buildFunctionExtension(
   extension: ExtensionInstance,
   options: BuildFunctionExtensionOptions,
 ): Promise<FunctionBuildResult> {
-  options.signal?.throwIfAborted()
+  if (options.signal?.aborted) throw new AbortSilentError()
   let releaseLock
   try {
     releaseLock = await acquireFunctionBuildLock(extension.directory, options.signal)
@@ -227,6 +227,7 @@ export async function buildFunctionExtension(
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
+    if (options.signal?.aborted) throw new AbortSilentError()
     // To avoid random user-code errors being reported as CLI bugs, we capture and rethrow them as AbortError.
     // In this case, we need to keep the ESBuild details for the logs. (the `errors` array).
     // If the error is already an AbortError, we can just rethrow it.

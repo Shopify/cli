@@ -259,6 +259,7 @@ export class AppEventWatcher extends EventEmitter {
           })
           // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
         } catch (error: any) {
+          if (this.options.signal.aborted) return
           // If there is an `errors` array, it's an esbuild error, format it and log it
           // If not, just print the error message to stderr.
           const errors: Message[] = error.errors ?? []

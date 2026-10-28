@@ -3,9 +3,11 @@ import {FileWatcher} from './file-watcher.js'
 import {handleWatcherEvents} from './app-event-watcher-handler.js'
 import {testAppLinked, testFunctionExtension} from '../../../models/app/app.test-data.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {expect, test, vi} from 'vitest'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
+import {Writable} from 'stream'
 
 vi.mock('./app-event-watcher-handler.js')
 
@@ -32,12 +34,19 @@ test('closes a real file watcher and releases event listeners when stopped repea
   })
 })
 
-test('waits for an active build and suppresses its events while stopping', async () => {
+test('waits for a cancelled build and suppresses its events and diagnostics while stopping', async () => {
   await inTemporaryDirectory(async (directory) => {
     const app = testAppLinked({directory})
     const extension = await testFunctionExtension({dir: directory})
     const controller = new AbortController()
-    const options = {stdout: process.stderr, stderr: process.stderr, signal: controller.signal}
+    const write = vi.fn()
+    const stderr = new Writable({
+      write(_chunk, _encoding, callback) {
+        write()
+        callback()
+      },
+    })
+    const options = {stdout: process.stderr, stderr, signal: controller.signal}
     const fileWatcher = new FileWatcher(app, options)
     const onChange = vi.spyOn(fileWatcher, 'onChange')
     vi.spyOn(fileWatcher, 'start').mockResolvedValue(undefined)
@@ -55,6 +64,7 @@ test('waits for an active build and suppresses its events while stopping', async
       expect(buildOptions.signal).toBe(controller.signal)
       signalBuildStarted()
       await build
+      throw new AbortSilentError()
     })
     vi.mocked(handleWatcherEvents).mockResolvedValue({
       app,
@@ -82,10 +92,12 @@ test('waits for an active build and suppresses its events while stopping', async
       finishBuild()
       await stopping
       expect(onEvent).not.toHaveBeenCalled()
+      expect(write).not.toHaveBeenCalled()
     } finally {
       finishBuild()
       controller.abort()
       await watcher.stop()
+      stderr.end()
     }
   })
 })
