@@ -141,6 +141,7 @@ test('protects named persistent stores and configured stores from cleanup', asyn
 
 for (const scenario of [
   'owned',
+  'delayed',
   'absent',
   'protected',
   'duplicate',
@@ -153,6 +154,7 @@ for (const scenario of [
     const ownedStore = {name, store: 'e2e-store-local-test.myshopify.com', type: 'dev'}
     const candidates = {
       owned: [ownedStore],
+      delayed: [ownedStore],
       absent: [{...ownedStore, name: 'another-run'}],
       protected: [{...ownedStore, store: stores[0]}],
       duplicate: [ownedStore, {...ownedStore, store: 'another.myshopify.com'}],
@@ -161,15 +163,17 @@ for (const scenario of [
       unconfirmed: [ownedStore],
     }
     const deleted: string[] = []
+    let listings = 0
     const cli = {
       async exec(args: string[]) {
         if (args[1] === 'list') {
+          listings++
           return {
             exitCode: 0,
             stderr: '',
             stdout: JSON.stringify({
               organization: {id: scenario === 'wrong-org' ? '456' : '123'},
-              stores: candidates[scenario],
+              stores: scenario === 'delayed' && listings === 1 ? [] : candidates[scenario],
               truncated: scenario === 'truncated',
             }),
           }
@@ -183,8 +187,13 @@ for (const scenario of [
         }
       },
     }
-    const cleanup = cleanupTemporaryStore({cli, orgId: '123', name})
-    if (scenario === 'owned' || scenario === 'absent') {
+    const cleanup = cleanupTemporaryStore({
+      cli,
+      orgId: '123',
+      name,
+      creationTimeoutMs: scenario === 'absent' ? 0 : 1000,
+    })
+    if (scenario === 'owned' || scenario === 'absent' || scenario === 'delayed') {
       await cleanup
     } else {
       const errors = {
@@ -196,9 +205,43 @@ for (const scenario of [
       }
       await expect(cleanup).rejects.toThrow(errors[scenario])
     }
-    expect(deleted).toEqual(scenario === 'owned' || scenario === 'unconfirmed' ? [ownedStore.store] : [])
+    expect(deleted).toEqual(
+      scenario === 'owned' || scenario === 'delayed' || scenario === 'unconfirmed' ? [ownedStore.store] : [],
+    )
+    expect(listings).toBe(scenario === 'delayed' ? 2 : 1)
   })
 }
+
+test('reports unresolved cleanup when a store does not finish provisioning within the wait', async () => {
+  const cli = {
+    async exec(args: string[]) {
+      expect(args.slice(0, 2)).toEqual(['store', 'list'])
+      return {exitCode: 0, stdout: JSON.stringify({organization: {id: '123'}, stores: []}), stderr: ''}
+    },
+  }
+
+  await expect(
+    cleanupTemporaryStore({cli, orgId: '123', name: 'e2e-store-delayed', creationTimeoutMs: 1000}),
+  ).rejects.toThrow('Temporary store e2e-store-delayed did not appear before cleanup timed out; cleanup is unresolved.')
+})
+
+test('preserves listing errors while waiting for a store to finish provisioning', async () => {
+  let listings = 0
+  const cli = {
+    async exec(args: string[]) {
+      expect(args.slice(0, 2)).toEqual(['store', 'list'])
+      listings++
+      return listings === 1
+        ? {exitCode: 0, stdout: JSON.stringify({organization: {id: '123'}, stores: []}), stderr: ''}
+        : {exitCode: 1, stdout: '', stderr: 'Authentication failed'}
+    },
+  }
+
+  await expect(
+    cleanupTemporaryStore({cli, orgId: '123', name: 'e2e-store-delayed', creationTimeoutMs: 1000}),
+  ).rejects.toThrow('Authentication failed')
+  expect(listings).toBe(2)
+})
 
 test('legacy store cleanup requires an explicit empty state', async () => {
   const page = (empty: boolean) =>

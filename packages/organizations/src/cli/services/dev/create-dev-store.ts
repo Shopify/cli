@@ -104,10 +104,10 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<st
           unauthorizedHandler,
         })
 
-        const status = pollResult.organization?.storeCreation?.status
-        if (!status) {
+        if (!pollResult.organization) {
           throw new AbortError('Unable to determine store creation status.')
         }
+        const status = pollResult.organization.storeCreation?.status
 
         if (status === 'COMPLETE') {
           return
@@ -116,7 +116,8 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<st
           throw new AbortError(`Store creation failed with status: ${status}`)
         }
 
-        updateStatus(outputContent`${friendlyStatus(status)}`)
+        // The creation record can take time to become available after the mutation succeeds.
+        if (status) updateStatus(outputContent`${friendlyStatus(status)}`)
 
         // eslint-disable-next-line no-await-in-loop
         await sleep(POLL_INTERVAL_SECONDS)
