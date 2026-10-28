@@ -5,12 +5,14 @@ import {
   hasBlockingAutoUpgradeNotification,
   runCLIUpgrade,
   versionToAutoUpgrade,
+  warnIfUpgradeAvailable,
 } from '../upgrade.js'
 import {isMajorVersionChange, availableHomebrewCLIVersion} from '../version.js'
 import {inferPackageManagerForGlobalCLI, getHomebrewCLIFormula} from '../is-global.js'
 import {addPublicMetadata} from '../metadata.js'
 import {reportAnalyticsEvent} from '../analytics.js'
 import {CLI_KIT_VERSION} from '../../common/version.js'
+import {runAtMinimumInterval} from '../../../private/node/conf-store.js'
 import {SemVer} from 'semver'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 
@@ -21,6 +23,7 @@ vi.mock('../upgrade.js', async (importOriginal) => {
     runCLIUpgrade: vi.fn(),
     getOutputUpdateCLIReminder: vi.fn(),
     versionToAutoUpgrade: vi.fn(),
+    warnIfUpgradeAvailable: vi.fn().mockResolvedValue(undefined),
     hasBlockingAutoUpgradeNotification: vi.fn().mockResolvedValue(false),
   }
 })
@@ -99,6 +102,38 @@ describe('postrun hook', () => {
 })
 
 describe('autoUpgradeIfNeeded', () => {
+  test('checks release notices even when no same-major update is available', async () => {
+    vi.mocked(versionToAutoUpgrade).mockResolvedValue(undefined)
+
+    await autoUpgradeIfNeeded()
+
+    expect(warnIfUpgradeAvailable).toHaveBeenCalledOnce()
+    expect(runCLIUpgrade).not.toHaveBeenCalled()
+  })
+
+  test('checks release notices before installing a same-major update', async () => {
+    vi.mocked(versionToAutoUpgrade).mockResolvedValue('3.91.0')
+    vi.mocked(runCLIUpgrade).mockResolvedValue(undefined)
+
+    await autoUpgradeIfNeeded()
+
+    expect(warnIfUpgradeAvailable).toHaveBeenCalledOnce()
+    expect(runCLIUpgrade).toHaveBeenCalledWith({autoupgrade: true, version: '3.91.0'})
+    expect(vi.mocked(warnIfUpgradeAvailable).mock.invocationCallOrder[0]!).toBeLessThan(
+      vi.mocked(runCLIUpgrade).mock.invocationCallOrder[0]!,
+    )
+  })
+
+  test('checks release notices even when the daily automatic upgrade attempt is skipped', async () => {
+    vi.mocked(versionToAutoUpgrade).mockResolvedValue('3.91.0')
+    vi.mocked(runAtMinimumInterval).mockResolvedValue(false)
+
+    await autoUpgradeIfNeeded()
+
+    expect(warnIfUpgradeAvailable).toHaveBeenCalledOnce()
+    expect(runCLIUpgrade).not.toHaveBeenCalled()
+  })
+
   test('runs the upgrade when versionToAutoUpgrade returns a version', async () => {
     // Given
     vi.mocked(versionToAutoUpgrade).mockResolvedValue('3.91.0')
