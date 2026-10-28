@@ -268,14 +268,15 @@ export async function exec(command: string, args: string[], options?: ExecOption
   }
 
   let aborted = false
-  options?.signal?.addEventListener('abort', () => {
+  const onAbort = () => {
     const pid = commandProcess.pid
     if (pid) {
       outputDebug(`Killing process ${pid}: ${command} ${args.join(' ')}`)
       aborted = true
       treeKill(pid, 'SIGTERM')
     }
-  })
+  }
+  options?.signal?.addEventListener('abort', onAbort)
   try {
     await commandProcess
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -290,6 +291,8 @@ export async function exec(command: string, args: string[], options?: ExecOption
       abortError.stack = processError.stack
       throw abortError
     }
+  } finally {
+    options?.signal?.removeEventListener('abort', onAbort)
   }
 }
 
