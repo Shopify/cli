@@ -78,7 +78,7 @@ describe('postrun hook', () => {
   test('reports analytics after auto-upgrade so auto-upgrade metadata is available', async () => {
     const config = {plugins: new Map(), runHook: vi.fn()} as any
     const Command = {id: 'app dev'} as any
-    vi.mocked(versionToAutoUpgrade).mockReturnValue('3.100.0')
+    vi.mocked(versionToAutoUpgrade).mockResolvedValue('3.100.0')
     vi.mocked(isMajorVersionChange).mockReturnValue(false)
     vi.mocked(runCLIUpgrade).mockResolvedValue(undefined)
 
@@ -97,7 +97,7 @@ describe('postrun hook', () => {
 describe('autoUpgradeIfNeeded', () => {
   test('runs the upgrade when versionToAutoUpgrade returns a version', async () => {
     // Given
-    vi.mocked(versionToAutoUpgrade).mockReturnValue('3.91.0')
+    vi.mocked(versionToAutoUpgrade).mockResolvedValue('3.91.0')
     vi.mocked(runCLIUpgrade).mockResolvedValue()
 
     // When
@@ -110,7 +110,7 @@ describe('autoUpgradeIfNeeded', () => {
   test('falls back to warning when the upgrade fails', async () => {
     // Given
     const outputMock = mockAndCaptureOutput()
-    vi.mocked(versionToAutoUpgrade).mockReturnValue('3.91.0')
+    vi.mocked(versionToAutoUpgrade).mockResolvedValue('3.91.0')
     vi.mocked(runCLIUpgrade).mockRejectedValue(new Error('upgrade failed'))
     const installReminder = '💡 Version 3.91.0 available! Run `npm install @shopify/cli@latest`'
     vi.mocked(getOutputUpdateCLIReminder).mockReturnValue(installReminder)
@@ -124,7 +124,7 @@ describe('autoUpgradeIfNeeded', () => {
 
   test('does nothing when versionToAutoUpgrade returns undefined', async () => {
     // Given
-    vi.mocked(versionToAutoUpgrade).mockReturnValue(undefined)
+    vi.mocked(versionToAutoUpgrade).mockResolvedValue(undefined)
 
     // When
     await autoUpgradeIfNeeded()
@@ -136,7 +136,7 @@ describe('autoUpgradeIfNeeded', () => {
   test('shows warning instead of upgrading for a major version change', async () => {
     // Given
     const outputMock = mockAndCaptureOutput()
-    vi.mocked(versionToAutoUpgrade).mockReturnValue('4.0.0')
+    vi.mocked(versionToAutoUpgrade).mockResolvedValue('4.0.0')
     vi.mocked(isMajorVersionChange).mockReturnValue(true)
     const installReminder = '💡 Version 4.0.0 available! Run `npm install @shopify/cli@latest`'
     vi.mocked(getOutputUpdateCLIReminder).mockReturnValue(installReminder)
@@ -151,7 +151,7 @@ describe('autoUpgradeIfNeeded', () => {
   })
 
   test('records skipped_reason for major version bump', async () => {
-    vi.mocked(versionToAutoUpgrade).mockReturnValue('4.0.0')
+    vi.mocked(versionToAutoUpgrade).mockResolvedValue('4.0.0')
     vi.mocked(isMajorVersionChange).mockReturnValue(true)
     vi.mocked(getOutputUpdateCLIReminder).mockReturnValue('upgrade reminder')
 
@@ -168,7 +168,7 @@ describe('autoUpgradeIfNeeded', () => {
   })
 
   test('records success=true on successful upgrade', async () => {
-    vi.mocked(versionToAutoUpgrade).mockReturnValue('3.100.0')
+    vi.mocked(versionToAutoUpgrade).mockResolvedValue('3.100.0')
     vi.mocked(isMajorVersionChange).mockReturnValue(false)
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
     vi.mocked(runCLIUpgrade).mockResolvedValue(undefined)
@@ -181,7 +181,7 @@ describe('autoUpgradeIfNeeded', () => {
 
   test('silently skips the upgrade when a blocking autoupgrade notification is active', async () => {
     const outputMock = mockAndCaptureOutput()
-    vi.mocked(versionToAutoUpgrade).mockReturnValue('3.100.0')
+    vi.mocked(versionToAutoUpgrade).mockResolvedValue('3.100.0')
     vi.mocked(isMajorVersionChange).mockReturnValue(false)
     vi.mocked(hasBlockingAutoUpgradeNotification).mockResolvedValue(true)
 
@@ -195,7 +195,7 @@ describe('autoUpgradeIfNeeded', () => {
   })
 
   test('does not query notifications when there is no version to upgrade to', async () => {
-    vi.mocked(versionToAutoUpgrade).mockReturnValue(undefined)
+    vi.mocked(versionToAutoUpgrade).mockResolvedValue(undefined)
 
     await autoUpgradeIfNeeded()
 
@@ -203,7 +203,7 @@ describe('autoUpgradeIfNeeded', () => {
   })
 
   test('records success=false on failed upgrade', async () => {
-    vi.mocked(versionToAutoUpgrade).mockReturnValue('3.100.0')
+    vi.mocked(versionToAutoUpgrade).mockResolvedValue('3.100.0')
     vi.mocked(isMajorVersionChange).mockReturnValue(false)
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
     vi.mocked(runCLIUpgrade).mockRejectedValue(new Error('upgrade failed'))
