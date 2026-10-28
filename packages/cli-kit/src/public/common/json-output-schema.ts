@@ -1,5 +1,7 @@
 import {z} from 'zod'
 
+export const jsonOutputStoreDomainSchema = z.string().regex(/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/)
+
 /** UTC instants in CLI-owned JSON use whole seconds and the Z timezone marker. */
 export const jsonOutputTimestampSchema = z
   .string()

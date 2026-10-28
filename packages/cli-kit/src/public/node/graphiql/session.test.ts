@@ -79,9 +79,13 @@ describe('generateRandomGraphiQLKey', () => {
 })
 
 describe('runGraphiQLSession', () => {
-  test.each(['shop.myshopify.com', 'shop.myshopify.io', 'shop.my.shop.dev'])(
+  test.each([
+    ['shop.myshopify.com', 'shop.myshopify.com'],
+    ['shop.myshopify.io', null],
+    ['shop.my.shop.dev', null],
+  ] as const)(
     'writes lifecycle records for %s only after listening and closes its real server',
-    async (storeFqdn) => {
+    async (storeFqdn, storeDomain) => {
       const controller = new AbortController()
       const before = listeners()
       let url = ''
@@ -105,12 +109,12 @@ describe('runGraphiQLSession', () => {
           }),
         )
         expect(records(stdout())).toEqual([
-          {type: 'starting', storeDomain: storeFqdn, timestamp: expect.any(String)},
+          {type: 'starting', storeDomain, timestamp: expect.any(String)},
           {
             type: 'ready',
             timestamp: expect.any(String),
             url,
-            storeDomain: storeFqdn,
+            storeDomain,
             api: 'admin',
             apiVersion: '2024-10',
             mutationsAllowed: false,

@@ -15,6 +15,7 @@ import {isInputDisabled} from '../no-input.js'
 import {formatJsonOutputTimestamp} from '../json-output-schema.js'
 import {openURL} from '../system.js'
 import {getAvailableTCPPort} from '../tcp.js'
+import {extractMyshopifyHandle} from '../../common/url.js'
 import {randomBytes} from 'crypto'
 import {Writable} from 'stream'
 
@@ -73,6 +74,7 @@ export function buildGraphiQLUrl(options: BuildGraphiQLUrlOptions): string {
  */
 export async function runGraphiQLSession(options: RunGraphiQLSessionOptions): Promise<void> {
   const json = options.outputFormat === 'json'
+  const storeDomain = extractMyshopifyHandle(options.storeFqdn) ? options.storeFqdn : null
   const cancellation = createGraphiQLCancellation(options.abortSignal)
   let server: ReturnType<typeof setupGraphiQLServer> | undefined
   let failed = false
@@ -96,7 +98,7 @@ export async function runGraphiQLSession(options: RunGraphiQLSessionOptions): Pr
 
   try {
     if (cancellation.controller.signal.aborted) return
-    writeRecord({type: 'starting', storeDomain: options.storeFqdn})
+    writeRecord({type: 'starting', storeDomain})
     const port = await getAvailableTCPPort(options.port)
     if (cancellation.controller.signal.aborted) return
 
@@ -129,7 +131,7 @@ export async function runGraphiQLSession(options: RunGraphiQLSessionOptions): Pr
     writeRecord({
       type: 'ready',
       url,
-      storeDomain: options.storeFqdn,
+      storeDomain,
       api: 'admin',
       apiVersion: options.apiVersion ?? null,
       mutationsAllowed: !options.protectMutations,

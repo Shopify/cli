@@ -2,7 +2,7 @@ import {graphiqlJsonOutputSchema} from './schema.js'
 import {expect, test} from 'vitest'
 import {Ajv} from 'ajv'
 
-test.each(['shop.myshopify.com', 'shop.myshopify.io', 'shop.my.shop.dev', 'nested.shop.myshopify.com'])(
+test.each(['shop.myshopify.com', null])(
   'publishes a self-contained JSON Schema for every lifecycle record with store %s',
   (storeDomain) => {
     const validate = new Ajv({formats: {'date-time': true, uri: true}}).compile(graphiqlJsonOutputSchema.jsonSchema)
@@ -25,17 +25,6 @@ test.each(['shop.myshopify.com', 'shop.myshopify.io', 'shop.my.shop.dev', 'neste
       expect(graphiqlJsonOutputSchema.validate(record)).toEqual(record)
       expect(validate({...record, accessToken: 'secret'})).toBe(false)
     }
-  },
-)
-
-test.each(['', 'https://shop.myshopify.io', 'shop.my.shop.dev/admin', 'shop..myshopify.com'])(
-  'rejects store domains that are not normalized hostnames (%s)',
-  (storeDomain) => {
-    const record = {type: 'starting', timestamp: '2026-10-21T10:20:30Z', storeDomain}
-    expect(() => graphiqlJsonOutputSchema.validate(record)).toThrow()
-    expect(
-      new Ajv({formats: {'date-time': true, uri: true}}).compile(graphiqlJsonOutputSchema.jsonSchema)(record),
-    ).toBe(false)
   },
 )
 

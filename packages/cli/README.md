@@ -287,7 +287,7 @@ DESCRIPTION
         "anyOf": [
           {
             "type": "string",
-            "pattern": "^[^.]+\\.myshopify\\.com$"
+            "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
           },
           {
             "type": "null"
@@ -605,7 +605,7 @@ DESCRIPTION
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[^.]+\\.myshopify\\.com$"
+                "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
               },
               {
                 "type": "null"
@@ -765,7 +765,7 @@ DESCRIPTION
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[^.]+\\.myshopify\\.com$"
+                "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
               },
               {
                 "type": "null"
@@ -2074,9 +2074,14 @@ DESCRIPTION
         "$ref": "#/definitions/AppDevCleanApp"
       },
       "storeDomain": {
-        "type": [
-          "string",
-          "null"
+        "anyOf": [
+          {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+          },
+          {
+            "type": "null"
+          }
         ],
         "description": "The canonical *.myshopify.com hostname, or null when unknown."
       }
@@ -3665,9 +3670,16 @@ DESCRIPTION
         "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
       },
       "GraphiQLStoreDomain": {
-        "type": "string",
-        "pattern": "^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$",
-        "description": "Normalized store hostname, including local development domains."
+        "anyOf": [
+          {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "The canonical *.myshopify.com hostname, or null when unknown."
       }
     },
     "$schema": "http://json-schema.org/draft-07/schema#"
@@ -3757,9 +3769,14 @@ DESCRIPTION
         "const": "success"
       },
       "storeDomain": {
-        "type": [
-          "string",
-          "null"
+        "anyOf": [
+          {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+          },
+          {
+            "type": "null"
+          }
         ],
         "description": "The full myshopify.com domain of the development store, or null when unavailable."
       },
@@ -10924,7 +10941,7 @@ DESCRIPTION
         "anyOf": [
           {
             "type": "string",
-            "pattern": "^[^.]+\\.myshopify\\.com$"
+            "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
           },
           {
             "type": "null"
@@ -11229,7 +11246,7 @@ DESCRIPTION
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[^.]+\\.myshopify\\.com$"
+                "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
               },
               {
                 "type": "null"
@@ -11374,7 +11391,7 @@ DESCRIPTION
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[^.]+\\.myshopify\\.com$"
+                "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
               },
               {
                 "type": "null"
@@ -12364,9 +12381,16 @@ DESCRIPTION
         "description": "A UTC ISO 8601 instant with whole seconds and the Z timezone marker."
       },
       "GraphiQLStoreDomain": {
-        "type": "string",
-        "pattern": "^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$",
-        "description": "Normalized store hostname, including local development domains."
+        "anyOf": [
+          {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "description": "The canonical *.myshopify.com hostname, or null when unknown."
       }
     },
     "$schema": "http://json-schema.org/draft-07/schema#"
@@ -12718,7 +12742,7 @@ DESCRIPTION
         "anyOf": [
           {
             "type": "string",
-            "pattern": "^[^.]+\\.myshopify\\.com$"
+            "pattern": "^[a-z0-9][a-z0-9-]*\\.myshopify\\.com$"
           },
           {
             "type": "null"
