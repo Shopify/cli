@@ -5,7 +5,67 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import {inTemporaryDirectory, mkdir, removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {expect, test, vi} from 'vitest'
-import chokidar from 'chokidar'
+import chokidar, {FSWatcher} from 'chokidar'
+
+test.each([
+  {name: 'stop', stop: (watcher: FileWatcher, _controller: AbortController) => watcher.stop()},
+  {name: 'abort', stop: async (_watcher: FileWatcher, controller: AbortController) => controller.abort()},
+])('settles startup when $name interrupts the initial scan', async ({stop}) => {
+  await inTemporaryDirectory(async (directory) => {
+    const controller = new AbortController()
+    const watcher = new FileWatcher(testAppLinked({directory}), {
+      stdout: process.stderr,
+      stderr: process.stderr,
+      signal: controller.signal,
+    })
+    const fileWatcher = new FSWatcher()
+    const watch = vi.spyOn(chokidar, 'watch').mockReturnValue(fileWatcher)
+    let started = false
+    const starting = watcher.start().then(() => {
+      started = true
+    })
+
+    try {
+      await vi.waitFor(() => expect(watch).toHaveBeenCalled())
+      expect(started).toBe(false)
+      await stop(watcher, controller)
+      await starting
+      expect(fileWatcher.listenerCount('ready')).toBe(0)
+      expect(fileWatcher.listenerCount('error')).toBe(0)
+    } finally {
+      controller.abort()
+      await watcher.stop()
+      await starting
+    }
+  })
+})
+
+test('rejects startup when the initial scan fails', async () => {
+  await inTemporaryDirectory(async (directory) => {
+    const controller = new AbortController()
+    const watcher = new FileWatcher(testAppLinked({directory}), {
+      stdout: process.stderr,
+      stderr: process.stderr,
+      signal: controller.signal,
+    })
+    const fileWatcher = new FSWatcher()
+    const watch = vi.spyOn(chokidar, 'watch').mockReturnValue(fileWatcher)
+    const error = new Error('Initial scan failed')
+    const starting = watcher.start()
+    const rejected = expect(starting).rejects.toBe(error)
+
+    try {
+      await vi.waitFor(() => expect(watch).toHaveBeenCalled())
+      fileWatcher.emit('error', error)
+      await rejected
+      expect(fileWatcher.listenerCount('ready')).toBe(0)
+      expect(fileWatcher.listenerCount('error')).toBe(0)
+    } finally {
+      controller.abort()
+      await watcher.stop()
+    }
+  })
+})
 
 test.each([
   {name: 'stop', stop: (watcher: FileWatcher, _controller: AbortController) => watcher.stop()},

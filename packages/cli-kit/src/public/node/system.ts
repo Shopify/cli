@@ -255,6 +255,8 @@ export async function execCommand(command: string, options?: ExecOptions): Promi
  * @param options - Optional settings for how to run the command.
  */
 export async function exec(command: string, args: string[], options?: ExecOptions): Promise<void> {
+  if (options?.signal?.aborted) return
+
   if (options) {
     // Windows opens a new console window when running a command in the background, so we disable it.
     const runningOnWindows = platformAndArch().platform === 'windows'

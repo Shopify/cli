@@ -1,9 +1,26 @@
 import {captureOutputWithExitCode, exec} from './system.js'
 import {AbortController} from './abort.js'
 import {ExternalError} from './error.js'
+import {fileExists, inTemporaryDirectory} from './fs.js'
+import {joinPath} from './path.js'
 import {expect, test} from 'vitest'
 import {Writable} from 'stream'
 import {getEventListeners} from 'events'
+
+test('does not start a command when its signal is already aborted', async () => {
+  await inTemporaryDirectory(async (directory) => {
+    const controller = new AbortController()
+    const markerPath = joinPath(directory, 'started')
+    controller.abort()
+
+    await exec(process.execPath, ['-e', "require('node:fs').writeFileSync(process.argv[1], 'started')", markerPath], {
+      signal: controller.signal,
+    })
+
+    await expect(fileExists(markerPath)).resolves.toBe(false)
+    expect(getEventListeners(controller.signal, 'abort')).toHaveLength(0)
+  })
+})
 
 test('does not accumulate abort listeners across repeated commands', async () => {
   const controller = new AbortController()

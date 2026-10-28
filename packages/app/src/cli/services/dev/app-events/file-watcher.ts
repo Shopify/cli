@@ -76,6 +76,7 @@ export class FileWatcher {
   private readonly options: OutputContextOptions
   private onChangeCallback?: (events: WatcherEvent[]) => void
   private watcher?: FSWatcher
+  private finishStartup?: () => void
   private readonly debouncedEmit: ReturnType<typeof debounce<() => void>>
   private readonly extensionCreationIntervals = new Set<ReturnType<typeof setInterval>>()
   private readonly fileDeletionTimeouts = new Set<ReturnType<typeof setTimeout>>()
@@ -108,6 +109,7 @@ export class FileWatcher {
   /**
    * Starts a new file watcher, and closes the previous one if it exists.
    * This ensures the watcher picks up any changes in what files need to be watched.
+   * Resolves after the initial scan finishes or startup is cancelled.
    */
   async start(): Promise<void> {
     if (this.options.signal.aborted) return
@@ -161,8 +163,30 @@ export class FileWatcher {
       ignoreInitial: true,
     })
 
-    this.watcher.on('all', this.handleFileEvent)
+    const watcher = this.watcher
+    watcher.on('all', this.handleFileEvent)
+    const ready = new Promise<void>((resolve, reject) => {
+      const cleanup = () => {
+        watcher.removeListener('ready', onReady)
+        watcher.removeListener('error', onError)
+        this.finishStartup = undefined
+      }
+      const onReady = () => {
+        cleanup()
+        resolve()
+      }
+      const onError = (error: Error) => {
+        cleanup()
+        reject(error)
+      }
+      this.finishStartup = onReady
+      watcher.once('ready', onReady)
+      watcher.once('error', onError)
+    })
     this.addAbortListener()
+    if (this.options.signal.aborted) this.onAbort()
+    await ready
+    if (this.stopped || this.options.signal.aborted) return
 
     outputDebug(`File watcher started with ${watchPaths.length} paths`, this.options.stdout)
   }
@@ -180,6 +204,7 @@ export class FileWatcher {
   /** Stops watching and waits for the underlying watcher to close. */
   async stop(): Promise<void> {
     this.stopped = true
+    this.finishStartup?.()
     this.options.signal.removeEventListener('abort', this.onAbort)
     this.clearPendingEvents()
     await this.watcher?.close()
@@ -477,6 +502,7 @@ export class FileWatcher {
   }
 
   private readonly close = () => {
+    this.finishStartup?.()
     if (!this.watcher) return
 
     outputDebug(`Closing file watcher`, this.options.stdout)
