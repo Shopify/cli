@@ -1,6 +1,6 @@
 import {captureOutput} from './system.js'
 import which from 'which'
-import {satisfies, SemVer} from 'semver'
+import {satisfies, SemVer, valid} from 'semver'
 /**
  * Returns the version of the local dependency of the CLI if it's installed in the provided directory.
  *
@@ -37,6 +37,25 @@ export async function globalCLIVersion(): Promise<string | undefined> {
       }
     }
     return undefined
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * Returns the stable CLI version available in Homebrew's current formula metadata.
+ *
+ * @returns The available version, or undefined when the formula cannot be read.
+ */
+export async function availableHomebrewCLIVersion(): Promise<string | undefined> {
+  try {
+    const output = await captureOutput('brew', ['info', '--json=v2', 'shopify-cli'], {
+      env: {HOMEBREW_NO_AUTO_UPDATE: '1'},
+    })
+    const info: {formulae?: {versions?: {stable?: string}}[]} = JSON.parse(output)
+    const version = info.formulae?.[0]?.versions?.stable
+    return valid(version) ?? undefined
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return undefined

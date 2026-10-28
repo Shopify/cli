@@ -6,11 +6,13 @@ import {
   runCLIUpgrade,
   versionToAutoUpgrade,
 } from '../upgrade.js'
-import {isMajorVersionChange} from '../version.js'
+import {isMajorVersionChange, availableHomebrewCLIVersion} from '../version.js'
 import {inferPackageManagerForGlobalCLI} from '../is-global.js'
 import {addPublicMetadata} from '../metadata.js'
 import {reportAnalyticsEvent} from '../analytics.js'
-import {describe, expect, test, vi, afterEach} from 'vitest'
+import {CLI_KIT_VERSION} from '../../common/version.js'
+import {SemVer} from 'semver'
+import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 
 vi.mock('../upgrade.js', async (importOriginal) => {
   const actual: any = await importOriginal()
@@ -28,6 +30,7 @@ vi.mock('../version.js', async (importOriginal) => {
   return {
     ...actual,
     isMajorVersionChange: vi.fn(),
+    availableHomebrewCLIVersion: vi.fn(),
   }
 })
 
@@ -105,6 +108,7 @@ describe('autoUpgradeIfNeeded', () => {
 
     // Then
     expect(runCLIUpgrade).toHaveBeenCalledWith({autoupgrade: true, version: '3.91.0'})
+    expect(availableHomebrewCLIVersion).not.toHaveBeenCalled()
   })
 
   test('falls back to warning when the upgrade fails', async () => {
@@ -120,6 +124,79 @@ describe('autoUpgradeIfNeeded', () => {
 
     // Then
     expect(outputMock.warn()).toMatch(installReminder)
+  })
+
+  describe('Homebrew', () => {
+    beforeEach(async () => {
+      const {isMajorVersionChange: actualIsMajorVersionChange} =
+        await vi.importActual<typeof import('../version.js')>('../version.js')
+      vi.mocked(isMajorVersionChange).mockImplementation(actualIsMajorVersionChange)
+      vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
+      vi.mocked(versionToAutoUpgrade).mockReturnValue(new SemVer(CLI_KIT_VERSION).inc('patch').version)
+    })
+
+    test('blocks a new formula major even when the cached npm target is a patch', async () => {
+      const nextMajor = new SemVer(CLI_KIT_VERSION).inc('major').version
+      vi.mocked(availableHomebrewCLIVersion).mockResolvedValue(nextMajor)
+      vi.mocked(getOutputUpdateCLIReminder).mockReturnValue('Major version available')
+
+      await autoUpgradeIfNeeded()
+
+      expect(runCLIUpgrade).not.toHaveBeenCalled()
+      expect(getOutputUpdateCLIReminder).toHaveBeenCalledWith(nextMajor, true)
+      expect(mockAndCaptureOutput().warn()).toContain('Major version available')
+      expect(hasBlockingAutoUpgradeNotification).not.toHaveBeenCalled()
+      const calls = vi.mocked(addPublicMetadata).mock.calls.map((call) => call[0]())
+      expect(calls).toContainEqual(expect.objectContaining({env_auto_upgrade_skipped_reason: 'major_version'}))
+    })
+
+    test('uses the available formula version for the upgrade', async () => {
+      const availableVersion = new SemVer(CLI_KIT_VERSION).inc('minor').version
+      vi.mocked(availableHomebrewCLIVersion).mockResolvedValue(availableVersion)
+      vi.mocked(runCLIUpgrade).mockResolvedValue(undefined)
+
+      await autoUpgradeIfNeeded()
+
+      expect(runCLIUpgrade).toHaveBeenCalledWith({autoupgrade: true, version: availableVersion})
+      const calls = vi.mocked(addPublicMetadata).mock.calls.map((call) => call[0]())
+      expect(calls).toContainEqual(expect.objectContaining({env_auto_upgrade_success: true}))
+    })
+
+    test('uses the checked formula version in the failure hint', async () => {
+      const availableVersion = new SemVer(CLI_KIT_VERSION).inc('minor').version
+      vi.mocked(availableHomebrewCLIVersion).mockResolvedValue(availableVersion)
+      vi.mocked(runCLIUpgrade).mockRejectedValue(new Error('upgrade failed'))
+      vi.mocked(getOutputUpdateCLIReminder).mockReturnValue('Upgrade reminder')
+
+      await autoUpgradeIfNeeded()
+
+      expect(getOutputUpdateCLIReminder).toHaveBeenCalledWith(availableVersion)
+    })
+
+    test('skips the upgrade when the formula version is unavailable', async () => {
+      vi.mocked(availableHomebrewCLIVersion).mockResolvedValue(undefined)
+
+      await autoUpgradeIfNeeded()
+
+      expect(runCLIUpgrade).not.toHaveBeenCalled()
+      expect(hasBlockingAutoUpgradeNotification).not.toHaveBeenCalled()
+      const calls = vi.mocked(addPublicMetadata).mock.calls.map((call) => call[0]())
+      expect(calls).toContainEqual(
+        expect.objectContaining({env_auto_upgrade_skipped_reason: 'homebrew_version_unavailable'}),
+      )
+    })
+
+    test('skips the upgrade when the formula has no newer version yet', async () => {
+      vi.mocked(availableHomebrewCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
+
+      await autoUpgradeIfNeeded()
+
+      expect(runCLIUpgrade).not.toHaveBeenCalled()
+      const calls = vi.mocked(addPublicMetadata).mock.calls.map((call) => call[0]())
+      expect(calls).toContainEqual(
+        expect.objectContaining({env_auto_upgrade_skipped_reason: 'homebrew_already_up_to_date'}),
+      )
+    })
   })
 
   test('does nothing when versionToAutoUpgrade returns undefined', async () => {
