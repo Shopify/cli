@@ -29,11 +29,11 @@ export {getAutoUpgradeEnabled, setAutoUpgradeEnabled}
  * Utility function for generating an install command for the user to run
  * to install an updated version of Shopify CLI.
  *
- * @param version - The version or dist-tag to install. Defaults to `latest`. Homebrew can't
+ * @param version - The version or dist-tag to install. Homebrew can't
  * install a specific version, so it always upgrades to the formula's current version.
  * @returns A string with the command to run, or undefined if the package manager cannot be determined.
  */
-export function cliInstallCommand(version = 'latest'): string | undefined {
+export function cliInstallCommand(version: string): string | undefined {
   const packageManager = inferPackageManagerForGlobalCLI()
   if (!packageManager || packageManager === 'unknown') return undefined
 
@@ -110,7 +110,7 @@ export async function upgradeCLI(options: RunCLIUpgradeOptions = {}): Promise<Up
   // Generate the install command for the global CLI and execute it
   if (isGlobal) {
     const packageManager = inferPackageManagerForGlobalCLI()
-    const installCommand = cliInstallCommand(options.version)
+    const installCommand = cliInstallCommand(options.version ?? 'latest')
     if (!installCommand || packageManager === 'unknown') {
       throw new Error('Could not determine the package manager')
     }
@@ -250,7 +250,7 @@ export async function warnIfUpgradeAvailable(): Promise<void> {
  * @returns The message to remind the user to update the CLI.
  */
 export function getOutputUpdateCLIReminder(version: string, isMajor = false): string {
-  const installCommand = cliInstallCommand()
+  const installCommand = cliInstallCommand(version)
   const base = installCommand
     ? outputContent`💡 Version ${version} available! Run ${outputToken.genericShellCommand(installCommand)}`.value
     : outputContent`💡 Version ${version} available!`.value
