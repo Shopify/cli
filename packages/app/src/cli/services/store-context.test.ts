@@ -260,6 +260,23 @@ describe('storeContext', () => {
     })
   })
 
+  test('skips provisioning user access for remote-only operations', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await prepareAppFolder(mockApp, dir)
+      vi.mocked(fetchStore).mockResolvedValue(mockStore)
+
+      const result = await storeContext({
+        appContextResult,
+        forceReselectStore: false,
+        ensureUserAccess: false,
+      })
+
+      expect(result).toEqual(mockStore)
+      expect(ensureTransferDisabledStore).toHaveBeenCalledWith(mockStore)
+      expect(mockDeveloperPlatformClient.ensureUserAccessToStore).not.toHaveBeenCalled()
+    })
+  })
+
   test('ensures user access to store', async () => {
     await inTemporaryDirectory(async (dir) => {
       await prepareAppFolder(mockApp, dir)

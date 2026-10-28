@@ -1065,6 +1065,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     shopFqdn,
     websocketUrl,
     unsafeValidation,
+    signal,
   }: DevSessionCreateOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
     return this.appDevRequest({
@@ -1076,7 +1077,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
         websocketUrl,
         unsafeValidation: unsafeValidation ?? false,
       },
-      requestOptions: {requestMode: 'slow-request'},
+      requestOptions: {
+        requestMode: signal ? {useNetworkLevelRetry: false, useAbortSignal: signal} : 'slow-request',
+      },
     })
   }
 
