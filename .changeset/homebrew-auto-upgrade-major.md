@@ -3,4 +3,4 @@
 '@shopify/cli': patch
 ---
 
-Prevent automatic Homebrew upgrades from installing a new CLI major version.
+Keep Homebrew auto-upgrades on the installed formula and refresh its metadata to find same-major fixes.

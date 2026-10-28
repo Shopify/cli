@@ -1,5 +1,10 @@
 import {isDevelopment, isUnitTest} from './context/local.js'
-import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI, getProjectDir} from './is-global.js'
+import {
+  currentProcessIsGlobal,
+  inferPackageManagerForGlobalCLI,
+  getProjectDir,
+  getHomebrewCLIFormula,
+} from './is-global.js'
 import {
   checkForCachedNewVersion,
   checkForNewVersion,
@@ -19,7 +24,7 @@ import {
   versionToAutoUpgrade,
 } from './upgrade.js'
 import {Notification, fetchNotifications} from './notifications-system.js'
-import {globalCLIVersion, isPreReleaseVersion} from './version.js'
+import {globalCLIVersion, isPreReleaseVersion, availableHomebrewCLIVersion} from './version.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {inTemporaryDirectory, writeFile} from './fs.js'
 import {joinPath} from './path.js'
@@ -54,8 +59,11 @@ vi.mock('./version.js', async (importOriginal) => {
     ...actual,
     isPreReleaseVersion: vi.fn(() => false),
     globalCLIVersion: vi.fn(),
+    availableHomebrewCLIVersion: vi.fn(),
   }
 })
+
+beforeEach(() => vi.mocked(getHomebrewCLIFormula).mockReturnValue('shopify-cli'))
 
 describe('cliInstallCommand', () => {
   beforeEach(() => {
@@ -134,6 +142,13 @@ describe('cliInstallCommand', () => {
     expect(got).toBe('pnpm add -g @shopify/cli@4.8.5')
   })
 
+  test('keeps the versioned Homebrew formula in the install command', () => {
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
+    vi.mocked(getHomebrewCLIFormula).mockReturnValue('shopify-cli@4')
+
+    expect(cliInstallCommand('4.10.1')).toBe('brew upgrade shopify-cli@4')
+  })
+
   test('returns undefined if the current process is locally installed', () => {
     // Given
     vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
@@ -146,6 +161,17 @@ describe('cliInstallCommand', () => {
   })
 })
 describe('getOutputUpdateCLIReminder', () => {
+  test('offers a separate formula and command for a new Homebrew major', () => {
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
+    vi.mocked(getHomebrewCLIFormula).mockReturnValue('shopify-cli@4')
+
+    const message = getOutputUpdateCLIReminder('6.0.0', true)
+
+    expect(message).toContain('brew install shopify-cli@6')
+    expect(message).toContain('Use shopify6 to run this major.')
+    expect(message).not.toContain('brew upgrade shopify-cli@4')
+  })
+
   test('pins the upgrade command to the version shown in the reminder', () => {
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
 
@@ -250,6 +276,37 @@ describe('runCLIUpgrade', () => {
       stdio: 'inherit',
       env: {HOMEBREW_NO_AUTO_UPDATE: '1'},
     })
+  })
+
+  test('upgrades and verifies the selected Homebrew major', async () => {
+    const major = new SemVer(CLI_KIT_VERSION).major
+    const version = new SemVer(CLI_KIT_VERSION).inc('patch').version
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
+    vi.mocked(getHomebrewCLIFormula).mockReturnValue(`shopify-cli@${major}`)
+    vi.mocked(globalCLIVersion).mockResolvedValue(version)
+
+    await runCLIUpgrade({autoupgrade: true, version})
+
+    expect(exec).toHaveBeenCalledWith('brew', ['upgrade', `shopify-cli@${major}`], {
+      stdio: 'inherit',
+      env: {HOMEBREW_NO_AUTO_UPDATE: '1'},
+    })
+    expect(globalCLIVersion).toHaveBeenCalledWith(`shopify${major}`)
+  })
+
+  test('verifies a manual versioned Homebrew upgrade against its formula instead of latest', async () => {
+    const major = new SemVer(CLI_KIT_VERSION).major
+    const version = new SemVer(CLI_KIT_VERSION).inc('patch').version
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
+    vi.mocked(getHomebrewCLIFormula).mockReturnValue(`shopify-cli@${major}`)
+    vi.mocked(checkForCachedNewVersion).mockReturnValue(new SemVer(CLI_KIT_VERSION).inc('major').version)
+    vi.mocked(availableHomebrewCLIVersion).mockResolvedValue(version)
+    vi.mocked(globalCLIVersion).mockResolvedValue(version)
+
+    await expect(runCLIUpgrade()).resolves.toBeUndefined()
+    expect(globalCLIVersion).toHaveBeenCalledWith(`shopify${major}`)
   })
 
   test('installs exactly the requested version, not latest, when the auto-upgrade hook passes one', async () => {

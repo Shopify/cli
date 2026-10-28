@@ -1,12 +1,14 @@
 import {captureOutput} from './system.js'
 import {localCLIVersion, globalCLIVersion, availableHomebrewCLIVersion, isPreReleaseVersion} from './version.js'
 import {inTemporaryDirectory} from './fs.js'
-import {describe, expect, test, vi} from 'vitest'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 
 import which from 'which'
 
 vi.mock('../node/system.js')
 vi.mock('which')
+
+afterEach(() => vi.unstubAllEnvs())
 
 describe('localCLIVersion', () => {
   test('returns the version of the local CLI', async () => {
@@ -39,6 +41,15 @@ describe('localCLIVersion', () => {
 })
 
 describe('globalCLIVersion', () => {
+  test('verifies the command exposed by a versioned Homebrew formula', async () => {
+    vi.mocked(which.sync).mockReturnValue(['path/to/shopify4'] as unknown as string)
+    vi.mocked(captureOutput).mockResolvedValue('@shopify/cli/4.10.1')
+
+    await expect(globalCLIVersion('shopify4')).resolves.toBe('4.10.1')
+    expect(which.sync).toHaveBeenCalledWith('shopify4', {all: true})
+    expect(captureOutput).toHaveBeenCalledWith('path/to/shopify4', [], {env: expect.any(Object)})
+  })
+
   test('returns the version when a recent CLI is installed globally', async () => {
     // Given
     // TS is not detecting the return type correctly, so we need to cast it
@@ -81,11 +92,24 @@ describe('globalCLIVersion', () => {
 })
 
 describe('availableHomebrewCLIVersion', () => {
-  test('reads the stable formula version without updating Homebrew', async () => {
+  test('refreshes formula metadata before reading the stable version', async () => {
     vi.mocked(captureOutput).mockResolvedValue(JSON.stringify({formulae: [{versions: {stable: '5.0.1'}}]}))
 
     await expect(availableHomebrewCLIVersion()).resolves.toBe('5.0.1')
-    expect(captureOutput).toHaveBeenCalledWith('brew', ['info', '--json=v2', 'shopify-cli'], {
+    expect(captureOutput).toHaveBeenNthCalledWith(1, 'brew', ['update', '--quiet'], {
+      env: {HOMEBREW_NO_AUTO_UPDATE: '1'},
+    })
+    expect(captureOutput).toHaveBeenNthCalledWith(2, 'brew', ['info', '--json=v2', 'shopify-cli'], {
+      env: {HOMEBREW_NO_AUTO_UPDATE: '1'},
+    })
+  })
+
+  test('looks up the versioned formula that installed the CLI', async () => {
+    vi.stubEnv('SHOPIFY_HOMEBREW_FORMULA', 'shopify-cli@4')
+    vi.mocked(captureOutput).mockResolvedValue(JSON.stringify({formulae: [{versions: {stable: '4.10.1'}}]}))
+
+    await expect(availableHomebrewCLIVersion()).resolves.toBe('4.10.1')
+    expect(captureOutput).toHaveBeenCalledWith('brew', ['info', '--json=v2', 'shopify-cli@4'], {
       env: {HOMEBREW_NO_AUTO_UPDATE: '1'},
     })
   })
@@ -107,6 +131,7 @@ describe('availableHomebrewCLIVersion', () => {
     vi.mocked(captureOutput).mockRejectedValue(new Error('Formula unavailable'))
 
     await expect(availableHomebrewCLIVersion()).resolves.toBeUndefined()
+    expect(captureOutput).toHaveBeenCalledOnce()
   })
 })
 
