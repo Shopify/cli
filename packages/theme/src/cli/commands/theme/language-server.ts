@@ -7,9 +7,7 @@ import {startServer} from '@shopify/theme-language-server-node'
 import {Flags} from '@oclif/core'
 
 export default class LanguageServer extends ThemeCommand {
-  static get jsonOutputSchema() {
-    return languageServerJsonOutputSchema
-  }
+  static jsonOutputSchema = languageServerJsonOutputSchema
 
   static summary = 'Start a Language Server Protocol server.'
 
