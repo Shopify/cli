@@ -114,11 +114,11 @@ async function performAutoUpgrade(newerVersion: string): Promise<void> {
   const [
     {CLI_KIT_VERSION},
     {isMajorVersionChange, availableHomebrewCLIVersion},
-    {outputWarn, outputDebug},
+    {outputWarn, outputDebug, outputContent, outputToken},
     {getOutputUpdateCLIReminder, runCLIUpgrade, hasBlockingAutoUpgradeNotification},
     metadata,
-    {inferPackageManagerForGlobalCLI},
-    {lt: semverLt},
+    {inferPackageManagerForGlobalCLI, getHomebrewCLIFormula},
+    {lt: semverLt, SemVer},
   ] = await Promise.all([
     import('../../common/version.js'),
     import('../version.js'),
@@ -146,7 +146,16 @@ async function performAutoUpgrade(newerVersion: string): Promise<void> {
       return
     }
     if (isMajorVersionChange(CLI_KIT_VERSION, availableVersion)) {
-      outputWarn(getOutputUpdateCLIReminder(availableVersion, true))
+      if (getHomebrewCLIFormula() === 'shopify-cli') {
+        const major = new SemVer(CLI_KIT_VERSION).major
+        outputWarn(
+          outputContent`To keep receiving Shopify CLI ${String(major)}.x updates with Homebrew, run ${outputToken.genericShellCommand(
+            `brew install shopify-cli@${major}`,
+          )} and use ${outputToken.genericShellCommand(`shopify${major}`)}.`,
+        )
+      } else {
+        outputWarn(getOutputUpdateCLIReminder(availableVersion, true))
+      }
       await metadata.addPublicMetadata(() => ({env_auto_upgrade_skipped_reason: 'major_version'}))
       return
     }
