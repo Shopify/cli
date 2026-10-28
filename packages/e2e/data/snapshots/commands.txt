@@ -11,7 +11,8 @@
 │  │  └─ validate
 │  ├─ deploy
 │  ├─ dev
-│  │  └─ clean
+│  │  ├─ clean
+│  │  └─ push
 │  ├─ env
 │  │  ├─ pull
 │  │  └─ show

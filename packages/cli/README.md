@@ -11,6 +11,7 @@
 * [`shopify app deploy`](#shopify-app-deploy)
 * [`shopify app dev`](#shopify-app-dev)
 * [`shopify app dev clean`](#shopify-app-dev-clean)
+* [`shopify app dev push`](#shopify-app-dev-push)
 * [`shopify app env pull`](#shopify-app-env-pull)
 * [`shopify app env show`](#shopify-app-env-show)
 * [`shopify app execute`](#shopify-app-execute)
@@ -2277,6 +2278,166 @@ DESCRIPTION
         "required": [
           "name",
           "clientId"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "$schema": "http://json-schema.org/draft-07/schema#"
+  }
+  ```
+```
+
+## `shopify app dev push`
+
+Pushes a dev preview without running local servers.
+
+```
+USAGE
+  $ shopify app dev push [--auth-alias <value>] [--client-id <value>] [-j] [--json-schema] [--no-color]
+    [--no-input] [--path <value>] [--reset | -c <value>] [--skip-dependencies-installation] [-s <value>] [--url <value>]
+    [--verbose]
+
+FLAGS
+  -c, --config=<value>
+      The name of the app configuration.
+      [env: SHOPIFY_FLAG_APP_CONFIG]
+
+  -j, --json
+      Output the result as JSON. Automatically disables color output.
+      [env: SHOPIFY_FLAG_JSON]
+
+  -s, --store=<value>
+      Store URL. Must be an existing development store.
+      [env: SHOPIFY_FLAG_STORE]
+
+  --auth-alias=<value>
+      Alias of the Shopify account to use for authentication.
+      [env: SHOPIFY_FLAG_AUTH_ALIAS]
+
+  --client-id=<value>
+      The Client ID of your app. Use with --config to push that configuration for a different app.
+      [env: SHOPIFY_FLAG_CLIENT_ID]
+
+  --json-schema
+      Print the command's JSON schemas.
+      [env: SHOPIFY_FLAG_JSON_SCHEMA]
+
+  --no-color
+      Disable color output.
+      [env: SHOPIFY_FLAG_NO_COLOR]
+
+  --no-input
+      Disable interactive prompts and browser authentication.
+      [env: SHOPIFY_FLAG_NO_INPUT]
+
+  --path=<value>
+      The path to your app directory.
+      [env: SHOPIFY_FLAG_PATH]
+
+  --reset
+      Reset all your settings.
+      [env: SHOPIFY_FLAG_RESET]
+
+  --skip-dependencies-installation
+      Skips the installation of dependencies. Deprecated, use workspaces instead.
+      [env: SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION]
+
+  --url=<value>
+      Public HTTPS origin of your separately hosted backend. Overrides URLs in the dev preview only.
+      [env: SHOPIFY_FLAG_URL]
+
+  --verbose
+      Increase the verbosity of the output. May include sensitive data.
+      [env: SHOPIFY_FLAG_VERBOSE]
+
+DESCRIPTION
+  Pushes a dev preview without running local servers.
+
+  Builds and uploads a snapshot of your app configuration and extensions to a development store, then exits. It does not
+  release an app version or start local servers, tunnels, or file watchers.
+
+  Deploy your web backend separately. Use `--url` to apply its public HTTPS origin to the preview using the same app
+  URL, OAuth callback, and app proxy rewriting as `app dev`. The override does not rewrite your TOML files. Without
+  `--url`, the preview uses your configured URLs.
+
+  Use `shopify app dev clean` to restore the app's released version.
+
+  Use `--json-schema` to print the result, error, and event schemas.
+
+  Output from `--json` conforms to the `AppDevPushResult` schema.
+
+  ```json
+  {
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "success"
+      },
+      "app": {
+        "$ref": "#/definitions/AppDevPushApp"
+      },
+      "storeDomain": {
+        "type": "string",
+        "description": "The canonical *.myshopify.com hostname of the development store."
+      },
+      "appUrl": {
+        "type": "string",
+        "description": "The application URL configured in the uploaded preview."
+      },
+      "previewUrl": {
+        "type": "string",
+        "description": "The admin URL for opening the app on the development store."
+      },
+      "warnings": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/AppDevPushWarning"
+        },
+        "description": "Warnings returned by the preview API; codes are upstream values."
+      }
+    },
+    "required": [
+      "status",
+      "app",
+      "storeDomain",
+      "appUrl",
+      "previewUrl",
+      "warnings"
+    ],
+    "additionalProperties": false,
+    "title": "AppDevPushResult",
+    "definitions": {
+      "AppDevPushApp": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "name",
+          "clientId"
+        ],
+        "additionalProperties": false
+      },
+      "AppDevPushWarning": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
         ],
         "additionalProperties": false
       }
