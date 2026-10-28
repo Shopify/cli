@@ -16,9 +16,7 @@ import {renderError} from '@shopify/cli-kit/node/ui'
 type ConsoleFlags = InferredFlags<typeof Console.flags>
 
 export default class Console extends ThemeCommand {
-  static get jsonOutputSchema() {
-    return themeConsoleJsonOutputSchema
-  }
+  static jsonOutputSchema = themeConsoleJsonOutputSchema
 
   static summary = 'Shopify Liquid REPL (read-eval-print loop) tool'
 
