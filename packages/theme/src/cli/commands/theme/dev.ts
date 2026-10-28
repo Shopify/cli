@@ -46,9 +46,7 @@ Development themes are deleted when you run \`shopify auth logout\`. If you need
 
 You can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).`
 
-  static get jsonOutputSchema() {
-    return devInstanceLogOutputSchema
-  }
+  static jsonOutputSchema = devInstanceLogOutputSchema
 
   static description = this.descriptionForHelp()
 
