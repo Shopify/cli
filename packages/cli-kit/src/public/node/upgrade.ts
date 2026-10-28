@@ -129,7 +129,10 @@ export async function upgradeCLI(options: RunCLIUpgradeOptions = {}): Promise<Up
       outputContent`${headline}
    Now upgrading by running: ${outputToken.genericShellCommand(installCommand)}...`,
     )
-    await execUpgradeCommand(command, args)
+    // Use the same Homebrew formula metadata that the automatic upgrade hook checked.
+    const execOptions =
+      options.autoupgrade && packageManager === 'homebrew' ? {env: {HOMEBREW_NO_AUTO_UPDATE: '1'}} : {}
+    await execUpgradeCommand(command, args, execOptions)
 
     // A zero exit code doesn't guarantee the right version landed: the version check above
     // queries the public npm registry, while the install goes through whatever registry the

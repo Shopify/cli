@@ -238,6 +238,20 @@ describe('runCLIUpgrade', () => {
     expect(exec).toHaveBeenCalledWith('brew', ['upgrade', 'shopify-cli'], {stdio: 'inherit'})
   })
 
+  test('keeps the checked Homebrew metadata during an automatic upgrade', async () => {
+    const version = new SemVer(CLI_KIT_VERSION).inc('patch').version
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
+    vi.mocked(globalCLIVersion).mockResolvedValue(version)
+
+    await runCLIUpgrade({autoupgrade: true, version})
+
+    expect(exec).toHaveBeenCalledWith('brew', ['upgrade', 'shopify-cli'], {
+      stdio: 'inherit',
+      env: {HOMEBREW_NO_AUTO_UPDATE: '1'},
+    })
+  })
+
   test('installs exactly the requested version, not latest, when the auto-upgrade hook passes one', async () => {
     // Given: the cache already knows about a newer major, but the hook vetted a minor.
     // Derived from CLI_KIT_VERSION so the test keeps working after release bumps.

@@ -1,5 +1,5 @@
 import {captureOutput} from './system.js'
-import {localCLIVersion, globalCLIVersion, isPreReleaseVersion} from './version.js'
+import {localCLIVersion, globalCLIVersion, availableHomebrewCLIVersion, isPreReleaseVersion} from './version.js'
 import {inTemporaryDirectory} from './fs.js'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -77,6 +77,36 @@ describe('globalCLIVersion', () => {
     // Then
     expect(got).toBeUndefined()
     expect(captureOutput).not.toHaveBeenCalled()
+  })
+})
+
+describe('availableHomebrewCLIVersion', () => {
+  test('reads the stable formula version without updating Homebrew', async () => {
+    vi.mocked(captureOutput).mockResolvedValue(JSON.stringify({formulae: [{versions: {stable: '5.0.1'}}]}))
+
+    await expect(availableHomebrewCLIVersion()).resolves.toBe('5.0.1')
+    expect(captureOutput).toHaveBeenCalledWith('brew', ['info', '--json=v2', 'shopify-cli'], {
+      env: {HOMEBREW_NO_AUTO_UPDATE: '1'},
+    })
+  })
+
+  test.each([
+    'invalid JSON',
+    '{}',
+    'null',
+    JSON.stringify({formulae: []}),
+    JSON.stringify({formulae: [{versions: {stable: null}}]}),
+    JSON.stringify({formulae: [{versions: {stable: 'not-a-version'}}]}),
+  ])('returns undefined for unusable formula metadata: %s', async (output) => {
+    vi.mocked(captureOutput).mockResolvedValue(output)
+
+    await expect(availableHomebrewCLIVersion()).resolves.toBeUndefined()
+  })
+
+  test('returns undefined when Homebrew cannot read the formula', async () => {
+    vi.mocked(captureOutput).mockRejectedValue(new Error('Formula unavailable'))
+
+    await expect(availableHomebrewCLIVersion()).resolves.toBeUndefined()
   })
 })
 
