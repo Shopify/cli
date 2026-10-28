@@ -7,7 +7,7 @@ import {
   versionToAutoUpgrade,
 } from '../upgrade.js'
 import {isMajorVersionChange, availableHomebrewCLIVersion} from '../version.js'
-import {inferPackageManagerForGlobalCLI} from '../is-global.js'
+import {inferPackageManagerForGlobalCLI, getHomebrewCLIFormula} from '../is-global.js'
 import {addPublicMetadata} from '../metadata.js'
 import {reportAnalyticsEvent} from '../analytics.js'
 import {CLI_KIT_VERSION} from '../../common/version.js'
@@ -39,6 +39,7 @@ vi.mock('../is-global.js', async (importOriginal) => {
   return {
     ...actual,
     inferPackageManagerForGlobalCLI: vi.fn(),
+    getHomebrewCLIFormula: vi.fn(),
   }
 })
 
@@ -132,11 +133,30 @@ describe('autoUpgradeIfNeeded', () => {
         await vi.importActual<typeof import('../version.js')>('../version.js')
       vi.mocked(isMajorVersionChange).mockImplementation(actualIsMajorVersionChange)
       vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
-      vi.mocked(versionToAutoUpgrade).mockReturnValue(new SemVer(CLI_KIT_VERSION).inc('patch').version)
+      vi.mocked(getHomebrewCLIFormula).mockReturnValue('shopify-cli')
+      vi.mocked(versionToAutoUpgrade).mockResolvedValue(new SemVer(CLI_KIT_VERSION).inc('patch').version)
     })
 
-    test('blocks a new formula major even when the cached npm target is a patch', async () => {
+    test('guides unversioned installs to the maintained major when the default formula moves on', async () => {
       const nextMajor = new SemVer(CLI_KIT_VERSION).inc('major').version
+      const currentMajor = new SemVer(CLI_KIT_VERSION).major
+      vi.mocked(availableHomebrewCLIVersion).mockResolvedValue(nextMajor)
+      vi.mocked(getOutputUpdateCLIReminder).mockReturnValue('Major version available')
+
+      await autoUpgradeIfNeeded()
+
+      expect(runCLIUpgrade).not.toHaveBeenCalled()
+      expect(mockAndCaptureOutput().warn()).toContain(`brew install shopify-cli@${currentMajor}`)
+      expect(mockAndCaptureOutput().warn()).toContain(`shopify${currentMajor}`)
+      expect(hasBlockingAutoUpgradeNotification).not.toHaveBeenCalled()
+      const calls = vi.mocked(addPublicMetadata).mock.calls.map((call) => call[0]())
+      expect(calls).toContainEqual(expect.objectContaining({env_auto_upgrade_skipped_reason: 'major_version'}))
+    })
+
+    test('rejects an unexpected major from a versioned formula', async () => {
+      const currentMajor = new SemVer(CLI_KIT_VERSION).major
+      const nextMajor = new SemVer(CLI_KIT_VERSION).inc('major').version
+      vi.mocked(getHomebrewCLIFormula).mockReturnValue(`shopify-cli@${currentMajor}`)
       vi.mocked(availableHomebrewCLIVersion).mockResolvedValue(nextMajor)
       vi.mocked(getOutputUpdateCLIReminder).mockReturnValue('Major version available')
 
@@ -144,10 +164,6 @@ describe('autoUpgradeIfNeeded', () => {
 
       expect(runCLIUpgrade).not.toHaveBeenCalled()
       expect(getOutputUpdateCLIReminder).toHaveBeenCalledWith(nextMajor, true)
-      expect(mockAndCaptureOutput().warn()).toContain('Major version available')
-      expect(hasBlockingAutoUpgradeNotification).not.toHaveBeenCalled()
-      const calls = vi.mocked(addPublicMetadata).mock.calls.map((call) => call[0]())
-      expect(calls).toContainEqual(expect.objectContaining({env_auto_upgrade_skipped_reason: 'major_version'}))
     })
 
     test('uses the available formula version for the upgrade', async () => {

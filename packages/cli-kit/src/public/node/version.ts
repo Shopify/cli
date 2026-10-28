@@ -1,4 +1,5 @@
 import {captureOutput} from './system.js'
+import {getHomebrewCLIFormula} from './is-global.js'
 import which from 'which'
 import {satisfies, SemVer, valid} from 'semver'
 /**
@@ -20,13 +21,14 @@ export async function localCLIVersion(directory: string): Promise<string | undef
 /**
  * Returns the version of the globally installed CLI, only if it's greater than 3.59.0 (when the global CLI was introduced).
  *
+ * @param binary - The CLI command to locate and run.
  * @returns The version of the CLI if it is globally installed or undefined.
  */
-export async function globalCLIVersion(): Promise<string | undefined> {
+export async function globalCLIVersion(binary = 'shopify'): Promise<string | undefined> {
   try {
     const env = {...process.env, SHOPIFY_CLI_NO_ANALYTICS: '1'}
     // Both execa and which find the project dependency. We need to exclude it.
-    const shopifyBinaries = which.sync('shopify', {all: true}).filter((path) => !path.includes('node_modules'))
+    const shopifyBinaries = which.sync(binary, {all: true}).filter((path) => !path.includes('node_modules'))
     if (!shopifyBinaries[0]) return undefined
     const output = await captureOutput(shopifyBinaries[0], [], {env})
     const versionMatch = output.match(/@shopify\/cli\/([^\s]+)/)
@@ -44,15 +46,15 @@ export async function globalCLIVersion(): Promise<string | undefined> {
 }
 
 /**
- * Returns the stable CLI version available in Homebrew's current formula metadata.
+ * Refreshes Homebrew metadata and returns the stable version of the running CLI's formula.
  *
  * @returns The available version, or undefined when the formula cannot be read.
  */
 export async function availableHomebrewCLIVersion(): Promise<string | undefined> {
   try {
-    const output = await captureOutput('brew', ['info', '--json=v2', 'shopify-cli'], {
-      env: {HOMEBREW_NO_AUTO_UPDATE: '1'},
-    })
+    const options = {env: {HOMEBREW_NO_AUTO_UPDATE: '1'}}
+    await captureOutput('brew', ['update', '--quiet'], options)
+    const output = await captureOutput('brew', ['info', '--json=v2', getHomebrewCLIFormula()], options)
     const info: {formulae?: {versions?: {stable?: string}}[]} = JSON.parse(output)
     const version = info.formulae?.[0]?.versions?.stable
     return valid(version) ?? undefined
