@@ -230,7 +230,8 @@ export async function ensureAuthenticated(
 
   const sessions = (await sessionStore.fetch()) ?? {}
 
-  let currentSessionId = forceNewSession ? undefined : (commandSessionId ?? getCurrentSessionId())
+  const storedCurrentSessionId = commandSessionId ? undefined : getCurrentSessionId()
+  let currentSessionId = forceNewSession ? undefined : (commandSessionId ?? storedCurrentSessionId)
   if (!currentSessionId && !commandSessionId) {
     const userIds = Object.keys(sessions[fqdn] ?? {})
     if (userIds.length > 0) currentSessionId = userIds[0]
@@ -312,7 +313,9 @@ ${outputToken.json(applications)}
       if (!commandSessionId) store.setCurrentSessionId(newSessionId)
     })
   } else if (sessionWasRefreshed && !commandSessionId) {
-    await sessionStore.withSessionStoreLock(async (store) => store.setCurrentSessionId(newSessionId))
+    await sessionStore.withSessionStoreLock(async (store) => {
+      if (store.getCurrentSessionId() === storedCurrentSessionId) store.setCurrentSessionId(newSessionId)
+    })
   }
 
   const tokens = await tokensFor(applications, completeSession)

@@ -152,6 +152,7 @@ beforeEach(() => {
       fetch: () => fetchSessions(),
       store: (sessions) => storeAllSessions(sessions),
       storeSession: (fqdn, id, session) => storeSessions(fqdn, id, session),
+      getCurrentSessionId,
       setCurrentSessionId,
       remove: () => secureRemove(),
       removeSession: (fqdn, id, session) => removeFailedSession(fqdn, id, session),
@@ -462,6 +463,46 @@ describe('when existing session is valid', () => {
     expect(storeSessions).toHaveBeenCalledWith(fqdn, selectedUserId, sessions[fqdn]![selectedUserId])
     expect(setCurrentSessionId).not.toHaveBeenCalled()
     expect(got).toEqual({...validTokens, userId: selectedUserId})
+  })
+
+  test('preserves an account selection made while refreshing another session', async () => {
+    // Given
+    const otherUserId = 'other-user-id'
+    const sessions: Sessions = {
+      [fqdn]: {
+        ...validSessions[fqdn],
+        [otherUserId]: {
+          identity: {...validIdentityToken, userId: otherUserId},
+          applications: appTokens,
+        },
+      },
+    }
+    vi.mocked(getCurrentSessionId).mockReturnValue(userId)
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
+    vi.mocked(fetchSessions).mockResolvedValue(sessions)
+
+    let lockCalls = 0
+    vi.mocked(withSessionStoreLock).mockImplementation(async (operation) => {
+      const store: LockedSessionStore = {
+        fetch: () => fetchSessions(),
+        store: (allSessions) => storeAllSessions(allSessions),
+        storeSession: (fqdn, id, session) => storeSessions(fqdn, id, session),
+        getCurrentSessionId,
+        setCurrentSessionId,
+        remove: () => secureRemove(),
+        removeSession: (fqdn, id, session) => removeFailedSession(fqdn, id, session),
+      }
+      const result = await operation(store)
+      if (++lockCalls === 1) vi.mocked(getCurrentSessionId).mockReturnValue(otherUserId)
+      return result
+    })
+
+    // When
+    await ensureAuthenticated(defaultApplications)
+
+    // Then
+    expect(setCurrentSessionId).not.toHaveBeenCalled()
+    expect(getCurrentSessionId()).toBe(otherUserId)
   })
 
   test('uses a session refreshed by another process instead of refreshing a stale copy', async () => {

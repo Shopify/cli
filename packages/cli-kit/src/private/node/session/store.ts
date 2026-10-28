@@ -23,6 +23,7 @@ export interface LockedSessionStore {
   fetch(): Promise<Sessions | undefined>
   store(sessions: Sessions): Promise<void>
   storeSession(fqdn: string, userId: string, session: Session): Promise<void>
+  getCurrentSessionId(): string | undefined
   setCurrentSessionId(sessionId: string): void
   remove(): Promise<void>
   removeSession(fqdn: string, userId: string, expectedSession?: Session): Promise<boolean>
@@ -48,6 +49,7 @@ export async function withSessionStoreLock<T>(
       fetch: fetchUnlocked,
       store: storeUnlocked,
       storeSession: storeSessionUnlocked,
+      getCurrentSessionId,
       setCurrentSessionId,
       remove: removeUnlocked,
       removeSession: removeSessionUnlocked,
