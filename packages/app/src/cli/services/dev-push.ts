@@ -58,7 +58,7 @@ export async function devPush({
 
     if (url) app.setDevApplicationURLs(generateApplicationURLsForApp(app, url))
 
-    if (!skipDependenciesInstallation && !project.usesWorkspaces) await installAppDependencies(project)
+    if (!skipDependenciesInstallation && !project.usesWorkspaces) await installAppDependencies(project, {signal})
     signal.throwIfAborted()
 
     return await inTemporaryDirectory(async (directory) => {
@@ -164,7 +164,7 @@ export async function devPush({
         storeDomain: store.shopDomain,
         appUrl: app.configuration.application_url,
         previewUrl,
-        warnings: result.warnings ?? [],
+        warnings: (result.warnings ?? []).map(({code, message}) => ({code, message})),
       }
     })
   } catch (error) {

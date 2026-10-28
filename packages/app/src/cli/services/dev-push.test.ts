@@ -211,7 +211,7 @@ test.each([
 
     await devPush({...input, appContextResult: {...input.appContextResult, project}, skipDependenciesInstallation})
 
-    if (installs) expect(installAppDependencies).toHaveBeenCalledWith(project)
+    if (installs) expect(installAppDependencies).toHaveBeenCalledWith(project, {signal: expect.any(AbortSignal)})
     else expect(installAppDependencies).not.toHaveBeenCalled()
   })
 })
@@ -290,11 +290,20 @@ test('requires a created dev session before reporting success', async () => {
   })
 })
 
-test('surfaces server warnings in the result', async () => {
+test('reports server warnings in one successful JSON result without GraphQL metadata', async () => {
   await inTemporaryDirectory(async (directory) => {
-    const warnings = [{code: 'SESSION_TAKEOVER', message: 'Another preview was replaced'}]
+    const warnings = [
+      {code: 'SESSION_TAKEOVER', message: 'Another preview was replaced', __typename: 'DevSessionWarning'},
+    ]
     const {input} = await fixture(directory, {devSessionCreate: {...response.devSessionCreate, warnings}})
-    await expect(devPush(input)).resolves.toMatchObject({warnings})
+    await withCapturedStandardStreams(async ({stdout}) => {
+      await runWithCommandEventsForCommand(['--json'], async () => {
+        renderDevPushResult(await devPush(input), 'json')
+      })
+      expect(JSON.parse(stdout()).warnings).toEqual([
+        {code: 'SESSION_TAKEOVER', message: 'Another preview was replaced'},
+      ])
+    })
   })
 })
 
@@ -341,6 +350,28 @@ test('SIGINT aborts a build, waits for it, cleans its bundle, and emits a fatal 
     expect(client.generateSignedUploadUrl).not.toHaveBeenCalled()
     expect(client.devSessionCreate).not.toHaveBeenCalled()
     expect(process.listenerCount('shopify:signal')).toBe(listeners)
+  })
+})
+
+test('SIGTERM during dependency installation stops the installer before building or uploading', async () => {
+  await inTemporaryDirectory(async (directory) => {
+    const {input, app, client} = await fixture(directory)
+    input.appContextResult.project = testProject({directory, usesWorkspaces: false})
+    const build = vi.spyOn(app.realExtensions[0]!, 'buildForBundle')
+    let installerStopped = false
+    vi.mocked(installAppDependencies).mockImplementation(async (_project, {signal} = {}) => {
+      const stopped = new Promise<void>((resolve) => signal!.addEventListener('abort', () => resolve(), {once: true}))
+      expect(processEvents.emit('shopify:signal', 'SIGTERM')).toBe(true)
+      await stopped
+      installerStopped = true
+    })
+
+    await expect(devPush(input)).rejects.toMatchObject({code: 'dev_push_cancelled', oclif: {exit: 143}})
+
+    expect(installerStopped).toBe(true)
+    expect(build).not.toHaveBeenCalled()
+    expect(client.generateSignedUploadUrl).not.toHaveBeenCalled()
+    expect(client.devSessionCreate).not.toHaveBeenCalled()
   })
 })
 
