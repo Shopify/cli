@@ -305,19 +305,20 @@ export async function usesWorkspaces(appDirectory: string): Promise<boolean> {
  * @param currentVersion - The current version.
  * @param cacheExpiryInHours - If the last check was done more than this amount of hours ago, it will
  * refresh the cache. Defaults to always refreshing.
+ * @param versionRange - An optional semver range that limits the versions considered.
  * @returns A promise that resolves with a more recent version or undefined if there's no more recent version.
  */
 export async function checkForNewVersion(
   dependency: string,
   currentVersion: string,
-  {cacheExpiryInHours = 0} = {},
+  {cacheExpiryInHours = 0, versionRange}: {cacheExpiryInHours?: number; versionRange?: string} = {},
 ): Promise<string | undefined> {
   const getLatestVersion = async () => {
     outputDebug(outputContent`Checking if there's a version of ${dependency} newer than ${currentVersion}`)
-    return getLatestNPMPackageVersion(dependency)
+    return getLatestNPMPackageVersion(dependency, versionRange)
   }
 
-  const cacheKey: PackageVersionKey = `npm-package-${dependency}`
+  const cacheKey: PackageVersionKey = `npm-package-${dependency}${versionRange ? `@${versionRange}` : ''}`
   let lastVersion
   try {
     lastVersion = await cacheRetrieveOrRepopulate(cacheKey, getLatestVersion, cacheExpiryInHours * 3600 * 1000)
@@ -326,7 +327,11 @@ export async function checkForNewVersion(
     return undefined
   }
 
-  if (lastVersion && new SemVer(currentVersion).compare(lastVersion) < 0) {
+  if (
+    lastVersion &&
+    (!versionRange || semverSatisfies(lastVersion, versionRange)) &&
+    new SemVer(currentVersion).compare(lastVersion) < 0
+  ) {
     return lastVersion
   } else {
     return undefined
@@ -697,13 +702,14 @@ export async function addResolutionOrOverride(directory: string, dependencies: R
 /**
  * Returns the latest available version of an NPM package.
  * @param name - The name of the NPM package.
+ * @param versionRange - An optional semver range that limits the versions considered.
  * @returns A promise to get the latest available version of a package.
  */
-async function getLatestNPMPackageVersion(name: string) {
+async function getLatestNPMPackageVersion(name: string, versionRange?: string) {
   outputDebug(outputContent`Getting the latest version of NPM package: ${outputToken.raw(name)}`)
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
     const {default: latestVersion} = await import('latest-version')
-    return latestVersion(name)
+    return versionRange ? latestVersion(name, {version: versionRange}) : latestVersion(name)
   })
 }
 

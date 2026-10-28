@@ -31,6 +31,8 @@ import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {LocalStorage} from './local-storage.js'
 import * as confStore from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
+import {http, HttpResponse} from 'msw'
+import {setupServer} from 'msw/node'
 import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
 
 vi.mock('./version.js')
@@ -611,6 +613,65 @@ describe('checkForNewVersion', () => {
   })
   afterEach(() => {
     vi.useRealTimers()
+  })
+
+  test('finds the newest stable release in an older major from real registry metadata', async () => {
+    const actual = await vi.importActual<typeof import('latest-version')>('latest-version')
+    vi.mocked(latestVersion).mockImplementation(actual.default)
+    const versions = ['4.8.4', '4.9.0', '4.10.1', '4.11.0-rc.1', '5.0.0', '6.0.0']
+    const server = setupServer(
+      http.get('https://registry.npmjs.org/*', () =>
+        HttpResponse.json({
+          name: '@shopify/cli',
+          'dist-tags': {latest: '6.0.0'},
+          versions: Object.fromEntries(versions.map((version) => [version, {name: '@shopify/cli', version}])),
+        }),
+      ),
+    )
+    server.listen({onUnhandledRequest: 'error'})
+    try {
+      await expect(checkForNewVersion('@shopify/cli', '4.8.4', {versionRange: '4.x'})).resolves.toBe('4.10.1')
+    } finally {
+      server.close()
+    }
+  })
+
+  test('keeps latest and different major ranges in separate caches', async () => {
+    vi.mocked(latestVersion)
+      .mockResolvedValueOnce('6.0.0')
+      .mockResolvedValueOnce('4.10.1')
+      .mockResolvedValueOnce('5.2.0')
+
+    await checkForNewVersion('@shopify/cli', '4.8.4', {cacheExpiryInHours: 24})
+    await expect(
+      checkForNewVersion('@shopify/cli', '4.8.4', {versionRange: '4.x', cacheExpiryInHours: 24}),
+    ).resolves.toBe('4.10.1')
+    await expect(
+      checkForNewVersion('@shopify/cli', '5.0.0', {versionRange: '5.x', cacheExpiryInHours: 24}),
+    ).resolves.toBe('5.2.0')
+    await expect(
+      checkForNewVersion('@shopify/cli', '4.8.4', {versionRange: '4.x', cacheExpiryInHours: 24}),
+    ).resolves.toBe('4.10.1')
+    expect(checkForCachedNewVersion('@shopify/cli', '4.8.4')).toBe('6.0.0')
+    expect(latestVersion).toHaveBeenCalledTimes(3)
+    expect(latestVersion).toHaveBeenCalledWith('@shopify/cli', {version: '4.x'})
+    expect(latestVersion).toHaveBeenCalledWith('@shopify/cli', {version: '5.x'})
+  })
+
+  test('refreshes a major-specific cache to discover a later backport', async () => {
+    vi.mocked(latestVersion).mockResolvedValueOnce('4.10.1').mockResolvedValueOnce('4.10.2')
+    const options = {versionRange: '4.x', cacheExpiryInHours: 24}
+    await checkForNewVersion('@shopify/cli', '4.8.4', options)
+    vi.setSystemTime(Date.now() + 25 * 3600 * 1000)
+
+    await expect(checkForNewVersion('@shopify/cli', '4.8.4', options)).resolves.toBe('4.10.2')
+    expect(latestVersion).toHaveBeenCalledTimes(2)
+  })
+
+  test.each(['5.0.0', '4.11.0-rc.1', 'invalid'])('rejects %s outside a stable major range', async (version) => {
+    vi.mocked(latestVersion).mockResolvedValue(version)
+
+    await expect(checkForNewVersion('@shopify/cli', '4.8.4', {versionRange: '4.x'})).resolves.toBeUndefined()
   })
 
   test('returns undefined when last version is lower or equals than current version', async () => {
