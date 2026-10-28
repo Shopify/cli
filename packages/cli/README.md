@@ -18182,7 +18182,7 @@ USAGE
 
 FLAGS
   -j, --json
-      Use native LSP JSON-RPC output (already enabled by default).
+      Accepted for consistency. Preserves native LSP output and stderr diagnostics.
       [env: SHOPIFY_FLAG_JSON]
 
   --auth-alias=<value>
@@ -18212,11 +18212,6 @@ DESCRIPTION
 
   Communicates using Language Server Protocol (LSP) JSON-RPC messages on stdin and stdout, framed with Content-Length
   headers. CLI diagnostics use stderr.
-
-  --json is accepted for consistency with other commands. The server already uses JSON, so --json and SHOPIFY_FLAG_JSON
-  preserve the native LSP transport and CLI diagnostics. --json-schema prints the JSON-RPC message body schema without
-  starting the server; method-specific payloads follow the LSP specification. --no-input does not change the LSP
-  transport.
 
   Use `--json-schema` to print the result, error, and event schemas.
 

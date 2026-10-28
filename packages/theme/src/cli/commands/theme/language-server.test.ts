@@ -141,5 +141,5 @@ test('documents the native protocol and JSON flag policy', () => {
   expect(LanguageServer.jsonOutputSchema?.name).toBe('ThemeLanguageServerMessage')
   expect(LanguageServer.flags).toHaveProperty('json')
   expect(LanguageServer.descriptionForHelp()).toContain('Content-Length')
-  expect(LanguageServer.descriptionForHelp()).toContain('SHOPIFY_FLAG_JSON')
+  expect(LanguageServer.flags.json.description).toContain('native LSP output')
 })
