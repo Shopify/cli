@@ -14,9 +14,7 @@ export default class FunctionReplay extends AppLinkedCommand {
     return true
   }
 
-  static get jsonOutputSchema() {
-    return functionRunJsonOutputSchema
-  }
+  static jsonOutputSchema = functionRunJsonOutputSchema
 
   static summary = 'Replays a function run from an app log.'
 
