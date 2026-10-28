@@ -17,9 +17,7 @@ import {Writable} from 'stream'
 
 type ShareFlags = InferredFlags<typeof Share.flags>
 export default class Share extends ThemeCommand {
-  static get jsonOutputSchema() {
-    return themeShareJsonOutputSchema
-  }
+  static jsonOutputSchema = themeShareJsonOutputSchema
 
   static summary = 'Creates a shareable, unpublished, and new theme on your theme library with a randomized name.'
 

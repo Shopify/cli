@@ -13,9 +13,7 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 type ListFlags = OutputFlags<typeof List.flags>
 
 export default class List extends ThemeCommand {
-  static get jsonOutputSchema() {
-    return themeListJsonOutputSchema
-  }
+  static jsonOutputSchema = themeListJsonOutputSchema
 
   static descriptionWithMarkdown = 'Lists the themes in your store, along with their IDs and statuses.'
 

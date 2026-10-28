@@ -8,6 +8,8 @@ import {outputCompleted, outputResult} from '@shopify/cli-kit/node/output'
 export default class Login extends Command {
   static descriptionWithMarkdown = 'Logs you in to your Shopify account.'
 
+  static jsonOutputSchema = authLoginJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static flags = {
@@ -19,10 +21,6 @@ export default class Login extends Command {
         env: 'SHOPIFY_FLAG_AUTH_ALIAS',
       }),
     ),
-  }
-
-  static get jsonOutputSchema() {
-    return authLoginJsonOutputSchema
   }
 
   async run(): Promise<void> {

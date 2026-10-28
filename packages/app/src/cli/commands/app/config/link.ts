@@ -16,9 +16,7 @@ export default class ConfigLink extends AppLinkedCommand {
   For more information on the format of the created TOML configuration file, refer to the [App configuration](https://shopify.dev/docs/apps/tools/cli/configuration) page.
   `
 
-  static get jsonOutputSchema() {
-    return appConfigLinkJsonOutputSchema
-  }
+  static jsonOutputSchema = appConfigLinkJsonOutputSchema
 
   static description = this.descriptionForHelp()
 

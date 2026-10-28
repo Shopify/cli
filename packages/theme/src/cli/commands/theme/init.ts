@@ -25,9 +25,7 @@ type InitFlags = InferredFlags<typeof Init.flags>
 type InitArgs = InferredArgs<typeof Init.args>
 
 export default class Init extends ThemeCommand {
-  static get jsonOutputSchema() {
-    return themeInitJsonOutputSchema
-  }
+  static jsonOutputSchema = themeInitJsonOutputSchema
 
   static summary = 'Clones a Git repository to use as a starting point for building a new theme.'
 

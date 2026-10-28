@@ -14,15 +14,13 @@ export default class AutocorrectOn extends Command {
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 `
 
+  static jsonOutputSchema = autocorrectJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
     ...jsonFlag,
-  }
-
-  static get jsonOutputSchema() {
-    return autocorrectJsonOutputSchema
   }
 
   async run(): Promise<void> {

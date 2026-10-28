@@ -8,9 +8,7 @@ import {InferredFlags} from '@oclif/core/interfaces'
 
 type PackageFlags = InferredFlags<typeof Package.flags>
 export default class Package extends ThemeCommand {
-  static get jsonOutputSchema() {
-    return themePackageJsonOutputSchema
-  }
+  static jsonOutputSchema = themePackageJsonOutputSchema
 
   static summary = 'Package your theme into a .zip file, ready to upload to the Online Store.'
 

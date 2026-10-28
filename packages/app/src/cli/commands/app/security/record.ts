@@ -18,9 +18,7 @@ The document is recorded all or nothing: if anything is invalid, the command fai
 
 Reports the number of findings to Shopify as usage telemetry, but not finding details. See [usage reporting](https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.`
 
-  static get jsonOutputSchema() {
-    return appSecurityRecordJsonOutputSchema
-  }
+  static jsonOutputSchema = appSecurityRecordJsonOutputSchema
 
   static description = this.descriptionForHelp()
 

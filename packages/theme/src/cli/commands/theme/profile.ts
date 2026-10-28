@@ -14,9 +14,7 @@ import type {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 
 type ProfileFlags = InferredFlags<typeof Profile.flags>
 export default class Profile extends ThemeCommand {
-  static get jsonOutputSchema() {
-    return themeProfileJsonOutputSchema
-  }
+  static jsonOutputSchema = themeProfileJsonOutputSchema
 
   static summary = 'Profile the Liquid rendering of a theme page.'
 

@@ -13,6 +13,8 @@ export default class StoreAuth extends StoreCommand {
 
 Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.`
 
+  static jsonOutputSchema = storeAuthJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static examples = [
@@ -29,10 +31,6 @@ Re-run this command if the stored token is missing, expires, or no longer has th
       env: 'SHOPIFY_FLAG_SCOPES',
       required: true,
     }),
-  }
-
-  static get jsonOutputSchema() {
-    return storeAuthJsonOutputSchema
   }
 
   public async run(): Promise<void> {

@@ -14,6 +14,8 @@ Some details may be omitted when they are not available for the store.
 
 Use \`--json\` for machine-readable output.`
 
+  static jsonOutputSchema = storeInfoJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static examples = [
@@ -25,10 +27,6 @@ Use \`--json\` for machine-readable output.`
     ...globalFlags,
     ...jsonFlag,
     store: storeFlags.store,
-  }
-
-  static get jsonOutputSchema() {
-    return storeInfoJsonOutputSchema
   }
 
   public async run(): Promise<void> {

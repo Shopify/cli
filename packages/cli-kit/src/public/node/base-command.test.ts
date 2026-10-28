@@ -380,9 +380,7 @@ describe('command events', () => {
 describe('command descriptions', () => {
   test('preserves schema patterns that resemble Markdown links', () => {
     class CommandWithPattern extends Command {
-      static get jsonOutputSchema() {
-        return defineJsonOutputSchema({name: 'Result', schema: zod.string().regex(/[a-z](value)/)})
-      }
+      static jsonOutputSchema = defineJsonOutputSchema({name: 'Result', schema: zod.string().regex(/[a-z](value)/)})
 
       public async run(): Promise<void> {}
     }
@@ -394,12 +392,10 @@ describe('command descriptions', () => {
 
   test('includes a JSON output schema without mutating the Markdown description', () => {
     class CommandWithJsonOutput extends Command {
-      static get jsonOutputSchema() {
-        return defineJsonOutputSchema({
-          name: 'CommandResult',
-          schema: zod.object({value: zod.string()}),
-        })
-      }
+      static jsonOutputSchema = defineJsonOutputSchema({
+        name: 'CommandResult',
+        schema: zod.object({value: zod.string()}),
+      })
 
       static descriptionWithMarkdown = 'Returns a value. [Learn more](https://shopify.dev).'
 

@@ -39,9 +39,7 @@ export default class Validate extends AppLinkedCommand {
 
   static descriptionWithMarkdown = `Validates the selected app configuration file and all extension configurations against their schemas and reports any errors found.`
 
-  static get jsonOutputSchema() {
-    return appConfigValidateJsonOutputSchema
-  }
+  static jsonOutputSchema = appConfigValidateJsonOutputSchema
 
   static description = this.descriptionForHelp()
 

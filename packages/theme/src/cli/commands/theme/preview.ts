@@ -16,9 +16,7 @@ import type {ThemeEnvironmentResult} from '../../services/json-output/schema.js'
 type PreviewFlags = InferredFlags<typeof Preview.flags>
 
 export default class Preview extends ThemeCommand {
-  static get jsonOutputSchema() {
-    return themePreviewJsonOutputSchema
-  }
+  static jsonOutputSchema = themePreviewJsonOutputSchema
 
   static summary = 'Applies JSON overrides to a theme and returns a preview URL.'
 

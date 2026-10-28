@@ -14,6 +14,8 @@ export default class StoreDelete extends Command {
 
   static descriptionWithMarkdown = 'Deletes a dev store from your organization.'
 
+  static jsonOutputSchema = deleteDevStoreJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static examples = [
@@ -33,10 +35,6 @@ export default class StoreDelete extends Command {
       env: 'SHOPIFY_FLAG_FORCE',
       default: false,
     }),
-  }
-
-  static get jsonOutputSchema() {
-    return deleteDevStoreJsonOutputSchema
   }
 
   async run(): Promise<void> {

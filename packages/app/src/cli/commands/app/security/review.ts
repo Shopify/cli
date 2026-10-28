@@ -18,9 +18,7 @@ The agent results are optional. Use \`--check-id\` to narrow the review to speci
 
 Reports the number of findings to Shopify as usage telemetry, but not finding details. See [usage reporting](https://shopify.dev/docs/api/shopify-cli#usage-reporting) for details.`
 
-  static get jsonOutputSchema() {
-    return appSecurityReviewJsonOutputSchema
-  }
+  static jsonOutputSchema = appSecurityReviewJsonOutputSchema
 
   static description = this.descriptionForHelp()
 

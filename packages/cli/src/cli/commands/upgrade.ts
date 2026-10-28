@@ -9,9 +9,7 @@ export default class Upgrade extends Command {
 
   static descriptionWithMarkdown = 'Upgrades Shopify CLI using your package manager.'
 
-  static get jsonOutputSchema() {
-    return upgradeJsonOutputSchema
-  }
+  static jsonOutputSchema = upgradeJsonOutputSchema
 
   static description = this.descriptionForHelp()
 

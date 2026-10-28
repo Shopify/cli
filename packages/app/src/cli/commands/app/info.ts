@@ -17,9 +17,7 @@ export default class AppInfo extends AppLinkedCommand {
   - The [access scopes](https://shopify.dev/docs/api/usage) your app has requested.
   - System information, including the package manager and version of Shopify CLI used in the project.`
 
-  static get jsonOutputSchema() {
-    return appInfoJsonOutputSchema
-  }
+  static jsonOutputSchema = appInfoJsonOutputSchema
 
   static description = this.descriptionForHelp()
 

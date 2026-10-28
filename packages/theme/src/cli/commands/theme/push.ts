@@ -21,9 +21,7 @@ import type {NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 type PushFlags = InferredFlags<typeof Push.flags>
 
 export default class Push extends ThemeCommand {
-  static get jsonOutputSchema() {
-    return themePushJsonOutputSchema
-  }
+  static jsonOutputSchema = themePushJsonOutputSchema
 
   static summary = 'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
 
