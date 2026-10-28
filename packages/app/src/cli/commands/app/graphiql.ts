@@ -14,9 +14,7 @@ export default class AppGraphiQL extends AppLinkedCommand {
 
 The app must be installed on the store.`
 
-  static get jsonOutputSchema() {
-    return graphiqlJsonOutputSchema
-  }
+  static jsonOutputSchema = graphiqlJsonOutputSchema
 
   static description = this.descriptionForHelp()
 
