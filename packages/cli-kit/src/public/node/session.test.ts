@@ -463,8 +463,7 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
       userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
       businessPlatformToken: 'business-platform-token',
     })
-    // App commands keep the exchange's default Business Platform scopes.
-    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).toHaveBeenCalledWith('custom_cli_token')
+    expect(exchangeAppAutomationTokenForBusinessPlatformAccessToken).toHaveBeenCalledWith('custom_cli_token', [])
     expect(ensureAuthenticated).not.toHaveBeenCalled()
   })
 })

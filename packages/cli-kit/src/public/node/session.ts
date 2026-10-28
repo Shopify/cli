@@ -188,7 +188,9 @@ ${outputToken.json(appManagementScopes)}
   const envToken = getAppAutomationToken()
   if (envToken) {
     const appManagmentToken = await exchangeAppAutomationTokenForAppManagementAccessToken(envToken)
-    const businessPlatformToken = await exchangeAppAutomationTokenForBusinessPlatformAccessToken(envToken)
+    // Preserve every Business Platform scope the token holds, including dev store management when granted.
+    // Explicitly requesting store management would reject automation tokens that only have app access.
+    const businessPlatformToken = await exchangeAppAutomationTokenForBusinessPlatformAccessToken(envToken, [])
 
     return {
       appManagementToken: appManagmentToken.accessToken,
