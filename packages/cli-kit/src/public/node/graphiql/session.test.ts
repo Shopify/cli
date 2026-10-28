@@ -211,6 +211,48 @@ describe('runGraphiQLSession', () => {
     })
   })
 
+  test.each(['/graphiql?key=key', '/graphiql/status'])(
+    'does not refresh credentials when shutdown aborts API-version loading at %s',
+    async (path) => {
+      const controller = new AbortController()
+      const tokenProvider = {
+        getToken: vi.fn(async () => 'token'),
+        refreshToken: vi.fn(async () => {
+          throw new Error('Unexpected token refresh after shutdown')
+        }),
+      }
+      let requested: () => void
+      const upstreamStarted = new Promise<void>((resolve) => {
+        requested = resolve
+      })
+      vi.mocked(supportedApiVersions).mockImplementationOnce(async (_session, mode) => {
+        const signal =
+          typeof mode === 'object' && typeof mode.useAbortSignal === 'function' ? mode.useAbortSignal() : undefined
+        expect(signal).toBeDefined()
+        return new Promise((_resolve, reject) => {
+          signal!.addEventListener('abort', () => reject(new DOMException('The operation was aborted.', 'AbortError')))
+          requested()
+        })
+      })
+      let browserRequest: Promise<unknown> | undefined
+      vi.mocked(openURL).mockImplementationOnce(async (url) => {
+        browserRequest = fetch(new URL(path, url)).catch((error: unknown) => error)
+        await upstreamStarted
+        controller.abort()
+        return true
+      })
+      await withCapturedStandardStreams(async ({stdout, stderr}) => {
+        await runGraphiQLSession({...options, tokenProvider, abortSignal: controller.signal})
+        await expect(browserRequest).resolves.toBeInstanceOf(Error)
+        expect(records(stdout()).map((record) => record.type)).toEqual(['starting', 'ready', 'stopped'])
+        expect(stderr()).toBe('')
+      })
+      expect(tokenProvider.getToken).toHaveBeenCalledTimes(1)
+      expect(tokenProvider.refreshToken).not.toHaveBeenCalled()
+      expect(supportedApiVersions).toHaveBeenCalledTimes(1)
+    },
+  )
+
   test('aborts an outstanding upstream request and closes active browser connections on cancellation', async () => {
     const controller = new AbortController()
     let upstreamAborted = false

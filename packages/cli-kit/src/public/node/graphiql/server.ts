@@ -167,6 +167,7 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
   const router = createRouter()
 
   const refreshUpstreamToken = async (): Promise<string> => {
+    requests.signal.throwIfAborted()
     try {
       debug('refreshing token')
       return await (tokenProvider.refreshToken ?? tokenProvider.getToken)()
@@ -176,6 +177,7 @@ export function setupGraphiQLServer(options: SetupGraphiQLServerOptions): Server
   }
 
   const currentToken = async (): Promise<string> => {
+    requests.signal.throwIfAborted()
     try {
       return await tokenProvider.getToken()
     } catch (_error) {
