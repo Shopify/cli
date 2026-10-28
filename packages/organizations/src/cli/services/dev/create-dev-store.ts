@@ -91,9 +91,15 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<st
     title: outputContent`Waiting for store to be ready`,
     task: async (updateStatus) => {
       const startTime = Date.now()
+      let sawStatus = false
       while (true) {
         if (Date.now() - startTime > POLL_TIMEOUT_MS) {
-          throw new AbortError('Store creation timed out after 5 minutes.')
+          if (sawStatus) {
+            throw new AbortError('Store creation timed out after 5 minutes.')
+          }
+          throw new AbortError('Store creation timed out after 5 minutes without reporting a status.', null, [
+            `Check whether ${shopDomain} was created with \`shopify store list\` before trying again.`,
+          ])
         }
 
         // eslint-disable-next-line no-await-in-loop
@@ -104,19 +110,24 @@ export async function createDevStore(options: CreateDevStoreOptions): Promise<st
           unauthorizedHandler,
         })
 
+        // Business Platform serves this query from a read replica, which can lag
+        // behind the write that created the store. Until the replica catches up,
+        // the store creation record is missing and the status is empty, so treat
+        // that as still pending and keep polling until the timeout, as the admin's
+        // store creation flow does.
         const status = pollResult.organization?.storeCreation?.status
-        if (!status) {
-          throw new AbortError('Unable to determine store creation status.')
+        if (status) {
+          sawStatus = true
+
+          if (status === 'COMPLETE') {
+            return
+          }
+          if (status === 'FAILED' || status === 'TIMED_OUT' || status === 'USER_ERROR') {
+            throw new AbortError(`Store creation failed with status: ${status}`)
+          }
         }
 
-        if (status === 'COMPLETE') {
-          return
-        }
-        if (status === 'FAILED' || status === 'TIMED_OUT' || status === 'USER_ERROR') {
-          throw new AbortError(`Store creation failed with status: ${status}`)
-        }
-
-        updateStatus(outputContent`${friendlyStatus(status)}`)
+        updateStatus(outputContent`${status ? friendlyStatus(status) : 'Waiting for store creation to start'}`)
 
         // eslint-disable-next-line no-await-in-loop
         await sleep(POLL_INTERVAL_SECONDS)
