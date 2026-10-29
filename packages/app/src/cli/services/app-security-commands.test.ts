@@ -508,6 +508,8 @@ describe('formatAppSecurityCommand', () => {
 
   test.skipIf(process.platform !== 'win32')(
     'the PowerShell record command reads a findings file without a byte order mark as UTF-8 in Windows PowerShell 5.1',
+    // Native PowerShell startup needs its own allowance on shared Windows runners.
+    {timeout: 30000},
     async () => {
       await inTemporaryDirectory(async (directory) => {
         const findingsPath = joinPath(directory, 'findings.json')
@@ -531,9 +533,10 @@ describe('formatAppSecurityCommand', () => {
         const result = spawnSync(
           'powershell.exe',
           ['-NoProfile', '-NonInteractive', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')],
-          {encoding: 'utf8', windowsHide: true},
+          {encoding: 'utf8', windowsHide: true, timeout: 25000},
         )
 
+        expect(result.error).toBeUndefined()
         expect(result.status, result.stderr).toBe(0)
         expect(JSON.parse(await readFile(receivedPath))).toStrictEqual({file: 'app/café.ts'})
       })
