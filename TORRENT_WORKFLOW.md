@@ -210,9 +210,11 @@ Torrent does not read GitHub reviews, threads or comments, and none of them wake
 who wants you to act comments on the ticket or moves it to `Rework`. Sweep the ticket's PR yourself:
 after each CI result, before the move to `Human Review`, and on every wake.
 
-- PR reviews, threads and comments: `torrent github pr snapshot --pr <n>`, or
-  `gh pr view <n> --comments` for the full text. Reply to every actionable item (accept, clarify, or
-  push back with a reason) _before_ changing code, with
+- PR reviews, threads and comments: `torrent github pr snapshot --pr <n>`. For full text, also read
+  `gh pr view <n> --comments` for conversation comments and review summaries, and
+  `gh api --paginate repos/Shopify/cli/pulls/<n>/comments` for inline review comments.
+  Reply to every actionable item (accept, clarify, or push back with a reason) _before_ changing
+  code, with
   `torrent github pr comment --pr <n> --key CLI-<n>:<review or thread node id>:<count> --body-file <file>`.
   Use one stable key for each reply. Name the file and line of a thread you answer. Never resolve a
   human's thread; the reviewer does that.
