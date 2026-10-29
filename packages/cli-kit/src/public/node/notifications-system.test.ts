@@ -458,6 +458,39 @@ describe('fetchNotificationsInBackground', () => {
       expect.anything(),
     )
   })
+
+  test('does nothing when the cached notifications are less than an hour old', async () => {
+    // Given
+    vi.mocked(cacheRetrieve).mockReturnValue({value: '{"notifications":[]}', timestamp: Date.now() - 5 * 60 * 1000})
+
+    // When
+    fetchNotificationsInBackground('theme:list', ['/path/to/node', '/path/to/shopify', 'theme', 'list'], {
+      SHOPIFY_UNIT_TEST: 'false',
+    })
+
+    // Then
+    expect(exec).not.toHaveBeenCalled()
+  })
+
+  test('fetches again when the cached notifications are more than an hour old', async () => {
+    // Given
+    vi.mocked(cacheRetrieve).mockReturnValue({
+      value: '{"notifications":[]}',
+      timestamp: Date.now() - 2 * 60 * 60 * 1000,
+    })
+
+    // When
+    fetchNotificationsInBackground('theme:list', ['/path/to/node', '/path/to/shopify', 'theme', 'list'], {
+      SHOPIFY_UNIT_TEST: 'false',
+    })
+
+    // Then
+    expect(exec).toHaveBeenCalledWith(
+      process.execPath,
+      ['/path/to/shopify', 'notifications', 'list', '--ignore-errors'],
+      expect.anything(),
+    )
+  })
 })
 
 describe('fetchNotifications', () => {
