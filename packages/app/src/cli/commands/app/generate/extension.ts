@@ -1,6 +1,7 @@
 import {appFlags} from '../../../flags.js'
 import metadata from '../../../metadata.js'
 import generate from '../../../services/generate.js'
+import {extensionFlavorValues} from '../../../services/generate/extension.js'
 import {appGenerateExtensionJsonOutputSchema} from '../../../services/generate/extension/types.js'
 import {renderGenerateExtensionResult} from '../../../services/generate/extension/result.js'
 import {checkFolderIsValidApp} from '../../../models/app/loader.js'
@@ -53,8 +54,8 @@ export default class AppGenerateExtension extends AppLinkedCommand {
     flavor: Flags.string({
       hidden: false,
       description:
-        'Choose a starting template for your extension, where applicable. Required if non interactive when the selected extension template supports multiple flavors.',
-      options: ['vanilla-js', 'preact', 'react', 'typescript', 'typescript-react', 'wasm', 'rust'],
+        'Choose a starting template for your extension, where applicable. Supported flavors depend on the selected extension template. Required if non interactive when the selected extension template supports multiple flavors.',
+      options: [...extensionFlavorValues],
       env: 'SHOPIFY_FLAG_FLAVOR',
     }),
   }
