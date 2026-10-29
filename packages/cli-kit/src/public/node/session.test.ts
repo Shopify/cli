@@ -512,4 +512,53 @@ describe('ensureAuthenticatedAdminAsApp', () => {
     // Then
     await expect(got).rejects.toThrow('Failed to get access token for app client123 on store mystore.myshopify.com')
   })
+
+  test('normalizes the store before sending the client secret', async () => {
+    // Given
+    vi.mocked(shopifyFetch).mockResolvedValueOnce({
+      status: 200,
+      text: async () => JSON.stringify({access_token: 'app_access_token'}),
+    } as any)
+
+    // When
+    const got = await ensureAuthenticatedAdminAsApp('mystore', 'client123', 'secret456')
+
+    // Then
+    expect(shopifyFetch).toHaveBeenCalledWith(
+      'https://mystore.myshopify.com/admin/oauth/access_token',
+      expect.anything(),
+      'slow-request',
+    )
+    expect(got).toEqual({token: 'app_access_token', storeFqdn: 'mystore.myshopify.com'})
+  })
+
+  test('only sends the client secret to a Shopify store domain', async () => {
+    // Given
+    vi.mocked(shopifyFetch).mockResolvedValueOnce({
+      status: 200,
+      text: async () => JSON.stringify({access_token: 'app_access_token'}),
+    } as any)
+
+    // When
+    await ensureAuthenticatedAdminAsApp('evil.attacker.test', 'client123', 'secret456')
+
+    // Then
+    expect(shopifyFetch).toHaveBeenCalledWith(
+      'https://evil.attacker.test.myshopify.com/admin/oauth/access_token',
+      expect.anything(),
+      'slow-request',
+    )
+  })
+
+  test.each(['evil.attacker.test:8443', 'mystore.myshopify.com:8443', 'user@mystore.myshopify.com'])(
+    'rejects %s without sending the client secret',
+    async (store) => {
+      // When
+      const got = ensureAuthenticatedAdminAsApp(store, 'client123', 'secret456')
+
+      // Then
+      await expect(got).rejects.toThrow(`Invalid store value: ${store}`)
+      expect(shopifyFetch).not.toHaveBeenCalled()
+    },
+  )
 })
