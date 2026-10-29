@@ -219,6 +219,18 @@ describe('getOnMessageHandler()', () => {
     // Verify no client messages were sent since this was a log event
     wss.clients.forEach((ws) => expect(ws.send).not.toHaveBeenCalled())
   })
+
+  test('ignores an incoming message that is not JSON', () => {
+    const wss = getMockWebsocketServer()
+    const options = getMockSetupWebSocketConnectionOptions()
+    const data = Buffer.from('not json') as unknown as RawData
+
+    expect(() => getOnMessageHandler(wss, options)(data)).not.toThrow()
+
+    expect(options.payloadStore.updateApp).not.toHaveBeenCalled()
+    expect(options.payloadStore.updateExtensions).not.toHaveBeenCalled()
+    wss.clients.forEach((ws) => expect(ws.send).not.toHaveBeenCalled())
+  })
 })
 
 describe('parseLogMessage()', () => {
