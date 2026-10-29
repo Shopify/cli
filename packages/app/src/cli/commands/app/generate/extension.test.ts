@@ -93,28 +93,54 @@ test.each([{flags: ['--flavor', 'preact']}, {flags: ['--flavor=preact']}])(
   },
 )
 
-test.each(['', 'liquid', 'config-only', 'future-flavor'])(
-  'delegates validation of %j to the generator',
+test.each(['vanilla-js', 'react', 'typescript', 'typescript-react', 'rust', 'wasm', 'liquid', 'config-only'])(
+  'accepts the known flavor %s',
   async (flavor) => {
     await withApp(async (directory) => {
       await withCapturedStandardStreams(async () => {
         await runCommand(directory, ['--no-input', '--flavor', flavor])
         await runCommand(directory, ['--no-input', `--flavor=${flavor}`])
       })
-      expect(generate).toHaveBeenCalledWith(expect.objectContaining({flavor}))
+      expect(generate).toHaveBeenNthCalledWith(1, expect.objectContaining({flavor}))
+      expect(generate).toHaveBeenNthCalledWith(2, expect.objectContaining({flavor}))
     })
   },
 )
 
-test('delegates validation of a flavor from the environment to the generator', async () => {
-  vi.stubEnv('SHOPIFY_FLAG_FLAVOR', 'future-flavor')
+test.each(['', 'future-flavor', 'precat'])('rejects flavor %j before loading the app or generating', async (flavor) => {
+  await withApp(async (directory) => {
+    await withCapturedStandardStreams(async () => {
+      await expect(runCommand(directory, ['--no-input', '--flavor', flavor])).rejects.toThrow('to be one of:')
+      await expect(runCommand(directory, ['--no-input', `--flavor=${flavor}`])).rejects.toThrow('to be one of:')
+    })
+    expect(linkedAppContext).not.toHaveBeenCalled()
+    expect(generate).not.toHaveBeenCalled()
+  })
+})
+
+test('accepts a known flavor from the environment', async () => {
+  vi.stubEnv('SHOPIFY_FLAG_FLAVOR', 'liquid')
   await withApp(async (directory) => {
     await withCapturedStandardStreams(async () => {
       await runCommand(directory, ['--no-input'])
     })
-    expect(generate).toHaveBeenCalledWith(expect.objectContaining({flavor: 'future-flavor'}))
+    expect(generate).toHaveBeenCalledWith(expect.objectContaining({flavor: 'liquid'}))
   })
 })
+
+test.each(['future-flavor', 'precat'])(
+  'rejects unknown environment flavor %j before loading the app',
+  async (flavor) => {
+    vi.stubEnv('SHOPIFY_FLAG_FLAVOR', flavor)
+    await withApp(async (directory) => {
+      await withCapturedStandardStreams(async () => {
+        await expect(runCommand(directory, ['--no-input'])).rejects.toThrow('to be one of:')
+      })
+      expect(linkedAppContext).not.toHaveBeenCalled()
+      expect(generate).not.toHaveBeenCalled()
+    })
+  },
+)
 
 test.each([
   {flags: ['--json'], environment: false},

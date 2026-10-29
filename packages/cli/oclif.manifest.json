@@ -2713,6 +2713,17 @@
           "hidden": false,
           "multiple": false,
           "name": "flavor",
+          "options": [
+            "vanilla-js",
+            "preact",
+            "react",
+            "typescript",
+            "typescript-react",
+            "rust",
+            "wasm",
+            "liquid",
+            "config-only"
+          ],
           "type": "option"
         },
         "json": {
