@@ -319,8 +319,8 @@ describe('DevSessionLogger', () => {
 
       expect(output).toMatchInlineSnapshot(`
         [
-          "[90m│ [39mConfiguration accepted",
-          "[90m└ [39mConfiguration accepted",
+          "[90m│ [39mExtension initialized",
+          "[90m└ [39mExtension initialized",
         ]
       `)
     })

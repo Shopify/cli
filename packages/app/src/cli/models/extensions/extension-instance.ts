@@ -44,7 +44,7 @@ const DEFAULT_WATCH_IGNORE = [
   '**/.gitignore',
 ]
 
-export const DEFAULT_DEV_SESSION_UPDATE_MESSAGE = 'Configuration accepted'
+export const DEFAULT_DEV_SESSION_UPDATE_MESSAGE = 'Extension initialized'
 
 /**
  * Class that represents an instance of a local extension
