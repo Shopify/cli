@@ -2707,7 +2707,7 @@
           "type": "option"
         },
         "flavor": {
-          "description": "Choose a starting template for your extension, where applicable. Required if non interactive when the selected extension template supports multiple flavors.",
+          "description": "Choose a starting template for your extension, where applicable. Supported flavors depend on the selected extension template. Required if non interactive when the selected extension template supports multiple flavors.",
           "env": "SHOPIFY_FLAG_FLAVOR",
           "hasDynamicHelp": false,
           "hidden": false,
@@ -2719,8 +2719,10 @@
             "react",
             "typescript",
             "typescript-react",
+            "rust",
             "wasm",
-            "rust"
+            "liquid",
+            "config-only"
           ],
           "type": "option"
         },
