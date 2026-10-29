@@ -367,8 +367,12 @@ change. It is binding: a PR that breaks a rule it carries comes back.
   focused tests (`pnpm vitest run <path>`), then `pnpm nx run-many --all --target=type-check` and
   `pnpm nx run-many --all --target=lint`. A change to a command, flag, help text, GraphQL query or
   documented function also needs the generator that CI checks for it (`pnpm refresh-manifests`,
-  `pnpm refresh-readme`, `pnpm graphql-codegen`, `pnpm refresh-code-documentation`). Commit the
-  generated files it changes.
+  `pnpm refresh-readme`, `pnpm graphql-codegen`, `pnpm refresh-code-documentation`). For a command
+  addition or removal, also run `pnpm test:regenerate-snapshots`. For command, flag, or help changes,
+  regenerate shopify.dev docs with `pnpm shopify docs generate`, then
+  `pnpm exec generate-docs --input ./docs-shopify.dev/commands/interfaces --output ./docs-shopify.dev/generated`.
+  Use these direct commands instead of `pnpm build-dev-docs`, whose script can also copy into
+  `$HOME/world` outside the worktree. Commit the generated files these commands change.
 - **Required checks.** Read them at pickup, because they change:
   `gh api repos/Shopify/cli/branches/main --jq '.protection.required_status_checks.contexts'`.
   Record the list in the workpad. They are the checks in §4 and §9. `Unit tests` is a gate over
