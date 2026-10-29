@@ -36,6 +36,11 @@ export function getConnectionDoneHandler(wss: WebSocketServer, options: SetupWeb
     outputDebug(outputContent`Sending connected payload: ${outputToken.json(connectedPayload)}`, options.stdout)
     ws.send(JSON.stringify(connectedPayload))
     ws.on('message', getOnMessageHandler(wss, options))
+    // Without an error listener, a client that breaks the protocol crashes the process.
+    // ws closes the failing connection by itself, so logging is enough.
+    ws.on('error', (error) => {
+      outputDebug(`Websocket connection error: ${error.message}`, options.stdout)
+    })
   }
 }
 
