@@ -78,7 +78,8 @@ function automationTokenExchangeMessages(
 ): {message: string; tryMessage: TokenItem} {
   const prettyName = apiName.replace(/-/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
   const variable = automationTokenVariable() ?? environmentVariables.serviceAccountToken
-  const admin: TokenItem = ['in the Shopify admin under', {subdued: 'Settings > Users > Security'}]
+  // Named loosely on purpose: the admin page that manages service accounts has moved before and can move again.
+  const admin: TokenItem = ["in your organization's settings in the Shopify admin"]
 
   switch (automationTokenExchangeFailure(cause)) {
     case 'missing_access': {
