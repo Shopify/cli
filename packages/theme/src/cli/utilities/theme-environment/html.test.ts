@@ -78,6 +78,42 @@ describe('getHtmlHandler', async () => {
     expect(ctx.lastRequestedPath).toStrictEqual('/previous-page')
   })
 
+  test('forwards the navigation fetch metadata and the redirect to another site from the exit page', async () => {
+    // Given
+    const handler = getHtmlHandler(theme, ctx)
+    const event = createH3Event('GET', '/url?q=https%3A%2F%2Fexample.com%2F&trigger=click', {
+      accept: 'text/html',
+      'sec-fetch-mode': 'navigate',
+      'sec-fetch-site': 'same-origin',
+    })
+
+    vi.mocked(render).mockResolvedValueOnce(
+      new Response(null, {
+        status: 302,
+        headers: {Location: 'https://example.com/', 'x-request-id': 'test-request-id'},
+      }),
+    )
+
+    // When
+    const response = await handler(event)
+
+    // Then
+    expect(render).toHaveBeenCalledWith(
+      ctx.session,
+      expect.objectContaining({
+        method: 'GET',
+        path: '/url',
+        query: [
+          ['q', 'https://example.com/'],
+          ['trigger', 'click'],
+        ],
+        headers: expect.objectContaining({'sec-fetch-mode': 'navigate', 'sec-fetch-site': 'same-origin'}),
+      }),
+    )
+    expect(response.status).toBe(302)
+    expect(response.headers.get('Location')).toBe('https://example.com/')
+  })
+
   test('the development server session recovers when a theme id mismatch occurs', async () => {
     // Given
     const handler = getHtmlHandler(theme, ctx)

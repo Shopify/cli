@@ -6,9 +6,16 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {getThemeKitAccessDomain} from '@shopify/cli-kit/node/context/local'
 import {recordError} from '@shopify/cli-kit/node/analytics'
+import {fetch as nodeFetch} from '@shopify/cli-kit/node/http'
 
 /** Query params that the renderer sets on every storefront request. */
 export const STOREFRONT_RENDERER_QUERY_PARAMS = {_fd: '0', pb: '0'}
+
+/**
+ * The storefront page that confirms a shopper wants to leave the store
+ * (`/url` or `/:locale/url`). Storefront links to other sites go through it.
+ */
+const EXIT_PAGE_PATH_REGEX = /^(?:\/[a-z]{2,3}(?:-[a-zA-Z0-9]{2,})?)?\/url\/?$/
 
 export async function render(session: DevServerSession, context: DevServerRenderContext): Promise<Response> {
   const url = buildStorefrontUrl(session, context)
@@ -21,7 +28,13 @@ export async function render(session: DevServerSession, context: DevServerRender
 
   const replaceTemplates = Object.keys({...context.replaceTemplates, ...context.replaceExtensionTemplates})
 
-  if (replaceTemplates.length > 0) {
+  if (isExitPageRequest(context)) {
+    outputDebug(`→ Rendering ${url} (exit page)...`)
+
+    response = await fetchExitPage(url, requestHeaders).catch((error) => {
+      throw createFetchError(recordError(error), url)
+    })
+  } else if (replaceTemplates.length > 0) {
     outputDebug(`→ Rendering ${url} (with ${replaceTemplates})...`)
 
     const bodyParams = storefrontReplaceTemplatesParams(context)
@@ -66,6 +79,35 @@ export async function render(session: DevServerSession, context: DevServerRender
   }
 
   return response
+}
+
+function isExitPageRequest({method, path}: Pick<DevServerRenderContext, 'method' | 'path'>) {
+  return method.toUpperCase() === 'GET' && EXIT_PAGE_PATH_REGEX.test(path)
+}
+
+/**
+ * The exit page only redirects to another site when the request is a real
+ * navigation (`Sec-Fetch-Mode: navigate`), as it is for the browser's request
+ * to the local server. Node's global `fetch` always replaces the
+ * `Sec-Fetch-Mode` header with its own request mode (`cors`), so the page would
+ * always show the confirmation instead. The CLI's `fetch` sends the header as
+ * is. The exit page doesn't render theme templates, so it's always a GET.
+ */
+async function fetchExitPage(url: string, headers: Record<string, string>): Promise<Response> {
+  const response = await nodeFetch(url, {method: 'GET', redirect: 'manual', headers}, 'slow-request')
+
+  const responseHeaders = new Headers()
+  for (const [key, values] of Object.entries(response.headers.raw())) {
+    for (const value of values) responseHeaders.append(key, value)
+  }
+
+  const hasNullBody = [101, 103, 204, 205, 304].includes(response.status)
+
+  return new Response(hasNullBody ? null : await response.arrayBuffer(), {
+    status: response.status,
+    statusText: response.statusText,
+    headers: responseHeaders,
+  })
 }
 
 export async function buildHeaders(session: DevServerSession, context: Pick<DevServerRenderContext, 'headers'>) {
