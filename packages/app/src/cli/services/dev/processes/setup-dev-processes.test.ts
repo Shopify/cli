@@ -5,6 +5,7 @@ import {WebProcess, launchWebProcess} from './web.js'
 import {PreviewableExtensionProcess, launchPreviewableExtensionProcess} from './previewable-extension.js'
 import {launchGraphiQLServer} from './graphiql.js'
 import {pushUpdatesForDevSession} from './dev-session/dev-session-process.js'
+import {DevSessionStatusManager} from './dev-session/dev-session-status-manager.js'
 import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {launchAppWatcher} from './app-watcher-process.js'
 import {
@@ -145,21 +146,31 @@ describe('setup-dev-processes', () => {
 
     const graphiqlKey = 'somekey'
 
-    const res = await setupDevProcesses({
-      localApp,
-      commandOptions,
-      network,
-      remoteApp,
-      remoteAppUpdated,
-      storeFqdn,
-      storeId,
-      developerPlatformClient,
-      partnerUrlsUpdated: true,
-      graphiqlPort,
-      graphiqlKey,
-    })
+    const devSessionStatusManager = new DevSessionStatusManager()
+    devSessionStatusManager.setMessage('LOADING')
+    const res = await setupDevProcesses(
+      {
+        localApp,
+        commandOptions,
+        network,
+        remoteApp,
+        remoteAppUpdated,
+        storeFqdn,
+        storeId,
+        developerPlatformClient,
+        partnerUrlsUpdated: true,
+        graphiqlPort,
+        graphiqlKey,
+      },
+      devSessionStatusManager,
+    )
 
     expect(res.previewUrl).toBe('https://admin.shopify.com/store/store/apps/api-key?dev-console=show')
+    expect(res.devSessionStatusManager).toBe(devSessionStatusManager)
+    expect(res.devSessionStatusManager.status).toMatchObject({
+      previewURL: res.previewUrl,
+      statusMessage: {message: 'Preparing dev preview', type: 'loading'},
+    })
     expect(res.processes[0]).toMatchObject({
       type: 'web',
       prefix: 'web-backend-frontend',
