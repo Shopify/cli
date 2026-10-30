@@ -1,9 +1,12 @@
 import {Scrollbar} from './Scrollbar.js'
+import {useOnClick, useOnMouseEnter} from './Mouse.js'
+import {getMouseEnabled} from '../../conf-store.js'
 import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {useSelectState} from '../hooks/use-select-state.js'
 import React, {useCallback, useEffect} from 'react'
 import {Box, Key, useInput, Text, DOMElement} from 'ink'
+import {type InkMouseEvent} from '@ink-tools/ink-mouse'
 import chalk from 'chalk'
 import figures from 'figures'
 import sortBy from 'lodash/sortBy.js'
@@ -74,6 +77,8 @@ interface ItemProps<T> {
   enableShortcuts: boolean
   hasAnyGroup: boolean
   index: number
+  onClick?: () => void
+  onHover?: () => void
 }
 
 function Item<T>({
@@ -85,7 +90,19 @@ function Item<T>({
   items,
   hasAnyGroup,
   index,
+  onClick,
+  onHover,
 }: ItemProps<T>): React.ReactElement {
+  const itemRef = React.useRef<DOMElement>(null)
+  const handleClick = useCallback(
+    (event: InkMouseEvent) => {
+      if (event.button === 'left') onClick?.()
+    },
+    [onClick],
+  )
+  useOnClick(itemRef, onClick ? handleClick : undefined)
+  useOnMouseEnter(itemRef, onHover)
+
   const label = highlightedLabel(item.label, highlightedTerm)
   let title: string | undefined
   let labelColor
@@ -115,7 +132,7 @@ function Item<T>({
         </Box>
       ) : null}
 
-      <Box key={index} marginLeft={hasAnyGroup ? 3 : 0}>
+      <Box ref={itemRef} key={index} marginLeft={hasAnyGroup ? 3 : 0}>
         <Box marginRight={2}>{isSelected ? <Text color="cyan">{`>`}</Text> : <Text> </Text>}</Box>
         <Text wrap="end" color={labelColor}>
           {showKey ? `(${item.key}) ${label}` : label}
@@ -126,6 +143,18 @@ function Item<T>({
 }
 
 const MAX_AVAILABLE_LINES = 25
+
+function selectInputHelpText(itemsHaveKeys: boolean, mouseEnabled: boolean): string {
+  if (mouseEnabled && itemsHaveKeys) {
+    return `Use ${figures.arrowUp}${figures.arrowDown} to select; press enter, use a shortcut, or click an option.`
+  }
+  if (mouseEnabled) {
+    return `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter to confirm, or click an option.`
+  }
+  return `Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter ${
+    itemsHaveKeys ? 'or a shortcut ' : ''
+  }to confirm.`
+}
 
 function SelectInput<T>({
   items: rawItems,
@@ -146,6 +175,7 @@ function SelectInput<T>({
   ref,
   groupOrder,
 }: SelectInputProps<T>): React.ReactElement | null {
+  const mouseEnabled = getMouseEnabled()
   let noItems = false
 
   if (rawItems.length === 0) {
@@ -222,6 +252,23 @@ function SelectInput<T>({
     [items, onSubmit, state],
   )
 
+  const handleClick = useCallback(
+    (item: Item<T>) => {
+      if (item.disabled) return
+
+      if (onSubmit) onSubmit(item)
+      state.selectOption({option: item})
+    },
+    [onSubmit, state],
+  )
+
+  const handleHover = useCallback(
+    (item: Item<T>) => {
+      if (!item.disabled) state.selectOption({option: item})
+    },
+    [state],
+  )
+
   useInput(
     (input, key) => {
       handleCtrlC(input, key)
@@ -277,6 +324,8 @@ function SelectInput<T>({
                 enableShortcuts={enableShortcuts}
                 hasAnyGroup={hasAnyGroup}
                 index={index}
+                onClick={focus ? () => handleClick(item) : undefined}
+                onHover={focus ? () => handleHover(item) : undefined}
               />
             ))}
           </Box>
@@ -298,11 +347,7 @@ function SelectInput<T>({
             </Box>
           ) : (
             <Box marginLeft={3} flexDirection="column">
-              <Text dimColor>
-                {`Press ${figures.arrowUp}${figures.arrowDown} arrows to select, enter ${
-                  itemsHaveKeys ? 'or a shortcut ' : ''
-                }to confirm.`}
-              </Text>
+              <Text dimColor>{selectInputHelpText(itemsHaveKeys, mouseEnabled)}</Text>
               {hasMorePages ? (
                 <Text>
                   <Text bold>1-{items.length} of many</Text>
