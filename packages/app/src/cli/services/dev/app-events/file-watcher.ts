@@ -136,6 +136,7 @@ export class FileWatcher {
 
     // Create new watcher
     const {default: chokidar} = await import('chokidar')
+    const pollingOverride = process.env.CHOKIDAR_USEPOLLING?.toLowerCase()
     const cargoProjects = new Map<string, boolean>()
     this.watcher = chokidar.watch(watchPaths, {
       ignored: [
@@ -152,6 +153,8 @@ export class FileWatcher {
       ],
       persistent: true,
       ignoreInitial: true,
+      // Chokidar selects FSEvents before it reads the environment override.
+      usePolling: pollingOverride ? !['false', '0'].includes(pollingOverride) : undefined,
     })
 
     this.watcher.on('all', this.handleFileEvent)
