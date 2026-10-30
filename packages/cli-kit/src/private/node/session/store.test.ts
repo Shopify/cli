@@ -1,6 +1,6 @@
 import {Sessions} from './schema.js'
 import {store, fetch, remove, getSessionAlias, setSessionAlias, findSessionByAlias} from './store.js'
-import {getSessions, removeSessions, setSessions, removeCurrentSessionId} from '../conf-store.js'
+import {getSessions, removeSessions, setSessions, removeCurrentSessionId, withSessionStoreLock} from '../conf-store.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 
 import {describe, expect, vi, test, beforeEach} from 'vitest'
@@ -37,6 +37,7 @@ const mockSessions: Sessions = {
 describe('session store', () => {
   beforeEach(() => {
     vi.mocked(identityFqdn).mockResolvedValue('identity.fqdn.com')
+    vi.mocked(withSessionStoreLock).mockImplementation(async (action) => action())
   })
 
   describe('store', () => {
@@ -45,7 +46,7 @@ describe('session store', () => {
       await store(mockSessions)
 
       // Then
-      expect(setSessions).toHaveBeenCalledWith(JSON.stringify(mockSessions))
+      expect(setSessions).toHaveBeenCalledWith(JSON.stringify(mockSessions), undefined)
     })
   })
 
@@ -72,32 +73,26 @@ describe('session store', () => {
       expect(result).toEqual(mockSessions)
     })
 
-    test('returns undefined and discards malformed JSON session content', async () => {
+    test('preserves malformed JSON session content and reports an error', async () => {
       // Given
       vi.mocked(getSessions).mockReturnValue('{not valid json')
 
       // When
-      const result = await fetch()
-
-      // Then
-      expect(result).toBeUndefined()
-      expect(removeSessions).toHaveBeenCalled()
-      expect(removeCurrentSessionId).toHaveBeenCalled()
+      await expect(fetch()).rejects.toThrow('The saved CLI accounts could not be read')
+      expect(removeSessions).not.toHaveBeenCalled()
+      expect(removeCurrentSessionId).not.toHaveBeenCalled()
     })
 
-    test('returns undefined and discards schema-invalid session content', async () => {
+    test('preserves schema-invalid session content and reports an error', async () => {
       // Given
       vi.mocked(getSessions).mockReturnValue(JSON.stringify({not: 'a valid sessions object'}))
       vi.mocked(removeSessions).mockClear()
       vi.mocked(removeCurrentSessionId).mockClear()
 
       // When
-      const result = await fetch()
-
-      // Then
-      expect(result).toBeUndefined()
-      expect(removeSessions).toHaveBeenCalled()
-      expect(removeCurrentSessionId).toHaveBeenCalled()
+      await expect(fetch()).rejects.toThrow('The saved CLI accounts could not be read')
+      expect(removeSessions).not.toHaveBeenCalled()
+      expect(removeCurrentSessionId).not.toHaveBeenCalled()
     })
 
     test('rethrows non-SyntaxError parse failures without discarding sessions', async () => {
