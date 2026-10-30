@@ -392,8 +392,8 @@ export function logout(): Promise<void> {
  *
  * See `ensureAuthenticatedAdmin` for access on behalf of a user.
  *
- * @param storeFqdn - Store fqdn to request auth for. It is normalized with `normalizeStoreFqdn`, so values that
- * aren't a store handle or Shopify store domain are rejected before the client secret is sent.
+ * @param storeFqdn - Store handle or domain, normalized with `normalizeStoreFqdn`. Unsupported URL components are
+ * rejected before the client secret is sent.
  * @param clientId - Client ID of the app.
  * @param clientSecret - Client secret of the app.
  * @returns The access token for the Admin API.
