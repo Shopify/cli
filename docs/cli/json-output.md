@@ -257,6 +257,11 @@ the session never changes the running process's log.
 Setup prompts still use stderr. Use `--json --no-input` for unattended runs. `app dev --json-schema` describes the
 stream's event and fatal error formats. This streaming contract does not change the single-document rule for finite commands.
 
+`shopify theme dev --json` also mirrors its session log to stdout as JSONL, with
+`timestamp` and `message` in each record. Theme records omit `source` because all
+messages belong to the same session. Setup diagnostics and fatal errors follow
+the same stream separation as `app dev`.
+
 Long-lived commands that produce an open-ended event stream don't have one finite result. Track these exemptions in
 `packages/eslint-plugin-cli/rules/json-output-command-exceptions.js`, in its streaming section. Add the command's
 repository-relative path:

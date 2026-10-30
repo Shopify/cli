@@ -29,7 +29,7 @@ export function setupDevServer(theme: Theme, ctx: DevServerContext) {
   const workPromise = Promise.all([watcherPromise, envSetup.workPromise]).then(() =>
     ctx.localThemeFileSystem.startWatcher(theme.id.toString(), ctx.session),
   )
-  const server = createDevelopmentServer(theme, ctx, workPromise)
+  const server = createDevelopmentServer(theme, ctx, workPromise, rejectBackgroundJob)
 
   return {
     workPromise,
@@ -142,7 +142,12 @@ interface DevelopmentServerInstance {
   close: () => Promise<void>
 }
 
-function createDevelopmentServer(theme: Theme, ctx: DevServerContext, initialWork: Promise<void>) {
+function createDevelopmentServer(
+  theme: Theme,
+  ctx: DevServerContext,
+  initialWork: Promise<void>,
+  rejectBackgroundJob: (reason?: unknown) => void,
+) {
   const app = createApp()
   const allowedOrigins = [
     `http://${ctx.options.host}:${ctx.options.port}`,
@@ -179,7 +184,7 @@ function createDevelopmentServer(theme: Theme, ctx: DevServerContext, initialWor
 
   app.use(getAssetsHandler(theme, ctx))
   app.use(getProxyHandler(theme, ctx))
-  app.use(getHtmlHandler(theme, ctx))
+  app.use(getHtmlHandler(theme, ctx, rejectBackgroundJob))
 
   const server = createServer(toNodeListener(app))
 

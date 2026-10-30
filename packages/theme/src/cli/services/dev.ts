@@ -57,6 +57,7 @@ interface DevOptions {
   only: string[]
   notify?: string
   listing?: string
+  json?: boolean
 }
 
 export async function dev(options: DevOptions) {
@@ -95,6 +96,7 @@ export async function dev(options: DevOptions) {
       command: 'theme dev',
       directory: options.directory,
       key: `${options.store}:${options.theme.id}`,
+      logOutput: options.json ? process.stdout : undefined,
       details: {
         store: options.store,
         themeId: options.theme.id,
@@ -111,10 +113,13 @@ export async function dev(options: DevOptions) {
       process.on('SIGTERM', stop)
       instance.abortSignal.addEventListener('abort', onInstanceError, {once: true})
       try {
-        await withThemeDevOutput(instance, () =>
-          runDev(options, instance, controller).catch((error: unknown) => {
-            if (!controller.signal.aborted || error !== controller.signal.reason) throw error
-          }),
+        await withThemeDevOutput(
+          instance,
+          () =>
+            runDev(options, instance, controller).catch((error: unknown) => {
+              if (!controller.signal.aborted || error !== controller.signal.reason) throw error
+            }),
+          options.json,
         )
         instance.abortSignal.throwIfAborted()
       } finally {
@@ -222,7 +227,7 @@ async function runDev(options: DevOptions, instance: DevInstance, controller: Ab
     options.theme,
     ctx,
   )
-  const acceptsInput = terminalSupportsPrompting()
+  const acceptsInput = !options.json && terminalSupportsPrompting()
   const keypressHandler = createKeypressHandler(urls, ctx, () => controller.abort())
   const {promise: stopped, resolve: resolveStopped} = Promise.withResolvers<void>()
   const onAbort = () => resolveStopped()
