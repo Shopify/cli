@@ -1,5 +1,5 @@
-import {buildFunctionExtension} from './extension.js'
-import {testFunctionExtension} from '../../models/app/app.test-data.js'
+import {buildFunctionExtension, buildUIExtension} from './extension.js'
+import {testFunctionExtension, testUIExtension} from '../../models/app/app.test-data.js'
 import {buildGraphqlTypes, buildJSFunction, runWasmOpt, runTrampoline} from '../function/build.js'
 import {validateSchemaApiVersion} from '../function/schema-version.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
@@ -525,6 +525,30 @@ describe('buildFunctionExtension', () => {
       expect(fs.fileExistsSync(customPath)).toBe(true)
       expect(touchFileSpy).not.toHaveBeenCalled()
       expect(writeFileSpy).not.toHaveBeenCalled()
+    })
+  })
+})
+
+describe('buildUIExtension', () => {
+  test('aborts with a clear error when skipBuild is set and the web pixel bundle is missing', async () => {
+    await fs.inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extension = await testUIExtension({type: 'web_pixel_extension', directory: tmpDir})
+      const options = {
+        stdout: {write: vi.fn()} as unknown as Writable,
+        stderr: {write: vi.fn()} as unknown as Writable,
+        app: {} as any,
+        environment: 'production' as const,
+        skipBuild: true,
+      }
+      const localOutputPath = joinPath(tmpDir, extension.outputRelativePath)
+
+      // When
+      const result = buildUIExtension(extension, options)
+
+      // Then
+      await expect(result).rejects.toThrowError(AbortError)
+      await expect(result).rejects.toThrow(`Couldn't find the build output at ${localOutputPath}`)
     })
   })
 })
