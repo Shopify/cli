@@ -2,6 +2,7 @@ import {shopifyFetch} from './http.js'
 import {nonRandomUUID} from './crypto.js'
 import {getAppAutomationToken} from './environment.js'
 import {AbortError, BugError} from './error.js'
+import {normalizeStoreFqdn} from './context/fqdn.js'
 import {outputContent, outputToken, outputDebug} from './output.js'
 import * as sessionStore from '../../private/node/session/store.js'
 import {automationTokenVariable} from '../../private/node/session/automation-token.js'
@@ -391,7 +392,8 @@ export function logout(): Promise<void> {
  *
  * See `ensureAuthenticatedAdmin` for access on behalf of a user.
  *
- * @param storeFqdn - Store fqdn to request auth for.
+ * @param storeFqdn - Store handle or domain, normalized with `normalizeStoreFqdn`. Unsupported URL components are
+ * rejected before the client secret is sent.
  * @param clientId - Client ID of the app.
  * @param clientSecret - Client secret of the app.
  * @returns The access token for the Admin API.
@@ -401,13 +403,14 @@ export async function ensureAuthenticatedAdminAsApp(
   clientId: string,
   clientSecret: string,
 ): Promise<AdminSession> {
+  const normalizedStoreFqdn = normalizeStoreFqdn(storeFqdn)
   const bodyData = {
     client_id: clientId,
     client_secret: clientSecret,
     grant_type: 'client_credentials',
   }
   const tokenResponse = await shopifyFetch(
-    `https://${storeFqdn}/admin/oauth/access_token`,
+    `https://${normalizedStoreFqdn}/admin/oauth/access_token`,
     {
       method: 'POST',
       headers: {
@@ -424,17 +427,17 @@ export async function ensureAuthenticatedAdminAsApp(
     if (body.includes('app_not_installed')) {
       throw new AbortError(
         outputContent`App is not installed on ${outputToken.green(
-          storeFqdn,
+          normalizedStoreFqdn,
         )}. Try running ${outputToken.genericShellCommand(`shopify app dev`)} to connect your app to the shop.`,
       )
     }
     throw new AbortError(
-      `Failed to get access token for app ${clientId} on store ${storeFqdn}: ${tokenResponse.statusText}`,
+      `Failed to get access token for app ${clientId} on store ${normalizedStoreFqdn}: ${tokenResponse.statusText}`,
     )
   }
   try {
     const tokenJson = JSON.parse(body) as {access_token: string}
-    return {token: tokenJson.access_token, storeFqdn}
+    return {token: tokenJson.access_token, storeFqdn: normalizedStoreFqdn}
   } catch (error) {
     if (error instanceof SyntaxError) {
       throw new AbortError(
