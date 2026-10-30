@@ -78,3 +78,18 @@ test('preserves inherited terminal streams after a global upgrade', async () => 
   expect(stdoutEnd).not.toHaveBeenCalled()
   expect(stderrEnd).not.toHaveBeenCalled()
 })
+
+test('passes environment overrides to the package manager in JSON mode', async () => {
+  const exec = vi.spyOn(system, 'exec').mockResolvedValue(undefined)
+  const env = {HOMEBREW_NO_AUTO_UPDATE: '1'}
+
+  await runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, async () => {
+    await execUpgradeCommand('brew', ['upgrade', 'shopify-cli'], {env})
+  })
+
+  expect(exec).toHaveBeenCalledExactlyOnceWith(
+    'brew',
+    ['upgrade', 'shopify-cli'],
+    expect.objectContaining({env, stdin: 'inherit'}),
+  )
+})

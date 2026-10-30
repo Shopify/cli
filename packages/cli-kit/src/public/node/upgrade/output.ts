@@ -1,6 +1,6 @@
 import {commandEventOutputMode} from '../command-events.js'
 import {outputInfo} from '../output.js'
-import {exec} from '../system.js'
+import {exec, type ExecOptions} from '../system.js'
 import {Writable} from 'node:stream'
 import {StringDecoder} from 'node:string_decoder'
 
@@ -36,11 +36,19 @@ function diagnosticStream(): Writable {
  *
  * @param command - The package-manager executable.
  * @param args - The install arguments.
+ * @param options - Environment overrides for the package manager.
  */
-export async function execUpgradeCommand(command: string, args: string[]): Promise<void> {
+export async function execUpgradeCommand(
+  command: string,
+  args: string[],
+  options: Pick<ExecOptions, 'env'> = {},
+): Promise<void> {
   const streams = upgradeOutputStreams()
   try {
-    await exec(command, args, streams.stdout === process.stdout ? {stdio: 'inherit'} : {stdin: 'inherit', ...streams})
+    await exec(command, args, {
+      ...options,
+      ...(streams.stdout === process.stdout ? {stdio: 'inherit'} : {stdin: 'inherit', ...streams}),
+    })
   } finally {
     if (streams.stdout !== process.stdout) streams.stdout.end()
     if (streams.stderr !== process.stderr) streams.stderr.end()
