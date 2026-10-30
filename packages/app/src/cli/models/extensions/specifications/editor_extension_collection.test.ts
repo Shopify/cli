@@ -1,7 +1,6 @@
 import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
-import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
-import {placeholderAppConfiguration} from '../../app/app.test-data.js'
+import {unwrapExtensionInstance, placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
@@ -32,13 +31,9 @@ describe('editor_extension_collection', async () => {
 
     const config = parsed.data
 
-    return new ExtensionInstance({
-      configuration: config,
-      directory,
-      specification,
-      configurationPath,
-      entryPath: '',
-    })
+    return unwrapExtensionInstance(
+      await specification.createInstance({configurationObject: config, directory, configurationPath, entryPath: ''}),
+    )
   }
 
   describe('deployConfig()', () => {

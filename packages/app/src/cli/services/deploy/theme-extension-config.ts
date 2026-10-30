@@ -1,4 +1,4 @@
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../models/extensions/extension-instance.js'
 import {themeExtensionFiles} from '../../utilities/extensions/theme.js'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {relativePath, dirname} from '@shopify/cli-kit/node/path'
@@ -9,7 +9,7 @@ interface ThemeExtensionConfig {
   }
 }
 
-export async function themeExtensionConfig(themeExtension: ExtensionInstance): Promise<ThemeExtensionConfig> {
+export async function themeExtensionConfig(themeExtension: ExtensionInstanceRuntime): Promise<ThemeExtensionConfig> {
   const files: {[key: string]: string} = {}
   const themeFiles = await themeExtensionFiles(themeExtension.directory)
   await Promise.all(

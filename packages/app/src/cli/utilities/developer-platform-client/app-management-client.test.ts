@@ -17,7 +17,8 @@ import {
   testOrganization,
   testOrganizationStore,
 } from '../../models/app/app.test-data.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../models/extensions/extension-instance.js'
+import {BaseConfigType} from '../../models/extensions/schemas.js'
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
 import {
   FetchStoreByDomain,
@@ -103,7 +104,7 @@ const templateDisallowedByBetaFlag: GatedExtensionTemplate = {
   minimumCliVersion: '1.0.0',
 }
 
-function moduleFromExtension(extension: ExtensionInstance) {
+function moduleFromExtension(extension: ExtensionInstanceRuntime<BaseConfigType>) {
   return {
     uuid: extension.uid,
     userIdentifier: extension.uid,

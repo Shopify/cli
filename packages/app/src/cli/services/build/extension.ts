@@ -4,7 +4,7 @@ import {bundleExtension} from '../extensions/bundle.js'
 import {buildGraphqlTypes, buildJSFunction, runTrampoline, runWasmOpt} from '../function/build.js'
 import {validateSchemaApiVersion} from '../function/schema-version.js'
 import {type FunctionBuildResult} from '../function/build-command/types.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {ExtensionInstance, ExtensionInstanceRuntime} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {exec} from '@shopify/cli-kit/node/system'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -70,7 +70,10 @@ export interface ExtensionBuildOptions {
  * @param options - Build options.
  * @returns The local output path.
  */
-export async function buildUIExtension(extension: ExtensionInstance, options: ExtensionBuildOptions): Promise<string> {
+export async function buildUIExtension(
+  extension: ExtensionInstanceRuntime,
+  options: ExtensionBuildOptions,
+): Promise<string> {
   options.stdout.write(`Bundling UI extension ${extension.localIdentifier}...`)
   const env = options.app.dotenv?.variables ?? {}
   if (options.appURL) {
@@ -151,7 +154,7 @@ type BuildFunctionExtensionOptions = ExtensionBuildOptions
  * @param options - Options to configure the build of the extension.
  */
 export async function buildFunctionExtension(
-  extension: ExtensionInstance,
+  extension: ExtensionInstanceRuntime,
   options: BuildFunctionExtensionOptions,
 ): Promise<FunctionBuildResult> {
   const lockfilePath = joinPath(extension.directory, '.build-lock')
@@ -246,7 +249,10 @@ async function bundleFunctionExtension(wasmPath: string, bundlePath: string) {
   await writeFile(bundlePath, base64Contents)
 }
 
-async function runCommandOrBuildJSFunction(extension: ExtensionInstance, options: BuildFunctionExtensionOptions) {
+async function runCommandOrBuildJSFunction(
+  extension: ExtensionInstanceRuntime,
+  options: BuildFunctionExtensionOptions,
+) {
   if (extension.buildCommand) {
     if (extension.typegenCommand) {
       await buildGraphqlTypes(extension, options)
@@ -257,7 +263,7 @@ async function runCommandOrBuildJSFunction(extension: ExtensionInstance, options
   }
 }
 
-async function buildOtherFunction(extension: ExtensionInstance, options: BuildFunctionExtensionOptions) {
+async function buildOtherFunction(extension: ExtensionInstanceRuntime, options: BuildFunctionExtensionOptions) {
   if (!extension.buildCommand) {
     options.stderr.write(
       `The function extension ${extension.localIdentifier} doesn't have a build command or it's empty`,
@@ -278,7 +284,11 @@ async function buildOtherFunction(extension: ExtensionInstance, options: BuildFu
   return runCommand(extension.buildCommand, extension, options)
 }
 
-async function runCommand(buildCommand: string, extension: ExtensionInstance, options: BuildFunctionExtensionOptions) {
+async function runCommand(
+  buildCommand: string,
+  extension: ExtensionInstanceRuntime,
+  options: BuildFunctionExtensionOptions,
+) {
   const buildCommandComponents = buildCommand.split(' ')
   options.stdout.write(`Building function ${extension.localIdentifier}...`)
 

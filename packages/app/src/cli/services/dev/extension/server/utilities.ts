@@ -1,11 +1,11 @@
-import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../../../models/extensions/extension-instance.js'
 import {getUIExtensionResourceURL} from '../../../../utilities/extensions/configuration.js'
 import {getExtensionPointTargetSurface} from '../utilities.js'
 import {ExtensionsPayloadStoreOptions} from '../payload/store.js'
 import {createError, sendError as h3SendError} from 'h3'
 import type {H3Error, H3Event} from 'h3'
 
-export function getRedirectUrl(extension: ExtensionInstance, options: ExtensionsPayloadStoreOptions): string {
+export function getRedirectUrl(extension: ExtensionInstanceRuntime, options: ExtensionsPayloadStoreOptions): string {
   const {url: resourceUrl} = getUIExtensionResourceURL(extension.type, options)
 
   if (extension.surface === 'checkout' && resourceUrl) {
@@ -25,7 +25,7 @@ export function getRedirectUrl(extension: ExtensionInstance, options: Extensions
 
 export function getExtensionPointRedirectUrl(
   requestedTarget: string,
-  extension: ExtensionInstance,
+  extension: ExtensionInstanceRuntime,
   options: ExtensionsPayloadStoreOptions,
 ): string | undefined {
   const surface = getExtensionPointTargetSurface(requestedTarget)
@@ -79,7 +79,7 @@ export function getExtensionPointRedirectUrl(
 }
 
 function getCustomerAccountsRedirectUrl(
-  extension: ExtensionInstance,
+  extension: ExtensionInstanceRuntime,
   options: ExtensionsPayloadStoreOptions,
   requestedTarget = '',
 ): URL {
@@ -98,7 +98,7 @@ function getCustomerAccountsRedirectUrl(
   return rawUrl
 }
 
-export function getExtensionUrl(extension: ExtensionInstance, options: ExtensionsPayloadStoreOptions): string {
+export function getExtensionUrl(extension: ExtensionInstanceRuntime, options: ExtensionsPayloadStoreOptions): string {
   const extensionUrl = new URL(options.url)
   extensionUrl.pathname = `/extensions/${extension.devUUID}`
   return extensionUrl.toString()

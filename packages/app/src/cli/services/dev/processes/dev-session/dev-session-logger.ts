@@ -1,6 +1,6 @@
 import {DevSessionResult, UserError} from './dev-session.js'
 import {AppEvent, EventType} from '../../app-events/app-event-watcher.js'
-import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../../../models/extensions/extension-instance.js'
 import {DevSessionUpdateContext} from '../../../../models/extensions/specification.js'
 import {outputToken, outputContent, outputDebug} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
@@ -36,7 +36,7 @@ export class DevSessionLogger {
     await this.log(outputContent`${content}`.value, prefix)
   }
 
-  async logUserErrors(errors: UserError[] | Error | string, extensions: ExtensionInstance[]) {
+  async logUserErrors(errors: UserError[] | Error | string, extensions: ExtensionInstanceRuntime[]) {
     if (typeof errors === 'string') {
       await this.error(errors)
     } else if (errors instanceof Error) {

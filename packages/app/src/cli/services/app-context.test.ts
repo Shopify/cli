@@ -11,6 +11,7 @@ import {testOrganizationApp, testDeveloperPlatformClient, testOrganization} from
 import metadata from '../metadata.js'
 import * as loader from '../models/app/loader.js'
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
+import {createExtensionSpecification} from '../models/extensions/specification.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFile, mkdir, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
@@ -572,6 +573,7 @@ describe('localAppContext', () => {
       // Also include app_access and webhooks specs that contribute auth and webhooks to schema
       vi.mocked(loadLocalExtensionsSpecifications).mockResolvedValue([
         {
+          ...createExtensionSpecification({identifier: 'ui_extension', appModuleFeatures: () => []}),
           identifier: 'ui_extension',
           externalIdentifier: 'ui_extension',
           externalName: 'UI Extension',
@@ -596,6 +598,7 @@ describe('localAppContext', () => {
           contributeToAppConfigurationSchema: (schema: any) => schema,
         } as any,
         {
+          ...createExtensionSpecification({identifier: 'app_access', appModuleFeatures: () => []}),
           identifier: 'app_access',
           experience: 'configuration',
           uidStrategy: 'single',
@@ -611,6 +614,7 @@ describe('localAppContext', () => {
           },
         } as any,
         {
+          ...createExtensionSpecification({identifier: 'webhooks', appModuleFeatures: () => []}),
           identifier: 'webhooks',
           experience: 'configuration',
           uidStrategy: 'single',

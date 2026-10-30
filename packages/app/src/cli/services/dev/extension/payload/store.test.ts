@@ -6,7 +6,8 @@ import {
 } from './store.js'
 import {UIExtensionPayload, ExtensionsEndpointPayload} from './models.js'
 import * as payload from '../payload.js'
-import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../../../models/extensions/extension-instance.js'
+import {BaseConfigType} from '../../../../models/extensions/schemas.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 describe('getExtensionsPayloadStoreRawPayload()', () => {
@@ -22,9 +23,9 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
       url: 'https://mock-url.com',
       websocketURL: 'wss://mock-websocket-url.com',
       extensions: [
-        {specification: {}, isPreviewable: true},
-        {specification: {}, isPreviewable: true},
-        {specification: {}, isPreviewable: true},
+        {specification: {}, configuration: {}, isPreviewable: true},
+        {specification: {}, configuration: {}, isPreviewable: true},
+        {specification: {}, configuration: {}, isPreviewable: true},
       ],
       storeFqdn: 'mock-store-fqdn.myshopify.com',
       manifestVersion: '3',
@@ -295,7 +296,10 @@ describe('ExtensionsPayloadStore()', () => {
       } as unknown as ExtensionsEndpointPayload
 
       const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
-      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
+      const updatedExtension = {
+        devUUID: '123',
+        updated: 'extension',
+      } as unknown as ExtensionInstanceRuntime<BaseConfigType>
 
       // When
       await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, 'mock-bundle-path', {hidden: true})
@@ -327,7 +331,10 @@ describe('ExtensionsPayloadStore()', () => {
       } as unknown as ExtensionsEndpointPayload
 
       const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
-      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
+      const updatedExtension = {
+        devUUID: '123',
+        updated: 'extension',
+      } as unknown as ExtensionInstanceRuntime<BaseConfigType>
 
       // When
       await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, 'mock-bundle-path')
@@ -363,7 +370,10 @@ describe('ExtensionsPayloadStore()', () => {
       } as unknown as ExtensionsEndpointPayload
 
       const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
-      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
+      const updatedExtension = {
+        devUUID: '123',
+        updated: 'extension',
+      } as unknown as ExtensionInstanceRuntime<BaseConfigType>
 
       // When
       await extensionsPayloadStore.updateExtension(updatedExtension, mockOptions, 'mock-bundle-path')
@@ -397,7 +407,10 @@ describe('ExtensionsPayloadStore()', () => {
       } as unknown as ExtensionsEndpointPayload
 
       const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
-      const updatedExtension = {devUUID: '123', updated: 'extension'} as unknown as ExtensionInstance
+      const updatedExtension = {
+        devUUID: '123',
+        updated: 'extension',
+      } as unknown as ExtensionInstanceRuntime<BaseConfigType>
       const onUpdateSpy = vi.fn()
 
       extensionsPayloadStore.on(ExtensionsPayloadStoreEvent.Update, onUpdateSpy)
@@ -416,7 +429,10 @@ describe('ExtensionsPayloadStore()', () => {
       } as unknown as ExtensionsEndpointPayload
 
       const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
-      const updatedExtension = {devUUID: '789', updated: 'extension'} as unknown as ExtensionInstance
+      const updatedExtension = {
+        devUUID: '789',
+        updated: 'extension',
+      } as unknown as ExtensionInstanceRuntime<BaseConfigType>
       const onUpdateSpy = vi.fn()
       const initialRawPayload = extensionsPayloadStore.getRawPayload()
 
@@ -442,7 +458,7 @@ describe('ExtensionsPayloadStore()', () => {
       const store = new ExtensionsPayloadStore(mockPayload, mockOptions, assetResolvers)
 
       // When
-      store.deleteExtension({devUUID: '123'} as unknown as ExtensionInstance)
+      store.deleteExtension({devUUID: '123'} as unknown as ExtensionInstanceRuntime<BaseConfigType>)
 
       // Then
       expect(store.getAssetResolver('123')).toBeUndefined()

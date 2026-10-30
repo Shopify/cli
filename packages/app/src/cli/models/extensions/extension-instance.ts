@@ -1,10 +1,17 @@
-import {BaseConfigType, BaseExtensionConfigType, MAX_EXTENSION_HANDLE_LENGTH, MAX_UID_LENGTH} from './schemas.js'
+import {
+  BaseConfigType,
+  BaseExtensionConfigType,
+  BaseSchema,
+  MAX_EXTENSION_HANDLE_LENGTH,
+  MAX_UID_LENGTH,
+} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {
   DevSessionUpdateContext,
   DevSessionWatchConfig,
   ExtensionFeature,
   ExtensionSpecification,
+  ExtensionSpecificationRuntime,
 } from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {ExtensionBuildOptions} from '../../services/build/extension.js'
@@ -46,6 +53,28 @@ const DEFAULT_WATCH_IGNORE = [
 
 export const DEFAULT_DEV_SESSION_UPDATE_MESSAGE = 'Extension initialized'
 
+export interface ExtensionInstanceOptions {
+  configurationPath: string
+  entryPath?: string
+  directory: string
+}
+
+export type ExtensionInstanceRuntime<
+  TConfiguration extends BaseExtensionConfigType = BaseExtensionConfigType & {capabilities?: unknown},
+> = Omit<ExtensionInstance<BaseExtensionConfigType>, 'configuration' | 'specification'> & {
+  readonly configuration: Readonly<TConfiguration>
+  readonly specification: ExtensionSpecificationRuntime
+}
+
+export function isUIExtensionInstance(
+  extension: ExtensionInstanceRuntime,
+): extension is ExtensionInstanceRuntime<BaseConfigType> {
+  return (
+    extension.isPreviewable &&
+    BaseSchema.shape.capabilities.safeParse(getPathValue(extension.configuration, 'capabilities')).success
+  )
+}
+
 /**
  * Class that represents an instance of a local extension
  * Before creating this class we've validated that:
@@ -58,7 +87,7 @@ export const DEFAULT_DEV_SESSION_UPDATE_MESSAGE = 'Extension initialized'
  *
  * This class holds the public interface to interact with extensions
  */
-export class ExtensionInstance<TConfiguration extends BaseExtensionConfigType = BaseConfigType> {
+export class ExtensionInstance<TConfiguration extends BaseExtensionConfigType = BaseExtensionConfigType> {
   entrySourceFilePath: string
   devUUID: string
   localIdentifier: string
@@ -68,7 +97,7 @@ export class ExtensionInstance<TConfiguration extends BaseExtensionConfigType = 
   configurationPath: string
   outputPath: string
   handle: string
-  specification: ExtensionSpecification
+  specification: ExtensionSpecification<TConfiguration>
   uid: string
   private cachedImportPaths?: string[]
 
@@ -154,13 +183,12 @@ export class ExtensionInstance<TConfiguration extends BaseExtensionConfigType = 
     return this.features.length === 0 && !this.hasDeploySteps && this.outputRelativePath === ''
   }
 
-  constructor(options: {
-    configuration: TConfiguration
-    configurationPath: string
-    entryPath?: string
-    directory: string
-    specification: ExtensionSpecification
-  }) {
+  constructor(
+    options: ExtensionInstanceOptions & {
+      configuration: NoInfer<TConfiguration>
+      specification: ExtensionSpecification<TConfiguration>
+    },
+  ) {
     this.configuration = options.configuration
     this.configurationPath = options.configurationPath
     this.entrySourceFilePath = options.entryPath ?? ''

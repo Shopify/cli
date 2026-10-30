@@ -2,7 +2,7 @@ import {OutputContextOptions, WatcherEvent} from './file-watcher.js'
 import {AppEvent, EventType, ExtensionEvent} from './app-event-watcher.js'
 import {appDiff} from './app-diffing.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
-import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../../models/extensions/extension-instance.js'
 import {reloadApp} from '../../../models/app/loader.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
@@ -44,7 +44,7 @@ type Handler = (input: HandlerInput) => AppEvent
 interface HandlerInput {
   event: WatcherEvent
   app: AppLinkedInterface
-  extensions: ExtensionInstance[]
+  extensions: ExtensionInstanceRuntime[]
   options: OutputContextOptions
 }
 

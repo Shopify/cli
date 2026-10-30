@@ -4,6 +4,7 @@ import {extensionMigrationPrompt} from './prompts.js'
 import {EnsureDeploymentIdsPresenceOptions} from './identifiers.js'
 import {AppInterface} from '../../models/app/app.js'
 import {
+  unwrapExtensionInstance,
   testApp,
   testAppConfigExtensions,
   testDeveloperPlatformClient,
@@ -12,7 +13,7 @@ import {
   testUIExtension,
 } from '../../models/app/app.test-data.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../models/extensions/extension-instance.js'
 import {BaseConfigType} from '../../models/extensions/schemas.js'
 import {createConfigExtensionSpecification} from '../../models/extensions/specification.js'
 import appEventsSpec from '../../models/extensions/specifications/app_config_events.js'
@@ -35,11 +36,11 @@ const REMOTE_APP: OrganizationApp = testOrganizationApp({
 
 const EMPTY_EXTENSION_BREAKDOWN = {onlyRemote: [], toCreate: [], toUpdate: [], unchanged: []}
 
-let EXTENSION_A: ExtensionInstance
-let EXTENSION_B: ExtensionInstance
-let EXTENSION_TO_MIGRATE: ExtensionInstance
-let CONFIG_EXTENSION: ExtensionInstance
-let WEBHOOK_SUBSCRIPTION_EXTENSION: ExtensionInstance
+let EXTENSION_A: ExtensionInstanceRuntime
+let EXTENSION_B: ExtensionInstanceRuntime
+let EXTENSION_TO_MIGRATE: ExtensionInstanceRuntime
+let CONFIG_EXTENSION: ExtensionInstanceRuntime
+let WEBHOOK_SUBSCRIPTION_EXTENSION: ExtensionInstanceRuntime
 let APP: AppInterface
 let REMOTE_EXTENSION_A: AppModuleVersion
 let REMOTE_EXTENSION_DELETED: AppModuleVersion
@@ -367,15 +368,16 @@ describe('classifyDeployExtensionChanges', () => {
         metaobject: 'metaobject',
       },
     })
-    const dataExtension = new ExtensionInstance<DataConfig>({
-      configuration: {
-        product: {enabled: true},
-        metaobject: {enabled: true},
-      },
-      configurationPath: 'shopify.app.toml',
-      directory: '/app',
-      specification: dataSpec,
-    })
+    const dataExtension = unwrapExtensionInstance(
+      await dataSpec.createInstance({
+        configurationObject: {
+          product: {enabled: true},
+          metaobject: {enabled: true},
+        },
+        configurationPath: 'shopify.app.toml',
+        directory: '/app',
+      }),
+    )
     const remoteDataModule = {
       registrationId: dataExtension.uid,
       registrationUuid: 'data-uuid',
@@ -505,20 +507,22 @@ describe('classifyDeployExtensionChanges', () => {
   })
 
   test('does not mark events as updated when single-subscription modules match the remote ones', async () => {
-    const localEvents = ['order-notifier', 'product-sync'].map(
-      (handle) =>
-        new ExtensionInstance({
-          specification: appEventsSpec,
-          configuration: {
-            handle,
-            events: {
-              api_version: '2024-01',
-              subscription: {topic: `${handle}/create`, actions: ['create'], uri: 'https://example.com'},
-            },
-          } as BaseConfigType,
-          configurationPath: '/app/shopify.app.toml',
-          directory: '/app',
-        }),
+    const localEvents = await Promise.all(
+      ['order-notifier', 'product-sync'].map(async (handle) =>
+        unwrapExtensionInstance(
+          await appEventsSpec.createInstance({
+            configurationObject: {
+              handle,
+              events: {
+                api_version: '2024-01',
+                subscription: {topic: `${handle}/create`, actions: ['create'], uri: 'https://example.com'},
+              },
+            } as BaseConfigType,
+            configurationPath: '/app/shopify.app.toml',
+            directory: '/app',
+          }),
+        ),
+      ),
     )
     expect(localEvents.map((extension) => extension.uid)).toEqual(['order-notifier', 'product-sync'])
     const remoteEvents = await Promise.all(
@@ -734,12 +738,13 @@ describe('ensureDeployIdentifiersFromAppVersion', () => {
         subscription: [{...subscription, ...(localVersion === undefined ? {} : {api_version: localVersion})}],
       },
     }
-    const eventsExtension = new ExtensionInstance<BaseConfigType & typeof localConfig>({
-      configuration: localConfig,
-      configurationPath: 'shopify.app.toml',
-      directory: '/app',
-      specification: appEventsSpec,
-    })
+    const eventsExtension = unwrapExtensionInstance(
+      await appEventsSpec.createInstance({
+        configurationObject: localConfig,
+        configurationPath: 'shopify.app.toml',
+        directory: '/app',
+      }),
+    )
     const remoteEventsModule: AppModuleVersion = {
       registrationId: eventsExtension.uid,
       registrationUuid: 'events-uuid',

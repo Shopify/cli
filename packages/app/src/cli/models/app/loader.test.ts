@@ -12,11 +12,11 @@ import {
 } from './loader.js'
 import {App, AppInterface, AppLinkedInterface, AppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
-import {ExtensionInstance} from '../extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../extensions/extension-instance.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
-import {createConfigExtensionSpecification, ExtensionSpecification} from '../extensions/specification.js'
+import {createConfigExtensionSpecification, ExtensionSpecificationRuntime} from '../extensions/specification.js'
 import {BaseSchemaWithoutHandle} from '../extensions/schemas.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
@@ -49,7 +49,7 @@ vi.mock('@shopify/cli-kit/node/version')
 vi.mock('@shopify/cli-kit/node/multiple-installation-warning')
 
 describe('load', () => {
-  let specifications: ExtensionSpecification[] = []
+  let specifications: ExtensionSpecificationRuntime[] = []
 
   let tmpDir: string
 
@@ -871,7 +871,7 @@ describe('load', () => {
     // Then
     const realExtensions = getRealExtensions(app)
     expect(realExtensions).toHaveLength(2)
-    const extensions = realExtensions.sort((extA: ExtensionInstance, extB: ExtensionInstance) =>
+    const extensions = realExtensions.sort((extA: ExtensionInstanceRuntime, extB: ExtensionInstanceRuntime) =>
       extA.name < extB.name ? -1 : 1,
     )
     expect(extensions[0]!.configuration.name).toBe('my_extension_1')
@@ -920,7 +920,7 @@ describe('load', () => {
     // Then
     const realExtensions = getRealExtensions(app)
     expect(realExtensions).toHaveLength(2)
-    const extensions = realExtensions.sort((extA: ExtensionInstance, extB: ExtensionInstance) =>
+    const extensions = realExtensions.sort((extA: ExtensionInstanceRuntime, extB: ExtensionInstanceRuntime) =>
       extA.name < extB.name ? -1 : 1,
     )
     expect(extensions[0]!.configuration.name).toBe('my_extension_1')
@@ -2245,7 +2245,7 @@ describe('load', () => {
       const app = await loadApp({
         directory: tmpDir,
         userProvidedConfigName: undefined,
-        specifications: [...specifications, specification] as ExtensionSpecification[],
+        specifications: [...specifications, specification] as ExtensionSpecificationRuntime[],
       })
 
       expect(app.errors.isEmpty()).toBe(true)
@@ -2266,7 +2266,7 @@ describe('load', () => {
       const app = await loadApp({
         directory: tmpDir,
         userProvidedConfigName: undefined,
-        specifications: [...specifications, specification] as ExtensionSpecification[],
+        specifications: [...specifications, specification] as ExtensionSpecificationRuntime[],
       })
 
       expect(app.errors.isEmpty()).toBe(true)
@@ -2285,7 +2285,7 @@ describe('load', () => {
       const app = await loadApp({
         directory: tmpDir,
         userProvidedConfigName: undefined,
-        specifications: [...specifications, specification] as ExtensionSpecification[],
+        specifications: [...specifications, specification] as ExtensionSpecificationRuntime[],
       })
 
       expect(app.errors.getErrors()).toEqual([
@@ -2573,7 +2573,7 @@ describe('load', () => {
     // Then
     const realExtensions = getRealExtensions(app)
     expect(realExtensions).toHaveLength(2)
-    const functions = realExtensions.sort((extA: ExtensionInstance, extB: ExtensionInstance) =>
+    const functions = realExtensions.sort((extA: ExtensionInstanceRuntime, extB: ExtensionInstanceRuntime) =>
       extA.name < extB.name ? -1 : 1,
     )
     expect(functions[0]!.configuration.name).toBe('my-function-1')
@@ -3909,7 +3909,7 @@ value = true
 })
 
 describe('loadOpaqueApp', () => {
-  let specifications: ExtensionSpecification[]
+  let specifications: ExtensionSpecificationRuntime[]
 
   beforeAll(async () => {
     specifications = await loadLocalExtensionsSpecifications()

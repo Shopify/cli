@@ -7,7 +7,7 @@ import {
   testOrganizationApp,
 } from '../../models/app/app.test-data.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {ExtensionInstance, ExtensionInstanceRuntime} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {generateSchemaService} from '../generate-schema.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
@@ -26,7 +26,7 @@ vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('../generate-schema.js')
 
 let app: AppLinkedInterface
-let ourFunction: ExtensionInstance
+let ourFunction: ExtensionInstanceRuntime
 
 beforeEach(async () => {
   ourFunction = await testFunctionExtension()
@@ -100,9 +100,9 @@ describe('getOrGenerateSchemaPath', () => {
 
 describe('chooseFunction', () => {
   let app: AppLinkedInterface
-  let functionExtension1: ExtensionInstance
-  let functionExtension2: ExtensionInstance
-  let nonFunctionExtension: ExtensionInstance
+  let functionExtension1: ExtensionInstanceRuntime
+  let functionExtension2: ExtensionInstanceRuntime
+  let nonFunctionExtension: ExtensionInstanceRuntime
 
   beforeEach(async () => {
     functionExtension1 = await testFunctionExtension({
@@ -141,7 +141,7 @@ describe('chooseFunction', () => {
       directory: '/path/to/app/extensions/theme',
       isFunctionExtension: false,
       handle: 'theme-extension',
-    } as ExtensionInstance
+    } as ExtensionInstanceRuntime
   })
 
   test('returns the function when path matches a function directory', async () => {

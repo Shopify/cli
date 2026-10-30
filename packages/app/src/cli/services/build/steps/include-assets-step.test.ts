@@ -1,13 +1,13 @@
 import {executeIncludeAssetsStep} from './include-assets-step.js'
 import {LifecycleStep, BuildContext} from '../client-steps.js'
-import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {ExtensionInstanceRuntime} from '../../../models/extensions/extension-instance.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {inTemporaryDirectory, writeFile, mkdir, fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 describe('executeIncludeAssetsStep', () => {
-  let mockExtension: ExtensionInstance
+  let mockExtension: ExtensionInstanceRuntime
   let mockContext: BuildContext
   let mockStdout: any
   let mockStderr: any
@@ -26,7 +26,7 @@ describe('executeIncludeAssetsStep', () => {
     mockExtension = {
       directory: extensionDir,
       outputPath: joinPath(outputDir, 'extension.js'),
-    } as ExtensionInstance
+    } as ExtensionInstanceRuntime
 
     mockContext = {
       extension: mockExtension,
@@ -244,7 +244,7 @@ describe('executeIncludeAssetsStep', () => {
           extension: {
             ...mockExtension,
             configuration: {static_root: 'public'},
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -275,7 +275,7 @@ describe('executeIncludeAssetsStep', () => {
           extension: {
             ...mockExtension,
             configuration: {},
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -304,7 +304,7 @@ describe('executeIncludeAssetsStep', () => {
           extension: {
             ...mockExtension,
             configuration: {static_root: 'nonexistent'},
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -331,7 +331,7 @@ describe('executeIncludeAssetsStep', () => {
           extension: {
             ...mockExtension,
             configuration: {static_root: 'nonexistent'},
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -364,7 +364,7 @@ describe('executeIncludeAssetsStep', () => {
                 },
               ],
             },
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -393,7 +393,7 @@ describe('executeIncludeAssetsStep', () => {
             configuration: {
               targeting: [{target: 'admin.app.intent.link'}],
             },
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -422,7 +422,7 @@ describe('executeIncludeAssetsStep', () => {
           extension: {
             ...mockExtension,
             configuration: {tools: './tools.json'},
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -456,7 +456,7 @@ describe('executeIncludeAssetsStep', () => {
           extension: {
             ...mockExtension,
             configuration: {tools_a: './a/schema.json', tools_b: './b/schema.json'},
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -495,7 +495,7 @@ describe('executeIncludeAssetsStep', () => {
           extension: {
             ...mockExtension,
             configuration: {static_root: ['public', 'assets']},
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -534,7 +534,7 @@ describe('executeIncludeAssetsStep', () => {
                 {targeting: [{tools: 'tools-c.js'}]},
               ],
             },
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -565,7 +565,7 @@ describe('executeIncludeAssetsStep', () => {
           extension: {
             ...mockExtension,
             configuration: {extensions: {targeting: {tools: 'tools.js'}}},
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -602,7 +602,7 @@ describe('executeIncludeAssetsStep', () => {
           extension: {
             ...mockExtension,
             configuration: {static_root: 'public'},
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -783,7 +783,7 @@ describe('executeIncludeAssetsStep', () => {
           extension: {
             ...mockExtension,
             configuration: {theme_root: 'theme'},
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -832,7 +832,7 @@ describe('executeIncludeAssetsStep', () => {
                 },
               ],
             },
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -893,7 +893,7 @@ describe('executeIncludeAssetsStep', () => {
                 },
               ],
             },
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -963,7 +963,7 @@ describe('executeIncludeAssetsStep', () => {
                 },
               ],
             },
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -1024,7 +1024,7 @@ describe('executeIncludeAssetsStep', () => {
                 },
               ],
             },
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         // No generatesAssetsManifest field — defaults to false
@@ -1118,7 +1118,7 @@ describe('executeIncludeAssetsStep', () => {
           extension: {
             ...mockExtension,
             configuration: {targeting: {tools: './tools.json', instructions: './instructions.md'}},
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -1160,7 +1160,7 @@ describe('executeIncludeAssetsStep', () => {
           extension: {
             ...mockExtension,
             configuration: {admin: {static_root: 'dist'}},
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -1217,7 +1217,7 @@ describe('executeIncludeAssetsStep', () => {
             configuration: {
               extensions: [{targeting: [{target: 'admin.intent.link', tools: './tools.json'}]}],
             },
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -1261,7 +1261,7 @@ describe('executeIncludeAssetsStep', () => {
             configuration: {
               extensions: 'not-an-array',
             },
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -1311,7 +1311,7 @@ describe('executeIncludeAssetsStep', () => {
                 },
               ],
             },
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -1356,7 +1356,7 @@ describe('executeIncludeAssetsStep', () => {
             configuration: {
               extensions: [{targeting: [{target: 'admin.intent.link', tools: './tools.json'}]}],
             },
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -1397,7 +1397,7 @@ describe('executeIncludeAssetsStep', () => {
             configuration: {
               extensions: [{targeting: [{target: 'admin.intent.link', tools: './tools.json'}]}],
             },
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -1439,7 +1439,7 @@ describe('executeIncludeAssetsStep', () => {
             configuration: {
               extensions: [{targeting: [{target: 'admin.intent.link', tools: 'tools.json'}]}],
             },
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -1487,7 +1487,7 @@ describe('executeIncludeAssetsStep', () => {
                 },
               ],
             },
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {
@@ -1536,7 +1536,7 @@ describe('executeIncludeAssetsStep', () => {
             configuration: {
               extensions: [{targeting: [{target: 'admin.intent.link', tools: './tools.json'}]}],
             },
-          } as unknown as ExtensionInstance,
+          } as unknown as ExtensionInstanceRuntime,
         }
 
         const step: LifecycleStep = {

@@ -1,9 +1,9 @@
 import {AppErrors, isWebType} from './loader.js'
 import {ensurePathStartsWithSlash} from './validation/common.js'
 import {ExtensionUuidsByLocalIdentifier} from './identifiers.js'
-import {ExtensionInstance} from '../extensions/extension-instance.js'
+import {ExtensionInstance, ExtensionInstanceRuntime} from '../extensions/extension-instance.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../extensions/specification.js'
+import {ExtensionSpecificationRuntime, RemoteAwareExtensionSpecification} from '../extensions/specification.js'
 import {AppConfigurationUsedByCli} from '../extensions/specifications/types/app_config.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
@@ -104,7 +104,7 @@ export type CurrentAppConfiguration = BasicAppConfigurationWithoutModules & AppC
 export type SchemaForConfig<TConfig> = ZodObjectOf<TConfig>
 
 export function getAppVersionedSchema(
-  specs: ExtensionSpecification[],
+  specs: ExtensionSpecificationRuntime[],
   allowDynamicallySpecifiedConfigs = true,
 ): ZodObjectOf<CurrentAppConfiguration> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -189,7 +189,7 @@ export interface Web {
 
 export interface AppConfigurationInterface<
   TConfig extends CurrentAppConfiguration = CurrentAppConfiguration,
-  TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
+  TModuleSpec extends ExtensionSpecificationRuntime = ExtensionSpecificationRuntime,
 > {
   directory: string
   configPath: string
@@ -220,20 +220,20 @@ interface ManifestModule extends JsonMapType {
 
 export interface AppInterface<
   TConfig extends CurrentAppConfiguration = CurrentAppConfiguration,
-  TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
+  TModuleSpec extends ExtensionSpecificationRuntime = ExtensionSpecificationRuntime,
 > extends AppConfigurationInterface<TConfig, TModuleSpec> {
   name: string
   idEnvironmentVariableName: 'SHOPIFY_API_KEY'
   webs: Web[]
   dotenv?: DotEnvFile
-  allExtensions: ExtensionInstance[]
-  realExtensions: ExtensionInstance[]
-  nonConfigExtensions: ExtensionInstance[]
+  allExtensions: ExtensionInstanceRuntime[]
+  realExtensions: ExtensionInstanceRuntime[]
+  nonConfigExtensions: ExtensionInstanceRuntime[]
   errors: AppErrors
   hiddenConfig: AppHiddenConfig
   includeConfigOnDeploy: boolean | undefined
   readonly devApplicationURLs?: ApplicationURLs
-  extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
+  extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstanceRuntime[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
   preDeployValidation: () => Promise<void>
   /**
@@ -257,14 +257,14 @@ export interface AppInterface<
 
 type AppConstructor<
   TConfig extends CurrentAppConfiguration = CurrentAppConfiguration,
-  TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
+  TModuleSpec extends ExtensionSpecificationRuntime = ExtensionSpecificationRuntime,
 > = AppConfigurationInterface<TConfig, TModuleSpec> & {
   name: string
   webs: Web[]
-  modules: ExtensionInstance[]
+  modules: ExtensionInstanceRuntime[]
   dotenv?: DotEnvFile
   errors: AppErrors
-  specifications: ExtensionSpecification[]
+  specifications: ExtensionSpecificationRuntime[]
   remoteFlags?: Flag[]
   hiddenConfig: AppHiddenConfig
   devApplicationURLs?: ApplicationURLs
@@ -272,7 +272,7 @@ type AppConstructor<
 
 export class App<
   TConfig extends CurrentAppConfiguration = CurrentAppConfiguration,
-  TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
+  TModuleSpec extends ExtensionSpecificationRuntime = ExtensionSpecificationRuntime,
 > implements AppInterface<TConfig, TModuleSpec> {
   name: string
   idEnvironmentVariableName: 'SHOPIFY_API_KEY' = 'SHOPIFY_API_KEY' as const
@@ -286,7 +286,7 @@ export class App<
   specifications: TModuleSpec[]
   configSchema: SchemaForConfig<TConfig>
   remoteFlags: Flag[]
-  realExtensions: ExtensionInstance[]
+  realExtensions: ExtensionInstanceRuntime[]
   devApplicationURLs?: ApplicationURLs
   private _hiddenConfig: AppHiddenConfig
 
@@ -405,7 +405,7 @@ export class App<
     await Promise.all(this.allExtensions.map((ext) => ext.preDeployValidation()))
   }
 
-  extensionsForType(specification: {identifier: string; externalIdentifier: string}): ExtensionInstance[] {
+  extensionsForType(specification: {identifier: string; externalIdentifier: string}): ExtensionInstanceRuntime[] {
     return this.allExtensions.filter(
       (extension) => extension.type === specification.identifier || extension.type === specification.externalIdentifier,
     )
@@ -517,7 +517,7 @@ Learn more: https://shopify.dev/docs/apps/build/authentication-authorization/app
 
 export function validateFunctionExtensionsWithUiHandle(
   functionExtensionsWithUiHandle: ExtensionInstance<FunctionConfigType>[],
-  allExtensions: ExtensionInstance[],
+  allExtensions: ExtensionInstanceRuntime[],
 ): string[] | undefined {
   const errors: string[] = []
 
@@ -541,7 +541,7 @@ type UIExtensionType = zod.infer<typeof UIExtensionSchema>
 
 export function validateExtensionsHandlesInCollection(
   editorExtensionCollections: ExtensionInstance<EditorExtensionCollectionType>[],
-  allExtensions: ExtensionInstance[],
+  allExtensions: ExtensionInstanceRuntime[],
 ): string[] | undefined {
   const errors: string[] = []
 
@@ -574,7 +574,10 @@ export function validateExtensionsHandlesInCollection(
   return errors.length > 0 ? errors : undefined
 }
 
-function findExtensionByHandle(allExtensions: ExtensionInstance[], handle: string): ExtensionInstance | undefined {
+function findExtensionByHandle(
+  allExtensions: ExtensionInstanceRuntime[],
+  handle: string,
+): ExtensionInstanceRuntime | undefined {
   return allExtensions.find((ext) => ext.handle === handle)
 }
 
@@ -586,7 +589,9 @@ type RendererVersionResult = {name: string; version: string} | undefined | 'not_
  * @param extension - UI extension whose renderer version will be obtained.
  * @returns The version if the dependency exists.
  */
-export async function getUIExtensionRendererVersion(extension: ExtensionInstance): Promise<RendererVersionResult> {
+export async function getUIExtensionRendererVersion(
+  extension: ExtensionInstanceRuntime,
+): Promise<RendererVersionResult> {
   // Look for the vanilla JS version of the dependency (the react one depends on it, will always be present)
   const rendererDependency = extension.dependency
   if (!rendererDependency) return undefined
