@@ -1,8 +1,8 @@
 import {createOrUpdateManifestFile} from './include-assets/generate-manifest.js'
 import {buildUIExtension} from '../extension.js'
 import {BuildManifest} from '../../../models/extensions/specifications/ui_extension.js'
-import {copyFile, fileExists} from '@shopify/cli-kit/node/fs'
-import {dirname, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
+import {copyFile, fileExists, glob, mkdir} from '@shopify/cli-kit/node/fs'
+import {dirname, joinPath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import type {BundleUIStep, BuildContext} from '../client-steps.js'
 
@@ -40,7 +40,22 @@ export async function executeBundleUIStep(step: BundleUIStep, context: BuildCont
     )
   }
 
-  await copyFile(localOutputDir, bundleOutputDir)
+  // Source maps stay in the extension's local output directory and are excluded
+  // from deploy bundles. Copying them here can race with another extension in
+  // the same folder moving its map back to that directory after its build.
+  const filesToCopy = await glob('**/*', {
+    cwd: localOutputDir,
+    absolute: true,
+    ignore: ['**/*.js.map'],
+  })
+
+  await Promise.all(
+    filesToCopy.map(async (filePath) => {
+      const outputPath = joinPath(bundleOutputDir, relativePath(localOutputDir, filePath))
+      await mkdir(dirname(outputPath))
+      await copyFile(filePath, outputPath)
+    }),
+  )
 
   if (!step.config?.generatesAssetsManifest) return
 
