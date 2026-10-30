@@ -99,6 +99,6 @@ See the [E2E setup guide](../../packages/e2e/README.md) for persistent store con
 
 ## GitHub Actions
 
-Use [the PR workflow](../../.github/workflows/tests-pr.yml) and [CLI pre-submit CI guide](../../.agents/skills/cli-pre-submit-ci/SKILL.md) to choose local checks and generated files. Follow the check requirements of the active automation task.
+Use [the PR workflow](../../.github/workflows/tests-pr.yml) and [CLI pre-submit CI guide](../../.agents/skills/cli-pre-submit-ci/SKILL.md) to choose local checks and generated files.
 
 Repository settings determine which checks block a merge. A passing job proves only what that job checked. Jobs with `continue-on-error` can fail without failing the workflow.
