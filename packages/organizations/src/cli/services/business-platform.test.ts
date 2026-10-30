@@ -61,7 +61,7 @@ describe('OrganizationStoreAccessError', () => {
     // The guidance lives in nextSteps, the field the store commands' --json output carries.
     expect(error.tryMessage).toBeNull()
     expect(error.nextSteps).toEqual([
-      'Give the service account Dev store management access in the Shopify admin under Settings > Users > Security.',
+      "Give the service account Dev store management access in your organization's settings in the Shopify admin.",
       'Or use a token from a service account that has that access.',
     ])
   })

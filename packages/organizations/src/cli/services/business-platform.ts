@@ -57,7 +57,8 @@ export function isOrganizationAccessError(error: unknown): boolean {
 export class OrganizationStoreAccessError extends AbortError {
   constructor(organization: OrganizationReference) {
     const name = organization.businessName ?? `organization ${organization.id}`
-    const where = 'in the Shopify admin under Settings > Users > Security'
+    // Named loosely on purpose: the admin page that manages service accounts has moved before and can move again.
+    const where = "in your organization's settings in the Shopify admin"
 
     if (isServiceAccountTokenSet()) {
       super(`This service account can't manage dev stores in ${name}.`, null, [
