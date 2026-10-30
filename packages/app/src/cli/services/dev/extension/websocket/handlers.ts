@@ -98,7 +98,17 @@ export function handleLogEvent(eventData: LogPayload, options: SetupWebSocketCon
 
 export function getOnMessageHandler(wss: WebSocketServer, options: SetupWebSocketConnectionOptions) {
   return (data: RawData) => {
-    const jsonData = JSON.parse(data.toString())
+    let jsonData
+    try {
+      jsonData = JSON.parse(data.toString())
+    } catch (error) {
+      // An exception thrown here escapes the socket's message listener and stops `app dev`.
+      if (error instanceof SyntaxError) {
+        outputDebug(`Ignoring websocket message that is not valid JSON: ${error.message}`, options.stdout)
+        return
+      }
+      throw error
+    }
     const {event: eventType, data: eventData} = jsonData
 
     outputDebug(
