@@ -83,18 +83,17 @@ export const hook: Hook.Postrun = async ({config, Command}) => {
 }
 
 /**
- * Auto-upgrades the CLI after a command completes, if a newer version is available.
- * The entire flow is rate-limited to once per day unless forced via SHOPIFY_CLI_FORCE_AUTO_UPGRADE.
+ * Checks release notices and auto-upgrades the CLI after a command completes.
+ * Notices have their own daily limit. Upgrade attempts run once per day unless forced
+ * via SHOPIFY_CLI_FORCE_AUTO_UPGRADE.
  *
  * @returns Resolves when the upgrade attempt (or fallback warning) is complete.
  */
 export async function autoUpgradeIfNeeded(): Promise<void> {
   const {versionToAutoUpgrade, warnIfUpgradeAvailable} = await import('../upgrade.js')
+  await warnIfUpgradeAvailable()
   const newerVersion = await versionToAutoUpgrade()
-  if (!newerVersion) {
-    await warnIfUpgradeAvailable()
-    return
-  }
+  if (!newerVersion) return
 
   const forced = process.env.SHOPIFY_CLI_FORCE_AUTO_UPGRADE === '1'
 
@@ -103,7 +102,7 @@ export async function autoUpgradeIfNeeded(): Promise<void> {
     await performAutoUpgrade(newerVersion)
   } else {
     const {runAtMinimumInterval} = await import('../../../private/node/conf-store.js')
-    // Rate-limit the entire upgrade flow to once per day to avoid repeated attempts and major-version warnings.
+    // Rate-limit upgrade attempts independently of release notices.
     await runAtMinimumInterval('auto-upgrade', {days: 1}, async () => {
       await performAutoUpgrade(newerVersion)
     })
