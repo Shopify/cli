@@ -201,6 +201,17 @@ describe('analitycsDisabled', () => {
     expect(got).toBe(true)
   })
 
+  test('returns true when DO_NOT_TRACK is truthy', () => {
+    // Given
+    const env = {DO_NOT_TRACK: '1'}
+
+    // When
+    const got = analyticsDisabled(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
   test('returns true when in development', () => {
     // Given
     const env = {SHOPIFY_CLI_ENV: 'development'}
