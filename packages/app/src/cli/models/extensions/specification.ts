@@ -1,4 +1,4 @@
-import {ZodSchemaType, BaseConfigType, BaseExtensionConfigType, BaseSchema} from './schemas.js'
+import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
 import {patchAppRelativeUrls} from './specifications/validation/app_relative_urls.js'
 import {blocks} from '../../constants.js'
@@ -81,7 +81,7 @@ export interface DevSessionUpdateContext {
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
-export interface ExtensionSpecification<TConfiguration extends BaseExtensionConfigType = BaseConfigType> {
+export interface ExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType> {
   identifier: string
   externalIdentifier: string
   externalName: string
@@ -179,7 +179,7 @@ export interface DevSessionWatchConfig {
 /**
  * Extension specification, explicitly marked as having taken remote configuration values into account.
  */
-export type RemoteAwareExtensionSpecification<TConfiguration extends BaseExtensionConfigType = BaseConfigType> =
+export type RemoteAwareExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType> =
   ExtensionSpecification<TConfiguration> & {
     loadedRemoteSpecs: true
   }
@@ -202,7 +202,7 @@ type ForbiddenFields =
 /**
  * Partial ExtensionSpec type used when creating a new ExtensionSpec, the only mandatory field is the identifier
  */
-interface CreateExtensionSpecType<TConfiguration extends BaseExtensionConfigType = BaseConfigType> extends Partial<
+interface CreateExtensionSpecType<TConfiguration extends BaseConfigType = BaseConfigType> extends Partial<
   Omit<ExtensionSpecification<TConfiguration>, ForbiddenFields>
 > {
   identifier: string
@@ -229,10 +229,9 @@ interface CreateExtensionSpecType<TConfiguration extends BaseExtensionConfigType
  * hasExtensionPointTarget?: (configuration: TConfiguration, target: string) => boolean // function to determine if the extension has a given extension point target
  * ```
  */
-export function createExtensionSpecification<TConfiguration extends BaseExtensionConfigType = BaseConfigType>(
+export function createExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
   spec: CreateExtensionSpecType<TConfiguration>,
 ): ExtensionSpecification<TConfiguration> {
-  const baseSchema: ZodSchemaType<BaseExtensionConfigType> = BaseSchema
   const defaults = {
     // these two fields are going to be overridden by the extension specification API response,
     // but we need them to have a default value for tests
@@ -241,7 +240,7 @@ export function createExtensionSpecification<TConfiguration extends BaseExtensio
     externalName: capitalize(spec.identifier.replace(/_/g, ' ')),
     surface: 'test-surface',
     partnersWebIdentifier: spec.identifier,
-    schema: baseSchema as ZodSchemaType<TConfiguration>,
+    schema: BaseSchema as ZodSchemaType<TConfiguration>,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     transform: spec.transformLocalToRemote,
     reverseTransform: spec.transformRemoteToLocal,
@@ -293,9 +292,7 @@ export function createExtensionSpecification<TConfiguration extends BaseExtensio
  *   - App config extensions have default transform and reverseTransform functions
 
  */
-export function createConfigExtensionSpecification<
-  TConfiguration extends BaseExtensionConfigType = BaseConfigType,
->(spec: {
+export function createConfigExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(spec: {
   identifier: string
   schema: ZodSchemaType<TConfiguration>
   clientSteps?: ClientSteps
@@ -328,7 +325,7 @@ export function createConfigExtensionSpecification<
   })
 }
 
-export function createContractBasedModuleSpecification<TConfiguration extends BaseExtensionConfigType = BaseConfigType>(
+export function createContractBasedModuleSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
   spec: Pick<
     CreateExtensionSpecType<TConfiguration>,
     | 'identifier'

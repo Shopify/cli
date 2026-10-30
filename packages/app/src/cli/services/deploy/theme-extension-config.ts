@@ -11,7 +11,7 @@ interface ThemeExtensionConfig {
 
 export async function themeExtensionConfig(themeExtension: ExtensionInstance): Promise<ThemeExtensionConfig> {
   const files: {[key: string]: string} = {}
-  const themeFiles = await themeExtensionFiles(themeExtension.directory)
+  const themeFiles = await themeExtensionFiles(themeExtension)
   await Promise.all(
     themeFiles.map(async (filepath) => {
       const relativePathName = relativePath(themeExtension.directory, filepath)
