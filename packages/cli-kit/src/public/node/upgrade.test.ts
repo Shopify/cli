@@ -69,7 +69,7 @@ describe('cliInstallCommand', () => {
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
 
     // When
-    const got = cliInstallCommand()
+    const got = cliInstallCommand('latest')
 
     // Then
     expect(got).toMatchInlineSnapshot(`
@@ -84,7 +84,7 @@ describe('cliInstallCommand', () => {
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('yarn')
 
     // When
-    const got = cliInstallCommand()
+    const got = cliInstallCommand('latest')
 
     // Then
     expect(got).toMatchInlineSnapshot(`
@@ -99,7 +99,7 @@ describe('cliInstallCommand', () => {
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
 
     // When
-    const got = cliInstallCommand()
+    const got = cliInstallCommand('latest')
 
     // Then
     expect(got).toMatchInlineSnapshot(`
@@ -114,7 +114,7 @@ describe('cliInstallCommand', () => {
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('pnpm')
 
     // When
-    const got = cliInstallCommand()
+    const got = cliInstallCommand('latest')
 
     // Then
     expect(got).toMatchInlineSnapshot(`
@@ -122,18 +122,40 @@ describe('cliInstallCommand', () => {
     `)
   })
 
+  test('installs the requested version instead of latest when one is given', () => {
+    // Given
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('pnpm')
+
+    // When
+    const got = cliInstallCommand('4.8.5')
+
+    // Then
+    expect(got).toBe('pnpm add -g @shopify/cli@4.8.5')
+  })
+
   test('returns undefined if the current process is locally installed', () => {
     // Given
     vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
 
     // When
-    const got = cliInstallCommand()
+    const got = cliInstallCommand('latest')
 
     // Then
     expect(got).toBeUndefined()
   })
 })
 describe('getOutputUpdateCLIReminder', () => {
+  test('pins the upgrade command to the version shown in the reminder', () => {
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
+
+    const message = getOutputUpdateCLIReminder('4.8.5')
+
+    expect(message).toContain('Version 4.8.5 available!')
+    expect(message).toContain('npm install -g @shopify/cli@4.8.5')
+    expect(message).not.toContain('@latest')
+  })
+
   test('returns a basic upgrade message for a minor version bump', () => {
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
 
@@ -214,6 +236,29 @@ describe('runCLIUpgrade', () => {
 
     // Then
     expect(exec).toHaveBeenCalledWith('brew', ['upgrade', 'shopify-cli'], {stdio: 'inherit'})
+  })
+
+  test('installs exactly the requested version, not latest, when the auto-upgrade hook passes one', async () => {
+    // Given: the cache already knows about a newer major, but the hook vetted a minor.
+    // Derived from CLI_KIT_VERSION so the test keeps working after release bumps.
+    const vettedVersion = new SemVer(CLI_KIT_VERSION).inc('minor').version
+    const nextMajorVersion = new SemVer(CLI_KIT_VERSION).inc('major').version
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('pnpm')
+    vi.mocked(exec).mockResolvedValue()
+    vi.mocked(checkForCachedNewVersion).mockReturnValue(nextMajorVersion)
+    vi.mocked(globalCLIVersion).mockResolvedValue(vettedVersion)
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+
+    // When
+    await runCLIUpgrade({autoupgrade: true, version: vettedVersion})
+
+    // Then
+    expect(exec).toHaveBeenCalledWith('pnpm', ['add', '-g', `@shopify/cli@${vettedVersion}`], {stdio: 'inherit'})
+    expect(outputMock.info()).toContain(`(${CLI_KIT_VERSION} → ${vettedVersion})`)
+    expect(outputMock.info()).not.toContain(nextMajorVersion)
+    expect(outputMock.info()).toContain(`You're now on version ${vettedVersion}`)
   })
 
   test('throws an error when cliInstallCommand returns undefined', async () => {
