@@ -11,7 +11,10 @@ import {linkedAppContext} from '../../../services/app-context.js'
 import {getMigrationChoices, selectMigrationChoice} from '../../../prompts/import-extensions.js'
 import {getExtensions} from '../../../services/fetch-extensions.js'
 import {updateAppIdentifiers} from '../../../models/app/identifiers.js'
-import {renderImportExtensionsResult} from '../../../services/import-extensions/result.js'
+import {
+  renderImportExtensionsFailureResult,
+  renderImportExtensionsResult,
+} from '../../../services/import-extensions/result.js'
 import {
   importDashboardExtensionsJsonOutputSchema,
   ImportDashboardExtensionsResult,
@@ -19,7 +22,6 @@ import {
   ImportExtensionsResult,
 } from '../../../services/import-extensions/types.js'
 import {AbortSilentError, errorMapper, shouldReportErrorAsUnexpected} from '@shopify/cli-kit/node/error'
-import {errorToJson} from '@shopify/cli-kit/node/error/serialization'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {sendErrorToBugsnag} from '@shopify/cli-kit/node/error-handler'
 import {flushStdout, outputResult} from '@shopify/cli-kit/node/output'
@@ -113,53 +115,20 @@ export default class ImportDashboardExtensions extends AppLinkedCommand {
         })
       } catch (error) {
         if (!flags.json) throw error instanceof ExtensionImportFailedError ? error.originalError : error
-        let originalError = error instanceof ExtensionImportFailedError ? error.originalError : error
-        if (error instanceof ExtensionImportCancelledError || error instanceof ExtensionImportFailedError) {
-          const completion = await error.completedImports()
-          if (error instanceof ExtensionImportFailedError && completion.extensions.length === 0) {
-            throw error.originalError
-          }
-          const cancelled = error instanceof ExtensionImportCancelledError && completion.failures.length === 0
-          outputResult(
-            importDashboardExtensionsJsonOutputSchema.encode({
-              status: cancelled ? 'cancelled' : 'partial',
-              reason: cancelled ? 'directory-selection-cancelled' : null,
-              extensions: projectExtensions(completion.extensions),
-              errors: completion.failures.map(({extension, error: failure}) => ({
-                extensionId: extension.uuid,
-                error: errorToJson(failure),
-              })),
-              identifiersUpdated: false,
-            }),
-          )
-          if (cancelled) {
-            await flushStdout()
-            throw error
-          }
-          if (error instanceof ExtensionImportCancelledError) originalError = completion.failures[0]!.error
-        } else if (result) {
-          outputResult(
-            importDashboardExtensionsJsonOutputSchema.encode({
-              status: 'partial',
-              reason: null,
-              extensions: projectExtensions(result.extensions),
-              errors: [{extensionId: null, error: errorToJson(error)}],
-              identifiersUpdated: false,
-            }),
-          )
-        } else {
-          throw error
+        const failure = await resolveImportFailure(error, result)
+        renderImportExtensionsFailureResult(projectExtensions(failure.extensions), failure.errors, failure.cancelled)
+        if (!failure.cancelled) {
+          const mappedError = await errorMapper(failure.originalError)
+          const exitMode = shouldReportErrorAsUnexpected(mappedError) ? 'unexpected_error' : 'expected_error'
+          await reportAnalyticsEvent({
+            config: this.config,
+            errorMessage: mappedError instanceof Error ? mappedError.message : undefined,
+            exitMode,
+          })
+          await sendErrorToBugsnag(mappedError, exitMode)
         }
-        const mappedError = await errorMapper(originalError)
-        const exitMode = shouldReportErrorAsUnexpected(mappedError) ? 'unexpected_error' : 'expected_error'
-        await reportAnalyticsEvent({
-          config: this.config,
-          errorMessage: mappedError instanceof Error ? mappedError.message : undefined,
-          exitMode,
-        })
-        await sendErrorToBugsnag(mappedError, exitMode)
         await flushStdout()
-        throw new AbortSilentError()
+        throw failure.cancelled ? error : new AbortSilentError()
       }
       if (flags.json) {
         outputResult(
@@ -187,4 +156,29 @@ function projectExtensions(extensions: ImportedDashboardExtension[]): ImportDash
     configurationPath,
     changed,
   }))
+}
+
+async function resolveImportFailure(error: unknown, result: ImportExtensionsResult | undefined) {
+  if (error instanceof ExtensionImportCancelledError || error instanceof ExtensionImportFailedError) {
+    const completion = await error.completedImports()
+    if (error instanceof ExtensionImportFailedError && completion.extensions.length === 0) {
+      throw error.originalError
+    }
+    const cancelled = error instanceof ExtensionImportCancelledError && completion.failures.length === 0
+    const originalError = error instanceof ExtensionImportFailedError ? error.originalError : error
+    return {
+      extensions: completion.extensions,
+      errors: completion.failures.map(({extension, error: failure}) => ({extensionId: extension.uuid, error: failure})),
+      cancelled,
+      originalError:
+        error instanceof ExtensionImportCancelledError && !cancelled ? completion.failures[0]!.error : originalError,
+    }
+  }
+  if (!result) throw error
+  return {
+    extensions: result.extensions,
+    errors: [{extensionId: null, error}],
+    cancelled: false,
+    originalError: error,
+  }
 }

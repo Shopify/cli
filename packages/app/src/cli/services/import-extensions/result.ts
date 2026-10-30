@@ -1,7 +1,12 @@
-import {ImportExtensionsResult} from './types.js'
+import {
+  importDashboardExtensionsJsonOutputSchema,
+  ImportDashboardExtensionsResult,
+  ImportExtensionsResult,
+} from './types.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {outputContent} from '@shopify/cli-kit/node/output'
+import {outputContent, outputResult} from '@shopify/cli-kit/node/output'
+import {errorToJson} from '@shopify/cli-kit/node/error/serialization'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 
 export function renderImportExtensionsResult(result: ImportExtensionsResult) {
@@ -15,4 +20,20 @@ export function renderImportExtensionsResult(result: ImportExtensionsResult) {
       })
       .join('\n'),
   })
+}
+
+export function renderImportExtensionsFailureResult(
+  extensions: ImportDashboardExtensionsResult['extensions'],
+  errors: {extensionId: string | null; error: unknown}[],
+  cancelled: boolean,
+) {
+  outputResult(
+    importDashboardExtensionsJsonOutputSchema.encode({
+      status: cancelled ? 'cancelled' : 'partial',
+      reason: cancelled ? 'directory-selection-cancelled' : null,
+      extensions,
+      errors: errors.map(({extensionId, error}) => ({extensionId, error: errorToJson(error)})),
+      identifiersUpdated: false,
+    }),
+  )
 }
