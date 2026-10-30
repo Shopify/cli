@@ -1,5 +1,22 @@
 # @shopify/app
 
+## 5.0.1
+
+### Patch Changes
+
+- e5a0588: Show `Extension initialized` instead of `Configuration accepted` when config-only extensions start in a new `app dev` session.
+- b28c759: Accept `--flavor preact` when generating app extensions.
+- c92ed3f: Prevent intermittent app deploy failures when UI extensions in the same folder build concurrently.
+- 06db440: Accept all CLI-supported extension flavors and validate compatibility with the selected template.
+- Updated dependencies [8cb7b7e]
+- Updated dependencies [d1d59da]
+- Updated dependencies [d418238]
+- Updated dependencies [329f213]
+  - @shopify/cli-kit@5.0.1
+  - @shopify/theme@5.0.1
+  - @shopify/organizations@5.0.1
+  - @shopify/plugin-cloudflare@5.0.1
+
 ## 5.0.0
 
 ### Major Changes

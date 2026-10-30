@@ -1,5 +1,15 @@
 # @shopify/theme
 
+## 5.0.1
+
+### Patch Changes
+
+- 329f213: Fix `shopify theme check --json` failing when Theme Check reports an offense without a known position
+- Updated dependencies [8cb7b7e]
+- Updated dependencies [d1d59da]
+- Updated dependencies [d418238]
+  - @shopify/cli-kit@5.0.1
+
 ## 5.0.0
 
 ### Major Changes
