@@ -88,5 +88,3 @@ Read the guides that apply to your task.
 - [Contributing to UI Kit](docs/cli-kit/ui-kit/contributing.md): follow component design and testing patterns when changing UI Kit.
 - [Content and UI guidelines](docs/cli-kit/ui-kit/guidelines.md): keep prompts, banners, progress, and logs consistent, and use semantic styling.
 - [Using UI Kit](docs/cli-kit/ui-kit/readme.md): use existing prompt and output APIs for consistent terminal UI.
-
-Follow the check requirements of the active automation task.
