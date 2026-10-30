@@ -13,6 +13,9 @@ import {NotificationKey, NotificationsKey, cacheRetrieve, cacheStore} from '../.
 
 const URL = 'https://cdn.shopify.com/static/cli/notifications.json'
 const EMPTY_CACHE_MESSAGE = 'Cache is empty'
+// Cached notifications younger than this are reused, so back-to-back commands don't each start a
+// background process to fetch them again.
+const NOTIFICATIONS_CACHE_MAX_AGE_MS = 60 * 60 * 1000
 const COMMANDS_TO_SKIP = [
   'notifications:list',
   'notifications:generate',
@@ -216,6 +219,8 @@ export function fetchNotificationsInBackground(
 ): void {
   if (skipNotifications(currentCommand, environment)) return
   if (!argv[1]) return
+  const cachedAt = cacheRetrieve(`notifications-${url()}`)?.timestamp
+  if (cachedAt && Date.now() - cachedAt < NOTIFICATIONS_CACHE_MAX_AGE_MS) return
 
   // Run the Shopify command the same way as the current execution
   const nodeBinary = process.execPath
