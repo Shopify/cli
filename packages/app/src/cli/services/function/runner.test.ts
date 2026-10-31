@@ -287,6 +287,17 @@ describe('captureFunctionRun', () => {
     )
   })
 
+  test('passes replay cancellation to the captured runner process', async () => {
+    const functionExtension = await testFunctionExtension()
+    const controller = new AbortController()
+    vi.mocked(captureOutputWithExitCode).mockImplementation(async (_command, _args, options) => {
+      expect(options?.signal).toBe(controller.signal)
+      controller.abort()
+      throw new Error('Runner cancelled')
+    })
+    await expect(captureFunctionRun({functionExtension, signal: controller.signal})).rejects.toThrow('Runner cancelled')
+  })
+
   test('returns completed Function failures without throwing a second fatal error', async () => {
     const functionExtension = await testFunctionExtension()
     vi.mocked(captureOutputWithExitCode).mockResolvedValue({

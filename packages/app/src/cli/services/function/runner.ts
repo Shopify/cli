@@ -7,6 +7,7 @@ import {exec, captureOutputWithExitCode} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, readFileSync} from '@shopify/cli-kit/node/fs'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Readable, Writable} from 'stream'
 
 interface FunctionRunnerOptions {
@@ -21,6 +22,7 @@ interface FunctionRunnerOptions {
   stdin?: Readable | 'inherit'
   stdout?: Writable | 'inherit'
   stderr?: Writable | 'inherit'
+  signal?: AbortSignal
 }
 
 async function getFunctionRunnerBinary(ext: ExtensionInstance<FunctionConfigType>) {
@@ -101,6 +103,7 @@ async function prepareFunctionRun(options: FunctionRunnerOptions) {
       cwd: options.functionExtension.directory,
       stdin: options.stdin,
       input: options.input,
+      signal: options.signal,
     },
     warningType: options.profile ? await profileWarningType(options.functionExtension, functionPath) : undefined,
   }

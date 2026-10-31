@@ -7,6 +7,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import lockfile from 'proper-lockfile'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 import * as fs from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
@@ -37,7 +38,7 @@ describe('buildFunctionExtension', () => {
     const releaseLock = vi.fn()
     const stdout = {write: vi.fn()} as unknown as Writable
     const stderr = {write: vi.fn()} as unknown as Writable
-    const signal = vi.fn() as any
+    const signal = new AbortController().signal
     const app = {} as any
     const extension = await testFunctionExtension({
       config,

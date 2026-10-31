@@ -47,6 +47,7 @@ export interface ExecOptions {
 interface BuildExecOptions {
   /** Whether to throw on non-zero exit codes (default: true). */
   reject?: boolean
+  signal?: AbortSignal
 }
 
 /**
@@ -146,7 +147,7 @@ export async function captureOutputWithExitCode(
   args: string[],
   options?: ExecOptions,
 ): Promise<CaptureOutputResult> {
-  const result = await buildExec(command, args, options, {reject: false})
+  const result = await buildExec(command, args, options, {reject: false, signal: options?.signal})
   if (result.exitCode === undefined) {
     throw new ExternalError(
       result instanceof Error ? result.message : 'Command terminated without an exit code.',
@@ -254,6 +255,8 @@ export async function execCommand(command: string, options?: ExecOptions): Promi
  * @param options - Optional settings for how to run the command.
  */
 export async function exec(command: string, args: string[], options?: ExecOptions): Promise<void> {
+  if (options?.signal?.aborted) return
+
   if (options) {
     // Windows opens a new console window when running a command in the background, so we disable it.
     const runningOnWindows = platformAndArch().platform === 'windows'
@@ -267,14 +270,15 @@ export async function exec(command: string, args: string[], options?: ExecOption
   }
 
   let aborted = false
-  options?.signal?.addEventListener('abort', () => {
+  const onAbort = () => {
     const pid = commandProcess.pid
     if (pid) {
       outputDebug(`Killing process ${pid}: ${command} ${args.join(' ')}`)
       aborted = true
       treeKill(pid, 'SIGTERM')
     }
-  })
+  }
+  options?.signal?.addEventListener('abort', onAbort)
   try {
     await commandProcess
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -289,6 +293,8 @@ export async function exec(command: string, args: string[], options?: ExecOption
       abortError.stack = processError.stack
       throw abortError
     }
+  } finally {
+    options?.signal?.removeEventListener('abort', onAbort)
   }
 }
 
