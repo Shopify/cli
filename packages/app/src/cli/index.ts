@@ -41,6 +41,7 @@ import gatherPublicMetadata from './hooks/public_metadata.js'
 import gatherSensitiveMetadata from './hooks/sensitive_metadata.js'
 import AppLinkedCommand from './utilities/app-linked-command.js'
 import DevClean from './commands/app/dev/clean.js'
+import DevPush from './commands/app/dev/push.js'
 import AppUnlinkedCommand from './utilities/app-unlinked-command.js'
 import FunctionInfo from './commands/app/function/info.js'
 import ImportChannelConfig from './commands/app/import/channel-config.js'
@@ -60,6 +61,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:deploy': Deploy,
   'app:dev': Dev,
   'app:dev:clean': DevClean,
+  'app:dev:push': DevPush,
   'app:security:check': SecurityCheck,
   'app:security:clean': SecurityClean,
   'app:security:instructions': SecurityInstructions,

@@ -28,4 +28,18 @@ describe('installAppDependencies', () => {
       deep: 3,
     })
   })
+
+  test('passes the cancellation signal to the installer', async () => {
+    // Given
+    const project = testProject({packageManager: 'npm', directory: '/tmp/project'})
+    const signal = new AbortController().signal
+
+    // When
+    await installAppDependencies(project, {signal})
+
+    // Then
+    const tasks = vi.mocked(renderTasks).mock.calls[0]![0] as any
+    await tasks[0].task()
+    expect(installNPMDependenciesRecursively).toHaveBeenCalledWith(expect.objectContaining({signal}))
+  })
 })
