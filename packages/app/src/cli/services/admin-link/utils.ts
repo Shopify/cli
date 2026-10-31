@@ -17,25 +17,24 @@ export const contextToTarget = (context: string) => {
   }
 }
 
-const locationToEntity = (location: string) => {
-  switch (location.toLocaleLowerCase()) {
-    case 'show':
-      return 'details'
-    case 'index':
-      return 'index'
-    case 'action':
-      return 'selection'
-    case 'fulfilled_card':
-      return 'fulfilled-card'
-    default:
-      throw new Error(`Invalid context location: ${location}`)
-  }
+type AdminLinkEntity = 'details' | 'index' | 'selection' | 'fulfilled-card'
+
+const LOCATION_TO_ENTITY = new Map<string, AdminLinkEntity>([
+  ['show', 'details'],
+  ['index', 'index'],
+  ['action', 'selection'],
+  ['fulfilled_card', 'fulfilled-card'],
+])
+
+const TYPE_TO_SUB_DOMAIN = new Map<string, string>([['variants', 'product-variant']])
+
+const locationToEntity = (location: string): AdminLinkEntity => {
+  const entity = LOCATION_TO_ENTITY.get(location.toLocaleLowerCase())
+  if (!entity) throw new Error(`Invalid context location: ${location}`)
+  return entity
 }
-const typeToSubDomain = (type: string) => {
-  switch (type.toLocaleLowerCase()) {
-    case 'variants':
-      return 'product-variant'
-    default:
-      return hyphenate(type.toLocaleLowerCase().replace(new RegExp(`(s)$`), ''))
-  }
+
+const typeToSubDomain = (type: string): string => {
+  const normalizedType = type.toLocaleLowerCase()
+  return TYPE_TO_SUB_DOMAIN.get(normalizedType) ?? hyphenate(normalizedType.replace(new RegExp(`(s)$`), ''))
 }
