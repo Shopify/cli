@@ -15,9 +15,7 @@ export default class SecurityClean extends BaseCommand {
 
 Use \`--all\` to delete every results directory under \`.shopify/app-security/\` instead. \`--all\` takes neither \`--config\` nor \`--client-id\`, and with \`--without-app-config\` it doesn't need \`--client-id\`.`
 
-  static get jsonOutputSchema() {
-    return appSecurityCleanJsonOutputSchema
-  }
+  static jsonOutputSchema = appSecurityCleanJsonOutputSchema
 
   static description = this.descriptionForHelp()
 

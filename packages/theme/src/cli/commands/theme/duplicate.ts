@@ -12,9 +12,7 @@ import type {OutputFlags} from '@oclif/core/interfaces'
 import type {FlagOutput, NonTTYFlagRequirement} from '@shopify/cli-kit/node/base-command'
 
 export default class Duplicate extends ThemeCommand {
-  static get jsonOutputSchema() {
-    return themeDuplicateJsonOutputSchema
-  }
+  static jsonOutputSchema = themeDuplicateJsonOutputSchema
 
   static summary = 'Duplicates a theme from your theme library.'
 

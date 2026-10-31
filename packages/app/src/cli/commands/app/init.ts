@@ -29,9 +29,7 @@ export default class Init extends AppLinkedCommand {
 
   static summary?: string | undefined = 'Create a new app project'
 
-  static get jsonOutputSchema() {
-    return appInitJsonOutputSchema
-  }
+  static jsonOutputSchema = appInitJsonOutputSchema
 
   static description = this.descriptionForHelp()
 

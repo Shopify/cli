@@ -15,6 +15,8 @@ export default class StoreCreateDev extends Command {
 
   static descriptionWithMarkdown = 'Creates a new dev store in your organization.'
 
+  static jsonOutputSchema = createDevStoreJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static examples = [
@@ -51,10 +53,6 @@ export default class StoreCreateDev extends Command {
       env: 'SHOPIFY_FLAG_STORE_DEMO_DATA',
     }),
     country: countryFlag,
-  }
-
-  static get jsonOutputSchema() {
-    return createDevStoreJsonOutputSchema
   }
 
   async run(): Promise<void> {

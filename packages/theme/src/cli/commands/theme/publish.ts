@@ -12,9 +12,7 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 type PublishFlags = OutputFlags<typeof Publish.flags>
 
 export default class Publish extends ThemeCommand {
-  static get jsonOutputSchema() {
-    return themePublishJsonOutputSchema
-  }
+  static jsonOutputSchema = themePublishJsonOutputSchema
 
   static summary = 'Set a remote theme as the live theme.'
 

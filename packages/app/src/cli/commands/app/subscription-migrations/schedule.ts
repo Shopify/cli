@@ -26,6 +26,8 @@ Run the command from an app project. By default, it uses the Client ID from the 
 
 Use \`--force\` to skip confirmation and immediately submit every valid row. With \`--watch\`, human-readable output shows accepted identifiers before polling begins, then displays operation progress and the final outcome. With \`--json --watch\`, the command outputs one structured JSON document after every operation reaches a terminal status.`
 
+  static jsonOutputSchema = migrationSubmissionJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static examples = [
@@ -37,10 +39,6 @@ Use \`--force\` to skip confirmation and immediately submit every valid row. Wit
   ]
 
   static flags = {...submissionFlags, ...jsonFlag}
-
-  static get jsonOutputSchema() {
-    return migrationSubmissionJsonOutputSchema
-  }
 
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Schedule)

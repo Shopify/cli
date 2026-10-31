@@ -9,6 +9,8 @@ export default class Search extends Command {
   static descriptionWithMarkdown =
     'Search shopify.dev for the most relevant content matching a query. Best for discovery — surfacing the relevant pieces of documentation for a topic, rather than retrieving a whole document. To download a full document verbatim, use `doc fetch`.'
 
+  static jsonOutputSchema = searchJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static usage = `search [query]`
@@ -32,10 +34,6 @@ export default class Search extends Command {
   static flags = {
     ...globalFlags,
     ...jsonFlag,
-  }
-
-  static get jsonOutputSchema() {
-    return searchJsonOutputSchema
   }
 
   async run(): Promise<void> {

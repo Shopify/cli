@@ -7,15 +7,13 @@ import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 export default class Version extends Command {
   static descriptionWithMarkdown = 'Shopify CLI version currently installed.'
 
+  static jsonOutputSchema = versionJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
     ...jsonFlag,
-  }
-
-  static get jsonOutputSchema() {
-    return versionJsonOutputSchema
   }
 
   async run(): Promise<void> {

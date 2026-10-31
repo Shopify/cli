@@ -17,9 +17,7 @@ export default class ImportChannelConfig extends AppLinkedCommand {
 
   The generated TOML only includes public \`channel_config\` fields. Review it, then deploy it with \`shopify app deploy\`.`
 
-  static get jsonOutputSchema() {
-    return importChannelConfigJsonOutputSchema
-  }
+  static jsonOutputSchema = importChannelConfigJsonOutputSchema
 
   static description = this.descriptionForHelp()
 

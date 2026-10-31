@@ -16,6 +16,8 @@ When more than one organization is available, the command prompts you to pick on
 
 Run \`<%= config.bin %> organization list\` to find organization IDs.`
 
+  static jsonOutputSchema = storeListJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static examples = [
@@ -37,10 +39,6 @@ Run \`<%= config.bin %> organization list\` to find organization IDs.`
       options: storeTypeFilters,
       env: 'SHOPIFY_FLAG_STORE_TYPE',
     }),
-  }
-
-  static get jsonOutputSchema() {
-    return storeListJsonOutputSchema
   }
 
   public async run(): Promise<void> {

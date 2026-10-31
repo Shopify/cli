@@ -14,9 +14,7 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 const DEFAULT_FUNCTION_EXPORT = '_start'
 
 export default class FunctionRun extends AppUnlinkedCommand {
-  static get jsonOutputSchema() {
-    return functionRunJsonOutputSchema
-  }
+  static jsonOutputSchema = functionRunJsonOutputSchema
 
   static summary = 'Run a function locally for testing.'
 

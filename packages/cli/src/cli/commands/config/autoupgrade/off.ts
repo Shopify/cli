@@ -14,15 +14,13 @@ export default class AutoupgradeOff extends Command {
   To enable auto-upgrade, run \`shopify config autoupgrade on\`.
 `
 
+  static jsonOutputSchema = autoUpgradeJsonOutputSchema
+
   static description = this.descriptionForHelp()
 
   static flags = {
     ...globalFlags,
     ...jsonFlag,
-  }
-
-  static get jsonOutputSchema() {
-    return autoUpgradeJsonOutputSchema
   }
 
   async run(): Promise<void> {

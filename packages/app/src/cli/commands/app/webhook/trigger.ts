@@ -29,9 +29,7 @@ export default class WebhookTrigger extends AppLinkedCommand {
   - You can't use this method to validate your API webhook subscriptions.
   `
 
-  static get jsonOutputSchema() {
-    return appWebhookTriggerJsonOutputSchema
-  }
+  static jsonOutputSchema = appWebhookTriggerJsonOutputSchema
 
   static description = this.descriptionForHelp()
 

@@ -14,9 +14,7 @@ import type {ThemeEnvironmentResult} from '../../../services/json-output/schema.
 type MetafieldsFlags = InferredFlags<typeof MetafieldsPull.flags>
 
 export default class MetafieldsPull extends ThemeCommand {
-  static get jsonOutputSchema() {
-    return themeMetafieldsPullJsonOutputSchema
-  }
+  static jsonOutputSchema = themeMetafieldsPullJsonOutputSchema
 
   static summary = 'Download metafields definitions from your shop into a local file.'
 

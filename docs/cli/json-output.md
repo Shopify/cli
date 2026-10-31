@@ -156,6 +156,7 @@ For CLI-owned instants, use `jsonOutputTimestampSchema` to validate public field
 ## Connect the command and encoder
 
 Expose the contract from the command and encode through it. Encoding validates the value before serialization.
+Declare `static jsonOutputSchema` before `static description` so the schema is available when help text is initialized.
 
 ```ts
 export default class WidgetList extends Command {
@@ -164,9 +165,7 @@ export default class WidgetList extends Command {
     ...jsonFlag,
   }
 
-  static get jsonOutputSchema() {
-    return widgetListJsonOutputSchema
-  }
+  static jsonOutputSchema = widgetListJsonOutputSchema
 
   static descriptionWithMarkdown = 'Lists widgets.'
   static description = this.descriptionForHelp()
