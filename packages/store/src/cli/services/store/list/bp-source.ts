@@ -9,6 +9,7 @@ import {
 } from '../../../api/graphql/business-platform-organizations/generated/list_accessible_shops.js'
 import {type ShopFilterInput} from '../../../api/graphql/business-platform-organizations/generated/types.js'
 import {extractHost} from '@shopify/cli-kit/common/url'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {type Organization} from '@shopify/organizations'
 
 interface ListBusinessPlatformStoresOptions {
@@ -53,11 +54,9 @@ async function fetchOrganizationStores(
   const accessibleShops = result.organization?.accessibleShops
   if (!accessibleShops) return {entries: [], hasMore: false}
 
-  const entries: StoreListEntry[] = []
-  for (const edge of accessibleShops.edges) {
-    const entry = toStoreListEntry(edge.node, organization)
-    if (entry) entries.push(entry)
-  }
+  const entries = getArrayRejectingUndefined(
+    accessibleShops.edges.map((edge) => toStoreListEntry(edge.node, organization)),
+  )
 
   return {entries, hasMore: accessibleShops.pageInfo.hasNextPage}
 }
