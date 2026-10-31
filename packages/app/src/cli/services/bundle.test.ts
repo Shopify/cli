@@ -303,3 +303,45 @@ describe('uploadToGCS', () => {
     })
   })
 })
+
+describe('upload cancellation', () => {
+  test('does not read a bundle or start a request when already aborted', async () => {
+    const controller = new AbortController()
+    const cancelled = new AbortError('Upload cancelled')
+    controller.abort(cancelled)
+    await expect(uploadToGCS('https://signed.example/upload', '/missing/bundle', controller.signal)).rejects.toBe(
+      cancelled,
+    )
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  test('passes the cancellation signal to the upload request', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = joinPath(directory, 'bundle.zip')
+      await writeFile(path, 'bundle')
+      const controller = new AbortController()
+      vi.mocked(fetch).mockResolvedValueOnce({ok: true} as never)
+      await uploadToGCS('https://signed.example/upload', path, controller.signal)
+      expect(fetch).toHaveBeenCalledWith(
+        'https://signed.example/upload',
+        expect.objectContaining({method: 'put', signal: controller.signal}),
+        'slow-request',
+      )
+    })
+  })
+
+  test('does not retry after cancellation', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      const path = joinPath(directory, 'bundle.zip')
+      await writeFile(path, 'bundle')
+      const controller = new AbortController()
+      const cancelled = new AbortError('Upload cancelled')
+      vi.mocked(fetch).mockImplementationOnce(async () => {
+        controller.abort(cancelled)
+        return {ok: false, status: 503, text: async () => 'Unavailable'} as never
+      })
+      await expect(uploadToGCS('https://signed.example/upload', path, controller.signal)).rejects.toBe(cancelled)
+      expect(fetch).toHaveBeenCalledTimes(1)
+    })
+  })
+})

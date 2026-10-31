@@ -1,7 +1,7 @@
 import {
   ApplicationURLs,
   FrontendURLOptions,
-  generateApplicationURLs,
+  generateApplicationURLsForApp,
   generateFrontendURL,
   getURLs,
   shouldOrPromptUpdateURLs,
@@ -202,7 +202,7 @@ async function actionsBeforeSettingUpDevProcesses(devConfig: DevConfig) {
   await blockIfMigrationIncomplete(devConfig)
 }
 
-export async function blockIfMigrationIncomplete(devConfig: DevConfig) {
+export async function blockIfMigrationIncomplete(devConfig: Pick<DevConfig, 'developerPlatformClient' | 'remoteApp'>) {
   const {developerPlatformClient, remoteApp} = devConfig
 
   const extensions = (await developerPlatformClient.appExtensionRegistrations(remoteApp)).app.extensionRegistrations
@@ -245,11 +245,7 @@ async function handleUpdatingOfPartnerUrls(
   let shouldUpdateURLs = false
   if (frontendConfig ?? backendConfig) {
     if (commandSpecifiedToUpdate) {
-      const newURLs = generateApplicationURLs(
-        network.proxyUrl,
-        webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
-        localApp.configuration.app_proxy,
-      )
+      const newURLs = generateApplicationURLsForApp(localApp, network.proxyUrl)
       shouldUpdateURLs = await shouldOrPromptUpdateURLs({
         currentURLs: network.currentUrls,
         appDirectory: localApp.directory,

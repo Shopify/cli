@@ -2,13 +2,8 @@ import {DevSessionLogger} from './dev-session-logger.js'
 import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DevSessionProcessOptions} from './dev-session-process.js'
 import {AppEvent, AppEventWatcher, ExtensionEvent} from '../../app-events/app-event-watcher.js'
-import {
-  BUNDLE_EXCLUSION_PATTERNS,
-  compressBundle,
-  getUploadURL,
-  uploadToGCS,
-  writeManifestToBundle,
-} from '../../../bundle.js'
+import {BUNDLE_EXCLUSION_PATTERNS, compressBundle, writeManifestToBundle} from '../../../bundle.js'
+import {devBundlePath, uploadDevBundle} from '../../dev-bundle.js'
 import {DevSessionCreateOptions, DevSessionUpdateOptions} from '../../../../utilities/developer-platform-client.js'
 import {AppManifest} from '../../../../models/app/app.js'
 import {DevSessionUpdateStatus} from '../../../../models/extensions/specification.js'
@@ -18,7 +13,7 @@ import {ClientError} from 'graphql-request'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {dirname} from '@shopify/cli-kit/node/path'
 import {readdir} from '@shopify/cli-kit/node/fs'
 import {SerialBatchProcessor} from '@shopify/cli-kit/node/serial-batch-processor'
 import {Writable} from 'stream'
@@ -406,10 +401,7 @@ export class DevSession {
    */
   private async uploadAssetsIfNeeded(assets: string[], includeManifest: boolean): Promise<string | undefined> {
     if (!assets.length && !includeManifest) return undefined
-    const compressedBundlePath = joinPath(
-      dirname(this.bundlePath),
-      `dev-bundle.${this.options.developerPlatformClient.bundleFormat}`,
-    )
+    const compressedBundlePath = devBundlePath(dirname(this.bundlePath), this.options.developerPlatformClient)
 
     // Create zip file with everything
     const filePattern = [...assets.map((ext) => `${ext}/**`), ...BUNDLE_EXCLUSION_PATTERNS]
@@ -417,23 +409,10 @@ export class DevSession {
 
     await compressBundle(this.bundlePath, compressedBundlePath, filePattern)
 
-    // Get a signed URL to upload the zip file
-    const signedURL = await this.getSignedURLWithRetry()
-
-    // Upload the zip file
-    await uploadToGCS(signedURL, compressedBundlePath)
-    return signedURL
-  }
-
-  /**
-   * Get a signed URL to upload the zip file to GCS
-   * @returns The signed URL
-   */
-  private async getSignedURLWithRetry() {
-    return getUploadURL(this.options.developerPlatformClient, {
-      apiKey: this.options.appId,
-      organizationId: this.options.organizationId,
-      id: this.options.appId,
+    return uploadDevBundle({
+      developerPlatformClient: this.options.developerPlatformClient,
+      app: {apiKey: this.options.appId, organizationId: this.options.organizationId, id: this.options.appId},
+      bundlePath: compressedBundlePath,
     })
   }
 

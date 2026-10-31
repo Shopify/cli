@@ -1,5 +1,5 @@
 import {updateURLsPrompt} from '../../prompts/dev.js'
-import {AppConfigurationInterface, AppLinkedInterface, CurrentAppConfiguration} from '../../models/app/app.js'
+import {AppConfigurationInterface, AppLinkedInterface, CurrentAppConfiguration, Web} from '../../models/app/app.js'
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
@@ -163,6 +163,24 @@ export function generateApplicationURLs(
     redirectUrlWhitelist,
     ...appProxy,
   }
+}
+
+/**
+ * Generates the app URLs used by a dev preview for an app served from the given base URL.
+ *
+ * @param app - The webs and configuration whose auth callback paths and app proxy are rewritten.
+ * @param baseURL - The public origin serving the app.
+ * @returns The application URL, OAuth redirect URLs, and app proxy URL for the preview.
+ */
+export function generateApplicationURLsForApp(
+  app: {webs: Web[]; configuration: Pick<CurrentAppConfiguration, 'app_proxy'>},
+  baseURL: string,
+): ApplicationURLs {
+  return generateApplicationURLs(
+    baseURL,
+    app.webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
+    app.configuration.app_proxy,
+  )
 }
 
 function replaceHost(oldUrl: string, newUrl: string): string {

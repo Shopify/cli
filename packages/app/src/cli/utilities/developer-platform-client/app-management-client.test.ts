@@ -1024,6 +1024,31 @@ describe('sendSampleWebhook', () => {
 })
 
 describe('dev session requests', () => {
+  test.each([true, false])(
+    'forwards optional creation cancellation without changing the default request mode: %s',
+    async (withSignal) => {
+      const client = AppManagementClient.getInstance()
+      client.token = () => Promise.resolve('token')
+      const signal = new AbortController().signal
+
+      await client.devSessionCreate({
+        appId: 'gid://shopify/App/123',
+        assetsUrl: 'https://assets.test',
+        shopFqdn: 'test.myshopify.com',
+        ...(withSignal ? {signal} : {}),
+      })
+
+      expect(appDevRequestDoc).toHaveBeenCalledWith(
+        expect.objectContaining({
+          requestOptions: {
+            requestMode: withSignal ? {useNetworkLevelRetry: false, useAbortSignal: signal} : 'slow-request',
+          },
+        }),
+      )
+      expect(vi.mocked(appDevRequestDoc).mock.calls[0]![0].variables).not.toHaveProperty('signal')
+    },
+  )
+
   test('sends the enabled unsafe validation value to create and update requests', async () => {
     const client = AppManagementClient.getInstance()
     client.token = () => Promise.resolve('token')

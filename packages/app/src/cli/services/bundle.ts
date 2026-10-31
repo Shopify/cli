@@ -7,6 +7,7 @@ import {brotliCompress, zip} from '@shopify/cli-kit/node/archiver'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {fileSize, readFileSync} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {writeFile} from 'fs/promises'
 
@@ -48,9 +49,12 @@ export async function compressBundle(inputDirectory: string, outputPath: string,
  *
  * @param signedURL - The signed URL to upload the file to
  * @param filePath - The path to the file
+ * @param signal - Optional signal to cancel the upload and any retries.
  */
-export async function uploadToGCS(signedURL: string, filePath: string) {
+export async function uploadToGCS(signedURL: string, filePath: string, signal?: AbortSignal) {
+  signal?.throwIfAborted()
   const size = await fileSize(filePath)
+  signal?.throwIfAborted()
   if (size > MAX_BUNDLE_SIZE_BYTES) {
     // Round up so a size that barely exceeds the cap never displays as the cap.
     const humanSize = `${(Math.ceil((size / MEGABYTE) * 100) / 100).toFixed(2)} MB`
@@ -66,8 +70,10 @@ export async function uploadToGCS(signedURL: string, filePath: string) {
   for (let attempt = 1; attempt <= UPLOAD_MAX_ATTEMPTS; attempt++) {
     // The signed URL only signs the `host` header, so no extra headers are
     // required; node-fetch derives Content-Length from the buffer body.
+
+    signal?.throwIfAborted()
     // eslint-disable-next-line no-await-in-loop
-    response = await fetch(signedURL, {method: 'put', body: buffer}, 'slow-request')
+    response = await fetch(signedURL, {method: 'put', body: buffer, ...(signal ? {signal} : {})}, 'slow-request')
     if (response.ok) return
     const lastAttempt = attempt === UPLOAD_MAX_ATTEMPTS
     const retryable = RETRYABLE_UPLOAD_STATUS_CODES.has(response.status)
