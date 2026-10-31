@@ -11,6 +11,7 @@ import {fetchThemeAssets, themeDelete} from '@shopify/cli-kit/node/themes/api'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import * as outputModule from '@shopify/cli-kit/node/output'
 
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/themes/api')
@@ -259,6 +260,35 @@ describe('dev server session', async () => {
         }),
       )
       expect(fetchOrCreateCrawlerSignatureHeaders).toHaveBeenCalledOnce()
+    })
+
+    test('warns when the background refresh needs interactive reauthentication', async () => {
+      // Given
+      vi.useFakeTimers()
+      const outputWarn = vi.spyOn(outputModule, 'outputWarn').mockImplementation(() => {})
+      try {
+        vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront_token')
+        vi.mocked(getStorefrontSessionCookies).mockResolvedValue({
+          _shopify_essential: ':AABBCCDDEEFFGGHH==123:',
+        })
+        vi.mocked(ensureAuthenticatedThemes).mockResolvedValue({token: 'token_1', storeFqdn})
+        await initializeDevServerSession(themeId, adminSession)
+        vi.mocked(ensureAuthenticatedThemes).mockRejectedValueOnce(
+          new AbortError('The credentials are invalid.', 'Sign in again in an interactive terminal.'),
+        )
+
+        // When
+        await vi.advanceTimersByTimeAsync(30 * 60 * 1000)
+
+        // Then
+        expect(outputWarn).toHaveBeenCalledWith(
+          'Theme dev could not refresh its Shopify session. Restart it in an interactive terminal to sign in again.',
+        )
+      } finally {
+        vi.clearAllTimers()
+        vi.useRealTimers()
+        outputWarn.mockRestore()
+      }
     })
   })
 })
