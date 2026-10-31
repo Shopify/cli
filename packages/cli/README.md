@@ -8139,7 +8139,7 @@ DESCRIPTION
               "string",
               "null"
             ],
-            "description": "Known values: SUPERSEDED, SCHEDULING_FAILED."
+            "description": "Known values: SUPERSEDED, SCHEDULING_FAILED, PLAN_REQUIREMENTS_NOT_MET, SHOP_FEATURES_UNVERIFIED."
           }
         },
         "required": [
