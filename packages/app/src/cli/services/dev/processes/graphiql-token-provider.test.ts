@@ -81,6 +81,33 @@ describe('createClientCredentialsTokenProvider', () => {
     )
   })
 
+  test.each(['getToken', 'refreshToken'] as const)(
+    'cancels an outstanding %s request when aborted',
+    async (operation) => {
+      const controller = new AbortController()
+      mockedFetch.mockImplementationOnce(async (_url, request) => {
+        return new Promise((_resolve, reject) => {
+          request?.signal?.addEventListener('abort', () => reject(new Error('Token request aborted')))
+        })
+      })
+      const provider = createClientCredentialsTokenProvider({
+        apiKey: 'api-key',
+        apiSecret: 'api-secret',
+        storeFqdn: 'store.myshopify.com',
+      })
+      const token = provider[operation]!(controller.signal)
+      const rejected = expect(token).rejects.toThrow('Token request aborted')
+      expect(mockedFetch).toHaveBeenCalledWith(
+        'https://store.myshopify.com/admin/oauth/access_token',
+        expect.objectContaining({signal: controller.signal}),
+      )
+
+      controller.abort()
+
+      await rejected
+    },
+  )
+
   test('throws when the token response is not successful', async () => {
     mockFailedTokenResponse(401)
 

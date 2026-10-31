@@ -12,9 +12,9 @@ interface OpenAppGraphiQLOptions {
   port?: number
   variables?: string
   apiVersion?: string
+  outputFormat?: 'text' | 'json'
   /**
-   * Test-only seam: aborts the server-running loop without requiring a real SIGINT.
-   * In production, the command itself listens for SIGINT and exits.
+   * Stops the session and closes its server when aborted.
    */
   abortSignal?: AbortSignal
 }
@@ -43,6 +43,7 @@ export async function openAppGraphiQL(options: OpenAppGraphiQLOptions): Promise<
     },
     variables: options.variables,
     apiVersion: options.apiVersion,
+    outputFormat: options.outputFormat,
     abortSignal: options.abortSignal,
   })
 }

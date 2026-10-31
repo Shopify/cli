@@ -1,4 +1,8 @@
-import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {
+  defineJsonOutputSchema,
+  jsonOutputStoreDomainSchema,
+  type InferJsonOutputSchema,
+} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const skippedMetafieldsSchema = zod
@@ -15,8 +19,7 @@ export const importCustomDataDefinitionsJsonOutputSchema = defineJsonOutputSchem
   schema: zod
     .object({
       status: zod.literal('success'),
-      storeDomain: zod
-        .string()
+      storeDomain: jsonOutputStoreDomainSchema
         .nullable()
         .describe('The full myshopify.com domain of the development store, or null when unavailable.'),
       metafieldCount: zod

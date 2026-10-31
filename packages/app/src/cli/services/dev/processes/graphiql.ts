@@ -50,5 +50,6 @@ export const launchGraphiQLServer: DevProcessFunction<GraphiQLServerProcessOptio
   })
   abortSignal.addEventListener('abort', () => {
     httpServer.close()
+    httpServer.closeAllConnections()
   })
 }

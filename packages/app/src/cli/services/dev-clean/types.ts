@@ -1,4 +1,8 @@
-import {defineJsonOutputSchema, type InferJsonOutputSchema} from '@shopify/cli-kit/node/json-output-schema'
+import {
+  defineJsonOutputSchema,
+  jsonOutputStoreDomainSchema,
+  type InferJsonOutputSchema,
+} from '@shopify/cli-kit/node/json-output-schema'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const appSchema = zod.object({name: zod.string(), clientId: zod.string().min(1)}).strict()
@@ -9,7 +13,9 @@ export const appDevCleanJsonOutputSchema = defineJsonOutputSchema({
     .object({
       status: zod.literal('success'),
       app: appSchema,
-      storeDomain: zod.string().nullable().describe('The canonical *.myshopify.com hostname, or null when unknown.'),
+      storeDomain: jsonOutputStoreDomainSchema
+        .nullable()
+        .describe('The canonical *.myshopify.com hostname, or null when unknown.'),
     })
     .strict(),
   definitions: {AppDevCleanApp: appSchema},

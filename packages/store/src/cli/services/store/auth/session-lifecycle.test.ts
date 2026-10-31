@@ -123,6 +123,26 @@ describe('loadStoredStoreSession', () => {
     expect(refreshed).toEqual(expect.objectContaining({accessToken: 'fresh-token', userId: '42'}))
   })
 
+  test('preserves stored authentication when a refresh is cancelled', async () => {
+    const controller = new AbortController()
+    const session = buildSession({expiresAt: new Date(Date.now() - 60 * 1000).toISOString()})
+    vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(session)
+    vi.mocked(refreshStoreAccessToken).mockImplementationOnce(async () => {
+      controller.abort()
+      throw new DOMException('The operation was aborted.', 'AbortError')
+    })
+
+    await expect(loadStoredStoreSession('shop.myshopify.com', controller.signal)).rejects.toThrow('aborted')
+
+    expect(refreshStoreAccessToken).toHaveBeenCalledWith({
+      store: 'shop.myshopify.com',
+      refreshToken: 'refresh-token',
+      signal: controller.signal,
+    })
+    expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
+    expect(setStoredStoreAppSession).not.toHaveBeenCalled()
+  })
+
   test('preserves existing optional refresh fields when Shopify omits them', async () => {
     const session = buildSession({
       expiresAt: new Date(Date.now() - 60 * 1000).toISOString(),
