@@ -10,7 +10,6 @@ const commandExceptions = [
   'packages/store/src/cli/commands/store/graphiql.ts',
   'packages/theme/src/cli/commands/theme/console.ts',
   'packages/theme/src/cli/commands/theme/dev.ts',
-  'packages/theme/src/cli/commands/theme/language-server.ts',
 ]
 
 module.exports = {commandExceptions}

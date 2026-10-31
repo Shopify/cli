@@ -108,6 +108,16 @@ describe('handler', () => {
     expect(mockAndCaptureOutput().output()).toBe('')
     expect(renderFatalError).not.toHaveBeenCalled()
   })
+
+  test('respects an explicit text context when JSON is enabled globally', async () => {
+    vi.mocked(jsonOutputEnabled).mockReturnValue(true)
+    const error = new AbortError('Protocol startup failed')
+
+    await runWithCommandEvents({outputMode: 'text', sink: () => {}}, () => handler(error))
+
+    expect(renderFatalError).toHaveBeenCalledWith(error)
+    expect(mockAndCaptureOutput().info()).toBe('')
+  })
 })
 
 describe('stack file path helpers', () => {
