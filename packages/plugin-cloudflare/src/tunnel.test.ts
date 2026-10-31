@@ -146,6 +146,31 @@ describe('hookStart', () => {
     }
   })
 
+  test('reports an unknown error when the tunnel times out without printing a URL or a known error', async () => {
+    // Given
+    vi.useFakeTimers()
+    try {
+      vi.mocked(exec).mockImplementationOnce(async (command, args, options) => {
+        const writable = options?.stdout as Writable
+        writable.write(Buffer.from(`2023-01-30T15:37:11Z INF Starting tunnel`))
+      })
+
+      // When
+      const tunnelClient = (await hookStart(port)).valueOrAbort()
+      await vi.advanceTimersByTimeAsync(250)
+      const result = tunnelClient.getTunnelStatus()
+
+      // Then
+      expect(result).toEqual({
+        status: 'error',
+        message: 'Could not start Cloudflare tunnel: unknown error.',
+        tryMessage: expect.anything(),
+      })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   test('returns error if it fails to install cloudflared', async () => {
     // Given
     vi.mocked(install).mockReturnValueOnce(Promise.reject(new Error('Failed to install cloudflared')))
