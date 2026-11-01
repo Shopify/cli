@@ -12,4 +12,4 @@ and ensure all deploys target the same production Partners' App.
 Storing the ids in a `.env` file to decide whether or not they want to include it in the Git repository,
 and set the value in CI/CD environments through environment variables.
 
-In the future we might interate on the `.env` idea to support deployment to environments other than production.
+In the future we might iterate on the `.env` idea to support deployment to environments other than production.
