@@ -1,4 +1,5 @@
 import {dev, openURLSafely, renderLinks, createKeypressHandler, reportDevAnalytics} from './dev.js'
+import {themeDevOutputSchema} from './dev/schema.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
 import {hasRequiredThemeDirectories} from '../utilities/theme-fs.js'
 import {isStorefrontPasswordProtected} from '../utilities/theme-environment/storefront-session.js'
@@ -16,6 +17,9 @@ import {Config} from '@oclif/core'
 import {readDevInstance, devInstancePaths, acquireDevInstance} from '@shopify/cli-kit/node/dev-instance'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {outputInfo} from '@shopify/cli-kit/node/output'
+import {renderCommandEventAsJson, runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
+import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import readline from 'readline'
 import {mkdtemp, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
@@ -554,6 +558,39 @@ describe('dev() Ctrl-C analytics', () => {
     await new Promise((resolve) => setImmediate(resolve))
     expect(serverStop).toHaveBeenCalledOnce()
     expect(serverStart).not.toHaveBeenCalled()
+    await expect(readDevInstance(identity)).resolves.toBeUndefined()
+  })
+
+  test('with JSON output, mirrors the session log to stdout without keyboard shortcuts', async () => {
+    vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+    const stdinOnSpy = vi.spyOn(process.stdin, 'on')
+    vi.mocked(setupDevServer).mockReturnValueOnce({
+      serverStart: vi.fn().mockResolvedValue(undefined),
+      serverStop: vi.fn().mockResolvedValue(undefined),
+      workPromise: Promise.resolve(),
+      renderDevSetupProgress: async () => outputInfo('Synced » update assets/base.css'),
+      backgroundJobPromise: new Promise(() => {}),
+      resolveBackgroundJob: vi.fn(),
+      dispatchEvent: vi.fn(async () => undefined),
+    })
+    const identity = {command: 'theme dev', directory: baseOptions.directory, key: `${baseOptions.store}:${theme.id}`}
+    const paths = devInstancePaths(identity)
+
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      await runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, async () => {
+        const running = dev({...baseOptions, json: true})
+        await vi.waitFor(async () => expect((await readDevInstance(identity))?.status).toBe('running'))
+        const info = JSON.parse(await readFile(paths.infoFile))
+        expect(themeDevOutputSchema.definitions.DevInstance!.parse(info)).toEqual(info)
+        processEvents.emit('shopify:signal')
+        await running
+      })
+
+      expect(stdout()).toBe(await readFile(paths.logFile))
+      expect(JSON.parse(stdout())).toEqual({timestamp: expect.any(String), message: 'Synced » update assets/base.css'})
+      expect(stderr()).not.toContain('Synced')
+    })
+    expect(stdinOnSpy).not.toHaveBeenCalledWith('keypress', expect.any(Function))
     await expect(readDevInstance(identity)).resolves.toBeUndefined()
   })
 })

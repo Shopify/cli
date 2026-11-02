@@ -1,5 +1,10 @@
 /* eslint-disable no-console -- Theme output helpers write messages through console.warn. */
-import {renderCommandEvent, runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
+import {
+  commandEventOutputMode,
+  renderCommandEvent,
+  renderCommandEventAsJson,
+  runWithCommandEvents,
+} from '@shopify/cli-kit/node/command-events'
 import {type DevInstance} from '@shopify/cli-kit/node/dev-instance'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {AsyncLocalStorage} from 'node:async_hooks'
@@ -13,6 +18,8 @@ export async function withThemeDevOutput<T>(instance: DevInstance, run: () => Pr
     stringWritesAreMessages: true,
   })
   const originalWarn = console.warn
+  // With --json, session messages go only to the log, which the instance mirrors to stdout.
+  const json = commandEventOutputMode() === 'json'
   let active = true
   // Ink writes progress frames directly to stderr. Capture messages before presentation,
   // and record task events separately so screen redraws do not enter the session log.
@@ -22,10 +29,15 @@ export async function withThemeDevOutput<T>(instance: DevInstance, run: () => Pr
       useConcurrentOutputContext({consoleWarn: writeMessage}, () =>
         runWithCommandEvents(
           {
-            outputMode: 'text',
+            outputMode: json ? 'json' : 'text',
             sink: (event, options) => {
-              if (active && event.type === 'progress' && event.message) output.write(event.message)
-              if (!options?.alreadyRendered) renderCommandEvent(event)
+              const recorded = active && (json || event.type === 'progress') && Boolean(event.message)
+              if (recorded) output.write(event.message)
+              if (json) {
+                if (!recorded) renderCommandEventAsJson(event)
+              } else if (!options?.alreadyRendered) {
+                renderCommandEvent(event)
+              }
             },
           },
           run,
@@ -51,6 +63,7 @@ export async function withThemeDevOutput<T>(instance: DevInstance, run: () => Pr
 
   function writeMessage(message: string) {
     if (active) output.write(message)
+    if (active && json) return
     // Ink can replace the console method while a progress view is active.
     const warn = console.warn === captureWarn ? originalWarn : console.warn
     warn(message)

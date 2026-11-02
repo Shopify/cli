@@ -1,10 +1,12 @@
 import {withThemeDevOutput} from './output.js'
+import {themeDevOutputSchema} from './schema.js'
 import {logRequestLine} from '../../utilities/log-request-line.js'
 import {renderThrownError} from '../../utilities/errors.js'
 import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {withDevInstance} from '@shopify/cli-kit/node/dev-instance'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderError, renderSuccess, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderCommandEventAsJson, runWithCommandEvents} from '@shopify/cli-kit/node/command-events'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
 import {afterEach, expect, test, vi} from 'vitest'
 import {createEvent} from 'h3'
@@ -106,6 +108,59 @@ test('preserves session output and restores terminal output after failure', asyn
       expect(JSON.parse(await readFile(logFile))).toEqual({timestamp: expect.any(String), message: 'Before failure'})
       expect(stderr()).toContain('Before failure')
       expect(stderr()).toContain('After failure')
+    })
+  })
+})
+
+test('with JSON output, writes session messages as identical JSONL to stdout and the log', async () => {
+  await inTemporaryDirectory(async (directory) => {
+    await withCapturedStandardStreams(async ({stdout, stderr}) => {
+      let logFile = ''
+      await runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, () =>
+        withDevInstance({command: 'theme dev', directory, logOutput: process.stdout}, async (instance) => {
+          logFile = instance.paths.logFile
+          outputInfo('Before the dev session')
+          await withThemeDevOutput(instance, async () => {
+            await renderTasks([{title: 'Uploading theme files', task: async () => {}}])
+            outputInfo('Synced » update assets/base.css')
+            renderWarning({body: 'A dev warning'})
+            renderError({headline: 'A rendered error.'})
+            renderThrownError('Failed to upload assets/base.css.', new Error('Invalid CSS'))
+            renderSuccess({body: [{link: {label: 'Preview your theme', url: 'http://127.0.0.1:9292'}}]})
+          })
+          outputInfo('After the dev session')
+        }),
+      )
+
+      expect(stdout()).toBe(await readFile(logFile))
+      const records = stdout()
+        .trim()
+        .split('\n')
+        .map((line) => JSON.parse(line))
+      records.forEach((record) => expect(() => themeDevOutputSchema.validate(record)).not.toThrow())
+      const messages = records.map((record) => record.message).join('\n')
+      for (const text of [
+        'Uploading theme files',
+        'Synced » update assets/base.css',
+        'A dev warning',
+        'A rendered error',
+        'Invalid CSS',
+        'http://127.0.0.1:9292',
+      ]) {
+        expect(messages).toContain(text)
+        expect(stderr()).not.toContain(text)
+      }
+      expect(stdout()).not.toContain('\u001b')
+      expect(stdout()).not.toContain('session')
+      expect(
+        stderr()
+          .trim()
+          .split('\n')
+          .map((line) => JSON.parse(line)),
+      ).toEqual([
+        expect.objectContaining({type: 'diagnostic', message: 'Before the dev session'}),
+        expect.objectContaining({type: 'diagnostic', message: 'After the dev session'}),
+      ])
     })
   })
 })
