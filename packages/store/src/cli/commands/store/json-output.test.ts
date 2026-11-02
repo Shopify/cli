@@ -376,10 +376,7 @@ describeJsonCommand({
   expectedResult: {storeDomain: store, apiVersion: '2026-01', operations: [], pageInfo: {hasNextPage: false}},
   expectedEvents: [{type: 'diagnostic', level: 'info', message: expect.stringContaining('Listing bulk operations.')}],
   expectedSchema: {
-    anyOf: [
-      {$ref: '#/definitions/GetBulkOperationStatusResult'},
-      {$ref: '#/definitions/ListBulkOperationsResult'},
-    ],
+    anyOf: [{$ref: '#/definitions/GetBulkOperationStatusResult'}, {$ref: '#/definitions/ListBulkOperationsResult'}],
   },
   setup: () => {
     vi.mocked(prepareBulkAdminContext).mockResolvedValue(adminSession)
