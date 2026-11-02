@@ -81,7 +81,10 @@ export async function render(session: DevServerSession, context: DevServerRender
   return response
 }
 
-function isExitPageRequest({method, path}: Pick<DevServerRenderContext, 'method' | 'path'>) {
+/**
+ * Whether a request is a GET to the storefront exit page (`/url` or `/:locale/url`).
+ */
+export function isExitPageRequest({method, path}: Pick<DevServerRenderContext, 'method' | 'path'>) {
   return method.toUpperCase() === 'GET' && EXIT_PAGE_PATH_REGEX.test(path)
 }
 

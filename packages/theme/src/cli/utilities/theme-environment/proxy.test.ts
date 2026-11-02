@@ -342,28 +342,48 @@ describe('dev proxy', () => {
       expect(patchedResponse.headers.get('Location')).toBe('/foo?bar=1')
     })
 
+    const exitPage = {keepExternalRedirects: true}
+
     test.each([
-      ['a relative path', '/foo?_fd=0&pb=0&bar=1', '/foo?bar=1'],
-      ['the store domain over http', 'http://my-store.myshopify.com/foo?pb=0', '/foo'],
-      ['an uppercase store domain', 'https://MY-STORE.myshopify.com/foo', '/foo'],
-      ['a protocol-relative store domain', '//my-store.myshopify.com/foo?_fd=0&bar=1', '/foo?bar=1'],
-    ])('rewrites a Location header with %s to a local path', async (_, location, expected) => {
+      ['a relative path', '/foo?_fd=0&pb=0&bar=1', '/foo?bar=1', undefined],
+      ['the store domain over http', 'http://my-store.myshopify.com/foo?pb=0', '/foo', undefined],
+      ['an uppercase store domain', 'https://MY-STORE.myshopify.com/foo', '/foo', undefined],
+      ['a protocol-relative store domain', '//my-store.myshopify.com/foo?_fd=0&bar=1', '/foo?bar=1', undefined],
+      ['a market domain', 'https://mystore.fr/products/new', '/products/new', undefined],
+      ['another site', 'https://example.com/path?_fd=0&pb=0&q=1', '/path?q=1', undefined],
+      ['a protocol-relative host', '//other.example.com/foo', '/foo', undefined],
+      ['a relative path on the exit page', '/foo?_fd=0&pb=0&bar=1', '/foo?bar=1', exitPage],
+      ['the store domain over http on the exit page', 'http://my-store.myshopify.com/foo?pb=0', '/foo', exitPage],
+      ['an uppercase store domain on the exit page', 'https://MY-STORE.myshopify.com/foo', '/foo', exitPage],
+      [
+        'a protocol-relative store domain on the exit page',
+        '//my-store.myshopify.com/foo?_fd=0&bar=1',
+        '/foo?bar=1',
+        exitPage,
+      ],
+    ])('rewrites a Location header with %s to a local path', async (_, location, expected, options) => {
       const redirectResponse = new Response(null, {status: 302, headers: {Location: location}})
 
-      const patchedResponse = await patchRenderingResponse(ctx, redirectResponse)
+      const patchedResponse = await patchRenderingResponse(ctx, redirectResponse, undefined, options)
 
+      expect(patchedResponse.status).toBe(302)
       expect(patchedResponse.headers.get('Location')).toBe(expected)
     })
 
     test.each([
-      ['another site', 'https://example.com/path?_fd=0&pb=0&q=1'],
-      ['another site on a subdomain', 'https://checkout.jplhomer.org/'],
-      ['a host that starts with the store domain', 'https://my-store.myshopify.com.example.com/foo'],
-      ['a store checkout', 'https://my-store.myshopify.com/checkouts/cn/abc123'],
-    ])('keeps a Location header to %s unchanged', async (_, location) => {
+      ['a store checkout', 'https://my-store.myshopify.com/checkouts/cn/abc123', undefined],
+      ['a store checkout on the exit page', 'https://my-store.myshopify.com/checkouts/cn/abc123', exitPage],
+      ['another site on the exit page', 'https://example.com/path?_fd=0&pb=0&q=1', exitPage],
+      ['another site on a subdomain on the exit page', 'https://checkout.jplhomer.org/', exitPage],
+      [
+        'a host that starts with the store domain on the exit page',
+        'https://my-store.myshopify.com.example.com/foo',
+        exitPage,
+      ],
+    ])('keeps a Location header to %s unchanged', async (_, location, options) => {
       const redirectResponse = new Response(null, {status: 302, headers: {Location: location}})
 
-      const patchedResponse = await patchRenderingResponse(ctx, redirectResponse)
+      const patchedResponse = await patchRenderingResponse(ctx, redirectResponse, undefined, options)
 
       expect(patchedResponse.status).toBe(302)
       expect(patchedResponse.headers.get('Location')).toBe(location)
@@ -372,14 +392,17 @@ describe('dev proxy', () => {
     test.each([
       ['//example.com/foo', 'https://example.com/foo'],
       ['//checkout.jplhomer.org/path?_fd=0&pb=0&q=1', 'https://checkout.jplhomer.org/path?_fd=0&pb=0&q=1'],
-    ])('makes a protocol-relative Location header to another site HTTPS (%s)', async (location, expected) => {
-      const redirectResponse = new Response(null, {status: 302, headers: {Location: location}})
+    ])(
+      'makes a protocol-relative Location header to another site HTTPS on the exit page (%s)',
+      async (location, expected) => {
+        const redirectResponse = new Response(null, {status: 302, headers: {Location: location}})
 
-      const patchedResponse = await patchRenderingResponse(ctx, redirectResponse)
+        const patchedResponse = await patchRenderingResponse(ctx, redirectResponse, undefined, exitPage)
 
-      expect(patchedResponse.status).toBe(302)
-      expect(patchedResponse.headers.get('Location')).toBe(expected)
-    })
+        expect(patchedResponse.status).toBe(302)
+        expect(patchedResponse.headers.get('Location')).toBe(expected)
+      },
+    )
 
     test('returns 3xx responses without reading or patching the body', async () => {
       const localCtx = {

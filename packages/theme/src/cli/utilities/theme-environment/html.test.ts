@@ -9,7 +9,10 @@ import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
 
-vi.mock('./storefront-renderer.js')
+vi.mock('./storefront-renderer.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./storefront-renderer.js')>()),
+  render: vi.fn(),
+}))
 vi.mock('./hot-reload/error-page.js')
 vi.mock('./hot-reload/server.js')
 vi.mock('../theme-ext-environment/theme-ext-server.js')
@@ -112,6 +115,26 @@ describe('getHtmlHandler', async () => {
     )
     expect(response.status).toBe(302)
     expect(response.headers.get('Location')).toBe('https://example.com/')
+  })
+
+  test('turns a redirect to another host into a local path outside the exit page', async () => {
+    // Given
+    const handler = getHtmlHandler(theme, ctx)
+    const event = createH3Event('GET', '/products/new', {accept: 'text/html', 'sec-fetch-mode': 'navigate'})
+
+    vi.mocked(render).mockResolvedValueOnce(
+      new Response(null, {
+        status: 302,
+        headers: {Location: 'https://mystore.fr/products/new', 'x-request-id': 'test-request-id'},
+      }),
+    )
+
+    // When
+    const response = await handler(event)
+
+    // Then
+    expect(response.status).toBe(302)
+    expect(response.headers.get('Location')).toBe('/products/new')
   })
 
   test('the development server session recovers when a theme id mismatch occurs', async () => {
