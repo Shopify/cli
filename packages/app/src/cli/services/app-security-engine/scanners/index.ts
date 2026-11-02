@@ -24,6 +24,7 @@ import {
   scanCredentialBrowserLeakage,
   scanCredentialLogLeakage,
   scanRequestControlledAdminContext,
+  scanStorefrontUnsafeEval,
   scanUnauthenticatedEndpoints,
   scanUnsafeInnerHTML,
 } from '../rules/js-rules.js'
@@ -171,6 +172,10 @@ const DETERMINISTIC_CHECK_DEFINITIONS: ReadonlyArray<DeterministicCheckDefinitio
   {
     ...jsCheck('UNSAFE_INNERHTML', unsafeInnerHtmlRunner, 'source_and_theme', 4),
     analysisMode: 'regex',
+    extensions: [...JAVASCRIPT_EXTENSIONS, '.liquid', '.html'],
+  },
+  {
+    ...jsCheck('STOREFRONT_UNSAFE_EVAL', (context) => scanStorefrontUnsafeEval(themeFiles(context)), 'theme'),
     extensions: [...JAVASCRIPT_EXTENSIONS, '.liquid', '.html'],
   },
   {

@@ -490,6 +490,79 @@ export function scanUnsafeInnerHTML(files: SourceFile[]): Issue[] {
   return [...new Map(issues.map((finding) => [`${finding.location.file}:${finding.location.line}`, finding])).values()]
 }
 
+/**
+ * Finds storefront code paths that require CSP `unsafe-eval`.
+ *
+ * This deliberately reports the executable APIs themselves rather than trying
+ * to infer whether a particular value is attacker-controlled: any runtime
+ * string-to-code execution prevents an app from running under a strict
+ * storefront CSP.
+ */
+export function scanStorefrontUnsafeEval(files: SourceFile[]): Issue[] {
+  const issues: Issue[] = []
+  const dynamicCodePatterns = [
+    /(?<![.\w$])(?:eval|(?:window|globalThis|self)\s*(?:\.\s*eval|\[\s*['"]eval['"]\s*\]))\s*\(/g,
+    /\(\s*0\s*,\s*eval\s*\)\s*\(/g,
+    /(?:\bnew\s+)?(?:Function|(?:window|globalThis|self)\s*(?:\.\s*Function|\[\s*['"]Function['"]\s*\]))\s*\(/g,
+    /(?:async\s+function|function\s*\*|async\s*\([^)]*\)\s*=>|\([^)]*\)\s*=>)\s*\{[^}]*\}\s*\.\s*constructor\s*\(/g,
+    /\.\s*constructor\s*\.\s*constructor\s*\(/g,
+  ]
+  const timerPattern = /\b(?:setTimeout|setInterval)\s*\(\s*(?:['"]|`)/g
+
+  for (const file of files) {
+    const javascript = storefrontJavaScriptContent(file)
+    if (!javascript) continue
+    const source = maskDynamicCode(javascript)
+    for (const pattern of dynamicCodePatterns) {
+      pattern.lastIndex = 0
+      let match = pattern.exec(source)
+      while (match) {
+        issues.push(storefrontUnsafeEvalIssue(file, match.index))
+        match = pattern.exec(source)
+      }
+    }
+
+    const commentsMasked = maskComments(javascript)
+    timerPattern.lastIndex = 0
+    let timer = timerPattern.exec(commentsMasked)
+    while (timer) {
+      issues.push(storefrontUnsafeEvalIssue(file, timer.index))
+      timer = timerPattern.exec(commentsMasked)
+    }
+  }
+  return [...new Map(issues.map((finding) => [`${finding.location.file}:${finding.location.line}`, finding])).values()]
+}
+
+/** Keeps script offsets intact so findings in Liquid and HTML report their original locations. */
+function storefrontJavaScriptContent(file: SourceFile): string | undefined {
+  if (!file.content) return undefined
+  if (isJavaScript(file)) return file.content
+  if (file.ext !== '.liquid' && file.ext !== '.html') return undefined
+
+  const extracted: string[] = file.content.split('').map((character) => (character === '\n' ? '\n' : ' '))
+  const script = /<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi
+  let match = script.exec(file.content)
+  while (match) {
+    const openingEnd = match.index + match[0].indexOf('>') + 1
+    const closingStart = match.index + match[0].lastIndexOf('</')
+    for (let index = openingEnd; index < closingStart; index++) extracted[index] = file.content[index]!
+    match = script.exec(file.content)
+  }
+  return extracted.join('')
+}
+
+function storefrontUnsafeEvalIssue(file: SourceFile, index: number): Issue {
+  return issue(
+    'STOREFRONT_UNSAFE_EVAL',
+    file,
+    index,
+    'Storefront code requires unsafe-eval',
+    'Storefront JavaScript executes a string or dynamically constructed function, which requires the CSP unsafe-eval source expression.',
+    'Replace runtime code generation with a statically defined function or a data-driven dispatch table so the storefront works without unsafe-eval.',
+    -15,
+  )
+}
+
 function isJavaScript(file: SourceFile): boolean {
   return Boolean(file.content) && JAVASCRIPT_EXTENSIONS.has(file.ext)
 }
@@ -589,6 +662,16 @@ function maskStringsExceptShopKeys(source: string): string {
   return source.replace(/(["'])(?:\\.|(?!\1)[^\\\n])*\1|`(?:\\.|[^`\\])*`/g, (literal) =>
     /^["']shop(?:Domain)?["']$/.test(literal) ? literal : literal.replace(/[^\n]/g, ' '),
   )
+}
+
+/** Preserve only literal property names needed to identify global eval APIs. */
+function maskDynamicCode(source: string): string {
+  const withoutComments = maskComments(source)
+  return withoutComments.replace(/(["'])(?:\\.|(?!\1)[^\\\n])*\1|`(?:\\.|[^`\\])*`/g, (literal, _quote, offset) => {
+    const previous = withoutComments.slice(0, offset).trimEnd().at(-1)
+    if (previous === '[' && /^(?:['"]eval['"]|['"]Function['"])$/.test(literal)) return literal
+    return literal.replace(/[^\n]/g, ' ')
+  })
 }
 
 /** Blank literal text while optionally retaining expressions embedded in template literals. */

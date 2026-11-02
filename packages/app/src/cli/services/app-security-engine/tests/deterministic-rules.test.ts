@@ -5,6 +5,7 @@ import {
   scanCredentialBrowserLeakage,
   scanCredentialLogLeakage,
   scanRequestControlledAdminContext,
+  scanStorefrontUnsafeEval,
   scanUnauthenticatedEndpoints,
   scanUnsafeInnerHTML,
 } from '../rules/js-rules.js'
@@ -27,6 +28,7 @@ const ACTIVE_IDS = [
   'CREDENTIAL_BROWSER_LEAKAGE',
   'LIQUID_UNSAFE_RENDER',
   'UNSAFE_INNERHTML',
+  'STOREFRONT_UNSAFE_EVAL',
   'APP_PROXY_LIQUID_INJECTION',
   'STATIC_FRAME_ANCESTORS',
 ].sort()
@@ -58,6 +60,7 @@ describe('deterministic rules product contract', () => {
     expect(DETERMINISTIC_CHECKS.get('CREDENTIAL_LOG_LEAKAGE')?.version).toBe(3)
     expect(DETERMINISTIC_CHECKS.get('CREDENTIAL_BROWSER_LEAKAGE')?.version).toBe(3)
     expect(DETERMINISTIC_CHECKS.get('UNSAFE_INNERHTML')?.version).toBe(4)
+    expect(DETERMINISTIC_CHECKS.get('STOREFRONT_UNSAFE_EVAL')?.version).toBe(1)
     expect(DETERMINISTIC_CHECKS.get('LIQUID_UNSAFE_RENDER')?.version).toBe(2)
     expect(DETERMINISTIC_CHECKS.get('STATIC_FRAME_ANCESTORS')?.version).toBe(2)
     expect(DETERMINISTIC_CHECKS.get('MISSING_DEPENDENCY_SECURITY_AUTOMATION')?.version).toBe(2)
@@ -186,6 +189,22 @@ describe('JavaScript regex mode', () => {
     expect(scanUnsafeInnerHTML([source('// element.innerHTML = payload\nelement.textContent = payload')])).toHaveLength(
       0,
     )
+    expect(
+      scanStorefrontUnsafeEval([
+        source(
+          `eval(code)\nwindow['eval'](code)\nnew Function(code)\n(0, eval)(code)\nsetTimeout('run()', 1)\nsetInterval(\"run()\", 1)`,
+          'extensions/theme/assets/widget.js',
+        ),
+      ]),
+    ).toHaveLength(6)
+    expect(
+      scanStorefrontUnsafeEval([
+        source(
+          `// eval(code)\nconst description = 'eval(code)'\nsetTimeout(() => render(), 1)\nobject.eval(code)`,
+          'extensions/theme/assets/widget.js',
+        ),
+      ]),
+    ).toEqual([])
   })
 })
 

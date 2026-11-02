@@ -50,6 +50,17 @@ export const RULE_CATALOG: RuleCatalogEntry[] = [
     docsUrl: `${CHECK_DOCS_BASE_URL}/unsafe-innerhtml`,
   },
   {
+    id: 'STOREFRONT_UNSAFE_EVAL',
+    title: 'Storefront code requires unsafe-eval',
+    severity: 'high',
+    points: -15,
+    description:
+      'Detects theme app extension JavaScript that executes strings or dynamically constructs functions, requiring unsafe-eval in the storefront Content Security Policy.',
+    fix: 'Replace eval-style execution with statically defined functions or data-driven dispatch so the storefront works without unsafe-eval.',
+    requires: 'theme_app_extension',
+    docsUrl: `${CHECK_DOCS_BASE_URL}/storefront-unsafe-eval`,
+  },
+  {
     id: 'LIQUID_UNSAFE_RENDER',
     title: 'Unsafe Liquid metafield or setting output',
     severity: 'medium',

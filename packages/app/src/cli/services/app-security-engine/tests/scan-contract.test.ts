@@ -233,6 +233,7 @@ describe('framework and surface detection', () => {
       (execution) => execution.id === 'REQUEST_CONTROLLED_ADMIN_CONTEXT',
     )!
     const themeUnsafe = theme.scan.checks_executed.find((execution) => execution.id === 'UNSAFE_INNERHTML')!
+    const themeUnsafeEval = theme.scan.checks_executed.find((execution) => execution.id === 'STOREFRONT_UNSAFE_EVAL')!
     expect(themeRequestCheck.status).toBe('not_applicable')
     expect(themeRequestCheck.inspected_files).toEqual([])
     expect(themeUnsafe.status).toBe('executed')
@@ -240,6 +241,7 @@ describe('framework and surface detection', () => {
       'extensions/theme/assets/widget.mjs',
       'extensions/theme/blocks/app.liquid',
     ])
+    expect(themeUnsafeEval).toMatchObject({status: 'executed', findings: 0})
 
     const mixed = await scan(
       await app({
@@ -265,6 +267,23 @@ describe('framework and surface detection', () => {
       'extensions/theme/blocks/app.liquid',
     ])
     expect(mixed.issues.filter((issue) => issue.id === 'UNSAFE_INNERHTML')).toHaveLength(2)
+  })
+
+  test('detects unsafe eval in theme assets and inline Liquid scripts only', async () => {
+    const directory = await app({
+      'shopify.app.toml': appConfig(),
+      'extensions/theme/shopify.extension.toml': 'type = "theme"\n',
+      'extensions/theme/assets/widget.js': 'window.eval(code)',
+      'extensions/theme/blocks/app.liquid': '<p>eval(code)</p><script>setTimeout("run()", 1)</script>',
+    })
+    const result = await scan(directory)
+
+    expect(result.issues.filter((issue) => issue.id === 'STOREFRONT_UNSAFE_EVAL')).toHaveLength(2)
+    expect(result.scan.checks_executed.find((execution) => execution.id === 'STOREFRONT_UNSAFE_EVAL')).toMatchObject({
+      status: 'executed',
+      findings: 2,
+      inspected_files: ['extensions/theme/assets/widget.js', 'extensions/theme/blocks/app.liquid'],
+    })
   })
 
   test('requires the Shopify React Router package and reports unsupported app languages', async () => {
