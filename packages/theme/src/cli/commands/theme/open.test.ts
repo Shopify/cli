@@ -1,6 +1,7 @@
 import Open from './open.js'
 import {open} from '../../services/open.js'
 import {themeOpenJsonOutputSchema, type ThemeOpenResult} from '../../services/open/types.js'
+import {themeResultJsonSchema} from '../../services/json-output/schema.test-data.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {Config} from '@oclif/core'
 import {afterEach, expect, test, vi} from 'vitest'
@@ -8,6 +9,7 @@ import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {renderConcurrent, renderError, renderInfo} from '@shopify/cli-kit/node/ui'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 
 vi.mock('../../services/open.js')
@@ -53,34 +55,17 @@ const publicResult = {
   },
 }
 
-test('exposes the result schema and JSON flag in help', () => {
-  expect(Open.jsonOutputSchema).toBe(themeOpenJsonOutputSchema)
-  expect(Open.flags.json).toBeDefined()
-  expect(Open.description).toContain('ThemeOpenResult')
+test('documents the result fields in help', () => {
   expect(Open.description).toContain('previewUrl')
 })
 
-test.each([false, true])('preserves browser selection with editor=%s', async (editor) => {
+test.each([true])('preserves browser selection with editor=%s', async (editor) => {
   vi.mocked(open).mockResolvedValue(result)
 
   await run(['--theme=1', ...(editor ? ['--editor'] : [])])
 
   expect(renderInfo).toHaveBeenCalled()
   expect(openURL).toHaveBeenCalledWith(editor ? result.editor_url : result.preview_url)
-})
-
-test('writes one JSON result', async () => {
-  vi.mocked(open).mockResolvedValue(result)
-
-  await withCapturedStandardStreams(async ({stdout, stderr}) => {
-    await run(['--theme=1', '--json'])
-
-    expect(JSON.parse(stdout())).toEqual(publicResult)
-    expect(stderr()).toBe('')
-  })
-  expect(renderInfo).not.toHaveBeenCalled()
-  expect(openURL).toHaveBeenCalledWith(result.preview_url)
-  expect(open).toHaveBeenCalledWith(session, expect.objectContaining({theme: '1', json: true}))
 })
 
 test.each(
@@ -208,7 +193,7 @@ test.each([false, true])('propagates browser failures before emitting a result (
   })
 })
 
-test.each([false, true])('rejects an unsuccessful browser launch without emitting a result (json=%s)', async (json) => {
+test.each([false])('rejects an unsuccessful browser launch without emitting a result (json=%s)', async (json) => {
   vi.mocked(open).mockResolvedValue(result)
   vi.mocked(openURL).mockResolvedValue(false)
 
@@ -217,4 +202,64 @@ test.each([false, true])('rejects an unsuccessful browser launch without emittin
     expect(stdout()).toBe('')
     expect(renderInfo).not.toHaveBeenCalled()
   })
+})
+
+describeJsonCommand({
+  command: Open,
+  commandId: 'theme:open',
+  moduleURL: new URL('../../../../../cli/src/index.ts', import.meta.url).href,
+  args: ['--store=store.myshopify.com', '--theme=1'],
+  expectedResult: publicResult,
+  expectedSchema: themeResultJsonSchema,
+  setup: () => {
+    vi.mocked(ensureThemeStore).mockReturnValue(session.storeFqdn)
+    vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(session)
+    vi.mocked(open).mockResolvedValue(result)
+    vi.mocked(openURL).mockResolvedValue(true)
+  },
+  assertExecuted: (format) => {
+    expect(open).toHaveBeenCalledExactlyOnceWith(
+      session,
+      expect.objectContaining({theme: '1', json: format === 'json'}),
+    )
+    expect(openURL).toHaveBeenCalledExactlyOnceWith(result.preview_url)
+    if (format === 'json') expect(renderInfo).not.toHaveBeenCalled()
+  },
+  assertNotExecuted: () => {
+    expect(open).not.toHaveBeenCalled()
+    expect(openURL).not.toHaveBeenCalled()
+  },
+  // The UI module is mocked, so text mode is checked through the rendered links.
+  textOutput: ({stdout}) => {
+    expect(stdout).toBe('')
+    expect(renderInfo).toHaveBeenCalledExactlyOnceWith({
+      body: [
+        'Preview information for theme',
+        "'my theme'",
+        {subdued: '(#1)'},
+        '\n\n',
+        {
+          list: {
+            items: [
+              {link: {label: 'Preview your theme', url: result.preview_url}},
+              {link: {label: 'Customize your theme at the theme editor', url: result.editor_url}},
+            ],
+          },
+        },
+      ],
+    })
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(openURL).mockResolvedValue(false)
+    },
+    expectedError: {
+      error: {
+        type: 'abort',
+        message: 'Could not open the browser.',
+        tryMessage: `Open this URL manually: ${result.preview_url}`,
+      },
+    },
+    exitCode: 1,
+  },
 })

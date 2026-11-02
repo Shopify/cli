@@ -1,9 +1,16 @@
 import Profile from './profile.js'
 import {themeProfileJsonOutputSchema, type ThemeProfileResult} from '../../services/profile/types.js'
 import * as themeStorage from '../../services/local-storage.js'
+import {themeResultJsonSchema} from '../../services/json-output/schema.test-data.js'
+import {findOrSelectTheme} from '../../utilities/theme-selector.js'
+import {render} from '../../utilities/theme-environment/storefront-renderer.js'
 import {expect, test, vi} from 'vitest'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, rmdir, tempDirectory} from '@shopify/cli-kit/node/fs'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {openURL} from '@shopify/cli-kit/node/system'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
 vi.mock('../../utilities/theme-selector.js')
@@ -33,8 +40,6 @@ const profile: ThemeProfileResult = {
 }
 
 test('exposes Speedscope evented and sampled profiles while retaining extension fields', () => {
-  expect(Profile.jsonOutputSchema).toBe(themeProfileJsonOutputSchema)
-  expect(Profile.flags.json).toBeDefined()
   expect(JSON.parse(themeProfileJsonOutputSchema.encode(profile))).toEqual(profile)
   const sampled: ThemeProfileResult = {
     ...profile,
@@ -122,4 +127,72 @@ test('wraps requested environment results while preserving the native profile pa
       environments: [{environment: 'development', result: profile, unexpected: true}],
     }),
   ).toThrow()
+})
+
+const profileStore = 'shop.myshopify.com'
+const profileSession = {storeFqdn: profileStore, token: 'token'}
+const profileTask = `Generating Liquid profile for ${profileStore} /`
+
+describeJsonCommand({
+  command: Profile,
+  commandId: 'theme:profile',
+  moduleURL: new URL('../../../../../cli/src/index.ts', import.meta.url).href,
+  args: ['--store', profileStore],
+  expectedResult: profile,
+  expectedEvents: [
+    {type: 'progress', status: 'started', message: profileTask},
+    {type: 'progress', status: 'completed', message: profileTask, current: 1, total: 1},
+  ],
+  expectedSchema: themeResultJsonSchema,
+  setup: () => {
+    // Keep the remembered theme store out of the user's configuration.
+    const directory = tempDirectory()
+    const storage = new LocalStorage<themeStorage.ThemeLocalStorageSchema>({cwd: directory})
+    const {getThemeStore, setThemeStore} = themeStorage
+    const getStore = vi.spyOn(themeStorage, 'getThemeStore').mockImplementation(() => getThemeStore(storage))
+    const setStore = vi
+      .spyOn(themeStorage, 'setThemeStore')
+      .mockImplementation((store) => setThemeStore(store, storage))
+    vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(profileSession)
+    vi.mocked(findOrSelectTheme).mockResolvedValue({
+      id: 1,
+      name: 'Dawn',
+      role: 'live',
+      processing: false,
+      createdAtRuntime: false,
+    })
+    vi.mocked(render).mockImplementation(async () => new Response(JSON.stringify(profile, null, 2), {status: 200}))
+    return async () => {
+      getStore.mockRestore()
+      setStore.mockRestore()
+      await rmdir(directory)
+    }
+  },
+  assertExecuted: (format) => {
+    expect(ensureAuthenticatedThemes).toHaveBeenCalledExactlyOnceWith(profileStore, undefined)
+    expect(findOrSelectTheme).toHaveBeenCalledExactlyOnceWith(profileSession, {filter: {live: true}})
+    expect(render).toHaveBeenCalledOnce()
+    if (format === 'json') {
+      expect(openURL).not.toHaveBeenCalled()
+    } else {
+      expect(openURL).toHaveBeenCalledExactlyOnceWith(expect.stringMatching(/^file:\/\/.+\.html$/))
+    }
+  },
+  assertNotExecuted: () => {
+    expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+    expect(render).not.toHaveBeenCalled()
+  },
+  // Text mode opens the profile in the browser and renders task progress on stderr.
+  textOutput: ({stdout}) => expect(stdout).toBe(''),
+  failure: {
+    setup: () => {
+      vi.mocked(render).mockRejectedValue(new AbortError('Network error.'))
+    },
+    expectedError: {error: {type: 'abort', message: 'Network error.'}},
+    expectedEvents: [
+      {type: 'progress', status: 'started', message: profileTask},
+      {type: 'progress', status: 'failed', message: profileTask},
+    ],
+    exitCode: 1,
+  },
 })

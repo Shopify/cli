@@ -1,11 +1,19 @@
 import Package from './package.js'
 import {themePackageJsonOutputSchema} from '../../services/package/types.js'
-import {renderThemePackageResult} from '../../services/package/result.js'
 import {Config} from '@oclif/core'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
-import {inTemporaryDirectory, mkdir, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
+import {
+  inTemporaryDirectory,
+  mkdir,
+  writeFile,
+  fileExists,
+  fileExistsSync,
+  rmdir,
+  tempDirectory,
+} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativizePath, cwd} from '@shopify/cli-kit/node/path'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {expect, test, vi} from 'vitest'
 // Native JSON paths must preserve Windows separators instead of pathe normalization.
@@ -23,7 +31,7 @@ async function run(argv: string[]) {
   await new Package(argv, config).run()
 }
 
-test.each([true, false])('writes the package receipt to stdout with version=%s', async (includeVersion) => {
+test.each([false])('writes the package receipt to stdout with version=%s', async (includeVersion) => {
   await inTemporaryDirectory(async (directory) => {
     await mkdir(joinPath(directory, 'config'))
     await writeFile(
@@ -39,14 +47,6 @@ test.each([true, false])('writes the package receipt to stdout with version=%s',
     })
     await expect(fileExists(path)).resolves.toBe(true)
     expect(renderSuccess).not.toHaveBeenCalled()
-  })
-})
-
-test('preserves the text success banner', () => {
-  const path = joinPath(cwd(), 'Dawn.zip')
-  renderThemePackageResult({path}, 'text')
-  expect(renderSuccess).toHaveBeenCalledWith({
-    body: ['Your local theme was packaged in', {filePath: relativizePath(path)}],
   })
 })
 
@@ -81,22 +81,55 @@ test('emits a fatal JSON error when the archive destination is a directory', asy
   })
 })
 
-test('does not emit a result when packaging fails', async () => {
-  await inTemporaryDirectory(async (directory) => {
-    await withCapturedStandardStreams(async ({stdout}) => {
-      await expect(run(['--path', directory, '--json'])).rejects.toThrow(
-        'Provide a config/settings_schema.json to package your theme.',
-      )
-      expect(stdout()).toBe('')
-    })
-  })
-})
-
-test('exposes the schema and rejects invalid package paths', () => {
-  expect(Package.jsonOutputSchema).toBe(themePackageJsonOutputSchema)
-  expect(Package.flags.json).toBeDefined()
-  expect(Package.description).toContain('--json-schema')
+test('rejects invalid package paths', () => {
   expect(() => themePackageJsonOutputSchema.validate({path: 42})).toThrow()
   expect(() => themePackageJsonOutputSchema.validate({path: 'Dawn.zip'})).toThrow()
   expect(() => themePackageJsonOutputSchema.validate({path: joinPath(cwd(), 'Dawn.zip'), extra: true})).toThrow()
+})
+
+let packageDirectory: string
+const packagePath = () => joinPath(packageDirectory, 'Dawn-1.0.zip')
+
+describeJsonCommand({
+  command: Package,
+  commandId: 'theme:package',
+  moduleURL: new URL('../../../../../cli/src/index.ts', import.meta.url).href,
+  args: () => ['--path', packageDirectory],
+  expectedResult: () => ({path: nativePath(packagePath())}),
+  expectedSchema: {type: 'object', required: ['path'], additionalProperties: false},
+  setup: async () => {
+    packageDirectory = tempDirectory()
+    const directory = packageDirectory
+    await mkdir(joinPath(directory, 'config'))
+    await writeFile(
+      joinPath(directory, 'config/settings_schema.json'),
+      JSON.stringify([{name: 'theme_info', theme_name: 'Dawn', theme_version: '1.0'}]),
+    )
+    return () => rmdir(directory)
+  },
+  assertExecuted: (format) => {
+    if (format === 'json') {
+      expect(renderSuccess).not.toHaveBeenCalled()
+    } else {
+      expect(renderSuccess).toHaveBeenCalledExactlyOnceWith({
+        body: ['Your local theme was packaged in', {filePath: relativizePath(packagePath())}],
+      })
+    }
+  },
+  assertNotExecuted: () => {
+    expect(fileExistsSync(packagePath())).toBe(false)
+    expect(renderSuccess).not.toHaveBeenCalled()
+  },
+  // The UI module is mocked, so text mode is checked through the rendered banner and the archive.
+  textOutput: ({stdout, stderr}) => {
+    expect({stdout, stderr}).toEqual({stdout: '', stderr: ''})
+    expect(fileExistsSync(packagePath())).toBe(true)
+  },
+  failure: {
+    setup: async () => {
+      await rmdir(joinPath(packageDirectory, 'config'))
+    },
+    expectedError: {error: {type: 'abort', message: 'Provide a config/settings_schema.json to package your theme.'}},
+    exitCode: 1,
+  },
 })

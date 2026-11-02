@@ -1,10 +1,12 @@
 import Duplicate from './duplicate.js'
 import {themeDuplicateJsonOutputSchema} from '../../services/duplicate/types.js'
 import {findThemeById} from '../../utilities/theme-selector.js'
+import {themeResultJsonSchema} from '../../services/json-output/schema.test-data.js'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {themeDuplicate} from '@shopify/cli-kit/node/themes/api'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {outputWarn} from '@shopify/cli-kit/node/output'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
@@ -91,10 +93,7 @@ async function run(extra: string[] = []) {
 }
 
 describe('theme duplicate JSON output', () => {
-  test('exposes a strict public schema and keeps the JSON flag', () => {
-    expect(Duplicate.jsonOutputSchema).toBe(themeDuplicateJsonOutputSchema)
-    expect(Duplicate.flags.json).toBeDefined()
-    expect(Duplicate.description).toContain('ThemeDuplicateResult')
+  test('exposes a strict public schema', () => {
     expect(themeDuplicateJsonOutputSchema.validate(publicResult)).toEqual(publicResult)
     expect(() =>
       themeDuplicateJsonOutputSchema.validate({...publicResult, theme: {...publicResult.theme, id: 2}}),
@@ -105,19 +104,6 @@ describe('theme duplicate JSON output', () => {
         theme: {...publicResult.theme, createdAtRuntime: false},
       }),
     ).toThrow()
-  })
-
-  test('writes one receipt to stdout and routes diagnostics to stderr', async () => {
-    vi.mocked(findThemeById).mockResolvedValue(originalTheme)
-    vi.mocked(themeDuplicate).mockImplementation(async () => {
-      outputWarn('Retrying request')
-      return {theme: copiedTheme, userErrors: [], requestId: 'omitted-on-success'}
-    })
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await run()
-      expect(JSON.parse(stdout())).toEqual(publicResult)
-      expect(JSON.parse(stderr())).toMatchObject({type: 'diagnostic', level: 'warning', message: 'Retrying request'})
-    })
   })
 
   test.each([undefined, '', 'request-123'])('throws a fatal error with domain details (%s)', async (requestId) => {
@@ -212,4 +198,58 @@ describe('theme duplicate JSON output', () => {
       expect(stdout()).toBe('')
     })
   })
+})
+
+describeJsonCommand({
+  command: Duplicate,
+  commandId: 'theme:duplicate',
+  moduleURL: new URL('../../../../../cli/src/index.ts', import.meta.url).href,
+  args: ['--store', session.storeFqdn, '--theme', '1', '--force'],
+  expectedResult: publicResult,
+  expectedSchema: themeResultJsonSchema,
+  setup: () => {
+    vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(session)
+    vi.mocked(findThemeById).mockResolvedValue(originalTheme)
+    vi.mocked(themeDuplicate).mockResolvedValue({theme: copiedTheme, userErrors: []})
+  },
+  assertExecuted: (format) => {
+    expect(ensureAuthenticatedThemes).toHaveBeenCalledExactlyOnceWith(session.storeFqdn, undefined)
+    expect(findThemeById).toHaveBeenCalledExactlyOnceWith(session, '1')
+    expect(themeDuplicate).toHaveBeenCalledExactlyOnceWith(1, undefined, session)
+    if (format === 'json') expect(renderSuccess).not.toHaveBeenCalled()
+  },
+  assertNotExecuted: () => {
+    expect(findThemeById).not.toHaveBeenCalled()
+    expect(themeDuplicate).not.toHaveBeenCalled()
+  },
+  // The UI module is mocked, so text mode is checked through the rendered banner.
+  textOutput: ({stdout}) => {
+    expect(stdout).toBe('')
+    expect(renderSuccess).toHaveBeenCalledExactlyOnceWith({
+      body: ['The theme', "'Original'", {subdued: '(#1)'}, 'has been duplicated', {char: '.'}],
+      nextSteps: [[{link: {label: 'View the duplicated theme', url: publicResult.theme.previewUrl}}]],
+    })
+  },
+  diagnostics: {
+    setup: () => {
+      vi.mocked(themeDuplicate).mockImplementation(async () => {
+        outputWarn('Retrying request')
+        return {theme: copiedTheme, userErrors: [], requestId: 'omitted-on-success'}
+      })
+    },
+    expectedEvents: [{type: 'diagnostic', level: 'warning', message: 'Retrying request'}],
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(themeDuplicate).mockResolvedValue({userErrors: [{message: 'Limit reached'}], requestId: 'request-123'})
+    },
+    expectedError: {
+      error: {
+        type: 'abort',
+        message: "The theme 'Original' could not be duplicated due to errors",
+        details: {errors: ['Limit reached'], requestId: 'request-123'},
+      },
+    },
+    exitCode: 1,
+  },
 })

@@ -1,5 +1,5 @@
 import Preview from './preview.js'
-import {themePreviewJsonOutputSchema} from '../../services/dev-override/types.js'
+import {themeResultJsonSchema} from '../../services/json-output/schema.test-data.js'
 import {devWithOverrideFile} from '../../services/dev-override.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
@@ -10,6 +10,8 @@ import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -26,6 +28,7 @@ vi.mock('@shopify/cli-kit/node/system', async (importOriginal) => ({
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/analytics', () => ({
   recordEvent: vi.fn(),
+  reportAnalyticsEvent: vi.fn(),
   compileData: vi.fn().mockReturnValue({timings: {}, errors: {}, retries: {}, events: {}}),
 }))
 vi.mock('@shopify/cli-kit/node/metadata', () => ({
@@ -154,36 +157,6 @@ describe('Preview', () => {
         password: 'shptka_abc123',
       }),
     )
-  })
-
-  test('writes the JSON result to stdout through the real presenter and writer', async () => {
-    await withCapturedStandardStreams(async ({stdout, stderr}) => {
-      await runWithCommandEventsForCommand(['--json'], () =>
-        run(['--overrides=/path/to/overrides.json', '--theme=2', '--json']),
-      )
-
-      expect(JSON.parse(stdout())).toEqual({
-        status: 'success',
-        preview: {id: result.preview_identifier, url: result.url},
-      })
-      expect(stderr()).toBe('')
-    })
-    expect(renderSuccess).not.toHaveBeenCalled()
-    expect(openURL).not.toHaveBeenCalled()
-    expect(devWithOverrideFile).toHaveBeenCalledWith({
-      adminSession,
-      overrideJson: '/path/to/overrides.json',
-      themeId: '2',
-      previewIdentifier: undefined,
-      password: undefined,
-    })
-  })
-
-  test('exposes its result schema in help', () => {
-    expect(Preview.jsonOutputSchema).toBe(themePreviewJsonOutputSchema)
-    expect(Preview.description).toContain('ThemePreviewResult')
-    expect(Preview.description).toContain('ThemePreview')
-    expect(Preview.flags.json.env).toBe('SHOPIFY_FLAG_JSON')
   })
 
   test('propagates failures without printing a success result or opening a browser', async () => {
@@ -399,3 +372,49 @@ test.each(['theme', 'overrides'])(
     }
   },
 )
+
+describeJsonCommand({
+  command: Preview,
+  commandId: 'theme:preview',
+  moduleURL: new URL('../../../../../cli/src/index.ts', import.meta.url).href,
+  args: ['--store', adminSession.storeFqdn, '--theme', '2', '--overrides', '/path/to/overrides.json'],
+  expectedResult: {status: 'success', preview: {id: result.preview_identifier, url: result.url}},
+  expectedSchema: themeResultJsonSchema,
+  setup: () => {
+    vi.mocked(ensureThemeStore).mockReturnValue(adminSession.storeFqdn)
+    vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(adminSession)
+    vi.mocked(findOrSelectTheme).mockResolvedValue(namedTheme)
+    vi.mocked(devWithOverrideFile).mockResolvedValue(result)
+  },
+  assertExecuted: (format) => {
+    expect(ensureAuthenticatedThemes).toHaveBeenCalledExactlyOnceWith(adminSession.storeFqdn, undefined)
+    expect(devWithOverrideFile).toHaveBeenCalledExactlyOnceWith({
+      adminSession,
+      overrideJson: '/path/to/overrides.json',
+      themeId: '2',
+      previewIdentifier: undefined,
+      password: undefined,
+    })
+    if (format === 'json') {
+      expect(renderSuccess).not.toHaveBeenCalled()
+    } else {
+      expect(renderSuccess).toHaveBeenCalledOnce()
+    }
+  },
+  assertNotExecuted: () => {
+    expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+    expect(findOrSelectTheme).not.toHaveBeenCalled()
+    expect(devWithOverrideFile).not.toHaveBeenCalled()
+  },
+  // renderSuccess is mocked, so text mode writes nothing.
+  textOutput: {stdout: '', stderr: ''},
+  failure: {
+    setup: () => {
+      vi.mocked(devWithOverrideFile).mockRejectedValue(
+        new AbortError('Override file not found: /path/to/overrides.json'),
+      )
+    },
+    expectedError: {error: {type: 'abort', message: 'Override file not found: /path/to/overrides.json'}},
+    exitCode: 1,
+  },
+})

@@ -1,15 +1,12 @@
 import Info from './info.js'
 import {fetchThemeInfo, getThemeEnvironmentInfo} from '../../services/info.js'
-import {themeInfoJsonOutputSchema} from '../../services/info/types.js'
+import {themeResultJsonSchema} from '../../services/json-output/schema.test-data.js'
 import * as infoResult from '../../services/info/result.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Config} from '@oclif/core'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {
-  mockAndCaptureOutput,
-  mockAndCaptureStandardStreams,
-  withCapturedStandardStreams,
-} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput, withCapturedStandardStreams} from '@shopify/cli-kit/node/testing/output'
+import {describeJsonCommand} from '@shopify/cli-kit/node/testing/json-command'
 import {runWithCommandEventsForCommand} from '@shopify/cli-kit/node/command-events'
 import {renderConcurrent, renderInfo} from '@shopify/cli-kit/node/ui'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
@@ -89,10 +86,6 @@ const publicEnvironmentResult = {
   nodeVersion: 'v24.15.0',
 }
 
-function restoreUnitTestEnvironment(value: string | undefined): void {
-  process.env.SHOPIFY_UNIT_TEST = value
-}
-
 async function run(argv: string[]) {
   await CommandConfig.load()
   vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(session)
@@ -125,26 +118,6 @@ describe('Info', () => {
   })
 
   describe('when theme or development flag is provided', () => {
-    test('outputs JSON when --json flag is passed', async () => {
-      vi.mocked(fetchThemeInfo).mockResolvedValue(themeResult)
-
-      await run(['--theme', '123', '--json'])
-
-      expect(fetchThemeInfo).toHaveBeenCalled()
-      expect(JSON.parse(mockAndCaptureOutput().output())).toEqual(publicThemeResult)
-      expect(renderInfo).not.toHaveBeenCalled()
-    })
-
-    test('renders formatted info when no --json flag is passed', async () => {
-      vi.mocked(fetchThemeInfo).mockResolvedValue(themeResult)
-
-      await run(['--theme', '123'])
-
-      expect(fetchThemeInfo).toHaveBeenCalled()
-      expect(renderInfo).toHaveBeenCalled()
-      expect(mockAndCaptureOutput().output()).toBe('')
-    })
-
     test('throws an error when theme is not found without rendering a result', async () => {
       vi.mocked(fetchThemeInfo).mockResolvedValue(undefined)
 
@@ -154,37 +127,6 @@ describe('Info', () => {
     })
   })
 
-  describe('when no theme or development flag is provided', () => {
-    test('outputs JSON when --json flag is passed', async () => {
-      vi.mocked(getThemeEnvironmentInfo).mockReturnValue({result: environmentResult, developmentTheme: undefined})
-
-      await run(['--json'])
-
-      expect(getThemeEnvironmentInfo).toHaveBeenCalledWith({cliVersion: expect.any(String)})
-      expect(JSON.parse(mockAndCaptureOutput().output())).toEqual(publicEnvironmentResult)
-      expect(renderInfo).not.toHaveBeenCalled()
-    })
-
-    test('renders info when no --json flag is passed', async () => {
-      vi.mocked(getThemeEnvironmentInfo).mockReturnValue({result: environmentResult, developmentTheme: undefined})
-
-      await run([])
-
-      expect(getThemeEnvironmentInfo).toHaveBeenCalledWith({cliVersion: expect.any(String)})
-      expect(renderInfo).toHaveBeenCalled()
-      expect(mockAndCaptureOutput().output()).toBe('')
-    })
-  })
-
-  test('defines the JSON output schema', () => {
-    expect(Info.jsonOutputSchema).toBe(themeInfoJsonOutputSchema)
-  })
-
-  test('includes the JSON output schema in the help description', () => {
-    expect(Info.description).toContain('ThemeInfoResult')
-    expect(Info.description).toContain('--json-schema')
-  })
-
   test('is removed from the JSON legacy exemption list', () => {
     const legacyCommandPaths = readFileSync(
       new URL('../../../../../eslint-plugin-cli/rules/json-output-command-exceptions.js', import.meta.url),
@@ -192,67 +134,6 @@ describe('Info', () => {
     )
 
     expect(legacyCommandPaths).not.toContain("'packages/theme/src/cli/commands/theme/info.ts'")
-  })
-
-  test('writes the selected theme JSON document to stdout without text on stderr', async () => {
-    const originalUnitTestEnv = process.env.SHOPIFY_UNIT_TEST
-    process.env.SHOPIFY_UNIT_TEST = 'false'
-    vi.resetModules()
-    const streams = mockAndCaptureStandardStreams()
-
-    try {
-      const {default: StreamInfo} = await import('./info.js')
-      const {fetchThemeInfo} = await import('../../services/info.js')
-      const {ensureAuthenticatedThemes} = await import('@shopify/cli-kit/node/session')
-      const {Config} = await import('@oclif/core')
-      const streamConfig = new Config({root: __dirname})
-      await streamConfig.load()
-      vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(session)
-      vi.mocked(fetchThemeInfo).mockResolvedValue(themeResult)
-
-      await new StreamInfo(
-        ['--store=my-shop.myshopify.com', '--password=test-password', '--theme', '123', '--json'],
-        streamConfig,
-      ).run()
-    } finally {
-      streams.restore()
-      restoreUnitTestEnvironment(originalUnitTestEnv)
-    }
-
-    const expectedStdout = `${JSON.stringify(publicThemeResult, null, 2)}\n`
-
-    expect(streams.stdout()).toBe(expectedStdout)
-    expect(JSON.parse(streams.stdout())).toEqual(publicThemeResult)
-    expect(streams.stderr()).toBe('')
-  })
-
-  test('writes the environment JSON document to stdout without text on stderr', async () => {
-    const originalUnitTestEnv = process.env.SHOPIFY_UNIT_TEST
-    process.env.SHOPIFY_UNIT_TEST = 'false'
-    vi.resetModules()
-    const streams = mockAndCaptureStandardStreams()
-
-    try {
-      const {default: StreamInfo} = await import('./info.js')
-      const {getThemeEnvironmentInfo} = await import('../../services/info.js')
-      const {ensureAuthenticatedThemes} = await import('@shopify/cli-kit/node/session')
-      const {Config} = await import('@oclif/core')
-      const streamConfig = new Config({root: __dirname})
-      await streamConfig.load()
-      vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(session)
-      vi.mocked(getThemeEnvironmentInfo).mockReturnValue({result: environmentResult, developmentTheme: undefined})
-
-      await new StreamInfo(['--store=my-shop.myshopify.com', '--password=test-password', '--json'], streamConfig).run()
-    } finally {
-      streams.restore()
-      restoreUnitTestEnvironment(originalUnitTestEnv)
-    }
-
-    const expectedStdout = `${JSON.stringify(publicEnvironmentResult, null, 2)}\n`
-
-    expect(streams.stdout()).toBe(expectedStdout)
-    expect(JSON.parse(streams.stdout())).toEqual(publicEnvironmentResult)
-    expect(streams.stderr()).toBe('')
   })
 
   describe('multi-environment JSON output', () => {
@@ -367,4 +248,107 @@ describe('Info', () => {
       )
     })
   })
+})
+
+describeJsonCommand({
+  command: Info,
+  commandId: 'theme:info',
+  moduleURL: new URL('../../../../../cli/src/index.ts', import.meta.url).href,
+  args: ['--store=my-shop.myshopify.com', '--password=test-password', '--theme', '123'],
+  expectedResult: publicThemeResult,
+  expectedSchema: themeResultJsonSchema,
+  setup: () => {
+    vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(session)
+    vi.mocked(fetchThemeInfo).mockResolvedValue(themeResult)
+  },
+  assertExecuted: (format) => {
+    expect(ensureAuthenticatedThemes).toHaveBeenCalledExactlyOnceWith('my-shop.myshopify.com', 'test-password')
+    expect(fetchThemeInfo).toHaveBeenCalledExactlyOnceWith(
+      session,
+      expect.objectContaining({theme: '123', json: format === 'json'}),
+    )
+    expect(getThemeEnvironmentInfo).not.toHaveBeenCalled()
+    if (format === 'json') expect(renderInfo).not.toHaveBeenCalled()
+  },
+  assertNotExecuted: () => {
+    expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+    expect(fetchThemeInfo).not.toHaveBeenCalled()
+  },
+  // The UI module is mocked, so text mode is checked through the rendered sections.
+  textOutput: ({stdout}) => {
+    expect(stdout).toBe('')
+    expect(renderInfo).toHaveBeenCalledExactlyOnceWith({
+      customSections: [
+        {
+          title: 'Theme Details',
+          body: {
+            tabularData: [
+              ['Id', '#123'],
+              ['Name', 'my theme'],
+              ['Role', 'live'],
+              ['Shop', 'my-shop.myshopify.com'],
+              ['Preview Url', {link: {url: 'https://my-shop.myshopify.com/preview', label: 'Preview Theme'}}],
+              ['Editor Url', {link: {url: 'https://my-shop.myshopify.com/editor', label: 'Open in Theme Editor'}}],
+            ],
+            firstColumnSubdued: true,
+          },
+        },
+      ],
+    })
+  },
+  failure: {
+    setup: () => {
+      vi.mocked(fetchThemeInfo).mockResolvedValue(undefined)
+    },
+    expectedError: {error: {type: 'abort', message: 'Theme not found!'}},
+    exitCode: 1,
+  },
+})
+
+describeJsonCommand({
+  command: Info,
+  commandId: 'theme:info',
+  moduleURL: new URL('../../../../../cli/src/index.ts', import.meta.url).href,
+  args: ['--store=my-shop.myshopify.com', '--password=test-password'],
+  expectedResult: publicEnvironmentResult,
+  expectedSchema: themeResultJsonSchema,
+  setup: () => {
+    vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(session)
+    vi.mocked(getThemeEnvironmentInfo).mockReturnValue({result: environmentResult, developmentTheme: undefined})
+  },
+  assertExecuted: (format) => {
+    expect(getThemeEnvironmentInfo).toHaveBeenCalledExactlyOnceWith({cliVersion: expect.any(String)})
+    expect(fetchThemeInfo).not.toHaveBeenCalled()
+    if (format === 'json') expect(renderInfo).not.toHaveBeenCalled()
+  },
+  assertNotExecuted: () => expect(getThemeEnvironmentInfo).not.toHaveBeenCalled(),
+  textOutput: ({stdout}) => {
+    expect(stdout).toBe('')
+    expect(renderInfo).toHaveBeenCalledExactlyOnceWith({
+      customSections: [
+        {
+          title: 'Theme Configuration',
+          body: {
+            tabularData: [
+              ['Store', 'my-shop.myshopify.com'],
+              ['Development Theme ID', {subdued: 'Not set'}],
+            ],
+            firstColumnSubdued: true,
+          },
+        },
+        {
+          title: 'Tooling and System',
+          body: {
+            tabularData: [
+              ['Shopify CLI', '3.91.0'],
+              ['OS', 'darwin-arm64'],
+              ['Shell', '/bin/zsh'],
+              ['Node version', 'v24.15.0'],
+            ],
+            firstColumnSubdued: true,
+          },
+        },
+      ],
+    })
+  },
 })
