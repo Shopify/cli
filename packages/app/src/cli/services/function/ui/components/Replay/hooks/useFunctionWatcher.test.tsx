@@ -1,202 +1,354 @@
 import {useFunctionWatcher} from './useFunctionWatcher.js'
 import {FunctionRunData} from '../../../../replay.js'
 import {testAppLinked, testFunctionExtension} from '../../../../../../models/app/app.test-data.js'
-import {runFunction} from '../../../../runner.js'
+import {captureFunctionRun, FunctionExecution} from '../../../../runner.js'
 import {AppEventWatcher, EventType} from '../../../../../dev/app-events/app-event-watcher.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {render} from '@shopify/cli-kit/node/testing/ui'
-import {test, describe, vi, beforeEach, afterEach, expect} from 'vitest'
+import {test, describe, vi, expect, onTestFinished} from 'vitest'
 import React from 'react'
-import {Writable} from 'stream'
 
-vi.mock('../../../../../dev/extension/bundler.js')
 vi.mock('../../../../runner.js')
 
-const SELECTED_RUN = {
-  shopId: 69665030382,
-  apiClientId: 124042444801,
-  payload: {
-    export: 'run',
-    input: {
-      someInput: 'someInput',
-    },
-    inputBytes: 136,
-    output: {
-      someOutput: 'someOutput',
-    },
-    outputBytes: 195,
-    logs: 'First Log\nLog the second!,\n1,\nfourth line, length should be above!,\nFifth line!',
-    functionId: '34236fa9-42f5-4bb6-adaf-956e12fff0b0',
-    fuelConsumed: 532632,
-  },
-  logType: 'function_run',
-  cursor: '2024-08-02T17:45:27.683139Z',
-  status: 'success',
-  source: 'product-discount',
-  sourceNamespace: 'extensions',
-  logTimestamp: '2024-08-02T17:45:27.382075Z',
-  identifier: '123456',
-} as FunctionRunData
-
-const ABORT_CONTROLLER = new AbortController()
-const APP = testAppLinked()
-const EXTENSION = await testFunctionExtension()
-
-const EXEC_RESPONSE = {
-  input: SELECTED_RUN.payload.input,
-  output: SELECTED_RUN.payload.output,
-  logs: SELECTED_RUN.payload.logs,
-  name: SELECTED_RUN.source,
-  size: 0,
-  memory_usage: 0,
-  instructions: SELECTED_RUN.payload.fuelConsumed,
-}
-
-const SECOND_EXEC_RESPONSE = {
-  input: SELECTED_RUN.payload.input,
-  output: SELECTED_RUN.payload.output,
-  logs: SELECTED_RUN.payload.logs,
-  name: SELECTED_RUN.source,
-  size: 1,
-  memory_usage: 1,
-  instructions: SELECTED_RUN.payload.fuelConsumed,
-}
-
 describe('useFunctionWatcher', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
-    // Prevent real chokidar/fsevents watchers from being created in tests.
-    // The hook only needs the AppEventWatcher as an EventEmitter, not real file watching.
-    vi.spyOn(AppEventWatcher.prototype, 'start').mockResolvedValue()
+  test('waits for watcher readiness, executes the selected log, and returns to watching', async () => {
+    const context = await fixture()
+    let finishStartup!: () => void
+    context.startWatcher.mockReturnValue(
+      new Promise<void>((resolve) => {
+        finishStartup = resolve
+      }),
+    )
+    let finishExecution!: (execution: FunctionExecution) => void
+    vi.mocked(captureFunctionRun).mockReturnValueOnce(
+      new Promise<FunctionExecution>((resolve) => {
+        finishExecution = resolve
+      }),
+    )
+    const hook = context.render()
+
+    await vi.waitFor(() => expect(context.startWatcher).toHaveBeenCalledOnce())
+    expect(captureFunctionRun).not.toHaveBeenCalled()
+    expect(hook.lastResult?.statusMessage).toBe('Watching for changes to product-discount...')
+
+    finishStartup()
+    await vi.waitFor(() => expect(hook.lastResult?.statusMessage).toBe('Replaying log with local function...'))
+    expect(captureFunctionRun).toHaveBeenCalledWith({
+      functionExtension: context.extension,
+      input: JSON.stringify(context.selectedRun.payload.input),
+      export: context.selectedRun.payload.export,
+      json: true,
+    })
+
+    finishExecution(context.execution)
+    await vi.waitFor(() => expect(hook.lastResult?.logs).toEqual([{...context.nativeResult, type: 'functionRun'}]))
+    expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...context.nativeResult, type: 'functionRun'})
+    expect(hook.lastResult?.recentFunctionRuns[1]).toMatchObject({
+      instructions: context.selectedRun.payload.fuelConsumed,
+    })
+    expect(hook.lastResult?.statusMessage).toBe('Watching for changes to product-discount...')
+    expect(hook.lastResult?.error).toBeUndefined()
   })
 
-  afterEach(() => {
-    vi.clearAllTimers()
+  test('replays rebuilds and keeps the two most recent runs for instruction statistics', async () => {
+    const context = await fixture()
+    const hook = context.render()
+    await vi.waitFor(() => expect(hook.lastResult?.logs).toHaveLength(1))
+
+    const updatedResult = {...context.nativeResult, size: 1, memory_usage: 1, instructions: 532800}
+    let finishExecution!: (execution: FunctionExecution) => void
+    vi.mocked(captureFunctionRun).mockReturnValueOnce(
+      new Promise<FunctionExecution>((resolve) => {
+        finishExecution = resolve
+      }),
+    )
+    context.update()
+    await vi.waitFor(() => expect(hook.lastResult?.statusMessage).toBe('Re-running with latest changes...'))
+
+    finishExecution({...context.execution, resultJson: JSON.stringify(updatedResult)})
+    await vi.waitFor(() =>
+      expect(hook.lastResult?.recentFunctionRuns).toEqual([
+        {...updatedResult, type: 'functionRun'},
+        {...context.nativeResult, type: 'functionRun'},
+      ]),
+    )
+    expect(hook.lastResult?.logs).toEqual([
+      {...context.nativeResult, type: 'functionRun'},
+      {...updatedResult, type: 'functionRun'},
+    ])
+    expect(hook.lastResult?.statusMessage).toBe('Watching for changes to product-discount...')
+    expect(captureFunctionRun).toHaveBeenCalledTimes(2)
   })
 
-  test('runs function once in watch mode without changes', async () => {
-    // Given
-    vi.mocked(runFunction).mockImplementation(runFunctionMockImplementation(EXEC_RESPONSE))
+  test('shows build failures without running and clears the error after a successful rebuild', async () => {
+    const context = await fixture()
+    const hook = context.render()
+    await vi.waitFor(() => expect(hook.lastResult?.logs).toHaveLength(1))
+    const previousRuns = hook.lastResult?.recentFunctionRuns
 
-    // When
-    const hook = renderHook(() =>
-      useFunctionWatcher({
-        selectedRun: SELECTED_RUN,
-        abortController: ABORT_CONTROLLER,
-        app: APP,
-        extension: EXTENSION,
-        appWatcher: new AppEventWatcher(APP),
+    context.update('Build failed')
+    await vi.waitFor(() =>
+      expect(hook.lastResult?.error).toBe('Error while reloading and building extension: Build failed'),
+    )
+    expect(captureFunctionRun).toHaveBeenCalledOnce()
+    expect(hook.lastResult?.recentFunctionRuns).toEqual(previousRuns)
+    expect(hook.lastResult?.logs).toHaveLength(1)
+
+    context.update()
+    await vi.waitFor(() => expect(hook.lastResult?.logs).toHaveLength(2))
+    expect(hook.lastResult?.error).toBeUndefined()
+    expect(hook.lastResult?.statusMessage).toBe('Watching for changes to product-discount...')
+    expect(captureFunctionRun).toHaveBeenCalledTimes(2)
+  })
+
+  test('keeps a newer build error when an older execution finishes', async () => {
+    const context = await fixture()
+    const hook = context.render()
+    await vi.waitFor(() => expect(hook.lastResult?.logs).toHaveLength(1))
+    let finishExecution!: (execution: FunctionExecution) => void
+    vi.mocked(captureFunctionRun).mockReturnValueOnce(
+      new Promise<FunctionExecution>((resolve) => {
+        finishExecution = resolve
       }),
     )
 
-    // Wait for the async initialReplay() to complete
-    // The hook uses a promise chain that needs multiple ticks to resolve
-    await vi.advanceTimersByTimeAsync(10)
-
-    // Also flush any pending microtasks
-    await vi.runOnlyPendingTimersAsync()
-
-    // Then
-    expect(runFunction).toHaveBeenCalledOnce()
-    expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
-  })
-
-  test('file watcher onChange re-runs function', async () => {
-    // Given
-    vi.mocked(runFunction)
-      .mockImplementationOnce(runFunctionMockImplementation(EXEC_RESPONSE))
-      .mockImplementationOnce(runFunctionMockImplementation(SECOND_EXEC_RESPONSE))
-    const appWatcher = new AppEventWatcher(APP)
-    const event = {extensionEvents: [{type: EventType.Updated, extension: EXTENSION}]}
-
-    // When
-    const hook = renderHook(() =>
-      useFunctionWatcher({
-        selectedRun: SELECTED_RUN,
-        abortController: ABORT_CONTROLLER,
-        app: APP,
-        extension: EXTENSION,
-        appWatcher,
-      }),
+    context.update()
+    await vi.waitFor(() => expect(hook.lastResult?.statusMessage).toBe('Re-running with latest changes...'))
+    context.update('Newer build failed')
+    await vi.waitFor(() =>
+      expect(hook.lastResult?.error).toBe('Error while reloading and building extension: Newer build failed'),
     )
 
-    // Wait for the async initialReplay() to complete
-    await vi.advanceTimersByTimeAsync(10)
-    await vi.runOnlyPendingTimersAsync()
-
-    expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
-    expect(hook.lastResult?.recentFunctionRuns[1]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
-
-    appWatcher.emit('all', event)
-    await vi.advanceTimersByTimeAsync(10)
-    await vi.runOnlyPendingTimersAsync()
-
-    expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...SECOND_EXEC_RESPONSE, type: 'functionRun'})
-    expect(hook.lastResult?.recentFunctionRuns[1]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
-
-    // Then
-    expect(runFunction).toHaveBeenCalledTimes(2)
+    finishExecution(context.execution)
+    await vi.waitFor(() => expect(hook.lastResult?.logs).toHaveLength(2))
+    expect(hook.lastResult?.error).toBe('Error while reloading and building extension: Newer build failed')
+    expect(captureFunctionRun).toHaveBeenCalledTimes(2)
   })
 
-  test('renders error in onReloadAndBuildError', async () => {
-    // Given
-    const expectedError = new Error('error!')
-    vi.mocked(runFunction).mockImplementationOnce(runFunctionMockImplementation(EXEC_RESPONSE))
-    const appWatcher = new AppEventWatcher(APP)
-    const event = {
-      extensionEvents: [
-        {type: EventType.Updated, extension: EXTENSION, buildResult: {status: 'error', error: expectedError.message}},
-      ],
-    }
+  test('keeps build output and runner diagnostics in the text log before the execution', async () => {
+    const context = await fixture()
+    context.startWatcher.mockImplementation(async (options) => {
+      options?.stdout?.write('Build output')
+      options?.stderr?.write('Build warning')
+    })
+    vi.mocked(captureFunctionRun).mockResolvedValue({...context.execution, diagnostics: ['Runner warning']})
+    const hook = context.render()
 
-    // When
-    const hook = renderHook(() =>
-      useFunctionWatcher({
-        selectedRun: SELECTED_RUN,
-        abortController: ABORT_CONTROLLER,
-        app: APP,
-        extension: EXTENSION,
-        appWatcher,
+    await vi.waitFor(() =>
+      expect(hook.lastResult?.logs).toEqual([
+        {type: 'systemMessage', message: 'Build output'},
+        {type: 'systemMessage', message: 'Build warning'},
+        {type: 'systemMessage', message: 'Runner warning'},
+        {...context.nativeResult, type: 'functionRun'},
+      ]),
+    )
+  })
+
+  test('shows a native unsuccessful result without treating it as a fatal runner error', async () => {
+    const context = await fixture()
+    const nativeResult = {...context.nativeResult, output: null, success: false}
+    vi.mocked(captureFunctionRun).mockResolvedValue({
+      ...context.execution,
+      resultJson: JSON.stringify(nativeResult),
+      exitCode: 1,
+    })
+    const hook = context.render()
+
+    await vi.waitFor(() => expect(hook.lastResult?.logs).toEqual([{...nativeResult, type: 'functionRun'}]))
+    expect(hook.lastResult?.error).toBeUndefined()
+    expect(hook.lastResult?.statusMessage).toBe('Watching for changes to product-discount...')
+    expect(context.abortController.signal.aborted).toBe(false)
+  })
+
+  test.each([new Error('Watcher startup failed'), 'Watcher startup failed'])(
+    'catches a fatal watcher startup rejection: %s',
+    async (error) => {
+      const context = await fixture()
+      context.startWatcher.mockRejectedValue(error)
+      const hook = context.render()
+
+      await vi.waitFor(() => expect(hook.lastResult?.error).toBe('Watcher startup failed'))
+      expect(captureFunctionRun).not.toHaveBeenCalled()
+      expect(context.watchSignal()?.aborted).toBe(true)
+      expect(context.abortController.signal.aborted).toBe(false)
+    },
+  )
+
+  test('catches fatal runner failures', async () => {
+    const context = await fixture()
+    vi.mocked(captureFunctionRun).mockRejectedValue(new Error('Runner failed'))
+    const hook = context.render()
+
+    await vi.waitFor(() => expect(hook.lastResult?.error).toBe('Runner failed'))
+    expect(hook.lastResult?.logs).toEqual([])
+    expect(context.watchSignal()?.aborted).toBe(true)
+    expect(context.abortController.signal.aborted).toBe(false)
+  })
+
+  test('catches fatal watcher errors after the initial execution', async () => {
+    const context = await fixture()
+    const hook = context.render()
+    await vi.waitFor(() => expect(hook.lastResult?.logs).toHaveLength(1))
+
+    context.watcher().emit('error', new Error('Watcher failed'))
+
+    await vi.waitFor(() => expect(hook.lastResult?.error).toBe('Watcher failed'))
+    expect(captureFunctionRun).toHaveBeenCalledOnce()
+    expect(context.watchSignal()?.aborted).toBe(true)
+    expect(context.abortController.signal.aborted).toBe(false)
+  })
+
+  test('does not restart the shared loop when the hook re-renders', async () => {
+    const context = await fixture()
+    const hook = context.render()
+    await vi.waitFor(() => expect(hook.lastResult?.logs).toHaveLength(1))
+
+    hook.rerender()
+    await vi.runOnlyPendingTimersAsync()
+
+    expect(context.startWatcher).toHaveBeenCalledOnce()
+    expect(captureFunctionRun).toHaveBeenCalledOnce()
+    expect(context.abortController.signal.aborted).toBe(false)
+  })
+
+  test('does not start watching or executing when the parent is already aborted', async () => {
+    const context = await fixture()
+    context.abortController.abort()
+    const hook = context.render()
+
+    await vi.advanceTimersByTimeAsync(10)
+    await vi.runOnlyPendingTimersAsync()
+
+    expect(context.startWatcher).not.toHaveBeenCalled()
+    expect(captureFunctionRun).not.toHaveBeenCalled()
+    expect(hook.lastResult?.logs).toEqual([])
+    expect(hook.lastResult?.error).toBeUndefined()
+  })
+
+  test('forwards parent cancellation to the shared loop', async () => {
+    const context = await fixture()
+    const hook = context.render()
+    await vi.waitFor(() => expect(hook.lastResult?.logs).toHaveLength(1))
+
+    context.abortController.abort()
+    await vi.runOnlyPendingTimersAsync()
+
+    expect(context.watchSignal()?.aborted).toBe(true)
+    context.update()
+    await vi.runOnlyPendingTimersAsync()
+    expect(captureFunctionRun).toHaveBeenCalledOnce()
+  })
+
+  test('aborts the shared loop on unmount and discards an in-flight execution', async () => {
+    const context = await fixture()
+    const removeEventListener = vi.spyOn(context.abortController.signal, 'removeEventListener')
+    let finishExecution!: (execution: FunctionExecution) => void
+    vi.mocked(captureFunctionRun).mockReturnValueOnce(
+      new Promise<FunctionExecution>((resolve) => {
+        finishExecution = resolve
       }),
     )
+    const hook = context.render()
+    await vi.waitFor(() => expect(captureFunctionRun).toHaveBeenCalledOnce())
 
-    // Wait for the async initialReplay() to complete
-    await vi.advanceTimersByTimeAsync(10)
+    hook.unmount()
     await vi.runOnlyPendingTimersAsync()
 
-    appWatcher.emit('all', event)
-    await vi.advanceTimersByTimeAsync(10)
+    expect(context.abortController.signal.aborted).toBe(false)
+    expect(context.watchSignal()?.aborted).toBe(true)
+    expect(removeEventListener).toHaveBeenCalledWith('abort', expect.any(Function))
+    finishExecution(context.execution)
+    context.update()
     await vi.runOnlyPendingTimersAsync()
-
-    // Then
-    expect(runFunction).toHaveBeenCalledOnce()
-    expect(hook.lastResult?.error).toEqual('Error while reloading and building extension: error!')
+    expect(hook.lastResult?.logs).toEqual([])
+    expect(captureFunctionRun).toHaveBeenCalledOnce()
   })
 })
 
-function renderHook<THookResult>(renderHookCallback: () => THookResult) {
-  const result: {
-    lastResult: THookResult | undefined
-  } = {
-    lastResult: undefined,
+async function fixture() {
+  const selectedRun = {
+    payload: {
+      export: 'run',
+      input: {someInput: 'someInput'},
+      output: {someOutput: 'someOutput'},
+      logs: 'First log\nSecond log',
+      fuelConsumed: 532632,
+    },
+    source: 'product-discount',
+  } as FunctionRunData
+  const abortController = new AbortController()
+  const app = testAppLinked()
+  const extension = await testFunctionExtension()
+  const nativeResult = {
+    input: selectedRun.payload.input,
+    output: selectedRun.payload.output,
+    logs: selectedRun.payload.logs,
+    name: selectedRun.source,
+    size: 0,
+    memory_usage: 0,
+    instructions: 532700,
+    success: true,
   }
+  const execution = {
+    state: 'completed',
+    resultJson: JSON.stringify(nativeResult),
+    exitCode: 0,
+    diagnostics: [],
+  } satisfies FunctionExecution
+  const startWatcher = vi.spyOn(AppEventWatcher.prototype, 'start').mockResolvedValue(undefined)
+  vi.mocked(captureFunctionRun).mockResolvedValue(execution)
+  vi.useFakeTimers()
 
-  const MockComponent = () => {
-    const hookResult = renderHookCallback()
-    result.lastResult = hookResult
+  let hook: {unmount: () => void} | undefined
+  onTestFinished(async () => {
+    hook?.unmount()
+    await vi.runOnlyPendingTimersAsync()
+    vi.clearAllTimers()
+    vi.useRealTimers()
+    startWatcher.mockRestore()
+  })
 
-    return null
+  const watcher = () => startWatcher.mock.instances[0] as AppEventWatcher
+  return {
+    selectedRun,
+    abortController,
+    extension,
+    nativeResult,
+    execution,
+    startWatcher,
+    watcher,
+    watchSignal: () => startWatcher.mock.calls[0]?.[0]?.signal,
+    update: (error?: string) =>
+      watcher().emit('all', {
+        extensionEvents: [
+          {
+            type: EventType.Updated,
+            extension,
+            buildResult: error ? {status: 'error', error} : {status: 'ok'},
+          },
+        ],
+      }),
+    render: () => {
+      const rendered = renderHook(() => useFunctionWatcher({selectedRun, abortController, app, extension}))
+      hook = rendered
+      return rendered
+    },
   }
-
-  render(<MockComponent />)
-
-  return result
 }
 
-function runFunctionMockImplementation(output: unknown): typeof runFunction {
-  return async (options) => {
-    if (options.stdout instanceof Writable) {
-      options.stdout.write(JSON.stringify(output))
-    }
+function renderHook<THookResult>(renderHookCallback: () => THookResult) {
+  const result: {lastResult: THookResult | undefined} = {lastResult: undefined}
+  const MockComponent = () => {
+    result.lastResult = renderHookCallback()
+    return null
+  }
+  const instance = render(<MockComponent />)
+
+  return {
+    get lastResult() {
+      return result.lastResult
+    },
+    unmount: instance.unmount,
+    rerender: () => instance.rerender(<MockComponent />),
   }
 }

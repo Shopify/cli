@@ -1,6 +1,7 @@
 import {FunctionRunData, replay} from './replay.js'
 import {renderReplay} from './ui.js'
 import {captureFunctionRun} from './runner.js'
+import {watchReplayJson} from './replay/json.js'
 import {testAppLinked, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
@@ -23,6 +24,7 @@ vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => ({
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('./ui.js')
 vi.mock('./runner.js')
+vi.mock('./replay/json.js')
 
 describe('replay', () => {
   const defaultConfig = {
@@ -212,6 +214,22 @@ describe('replay', () => {
         watch: false,
       })
     }).rejects.toThrow(new AbortError(`No logs found in ${logsDir}`))
+  })
+
+  testWithTempDir('uses JSON output without rendering the terminal UI', async ({tempDir}) => {
+    const app = testAppLinked({directory: tempDir})
+    const file = createFunctionRunFile({handle: extension.handle})
+    await writeFunctionRunFiles(app.getLogsDir(), [file])
+
+    await replay({app, extension, log: file.run.identifier, path: 'test-path', json: true, watch: true})
+
+    expect(watchReplayJson).toHaveBeenCalledWith({
+      app,
+      extension,
+      selectedRun: file.run,
+      abortController: expect.anything(),
+    })
+    expect(renderReplay).not.toHaveBeenCalled()
   })
 
   testWithTempDir('delegates to renderReplay when watch is true', async ({tempDir}) => {
