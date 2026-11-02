@@ -1,5 +1,6 @@
 import {createDevStoreJsonOutputSchema} from './types.js'
 import {createDevStore} from './create-dev-store.js'
+import {PollStoreCreation} from '../../api/graphql/business-platform-organizations/generated/poll_store_creation.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 
 import {businessPlatformOrganizationsRequestDoc} from '@shopify/cli-kit/node/api/business-platform'
@@ -53,6 +54,48 @@ beforeEach(() => {
 })
 
 describe('createDevStore', () => {
+  test.each([undefined, null])('waits for an initially missing creation record (%s)', async (storeCreation) => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce(defaultMutationResult)
+      .mockResolvedValueOnce({organization: {id: '123', storeCreation}})
+      .mockResolvedValueOnce({organization: {id: '123', storeCreation: {status: 'AWAITING_CORE_STORE_READY'}}})
+      .mockResolvedValueOnce({organization: {id: '123', storeCreation: {status: 'COMPLETE'}}})
+    vi.mocked(sleep).mockImplementation(async () => {
+      expect(outputResult).not.toHaveBeenCalled()
+    })
+
+    const domain = await createDevStore({name: 'test-store', organization: defaultOrg, plan: 'basic', json: true})
+
+    expect(domain).toBe('test-store.myshopify.com')
+    expect(sleep).toHaveBeenCalledTimes(2)
+    expect(businessPlatformOrganizationsRequestDoc).toHaveBeenCalledTimes(4)
+    for (const [request] of vi.mocked(businessPlatformOrganizationsRequestDoc).mock.calls.slice(1)) {
+      expect(request).toMatchObject({query: PollStoreCreation, variables: {shopDomain: domain}})
+    }
+    expect(JSON.parse(vi.mocked(outputResult).mock.calls[0]![0] as string).store.domain).toBe(domain)
+  })
+
+  test.each(['FAILED', 'TIMED_OUT', 'USER_ERROR'])('does not retry terminal creation status %s', async (status) => {
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce(defaultMutationResult)
+      .mockResolvedValueOnce({organization: {id: '123', storeCreation: {status}}})
+
+    await expect(createDevStore({name: 'test-store', organization: defaultOrg, plan: 'basic'})).rejects.toThrow(
+      `Store creation failed with status: ${status}`,
+    )
+    expect(sleep).not.toHaveBeenCalled()
+  })
+
+  test('preserves unrelated polling errors', async () => {
+    const error = new Error('Authentication failed')
+    vi.mocked(businessPlatformOrganizationsRequestDoc)
+      .mockResolvedValueOnce(defaultMutationResult)
+      .mockRejectedValueOnce(error)
+
+    await expect(createDevStore({name: 'test-store', organization: defaultOrg, plan: 'basic'})).rejects.toBe(error)
+    expect(sleep).not.toHaveBeenCalled()
+  })
+
   test('returns the polled shop domain without rendering output when summary is false', async () => {
     vi.mocked(businessPlatformOrganizationsRequestDoc)
       .mockResolvedValueOnce(defaultMutationResult)

@@ -44,7 +44,7 @@ pnpm --filter e2e exec playwright test --project remote --shard 1/2
 
 `tests/store-lifecycle.spec.ts` is the one exception to store reuse. It creates one temporary development store with `store create dev --json`, checks it with `store list --json`, and deletes it with `store delete --force --json`. It requires confirmed deletion and checks that the store is absent from the active store list. It runs once across the two remote shards and needs one free store slot in the E2E organization.
 
-The lifecycle commands do not use a browser. They use the CLI session from shared authentication. The temporary store has an `e2e-store-` name with the run marker and a random suffix. Cleanup runs even when the test fails or `E2E_SKIP_TEARDOWN=1`, with a separate timeout. It finds only the exact test name and refuses to delete protected stores. The test report includes the temporary name for recovery if the runner stops before cleanup or provisioning finishes late.
+The lifecycle commands do not use a browser. They use the CLI session from shared authentication. The temporary store has an `e2e-store-` name with the run marker and a random suffix. Cleanup runs even when the test fails or `E2E_SKIP_TEARDOWN=1`, with a separate timeout. After a failed test, cleanup waits up to one minute for the store to appear. If the store remains absent, cleanup reports an unresolved failure. It finds only the exact test name and refuses to delete protected stores. The test report includes the temporary name for recovery if the runner stops before cleanup or provisioning finishes late.
 
 Run only this test with:
 
