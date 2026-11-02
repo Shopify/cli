@@ -5,7 +5,6 @@ import {
   scanCredentialBrowserLeakage,
   scanCredentialLogLeakage,
   scanRequestControlledAdminContext,
-  scanStorefrontUnsafeEval,
   scanUnauthenticatedEndpoints,
   scanUnsafeInnerHTML,
 } from '../rules/js-rules.js'
@@ -189,22 +188,6 @@ describe('JavaScript regex mode', () => {
     expect(scanUnsafeInnerHTML([source('// element.innerHTML = payload\nelement.textContent = payload')])).toHaveLength(
       0,
     )
-    expect(
-      scanStorefrontUnsafeEval([
-        source(
-          `eval(code)\nwindow['eval'](code)\nnew Function(code)\n(0, eval)(code)\nsetTimeout('run()', 1)\nsetInterval(\"run()\", 1)`,
-          'extensions/theme/assets/widget.js',
-        ),
-      ]),
-    ).toHaveLength(6)
-    expect(
-      scanStorefrontUnsafeEval([
-        source(
-          `// eval(code)\nconst description = 'eval(code)'\nsetTimeout(() => render(), 1)\nobject.eval(code)`,
-          'extensions/theme/assets/widget.js',
-        ),
-      ]),
-    ).toEqual([])
   })
 })
 

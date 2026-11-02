@@ -55,6 +55,9 @@
     ]
   },
   "dependencies": {
+    "@babel/parser": "7.29.7",
+    "@babel/traverse": "7.29.7",
+    "@babel/types": "7.29.7",
     "@graphql-typed-document-node/core": "3.2.0",
     "@luckycatfactory/esbuild-graphql-loader": "3.8.1",
     "@oclif/core": "4.8.3",
@@ -81,6 +84,7 @@
     "ws": "8.21.0"
   },
   "devDependencies": {
+    "@types/babel__traverse": "7.28.0",
     "@types/diff": "^5.0.3",
     "@types/proper-lockfile": "4.1.4",
     "@types/react": "^19.0.0",

@@ -41,6 +41,7 @@ This review is static only: verify by reading code. Do not execute app, SDK, tes
 1. Follow its prompt exactly.
 2. Trace relevant request, authentication, authorization, data-flow, configuration, and rendering paths far enough to verify the behavior.
 3. Report only findings that prove a concrete trust-boundary violation in repository evidence. Name the principal, untrusted source, missing or weak boundary, sink or action, and affected authority. A code smell alone is not a finding.
+   For `STOREFRONT_UNSAFE_EVAL`, instead prove a production storefront path that requires CSP `unsafe-eval`. Cite the production entry point and runtime string-to-code operation. Literal code strings count; attacker-controlled input or an XSS exploit is not required.
 4. Use project-relative file paths and accurate one-based line numbers.
 5. Keep the check `id` and `version` exactly as they appear in {{AGENT_CHECKS_PATH}}.
 6. Include concise evidence citations. Never include a detected secret value or unnecessary personal data.

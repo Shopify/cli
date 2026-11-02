@@ -16,6 +16,7 @@ const PREFER_AGENT_CHECK_IDS = [
   'MISSING_COMPLIANCE_WEBHOOKS',
   'REQUEST_CONTROLLED_ADMIN_CONTEXT',
   'STATIC_FRAME_ANCESTORS',
+  'STOREFRONT_UNSAFE_EVAL',
 ]
 
 const EXPLICIT_UNION_CHECK_IDS = [
@@ -66,7 +67,7 @@ describe('check versions', () => {
 })
 
 describe('check precedence', () => {
-  test('sets the expected precedence on the 14 shared checks and defaults every other check to union', () => {
+  test('sets the expected precedence on the 15 shared checks and defaults every other check to union', () => {
     const checks = loadChecks()
     const precedenceById = new Map<string, CheckPrecedence>()
     for (const check of checks.values()) precedenceById.set(check.id, check.precedence)
@@ -75,7 +76,7 @@ describe('check precedence', () => {
       ...PREFER_AGENT_CHECK_IDS.map((id): [string, CheckPrecedence] => [id, 'prefer-agent']),
       ...EXPLICIT_UNION_CHECK_IDS.map((id): [string, CheckPrecedence] => [id, 'union']),
     ])
-    expect(expected.size).toBe(14)
+    expect(expected.size).toBe(15)
     for (const [id, precedence] of expected) expect(precedenceById.get(id), id).toBe(precedence)
 
     const others = [...checks.values()].filter((check) => !expected.has(check.id))
