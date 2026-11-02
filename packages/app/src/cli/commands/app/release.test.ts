@@ -50,6 +50,8 @@ afterEach(() => {
 
 describe('app release command', () => {
   beforeEach(() => {
+    // Vitest's throwing process.exit makes Oclif print error stacks to the captured native console.
+    vi.spyOn(process, 'exit').mockReturnValue(undefined as never)
     vi.mocked(appManagementRequestDoc).mockImplementation((options) =>
       graphqlRequestDoc({
         ...options,
@@ -89,7 +91,10 @@ describe('app release command', () => {
     vi.mocked(release).mockResolvedValue({status: 'failed', version, userErrors})
     await inTemporaryDirectory(async (tmp) => {
       await withCapturedStandardStreams(async ({stdout, stderr}) => {
-        await expect(runRelease(['--path', tmp, '--version', 'v1', '--json', '--allow-updates'])).rejects.toThrow()
+        await expect(
+          runRelease(['--path', tmp, '--version', 'v1', '--json', '--allow-updates']),
+        ).resolves.toBeUndefined()
+        expect(process.exit).toHaveBeenCalledExactlyOnceWith(1)
         expect(JSON.parse(stdout())).toMatchObject({
           error: {type: 'abort', message: "Version couldn't be released.", details: {userErrors}},
         })
@@ -129,7 +134,8 @@ describe('app release command', () => {
       await withCapturedStandardStreams(async ({stdout, stderr}) => {
         const argv = ['--path', directory, '--version', 'missing', '--allow-updates']
         if (format === 'json') argv.push('--json')
-        await expect(runRelease(argv)).rejects.toThrow()
+        await expect(runRelease(argv)).resolves.toBeUndefined()
+        expect(process.exit).toHaveBeenCalledExactlyOnceWith(1)
         expect(reportAnalyticsEvent).toHaveBeenCalledExactlyOnceWith(
           expect.objectContaining({
             errorMessage: format === 'json' ? 'Version missing could not be found.' : "Version couldn't be released.",
@@ -194,7 +200,8 @@ describe('app release command', () => {
             '--allow-deletes',
             '--no-input',
           ]),
-        ).rejects.toThrow()
+        ).resolves.toBeUndefined()
+        expect(process.exit).toHaveBeenCalledExactlyOnceWith(1)
         const {error} = JSON.parse(stdout())
         expect(error).toMatchObject({type: 'abort', message: expect.stringContaining(message)})
         expect(error.message).toContain('Request ID: lookup-request-id')
