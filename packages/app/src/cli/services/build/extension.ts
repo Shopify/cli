@@ -14,6 +14,7 @@ import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {readFile, touchFile, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
+import {setTimeout} from 'timers/promises'
 // eslint-disable-next-line no-restricted-imports
 import {resolve} from 'node:path'
 
@@ -154,12 +155,13 @@ export async function buildFunctionExtension(
   extension: ExtensionInstance,
   options: BuildFunctionExtensionOptions,
 ): Promise<FunctionBuildResult> {
-  const lockfilePath = joinPath(extension.directory, '.build-lock')
+  if (options.signal?.aborted) throw new AbortSilentError()
   let releaseLock
   try {
-    releaseLock = await lockfile.lock(extension.directory, {retries: 20, lockfilePath})
+    releaseLock = await acquireFunctionBuildLock(extension.directory, options.signal)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
+    if (options.signal?.aborted) throw new AbortSilentError()
     outputDebug(`Failed to acquire function build lock: ${error.message}`)
     throw new AbortError('Failed to build function.', 'This is likely due to another in-progress build.', [
       'Ensure there are no other function builds in-progress.',
@@ -168,6 +170,7 @@ export async function buildFunctionExtension(
   }
 
   try {
+    options.signal?.throwIfAborted()
     const functionConfiguration = (extension as ExtensionInstance<FunctionConfigType>).configuration
     const bundlePath = extension.outputPath
     const relativeBuildPath = functionConfiguration.build?.path ?? extension.outputRelativePath
@@ -179,6 +182,7 @@ export async function buildFunctionExtension(
       localIdentifier: extension.localIdentifier,
       apiVersion: functionConfiguration.api_version,
     })
+    options.signal?.throwIfAborted()
 
     if (!options.skipBuild) {
       if (extension.isJavaScript) {
@@ -186,11 +190,13 @@ export async function buildFunctionExtension(
       } else {
         await buildOtherFunction(extension, options)
       }
+      options.signal?.throwIfAborted()
 
       const wasmOpt = (extension as ExtensionInstance<FunctionConfigType>).configuration.build?.wasm_opt
       if (fileExistsSync(extension.outputPath) && wasmOpt) {
         await runWasmOpt(extension.outputPath)
       }
+      options.signal?.throwIfAborted()
 
       if (fileExistsSync(extension.outputPath)) {
         await runTrampoline(extension.outputPath)
@@ -221,6 +227,7 @@ export async function buildFunctionExtension(
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
+    if (options.signal?.aborted) throw new AbortSilentError()
     // To avoid random user-code errors being reported as CLI bugs, we capture and rethrow them as AbortError.
     // In this case, we need to keep the ESBuild details for the logs. (the `errors` array).
     // If the error is already an AbortError, we can just rethrow it.
@@ -236,6 +243,24 @@ export async function buildFunctionExtension(
     throw newError
   } finally {
     await releaseLock()
+  }
+}
+
+async function acquireFunctionBuildLock(directory: string, signal?: AbortSignal): Promise<() => Promise<void>> {
+  const lockfilePath = joinPath(directory, '.build-lock')
+  if (!signal) return lockfile.lock(directory, {retries: 20, lockfilePath})
+
+  // proper-lockfile cannot cancel its retry timers, so own the delays when cancellation is available.
+  for (let attempt = 0; ; attempt++) {
+    signal.throwIfAborted()
+    try {
+      // eslint-disable-next-line no-await-in-loop -- Lock acquisition attempts must stay sequential.
+      return await lockfile.lock(directory, {retries: 0, lockfilePath})
+    } catch (error) {
+      if (!(error instanceof Error) || !('code' in error) || error.code !== 'ELOCKED' || attempt === 20) throw error
+      // eslint-disable-next-line no-await-in-loop -- Wait before attempting to acquire the lock again.
+      await setTimeout(1000 * 2 ** attempt, undefined, {signal})
+    }
   }
 }
 

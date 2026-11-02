@@ -97,6 +97,8 @@ export class AppEventWatcher extends EventEmitter {
   private ready = false
   private initialEvents: ExtensionEvent[] = []
   private fileWatcher?: FileWatcher
+  private stopping = false
+  private readonly pendingEvents = new Set<Promise<void>>()
 
   constructor(app: AppLinkedInterface, appURL?: string, buildOutputPath?: string, fileWatcher?: FileWatcher) {
     super()
@@ -126,20 +128,23 @@ export class AppEventWatcher extends EventEmitter {
 
     this.fileWatcher = this.fileWatcher ?? new FileWatcher(this.app, this.options)
     this.fileWatcher.onChange((events) => {
-      handleWatcherEvents(events, this.app, this.options)
+      if (this.stopping) return
+      const pending = handleWatcherEvents(events, this.app, this.options)
         .then(async (appEvent) => {
           if (appEvent?.extensionEvents.length === 0) outputDebug('Change detected, but no extensions were affected')
-          if (!appEvent) return
+          if (!appEvent || this.stopping) return
 
           this.app = appEvent.app
           if (appEvent.appWasReloaded) this.fileWatcher?.updateApp(this.app)
           await this.rescanImports(appEvent)
+          if (this.stopping) return
 
           // Find affected created/updated extensions and build them
           const buildableEvents = appEvent.extensionEvents.filter((extEvent) => extEvent.type !== EventType.Deleted)
 
           // Build the created/updated extensions and update the extension events with the build result
           await this.buildExtensions(buildableEvents)
+          if (this.stopping) return
 
           // Generate the extension types after building the extensions so new imports are included
           // Skip if the app was reloaded, as generateExtensionTypes was already called during reload
@@ -149,16 +154,29 @@ export class AppEventWatcher extends EventEmitter {
 
           // Find deleted extensions and delete their previous build output
           await this.deleteExtensionsBuildOutput(appEvent)
-          this.emit('all', appEvent)
+          if (!this.stopping) this.emit('all', appEvent)
         })
         .catch((error) => {
           this.emit('error', error)
         })
+        .finally(() => this.pendingEvents.delete(pending))
+      this.pendingEvents.add(pending)
     })
     await this.fileWatcher.start()
+    if (this.stopping || this.options.signal.aborted) return
 
     this.ready = true
     this.emit('ready', {app: this.app, extensionEvents: this.initialEvents})
+  }
+
+  /** Stops file watching and waits for builds already in progress before releasing listeners. */
+  async stop(): Promise<void> {
+    this.stopping = true
+    await this.fileWatcher?.stop()
+    await Promise.all(this.pendingEvents)
+    // An in-flight import rescan can restart the file watcher.
+    await this.fileWatcher?.stop()
+    this.removeAllListeners()
   }
 
   /**
@@ -241,6 +259,7 @@ export class AppEventWatcher extends EventEmitter {
           })
           // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
         } catch (error: any) {
+          if (this.options.signal.aborted) return
           // If there is an `errors` array, it's an esbuild error, format it and log it
           // If not, just print the error message to stderr.
           const errors: Message[] = error.errors ?? []
@@ -289,6 +308,7 @@ export class AppEventWatcher extends EventEmitter {
       useTasks: false,
       environment: 'development',
       appURL: this.appURL,
+      signal: this.options.signal,
     }
     await extension.buildForBundle(buildOptions, this.buildOutputPath)
   }

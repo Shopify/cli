@@ -55,6 +55,7 @@ export async function watchReplay({
       input: JSON.stringify(selectedRun.payload.input),
       export: selectedRun.payload.export,
       json: true,
+      signal,
     })
     if (signal.aborted) return
     if (execution.state !== 'completed') {
@@ -103,7 +104,12 @@ export async function watchReplay({
     }
   } finally {
     abortController.abort()
-    await executions
+    try {
+      await watcher.stop()
+    } finally {
+      await executions
+      diagnostics.end()
+    }
   }
   if (failure) throw failure
   onEvent({type: 'status', status: 'cancelled'})

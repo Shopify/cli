@@ -79,7 +79,11 @@ export class FileWatcher {
   private watcher?: FSWatcher
   private starting?: Promise<void>
   private restartRequested = false
-  private readonly debouncedEmit: () => void
+  private finishStartup?: () => void
+  private readonly debouncedEmit: ReturnType<typeof debounce<() => void>>
+  private readonly extensionCreationIntervals = new Set<ReturnType<typeof setInterval>>()
+  private readonly fileDeletionTimeouts = new Set<ReturnType<typeof setTimeout>>()
+  private stopped = false
   private readonly ignored: {[key: string]: ignore.Ignore | undefined} = {}
   // Map of file paths to the extension handles that watch them
   private readonly extensionWatchedFiles = new Map<string, Set<string>>()
@@ -108,8 +112,11 @@ export class FileWatcher {
   /**
    * Starts a new file watcher, and closes the previous one if it exists.
    * This ensures the watcher picks up any changes in what files need to be watched.
+   * Resolves after the initial scan finishes or startup is cancelled.
    */
   start(): Promise<void> {
+    if (this.options.signal.aborted) return Promise.resolve()
+    this.stopped = false
     this.restartRequested = true
     this.starting ??= this.startWatching()
     return this.starting
@@ -125,12 +132,22 @@ export class FileWatcher {
     })
   }
 
+  /** Stops watching and waits for the underlying watcher to close. */
+  async stop(): Promise<void> {
+    this.stopped = true
+    this.finishStartup?.()
+    this.options.signal.removeEventListener('abort', this.onAbort)
+    this.clearPendingEvents()
+    await this.watcher?.close()
+    this.watcher = undefined
+  }
+
   private async startWatching(): Promise<void> {
     try {
       do {
         this.restartRequested = false
         await this.startWatcher()
-      } while (this.restartRequested && !this.options.signal.aborted)
+      } while (this.restartRequested && !this.stopped && !this.options.signal.aborted)
     } finally {
       this.starting = undefined
     }
@@ -155,6 +172,7 @@ export class FileWatcher {
         }
       }),
     )
+    if (this.stopped || this.options.signal.aborted) return
 
     const watchPaths = [this.app.configPath, ...fullExtensionDirectories]
 
@@ -166,6 +184,7 @@ export class FileWatcher {
 
     // Create new watcher
     const {default: chokidar} = await import('chokidar')
+    if (this.stopped || this.options.signal.aborted) return
     const cargoProjects = new Map<string, boolean>()
     this.watcher = chokidar.watch(watchPaths, {
       ignored: [
@@ -184,15 +203,13 @@ export class FileWatcher {
       ignoreInitial: true,
     })
 
-    this.watcher.on('all', AsyncResource.bind(this.handleFileEvent))
-    this.addAbortListener()
-
     const watcher = this.watcher
-    await new Promise<void>((resolve, reject) => {
+    watcher.on('all', AsyncResource.bind(this.handleFileEvent))
+    const ready = new Promise<void>((resolve, reject) => {
       const cleanup = () => {
         watcher.removeListener('ready', onReady)
         watcher.removeListener('error', onError)
-        this.options.signal.removeEventListener('abort', onReady)
+        this.finishStartup = undefined
       }
       const onReady = () => {
         cleanup()
@@ -202,21 +219,30 @@ export class FileWatcher {
         cleanup()
         reject(error)
       }
+      this.finishStartup = onReady
       watcher.once('ready', onReady)
       watcher.once('error', onError)
-      this.options.signal.addEventListener('abort', onReady, {once: true})
-      if (this.options.signal.aborted) {
-        this.close()
-        onReady()
-      }
     })
+    this.addAbortListener()
+    if (this.options.signal.aborted) this.onAbort()
+    await ready
+    if (this.stopped || this.options.signal.aborted) return
 
     outputDebug(`File watcher started with ${watchPaths.length} paths`, this.options.stdout)
   }
 
   private addAbortListener() {
-    this.options.signal.removeEventListener('abort', this.close)
-    this.options.signal.addEventListener('abort', this.close)
+    this.options.signal.removeEventListener('abort', this.onAbort)
+    this.options.signal.addEventListener('abort', this.onAbort)
+  }
+
+  private clearPendingEvents() {
+    this.extensionCreationIntervals.forEach((interval) => clearInterval(interval))
+    this.extensionCreationIntervals.clear()
+    this.fileDeletionTimeouts.forEach((timeout) => clearTimeout(timeout))
+    this.fileDeletionTimeouts.clear()
+    this.debouncedEmit.cancel()
+    this.currentEvents = []
   }
 
   /**
@@ -251,6 +277,7 @@ export class FileWatcher {
    * It also logs the number of events emitted and their paths for debugging purposes.
    */
   private readonly emitEvents = () => {
+    if (this.stopped || this.options.signal.aborted) return
     const events = this.currentEvents
     this.currentEvents = []
     const message = `🔉 ${events.length} EVENTS EMITTED in files: ${events.map((event) => event.path).join('\n')}`
@@ -327,6 +354,7 @@ export class FileWatcher {
   }
 
   private readonly handleFileEvent = (event: string, path: string) => {
+    if (this.stopped || this.options.signal.aborted) return
     const startTime = startHRTime()
     const normalizedPath = normalizePath(path)
     const isConfigAppPath = path === this.app.configPath
@@ -440,6 +468,7 @@ export class FileWatcher {
             totalWaitedTime += EXTENSION_CREATION_CHECK_INTERVAL_IN_MS
           } else {
             clearInterval(intervalId)
+            this.extensionCreationIntervals.delete(intervalId)
             this.extensionPaths.push(realPath)
             this.pushEvent({type: 'extension_folder_created', path: realPath, extensionPath, startTime})
             // Force an emit because we are inside a timeout callback
@@ -447,9 +476,11 @@ export class FileWatcher {
           }
           if (totalWaitedTime >= EXTENSION_CREATION_TIMEOUT_IN_MS) {
             clearInterval(intervalId)
+            this.extensionCreationIntervals.delete(intervalId)
             this.options.stderr.write(`Error loading new extension at path: ${path}.\n Please restart the process.`)
           }
         }, EXTENSION_CREATION_CHECK_INTERVAL_IN_MS)
+        this.extensionCreationIntervals.add(intervalId)
         break
       case 'unlink':
         // Ignore shoplock files
@@ -462,7 +493,8 @@ export class FileWatcher {
           this.extensionPaths = this.extensionPaths.filter((extPath) => extPath !== extensionPath)
           this.pushEvent({type: 'extension_folder_deleted', path: extensionPath, extensionPath, startTime})
         } else {
-          setTimeout(() => {
+          const timeoutId = setTimeout(() => {
+            this.fileDeletionTimeouts.delete(timeoutId)
             // If the extensionPath is not longer in the list, the extension was deleted while the timeout was running.
             if (!this.extensionPaths.includes(extensionPath)) return
             this.pushEvent({type: 'file_deleted', path, extensionPath, extensionHandle, startTime})
@@ -473,6 +505,7 @@ export class FileWatcher {
             // Force an emit because we are inside a timeout callback
             this.debouncedEmit()
           }, FILE_DELETE_TIMEOUT_IN_MS)
+          this.fileDeletionTimeouts.add(timeoutId)
         }
         break
       // These events are ignored
@@ -482,7 +515,14 @@ export class FileWatcher {
     }
   }
 
+  private readonly onAbort = () => {
+    this.stopped = true
+    this.clearPendingEvents()
+    this.close()
+  }
+
   private readonly close = () => {
+    this.finishStartup?.()
     if (!this.watcher) return
 
     outputDebug(`Closing file watcher`, this.options.stdout)
