@@ -1,4 +1,4 @@
-import {watchReplay} from './watch.js'
+import {watchReplayJson} from './json.js'
 import {captureFunctionRun} from '../runner.js'
 import {type FunctionRunData} from '../replay.js'
 import {testAppLinked, testFunctionExtension} from '../../../models/app/app.test-data.js'
@@ -44,7 +44,7 @@ test('rebuilds an edit made immediately after the watching record', async () => 
       exitCode: 0,
       diagnostics: [],
     })
-    const running = watchReplay({
+    const running = watchReplayJson({
       app,
       extension,
       abortController: controller,

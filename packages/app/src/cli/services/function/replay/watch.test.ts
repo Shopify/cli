@@ -1,4 +1,4 @@
-import {watchReplay} from './watch.js'
+import {watchReplayJson} from './json.js'
 import {functionReplayEventSchema} from './types.js'
 import {captureFunctionRun, type FunctionExecution} from '../runner.js'
 import {type FunctionRunData} from '../replay.js'
@@ -37,7 +37,7 @@ async function fixture(directory: string) {
   const selectedRun = {payload: {input: nativeResult.input, export: 'run'}} as FunctionRunData
   const start = () =>
     runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, () =>
-      watchReplay({app, extension, abortController, selectedRun}),
+      watchReplayJson({app, extension, abortController, selectedRun}),
     )
   const update = (error?: string) => {
     runWithCommandEvents({outputMode: 'json', sink: renderCommandEventAsJson}, () =>
