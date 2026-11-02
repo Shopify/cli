@@ -1,5 +1,6 @@
 import {renderReplay} from './ui.js'
 import {captureFunctionRun, type FunctionExecution} from './runner.js'
+import {watchReplay} from './replay/watch.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
@@ -56,12 +57,17 @@ export async function replay(options: ReplayOptions): Promise<FunctionExecution 
     const {input, export: runExport} = selectedRun.payload
 
     if (watch) {
-      await renderReplay({
+      const watchReplayOptions = {
         selectedRun,
         abortController,
         app,
         extension,
-      })
+      }
+      if (options.json) {
+        await watchReplay(watchReplayOptions)
+      } else {
+        await renderReplay(watchReplayOptions)
+      }
     } else {
       return await captureFunctionRun({
         functionExtension: extension,
