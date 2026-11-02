@@ -230,7 +230,7 @@ describe('replay', () => {
       extension,
       stdout: false,
       path: 'test-path',
-      json: true,
+      json: false,
       watch: true,
     })
 
@@ -254,7 +254,7 @@ describe('replay', () => {
         extension,
         stdout: false,
         path: 'test-path',
-        json: true,
+        json: false,
         watch: true,
       }),
     ).rejects.toThrow()
@@ -336,7 +336,7 @@ describe('replay', () => {
       extension,
       stdout: false,
       path: 'test-path',
-      json: true,
+      json: false,
       watch: true,
     })
 

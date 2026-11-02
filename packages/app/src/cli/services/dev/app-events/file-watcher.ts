@@ -157,6 +157,30 @@ export class FileWatcher {
     this.watcher.on('all', this.handleFileEvent)
     this.addAbortListener()
 
+    const watcher = this.watcher
+    await new Promise<void>((resolve, reject) => {
+      const cleanup = () => {
+        watcher.removeListener('ready', onReady)
+        watcher.removeListener('error', onError)
+        this.options.signal.removeEventListener('abort', onReady)
+      }
+      const onReady = () => {
+        cleanup()
+        resolve()
+      }
+      const onError = (error: Error) => {
+        cleanup()
+        reject(error)
+      }
+      watcher.once('ready', onReady)
+      watcher.once('error', onError)
+      this.options.signal.addEventListener('abort', onReady, {once: true})
+      if (this.options.signal.aborted) {
+        this.close()
+        onReady()
+      }
+    })
+
     outputDebug(`File watcher started with ${watchPaths.length} paths`, this.options.stdout)
   }
 
