@@ -154,6 +154,6 @@ When the user explicitly wants a fast local or CI scan without semantic investig
 {{DETERMINISTIC_SCAN_COMMAND}}
 ```
 
-For a pass/fail gate, add `--blocking <severity>`: the command exits 1 when a check with findings is at or above that severity. Do not describe a deterministic-only scan as the full app security check.
+For a pass/fail gate, add `--blocking <severity>`. The deterministic scan blocks on confirmed findings at or above that severity. `STOREFRONT_UNSAFE_EVAL` findings are candidates until agent review confirms production reachability; use `shopify app security review --blocking <severity>` after recording the agent result to gate that check. Do not describe a deterministic-only scan as the full app security check.
 
 Route authentication retains a template-oriented heuristic. Calls using `context.shopify.authenticate.admin(...)` are deferred to the `UNAUTHENTICATED_ENDPOINT` agent review, with unresolved coverage rather than a missing-auth finding or a pass. The heuristic does not establish binding provenance, control-flow safety, or tenant/object authorization.

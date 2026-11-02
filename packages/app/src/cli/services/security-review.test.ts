@@ -169,6 +169,35 @@ describe('reviewAppSecurityResults', () => {
   })
 
   describe('--blocking', () => {
+    test('blocks storefront unsafe-eval only after agent confirmation', () => {
+      const deterministicCandidate = {
+        ...deterministicFindingsDocument.checks[0]!,
+        id: 'STOREFRONT_UNSAFE_EVAL',
+        status: 'unresolved' as const,
+        reason: {code: 'agent_investigation_required', message: 'Production reachability needs review.'},
+        findings: [deterministicFindingsDocument.checks[0]!.findings[0]!],
+      }
+      const deterministic = {...deterministicFindingsDocument, checks: [deterministicCandidate]}
+      const confirmed = {
+        ...agentFindingsDocument.checks[0]!,
+        id: 'STOREFRONT_UNSAFE_EVAL',
+        findings: [agentFindingsDocument.checks[0]!.findings[0]!],
+      }
+      const agent = {...agentFindingsDocument, checks: [confirmed]}
+
+      expect(review({deterministic}, {blocking: 'high'}).checks[0]!.findings).toHaveLength(1)
+      expect(review({deterministic}, {blocking: 'high'}).blocking.blockedChecks).toBe(0)
+      expect(review({deterministic, agent}, {blocking: 'high'}).blocking.blockedChecks).toBe(1)
+      expect(
+        review({deterministic, agent: {...agent, generated_at: '2026-09-01T09:00:00.000Z'}}, {blocking: 'high'})
+          .blocking.blockedChecks,
+      ).toBe(0)
+      expect(
+        review({deterministic, agent: {...agent, checks: [{...confirmed, findings: []}]}}, {blocking: 'high'}).blocking
+          .blockedChecks,
+      ).toBe(0)
+    })
+
     test('never breaches at none', () => {
       expect(review(both, {blocking: 'none'}).blocking).toEqual({level: 'none', blockedChecks: 0})
     })

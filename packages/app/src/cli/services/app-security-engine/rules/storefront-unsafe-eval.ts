@@ -1,13 +1,32 @@
 import {parse} from '@babel/parser'
 import babelTraverse, {type NodePath, type Scope} from '@babel/traverse'
 import * as t from '@babel/types'
-import {SourceCodeType, toLiquidHTMLAST, visit} from '@shopify/theme-check-node'
+import {SourceCodeType, toLiquidHTMLAST, visit, type LiquidHtmlNode} from '@shopify/theme-check-node'
 import type {Issue} from '../types.js'
 import type {RunnerResult, SourceFile} from '../scanners/types.js'
 
 // Babel's CommonJS default is wrapped under native ESM, but unwrapped by some bundlers.
 const traverse = typeof babelTraverse === 'function' ? babelTraverse : babelTraverse.default
 const JAVASCRIPT_EXTENSIONS = new Set(['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.mts', '.cts'])
+const JAVASCRIPT_MIME_TYPES = new Set([
+  'application/ecmascript',
+  'application/javascript',
+  'application/x-ecmascript',
+  'application/x-javascript',
+  'text/ecmascript',
+  'text/javascript',
+  'text/javascript1.0',
+  'text/javascript1.1',
+  'text/javascript1.2',
+  'text/javascript1.3',
+  'text/javascript1.4',
+  'text/javascript1.5',
+  'text/jscript',
+  'text/livescript',
+  'text/x-ecmascript',
+  'text/x-javascript',
+])
+type HtmlRawNode = Extract<LiquidHtmlNode, {type: 'HtmlRawNode'}>
 type Value =
   | 'global'
   | 'object'
@@ -53,6 +72,7 @@ export function scanStorefrontUnsafeEval(files: SourceFile[]): RunnerResult {
       const inspect = (path: NodePath<t.CallExpression | t.OptionalCallExpression | t.NewExpression>) => {
         const callee = resolve(path.node.callee, path.scope)
         if (callee !== 'constructor' && callee !== 'eval' && callee !== 'timer') return
+        if (path.isNewExpression() && callee !== 'constructor') return
         const argument = path.node.arguments[0]
         const value = argument ? resolve(argument, path.scope) : 'other'
         if (callee !== 'constructor' && value !== 'string') {
@@ -99,16 +119,8 @@ function extractScripts(file: SourceFile, gaps: string[]): Script[] {
         return undefined
       const script = ancestors.find((ancestor) => ancestor.type === 'HtmlRawNode' && ancestor.name === 'script')
       if (script?.type === 'HtmlRawNode') {
-        const typeAttribute = script.attributes.find(
-          (attribute) =>
-            'name' in attribute &&
-            Array.isArray(attribute.name) &&
-            attribute.name.every((part) => part.type === 'TextNode') &&
-            attribute.name
-              .map((part) => part.value)
-              .join('')
-              .toLowerCase() === 'type',
-        )
+        if (script.attributes.some((attribute) => staticAttributeName(attribute) === 'src')) return undefined
+        const typeAttribute = script.attributes.find((attribute) => staticAttributeName(attribute) === 'type')
         if (typeAttribute && 'value' in typeAttribute) {
           if (!typeAttribute.value.every((part) => part.type === 'TextNode')) {
             gaps.push(`${file.path}: dynamic script type needs review`)
@@ -119,17 +131,21 @@ function extractScripts(file: SourceFile, gaps: string[]): Script[] {
             .join('')
             .trim()
             .toLowerCase()
-          if (
-            type &&
-            type !== 'module' &&
-            !/^(?:text|application)\/(?:x-)?(?:java|ecma)script(?:1\.[0-5])?$/.test(type)
-          )
-            return undefined
+          if (type && type !== 'module' && !JAVASCRIPT_MIME_TYPES.has(type)) return undefined
         }
       }
       return {content: node.value, offset: node.position.start}
     },
   })
+}
+
+function staticAttributeName(attribute: HtmlRawNode['attributes'][number]): string | undefined {
+  if (!('name' in attribute) || !Array.isArray(attribute.name)) return undefined
+  if (!attribute.name.every((part) => part.type === 'TextNode')) return undefined
+  return attribute.name
+    .map((part) => part.value)
+    .join('')
+    .toLowerCase()
 }
 
 /** Resolve only built-ins and immutable local aliases; ambiguous bindings stay for semantic review. */

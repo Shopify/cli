@@ -67,6 +67,8 @@ describe('storefront runtime code generation', () => {
     '<script>eval("1")</script>',
     '<script type="module">eval("1")</script>',
     '<script type="text/javascript">eval("1")</script>',
+    '<script type="text/jscript">eval("1")</script>',
+    '<script type="text/livescript">eval("1")</script>',
   ])('finds executable Liquid JavaScript: %s', (content) => {
     expect(scan(content, '.liquid')).toHaveLength(1)
   })
@@ -77,6 +79,8 @@ describe('storefront runtime code generation', () => {
     '<script type="application/json">{"example":"setTimeout(\'render()\', 1)"}</script>',
     '<script TYPE="text/plain">eval("1")</script>',
     '<script type="text/x-template">eval("1")</script>',
+    '<script src="/assets/widget.js">eval("1")</script>',
+    '<script src="{{ "widget.js" | asset_url }}">Function("return 1")</script>',
   ])('ignores inert Liquid content: %s', (content) => {
     expect(scan(content, '.liquid')).toEqual([])
   })
@@ -152,6 +156,10 @@ describe('storefront runtime code generation', () => {
       issues: [],
       unresolvedReason: expect.stringContaining('dynamic script type needs review'),
     })
+  })
+
+  test.each(['new eval("1")', 'new window.setTimeout("1", 1)'])('ignores non-constructible %s', (content) => {
+    expect(scan(content)).toEqual([])
   })
 
   test('does not mark unreadable source as inspected', () => {

@@ -75,9 +75,34 @@ describe('blockedCheckCount', () => {
     expect(blockedCheckCount(execution, 'medium')).toBe(2)
     expect(blockedCheckCount(execution, 'low')).toBe(3)
   })
+
+  test('leaves storefront unsafe-eval candidates to the agent review gate', () => {
+    const candidate = {id: 'STOREFRONT_UNSAFE_EVAL', severity: 'high'} as const
+    const confirmed = {id: 'COMMITTED_SECRET', severity: 'high'} as const
+
+    expect(blockedCheckCount(executionWithIssues([candidate]), 'high')).toBe(0)
+    expect(blockedCheckCount(executionWithIssues([candidate, confirmed]), 'high')).toBe(1)
+  })
 })
 
 describe('app security CLI integration', () => {
+  test('records unsafe-eval candidates without failing the deterministic blocking gate', async () => {
+    await inTemporaryDirectory(async (directory) => {
+      await createApp(directory)
+      await mkdir(joinPath(directory, 'extensions', 'theme', 'assets'))
+      await writeFile(joinPath(directory, 'extensions', 'theme', 'shopify.extension.toml'), 'type = "theme"\n')
+      await writeFile(joinPath(directory, 'extensions', 'theme', 'assets', 'widget.js'), 'if (false) eval("1")')
+
+      const result = await runSecurity({directory, blocking: 'high'})
+
+      expect(result.execution.scan.issues.some((issue) => issue.id === 'STOREFRONT_UNSAFE_EVAL')).toBe(true)
+      expect(
+        result.execution.scan.scan.checks_executed.find((check) => check.id === 'STOREFRONT_UNSAFE_EVAL')?.status,
+      ).toBe('unresolved')
+      expect(result.blockedChecks).toBe(0)
+    })
+  })
+
   test('runs the in-tree engine and writes the deterministic findings and agent checks', async () => {
     await inTemporaryDirectory(async (directory) => {
       await createApp(directory)
