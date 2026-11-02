@@ -8,7 +8,6 @@ import {
 } from './app-security-selection.js'
 import {loadAppSecurityResults, type AppSecurityResults} from './app-security-results.js'
 import {recordAppSecurityMetadata, type AppSecurityMetadata} from './app-security-metadata.js'
-import {CHECKS_REQUIRING_AGENT_CONFIRMATION} from './app-security-api.js'
 import {activeFindings, SEVERITY_RANK, type CombinedCheck} from './app-security-engine/index.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import type {AppSecurityBlockingLevel} from './app-security-api.js'
@@ -94,18 +93,14 @@ function scopeDiffers({deterministic, agent}: AppSecurityResults['sources']): bo
 
 /**
  * A check blocks when it has a confirmed active finding at or above the level, whatever its status. Candidate-only
- * deterministic findings need a current agent review. Unresolved status alone never blocks.
+ * deterministic findings marked needs_review do not block. Unresolved status alone never blocks.
  */
 function countBlockedChecks(checks: CombinedCheck[], level: AppSecurityBlockingLevel): number {
   if (level === 'none') return 0
   return checks.filter(
     (check) =>
       SEVERITY_RANK[check.severity] >= SEVERITY_RANK[level] &&
-      activeFindings(check).some(
-        (finding) =>
-          !CHECKS_REQUIRING_AGENT_CONFIRMATION.has(check.id) ||
-          (finding.source === 'agent' && check.applied_precedence === 'prefer-agent'),
-      ),
+      activeFindings(check).some((finding) => finding.source === 'agent' || finding.confidence !== 'needs_review'),
   ).length
 }
 

@@ -137,6 +137,20 @@ describe('buildDeterministicFindings', () => {
     expect(translateFindingsDocument(JSON.parse(JSON.stringify(document)))).toEqual({ok: true, document})
   })
 
+  test.each(['definite', 'needs_review'] as const)(
+    'preserves %s confidence through storage and combination',
+    (confidence) => {
+      const document = buildDeterministicFindings(result([deterministicIssue({confidence})]))
+      const translated = translateFindingsDocument(JSON.parse(JSON.stringify(document)))
+      if (!translated.ok || translated.document.source !== 'deterministic')
+        throw new Error('Expected deterministic results')
+
+      expect(combineFindings({deterministic: translated.document, agent: null})[0]!.findings).toMatchObject([
+        {source: 'deterministic', confidence, disposition: 'active'},
+      ])
+    },
+  )
+
   test('records the scope as typed and the scan directories in coverage', () => {
     const scope = {include_dirs: ['../backend', './lib/'], excludes: ['generated', '**/*.log'], no_git_ignore: true}
     const scanDirectories = [

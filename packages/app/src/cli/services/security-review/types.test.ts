@@ -12,6 +12,7 @@ const scope = {includeDirs: [], excludes: [], noGitIgnore: false}
 const location = {filePath: ordersPath, line: 12, column: null}
 const deterministicFinding = {
   source: 'deterministic',
+  confidence: null,
   disposition: 'superseded',
   location,
   message: 'accessToken flows into console.log.',
@@ -122,6 +123,10 @@ describe('appSecurityReviewJsonOutputSchema', () => {
     [
       'an agent field on a deterministic finding',
       {...result, checks: [{...check, findings: [{...deterministicFinding, confidence: 'high'}]}]},
+    ],
+    [
+      'deterministic confidence on an agent finding',
+      {...result, checks: [{...check, findings: [{...agentFinding, confidence: 'needs-review'}]}]},
     ],
     ['a fix on an agent finding', {...result, checks: [{...check, findings: [{...agentFinding, fix: null}]}]}],
     [

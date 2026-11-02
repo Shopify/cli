@@ -235,8 +235,8 @@ export interface StoredFinding {
   snippet?: string
   /** Deterministic documents only. */
   fix?: Fix
-  /** Agent documents only. */
-  confidence?: 'high' | 'medium' | 'low'
+  /** Deterministic: definite or needs_review. Agent: high, medium, or low. */
+  confidence?: Confidence | 'high' | 'medium' | 'low'
   /** Agent documents only. */
   reasoning?: string
   /** Agent documents only. */

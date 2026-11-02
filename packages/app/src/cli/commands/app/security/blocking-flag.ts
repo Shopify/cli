@@ -10,7 +10,7 @@ const blockingLevels: AppSecurityBlockingLevel[] = ['high', 'medium', 'low', 'no
 export const appSecurityBlockingFlag = {
   blocking: Flags.custom<AppSecurityBlockingLevel>({
     description:
-      'The minimum confirmed finding severity that causes a non-zero exit code: high, medium, or low. Defaults to none. Storefront unsafe-eval candidates require agent review before they can block.',
+      "The minimum confirmed finding severity that causes a non-zero exit code: high, medium, or low. Defaults to none. Deterministic findings marked as needing review don't block.",
     options: blockingLevels,
     default: 'none',
     env: 'SHOPIFY_FLAG_APP_SECURITY_BLOCKING',

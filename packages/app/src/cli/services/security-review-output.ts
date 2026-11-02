@@ -489,11 +489,15 @@ function findingSection(finding: CombinedFinding, verbose: boolean, titlePrefix 
   const details: Token[] = [finding.message]
   if (finding.snippet) details.push({subdued: `\nCode: ${finding.snippet}`})
   if (finding.source === 'deterministic') {
+    if (finding.confidence === 'needs_review') details.push({subdued: '\nConfidence: needs review'})
+    if (finding.confidence === 'definite') details.push({subdued: '\nConfidence: definite'})
     if (finding.fix) details.push({subdued: `\nFix: ${finding.fix.description}`})
     const guide = finding.fix?.guide
     if (guide) details.push({subdued: `\nGuide: ${guide}`})
   } else {
-    if (finding.confidence) details.push({subdued: `\nConfidence: ${finding.confidence}`})
+    if (finding.confidence === 'high' || finding.confidence === 'medium' || finding.confidence === 'low') {
+      details.push({subdued: `\nConfidence: ${finding.confidence}`})
+    }
     if (finding.reasoning)
       details.push({subdued: `\nReasoning: ${verbose ? finding.reasoning : conciseReasoning(finding.reasoning)}`})
   }

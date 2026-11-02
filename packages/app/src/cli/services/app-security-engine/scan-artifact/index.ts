@@ -57,6 +57,7 @@ function issueToFinding(issueInput: Issue): StoredFinding {
     evidence: issue.evidence ?? [],
     ...(issue.snippet === undefined ? {} : {snippet: issue.snippet}),
     fix: issue.fix,
+    ...(issue.confidence === undefined ? {} : {confidence: issue.confidence}),
   }
 }
 

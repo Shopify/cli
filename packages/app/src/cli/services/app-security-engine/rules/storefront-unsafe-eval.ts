@@ -262,6 +262,7 @@ function finding(file: SourceFile, script: Script, node: t.Node, callee: 'constr
     id: 'STOREFRONT_UNSAFE_EVAL',
     title: 'Storefront code requires unsafe-eval',
     severity: 'high',
+    confidence: 'needs_review',
     points: -15,
     message: `${operation} requires CSP unsafe-eval when executed. Verify that this path is reachable in the production storefront.`,
     location: sourceLocation(file, script, node),

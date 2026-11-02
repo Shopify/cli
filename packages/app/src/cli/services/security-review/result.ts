@@ -231,9 +231,11 @@ function projectFinding(finding: CombinedFinding, appDirectory: string): AppSecu
     evidence: finding.evidence.map((evidence) => projectEvidence(evidence, appDirectory)),
   }
   if (finding.source === 'deterministic') {
+    const confidence = finding.confidence === 'needs_review' ? 'needs-review' : finding.confidence
     return {
       source: 'deterministic',
       ...common,
+      confidence: confidence === 'definite' || confidence === 'needs-review' ? confidence : null,
       fix: finding.fix
         ? {
             description: finding.fix.description,
@@ -246,7 +248,10 @@ function projectFinding(finding: CombinedFinding, appDirectory: string): AppSecu
   return {
     source: 'agent',
     ...common,
-    confidence: finding.confidence ?? null,
+    confidence:
+      finding.confidence === 'high' || finding.confidence === 'medium' || finding.confidence === 'low'
+        ? finding.confidence
+        : null,
     reasoning: projectOptionalText(finding.reasoning),
     suppression: finding.suppression ? {justification: finding.suppression.justification} : null,
   }

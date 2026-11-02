@@ -4,7 +4,9 @@ import {
   type AppSecurityBlockingLevel,
   type AppSecurityExecution,
 } from './app-security-api.js'
-import {writeCheckArtifacts} from './app-security-artifacts.js'
+import {writeCheckArtifacts, appSecurityArtifactPaths} from './app-security-artifacts.js'
+import {loadAppSecurityResults} from './app-security-results.js'
+import {reviewAppSecurityResults} from './security-review.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -49,7 +51,7 @@ async function createApp(directory: string, source = 'export const loader = () =
   return sourcePath
 }
 
-function executionWithIssues(issues: Pick<Issue, 'id' | 'severity'>[]): AppSecurityExecution {
+function executionWithIssues(issues: Pick<Issue, 'id' | 'severity' | 'confidence'>[]): AppSecurityExecution {
   return {scan: {issues}} as unknown as AppSecurityExecution
 }
 
@@ -76,12 +78,14 @@ describe('blockedCheckCount', () => {
     expect(blockedCheckCount(execution, 'low')).toBe(3)
   })
 
-  test('leaves storefront unsafe-eval candidates to the agent review gate', () => {
-    const candidate = {id: 'STOREFRONT_UNSAFE_EVAL', severity: 'high'} as const
-    const confirmed = {id: 'COMMITTED_SECRET', severity: 'high'} as const
+  test('skips needs_review issues without exempting other findings of the same check', () => {
+    const candidate = {id: 'CREDENTIAL_LOG_LEAKAGE', severity: 'high', confidence: 'needs_review'} as const
+    const definite = {...candidate, confidence: 'definite'} as const
+    const legacy = {id: candidate.id, severity: 'high'} as const
 
-    expect(blockedCheckCount(executionWithIssues([candidate]), 'high')).toBe(0)
-    expect(blockedCheckCount(executionWithIssues([candidate, confirmed]), 'high')).toBe(1)
+    expect(blockedCheckCount(executionWithIssues([candidate]), 'low')).toBe(0)
+    expect(blockedCheckCount(executionWithIssues([candidate, definite]), 'high')).toBe(1)
+    expect(blockedCheckCount(executionWithIssues([candidate, legacy]), 'high')).toBe(1)
   })
 })
 
@@ -95,7 +99,22 @@ describe('app security CLI integration', () => {
 
       const result = await runSecurity({directory, blocking: 'high'})
 
-      expect(result.execution.scan.issues.some((issue) => issue.id === 'STOREFRONT_UNSAFE_EVAL')).toBe(true)
+      expect(result.execution.scan.issues.filter((issue) => issue.id === 'STOREFRONT_UNSAFE_EVAL')).toMatchObject([
+        {confidence: 'needs_review'},
+      ])
+      const loaded = await loadAppSecurityResults(
+        {kind: 'config', appDirectory: directory, appConfigFilePath: joinPath(directory, 'shopify.app.toml')},
+        directory,
+      )
+      const review = reviewAppSecurityResults(loaded, {
+        resultsDirectory: appSecurityArtifactPaths(directory, 'shopify.app').resultsDirectory,
+        checkIds: ['STOREFRONT_UNSAFE_EVAL'],
+        blocking: 'high',
+      })
+      expect(review.checks[0]!.findings).toMatchObject([
+        {source: 'deterministic', confidence: 'needs_review', disposition: 'active'},
+      ])
+      expect(review.blocking.blockedChecks).toBe(0)
       expect(
         result.execution.scan.scan.checks_executed.find((check) => check.id === 'STOREFRONT_UNSAFE_EVAL')?.status,
       ).toBe('unresolved')

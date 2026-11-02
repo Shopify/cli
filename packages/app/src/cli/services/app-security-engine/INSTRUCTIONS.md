@@ -40,8 +40,7 @@ This review is static only: verify by reading code. Do not execute app, SDK, tes
 
 1. Follow its prompt exactly.
 2. Trace relevant request, authentication, authorization, data-flow, configuration, and rendering paths far enough to verify the behavior.
-3. Report only findings that prove a concrete trust-boundary violation in repository evidence. Name the principal, untrusted source, missing or weak boundary, sink or action, and affected authority. A code smell alone is not a finding.
-   For `STOREFRONT_UNSAFE_EVAL`, instead prove a production storefront path that requires CSP `unsafe-eval`. Cite the production entry point and runtime string-to-code operation. Literal code strings count; attacker-controlled input or an XSS exploit is not required.
+3. Meet the check's standard of proof using repository evidence. Unless the check defines a different standard, prove a concrete trust-boundary violation: name the principal, untrusted source, missing or weak boundary, sink or action, and affected authority. A code smell alone is not a finding.
 4. Use project-relative file paths and accurate one-based line numbers.
 5. Keep the check `id` and `version` exactly as they appear in {{AGENT_CHECKS_PATH}}.
 6. Include concise evidence citations. Never include a detected secret value or unnecessary personal data.
@@ -154,6 +153,6 @@ When the user explicitly wants a fast local or CI scan without semantic investig
 {{DETERMINISTIC_SCAN_COMMAND}}
 ```
 
-For a pass/fail gate, add `--blocking <severity>`. The deterministic scan blocks on confirmed findings at or above that severity. `STOREFRONT_UNSAFE_EVAL` findings are candidates until agent review confirms production reachability; use `shopify app security review --blocking <severity>` after recording the agent result to gate that check. Do not describe a deterministic-only scan as the full app security check.
+For a pass/fail gate, add `--blocking <severity>`. The deterministic scan blocks on confirmed findings at or above that severity. Deterministic findings with `confidence: needs_review` do not block; use `shopify app security review --blocking <severity>` after recording the agent result to gate reviewed findings. Do not describe a deterministic-only scan as the full app security check.
 
 Route authentication retains a template-oriented heuristic. Calls using `context.shopify.authenticate.admin(...)` are deferred to the `UNAUTHENTICATED_ENDPOINT` agent review, with unresolved coverage rather than a missing-auth finding or a pass. The heuristic does not establish binding provenance, control-flow safety, or tenant/object authorization.
