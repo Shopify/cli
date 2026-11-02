@@ -3,7 +3,8 @@
 This guide is the canonical contract for new JSON flags in Shopify CLI and its plugins, including Hydrogen. It records the agreed JSON conventions.
 
 A finite command finishes its work, returns one final result, and exits, such as `shopify store list`. Commands that
-keep running and streaming updates, such as `shopify app dev`, are currently outside this contract.
+keep running and streaming updates, such as `shopify app logs`, are currently outside this contract. `shopify app dev`
+and `shopify theme dev` use the [dev command](#dev-commands) stream instead.
 
 Finite commands expose their successful result as typed data independently from terminal presentation. The command's
 domain package owns this contract; CLI Kit only provides the shared schema and help infrastructure.
@@ -237,24 +238,47 @@ When a JSON command prompts, stderr also contains human-readable UI and terminal
 interactive mode, stderr is not a pure JSONL stream. For automation, use `--json --no-input` to capture JSON side
 events from stderr; missing required input then produces a fatal error instead of a prompt.
 
-## Exempt only streaming commands
+## Dev commands
 
-`shopify app dev --json` writes dev stream records as identical JSONL bytes to stdout and the session log. Each record
-has `timestamp`, `source`, and `message`, with `level` when available. The log contains process output, preview URLs,
-and session status messages. There is no final success result. Preview errors remain log records so that the
-developer can fix the app while dev keeps running.
+`shopify app dev` and `shopify theme dev` keep running and have no final result. Each session writes two local files
+under `<project>/.shopify/dev/`. Agents can read them when dev runs in another terminal.
 
-CLI setup messages and other diagnostics use stderr. Fatal CLI failures use the standard `{error: {...}}` envelope
-on stdout and exit nonzero. These failures are not added to the session log. A second invocation that cannot acquire
-the session never changes the running process's log.
+- The instance JSON has `command`, `directory`, `pid`, `sessionId`, `status` (`starting` or `running`), `logFile`,
+  and command-specific `details`. `--json-schema` describes it as `definitions.DevInstance`. The status is what the
+  CLI reports, not a health check. Check the PID before you reuse a session; the file alone doesn't prove it's alive.
+- The JSONL log at `logFile` has one record per line: `timestamp` and `message`, plus `source` and `level` when
+  available. It has no colors, spinners, or redraws. Keep a byte offset to read new lines, and wait for an incomplete
+  last line to finish. Each run clears the log, so reset the offset when `sessionId` changes.
+
+One session owns each identity: app dev owns one per app configuration, and theme dev owns one per store and theme ID
+in a directory. A second start fails with the `dev_instance_already_running` error code, and `details.instance` holds
+the running instance. It doesn't change that session's log. A live PID blocks takeover, even with a stale lock.
+
+With `--json`, stdout gets the same JSONL bytes as the log. There is no final success result. Setup messages before
+the session, diagnostics, and prompts use stderr, so use `--json --no-input` for unattended runs. Fatal CLI errors use
+the standard `{error: {...}}` envelope on stdout, exit nonzero, and aren't added to the log.
 
 ```jsonl
 {"timestamp":"2026-10-20T09:00:00Z","source":"web","message":"Server listening on 3000"}
 {"timestamp":"2026-10-20T09:00:01Z","source":"app dev","level":"info","message":"Ready, watching for changes in your app"}
+{"timestamp":"2026-10-20T09:00:02Z","message":"• 09:00:02  Synced » update assets/base.css"}
 ```
 
-Setup prompts still use stderr. Use `--json --no-input` for unattended runs. `app dev --json-schema` describes the
-stream's event and fatal error formats. This streaming contract does not change the single-document rule for finite commands.
+Ctrl+C and SIGTERM stop dev work and write queued records before the instance JSON and lock are removed. The log stays
+until the next run. On Windows, signals sent with `process.kill()` end the process without this cleanup. If a killed
+startup leaves a `.lock.acquire` directory, the next start reports its path; remove it only when no other start is
+running. Keep these files out of commits and reports, since output and local URLs can contain secrets.
+
+`app dev` details include the app configuration, app identity, store, URLs, and `preview` (`definitions.DevPreview`).
+Preview errors stay until the CLI reports success. Records keep the process `source`, such as `web` or an extension
+handle. Status changes are logged with source `app dev`.
+
+`theme dev` details include `store`, `themeId`, `themeName`, `listing` when set, `host`, `port`, and `urls` (`local`,
+`preview`, `themeEditor`, `giftCard`). The status becomes `running` once the server listens and the first sync is
+done. Records have only `timestamp` and `message`. They cover setup progress, sync results, request lines, and errors.
+With `--json`, these messages don't also go to stderr, and keyboard shortcuts are off.
+
+## Exempt only streaming commands
 
 Long-lived commands that produce an open-ended event stream don't have one finite result. Track these exemptions in
 `packages/eslint-plugin-cli/rules/json-output-command-exceptions.js`, in its streaming section. Add the command's
